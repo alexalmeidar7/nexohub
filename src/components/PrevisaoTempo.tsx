@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Search, Droplets, CloudRain, Thermometer, Wind } from "lucide-react";
+import { useState, useMemo } from "react";
+import { Search, Droplets, CloudRain, Thermometer, Copy, Check, Code2 } from "lucide-react";
 
 interface WeatherData {
   city: string;
@@ -116,6 +116,38 @@ export default function PrevisaoTempo() {
     }
   };
 
+  const xmlUrl = useMemo(() => {
+    if (!weather) return "";
+    const dayToXml = (d: DayWeather, tag: string) =>
+      `    <${tag} date="${d.date}">
+      <temperatura>${d.temp}</temperatura>
+      <minima>${d.tempMin}</minima>
+      <maxima>${d.tempMax}</maxima>
+      <humidade>${d.humidity}</humidade>
+      <chance_chuva>${d.rainChance}</chance_chuva>
+      <condicao>${getWeatherLabel(d.weatherCode)}</condicao>
+    </${tag}>`;
+
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<previsao>
+  <cidade>${weather.city}</cidade>
+${dayToXml(weather.current, "atual")}
+${weather.forecast.map((d) => dayToXml(d, "dia")).join("\n")}
+</previsao>`;
+
+    const blob = new Blob([xml], { type: "application/xml" });
+    return URL.createObjectURL(blob);
+  }, [weather]);
+
+  const [copied, setCopied] = useState(false);
+
+  const copyXmlUrl = () => {
+    if (!xmlUrl) return;
+    navigator.clipboard.writeText(xmlUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   return (
     <div className="animate-fade-in space-y-8">
       {/* Search */}
@@ -179,6 +211,21 @@ export default function PrevisaoTempo() {
               ))}
             </div>
           </div>
+
+          {/* XML URL */}
+          <div
+            onClick={copyXmlUrl}
+            className="flex items-center gap-3 bg-muted rounded-xl p-4 border border-border cursor-pointer hover:border-primary transition-colors group"
+          >
+            <Code2 size={18} className="text-primary shrink-0" />
+            <span className="text-sm text-muted-foreground truncate flex-1 font-mono">{xmlUrl}</span>
+            {copied ? (
+              <Check size={18} className="text-primary shrink-0" />
+            ) : (
+              <Copy size={18} className="text-muted-foreground group-hover:text-primary shrink-0" />
+            )}
+          </div>
+          {copied && <p className="text-xs text-primary -mt-6">URL copiada!</p>}
         </>
       )}
     </div>
