@@ -3,6 +3,7 @@ import { Home, Sun, FileText, Mic2, PlaySquare } from "lucide-react";
 import NavItem from "./NavItem";
 import ApresentadorForm from "./ApresentadorForm";
 import ProgramaForm from "./ProgramaForm";
+import PrevisaoTempo from "./PrevisaoTempo";
 
 type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "programas";
 
@@ -50,9 +51,7 @@ export default function Dashboard() {
               Bem-vindo ao MasterView. Selecione uma opção no menu lateral.
             </div>
           )}
-          {currentPage === "previsao" && (
-            <div className="animate-fade-in">Painel de ajuste meteorológico em tempo real.</div>
-          )}
+          {currentPage === "previsao" && <PrevisaoTempo />}
           {currentPage === "noticias" && (
             <div className="animate-fade-in">Gestão de feeds e notícias de última hora.</div>
           )}
