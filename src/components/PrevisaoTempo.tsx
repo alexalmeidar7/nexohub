@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { Search, Droplets, CloudRain, Thermometer, Copy, Check, Code2 } from "lucide-react";
 
 interface WeatherData {
@@ -55,17 +55,23 @@ function formatDay(dateStr: string) {
   return date.toLocaleDateString("pt-BR", { weekday: "short", day: "numeric", month: "short" });
 }
 
+const STORAGE_KEY = "masterview_last_city";
+const REFRESH_INTERVAL = 5 * 60 * 1000; // 5 minutes
+
 export default function PrevisaoTempo() {
-  const [city, setCity] = useState("");
+  const [city, setCity] = useState(() => localStorage.getItem(STORAGE_KEY) || "");
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const searchWeather = async () => {
-    if (!city.trim()) return;
-    setLoading(true);
-    setError("");
-    setWeather(null);
+  const fetchWeather = useCallback(async (searchCity: string, silent = false) => {
+    if (!searchCity.trim()) return;
+    if (!silent) {
+      setLoading(true);
+      setError("");
+      setWeather(null);
+    }
 
     try {
       // Geocoding
@@ -108,13 +114,42 @@ export default function PrevisaoTempo() {
         weatherCode: wxData.daily.weather_code[i + 1],
       }));
 
+      localStorage.setItem(STORAGE_KEY, searchCity);
       setWeather({ city: name, current, forecast });
     } catch {
-      setError("Erro ao buscar dados meteorológicos.");
+      if (!silent) setError("Erro ao buscar dados meteorológicos.");
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  const searchWeather = () => fetchWeather(city);
+
+  // Load saved city on mount & set up auto-refresh
+  useEffect(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      fetchWeather(saved);
+    }
+
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [fetchWeather]);
+
+  // Set up refresh interval when weather is loaded
+  useEffect(() => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    if (weather) {
+      intervalRef.current = setInterval(() => {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) fetchWeather(saved, true);
+      }, REFRESH_INTERVAL);
+    }
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [weather, fetchWeather]);
 
   const xmlUrl = useMemo(() => {
     if (!weather) return "";
