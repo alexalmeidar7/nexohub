@@ -4,6 +4,7 @@ import NavItem from "./NavItem";
 import ApresentadorForm from "./ApresentadorForm";
 import ProgramaForm from "./ProgramaForm";
 import PrevisaoTempo from "./PrevisaoTempo";
+import NoticiasPanel from "./NoticiasPanel";
 
 type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "programas";
 
@@ -52,9 +53,7 @@ export default function Dashboard() {
             </div>
           )}
           {currentPage === "previsao" && <PrevisaoTempo />}
-          {currentPage === "noticias" && (
-            <div className="animate-fade-in">Gestão de feeds e notícias de última hora.</div>
-          )}
+          {currentPage === "noticias" && <NoticiasPanel />}
           {currentPage === "apresentadores" && <ApresentadorForm />}
           {currentPage === "programas" && <ProgramaForm />}
         </section>
