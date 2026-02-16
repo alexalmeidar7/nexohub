@@ -5,6 +5,7 @@ import ApresentadorForm from "./ApresentadorForm";
 import ProgramaForm from "./ProgramaForm";
 import PrevisaoTempo from "./PrevisaoTempo";
 import NoticiasPanel from "./NoticiasPanel";
+import WeatherWidget from "./WeatherWidget";
 
 type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "programas";
 
@@ -48,8 +49,11 @@ export default function Dashboard() {
         </header>
         <section className="bg-surface-elevated rounded-2xl p-8 border border-border min-h-[400px]">
           {currentPage === "dashboard" && (
-            <div className="text-muted-foreground animate-fade-in">
-              Bem-vindo ao MasterView. Selecione uma opção no menu lateral.
+            <div className="animate-fade-in space-y-6">
+              <p className="text-muted-foreground">
+                Bem-vindo ao MasterView. Selecione uma opção no menu lateral.
+              </p>
+              <WeatherWidget />
             </div>
           )}
           {currentPage === "previsao" && <PrevisaoTempo />}
