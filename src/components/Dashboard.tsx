@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Home, Sun, FileText, Mic2, PlaySquare, Music, Settings, LogOut } from "lucide-react";
+import { Home, Sun, FileText, Mic2, PlaySquare, Music, CalendarDays, Settings, LogOut } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import ApresentadorForm from "./ApresentadorForm";
 import ProgramaForm from "./ProgramaForm";
@@ -8,6 +8,7 @@ import NoticiasPanel from "./NoticiasPanel";
 import WeatherWidget from "./WeatherWidget";
 import OnAirWidget from "./OnAirWidget";
 import MusicaNoAr from "./MusicaNoAr";
+import AgendaPage from "./AgendaPage";
 import MusicWidget from "./MusicWidget";
 import XmlLinkRow from "./XmlLinkRow";
 import ConfiguracoesPage, { getEmpresaConfig } from "./ConfiguracoesPage";
@@ -21,7 +22,7 @@ import {
 import { getMusicData } from "./MusicaNoAr";
 import { useAuth } from "@/hooks/useAuth";
 
-type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "programas" | "musica" | "configuracoes";
+type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "programas" | "musica" | "agenda" | "configuracoes";
 
 const menuItems: { icon: typeof Home; label: string; page: Page }[] = [
   { icon: Home, label: "Home", page: "dashboard" },
@@ -30,6 +31,7 @@ const menuItems: { icon: typeof Home; label: string; page: Page }[] = [
   { icon: Mic2, label: "Apresentadores", page: "apresentadores" },
   { icon: PlaySquare, label: "Programas", page: "programas" },
   { icon: Music, label: "Música tocando agora", page: "musica" },
+  { icon: CalendarDays, label: "Agenda", page: "agenda" },
 ];
 
 const pageTitle: Record<Page, string> = {
@@ -39,6 +41,7 @@ const pageTitle: Record<Page, string> = {
   apresentadores: "Apresentadores",
   programas: "Programas",
   musica: "Música no Ar",
+  agenda: "Agenda",
   configuracoes: "Configurações",
 };
 
@@ -182,6 +185,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           {currentPage === "apresentadores" && <ApresentadorForm />}
           {currentPage === "programas" && <ProgramaForm />}
           {currentPage === "musica" && <MusicaNoAr />}
+          {currentPage === "agenda" && <AgendaPage />}
           {currentPage === "configuracoes" && <ConfiguracoesPage />}
         </section>
 
