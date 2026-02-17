@@ -228,18 +228,18 @@ export default function OnAirWidget() {
           />
         )}
 
-        <div className="relative z-10 p-5 flex items-start justify-between">
+        {nextProgram && (
+          <div className="absolute top-3 right-3 z-20 flex items-center gap-1 bg-[#2d2d2d] rounded-full px-3 py-1 cursor-pointer">
+            <span className="text-gray-300 text-[10px] font-semibold uppercase tracking-wider">Próximo programa</span>
+            <ChevronRight size={12} className="text-gray-300" />
+          </div>
+        )}
+
+        <div className="relative z-10 p-5">
           <div className="flex items-center gap-2">
             <Radio size={16} className="text-gray-700 animate-pulse" />
             <span className="font-bold text-gray-700 text-sm animate-pulse">NO AR</span>
           </div>
-
-          {nextProgram && (
-            <div className="flex items-center gap-1 bg-[#2d2d2d] rounded-full px-3 py-1 cursor-pointer">
-              <span className="text-gray-300 text-[10px] font-semibold uppercase tracking-wider">Próximo programa</span>
-              <ChevronRight size={12} className="text-gray-300" />
-            </div>
-          )}
 
           {programa.selo && (
             <img
