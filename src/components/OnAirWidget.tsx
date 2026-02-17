@@ -156,21 +156,21 @@ export default function OnAirWidget() {
                 />
               )}
 
-              <div className="relative z-10 p-5 animate-fade-in">
-                <div className="flex items-center gap-2">
-                  <SkipForward size={16} className="text-gray-300" />
-                  <span className="font-bold text-gray-300 text-sm">PRÓXIMO PROGRAMA</span>
-                </div>
+              <div className="absolute top-4 left-5 z-10 flex items-center gap-2 animate-fade-in">
+                <SkipForward size={16} className="text-gray-300" />
+                <span className="font-bold text-gray-300 text-sm">PRÓXIMO PROGRAMA</span>
+              </div>
 
-                {nextProgram.selo && (
+              {nextProgram.selo && (
+                <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none animate-fade-in" style={{ bottom: 40 }}>
                   <img
                     src={nextProgram.selo}
                     alt="Selo"
-                    className="rounded mt-3"
-                    style={{ filter: "grayscale(100%) brightness(1.5)", width: "45%", height: "auto" }}
+                    className="rounded max-h-[45%] w-auto"
+                    style={{ filter: "grayscale(100%) brightness(1.5)" }}
                   />
-                )}
-              </div>
+                </div>
+              )}
 
               <div className="absolute bottom-4 left-0 right-0 z-10 px-5 animate-fade-in">
                 <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4">
@@ -235,21 +235,21 @@ export default function OnAirWidget() {
           </div>
         )}
 
-        <div className="relative z-10 p-5">
-          <div className="flex items-center gap-2">
-            <Radio size={16} className="text-gray-700 animate-pulse" />
-            <span className="font-bold text-gray-700 text-sm animate-pulse">NO AR</span>
-          </div>
+        <div className="absolute top-4 left-5 z-10 flex items-center gap-2">
+          <Radio size={16} className="text-gray-700 animate-pulse" />
+          <span className="font-bold text-gray-700 text-sm animate-pulse">NO AR</span>
+        </div>
 
-          {programa.selo && (
+        {programa.selo && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none" style={{ bottom: 40 }}>
             <img
               src={programa.selo}
               alt="Selo"
-              className="rounded mt-3"
-              style={{ filter: "grayscale(100%) brightness(0.3)", width: "45%", height: "auto" }}
+              className="rounded max-h-[45%] w-auto"
+              style={{ filter: "grayscale(100%) brightness(0.3)" }}
             />
-          )}
-        </div>
+          </div>
+        )}
 
         <div className="absolute bottom-[4px] left-0 right-0 z-10 px-5">
           <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 mb-1">
