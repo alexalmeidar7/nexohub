@@ -43,14 +43,11 @@ function parseXmlString(xmlStr: string): MusicData | null {
     if (duracaoStr.includes(":")) {
       const parts = duracaoStr.split(":").map(Number);
       if (parts.length === 2) {
-        // Se o primeiro valor > 59, é formato "segundos:centésimos" (ex: "228:06" = 228s)
-        if (parts[0] > 59) {
-          duracao = parts[0];
-        } else {
-          duracao = parts[0] * 60 + parts[1];
-        }
+        // mm:ss
+        duracao = parts[0] * 60 + parts[1];
       } else if (parts.length === 3) {
-        duracao = parts[0] * 3600 + parts[1] * 60 + parts[2];
+        // mm:ss:cc (minutos:segundos:centésimos) — padrão de automação de rádio
+        duracao = parts[0] * 60 + parts[1] + parts[2] / 100;
       }
     } else {
       duracao = parseFloat(duracaoStr) || 0;
@@ -325,6 +322,9 @@ export default function MusicaNoAr() {
                 {" "}
                 {String(Math.floor(Math.max(0, timeLeft) % 60)).padStart(2, "0")}
                 <span className="text-sm text-zinc-400 ml-1">seg</span>
+                {" "}
+                {String(Math.floor((Math.max(0, timeLeft) % 1) * 100)).padStart(2, "0")}
+                <span className="text-sm text-zinc-400 ml-1">ms</span>
               </span>
             </div>
           </div>
