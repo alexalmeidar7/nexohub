@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Search, Droplets, CloudRain, Thermometer, Copy, Check, Code2, Star } from "lucide-react";
+import { Search, Droplets, CloudRain, Thermometer, Star } from "lucide-react";
+import XmlLinkRow from "./XmlLinkRow";
 
 interface WeatherData {
   city: string;
@@ -202,7 +203,7 @@ export default function PrevisaoTempo() {
 
   const isFavorited = weather ? favorites.some(f => f.name === weather.city) : false;
 
-  const [copied, setCopied] = useState(false);
+  
 
   return (
     <div className="animate-fade-in space-y-8">
@@ -296,33 +297,12 @@ export default function PrevisaoTempo() {
             </div>
           </div>
 
-          <div className="space-y-2">
-            <h4 className="text-lg font-medium text-foreground flex items-center gap-2">
-              <Code2 size={18} className="text-primary" /> XML TEMPO
-            </h4>
-            <div className="relative">
-              <textarea
-                readOnly
-                value={(() => {
-                  if (!weather) return "";
-                  const dayToXml = (d: DayWeather, tag: string) =>
-                    `  <${tag} date="${d.date}">\n    <temperatura>${d.temp}</temperatura>\n    <minima>${d.tempMin}</minima>\n    <maxima>${d.tempMax}</maxima>\n    <humidade>${d.humidity}</humidade>\n    <chance_chuva>${d.rainChance}</chance_chuva>\n    <condicao>${getWeatherLabel(d.weatherCode)}</condicao>\n  </${tag}>`;
-                  return `<?xml version="1.0" encoding="UTF-8"?>\n<previsao>\n  <cidade>${weather.city}</cidade>\n${dayToXml(weather.current, "atual")}\n${weather.forecast.map((d) => dayToXml(d, "dia")).join("\n")}\n</previsao>`;
-                })()}
-                className="w-full bg-muted border border-border rounded-lg p-3 text-xs font-mono text-foreground min-h-[200px] resize-y"
-              />
-              <button
-                onClick={() => {
-                  const textarea = document.querySelector<HTMLTextAreaElement>('textarea[readonly]');
-                  if (textarea) { navigator.clipboard.writeText(textarea.value); setCopied(true); setTimeout(() => setCopied(false), 2000); }
-                }}
-                className="absolute top-2 right-2 text-muted-foreground hover:text-primary"
-              >
-                {copied ? <Check size={16} /> : <Copy size={16} />}
-              </button>
-            </div>
-            {copied && <p className="text-xs text-primary">Copiado!</p>}
-          </div>
+          <XmlLinkRow label="XML TEMPO" xmlContent={(() => {
+            if (!weather) return "";
+            const dayToXml = (d: DayWeather, tag: string) =>
+              `  <${tag} date="${d.date}">\n    <temperatura>${d.temp}</temperatura>\n    <minima>${d.tempMin}</minima>\n    <maxima>${d.tempMax}</maxima>\n    <humidade>${d.humidity}</humidade>\n    <chance_chuva>${d.rainChance}</chance_chuva>\n    <condicao>${getWeatherLabel(d.weatherCode)}</condicao>\n  </${tag}>`;
+            return `<?xml version="1.0" encoding="UTF-8"?>\n<previsao>\n  <cidade>${weather.city}</cidade>\n${dayToXml(weather.current, "atual")}\n${weather.forecast.map((d) => dayToXml(d, "dia")).join("\n")}\n</previsao>`;
+          })()} />
         </>
       )}
     </div>

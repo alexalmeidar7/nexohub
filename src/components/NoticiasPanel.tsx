@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { RefreshCw, ExternalLink, Plus, TrendingUp, TrendingDown, Minus, Trash2, ChevronDown, ChevronUp } from "lucide-react";
+import XmlLinkRow from "./XmlLinkRow";
 
 interface NewsItem {
   title: string;
@@ -332,22 +333,15 @@ export default function NoticiasPanel() {
 
       {/* XML NOTICIAS */}
       {(selectedNews.length > 0 || selectedCotacoes.length > 0) && (
-        <div className="space-y-2">
-          <h4 className="text-lg font-medium text-foreground">XML NOTICIAS</h4>
-          <textarea
-            readOnly
-            value={(() => {
-              const newsXml = selectedNews.map(sn =>
-                `  <noticia>\n    <portal>${sn.portal}</portal>\n    <titulo>${sn.title.replace(/&/g, "&amp;").replace(/</g, "&lt;")}</titulo>\n    <imagem>${sn.imageUrl}</imagem>\n  </noticia>`
-              ).join("\n");
-              const cotXml = selectedCotacoes.map(sc =>
-                `  <cotacao>\n    <nome>${sc.name}</nome>\n    <valor>${sc.value}</valor>\n    <variacao>${sc.change}</variacao>\n  </cotacao>`
-              ).join("\n");
-              return `<?xml version="1.0" encoding="UTF-8"?>\n<noticias>\n${newsXml}\n${cotXml}\n</noticias>`;
-            })()}
-            className="w-full bg-muted border border-border rounded-lg p-3 text-xs font-mono text-foreground min-h-[150px] resize-y"
-          />
-        </div>
+        <XmlLinkRow label="XML NOTICIAS" xmlContent={(() => {
+          const newsXml = selectedNews.map(sn =>
+            `  <noticia>\n    <portal>${sn.portal}</portal>\n    <titulo>${sn.title.replace(/&/g, "&amp;").replace(/</g, "&lt;")}</titulo>\n    <imagem>${sn.imageUrl}</imagem>\n  </noticia>`
+          ).join("\n");
+          const cotXml = selectedCotacoes.map(sc =>
+            `  <cotacao>\n    <nome>${sc.name}</nome>\n    <valor>${sc.value}</valor>\n    <variacao>${sc.change}</variacao>\n  </cotacao>`
+          ).join("\n");
+          return `<?xml version="1.0" encoding="UTF-8"?>\n<noticias>\n${newsXml}\n${cotXml}\n</noticias>`;
+        })()} />
       )}
     </div>
   );
