@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { RefreshCw, ExternalLink, Plus, TrendingUp, TrendingDown, Minus, Trash2, ChevronDown, ChevronUp } from "lucide-react";
+import { RefreshCw, ExternalLink, Plus, TrendingUp, TrendingDown, Minus, Trash2, ChevronDown, ChevronUp, ListPlus } from "lucide-react";
 import XmlLinkRow from "./XmlLinkRow";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -23,6 +23,13 @@ interface CotacaoItem {
 }
 
 interface SelectedNews {
+  id?: string;
+  portal: string;
+  title: string;
+  imageUrl: string;
+}
+
+interface EscaladaNews {
   id?: string;
   portal: string;
   title: string;
@@ -101,6 +108,7 @@ export default function NoticiasPanel() {
   const [cotacoes, setCotacoes] = useState<CotacaoItem[]>([]);
   const [loadingCotacoes, setLoadingCotacoes] = useState(true);
   const [selectedNews, setSelectedNews] = useState<SelectedNews[]>([]);
+  const [escaladaNews, setEscaladaNews] = useState<EscaladaNews[]>([]);
   const [selectedCotacoes, setSelectedCotacoes] = useState<SelectedCotacao[]>([]);
   const [expandedPortals, setExpandedPortals] = useState<Record<string, boolean>>({});
 
@@ -108,14 +116,16 @@ export default function NoticiasPanel() {
   useEffect(() => {
     if (!user) return;
     const loadDb = async () => {
-      const [sitesRes, newsRes, cotRes] = await Promise.all([
+      const [sitesRes, newsRes, cotRes, escRes] = await Promise.all([
         supabase.from("custom_news_sites").select("*"),
         supabase.from("selected_news").select("*"),
         supabase.from("selected_cotacoes").select("*"),
+        supabase.from("escalada_news").select("*"),
       ]);
       setCustomSites((sitesRes.data || []).map(s => ({ id: s.id, name: s.name, rssUrl: s.rss_url })));
       setSelectedNews((newsRes.data || []).map(n => ({ id: n.id, portal: n.portal, title: n.title, imageUrl: n.image_url || "" })));
       setSelectedCotacoes((cotRes.data || []).map(c => ({ id: c.id, name: c.name, value: c.value, change: c.change })));
+      setEscaladaNews((escRes.data || []).map(n => ({ id: n.id, portal: n.portal, title: n.title, imageUrl: n.image_url || "" })));
     };
     loadDb();
   }, [user]);
@@ -172,6 +182,25 @@ export default function NoticiasPanel() {
     setSelectedNews(prev => prev.filter((_, i) => i !== index));
   };
 
+  const addToEscalada = async (sn: SelectedNews) => {
+    if (!user) return;
+    // Check if already in escalada
+    if (escaladaNews.some(e => e.title === sn.title && e.portal === sn.portal)) return;
+    const { data } = await supabase.from("escalada_news").insert({
+      user_id: user.id,
+      portal: sn.portal,
+      title: sn.title,
+      image_url: sn.imageUrl,
+    }).select().single();
+    if (data) setEscaladaNews(prev => [...prev, { id: data.id, portal: data.portal, title: data.title, imageUrl: data.image_url || "" }]);
+  };
+
+  const removeFromEscalada = async (index: number) => {
+    const item = escaladaNews[index];
+    if (item?.id) await supabase.from("escalada_news").delete().eq("id", item.id);
+    setEscaladaNews(prev => prev.filter((_, i) => i !== index));
+  };
+
   const addCotacao = async (c: CotacaoItem) => {
     if (!user || selectedCotacoes.some(sc => sc.name === c.name)) return;
     const { data } = await supabase.from("selected_cotacoes").insert({ user_id: user.id, name: c.name, value: c.value, change: c.change }).select().single();
@@ -207,34 +236,72 @@ export default function NoticiasPanel() {
         </button>
       </div>
 
-      {selectedNews.length > 0 && (
-        <div className="bg-muted rounded-xl border border-border overflow-hidden">
-          <div className={headerStyle}>📋 Notícias Selecionadas</div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs">
-              <thead>
-                <tr className="border-b border-border text-muted-foreground">
-                  <th className="text-left px-3 py-2">Portal</th>
-                  <th className="text-left px-3 py-2">Título</th>
-                  <th className="text-left px-3 py-2">URL da Imagem</th>
-                  <th className="px-3 py-2 w-10"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {selectedNews.map((sn, i) => (
-                  <tr key={sn.id || i} className="border-b border-border/50">
-                    <td className="px-3 py-2 text-foreground font-semibold whitespace-nowrap">{sn.portal}</td>
-                    <td className="px-3 py-2 text-foreground">{sn.title}</td>
-                    <td className="px-3 py-2 text-muted-foreground truncate max-w-[200px]">{sn.imageUrl || "—"}</td>
-                    <td className="px-3 py-2">
-                      <button onClick={() => removeFromSelected(i)} className="text-destructive hover:text-destructive/80">
-                        <Trash2 size={12} />
-                      </button>
-                    </td>
+      {/* Selected News + Escalada side by side */}
+      {(selectedNews.length > 0 || escaladaNews.length > 0) && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Notícias Selecionadas */}
+          <div className="bg-muted rounded-xl border border-border overflow-hidden">
+            <div className={headerStyle}>📋 Notícias Selecionadas</div>
+            <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b border-border text-muted-foreground">
+                    <th className="text-left px-3 py-2">Portal</th>
+                    <th className="text-left px-3 py-2">Título</th>
+                    <th className="px-3 py-2 w-20"></th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {selectedNews.map((sn, i) => (
+                    <tr key={sn.id || i} className="border-b border-border/50">
+                      <td className="px-3 py-2 text-foreground font-semibold whitespace-nowrap">{sn.portal}</td>
+                      <td className="px-3 py-2 text-foreground">{sn.title}</td>
+                      <td className="px-3 py-2 flex items-center gap-1">
+                        <button onClick={() => addToEscalada(sn)} className="text-primary hover:text-primary/80" title="Por na escalada">
+                          <ListPlus size={14} />
+                        </button>
+                        <button onClick={() => removeFromSelected(i)} className="text-destructive hover:text-destructive/80">
+                          <Trash2 size={12} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Notícias Escalada */}
+          <div className="bg-muted rounded-xl border border-border overflow-hidden">
+            <div className={headerStyle}>🎯 Notícias Escalada</div>
+            <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
+              {escaladaNews.length === 0 ? (
+                <p className="text-muted-foreground text-xs p-4">Nenhuma notícia na escalada. Use o botão <ListPlus size={12} className="inline" /> nas notícias selecionadas.</p>
+              ) : (
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b border-border text-muted-foreground">
+                      <th className="text-left px-3 py-2">Portal</th>
+                      <th className="text-left px-3 py-2">Título</th>
+                      <th className="px-3 py-2 w-10"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {escaladaNews.map((en, i) => (
+                      <tr key={en.id || i} className="border-b border-border/50">
+                        <td className="px-3 py-2 text-foreground font-semibold whitespace-nowrap">{en.portal}</td>
+                        <td className="px-3 py-2 text-foreground">{en.title}</td>
+                        <td className="px-3 py-2">
+                          <button onClick={() => removeFromEscalada(i)} className="text-destructive hover:text-destructive/80">
+                            <Trash2 size={12} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
           </div>
         </div>
       )}

@@ -36,6 +36,7 @@ export default function ApresentadorForm() {
 
   const load = async () => {
     const list = await getApresentadores();
+    list.sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
     setApresentadores(list);
   };
 

@@ -60,6 +60,7 @@ export default function ProgramaForm() {
   const load = async () => {
     const [ap, pg] = await Promise.all([getApresentadores(), getProgramas()]);
     setApresentadores(ap);
+    pg.sort((a, b) => a.horarioInicio.localeCompare(b.horarioInicio));
     setProgramas(pg);
   };
 
