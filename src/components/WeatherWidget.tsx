@@ -81,14 +81,14 @@ export default function WeatherWidget() {
 
   if (!weather) {
     return (
-      <div className="rounded-xl p-4 border border-gray-200 text-gray-500" style={{ backgroundColor: "#ffffff" }}>
+      <div className="rounded-xl p-4 text-gray-500" style={{ backgroundColor: "#ffffff" }}>
         Nenhuma cidade pesquisada ainda. Vá em Previsão do Tempo para buscar.
       </div>
     );
   }
 
   return (
-    <div className="rounded-xl p-5 border border-gray-200" style={{ backgroundColor: "#ffffff" }}>
+    <div className="rounded-xl p-5" style={{ backgroundColor: "#ffffff" }}>
       <div className="flex items-center gap-3 mb-3">
         <span className="text-4xl">{getIcon(weather.weatherCode)}</span>
         <div>

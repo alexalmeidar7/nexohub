@@ -90,7 +90,7 @@ export default function Dashboard() {
           <h2 className={`text-3xl font-light ${currentPage === "dashboard" ? "text-gray-800" : ""}`}>{pageTitle[currentPage]}</h2>
         </header>
         <section
-          className={`rounded-2xl p-8 border min-h-[400px] ${currentPage === "dashboard" ? "border-gray-300" : "bg-surface-elevated border-border"}`}
+          className={`rounded-2xl p-8 min-h-[400px] ${currentPage === "dashboard" ? "" : "bg-surface-elevated border border-border"}`}
           style={currentPage === "dashboard" ? { backgroundColor: "#efefef" } : undefined}
         >
           {currentPage === "dashboard" && (
