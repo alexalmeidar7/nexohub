@@ -132,13 +132,12 @@ export default function OnAirWidget() {
 
       {/* Content aligned to bottom */}
       <div className="relative z-10 mt-auto px-5">
-        <div className="space-y-1 mb-2">
+        <div className="flex items-center gap-4 mb-2 flex-wrap">
           <p className="font-bold text-gray-800">{programa.nome}</p>
           <p className="text-gray-600 text-xs">{apresentadorNome}</p>
           <p className="text-gray-600 text-xs">
             {programa.horarioInicio} — {programa.horarioFim}
           </p>
-          <p className="text-gray-500 text-xs">{programa.estudio}</p>
         </div>
       </div>
 
@@ -149,9 +148,6 @@ export default function OnAirWidget() {
             className="h-full bg-gray-700 transition-all duration-1000"
             style={{ width: `${progress}%` }}
           />
-        </div>
-        <div className="flex justify-end px-3 pb-1">
-          <p className="text-[10px] text-gray-500">{Math.round(progress)}%</p>
         </div>
       </div>
     </div>
