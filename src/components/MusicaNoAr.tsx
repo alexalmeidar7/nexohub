@@ -42,11 +42,19 @@ function parseXmlString(xmlStr: string): MusicData | null {
     let duracao = 0;
     if (duracaoStr.includes(":")) {
       const parts = duracaoStr.split(":").map(Number);
-      if (parts.length === 2) duracao = parts[0] * 60 + parts[1];
-      else if (parts.length === 3) duracao = parts[0] * 3600 + parts[1] * 60 + parts[2];
+      if (parts.length === 2) {
+        // Se o primeiro valor > 59, é formato "segundos:centésimos" (ex: "228:06" = 228s)
+        if (parts[0] > 59) {
+          duracao = parts[0];
+        } else {
+          duracao = parts[0] * 60 + parts[1];
+        }
+      } else if (parts.length === 3) {
+        duracao = parts[0] * 3600 + parts[1] * 60 + parts[2];
+      }
     } else {
       duracao = parseFloat(duracaoStr) || 0;
-      if (duracao > 300) duracao = duracao / 1000;
+      if (duracao > 600) duracao = duracao / 1000;
     }
 
     return { titulo, artista, duracao, capa };
