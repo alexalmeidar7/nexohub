@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Home, Sun, FileText, Mic2, PlaySquare, Music, Settings, Copy } from "lucide-react";
+import { Home, Sun, FileText, Mic2, PlaySquare, Music, Settings, Copy, LogOut } from "lucide-react";
 import ApresentadorForm from "./ApresentadorForm";
 import ProgramaForm from "./ProgramaForm";
 import PrevisaoTempo from "./PrevisaoTempo";
@@ -48,7 +48,11 @@ function SocialIcon({ url, children }: { url: string; children: React.ReactNode 
   );
 }
 
-export default function Dashboard() {
+interface DashboardProps {
+  onLogout?: () => void;
+}
+
+export default function Dashboard({ onLogout }: DashboardProps) {
   const [currentPage, setCurrentPage] = useState<Page>("dashboard");
   const [empresa, setEmpresa] = useState(getEmpresaConfig());
 
@@ -96,6 +100,21 @@ export default function Dashboard() {
 
         {/* Spacer */}
         <div className="flex-1" />
+
+        {/* Logout button */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={onLogout}
+              className="w-10 h-10 rounded-full flex items-center justify-center transition-all bg-transparent hover:bg-red-500/20 mb-1"
+            >
+              <LogOut size={18} className="text-red-400" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="right">
+            <p>Sair</p>
+          </TooltipContent>
+        </Tooltip>
 
         {/* Settings icon at bottom */}
         <Tooltip>
