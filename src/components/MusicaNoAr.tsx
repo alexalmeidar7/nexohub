@@ -306,27 +306,13 @@ export default function MusicaNoAr() {
           </p>
         </div>
 
-        {/* Progress bar and countdown */}
+        {/* Countdown */}
         {music && music.duracao > 0 && (
-          <div className="space-y-3">
-            <div className="w-full bg-zinc-800 h-2.5 rounded-full overflow-hidden">
-              <div
-                className="bg-gradient-to-r from-violet-600 to-indigo-500 h-full transition-all duration-100 ease-linear"
-                style={{
-                  width: `${progress}%`,
-                  boxShadow: "0 0 10px rgba(139,92,246,0.5)",
-                }}
-              />
-            </div>
-
-            <div className="flex justify-between text-sm font-mono text-zinc-400 px-1">
-              <span className="flex items-center gap-1.5 italic">
-                <Clock size={14} /> {formatTime(timeElapsed)}
-              </span>
-              <span className="font-bold text-zinc-200">
-                -{formatTime(timeLeft)}
-              </span>
-            </div>
+          <div className="text-center">
+            <span className="text-3xl font-bold font-mono text-zinc-200 flex items-center justify-center gap-2">
+              <Clock size={20} className="text-violet-400" />
+              -{formatTime(timeLeft)}
+            </span>
           </div>
         )}
 
