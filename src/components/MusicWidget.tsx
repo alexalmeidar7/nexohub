@@ -30,7 +30,7 @@ export default function MusicWidget() {
     );
   }
 
-  const { music: m, elapsed } = music;
+  const { music: m, elapsed, finished } = music;
   const progress = m.duracao > 0 ? Math.min(100, (elapsed / m.duracao) * 100) : 0;
 
   return (

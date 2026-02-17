@@ -79,15 +79,15 @@ async function fetchCoverFromiTunes(titulo: string, artista: string): Promise<st
   return "";
 }
 
-export function getMusicData(): { music: MusicData; elapsed: number } | null {
+export function getMusicData(): { music: MusicData; elapsed: number; finished: boolean } | null {
   try {
     const raw = localStorage.getItem(MUSIC_DATA_KEY);
     const startStr = localStorage.getItem(MUSIC_START_KEY);
     if (!raw || !startStr) return null;
     const music: MusicData = JSON.parse(raw);
     const elapsed = (Date.now() - parseInt(startStr, 10)) / 1000;
-    if (elapsed > music.duracao) return null;
-    return { music, elapsed };
+    const finished = elapsed >= music.duracao;
+    return { music, elapsed: Math.min(elapsed, music.duracao), finished };
   } catch {
     return null;
   }
