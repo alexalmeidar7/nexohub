@@ -105,7 +105,7 @@ export default function OnAirWidget() {
           style={{
             right: 0,
             top: 0,
-            width: "50%",
+            width: "60%",
             height: "100%",
             objectPosition: "right top",
           }}
