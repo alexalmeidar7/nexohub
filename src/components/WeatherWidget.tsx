@@ -96,7 +96,7 @@ export default function WeatherWidget() {
           <p className="text-gray-500 text-xs">{getLabel(weather.weatherCode)}</p>
         </div>
       </div>
-      <p className="text-5xl font-light text-gray-700 mb-4">{weather.temp}°C</p>
+      <p className="text-5xl font-bold text-gray-700 mb-4">{weather.temp}°C</p>
       <div className="flex items-center gap-4 text-xs flex-wrap">
         <div className="flex items-center gap-1 text-gray-500">
           <Thermometer size={12} /> ↓{weather.tempMin}° / ↑{weather.tempMax}°
