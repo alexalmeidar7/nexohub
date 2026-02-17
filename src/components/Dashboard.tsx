@@ -358,23 +358,64 @@ function DashboardAgenda() {
     fetch();
   }, [user]);
 
-  const eventDatesSet = new Set(eventos.map((e) => e.data));
-  const eventDates = eventos.map((e) => new Date(e.data + "T12:00:00"));
+  const eventMatchesDate = (evt: any, dateStr: string) => {
+    if (evt.data === dateStr) return true;
+    const evtDate = new Date(evt.data + "T12:00:00");
+    const checkDate = new Date(dateStr + "T12:00:00");
+    if (checkDate < evtDate) return false;
+    if (evt.recorrencia === "semanal") return evtDate.getDay() === checkDate.getDay();
+    if (evt.recorrencia === "mensal") return evtDate.getDate() === checkDate.getDate();
+    return false;
+  };
+
+  // Build calendar highlight dates (expand recurring for ~3 months)
+  const getCalendarDates = () => {
+    const dates: Date[] = [];
+    const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const end = new Date(now.getFullYear(), now.getMonth() + 2, 0);
+    for (const evt of eventos) {
+      if (evt.recorrencia === "unico") {
+        dates.push(new Date(evt.data + "T12:00:00"));
+      } else {
+        const d = new Date(start);
+        while (d <= end) {
+          const ds = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+          if (eventMatchesDate(evt, ds)) dates.push(new Date(d));
+          d.setDate(d.getDate() + 1);
+        }
+      }
+    }
+    return dates;
+  };
+  const eventDates = getCalendarDates();
 
   const today = new Date();
   const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
 
-  // Next 3 upcoming events (from today onwards)
-  const upcoming = eventos
-    .filter((e) => e.data >= todayStr)
-    .sort((a, b) => a.data.localeCompare(b.data))
-    .slice(0, 3);
+  // Next 3 upcoming events (expand recurring for next 60 days)
+  const getUpcoming = () => {
+    const results: { evt: any; dateStr: string }[] = [];
+    for (let i = 0; i < 60; i++) {
+      const d = new Date(today);
+      d.setDate(d.getDate() + i);
+      const ds = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      for (const evt of eventos) {
+        if (eventMatchesDate(evt, ds)) {
+          results.push({ evt, dateStr: ds });
+        }
+      }
+      if (results.length >= 3) break;
+    }
+    return results.slice(0, 3);
+  };
+  const upcoming = getUpcoming();
 
   // Events for selected date
   const selDateStr = selectedDate
     ? `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, "0")}-${String(selectedDate.getDate()).padStart(2, "0")}`
     : "";
-  const dayEvents = eventos.filter((e) => e.data === selDateStr);
+  const dayEvents = eventos.filter((e) => eventMatchesDate(e, selDateStr));
 
   return (
     <div className="space-y-4">
@@ -403,15 +444,15 @@ function DashboardAgenda() {
         <div className="bg-white/80 rounded-2xl border border-gray-200 p-4">
           <h4 className="text-sm font-semibold text-gray-700 mb-2">Próximos Eventos</h4>
           <div className="space-y-2">
-            {upcoming.map((evt: any) => {
-              const d = new Date(evt.data + "T12:00:00");
-              const dateStr = d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
+            {upcoming.map((item: any, idx: number) => {
+              const d = new Date(item.dateStr + "T12:00:00");
+              const dateLabel = d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
               return (
-                <div key={evt.id} className="flex items-center gap-3 bg-muted/50 rounded-lg px-3 py-2">
-                  <span className="text-xs font-bold text-primary bg-primary/10 rounded px-2 py-1">{dateStr}</span>
+                <div key={`${item.evt.id}-${idx}`} className="flex items-center gap-3 bg-muted/50 rounded-lg px-3 py-2">
+                  <span className="text-xs font-bold text-primary bg-primary/10 rounded px-2 py-1">{dateLabel}</span>
                   <div className="text-xs">
-                    <p className="font-semibold text-foreground">{evt.programa?.nome || "Evento"}</p>
-                    {evt.programa && <p className="text-muted-foreground">{evt.programa.horario_inicio} - {evt.programa.horario_fim}</p>}
+                    <p className="font-semibold text-foreground">{item.evt.programa?.nome || "Evento"}</p>
+                    {item.evt.programa && <p className="text-muted-foreground">{item.evt.programa.horario_inicio} - {item.evt.programa.horario_fim}</p>}
                   </div>
                 </div>
               );
