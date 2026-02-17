@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Music, User, Clock, Loader2, FolderOpen } from "lucide-react";
+import { Music, User, Loader2, FolderOpen } from "lucide-react";
 
 interface MusicData {
   titulo: string;
@@ -311,22 +311,15 @@ export default function MusicaNoAr() {
           </p>
         </div>
 
-        {/* Countdown */}
-        {music && music.duracao > 0 && (
-          <div className="text-center">
-            <div className="flex items-center justify-center gap-2">
-              <Clock size={20} className="text-violet-400" />
-              <span className="text-3xl font-bold font-mono text-zinc-200">
-                {Math.floor(Math.max(0, timeLeft) / 60)}
-                <span className="text-sm text-zinc-400 ml-1">min</span>
-                {" "}
-                {String(Math.floor(Math.max(0, timeLeft) % 60)).padStart(2, "0")}
-                <span className="text-sm text-zinc-400 ml-1">seg</span>
-                {" "}
-                {String(Math.floor((Math.max(0, timeLeft) % 1) * 100)).padStart(2, "0")}
-                <span className="text-sm text-zinc-400 ml-1">ms</span>
-              </span>
-            </div>
+        {/* XML MUSICA AGORA */}
+        {music && (
+          <div className="mt-4 space-y-2">
+            <p className="text-xs text-zinc-400 font-semibold">XML MUSICA AGORA</p>
+            <textarea
+              readOnly
+              value={`<?xml version="1.0" encoding="UTF-8"?>\n<musica_agora>\n  <titulo>${music.titulo}</titulo>\n  <interprete>${music.artista}</interprete>\n  <capa>${music.capa || ""}</capa>\n</musica_agora>`}
+              className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 text-[10px] font-mono text-zinc-300 min-h-[120px] resize-y"
+            />
           </div>
         )}
 

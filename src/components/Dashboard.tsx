@@ -16,6 +16,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
+import { getMusicData } from "./MusicaNoAr";
+
 type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "programas" | "musica" | "configuracoes";
 
 const menuItems: { icon: typeof Home; label: string; page: Page }[] = [
@@ -168,6 +170,7 @@ export default function Dashboard() {
                 </div>
                 <OnAirWidget />
               </div>
+              <DashboardXmlFields />
             </div>
           )}
           {currentPage === "previsao" && <PrevisaoTempo />}
@@ -184,6 +187,78 @@ export default function Dashboard() {
           </span>
         </div>
       </main>
+    </div>
+  );
+}
+
+const WEATHER_KEY = "masterview_last_city";
+const SELECTED_NEWS_KEY = "masterview_selected_news";
+const SELECTED_COTACOES_KEY = "masterview_selected_cotacoes";
+
+function DashboardXmlFields() {
+  const [weatherXml, setWeatherXml] = useState("");
+  const [newsXml, setNewsXml] = useState("");
+  const [musicXml, setMusicXml] = useState("");
+
+  useEffect(() => {
+    const update = () => {
+      // Weather XML
+      const savedCity = localStorage.getItem(WEATHER_KEY);
+      if (savedCity) {
+        fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(savedCity)}&count=1&language=pt`)
+          .then(r => r.json()).then(async geo => {
+            if (!geo.results?.length) return;
+            const { latitude, longitude, name } = geo.results[0];
+            const wx = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code&timezone=auto&forecast_days=1`);
+            const d = await wx.json();
+            setWeatherXml(`<?xml version="1.0" encoding="UTF-8"?>\n<tempo>\n  <cidade>${name}</cidade>\n  <temperatura>${Math.round(d.current.temperature_2m)}</temperatura>\n  <humidade>${d.current.relative_humidity_2m}</humidade>\n  <condicao_codigo>${d.current.weather_code}</condicao_codigo>\n  <minima>${Math.round(d.daily.temperature_2m_min[0])}</minima>\n  <maxima>${Math.round(d.daily.temperature_2m_max[0])}</maxima>\n  <chance_chuva>${d.daily.precipitation_probability_max[0] ?? 0}</chance_chuva>\n</tempo>`);
+          }).catch(() => {});
+      }
+
+      // News XML
+      try {
+        const news = JSON.parse(localStorage.getItem(SELECTED_NEWS_KEY) || "[]");
+        const cots = JSON.parse(localStorage.getItem(SELECTED_COTACOES_KEY) || "[]");
+        if (news.length || cots.length) {
+          const nXml = news.map((n: any) => `  <noticia>\n    <titulo>${n.title?.replace(/&/g,"&amp;").replace(/</g,"&lt;")}</titulo>\n    <imagem>${n.imageUrl || ""}</imagem>\n  </noticia>`).join("\n");
+          const cXml = cots.map((c: any) => `  <cotacao>\n    <nome>${c.name}</nome>\n    <valor>${c.value}</valor>\n  </cotacao>`).join("\n");
+          setNewsXml(`<?xml version="1.0" encoding="UTF-8"?>\n<noticias>\n${nXml}\n${cXml}\n</noticias>`);
+        }
+      } catch {}
+
+      // Music XML
+      const m = getMusicData();
+      if (m) {
+        setMusicXml(`<?xml version="1.0" encoding="UTF-8"?>\n<musica_agora>\n  <titulo>${m.music.titulo}</titulo>\n  <interprete>${m.music.artista}</interprete>\n  <capa>${m.music.capa || ""}</capa>\n</musica_agora>`);
+      } else {
+        setMusicXml("");
+      }
+    };
+    update();
+    const interval = setInterval(update, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      {weatherXml && (
+        <div className="space-y-1">
+          <p className="text-xs font-semibold text-gray-600">XML TEMPO</p>
+          <textarea readOnly value={weatherXml} className="w-full bg-white border border-gray-300 rounded-lg p-2 text-[10px] font-mono text-gray-700 min-h-[120px] resize-y" />
+        </div>
+      )}
+      {newsXml && (
+        <div className="space-y-1">
+          <p className="text-xs font-semibold text-gray-600">XML NOTICIAS</p>
+          <textarea readOnly value={newsXml} className="w-full bg-white border border-gray-300 rounded-lg p-2 text-[10px] font-mono text-gray-700 min-h-[120px] resize-y" />
+        </div>
+      )}
+      {musicXml && (
+        <div className="space-y-1">
+          <p className="text-xs font-semibold text-gray-600">XML MUSICA AGORA</p>
+          <textarea readOnly value={musicXml} className="w-full bg-white border border-gray-300 rounded-lg p-2 text-[10px] font-mono text-gray-700 min-h-[120px] resize-y" />
+        </div>
+      )}
     </div>
   );
 }

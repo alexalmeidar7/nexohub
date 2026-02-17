@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Search, Droplets, CloudRain, Thermometer, Copy, Check, Code2, Star } from "lucide-react";
 
 interface WeatherData {
@@ -202,42 +202,7 @@ export default function PrevisaoTempo() {
 
   const isFavorited = weather ? favorites.some(f => f.name === weather.city) : false;
 
-  // XML with all cities that have inXml checked
-  const xmlUrl = useMemo(() => {
-    if (!weather) return "";
-    const dayToXml = (d: DayWeather, tag: string) =>
-      `    <${tag} date="${d.date}">
-      <temperatura>${d.temp}</temperatura>
-      <minima>${d.tempMin}</minima>
-      <maxima>${d.tempMax}</maxima>
-      <humidade>${d.humidity}</humidade>
-      <chance_chuva>${d.rainChance}</chance_chuva>
-      <condicao>${getWeatherLabel(d.weatherCode)}</condicao>
-    </${tag}>`;
-
-    const xmlCities = favorites.filter(f => f.inXml).map(f => `  <cidade nome="${f.name}" />`).join("\n");
-
-    const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<previsao>
-  <cidade>${weather.city}</cidade>
-${dayToXml(weather.current, "atual")}
-${weather.forecast.map((d) => dayToXml(d, "dia")).join("\n")}
-  <cidades_favoritas>
-${xmlCities}
-  </cidades_favoritas>
-</previsao>`;
-
-    const blob = new Blob([xml], { type: "application/xml" });
-    return URL.createObjectURL(blob);
-  }, [weather, favorites]);
-
   const [copied, setCopied] = useState(false);
-  const copyXmlUrl = () => {
-    if (!xmlUrl) return;
-    navigator.clipboard.writeText(xmlUrl);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
 
   return (
     <div className="animate-fade-in space-y-8">
@@ -331,13 +296,33 @@ ${xmlCities}
             </div>
           </div>
 
-          <div onClick={copyXmlUrl}
-            className="flex items-center gap-3 bg-muted rounded-xl p-4 border border-border cursor-pointer hover:border-primary transition-colors group">
-            <Code2 size={18} className="text-primary shrink-0" />
-            <span className="text-sm text-muted-foreground truncate flex-1 font-mono">{xmlUrl}</span>
-            {copied ? <Check size={18} className="text-primary shrink-0" /> : <Copy size={18} className="text-muted-foreground group-hover:text-primary shrink-0" />}
+          <div className="space-y-2">
+            <h4 className="text-lg font-medium text-foreground flex items-center gap-2">
+              <Code2 size={18} className="text-primary" /> XML TEMPO
+            </h4>
+            <div className="relative">
+              <textarea
+                readOnly
+                value={(() => {
+                  if (!weather) return "";
+                  const dayToXml = (d: DayWeather, tag: string) =>
+                    `  <${tag} date="${d.date}">\n    <temperatura>${d.temp}</temperatura>\n    <minima>${d.tempMin}</minima>\n    <maxima>${d.tempMax}</maxima>\n    <humidade>${d.humidity}</humidade>\n    <chance_chuva>${d.rainChance}</chance_chuva>\n    <condicao>${getWeatherLabel(d.weatherCode)}</condicao>\n  </${tag}>`;
+                  return `<?xml version="1.0" encoding="UTF-8"?>\n<previsao>\n  <cidade>${weather.city}</cidade>\n${dayToXml(weather.current, "atual")}\n${weather.forecast.map((d) => dayToXml(d, "dia")).join("\n")}\n</previsao>`;
+                })()}
+                className="w-full bg-muted border border-border rounded-lg p-3 text-xs font-mono text-foreground min-h-[200px] resize-y"
+              />
+              <button
+                onClick={() => {
+                  const textarea = document.querySelector<HTMLTextAreaElement>('textarea[readonly]');
+                  if (textarea) { navigator.clipboard.writeText(textarea.value); setCopied(true); setTimeout(() => setCopied(false), 2000); }
+                }}
+                className="absolute top-2 right-2 text-muted-foreground hover:text-primary"
+              >
+                {copied ? <Check size={16} /> : <Copy size={16} />}
+              </button>
+            </div>
+            {copied && <p className="text-xs text-primary">Copiado!</p>}
           </div>
-          {copied && <p className="text-xs text-primary -mt-6">URL copiada!</p>}
         </>
       )}
     </div>
