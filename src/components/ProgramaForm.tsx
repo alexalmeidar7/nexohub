@@ -234,7 +234,7 @@ export default function ProgramaForm() {
               <div key={p.id} className="bg-muted rounded-xl border border-border overflow-hidden">
                 <div className="px-4 py-3 font-bold text-sm bg-primary text-primary-foreground flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    {p.selo && <img src={p.selo} alt="Selo" className="h-6 rounded" />}
+                    {p.selo && <img src={p.selo} alt="Selo" className="h-6 rounded grayscale brightness-50" />}
                     <span>{p.nome}</span>
                   </div>
                   <button onClick={() => removePrograma(p.id)} title="Remover">

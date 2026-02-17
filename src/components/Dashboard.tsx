@@ -1,44 +1,80 @@
 import { useState } from "react";
 import { Home, Sun, FileText, Mic2, PlaySquare } from "lucide-react";
-import NavItem from "./NavItem";
 import ApresentadorForm from "./ApresentadorForm";
 import ProgramaForm from "./ProgramaForm";
 import PrevisaoTempo from "./PrevisaoTempo";
 import NoticiasPanel from "./NoticiasPanel";
 import WeatherWidget from "./WeatherWidget";
+import OnAirWidget from "./OnAirWidget";
+import logoMenu from "@/assets/logo-menu.png";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "programas";
+
+const menuItems: { icon: typeof Home; label: string; page: Page }[] = [
+  { icon: Home, label: "Home", page: "dashboard" },
+  { icon: Sun, label: "Previsão do Tempo", page: "previsao" },
+  { icon: FileText, label: "Notícias", page: "noticias" },
+  { icon: Mic2, label: "Apresentadores", page: "apresentadores" },
+  { icon: PlaySquare, label: "Programas", page: "programas" },
+];
+
+const pageTitle: Record<Page, string> = {
+  dashboard: "Dashboard Home",
+  previsao: "Previsão do Tempo",
+  noticias: "Notícias",
+  apresentadores: "Apresentadores",
+  programas: "Programas",
+};
 
 export default function Dashboard() {
   const [currentPage, setCurrentPage] = useState<Page>("dashboard");
 
-  const pageTitle: Record<Page, string> = {
-    dashboard: "Dashboard Home",
-    previsao: "Previsão do Tempo",
-    noticias: "Notícias",
-    apresentadores: "Apresentadores",
-    programas: "Programas",
-  };
-
   return (
     <div className="min-h-screen bg-background flex text-foreground">
-      {/* Sidebar */}
-      <aside className="w-64 border-r border-sidebar-border flex flex-col">
-        <div className="p-6 flex items-center gap-2 text-primary">
-          <div className="rotate-90 font-black tracking-tighter text-xl border-b-2 border-primary">
-            MASTER
-          </div>
-          <span className="text-xs">✦</span>
+      {/* Sidebar - icon only */}
+      <aside className="w-16 flex flex-col items-center py-4 gap-3" style={{ backgroundColor: "#1e1e1e" }}>
+        {/* Logo */}
+        <div className="mb-4">
+          <img src={logoMenu} alt="MasterView" className="w-10 h-auto" />
         </div>
-        <nav className="flex-1 mt-4">
-          <NavItem icon={<Home size={20} />} label="Home" active={currentPage === "dashboard"} onClick={() => setCurrentPage("dashboard")} />
-          <NavItem icon={<Sun size={20} />} label="Previsão do tempo" active={currentPage === "previsao"} onClick={() => setCurrentPage("previsao")} />
-          <NavItem icon={<FileText size={20} />} label="Notícias" active={currentPage === "noticias"} onClick={() => setCurrentPage("noticias")} />
-          <NavItem icon={<Mic2 size={20} />} label="Apresentadores" active={currentPage === "apresentadores"} onClick={() => setCurrentPage("apresentadores")} />
-          <NavItem icon={<PlaySquare size={20} />} label="Programas" active={currentPage === "programas"} onClick={() => setCurrentPage("programas")} />
-        </nav>
-        <div className="p-6 opacity-50">
-          <span className="text-xs font-bold italic">svn✦broadcast</span>
+
+        {/* Menu icons */}
+        {menuItems.map((item) => {
+          const isActive = currentPage === item.page;
+          const Icon = item.icon;
+          return (
+            <Tooltip key={item.page}>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => setCurrentPage(item.page)}
+                  className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
+                    isActive
+                      ? "bg-primary"
+                      : "bg-transparent hover:bg-white/10"
+                  }`}
+                >
+                  <Icon
+                    size={18}
+                    className={isActive ? "text-[#333]" : "text-muted-foreground"}
+                  />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                <p>{item.label}</p>
+              </TooltipContent>
+            </Tooltip>
+          );
+        })}
+
+        <div className="mt-auto opacity-50">
+          <span className="text-[8px] font-bold italic text-muted-foreground writing-mode-vertical" style={{ writingMode: "vertical-rl" }}>
+            svn✦broadcast
+          </span>
         </div>
       </aside>
 
@@ -53,7 +89,10 @@ export default function Dashboard() {
               <p className="text-muted-foreground">
                 Bem-vindo ao MasterView. Selecione uma opção no menu lateral.
               </p>
-              <WeatherWidget />
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <WeatherWidget />
+                <OnAirWidget />
+              </div>
             </div>
           )}
           {currentPage === "previsao" && <PrevisaoTempo />}
