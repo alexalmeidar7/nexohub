@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { RefreshCw, ExternalLink, Plus, TrendingUp, TrendingDown, Minus, Trash2, ChevronDown, ChevronUp } from "lucide-react";
 import XmlLinkRow from "./XmlLinkRow";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 interface NewsItem {
   title: string;
@@ -21,20 +23,20 @@ interface CotacaoItem {
 }
 
 interface SelectedNews {
+  id?: string;
   portal: string;
   title: string;
   imageUrl: string;
 }
 
 interface SelectedCotacao {
+  id?: string;
   name: string;
   value: string;
   change: string;
 }
 
-const SELECTED_COTACOES_KEY = "masterview_selected_cotacoes";
-
-const PORTALS: Portal[] = [
+const DEFAULT_PORTALS: Portal[] = [
   { name: "G1", rssUrl: "https://g1.globo.com/rss/g1/" },
   { name: "UOL", rssUrl: "https://rss.uol.com.br/feed/noticias.xml" },
   { name: "GloboNews", rssUrl: "https://g1.globo.com/rss/g1/globonews/" },
@@ -43,8 +45,6 @@ const PORTALS: Portal[] = [
 ];
 
 const PROXY = "https://api.rss2json.com/v1/api.json?rss_url=";
-const CUSTOM_SITES_KEY = "masterview_custom_news_sites";
-const SELECTED_NEWS_KEY = "masterview_selected_news";
 
 async function fetchNews(rssUrl: string): Promise<NewsItem[]> {
   try {
@@ -74,8 +74,6 @@ async function fetchCotacoes(): Promise<CotacaoItem[]> {
         direction: pctChange > 0 ? "up" : pctChange < 0 ? "down" : "neutral",
       };
     });
-
-    // Add stock exchange indices (static names, fetched from awesome API)
     const bolsas: CotacaoItem[] = [];
     try {
       const bolsaRes = await fetch("https://economia.awesomeapi.com.br/last/DOW-JONES,S&P500,NASDAQ,IBOVESPA,FTSE,NIKKEI,DAX,CAC");
@@ -89,43 +87,40 @@ async function fetchCotacoes(): Promise<CotacaoItem[]> {
           direction: pctChange > 0 ? "up" : pctChange < 0 ? "down" : "neutral",
         });
       });
-    } catch { /* bolsas unavailable */ }
-
+    } catch {}
     return [...moedas, ...bolsas];
   } catch { return []; }
 }
 
 export default function NoticiasPanel() {
+  const { user } = useAuth();
   const [newsByPortal, setNewsByPortal] = useState<Record<string, NewsItem[]>>({});
   const [loading, setLoading] = useState(true);
   const [customUrl, setCustomUrl] = useState("");
-  const [customSites, setCustomSites] = useState<Portal[]>(() => {
-    try { return JSON.parse(localStorage.getItem(CUSTOM_SITES_KEY) || "[]"); } catch { return []; }
-  });
+  const [customSites, setCustomSites] = useState<(Portal & { id?: string })[]>([]);
   const [cotacoes, setCotacoes] = useState<CotacaoItem[]>([]);
   const [loadingCotacoes, setLoadingCotacoes] = useState(true);
-  const [selectedNews, setSelectedNews] = useState<SelectedNews[]>(() => {
-    try { return JSON.parse(localStorage.getItem(SELECTED_NEWS_KEY) || "[]"); } catch { return []; }
-  });
-  const [selectedCotacoes, setSelectedCotacoes] = useState<SelectedCotacao[]>(() => {
-    try { return JSON.parse(localStorage.getItem(SELECTED_COTACOES_KEY) || "[]"); } catch { return []; }
-  });
+  const [selectedNews, setSelectedNews] = useState<SelectedNews[]>([]);
+  const [selectedCotacoes, setSelectedCotacoes] = useState<SelectedCotacao[]>([]);
   const [expandedPortals, setExpandedPortals] = useState<Record<string, boolean>>({});
 
-  const addCotacao = (c: CotacaoItem) => {
-    if (selectedCotacoes.some(sc => sc.name === c.name)) return;
-    const updated = [...selectedCotacoes, { name: c.name, value: c.value, change: c.change }];
-    setSelectedCotacoes(updated);
-    localStorage.setItem(SELECTED_COTACOES_KEY, JSON.stringify(updated));
-  };
+  // Load from DB
+  useEffect(() => {
+    if (!user) return;
+    const loadDb = async () => {
+      const [sitesRes, newsRes, cotRes] = await Promise.all([
+        supabase.from("custom_news_sites").select("*"),
+        supabase.from("selected_news").select("*"),
+        supabase.from("selected_cotacoes").select("*"),
+      ]);
+      setCustomSites((sitesRes.data || []).map(s => ({ id: s.id, name: s.name, rssUrl: s.rss_url })));
+      setSelectedNews((newsRes.data || []).map(n => ({ id: n.id, portal: n.portal, title: n.title, imageUrl: n.image_url || "" })));
+      setSelectedCotacoes((cotRes.data || []).map(c => ({ id: c.id, name: c.name, value: c.value, change: c.change })));
+    };
+    loadDb();
+  }, [user]);
 
-  const removeCotacao = (name: string) => {
-    const updated = selectedCotacoes.filter(sc => sc.name !== name);
-    setSelectedCotacoes(updated);
-    localStorage.setItem(SELECTED_COTACOES_KEY, JSON.stringify(updated));
-  };
-
-  const allPortals = [...PORTALS, ...customSites];
+  const allPortals = [...DEFAULT_PORTALS, ...customSites];
 
   const loadAll = async () => {
     setLoading(true);
@@ -142,40 +137,51 @@ export default function NoticiasPanel() {
     setLoadingCotacoes(false);
   };
 
-  useEffect(() => { loadAll(); loadCotacoes(); const interval = setInterval(loadCotacoes, 60 * 1000); return () => clearInterval(interval); }, []);
-  useEffect(() => { if (customSites.length > 0 || PORTALS.length > 0) loadAll(); }, [customSites.length]);
+  useEffect(() => { loadAll(); loadCotacoes(); const interval = setInterval(loadCotacoes, 60 * 1000); return () => clearInterval(interval); }, [customSites.length]);
 
-  const addCustomSite = () => {
-    if (!customUrl.trim()) return;
+  const addCustomSite = async () => {
+    if (!customUrl.trim() || !user) return;
     let url = customUrl.trim();
     let displayName: string;
     try { const parsed = new URL(url); displayName = parsed.hostname.replace("www.", ""); } catch { displayName = url; }
-    const newSite: Portal = { name: displayName, rssUrl: url };
-    const updated = [...customSites, newSite];
-    setCustomSites(updated);
-    localStorage.setItem(CUSTOM_SITES_KEY, JSON.stringify(updated));
+    const { data } = await supabase.from("custom_news_sites").insert({ user_id: user.id, name: displayName, rss_url: url }).select().single();
+    if (data) {
+      setCustomSites(prev => [...prev, { id: data.id, name: data.name, rssUrl: data.rss_url }]);
+    }
     setCustomUrl("");
     fetchNews(url).then(news => { setNewsByPortal(prev => ({ ...prev, [displayName]: news })); });
   };
 
-  const removeCustomSite = (name: string) => {
-    const updated = customSites.filter(s => s.name !== name);
-    setCustomSites(updated);
-    localStorage.setItem(CUSTOM_SITES_KEY, JSON.stringify(updated));
+  const removeCustomSite = async (name: string) => {
+    const site = customSites.find(s => s.name === name);
+    if (site?.id) await supabase.from("custom_news_sites").delete().eq("id", site.id);
+    setCustomSites(prev => prev.filter(s => s.name !== name));
     setNewsByPortal(prev => { const copy = { ...prev }; delete copy[name]; return copy; });
   };
 
-  const addToSelected = (portal: string, news: NewsItem) => {
+  const addToSelected = async (portal: string, news: NewsItem) => {
+    if (!user) return;
     const item: SelectedNews = { portal, title: news.title, imageUrl: news.thumbnail || "" };
-    const updated = [...selectedNews, item];
-    setSelectedNews(updated);
-    localStorage.setItem(SELECTED_NEWS_KEY, JSON.stringify(updated));
+    const { data } = await supabase.from("selected_news").insert({ user_id: user.id, portal, title: news.title, image_url: news.thumbnail || "" }).select().single();
+    if (data) setSelectedNews(prev => [...prev, { ...item, id: data.id }]);
   };
 
-  const removeFromSelected = (index: number) => {
-    const updated = selectedNews.filter((_, i) => i !== index);
-    setSelectedNews(updated);
-    localStorage.setItem(SELECTED_NEWS_KEY, JSON.stringify(updated));
+  const removeFromSelected = async (index: number) => {
+    const item = selectedNews[index];
+    if (item?.id) await supabase.from("selected_news").delete().eq("id", item.id);
+    setSelectedNews(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const addCotacao = async (c: CotacaoItem) => {
+    if (!user || selectedCotacoes.some(sc => sc.name === c.name)) return;
+    const { data } = await supabase.from("selected_cotacoes").insert({ user_id: user.id, name: c.name, value: c.value, change: c.change }).select().single();
+    if (data) setSelectedCotacoes(prev => [...prev, { id: data.id, name: c.name, value: c.value, change: c.change }]);
+  };
+
+  const removeCotacao = async (name: string) => {
+    const item = selectedCotacoes.find(sc => sc.name === name);
+    if (item?.id) await supabase.from("selected_cotacoes").delete().eq("id", item.id);
+    setSelectedCotacoes(prev => prev.filter(sc => sc.name !== name));
   };
 
   const headerStyle = "px-4 py-3 font-bold text-sm tracking-wide bg-primary text-primary-foreground";
@@ -190,7 +196,6 @@ export default function NoticiasPanel() {
         </button>
       </div>
 
-      {/* Custom URL Field */}
       <div className="flex gap-2">
         <input value={customUrl} onChange={(e) => setCustomUrl(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && addCustomSite()}
@@ -202,7 +207,6 @@ export default function NoticiasPanel() {
         </button>
       </div>
 
-      {/* Selected News Table */}
       {selectedNews.length > 0 && (
         <div className="bg-muted rounded-xl border border-border overflow-hidden">
           <div className={headerStyle}>📋 Notícias Selecionadas</div>
@@ -218,7 +222,7 @@ export default function NoticiasPanel() {
               </thead>
               <tbody>
                 {selectedNews.map((sn, i) => (
-                  <tr key={i} className="border-b border-border/50">
+                  <tr key={sn.id || i} className="border-b border-border/50">
                     <td className="px-3 py-2 text-foreground font-semibold whitespace-nowrap">{sn.portal}</td>
                     <td className="px-3 py-2 text-foreground">{sn.title}</td>
                     <td className="px-3 py-2 text-muted-foreground truncate max-w-[200px]">{sn.imageUrl || "—"}</td>
@@ -235,7 +239,6 @@ export default function NoticiasPanel() {
         </div>
       )}
 
-      {/* Cotações */}
       <div className="bg-muted rounded-xl border border-border overflow-hidden">
         <div className={headerStyle}>💹 Cotações - Bolsas e Moedas</div>
         <div className="p-4">
@@ -267,13 +270,12 @@ export default function NoticiasPanel() {
         </div>
       </div>
 
-      {/* Selected Cotações */}
       {selectedCotacoes.length > 0 && (
         <div className="bg-muted rounded-xl border border-border overflow-hidden">
           <div className={headerStyle}>📊 Cotações Selecionadas</div>
           <div className="p-4 flex flex-wrap gap-2">
             {selectedCotacoes.map(sc => (
-              <div key={sc.name} className="bg-background/50 rounded-lg px-3 py-2 flex items-center gap-2 text-xs">
+              <div key={sc.id || sc.name} className="bg-background/50 rounded-lg px-3 py-2 flex items-center gap-2 text-xs">
                 <span className="font-semibold text-foreground">{sc.name}</span>
                 <span className="text-muted-foreground">{sc.value}</span>
                 <span className="text-muted-foreground">{sc.change}</span>
@@ -286,7 +288,6 @@ export default function NoticiasPanel() {
         </div>
       )}
 
-      {/* News Grid */}
       {loading && Object.keys(newsByPortal).length === 0 ? (
         <p className="text-muted-foreground">Carregando notícias...</p>
       ) : (
@@ -331,7 +332,6 @@ export default function NoticiasPanel() {
         </div>
       )}
 
-      {/* XML NOTICIAS */}
       {(selectedNews.length > 0 || selectedCotacoes.length > 0) && (
         <XmlLinkRow label="XML NOTICIAS" xmlContent={(() => {
           const newsXml = selectedNews.map(sn =>
