@@ -245,7 +245,7 @@ export default function OnAirWidget() {
             <img
               src={programa.selo}
               alt="Selo"
-              className="rounded max-h-[50%] w-auto"
+              className="rounded max-h-[65%] w-auto"
               style={{ filter: "grayscale(100%) brightness(0.3)" }}
             />
           </div>
