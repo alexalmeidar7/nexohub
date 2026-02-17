@@ -35,7 +35,7 @@ interface FavoriteCity {
   inXml: boolean;
 }
 
-const weatherIcons: Record<number, string> = {
+const weatherIconsDay: Record<number, string> = {
   0: "☀️", 1: "🌤️", 2: "⛅", 3: "☁️",
   45: "🌫️", 48: "🌫️",
   51: "🌦️", 53: "🌦️", 55: "🌧️",
@@ -44,6 +44,21 @@ const weatherIcons: Record<number, string> = {
   80: "🌦️", 81: "🌧️", 82: "⛈️",
   95: "⛈️", 96: "⛈️", 99: "⛈️",
 };
+
+const weatherIconsNight: Record<number, string> = {
+  0: "🌙", 1: "🌙", 2: "☁️", 3: "☁️",
+  45: "🌫️", 48: "🌫️",
+  51: "🌦️", 53: "🌦️", 55: "🌧️",
+  61: "🌧️", 63: "🌧️", 65: "🌧️",
+  71: "🌨️", 73: "🌨️", 75: "🌨️",
+  80: "🌦️", 81: "🌧️", 82: "⛈️",
+  95: "⛈️", 96: "⛈️", 99: "⛈️",
+};
+
+function isNightTime(): boolean {
+  const hour = new Date().getHours();
+  return hour >= 18 || hour < 6;
+}
 
 const weatherLabels: Record<number, string> = {
   0: "Céu limpo", 1: "Parcialmente limpo", 2: "Parcialmente nublado", 3: "Nublado",
@@ -54,10 +69,11 @@ const weatherLabels: Record<number, string> = {
   95: "Tempestade", 96: "Tempestade com granizo", 99: "Tempestade severa",
 };
 
-function getWeatherIcon(code: number) {
-  const closest = Object.keys(weatherIcons).map(Number)
+function getWeatherIcon(code: number, forceDay = false) {
+  const icons = (!forceDay && isNightTime()) ? weatherIconsNight : weatherIconsDay;
+  const closest = Object.keys(icons).map(Number)
     .reduce((prev, curr) => (Math.abs(curr - code) < Math.abs(prev - code) ? curr : prev));
-  return weatherIcons[closest] || "🌡️";
+  return icons[closest] || "🌡️";
 }
 
 function getWeatherLabel(code: number) {
@@ -284,7 +300,7 @@ export default function PrevisaoTempo() {
               {weather.forecast.map((day) => (
                 <div key={day.date} className="bg-muted rounded-xl p-4 border border-border text-center space-y-2">
                   <p className="text-xs text-muted-foreground capitalize">{formatDay(day.date)}</p>
-                  <span className="text-3xl block">{getWeatherIcon(day.weatherCode)}</span>
+                  <span className="text-3xl block">{getWeatherIcon(day.weatherCode, true)}</span>
                   <p className="text-sm text-muted-foreground">{getWeatherLabel(day.weatherCode)}</p>
                   <p className="text-xl font-semibold text-foreground">{day.temp}°C</p>
                   <div className="text-xs text-muted-foreground space-y-1">
