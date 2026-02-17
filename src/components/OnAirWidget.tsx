@@ -245,7 +245,7 @@ export default function OnAirWidget() {
             <img
               src={programa.selo}
               alt="Selo"
-              className="rounded max-h-[65%] w-auto"
+              className="rounded max-h-[110%] w-auto"
               style={{ filter: "grayscale(100%) brightness(0.3)" }}
             />
           </div>
@@ -253,7 +253,7 @@ export default function OnAirWidget() {
 
         <div className="absolute bottom-[4px] left-0 right-0 z-10 px-5">
           <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 mb-1">
-            <p className="font-bold text-gray-800 text-sm sm:text-base truncate">{programa.nome}</p>
+            <p className="font-bold text-gray-800 truncate" style={{ fontSize: 12 }}>{programa.nome}</p>
             <p className="text-gray-600 text-xs truncate">{apresentadorNome}</p>
             <p className="text-gray-600 text-xs whitespace-nowrap">
               {programa.horarioInicio} — {programa.horarioFim}
