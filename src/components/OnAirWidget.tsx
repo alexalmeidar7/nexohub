@@ -78,7 +78,7 @@ export default function OnAirWidget() {
 
   return (
     <div className="rounded-xl relative overflow-hidden flex flex-col" style={{ backgroundColor: "#dff06f", height: 330 }}>
-      {/* Program seal as background aligned left */}
+      {/* Program seal as background - aligned left, pushed up */}
       {programa.selo && (
         <img
           src={programa.selo}
@@ -86,8 +86,8 @@ export default function OnAirWidget() {
           className="absolute pointer-events-none"
           style={{
             left: 0,
-            top: 0,
-            height: "100%",
+            top: -20,
+            height: "110%",
             width: "auto",
             opacity: 0.1,
             objectFit: "contain",
@@ -96,7 +96,7 @@ export default function OnAirWidget() {
         />
       )}
 
-      {/* Presenter photo as background - fully aligned right, no opacity, no crop */}
+      {/* Presenter photo as background - fully aligned right */}
       {apresentadorFoto && (
         <img
           src={apresentadorFoto}
@@ -112,24 +112,27 @@ export default function OnAirWidget() {
         />
       )}
 
-      {/* Content on top */}
-      <div className="relative z-10 p-5 flex-1">
-        <div className="flex items-center gap-2 mb-3">
+      {/* NO AR label at top */}
+      <div className="relative z-10 p-5">
+        <div className="flex items-center gap-2">
           <Radio size={16} className="text-gray-700 animate-pulse" />
           <span className="font-bold text-gray-700 text-sm animate-pulse">NO AR</span>
         </div>
 
-        {/* Seal 40% size, aligned left, dark gray */}
+        {/* Seal 40% visible, dark gray */}
         {programa.selo && (
           <img
             src={programa.selo}
             alt="Selo"
-            className="rounded mb-3"
+            className="rounded mt-3"
             style={{ filter: "grayscale(100%) brightness(0.3)", width: "40%", height: "auto" }}
           />
         )}
+      </div>
 
-        <div className="space-y-1">
+      {/* Content aligned to bottom */}
+      <div className="relative z-10 mt-auto px-5">
+        <div className="space-y-1 mb-2">
           <p className="font-bold text-gray-800">{programa.nome}</p>
           <p className="text-gray-600 text-xs">{apresentadorNome}</p>
           <p className="text-gray-600 text-xs">
@@ -140,7 +143,7 @@ export default function OnAirWidget() {
       </div>
 
       {/* Progress bar at very bottom */}
-      <div className="relative z-10 mt-auto">
+      <div className="relative z-10">
         <div className="w-full h-1 bg-gray-300 overflow-hidden">
           <div
             className="h-full bg-gray-700 transition-all duration-1000"

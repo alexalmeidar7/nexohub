@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Music, Disc3, FolderOpen } from "lucide-react";
+import { Music, User, Clock, Loader2, FolderOpen } from "lucide-react";
 
 interface MusicData {
   titulo: string;
   artista: string;
-  duracao: number; // seconds
+  duracao: number;
   capa: string;
 }
 
@@ -19,10 +19,24 @@ function parseXmlString(xmlStr: string): MusicData | null {
     const errorNode = doc.querySelector("parsererror");
     if (errorNode) return null;
 
-    const titulo = doc.querySelector("titulo")?.textContent || doc.querySelector("title")?.textContent || "Sem título";
-    const artista = doc.querySelector("artista")?.textContent || doc.querySelector("artist")?.textContent || "Desconhecido";
-    const duracaoStr = doc.querySelector("duracao")?.textContent || doc.querySelector("duration")?.textContent || "0";
-    const capa = doc.querySelector("capa")?.textContent || doc.querySelector("cover")?.textContent || "";
+    const titulo =
+      doc.querySelector("nome_musica")?.textContent ||
+      doc.querySelector("titulo")?.textContent ||
+      doc.querySelector("title")?.textContent ||
+      "Sem título";
+    const artista =
+      doc.querySelector("nome_interprete")?.textContent ||
+      doc.querySelector("artista")?.textContent ||
+      doc.querySelector("artist")?.textContent ||
+      "Desconhecido";
+    const duracaoStr =
+      doc.querySelector("duracao")?.textContent ||
+      doc.querySelector("duration")?.textContent ||
+      "0";
+    const capa =
+      doc.querySelector("capa")?.textContent ||
+      doc.querySelector("cover")?.textContent ||
+      "";
 
     let duracao = 0;
     if (duracaoStr.includes(":")) {
@@ -85,6 +99,7 @@ export default function MusicaNoAr() {
   const [countdown, setCountdown] = useState(5);
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const selectedFileRef = useRef<File | null>(null);
+  const [loadingCover, setLoadingCover] = useState(false);
 
   const processMusic = useCallback(async (data: MusicData) => {
     const prevRaw = localStorage.getItem(MUSIC_DATA_KEY);
@@ -95,7 +110,9 @@ export default function MusicaNoAr() {
       if (coverCacheRef.current[cacheKey]) {
         data.capa = coverCacheRef.current[cacheKey];
       } else {
+        setLoadingCover(true);
         const cover = await fetchCoverFromiTunes(data.titulo, data.artista);
+        setLoadingCover(false);
         if (cover) {
           data.capa = cover;
           coverCacheRef.current[cacheKey] = cover;
@@ -114,7 +131,7 @@ export default function MusicaNoAr() {
       if (data.capa && (!prev.capa || prev.capa !== data.capa)) {
         localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify({ ...prev, capa: data.capa }));
       }
-      setMusic(data);
+      setMusic(prev.capa && !data.capa ? { ...data, capa: prev.capa } : data);
     }
   }, []);
 
@@ -209,7 +226,6 @@ export default function MusicaNoAr() {
       if (!file) return;
       selectedFileRef.current = file;
       setFileLoaded(true);
-      // Read immediately
       const reader = new FileReader();
       reader.onload = async (ev) => {
         const text = ev.target?.result as string;
@@ -227,87 +243,115 @@ export default function MusicaNoAr() {
   };
 
   const progress = music && music.duracao > 0 ? Math.min(100, (elapsed / music.duracao) * 100) : 0;
+  const timeLeft = music ? Math.max(0, music.duracao - elapsed) : 0;
+  const timeElapsed = music ? Math.min(elapsed, music.duracao) : 0;
 
   return (
-    <div className="animate-fade-in space-y-6">
-      <h3 className="text-xl text-primary">Música no Ar</h3>
+    <div className="flex flex-col items-center justify-center min-h-[500px] animate-fade-in">
+      <div className="bg-zinc-900 p-8 rounded-[2rem] shadow-2xl w-full max-w-md">
 
-      {/* URL input + green file button */}
-      <div className="flex gap-2">
-        <input
-          value={xmlUrl}
-          onChange={(e) => { setXmlUrl(e.target.value); setFileLoaded(false); selectedFileRef.current = null; }}
-          placeholder="URL do arquivo XML (atualiza automaticamente a cada 5s)"
-          className="flex-1 bg-muted border border-border p-3 rounded-lg text-foreground placeholder:text-muted-foreground outline-none focus:ring-1 focus:ring-primary"
-        />
-        <button
-          onClick={handleFileSelect}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg text-white font-semibold transition-all text-xs whitespace-nowrap"
-          style={{ backgroundColor: "#2e7d32" }}
-        >
-          <FolderOpen size={14} />
-          {fileLoaded ? `Atualizando arquivo em: ${countdown}s` : "Carregar arquivo XML música"}
-        </button>
-      </div>
+        {/* URL input + green file button */}
+        <div className="flex gap-2 mb-6">
+          <input
+            value={xmlUrl}
+            onChange={(e) => { setXmlUrl(e.target.value); setFileLoaded(false); selectedFileRef.current = null; }}
+            placeholder="URL do arquivo XML (a cada 5s)"
+            className="flex-1 bg-zinc-800 border border-zinc-700 p-3 rounded-lg text-zinc-100 placeholder:text-zinc-500 outline-none focus:ring-1 focus:ring-violet-500 text-sm"
+          />
+          <button
+            onClick={handleFileSelect}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-white font-semibold transition-all text-xs whitespace-nowrap"
+            style={{ backgroundColor: "#2e7d32" }}
+          >
+            <FolderOpen size={14} />
+            {fileLoaded ? `Atualizando em: ${countdown}s` : "Carregar XML"}
+          </button>
+        </div>
 
-      {fetchError && <p className="text-destructive text-xs">{fetchError}</p>}
+        {fetchError && <p className="text-red-400 text-xs mb-4">{fetchError}</p>}
 
-      {/* Now Playing */}
-      {music ? (
-        <div className="bg-muted rounded-2xl border border-border p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <Music size={16} className="text-primary" />
-            <span className="font-bold text-primary text-sm">TOCANDO AGORA</span>
-          </div>
+        {/* Album artwork */}
+        <div className="relative aspect-square mb-8 overflow-hidden rounded-2xl bg-zinc-800 shadow-lg group">
+          {loadingCover && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/40 z-10 backdrop-blur-sm">
+              <Loader2 className="animate-spin text-violet-500" size={48} />
+            </div>
+          )}
 
-          <div className="flex gap-6">
-            {/* CD Cover */}
-            <div className="shrink-0">
-              {music.capa ? (
-                <img
-                  src={music.capa}
-                  alt="Capa do CD"
-                  className="w-32 h-32 rounded-xl object-cover border border-border shadow-lg"
-                />
-              ) : (
-                <div className="w-32 h-32 rounded-xl bg-background/50 border border-border flex items-center justify-center">
-                  <Disc3 size={48} className="text-muted-foreground animate-spin" style={{ animationDuration: "3s" }} />
-                </div>
-              )}
+          {music?.capa ? (
+            <img
+              src={music.capa}
+              alt="Capa do Álbum"
+              className="object-cover w-full h-full transition-transform duration-700 group-hover:scale-105"
+            />
+          ) : (
+            <div className="w-full h-full flex flex-col items-center justify-center text-zinc-600 gap-3">
+              <Music size={48} />
+              <span className="italic text-sm">
+                {music ? "Nenhuma capa encontrada" : "Aguardando leitura..."}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Song info */}
+        <div className="space-y-2 text-center mb-8">
+          <h1 className="text-2xl font-bold tracking-tight truncate px-2 text-zinc-100">
+            {music?.titulo || "Aguardando leitura..."}
+          </h1>
+          <p className="text-violet-400 font-semibold flex items-center justify-center gap-2 text-lg">
+            <User size={20} />
+            {music?.artista || "Intérprete"}
+          </p>
+        </div>
+
+        {/* Progress bar and countdown */}
+        {music && music.duracao > 0 && (
+          <div className="space-y-3">
+            <div className="w-full bg-zinc-800 h-2.5 rounded-full overflow-hidden">
+              <div
+                className="bg-gradient-to-r from-violet-600 to-indigo-500 h-full transition-all duration-100 ease-linear"
+                style={{
+                  width: `${progress}%`,
+                  boxShadow: "0 0 10px rgba(139,92,246,0.5)",
+                }}
+              />
             </div>
 
-            {/* Song Info */}
-            <div className="flex-1 space-y-2">
-              <p className="text-lg font-bold text-foreground">{music.titulo}</p>
-              <p className="text-muted-foreground">{music.artista}</p>
-              {/* Progress bar */}
-              <div className="pt-2">
-                <div className="w-full h-2 bg-background/50 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-primary rounded-full transition-all duration-100"
-                    style={{ width: `${progress}%` }}
-                  />
-                </div>
-              </div>
+            <div className="flex justify-between text-sm font-mono text-zinc-400 px-1">
+              <span className="flex items-center gap-1.5 italic">
+                <Clock size={14} /> {formatTime(timeElapsed)}
+              </span>
+              <span className="font-bold text-zinc-200">
+                -{formatTime(timeLeft)}
+              </span>
             </div>
           </div>
-        </div>
-      ) : (
-        <div className="bg-muted rounded-2xl border border-border p-6 text-center">
-          <Disc3 size={40} className="text-muted-foreground mx-auto mb-3" />
-          <p className="text-muted-foreground">Nenhuma música sendo reproduzida. Insira a URL do arquivo XML ou carregue um arquivo local.</p>
-        </div>
-      )}
+        )}
 
-      {/* XML structure hint */}
-      <div className="bg-muted/50 rounded-xl border border-border p-4">
-        <p className="text-xs text-muted-foreground mb-2 font-semibold">Estrutura esperada do XML:</p>
-        <pre className="text-[10px] text-muted-foreground font-mono leading-relaxed">{`<musica>
-  <titulo>Nome da Música</titulo>
-  <artista>Nome do Artista</artista>
-  <duracao>03:45</duracao>  <!-- mm:ss ou segundos -->
-  <capa>https://url-da-capa.jpg</capa>  <!-- opcional, busca automática via iTunes -->
+        {/* Monitoring indicator */}
+        {(fileLoaded || xmlUrl.trim()) && (
+          <div className="mt-8 flex justify-center">
+            <span className="inline-flex items-center gap-2 px-3 py-1 bg-green-500/10 text-green-500 text-[10px] uppercase tracking-widest font-bold rounded-full border border-green-500/20">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+              </span>
+              {fileLoaded ? `Monitorando: ${selectedFileRef.current?.name}` : "Monitorando URL"}
+            </span>
+          </div>
+        )}
+
+        {/* XML structure hint */}
+        <div className="mt-6 bg-zinc-800/50 rounded-xl p-4">
+          <p className="text-xs text-zinc-500 mb-2 font-semibold">Estrutura esperada do XML:</p>
+          <pre className="text-[10px] text-zinc-600 font-mono leading-relaxed">{`<musica>
+  <nome_musica>Nome da Música</nome_musica>
+  <nome_interprete>Artista</nome_interprete>
+  <duracao>03:45</duracao>
+  <capa>https://url.jpg</capa> <!-- opcional -->
 </musica>`}</pre>
+        </div>
       </div>
     </div>
   );
