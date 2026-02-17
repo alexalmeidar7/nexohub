@@ -241,11 +241,11 @@ export default function OnAirWidget() {
         </div>
 
         {programa.selo && (
-          <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none" style={{ bottom: 40 }}>
+          <div className="absolute inset-0 z-10 flex items-start justify-start pointer-events-none" style={{ bottom: 40, padding: "40px 0 0 20px" }}>
             <img
               src={programa.selo}
               alt="Selo"
-              className="rounded max-h-[45%] w-auto"
+              className="rounded max-h-[50%] w-auto"
               style={{ filter: "grayscale(100%) brightness(0.3)" }}
             />
           </div>
@@ -261,7 +261,7 @@ export default function OnAirWidget() {
           </div>
         </div>
 
-        <div className="relative z-10">
+        <div className="absolute bottom-0 left-0 right-0 z-10">
           <div className="w-full h-1 bg-gray-300 overflow-hidden">
             <div
               className="h-full bg-gray-700 transition-all duration-1000"
