@@ -81,30 +81,30 @@ export default function WeatherWidget() {
 
   if (!weather) {
     return (
-      <div className="bg-muted rounded-xl p-4 border border-border text-muted-foreground">
+      <div className="rounded-xl p-4 border border-gray-200 text-gray-500" style={{ backgroundColor: "#ffffff" }}>
         Nenhuma cidade pesquisada ainda. Vá em Previsão do Tempo para buscar.
       </div>
     );
   }
 
   return (
-    <div className="bg-muted rounded-xl p-5 border border-border max-w-sm">
+    <div className="rounded-xl p-5 border border-gray-200" style={{ backgroundColor: "#ffffff" }}>
       <div className="flex items-center gap-3 mb-3">
         <span className="text-4xl">{getIcon(weather.weatherCode)}</span>
         <div>
-          <p className="font-semibold text-foreground">{weather.city}</p>
-          <p className="text-muted-foreground text-xs">{getLabel(weather.weatherCode)}</p>
+          <p className="font-semibold text-gray-800">{weather.city}</p>
+          <p className="text-gray-500 text-xs">{getLabel(weather.weatherCode)}</p>
         </div>
       </div>
-      <p className="text-3xl font-light text-primary mb-3">{weather.temp}°C</p>
+      <p className="text-3xl font-light text-gray-700 mb-3">{weather.temp}°C</p>
       <div className="grid grid-cols-2 gap-2 text-xs">
-        <div className="flex items-center gap-1 text-muted-foreground">
+        <div className="flex items-center gap-1 text-gray-500">
           <Thermometer size={12} /> ↓{weather.tempMin}° / ↑{weather.tempMax}°
         </div>
-        <div className="flex items-center gap-1 text-muted-foreground">
+        <div className="flex items-center gap-1 text-gray-500">
           <Droplets size={12} /> {weather.humidity}%
         </div>
-        <div className="flex items-center gap-1 text-muted-foreground col-span-2">
+        <div className="flex items-center gap-1 text-gray-500 col-span-2">
           <CloudRain size={12} /> Chuva: {weather.rainChance}%
         </div>
       </div>

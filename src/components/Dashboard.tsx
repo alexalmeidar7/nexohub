@@ -83,14 +83,19 @@ export default function Dashboard() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 p-10 relative">
+      <main className={`flex-1 p-10 relative ${currentPage === "dashboard" ? "" : ""}`}
+        style={currentPage === "dashboard" ? { backgroundColor: "#e0e0e0" } : undefined}
+      >
         <header className="mb-10">
-          <h2 className="text-3xl font-light">{pageTitle[currentPage]}</h2>
+          <h2 className={`text-3xl font-light ${currentPage === "dashboard" ? "text-gray-800" : ""}`}>{pageTitle[currentPage]}</h2>
         </header>
-        <section className="bg-surface-elevated rounded-2xl p-8 border border-border min-h-[400px]">
+        <section
+          className={`rounded-2xl p-8 border min-h-[400px] ${currentPage === "dashboard" ? "border-gray-300" : "bg-surface-elevated border-border"}`}
+          style={currentPage === "dashboard" ? { backgroundColor: "#efefef" } : undefined}
+        >
           {currentPage === "dashboard" && (
             <div className="animate-fade-in space-y-6">
-              <p className="text-muted-foreground">
+              <p className="text-gray-500">
                 Bem-vindo ao MasterView. Selecione uma opção no menu lateral.
               </p>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
