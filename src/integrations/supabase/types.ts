@@ -116,6 +116,33 @@ export type Database = {
         }
         Relationships: []
       }
+      escalada_news: {
+        Row: {
+          created_at: string
+          id: string
+          image_url: string | null
+          portal: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          portal: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          portal?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       programas: {
         Row: {
           apresentador_id: string | null

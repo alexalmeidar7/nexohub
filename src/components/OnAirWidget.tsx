@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Radio, SkipForward, ChevronRight } from "lucide-react";
+import { Radio, SkipForward, ChevronRight, Clock } from "lucide-react";
 import { getApresentadores } from "./ApresentadorForm";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -52,25 +52,28 @@ function findCurrentProgram(programas: Programa[]): { programa: Programa; progre
   return null;
 }
 
-function findNextProgram(programas: Programa[]): Programa | null {
+function findNextPrograms(programas: Programa[], count: number): Programa[] {
   const now = new Date();
   const diaAtual = DIAS_MAP[now.getDay()];
   const horaAtual = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
 
-  const todayPrograms = programas
+  return programas
     .filter(p => p.diasSemana.includes(diaAtual) && p.horarioInicio > horaAtual)
-    .sort((a, b) => a.horarioInicio.localeCompare(b.horarioInicio));
+    .sort((a, b) => a.horarioInicio.localeCompare(b.horarioInicio))
+    .slice(0, count);
+}
 
-  return todayPrograms.length > 0 ? todayPrograms[0] : null;
+interface ApresentadorInfo {
+  nome: string;
+  foto: string;
 }
 
 export default function OnAirWidget() {
   const [onAir, setOnAir] = useState<{ programa: Programa; progress: number } | null>(null);
   const [apresentadorNome, setApresentadorNome] = useState("");
   const [apresentadorFoto, setApresentadorFoto] = useState("");
-  const [nextProgram, setNextProgram] = useState<Programa | null>(null);
-  const [nextApresentadorNome, setNextApresentadorNome] = useState("");
-  const [nextApresentadorFoto, setNextApresentadorFoto] = useState("");
+  const [nextPrograms, setNextPrograms] = useState<Programa[]>([]);
+  const [nextApresentadores, setNextApresentadores] = useState<Record<string, ApresentadorInfo>>({});
   const [isHovered, setIsHovered] = useState(false);
 
   useEffect(() => {
@@ -83,28 +86,34 @@ export default function OnAirWidget() {
         setApresentadorNome(ap?.nome || "—");
         setApresentadorFoto(ap?.foto || "");
       }
-      const next = findNextProgram(programas);
-      setNextProgram(next);
-      if (next) {
-        const ap = apresentadores.find(a => a.id === next.apresentadorId);
-        setNextApresentadorNome(ap?.nome || "—");
-        setNextApresentadorFoto(ap?.foto || "");
-      }
+      const nexts = findNextPrograms(programas, 3);
+      setNextPrograms(nexts);
+      const apMap: Record<string, ApresentadorInfo> = {};
+      nexts.forEach(p => {
+        const ap = apresentadores.find(a => a.id === p.apresentadorId);
+        apMap[p.id] = { nome: ap?.nome || "—", foto: ap?.foto || "" };
+      });
+      setNextApresentadores(apMap);
     };
     update();
     const interval = setInterval(update, 30 * 1000);
     return () => clearInterval(interval);
   }, []);
 
+  const firstNext = nextPrograms[0] || null;
+  const firstNextAp = firstNext ? nextApresentadores[firstNext.id] : null;
 
   if (!onAir) {
     return (
-      <div className="rounded-xl p-5" style={{ backgroundColor: "#dff06f", height: 330 }}>
-        <div className="flex items-center gap-2 mb-2">
-          <Radio size={16} className="text-gray-600" />
-          <span className="font-semibold text-gray-600 text-sm">No Ar</span>
+      <div className="space-y-4">
+        <div className="rounded-xl p-5" style={{ backgroundColor: "#dff06f", height: 330 }}>
+          <div className="flex items-center gap-2 mb-2">
+            <Radio size={16} className="text-gray-600" />
+            <span className="font-semibold text-gray-600 text-sm">No Ar</span>
+          </div>
+          <p className="text-gray-500 text-xs">Nenhum programa no ar neste momento.</p>
         </div>
-        <p className="text-gray-500 text-xs">Nenhum programa no ar neste momento.</p>
+        <UpcomingProgramsList programs={nextPrograms} apresentadores={nextApresentadores} />
       </div>
     );
   }
@@ -112,175 +121,203 @@ export default function OnAirWidget() {
   const { programa, progress } = onAir;
 
   return (
-    <div
-      className="relative"
-      style={{ height: 330 }}
-      onMouseEnter={() => nextProgram && setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      {/* Next program box - behind, peeking from right */}
-      {nextProgram && (
-        <div
-          className="absolute top-0 rounded-xl overflow-hidden flex flex-col transition-all duration-500 ease-in-out"
-          style={{
-            backgroundColor: "#2d2d2d",
-            height: 330,
-            right: 0,
-            width: isHovered ? "100%" : "0px",
-            zIndex: isHovered ? 20 : 5,
-            opacity: isHovered ? 1 : 0,
-          }}
-        >
-
-          {/* Full content when expanded */}
-          {isHovered && (
-            <>
-              {nextProgram.selo && (
-                <img
-                  src={nextProgram.selo}
-                  alt="Selo"
-                  className="absolute pointer-events-none"
-                  style={{
-                    left: 0,
-                    top: -20,
-                    height: "110%",
-                    width: "auto",
-                    opacity: 0.1,
-                    objectFit: "contain",
-                    objectPosition: "left top",
-                  }}
-                />
-              )}
-
-              {nextApresentadorFoto && (
-                <img
-                  src={nextApresentadorFoto}
-                  alt={nextApresentadorNome}
-                  className="absolute object-contain pointer-events-none"
-                  style={{
-                    right: 0,
-                    top: 0,
-                    width: "60%",
-                    height: "100%",
-                    objectPosition: "right top",
-                  }}
-                />
-              )}
-
-              <div className="absolute top-4 left-5 z-10 flex items-center gap-2 animate-fade-in">
-                <SkipForward size={16} className="text-gray-300" />
-                <span className="font-bold text-gray-300 text-sm">PRÓXIMO PROGRAMA</span>
-              </div>
-
-              {nextProgram.selo && (
-                <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none animate-fade-in" style={{ bottom: 40 }}>
-                  <img
-                    src={nextProgram.selo}
-                    alt="Selo"
-                    className="rounded max-h-[45%] w-auto"
-                    style={{ filter: "grayscale(100%) brightness(1.5)" }}
-                  />
-                </div>
-              )}
-
-              <div className="absolute bottom-4 left-0 right-0 z-10 px-5 animate-fade-in">
-                <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4">
-                  <p className="font-bold text-white text-sm sm:text-base truncate">{nextProgram.nome}</p>
-                  <p className="text-gray-400 text-xs truncate">{nextApresentadorNome}</p>
-                  <p className="text-gray-400 text-xs whitespace-nowrap">
-                    {nextProgram.horarioInicio} — {nextProgram.horarioFim}
-                  </p>
-                </div>
-              </div>
-            </>
-          )}
-        </div>
-      )}
-
-      {/* Current program - main box */}
+    <div className="space-y-4">
       <div
-        className="rounded-xl relative overflow-hidden flex flex-col transition-all duration-500 ease-in-out"
-        style={{
-          backgroundColor: "#dff06f",
-          height: 330,
-          opacity: isHovered ? 0 : 1,
-          zIndex: isHovered ? 1 : 10,
-        }}
+        className="relative"
+        style={{ height: 330 }}
+        onMouseEnter={() => firstNext && setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
       >
-        {programa.selo && (
-          <img
-            src={programa.selo}
-            alt="Selo"
-            className="absolute pointer-events-none"
+        {/* Next program box - behind, peeking from right */}
+        {firstNext && (
+          <div
+            className="absolute top-0 rounded-xl overflow-hidden flex flex-col transition-all duration-500 ease-in-out"
             style={{
-              left: 0,
-              top: -20,
-              height: "110%",
-              width: "auto",
-              opacity: 0.1,
-              objectFit: "contain",
-              objectPosition: "left top",
-            }}
-          />
-        )}
-
-        {apresentadorFoto && (
-          <img
-            src={apresentadorFoto}
-            alt={apresentadorNome}
-            className="absolute object-contain pointer-events-none"
-            style={{
+              backgroundColor: "#2d2d2d",
+              height: 330,
               right: 0,
-              top: 0,
-              width: "60%",
-              height: "100%",
-              objectPosition: "right top",
+              width: isHovered ? "100%" : "0px",
+              zIndex: isHovered ? 20 : 5,
+              opacity: isHovered ? 1 : 0,
             }}
-          />
-        )}
+          >
+            {isHovered && (
+              <>
+                {firstNext.selo && (
+                  <img
+                    src={firstNext.selo}
+                    alt="Selo"
+                    className="absolute pointer-events-none"
+                    style={{
+                      left: 0,
+                      top: 0,
+                      height: "50%",
+                      width: "auto",
+                      opacity: 0.15,
+                      objectFit: "contain",
+                      objectPosition: "left top",
+                    }}
+                  />
+                )}
 
-        {nextProgram && (
-          <div className="absolute top-3 right-3 z-20 flex items-center gap-1 bg-[#2d2d2d] rounded-full px-3 py-1 cursor-pointer">
-            <span className="text-gray-300 text-[10px] font-semibold uppercase tracking-wider">Próximo programa</span>
-            <ChevronRight size={12} className="text-gray-300" />
+                {firstNextAp?.foto && (
+                  <img
+                    src={firstNextAp.foto}
+                    alt={firstNextAp.nome}
+                    className="absolute object-contain pointer-events-none"
+                    style={{
+                      right: 0,
+                      top: 0,
+                      width: "60%",
+                      height: "100%",
+                      objectPosition: "right top",
+                    }}
+                  />
+                )}
+
+                <div className="absolute top-4 left-5 z-10 flex items-center gap-2 animate-fade-in">
+                  <SkipForward size={16} className="text-gray-300" />
+                  <span className="font-bold text-gray-300 text-sm">PRÓXIMO PROGRAMA</span>
+                </div>
+
+                {firstNext.selo && (
+                  <div className="absolute inset-0 z-10 flex items-start justify-start pointer-events-none animate-fade-in" style={{ padding: "40px 0 0 20px" }}>
+                    <img
+                      src={firstNext.selo}
+                      alt="Selo"
+                      className="rounded w-auto"
+                      style={{ maxHeight: "50%", filter: "grayscale(100%) brightness(1.5)" }}
+                    />
+                  </div>
+                )}
+
+                <div className="absolute bottom-4 left-0 right-0 z-10 px-5 animate-fade-in">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4">
+                    <p className="font-bold text-white truncate" style={{ fontSize: 12 }}>{firstNext.nome}</p>
+                    <p className="text-gray-400 text-xs truncate">{firstNextAp?.nome}</p>
+                    <p className="text-gray-400 text-xs whitespace-nowrap">
+                      {firstNext.horarioInicio} — {firstNext.horarioFim}
+                    </p>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         )}
 
-        <div className="absolute top-4 left-5 z-10 flex items-center gap-2">
-          <Radio size={16} className="text-gray-700 animate-pulse" />
-          <span className="font-bold text-gray-700 text-sm animate-pulse">NO AR</span>
-        </div>
-
-        {programa.selo && (
-          <div className="absolute inset-0 z-10 flex items-start justify-start pointer-events-none" style={{ bottom: 40, padding: "40px 0 0 20px" }}>
+        {/* Current program - main box */}
+        <div
+          className="rounded-xl relative overflow-hidden flex flex-col transition-all duration-500 ease-in-out"
+          style={{
+            backgroundColor: "#dff06f",
+            height: 330,
+            opacity: isHovered ? 0 : 1,
+            zIndex: isHovered ? 1 : 10,
+          }}
+        >
+          {programa.selo && (
             <img
               src={programa.selo}
               alt="Selo"
-              className="rounded max-h-[110%] w-auto"
-              style={{ filter: "grayscale(100%) brightness(0.3)" }}
+              className="absolute pointer-events-none"
+              style={{
+                left: 0,
+                top: -20,
+                height: "110%",
+                width: "auto",
+                opacity: 0.1,
+                objectFit: "contain",
+                objectPosition: "left top",
+              }}
             />
-          </div>
-        )}
+          )}
 
-        <div className="absolute bottom-[4px] left-0 right-0 z-10 px-5">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 mb-1">
-            <p className="font-bold text-gray-800 truncate" style={{ fontSize: 12 }}>{programa.nome}</p>
-            <p className="text-gray-600 text-xs truncate">{apresentadorNome}</p>
-            <p className="text-gray-600 text-xs whitespace-nowrap">
-              {programa.horarioInicio} — {programa.horarioFim}
-            </p>
-          </div>
-        </div>
-
-        <div className="absolute bottom-0 left-0 right-0 z-10">
-          <div className="w-full h-1 bg-gray-300 overflow-hidden">
-            <div
-              className="h-full bg-gray-700 transition-all duration-1000"
-              style={{ width: `${progress}%` }}
+          {apresentadorFoto && (
+            <img
+              src={apresentadorFoto}
+              alt={apresentadorNome}
+              className="absolute object-contain pointer-events-none"
+              style={{
+                right: 0,
+                top: 0,
+                width: "60%",
+                height: "100%",
+                objectPosition: "right top",
+              }}
             />
+          )}
+
+          {firstNext && (
+            <div className="absolute top-3 right-3 z-20 flex items-center gap-1 bg-[#2d2d2d] rounded-full px-3 py-1 cursor-pointer">
+              <span className="text-gray-300 text-[10px] font-semibold uppercase tracking-wider">Próximo programa</span>
+              <ChevronRight size={12} className="text-gray-300" />
+            </div>
+          )}
+
+          <div className="absolute top-4 left-5 z-10 flex items-center gap-2">
+            <Radio size={16} className="text-gray-700 animate-pulse" />
+            <span className="font-bold text-gray-700 text-sm animate-pulse">NO AR</span>
+          </div>
+
+          {programa.selo && (
+            <div className="absolute inset-0 z-10 flex items-start justify-start pointer-events-none" style={{ bottom: 40, padding: "40px 0 0 20px" }}>
+              <img
+                src={programa.selo}
+                alt="Selo"
+                className="rounded max-h-[110%] w-auto"
+                style={{ filter: "grayscale(100%) brightness(0.3)" }}
+              />
+            </div>
+          )}
+
+          <div className="absolute bottom-[4px] left-0 right-0 z-10 px-5">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 mb-1">
+              <p className="font-bold text-gray-800 truncate" style={{ fontSize: 12 }}>{programa.nome}</p>
+              <p className="text-gray-600 text-xs truncate">{apresentadorNome}</p>
+              <p className="text-gray-600 text-xs whitespace-nowrap">
+                {programa.horarioInicio} — {programa.horarioFim}
+              </p>
+            </div>
+          </div>
+
+          <div className="absolute bottom-0 left-0 right-0 z-10">
+            <div className="w-full h-1 bg-gray-300 overflow-hidden">
+              <div
+                className="h-full bg-gray-700 transition-all duration-1000"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
           </div>
         </div>
       </div>
+
+      <UpcomingProgramsList programs={nextPrograms} apresentadores={nextApresentadores} />
+    </div>
+  );
+}
+
+function UpcomingProgramsList({ programs, apresentadores }: { programs: Programa[]; apresentadores: Record<string, ApresentadorInfo> }) {
+  if (programs.length === 0) return null;
+
+  return (
+    <div className="space-y-2">
+      <p className="text-gray-500 text-xs font-semibold uppercase tracking-wider flex items-center gap-1">
+        <Clock size={12} /> Próximos programas
+      </p>
+      {programs.map(p => (
+        <div key={p.id} className="flex items-center gap-3 bg-white rounded-lg p-3 border border-gray-300">
+          {p.selo && (
+            <img src={p.selo} alt="Selo" className="h-8 w-8 rounded object-contain" style={{ filter: "grayscale(50%)" }} />
+          )}
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-gray-800 text-xs truncate">{p.nome}</p>
+            <p className="text-gray-500 text-[10px] truncate">{apresentadores[p.id]?.nome || "—"}</p>
+          </div>
+          <p className="text-gray-500 text-[10px] whitespace-nowrap font-mono">
+            {p.horarioInicio} — {p.horarioFim}
+          </p>
+        </div>
+      ))}
     </div>
   );
 }

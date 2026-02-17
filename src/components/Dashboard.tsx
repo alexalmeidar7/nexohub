@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Home, Sun, FileText, Mic2, PlaySquare, Music, Settings, Copy, LogOut } from "lucide-react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { Home, Sun, FileText, Mic2, PlaySquare, Music, Settings, LogOut } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import ApresentadorForm from "./ApresentadorForm";
 import ProgramaForm from "./ProgramaForm";
@@ -9,6 +9,7 @@ import WeatherWidget from "./WeatherWidget";
 import OnAirWidget from "./OnAirWidget";
 import MusicaNoAr from "./MusicaNoAr";
 import MusicWidget from "./MusicWidget";
+import XmlLinkRow from "./XmlLinkRow";
 import ConfiguracoesPage, { getEmpresaConfig } from "./ConfiguracoesPage";
 import logoMenu from "@/assets/logo-menu.png";
 import {
@@ -18,6 +19,7 @@ import {
 } from "@/components/ui/tooltip";
 
 import { getMusicData } from "./MusicaNoAr";
+import { useAuth } from "@/hooks/useAuth";
 
 type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "programas" | "musica" | "configuracoes";
 
@@ -54,24 +56,25 @@ interface DashboardProps {
 }
 
 export default function Dashboard({ onLogout }: DashboardProps) {
+  const { user } = useAuth();
   const [currentPage, setCurrentPage] = useState<Page>("dashboard");
   const [empresa, setEmpresa] = useState<import("./ConfiguracoesPage").EmpresaConfig>({} as any);
 
-  // Refresh empresa config when switching to dashboard
   useEffect(() => {
     getEmpresaConfig().then(setEmpresa);
   }, [currentPage]);
+
+  // Global music XML upload every 5s regardless of page
+  useGlobalMusicXmlUpload();
 
   return (
     <div className="min-h-screen bg-background flex text-foreground">
       {/* Sidebar - icon only */}
       <aside className="w-16 flex flex-col items-center py-4 gap-3" style={{ backgroundColor: "#1e1e1e" }}>
-        {/* Logo */}
         <div className="mb-4">
           <img src={logoMenu} alt="MasterView" className="w-10 h-auto" />
         </div>
 
-        {/* Menu icons */}
         {menuItems.map((item) => {
           const isActive = currentPage === item.page;
           const Icon = item.icon;
@@ -81,62 +84,40 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 <button
                   onClick={() => setCurrentPage(item.page)}
                   className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
-                    isActive
-                      ? "bg-primary"
-                      : "bg-transparent hover:bg-white/10"
+                    isActive ? "bg-primary" : "bg-transparent hover:bg-white/10"
                   }`}
                 >
-                  <Icon
-                    size={18}
-                    className={isActive ? "text-[#333]" : "text-muted-foreground"}
-                  />
+                  <Icon size={18} className={isActive ? "text-[#333]" : "text-muted-foreground"} />
                 </button>
               </TooltipTrigger>
-              <TooltipContent side="right">
-                <p>{item.label}</p>
-              </TooltipContent>
+              <TooltipContent side="right"><p>{item.label}</p></TooltipContent>
             </Tooltip>
           );
         })}
 
-        {/* Spacer */}
         <div className="flex-1" />
 
-        {/* Logout button */}
         <Tooltip>
           <TooltipTrigger asChild>
-            <button
-              onClick={onLogout}
-              className="w-10 h-10 rounded-full flex items-center justify-center transition-all bg-transparent hover:bg-red-500/20 mb-1"
-            >
+            <button onClick={onLogout} className="w-10 h-10 rounded-full flex items-center justify-center transition-all bg-transparent hover:bg-red-500/20 mb-1">
               <LogOut size={18} className="text-red-400" />
             </button>
           </TooltipTrigger>
-          <TooltipContent side="right">
-            <p>Sair</p>
-          </TooltipContent>
+          <TooltipContent side="right"><p>Sair</p></TooltipContent>
         </Tooltip>
 
-        {/* Settings icon at bottom */}
         <Tooltip>
           <TooltipTrigger asChild>
             <button
               onClick={() => setCurrentPage("configuracoes")}
               className={`w-10 h-10 rounded-full flex items-center justify-center transition-all mb-2 ${
-                currentPage === "configuracoes"
-                  ? "bg-primary"
-                  : "bg-transparent hover:bg-white/10"
+                currentPage === "configuracoes" ? "bg-primary" : "bg-transparent hover:bg-white/10"
               }`}
             >
-              <Settings
-                size={18}
-                className={currentPage === "configuracoes" ? "text-[#333]" : "text-muted-foreground"}
-              />
+              <Settings size={18} className={currentPage === "configuracoes" ? "text-[#333]" : "text-muted-foreground"} />
             </button>
           </TooltipTrigger>
-          <TooltipContent side="right">
-            <p>Configurações</p>
-          </TooltipContent>
+          <TooltipContent side="right"><p>Configurações</p></TooltipContent>
         </Tooltip>
 
         <div className="opacity-50">
@@ -147,7 +128,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       </aside>
 
       {/* Main Content */}
-      <main className={`flex-1 p-10 relative ${currentPage === "dashboard" ? "" : ""}`}
+      <main className={`flex-1 p-10 relative`}
         style={currentPage === "dashboard" ? { backgroundColor: "#e0e0e0" } : undefined}
       >
         <header className="mb-10 flex items-center gap-4">
@@ -173,6 +154,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               </div>
             </div>
           )}
+          {/* Spacer to push clock to right */}
+          <div className="flex-1" />
+          {currentPage === "dashboard" && <ServerClock />}
         </header>
         <section
           className={`rounded-2xl p-8 min-h-[400px] ${currentPage === "dashboard" ? "" : "bg-surface-elevated border border-border"}`}
@@ -190,7 +174,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 </div>
                 <OnAirWidget />
               </div>
-              <DashboardXmlFields />
+              <UnifiedXmlField />
             </div>
           )}
           {currentPage === "previsao" && <PrevisaoTempo />}
@@ -211,16 +195,39 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   );
 }
 
+// Server clock component
+function ServerClock() {
+  const [now, setNow] = useState(new Date());
+
+  useEffect(() => {
+    const interval = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const time = now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  const date = now.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+
+  return (
+    <div className="text-right">
+      <p className="text-2xl font-bold text-gray-800 font-mono tracking-wider">{time}</p>
+      <p className="text-xs text-gray-500 capitalize">{date}</p>
+    </div>
+  );
+}
+
+// Unified XML field combining weather + news + music
 const WEATHER_KEY = "masterview_last_city";
 
-function DashboardXmlFields() {
-  const [weatherUrl, setWeatherUrl] = useState("");
-  const [newsUrl, setNewsUrl] = useState("");
-  const [musicUrl, setMusicUrl] = useState("");
+function UnifiedXmlField() {
+  const [xmlContent, setXmlContent] = useState("");
 
   useEffect(() => {
     const update = async () => {
-      // Weather XML
+      let weatherXml = "";
+      let newsXml = "";
+      let musicXml = "";
+
+      // Weather
       const savedCity = localStorage.getItem(WEATHER_KEY);
       if (savedCity) {
         try {
@@ -230,13 +237,12 @@ function DashboardXmlFields() {
             const { latitude, longitude, name } = geo.results[0];
             const wx = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code&timezone=auto&forecast_days=1`);
             const d = await wx.json();
-            const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<tempo>\n  <cidade>${name}</cidade>\n  <temperatura>${Math.round(d.current.temperature_2m)}</temperatura>\n  <humidade>${d.current.relative_humidity_2m}</humidade>\n  <condicao_codigo>${d.current.weather_code}</condicao_codigo>\n  <minima>${Math.round(d.daily.temperature_2m_min[0])}</minima>\n  <maxima>${Math.round(d.daily.temperature_2m_max[0])}</maxima>\n  <chance_chuva>${d.daily.precipitation_probability_max[0] ?? 0}</chance_chuva>\n</tempo>`;
-            setWeatherUrl(URL.createObjectURL(new Blob([xml], { type: "application/xml" })));
+            weatherXml = `  <tempo>\n    <cidade>${name}</cidade>\n    <temperatura>${Math.round(d.current.temperature_2m)}</temperatura>\n    <humidade>${d.current.relative_humidity_2m}</humidade>\n    <condicao_codigo>${d.current.weather_code}</condicao_codigo>\n    <minima>${Math.round(d.daily.temperature_2m_min[0])}</minima>\n    <maxima>${Math.round(d.daily.temperature_2m_max[0])}</maxima>\n    <chance_chuva>${d.daily.precipitation_probability_max[0] ?? 0}</chance_chuva>\n  </tempo>`;
           }
         } catch {}
       }
 
-      // News XML from DB
+      // News from DB
       try {
         const [newsRes, cotRes] = await Promise.all([
           supabase.from("selected_news").select("*"),
@@ -245,20 +251,23 @@ function DashboardXmlFields() {
         const news = newsRes.data || [];
         const cots = cotRes.data || [];
         if (news.length || cots.length) {
-          const nXml = news.map((n: any) => `  <noticia>\n    <titulo>${n.title?.replace(/&/g,"&amp;").replace(/</g,"&lt;")}</titulo>\n    <imagem>${n.image_url || ""}</imagem>\n  </noticia>`).join("\n");
-          const cXml = cots.map((c: any) => `  <cotacao>\n    <nome>${c.name}</nome>\n    <valor>${c.value}</valor>\n  </cotacao>`).join("\n");
-          const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<noticias>\n${nXml}\n${cXml}\n</noticias>`;
-          setNewsUrl(URL.createObjectURL(new Blob([xml], { type: "application/xml" })));
+          const nXml = news.map((n: any) => `    <noticia>\n      <titulo>${n.title?.replace(/&/g,"&amp;").replace(/</g,"&lt;")}</titulo>\n      <imagem>${n.image_url || ""}</imagem>\n    </noticia>`).join("\n");
+          const cXml = cots.map((c: any) => `    <cotacao>\n      <nome>${c.name}</nome>\n      <valor>${c.value}</valor>\n    </cotacao>`).join("\n");
+          newsXml = `  <noticias>\n${nXml}\n${cXml}\n  </noticias>`;
         }
       } catch {}
 
-      // Music XML
+      // Music
       const m = getMusicData();
       if (m) {
-        const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<musica_agora>\n  <titulo>${m.music.titulo}</titulo>\n  <interprete>${m.music.artista}</interprete>\n  <capa>${m.music.capa || ""}</capa>\n</musica_agora>`;
-        setMusicUrl(URL.createObjectURL(new Blob([xml], { type: "application/xml" })));
+        musicXml = `  <musica_agora>\n    <titulo>${m.music.titulo}</titulo>\n    <interprete>${m.music.artista}</interprete>\n    <capa>${m.music.capa || ""}</capa>\n  </musica_agora>`;
+      }
+
+      const parts = [weatherXml, newsXml, musicXml].filter(Boolean);
+      if (parts.length > 0) {
+        setXmlContent(`<?xml version="1.0" encoding="UTF-8"?>\n<masterview>\n${parts.join("\n")}\n</masterview>`);
       } else {
-        setMusicUrl("");
+        setXmlContent("");
       }
     };
     update();
@@ -266,23 +275,52 @@ function DashboardXmlFields() {
     return () => clearInterval(interval);
   }, []);
 
+  if (!xmlContent) return null;
+
   return (
     <div className="space-y-2">
-      {weatherUrl && <XmlLinkField label="XML TEMPO" url={weatherUrl} />}
-      {newsUrl && <XmlLinkField label="XML NOTICIAS" url={newsUrl} />}
-      {musicUrl && <XmlLinkField label="XML MUSICA AGORA" url={musicUrl} />}
+      <XmlLinkRow label="XML MASTERVIEW" xmlContent={xmlContent} />
     </div>
   );
 }
 
-function XmlLinkField({ label, url }: { label: string; url: string }) {
-  const [copied, setCopied] = useState(false);
-  const copy = () => { navigator.clipboard.writeText(url); setCopied(true); setTimeout(() => setCopied(false), 2000); };
-  return (
-    <div className="flex items-center gap-3 bg-white rounded-lg p-3 border border-gray-300 cursor-pointer hover:border-gray-500 transition-colors" onClick={copy}>
-      <span className="text-xs font-bold text-gray-600 whitespace-nowrap">{label}</span>
-      <span className="text-[10px] text-gray-500 truncate flex-1 font-mono">{url}</span>
-      {copied ? <span className="text-xs text-green-600 font-semibold whitespace-nowrap">Copiado!</span> : <Copy size={14} className="text-gray-400 shrink-0" />}
-    </div>
-  );
+// Global hook: auto-upload music XML every 5s regardless of which page is open
+function useGlobalMusicXmlUpload() {
+  const { user } = useAuth();
+  const lastContentRef = useRef<string>("");
+
+  useEffect(() => {
+    if (!user) return;
+
+    const uploadMusicXml = async () => {
+      // Get music XML URL from DB
+      const { data: settings } = await supabase
+        .from("user_settings")
+        .select("music_xml_url")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (!settings?.music_xml_url) return;
+
+      try {
+        const res = await fetch(settings.music_xml_url, { cache: "no-store" });
+        const text = await res.text();
+
+        // Only upload if content changed
+        if (text === lastContentRef.current) return;
+        lastContentRef.current = text;
+
+        const file = new Blob([text], { type: "application/xml" });
+        await supabase.storage
+          .from("xml-files")
+          .upload("musica-agora.xml", file, { upsert: true, contentType: "application/xml" });
+      } catch {
+        // silent
+      }
+    };
+
+    uploadMusicXml();
+    const interval = setInterval(uploadMusicXml, 5000);
+    return () => clearInterval(interval);
+  }, [user]);
 }
