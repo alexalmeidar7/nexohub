@@ -77,37 +77,37 @@ export default function OnAirWidget() {
   const { programa, progress } = onAir;
 
   return (
-    <div className="rounded-xl p-5 relative overflow-hidden" style={{ backgroundColor: "#dff06f", minHeight: 140 }}>
-      {/* Presenter photo as background, aligned right */}
+    <div className="rounded-xl relative overflow-hidden" style={{ backgroundColor: "#dff06f", minHeight: 140 }}>
+      {/* Presenter photo as background - no opacity, no top crop, fully aligned right */}
       {apresentadorFoto && (
         <img
           src={apresentadorFoto}
           alt={apresentadorNome}
-          className="absolute opacity-40 object-cover pointer-events-none"
+          className="absolute object-contain pointer-events-none"
           style={{
-            right: 50,
-            top: 10,
+            right: 0,
+            top: 0,
             width: "50%",
-            height: "auto",
-            maxHeight: "100%",
+            height: "100%",
+            objectPosition: "right top",
           }}
         />
       )}
 
       {/* Content on top */}
-      <div className="relative z-10">
+      <div className="relative z-10 p-5 pb-0">
         <div className="flex items-center gap-2 mb-2">
-          <Radio size={16} className="text-green-700 animate-pulse" />
-          <span className="font-bold text-green-700 text-sm">NO AR</span>
+          <Radio size={16} className="text-gray-700 animate-pulse" />
+          <span className="font-bold text-gray-700 text-sm">NO AR</span>
         </div>
 
-        {/* Seal in dark gray, aligned left below NO AR */}
+        {/* Seal 40% size, aligned left */}
         {programa.selo && (
           <img
             src={programa.selo}
             alt="Selo"
-            className="h-16 rounded mb-3"
-            style={{ filter: "grayscale(100%) brightness(0.3)" }}
+            className="rounded mb-3"
+            style={{ filter: "grayscale(100%) brightness(0.3)", width: "40%", height: "auto" }}
           />
         )}
 
@@ -119,16 +119,18 @@ export default function OnAirWidget() {
           </p>
           <p className="text-gray-500 text-xs">{programa.estudio}</p>
         </div>
+      </div>
 
-        {/* Thin progress bar */}
-        <div className="mt-3">
-          <div className="w-full h-1 bg-gray-300 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-gray-700 rounded-full transition-all duration-1000"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-          <p className="text-[10px] text-gray-500 mt-1 text-right">{Math.round(progress)}% concluído</p>
+      {/* Progress bar aligned to bottom of box */}
+      <div className="relative z-10 mt-3 px-0">
+        <div className="w-full h-1 bg-gray-300 overflow-hidden">
+          <div
+            className="h-full bg-gray-700 transition-all duration-1000"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+        <div className="px-5 pb-1">
+          <p className="text-[10px] text-gray-500 text-right">{Math.round(progress)}%</p>
         </div>
       </div>
     </div>

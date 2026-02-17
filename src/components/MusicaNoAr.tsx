@@ -31,7 +31,6 @@ function parseXmlString(xmlStr: string): MusicData | null {
       else if (parts.length === 3) duracao = parts[0] * 3600 + parts[1] * 60 + parts[2];
     } else {
       duracao = parseFloat(duracaoStr) || 0;
-      // If value > 300 and no decimal, likely in milliseconds
       if (duracao > 300) duracao = duracao / 1000;
     }
 
@@ -53,7 +52,6 @@ async function fetchCoverFromiTunes(titulo: string, artista: string): Promise<st
     const res = await fetch(`https://itunes.apple.com/search?term=${query}&media=music&limit=1`);
     const data = await res.json();
     if (data.results && data.results.length > 0) {
-      // Get high-res artwork (replace 100x100 with 600x600)
       return data.results[0].artworkUrl100?.replace("100x100", "600x600") || "";
     }
   } catch { /* silent */ }
@@ -88,7 +86,6 @@ export default function MusicaNoAr() {
     const prevRaw = localStorage.getItem(MUSIC_DATA_KEY);
     const prev: MusicData | null = prevRaw ? JSON.parse(prevRaw) : null;
 
-    // Fetch cover from iTunes if not in XML
     if (!data.capa) {
       const cacheKey = `${data.artista}-${data.titulo}`;
       if (coverCacheRef.current[cacheKey]) {
@@ -102,7 +99,6 @@ export default function MusicaNoAr() {
       }
     }
 
-    // Only reset timer if song changed
     if (!prev || prev.titulo !== data.titulo || prev.artista !== data.artista) {
       const now = Date.now();
       localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify(data));
@@ -111,7 +107,6 @@ export default function MusicaNoAr() {
       setStartTime(now);
       setElapsed(0);
     } else {
-      // Update cover if it was fetched
       if (data.capa && (!prev.capa || prev.capa !== data.capa)) {
         localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify({ ...prev, capa: data.capa }));
       }
@@ -132,7 +127,7 @@ export default function MusicaNoAr() {
     }
   }, [xmlUrl, processMusic]);
 
-  // Fetch XML every 5 seconds (auto-refresh)
+  // Fetch XML every 5 seconds
   useEffect(() => {
     if (xmlUrl.trim()) {
       fetchXml();
@@ -141,11 +136,10 @@ export default function MusicaNoAr() {
     }
   }, [xmlUrl, fetchXml]);
 
-  // Timer - high precision using milliseconds
+  // Timer - high precision
   useEffect(() => {
     if (!music || !startTime) return;
     const tick = () => {
-      const now = performance.now();
       const el = (Date.now() - startTime) / 1000;
       setElapsed(Math.min(el, music.duracao));
     };
@@ -164,7 +158,7 @@ export default function MusicaNoAr() {
     }
   }, []);
 
-  // Auto-save URL on change
+  // Auto-save URL
   useEffect(() => {
     localStorage.setItem(MUSIC_XML_URL_KEY, xmlUrl.trim());
   }, [xmlUrl]);
@@ -193,27 +187,44 @@ export default function MusicaNoAr() {
   };
 
   const progress = music && music.duracao > 0 ? Math.min(100, (elapsed / music.duracao) * 100) : 0;
+  const remaining = music ? Math.max(0, music.duracao - elapsed) : 0;
 
   return (
     <div className="animate-fade-in space-y-6">
       <h3 className="text-xl text-primary">Música no Ar</h3>
 
-      {/* URL input + file button */}
-      <div className="space-y-3">
-        <div className="flex gap-2">
-          <input
-            value={xmlUrl}
-            onChange={(e) => setXmlUrl(e.target.value)}
-            placeholder="URL do arquivo XML (salva e atualiza automaticamente a cada 5s)"
-            className="flex-1 bg-muted border border-border p-3 rounded-lg text-foreground placeholder:text-muted-foreground outline-none focus:ring-1 focus:ring-primary"
-          />
-        </div>
-        <button onClick={handleFileSelect}
-          className="flex items-center gap-2 bg-muted border border-border px-4 py-2 rounded-lg text-foreground hover:bg-muted/80 transition-all text-xs">
+      {/* URL input + green file button */}
+      <div className="flex gap-2">
+        <input
+          value={xmlUrl}
+          onChange={(e) => setXmlUrl(e.target.value)}
+          placeholder="URL do arquivo XML (atualiza automaticamente a cada 5s)"
+          className="flex-1 bg-muted border border-border p-3 rounded-lg text-foreground placeholder:text-muted-foreground outline-none focus:ring-1 focus:ring-primary"
+        />
+        <button
+          onClick={handleFileSelect}
+          className="flex items-center gap-2 px-4 py-2 rounded-lg text-white font-semibold transition-all text-xs whitespace-nowrap"
+          style={{ backgroundColor: "#2e7d32" }}
+        >
           <FolderOpen size={14} />
-          Carregar arquivo XML local
+          Carregar arquivo XML música
         </button>
       </div>
+
+      {/* Countdown timer below URL */}
+      {music && (
+        <div className="flex items-center gap-3 bg-muted rounded-lg border border-border px-4 py-3">
+          <Music size={16} className="text-primary" />
+          <span className="text-sm text-muted-foreground">Tempo restante:</span>
+          <span className="font-mono text-xl font-bold text-primary">{formatTime(remaining)}</span>
+          <div className="flex-1 h-2 bg-background/50 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-primary rounded-full transition-all duration-100"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        </div>
+      )}
 
       {fetchError && <p className="text-destructive text-xs">{fetchError}</p>}
 
@@ -241,24 +252,10 @@ export default function MusicaNoAr() {
               )}
             </div>
 
-            {/* Song Info */}
+            {/* Song Info - no duration shown, just title and artist */}
             <div className="flex-1 space-y-2">
               <p className="text-lg font-bold text-foreground">{music.titulo}</p>
               <p className="text-muted-foreground">{music.artista}</p>
-
-              {/* Timer */}
-              <div className="flex items-center gap-3 mt-4">
-                <span className="text-primary font-mono text-sm">{formatTime(elapsed)}</span>
-                <div className="flex-1 h-2 bg-background/50 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-primary rounded-full transition-all duration-100"
-                    style={{ width: `${progress}%` }}
-                  />
-                </div>
-                <span className="text-muted-foreground font-mono text-sm">{formatTime(music.duracao)}</span>
-              </div>
-
-              <p className="text-[10px] text-muted-foreground text-right">{Math.round(progress)}% concluído</p>
             </div>
           </div>
         </div>
