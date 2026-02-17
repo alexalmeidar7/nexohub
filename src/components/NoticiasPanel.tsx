@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { RefreshCw, ExternalLink, Plus, TrendingUp, TrendingDown, Minus, Trash2 } from "lucide-react";
+import { RefreshCw, ExternalLink, Plus, TrendingUp, TrendingDown, Minus, Trash2, ChevronDown, ChevronUp } from "lucide-react";
 
 interface NewsItem {
   title: string;
@@ -109,6 +109,7 @@ export default function NoticiasPanel() {
   const [selectedCotacoes, setSelectedCotacoes] = useState<SelectedCotacao[]>(() => {
     try { return JSON.parse(localStorage.getItem(SELECTED_COTACOES_KEY) || "[]"); } catch { return []; }
   });
+  const [expandedPortals, setExpandedPortals] = useState<Record<string, boolean>>({});
 
   const addCotacao = (c: CotacaoItem) => {
     if (selectedCotacoes.some(sc => sc.name === c.name)) return;
@@ -291,31 +292,39 @@ export default function NoticiasPanel() {
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
           {allPortals.map((portal) => (
             <div key={portal.name} className="bg-muted rounded-xl border border-border overflow-hidden">
-              <div className={`${headerStyle} flex items-center justify-between`}>
-                <span>{portal.name}</span>
-                {customSites.some(s => s.name === portal.name) && (
-                  <button onClick={() => removeCustomSite(portal.name)} className="text-primary-foreground/70 hover:text-primary-foreground text-xs">✕</button>
-                )}
+              <div className={`${headerStyle} flex items-center justify-between cursor-pointer select-none`}
+                onClick={() => setExpandedPortals(prev => ({ ...prev, [portal.name]: !prev[portal.name] }))}>
+                <span className="flex items-center gap-2">
+                  {expandedPortals[portal.name] ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                  {portal.name}
+                </span>
+                <div className="flex items-center gap-2">
+                  {customSites.some(s => s.name === portal.name) && (
+                    <button onClick={(e) => { e.stopPropagation(); removeCustomSite(portal.name); }} className="text-primary-foreground/70 hover:text-primary-foreground text-xs">✕</button>
+                  )}
+                </div>
               </div>
-              <ul className="divide-y divide-border">
-                {(newsByPortal[portal.name] || []).length === 0 ? (
-                  <li className="px-4 py-3 text-sm text-muted-foreground">Sem notícias disponíveis</li>
-                ) : (
-                  newsByPortal[portal.name].map((news, i) => (
-                    <li key={i} className="flex items-center">
-                      <a href={news.link} target="_blank" rel="noopener noreferrer"
-                        className="flex-1 px-4 py-3 text-sm text-foreground hover:text-primary hover:bg-background/50 transition-colors flex items-start gap-2 group">
-                        <span className="flex-1 line-clamp-2">{news.title}</span>
-                        <ExternalLink size={14} className="shrink-0 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground" />
-                      </a>
-                      <button onClick={() => addToSelected(portal.name, news)}
-                        className="px-2 py-1 mr-2 text-muted-foreground hover:text-primary transition-colors" title="Adicionar à seleção">
-                        <Plus size={14} />
-                      </button>
-                    </li>
-                  ))
-                )}
-              </ul>
+              {expandedPortals[portal.name] && (
+                <ul className="divide-y divide-border">
+                  {(newsByPortal[portal.name] || []).length === 0 ? (
+                    <li className="px-4 py-3 text-sm text-muted-foreground">Sem notícias disponíveis</li>
+                  ) : (
+                    newsByPortal[portal.name].map((news, i) => (
+                      <li key={i} className="flex items-center">
+                        <a href={news.link} target="_blank" rel="noopener noreferrer"
+                          className="flex-1 px-4 py-3 text-sm text-foreground hover:text-primary hover:bg-background/50 transition-colors flex items-start gap-2 group">
+                          <span className="flex-1 line-clamp-2">{news.title}</span>
+                          <ExternalLink size={14} className="shrink-0 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground" />
+                        </a>
+                        <button onClick={() => addToSelected(portal.name, news)}
+                          className="px-2 py-1 mr-2 text-muted-foreground hover:text-primary transition-colors" title="Adicionar à seleção">
+                          <Plus size={14} />
+                        </button>
+                      </li>
+                    ))
+                  )}
+                </ul>
+              )}
             </div>
           ))}
         </div>
