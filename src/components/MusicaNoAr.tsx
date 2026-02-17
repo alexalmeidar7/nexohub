@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Music, Play, Pause, Disc3 } from "lucide-react";
+import { Music, Disc3, FolderOpen } from "lucide-react";
 
 interface MusicData {
   titulo: string;
@@ -24,14 +24,15 @@ function parseXmlString(xmlStr: string): MusicData | null {
     const duracaoStr = doc.querySelector("duracao")?.textContent || doc.querySelector("duration")?.textContent || "0";
     const capa = doc.querySelector("capa")?.textContent || doc.querySelector("cover")?.textContent || "";
 
-    // Parse duracao - could be "mm:ss" or seconds
     let duracao = 0;
     if (duracaoStr.includes(":")) {
       const parts = duracaoStr.split(":").map(Number);
       if (parts.length === 2) duracao = parts[0] * 60 + parts[1];
       else if (parts.length === 3) duracao = parts[0] * 3600 + parts[1] * 60 + parts[2];
     } else {
-      duracao = parseInt(duracaoStr, 10) || 0;
+      duracao = parseFloat(duracaoStr) || 0;
+      // If value > 1000, likely in milliseconds
+      if (duracao > 1000) duracao = duracao / 1000;
     }
 
     return { titulo, artista, duracao, capa };
@@ -44,6 +45,19 @@ function formatTime(seconds: number): string {
   const m = Math.floor(seconds / 60);
   const s = Math.floor(seconds % 60);
   return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+}
+
+async function fetchCoverFromiTunes(titulo: string, artista: string): Promise<string> {
+  try {
+    const query = encodeURIComponent(`${artista} ${titulo}`);
+    const res = await fetch(`https://itunes.apple.com/search?term=${query}&media=music&limit=1`);
+    const data = await res.json();
+    if (data.results && data.results.length > 0) {
+      // Get high-res artwork (replace 100x100 with 600x600)
+      return data.results[0].artworkUrl100?.replace("100x100", "600x600") || "";
+    }
+  } catch { /* silent */ }
+  return "";
 }
 
 export function getMusicData(): { music: MusicData; elapsed: number } | null {
@@ -62,18 +76,31 @@ export function getMusicData(): { music: MusicData; elapsed: number } | null {
 
 export default function MusicaNoAr() {
   const [xmlUrl, setXmlUrl] = useState(() => localStorage.getItem(MUSIC_XML_URL_KEY) || "");
-  const [xmlInput, setXmlInput] = useState("");
   const [music, setMusic] = useState<MusicData | null>(null);
   const [elapsed, setElapsed] = useState(0);
   const [startTime, setStartTime] = useState<number | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const fetchIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const [mode, setMode] = useState<"url" | "manual">("url");
   const [fetchError, setFetchError] = useState("");
+  const coverCacheRef = useRef<Record<string, string>>({});
 
-  const processMusic = useCallback((data: MusicData) => {
+  const processMusic = useCallback(async (data: MusicData) => {
     const prevRaw = localStorage.getItem(MUSIC_DATA_KEY);
     const prev: MusicData | null = prevRaw ? JSON.parse(prevRaw) : null;
+
+    // Fetch cover from iTunes if not in XML
+    if (!data.capa) {
+      const cacheKey = `${data.artista}-${data.titulo}`;
+      if (coverCacheRef.current[cacheKey]) {
+        data.capa = coverCacheRef.current[cacheKey];
+      } else {
+        const cover = await fetchCoverFromiTunes(data.titulo, data.artista);
+        if (cover) {
+          data.capa = cover;
+          coverCacheRef.current[cacheKey] = cover;
+        }
+      }
+    }
 
     // Only reset timer if song changed
     if (!prev || prev.titulo !== data.titulo || prev.artista !== data.artista) {
@@ -84,6 +111,10 @@ export default function MusicaNoAr() {
       setStartTime(now);
       setElapsed(0);
     } else {
+      // Update cover if it was fetched
+      if (data.capa && (!prev.capa || prev.capa !== data.capa)) {
+        localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify({ ...prev, capa: data.capa }));
+      }
       setMusic(data);
     }
   }, []);
@@ -92,23 +123,23 @@ export default function MusicaNoAr() {
     if (!xmlUrl.trim()) return;
     try {
       setFetchError("");
-      const res = await fetch(xmlUrl.trim());
+      const res = await fetch(xmlUrl.trim(), { cache: "no-store" });
       const text = await res.text();
       const parsed = parseXmlString(text);
-      if (parsed) processMusic(parsed);
+      if (parsed) await processMusic(parsed);
     } catch {
-      setFetchError("Erro ao buscar XML");
+      setFetchError("Erro ao carregar arquivo XML");
     }
   }, [xmlUrl, processMusic]);
 
-  // Fetch XML every 3 seconds
+  // Fetch XML every 5 seconds
   useEffect(() => {
-    if (mode === "url" && xmlUrl.trim()) {
+    if (xmlUrl.trim()) {
       fetchXml();
-      fetchIntervalRef.current = setInterval(fetchXml, 3000);
+      fetchIntervalRef.current = setInterval(fetchXml, 5000);
       return () => { if (fetchIntervalRef.current) clearInterval(fetchIntervalRef.current); };
     }
-  }, [mode, xmlUrl, fetchXml]);
+  }, [xmlUrl, fetchXml]);
 
   // Timer
   useEffect(() => {
@@ -132,18 +163,31 @@ export default function MusicaNoAr() {
     }
   }, []);
 
-  const handleManualXml = () => {
-    const parsed = parseXmlString(xmlInput);
-    if (parsed) {
-      processMusic(parsed);
-      setFetchError("");
-    } else {
-      setFetchError("XML inválido");
-    }
-  };
-
   const saveUrl = () => {
     localStorage.setItem(MUSIC_XML_URL_KEY, xmlUrl.trim());
+  };
+
+  const handleFileSelect = () => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".xml,text/xml,application/xml";
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = async (ev) => {
+        const text = ev.target?.result as string;
+        const parsed = parseXmlString(text);
+        if (parsed) {
+          await processMusic(parsed);
+          setFetchError("");
+        } else {
+          setFetchError("Arquivo XML inválido");
+        }
+      };
+      reader.readAsText(file);
+    };
+    input.click();
   };
 
   const progress = music && music.duracao > 0 ? Math.min(100, (elapsed / music.duracao) * 100) : 0;
@@ -152,24 +196,13 @@ export default function MusicaNoAr() {
     <div className="animate-fade-in space-y-6">
       <h3 className="text-xl text-primary">Música no Ar</h3>
 
-      {/* Mode toggle */}
-      <div className="flex gap-2">
-        <button onClick={() => setMode("url")}
-          className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${mode === "url" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground border border-border"}`}>
-          URL do XML
-        </button>
-        <button onClick={() => setMode("manual")}
-          className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${mode === "manual" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground border border-border"}`}>
-          Colar XML
-        </button>
-      </div>
-
-      {mode === "url" ? (
+      {/* URL input + file button */}
+      <div className="space-y-3">
         <div className="flex gap-2">
           <input
             value={xmlUrl}
             onChange={(e) => setXmlUrl(e.target.value)}
-            placeholder="URL do XML da música (atualiza a cada 3s)"
+            placeholder="URL do arquivo XML (atualiza a cada 5s)"
             className="flex-1 bg-muted border border-border p-3 rounded-lg text-foreground placeholder:text-muted-foreground outline-none focus:ring-1 focus:ring-primary"
           />
           <button onClick={saveUrl}
@@ -177,21 +210,12 @@ export default function MusicaNoAr() {
             Salvar URL
           </button>
         </div>
-      ) : (
-        <div className="space-y-2">
-          <textarea
-            value={xmlInput}
-            onChange={(e) => setXmlInput(e.target.value)}
-            placeholder={`Cole o XML aqui. Exemplo:\n<musica>\n  <titulo>Nome da Música</titulo>\n  <artista>Nome do Artista</artista>\n  <duracao>03:45</duracao>\n  <capa>https://url-da-capa.jpg</capa>\n</musica>`}
-            rows={6}
-            className="w-full bg-muted border border-border p-3 rounded-lg text-foreground placeholder:text-muted-foreground outline-none focus:ring-1 focus:ring-primary font-mono text-xs"
-          />
-          <button onClick={handleManualXml}
-            className="bg-primary text-primary-foreground px-4 py-2 rounded-lg font-bold hover:brightness-95 transition-all">
-            Processar XML
-          </button>
-        </div>
-      )}
+        <button onClick={handleFileSelect}
+          className="flex items-center gap-2 bg-muted border border-border px-4 py-2 rounded-lg text-foreground hover:bg-muted/80 transition-all text-xs">
+          <FolderOpen size={14} />
+          Carregar arquivo XML local
+        </button>
+      </div>
 
       {fetchError && <p className="text-destructive text-xs">{fetchError}</p>}
 
@@ -236,7 +260,6 @@ export default function MusicaNoAr() {
                 <span className="text-muted-foreground font-mono text-sm">{formatTime(music.duracao)}</span>
               </div>
 
-              {/* Progress percentage */}
               <p className="text-[10px] text-muted-foreground text-right">{Math.round(progress)}% concluído</p>
             </div>
           </div>
@@ -244,7 +267,7 @@ export default function MusicaNoAr() {
       ) : (
         <div className="bg-muted rounded-2xl border border-border p-6 text-center">
           <Disc3 size={40} className="text-muted-foreground mx-auto mb-3" />
-          <p className="text-muted-foreground">Nenhuma música sendo reproduzida. Insira a URL do XML ou cole o XML manualmente.</p>
+          <p className="text-muted-foreground">Nenhuma música sendo reproduzida. Insira a URL do arquivo XML ou carregue um arquivo local.</p>
         </div>
       )}
 
@@ -255,7 +278,7 @@ export default function MusicaNoAr() {
   <titulo>Nome da Música</titulo>
   <artista>Nome do Artista</artista>
   <duracao>03:45</duracao>  <!-- mm:ss ou segundos -->
-  <capa>https://url-da-capa.jpg</capa>
+  <capa>https://url-da-capa.jpg</capa>  <!-- opcional, busca automática via iTunes -->
 </musica>`}</pre>
       </div>
     </div>
