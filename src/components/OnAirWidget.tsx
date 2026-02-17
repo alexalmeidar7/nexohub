@@ -64,7 +64,7 @@ export default function OnAirWidget() {
 
   if (!onAir) {
     return (
-      <div className="rounded-xl p-5" style={{ backgroundColor: "#dff06f" }}>
+      <div className="rounded-xl p-5" style={{ backgroundColor: "#dff06f", height: 330 }}>
         <div className="flex items-center gap-2 mb-2">
           <Radio size={16} className="text-gray-600" />
           <span className="font-semibold text-gray-600 text-sm">No Ar</span>
@@ -77,8 +77,26 @@ export default function OnAirWidget() {
   const { programa, progress } = onAir;
 
   return (
-    <div className="rounded-xl relative overflow-hidden" style={{ backgroundColor: "#dff06f", minHeight: 140 }}>
-      {/* Presenter photo as background - no opacity, no top crop, fully aligned right */}
+    <div className="rounded-xl relative overflow-hidden flex flex-col" style={{ backgroundColor: "#dff06f", height: 330 }}>
+      {/* Program seal as background aligned left */}
+      {programa.selo && (
+        <img
+          src={programa.selo}
+          alt="Selo"
+          className="absolute pointer-events-none"
+          style={{
+            left: 0,
+            top: 0,
+            height: "100%",
+            width: "auto",
+            opacity: 0.1,
+            objectFit: "contain",
+            objectPosition: "left top",
+          }}
+        />
+      )}
+
+      {/* Presenter photo as background - fully aligned right, no opacity, no crop */}
       {apresentadorFoto && (
         <img
           src={apresentadorFoto}
@@ -95,13 +113,13 @@ export default function OnAirWidget() {
       )}
 
       {/* Content on top */}
-      <div className="relative z-10 p-5 pb-0">
-        <div className="flex items-center gap-2 mb-2">
+      <div className="relative z-10 p-5 flex-1">
+        <div className="flex items-center gap-2 mb-3">
           <Radio size={16} className="text-gray-700 animate-pulse" />
-          <span className="font-bold text-gray-700 text-sm">NO AR</span>
+          <span className="font-bold text-gray-700 text-sm animate-pulse">NO AR</span>
         </div>
 
-        {/* Seal 40% size, aligned left */}
+        {/* Seal 40% size, aligned left, dark gray */}
         {programa.selo && (
           <img
             src={programa.selo}
@@ -121,16 +139,16 @@ export default function OnAirWidget() {
         </div>
       </div>
 
-      {/* Progress bar aligned to bottom of box */}
-      <div className="relative z-10 mt-3 px-0">
+      {/* Progress bar at very bottom */}
+      <div className="relative z-10 mt-auto">
         <div className="w-full h-1 bg-gray-300 overflow-hidden">
           <div
             className="h-full bg-gray-700 transition-all duration-1000"
             style={{ width: `${progress}%` }}
           />
         </div>
-        <div className="px-5 pb-1">
-          <p className="text-[10px] text-gray-500 text-right">{Math.round(progress)}%</p>
+        <div className="flex justify-end px-3 pb-1">
+          <p className="text-[10px] text-gray-500">{Math.round(progress)}%</p>
         </div>
       </div>
     </div>

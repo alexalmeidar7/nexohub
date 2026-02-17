@@ -162,11 +162,11 @@ export default function Dashboard() {
                 Bem-vindo ao MasterView. Selecione uma opção no menu lateral.
               </p>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <WeatherWidget />
+                <div className="space-y-6">
+                  <WeatherWidget />
+                  <MusicWidget />
+                </div>
                 <OnAirWidget />
-              </div>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <MusicWidget />
               </div>
             </div>
           )}

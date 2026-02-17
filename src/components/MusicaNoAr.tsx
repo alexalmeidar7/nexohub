@@ -81,6 +81,10 @@ export default function MusicaNoAr() {
   const fetchIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [fetchError, setFetchError] = useState("");
   const coverCacheRef = useRef<Record<string, string>>({});
+  const [fileLoaded, setFileLoaded] = useState(false);
+  const [countdown, setCountdown] = useState(5);
+  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const selectedFileRef = useRef<File | null>(null);
 
   const processMusic = useCallback(async (data: MusicData) => {
     const prevRaw = localStorage.getItem(MUSIC_DATA_KEY);
@@ -127,14 +131,47 @@ export default function MusicaNoAr() {
     }
   }, [xmlUrl, processMusic]);
 
-  // Fetch XML every 5 seconds
+  const readLocalFile = useCallback(async () => {
+    const file = selectedFileRef.current;
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async (ev) => {
+      const text = ev.target?.result as string;
+      const parsed = parseXmlString(text);
+      if (parsed) {
+        await processMusic(parsed);
+        setFetchError("");
+      } else {
+        setFetchError("Arquivo XML inválido");
+      }
+    };
+    reader.readAsText(file);
+  }, [processMusic]);
+
+  // Fetch XML every 5 seconds (URL mode)
   useEffect(() => {
-    if (xmlUrl.trim()) {
+    if (xmlUrl.trim() && !fileLoaded) {
       fetchXml();
       fetchIntervalRef.current = setInterval(fetchXml, 5000);
       return () => { if (fetchIntervalRef.current) clearInterval(fetchIntervalRef.current); };
     }
-  }, [xmlUrl, fetchXml]);
+  }, [xmlUrl, fetchXml, fileLoaded]);
+
+  // File reload countdown
+  useEffect(() => {
+    if (!fileLoaded) return;
+    setCountdown(5);
+    countdownRef.current = setInterval(() => {
+      setCountdown(prev => {
+        if (prev <= 1) {
+          readLocalFile();
+          return 5;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => { if (countdownRef.current) clearInterval(countdownRef.current); };
+  }, [fileLoaded, readLocalFile]);
 
   // Timer - high precision
   useEffect(() => {
@@ -170,6 +207,9 @@ export default function MusicaNoAr() {
     input.onchange = (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (!file) return;
+      selectedFileRef.current = file;
+      setFileLoaded(true);
+      // Read immediately
       const reader = new FileReader();
       reader.onload = async (ev) => {
         const text = ev.target?.result as string;
@@ -187,7 +227,6 @@ export default function MusicaNoAr() {
   };
 
   const progress = music && music.duracao > 0 ? Math.min(100, (elapsed / music.duracao) * 100) : 0;
-  const remaining = music ? Math.max(0, music.duracao - elapsed) : 0;
 
   return (
     <div className="animate-fade-in space-y-6">
@@ -197,7 +236,7 @@ export default function MusicaNoAr() {
       <div className="flex gap-2">
         <input
           value={xmlUrl}
-          onChange={(e) => setXmlUrl(e.target.value)}
+          onChange={(e) => { setXmlUrl(e.target.value); setFileLoaded(false); selectedFileRef.current = null; }}
           placeholder="URL do arquivo XML (atualiza automaticamente a cada 5s)"
           className="flex-1 bg-muted border border-border p-3 rounded-lg text-foreground placeholder:text-muted-foreground outline-none focus:ring-1 focus:ring-primary"
         />
@@ -207,24 +246,9 @@ export default function MusicaNoAr() {
           style={{ backgroundColor: "#2e7d32" }}
         >
           <FolderOpen size={14} />
-          Carregar arquivo XML música
+          {fileLoaded ? `Atualizando arquivo em: ${countdown}s` : "Carregar arquivo XML música"}
         </button>
       </div>
-
-      {/* Countdown timer below URL */}
-      {music && (
-        <div className="flex items-center gap-3 bg-muted rounded-lg border border-border px-4 py-3">
-          <Music size={16} className="text-primary" />
-          <span className="text-sm text-muted-foreground">Tempo restante:</span>
-          <span className="font-mono text-xl font-bold text-primary">{formatTime(remaining)}</span>
-          <div className="flex-1 h-2 bg-background/50 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-primary rounded-full transition-all duration-100"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-        </div>
-      )}
 
       {fetchError && <p className="text-destructive text-xs">{fetchError}</p>}
 
@@ -252,10 +276,19 @@ export default function MusicaNoAr() {
               )}
             </div>
 
-            {/* Song Info - no duration shown, just title and artist */}
+            {/* Song Info */}
             <div className="flex-1 space-y-2">
               <p className="text-lg font-bold text-foreground">{music.titulo}</p>
               <p className="text-muted-foreground">{music.artista}</p>
+              {/* Progress bar */}
+              <div className="pt-2">
+                <div className="w-full h-2 bg-background/50 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-primary rounded-full transition-all duration-100"
+                    style={{ width: `${progress}%` }}
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </div>
