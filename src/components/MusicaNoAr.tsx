@@ -31,8 +31,8 @@ function parseXmlString(xmlStr: string): MusicData | null {
       else if (parts.length === 3) duracao = parts[0] * 3600 + parts[1] * 60 + parts[2];
     } else {
       duracao = parseFloat(duracaoStr) || 0;
-      // If value > 1000, likely in milliseconds
-      if (duracao > 1000) duracao = duracao / 1000;
+      // If value > 300 and no decimal, likely in milliseconds
+      if (duracao > 300) duracao = duracao / 1000;
     }
 
     return { titulo, artista, duracao, capa };
@@ -132,7 +132,7 @@ export default function MusicaNoAr() {
     }
   }, [xmlUrl, processMusic]);
 
-  // Fetch XML every 5 seconds
+  // Fetch XML every 5 seconds (auto-refresh)
   useEffect(() => {
     if (xmlUrl.trim()) {
       fetchXml();
@@ -141,14 +141,15 @@ export default function MusicaNoAr() {
     }
   }, [xmlUrl, fetchXml]);
 
-  // Timer
+  // Timer - high precision using milliseconds
   useEffect(() => {
     if (!music || !startTime) return;
-    intervalRef.current = setInterval(() => {
-      const now = Date.now();
-      const el = (now - startTime) / 1000;
+    const tick = () => {
+      const now = performance.now();
+      const el = (Date.now() - startTime) / 1000;
       setElapsed(Math.min(el, music.duracao));
-    }, 100);
+    };
+    intervalRef.current = setInterval(tick, 50);
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
   }, [music, startTime]);
 
@@ -163,9 +164,10 @@ export default function MusicaNoAr() {
     }
   }, []);
 
-  const saveUrl = () => {
+  // Auto-save URL on change
+  useEffect(() => {
     localStorage.setItem(MUSIC_XML_URL_KEY, xmlUrl.trim());
-  };
+  }, [xmlUrl]);
 
   const handleFileSelect = () => {
     const input = document.createElement("input");
@@ -202,13 +204,9 @@ export default function MusicaNoAr() {
           <input
             value={xmlUrl}
             onChange={(e) => setXmlUrl(e.target.value)}
-            placeholder="URL do arquivo XML (atualiza a cada 5s)"
+            placeholder="URL do arquivo XML (salva e atualiza automaticamente a cada 5s)"
             className="flex-1 bg-muted border border-border p-3 rounded-lg text-foreground placeholder:text-muted-foreground outline-none focus:ring-1 focus:ring-primary"
           />
-          <button onClick={saveUrl}
-            className="bg-primary text-primary-foreground px-4 py-2 rounded-lg font-bold hover:brightness-95 transition-all">
-            Salvar URL
-          </button>
         </div>
         <button onClick={handleFileSelect}
           className="flex items-center gap-2 bg-muted border border-border px-4 py-2 rounded-lg text-foreground hover:bg-muted/80 transition-all text-xs">

@@ -20,7 +20,7 @@ export default function MusicWidget() {
 
   if (!music) {
     return (
-      <div className="rounded-xl p-5 border border-gray-300" style={{ backgroundColor: "#aea4ee" }}>
+        <div className="rounded-xl p-5" style={{ backgroundColor: "#aea4ee" }}>
         <div className="flex items-center gap-2 mb-2">
           <Music size={16} className="text-gray-600" />
           <span className="font-semibold text-gray-600 text-sm">Música</span>
@@ -34,7 +34,7 @@ export default function MusicWidget() {
   const progress = m.duracao > 0 ? Math.min(100, (elapsed / m.duracao) * 100) : 0;
 
   return (
-    <div className="rounded-xl p-5 border border-gray-300" style={{ backgroundColor: "#aea4ee" }}>
+    <div className="rounded-xl p-5" style={{ backgroundColor: "#aea4ee" }}>
       <div className="flex items-center gap-2 mb-3">
         <Music size={16} className="text-gray-700 animate-pulse" />
         <span className="font-bold text-gray-700 text-sm">♫ TOCANDO</span>

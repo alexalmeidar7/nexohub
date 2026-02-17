@@ -64,7 +64,7 @@ export default function OnAirWidget() {
 
   if (!onAir) {
     return (
-      <div className="rounded-xl p-5 border border-gray-300" style={{ backgroundColor: "#dff06f" }}>
+      <div className="rounded-xl p-5" style={{ backgroundColor: "#dff06f" }}>
         <div className="flex items-center gap-2 mb-2">
           <Radio size={16} className="text-gray-600" />
           <span className="font-semibold text-gray-600 text-sm">No Ar</span>
@@ -77,20 +77,41 @@ export default function OnAirWidget() {
   const { programa, progress } = onAir;
 
   return (
-    <div className="rounded-xl p-5 border border-gray-300" style={{ backgroundColor: "#dff06f" }}>
-      <div className="flex items-center gap-2 mb-3">
-        <Radio size={16} className="text-gray-700 animate-pulse" />
-        <span className="font-bold text-gray-700 text-sm">NO AR</span>
-      </div>
-      <div className="flex gap-4">
-        {apresentadorFoto && (
+    <div className="rounded-xl p-5 relative overflow-hidden" style={{ backgroundColor: "#dff06f", minHeight: 140 }}>
+      {/* Presenter photo as background, aligned right */}
+      {apresentadorFoto && (
+        <img
+          src={apresentadorFoto}
+          alt={apresentadorNome}
+          className="absolute opacity-40 object-cover pointer-events-none"
+          style={{
+            right: 50,
+            top: 10,
+            width: "50%",
+            height: "auto",
+            maxHeight: "100%",
+          }}
+        />
+      )}
+
+      {/* Content on top */}
+      <div className="relative z-10">
+        <div className="flex items-center gap-2 mb-2">
+          <Radio size={16} className="text-green-700 animate-pulse" />
+          <span className="font-bold text-green-700 text-sm">NO AR</span>
+        </div>
+
+        {/* Seal in dark gray, aligned left below NO AR */}
+        {programa.selo && (
           <img
-            src={apresentadorFoto}
-            alt={apresentadorNome}
-            className="w-20 h-20 object-cover rounded-lg border border-gray-300"
+            src={programa.selo}
+            alt="Selo"
+            className="h-16 rounded mb-3"
+            style={{ filter: "grayscale(100%) brightness(0.3)" }}
           />
         )}
-        <div className="flex-1 space-y-1">
+
+        <div className="space-y-1">
           <p className="font-bold text-gray-800">{programa.nome}</p>
           <p className="text-gray-600 text-xs">{apresentadorNome}</p>
           <p className="text-gray-600 text-xs">
@@ -98,19 +119,17 @@ export default function OnAirWidget() {
           </p>
           <p className="text-gray-500 text-xs">{programa.estudio}</p>
         </div>
-        {programa.selo && (
-          <img src={programa.selo} alt="Selo" className="h-20 rounded opacity-80" />
-        )}
-      </div>
-      {/* Thinner progress bar */}
-      <div className="mt-3">
-        <div className="w-full h-1 bg-gray-300 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-gray-700 rounded-full transition-all duration-1000"
-            style={{ width: `${progress}%` }}
-          />
+
+        {/* Thin progress bar */}
+        <div className="mt-3">
+          <div className="w-full h-1 bg-gray-300 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-gray-700 rounded-full transition-all duration-1000"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+          <p className="text-[10px] text-gray-500 mt-1 text-right">{Math.round(progress)}% concluído</p>
         </div>
-        <p className="text-[10px] text-gray-500 mt-1 text-right">{Math.round(progress)}% concluído</p>
       </div>
     </div>
   );
