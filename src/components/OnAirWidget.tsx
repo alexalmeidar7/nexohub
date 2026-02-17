@@ -112,7 +112,7 @@ export default function OnAirWidget() {
         <div
           className="absolute top-0 rounded-xl overflow-hidden flex flex-col transition-all duration-500 ease-in-out"
           style={{
-            backgroundColor: "#b8d4e3",
+            backgroundColor: "#2d2d2d",
             height: 330,
             right: 0,
             width: isHovered ? "100%" : "40px",
@@ -123,7 +123,7 @@ export default function OnAirWidget() {
           {!isHovered && (
             <div className="h-full flex items-center justify-center">
               <span
-                className="text-gray-600 font-semibold text-[10px] uppercase tracking-wider whitespace-nowrap"
+                className="text-gray-300 font-semibold text-[10px] uppercase tracking-wider whitespace-nowrap"
                 style={{ writingMode: "vertical-rl", transform: "rotate(180deg)" }}
               >
                 Próximo programa
@@ -168,8 +168,8 @@ export default function OnAirWidget() {
 
               <div className="relative z-10 p-5 animate-fade-in">
                 <div className="flex items-center gap-2">
-                  <SkipForward size={16} className="text-gray-700" />
-                  <span className="font-bold text-gray-700 text-sm">PRÓXIMO PROGRAMA</span>
+                  <SkipForward size={16} className="text-gray-300" />
+                  <span className="font-bold text-gray-300 text-sm">PRÓXIMO PROGRAMA</span>
                 </div>
 
                 {nextProgram.selo && (
@@ -177,16 +177,16 @@ export default function OnAirWidget() {
                     src={nextProgram.selo}
                     alt="Selo"
                     className="rounded mt-3"
-                    style={{ filter: "grayscale(100%) brightness(0.3)", width: "45%", height: "auto" }}
+                    style={{ filter: "grayscale(100%) brightness(1.5)", width: "45%", height: "auto" }}
                   />
                 )}
               </div>
 
               <div className="relative z-10 mt-auto px-5 pb-4 animate-fade-in">
                 <div className="flex items-center gap-4 mb-2 flex-wrap">
-                  <p className="font-bold text-gray-800">{nextProgram.nome}</p>
-                  <p className="text-gray-600 text-xs">{nextApresentadorNome}</p>
-                  <p className="text-gray-600 text-xs">
+                  <p className="font-bold text-white">{nextProgram.nome}</p>
+                  <p className="text-gray-400 text-xs">{nextApresentadorNome}</p>
+                  <p className="text-gray-400 text-xs">
                     {nextProgram.horarioInicio} — {nextProgram.horarioFim}
                   </p>
                 </div>
