@@ -96,15 +96,15 @@ export default function WeatherWidget() {
           <p className="text-gray-500 text-xs">{getLabel(weather.weatherCode)}</p>
         </div>
       </div>
-      <p className="text-3xl font-light text-gray-700 mb-3">{weather.temp}°C</p>
-      <div className="grid grid-cols-2 gap-2 text-xs">
+      <p className="text-5xl font-light text-gray-700 mb-4">{weather.temp}°C</p>
+      <div className="flex items-center gap-4 text-xs flex-wrap">
         <div className="flex items-center gap-1 text-gray-500">
           <Thermometer size={12} /> ↓{weather.tempMin}° / ↑{weather.tempMax}°
         </div>
         <div className="flex items-center gap-1 text-gray-500">
           <Droplets size={12} /> {weather.humidity}%
         </div>
-        <div className="flex items-center gap-1 text-gray-500 col-span-2">
+        <div className="flex items-center gap-1 text-gray-500">
           <CloudRain size={12} /> Chuva: {weather.rainChance}%
         </div>
       </div>
