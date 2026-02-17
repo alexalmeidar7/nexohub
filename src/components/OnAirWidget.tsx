@@ -125,7 +125,7 @@ export default function OnAirWidget() {
             src={programa.selo}
             alt="Selo"
             className="rounded mt-3"
-            style={{ filter: "grayscale(100%) brightness(0.3)", width: "40%", height: "auto" }}
+            style={{ filter: "grayscale(100%) brightness(0.3)", width: "80%", height: "auto" }}
           />
         )}
       </div>
