@@ -317,7 +317,7 @@ export default function MusicaNoAr() {
             <div className="flex items-center justify-center gap-2">
               <Clock size={20} className="text-violet-400" />
               <span className="text-3xl font-bold font-mono text-zinc-200">
-                {String(Math.floor(Math.max(0, timeLeft) / 60)).padStart(2, "0")}
+                {Math.floor(Math.max(0, timeLeft) / 60)}
                 <span className="text-sm text-zinc-400 ml-1">min</span>
                 {" "}
                 {String(Math.floor(Math.max(0, timeLeft) % 60)).padStart(2, "0")}
