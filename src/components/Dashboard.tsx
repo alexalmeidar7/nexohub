@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Home, Sun, FileText, Mic2, PlaySquare, Music, Settings } from "lucide-react";
+import { Home, Sun, FileText, Mic2, PlaySquare, Music, Settings, Copy } from "lucide-react";
 import ApresentadorForm from "./ApresentadorForm";
 import ProgramaForm from "./ProgramaForm";
 import PrevisaoTempo from "./PrevisaoTempo";
@@ -196,9 +196,9 @@ const SELECTED_NEWS_KEY = "masterview_selected_news";
 const SELECTED_COTACOES_KEY = "masterview_selected_cotacoes";
 
 function DashboardXmlFields() {
-  const [weatherXml, setWeatherXml] = useState("");
-  const [newsXml, setNewsXml] = useState("");
-  const [musicXml, setMusicXml] = useState("");
+  const [weatherUrl, setWeatherUrl] = useState("");
+  const [newsUrl, setNewsUrl] = useState("");
+  const [musicUrl, setMusicUrl] = useState("");
 
   useEffect(() => {
     const update = () => {
@@ -211,7 +211,8 @@ function DashboardXmlFields() {
             const { latitude, longitude, name } = geo.results[0];
             const wx = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code&timezone=auto&forecast_days=1`);
             const d = await wx.json();
-            setWeatherXml(`<?xml version="1.0" encoding="UTF-8"?>\n<tempo>\n  <cidade>${name}</cidade>\n  <temperatura>${Math.round(d.current.temperature_2m)}</temperatura>\n  <humidade>${d.current.relative_humidity_2m}</humidade>\n  <condicao_codigo>${d.current.weather_code}</condicao_codigo>\n  <minima>${Math.round(d.daily.temperature_2m_min[0])}</minima>\n  <maxima>${Math.round(d.daily.temperature_2m_max[0])}</maxima>\n  <chance_chuva>${d.daily.precipitation_probability_max[0] ?? 0}</chance_chuva>\n</tempo>`);
+            const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<tempo>\n  <cidade>${name}</cidade>\n  <temperatura>${Math.round(d.current.temperature_2m)}</temperatura>\n  <humidade>${d.current.relative_humidity_2m}</humidade>\n  <condicao_codigo>${d.current.weather_code}</condicao_codigo>\n  <minima>${Math.round(d.daily.temperature_2m_min[0])}</minima>\n  <maxima>${Math.round(d.daily.temperature_2m_max[0])}</maxima>\n  <chance_chuva>${d.daily.precipitation_probability_max[0] ?? 0}</chance_chuva>\n</tempo>`;
+            setWeatherUrl(URL.createObjectURL(new Blob([xml], { type: "application/xml" })));
           }).catch(() => {});
       }
 
@@ -222,16 +223,18 @@ function DashboardXmlFields() {
         if (news.length || cots.length) {
           const nXml = news.map((n: any) => `  <noticia>\n    <titulo>${n.title?.replace(/&/g,"&amp;").replace(/</g,"&lt;")}</titulo>\n    <imagem>${n.imageUrl || ""}</imagem>\n  </noticia>`).join("\n");
           const cXml = cots.map((c: any) => `  <cotacao>\n    <nome>${c.name}</nome>\n    <valor>${c.value}</valor>\n  </cotacao>`).join("\n");
-          setNewsXml(`<?xml version="1.0" encoding="UTF-8"?>\n<noticias>\n${nXml}\n${cXml}\n</noticias>`);
+          const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<noticias>\n${nXml}\n${cXml}\n</noticias>`;
+          setNewsUrl(URL.createObjectURL(new Blob([xml], { type: "application/xml" })));
         }
       } catch {}
 
       // Music XML
       const m = getMusicData();
       if (m) {
-        setMusicXml(`<?xml version="1.0" encoding="UTF-8"?>\n<musica_agora>\n  <titulo>${m.music.titulo}</titulo>\n  <interprete>${m.music.artista}</interprete>\n  <capa>${m.music.capa || ""}</capa>\n</musica_agora>`);
+        const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<musica_agora>\n  <titulo>${m.music.titulo}</titulo>\n  <interprete>${m.music.artista}</interprete>\n  <capa>${m.music.capa || ""}</capa>\n</musica_agora>`;
+        setMusicUrl(URL.createObjectURL(new Blob([xml], { type: "application/xml" })));
       } else {
-        setMusicXml("");
+        setMusicUrl("");
       }
     };
     update();
@@ -240,25 +243,22 @@ function DashboardXmlFields() {
   }, []);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-      {weatherXml && (
-        <div className="space-y-1">
-          <p className="text-xs font-semibold text-gray-600">XML TEMPO</p>
-          <textarea readOnly value={weatherXml} className="w-full bg-white border border-gray-300 rounded-lg p-2 text-[10px] font-mono text-gray-700 min-h-[120px] resize-y" />
-        </div>
-      )}
-      {newsXml && (
-        <div className="space-y-1">
-          <p className="text-xs font-semibold text-gray-600">XML NOTICIAS</p>
-          <textarea readOnly value={newsXml} className="w-full bg-white border border-gray-300 rounded-lg p-2 text-[10px] font-mono text-gray-700 min-h-[120px] resize-y" />
-        </div>
-      )}
-      {musicXml && (
-        <div className="space-y-1">
-          <p className="text-xs font-semibold text-gray-600">XML MUSICA AGORA</p>
-          <textarea readOnly value={musicXml} className="w-full bg-white border border-gray-300 rounded-lg p-2 text-[10px] font-mono text-gray-700 min-h-[120px] resize-y" />
-        </div>
-      )}
+    <div className="space-y-2">
+      {weatherUrl && <XmlLinkField label="XML TEMPO" url={weatherUrl} />}
+      {newsUrl && <XmlLinkField label="XML NOTICIAS" url={newsUrl} />}
+      {musicUrl && <XmlLinkField label="XML MUSICA AGORA" url={musicUrl} />}
+    </div>
+  );
+}
+
+function XmlLinkField({ label, url }: { label: string; url: string }) {
+  const [copied, setCopied] = useState(false);
+  const copy = () => { navigator.clipboard.writeText(url); setCopied(true); setTimeout(() => setCopied(false), 2000); };
+  return (
+    <div className="flex items-center gap-3 bg-white rounded-lg p-3 border border-gray-300 cursor-pointer hover:border-gray-500 transition-colors" onClick={copy}>
+      <span className="text-xs font-bold text-gray-600 whitespace-nowrap">{label}</span>
+      <span className="text-[10px] text-gray-500 truncate flex-1 font-mono">{url}</span>
+      {copied ? <span className="text-xs text-green-600 font-semibold whitespace-nowrap">Copiado!</span> : <Copy size={14} className="text-gray-400 shrink-0" />}
     </div>
   );
 }

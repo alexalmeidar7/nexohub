@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Music, User, Loader2, FolderOpen } from "lucide-react";
+import XmlLinkRow from "./XmlLinkRow";
 
 interface MusicData {
   titulo: string;
@@ -313,14 +314,7 @@ export default function MusicaNoAr() {
 
         {/* XML MUSICA AGORA */}
         {music && (
-          <div className="mt-4 space-y-2">
-            <p className="text-xs text-zinc-400 font-semibold">XML MUSICA AGORA</p>
-            <textarea
-              readOnly
-              value={`<?xml version="1.0" encoding="UTF-8"?>\n<musica_agora>\n  <titulo>${music.titulo}</titulo>\n  <interprete>${music.artista}</interprete>\n  <capa>${music.capa || ""}</capa>\n</musica_agora>`}
-              className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 text-[10px] font-mono text-zinc-300 min-h-[120px] resize-y"
-            />
-          </div>
+          <XmlLinkRow label="XML MUSICA AGORA" xmlContent={`<?xml version="1.0" encoding="UTF-8"?>\n<musica_agora>\n  <titulo>${music.titulo}</titulo>\n  <interprete>${music.artista}</interprete>\n  <capa>${music.capa || ""}</capa>\n</musica_agora>`} dark />
         )}
 
         {/* Monitoring indicator */}
