@@ -50,16 +50,9 @@ export default function MusicWidget() {
         <div className="flex-1 space-y-1 min-w-0">
           <p className="font-bold text-gray-800 truncate">{m.titulo}</p>
           <p className="text-gray-500 text-xs truncate">{m.artista}</p>
-          <div className="flex items-center gap-2 text-[10px] text-gray-500">
-            <span>{formatTime(elapsed)}</span>
-            <span>/</span>
-            <span>{formatTime(m.duracao)}</span>
+          <div className="text-[10px] text-gray-600 font-mono font-bold">
+            -{formatTime(Math.max(0, m.duracao - elapsed))}
           </div>
-        </div>
-      </div>
-      <div className="mt-3">
-        <div className="w-full h-1.5 bg-white/50 rounded-full overflow-hidden">
-          <div className="h-full bg-gray-700 rounded-full transition-all duration-1000" style={{ width: `${progress}%` }} />
         </div>
       </div>
     </div>
