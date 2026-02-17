@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Radio, SkipForward, ChevronRight } from "lucide-react";
 import { getApresentadores } from "./ApresentadorForm";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Programa {
   id: string;
@@ -17,15 +18,25 @@ const DIAS_MAP: Record<number, string> = {
   1: "Segunda", 2: "Terça", 3: "Quarta", 4: "Quinta", 5: "Sexta", 6: "Sábado", 0: "Domingo",
 };
 
-function getProgramas(): Programa[] {
-  try { return JSON.parse(localStorage.getItem("masterview_programas") || "[]"); } catch { return []; }
+async function getProgramas(): Promise<Programa[]> {
+  const { data } = await supabase.from("programas").select("*");
+  if (!data) return [];
+  return data.map(p => ({
+    id: p.id,
+    nome: p.nome,
+    apresentadorId: p.apresentador_id || "",
+    selo: p.selo || "",
+    diasSemana: p.dias_semana || [],
+    horarioInicio: p.horario_inicio,
+    horarioFim: p.horario_fim,
+    estudio: p.estudio || "",
+  }));
 }
 
-function getCurrentProgram(): { programa: Programa; progress: number } | null {
+function findCurrentProgram(programas: Programa[]): { programa: Programa; progress: number } | null {
   const now = new Date();
   const diaAtual = DIAS_MAP[now.getDay()];
   const horaAtual = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-  const programas = getProgramas();
 
   for (const p of programas) {
     if (p.diasSemana.includes(diaAtual) && horaAtual >= p.horarioInicio && horaAtual < p.horarioFim) {
@@ -41,11 +52,10 @@ function getCurrentProgram(): { programa: Programa; progress: number } | null {
   return null;
 }
 
-function getNextProgram(): Programa | null {
+function findNextProgram(programas: Programa[]): Programa | null {
   const now = new Date();
   const diaAtual = DIAS_MAP[now.getDay()];
   const horaAtual = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-  const programas = getProgramas();
 
   const todayPrograms = programas
     .filter(p => p.diasSemana.includes(diaAtual) && p.horarioInicio > horaAtual)
@@ -64,16 +74,16 @@ export default function OnAirWidget() {
   const [isHovered, setIsHovered] = useState(false);
 
   useEffect(() => {
-    const update = () => {
-      const current = getCurrentProgram();
+    const update = async () => {
+      const [programas, apresentadores] = await Promise.all([getProgramas(), getApresentadores()]);
+      const current = findCurrentProgram(programas);
       setOnAir(current);
-      const apresentadores = getApresentadores();
       if (current) {
         const ap = apresentadores.find(a => a.id === current.programa.apresentadorId);
         setApresentadorNome(ap?.nome || "—");
         setApresentadorFoto(ap?.foto || "");
       }
-      const next = getNextProgram();
+      const next = findNextProgram(programas);
       setNextProgram(next);
       if (next) {
         const ap = apresentadores.find(a => a.id === next.apresentadorId);
@@ -85,6 +95,7 @@ export default function OnAirWidget() {
     const interval = setInterval(update, 30 * 1000);
     return () => clearInterval(interval);
   }, []);
+
 
   if (!onAir) {
     return (

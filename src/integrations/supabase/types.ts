@@ -14,7 +14,230 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      apresentadores: {
+        Row: {
+          ativo: boolean | null
+          cargo: string | null
+          created_at: string
+          foto: string | null
+          id: string
+          instagram: string | null
+          nome: string
+          user_id: string
+        }
+        Insert: {
+          ativo?: boolean | null
+          cargo?: string | null
+          created_at?: string
+          foto?: string | null
+          id?: string
+          instagram?: string | null
+          nome: string
+          user_id: string
+        }
+        Update: {
+          ativo?: boolean | null
+          cargo?: string | null
+          created_at?: string
+          foto?: string | null
+          id?: string
+          instagram?: string | null
+          nome?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      custom_news_sites: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          rss_url: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          rss_url: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          rss_url?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      empresa_config: {
+        Row: {
+          endereco: string | null
+          facebook: string | null
+          id: string
+          instagram: string | null
+          logo: string | null
+          nome: string | null
+          site: string | null
+          telefone_comercial: string | null
+          telefone_participacao: string | null
+          updated_at: string
+          user_id: string
+          youtube: string | null
+        }
+        Insert: {
+          endereco?: string | null
+          facebook?: string | null
+          id?: string
+          instagram?: string | null
+          logo?: string | null
+          nome?: string | null
+          site?: string | null
+          telefone_comercial?: string | null
+          telefone_participacao?: string | null
+          updated_at?: string
+          user_id: string
+          youtube?: string | null
+        }
+        Update: {
+          endereco?: string | null
+          facebook?: string | null
+          id?: string
+          instagram?: string | null
+          logo?: string | null
+          nome?: string | null
+          site?: string | null
+          telefone_comercial?: string | null
+          telefone_participacao?: string | null
+          updated_at?: string
+          user_id?: string
+          youtube?: string | null
+        }
+        Relationships: []
+      }
+      programas: {
+        Row: {
+          apresentador_id: string | null
+          created_at: string
+          dias_semana: string[] | null
+          estudio: string | null
+          horario_fim: string
+          horario_inicio: string
+          id: string
+          nome: string
+          selo: string | null
+          user_id: string
+        }
+        Insert: {
+          apresentador_id?: string | null
+          created_at?: string
+          dias_semana?: string[] | null
+          estudio?: string | null
+          horario_fim: string
+          horario_inicio: string
+          id?: string
+          nome: string
+          selo?: string | null
+          user_id: string
+        }
+        Update: {
+          apresentador_id?: string | null
+          created_at?: string
+          dias_semana?: string[] | null
+          estudio?: string | null
+          horario_fim?: string
+          horario_inicio?: string
+          id?: string
+          nome?: string
+          selo?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "programas_apresentador_id_fkey"
+            columns: ["apresentador_id"]
+            isOneToOne: false
+            referencedRelation: "apresentadores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      selected_cotacoes: {
+        Row: {
+          change: string
+          created_at: string
+          id: string
+          name: string
+          user_id: string
+          value: string
+        }
+        Insert: {
+          change: string
+          created_at?: string
+          id?: string
+          name: string
+          user_id: string
+          value: string
+        }
+        Update: {
+          change?: string
+          created_at?: string
+          id?: string
+          name?: string
+          user_id?: string
+          value?: string
+        }
+        Relationships: []
+      }
+      selected_news: {
+        Row: {
+          created_at: string
+          id: string
+          image_url: string | null
+          portal: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          portal: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          portal?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_settings: {
+        Row: {
+          id: string
+          music_xml_url: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          music_xml_url?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          music_xml_url?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

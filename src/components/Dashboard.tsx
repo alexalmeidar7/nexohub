@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Home, Sun, FileText, Mic2, PlaySquare, Music, Settings, Copy, LogOut } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import ApresentadorForm from "./ApresentadorForm";
 import ProgramaForm from "./ProgramaForm";
 import PrevisaoTempo from "./PrevisaoTempo";
@@ -54,11 +55,11 @@ interface DashboardProps {
 
 export default function Dashboard({ onLogout }: DashboardProps) {
   const [currentPage, setCurrentPage] = useState<Page>("dashboard");
-  const [empresa, setEmpresa] = useState(getEmpresaConfig());
+  const [empresa, setEmpresa] = useState<import("./ConfiguracoesPage").EmpresaConfig>({} as any);
 
   // Refresh empresa config when switching to dashboard
   useEffect(() => {
-    setEmpresa(getEmpresaConfig());
+    getEmpresaConfig().then(setEmpresa);
   }, [currentPage]);
 
   return (
@@ -211,8 +212,6 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 }
 
 const WEATHER_KEY = "masterview_last_city";
-const SELECTED_NEWS_KEY = "masterview_selected_news";
-const SELECTED_COTACOES_KEY = "masterview_selected_cotacoes";
 
 function DashboardXmlFields() {
   const [weatherUrl, setWeatherUrl] = useState("");
@@ -220,27 +219,33 @@ function DashboardXmlFields() {
   const [musicUrl, setMusicUrl] = useState("");
 
   useEffect(() => {
-    const update = () => {
+    const update = async () => {
       // Weather XML
       const savedCity = localStorage.getItem(WEATHER_KEY);
       if (savedCity) {
-        fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(savedCity)}&count=1&language=pt`)
-          .then(r => r.json()).then(async geo => {
-            if (!geo.results?.length) return;
+        try {
+          const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(savedCity)}&count=1&language=pt`);
+          const geo = await geoRes.json();
+          if (geo.results?.length) {
             const { latitude, longitude, name } = geo.results[0];
             const wx = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code&timezone=auto&forecast_days=1`);
             const d = await wx.json();
             const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<tempo>\n  <cidade>${name}</cidade>\n  <temperatura>${Math.round(d.current.temperature_2m)}</temperatura>\n  <humidade>${d.current.relative_humidity_2m}</humidade>\n  <condicao_codigo>${d.current.weather_code}</condicao_codigo>\n  <minima>${Math.round(d.daily.temperature_2m_min[0])}</minima>\n  <maxima>${Math.round(d.daily.temperature_2m_max[0])}</maxima>\n  <chance_chuva>${d.daily.precipitation_probability_max[0] ?? 0}</chance_chuva>\n</tempo>`;
             setWeatherUrl(URL.createObjectURL(new Blob([xml], { type: "application/xml" })));
-          }).catch(() => {});
+          }
+        } catch {}
       }
 
-      // News XML
+      // News XML from DB
       try {
-        const news = JSON.parse(localStorage.getItem(SELECTED_NEWS_KEY) || "[]");
-        const cots = JSON.parse(localStorage.getItem(SELECTED_COTACOES_KEY) || "[]");
+        const [newsRes, cotRes] = await Promise.all([
+          supabase.from("selected_news").select("*"),
+          supabase.from("selected_cotacoes").select("*"),
+        ]);
+        const news = newsRes.data || [];
+        const cots = cotRes.data || [];
         if (news.length || cots.length) {
-          const nXml = news.map((n: any) => `  <noticia>\n    <titulo>${n.title?.replace(/&/g,"&amp;").replace(/</g,"&lt;")}</titulo>\n    <imagem>${n.imageUrl || ""}</imagem>\n  </noticia>`).join("\n");
+          const nXml = news.map((n: any) => `  <noticia>\n    <titulo>${n.title?.replace(/&/g,"&amp;").replace(/</g,"&lt;")}</titulo>\n    <imagem>${n.image_url || ""}</imagem>\n  </noticia>`).join("\n");
           const cXml = cots.map((c: any) => `  <cotacao>\n    <nome>${c.name}</nome>\n    <valor>${c.value}</valor>\n  </cotacao>`).join("\n");
           const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<noticias>\n${nXml}\n${cXml}\n</noticias>`;
           setNewsUrl(URL.createObjectURL(new Blob([xml], { type: "application/xml" })));
