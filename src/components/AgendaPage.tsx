@@ -45,9 +45,16 @@ interface Evento {
   data: string;
   local: string;
   descricao: string;
+  recorrencia: "unico" | "semanal" | "mensal";
   programa?: Programa;
   participantes?: Participante[];
 }
+
+const recorrenciaLabels: Record<string, string> = {
+  unico: "Somente este dia",
+  semanal: "Toda semana neste dia",
+  mensal: "Todo mês neste dia",
+};
 
 export default function AgendaPage() {
   const { user } = useAuth();
@@ -62,6 +69,7 @@ export default function AgendaPage() {
   const [formData, setFormData] = useState<Date | undefined>(undefined);
   const [formLocal, setFormLocal] = useState("");
   const [formDescricao, setFormDescricao] = useState("");
+  const [formRecorrencia, setFormRecorrencia] = useState<"unico" | "semanal" | "mensal">("unico");
   const [formParticipantes, setFormParticipantes] = useState<Participante[]>([
     { nome: "", instagram: "" },
   ]);
@@ -138,7 +146,8 @@ export default function AgendaPage() {
         data: format(formData, "yyyy-MM-dd"),
         local: formLocal,
         descricao: formDescricao,
-      })
+        recorrencia: formRecorrencia,
+      } as any)
       .select()
       .single();
 
@@ -161,6 +170,7 @@ export default function AgendaPage() {
     setFormData(undefined);
     setFormLocal("");
     setFormDescricao("");
+    setFormRecorrencia("unico");
     setFormParticipantes([{ nome: "", instagram: "" }]);
     setDialogOpen(false);
     fetchEventos();
@@ -174,17 +184,52 @@ export default function AgendaPage() {
   // Get unique locals for filter
   const locais = Array.from(new Set(eventos.map((e) => e.local).filter(Boolean)));
 
+  // Check if a recurring event matches a given date
+  const eventMatchesDate = (evt: Evento, dateStr: string) => {
+    if (evt.data === dateStr) return true;
+    const evtDate = new Date(evt.data + "T12:00:00");
+    const checkDate = new Date(dateStr + "T12:00:00");
+    if (checkDate < evtDate) return false; // no past recurrence
+    if (evt.recorrencia === "semanal") {
+      return evtDate.getDay() === checkDate.getDay();
+    }
+    if (evt.recorrencia === "mensal") {
+      return evtDate.getDate() === checkDate.getDate();
+    }
+    return false;
+  };
+
   // Filter events by selected date and local
   const filteredEventos = eventos.filter((e) => {
-    const matchDate = selectedDate
-      ? e.data === format(selectedDate, "yyyy-MM-dd")
-      : true;
+    const selStr = selectedDate ? format(selectedDate, "yyyy-MM-dd") : "";
+    const matchDate = selectedDate ? eventMatchesDate(e, selStr) : true;
     const matchLocal = filterLocal === "todos" || e.local === filterLocal;
     return matchDate && matchLocal;
   });
 
-  // Dates that have events (for calendar highlighting)
-  const eventDates = eventos.map((e) => new Date(e.data + "T12:00:00"));
+  // Dates that have events (for calendar highlighting) — expand recurring for current month view
+  const getEventDatesForCalendar = () => {
+    const dates: Date[] = [];
+    const now = new Date();
+    const startMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const endMonth = new Date(now.getFullYear(), now.getMonth() + 2, 0);
+    for (const evt of eventos) {
+      if (evt.recorrencia === "unico") {
+        dates.push(new Date(evt.data + "T12:00:00"));
+      } else {
+        const d = new Date(startMonth);
+        while (d <= endMonth) {
+          const ds = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+          if (eventMatchesDate(evt, ds)) {
+            dates.push(new Date(d));
+          }
+          d.setDate(d.getDate() + 1);
+        }
+      }
+    }
+    return dates;
+  };
+  const eventDates = getEventDatesForCalendar();
 
   const selectedPrograma = programas.find((p) => p.id === formProgramaId);
 
@@ -260,7 +305,21 @@ export default function AgendaPage() {
                 )}
               </div>
 
-              {/* Local */}
+              {/* Recurrence */}
+              <div>
+                <Label>Recorrência</Label>
+                <Select value={formRecorrencia} onValueChange={(v) => setFormRecorrencia(v as any)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="unico">Somente este dia</SelectItem>
+                    <SelectItem value="semanal">Toda semana neste dia</SelectItem>
+                    <SelectItem value="mensal">Todo mês neste dia</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
               <div>
                 <Label>Local</Label>
                 <Input
@@ -374,6 +433,11 @@ export default function AgendaPage() {
                       {format(new Date(evt.data + "T12:00:00"), "dd/MM/yyyy")}
                       {evt.programa && ` • ${evt.programa.horario_inicio} - ${evt.programa.horario_fim}`}
                     </p>
+                    {evt.recorrencia !== "unico" && (
+                      <span className="inline-block bg-primary/15 text-primary text-[10px] font-semibold px-2 py-0.5 rounded mt-0.5">
+                        🔁 {recorrenciaLabels[evt.recorrencia]}
+                      </span>
+                    )}
                     {evt.local && (
                       <p className="text-xs text-muted-foreground">
                         <MapPin size={12} className="inline mr-1" />
