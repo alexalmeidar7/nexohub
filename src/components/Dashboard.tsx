@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { Calendar as CalendarUI } from "@/components/ui/calendar";
 import { Home, Sun, FileText, Mic2, PlaySquare, Music, CalendarDays, Settings, LogOut } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import ApresentadorForm from "./ApresentadorForm";
@@ -170,12 +171,13 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               <p className="text-gray-500">
                 Bem-vindo ao MasterView. Selecione uma opção no menu lateral.
               </p>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="space-y-6">
                   <WeatherWidget />
                   <MusicWidget />
                 </div>
                 <OnAirWidget />
+                <DashboardAgenda />
               </div>
               <UnifiedXmlField />
             </div>
@@ -327,4 +329,114 @@ function useGlobalMusicXmlUpload() {
     const interval = setInterval(uploadMusicXml, 5000);
     return () => clearInterval(interval);
   }, [user]);
+}
+
+// Dashboard mini-agenda widget
+function DashboardAgenda() {
+  const { user } = useAuth();
+  const [eventos, setEventos] = useState<any[]>([]);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+
+  useEffect(() => {
+    if (!user) return;
+    const fetch = async () => {
+      const { data: evts } = await supabase
+        .from("agenda_eventos")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("data");
+      if (!evts) { setEventos([]); return; }
+      const programaIds = evts.map((e: any) => e.programa_id).filter(Boolean);
+      const { data: progs } = programaIds.length
+        ? await supabase.from("programas").select("*").in("id", programaIds)
+        : { data: [] };
+      setEventos(evts.map((e: any) => ({
+        ...e,
+        programa: (progs || []).find((p: any) => p.id === e.programa_id),
+      })));
+    };
+    fetch();
+  }, [user]);
+
+  const eventDatesSet = new Set(eventos.map((e) => e.data));
+  const eventDates = eventos.map((e) => new Date(e.data + "T12:00:00"));
+
+  const today = new Date();
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+
+  // Next 3 upcoming events (from today onwards)
+  const upcoming = eventos
+    .filter((e) => e.data >= todayStr)
+    .sort((a, b) => a.data.localeCompare(b.data))
+    .slice(0, 3);
+
+  // Events for selected date
+  const selDateStr = selectedDate
+    ? `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, "0")}-${String(selectedDate.getDate()).padStart(2, "0")}`
+    : "";
+  const dayEvents = eventos.filter((e) => e.data === selDateStr);
+
+  return (
+    <div className="space-y-4">
+      <div className="bg-white/80 rounded-2xl border border-gray-200 p-4">
+        <h4 className="text-sm font-semibold text-gray-700 mb-2">📅 Agenda</h4>
+        <DashboardCalendar
+          selected={selectedDate}
+          onSelect={setSelectedDate}
+          eventDates={eventDates}
+        />
+        {dayEvents.length > 0 && (
+          <div className="mt-3 space-y-1">
+            {dayEvents.map((evt: any) => (
+              <div key={evt.id} className="bg-green-100 border border-green-300 rounded-lg px-3 py-2 text-xs">
+                <p className="font-semibold text-green-900">{evt.programa?.nome || "Evento"}</p>
+                {evt.programa && <p className="text-green-700">{evt.programa.horario_inicio} - {evt.programa.horario_fim}</p>}
+                {evt.descricao && <p className="text-green-800">{evt.descricao}</p>}
+                {evt.local && <p className="text-green-600">📍 {evt.local}</p>}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {upcoming.length > 0 && (
+        <div className="bg-white/80 rounded-2xl border border-gray-200 p-4">
+          <h4 className="text-sm font-semibold text-gray-700 mb-2">Próximos Eventos</h4>
+          <div className="space-y-2">
+            {upcoming.map((evt: any) => {
+              const d = new Date(evt.data + "T12:00:00");
+              const dateStr = d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
+              return (
+                <div key={evt.id} className="flex items-center gap-3 bg-muted/50 rounded-lg px-3 py-2">
+                  <span className="text-xs font-bold text-primary bg-primary/10 rounded px-2 py-1">{dateStr}</span>
+                  <div className="text-xs">
+                    <p className="font-semibold text-foreground">{evt.programa?.nome || "Evento"}</p>
+                    {evt.programa && <p className="text-muted-foreground">{evt.programa.horario_inicio} - {evt.programa.horario_fim}</p>}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Small calendar for dashboard with green dots on event days
+function DashboardCalendar({ selected, onSelect, eventDates }: {
+  selected: Date | undefined;
+  onSelect: (d: Date | undefined) => void;
+  eventDates: Date[];
+}) {
+  return (
+    <CalendarUI
+      mode="single"
+      selected={selected}
+      onSelect={onSelect}
+      className="p-0 pointer-events-auto [&_.rdp-day]:h-7 [&_.rdp-day]:w-7 [&_.rdp-day]:text-xs"
+      modifiers={{ hasEvent: eventDates }}
+      modifiersClassNames={{ hasEvent: "bg-green-200 font-bold text-green-800" }}
+    />
+  );
 }
