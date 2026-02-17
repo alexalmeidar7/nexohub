@@ -1,11 +1,13 @@
 import { useState } from "react";
-import { Home, Sun, FileText, Mic2, PlaySquare } from "lucide-react";
+import { Home, Sun, FileText, Mic2, PlaySquare, Music } from "lucide-react";
 import ApresentadorForm from "./ApresentadorForm";
 import ProgramaForm from "./ProgramaForm";
 import PrevisaoTempo from "./PrevisaoTempo";
 import NoticiasPanel from "./NoticiasPanel";
 import WeatherWidget from "./WeatherWidget";
 import OnAirWidget from "./OnAirWidget";
+import MusicaNoAr from "./MusicaNoAr";
+import MusicWidget from "./MusicWidget";
 import logoMenu from "@/assets/logo-menu.png";
 import {
   Tooltip,
@@ -13,7 +15,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "programas";
+type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "programas" | "musica";
 
 const menuItems: { icon: typeof Home; label: string; page: Page }[] = [
   { icon: Home, label: "Home", page: "dashboard" },
@@ -21,6 +23,7 @@ const menuItems: { icon: typeof Home; label: string; page: Page }[] = [
   { icon: FileText, label: "Notícias", page: "noticias" },
   { icon: Mic2, label: "Apresentadores", page: "apresentadores" },
   { icon: PlaySquare, label: "Programas", page: "programas" },
+  { icon: Music, label: "Música tocando agora", page: "musica" },
 ];
 
 const pageTitle: Record<Page, string> = {
@@ -29,6 +32,7 @@ const pageTitle: Record<Page, string> = {
   noticias: "Notícias",
   apresentadores: "Apresentadores",
   programas: "Programas",
+  musica: "Música no Ar",
 };
 
 export default function Dashboard() {
@@ -93,12 +97,16 @@ export default function Dashboard() {
                 <WeatherWidget />
                 <OnAirWidget />
               </div>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <MusicWidget />
+              </div>
             </div>
           )}
           {currentPage === "previsao" && <PrevisaoTempo />}
           {currentPage === "noticias" && <NoticiasPanel />}
           {currentPage === "apresentadores" && <ApresentadorForm />}
           {currentPage === "programas" && <ProgramaForm />}
+          {currentPage === "musica" && <MusicaNoAr />}
         </section>
 
         <div className="absolute bottom-10 right-10 opacity-80">

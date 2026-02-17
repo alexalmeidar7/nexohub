@@ -29,7 +29,6 @@ function getCurrentProgram(): { programa: Programa; progress: number } | null {
 
   for (const p of programas) {
     if (p.diasSemana.includes(diaAtual) && horaAtual >= p.horarioInicio && horaAtual < p.horarioFim) {
-      // Calculate progress
       const [sh, sm] = p.horarioInicio.split(":").map(Number);
       const [eh, em] = p.horarioFim.split(":").map(Number);
       const startMin = sh * 60 + sm;
@@ -80,15 +79,15 @@ export default function OnAirWidget() {
   return (
     <div className="bg-muted rounded-xl p-5 border border-border">
       <div className="flex items-center gap-2 mb-3">
-        <Radio size={16} className="text-destructive animate-pulse" />
-        <span className="font-bold text-destructive text-sm">NO AR</span>
+        <Radio size={16} className="text-primary animate-pulse" />
+        <span className="font-bold text-primary text-sm">NO AR</span>
       </div>
       <div className="flex gap-4">
         {apresentadorFoto && (
           <img
             src={apresentadorFoto}
             alt={apresentadorNome}
-            className="w-16 h-20 object-cover rounded-lg border border-border"
+            className="w-20 h-20 object-cover rounded-lg border border-border"
           />
         )}
         <div className="flex-1 space-y-1">
@@ -100,12 +99,12 @@ export default function OnAirWidget() {
           <p className="text-muted-foreground text-xs">{programa.estudio}</p>
         </div>
         {programa.selo && (
-          <img src={programa.selo} alt="Selo" className="h-12 rounded opacity-60" />
+          <img src={programa.selo} alt="Selo" className="h-20 rounded opacity-80" />
         )}
       </div>
-      {/* Progress bar */}
+      {/* Thinner progress bar */}
       <div className="mt-3">
-        <div className="w-full h-1.5 bg-background/50 rounded-full overflow-hidden">
+        <div className="w-full h-1 bg-background/50 rounded-full overflow-hidden">
           <div
             className="h-full bg-primary rounded-full transition-all duration-1000"
             style={{ width: `${progress}%` }}

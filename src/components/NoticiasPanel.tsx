@@ -25,6 +25,14 @@ interface SelectedNews {
   imageUrl: string;
 }
 
+interface SelectedCotacao {
+  name: string;
+  value: string;
+  change: string;
+}
+
+const SELECTED_COTACOES_KEY = "masterview_selected_cotacoes";
+
 const PORTALS: Portal[] = [
   { name: "G1", rssUrl: "https://g1.globo.com/rss/g1/" },
   { name: "UOL", rssUrl: "https://rss.uol.com.br/feed/noticias.xml" },
@@ -98,6 +106,22 @@ export default function NoticiasPanel() {
   const [selectedNews, setSelectedNews] = useState<SelectedNews[]>(() => {
     try { return JSON.parse(localStorage.getItem(SELECTED_NEWS_KEY) || "[]"); } catch { return []; }
   });
+  const [selectedCotacoes, setSelectedCotacoes] = useState<SelectedCotacao[]>(() => {
+    try { return JSON.parse(localStorage.getItem(SELECTED_COTACOES_KEY) || "[]"); } catch { return []; }
+  });
+
+  const addCotacao = (c: CotacaoItem) => {
+    if (selectedCotacoes.some(sc => sc.name === c.name)) return;
+    const updated = [...selectedCotacoes, { name: c.name, value: c.value, change: c.change }];
+    setSelectedCotacoes(updated);
+    localStorage.setItem(SELECTED_COTACOES_KEY, JSON.stringify(updated));
+  };
+
+  const removeCotacao = (name: string) => {
+    const updated = selectedCotacoes.filter(sc => sc.name !== name);
+    setSelectedCotacoes(updated);
+    localStorage.setItem(SELECTED_COTACOES_KEY, JSON.stringify(updated));
+  };
 
   const allPortals = [...PORTALS, ...customSites];
 
@@ -220,7 +244,12 @@ export default function NoticiasPanel() {
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3">
               {cotacoes.map(c => (
-                <div key={c.name} className="bg-background/50 rounded-lg p-3 text-center">
+                <div key={c.name} className="bg-background/50 rounded-lg p-3 text-center relative group">
+                  <button onClick={() => addCotacao(c)}
+                    className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-primary transition-all"
+                    title="Adicionar cotação">
+                    <Plus size={12} />
+                  </button>
                   <p className="text-[10px] text-muted-foreground mb-1">{c.name}</p>
                   <p className="text-sm font-semibold text-foreground">{c.value}</p>
                   <div className={`flex items-center justify-center gap-1 text-xs mt-1 ${
@@ -235,6 +264,25 @@ export default function NoticiasPanel() {
           )}
         </div>
       </div>
+
+      {/* Selected Cotações */}
+      {selectedCotacoes.length > 0 && (
+        <div className="bg-muted rounded-xl border border-border overflow-hidden">
+          <div className={headerStyle}>📊 Cotações Selecionadas</div>
+          <div className="p-4 flex flex-wrap gap-2">
+            {selectedCotacoes.map(sc => (
+              <div key={sc.name} className="bg-background/50 rounded-lg px-3 py-2 flex items-center gap-2 text-xs">
+                <span className="font-semibold text-foreground">{sc.name}</span>
+                <span className="text-muted-foreground">{sc.value}</span>
+                <span className="text-muted-foreground">{sc.change}</span>
+                <button onClick={() => removeCotacao(sc.name)} className="text-destructive hover:text-destructive/80">
+                  <Trash2 size={10} />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* News Grid */}
       {loading && Object.keys(newsByPortal).length === 0 ? (
