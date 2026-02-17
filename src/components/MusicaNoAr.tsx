@@ -309,10 +309,16 @@ export default function MusicaNoAr() {
         {/* Countdown */}
         {music && music.duracao > 0 && (
           <div className="text-center">
-            <span className="text-3xl font-bold font-mono text-zinc-200 flex items-center justify-center gap-2">
+            <div className="flex items-center justify-center gap-2">
               <Clock size={20} className="text-violet-400" />
-              -{formatTime(timeLeft)}
-            </span>
+              <span className="text-3xl font-bold font-mono text-zinc-200">
+                {String(Math.floor(Math.max(0, timeLeft) / 60)).padStart(2, "0")}
+                <span className="text-sm text-zinc-400 ml-1">min</span>
+                {" "}
+                {String(Math.floor(Math.max(0, timeLeft) % 60)).padStart(2, "0")}
+                <span className="text-sm text-zinc-400 ml-1">seg</span>
+              </span>
+            </div>
           </div>
         )}
 

@@ -51,7 +51,7 @@ export default function MusicWidget() {
           <p className="font-bold text-gray-800 truncate">{m.titulo}</p>
           <p className="text-gray-500 text-xs truncate">{m.artista}</p>
           <div className="text-[10px] text-gray-600 font-mono font-bold">
-            -{formatTime(Math.max(0, m.duracao - elapsed))}
+            {String(Math.floor(Math.max(0, m.duracao - elapsed) / 60)).padStart(2, "0")}min {String(Math.floor(Math.max(0, m.duracao - elapsed) % 60)).padStart(2, "0")}seg
           </div>
         </div>
       </div>
