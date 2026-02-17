@@ -25,6 +25,7 @@ function parseXmlString(xmlStr: string): MusicData | null {
       doc.querySelector("title")?.textContent ||
       "Sem título";
     const artista =
+      doc.querySelector("interprete")?.textContent ||
       doc.querySelector("nome_interprete")?.textContent ||
       doc.querySelector("artista")?.textContent ||
       doc.querySelector("artist")?.textContent ||
