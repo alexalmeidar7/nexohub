@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Radio, SkipForward } from "lucide-react";
+import { Radio, SkipForward, ChevronRight } from "lucide-react";
 import { getApresentadores } from "./ApresentadorForm";
 
 interface Programa {
@@ -115,21 +115,11 @@ export default function OnAirWidget() {
             backgroundColor: "#2d2d2d",
             height: 330,
             right: 0,
-            width: isHovered ? "100%" : "40px",
+            width: isHovered ? "100%" : "0px",
             zIndex: isHovered ? 20 : 5,
+            opacity: isHovered ? 1 : 0,
           }}
         >
-          {/* Vertical label when collapsed */}
-          {!isHovered && (
-            <div className="h-full flex items-center justify-center">
-              <span
-                className="text-gray-300 font-semibold text-[10px] uppercase tracking-wider whitespace-nowrap"
-                style={{ writingMode: "vertical-rl", transform: "rotate(180deg)" }}
-              >
-                Próximo programa
-              </span>
-            </div>
-          )}
 
           {/* Full content when expanded */}
           {isHovered && (
@@ -238,11 +228,18 @@ export default function OnAirWidget() {
           />
         )}
 
-        <div className="relative z-10 p-5">
+        <div className="relative z-10 p-5 flex items-start justify-between">
           <div className="flex items-center gap-2">
             <Radio size={16} className="text-gray-700 animate-pulse" />
             <span className="font-bold text-gray-700 text-sm animate-pulse">NO AR</span>
           </div>
+
+          {nextProgram && (
+            <div className="flex items-center gap-1 bg-[#2d2d2d] rounded-full px-3 py-1 cursor-pointer">
+              <span className="text-gray-300 text-[10px] font-semibold uppercase tracking-wider">Próximo programa</span>
+              <ChevronRight size={12} className="text-gray-300" />
+            </div>
+          )}
 
           {programa.selo && (
             <img
