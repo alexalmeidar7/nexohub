@@ -172,11 +172,11 @@ export default function OnAirWidget() {
                 )}
               </div>
 
-              <div className="relative z-10 mt-auto px-5 pb-4 animate-fade-in">
-                <div className="flex items-center gap-4 mb-2 flex-wrap">
-                  <p className="font-bold text-white">{nextProgram.nome}</p>
-                  <p className="text-gray-400 text-xs">{nextApresentadorNome}</p>
-                  <p className="text-gray-400 text-xs">
+              <div className="absolute bottom-4 left-0 right-0 z-10 px-5 animate-fade-in">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4">
+                  <p className="font-bold text-white text-sm sm:text-base truncate">{nextProgram.nome}</p>
+                  <p className="text-gray-400 text-xs truncate">{nextApresentadorNome}</p>
+                  <p className="text-gray-400 text-xs whitespace-nowrap">
                     {nextProgram.horarioInicio} — {nextProgram.horarioFim}
                   </p>
                 </div>
@@ -251,11 +251,11 @@ export default function OnAirWidget() {
           )}
         </div>
 
-        <div className="relative z-10 mt-auto px-5">
-          <div className="flex items-center gap-4 mb-2 flex-wrap">
-            <p className="font-bold text-gray-800">{programa.nome}</p>
-            <p className="text-gray-600 text-xs">{apresentadorNome}</p>
-            <p className="text-gray-600 text-xs">
+        <div className="absolute bottom-[4px] left-0 right-0 z-10 px-5">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 mb-1">
+            <p className="font-bold text-gray-800 text-sm sm:text-base truncate">{programa.nome}</p>
+            <p className="text-gray-600 text-xs truncate">{apresentadorNome}</p>
+            <p className="text-gray-600 text-xs whitespace-nowrap">
               {programa.horarioInicio} — {programa.horarioFim}
             </p>
           </div>
