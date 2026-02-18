@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { CalendarIcon, Plus, Trash2, MapPin, Users, Instagram } from "lucide-react";
+import { CalendarIcon, Plus, Trash2, MapPin, Users, Instagram, Pencil, X, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
@@ -45,7 +45,8 @@ interface Evento {
   data: string;
   local: string;
   descricao: string;
-  recorrencia: "unico" | "semanal" | "mensal";
+  recorrencia: string;
+  prioridade: string;
   programa?: Programa;
   participantes?: Participante[];
 }
@@ -54,6 +55,21 @@ const recorrenciaLabels: Record<string, string> = {
   unico: "Somente este dia",
   semanal: "Toda semana neste dia",
   mensal: "Todo mês neste dia",
+  programa_semanal: "Programa semanal",
+};
+
+const prioridadeLabels: Record<string, string> = {
+  baixa: "Baixa",
+  normal: "Normal",
+  alta: "Alta",
+  urgente: "Urgente",
+};
+
+const prioridadeColors: Record<string, string> = {
+  baixa: "bg-blue-100 text-blue-800",
+  normal: "bg-gray-100 text-gray-800",
+  alta: "bg-orange-100 text-orange-800",
+  urgente: "bg-red-100 text-red-800",
 };
 
 export default function AgendaPage() {
@@ -63,16 +79,21 @@ export default function AgendaPage() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [filterLocal, setFilterLocal] = useState<string>("todos");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
-  // New event form
+  // Form
   const [formProgramaId, setFormProgramaId] = useState("");
   const [formData, setFormData] = useState<Date | undefined>(undefined);
   const [formLocal, setFormLocal] = useState("");
   const [formDescricao, setFormDescricao] = useState("");
-  const [formRecorrencia, setFormRecorrencia] = useState<"unico" | "semanal" | "mensal">("unico");
+  const [formRecorrencia, setFormRecorrencia] = useState<string>("unico");
+  const [formPrioridade, setFormPrioridade] = useState("normal");
   const [formParticipantes, setFormParticipantes] = useState<Participante[]>([
     { nome: "", instagram: "" },
   ]);
+
+  // Estúdios from programas
+  const estudios = Array.from(new Set(programas.map(p => p.estudio).filter(Boolean)));
 
   const fetchProgramas = useCallback(async () => {
     if (!user) return;
@@ -94,7 +115,6 @@ export default function AgendaPage() {
 
     if (!evts) { setEventos([]); return; }
 
-    // Fetch participantes and programas for each event
     const eventIds = evts.map((e: any) => e.id);
     const programaIds = evts.map((e: any) => e.programa_id).filter(Boolean);
 
@@ -109,6 +129,7 @@ export default function AgendaPage() {
 
     const enriched: Evento[] = evts.map((e: any) => ({
       ...e,
+      prioridade: e.prioridade || "normal",
       programa: (progs || []).find((p: any) => p.id === e.programa_id),
       participantes: (parts || []).filter((p: any) => p.evento_id === e.id),
     }));
@@ -135,43 +156,89 @@ export default function AgendaPage() {
     setFormParticipantes(updated);
   };
 
-  const handleSave = async () => {
-    if (!user || !formProgramaId || !formData) return;
-
-    const { data: evt, error } = await supabase
-      .from("agenda_eventos")
-      .insert({
-        user_id: user.id,
-        programa_id: formProgramaId,
-        data: format(formData, "yyyy-MM-dd"),
-        local: formLocal,
-        descricao: formDescricao,
-        recorrencia: formRecorrencia,
-      } as any)
-      .select()
-      .single();
-
-    if (error || !evt) return;
-
-    const validParts = formParticipantes.filter((p) => p.nome.trim());
-    if (validParts.length) {
-      await supabase.from("agenda_participantes").insert(
-        validParts.map((p) => ({
-          evento_id: evt.id,
-          user_id: user.id,
-          nome: p.nome,
-          instagram: p.instagram,
-        }))
-      );
-    }
-
-    // Reset form
+  const resetForm = () => {
     setFormProgramaId("");
     setFormData(undefined);
     setFormLocal("");
     setFormDescricao("");
     setFormRecorrencia("unico");
+    setFormPrioridade("normal");
     setFormParticipantes([{ nome: "", instagram: "" }]);
+    setEditingId(null);
+  };
+
+  const openNewDialog = () => {
+    resetForm();
+    setDialogOpen(true);
+  };
+
+  const startEdit = (evt: Evento) => {
+    setEditingId(evt.id);
+    setFormProgramaId(evt.programa_id);
+    setFormData(new Date(evt.data + "T12:00:00"));
+    setFormLocal(evt.local);
+    setFormDescricao(evt.descricao);
+    setFormRecorrencia(evt.recorrencia);
+    setFormPrioridade(evt.prioridade || "normal");
+    setFormParticipantes(
+      evt.participantes && evt.participantes.length > 0
+        ? evt.participantes.map(p => ({ id: p.id, nome: p.nome, instagram: p.instagram }))
+        : [{ nome: "", instagram: "" }]
+    );
+    setDialogOpen(true);
+  };
+
+  const handleSave = async () => {
+    if (!user || !formProgramaId || !formData) return;
+
+    const payload = {
+      user_id: user.id,
+      programa_id: formProgramaId,
+      data: format(formData, "yyyy-MM-dd"),
+      local: formLocal,
+      descricao: formDescricao,
+      recorrencia: formRecorrencia,
+      prioridade: formPrioridade,
+    } as any;
+
+    if (editingId) {
+      await supabase.from("agenda_eventos").update(payload).eq("id", editingId);
+      // Delete old participants and re-insert
+      await supabase.from("agenda_participantes").delete().eq("evento_id", editingId);
+      const validParts = formParticipantes.filter((p) => p.nome.trim());
+      if (validParts.length) {
+        await supabase.from("agenda_participantes").insert(
+          validParts.map((p) => ({
+            evento_id: editingId,
+            user_id: user.id,
+            nome: p.nome,
+            instagram: p.instagram,
+          }))
+        );
+      }
+    } else {
+      const { data: evt, error } = await supabase
+        .from("agenda_eventos")
+        .insert(payload)
+        .select()
+        .single();
+
+      if (error || !evt) return;
+
+      const validParts = formParticipantes.filter((p) => p.nome.trim());
+      if (validParts.length) {
+        await supabase.from("agenda_participantes").insert(
+          validParts.map((p) => ({
+            evento_id: evt.id,
+            user_id: user.id,
+            nome: p.nome,
+            instagram: p.instagram,
+          }))
+        );
+      }
+    }
+
+    resetForm();
     setDialogOpen(false);
     fetchEventos();
   };
@@ -181,16 +248,14 @@ export default function AgendaPage() {
     fetchEventos();
   };
 
-  // Get unique locals for filter
   const locais = Array.from(new Set(eventos.map((e) => e.local).filter(Boolean)));
 
-  // Check if a recurring event matches a given date
   const eventMatchesDate = (evt: Evento, dateStr: string) => {
     if (evt.data === dateStr) return true;
     const evtDate = new Date(evt.data + "T12:00:00");
     const checkDate = new Date(dateStr + "T12:00:00");
-    if (checkDate < evtDate) return false; // no past recurrence
-    if (evt.recorrencia === "semanal") {
+    if (checkDate < evtDate) return false;
+    if (evt.recorrencia === "semanal" || evt.recorrencia === "programa_semanal") {
       return evtDate.getDay() === checkDate.getDay();
     }
     if (evt.recorrencia === "mensal") {
@@ -199,7 +264,6 @@ export default function AgendaPage() {
     return false;
   };
 
-  // Filter events by selected date and local
   const filteredEventos = eventos.filter((e) => {
     const selStr = selectedDate ? format(selectedDate, "yyyy-MM-dd") : "";
     const matchDate = selectedDate ? eventMatchesDate(e, selStr) : true;
@@ -207,7 +271,6 @@ export default function AgendaPage() {
     return matchDate && matchLocal;
   });
 
-  // Dates that have events (for calendar highlighting) — expand recurring for current month view
   const getEventDatesForCalendar = () => {
     const dates: Date[] = [];
     const now = new Date();
@@ -254,144 +317,158 @@ export default function AgendaPage() {
           )}
         </div>
 
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button size="sm" className="gap-1">
-              <Plus size={16} /> Novo Evento
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Cadastrar Evento</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              {/* Step 1: Select program */}
-              <div>
-                <Label>Programa</Label>
-                <Select value={formProgramaId} onValueChange={setFormProgramaId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o programa" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {programas.map((p) => (
-                      <SelectItem key={p.id} value={p.id}>
-                        {p.nome} ({p.horario_inicio} - {p.horario_fim})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {selectedPrograma && (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Horário: {selectedPrograma.horario_inicio} às {selectedPrograma.horario_fim}
-                    {selectedPrograma.estudio && ` • Estúdio: ${selectedPrograma.estudio}`}
-                  </p>
-                )}
-              </div>
-
-              {/* Step 2: Select date */}
-              <div>
-                <Label>Data do Evento</Label>
-                <Calendar
-                  mode="single"
-                  selected={formData}
-                  onSelect={setFormData}
-                  className={cn("p-3 pointer-events-auto border border-border rounded-lg mt-1")}
-                  locale={ptBR}
-                />
-                {formData && (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {format(formData, "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
-                  </p>
-                )}
-              </div>
-
-              {/* Recurrence */}
-              <div>
-                <Label>Recorrência</Label>
-                <Select value={formRecorrencia} onValueChange={(v) => setFormRecorrencia(v as any)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="unico">Somente este dia</SelectItem>
-                    <SelectItem value="semanal">Toda semana neste dia</SelectItem>
-                    <SelectItem value="mensal">Todo mês neste dia</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label>Local</Label>
-                <Input
-                  value={formLocal}
-                  onChange={(e) => setFormLocal(e.target.value)}
-                  placeholder="Ex: Estúdio A, Auditório..."
-                />
-              </div>
-
-              {/* Description */}
-              <div>
-                <Label>Descrição</Label>
-                <Input
-                  value={formDescricao}
-                  onChange={(e) => setFormDescricao(e.target.value)}
-                  placeholder="Descrição do evento"
-                />
-              </div>
-
-              {/* Participants */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <Label className="flex items-center gap-1">
-                    <Users size={14} /> Participantes
-                  </Label>
-                  <Button type="button" variant="ghost" size="sm" onClick={addParticipante}>
-                    <Plus size={14} /> Adicionar
-                  </Button>
-                </div>
-                <div className="space-y-2">
-                  {formParticipantes.map((p, i) => (
-                    <div key={i} className="flex items-center gap-2">
-                      <Input
-                        value={p.nome}
-                        onChange={(e) => updateParticipante(i, "nome", e.target.value)}
-                        placeholder="Nome"
-                        className="flex-1"
-                      />
-                      <div className="flex items-center gap-1 flex-1">
-                        <Instagram size={14} className="text-muted-foreground shrink-0" />
-                        <Input
-                          value={p.instagram}
-                          onChange={(e) => updateParticipante(i, "instagram", e.target.value)}
-                          placeholder="@instagram"
-                        />
-                      </div>
-                      {formParticipantes.length > 1 && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 shrink-0"
-                          onClick={() => removeParticipante(i)}
-                        >
-                          <Trash2 size={14} className="text-destructive" />
-                        </Button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <Button onClick={handleSave} disabled={!formProgramaId || !formData} className="w-full">
-                Salvar Evento
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+        <Button size="sm" className="gap-1" onClick={openNewDialog}>
+          <Plus size={16} /> Novo Evento
+        </Button>
       </div>
 
+      <Dialog open={dialogOpen} onOpenChange={(open) => { if (!open) resetForm(); setDialogOpen(open); }}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editingId ? "Editar Evento" : "Cadastrar Evento"}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Programa</Label>
+              <Select value={formProgramaId} onValueChange={setFormProgramaId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o programa" />
+                </SelectTrigger>
+                <SelectContent>
+                  {programas.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.nome} ({p.horario_inicio} - {p.horario_fim})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {selectedPrograma && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Horário: {selectedPrograma.horario_inicio} às {selectedPrograma.horario_fim}
+                  {selectedPrograma.estudio && ` • Estúdio: ${selectedPrograma.estudio}`}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <Label>Data do Evento</Label>
+              <Calendar
+                mode="single"
+                selected={formData}
+                onSelect={setFormData}
+                className={cn("p-3 pointer-events-auto border border-border rounded-lg mt-1")}
+                locale={ptBR}
+              />
+              {formData && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  {format(formData, "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <Label>Recorrência</Label>
+              <Select value={formRecorrencia} onValueChange={setFormRecorrencia}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="unico">Somente este dia</SelectItem>
+                  <SelectItem value="semanal">Toda semana neste dia</SelectItem>
+                  <SelectItem value="mensal">Todo mês neste dia</SelectItem>
+                  <SelectItem value="programa_semanal">Programa semanal</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label>Local</Label>
+              <Select value={formLocal} onValueChange={setFormLocal}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o local" />
+                </SelectTrigger>
+                <SelectContent>
+                  {estudios.map((e) => (
+                    <SelectItem key={e} value={e}>{e}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label>Prioridade</Label>
+              <Select value={formPrioridade} onValueChange={setFormPrioridade}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="baixa">Baixa</SelectItem>
+                  <SelectItem value="normal">Normal</SelectItem>
+                  <SelectItem value="alta">Alta</SelectItem>
+                  <SelectItem value="urgente">Urgente</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label>Descrição</Label>
+              <Input
+                value={formDescricao}
+                onChange={(e) => setFormDescricao(e.target.value)}
+                placeholder="Descrição do evento"
+              />
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <Label className="flex items-center gap-1">
+                  <Users size={14} /> Participantes
+                </Label>
+                <Button type="button" variant="ghost" size="sm" onClick={addParticipante}>
+                  <Plus size={14} /> Adicionar
+                </Button>
+              </div>
+              <div className="space-y-2">
+                {formParticipantes.map((p, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <Input
+                      value={p.nome}
+                      onChange={(e) => updateParticipante(i, "nome", e.target.value)}
+                      placeholder="Nome"
+                      className="flex-1"
+                    />
+                    <div className="flex items-center gap-1 flex-1">
+                      <Instagram size={14} className="text-muted-foreground shrink-0" />
+                      <Input
+                        value={p.instagram}
+                        onChange={(e) => updateParticipante(i, "instagram", e.target.value)}
+                        placeholder="@instagram"
+                      />
+                    </div>
+                    {formParticipantes.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 shrink-0"
+                        onClick={() => removeParticipante(i)}
+                      >
+                        <Trash2 size={14} className="text-destructive" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <Button onClick={handleSave} disabled={!formProgramaId || !formData} className="w-full">
+              {editingId ? "Atualizar Evento" : "Salvar Evento"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Calendar */}
         <div className="bg-muted rounded-xl border border-border p-4">
           <Calendar
             mode="single"
@@ -404,7 +481,6 @@ export default function AgendaPage() {
           />
         </div>
 
-        {/* Events list */}
         <div className="lg:col-span-2 space-y-3">
           <h4 className="text-sm font-medium text-muted-foreground">
             {selectedDate
@@ -438,6 +514,10 @@ export default function AgendaPage() {
                         🔁 {recorrenciaLabels[evt.recorrencia]}
                       </span>
                     )}
+                    <span className={`inline-block text-[10px] font-semibold px-2 py-0.5 rounded mt-0.5 ml-1 ${prioridadeColors[evt.prioridade] || prioridadeColors.normal}`}>
+                      {evt.prioridade === "urgente" && <AlertTriangle size={10} className="inline mr-0.5" />}
+                      {prioridadeLabels[evt.prioridade] || "Normal"}
+                    </span>
                     {evt.local && (
                       <p className="text-xs text-muted-foreground">
                         <MapPin size={12} className="inline mr-1" />
@@ -448,14 +528,24 @@ export default function AgendaPage() {
                       <p className="text-sm text-foreground mt-1">{evt.descricao}</p>
                     )}
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 shrink-0"
-                    onClick={() => handleDelete(evt.id)}
-                  >
-                    <Trash2 size={14} className="text-destructive" />
-                  </Button>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 shrink-0"
+                      onClick={() => startEdit(evt)}
+                    >
+                      <Pencil size={14} className="text-muted-foreground" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 shrink-0"
+                      onClick={() => handleDelete(evt.id)}
+                    >
+                      <Trash2 size={14} className="text-destructive" />
+                    </Button>
+                  </div>
                 </div>
 
                 {evt.participantes && evt.participantes.length > 0 && (

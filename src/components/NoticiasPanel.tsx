@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { RefreshCw, ExternalLink, Plus, TrendingUp, TrendingDown, Minus, Trash2, ChevronDown, ChevronUp, ListPlus } from "lucide-react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { RefreshCw, ExternalLink, Plus, TrendingUp, TrendingDown, Minus, Trash2, ChevronDown, ChevronUp, ListPlus, GripVertical } from "lucide-react";
 import XmlLinkRow from "./XmlLinkRow";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -99,6 +99,33 @@ async function fetchCotacoes(): Promise<CotacaoItem[]> {
   } catch { return []; }
 }
 
+// Simple drag reorder hook
+function useDragReorder<T>(items: T[], setItems: (items: T[]) => void) {
+  const dragItem = useRef<number | null>(null);
+  const dragOverItem = useRef<number | null>(null);
+
+  const handleDragStart = (idx: number) => {
+    dragItem.current = idx;
+  };
+
+  const handleDragOver = (e: React.DragEvent, idx: number) => {
+    e.preventDefault();
+    dragOverItem.current = idx;
+  };
+
+  const handleDrop = () => {
+    if (dragItem.current === null || dragOverItem.current === null) return;
+    const reordered = [...items];
+    const [removed] = reordered.splice(dragItem.current, 1);
+    reordered.splice(dragOverItem.current, 0, removed);
+    setItems(reordered);
+    dragItem.current = null;
+    dragOverItem.current = null;
+  };
+
+  return { handleDragStart, handleDragOver, handleDrop };
+}
+
 export default function NoticiasPanel() {
   const { user } = useAuth();
   const [newsByPortal, setNewsByPortal] = useState<Record<string, NewsItem[]>>({});
@@ -111,6 +138,7 @@ export default function NoticiasPanel() {
   const [escaladaNews, setEscaladaNews] = useState<EscaladaNews[]>([]);
   const [selectedCotacoes, setSelectedCotacoes] = useState<SelectedCotacao[]>([]);
   const [expandedPortals, setExpandedPortals] = useState<Record<string, boolean>>({});
+  const [portalOrder, setPortalOrder] = useState<string[]>([]);
 
   // Load from DB
   useEffect(() => {
@@ -130,7 +158,20 @@ export default function NoticiasPanel() {
     loadDb();
   }, [user]);
 
-  const allPortals = [...DEFAULT_PORTALS, ...customSites];
+  // Build portal order: custom sites first, then defaults
+  useEffect(() => {
+    const customNames = customSites.map(s => s.name);
+    const defaultNames = DEFAULT_PORTALS.map(p => p.name);
+    setPortalOrder([...customNames, ...defaultNames]);
+  }, [customSites]);
+
+  const allPortals = [...customSites, ...DEFAULT_PORTALS];
+
+  const orderedPortals = portalOrder
+    .map(name => allPortals.find(p => p.name === name))
+    .filter(Boolean) as Portal[];
+
+  const portalDrag = useDragReorder(portalOrder, setPortalOrder);
 
   const loadAll = async () => {
     setLoading(true);
@@ -184,7 +225,6 @@ export default function NoticiasPanel() {
 
   const addToEscalada = async (sn: SelectedNews) => {
     if (!user) return;
-    // Check if already in escalada
     if (escaladaNews.some(e => e.title === sn.title && e.portal === sn.portal)) return;
     const { data } = await supabase.from("escalada_news").insert({
       user_id: user.id,
@@ -240,12 +280,12 @@ export default function NoticiasPanel() {
       {(selectedNews.length > 0 || escaladaNews.length > 0) && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Notícias Selecionadas */}
-          <div className="bg-muted rounded-xl border border-border overflow-hidden">
+          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
             <div className={headerStyle}>📋 Notícias Selecionadas</div>
             <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
               <table className="w-full text-xs">
                 <thead>
-                  <tr className="border-b border-border text-muted-foreground">
+                  <tr className="border-b border-gray-200 text-gray-500">
                     <th className="text-left px-3 py-2">Portal</th>
                     <th className="text-left px-3 py-2">Título</th>
                     <th className="px-3 py-2 w-20"></th>
@@ -253,9 +293,9 @@ export default function NoticiasPanel() {
                 </thead>
                 <tbody>
                   {selectedNews.map((sn, i) => (
-                    <tr key={sn.id || i} className="border-b border-border/50">
-                      <td className="px-3 py-2 text-foreground font-semibold whitespace-nowrap">{sn.portal}</td>
-                      <td className="px-3 py-2 text-foreground">{sn.title}</td>
+                    <tr key={sn.id || i} className="border-b border-gray-100">
+                      <td className="px-3 py-2 text-gray-700 font-semibold whitespace-nowrap">{sn.portal}</td>
+                      <td className="px-3 py-2 text-gray-700">{sn.title}</td>
                       <td className="px-3 py-2 flex items-center gap-1">
                         <button onClick={() => addToEscalada(sn)} className="text-primary hover:text-primary/80" title="Por na escalada">
                           <ListPlus size={14} />
@@ -272,15 +312,15 @@ export default function NoticiasPanel() {
           </div>
 
           {/* Notícias Escalada */}
-          <div className="bg-muted rounded-xl border border-border overflow-hidden">
+          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
             <div className={headerStyle}>🎯 Notícias Escalada</div>
             <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
               {escaladaNews.length === 0 ? (
-                <p className="text-muted-foreground text-xs p-4">Nenhuma notícia na escalada. Use o botão <ListPlus size={12} className="inline" /> nas notícias selecionadas.</p>
+                <p className="text-gray-500 text-xs p-4">Nenhuma notícia na escalada. Use o botão <ListPlus size={12} className="inline" /> nas notícias selecionadas.</p>
               ) : (
                 <table className="w-full text-xs">
                   <thead>
-                    <tr className="border-b border-border text-muted-foreground">
+                    <tr className="border-b border-gray-200 text-gray-500">
                       <th className="text-left px-3 py-2">Portal</th>
                       <th className="text-left px-3 py-2">Título</th>
                       <th className="px-3 py-2 w-10"></th>
@@ -288,9 +328,9 @@ export default function NoticiasPanel() {
                   </thead>
                   <tbody>
                     {escaladaNews.map((en, i) => (
-                      <tr key={en.id || i} className="border-b border-border/50">
-                        <td className="px-3 py-2 text-foreground font-semibold whitespace-nowrap">{en.portal}</td>
-                        <td className="px-3 py-2 text-foreground">{en.title}</td>
+                      <tr key={en.id || i} className="border-b border-gray-100">
+                        <td className="px-3 py-2 text-gray-700 font-semibold whitespace-nowrap">{en.portal}</td>
+                        <td className="px-3 py-2 text-gray-700">{en.title}</td>
                         <td className="px-3 py-2">
                           <button onClick={() => removeFromEscalada(i)} className="text-destructive hover:text-destructive/80">
                             <Trash2 size={12} />
@@ -359,11 +399,19 @@ export default function NoticiasPanel() {
         <p className="text-muted-foreground">Carregando notícias...</p>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-          {allPortals.map((portal) => (
-            <div key={portal.name} className="bg-muted rounded-xl border border-border overflow-hidden">
+          {orderedPortals.map((portal, idx) => (
+            <div
+              key={portal.name}
+              className="bg-muted rounded-xl border border-border overflow-hidden cursor-grab active:cursor-grabbing"
+              draggable
+              onDragStart={() => portalDrag.handleDragStart(idx)}
+              onDragOver={(e) => portalDrag.handleDragOver(e, idx)}
+              onDrop={portalDrag.handleDrop}
+            >
               <div className={`${headerStyle} flex items-center justify-between cursor-pointer select-none`}
                 onClick={() => setExpandedPortals(prev => ({ ...prev, [portal.name]: !prev[portal.name] }))}>
                 <span className="flex items-center gap-2">
+                  <GripVertical size={14} className="opacity-50" />
                   {expandedPortals[portal.name] ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                   {portal.name}
                 </span>
