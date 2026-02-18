@@ -21,6 +21,7 @@ export type Database = {
           descricao: string | null
           id: string
           local: string
+          prioridade: string
           programa_id: string | null
           recorrencia: string
           user_id: string
@@ -31,6 +32,7 @@ export type Database = {
           descricao?: string | null
           id?: string
           local?: string
+          prioridade?: string
           programa_id?: string | null
           recorrencia?: string
           user_id: string
@@ -41,6 +43,7 @@ export type Database = {
           descricao?: string | null
           id?: string
           local?: string
+          prioridade?: string
           programa_id?: string | null
           recorrencia?: string
           user_id?: string
@@ -222,6 +225,7 @@ export type Database = {
       programas: {
         Row: {
           apresentador_id: string | null
+          ativo: boolean
           created_at: string
           dias_semana: string[] | null
           estudio: string | null
@@ -234,6 +238,7 @@ export type Database = {
         }
         Insert: {
           apresentador_id?: string | null
+          ativo?: boolean
           created_at?: string
           dias_semana?: string[] | null
           estudio?: string | null
@@ -246,6 +251,7 @@ export type Database = {
         }
         Update: {
           apresentador_id?: string | null
+          ativo?: boolean
           created_at?: string
           dias_semana?: string[] | null
           estudio?: string | null

@@ -143,23 +143,6 @@ export default function OnAirWidget() {
           >
             {isHovered && (
               <>
-                {firstNext.selo && (
-                  <img
-                    src={firstNext.selo}
-                    alt="Selo"
-                    className="absolute pointer-events-none"
-                    style={{
-                      left: 0,
-                      top: 0,
-                      height: "50%",
-                      width: "auto",
-                      opacity: 0.15,
-                      objectFit: "contain",
-                      objectPosition: "left top",
-                    }}
-                  />
-                )}
-
                 {firstNextAp?.foto && (
                   <img
                     src={firstNextAp.foto}
@@ -179,17 +162,6 @@ export default function OnAirWidget() {
                   <SkipForward size={16} className="text-gray-300" />
                   <span className="font-bold text-gray-300 text-sm">PRÓXIMO PROGRAMA</span>
                 </div>
-
-                {firstNext.selo && (
-                  <div className="absolute inset-0 z-10 flex items-start justify-start pointer-events-none animate-fade-in" style={{ padding: "40px 0 0 20px" }}>
-                    <img
-                      src={firstNext.selo}
-                      alt="Selo"
-                      className="rounded w-auto"
-                      style={{ maxHeight: "50%", filter: "grayscale(100%) brightness(1.5)" }}
-                    />
-                  </div>
-                )}
 
                 <div className="absolute bottom-4 left-0 right-0 z-10 px-5 animate-fade-in">
                   <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4">
@@ -215,23 +187,6 @@ export default function OnAirWidget() {
             zIndex: isHovered ? 1 : 10,
           }}
         >
-          {programa.selo && (
-            <img
-              src={programa.selo}
-              alt="Selo"
-              className="absolute pointer-events-none"
-              style={{
-                left: 0,
-                top: -20,
-                height: "110%",
-                width: "auto",
-                opacity: 0.1,
-                objectFit: "contain",
-                objectPosition: "left top",
-              }}
-            />
-          )}
-
           {apresentadorFoto && (
             <img
               src={apresentadorFoto}
@@ -258,17 +213,6 @@ export default function OnAirWidget() {
             <Radio size={16} className="text-gray-700 animate-pulse" />
             <span className="font-bold text-gray-700 text-sm animate-pulse">NO AR</span>
           </div>
-
-          {programa.selo && (
-            <div className="absolute inset-0 z-10 flex items-start justify-start pointer-events-none" style={{ bottom: 40, padding: "40px 0 0 20px" }}>
-              <img
-                src={programa.selo}
-                alt="Selo"
-                className="rounded max-h-[110%] w-auto"
-                style={{ filter: "grayscale(100%) brightness(0.3)" }}
-              />
-            </div>
-          )}
 
           <div className="absolute bottom-[4px] left-0 right-0 z-10 px-5">
             <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 mb-1">
@@ -306,9 +250,6 @@ function UpcomingProgramsList({ programs, apresentadores }: { programs: Programa
       </p>
       {programs.map(p => (
         <div key={p.id} className="flex items-center gap-3 bg-white rounded-lg p-3 border border-gray-300">
-          {p.selo && (
-            <img src={p.selo} alt="Selo" className="h-8 w-8 rounded object-contain" style={{ filter: "grayscale(50%)" }} />
-          )}
           <div className="flex-1 min-w-0">
             <p className="font-semibold text-gray-800 text-xs truncate">{p.nome}</p>
             <p className="text-gray-500 text-[10px] truncate">{apresentadores[p.id]?.nome || "—"}</p>
