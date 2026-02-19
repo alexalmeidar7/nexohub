@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Instagram, UserCheck, UserX, Trash2, Pencil, X } from "lucide-react";
+import { Instagram, UserCheck, UserX, Trash2, Pencil, X, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -19,7 +19,7 @@ export interface Apresentador {
   ativo: boolean;
 }
 
-const CARGO_OPTIONS = ["Apresentador", "Jornalista", "Convidado"];
+const CATEGORIA_OPTIONS = ["Apresentador", "Jornalista", "Convidado"];
 
 export async function getApresentadores(): Promise<Apresentador[]> {
   const { data } = await supabase.from("apresentadores").select("*");
@@ -37,13 +37,15 @@ export async function getApresentadores(): Promise<Apresentador[]> {
 export default function ApresentadorForm() {
   const { user } = useAuth();
   const [nome, setNome] = useState("");
-  const [cargo, setCargo] = useState("");
+  const [categoria, setCategoria] = useState("");
+  const [cargoConvidado, setCargoConvidado] = useState("");
   const [instagram, setInstagram] = useState("");
   const [foto, setFoto] = useState("");
   const [ativo, setAtivo] = useState(true);
   const [apresentadores, setApresentadores] = useState<Apresentador[]>([]);
-  const [filterCargo, setFilterCargo] = useState("todos");
+  const [filterCategoria, setFilterCategoria] = useState("todos");
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
   const load = async () => {
     const list = await getApresentadores();
@@ -53,7 +55,7 @@ export default function ApresentadorForm() {
 
   useEffect(() => { load(); }, []);
 
-  const showFoto = cargo === "Apresentador" || cargo === "Jornalista";
+  const showFoto = categoria === "Apresentador" || categoria === "Jornalista";
 
   const handleFoto = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -64,16 +66,19 @@ export default function ApresentadorForm() {
   };
 
   const resetForm = () => {
-    setNome(""); setCargo(""); setInstagram(""); setFoto(""); setAtivo(true); setEditingId(null);
+    setNome(""); setCategoria(""); setCargoConvidado(""); setInstagram(""); setFoto(""); setAtivo(true); setEditingId(null);
   };
 
   const handleSave = async () => {
-    if (!nome.trim() || !user || !cargo) return;
+    if (!nome.trim() || !user || !categoria) return;
+    setSaving(true);
+
+    const cargoValue = categoria === "Convidado" ? categoria : categoria;
 
     if (editingId) {
       await supabase.from("apresentadores").update({
         nome: nome.trim(),
-        cargo: cargo.trim(),
+        cargo: cargoValue,
         instagram: instagram.trim(),
         foto: showFoto ? foto : "",
         ativo,
@@ -82,7 +87,7 @@ export default function ApresentadorForm() {
       await supabase.from("apresentadores").insert({
         user_id: user.id,
         nome: nome.trim(),
-        cargo: cargo.trim(),
+        cargo: cargoValue,
         instagram: instagram.trim(),
         foto: showFoto ? foto : "",
         ativo,
@@ -90,12 +95,13 @@ export default function ApresentadorForm() {
     }
     await load();
     resetForm();
+    setSaving(false);
   };
 
   const startEdit = (a: Apresentador) => {
     setEditingId(a.id);
     setNome(a.nome);
-    setCargo(a.cargo);
+    setCategoria(a.cargo);
     setInstagram(a.instagram);
     setFoto(a.foto);
     setAtivo(a.ativo);
@@ -111,9 +117,9 @@ export default function ApresentadorForm() {
     await load();
   };
 
-  const filtered = filterCargo === "todos"
+  const filtered = filterCategoria === "todos"
     ? apresentadores
-    : apresentadores.filter(a => a.cargo === filterCargo);
+    : apresentadores.filter(a => a.cargo === filterCategoria);
 
   return (
     <div className="animate-fade-in space-y-6">
@@ -125,18 +131,23 @@ export default function ApresentadorForm() {
           className="w-full bg-muted border border-border p-3 rounded-lg text-foreground placeholder:text-muted-foreground outline-none focus:ring-1 focus:ring-primary" />
 
         <div>
-          <label className="block text-muted-foreground text-xs mb-1">Cargo</label>
-          <Select value={cargo} onValueChange={setCargo}>
+          <label className="block text-muted-foreground text-xs mb-1">Categoria</label>
+          <Select value={categoria} onValueChange={setCategoria}>
             <SelectTrigger className="w-full">
-              <SelectValue placeholder="Selecione o cargo" />
+              <SelectValue placeholder="Selecione a categoria" />
             </SelectTrigger>
             <SelectContent>
-              {CARGO_OPTIONS.map(c => (
+              {CATEGORIA_OPTIONS.map(c => (
                 <SelectItem key={c} value={c}>{c}</SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
+
+        {categoria === "Convidado" && (
+          <input value={cargoConvidado} onChange={(e) => setCargoConvidado(e.target.value)} placeholder="Cargo (ex: Médico, Advogado...)"
+            className="w-full bg-muted border border-border p-3 rounded-lg text-foreground placeholder:text-muted-foreground outline-none focus:ring-1 focus:ring-primary" />
+        )}
 
         <div className="flex items-center gap-2">
           <Instagram size={18} className="text-muted-foreground" />
@@ -159,9 +170,10 @@ export default function ApresentadorForm() {
           <input type="checkbox" checked={ativo} onChange={(e) => setAtivo(e.target.checked)} className="w-4 h-4 accent-primary" />
           Ativo
         </label>
-        <div className="flex gap-2">
-          <button onClick={handleSave} className="bg-primary text-primary-foreground px-6 py-2 rounded-lg font-bold hover:brightness-95 transition-all">
-            {editingId ? "Atualizar" : "Salvar"}
+        <div className="flex gap-2 items-center">
+          <button onClick={handleSave} disabled={saving} className="bg-primary text-primary-foreground px-6 py-2 rounded-lg font-bold hover:brightness-95 transition-all flex items-center gap-2 disabled:opacity-70">
+            {saving && <Loader2 size={14} className="animate-spin" />}
+            {saving ? "Salvando..." : editingId ? "Atualizar" : "Salvar"}
           </button>
           {editingId && (
             <button onClick={resetForm} className="bg-muted border border-border text-foreground px-4 py-2 rounded-lg font-bold hover:brightness-95 transition-all flex items-center gap-1">
@@ -175,13 +187,13 @@ export default function ApresentadorForm() {
         <div>
           <div className="flex items-center justify-between mb-4">
             <h4 className="text-lg font-medium text-foreground">Cadastrados</h4>
-            <Select value={filterCargo} onValueChange={setFilterCargo}>
+            <Select value={filterCategoria} onValueChange={setFilterCategoria}>
               <SelectTrigger className="w-[180px] h-8 text-sm">
-                <SelectValue placeholder="Filtrar por cargo" />
+                <SelectValue placeholder="Filtrar por categoria" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="todos">Todos</SelectItem>
-                {CARGO_OPTIONS.map(c => (
+                {CATEGORIA_OPTIONS.map(c => (
                   <SelectItem key={c} value={c}>{c}</SelectItem>
                 ))}
               </SelectContent>
@@ -207,7 +219,7 @@ export default function ApresentadorForm() {
                 <div className="p-4 flex gap-3">
                   {a.foto && <img src={a.foto} alt={a.nome} className="w-16 h-20 object-cover rounded-lg border border-border" />}
                   <div className="space-y-1 text-sm">
-                    <p className="text-foreground">{a.cargo || "Sem cargo"}</p>
+                    <p className="text-foreground">{a.cargo || "Sem categoria"}</p>
                     {a.instagram && (
                       <p className="text-muted-foreground flex items-center gap-1">
                         <Instagram size={12} /> {a.instagram}

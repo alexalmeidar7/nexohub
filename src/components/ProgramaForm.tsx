@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo } from "react";
-import { AlertCircle, Trash2, Clock, Calendar, Building2, Pencil, X, ChevronUp, ChevronDown, Power } from "lucide-react";
+import { useState, useEffect, useMemo, useRef } from "react";
+import { AlertCircle, Trash2, Clock, Calendar, Building2, Pencil, X, Power, Loader2 } from "lucide-react";
 import { getApresentadores, type Apresentador } from "./ApresentadorForm";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -76,22 +76,25 @@ export default function ProgramaForm() {
   const [programas, setProgramas] = useState<Programa[]>([]);
   const [conflictMsg, setConflictMsg] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
   // Estúdio management
   const [estudios, setEstudios] = useState<string[]>([]);
   const [newEstudio, setNewEstudio] = useState("");
   const [estudioDialogOpen, setEstudioDialogOpen] = useState(false);
 
-  // Grade scroll
-  const [gradeStartIdx, setGradeStartIdx] = useState(0);
-  const GRADE_VISIBLE_ROWS = 5;
+  // Grade filter
+  const [gradeEstudioFilter, setGradeEstudioFilter] = useState("todos");
+  const gradeRef = useRef<HTMLDivElement>(null);
+
+  // Sorting
+  const [sortBy, setSortBy] = useState<"horario" | "nome" | "estudio" | "status">("horario");
 
   const load = async () => {
     const [ap, pg] = await Promise.all([getApresentadores(), getProgramas()]);
     setApresentadores(ap);
     pg.sort((a, b) => a.horarioInicio.localeCompare(b.horarioInicio));
     setProgramas(pg);
-    // Extract unique estúdios
     const allEstudios = Array.from(new Set(pg.map(p => p.estudio).filter(Boolean)));
     setEstudios(prev => {
       const merged = Array.from(new Set([...prev, ...allEstudios]));
@@ -127,45 +130,28 @@ export default function ProgramaForm() {
     const conflict = checkConflict(programas, diasSemana, horarioInicio, horarioFim, estudio.trim(), editingId || undefined);
     if (conflict) { setConflictMsg(`Conflito com "${conflict.nome}" no mesmo estúdio e horário.`); return; }
 
+    setSaving(true);
+
     if (editingId) {
       await supabase.from("programas").update({
-        nome: nome.trim(),
-        apresentador_id: apresentadorId || null,
-        selo,
-        dias_semana: diasSemana,
-        horario_inicio: horarioInicio,
-        horario_fim: horarioFim,
-        estudio: estudio.trim(),
-        ativo,
+        nome: nome.trim(), apresentador_id: apresentadorId || null, selo, dias_semana: diasSemana,
+        horario_inicio: horarioInicio, horario_fim: horarioFim, estudio: estudio.trim(), ativo,
       } as any).eq("id", editingId);
     } else {
       await supabase.from("programas").insert({
-        user_id: user.id,
-        nome: nome.trim(),
-        apresentador_id: apresentadorId || null,
-        selo,
-        dias_semana: diasSemana,
-        horario_inicio: horarioInicio,
-        horario_fim: horarioFim,
-        estudio: estudio.trim(),
-        ativo,
+        user_id: user.id, nome: nome.trim(), apresentador_id: apresentadorId || null, selo, dias_semana: diasSemana,
+        horario_inicio: horarioInicio, horario_fim: horarioFim, estudio: estudio.trim(), ativo,
       } as any);
     }
     await load();
     resetForm();
+    setSaving(false);
   };
 
   const startEdit = (p: Programa) => {
-    setEditingId(p.id);
-    setNome(p.nome);
-    setApresentadorId(p.apresentadorId);
-    setSelo(p.selo);
-    setDiasSemana(p.diasSemana);
-    setHorarioInicio(p.horarioInicio);
-    setHorarioFim(p.horarioFim);
-    setEstudio(p.estudio);
-    setAtivo(p.ativo);
-    setConflictMsg("");
+    setEditingId(p.id); setNome(p.nome); setApresentadorId(p.apresentadorId); setSelo(p.selo);
+    setDiasSemana(p.diasSemana); setHorarioInicio(p.horarioInicio); setHorarioFim(p.horarioFim);
+    setEstudio(p.estudio); setAtivo(p.ativo); setConflictMsg("");
   };
 
   const removePrograma = async (id: string) => {
@@ -203,15 +189,25 @@ export default function ProgramaForm() {
   const DIAS_MAP: Record<number, string> = { 1: "Segunda", 2: "Terça", 3: "Quarta", 4: "Quinta", 5: "Sexta", 6: "Sábado", 0: "Domingo" };
   const diaAtual = DIAS_MAP[now.getDay()];
 
+  const gradeProgramas = gradeEstudioFilter === "todos" ? programas : programas.filter(p => p.estudio === gradeEstudioFilter);
+
   const getProgramaForSlot = (dia: string, slotTime: string) => {
-    return programas.find(p =>
-      p.diasSemana.includes(dia) &&
-      slotTime >= p.horarioInicio &&
-      slotTime < p.horarioFim
+    return gradeProgramas.find(p =>
+      p.diasSemana.includes(dia) && slotTime >= p.horarioInicio && slotTime < p.horarioFim
     );
   };
 
-  const visibleSlots = gradeSlots.slice(gradeStartIdx, gradeStartIdx + GRADE_VISIBLE_ROWS);
+  // Sorted programs for list
+  const sortedProgramas = useMemo(() => {
+    const sorted = [...programas];
+    switch (sortBy) {
+      case "nome": sorted.sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR")); break;
+      case "estudio": sorted.sort((a, b) => a.estudio.localeCompare(b.estudio, "pt-BR")); break;
+      case "status": sorted.sort((a, b) => (a.ativo === b.ativo ? 0 : a.ativo ? -1 : 1)); break;
+      default: sorted.sort((a, b) => a.horarioInicio.localeCompare(b.horarioInicio)); break;
+    }
+    return sorted;
+  }, [programas, sortBy]);
 
   return (
     <div className="animate-fade-in space-y-6">
@@ -235,7 +231,6 @@ export default function ProgramaForm() {
           {selo && <img src={selo} alt="Selo" className="mt-2 h-16 rounded border border-border" />}
         </div>
 
-        {/* Estúdio combo */}
         <div>
           <label className="block text-muted-foreground text-xs mb-1 flex items-center gap-1">
             <Building2 size={14} /> Estúdio
@@ -300,9 +295,10 @@ export default function ProgramaForm() {
         </label>
 
         {conflictMsg && <p className="text-destructive text-sm flex items-center gap-1"><AlertCircle size={14} /> {conflictMsg}</p>}
-        <div className="flex gap-2">
-          <button onClick={handleAdd} className="bg-primary text-primary-foreground px-6 py-2 rounded-lg font-bold hover:brightness-95 transition-all">
-            {editingId ? "Atualizar Programa" : "Adicionar Programa"}
+        <div className="flex gap-2 items-center">
+          <button onClick={handleAdd} disabled={saving} className="bg-primary text-primary-foreground px-6 py-2 rounded-lg font-bold hover:brightness-95 transition-all flex items-center gap-2 disabled:opacity-70">
+            {saving && <Loader2 size={14} className="animate-spin" />}
+            {saving ? "Salvando..." : editingId ? "Atualizar Programa" : "Adicionar Programa"}
           </button>
           {editingId && (
             <button onClick={resetForm} className="bg-muted border border-border text-foreground px-4 py-2 rounded-lg font-bold hover:brightness-95 transition-all flex items-center gap-1">
@@ -315,67 +311,80 @@ export default function ProgramaForm() {
       {/* Grade de Programação */}
       {programas.length > 0 && (
         <div>
-          <h4 className="text-lg font-medium text-foreground mb-4">Grade de Programação</h4>
-          <div className="bg-muted rounded-xl border border-border overflow-hidden">
-            <div className="flex items-center justify-between px-4 py-2 border-b border-border">
-              <button onClick={() => setGradeStartIdx(Math.max(0, gradeStartIdx - GRADE_VISIBLE_ROWS))}
-                disabled={gradeStartIdx === 0}
-                className="text-muted-foreground hover:text-foreground disabled:opacity-30 transition-colors">
-                <ChevronUp size={18} />
-              </button>
-              <span className="text-xs text-muted-foreground">
-                {visibleSlots[0]?.slice(0, 5)} — {visibleSlots[visibleSlots.length - 1]?.slice(0, 5)}
-              </span>
-              <button onClick={() => setGradeStartIdx(Math.min(gradeSlots.length - GRADE_VISIBLE_ROWS, gradeStartIdx + GRADE_VISIBLE_ROWS))}
-                disabled={gradeStartIdx >= gradeSlots.length - GRADE_VISIBLE_ROWS}
-                className="text-muted-foreground hover:text-foreground disabled:opacity-30 transition-colors">
-                <ChevronDown size={18} />
-              </button>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs">
-                <thead>
-                  <tr className="border-b border-border">
-                    <th className="px-2 py-2 text-left text-muted-foreground w-20">Horário</th>
-                    {DIAS_SEMANA.map(dia => (
-                      <th key={dia} className={`px-2 py-2 text-center ${dia === diaAtual ? "text-primary font-bold" : "text-muted-foreground"}`}>
-                        {dia.slice(0, 3)}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {visibleSlots.map(slot => (
-                    <tr key={slot} className="border-b border-border/50">
-                      <td className="px-2 py-2 text-muted-foreground font-mono">{slot.slice(0, 5)}</td>
-                      {DIAS_SEMANA.map(dia => {
-                        const prog = getProgramaForSlot(dia, slot);
-                        const isOnAir = prog && dia === diaAtual && currentTimeStr >= prog.horarioInicio && currentTimeStr < prog.horarioFim;
-                        return (
-                          <td key={dia} className={`px-1 py-1 text-center ${
-                            isOnAir ? "bg-green-200 text-green-900 font-bold" :
-                            prog ? "bg-primary/10 text-foreground" : ""
-                          }`}>
-                            {prog ? (
-                              <span className="text-[10px] truncate block">{prog.nome}</span>
-                            ) : null}
-                          </td>
-                        );
-                      })}
-                    </tr>
+          <div className="flex items-center justify-between mb-4">
+            <h4 className="text-lg font-medium text-foreground">Grade de Programação</h4>
+            <Select value={gradeEstudioFilter} onValueChange={setGradeEstudioFilter}>
+              <SelectTrigger className="w-[200px] h-8 text-sm">
+                <SelectValue placeholder="Filtrar por estúdio" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos os estúdios</SelectItem>
+                {estudios.map(e => (
+                  <SelectItem key={e} value={e}>{e}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div
+            ref={gradeRef}
+            className="bg-muted rounded-xl border border-border overflow-auto max-h-[300px]"
+          >
+            <table className="w-full text-xs">
+              <thead className="sticky top-0 z-10 bg-muted">
+                <tr className="border-b border-border">
+                  <th className="px-2 py-2 text-left text-muted-foreground w-20">Horário</th>
+                  {DIAS_SEMANA.map(dia => (
+                    <th key={dia} className={`px-2 py-2 text-center ${dia === diaAtual ? "text-primary font-bold" : "text-muted-foreground"}`}>
+                      {dia.slice(0, 3)}
+                    </th>
                   ))}
-                </tbody>
-              </table>
-            </div>
+                </tr>
+              </thead>
+              <tbody>
+                {gradeSlots.map(slot => (
+                  <tr key={slot} className="border-b border-border/50">
+                    <td className="px-2 py-2 text-muted-foreground font-mono">{slot.slice(0, 5)}</td>
+                    {DIAS_SEMANA.map(dia => {
+                      const prog = getProgramaForSlot(dia, slot);
+                      const isOnAir = prog && dia === diaAtual && currentTimeStr >= prog.horarioInicio && currentTimeStr < prog.horarioFim;
+                      return (
+                        <td key={dia} className={`px-1 py-1 text-center ${
+                          isOnAir ? "text-gray-700 font-bold" :
+                          prog ? "bg-primary/10 text-foreground" : ""
+                        }`}
+                        style={isOnAir ? { backgroundColor: "#ffffff" } : undefined}>
+                          {prog ? (
+                            <span className="text-[10px] truncate block">{prog.nome}</span>
+                          ) : null}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       )}
 
       {programas.length > 0 && (
         <div>
-          <h4 className="text-lg font-medium text-foreground mb-4">Programas Cadastrados</h4>
+          <div className="flex items-center justify-between mb-4">
+            <h4 className="text-lg font-medium text-foreground">Programas Cadastrados</h4>
+            <Select value={sortBy} onValueChange={(v) => setSortBy(v as any)}>
+              <SelectTrigger className="w-[180px] h-8 text-sm">
+                <SelectValue placeholder="Ordenar por" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="horario">Horário</SelectItem>
+                <SelectItem value="nome">Ordem Alfabética</SelectItem>
+                <SelectItem value="estudio">Estúdio</SelectItem>
+                <SelectItem value="status">Status</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {programas.map((p) => (
+            {sortedProgramas.map((p) => (
               <div key={p.id} className={`bg-muted rounded-xl border overflow-hidden ${p.ativo ? "border-border" : "border-destructive/30 opacity-60"}`}>
                 <div className="px-4 py-3 font-bold text-sm bg-primary text-primary-foreground flex items-center justify-between">
                   <div className="flex items-center gap-2">
