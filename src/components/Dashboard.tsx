@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Calendar as CalendarUI } from "@/components/ui/calendar";
-import { Home, Sun, FileText, Mic2, PlaySquare, Music, CalendarDays, Settings, LogOut } from "lucide-react";
+import { Home, Sun, FileText, Mic2, PlaySquare, Music, CalendarDays, Settings, LogOut, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import ApresentadorForm from "./ApresentadorForm";
 import ProgramaForm from "./ProgramaForm";
@@ -68,12 +68,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     getEmpresaConfig().then(setEmpresa);
   }, [currentPage]);
 
-  // Global music XML upload every 5s regardless of page
   useGlobalMusicXmlUpload();
 
   return (
     <div className="min-h-screen bg-background flex text-foreground">
-      {/* Sidebar - icon only */}
       <aside className="w-16 flex flex-col items-center py-4 gap-3" style={{ backgroundColor: "#1e1e1e" }}>
         <div className="mb-4">
           <img src={logoMenu} alt="MasterView" className="w-10 h-auto" />
@@ -131,7 +129,6 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         </div>
       </aside>
 
-      {/* Main Content */}
       <main className={`flex-1 p-10 relative`}
         style={currentPage === "dashboard" ? { backgroundColor: "#e0e0e0" } : undefined}
       >
@@ -158,7 +155,6 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               </div>
             </div>
           )}
-          {/* Spacer to push clock to right */}
           <div className="flex-1" />
           {currentPage === "dashboard" && <ServerClock />}
         </header>
@@ -201,7 +197,6 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   );
 }
 
-// Server clock component
 function ServerClock() {
   const [now, setNow] = useState(new Date());
 
@@ -221,7 +216,6 @@ function ServerClock() {
   );
 }
 
-// Unified XML field combining weather + news + music
 const WEATHER_KEY = "masterview_last_city";
 
 function UnifiedXmlField() {
@@ -233,7 +227,6 @@ function UnifiedXmlField() {
       let newsXml = "";
       let musicXml = "";
 
-      // Weather
       const savedCity = localStorage.getItem(WEATHER_KEY);
       if (savedCity) {
         try {
@@ -248,7 +241,6 @@ function UnifiedXmlField() {
         } catch {}
       }
 
-      // News from DB
       try {
         const [newsRes, cotRes] = await Promise.all([
           supabase.from("selected_news").select("*"),
@@ -263,7 +255,6 @@ function UnifiedXmlField() {
         }
       } catch {}
 
-      // Music
       const m = getMusicData();
       if (m) {
         musicXml = `  <musica_agora>\n    <titulo>${m.music.titulo}</titulo>\n    <interprete>${m.music.artista}</interprete>\n    <capa>${m.music.capa || ""}</capa>\n  </musica_agora>`;
@@ -290,7 +281,6 @@ function UnifiedXmlField() {
   );
 }
 
-// Global hook: auto-upload music XML every 5s regardless of which page is open
 function useGlobalMusicXmlUpload() {
   const { user } = useAuth();
   const lastContentRef = useRef<string>("");
@@ -299,7 +289,6 @@ function useGlobalMusicXmlUpload() {
     if (!user) return;
 
     const uploadMusicXml = async () => {
-      // Get music XML URL from DB
       const { data: settings } = await supabase
         .from("user_settings")
         .select("music_xml_url")
@@ -311,8 +300,6 @@ function useGlobalMusicXmlUpload() {
       try {
         const res = await fetch(settings.music_xml_url, { cache: "no-store" });
         const text = await res.text();
-
-        // Only upload if content changed
         if (text === lastContentRef.current) return;
         lastContentRef.current = text;
 
@@ -320,9 +307,7 @@ function useGlobalMusicXmlUpload() {
         await supabase.storage
           .from("xml-files")
           .upload("musica-agora.xml", file, { upsert: true, contentType: "application/xml" });
-      } catch {
-        // silent
-      }
+      } catch {}
     };
 
     uploadMusicXml();
@@ -334,18 +319,19 @@ function useGlobalMusicXmlUpload() {
 // Dashboard mini-agenda widget
 function DashboardAgenda() {
   const { user } = useAuth();
+  const [loading, setLoading] = useState(true);
   const [eventos, setEventos] = useState<any[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
 
   useEffect(() => {
     if (!user) return;
-    const fetch = async () => {
+    const fetchData = async () => {
       const { data: evts } = await supabase
         .from("agenda_eventos")
         .select("*")
         .eq("user_id", user.id)
         .order("data");
-      if (!evts) { setEventos([]); return; }
+      if (!evts) { setEventos([]); setLoading(false); return; }
       const programaIds = evts.map((e: any) => e.programa_id).filter(Boolean);
       const { data: progs } = programaIds.length
         ? await supabase.from("programas").select("*").in("id", programaIds)
@@ -354,8 +340,9 @@ function DashboardAgenda() {
         ...e,
         programa: (progs || []).find((p: any) => p.id === e.programa_id),
       })));
+      setLoading(false);
     };
-    fetch();
+    fetchData();
   }, [user]);
 
   const eventMatchesDate = (evt: any, dateStr: string) => {
@@ -368,7 +355,6 @@ function DashboardAgenda() {
     return false;
   };
 
-  // Build calendar highlight dates (expand recurring for ~3 months)
   const getCalendarDates = () => {
     const dates: Date[] = [];
     const now = new Date();
@@ -393,7 +379,6 @@ function DashboardAgenda() {
   const today = new Date();
   const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
 
-  // Next 3 upcoming events (expand recurring for next 60 days)
   const getUpcoming = () => {
     const results: { evt: any; dateStr: string }[] = [];
     for (let i = 0; i < 60; i++) {
@@ -411,11 +396,21 @@ function DashboardAgenda() {
   };
   const upcoming = getUpcoming();
 
-  // Events for selected date
   const selDateStr = selectedDate
     ? `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, "0")}-${String(selectedDate.getDate()).padStart(2, "0")}`
     : "";
   const dayEvents = eventos.filter((e) => eventMatchesDate(e, selDateStr));
+
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        <div className="bg-white/80 rounded-2xl border border-gray-200 p-4 flex items-center gap-2">
+          <Loader2 size={16} className="text-gray-500 animate-spin" />
+          <span className="text-gray-500 text-xs">Carregando dados</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -429,11 +424,11 @@ function DashboardAgenda() {
         {dayEvents.length > 0 && (
           <div className="mt-3 space-y-1">
             {dayEvents.map((evt: any) => (
-              <div key={evt.id} className="bg-green-100 border border-green-300 rounded-lg px-3 py-2 text-xs">
-                <p className="font-semibold text-green-900">{evt.programa?.nome || "Evento"}</p>
-                {evt.programa && <p className="text-green-700">{evt.programa.horario_inicio} - {evt.programa.horario_fim}</p>}
-                {evt.descricao && <p className="text-green-800">{evt.descricao}</p>}
-                {evt.local && <p className="text-green-600">📍 {evt.local}</p>}
+              <div key={evt.id} className="rounded-lg px-3 py-2 text-xs" style={{ backgroundColor: "#d8f96c" }}>
+                <p className="font-semibold text-gray-700">{evt.programa?.nome || "Evento"}</p>
+                {evt.programa && <p className="text-gray-600">{evt.programa.horario_inicio} - {evt.programa.horario_fim}</p>}
+                {evt.descricao && <p className="text-gray-600">{evt.descricao}</p>}
+                {evt.local && <p className="text-gray-500">📍 {evt.local}</p>}
               </div>
             ))}
           </div>
@@ -449,7 +444,7 @@ function DashboardAgenda() {
               const dateLabel = d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
               return (
                 <div key={`${item.evt.id}-${idx}`} className="flex items-center gap-3 bg-muted/50 rounded-lg px-3 py-2">
-                  <span className="text-xs font-bold text-primary bg-primary/10 rounded px-2 py-1">{dateLabel}</span>
+                  <span className="text-xs font-bold text-white bg-gray-700 rounded px-2 py-1">{dateLabel}</span>
                   <div className="text-xs">
                     <p className="font-semibold text-foreground">{item.evt.programa?.nome || "Evento"}</p>
                     {item.evt.programa && <p className="text-muted-foreground">{item.evt.programa.horario_inicio} - {item.evt.programa.horario_fim}</p>}
@@ -464,7 +459,7 @@ function DashboardAgenda() {
   );
 }
 
-// Small calendar for dashboard with green dots on event days
+// Small calendar for dashboard with custom styling
 function DashboardCalendar({ selected, onSelect, eventDates }: {
   selected: Date | undefined;
   onSelect: (d: Date | undefined) => void;
@@ -475,9 +470,14 @@ function DashboardCalendar({ selected, onSelect, eventDates }: {
       mode="single"
       selected={selected}
       onSelect={onSelect}
-      className="p-0 pointer-events-auto [&_.rdp-day]:h-7 [&_.rdp-day]:w-7 [&_.rdp-day]:text-xs"
+      className="p-0 pointer-events-auto [&_.rdp-day]:h-7 [&_.rdp-day]:w-7 [&_.rdp-day]:text-xs [&_.rdp-day]:text-gray-700 [&_.rdp-day_button]:text-gray-700 [&_.rdp-head_cell]:text-gray-500"
       modifiers={{ hasEvent: eventDates }}
-      modifiersClassNames={{ hasEvent: "bg-green-200 font-bold text-green-800" }}
+      modifiersStyles={{
+        hasEvent: { backgroundColor: "#d8f96c", fontWeight: "bold", color: "#333" },
+      }}
+      styles={{
+        day: { color: "#555" },
+      }}
     />
   );
 }

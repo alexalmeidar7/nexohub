@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Radio, SkipForward, ChevronRight, Clock } from "lucide-react";
+import { Radio, SkipForward, ChevronRight, Clock, Loader2 } from "lucide-react";
 import { getApresentadores } from "./ApresentadorForm";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -69,6 +69,7 @@ interface ApresentadorInfo {
 }
 
 export default function OnAirWidget() {
+  const [loading, setLoading] = useState(true);
   const [onAir, setOnAir] = useState<{ programa: Programa; progress: number } | null>(null);
   const [apresentadorNome, setApresentadorNome] = useState("");
   const [apresentadorFoto, setApresentadorFoto] = useState("");
@@ -94,6 +95,7 @@ export default function OnAirWidget() {
         apMap[p.id] = { nome: ap?.nome || "—", foto: ap?.foto || "" };
       });
       setNextApresentadores(apMap);
+      setLoading(false);
     };
     update();
     const interval = setInterval(update, 30 * 1000);
@@ -102,6 +104,17 @@ export default function OnAirWidget() {
 
   const firstNext = nextPrograms[0] || null;
   const firstNextAp = firstNext ? nextApresentadores[firstNext.id] : null;
+
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        <div className="rounded-xl p-5 flex items-start gap-2" style={{ backgroundColor: "#dff06f", height: 330 }}>
+          <Loader2 size={16} className="text-gray-600 animate-spin" />
+          <span className="text-gray-600 text-xs">Carregando dados</span>
+        </div>
+      </div>
+    );
+  }
 
   if (!onAir) {
     return (
@@ -148,13 +161,7 @@ export default function OnAirWidget() {
                     src={firstNextAp.foto}
                     alt={firstNextAp.nome}
                     className="absolute object-contain pointer-events-none"
-                    style={{
-                      right: 0,
-                      top: 0,
-                      width: "60%",
-                      height: "100%",
-                      objectPosition: "right top",
-                    }}
+                    style={{ right: 0, top: 0, width: "60%", height: "100%", objectPosition: "right top" }}
                   />
                 )}
 
@@ -164,13 +171,8 @@ export default function OnAirWidget() {
                 </div>
 
                 <div className="absolute bottom-4 left-0 right-0 z-10 px-5 animate-fade-in">
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4">
-                    <p className="font-bold text-white truncate" style={{ fontSize: 12 }}>{firstNext.nome}</p>
-                    <p className="text-gray-400 text-xs truncate">{firstNextAp?.nome}</p>
-                    <p className="text-gray-400 text-xs whitespace-nowrap">
-                      {firstNext.horarioInicio} — {firstNext.horarioFim}
-                    </p>
-                  </div>
+                  <p className="font-bold text-white truncate" style={{ fontSize: 14 }}>{firstNext.nome}</p>
+                  <p className="text-gray-400 text-xs truncate">{firstNextAp?.nome} • {firstNext.horarioInicio} — {firstNext.horarioFim}</p>
                 </div>
               </>
             )}
@@ -192,13 +194,7 @@ export default function OnAirWidget() {
               src={apresentadorFoto}
               alt={apresentadorNome}
               className="absolute object-contain pointer-events-none"
-              style={{
-                right: 0,
-                top: 0,
-                width: "60%",
-                height: "100%",
-                objectPosition: "right top",
-              }}
+              style={{ right: 0, top: 0, width: "60%", height: "100%", objectPosition: "right top" }}
             />
           )}
 
@@ -209,14 +205,25 @@ export default function OnAirWidget() {
             </div>
           )}
 
-          <div className="absolute top-4 left-5 z-10 flex items-center gap-2">
-            <Radio size={16} className="text-gray-700 animate-pulse" />
-            <span className="font-bold text-gray-700 text-sm animate-pulse">NO AR</span>
+          <div className="absolute top-4 left-5 z-10">
+            <div className="flex items-center gap-2">
+              <Radio size={16} className="text-gray-700 animate-pulse" />
+              <span className="font-bold text-gray-700 text-sm animate-pulse">NO AR</span>
+            </div>
+            {/* Selo do programa abaixo do NO AR */}
+            {programa.selo && (
+              <img
+                src={programa.selo}
+                alt="Selo"
+                className="mt-2 object-contain"
+                style={{ maxHeight: 80, maxWidth: 120, filter: "grayscale(100%) brightness(0.4)" }}
+              />
+            )}
           </div>
 
           <div className="absolute bottom-[4px] left-0 right-0 z-10 px-5">
-            <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 mb-1">
-              <p className="font-bold text-gray-800 truncate" style={{ fontSize: 12 }}>{programa.nome}</p>
+            <p className="font-bold text-gray-800 truncate" style={{ fontSize: 14 }}>{programa.nome}</p>
+            <div className="flex items-center gap-3 mb-1">
               <p className="text-gray-600 text-xs truncate">{apresentadorNome}</p>
               <p className="text-gray-600 text-xs whitespace-nowrap">
                 {programa.horarioInicio} — {programa.horarioFim}
