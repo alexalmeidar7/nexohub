@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { RefreshCw, ExternalLink, Plus, TrendingUp, TrendingDown, Minus, Trash2, ChevronDown, ChevronUp, ListPlus, GripVertical } from "lucide-react";
+import { RefreshCw, ExternalLink, Plus, TrendingUp, TrendingDown, Minus, Trash2, ChevronDown, ChevronUp, ListPlus, GripVertical, BookOpen, Loader2, X, Image as ImageIcon } from "lucide-react";
 import XmlLinkRow from "./XmlLinkRow";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -51,21 +51,67 @@ const DEFAULT_PORTALS: Portal[] = [
   { name: "CNN Brasil", rssUrl: "https://www.cnnbrasil.com.br/feed/" },
 ];
 
-const PROXY = "https://api.rss2json.com/v1/api.json?rss_url=";
+const PROXY = "https://api.allorigins.win/raw?url=";
+
+function decodeHtmlEntities(str: string): string {
+  const textarea = document.createElement("textarea");
+  textarea.innerHTML = str;
+  return textarea.value;
+}
 
 async function fetchNews(rssUrl: string): Promise<NewsItem[]> {
   try {
     const res = await fetch(`${PROXY}${encodeURIComponent(rssUrl)}`);
-    const data = await res.json();
-    if (data.status === "ok" && data.items) {
-      return data.items.slice(0, 8).map((item: any) => ({
-        title: item.title,
-        link: item.link,
-        thumbnail: item.thumbnail || item.enclosure?.link || "",
-      }));
-    }
+    const text = await res.text();
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(text, "application/xml");
+    const items = doc.querySelectorAll("item");
+    const results: NewsItem[] = [];
+    items.forEach((item, i) => {
+      if (i >= 10) return;
+      const title = decodeHtmlEntities(item.querySelector("title")?.textContent || "");
+      const link = item.querySelector("link")?.textContent || "";
+      let thumbnail = "";
+      // Try media:content, media:thumbnail, enclosure, or image in description
+      const mediaContent = item.querySelector("content[url]") || item.querySelector("thumbnail[url]");
+      if (mediaContent) {
+        thumbnail = mediaContent.getAttribute("url") || "";
+      }
+      if (!thumbnail) {
+        const enclosure = item.querySelector("enclosure[url]");
+        if (enclosure && (enclosure.getAttribute("type") || "").startsWith("image")) {
+          thumbnail = enclosure.getAttribute("url") || "";
+        }
+      }
+      if (!thumbnail) {
+        const desc = item.querySelector("description")?.textContent || "";
+        const imgMatch = desc.match(/<img[^>]+src=["']([^"']+)["']/i);
+        if (imgMatch) thumbnail = imgMatch[1];
+      }
+      // Only add news with images
+      if (title && thumbnail) {
+        results.push({ title, link, thumbnail });
+      }
+    });
+    return results;
+  } catch {
+    // Fallback to rss2json
+    try {
+      const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`);
+      const data = await res.json();
+      if (data.status === "ok" && data.items) {
+        return data.items
+          .slice(0, 10)
+          .map((item: any) => ({
+            title: decodeHtmlEntities(item.title || ""),
+            link: item.link,
+            thumbnail: item.thumbnail || item.enclosure?.link || "",
+          }))
+          .filter((n: NewsItem) => n.thumbnail);
+      }
+    } catch {}
     return [];
-  } catch { return []; }
+  }
 }
 
 async function fetchCotacoes(): Promise<CotacaoItem[]> {
@@ -81,20 +127,44 @@ async function fetchCotacoes(): Promise<CotacaoItem[]> {
         direction: pctChange > 0 ? "up" : pctChange < 0 ? "down" : "neutral",
       };
     });
+
+    // Fetch stock market indices
     const bolsas: CotacaoItem[] = [];
+    const bolsaNames: Record<string, string> = {
+      "^BVSP": "B3 (IBOVESPA)",
+      "^GSPC": "S&P 500",
+      "^DJI": "Dow Jones",
+      "^IXIC": "NASDAQ",
+      "^FTSE": "FTSE 100",
+      "^GDAXI": "DAX 40",
+      "^N225": "Nikkei (Japão)",
+      "^HSI": "Hong Kong SE",
+      "000001.SS": "Shanghai SE",
+    };
+    // Use a simple approach with available APIs
     try {
-      const bolsaRes = await fetch("https://economia.awesomeapi.com.br/last/DOW-JONES,S&P500,NASDAQ,IBOVESPA,FTSE,NIKKEI,DAX,CAC");
-      const bolsaData = await bolsaRes.json();
-      Object.values(bolsaData).forEach((item: any) => {
-        const pctChange = parseFloat(item.pctChange || "0");
-        bolsas.push({
-          name: item.name || `${item.code}`,
-          value: parseFloat(item.bid).toLocaleString("pt-BR"),
-          change: `${pctChange >= 0 ? "+" : ""}${pctChange.toFixed(2)}%`,
-          direction: pctChange > 0 ? "up" : pctChange < 0 ? "down" : "neutral",
-        });
-      });
+      const symbols = Object.keys(bolsaNames);
+      for (const symbol of symbols) {
+        try {
+          const bRes = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=1d&interval=1d`);
+          const bData = await bRes.json();
+          const result = bData?.chart?.result?.[0];
+          if (result) {
+            const meta = result.meta;
+            const price = meta.regularMarketPrice || 0;
+            const prevClose = meta.previousClose || meta.chartPreviousClose || price;
+            const change = prevClose ? ((price - prevClose) / prevClose) * 100 : 0;
+            bolsas.push({
+              name: bolsaNames[symbol],
+              value: price.toLocaleString("pt-BR", { minimumFractionDigits: 2 }),
+              change: `${change >= 0 ? "+" : ""}${change.toFixed(2)}%`,
+              direction: change > 0 ? "up" : change < 0 ? "down" : "neutral",
+            });
+          }
+        } catch {}
+      }
     } catch {}
+
     return [...moedas, ...bolsas];
   } catch { return []; }
 }
@@ -104,15 +174,8 @@ function useDragReorder<T>(items: T[], setItems: (items: T[]) => void) {
   const dragItem = useRef<number | null>(null);
   const dragOverItem = useRef<number | null>(null);
 
-  const handleDragStart = (idx: number) => {
-    dragItem.current = idx;
-  };
-
-  const handleDragOver = (e: React.DragEvent, idx: number) => {
-    e.preventDefault();
-    dragOverItem.current = idx;
-  };
-
+  const handleDragStart = (idx: number) => { dragItem.current = idx; };
+  const handleDragOver = (e: React.DragEvent, idx: number) => { e.preventDefault(); dragOverItem.current = idx; };
   const handleDrop = () => {
     if (dragItem.current === null || dragOverItem.current === null) return;
     const reordered = [...items];
@@ -139,6 +202,8 @@ export default function NoticiasPanel() {
   const [selectedCotacoes, setSelectedCotacoes] = useState<SelectedCotacao[]>([]);
   const [expandedPortals, setExpandedPortals] = useState<Record<string, boolean>>({});
   const [portalOrder, setPortalOrder] = useState<string[]>([]);
+  const [summaryPopup, setSummaryPopup] = useState<{ title: string; resumo: string; tempoLeitura: string } | null>(null);
+  const [loadingSummary, setLoadingSummary] = useState(false);
 
   // Load from DB
   useEffect(() => {
@@ -158,7 +223,6 @@ export default function NoticiasPanel() {
     loadDb();
   }, [user]);
 
-  // Build portal order: custom sites first, then defaults
   useEffect(() => {
     const customNames = customSites.map(s => s.name);
     const defaultNames = DEFAULT_PORTALS.map(p => p.name);
@@ -166,11 +230,9 @@ export default function NoticiasPanel() {
   }, [customSites]);
 
   const allPortals = [...customSites, ...DEFAULT_PORTALS];
-
   const orderedPortals = portalOrder
     .map(name => allPortals.find(p => p.name === name))
     .filter(Boolean) as Portal[];
-
   const portalDrag = useDragReorder(portalOrder, setPortalOrder);
 
   const loadAll = async () => {
@@ -197,10 +259,12 @@ export default function NoticiasPanel() {
     try { const parsed = new URL(url); displayName = parsed.hostname.replace("www.", ""); } catch { displayName = url; }
     const { data } = await supabase.from("custom_news_sites").insert({ user_id: user.id, name: displayName, rss_url: url }).select().single();
     if (data) {
-      setCustomSites(prev => [...prev, { id: data.id, name: data.name, rssUrl: data.rss_url }]);
+      const newSite = { id: data.id, name: data.name, rssUrl: data.rss_url };
+      setCustomSites(prev => [...prev, newSite]);
+      // Immediately fetch news for the new site
+      fetchNews(url).then(news => { setNewsByPortal(prev => ({ ...prev, [displayName]: news })); });
     }
     setCustomUrl("");
-    fetchNews(url).then(news => { setNewsByPortal(prev => ({ ...prev, [displayName]: news })); });
   };
 
   const removeCustomSite = async (name: string) => {
@@ -211,7 +275,7 @@ export default function NoticiasPanel() {
   };
 
   const addToSelected = async (portal: string, news: NewsItem) => {
-    if (!user) return;
+    if (!user || !news.thumbnail) return;
     const item: SelectedNews = { portal, title: news.title, imageUrl: news.thumbnail || "" };
     const { data } = await supabase.from("selected_news").insert({ user_id: user.id, portal, title: news.title, image_url: news.thumbnail || "" }).select().single();
     if (data) setSelectedNews(prev => [...prev, { ...item, id: data.id }]);
@@ -223,14 +287,19 @@ export default function NoticiasPanel() {
     setSelectedNews(prev => prev.filter((_, i) => i !== index));
   };
 
+  const updateSelectedField = async (index: number, field: keyof SelectedNews, value: string) => {
+    const item = selectedNews[index];
+    if (!item?.id) return;
+    const dbField = field === "imageUrl" ? "image_url" : field;
+    await supabase.from("selected_news").update({ [dbField]: value }).eq("id", item.id);
+    setSelectedNews(prev => prev.map((n, i) => i === index ? { ...n, [field]: value } : n));
+  };
+
   const addToEscalada = async (sn: SelectedNews) => {
     if (!user) return;
     if (escaladaNews.some(e => e.title === sn.title && e.portal === sn.portal)) return;
     const { data } = await supabase.from("escalada_news").insert({
-      user_id: user.id,
-      portal: sn.portal,
-      title: sn.title,
-      image_url: sn.imageUrl,
+      user_id: user.id, portal: sn.portal, title: sn.title, image_url: sn.imageUrl,
     }).select().single();
     if (data) setEscaladaNews(prev => [...prev, { id: data.id, portal: data.portal, title: data.title, imageUrl: data.image_url || "" }]);
   };
@@ -251,6 +320,29 @@ export default function NoticiasPanel() {
     const item = selectedCotacoes.find(sc => sc.name === name);
     if (item?.id) await supabase.from("selected_cotacoes").delete().eq("id", item.id);
     setSelectedCotacoes(prev => prev.filter(sc => sc.name !== name));
+  };
+
+  const openSummary = async (news: SelectedNews) => {
+    setLoadingSummary(true);
+    setSummaryPopup({ title: news.title, resumo: "", tempoLeitura: "" });
+    try {
+      const { data, error } = await supabase.functions.invoke("summarize-news", {
+        body: { title: news.title, url: "" },
+      });
+      if (error) throw error;
+      setSummaryPopup({
+        title: news.title,
+        resumo: data.resumo || "Não foi possível gerar o resumo.",
+        tempoLeitura: data.tempo_leitura || "1 min",
+      });
+    } catch (err: any) {
+      setSummaryPopup({
+        title: news.title,
+        resumo: "Erro ao gerar resumo. Tente novamente.",
+        tempoLeitura: "",
+      });
+    }
+    setLoadingSummary(false);
   };
 
   const headerStyle = "px-4 py-3 font-bold text-sm tracking-wide bg-primary text-primary-foreground";
@@ -276,28 +368,54 @@ export default function NoticiasPanel() {
         </button>
       </div>
 
-      {/* Selected News + Escalada side by side */}
-      {(selectedNews.length > 0 || escaladaNews.length > 0) && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {/* Notícias Selecionadas */}
-          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-            <div className={headerStyle}>📋 Notícias Selecionadas</div>
-            <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
+      {/* Top row: Noticias Selecionadas + Cotações side by side */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Notícias Selecionadas */}
+        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+          <div className={headerStyle}>📋 Notícias Selecionadas</div>
+          <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
+            {selectedNews.length === 0 ? (
+              <p className="text-gray-500 text-xs p-4">Nenhuma notícia selecionada.</p>
+            ) : (
               <table className="w-full text-xs">
                 <thead>
                   <tr className="border-b border-gray-200 text-gray-500">
                     <th className="text-left px-3 py-2">Portal</th>
                     <th className="text-left px-3 py-2">Título</th>
-                    <th className="px-3 py-2 w-20"></th>
+                    <th className="text-left px-3 py-2">Imagem URL</th>
+                    <th className="px-3 py-2 w-24"></th>
                   </tr>
                 </thead>
                 <tbody>
                   {selectedNews.map((sn, i) => (
                     <tr key={sn.id || i} className="border-b border-gray-100">
-                      <td className="px-3 py-2 text-gray-700 font-semibold whitespace-nowrap">{sn.portal}</td>
-                      <td className="px-3 py-2 text-gray-700">{sn.title}</td>
+                      <td className="px-3 py-2">
+                        <input
+                          defaultValue={sn.portal}
+                          onBlur={(e) => updateSelectedField(i, "portal", e.target.value)}
+                          className="bg-transparent border-b border-transparent hover:border-gray-300 focus:border-primary outline-none text-gray-700 font-semibold w-full text-xs"
+                        />
+                      </td>
+                      <td className="px-3 py-2">
+                        <input
+                          defaultValue={sn.title}
+                          onBlur={(e) => updateSelectedField(i, "title", e.target.value)}
+                          className="bg-transparent border-b border-transparent hover:border-gray-300 focus:border-primary outline-none text-gray-700 w-full text-xs"
+                        />
+                      </td>
+                      <td className="px-3 py-2">
+                        <input
+                          defaultValue={sn.imageUrl}
+                          onBlur={(e) => updateSelectedField(i, "imageUrl", e.target.value)}
+                          className="bg-transparent border-b border-transparent hover:border-gray-300 focus:border-primary outline-none text-gray-500 w-full text-xs truncate"
+                          title={sn.imageUrl}
+                        />
+                      </td>
                       <td className="px-3 py-2 flex items-center gap-1">
-                        <button onClick={() => addToEscalada(sn)} className="text-primary hover:text-primary/80" title="Por na escalada">
+                        <button onClick={() => openSummary(sn)} className="text-blue-500 hover:text-blue-700" title="Ler resumo">
+                          <BookOpen size={14} />
+                        </button>
+                        <button onClick={() => addToEscalada(sn)} className="text-primary hover:text-primary/80" title="Inserir na escalada">
                           <ListPlus size={14} />
                         </button>
                         <button onClick={() => removeFromSelected(i)} className="text-destructive hover:text-destructive/80">
@@ -308,93 +426,95 @@ export default function NoticiasPanel() {
                   ))}
                 </tbody>
               </table>
-            </div>
+            )}
           </div>
+        </div>
 
-          {/* Notícias Escalada */}
-          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-            <div className={headerStyle}>🎯 Notícias Escalada</div>
-            <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
-              {escaladaNews.length === 0 ? (
-                <p className="text-gray-500 text-xs p-4">Nenhuma notícia na escalada. Use o botão <ListPlus size={12} className="inline" /> nas notícias selecionadas.</p>
+        {/* Cotações ao lado */}
+        <div className="space-y-4">
+          <div className="bg-muted rounded-xl border border-border overflow-hidden">
+            <div className={headerStyle}>💹 Cotações - Bolsas e Moedas</div>
+            <div className="p-4">
+              {loadingCotacoes ? (
+                <p className="text-muted-foreground text-sm">Carregando cotações...</p>
+              ) : cotacoes.length === 0 ? (
+                <p className="text-muted-foreground text-sm">Cotações indisponíveis</p>
               ) : (
-                <table className="w-full text-xs">
-                  <thead>
-                    <tr className="border-b border-gray-200 text-gray-500">
-                      <th className="text-left px-3 py-2">Portal</th>
-                      <th className="text-left px-3 py-2">Título</th>
-                      <th className="px-3 py-2 w-10"></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {escaladaNews.map((en, i) => (
-                      <tr key={en.id || i} className="border-b border-gray-100">
-                        <td className="px-3 py-2 text-gray-700 font-semibold whitespace-nowrap">{en.portal}</td>
-                        <td className="px-3 py-2 text-gray-700">{en.title}</td>
-                        <td className="px-3 py-2">
-                          <button onClick={() => removeFromEscalada(i)} className="text-destructive hover:text-destructive/80">
-                            <Trash2 size={12} />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {cotacoes.map(c => (
+                    <div key={c.name} className="bg-background/50 rounded-lg p-3 text-center relative group">
+                      <button onClick={() => addCotacao(c)}
+                        className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-primary transition-all"
+                        title="Adicionar cotação">
+                        <Plus size={12} />
+                      </button>
+                      <p className="text-[10px] text-muted-foreground mb-1">{c.name}</p>
+                      <p className="text-sm font-semibold text-foreground">{c.value}</p>
+                      <div className={`flex items-center justify-center gap-1 text-xs mt-1 ${
+                        c.direction === "up" ? "text-green-400" : c.direction === "down" ? "text-red-400" : "text-muted-foreground"
+                      }`}>
+                        {c.direction === "up" ? <TrendingUp size={12} /> : c.direction === "down" ? <TrendingDown size={12} /> : <Minus size={12} />}
+                        {c.change}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
           </div>
-        </div>
-      )}
 
-      <div className="bg-muted rounded-xl border border-border overflow-hidden">
-        <div className={headerStyle}>💹 Cotações - Bolsas e Moedas</div>
-        <div className="p-4">
-          {loadingCotacoes ? (
-            <p className="text-muted-foreground text-sm">Carregando cotações...</p>
-          ) : cotacoes.length === 0 ? (
-            <p className="text-muted-foreground text-sm">Cotações indisponíveis</p>
-          ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3">
-              {cotacoes.map(c => (
-                <div key={c.name} className="bg-background/50 rounded-lg p-3 text-center relative group">
-                  <button onClick={() => addCotacao(c)}
-                    className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-primary transition-all"
-                    title="Adicionar cotação">
-                    <Plus size={12} />
-                  </button>
-                  <p className="text-[10px] text-muted-foreground mb-1">{c.name}</p>
-                  <p className="text-sm font-semibold text-foreground">{c.value}</p>
-                  <div className={`flex items-center justify-center gap-1 text-xs mt-1 ${
-                    c.direction === "up" ? "text-green-400" : c.direction === "down" ? "text-red-400" : "text-muted-foreground"
-                  }`}>
-                    {c.direction === "up" ? <TrendingUp size={12} /> : c.direction === "down" ? <TrendingDown size={12} /> : <Minus size={12} />}
-                    {c.change}
+          {selectedCotacoes.length > 0 && (
+            <div className="bg-muted rounded-xl border border-border overflow-hidden">
+              <div className={headerStyle}>📊 Cotações Selecionadas</div>
+              <div className="p-4 flex flex-wrap gap-2">
+                {selectedCotacoes.map(sc => (
+                  <div key={sc.id || sc.name} className="bg-background/50 rounded-lg px-3 py-2 flex items-center gap-2 text-xs">
+                    <span className="font-semibold text-foreground">{sc.name}</span>
+                    <span className="text-muted-foreground">{sc.value}</span>
+                    <span className="text-muted-foreground">{sc.change}</span>
+                    <button onClick={() => removeCotacao(sc.name)} className="text-destructive hover:text-destructive/80">
+                      <Trash2 size={10} />
+                    </button>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           )}
         </div>
       </div>
 
-      {selectedCotacoes.length > 0 && (
-        <div className="bg-muted rounded-xl border border-border overflow-hidden">
-          <div className={headerStyle}>📊 Cotações Selecionadas</div>
-          <div className="p-4 flex flex-wrap gap-2">
-            {selectedCotacoes.map(sc => (
-              <div key={sc.id || sc.name} className="bg-background/50 rounded-lg px-3 py-2 flex items-center gap-2 text-xs">
-                <span className="font-semibold text-foreground">{sc.name}</span>
-                <span className="text-muted-foreground">{sc.value}</span>
-                <span className="text-muted-foreground">{sc.change}</span>
-                <button onClick={() => removeCotacao(sc.name)} className="text-destructive hover:text-destructive/80">
-                  <Trash2 size={10} />
-                </button>
-              </div>
-            ))}
+      {/* Notícias Escalada - below Selecionadas */}
+      {escaladaNews.length > 0 && (
+        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+          <div className={headerStyle}>🎯 Notícias Escalada</div>
+          <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="border-b border-gray-200 text-gray-500">
+                  <th className="text-left px-3 py-2">Portal</th>
+                  <th className="text-left px-3 py-2">Título</th>
+                  <th className="px-3 py-2 w-10"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {escaladaNews.map((en, i) => (
+                  <tr key={en.id || i} className="border-b border-gray-100">
+                    <td className="px-3 py-2 text-gray-700 font-semibold whitespace-nowrap">{en.portal}</td>
+                    <td className="px-3 py-2 text-gray-700">{en.title}</td>
+                    <td className="px-3 py-2">
+                      <button onClick={() => removeFromEscalada(i)} className="text-destructive hover:text-destructive/80">
+                        <Trash2 size={12} />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       )}
 
+      {/* News portals grid */}
       {loading && Object.keys(newsByPortal).length === 0 ? (
         <p className="text-muted-foreground">Carregando notícias...</p>
       ) : (
@@ -428,8 +548,11 @@ export default function NoticiasPanel() {
                   ) : (
                     newsByPortal[portal.name].map((news, i) => (
                       <li key={i} className="flex items-center">
+                        {news.thumbnail && (
+                          <img src={news.thumbnail} alt="" className="w-10 h-10 object-cover rounded ml-2 shrink-0" />
+                        )}
                         <a href={news.link} target="_blank" rel="noopener noreferrer"
-                          className="flex-1 px-4 py-3 text-sm text-foreground hover:text-primary hover:bg-background/50 transition-colors flex items-start gap-2 group">
+                          className="flex-1 px-3 py-3 text-sm text-foreground hover:text-primary hover:bg-background/50 transition-colors flex items-start gap-2 group">
                           <span className="flex-1 line-clamp-2">{news.title}</span>
                           <ExternalLink size={14} className="shrink-0 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground" />
                         </a>
@@ -457,6 +580,31 @@ export default function NoticiasPanel() {
           ).join("\n");
           return `<?xml version="1.0" encoding="UTF-8"?>\n<noticias>\n${newsXml}\n${cotXml}\n</noticias>`;
         })()} />
+      )}
+
+      {/* Summary Popup */}
+      {summaryPopup && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4" onClick={() => setSummaryPopup(null)}>
+          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 relative" onClick={(e) => e.stopPropagation()}>
+            <button onClick={() => setSummaryPopup(null)} className="absolute top-3 right-3 text-gray-400 hover:text-gray-700">
+              <X size={20} />
+            </button>
+            <h3 className="font-bold text-gray-800 text-lg mb-2 pr-8">{summaryPopup.title}</h3>
+            {summaryPopup.tempoLeitura && (
+              <p className="text-xs text-gray-500 mb-4 flex items-center gap-1">
+                ⏱ Tempo estimado de leitura: <strong>{summaryPopup.tempoLeitura}</strong>
+              </p>
+            )}
+            {loadingSummary ? (
+              <div className="flex items-center gap-2 py-8 justify-center">
+                <Loader2 size={20} className="animate-spin text-primary" />
+                <span className="text-gray-500 text-sm">Gerando resumo...</span>
+              </div>
+            ) : (
+              <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-line">{summaryPopup.resumo}</p>
+            )}
+          </div>
+        </div>
       )}
     </div>
   );
