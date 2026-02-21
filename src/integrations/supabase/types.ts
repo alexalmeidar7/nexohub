@@ -318,6 +318,7 @@ export type Database = {
       }
       promocoes: {
         Row: {
+          botao_url: string | null
           created_at: string
           data_fim: string
           data_inicio: string
@@ -328,6 +329,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          botao_url?: string | null
           created_at?: string
           data_fim: string
           data_inicio: string
@@ -338,6 +340,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          botao_url?: string | null
           created_at?: string
           data_fim?: string
           data_inicio?: string
