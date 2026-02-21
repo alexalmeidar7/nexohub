@@ -173,29 +173,25 @@ export default function PromocoesKiosk() {
             src={config.logo}
             alt={config.nome}
             className="h-18 w-auto object-contain shrink-0 drop-shadow-xl"
-            style={{ height: "108px", marginRight: "100px" }}
+            style={{ height: "108px" }}
           />
         )}
       </header>
 
       {/* CARROSSEL DE BANNERS - ocupa toda a página */}
-      <div className="relative w-full h-screen">
+      <div className="relative w-full flex items-center justify-center bg-black">
         {banners.length > 0 ? (
           banners.map((banner, index) => (
             <div
               key={banner.id}
-              className="absolute inset-0 transition-opacity duration-1000 ease-in-out"
-              style={{ opacity: index === currentBannerIndex ? 1 : 0 }}
+              className={`w-full transition-opacity duration-1000 ease-in-out ${index === currentBannerIndex ? "" : "absolute inset-0"}`}
+              style={{ opacity: index === currentBannerIndex ? 1 : 0, display: index === currentBannerIndex ? "block" : "none" }}
             >
               <img
                 src={banner.imagem_url}
                 alt={banner.texto}
-                className="w-full h-full object-cover object-top"
+                className="w-full h-auto object-contain"
               />
-              {/* Gradient overlay top for header readability */}
-              <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/60 to-transparent" />
-              {/* Gradient overlay bottom */}
-              <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-black/90 to-transparent" />
             </div>
           ))
         ) : (
