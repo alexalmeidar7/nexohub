@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Music, User, Loader2 } from "lucide-react";
+import { Music, User, Loader2, Pencil, Check } from "lucide-react";
 import XmlLinkRow from "./XmlLinkRow";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { findCurrentProgram } from "./OnAirWidget";
+import { getApresentadores } from "./ApresentadorForm";
 
 interface MusicData {
   titulo: string;
@@ -13,7 +15,7 @@ interface MusicData {
 
 const MUSIC_DATA_KEY = "masterview_music_data";
 const MUSIC_START_KEY = "masterview_music_start";
-const FIXED_XML_URL = "https://positivafm.com.br/storage/pulsar/positivafm.xml";
+const DEFAULT_XML_URL = "https://positivafm.com.br/storage/pulsar/positivafm.xml";
 
 function parseXmlString(xmlStr: string): MusicData | null {
   try {
@@ -92,26 +94,81 @@ export function getMusicData(): { music: MusicData; elapsed: number; finished: b
 
 export default function MusicaNoAr() {
   const { user } = useAuth();
-  const [xmlUrl, setXmlUrl] = useState(FIXED_XML_URL);
+  const [xmlUrl, setXmlUrl] = useState(DEFAULT_XML_URL);
+  const [editingUrl, setEditingUrl] = useState(false);
+  const [tempUrl, setTempUrl] = useState("");
   const [music, setMusic] = useState<MusicData | null>(null);
   const [elapsed, setElapsed] = useState(0);
   const [startTime, setStartTime] = useState<number | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const fetchIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const [fetchError, setFetchError] = useState("");
   const coverCacheRef = useRef<Record<string, string>>({});
   const [loadingCover, setLoadingCover] = useState(false);
-  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [presenterFallback, setPresenterFallback] = useState<{ nome: string; foto: string } | null>(null);
 
-  // Load URL from DB and save the fixed URL
+  // Load URL from DB
   useEffect(() => {
     if (!user) return;
-    supabase.from("user_settings").upsert({
+    const loadUrl = async () => {
+      const { data } = await supabase
+        .from("user_settings")
+        .select("music_xml_url")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (data?.music_xml_url) {
+        setXmlUrl(data.music_xml_url);
+      } else {
+        // Save default
+        await supabase.from("user_settings").upsert({
+          user_id: user.id,
+          music_xml_url: DEFAULT_XML_URL,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: "user_id" });
+      }
+    };
+    loadUrl();
+  }, [user]);
+
+  // Fetch current presenter for fallback
+  useEffect(() => {
+    const fetchPresenter = async () => {
+      const [{ data: progsData }, apresentadores] = await Promise.all([
+        supabase.from("programas").select("*"),
+        getApresentadores(),
+      ]);
+      if (!progsData) return;
+      const programas = progsData.map((p: any) => ({
+        id: p.id,
+        nome: p.nome,
+        apresentadorId: p.apresentador_id || "",
+        selo: p.selo || "",
+        diasSemana: p.dias_semana || [],
+        horarioInicio: p.horario_inicio,
+        horarioFim: p.horario_fim,
+        estudio: p.estudio || "",
+      }));
+      const current = findCurrentProgram(programas);
+      if (current) {
+        const ap = apresentadores.find(a => a.id === current.programa.apresentadorId);
+        if (ap) {
+          setPresenterFallback({ nome: ap.nome, foto: ap.foto });
+        }
+      }
+    };
+    fetchPresenter();
+    const interval = setInterval(fetchPresenter, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const saveUrl = async (url: string) => {
+    if (!user) return;
+    setXmlUrl(url);
+    await supabase.from("user_settings").upsert({
       user_id: user.id,
-      music_xml_url: FIXED_XML_URL,
+      music_xml_url: url,
       updated_at: new Date().toISOString(),
     }, { onConflict: "user_id" });
-  }, [user]);
+  };
 
   const processMusic = useCallback(async (data: MusicData) => {
     const prevRaw = localStorage.getItem(MUSIC_DATA_KEY);
@@ -150,22 +207,19 @@ export default function MusicaNoAr() {
   const fetchXml = useCallback(async () => {
     if (!xmlUrl.trim()) return;
     try {
-      setFetchError("");
-      // Use a CORS proxy to avoid CORS issues
       const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(xmlUrl.trim())}`;
       const res = await fetch(proxyUrl, { cache: "no-store" });
       const text = await res.text();
       const parsed = parseXmlString(text);
       if (parsed) await processMusic(parsed);
-      else setFetchError("XML inválido ou sem dados de música");
     } catch {
-      setFetchError("Erro ao carregar arquivo XML. Tentando novamente...");
+      // Silently handle errors - no error messages shown to user
     }
   }, [xmlUrl, processMusic]);
 
   useEffect(() => {
     fetchXml();
-    fetchIntervalRef.current = setInterval(fetchXml, 5000);
+    fetchIntervalRef.current = setInterval(fetchXml, 2000);
     return () => { if (fetchIntervalRef.current) clearInterval(fetchIntervalRef.current); };
   }, [fetchXml]);
 
@@ -188,15 +242,45 @@ export default function MusicaNoAr() {
 
   const progress = music && music.duracao > 0 ? Math.min(100, (elapsed / music.duracao) * 100) : 0;
 
+  // Determine display data with fallback logic
+  const hasCover = music?.capa && music.capa.length > 0;
+  const useFallback = !hasCover && presenterFallback;
+  const displayTitulo = useFallback ? presenterFallback!.nome : (music?.titulo || "Aguardando leitura...");
+  const displayArtista = useFallback ? "no ar agora" : (music?.artista || "Intérprete");
+  const displayCover = useFallback ? presenterFallback!.foto : (music?.capa || "");
+
   return (
     <div className="flex flex-col items-center justify-center min-h-[500px] animate-fade-in">
       <div className="bg-zinc-900 p-8 rounded-[2rem] shadow-2xl w-full max-w-md">
         <div className="mb-4">
           <p className="text-zinc-500 text-xs mb-1">URL do XML:</p>
-          <p className="text-zinc-400 text-xs truncate bg-zinc-800 rounded-lg px-3 py-2 border border-zinc-700">{xmlUrl}</p>
+          {editingUrl ? (
+            <div className="flex gap-2">
+              <input
+                value={tempUrl}
+                onChange={(e) => setTempUrl(e.target.value)}
+                className="flex-1 text-zinc-400 text-xs bg-zinc-800 rounded-lg px-3 py-2 border border-zinc-700 outline-none focus:border-violet-500"
+                placeholder="URL do XML"
+              />
+              <button
+                onClick={() => { saveUrl(tempUrl); setEditingUrl(false); }}
+                className="bg-violet-600 text-white rounded-lg px-3 py-2 hover:bg-violet-500 transition-colors"
+              >
+                <Check size={14} />
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <p className="text-zinc-400 text-xs truncate bg-zinc-800 rounded-lg px-3 py-2 border border-zinc-700 flex-1">{xmlUrl}</p>
+              <button
+                onClick={() => { setTempUrl(xmlUrl); setEditingUrl(true); }}
+                className="text-zinc-500 hover:text-violet-400 transition-colors"
+              >
+                <Pencil size={14} />
+              </button>
+            </div>
+          )}
         </div>
-
-        {fetchError && <p className="text-red-400 text-xs mb-4">{fetchError}</p>}
 
         <div className="relative aspect-square mb-8 overflow-hidden rounded-2xl bg-zinc-800 shadow-lg group">
           {loadingCover && (
@@ -204,8 +288,8 @@ export default function MusicaNoAr() {
               <Loader2 className="animate-spin text-violet-500" size={48} />
             </div>
           )}
-          {music?.capa ? (
-            <img src={music.capa} alt="Capa do Álbum" className="object-cover w-full h-full transition-transform duration-700 group-hover:scale-105" />
+          {displayCover ? (
+            <img src={displayCover} alt="Capa do Álbum" className="object-cover w-full h-full transition-transform duration-700 group-hover:scale-105" />
           ) : (
             <div className="w-full h-full flex flex-col items-center justify-center text-zinc-600 gap-3">
               <Music size={48} />
@@ -214,13 +298,26 @@ export default function MusicaNoAr() {
           )}
         </div>
 
-        <div className="space-y-2 text-center mb-8">
-          <h1 className="text-2xl font-bold tracking-tight truncate px-2 text-zinc-100">{music?.titulo || "Aguardando leitura..."}</h1>
+        <div className="space-y-2 text-center mb-4">
+          <h1 className="text-2xl font-bold tracking-tight truncate px-2 text-zinc-100">{displayTitulo}</h1>
           <p className="text-violet-400 font-semibold flex items-center justify-center gap-2 text-lg">
             <User size={20} />
-            {music?.artista || "Intérprete"}
+            {displayArtista}
           </p>
         </div>
+
+        {/* Duration display */}
+        {music && music.duracao > 0 && (
+          <div className="mb-6">
+            <div className="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden mb-2">
+              <div className="h-full bg-violet-500 rounded-full transition-all duration-300" style={{ width: `${progress}%` }} />
+            </div>
+            <div className="flex justify-between text-zinc-500 text-xs font-mono">
+              <span>{formatTime(elapsed)}</span>
+              <span>{formatTime(music.duracao)}</span>
+            </div>
+          </div>
+        )}
 
         {music && (
           <XmlLinkRow label="XML MUSICA AGORA" xmlContent={`<?xml version="1.0" encoding="UTF-8"?>\n<musica_agora>\n  <titulo>${music.titulo}</titulo>\n  <interprete>${music.artista}</interprete>\n  <capa>${music.capa || ""}</capa>\n</musica_agora>`} dark />
@@ -232,7 +329,7 @@ export default function MusicaNoAr() {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
             </span>
-            Monitorando URL
+            Monitorando a cada 2s
           </span>
         </div>
 

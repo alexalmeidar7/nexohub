@@ -1,12 +1,6 @@
 import { useState, useEffect } from "react";
-import { Music, Disc3 } from "lucide-react";
+import { Disc3 } from "lucide-react";
 import { getMusicData } from "./MusicaNoAr";
-
-function formatTime(seconds: number): string {
-  const m = Math.floor(seconds / 60);
-  const s = Math.floor(seconds % 60);
-  return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
-}
 
 export default function MusicWidget() {
   const [music, setMusic] = useState<ReturnType<typeof getMusicData>>(null);
@@ -20,23 +14,22 @@ export default function MusicWidget() {
 
   if (!music) {
     return (
-        <div className="rounded-xl p-5" style={{ backgroundColor: "#aea4ee" }}>
+      <div className="rounded-xl p-5" style={{ backgroundColor: "#aea4ee" }}>
         <div className="flex items-center gap-2 mb-2">
-          <Music size={16} className="text-gray-600" />
-          <span className="font-semibold text-gray-600 text-sm">Música</span>
+          <Disc3 size={16} className="text-gray-600" />
+          <span className="font-semibold text-gray-600 text-sm">Tocando</span>
         </div>
         <p className="text-gray-500 text-xs">Nenhuma música tocando.</p>
       </div>
     );
   }
 
-  const { music: m, elapsed, finished } = music;
-  const progress = m.duracao > 0 ? Math.min(100, (elapsed / m.duracao) * 100) : 0;
+  const { music: m } = music;
 
   return (
     <div className="rounded-xl p-5" style={{ backgroundColor: "#aea4ee" }}>
       <div className="flex items-center gap-2 mb-3">
-        <Music size={16} className="text-gray-700 animate-pulse" />
+        <Disc3 size={16} className="text-gray-700 animate-spin" style={{ animationDuration: "3s" }} />
         <span className="font-bold text-gray-700 text-sm">♫ TOCANDO</span>
       </div>
       <div className="flex gap-3">
@@ -50,9 +43,6 @@ export default function MusicWidget() {
         <div className="flex-1 space-y-1 min-w-0">
           <p className="font-bold text-gray-800 truncate">{m.titulo}</p>
           <p className="text-gray-500 text-xs truncate">{m.artista}</p>
-          <div className="text-[10px] text-gray-600 font-mono font-bold">
-            {Math.floor(Math.max(0, m.duracao - elapsed) / 60)}min {String(Math.floor(Math.max(0, m.duracao - elapsed) % 60)).padStart(2, "0")}seg {String(Math.floor((Math.max(0, m.duracao - elapsed) % 1) * 100)).padStart(2, "0")}ms
-          </div>
         </div>
       </div>
     </div>

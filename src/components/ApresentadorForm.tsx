@@ -46,11 +46,14 @@ export default function ApresentadorForm() {
   const [filterCategoria, setFilterCategoria] = useState("todos");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [loadingList, setLoadingList] = useState(true);
 
   const load = async () => {
+    setLoadingList(true);
     const list = await getApresentadores();
     list.sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
     setApresentadores(list);
+    setLoadingList(false);
   };
 
   useEffect(() => { load(); }, []);
@@ -183,7 +186,12 @@ export default function ApresentadorForm() {
         </div>
       </div>
 
-      {apresentadores.length > 0 && (
+      {loadingList ? (
+        <div className="flex items-center gap-2 py-8 justify-center">
+          <Loader2 size={20} className="animate-spin text-primary" />
+          <span className="text-muted-foreground text-sm">Carregando cadastrados...</span>
+        </div>
+      ) : apresentadores.length > 0 ? (
         <div>
           <div className="flex items-center justify-between mb-4">
             <h4 className="text-lg font-medium text-foreground">Cadastrados</h4>
@@ -236,7 +244,7 @@ export default function ApresentadorForm() {
             ))}
           </div>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

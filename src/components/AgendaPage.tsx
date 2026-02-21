@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
-import { CalendarIcon, Plus, Trash2, MapPin, Users, Instagram, Pencil, X, AlertTriangle } from "lucide-react";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { CalendarIcon, Plus, Trash2, MapPin, Users, Instagram, Pencil, X, AlertTriangle, History } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
@@ -13,7 +13,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -80,6 +79,7 @@ export default function AgendaPage() {
   const [filterLocal, setFilterLocal] = useState<string>("todos");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [historyDateFilter, setHistoryDateFilter] = useState<Date | undefined>(undefined);
 
   // Form
   const [formProgramaId, setFormProgramaId] = useState("");
@@ -92,7 +92,6 @@ export default function AgendaPage() {
     { nome: "", instagram: "" },
   ]);
 
-  // Estúdios from programas
   const estudios = Array.from(new Set(programas.map(p => p.estudio).filter(Boolean)));
 
   const fetchProgramas = useCallback(async () => {
@@ -203,7 +202,6 @@ export default function AgendaPage() {
 
     if (editingId) {
       await supabase.from("agenda_eventos").update(payload).eq("id", editingId);
-      // Delete old participants and re-insert
       await supabase.from("agenda_participantes").delete().eq("evento_id", editingId);
       const validParts = formParticipantes.filter((p) => p.nome.trim());
       if (validParts.length) {
@@ -264,12 +262,33 @@ export default function AgendaPage() {
     return false;
   };
 
+  const todayStr = useMemo(() => {
+    const t = new Date();
+    return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, "0")}-${String(t.getDate()).padStart(2, "0")}`;
+  }, []);
+
   const filteredEventos = eventos.filter((e) => {
     const selStr = selectedDate ? format(selectedDate, "yyyy-MM-dd") : "";
     const matchDate = selectedDate ? eventMatchesDate(e, selStr) : true;
     const matchLocal = filterLocal === "todos" || e.local === filterLocal;
-    return matchDate && matchLocal;
+    // Only future/current events
+    const isFuture = e.recorrencia !== "unico" || e.data >= todayStr;
+    return matchDate && matchLocal && isFuture;
   });
+
+  // Past events
+  const pastEventos = useMemo(() => {
+    const past = eventos.filter((e) => {
+      if (e.recorrencia !== "unico") return false;
+      return e.data < todayStr;
+    });
+    // Apply history date filter
+    if (historyDateFilter) {
+      const filterStr = format(historyDateFilter, "yyyy-MM-dd");
+      return past.filter(e => e.data === filterStr);
+    }
+    return past.sort((a, b) => b.data.localeCompare(a.data));
+  }, [eventos, todayStr, historyDateFilter]);
 
   const getEventDatesForCalendar = () => {
     const dates: Date[] = [];
@@ -295,6 +314,78 @@ export default function AgendaPage() {
   const eventDates = getEventDatesForCalendar();
 
   const selectedPrograma = programas.find((p) => p.id === formProgramaId);
+
+  const renderEventCard = (evt: Evento, inactive = false) => (
+    <div
+      key={evt.id}
+      className={`bg-muted rounded-xl border border-border p-4 space-y-2 ${inactive ? "opacity-50 grayscale" : ""}`}
+    >
+      <div className="flex items-start justify-between">
+        <div>
+          <h5 className="font-semibold text-foreground">
+            {evt.programa?.nome || "Programa removido"}
+          </h5>
+          <p className="text-xs text-muted-foreground">
+            <CalendarIcon size={12} className="inline mr-1" />
+            {format(new Date(evt.data + "T12:00:00"), "dd/MM/yyyy")}
+            {evt.programa && ` • ${evt.programa.horario_inicio} - ${evt.programa.horario_fim}`}
+          </p>
+          {evt.recorrencia !== "unico" && (
+            <span className="inline-block bg-primary/15 text-primary text-[10px] font-semibold px-2 py-0.5 rounded mt-0.5">
+              🔁 {recorrenciaLabels[evt.recorrencia]}
+            </span>
+          )}
+          <span className={`inline-block text-[10px] font-semibold px-2 py-0.5 rounded mt-0.5 ml-1 ${prioridadeColors[evt.prioridade] || prioridadeColors.normal}`}>
+            {evt.prioridade === "urgente" && <AlertTriangle size={10} className="inline mr-0.5" />}
+            {prioridadeLabels[evt.prioridade] || "Normal"}
+          </span>
+          {evt.local && (
+            <p className="text-xs text-muted-foreground">
+              <MapPin size={12} className="inline mr-1" />
+              {evt.local}
+            </p>
+          )}
+          {evt.descricao && (
+            <p className="text-sm text-foreground mt-1">{evt.descricao}</p>
+          )}
+        </div>
+        {!inactive && (
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => startEdit(evt)}>
+              <Pencil size={14} className="text-muted-foreground" />
+            </Button>
+            <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => handleDelete(evt.id)}>
+              <Trash2 size={14} className="text-destructive" />
+            </Button>
+          </div>
+        )}
+      </div>
+
+      {evt.participantes && evt.participantes.length > 0 && (
+        <div className="border-t border-border pt-2">
+          <p className="text-xs font-medium text-muted-foreground mb-1 flex items-center gap-1">
+            <Users size={12} /> Participantes
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {evt.participantes.map((p, i) => (
+              <span
+                key={i}
+                className="bg-background/50 border border-border rounded-lg px-2 py-1 text-xs text-foreground"
+              >
+                {p.nome}
+                {p.instagram && (
+                  <span className="text-muted-foreground ml-1">
+                    <Instagram size={10} className="inline mr-0.5" />
+                    {p.instagram}
+                  </span>
+                )}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
 
   return (
     <div className="animate-fade-in space-y-6">
@@ -494,87 +585,40 @@ export default function AgendaPage() {
               Nenhum evento encontrado para esta data.
             </p>
           ) : (
-            filteredEventos.map((evt) => (
-              <div
-                key={evt.id}
-                className="bg-muted rounded-xl border border-border p-4 space-y-2"
-              >
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h5 className="font-semibold text-foreground">
-                      {evt.programa?.nome || "Programa removido"}
-                    </h5>
-                    <p className="text-xs text-muted-foreground">
-                      <CalendarIcon size={12} className="inline mr-1" />
-                      {format(new Date(evt.data + "T12:00:00"), "dd/MM/yyyy")}
-                      {evt.programa && ` • ${evt.programa.horario_inicio} - ${evt.programa.horario_fim}`}
-                    </p>
-                    {evt.recorrencia !== "unico" && (
-                      <span className="inline-block bg-primary/15 text-primary text-[10px] font-semibold px-2 py-0.5 rounded mt-0.5">
-                        🔁 {recorrenciaLabels[evt.recorrencia]}
-                      </span>
-                    )}
-                    <span className={`inline-block text-[10px] font-semibold px-2 py-0.5 rounded mt-0.5 ml-1 ${prioridadeColors[evt.prioridade] || prioridadeColors.normal}`}>
-                      {evt.prioridade === "urgente" && <AlertTriangle size={10} className="inline mr-0.5" />}
-                      {prioridadeLabels[evt.prioridade] || "Normal"}
-                    </span>
-                    {evt.local && (
-                      <p className="text-xs text-muted-foreground">
-                        <MapPin size={12} className="inline mr-1" />
-                        {evt.local}
-                      </p>
-                    )}
-                    {evt.descricao && (
-                      <p className="text-sm text-foreground mt-1">{evt.descricao}</p>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 shrink-0"
-                      onClick={() => startEdit(evt)}
-                    >
-                      <Pencil size={14} className="text-muted-foreground" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 shrink-0"
-                      onClick={() => handleDelete(evt.id)}
-                    >
-                      <Trash2 size={14} className="text-destructive" />
-                    </Button>
-                  </div>
-                </div>
-
-                {evt.participantes && evt.participantes.length > 0 && (
-                  <div className="border-t border-border pt-2">
-                    <p className="text-xs font-medium text-muted-foreground mb-1 flex items-center gap-1">
-                      <Users size={12} /> Participantes
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {evt.participantes.map((p, i) => (
-                        <span
-                          key={i}
-                          className="bg-background/50 border border-border rounded-lg px-2 py-1 text-xs text-foreground"
-                        >
-                          {p.nome}
-                          {p.instagram && (
-                            <span className="text-muted-foreground ml-1">
-                              <Instagram size={10} className="inline mr-0.5" />
-                              {p.instagram}
-                            </span>
-                          )}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            ))
+            filteredEventos.map((evt) => renderEventCard(evt))
           )}
         </div>
+      </div>
+
+      {/* Past events history */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h4 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+            <History size={14} /> Histórico de Eventos Passados
+          </h4>
+          <div className="flex items-center gap-2">
+            <Input
+              type="date"
+              value={historyDateFilter ? format(historyDateFilter, "yyyy-MM-dd") : ""}
+              onChange={(e) => setHistoryDateFilter(e.target.value ? new Date(e.target.value + "T12:00:00") : undefined)}
+              className="w-[180px] h-8 text-sm"
+              placeholder="Filtrar por data"
+            />
+            {historyDateFilter && (
+              <Button variant="ghost" size="sm" onClick={() => setHistoryDateFilter(undefined)}>
+                <X size={14} /> Limpar
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {pastEventos.length === 0 ? (
+          <p className="text-muted-foreground text-sm py-4 text-center">
+            Nenhum evento passado encontrado.
+          </p>
+        ) : (
+          pastEventos.map((evt) => renderEventCard(evt, true))
+        )}
       </div>
     </div>
   );

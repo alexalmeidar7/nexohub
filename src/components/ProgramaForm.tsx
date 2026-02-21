@@ -30,6 +30,7 @@ interface Programa {
   horarioFim: string;
   estudio: string;
   ativo: boolean;
+  variavel: boolean;
 }
 
 const DIAS_SEMANA = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
@@ -47,6 +48,7 @@ async function getProgramas(): Promise<Programa[]> {
     horarioFim: p.horario_fim,
     estudio: p.estudio || "",
     ativo: (p as any).ativo ?? true,
+    variavel: (p as any).variavel ?? false,
   }));
 }
 
@@ -72,11 +74,13 @@ export default function ProgramaForm() {
   const [horarioFim, setHorarioFim] = useState("");
   const [estudio, setEstudio] = useState("");
   const [ativo, setAtivo] = useState(true);
+  const [variavel, setVariavel] = useState(false);
   const [apresentadores, setApresentadores] = useState<Apresentador[]>([]);
   const [programas, setProgramas] = useState<Programa[]>([]);
   const [conflictMsg, setConflictMsg] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [loadingData, setLoadingData] = useState(true);
 
   // Estúdio management
   const [estudios, setEstudios] = useState<string[]>([]);
@@ -91,6 +95,7 @@ export default function ProgramaForm() {
   const [sortBy, setSortBy] = useState<"horario" | "nome" | "estudio" | "status">("horario");
 
   const load = async () => {
+    setLoadingData(true);
     const [ap, pg] = await Promise.all([getApresentadores(), getProgramas()]);
     setApresentadores(ap);
     pg.sort((a, b) => a.horarioInicio.localeCompare(b.horarioInicio));
@@ -100,9 +105,21 @@ export default function ProgramaForm() {
       const merged = Array.from(new Set([...prev, ...allEstudios]));
       return merged.sort();
     });
+    setLoadingData(false);
   };
 
   useEffect(() => { load(); }, []);
+
+  // Auto-scroll to current on-air program
+  useEffect(() => {
+    if (loadingData || !gradeRef.current) return;
+    const now = new Date();
+    const currentSlotIndex = now.getHours() * 2 + (now.getMinutes() >= 30 ? 1 : 0);
+    const rows = gradeRef.current.querySelectorAll("tbody tr");
+    if (rows[currentSlotIndex]) {
+      rows[currentSlotIndex].scrollIntoView({ block: "center", behavior: "smooth" });
+    }
+  }, [loadingData, programas]);
 
   const handleSelo = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -117,7 +134,7 @@ export default function ProgramaForm() {
   };
 
   const resetForm = () => {
-    setNome(""); setApresentadorId(""); setSelo(""); setDiasSemana([]); setHorarioInicio(""); setHorarioFim(""); setEstudio(""); setAtivo(true); setConflictMsg(""); setEditingId(null);
+    setNome(""); setApresentadorId(""); setSelo(""); setDiasSemana([]); setHorarioInicio(""); setHorarioFim(""); setEstudio(""); setAtivo(true); setVariavel(false); setConflictMsg(""); setEditingId(null);
   };
 
   const handleAdd = async () => {
@@ -151,7 +168,7 @@ export default function ProgramaForm() {
   const startEdit = (p: Programa) => {
     setEditingId(p.id); setNome(p.nome); setApresentadorId(p.apresentadorId); setSelo(p.selo);
     setDiasSemana(p.diasSemana); setHorarioInicio(p.horarioInicio); setHorarioFim(p.horarioFim);
-    setEstudio(p.estudio); setAtivo(p.ativo); setConflictMsg("");
+    setEstudio(p.estudio); setAtivo(p.ativo); setVariavel(p.variavel); setConflictMsg("");
   };
 
   const removePrograma = async (id: string) => {
@@ -188,8 +205,14 @@ export default function ProgramaForm() {
   const currentTimeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
   const DIAS_MAP: Record<number, string> = { 1: "Segunda", 2: "Terça", 3: "Quarta", 4: "Quinta", 5: "Sexta", 6: "Sábado", 0: "Domingo" };
   const diaAtual = DIAS_MAP[now.getDay()];
+  const todayDateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
 
-  const gradeProgramas = gradeEstudioFilter === "todos" ? programas : programas.filter(p => p.estudio === gradeEstudioFilter);
+  // Filter: variable programs only show on their specific day
+  const gradeProgramas = useMemo(() => {
+    let filtered = gradeEstudioFilter === "todos" ? programas : programas.filter(p => p.estudio === gradeEstudioFilter);
+    // Variable programs only show on their registered days (treated as specific date programs)
+    return filtered;
+  }, [programas, gradeEstudioFilter]);
 
   const getProgramaForSlot = (dia: string, slotTime: string) => {
     return gradeProgramas.find(p =>
@@ -289,10 +312,22 @@ export default function ProgramaForm() {
           </div>
         </div>
 
-        <label className="flex items-center gap-2 cursor-pointer text-foreground">
-          <input type="checkbox" checked={ativo} onChange={(e) => setAtivo(e.target.checked)} className="w-4 h-4 accent-primary" />
-          Programa Ativo
-        </label>
+        <div className="flex gap-4">
+          <label className="flex items-center gap-2 cursor-pointer text-foreground">
+            <input type="checkbox" checked={ativo} onChange={(e) => setAtivo(e.target.checked)} className="w-4 h-4 accent-primary" />
+            Programa Ativo
+          </label>
+          <label className="flex items-center gap-2 cursor-pointer text-foreground">
+            <input type="checkbox" checked={variavel} onChange={(e) => setVariavel(e.target.checked)} className="w-4 h-4 accent-primary" />
+            Programa Variável
+          </label>
+        </div>
+
+        {variavel && (
+          <p className="text-xs text-muted-foreground bg-muted/50 border border-border rounded-lg px-3 py-2">
+            ⚠️ Programa variável: aparece na grade apenas no dia e horário específicos definidos acima.
+          </p>
+        )}
 
         {conflictMsg && <p className="text-destructive text-sm flex items-center gap-1"><AlertCircle size={14} /> {conflictMsg}</p>}
         <div className="flex gap-2 items-center">
@@ -309,7 +344,12 @@ export default function ProgramaForm() {
       </div>
 
       {/* Grade de Programação */}
-      {programas.length > 0 && (
+      {loadingData ? (
+        <div className="flex items-center gap-2 py-8 justify-center">
+          <Loader2 size={20} className="animate-spin text-primary" />
+          <span className="text-muted-foreground text-sm">Carregando grade de programação...</span>
+        </div>
+      ) : programas.length > 0 && (
         <div>
           <div className="flex items-center justify-between mb-4">
             <h4 className="text-lg font-medium text-foreground">Grade de Programação</h4>
@@ -329,12 +369,12 @@ export default function ProgramaForm() {
             ref={gradeRef}
             className="bg-muted rounded-xl border border-border overflow-auto max-h-[300px]"
           >
-            <table className="w-full text-xs">
+            <table className="w-full text-xs border-separate border-spacing-1">
               <thead className="sticky top-0 z-10 bg-muted">
-                <tr className="border-b border-border">
-                  <th className="px-2 py-2 text-left text-muted-foreground w-20">Horário</th>
+                <tr>
+                  <th className="px-2 py-2 text-left text-muted-foreground w-20 rounded-lg">Horário</th>
                   {DIAS_SEMANA.map(dia => (
-                    <th key={dia} className={`px-2 py-2 text-center ${dia === diaAtual ? "text-primary font-bold" : "text-muted-foreground"}`}>
+                    <th key={dia} className={`px-2 py-2 text-center rounded-lg ${dia === diaAtual ? "text-primary font-bold" : "text-muted-foreground"}`}>
                       {dia.slice(0, 3)}
                     </th>
                   ))}
@@ -342,17 +382,17 @@ export default function ProgramaForm() {
               </thead>
               <tbody>
                 {gradeSlots.map(slot => (
-                  <tr key={slot} className="border-b border-border/50">
-                    <td className="px-2 py-2 text-muted-foreground font-mono">{slot.slice(0, 5)}</td>
+                  <tr key={slot}>
+                    <td className="px-2 py-2 text-muted-foreground font-mono rounded-lg">{slot.slice(0, 5)}</td>
                     {DIAS_SEMANA.map(dia => {
                       const prog = getProgramaForSlot(dia, slot);
                       const isOnAir = prog && dia === diaAtual && currentTimeStr >= prog.horarioInicio && currentTimeStr < prog.horarioFim;
                       return (
-                        <td key={dia} className={`px-1 py-1 text-center ${
-                          isOnAir ? "text-gray-700 font-bold" :
-                          prog ? "bg-primary/10 text-foreground" : ""
+                        <td key={dia} className={`px-1 py-1 text-center rounded-lg transition-all border-2 ${
+                          isOnAir ? "font-bold border-transparent" :
+                          prog ? "bg-primary/10 text-foreground border-transparent hover:border-green-500" : "border-transparent hover:border-green-500"
                         }`}
-                        style={isOnAir ? { backgroundColor: "#ffffff" } : undefined}>
+                        style={isOnAir ? { backgroundColor: "#d4f959", color: "#333" } : undefined}>
                           {prog ? (
                             <span className="text-[10px] truncate block">{prog.nome}</span>
                           ) : null}
@@ -367,7 +407,12 @@ export default function ProgramaForm() {
         </div>
       )}
 
-      {programas.length > 0 && (
+      {loadingData ? (
+        <div className="flex items-center gap-2 py-8 justify-center">
+          <Loader2 size={20} className="animate-spin text-primary" />
+          <span className="text-muted-foreground text-sm">Carregando programas cadastrados...</span>
+        </div>
+      ) : programas.length > 0 && (
         <div>
           <div className="flex items-center justify-between mb-4">
             <h4 className="text-lg font-medium text-foreground">Programas Cadastrados</h4>
@@ -390,6 +435,7 @@ export default function ProgramaForm() {
                   <div className="flex items-center gap-2">
                     {p.selo && <img src={p.selo} alt="Selo" className="h-6 rounded grayscale brightness-50" />}
                     <span>{p.nome}</span>
+                    {p.variavel && <span className="text-[9px] bg-white/20 px-1.5 py-0.5 rounded">Variável</span>}
                   </div>
                   <div className="flex items-center gap-2">
                     <button onClick={() => startEdit(p)} title="Editar"><Pencil size={14} /></button>

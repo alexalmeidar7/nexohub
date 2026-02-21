@@ -518,6 +518,19 @@ function DashboardAgenda() {
   };
   const upcoming = getUpcoming();
 
+  // Get last 3 past events
+  const getPastEvents = () => {
+    const pastResults: { evt: any; dateStr: string }[] = [];
+    for (const evt of eventos) {
+      if (evt.recorrencia === "unico" && evt.data < todayStr) {
+        pastResults.push({ evt, dateStr: evt.data });
+      }
+    }
+    pastResults.sort((a, b) => b.dateStr.localeCompare(a.dateStr));
+    return pastResults.slice(0, 3);
+  };
+  const pastEvents = getPastEvents();
+
   const selDateStr = selectedDate
     ? `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, "0")}-${String(selectedDate.getDate()).padStart(2, "0")}`
     : "";
@@ -567,6 +580,28 @@ function DashboardAgenda() {
               return (
                 <div key={`${item.evt.id}-${idx}`} className="flex items-center gap-3 bg-muted/50 rounded-lg px-3 py-2">
                   <span className="text-xs font-bold text-white bg-gray-700 rounded px-2 py-1">{dateLabel}</span>
+                  <div className="text-xs">
+                    <p className="font-semibold text-foreground">{item.evt.programa?.nome || "Evento"}</p>
+                    {item.evt.programa && <p className="text-muted-foreground">{item.evt.programa.horario_inicio} - {item.evt.programa.horario_fim}</p>}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Past events */}
+      {pastEvents.length > 0 && (
+        <div className="bg-white/80 rounded-2xl border border-gray-200 p-4">
+          <h4 className="text-sm font-semibold text-gray-400 mb-2">Eventos Passados</h4>
+          <div className="space-y-2">
+            {pastEvents.map((item: any, idx: number) => {
+              const d = new Date(item.dateStr + "T12:00:00");
+              const dateLabel = d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
+              return (
+                <div key={`past-${item.evt.id}-${idx}`} className="flex items-center gap-3 bg-muted/30 rounded-lg px-3 py-2 opacity-50 grayscale">
+                  <span className="text-xs font-bold text-white bg-gray-400 rounded px-2 py-1">{dateLabel}</span>
                   <div className="text-xs">
                     <p className="font-semibold text-foreground">{item.evt.programa?.nome || "Evento"}</p>
                     {item.evt.programa && <p className="text-muted-foreground">{item.evt.programa.horario_inicio} - {item.evt.programa.horario_fim}</p>}
