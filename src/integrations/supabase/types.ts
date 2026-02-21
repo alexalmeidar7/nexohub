@@ -265,6 +265,7 @@ export type Database = {
           apresentador_id: string | null
           ativo: boolean
           created_at: string
+          descricao: string | null
           dias_semana: string[] | null
           estudio: string | null
           horario_fim: string
@@ -278,6 +279,7 @@ export type Database = {
           apresentador_id?: string | null
           ativo?: boolean
           created_at?: string
+          descricao?: string | null
           dias_semana?: string[] | null
           estudio?: string | null
           horario_fim: string
@@ -291,6 +293,7 @@ export type Database = {
           apresentador_id?: string | null
           ativo?: boolean
           created_at?: string
+          descricao?: string | null
           dias_semana?: string[] | null
           estudio?: string | null
           horario_fim?: string

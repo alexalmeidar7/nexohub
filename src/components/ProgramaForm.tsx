@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { AlertCircle, Trash2, Clock, Calendar, Building2, Pencil, X, Power, Loader2 } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 import { getApresentadores, type Apresentador } from "./ApresentadorForm";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -31,6 +32,7 @@ interface Programa {
   estudio: string;
   ativo: boolean;
   variavel: boolean;
+  descricao: string;
 }
 
 const DIAS_SEMANA = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
@@ -49,6 +51,7 @@ async function getProgramas(): Promise<Programa[]> {
     estudio: p.estudio || "",
     ativo: (p as any).ativo ?? true,
     variavel: (p as any).variavel ?? false,
+    descricao: (p as any).descricao || "",
   }));
 }
 
@@ -75,6 +78,7 @@ export default function ProgramaForm() {
   const [estudio, setEstudio] = useState("");
   const [ativo, setAtivo] = useState(true);
   const [variavel, setVariavel] = useState(false);
+  const [descricao, setDescricao] = useState("");
   const [apresentadores, setApresentadores] = useState<Apresentador[]>([]);
   const [programas, setProgramas] = useState<Programa[]>([]);
   const [conflictMsg, setConflictMsg] = useState("");
@@ -134,7 +138,7 @@ export default function ProgramaForm() {
   };
 
   const resetForm = () => {
-    setNome(""); setApresentadorId(""); setSelo(""); setDiasSemana([]); setHorarioInicio(""); setHorarioFim(""); setEstudio(""); setAtivo(true); setVariavel(false); setConflictMsg(""); setEditingId(null);
+    setNome(""); setApresentadorId(""); setSelo(""); setDiasSemana([]); setHorarioInicio(""); setHorarioFim(""); setEstudio(""); setAtivo(true); setVariavel(false); setDescricao(""); setConflictMsg(""); setEditingId(null);
   };
 
   const handleAdd = async () => {
@@ -144,20 +148,23 @@ export default function ProgramaForm() {
     if (diasSemana.length === 0) { setConflictMsg("Selecione ao menos um dia da semana."); return; }
     if (!estudio.trim()) { setConflictMsg("Informe o estúdio."); return; }
 
-    const conflict = checkConflict(programas, diasSemana, horarioInicio, horarioFim, estudio.trim(), editingId || undefined);
-    if (conflict) { setConflictMsg(`Conflito com "${conflict.nome}" no mesmo estúdio e horário.`); return; }
+    // Variable programs can override fixed ones — skip conflict check
+    if (!variavel) {
+      const conflict = checkConflict(programas, diasSemana, horarioInicio, horarioFim, estudio.trim(), editingId || undefined);
+      if (conflict) { setConflictMsg(`Conflito com "${conflict.nome}" no mesmo estúdio e horário.`); return; }
+    }
 
     setSaving(true);
 
     if (editingId) {
       await supabase.from("programas").update({
         nome: nome.trim(), apresentador_id: apresentadorId || null, selo, dias_semana: diasSemana,
-        horario_inicio: horarioInicio, horario_fim: horarioFim, estudio: estudio.trim(), ativo,
+        horario_inicio: horarioInicio, horario_fim: horarioFim, estudio: estudio.trim(), ativo, descricao: descricao.trim(),
       } as any).eq("id", editingId);
     } else {
       await supabase.from("programas").insert({
         user_id: user.id, nome: nome.trim(), apresentador_id: apresentadorId || null, selo, dias_semana: diasSemana,
-        horario_inicio: horarioInicio, horario_fim: horarioFim, estudio: estudio.trim(), ativo,
+        horario_inicio: horarioInicio, horario_fim: horarioFim, estudio: estudio.trim(), ativo, descricao: descricao.trim(),
       } as any);
     }
     await load();
@@ -168,7 +175,7 @@ export default function ProgramaForm() {
   const startEdit = (p: Programa) => {
     setEditingId(p.id); setNome(p.nome); setApresentadorId(p.apresentadorId); setSelo(p.selo);
     setDiasSemana(p.diasSemana); setHorarioInicio(p.horarioInicio); setHorarioFim(p.horarioFim);
-    setEstudio(p.estudio); setAtivo(p.ativo); setVariavel(p.variavel); setConflictMsg("");
+    setEstudio(p.estudio); setAtivo(p.ativo); setVariavel(p.variavel); setDescricao(p.descricao); setConflictMsg("");
   };
 
   const removePrograma = async (id: string) => {
@@ -215,9 +222,13 @@ export default function ProgramaForm() {
   }, [programas, gradeEstudioFilter]);
 
   const getProgramaForSlot = (dia: string, slotTime: string) => {
-    return gradeProgramas.find(p =>
-      p.diasSemana.includes(dia) && slotTime >= p.horarioInicio && slotTime < p.horarioFim
+    const matching = gradeProgramas.filter(p =>
+      p.diasSemana.includes(dia) && slotTime >= p.horarioInicio && slotTime < p.horarioFim && p.ativo
     );
+    // Variable programs take priority over fixed ones
+    const variable = matching.find(p => p.variavel);
+    if (variable && dia === diaAtual) return variable;
+    return matching.find(p => !p.variavel) || matching[0] || undefined;
   };
 
   // Sorted programs for list
@@ -240,6 +251,8 @@ export default function ProgramaForm() {
         </h3>
         <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Nome do Programa"
           className="w-full bg-muted border border-border p-3 rounded-lg text-foreground placeholder:text-muted-foreground outline-none focus:ring-1 focus:ring-primary" />
+        <Textarea value={descricao} onChange={(e) => setDescricao(e.target.value)} placeholder="Descrição do Programa (opcional)"
+          className="bg-muted border-border text-foreground placeholder:text-muted-foreground min-h-[60px]" />
         <select value={apresentadorId} onChange={(e) => setApresentadorId(e.target.value)}
           className="w-full bg-muted border border-border p-3 rounded-lg text-foreground outline-none focus:ring-1 focus:ring-primary">
           <option value="">Selecionar Apresentador Responsável</option>
@@ -450,6 +463,7 @@ export default function ProgramaForm() {
                   <p className="text-muted-foreground flex items-center gap-1"><Building2 size={12} /> {p.estudio}</p>
                   <p className="text-muted-foreground flex items-center gap-1"><Calendar size={12} /> {p.diasSemana.join(", ")}</p>
                   <p className="text-muted-foreground flex items-center gap-1"><Clock size={12} /> {p.horarioInicio} — {p.horarioFim}</p>
+                  {p.descricao && <p className="text-muted-foreground text-xs italic">{p.descricao}</p>}
                   <span className={`inline-block px-2 py-0.5 rounded text-xs font-semibold ${
                     p.ativo ? "bg-primary/20 text-primary" : "bg-destructive/20 text-destructive"
                   }`}>
