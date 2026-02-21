@@ -145,7 +145,7 @@ export default function PromocoesKiosk() {
     <div className="min-h-screen bg-black text-white overflow-y-auto">
 
       {/* HEADER TRANSPARENTE - overlay sobre o banner */}
-      <header className="w-full z-50 flex items-center justify-between px-6 py-4">
+      <header className="absolute top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-4">
         <div className="flex items-center gap-6 flex-1 min-w-0">
           {/* No Ar info */}
           <div className="flex items-center gap-3 min-w-0">
@@ -179,7 +179,7 @@ export default function PromocoesKiosk() {
       </header>
 
       {/* CARROSSEL DE BANNERS - ocupa toda a página */}
-      <div className="relative w-full flex items-center justify-center bg-black">
+      <div className="relative w-full flex items-center justify-center">
         {banners.length > 0 ? (
           banners.map((banner, index) => (
             <div
