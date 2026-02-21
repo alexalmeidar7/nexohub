@@ -140,7 +140,7 @@ export default function PromocoesKiosk() {
   }, []);
 
   return (
-    <div className="bg-black text-white min-h-screen p-8 flex flex-col items-center">
+    <div className="text-white min-h-screen p-8 flex flex-col items-center" style={{ background: "url('/images/kiosk-bg.png') center center / cover no-repeat fixed", backgroundColor: "#000" }}>
       <style>{`.no-scrollbar::-webkit-scrollbar{display:none}.no-scrollbar{-ms-overflow-style:none;scrollbar-width:none}`}</style>
 
       <div className="w-full max-w-[1000px] flex flex-col gap-6">
