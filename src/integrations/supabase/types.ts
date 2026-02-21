@@ -264,6 +264,7 @@ export type Database = {
         Row: {
           apresentador_id: string | null
           ativo: boolean
+          capa: string | null
           created_at: string
           descricao: string | null
           dias_semana: string[] | null
@@ -278,6 +279,7 @@ export type Database = {
         Insert: {
           apresentador_id?: string | null
           ativo?: boolean
+          capa?: string | null
           created_at?: string
           descricao?: string | null
           dias_semana?: string[] | null
@@ -292,6 +294,7 @@ export type Database = {
         Update: {
           apresentador_id?: string | null
           ativo?: boolean
+          capa?: string | null
           created_at?: string
           descricao?: string | null
           dias_semana?: string[] | null
