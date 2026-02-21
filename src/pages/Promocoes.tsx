@@ -122,7 +122,7 @@ export default function PromocoesKiosk() {
   const canScrollRight = programScrollIndex + 6 < todayPrograms.length;
 
   return (
-    <div className="min-h-screen bg-black text-white relative overflow-hidden flex flex-col">
+    <div className="min-h-screen bg-black text-white overflow-y-auto">
 
       {/* HEADER TRANSPARENTE - overlay sobre o banner */}
       <header className="absolute top-0 left-0 right-0 z-50 flex items-center justify-between pt-[50px] px-6 py-3">
@@ -159,7 +159,7 @@ export default function PromocoesKiosk() {
       </header>
 
       {/* CARROSSEL DE BANNERS - ocupa toda a página */}
-      <div className="relative flex-1 flex items-start justify-center overflow-hidden">
+      <div className="relative w-full h-screen">
         {banners.length > 0 ? (
           banners.map((banner, index) => (
             <div
@@ -200,8 +200,8 @@ export default function PromocoesKiosk() {
         )}
       </div>
 
-      {/* OVERLAY INFERIOR - Capas e Botões */}
-      <div className="relative z-30 bg-black/90 backdrop-blur-sm border-t border-white/10 px-6 py-4 space-y-4">
+      {/* SEÇÃO INFERIOR - Capas e Botões */}
+      <div className="bg-black px-6 py-8 space-y-6">
 
         {/* Capas dos Programas - sem título */}
         {todayPrograms.length > 0 && (
@@ -224,7 +224,7 @@ export default function PromocoesKiosk() {
                 </button>
               </div>
             </div>
-            <div className="flex gap-[7px] overflow-hidden" style={{ scrollbarWidth: "none" }}>
+            <div className="flex gap-[7px] justify-center flex-wrap">
               {visiblePrograms.map(prog => {
                 const isOnAir = onAirProgram?.nome === prog.nome;
                 return (
@@ -253,7 +253,7 @@ export default function PromocoesKiosk() {
 
         {/* Botões das Promoções - sem borda, tamanho da imagem */}
         {botoes.length > 0 && (
-          <div className="flex gap-3 flex-wrap">
+          <div className="flex gap-3 flex-wrap justify-center">
             {botoes.map(botao => (
               <button
                 key={botao.id}
