@@ -354,45 +354,55 @@ export default function PromocoesKiosk() {
             </DialogTitle>
           </DialogHeader>
 
-          <div ref={modalScrollRef} className="overflow-y-auto flex-1 flex flex-col gap-3">
-            {selectedPromo?.imagem_url && (
-              <img src={selectedPromo.imagem_url} alt="Banner" className="w-full rounded-lg object-contain max-h-[300px]" />
-            )}
+          {selectedPromo?.imagem_url && (
+            <img src={selectedPromo.imagem_url} alt="Banner" className="w-full rounded-lg object-contain max-h-[300px]" />
+          )}
 
-            {/* Controle de font + auto scroll */}
-            <div className="flex items-center gap-2 justify-end">
-              <button
-                onClick={() => {
-                  if (autoScrolling) {
-                    if (autoScrollRef.current) { clearInterval(autoScrollRef.current); autoScrollRef.current = null; }
-                    setAutoScrolling(false);
-                  } else {
-                    autoScrollRef.current = setInterval(() => {
-                      modalScrollRef.current?.scrollBy({ top: 1 });
-                    }, 30);
-                    setAutoScrolling(true);
-                  }
-                }}
-                className="w-7 h-7 rounded bg-zinc-800 hover:bg-zinc-700 text-white flex items-center justify-center"
-              >
-                {autoScrolling ? <Pause size={12} /> : <Play size={12} />}
-              </button>
-              <button onClick={() => setFontSize(s => Math.max(10, s - 2))} className="w-7 h-7 rounded bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-bold">A-</button>
-              <button onClick={() => setFontSize(s => Math.min(24, s + 2))} className="w-7 h-7 rounded bg-zinc-800 hover:bg-zinc-700 text-white text-sm font-bold">A+</button>
-            </div>
-
-            {/* Descrição */}
-            <div className="text-white font-bold whitespace-pre-line" style={{ fontSize }}>
-              {selectedPromo?.texto}
-            </div>
-
-            {/* Oferecimento */}
-            {selectedPromo?.oferecimento && selectedPromo.oferecimento !== "-" && (
-              <div className="text-white text-xs border-t border-zinc-800 pt-3">
-                <span className="font-semibold">Oferecimento:</span> {selectedPromo.oferecimento}
-              </div>
-            )}
+          {/* Controle de font + auto scroll */}
+          <div className="flex items-center gap-2 justify-end">
+            <button
+              onClick={() => {
+                if (autoScrolling) {
+                  if (autoScrollRef.current) { clearInterval(autoScrollRef.current); autoScrollRef.current = null; }
+                  setAutoScrolling(false);
+                } else {
+                  autoScrollRef.current = setInterval(() => {
+                    modalScrollRef.current?.scrollBy({ top: 1 });
+                  }, 30);
+                  setAutoScrolling(true);
+                }
+              }}
+              className="w-7 h-7 rounded bg-zinc-800 hover:bg-zinc-700 text-white flex items-center justify-center"
+            >
+              {autoScrolling ? <Pause size={12} /> : <Play size={12} />}
+            </button>
+            <button onClick={() => setFontSize(s => Math.max(10, s - 2))} className="w-7 h-7 rounded bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-bold">A-</button>
+            <button onClick={() => setFontSize(s => Math.min(24, s + 2))} className="w-7 h-7 rounded bg-zinc-800 hover:bg-zinc-700 text-white text-sm font-bold">A+</button>
           </div>
+
+          {/* Descrição com scroll */}
+          <div ref={modalScrollRef} className="overflow-y-auto flex-1 min-h-0">
+            <div className="text-white font-bold whitespace-pre-line" style={{ fontSize }}>
+              {selectedPromo?.texto?.split("\n").map((line, i) => (
+                <p
+                  key={i}
+                  className="px-1 py-0.5 rounded transition-colors"
+                  style={{ cursor: "default" }}
+                  onMouseEnter={e => (e.currentTarget.style.backgroundColor = "#a30101")}
+                  onMouseLeave={e => (e.currentTarget.style.backgroundColor = "transparent")}
+                >
+                  {line || "\u00A0"}
+                </p>
+              ))}
+            </div>
+          </div>
+
+          {/* Oferecimento fixo */}
+          {selectedPromo?.oferecimento && selectedPromo.oferecimento !== "-" && (
+            <div className="text-white text-xs border-t border-zinc-800 pt-3">
+              <span className="font-semibold">Oferecimento:</span> {selectedPromo.oferecimento}
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
