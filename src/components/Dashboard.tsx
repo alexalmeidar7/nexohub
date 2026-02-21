@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Calendar as CalendarUI } from "@/components/ui/calendar";
-import { Home, Sun, FileText, Mic2, PlaySquare, Music, CalendarDays, Settings, LogOut, Loader2 } from "lucide-react";
+import { Home, Sun, FileText, Mic2, PlaySquare, Music, CalendarDays, Settings, LogOut, Loader2, ShoppingBag, ChevronDown, ChevronUp, MessageSquareQuote, Tag, Image } from "lucide-react";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import ApresentadorForm from "./ApresentadorForm";
@@ -14,6 +14,9 @@ import AgendaPage from "./AgendaPage";
 import MusicWidget from "./MusicWidget";
 import XmlLinkRow from "./XmlLinkRow";
 import ConfiguracoesPage, { getEmpresaConfig } from "./ConfiguracoesPage";
+import TestemunhaisPage from "./TestemunhaisPage";
+import PromocoesPage from "./PromocoesPage";
+import LogosPatrocinadoresPage from "./LogosPatrocinadoresPage";
 import logoMenu from "@/assets/logo-menu.png";
 import {
   Tooltip,
@@ -24,7 +27,7 @@ import {
 import { getMusicData } from "./MusicaNoAr";
 import { useAuth } from "@/hooks/useAuth";
 
-type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "programas" | "musica" | "agenda" | "configuracoes";
+type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos";
 
 const menuItems: { icon: typeof Home; label: string; page: Page }[] = [
   { icon: Home, label: "Home", page: "dashboard" },
@@ -36,6 +39,12 @@ const menuItems: { icon: typeof Home; label: string; page: Page }[] = [
   { icon: CalendarDays, label: "Agenda", page: "agenda" },
 ];
 
+const comercialSubItems: { icon: typeof Home; label: string; page: Page }[] = [
+  { icon: MessageSquareQuote, label: "Testemunhais", page: "testemunhais" },
+  { icon: Tag, label: "Promoções", page: "promocoes" },
+  { icon: Image, label: "Logos Patrocinadores", page: "logos" },
+];
+
 const pageTitle: Record<Page, string> = {
   dashboard: "Dashboard Home",
   previsao: "Previsão do Tempo",
@@ -45,6 +54,9 @@ const pageTitle: Record<Page, string> = {
   musica: "Música no Ar",
   agenda: "Agenda",
   configuracoes: "Configurações",
+  testemunhais: "Testemunhais",
+  promocoes: "Promoções",
+  logos: "Logos Patrocinadores",
 };
 
 function SocialIcon({ url, children }: { url: string; children: React.ReactNode }) {
@@ -63,7 +75,14 @@ interface DashboardProps {
 export default function Dashboard({ onLogout }: DashboardProps) {
   const { user } = useAuth();
   const [currentPage, setCurrentPage] = useState<Page>("dashboard");
+  const [comercialOpen, setComercialOpen] = useState(false);
   const [empresa, setEmpresa] = useState<import("./ConfiguracoesPage").EmpresaConfig>({} as any);
+
+  const isComercialPage = comercialSubItems.some((s) => s.page === currentPage);
+
+  useEffect(() => {
+    if (isComercialPage) setComercialOpen(true);
+  }, [currentPage]);
 
   useEffect(() => {
     getEmpresaConfig().then(setEmpresa);
@@ -91,6 +110,41 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   }`}
                 >
                   <Icon size={18} className={isActive ? "text-[#333]" : "text-muted-foreground"} />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right"><p>{item.label}</p></TooltipContent>
+            </Tooltip>
+          );
+        })}
+
+        {/* Comercial expandable menu */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={() => setComercialOpen(!comercialOpen)}
+              className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
+                isComercialPage ? "bg-primary" : "bg-transparent hover:bg-white/10"
+              }`}
+            >
+              <ShoppingBag size={18} className={isComercialPage ? "text-[#333]" : "text-muted-foreground"} />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="right"><p>Comercial</p></TooltipContent>
+        </Tooltip>
+
+        {comercialOpen && comercialSubItems.map((item) => {
+          const isActive = currentPage === item.page;
+          const Icon = item.icon;
+          return (
+            <Tooltip key={item.page}>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => setCurrentPage(item.page)}
+                  className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
+                    isActive ? "bg-primary" : "bg-transparent hover:bg-white/10"
+                  }`}
+                >
+                  <Icon size={14} className={isActive ? "text-[#333]" : "text-muted-foreground"} />
                 </button>
               </TooltipTrigger>
               <TooltipContent side="right"><p>{item.label}</p></TooltipContent>
@@ -186,6 +240,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           {currentPage === "musica" && <MusicaNoAr />}
           {currentPage === "agenda" && <AgendaPage />}
           {currentPage === "configuracoes" && <ConfiguracoesPage />}
+          {currentPage === "testemunhais" && <TestemunhaisPage />}
+          {currentPage === "promocoes" && <PromocoesPage />}
+          {currentPage === "logos" && <LogosPatrocinadoresPage />}
         </section>
 
         <div className="absolute bottom-10 right-10 opacity-80">
