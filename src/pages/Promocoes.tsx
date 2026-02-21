@@ -43,6 +43,7 @@ export default function PromocoesKiosk() {
   const [onAirProgram, setOnAirProgram] = useState<{ nome: string; horarioInicio: string; horarioFim: string } | null>(null);
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
   const [selectedPromo, setSelectedPromo] = useState<Promocao | null>(null);
+  const [fontSize, setFontSize] = useState(14);
   const scrollRef = useRef<HTMLDivElement>(null);
   const promoScrollRef = useRef<HTMLDivElement>(null);
 
@@ -105,11 +106,7 @@ export default function PromocoesKiosk() {
 
   const filteredPrograms = programas
     .filter(p => PROGRAMAS_VISIVEIS.some(name => p.nome.toUpperCase().includes(name)))
-    .sort((a, b) => {
-      const idxA = PROGRAMAS_VISIVEIS.findIndex(name => a.nome.toUpperCase().includes(name));
-      const idxB = PROGRAMAS_VISIVEIS.findIndex(name => b.nome.toUpperCase().includes(name));
-      return idxA - idxB;
-    });
+    .sort((a, b) => a.horarioInicio.localeCompare(b.horarioInicio));
 
   const banners = promocoes.filter(p => p.imagem_url);
   const botoes = promocoes.filter(p => p.botao_url);
@@ -243,23 +240,36 @@ export default function PromocoesKiosk() {
       </div>
 
       {/* Modal da Promoção */}
-      <Dialog open={!!selectedPromo} onOpenChange={(open) => !open && setSelectedPromo(null)}>
-        <DialogContent className="bg-zinc-950 border-zinc-800 text-white max-w-lg">
+      <Dialog open={!!selectedPromo} onOpenChange={(open) => { if (!open) { setSelectedPromo(null); setFontSize(14); } }}>
+        <DialogContent className="bg-zinc-950 border-zinc-800 text-white max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold">{selectedPromo?.texto?.split("\n")[0] || "Promoção"}</DialogTitle>
-            {selectedPromo?.oferecimento && selectedPromo.oferecimento !== "-" && (
-              <DialogDescription className="text-white/50 text-xs">
-                Oferecimento: {selectedPromo.oferecimento}
-              </DialogDescription>
-            )}
           </DialogHeader>
+
           {selectedPromo?.imagem_url && (
             <img src={selectedPromo.imagem_url} alt="Banner" className="w-full rounded-lg object-contain max-h-[300px]" />
           )}
-          <div className="space-y-3 text-sm text-white/70 whitespace-pre-line max-h-[200px] overflow-y-auto">
+
+          {/* Controle de font */}
+          <div className="flex items-center gap-2 justify-end">
+            <button onClick={() => setFontSize(s => Math.max(10, s - 2))} className="w-7 h-7 rounded bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-bold">A-</button>
+            <button onClick={() => setFontSize(s => Math.min(24, s + 2))} className="w-7 h-7 rounded bg-zinc-800 hover:bg-zinc-700 text-white text-sm font-bold">A+</button>
+          </div>
+
+          {/* Descrição */}
+          <div className="text-white font-bold whitespace-pre-line max-h-[250px] overflow-y-auto" style={{ fontSize }}>
             {selectedPromo?.texto}
           </div>
-          <div className="text-xs text-white/40">
+
+          {/* Oferecimento */}
+          {selectedPromo?.oferecimento && selectedPromo.oferecimento !== "-" && (
+            <div className="text-white/50 text-xs border-t border-zinc-800 pt-3">
+              <span className="text-white/70 font-semibold">Oferecimento:</span> {selectedPromo.oferecimento}
+            </div>
+          )}
+
+          {/* Período */}
+          <div className="text-white/40 text-xs">
             Período: {selectedPromo?.data_inicio} a {selectedPromo?.data_fim}
           </div>
         </DialogContent>
