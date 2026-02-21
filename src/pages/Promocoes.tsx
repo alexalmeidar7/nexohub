@@ -31,6 +31,17 @@ const DIAS_MAP: Record<number, string> = {
   1: "Segunda", 2: "Terça", 3: "Quarta", 4: "Quinta", 5: "Sexta", 6: "Sábado", 0: "Domingo",
 };
 
+const PROGRAMAS_VISIVEIS = [
+  "SERTANEJO BOM DEMAIS 1ª EDIÇÃO",
+  "PRIMEIRA HORA",
+  "BOM DIA POSITIVA",
+  "FLASHBACK POSITIVA",
+  "WHATSAPP POSITIVA",
+  "SERTANEJO BOM DEMAIS 2ª EDIÇÃO",
+  "VALE NIGHT",
+  "PALCO POSITIVA",
+];
+
 export default function PromocoesKiosk() {
   const [promocoes, setPromocoes] = useState<Promocao[]>([]);
   const [config, setConfig] = useState<EmpresaConfig>({} as EmpresaConfig);
@@ -39,6 +50,7 @@ export default function PromocoesKiosk() {
   const [onAirProgram, setOnAirProgram] = useState<{ nome: string; horarioInicio: string; horarioFim: string } | null>(null);
   const [musicInfo, setMusicInfo] = useState<{ titulo: string; artista: string } | null>(null);
   const [programScrollIndex, setProgramScrollIndex] = useState(0);
+  const [promoScrollIndex, setPromoScrollIndex] = useState(0);
   const [selectedPromo, setSelectedPromo] = useState<Promocao | null>(null);
 
   // Load data
@@ -108,18 +120,26 @@ export default function PromocoesKiosk() {
     return () => clearInterval(interval);
   }, [programas]);
 
-  // Today's programs sorted
-  const diaAtual = DIAS_MAP[new Date().getDay()];
-  const todayPrograms = programas
-    .filter(p => p.diasSemana.includes(diaAtual))
-    .sort((a, b) => a.horarioInicio.localeCompare(b.horarioInicio));
+  // Filter programs to only show specific ones
+  const filteredPrograms = programas
+    .filter(p => PROGRAMAS_VISIVEIS.some(name => p.nome.toUpperCase().includes(name) || name.includes(p.nome.toUpperCase())))
+    .sort((a, b) => {
+      const idxA = PROGRAMAS_VISIVEIS.findIndex(name => a.nome.toUpperCase().includes(name) || name.includes(a.nome.toUpperCase()));
+      const idxB = PROGRAMAS_VISIVEIS.findIndex(name => b.nome.toUpperCase().includes(name) || name.includes(b.nome.toUpperCase()));
+      return idxA - idxB;
+    });
 
   const banners = promocoes.filter(p => p.imagem_url);
   const botoes = promocoes.filter(p => p.botao_url);
 
-  const visiblePrograms = todayPrograms.slice(programScrollIndex, programScrollIndex + 6);
+  const ITEMS_PER_PAGE = 4;
+  const visiblePrograms = filteredPrograms.slice(programScrollIndex, programScrollIndex + ITEMS_PER_PAGE);
   const canScrollLeft = programScrollIndex > 0;
-  const canScrollRight = programScrollIndex + 6 < todayPrograms.length;
+  const canScrollRight = programScrollIndex + ITEMS_PER_PAGE < filteredPrograms.length;
+
+  const visibleBotoes = botoes.slice(promoScrollIndex, promoScrollIndex + ITEMS_PER_PAGE);
+  const canPromoLeft = promoScrollIndex > 0;
+  const canPromoRight = promoScrollIndex + ITEMS_PER_PAGE < botoes.length;
 
   return (
     <div className="min-h-screen bg-black text-white overflow-y-auto">
@@ -203,70 +223,83 @@ export default function PromocoesKiosk() {
       {/* SEÇÃO INFERIOR - Capas e Botões */}
       <div className="bg-black px-6 py-8 space-y-6">
 
-        {/* Capas dos Programas - sem título */}
-        {todayPrograms.length > 0 && (
-          <div>
-            <div className="flex items-center justify-end mb-2">
-              <div className="flex gap-1">
-                <button
-                  onClick={() => setProgramScrollIndex(Math.max(0, programScrollIndex - 6))}
-                  disabled={!canScrollLeft}
-                  className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center disabled:opacity-20 hover:bg-white/20 transition-colors"
+        {/* Capas dos Programas */}
+        {filteredPrograms.length > 0 && (
+          <div className="flex items-center justify-center gap-4">
+            <button
+              onClick={() => setProgramScrollIndex(Math.max(0, programScrollIndex - ITEMS_PER_PAGE))}
+              disabled={!canScrollLeft}
+              className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center disabled:opacity-20 hover:bg-white/20 transition-colors shrink-0"
+            >
+              <ChevronLeft size={20} />
+            </button>
+
+            <div className="flex gap-[7px] justify-center">
+              {visiblePrograms.map(prog => (
+                <div
+                  key={prog.id}
+                  className="flex-shrink-0 rounded-xl overflow-hidden border-0 relative cursor-pointer hover:opacity-70 transition-opacity"
                 >
-                  <ChevronLeft size={12} />
-                </button>
-                <button
-                  onClick={() => setProgramScrollIndex(programScrollIndex + 6)}
-                  disabled={!canScrollRight}
-                  className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center disabled:opacity-20 hover:bg-white/20 transition-colors"
-                >
-                  <ChevronRight size={12} />
-                </button>
-              </div>
-            </div>
-            <div className="flex gap-[7px] justify-center flex-wrap">
-              {visiblePrograms.map(prog => {
-                const isOnAir = onAirProgram?.nome === prog.nome;
-                return (
-                  <div
-                    key={prog.id}
-                    className="flex-shrink-0 rounded-xl overflow-hidden border-0 transition-all relative"
-                  >
-                    {prog.capa ? (
-                      <img src={prog.capa} alt={prog.nome} className="w-auto h-auto object-contain" />
-                    ) : (
-                      <div className="w-full flex items-center justify-center bg-white/5" style={{ height: "80px" }}>
-                        <Radio size={16} className="text-white/20" />
-                      </div>
-                    )}
-                    <div className="absolute bottom-1 left-0 right-0 text-center">
-                      <span className="text-[10px] font-bold text-white drop-shadow-lg bg-black/50 px-1.5 py-0.5 rounded">
-                        {prog.horarioInicio.slice(0, 5)} - {prog.horarioFim.slice(0, 5)}
-                      </span>
+                  {prog.capa ? (
+                    <img src={prog.capa} alt={prog.nome} className="w-auto h-auto object-contain" />
+                  ) : (
+                    <div className="w-full flex items-center justify-center bg-white/5" style={{ height: "80px" }}>
+                      <Radio size={16} className="text-white/20" />
                     </div>
+                  )}
+                  <div className="absolute bottom-1 left-0 right-0 text-center">
+                    <span className="text-[10px] font-bold text-white drop-shadow-lg bg-black/50 px-1.5 py-0.5 rounded">
+                      {prog.horarioInicio.slice(0, 5)} - {prog.horarioFim.slice(0, 5)}
+                    </span>
                   </div>
-                );
-              })}
+                </div>
+              ))}
             </div>
+
+            <button
+              onClick={() => setProgramScrollIndex(programScrollIndex + ITEMS_PER_PAGE)}
+              disabled={!canScrollRight}
+              className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center disabled:opacity-20 hover:bg-white/20 transition-colors shrink-0"
+            >
+              <ChevronRight size={20} />
+            </button>
           </div>
         )}
 
-        {/* Botões das Promoções - sem borda, tamanho da imagem */}
+        {/* Botões das Promoções */}
         {botoes.length > 0 && (
-          <div className="flex gap-3 flex-wrap justify-center">
-            {botoes.map(botao => (
-              <button
-                key={botao.id}
-                onClick={() => setSelectedPromo(botao)}
-                className="border-none p-0 bg-transparent hover:scale-105 transition-transform cursor-pointer"
-              >
-                <img
-                  src={botao.botao_url}
-                  alt={botao.texto}
-                  className="w-auto h-auto object-contain"
-                />
-              </button>
-            ))}
+          <div className="flex items-center justify-center gap-4">
+            <button
+              onClick={() => setPromoScrollIndex(Math.max(0, promoScrollIndex - ITEMS_PER_PAGE))}
+              disabled={!canPromoLeft}
+              className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center disabled:opacity-20 hover:bg-white/20 transition-colors shrink-0"
+            >
+              <ChevronLeft size={20} />
+            </button>
+
+            <div className="flex gap-3 justify-center">
+              {visibleBotoes.map(botao => (
+                <button
+                  key={botao.id}
+                  onClick={() => setSelectedPromo(botao)}
+                  className="border-none p-0 bg-transparent hover:opacity-70 transition-opacity cursor-pointer"
+                >
+                  <img
+                    src={botao.botao_url}
+                    alt={botao.texto}
+                    className="w-auto h-auto object-contain"
+                  />
+                </button>
+              ))}
+            </div>
+
+            <button
+              onClick={() => setPromoScrollIndex(promoScrollIndex + ITEMS_PER_PAGE)}
+              disabled={!canPromoRight}
+              className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center disabled:opacity-20 hover:bg-white/20 transition-colors shrink-0"
+            >
+              <ChevronRight size={20} />
+            </button>
           </div>
         )}
       </div>
