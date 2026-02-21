@@ -156,7 +156,7 @@ export default function PromocoesKiosk() {
                   <span className="text-white/60 text-[10px]">
                     {onAirProgram.horarioInicio.slice(0, 5)} às {onAirProgram.horarioFim.slice(0, 5)}
                   </span>
-                  <div className="w-24 h-1.5 rounded-full bg-white/10 overflow-hidden">
+                  <div className="h-1.5 rounded-full overflow-hidden" style={{ width: 160, backgroundColor: "#d70d0e" }}>
                     <div
                       className="h-full rounded-full transition-all duration-1000"
                       style={{ width: `${onAirProgram.progress}%`, backgroundColor: "#ffffff" }}
@@ -177,34 +177,28 @@ export default function PromocoesKiosk() {
             })()}
 
             {/* Contact info */}
-            <div className="flex items-center gap-3 ml-3 text-white/70 text-[11px]">
+            <div className="flex items-center gap-3 ml-3">
               {config.site && (
-                <div className="flex items-center gap-1">
-                  <Globe size={12} />
-                  <span>{config.site}</span>
-                </div>
+                <Globe size={14} className="text-white" />
               )}
               {config.instagram && (
-                <div className="flex items-center gap-1">
-                  <Instagram size={12} />
-                  <span>{config.instagram}</span>
-                </div>
+                <Instagram size={14} className="text-white" />
               )}
               {config.youtube && (
-                <div className="flex items-center gap-1">
-                  <Youtube size={12} />
-                  <span>{config.youtube}</span>
-                </div>
+                <Youtube size={14} className="text-white" />
+              )}
+              {config.facebook && (
+                <Globe size={14} className="text-white" />
               )}
               {config.telefoneParticipacao && (
-                <div className="flex items-center gap-1">
-                  <MessageCircle size={12} />
+                <div className="flex items-center gap-1 font-bold text-[11px]" style={{ color: "#d70d0e" }}>
+                  <MessageCircle size={13} />
                   <span>{config.telefoneParticipacao}</span>
                 </div>
               )}
               {config.telefoneComercial && (
-                <div className="flex items-center gap-1">
-                  <Phone size={12} />
+                <div className="flex items-center gap-1 font-bold text-[11px]" style={{ color: "#d70d0e" }}>
+                  <Phone size={13} />
                   <span>{config.telefoneComercial}</span>
                 </div>
               )}
