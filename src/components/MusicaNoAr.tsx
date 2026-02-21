@@ -48,7 +48,7 @@ function parseXmlString(xmlStr: string): MusicData | null {
     if (duracaoStr.includes(":")) {
       const parts = duracaoStr.split(":").map(Number);
       if (parts.length === 2) duracao = parts[0] * 60 + parts[1];
-      else if (parts.length === 3) duracao = parts[0] * 60 + parts[1] + parts[2] / 100;
+      else if (parts.length === 3) duracao = parts[0] * 3600 + parts[1] * 60 + parts[2];
     } else {
       duracao = parseFloat(duracaoStr) || 0;
       if (duracao > 600) duracao = duracao / 1000;
