@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Radio, SkipForward, ChevronRight, Clock, Loader2 } from "lucide-react";
+import { Radio, ChevronRight, Clock, Loader2, ArrowRight } from "lucide-react";
 import { getApresentadores } from "./ApresentadorForm";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -33,7 +33,7 @@ async function getProgramas(): Promise<Programa[]> {
   }));
 }
 
-function findCurrentProgram(programas: Programa[]): { programa: Programa; progress: number } | null {
+export function findCurrentProgram(programas: Programa[]): { programa: Programa; progress: number } | null {
   const now = new Date();
   const diaAtual = DIAS_MAP[now.getDay()];
   const horaAtual = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
@@ -166,7 +166,7 @@ export default function OnAirWidget() {
                 )}
 
                 <div className="absolute top-4 left-5 z-10 flex items-center gap-2 animate-fade-in">
-                  <SkipForward size={16} className="text-gray-300" />
+                  <ArrowRight size={16} className="text-gray-300" />
                   <span className="font-bold text-gray-300 text-sm">PRÓXIMO PROGRAMA</span>
                 </div>
 
@@ -200,8 +200,7 @@ export default function OnAirWidget() {
 
           {firstNext && (
             <div className="absolute top-3 right-3 z-20 flex items-center gap-1 bg-[#2d2d2d] rounded-full px-3 py-1 cursor-pointer">
-              <span className="text-gray-300 text-[10px] font-semibold uppercase tracking-wider">Próximo programa</span>
-              <ChevronRight size={12} className="text-gray-300" />
+              <ArrowRight size={12} className="text-gray-300" />
             </div>
           )}
 
@@ -210,19 +209,10 @@ export default function OnAirWidget() {
               <Radio size={16} className="text-gray-700 animate-pulse" />
               <span className="font-bold text-gray-700 text-sm animate-pulse">NO AR</span>
             </div>
-            {/* Selo do programa abaixo do NO AR */}
-            {programa.selo && (
-              <img
-                src={programa.selo}
-                alt="Selo"
-                className="mt-2 object-contain"
-                style={{ maxHeight: 80, maxWidth: 120, filter: "grayscale(100%) brightness(0.4)" }}
-              />
-            )}
           </div>
 
           <div className="absolute bottom-[4px] left-0 right-0 z-10 px-5">
-            <p className="font-bold text-gray-800 truncate" style={{ fontSize: 14 }}>{programa.nome}</p>
+            <p className="font-bold text-gray-800 truncate text-2xl">{programa.nome}</p>
             <div className="flex items-center gap-3 mb-1">
               <p className="text-gray-600 text-xs truncate">{apresentadorNome}</p>
               <p className="text-gray-600 text-xs whitespace-nowrap">
