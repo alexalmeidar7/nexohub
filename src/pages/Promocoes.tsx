@@ -131,7 +131,7 @@ export default function PromocoesKiosk() {
           <div className="flex items-center gap-3 min-w-0">
             <div className="flex items-center gap-2 shrink-0">
               <Radio size={16} className="text-[#d4f959] animate-pulse" />
-              <span className="text-[#d4f959] font-bold text-xs uppercase tracking-wider">No Ar:</span>
+              <span className="text-red-600 font-bold text-xs uppercase tracking-wider">No Ar:</span>
             </div>
             <div className="min-w-0">
               <p className="text-white font-semibold text-sm truncate drop-shadow-lg">
@@ -203,7 +203,7 @@ export default function PromocoesKiosk() {
                 key={i}
                 onClick={() => setCurrentBannerIndex(i)}
                 className={`w-2.5 h-2.5 rounded-full transition-all ${
-                  i === currentBannerIndex ? "bg-[#d4f959] scale-125" : "bg-white/40"
+                  i === currentBannerIndex ? "bg-red-600 scale-125" : "bg-white/40"
                 }`}
               />
             ))}
@@ -241,9 +241,7 @@ export default function PromocoesKiosk() {
                 return (
                   <div
                     key={prog.id}
-                    className={`flex-shrink-0 w-36 rounded-xl overflow-hidden border-2 transition-all ${
-                      isOnAir ? "border-[#d4f959]" : "border-white/10 hover:border-white/30"
-                    }`}
+                    className="flex-shrink-0 w-36 rounded-xl overflow-hidden border-0 transition-all relative"
                   >
                     {prog.capa ? (
                       <img src={prog.capa} alt={prog.nome} className="w-full object-contain" style={{ height: "80px" }} />
@@ -252,14 +250,10 @@ export default function PromocoesKiosk() {
                         <Radio size={16} className="text-white/20" />
                       </div>
                     )}
-                    <div className="px-2 py-1.5">
-                      <p className="text-[10px] font-bold text-white truncate">{prog.nome}</p>
-                      <p className="text-[9px] text-white/40">
+                    <div className="absolute bottom-1 left-0 right-0 text-center">
+                      <span className="text-[10px] font-bold text-white drop-shadow-lg bg-black/50 px-1.5 py-0.5 rounded">
                         {prog.horarioInicio.slice(0, 5)} - {prog.horarioFim.slice(0, 5)}
-                      </p>
-                      {isOnAir && (
-                        <span className="text-[8px] text-[#d4f959] font-bold uppercase">No Ar</span>
-                      )}
+                      </span>
                     </div>
                   </div>
                 );
