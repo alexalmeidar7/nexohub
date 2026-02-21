@@ -130,7 +130,7 @@ export default function PromocoesKiosk() {
           {/* No Ar info */}
           <div className="flex items-center gap-3 min-w-0">
             <div className="flex items-center gap-2 shrink-0">
-              <Radio size={16} className="text-[#d4f959] animate-pulse" />
+              <Radio size={16} className="text-red-600 animate-pulse" />
               <span className="text-red-600 font-bold text-xs uppercase tracking-wider">No Ar:</span>
             </div>
             <div className="min-w-0">
@@ -145,17 +145,6 @@ export default function PromocoesKiosk() {
             </div>
           </div>
 
-          {/* Separator */}
-          <div className="w-px h-8 bg-white/30 shrink-0" />
-
-          {/* Tocando Agora */}
-          <div className="flex items-center gap-2 min-w-0">
-            <Music size={14} className="text-violet-400 shrink-0" />
-            <span className="text-white/80 text-xs uppercase tracking-wider shrink-0 drop-shadow-lg">Tocando Agora:</span>
-            <p className="text-white/90 text-xs truncate drop-shadow-lg">
-              {musicInfo ? `${musicInfo.artista} - ${musicInfo.titulo}` : "Sintonizando..."}
-            </p>
-          </div>
         </div>
 
         {/* LOGO - centralizado, 50% maior */}
@@ -163,8 +152,8 @@ export default function PromocoesKiosk() {
           <img
             src={config.logo}
             alt={config.nome}
-            className="h-18 w-auto object-contain shrink-0 absolute left-1/2 -translate-x-1/2 top-3 drop-shadow-xl"
-            style={{ height: "72px" }}
+            className="h-18 w-auto object-contain shrink-0 drop-shadow-xl"
+            style={{ height: "108px", marginRight: "100px" }}
           />
         )}
       </header>
@@ -241,10 +230,10 @@ export default function PromocoesKiosk() {
                 return (
                   <div
                     key={prog.id}
-                    className="flex-shrink-0 w-36 rounded-xl overflow-hidden border-0 transition-all relative"
+                    className="flex-shrink-0 rounded-xl overflow-hidden border-0 transition-all relative"
                   >
                     {prog.capa ? (
-                      <img src={prog.capa} alt={prog.nome} className="w-full object-contain" style={{ height: "80px" }} />
+                      <img src={prog.capa} alt={prog.nome} className="w-auto h-auto object-contain" />
                     ) : (
                       <div className="w-full flex items-center justify-center bg-white/5" style={{ height: "80px" }}>
                         <Radio size={16} className="text-white/20" />
@@ -274,7 +263,7 @@ export default function PromocoesKiosk() {
                 <img
                   src={botao.botao_url}
                   alt={botao.texto}
-                  className="h-12 w-auto object-contain"
+                  className="w-auto h-auto object-contain"
                 />
               </button>
             ))}
