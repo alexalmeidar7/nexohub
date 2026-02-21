@@ -145,7 +145,7 @@ export default function PromocoesKiosk() {
     <div className="min-h-screen bg-black text-white overflow-y-auto">
 
       {/* HEADER TRANSPARENTE - overlay sobre o banner */}
-      <header className="absolute top-0 left-0 right-0 z-50 flex items-center justify-between pt-[50px] px-6 py-3">
+      <header className="w-full z-50 flex items-center justify-between px-6 py-4">
         <div className="flex items-center gap-6 flex-1 min-w-0">
           {/* No Ar info */}
           <div className="flex items-center gap-3 min-w-0">
