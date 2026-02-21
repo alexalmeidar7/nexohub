@@ -3,7 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { getEmpresaConfig, type EmpresaConfig } from "@/components/ConfiguracoesPage";
 import { findCurrentProgram } from "@/components/OnAirWidget";
 import { getMusicData } from "@/components/MusicaNoAr";
-import { Radio, Music, ChevronLeft, ChevronRight, ExternalLink } from "lucide-react";
+import { Radio, Music, ChevronLeft, ChevronRight } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 interface Promocao {
   id: string;
@@ -38,6 +39,7 @@ export default function PromocoesKiosk() {
   const [onAirProgram, setOnAirProgram] = useState<{ nome: string; horarioInicio: string; horarioFim: string } | null>(null);
   const [musicInfo, setMusicInfo] = useState<{ titulo: string; artista: string } | null>(null);
   const [programScrollIndex, setProgramScrollIndex] = useState(0);
+  const [selectedPromo, setSelectedPromo] = useState<Promocao | null>(null);
 
   // Load data
   useEffect(() => {
@@ -122,8 +124,8 @@ export default function PromocoesKiosk() {
   return (
     <div className="min-h-screen bg-black text-white relative overflow-hidden flex flex-col">
 
-      {/* HEADER DINÂMICO - recuo 270px direita / 50px topo */}
-      <header className="relative z-50 flex items-center justify-between pr-[270px] pt-[50px] px-6 py-3">
+      {/* HEADER TRANSPARENTE - overlay sobre o banner */}
+      <header className="absolute top-0 left-0 right-0 z-50 flex items-center justify-between pt-[50px] px-6 py-3">
         <div className="flex items-center gap-6 flex-1 min-w-0">
           {/* No Ar info */}
           <div className="flex items-center gap-3 min-w-0">
@@ -132,11 +134,11 @@ export default function PromocoesKiosk() {
               <span className="text-[#d4f959] font-bold text-xs uppercase tracking-wider">No Ar:</span>
             </div>
             <div className="min-w-0">
-              <p className="text-white font-semibold text-sm truncate">
+              <p className="text-white font-semibold text-sm truncate drop-shadow-lg">
                 {onAirProgram?.nome || "Programação Musical"}
               </p>
               {onAirProgram && (
-                <p className="text-white/50 text-[10px]">
+                <p className="text-white/70 text-[10px] drop-shadow-lg">
                   {onAirProgram.horarioInicio.slice(0, 5)} às {onAirProgram.horarioFim.slice(0, 5)}
                 </p>
               )}
@@ -144,24 +146,25 @@ export default function PromocoesKiosk() {
           </div>
 
           {/* Separator */}
-          <div className="w-px h-8 bg-white/20 shrink-0" />
+          <div className="w-px h-8 bg-white/30 shrink-0" />
 
           {/* Tocando Agora */}
           <div className="flex items-center gap-2 min-w-0">
             <Music size={14} className="text-violet-400 shrink-0" />
-            <span className="text-white/60 text-xs uppercase tracking-wider shrink-0">Tocando Agora:</span>
-            <p className="text-white/80 text-xs truncate">
+            <span className="text-white/80 text-xs uppercase tracking-wider shrink-0 drop-shadow-lg">Tocando Agora:</span>
+            <p className="text-white/90 text-xs truncate drop-shadow-lg">
               {musicInfo ? `${musicInfo.artista} - ${musicInfo.titulo}` : "Sintonizando..."}
             </p>
           </div>
         </div>
 
-        {/* LOGO - recuo 270px conforme solicitado */}
+        {/* LOGO - centralizado, 50% maior */}
         {config.logo && (
           <img
             src={config.logo}
             alt={config.nome}
-            className="h-12 w-auto object-contain shrink-0 ml-4 absolute right-6 top-4"
+            className="h-18 w-auto object-contain shrink-0 absolute left-1/2 -translate-x-1/2 top-3 drop-shadow-xl"
+            style={{ height: "72px" }}
           />
         )}
       </header>
@@ -180,6 +183,8 @@ export default function PromocoesKiosk() {
                 alt={banner.texto}
                 className="w-full h-full object-cover object-top"
               />
+              {/* Gradient overlay top for header readability */}
+              <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/60 to-transparent" />
               {/* Gradient overlay bottom */}
               <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-black/90 to-transparent" />
             </div>
@@ -209,11 +214,10 @@ export default function PromocoesKiosk() {
       {/* OVERLAY INFERIOR - Capas e Botões */}
       <div className="relative z-30 bg-black/90 backdrop-blur-sm border-t border-white/10 px-6 py-4 space-y-4">
 
-        {/* Capas dos Programas - espaçamento 7px */}
+        {/* Capas dos Programas - sem título */}
         {todayPrograms.length > 0 && (
           <div>
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-white/50 text-[10px] uppercase tracking-widest font-bold">Programação de Hoje</p>
+            <div className="flex items-center justify-end mb-2">
               <div className="flex gap-1">
                 <button
                   onClick={() => setProgramScrollIndex(Math.max(0, programScrollIndex - 6))}
@@ -242,7 +246,7 @@ export default function PromocoesKiosk() {
                     }`}
                   >
                     {prog.capa ? (
-                      <img src={prog.capa} alt={prog.nome} className="w-full h-20 object-cover" style={{ height: "80px" }} />
+                      <img src={prog.capa} alt={prog.nome} className="w-full object-contain" style={{ height: "80px" }} />
                     ) : (
                       <div className="w-full flex items-center justify-center bg-white/5" style={{ height: "80px" }}>
                         <Radio size={16} className="text-white/20" />
@@ -264,13 +268,14 @@ export default function PromocoesKiosk() {
           </div>
         )}
 
-        {/* Botões das Promoções */}
+        {/* Botões das Promoções - sem borda, tamanho da imagem */}
         {botoes.length > 0 && (
           <div className="flex gap-3 flex-wrap">
             {botoes.map(botao => (
               <button
                 key={botao.id}
-                className="bg-[#d70d0e] hover:bg-red-700 text-white font-black px-8 py-3 rounded-full text-lg uppercase transition-all shadow-xl hover:scale-105"
+                onClick={() => setSelectedPromo(botao)}
+                className="border-none p-0 bg-transparent hover:scale-105 transition-transform cursor-pointer"
               >
                 <img
                   src={botao.botao_url}
@@ -282,6 +287,26 @@ export default function PromocoesKiosk() {
           </div>
         )}
       </div>
+
+      {/* Modal de Promoção */}
+      <Dialog open={!!selectedPromo} onOpenChange={(open) => !open && setSelectedPromo(null)}>
+        <DialogContent className="bg-black/95 border-white/20 text-white max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold">{selectedPromo?.texto || "Promoção"}</DialogTitle>
+            {selectedPromo?.oferecimento && (
+              <DialogDescription className="text-white/60">
+                Oferecimento: {selectedPromo.oferecimento}
+              </DialogDescription>
+            )}
+          </DialogHeader>
+          {selectedPromo?.imagem_url && (
+            <img src={selectedPromo.imagem_url} alt={selectedPromo.texto} className="w-full rounded-lg object-cover max-h-64" />
+          )}
+          <div className="space-y-2 text-sm text-white/70">
+            <p>Período: {selectedPromo?.data_inicio} a {selectedPromo?.data_fim}</p>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
