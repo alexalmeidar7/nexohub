@@ -26,6 +26,7 @@ interface Programa {
   nome: string;
   apresentadorId: string;
   selo: string;
+  capa: string;
   diasSemana: string[];
   horarioInicio: string;
   horarioFim: string;
@@ -45,6 +46,7 @@ async function getProgramas(): Promise<Programa[]> {
     nome: p.nome,
     apresentadorId: p.apresentador_id || "",
     selo: p.selo || "",
+    capa: (p as any).capa || "",
     diasSemana: p.dias_semana || [],
     horarioInicio: p.horario_inicio,
     horarioFim: p.horario_fim,
@@ -72,6 +74,7 @@ export default function ProgramaForm() {
   const [nome, setNome] = useState("");
   const [apresentadorId, setApresentadorId] = useState("");
   const [selo, setSelo] = useState("");
+  const [capa, setCapa] = useState("");
   const [diasSemana, setDiasSemana] = useState<string[]>([]);
   const [horarioInicio, setHorarioInicio] = useState("");
   const [horarioFim, setHorarioFim] = useState("");
@@ -133,12 +136,20 @@ export default function ProgramaForm() {
     reader.readAsDataURL(file);
   };
 
+  const handleCapa = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => setCapa(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
   const toggleDia = (dia: string) => {
     setDiasSemana(prev => prev.includes(dia) ? prev.filter(d => d !== dia) : [...prev, dia]);
   };
 
   const resetForm = () => {
-    setNome(""); setApresentadorId(""); setSelo(""); setDiasSemana([]); setHorarioInicio(""); setHorarioFim(""); setEstudio(""); setAtivo(true); setVariavel(false); setDescricao(""); setConflictMsg(""); setEditingId(null);
+    setNome(""); setApresentadorId(""); setSelo(""); setCapa(""); setDiasSemana([]); setHorarioInicio(""); setHorarioFim(""); setEstudio(""); setAtivo(true); setVariavel(false); setDescricao(""); setConflictMsg(""); setEditingId(null);
   };
 
   const handleAdd = async () => {
@@ -158,12 +169,12 @@ export default function ProgramaForm() {
 
     if (editingId) {
       await supabase.from("programas").update({
-        nome: nome.trim(), apresentador_id: apresentadorId || null, selo, dias_semana: diasSemana,
+        nome: nome.trim(), apresentador_id: apresentadorId || null, selo, capa, dias_semana: diasSemana,
         horario_inicio: horarioInicio, horario_fim: horarioFim, estudio: estudio.trim(), ativo, descricao: descricao.trim(),
       } as any).eq("id", editingId);
     } else {
       await supabase.from("programas").insert({
-        user_id: user.id, nome: nome.trim(), apresentador_id: apresentadorId || null, selo, dias_semana: diasSemana,
+        user_id: user.id, nome: nome.trim(), apresentador_id: apresentadorId || null, selo, capa, dias_semana: diasSemana,
         horario_inicio: horarioInicio, horario_fim: horarioFim, estudio: estudio.trim(), ativo, descricao: descricao.trim(),
       } as any);
     }
@@ -173,7 +184,7 @@ export default function ProgramaForm() {
   };
 
   const startEdit = (p: Programa) => {
-    setEditingId(p.id); setNome(p.nome); setApresentadorId(p.apresentadorId); setSelo(p.selo);
+    setEditingId(p.id); setNome(p.nome); setApresentadorId(p.apresentadorId); setSelo(p.selo); setCapa(p.capa);
     setDiasSemana(p.diasSemana); setHorarioInicio(p.horarioInicio); setHorarioFim(p.horarioFim);
     setEstudio(p.estudio); setAtivo(p.ativo); setVariavel(p.variavel); setDescricao(p.descricao); setConflictMsg("");
   };
@@ -265,6 +276,12 @@ export default function ProgramaForm() {
           <input type="file" accept="image/*" onChange={handleSelo}
             className="w-full bg-muted border border-border p-2 rounded-lg text-foreground text-sm file:mr-3 file:rounded file:border-0 file:bg-primary file:text-primary-foreground file:px-3 file:py-1 file:font-bold file:text-xs" />
           {selo && <img src={selo} alt="Selo" className="mt-2 h-16 rounded border border-border" />}
+        </div>
+        <div>
+          <label className="block text-muted-foreground text-xs mb-2">Capa do Programa (1080 x 1080 px - PNG com fundo alpha)</label>
+          <input type="file" accept="image/*" onChange={handleCapa}
+            className="w-full bg-muted border border-border p-2 rounded-lg text-foreground text-sm file:mr-3 file:rounded file:border-0 file:bg-primary file:text-primary-foreground file:px-3 file:py-1 file:font-bold file:text-xs" />
+          {capa && <img src={capa} alt="Capa" className="mt-2 h-16 rounded border border-border" />}
         </div>
 
         <div>

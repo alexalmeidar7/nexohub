@@ -1,0 +1,1 @@
+ALTER TABLE public.programas ADD COLUMN capa text DEFAULT ''::text;
