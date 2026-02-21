@@ -222,6 +222,44 @@ export type Database = {
         }
         Relationships: []
       }
+      logos_patrocinadores: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          data_final: string
+          id: string
+          logo_url: string
+          programa_id: string
+          user_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          data_final: string
+          id?: string
+          logo_url?: string
+          programa_id: string
+          user_id: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          data_final?: string
+          id?: string
+          logo_url?: string
+          programa_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "logos_patrocinadores_programa_id_fkey"
+            columns: ["programa_id"]
+            isOneToOne: false
+            referencedRelation: "programas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       programas: {
         Row: {
           apresentador_id: string | null
@@ -271,6 +309,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      promocoes: {
+        Row: {
+          created_at: string
+          data_fim: string
+          data_inicio: string
+          id: string
+          imagem_url: string | null
+          oferecimento: string | null
+          texto: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data_fim: string
+          data_inicio: string
+          id?: string
+          imagem_url?: string | null
+          oferecimento?: string | null
+          texto?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data_fim?: string
+          data_inicio?: string
+          id?: string
+          imagem_url?: string | null
+          oferecimento?: string | null
+          texto?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       selected_cotacoes: {
         Row: {
@@ -326,6 +397,47 @@ export type Database = {
         }
         Relationships: []
       }
+      testemunhais: {
+        Row: {
+          created_at: string
+          data_fim: string
+          data_inicio: string
+          id: string
+          imagem_url: string | null
+          programa_id: string | null
+          texto: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data_fim: string
+          data_inicio: string
+          id?: string
+          imagem_url?: string | null
+          programa_id?: string | null
+          texto?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data_fim?: string
+          data_inicio?: string
+          id?: string
+          imagem_url?: string | null
+          programa_id?: string | null
+          texto?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "testemunhais_programa_id_fkey"
+            columns: ["programa_id"]
+            isOneToOne: false
+            referencedRelation: "programas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_settings: {
         Row: {
           id: string
@@ -352,7 +464,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      cleanup_comercial: { Args: never; Returns: undefined }
     }
     Enums: {
       [_ in never]: never
