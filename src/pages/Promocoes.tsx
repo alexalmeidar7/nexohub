@@ -1,9 +1,9 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getEmpresaConfig, type EmpresaConfig } from "@/components/ConfiguracoesPage";
 import { findCurrentProgram } from "@/components/OnAirWidget";
-import { ChevronLeft, ChevronRight, Clock, X } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { ChevronLeft, ChevronRight, Clock, Radio } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface Promocao {
   id: string;
@@ -40,7 +40,7 @@ export default function PromocoesKiosk() {
   const [promocoes, setPromocoes] = useState<Promocao[]>([]);
   const [config, setConfig] = useState<EmpresaConfig>({} as EmpresaConfig);
   const [programas, setProgramas] = useState<ProgramaGrade[]>([]);
-  const [onAirProgram, setOnAirProgram] = useState<{ nome: string; horarioInicio: string; horarioFim: string } | null>(null);
+  const [onAirProgram, setOnAirProgram] = useState<{ nome: string; horarioInicio: string; horarioFim: string; progress: number } | null>(null);
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
   const [selectedPromo, setSelectedPromo] = useState<Promocao | null>(null);
   const [fontSize, setFontSize] = useState(14);
@@ -94,6 +94,7 @@ export default function PromocoesKiosk() {
           nome: current.programa.nome,
           horarioInicio: (current.programa as any).horarioInicio,
           horarioFim: (current.programa as any).horarioFim,
+          progress: Math.min(100, Math.max(0, current.progress * 100)),
         });
       } else {
         setOnAirProgram(null);
@@ -111,12 +112,23 @@ export default function PromocoesKiosk() {
   const banners = promocoes.filter(p => p.imagem_url);
   const botoes = promocoes.filter(p => p.botao_url);
 
-  const sideScroll = (ref: React.RefObject<HTMLDivElement>, direction: "left" | "right") => {
-    const el = ref.current;
-    if (el) {
-      el.scrollBy({ left: direction === "left" ? -300 : 300, behavior: "smooth" });
+  const scrollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const startScroll = useCallback((ref: React.RefObject<HTMLDivElement>, direction: "left" | "right") => {
+    stopScroll();
+    const step = () => {
+      ref.current?.scrollBy({ left: direction === "left" ? -8 : 8 });
+    };
+    step();
+    scrollIntervalRef.current = setInterval(step, 16);
+  }, []);
+
+  const stopScroll = useCallback(() => {
+    if (scrollIntervalRef.current) {
+      clearInterval(scrollIntervalRef.current);
+      scrollIntervalRef.current = null;
     }
-  };
+  }, []);
 
   return (
     <div className="bg-black text-white min-h-screen p-8 flex flex-col items-center">
@@ -127,19 +139,24 @@ export default function PromocoesKiosk() {
         {/* Header */}
         <div className="flex justify-between items-center w-full px-2">
           <div className="flex items-center gap-3">
-            <span className="relative flex h-3 w-3">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-3 w-3 bg-red-600"></span>
-            </span>
+            <Radio size={16} style={{ color: "#be0101" }} className="animate-pulse" />
             <div>
-              <span className="font-bold uppercase tracking-widest text-xs text-red-500">No Ar</span>
-              <p className="text-white/80 text-sm truncate max-w-[300px]">
+              <span className="font-bold uppercase tracking-widest text-xs" style={{ color: "#be0101" }}>No Ar</span>
+              <p className="text-white text-sm font-semibold truncate max-w-[300px]">
                 {onAirProgram?.nome || "Programação Musical"}
               </p>
               {onAirProgram && (
-                <p className="text-white/50 text-[10px]">
-                  {onAirProgram.horarioInicio.slice(0, 5)} às {onAirProgram.horarioFim.slice(0, 5)}
-                </p>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <span className="text-white/60 text-[10px]">
+                    {onAirProgram.horarioInicio.slice(0, 5)} às {onAirProgram.horarioFim.slice(0, 5)}
+                  </span>
+                  <div className="w-24 h-1.5 rounded-full bg-white/10 overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all duration-1000"
+                      style={{ width: `${onAirProgram.progress}%`, backgroundColor: "#be0101" }}
+                    />
+                  </div>
+                </div>
               )}
             </div>
           </div>
@@ -182,10 +199,10 @@ export default function PromocoesKiosk() {
         {filteredPrograms.length > 0 && (
           <div className="relative group">
             <h2 className="text-lg font-bold mb-4">Programação</h2>
-            <div onMouseEnter={() => sideScroll(scrollRef, "left")} className="absolute left-[-45px] top-1/2 -translate-y-1/2 p-2 cursor-pointer opacity-30 hover:opacity-100 transition-opacity z-10">
+            <div onMouseEnter={() => startScroll(scrollRef, "left")} onMouseLeave={stopScroll} className="absolute left-[-45px] top-1/2 -translate-y-1/2 p-2 cursor-pointer opacity-30 hover:opacity-100 transition-opacity z-10">
               <ChevronLeft size={36} />
             </div>
-            <div onMouseEnter={() => sideScroll(scrollRef, "right")} className="absolute right-[-45px] top-1/2 -translate-y-1/2 p-2 cursor-pointer opacity-30 hover:opacity-100 transition-opacity z-10">
+            <div onMouseEnter={() => startScroll(scrollRef, "right")} onMouseLeave={stopScroll} className="absolute right-[-45px] top-1/2 -translate-y-1/2 p-2 cursor-pointer opacity-30 hover:opacity-100 transition-opacity z-10">
               <ChevronRight size={36} />
             </div>
 
@@ -217,10 +234,10 @@ export default function PromocoesKiosk() {
         {botoes.length > 0 && (
           <div className="relative group">
             <h2 className="text-lg font-bold mb-4">Promoções</h2>
-            <div onMouseEnter={() => sideScroll(promoScrollRef, "left")} className="absolute left-[-45px] top-1/2 -translate-y-1/2 p-2 cursor-pointer opacity-30 hover:opacity-100 transition-opacity z-10">
+            <div onMouseEnter={() => startScroll(promoScrollRef, "left")} onMouseLeave={stopScroll} className="absolute left-[-45px] top-1/2 -translate-y-1/2 p-2 cursor-pointer opacity-30 hover:opacity-100 transition-opacity z-10">
               <ChevronLeft size={36} />
             </div>
-            <div onMouseEnter={() => sideScroll(promoScrollRef, "right")} className="absolute right-[-45px] top-1/2 -translate-y-1/2 p-2 cursor-pointer opacity-30 hover:opacity-100 transition-opacity z-10">
+            <div onMouseEnter={() => startScroll(promoScrollRef, "right")} onMouseLeave={stopScroll} className="absolute right-[-45px] top-1/2 -translate-y-1/2 p-2 cursor-pointer opacity-30 hover:opacity-100 transition-opacity z-10">
               <ChevronRight size={36} />
             </div>
 
