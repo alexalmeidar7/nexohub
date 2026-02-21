@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 interface Promocao {
   id: string;
   imagem_url: string;
+  botao_url: string;
   texto: string;
   oferecimento: string;
   data_inicio: string;
@@ -32,6 +33,8 @@ export default function PromocoesPage() {
   const [dataFim, setDataFim] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState("");
+  const [botaoFile, setBotaoFile] = useState<File | null>(null);
+  const [botaoPreview, setBotaoPreview] = useState("");
 
   useEffect(() => {
     if (user) loadData();
@@ -52,6 +55,13 @@ export default function PromocoesPage() {
     setImagePreview(URL.createObjectURL(file));
   };
 
+  const handleBotaoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setBotaoFile(file);
+    setBotaoPreview(URL.createObjectURL(file));
+  };
+
   const uploadImage = async (file: File): Promise<string> => {
     const ext = file.name.split(".").pop();
     const path = `promocoes/${Date.now()}.${ext}`;
@@ -69,6 +79,8 @@ export default function PromocoesPage() {
     setDataFim(item.data_fim);
     setImagePreview(item.imagem_url || "");
     setImageFile(null);
+    setBotaoPreview(item.botao_url || "");
+    setBotaoFile(null);
   };
 
   const cancelEdit = () => {
@@ -84,10 +96,13 @@ export default function PromocoesPage() {
     try {
       let imagem_url = editingId ? imagePreview : "";
       if (imageFile) imagem_url = await uploadImage(imageFile);
+      let botao_url = editingId ? botaoPreview : "";
+      if (botaoFile) botao_url = await uploadImage(botaoFile);
 
       if (editingId) {
         const { error } = await supabase.from("promocoes").update({
           imagem_url,
+          botao_url,
           texto,
           oferecimento,
           data_inicio: dataInicio,
@@ -99,6 +114,7 @@ export default function PromocoesPage() {
         const { error } = await supabase.from("promocoes").insert({
           user_id: user.id,
           imagem_url,
+          botao_url,
           texto,
           oferecimento,
           data_inicio: dataInicio,
@@ -125,6 +141,8 @@ export default function PromocoesPage() {
     setDataFim("");
     setImageFile(null);
     setImagePreview("");
+    setBotaoFile(null);
+    setBotaoPreview("");
   };
 
   const handleDelete = async (id: string) => {
@@ -151,7 +169,7 @@ export default function PromocoesPage() {
       <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <label className="text-sm font-medium text-foreground">Imagem da Promoção</label>
+            <label className="text-sm font-medium text-foreground">Banner da Promoção <span className="text-xs text-muted-foreground font-normal">(1920×850px)</span></label>
             {editingId && (
               <Button type="button" variant="ghost" size="sm" onClick={cancelEdit} className="text-xs">
                 <X size={12} className="mr-1" /> Cancelar edição
@@ -160,10 +178,10 @@ export default function PromocoesPage() {
           </div>
           <div className="flex items-center gap-3">
             {imagePreview ? (
-              <img src={imagePreview} alt="preview" className="w-20 h-14 rounded-lg object-cover border" />
+              <img src={imagePreview} alt="banner" className="w-24 h-10 rounded-lg object-cover border" />
             ) : (
-              <div className="w-20 h-14 rounded-lg bg-muted flex items-center justify-center border">
-                <ImageIcon size={20} className="text-muted-foreground" />
+              <div className="w-24 h-10 rounded-lg bg-muted flex items-center justify-center border">
+                <ImageIcon size={18} className="text-muted-foreground" />
               </div>
             )}
             <label className="cursor-pointer inline-flex items-center gap-2 px-3 py-2 bg-muted hover:bg-muted/80 rounded-lg text-sm transition-colors">
@@ -171,6 +189,24 @@ export default function PromocoesPage() {
               Enviar banner
               <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
             </label>
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-foreground mb-1 block">Imagem do Botão</label>
+            <div className="flex items-center gap-3">
+              {botaoPreview ? (
+                <img src={botaoPreview} alt="botão" className="w-16 h-10 rounded-lg object-contain border" />
+              ) : (
+                <div className="w-16 h-10 rounded-lg bg-muted flex items-center justify-center border">
+                  <ImageIcon size={16} className="text-muted-foreground" />
+                </div>
+              )}
+              <label className="cursor-pointer inline-flex items-center gap-2 px-3 py-2 bg-muted hover:bg-muted/80 rounded-lg text-sm transition-colors">
+                <Upload size={14} />
+                Enviar botão
+                <input type="file" accept="image/*" className="hidden" onChange={handleBotaoChange} />
+              </label>
+            </div>
           </div>
 
           <div>

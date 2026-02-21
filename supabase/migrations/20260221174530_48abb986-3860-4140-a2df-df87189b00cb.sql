@@ -1,0 +1,1 @@
+ALTER TABLE public.promocoes ADD COLUMN botao_url text DEFAULT ''::text;
