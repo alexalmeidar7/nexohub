@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from "react";
-import { AlertCircle, Trash2, Clock, Calendar, Building2, Pencil, X, Power, Loader2 } from "lucide-react";
+import { AlertCircle, Trash2, Clock, Calendar, Building2, Pencil, X, Power, Loader2, Info } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { getApresentadores, type Apresentador } from "./ApresentadorForm";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,6 +19,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 
 interface Programa {
@@ -418,13 +423,46 @@ export default function ProgramaForm() {
                       const prog = getProgramaForSlot(dia, slot);
                       const isOnAir = prog && dia === diaAtual && currentTimeStr >= prog.horarioInicio && currentTimeStr < prog.horarioFim;
                       return (
-                        <td key={dia} className={`px-1 py-1 text-center rounded-lg transition-all border-2 ${
-                          isOnAir ? "font-bold border-transparent" :
-                          prog ? "bg-primary/10 text-foreground border-transparent hover:border-green-500" : "border-transparent hover:border-green-500"
+                        <td key={dia} className={`px-1 py-1 text-center rounded-lg transition-all border-2 hover:border-[#d4f959] ${
+                          isOnAir ? "font-bold" :
+                          prog ? "bg-primary/10 text-foreground border-transparent" : "border-transparent"
                         }`}
-                        style={isOnAir ? { backgroundColor: "#d4f959", color: "#333" } : undefined}>
+                        style={{
+                          backgroundColor: isOnAir ? "#d4f959" : undefined,
+                          color: isOnAir ? "#333" : undefined,
+                          borderColor: isOnAir ? "#d4f959" : undefined,
+                        }}>
                           {prog ? (
-                            <span className="text-[10px] truncate block">{prog.nome}</span>
+                            <div className="flex items-center justify-center gap-0.5 group/cell" style={{ borderColor: 'transparent' }}>
+                              <span className="text-[10px] truncate">{prog.nome}</span>
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <button
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="opacity-0 group-hover/cell:opacity-100 transition-opacity shrink-0"
+                                  >
+                                    <Info size={10} className={isOnAir ? "text-gray-600" : "text-muted-foreground"} />
+                                  </button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-72 p-0 overflow-hidden" side="right" align="start">
+                                  {prog.capa && (
+                                    <img src={prog.capa} alt={prog.nome} className="w-full h-32 object-cover" />
+                                  )}
+                                  <div className="p-3 space-y-1.5">
+                                    <p className="font-bold text-sm text-foreground">{prog.nome}</p>
+                                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                      <Clock size={10} /> {prog.horarioInicio.slice(0, 5)} — {prog.horarioFim.slice(0, 5)}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                      <Calendar size={10} /> {prog.diasSemana.join(", ")}
+                                    </p>
+                                    {prog.descricao && (
+                                      <p className="text-xs text-muted-foreground italic border-t border-border pt-1.5 mt-1.5">{prog.descricao}</p>
+                                    )}
+                                  </div>
+                                </PopoverContent>
+                              </Popover>
+                            </div>
                           ) : null}
                         </td>
                       );
