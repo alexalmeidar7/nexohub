@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Calendar as CalendarUI } from "@/components/ui/calendar";
-import { Home, Sun, FileText, Mic2, PlaySquare, Music, CalendarDays, Settings, LogOut, Loader2, ShoppingBag, ChevronDown, ChevronUp, MessageSquareQuote, Tag, Image } from "lucide-react";
+import { Home, Sun, FileText, Mic2, PlaySquare, Music, CalendarDays, Settings, LogOut, Loader2, ShoppingBag, ChevronDown, ChevronUp, MessageSquareQuote, Tag, Image, ExternalLink } from "lucide-react";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import ApresentadorForm from "./ApresentadorForm";
@@ -248,7 +248,15 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           {currentPage === "logos" && <LogosPatrocinadoresPage />}
         </section>
 
-        <div className="absolute bottom-10 right-10 opacity-80">
+        <button
+          onClick={() => window.open('/promocoes-kiosk', '_blank')}
+          className="fixed bottom-10 right-10 bg-[#d70d0e] text-white px-4 py-3 rounded-lg shadow-lg hover:scale-105 transition-transform z-50 flex items-center gap-2 font-bold text-sm"
+        >
+          <ExternalLink size={16} />
+          Ver Promoções & Grade
+        </button>
+
+        <div className="absolute bottom-10 right-10 opacity-80 pointer-events-none">
           <span className="text-foreground font-bold text-3xl tracking-tighter">
             svn<span className="text-lg">✦</span>broadcast
           </span>
