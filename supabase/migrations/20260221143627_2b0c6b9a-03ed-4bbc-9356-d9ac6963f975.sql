@@ -1,0 +1,1 @@
+ALTER TABLE public.programas ADD COLUMN descricao text DEFAULT '';
