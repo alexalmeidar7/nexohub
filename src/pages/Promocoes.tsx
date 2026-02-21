@@ -2,7 +2,8 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getEmpresaConfig, type EmpresaConfig } from "@/components/ConfiguracoesPage";
 import { findCurrentProgram } from "@/components/OnAirWidget";
-import { ChevronLeft, ChevronRight, Clock, Radio } from "lucide-react";
+import { ChevronLeft, ChevronRight, Clock, Radio, Globe, Instagram, Youtube, Phone, MessageCircle } from "lucide-react";
+import { getApresentadores } from "@/components/ApresentadorForm";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface Promocao {
@@ -40,7 +41,8 @@ export default function PromocoesKiosk() {
   const [promocoes, setPromocoes] = useState<Promocao[]>([]);
   const [config, setConfig] = useState<EmpresaConfig>({} as EmpresaConfig);
   const [programas, setProgramas] = useState<ProgramaGrade[]>([]);
-  const [onAirProgram, setOnAirProgram] = useState<{ nome: string; horarioInicio: string; horarioFim: string; progress: number } | null>(null);
+  const [onAirProgram, setOnAirProgram] = useState<{ nome: string; horarioInicio: string; horarioFim: string; progress: number; apresentadorId: string } | null>(null);
+  const [apresentadores, setApresentadores] = useState<any[]>([]);
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
   const [selectedPromo, setSelectedPromo] = useState<Promocao | null>(null);
   const [fontSize, setFontSize] = useState(14);
@@ -71,6 +73,9 @@ export default function PromocoesKiosk() {
         horarioFim: p.horario_fim,
       }));
       setProgramas(mapped);
+
+      const aprs = await getApresentadores();
+      setApresentadores(aprs);
     };
     load();
     const interval = setInterval(load, 30000);
@@ -95,6 +100,7 @@ export default function PromocoesKiosk() {
           horarioInicio: (current.programa as any).horarioInicio,
           horarioFim: (current.programa as any).horarioFim,
           progress: Math.min(100, Math.max(0, current.progress * 100)),
+          apresentadorId: (current.programa as any).apresentadorId || "",
         });
       } else {
         setOnAirProgram(null);
@@ -153,9 +159,53 @@ export default function PromocoesKiosk() {
                   <div className="w-24 h-1.5 rounded-full bg-white/10 overflow-hidden">
                     <div
                       className="h-full rounded-full transition-all duration-1000"
-                      style={{ width: `${onAirProgram.progress}%`, backgroundColor: "#be0101" }}
+                      style={{ width: `${onAirProgram.progress}%`, backgroundColor: "#ffffff" }}
                     />
                   </div>
+                </div>
+              )}
+            </div>
+
+            {/* Presenter photo */}
+            {(() => {
+              const presenter = onAirProgram?.apresentadorId
+                ? apresentadores.find(a => a.id === onAirProgram.apresentadorId)
+                : null;
+              return presenter?.foto ? (
+                <img src={presenter.foto} alt={presenter.nome} className="w-14 h-14 rounded-full object-cover border-2 border-white/20 ml-2" />
+              ) : null;
+            })()}
+
+            {/* Contact info */}
+            <div className="flex items-center gap-3 ml-3 text-white/70 text-[11px]">
+              {config.site && (
+                <div className="flex items-center gap-1">
+                  <Globe size={12} />
+                  <span>{config.site}</span>
+                </div>
+              )}
+              {config.instagram && (
+                <div className="flex items-center gap-1">
+                  <Instagram size={12} />
+                  <span>{config.instagram}</span>
+                </div>
+              )}
+              {config.youtube && (
+                <div className="flex items-center gap-1">
+                  <Youtube size={12} />
+                  <span>{config.youtube}</span>
+                </div>
+              )}
+              {config.telefoneParticipacao && (
+                <div className="flex items-center gap-1">
+                  <MessageCircle size={12} />
+                  <span>{config.telefoneParticipacao}</span>
+                </div>
+              )}
+              {config.telefoneComercial && (
+                <div className="flex items-center gap-1">
+                  <Phone size={12} />
+                  <span>{config.telefoneComercial}</span>
                 </div>
               )}
             </div>
