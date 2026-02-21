@@ -99,7 +99,7 @@ export default function PromocoesKiosk() {
           nome: current.programa.nome,
           horarioInicio: (current.programa as any).horarioInicio,
           horarioFim: (current.programa as any).horarioFim,
-          progress: Math.min(100, Math.max(0, current.progress * 100)),
+          progress: Math.min(100, Math.max(0, current.progress)),
           apresentadorId: (current.programa as any).apresentadorId || "",
         });
       } else {
@@ -198,14 +198,14 @@ export default function PromocoesKiosk() {
                 <Globe size={14} className="text-white" />
               )}
               {config.telefoneParticipacao && (
-                <div className="flex items-center gap-1 font-bold text-[11px]" style={{ color: "#d70d0e" }}>
-                  <MessageCircle size={13} />
+                <div className="flex items-center gap-1 font-bold text-[16px]" style={{ color: "#d70d0e" }}>
+                  <MessageCircle size={15} />
                   <span>{config.telefoneParticipacao}</span>
                 </div>
               )}
               {config.telefoneComercial && (
-                <div className="flex items-center gap-1 font-bold text-[11px]" style={{ color: "#d70d0e" }}>
-                  <Phone size={13} />
+                <div className="flex items-center gap-1 font-bold text-[16px]" style={{ color: "#d70d0e" }}>
+                  <Phone size={15} />
                   <span>{config.telefoneComercial}</span>
                 </div>
               )}
@@ -234,15 +234,29 @@ export default function PromocoesKiosk() {
           )}
 
           {banners.length > 1 && (
-            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
-              {banners.map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setCurrentBannerIndex(i)}
-                  className={`w-1.5 h-1.5 rounded-full transition-all ${i === currentBannerIndex ? "bg-red-600 scale-125" : "bg-white/40"}`}
-                />
-              ))}
-            </div>
+            <>
+              <button
+                onClick={() => setCurrentBannerIndex(prev => (prev - 1 + banners.length) % banners.length)}
+                className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full w-8 h-8 flex items-center justify-center z-10 transition-opacity"
+              >
+                <ChevronLeft size={20} />
+              </button>
+              <button
+                onClick={() => setCurrentBannerIndex(prev => (prev + 1) % banners.length)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full w-8 h-8 flex items-center justify-center z-10 transition-opacity"
+              >
+                <ChevronRight size={20} />
+              </button>
+              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+                {banners.map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setCurrentBannerIndex(i)}
+                    className={`w-1.5 h-1.5 rounded-full transition-all ${i === currentBannerIndex ? "bg-red-600 scale-125" : "bg-white/40"}`}
+                  />
+                ))}
+              </div>
+            </>
           )}
         </div>
 
