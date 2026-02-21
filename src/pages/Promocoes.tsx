@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getEmpresaConfig, type EmpresaConfig } from "@/components/ConfiguracoesPage";
 import { findCurrentProgram } from "@/components/OnAirWidget";
-import { ChevronLeft, ChevronRight, Clock } from "lucide-react";
+import { ChevronLeft, ChevronRight, Clock, X } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 interface Promocao {
   id: string;
@@ -26,12 +27,11 @@ interface ProgramaGrade {
 }
 
 const PROGRAMAS_VISIVEIS = [
-  "SERTANEJO BOM DEMAIS 1ª EDIÇÃO",
+  "SERTANEJO BOM DEMAIS",
   "PRIMEIRA HORA",
   "BOM DIA POSITIVA",
   "FLASHBACK POSITIVA",
   "WHATSAPP POSITIVA",
-  "SERTANEJO BOM DEMAIS 2ª EDIÇÃO",
   "VALE NIGHT",
   "PALCO POSITIVA",
 ];
@@ -42,6 +42,7 @@ export default function PromocoesKiosk() {
   const [programas, setProgramas] = useState<ProgramaGrade[]>([]);
   const [onAirProgram, setOnAirProgram] = useState<{ nome: string; horarioInicio: string; horarioFim: string } | null>(null);
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
+  const [selectedPromo, setSelectedPromo] = useState<Promocao | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const promoScrollRef = useRef<HTMLDivElement>(null);
 
@@ -103,10 +104,10 @@ export default function PromocoesKiosk() {
   }, [programas]);
 
   const filteredPrograms = programas
-    .filter(p => PROGRAMAS_VISIVEIS.some(name => p.nome.toUpperCase().includes(name) || name.includes(p.nome.toUpperCase())))
+    .filter(p => PROGRAMAS_VISIVEIS.some(name => p.nome.toUpperCase().includes(name)))
     .sort((a, b) => {
-      const idxA = PROGRAMAS_VISIVEIS.findIndex(name => a.nome.toUpperCase().includes(name) || name.includes(a.nome.toUpperCase()));
-      const idxB = PROGRAMAS_VISIVEIS.findIndex(name => b.nome.toUpperCase().includes(name) || name.includes(b.nome.toUpperCase()));
+      const idxA = PROGRAMAS_VISIVEIS.findIndex(name => a.nome.toUpperCase().includes(name));
+      const idxB = PROGRAMAS_VISIVEIS.findIndex(name => b.nome.toUpperCase().includes(name));
       return idxA - idxB;
     });
 
@@ -116,13 +117,12 @@ export default function PromocoesKiosk() {
   const sideScroll = (ref: React.RefObject<HTMLDivElement>, direction: "left" | "right") => {
     const el = ref.current;
     if (el) {
-      const scrollAmount = direction === "left" ? -300 : 300;
-      el.scrollBy({ left: scrollAmount, behavior: "smooth" });
+      el.scrollBy({ left: direction === "left" ? -300 : 300, behavior: "smooth" });
     }
   };
 
   return (
-    <div className="bg-zinc-900 text-white min-h-screen p-8 flex flex-col items-center">
+    <div className="bg-black text-white min-h-screen p-8 flex flex-col items-center">
       <style>{`.no-scrollbar::-webkit-scrollbar{display:none}.no-scrollbar{-ms-overflow-style:none;scrollbar-width:none}`}</style>
 
       <div className="w-full max-w-[1000px] flex flex-col gap-6">
@@ -148,11 +148,7 @@ export default function PromocoesKiosk() {
           </div>
 
           {config.logo && (
-            <img
-              src={config.logo}
-              alt={config.nome}
-              className="h-[90px] w-auto object-contain"
-            />
+            <img src={config.logo} alt={config.nome} className="h-[90px] w-auto object-contain" />
           )}
         </div>
 
@@ -163,22 +159,13 @@ export default function PromocoesKiosk() {
               <div
                 key={banner.id}
                 className="w-full transition-opacity duration-1000"
-                style={{
-                  opacity: index === currentBannerIndex ? 1 : 0,
-                  display: index === currentBannerIndex ? "block" : "none",
-                }}
+                style={{ opacity: index === currentBannerIndex ? 1 : 0, display: index === currentBannerIndex ? "block" : "none" }}
               >
-                <img
-                  src={banner.imagem_url}
-                  alt={banner.texto}
-                  className="w-full h-auto object-contain"
-                />
+                <img src={banner.imagem_url} alt={banner.texto} className="w-full h-auto object-contain" />
               </div>
             ))
           ) : (
-            <div className="h-[200px] flex items-center justify-center text-white/30">
-              Nenhum banner ativo
-            </div>
+            <div className="h-[200px] flex items-center justify-center text-white/30">Nenhum banner ativo</div>
           )}
 
           {banners.length > 1 && (
@@ -187,9 +174,7 @@ export default function PromocoesKiosk() {
                 <button
                   key={i}
                   onClick={() => setCurrentBannerIndex(i)}
-                  className={`w-1.5 h-1.5 rounded-full transition-all ${
-                    i === currentBannerIndex ? "bg-red-600 scale-125" : "bg-white/40"
-                  }`}
+                  className={`w-1.5 h-1.5 rounded-full transition-all ${i === currentBannerIndex ? "bg-red-600 scale-125" : "bg-white/40"}`}
                 />
               ))}
             </div>
@@ -200,28 +185,18 @@ export default function PromocoesKiosk() {
         {filteredPrograms.length > 0 && (
           <div className="relative group">
             <h2 className="text-lg font-bold mb-4">Programação</h2>
-
-            <div
-              onMouseEnter={() => sideScroll(scrollRef, "left")}
-              className="absolute left-[-45px] top-1/2 -translate-y-1/2 p-2 cursor-pointer opacity-30 hover:opacity-100 transition-opacity z-10"
-            >
+            <div onMouseEnter={() => sideScroll(scrollRef, "left")} className="absolute left-[-45px] top-1/2 -translate-y-1/2 p-2 cursor-pointer opacity-30 hover:opacity-100 transition-opacity z-10">
               <ChevronLeft size={36} />
             </div>
-            <div
-              onMouseEnter={() => sideScroll(scrollRef, "right")}
-              className="absolute right-[-45px] top-1/2 -translate-y-1/2 p-2 cursor-pointer opacity-30 hover:opacity-100 transition-opacity z-10"
-            >
+            <div onMouseEnter={() => sideScroll(scrollRef, "right")} className="absolute right-[-45px] top-1/2 -translate-y-1/2 p-2 cursor-pointer opacity-30 hover:opacity-100 transition-opacity z-10">
               <ChevronRight size={36} />
             </div>
 
-            <div
-              ref={scrollRef}
-              className="flex gap-4 overflow-x-auto scroll-smooth no-scrollbar"
-            >
+            <div ref={scrollRef} className="flex gap-4 overflow-x-auto scroll-smooth no-scrollbar">
               {filteredPrograms.map(prog => (
                 <div
                   key={prog.id}
-                  className="min-w-[230px] relative rounded-lg overflow-hidden flex-shrink-0"
+                  className="min-w-[230px] relative rounded-lg overflow-hidden flex-shrink-0 cursor-pointer hover:opacity-70 transition-opacity"
                 >
                   {prog.capa ? (
                     <img src={prog.capa} alt={prog.nome} className="w-full h-auto object-contain" />
@@ -230,8 +205,6 @@ export default function PromocoesKiosk() {
                       <Clock size={24} className="text-zinc-600" />
                     </div>
                   )}
-
-                  {/* Horário no fundo */}
                   <div className="absolute bottom-1 left-0 right-0 text-center">
                     <span className="text-[10px] font-bold text-white drop-shadow-lg bg-black/50 px-1.5 py-0.5 rounded">
                       {prog.horarioInicio.slice(0, 5)} - {prog.horarioFim.slice(0, 5)}
@@ -243,45 +216,54 @@ export default function PromocoesKiosk() {
           </div>
         )}
 
-        {/* Promoções - botões lado a lado com scroll */}
+        {/* Promoções */}
         {botoes.length > 0 && (
           <div className="relative group">
             <h2 className="text-lg font-bold mb-4">Promoções</h2>
-
-            <div
-              onMouseEnter={() => sideScroll(promoScrollRef, "left")}
-              className="absolute left-[-45px] top-1/2 -translate-y-1/2 p-2 cursor-pointer opacity-30 hover:opacity-100 transition-opacity z-10"
-            >
+            <div onMouseEnter={() => sideScroll(promoScrollRef, "left")} className="absolute left-[-45px] top-1/2 -translate-y-1/2 p-2 cursor-pointer opacity-30 hover:opacity-100 transition-opacity z-10">
               <ChevronLeft size={36} />
             </div>
-            <div
-              onMouseEnter={() => sideScroll(promoScrollRef, "right")}
-              className="absolute right-[-45px] top-1/2 -translate-y-1/2 p-2 cursor-pointer opacity-30 hover:opacity-100 transition-opacity z-10"
-            >
+            <div onMouseEnter={() => sideScroll(promoScrollRef, "right")} className="absolute right-[-45px] top-1/2 -translate-y-1/2 p-2 cursor-pointer opacity-30 hover:opacity-100 transition-opacity z-10">
               <ChevronRight size={36} />
             </div>
 
-            <div
-              ref={promoScrollRef}
-              className="flex gap-4 overflow-x-auto scroll-smooth no-scrollbar"
-            >
+            <div ref={promoScrollRef} className="flex gap-4 overflow-x-auto scroll-smooth no-scrollbar">
               {botoes.map(promo => (
                 <div
                   key={promo.id}
                   className="flex-shrink-0 cursor-pointer hover:opacity-70 transition-opacity"
+                  onClick={() => setSelectedPromo(promo)}
                 >
-                  <img
-                    src={promo.botao_url}
-                    alt={promo.texto}
-                    className="h-auto w-auto object-contain rounded-lg"
-                  />
+                  <img src={promo.botao_url} alt={promo.texto} className="h-auto w-auto object-contain rounded-lg" />
                 </div>
               ))}
             </div>
           </div>
         )}
-
       </div>
+
+      {/* Modal da Promoção */}
+      <Dialog open={!!selectedPromo} onOpenChange={(open) => !open && setSelectedPromo(null)}>
+        <DialogContent className="bg-zinc-950 border-zinc-800 text-white max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold">{selectedPromo?.texto?.split("\n")[0] || "Promoção"}</DialogTitle>
+            {selectedPromo?.oferecimento && selectedPromo.oferecimento !== "-" && (
+              <DialogDescription className="text-white/50 text-xs">
+                Oferecimento: {selectedPromo.oferecimento}
+              </DialogDescription>
+            )}
+          </DialogHeader>
+          {selectedPromo?.imagem_url && (
+            <img src={selectedPromo.imagem_url} alt="Banner" className="w-full rounded-lg object-contain max-h-[300px]" />
+          )}
+          <div className="space-y-3 text-sm text-white/70 whitespace-pre-line max-h-[200px] overflow-y-auto">
+            {selectedPromo?.texto}
+          </div>
+          <div className="text-xs text-white/40">
+            Período: {selectedPromo?.data_inicio} a {selectedPromo?.data_fim}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
