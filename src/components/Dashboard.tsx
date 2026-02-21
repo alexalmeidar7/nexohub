@@ -117,40 +117,42 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           );
         })}
 
-        {/* Comercial expandable menu */}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              onClick={() => setComercialOpen(!comercialOpen)}
-              className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
-                isComercialPage ? "bg-primary" : "bg-transparent hover:bg-white/10"
-              }`}
-            >
-              <ShoppingBag size={18} className={isComercialPage ? "text-[#333]" : "text-muted-foreground"} />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent side="right"><p>Comercial</p></TooltipContent>
-        </Tooltip>
+        {/* Comercial expandable menu with glassmorphism container */}
+        <div className={`flex flex-col items-center gap-1 rounded-xl py-2 px-1 transition-all ${comercialOpen || isComercialPage ? "bg-white/[0.06] backdrop-blur-md border border-white/[0.08] shadow-lg" : ""}`}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={() => setComercialOpen(!comercialOpen)}
+                className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
+                  isComercialPage ? "bg-primary" : "bg-transparent hover:bg-white/10"
+                }`}
+              >
+                <ShoppingBag size={18} className={isComercialPage ? "text-[#333]" : "text-muted-foreground"} />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right"><p>Comercial</p></TooltipContent>
+          </Tooltip>
 
-        {comercialOpen && comercialSubItems.map((item) => {
-          const isActive = currentPage === item.page;
-          const Icon = item.icon;
-          return (
-            <Tooltip key={item.page}>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={() => setCurrentPage(item.page)}
-                  className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
-                    isActive ? "bg-primary" : "bg-transparent hover:bg-white/10"
-                  }`}
-                >
-                  <Icon size={14} className={isActive ? "text-[#333]" : "text-muted-foreground"} />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="right"><p>{item.label}</p></TooltipContent>
-            </Tooltip>
-          );
-        })}
+          {comercialOpen && comercialSubItems.map((item) => {
+            const isActive = currentPage === item.page;
+            const Icon = item.icon;
+            return (
+              <Tooltip key={item.page}>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={() => setCurrentPage(item.page)}
+                    className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
+                      isActive ? "bg-primary" : "bg-transparent hover:bg-white/10"
+                    }`}
+                  >
+                    <Icon size={14} className={isActive ? "text-[#333]" : "text-muted-foreground"} />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="right"><p>{item.label}</p></TooltipContent>
+              </Tooltip>
+            );
+          })}
+        </div>
 
         <div className="flex-1" />
 
@@ -222,6 +224,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               <p className="text-gray-500">
                 Bem-vindo ao MasterView. Selecione uma opção no menu lateral.
               </p>
+              <ComercialWidgets />
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="space-y-6">
                   <WeatherWidget />
@@ -372,6 +375,67 @@ function useGlobalMusicXmlUpload() {
     const interval = setInterval(uploadMusicXml, 5000);
     return () => clearInterval(interval);
   }, [user]);
+}
+
+// Commercial summary widgets for dashboard
+function ComercialWidgets() {
+  const { user } = useAuth();
+  const [totalLogos, setTotalLogos] = useState(0);
+  const [nextTestemunhal, setNextTestemunhal] = useState<{ texto: string; data_fim: string } | null>(null);
+  const [nextPromocao, setNextPromocao] = useState<{ texto: string; data_fim: string } | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user) return;
+    const fetch = async () => {
+      const [{ count }, { data: tData }, { data: pData }] = await Promise.all([
+        supabase.from("logos_patrocinadores").select("*", { count: "exact", head: true }).eq("user_id", user.id).eq("ativo", true),
+        supabase.from("testemunhais").select("texto, data_fim").eq("user_id", user.id).order("data_fim", { ascending: true }).limit(1),
+        supabase.from("promocoes").select("texto, data_fim").eq("user_id", user.id).order("data_fim", { ascending: true }).limit(1),
+      ]);
+      setTotalLogos(count || 0);
+      setNextTestemunhal(tData?.[0] || null);
+      setNextPromocao(pData?.[0] || null);
+      setLoading(false);
+    };
+    fetch();
+  }, [user]);
+
+  if (loading) return null;
+
+  const diasRestantes = (d: string) => Math.ceil((new Date(d + "T23:59:59").getTime() - Date.now()) / 86400000);
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="bg-white/80 rounded-2xl border border-gray-200 p-4">
+        <p className="text-xs text-gray-500 mb-1">🏷️ Patrocinadores Ativos</p>
+        <p className="text-3xl font-bold text-gray-800">{totalLogos}</p>
+        <p className="text-[10px] text-gray-400 mt-1">logos vinculadas a programas</p>
+      </div>
+      <div className="bg-white/80 rounded-2xl border border-gray-200 p-4">
+        <p className="text-xs text-gray-500 mb-1">💬 Próximo Testemunhal</p>
+        {nextTestemunhal ? (
+          <>
+            <p className="text-sm font-semibold text-gray-800 line-clamp-1">{nextTestemunhal.texto}</p>
+            <p className={`text-xs mt-1 font-bold ${diasRestantes(nextTestemunhal.data_fim) <= 3 ? "text-red-500" : "text-green-600"}`}>
+              {diasRestantes(nextTestemunhal.data_fim)}d para expirar
+            </p>
+          </>
+        ) : <p className="text-sm text-gray-400">Nenhum ativo</p>}
+      </div>
+      <div className="bg-white/80 rounded-2xl border border-gray-200 p-4">
+        <p className="text-xs text-gray-500 mb-1">🎁 Próxima Promoção</p>
+        {nextPromocao ? (
+          <>
+            <p className="text-sm font-semibold text-gray-800 line-clamp-1">{nextPromocao.texto}</p>
+            <p className={`text-xs mt-1 font-bold ${diasRestantes(nextPromocao.data_fim) <= 3 ? "text-red-500" : "text-green-600"}`}>
+              {diasRestantes(nextPromocao.data_fim)}d para encerrar
+            </p>
+          </>
+        ) : <p className="text-sm text-gray-400">Nenhuma ativa</p>}
+      </div>
+    </div>
+  );
 }
 
 // Dashboard mini-agenda widget

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Trash2, Upload, ImageIcon } from "lucide-react";
+import { Loader2, Trash2, Upload, ImageIcon, Pencil, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface Testemunhal {
@@ -31,6 +31,7 @@ export default function TestemunhaisPage() {
   const [programas, setProgramas] = useState<Programa[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   const [texto, setTexto] = useState("");
   const [programaId, setProgramaId] = useState("");
@@ -45,7 +46,6 @@ export default function TestemunhaisPage() {
 
   const loadData = async () => {
     if (!user) return;
-    // cleanup expired on load
     await supabase.rpc("cleanup_comercial");
 
     const [{ data: tData }, { data: pData }] = await Promise.all([
@@ -82,26 +82,54 @@ export default function TestemunhaisPage() {
     return data.publicUrl;
   };
 
+  const startEdit = (item: Testemunhal) => {
+    setEditingId(item.id);
+    setTexto(item.texto);
+    setProgramaId(item.programa_id || "");
+    setDataInicio(item.data_inicio);
+    setDataFim(item.data_fim);
+    setImagePreview(item.imagem_url || "");
+    setImageFile(null);
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    resetForm();
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !texto || !dataInicio || !dataFim) return;
     setSaving(true);
 
     try {
-      let imagem_url = "";
+      let imagem_url = editingId ? imagePreview : "";
       if (imageFile) imagem_url = await uploadImage(imageFile);
 
-      const { error } = await supabase.from("testemunhais").insert({
-        user_id: user.id,
-        programa_id: programaId || null,
-        imagem_url,
-        texto,
-        data_inicio: dataInicio,
-        data_fim: dataFim,
-      });
+      if (editingId) {
+        const { error } = await supabase.from("testemunhais").update({
+          programa_id: programaId || null,
+          imagem_url,
+          texto,
+          data_inicio: dataInicio,
+          data_fim: dataFim,
+        }).eq("id", editingId);
+        if (error) throw error;
+        toast({ title: "Testemunhal atualizado!" });
+      } else {
+        const { error } = await supabase.from("testemunhais").insert({
+          user_id: user.id,
+          programa_id: programaId || null,
+          imagem_url,
+          texto,
+          data_inicio: dataInicio,
+          data_fim: dataFim,
+        });
+        if (error) throw error;
+        toast({ title: "Testemunhal salvo com sucesso!" });
+      }
 
-      if (error) throw error;
-      toast({ title: "Testemunhal salvo com sucesso!" });
+      setEditingId(null);
       resetForm();
       await loadData();
     } catch (err: any) {
@@ -126,8 +154,7 @@ export default function TestemunhaisPage() {
   };
 
   const diasRestantes = (dataFim: string) => {
-    const diff = Math.ceil((new Date(dataFim + "T23:59:59").getTime() - Date.now()) / 86400000);
-    return diff;
+    return Math.ceil((new Date(dataFim + "T23:59:59").getTime() - Date.now()) / 86400000);
   };
 
   if (loading) {
@@ -143,22 +170,27 @@ export default function TestemunhaisPage() {
     <div className="space-y-8">
       <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-4">
-          <div>
-            <label className="text-sm font-medium text-foreground mb-1 block">Foto do Cliente</label>
-            <div className="flex items-center gap-3">
-              {imagePreview ? (
-                <img src={imagePreview} alt="preview" className="w-16 h-16 rounded-lg object-cover border" />
-              ) : (
-                <div className="w-16 h-16 rounded-lg bg-muted flex items-center justify-center border">
-                  <ImageIcon size={20} className="text-muted-foreground" />
-                </div>
-              )}
-              <label className="cursor-pointer inline-flex items-center gap-2 px-3 py-2 bg-muted hover:bg-muted/80 rounded-lg text-sm transition-colors">
-                <Upload size={14} />
-                Enviar imagem
-                <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
-              </label>
-            </div>
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-medium text-foreground">Foto do Cliente</label>
+            {editingId && (
+              <Button type="button" variant="ghost" size="sm" onClick={cancelEdit} className="text-xs">
+                <X size={12} className="mr-1" /> Cancelar edição
+              </Button>
+            )}
+          </div>
+          <div className="flex items-center gap-3">
+            {imagePreview ? (
+              <img src={imagePreview} alt="preview" className="w-16 h-16 rounded-lg object-cover border" />
+            ) : (
+              <div className="w-16 h-16 rounded-lg bg-muted flex items-center justify-center border">
+                <ImageIcon size={20} className="text-muted-foreground" />
+              </div>
+            )}
+            <label className="cursor-pointer inline-flex items-center gap-2 px-3 py-2 bg-muted hover:bg-muted/80 rounded-lg text-sm transition-colors">
+              <Upload size={14} />
+              Enviar imagem
+              <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
+            </label>
           </div>
 
           <div>
@@ -192,7 +224,7 @@ export default function TestemunhaisPage() {
           </div>
 
           <Button type="submit" disabled={saving} className="w-full">
-            {saving ? <><Loader2 className="animate-spin mr-2" size={14} /> Salvando...</> : "Cadastrar Testemunhal"}
+            {saving ? <><Loader2 className="animate-spin mr-2" size={14} /> Salvando...</> : editingId ? "Atualizar Testemunhal" : "Cadastrar Testemunhal"}
           </Button>
         </div>
       </form>
@@ -206,7 +238,7 @@ export default function TestemunhaisPage() {
             {items.map((item) => {
               const dias = diasRestantes(item.data_fim);
               return (
-                <div key={item.id} className="bg-card border border-border rounded-xl p-4 space-y-3">
+                <div key={item.id} className={`bg-card border rounded-xl p-4 space-y-3 ${editingId === item.id ? "border-primary ring-1 ring-primary" : "border-border"}`}>
                   <div className="flex items-start gap-3">
                     {item.imagem_url ? (
                       <img src={item.imagem_url} alt="" className="w-14 h-14 rounded-lg object-cover flex-shrink-0" />
@@ -225,9 +257,14 @@ export default function TestemunhaisPage() {
                       {dias} dia{dias !== 1 ? "s" : ""} restante{dias !== 1 ? "s" : ""}
                     </span>
                   </div>
-                  <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-700 w-full" onClick={() => handleDelete(item.id)}>
-                    <Trash2 size={14} className="mr-1" /> Remover
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button variant="ghost" size="sm" className="flex-1 text-primary hover:text-primary/80" onClick={() => startEdit(item)}>
+                      <Pencil size={14} className="mr-1" /> Editar
+                    </Button>
+                    <Button variant="ghost" size="sm" className="flex-1 text-red-500 hover:text-red-700" onClick={() => handleDelete(item.id)}>
+                      <Trash2 size={14} className="mr-1" /> Remover
+                    </Button>
+                  </div>
                 </div>
               );
             })}

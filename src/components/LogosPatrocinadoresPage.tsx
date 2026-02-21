@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Trash2, Upload, ImageIcon, Plus } from "lucide-react";
+import { Loader2, Trash2, Plus, Pencil, Check, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "@/components/ui/carousel";
 
@@ -34,6 +34,10 @@ export default function LogosPatrocinadoresPage() {
   const [programaId, setProgramaId] = useState("");
   const [dataFinal, setDataFinal] = useState("");
   const [pendingFiles, setPendingFiles] = useState<{ file: File; preview: string }[]>([]);
+
+  // Inline date editing
+  const [editingLogoId, setEditingLogoId] = useState<string | null>(null);
+  const [editDate, setEditDate] = useState("");
 
   useEffect(() => {
     if (user) loadData();
@@ -111,6 +115,24 @@ export default function LogosPatrocinadoresPage() {
 
   const handleDelete = async (id: string) => {
     await supabase.from("logos_patrocinadores").delete().eq("id", id);
+    await loadData();
+  };
+
+  const startEditDate = (logo: Logo) => {
+    setEditingLogoId(logo.id);
+    setEditDate(logo.data_final);
+  };
+
+  const saveEditDate = async () => {
+    if (!editingLogoId || !editDate) return;
+    const { error } = await supabase.from("logos_patrocinadores").update({ data_final: editDate, ativo: true }).eq("id", editingLogoId);
+    if (error) {
+      toast({ title: "Erro ao atualizar", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Validade atualizada!" });
+    }
+    setEditingLogoId(null);
+    setEditDate("");
     await loadData();
   };
 
@@ -199,6 +221,7 @@ export default function LogosPatrocinadoresPage() {
                     <CarouselContent>
                       {gLogos.map((logo) => {
                         const diasRestantes = Math.ceil((new Date(logo.data_final + "T23:59:59").getTime() - Date.now()) / 86400000);
+                        const isEditing = editingLogoId === logo.id;
                         return (
                           <CarouselItem key={logo.id} className="basis-1/3 md:basis-1/4 lg:basis-1/5">
                             <div className="space-y-2 text-center">
@@ -218,6 +241,17 @@ export default function LogosPatrocinadoresPage() {
                               <Badge variant={diasRestantes <= 7 ? "destructive" : "secondary"} className="text-[10px]">
                                 {diasRestantes > 0 ? `${diasRestantes}d restantes` : "Expirando"}
                               </Badge>
+                              {isEditing ? (
+                                <div className="flex items-center gap-1">
+                                  <Input type="date" value={editDate} onChange={(e) => setEditDate(e.target.value)} className="h-7 text-[10px] px-1" />
+                                  <button onClick={saveEditDate} className="text-green-500 hover:text-green-400"><Check size={14} /></button>
+                                  <button onClick={() => setEditingLogoId(null)} className="text-red-500 hover:text-red-400"><X size={14} /></button>
+                                </div>
+                              ) : (
+                                <button onClick={() => startEditDate(logo)} className="text-[10px] text-muted-foreground hover:text-primary flex items-center gap-1 mx-auto">
+                                  <Pencil size={10} /> Editar validade
+                                </button>
+                              )}
                             </div>
                           </CarouselItem>
                         );
