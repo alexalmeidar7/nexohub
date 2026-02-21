@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getEmpresaConfig, type EmpresaConfig } from "@/components/ConfiguracoesPage";
 import { findCurrentProgram } from "@/components/OnAirWidget";
 import { getMusicData } from "@/components/MusicaNoAr";
-import { Radio, Music, ChevronLeft, ChevronRight } from "lucide-react";
+import { Radio, Music, ChevronLeft, ChevronRight, ExternalLink } from "lucide-react";
 
 interface Promocao {
   id: string;
@@ -83,7 +83,6 @@ export default function PromocoesKiosk() {
   // On-air program & music - refresh every 2s
   useEffect(() => {
     const update = () => {
-      // Current program
       const current = findCurrentProgram(programas as any);
       if (current) {
         setOnAirProgram({
@@ -95,7 +94,6 @@ export default function PromocoesKiosk() {
         setOnAirProgram(null);
       }
 
-      // Music
       const m = getMusicData();
       if (m && !m.finished) {
         setMusicInfo({ titulo: m.music.titulo, artista: m.music.artista });
@@ -123,10 +121,11 @@ export default function PromocoesKiosk() {
 
   return (
     <div className="min-h-screen bg-black text-white relative overflow-hidden flex flex-col">
-      {/* Header */}
-      <header className="relative z-50 flex items-center justify-between px-6 py-3 bg-black/80 backdrop-blur-sm border-b border-white/10">
+
+      {/* HEADER DINÂMICO - recuo 270px direita / 50px topo */}
+      <header className="relative z-50 flex items-center justify-between pr-[270px] pt-[50px] px-6 py-3">
         <div className="flex items-center gap-6 flex-1 min-w-0">
-          {/* On Air info */}
+          {/* No Ar info */}
           <div className="flex items-center gap-3 min-w-0">
             <div className="flex items-center gap-2 shrink-0">
               <Radio size={16} className="text-[#d4f959] animate-pulse" />
@@ -134,11 +133,11 @@ export default function PromocoesKiosk() {
             </div>
             <div className="min-w-0">
               <p className="text-white font-semibold text-sm truncate">
-                {onAirProgram?.nome || "Nenhum programa"}
+                {onAirProgram?.nome || "Programação Musical"}
               </p>
               {onAirProgram && (
                 <p className="text-white/50 text-[10px]">
-                  {onAirProgram.horarioInicio.slice(0, 5)} - {onAirProgram.horarioFim.slice(0, 5)}
+                  {onAirProgram.horarioInicio.slice(0, 5)} às {onAirProgram.horarioFim.slice(0, 5)}
                 </p>
               )}
             </div>
@@ -147,24 +146,28 @@ export default function PromocoesKiosk() {
           {/* Separator */}
           <div className="w-px h-8 bg-white/20 shrink-0" />
 
-          {/* Music info */}
+          {/* Tocando Agora */}
           <div className="flex items-center gap-2 min-w-0">
             <Music size={14} className="text-violet-400 shrink-0" />
-            <span className="text-white/60 text-xs uppercase tracking-wider shrink-0">Tocando:</span>
+            <span className="text-white/60 text-xs uppercase tracking-wider shrink-0">Tocando Agora:</span>
             <p className="text-white/80 text-xs truncate">
-              {musicInfo ? `${musicInfo.artista} - ${musicInfo.titulo}` : "—"}
+              {musicInfo ? `${musicInfo.artista} - ${musicInfo.titulo}` : "Sintonizando..."}
             </p>
           </div>
         </div>
 
-        {/* Logo */}
+        {/* LOGO - recuo 270px conforme solicitado */}
         {config.logo && (
-          <img src={config.logo} alt={config.nome} className="h-10 w-auto object-contain shrink-0 ml-4" />
+          <img
+            src={config.logo}
+            alt={config.nome}
+            className="h-12 w-auto object-contain shrink-0 ml-4 absolute right-6 top-4"
+          />
         )}
       </header>
 
-      {/* Banner area */}
-      <div className="relative flex-1 flex items-center justify-center overflow-hidden">
+      {/* CARROSSEL DE BANNERS - ocupa toda a página */}
+      <div className="relative flex-1 flex items-start justify-center overflow-hidden">
         {banners.length > 0 ? (
           banners.map((banner, index) => (
             <div
@@ -175,14 +178,14 @@ export default function PromocoesKiosk() {
               <img
                 src={banner.imagem_url}
                 alt={banner.texto}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover object-top"
               />
               {/* Gradient overlay bottom */}
               <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-black/90 to-transparent" />
             </div>
           ))
         ) : (
-          <div className="flex items-center justify-center text-white/30 text-lg">
+          <div className="flex items-center justify-center h-full text-white/30 text-lg">
             Nenhum banner de promoção ativo
           </div>
         )}
@@ -203,9 +206,10 @@ export default function PromocoesKiosk() {
         )}
       </div>
 
-      {/* Bottom section */}
+      {/* OVERLAY INFERIOR - Capas e Botões */}
       <div className="relative z-30 bg-black/90 backdrop-blur-sm border-t border-white/10 px-6 py-4 space-y-4">
-        {/* Programs carousel */}
+
+        {/* Capas dos Programas - espaçamento 7px */}
         {todayPrograms.length > 0 && (
           <div>
             <div className="flex items-center justify-between mb-2">
@@ -227,7 +231,7 @@ export default function PromocoesKiosk() {
                 </button>
               </div>
             </div>
-            <div className="flex gap-2 overflow-hidden scrollbar-hide">
+            <div className="flex gap-[7px] overflow-hidden" style={{ scrollbarWidth: "none" }}>
               {visiblePrograms.map(prog => {
                 const isOnAir = onAirProgram?.nome === prog.nome;
                 return (
@@ -238,9 +242,9 @@ export default function PromocoesKiosk() {
                     }`}
                   >
                     {prog.capa ? (
-                      <img src={prog.capa} alt={prog.nome} className="w-full h-20 object-cover" />
+                      <img src={prog.capa} alt={prog.nome} className="w-full h-20 object-cover" style={{ height: "80px" }} />
                     ) : (
-                      <div className="w-full h-20 bg-white/5 flex items-center justify-center">
+                      <div className="w-full flex items-center justify-center bg-white/5" style={{ height: "80px" }}>
                         <Radio size={16} className="text-white/20" />
                       </div>
                     )}
@@ -260,13 +264,13 @@ export default function PromocoesKiosk() {
           </div>
         )}
 
-        {/* Promo buttons */}
+        {/* Botões das Promoções */}
         {botoes.length > 0 && (
           <div className="flex gap-3 flex-wrap">
             {botoes.map(botao => (
               <button
                 key={botao.id}
-                className="rounded-xl overflow-hidden border-2 border-white/10 hover:border-[#d4f959] transition-all hover:scale-105"
+                className="bg-[#d70d0e] hover:bg-red-700 text-white font-black px-8 py-3 rounded-full text-lg uppercase transition-all shadow-xl hover:scale-105"
               >
                 <img
                   src={botao.botao_url}
