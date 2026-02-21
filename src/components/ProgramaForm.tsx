@@ -433,7 +433,7 @@ export default function ProgramaForm() {
                           borderColor: isOnAir ? "#d4f959" : undefined,
                         }}>
                           {prog ? (
-                            <div className="flex items-center justify-center gap-0.5 group/cell" style={{ borderColor: 'transparent' }}>
+                            <div className="flex items-center justify-between gap-0.5 group/cell">
                               <span className="text-[10px] truncate">{prog.nome}</span>
                               <Popover>
                                 <PopoverTrigger asChild>
@@ -441,24 +441,26 @@ export default function ProgramaForm() {
                                     onClick={(e) => e.stopPropagation()}
                                     className="opacity-0 group-hover/cell:opacity-100 transition-opacity shrink-0"
                                   >
-                                    <Info size={10} className={isOnAir ? "text-gray-600" : "text-muted-foreground"} />
+                                    <Info size={10} className="text-white" />
                                   </button>
                                 </PopoverTrigger>
-                                <PopoverContent className="w-72 p-0 overflow-hidden" side="right" align="start">
-                                  {prog.capa && (
-                                    <img src={prog.capa} alt={prog.nome} className="w-full h-32 object-cover" />
-                                  )}
-                                  <div className="p-3 space-y-1.5">
-                                    <p className="font-bold text-sm text-foreground">{prog.nome}</p>
-                                    <p className="text-xs text-muted-foreground flex items-center gap-1">
-                                      <Clock size={10} /> {prog.horarioInicio.slice(0, 5)} — {prog.horarioFim.slice(0, 5)}
-                                    </p>
-                                    <p className="text-xs text-muted-foreground flex items-center gap-1">
-                                      <Calendar size={10} /> {prog.diasSemana.join(", ")}
-                                    </p>
-                                    {prog.descricao && (
-                                      <p className="text-xs text-muted-foreground italic border-t border-border pt-1.5 mt-1.5">{prog.descricao}</p>
+                                <PopoverContent className="w-96 p-0 overflow-hidden" side="right" align="start">
+                                  <div className="flex">
+                                    {prog.capa && (
+                                      <img src={prog.capa} alt={prog.nome} className="w-36 h-auto object-cover shrink-0" />
                                     )}
+                                    <div className="p-3 space-y-1.5 flex-1 min-w-0">
+                                      <p className="font-bold text-sm text-foreground">{prog.nome}</p>
+                                      <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                        <Clock size={10} /> {prog.horarioInicio.slice(0, 5)} — {prog.horarioFim.slice(0, 5)}
+                                      </p>
+                                      <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                        <Calendar size={10} /> {prog.diasSemana.join(", ")}
+                                      </p>
+                                      {prog.descricao && (
+                                        <p className="text-xs text-muted-foreground italic border-t border-border pt-1.5 mt-1.5">{prog.descricao}</p>
+                                      )}
+                                    </div>
                                   </div>
                                 </PopoverContent>
                               </Popover>
