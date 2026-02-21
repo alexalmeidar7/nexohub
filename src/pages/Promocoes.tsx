@@ -2,7 +2,8 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getEmpresaConfig, type EmpresaConfig } from "@/components/ConfiguracoesPage";
 import { findCurrentProgram } from "@/components/OnAirWidget";
-import { ChevronLeft, ChevronRight, Clock, Radio, Globe, Instagram, Youtube, Phone, MessageCircle } from "lucide-react";
+import { ChevronLeft, ChevronRight, Clock, Radio, Globe, Instagram, Youtube, Phone, MessageCircle, Play, Pause } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { getApresentadores } from "@/components/ApresentadorForm";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
@@ -48,7 +49,9 @@ export default function PromocoesKiosk() {
   const [fontSize, setFontSize] = useState(14);
   const scrollRef = useRef<HTMLDivElement>(null);
   const promoScrollRef = useRef<HTMLDivElement>(null);
-
+  const modalScrollRef = useRef<HTMLDivElement>(null);
+  const autoScrollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [autoScrolling, setAutoScrolling] = useState(false);
   useEffect(() => {
     const load = async () => {
       const [empresaData, { data: promoData }, { data: progsData }] = await Promise.all([
@@ -184,19 +187,32 @@ export default function PromocoesKiosk() {
             })()}
 
             {/* Contact info */}
-            <div className="flex items-center gap-3 ml-3">
-              {config.site && (
-                <Globe size={14} className="text-white" />
-              )}
-              {config.instagram && (
-                <Instagram size={14} className="text-white" />
-              )}
-              {config.youtube && (
-                <Youtube size={14} className="text-white" />
-              )}
-              {config.facebook && (
-                <Globe size={14} className="text-white" />
-              )}
+            <TooltipProvider delayDuration={200}>
+              <div className="flex items-center gap-3 ml-3">
+                {config.site && (
+                  <Tooltip>
+                    <TooltipTrigger><Globe size={14} className="text-white cursor-pointer" /></TooltipTrigger>
+                    <TooltipContent><p>{config.site}</p></TooltipContent>
+                  </Tooltip>
+                )}
+                {config.instagram && (
+                  <Tooltip>
+                    <TooltipTrigger><Instagram size={14} className="text-white cursor-pointer" /></TooltipTrigger>
+                    <TooltipContent><p>{config.instagram}</p></TooltipContent>
+                  </Tooltip>
+                )}
+                {config.youtube && (
+                  <Tooltip>
+                    <TooltipTrigger><Youtube size={14} className="text-white cursor-pointer" /></TooltipTrigger>
+                    <TooltipContent><p>{config.youtube}</p></TooltipContent>
+                  </Tooltip>
+                )}
+                {config.facebook && (
+                  <Tooltip>
+                    <TooltipTrigger><Globe size={14} className="text-white cursor-pointer" /></TooltipTrigger>
+                    <TooltipContent><p>{config.facebook}</p></TooltipContent>
+                  </Tooltip>
+                )}
               {config.telefoneParticipacao && (
                 <div className="flex items-center gap-1 font-bold text-[16px]" style={{ color: "#d70d0e" }}>
                   <MessageCircle size={15} />
@@ -209,7 +225,8 @@ export default function PromocoesKiosk() {
                   <span>{config.telefoneComercial}</span>
                 </div>
               )}
-            </div>
+              </div>
+            </TooltipProvider>
           </div>
 
           {config.logo && (
@@ -322,37 +339,59 @@ export default function PromocoesKiosk() {
       </div>
 
       {/* Modal da Promoção */}
-      <Dialog open={!!selectedPromo} onOpenChange={(open) => { if (!open) { setSelectedPromo(null); setFontSize(14); } }}>
-        <DialogContent className="bg-zinc-950 border-zinc-800 text-white max-w-lg max-h-[90vh] overflow-y-auto">
+      <Dialog open={!!selectedPromo} onOpenChange={(open) => {
+        if (!open) {
+          setSelectedPromo(null);
+          setFontSize(14);
+          setAutoScrolling(false);
+          if (autoScrollRef.current) { clearInterval(autoScrollRef.current); autoScrollRef.current = null; }
+        }
+      }}>
+        <DialogContent className="bg-zinc-950 border-zinc-800 text-white max-w-lg max-h-[90vh] overflow-hidden flex flex-col">
           <DialogHeader>
-            <DialogTitle className="text-lg font-bold">{selectedPromo?.texto?.split("\n")[0] || "Promoção"}</DialogTitle>
+            <DialogTitle className="text-xs text-white/60">
+              Período: {selectedPromo?.data_inicio} a {selectedPromo?.data_fim}
+            </DialogTitle>
           </DialogHeader>
 
-          {selectedPromo?.imagem_url && (
-            <img src={selectedPromo.imagem_url} alt="Banner" className="w-full rounded-lg object-contain max-h-[300px]" />
-          )}
+          <div ref={modalScrollRef} className="overflow-y-auto flex-1 flex flex-col gap-3">
+            {selectedPromo?.imagem_url && (
+              <img src={selectedPromo.imagem_url} alt="Banner" className="w-full rounded-lg object-contain max-h-[300px]" />
+            )}
 
-          {/* Controle de font */}
-          <div className="flex items-center gap-2 justify-end">
-            <button onClick={() => setFontSize(s => Math.max(10, s - 2))} className="w-7 h-7 rounded bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-bold">A-</button>
-            <button onClick={() => setFontSize(s => Math.min(24, s + 2))} className="w-7 h-7 rounded bg-zinc-800 hover:bg-zinc-700 text-white text-sm font-bold">A+</button>
-          </div>
-
-          {/* Descrição */}
-          <div className="text-white font-bold whitespace-pre-line max-h-[250px] overflow-y-auto" style={{ fontSize }}>
-            {selectedPromo?.texto}
-          </div>
-
-          {/* Oferecimento */}
-          {selectedPromo?.oferecimento && selectedPromo.oferecimento !== "-" && (
-            <div className="text-white/50 text-xs border-t border-zinc-800 pt-3">
-              <span className="text-white/70 font-semibold">Oferecimento:</span> {selectedPromo.oferecimento}
+            {/* Controle de font + auto scroll */}
+            <div className="flex items-center gap-2 justify-end">
+              <button
+                onClick={() => {
+                  if (autoScrolling) {
+                    if (autoScrollRef.current) { clearInterval(autoScrollRef.current); autoScrollRef.current = null; }
+                    setAutoScrolling(false);
+                  } else {
+                    autoScrollRef.current = setInterval(() => {
+                      modalScrollRef.current?.scrollBy({ top: 1 });
+                    }, 30);
+                    setAutoScrolling(true);
+                  }
+                }}
+                className="w-7 h-7 rounded bg-zinc-800 hover:bg-zinc-700 text-white flex items-center justify-center"
+              >
+                {autoScrolling ? <Pause size={12} /> : <Play size={12} />}
+              </button>
+              <button onClick={() => setFontSize(s => Math.max(10, s - 2))} className="w-7 h-7 rounded bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-bold">A-</button>
+              <button onClick={() => setFontSize(s => Math.min(24, s + 2))} className="w-7 h-7 rounded bg-zinc-800 hover:bg-zinc-700 text-white text-sm font-bold">A+</button>
             </div>
-          )}
 
-          {/* Período */}
-          <div className="text-white/40 text-xs">
-            Período: {selectedPromo?.data_inicio} a {selectedPromo?.data_fim}
+            {/* Descrição */}
+            <div className="text-white font-bold whitespace-pre-line" style={{ fontSize }}>
+              {selectedPromo?.texto}
+            </div>
+
+            {/* Oferecimento */}
+            {selectedPromo?.oferecimento && selectedPromo.oferecimento !== "-" && (
+              <div className="text-white text-xs border-t border-zinc-800 pt-3">
+                <span className="font-semibold">Oferecimento:</span> {selectedPromo.oferecimento}
+              </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>
