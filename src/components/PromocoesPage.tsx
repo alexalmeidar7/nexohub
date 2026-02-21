@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Trash2, Upload, ImageIcon } from "lucide-react";
+import { Loader2, Trash2, Upload, ImageIcon, Pencil, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface Promocao {
@@ -24,6 +24,7 @@ export default function PromocoesPage() {
   const [items, setItems] = useState<Promocao[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   const [texto, setTexto] = useState("");
   const [oferecimento, setOferecimento] = useState("");
@@ -60,26 +61,54 @@ export default function PromocoesPage() {
     return data.publicUrl;
   };
 
+  const startEdit = (item: Promocao) => {
+    setEditingId(item.id);
+    setTexto(item.texto);
+    setOferecimento(item.oferecimento || "");
+    setDataInicio(item.data_inicio);
+    setDataFim(item.data_fim);
+    setImagePreview(item.imagem_url || "");
+    setImageFile(null);
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    resetForm();
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !texto || !dataInicio || !dataFim) return;
     setSaving(true);
 
     try {
-      let imagem_url = "";
+      let imagem_url = editingId ? imagePreview : "";
       if (imageFile) imagem_url = await uploadImage(imageFile);
 
-      const { error } = await supabase.from("promocoes").insert({
-        user_id: user.id,
-        imagem_url,
-        texto,
-        oferecimento,
-        data_inicio: dataInicio,
-        data_fim: dataFim,
-      });
+      if (editingId) {
+        const { error } = await supabase.from("promocoes").update({
+          imagem_url,
+          texto,
+          oferecimento,
+          data_inicio: dataInicio,
+          data_fim: dataFim,
+        }).eq("id", editingId);
+        if (error) throw error;
+        toast({ title: "Promoção atualizada!" });
+      } else {
+        const { error } = await supabase.from("promocoes").insert({
+          user_id: user.id,
+          imagem_url,
+          texto,
+          oferecimento,
+          data_inicio: dataInicio,
+          data_fim: dataFim,
+        });
+        if (error) throw error;
+        toast({ title: "Promoção salva com sucesso!" });
+      }
 
-      if (error) throw error;
-      toast({ title: "Promoção salva com sucesso!" });
+      setEditingId(null);
       resetForm();
       await loadData();
     } catch (err: any) {
@@ -121,22 +150,27 @@ export default function PromocoesPage() {
     <div className="space-y-8">
       <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-4">
-          <div>
-            <label className="text-sm font-medium text-foreground mb-1 block">Imagem da Promoção</label>
-            <div className="flex items-center gap-3">
-              {imagePreview ? (
-                <img src={imagePreview} alt="preview" className="w-20 h-14 rounded-lg object-cover border" />
-              ) : (
-                <div className="w-20 h-14 rounded-lg bg-muted flex items-center justify-center border">
-                  <ImageIcon size={20} className="text-muted-foreground" />
-                </div>
-              )}
-              <label className="cursor-pointer inline-flex items-center gap-2 px-3 py-2 bg-muted hover:bg-muted/80 rounded-lg text-sm transition-colors">
-                <Upload size={14} />
-                Enviar banner
-                <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
-              </label>
-            </div>
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-medium text-foreground">Imagem da Promoção</label>
+            {editingId && (
+              <Button type="button" variant="ghost" size="sm" onClick={cancelEdit} className="text-xs">
+                <X size={12} className="mr-1" /> Cancelar edição
+              </Button>
+            )}
+          </div>
+          <div className="flex items-center gap-3">
+            {imagePreview ? (
+              <img src={imagePreview} alt="preview" className="w-20 h-14 rounded-lg object-cover border" />
+            ) : (
+              <div className="w-20 h-14 rounded-lg bg-muted flex items-center justify-center border">
+                <ImageIcon size={20} className="text-muted-foreground" />
+              </div>
+            )}
+            <label className="cursor-pointer inline-flex items-center gap-2 px-3 py-2 bg-muted hover:bg-muted/80 rounded-lg text-sm transition-colors">
+              <Upload size={14} />
+              Enviar banner
+              <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
+            </label>
           </div>
 
           <div>
@@ -163,7 +197,7 @@ export default function PromocoesPage() {
           </div>
 
           <Button type="submit" disabled={saving} className="w-full">
-            {saving ? <><Loader2 className="animate-spin mr-2" size={14} /> Salvando...</> : "Cadastrar Promoção"}
+            {saving ? <><Loader2 className="animate-spin mr-2" size={14} /> Salvando...</> : editingId ? "Atualizar Promoção" : "Cadastrar Promoção"}
           </Button>
         </div>
       </form>
@@ -177,7 +211,7 @@ export default function PromocoesPage() {
             {items.map((item) => {
               const status = getStatus(item);
               return (
-                <div key={item.id} className="bg-card border border-border rounded-xl overflow-hidden">
+                <div key={item.id} className={`bg-card border rounded-xl overflow-hidden ${editingId === item.id ? "border-primary ring-1 ring-primary" : "border-border"}`}>
                   {item.imagem_url ? (
                     <img src={item.imagem_url} alt="" className="w-full h-36 object-cover" />
                   ) : (
@@ -198,9 +232,14 @@ export default function PromocoesPage() {
                     {item.oferecimento && (
                       <p className="text-xs text-muted-foreground italic">Oferecimento: {item.oferecimento}</p>
                     )}
-                    <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-700 w-full" onClick={() => handleDelete(item.id)}>
-                      <Trash2 size={14} className="mr-1" /> Remover
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button variant="ghost" size="sm" className="flex-1 text-primary hover:text-primary/80" onClick={() => startEdit(item)}>
+                        <Pencil size={14} className="mr-1" /> Editar
+                      </Button>
+                      <Button variant="ghost" size="sm" className="flex-1 text-red-500 hover:text-red-700" onClick={() => handleDelete(item.id)}>
+                        <Trash2 size={14} className="mr-1" /> Remover
+                      </Button>
+                    </div>
                   </div>
                 </div>
               );
