@@ -2,10 +2,11 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getEmpresaConfig, type EmpresaConfig } from "@/components/ConfiguracoesPage";
 import { findCurrentProgram } from "@/components/OnAirWidget";
-import { ChevronLeft, ChevronRight, Clock, Radio, Globe, Instagram, Youtube, Phone, MessageCircle, Play, Pause } from "lucide-react";
+import { ChevronLeft, ChevronRight, Clock, Radio, Globe, Instagram, Youtube, Phone, MessageCircle, Play, Pause, Facebook, X } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { getApresentadores } from "@/components/ApresentadorForm";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Slider } from "@/components/ui/slider";
 
 interface Promocao {
   id: string;
@@ -26,6 +27,16 @@ interface ProgramaGrade {
   diasSemana: string[];
   horarioInicio: string;
   horarioFim: string;
+  descricao: string;
+}
+
+interface Testemunhal {
+  id: string;
+  programa_id: string;
+  texto: string;
+  data_inicio: string;
+  data_fim: string;
+  imagem_url: string | null;
 }
 
 const PROGRAMAS_VISIVEIS = [
@@ -38,32 +49,50 @@ const PROGRAMAS_VISIVEIS = [
   "PALCO POSITIVA",
 ];
 
+function renderBoldMarkdown(text: string) {
+  const parts = text.split(/\*([^*]+)\*/g);
+  return parts.map((part, i) =>
+    i % 2 === 1 ? <strong key={i}>{part}</strong> : part
+  );
+}
+
 export default function PromocoesKiosk() {
   const [promocoes, setPromocoes] = useState<Promocao[]>([]);
   const [config, setConfig] = useState<EmpresaConfig>({} as EmpresaConfig);
   const [programas, setProgramas] = useState<ProgramaGrade[]>([]);
+  const [testemunhais, setTestemunhais] = useState<Testemunhal[]>([]);
   const [onAirProgram, setOnAirProgram] = useState<{ nome: string; horarioInicio: string; horarioFim: string; progress: number; apresentadorId: string } | null>(null);
   const [apresentadores, setApresentadores] = useState<any[]>([]);
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
   const [selectedPromo, setSelectedPromo] = useState<Promocao | null>(null);
-  const [fontSize, setFontSize] = useState(14);
+  const [selectedProgram, setSelectedProgram] = useState<ProgramaGrade | null>(null);
+  const [fontSize, setFontSize] = useState(24);
+  const [scrollSpeed, setScrollSpeed] = useState(() => {
+    const saved = localStorage.getItem("promo-scroll-speed");
+    return saved ? Number(saved) : 30;
+  });
   const scrollRef = useRef<HTMLDivElement>(null);
   const promoScrollRef = useRef<HTMLDivElement>(null);
   const modalScrollRef = useRef<HTMLDivElement>(null);
   const autoScrollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [autoScrolling, setAutoScrolling] = useState(false);
+  const bannerTimerRef = useRef(0);
+  const [bannerProgress, setBannerProgress] = useState(0);
+
   useEffect(() => {
     const load = async () => {
-      const [empresaData, { data: promoData }, { data: progsData }] = await Promise.all([
+      const [empresaData, { data: promoData }, { data: progsData }, { data: testData }] = await Promise.all([
         getEmpresaConfig(),
         supabase.from("promocoes").select("*").order("data_inicio"),
         supabase.from("programas").select("*").eq("ativo", true),
+        supabase.from("testemunhais").select("*"),
       ]);
       setConfig(empresaData);
 
       const today = new Date().toISOString().split("T")[0];
       const activePromos = (promoData || []).filter((p: any) => p.data_inicio <= today && p.data_fim >= today);
       setPromocoes(activePromos);
+      setTestemunhais(testData || []);
 
       const mapped = (progsData || []).map((p: any) => ({
         id: p.id,
@@ -74,6 +103,7 @@ export default function PromocoesKiosk() {
         diasSemana: p.dias_semana || [],
         horarioInicio: p.horario_inicio,
         horarioFim: p.horario_fim,
+        descricao: p.descricao || "",
       }));
       setProgramas(mapped);
 
@@ -85,14 +115,35 @@ export default function PromocoesKiosk() {
     return () => clearInterval(interval);
   }, []);
 
+  // Banner auto-rotate with progress tracking
+  const BANNER_DURATION = 5000;
+  const PROGRESS_INTERVAL = 50;
+
   useEffect(() => {
     const banners = promocoes.filter(p => p.imagem_url);
     if (banners.length <= 1) return;
+    bannerTimerRef.current = 0;
+    setBannerProgress(0);
     const timer = setInterval(() => {
-      setCurrentBannerIndex(prev => (prev + 1) % banners.length);
-    }, 5000);
+      bannerTimerRef.current += PROGRESS_INTERVAL;
+      const pct = (bannerTimerRef.current / BANNER_DURATION) * 100;
+      if (pct >= 100) {
+        setCurrentBannerIndex(prev => (prev + 1) % banners.length);
+        bannerTimerRef.current = 0;
+        setBannerProgress(0);
+      } else {
+        setBannerProgress(pct);
+      }
+    }, PROGRESS_INTERVAL);
     return () => clearInterval(timer);
   }, [promocoes]);
+
+  // Reset progress on manual banner change
+  const changeBanner = (index: number) => {
+    setCurrentBannerIndex(index);
+    bannerTimerRef.current = 0;
+    setBannerProgress(0);
+  };
 
   useEffect(() => {
     const update = () => {
@@ -113,6 +164,17 @@ export default function PromocoesKiosk() {
     const interval = setInterval(update, 2000);
     return () => clearInterval(interval);
   }, [programas]);
+
+  // Auto scroll speed change
+  useEffect(() => {
+    localStorage.setItem("promo-scroll-speed", String(scrollSpeed));
+    if (autoScrolling && autoScrollRef.current) {
+      clearInterval(autoScrollRef.current);
+      autoScrollRef.current = setInterval(() => {
+        modalScrollRef.current?.scrollBy({ top: 1 });
+      }, scrollSpeed);
+    }
+  }, [scrollSpeed, autoScrolling]);
 
   const filteredPrograms = programas
     .filter(p => PROGRAMAS_VISIVEIS.some(name => p.nome.toUpperCase().includes(name)))
@@ -139,9 +201,64 @@ export default function PromocoesKiosk() {
     }
   }, []);
 
+  const toggleAutoScroll = () => {
+    if (autoScrolling) {
+      if (autoScrollRef.current) { clearInterval(autoScrollRef.current); autoScrollRef.current = null; }
+      setAutoScrolling(false);
+    } else {
+      autoScrollRef.current = setInterval(() => {
+        modalScrollRef.current?.scrollBy({ top: 1 });
+      }, scrollSpeed);
+      setAutoScrolling(true);
+    }
+  };
+
+  const closePromoModal = () => {
+    setSelectedPromo(null);
+    setAutoScrolling(false);
+    if (autoScrollRef.current) { clearInterval(autoScrollRef.current); autoScrollRef.current = null; }
+  };
+
+  const getTestemunhaisForProgram = (programId: string) => {
+    const today = new Date().toISOString().split("T")[0];
+    return testemunhais.filter(t => t.programa_id === programId && t.data_inicio <= today && t.data_fim >= today);
+  };
+
+  // SVG progress circle for banner pagination
+  const ProgressCircle = ({ active, progress }: { active: boolean; progress: number }) => {
+    const r = 5;
+    const circumference = 2 * Math.PI * r;
+    const dashoffset = circumference - (progress / 100) * circumference;
+    if (!active) {
+      return (
+        <svg width="14" height="14" viewBox="0 0 14 14">
+          <circle cx="7" cy="7" r={r} fill="white" />
+        </svg>
+      );
+    }
+    return (
+      <svg width="14" height="14" viewBox="0 0 14 14" style={{ transform: "rotate(-90deg)" }}>
+        <circle cx="7" cy="7" r={r} fill="none" stroke="white" strokeWidth="2" />
+        <circle cx="7" cy="7" r={r} fill="none" stroke="#d70d0e" strokeWidth="2"
+          strokeDasharray={circumference} strokeDashoffset={dashoffset}
+          style={{ transition: "stroke-dashoffset 50ms linear" }}
+        />
+      </svg>
+    );
+  };
+
   return (
     <div className="text-white min-h-screen p-8 flex flex-col items-center" style={{ background: "url('/images/kiosk-bg.png') center center / cover no-repeat fixed", backgroundColor: "#000" }}>
-      <style>{`.no-scrollbar::-webkit-scrollbar{display:none}.no-scrollbar{-ms-overflow-style:none;scrollbar-width:none}`}</style>
+      <style>{`
+        .no-scrollbar::-webkit-scrollbar{display:none}
+        .no-scrollbar{-ms-overflow-style:none;scrollbar-width:none}
+        .promo-scroll::-webkit-scrollbar{width:10px}
+        .promo-scroll::-webkit-scrollbar-track{background:#a60101;border-radius:5px}
+        .promo-scroll::-webkit-scrollbar-thumb{background:white;border-radius:5px}
+        .promo-scroll::-webkit-scrollbar-button{display:block;height:10px;background:white;border-radius:2px}
+        .promo-scroll{scrollbar-width:thin;scrollbar-color:white #a60101}
+        .close-hover-red button[data-close]:hover{color:#ff0000!important}
+      `}</style>
 
       <div className="w-full max-w-[1000px] flex flex-col gap-6">
 
@@ -209,22 +326,30 @@ export default function PromocoesKiosk() {
                 )}
                 {config.facebook && (
                   <Tooltip>
-                    <TooltipTrigger><Globe size={14} className="text-white cursor-pointer" /></TooltipTrigger>
+                    <TooltipTrigger><Facebook size={14} className="text-white cursor-pointer" /></TooltipTrigger>
                     <TooltipContent><p>{config.facebook}</p></TooltipContent>
                   </Tooltip>
                 )}
-              {config.telefoneParticipacao && (
-                <div className="flex items-center gap-1 font-bold text-[16px]" style={{ color: "#d70d0e" }}>
-                  <MessageCircle size={15} />
-                  <span>{config.telefoneParticipacao}</span>
-                </div>
-              )}
-              {config.telefoneComercial && (
-                <div className="flex items-center gap-1 font-bold text-[16px]" style={{ color: "#d70d0e" }}>
-                  <Phone size={15} />
-                  <span>{config.telefoneComercial}</span>
-                </div>
-              )}
+
+                {/* Telefones */}
+                {config.telefoneParticipacao && (
+                  <div className="flex flex-col items-center ml-2">
+                    <div className="flex items-center gap-1">
+                      <MessageCircle size={15} style={{ color: "#FF0000" }} />
+                      <span className="font-bold text-[16px] text-white">{config.telefoneParticipacao}</span>
+                    </div>
+                    <span className="text-xs" style={{ color: "#FF0000" }}>whatsapp ouvinte</span>
+                  </div>
+                )}
+                {config.telefoneComercial && (
+                  <div className="flex flex-col items-center ml-2">
+                    <div className="flex items-center gap-1">
+                      <Phone size={15} style={{ color: "#FF0000" }} />
+                      <span className="font-bold text-[16px] text-white">{config.telefoneComercial}</span>
+                    </div>
+                    <span className="text-xs" style={{ color: "#FF0000" }}>telefone comercial</span>
+                  </div>
+                )}
               </div>
             </TooltipProvider>
           </div>
@@ -234,18 +359,21 @@ export default function PromocoesKiosk() {
           )}
         </div>
 
-        {/* Banner */}
+        {/* Banner with slide animation */}
         <div className="w-full overflow-hidden rounded-xl shadow-2xl relative">
           {banners.length > 0 ? (
-            banners.map((banner, index) => (
+            <div className="relative w-full overflow-hidden">
               <div
-                key={banner.id}
-                className="w-full transition-opacity duration-1000"
-                style={{ opacity: index === currentBannerIndex ? 1 : 0, display: index === currentBannerIndex ? "block" : "none" }}
+                className="flex transition-transform duration-700 ease-in-out"
+                style={{ transform: `translateX(-${currentBannerIndex * 100}%)` }}
               >
-                <img src={banner.imagem_url} alt={banner.texto} className="w-full h-auto object-contain" />
+                {banners.map((banner) => (
+                  <div key={banner.id} className="w-full flex-shrink-0">
+                    <img src={banner.imagem_url} alt={banner.texto} className="w-full h-auto object-contain" />
+                  </div>
+                ))}
               </div>
-            ))
+            </div>
           ) : (
             <div className="h-[200px] flex items-center justify-center text-white/30">Nenhum banner ativo</div>
           )}
@@ -253,34 +381,31 @@ export default function PromocoesKiosk() {
           {banners.length > 1 && (
             <>
               <button
-                onClick={() => setCurrentBannerIndex(prev => (prev - 1 + banners.length) % banners.length)}
-                className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full w-8 h-8 flex items-center justify-center z-10 transition-opacity"
+                onClick={() => changeBanner((currentBannerIndex - 1 + banners.length) % banners.length)}
+                className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full w-8 h-8 flex items-center justify-center z-10"
               >
                 <ChevronLeft size={20} />
               </button>
               <button
-                onClick={() => setCurrentBannerIndex(prev => (prev + 1) % banners.length)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full w-8 h-8 flex items-center justify-center z-10 transition-opacity"
+                onClick={() => changeBanner((currentBannerIndex + 1) % banners.length)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full w-8 h-8 flex items-center justify-center z-10"
               >
                 <ChevronRight size={20} />
               </button>
-              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2 items-center">
                 {banners.map((_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setCurrentBannerIndex(i)}
-                    className={`w-1.5 h-1.5 rounded-full transition-all ${i === currentBannerIndex ? "bg-red-600 scale-125" : "bg-white/40"}`}
-                  />
+                  <button key={i} onClick={() => changeBanner(i)} className="cursor-pointer">
+                    <ProgressCircle active={i === currentBannerIndex} progress={i === currentBannerIndex ? bannerProgress : 0} />
+                  </button>
                 ))}
               </div>
             </>
           )}
         </div>
 
-        {/* Programação */}
+        {/* Programação - sem título */}
         {filteredPrograms.length > 0 && (
           <div className="relative group">
-            <h2 className="text-lg font-bold mb-4">Programação</h2>
             <div onMouseEnter={() => startScroll(scrollRef, "left")} onMouseLeave={stopScroll} className="absolute left-[-45px] top-1/2 -translate-y-1/2 p-2 cursor-pointer opacity-30 hover:opacity-100 transition-opacity z-10">
               <ChevronLeft size={36} />
             </div>
@@ -293,6 +418,7 @@ export default function PromocoesKiosk() {
                 <div
                   key={prog.id}
                   className="min-w-[230px] relative rounded-lg overflow-hidden flex-shrink-0 cursor-pointer hover:opacity-70 transition-opacity"
+                  onClick={() => setSelectedProgram(prog)}
                 >
                   {prog.capa ? (
                     <img src={prog.capa} alt={prog.nome} className="w-full h-auto object-contain" />
@@ -339,70 +465,121 @@ export default function PromocoesKiosk() {
       </div>
 
       {/* Modal da Promoção */}
-      <Dialog open={!!selectedPromo} onOpenChange={(open) => {
-        if (!open) {
-          setSelectedPromo(null);
-          setFontSize(14);
-          setAutoScrolling(false);
-          if (autoScrollRef.current) { clearInterval(autoScrollRef.current); autoScrollRef.current = null; }
-        }
-      }}>
-        <DialogContent className="bg-zinc-950 border-zinc-800 text-white max-w-lg max-h-[90vh] overflow-hidden flex flex-col">
-          <DialogHeader>
-            <DialogTitle className="text-xs text-white/60">
-              Período: {selectedPromo?.data_inicio} a {selectedPromo?.data_fim}
-            </DialogTitle>
-          </DialogHeader>
-
+      <Dialog open={!!selectedPromo} onOpenChange={(open) => { if (!open) closePromoModal(); }}>
+        <DialogContent className="bg-zinc-950 border-zinc-800 text-white max-w-2xl max-h-[90vh] overflow-hidden flex flex-col p-0 [&>button]:hover:text-red-600 [&>button]:transition-colors">
+          {/* Banner fixo */}
           {selectedPromo?.imagem_url && (
-            <img src={selectedPromo.imagem_url} alt="Banner" className="w-full rounded-lg object-contain max-h-[300px]" />
+            <img src={selectedPromo.imagem_url} alt="Banner" className="w-full object-contain max-h-[250px]" />
           )}
 
-          {/* Controle de font + auto scroll */}
-          <div className="flex items-center gap-2 justify-end">
-            <button
-              onClick={() => {
-                if (autoScrolling) {
-                  if (autoScrollRef.current) { clearInterval(autoScrollRef.current); autoScrollRef.current = null; }
-                  setAutoScrolling(false);
-                } else {
-                  autoScrollRef.current = setInterval(() => {
-                    modalScrollRef.current?.scrollBy({ top: 1 });
-                  }, 30);
-                  setAutoScrolling(true);
-                }
-              }}
-              className="w-7 h-7 rounded bg-zinc-800 hover:bg-zinc-700 text-white flex items-center justify-center"
-            >
+          {/* Período */}
+          <div className="px-4 pt-2 text-xs text-white/60">
+            Período: {selectedPromo?.data_inicio} a {selectedPromo?.data_fim}
+          </div>
+
+          {/* Controles: play + slider velocidade + font size */}
+          <div className="flex items-center gap-3 px-4 py-1">
+            <button onClick={toggleAutoScroll} className="w-7 h-7 rounded bg-zinc-800 hover:bg-zinc-700 text-white flex items-center justify-center">
               {autoScrolling ? <Pause size={12} /> : <Play size={12} />}
             </button>
-            <button onClick={() => setFontSize(s => Math.max(10, s - 2))} className="w-7 h-7 rounded bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-bold">A-</button>
-            <button onClick={() => setFontSize(s => Math.min(24, s + 2))} className="w-7 h-7 rounded bg-zinc-800 hover:bg-zinc-700 text-white text-sm font-bold">A+</button>
-          </div>
-
-          {/* Descrição com scroll */}
-          <div ref={modalScrollRef} className="overflow-y-auto flex-1 min-h-0">
-            <div className="text-white font-bold whitespace-pre-line" style={{ fontSize }}>
-              {selectedPromo?.texto?.split("\n").map((line, i) => (
-                <p
-                  key={i}
-                  className="px-1 py-0.5 rounded transition-colors"
-                  style={{ cursor: "default" }}
-                  onMouseEnter={e => (e.currentTarget.style.backgroundColor = "#a30101")}
-                  onMouseLeave={e => (e.currentTarget.style.backgroundColor = "transparent")}
-                >
-                  {line || "\u00A0"}
-                </p>
-              ))}
+            <div className="flex items-center gap-2 flex-1 max-w-[200px]">
+              <span className="text-[10px] text-white/50">Vel.</span>
+              <Slider
+                value={[60 - scrollSpeed]}
+                min={10}
+                max={55}
+                step={5}
+                onValueChange={([v]) => setScrollSpeed(60 - v)}
+                className="flex-1"
+              />
+            </div>
+            <div className="flex items-center gap-1 ml-auto">
+              <button onClick={() => setFontSize(s => Math.max(12, s - 2))} className="w-7 h-7 rounded bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-bold">A-</button>
+              <button onClick={() => setFontSize(s => Math.min(48, s + 2))} className="w-7 h-7 rounded bg-zinc-800 hover:bg-zinc-700 text-white text-sm font-bold">A+</button>
             </div>
           </div>
 
-          {/* Oferecimento fixo */}
-          {selectedPromo?.oferecimento && selectedPromo.oferecimento !== "-" && (
-            <div className="text-white text-xs border-t border-zinc-800 pt-3">
-              <span className="font-semibold">Oferecimento:</span> {selectedPromo.oferecimento}
+          {/* Corpo: texto scrollável + oferecimento lateral */}
+          <div className="flex flex-1 min-h-0 px-4 pb-4 gap-3">
+            {/* Texto com scroll */}
+            <div ref={modalScrollRef} className="overflow-y-auto flex-1 min-h-0 promo-scroll pr-2">
+              <div className="text-white font-bold whitespace-pre-line" style={{ fontSize }}>
+                {selectedPromo?.texto?.split("\n").map((line, i) => (
+                  <p
+                    key={i}
+                    className="px-1 py-0.5 rounded transition-colors cursor-default"
+                    onMouseEnter={e => (e.currentTarget.style.backgroundColor = "#a30101")}
+                    onMouseLeave={e => (e.currentTarget.style.backgroundColor = "transparent")}
+                  >
+                    {line ? renderBoldMarkdown(line) : "\u00A0"}
+                  </p>
+                ))}
+              </div>
             </div>
-          )}
+
+            {/* Oferecimento lateral */}
+            {selectedPromo?.oferecimento && selectedPromo.oferecimento !== "-" && (
+              <div className="flex items-center justify-center" style={{ writingMode: "vertical-rl", textOrientation: "mixed" }}>
+                <span className="text-white text-xs font-semibold tracking-wider whitespace-nowrap">
+                  Oferecimento: {selectedPromo.oferecimento}
+                </span>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Programação */}
+      <Dialog open={!!selectedProgram} onOpenChange={(open) => { if (!open) setSelectedProgram(null); }}>
+        <DialogContent className="bg-zinc-950 border-zinc-800 text-white max-w-2xl max-h-[90vh] overflow-hidden flex flex-col p-0 [&>button]:hover:text-red-600 [&>button]:transition-colors">
+          <div className="flex flex-col md:flex-row gap-0 flex-1 min-h-0">
+            {/* Lado esquerdo: capa */}
+            {selectedProgram?.capa && (
+              <div className="md:w-1/2 flex-shrink-0">
+                <img src={selectedProgram.capa} alt={selectedProgram.nome} className="w-full h-full object-cover" />
+              </div>
+            )}
+
+            {/* Lado direito: período + testemunhais */}
+            <div className="flex flex-col flex-1 min-h-0 p-4">
+              {/* Período */}
+              <div className="text-xs text-white/60 mb-2">
+                {selectedProgram?.horarioInicio.slice(0, 5)} às {selectedProgram?.horarioFim.slice(0, 5)}
+                {selectedProgram?.diasSemana && selectedProgram.diasSemana.length > 0 && (
+                  <span className="ml-2">• {selectedProgram.diasSemana.join(", ")}</span>
+                )}
+              </div>
+
+              {/* Testemunhais */}
+              <div className="overflow-y-auto flex-1 min-h-0 promo-scroll pr-2">
+                {(() => {
+                  const tests = selectedProgram ? getTestemunhaisForProgram(selectedProgram.id) : [];
+                  if (tests.length === 0) {
+                    return <p className="text-white/40 text-sm">Nenhum conteúdo disponível.</p>;
+                  }
+                  return tests.map(t => (
+                    <div key={t.id} className="mb-4">
+                      {t.imagem_url && (
+                        <img src={t.imagem_url} alt="" className="w-full rounded-lg mb-2 object-contain max-h-[200px]" />
+                      )}
+                      <div className="text-white whitespace-pre-line text-sm">
+                        {t.texto.split("\n").map((line, i) => (
+                          <p
+                            key={i}
+                            className="px-1 py-0.5 rounded transition-colors cursor-default"
+                            onMouseEnter={e => (e.currentTarget.style.backgroundColor = "#a30101")}
+                            onMouseLeave={e => (e.currentTarget.style.backgroundColor = "transparent")}
+                          >
+                            {line ? renderBoldMarkdown(line) : "\u00A0"}
+                          </p>
+                        ))}
+                      </div>
+                    </div>
+                  ));
+                })()}
+              </div>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
