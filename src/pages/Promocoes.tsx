@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getEmpresaConfig, type EmpresaConfig } from "@/components/ConfiguracoesPage";
 import { findCurrentProgram } from "@/components/OnAirWidget";
-import { ChevronLeft, ChevronRight, Clock, Radio, Globe, Instagram, Youtube, Phone, MessageCircle, Play, Pause, Facebook, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Clock, Radio, Globe, Instagram, Youtube, Phone, MessageCircle, Play, Pause, Facebook, X, Maximize, Minimize, Calendar } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { getApresentadores } from "@/components/ApresentadorForm";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -66,18 +66,52 @@ export default function PromocoesKiosk() {
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
   const [selectedPromo, setSelectedPromo] = useState<Promocao | null>(null);
   const [selectedProgram, setSelectedProgram] = useState<ProgramaGrade | null>(null);
-  const [fontSize, setFontSize] = useState(24);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // Shared persistent settings
+  const [fontSize, setFontSize] = useState(() => {
+    const saved = localStorage.getItem("kiosk-font-size");
+    return saved ? Number(saved) : 24;
+  });
   const [scrollSpeed, setScrollSpeed] = useState(() => {
     const saved = localStorage.getItem("promo-scroll-speed");
     return saved ? Number(saved) : 30;
   });
+
   const scrollRef = useRef<HTMLDivElement>(null);
   const promoScrollRef = useRef<HTMLDivElement>(null);
   const modalScrollRef = useRef<HTMLDivElement>(null);
+  const programModalScrollRef = useRef<HTMLDivElement>(null);
   const autoScrollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [autoScrolling, setAutoScrolling] = useState(false);
+  const [activeScrollTarget, setActiveScrollTarget] = useState<"promo" | "program">("promo");
   const bannerTimerRef = useRef(0);
   const [bannerProgress, setBannerProgress] = useState(0);
+
+  // Persist font size
+  useEffect(() => {
+    localStorage.setItem("kiosk-font-size", String(fontSize));
+  }, [fontSize]);
+
+  // Persist scroll speed
+  useEffect(() => {
+    localStorage.setItem("promo-scroll-speed", String(scrollSpeed));
+  }, [scrollSpeed]);
+
+  // Fullscreen toggle
+  const toggleFullscreen = async () => {
+    if (!document.fullscreenElement) {
+      await document.documentElement.requestFullscreen();
+    } else {
+      await document.exitFullscreen();
+    }
+  };
+
+  useEffect(() => {
+    const handler = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", handler);
+    return () => document.removeEventListener("fullscreenchange", handler);
+  }, []);
 
   useEffect(() => {
     const load = async () => {
@@ -138,7 +172,6 @@ export default function PromocoesKiosk() {
     return () => clearInterval(timer);
   }, [promocoes]);
 
-  // Reset progress on manual banner change
   const changeBanner = (index: number) => {
     setCurrentBannerIndex(index);
     bannerTimerRef.current = 0;
@@ -165,16 +198,20 @@ export default function PromocoesKiosk() {
     return () => clearInterval(interval);
   }, [programas]);
 
-  // Auto scroll speed change
+  // Auto scroll - works for whichever modal is open
+  const getActiveScrollRef = useCallback(() => {
+    return activeScrollTarget === "promo" ? modalScrollRef : programModalScrollRef;
+  }, [activeScrollTarget]);
+
   useEffect(() => {
-    localStorage.setItem("promo-scroll-speed", String(scrollSpeed));
     if (autoScrolling && autoScrollRef.current) {
       clearInterval(autoScrollRef.current);
+      const ref = getActiveScrollRef();
       autoScrollRef.current = setInterval(() => {
-        modalScrollRef.current?.scrollBy({ top: 1 });
+        ref.current?.scrollBy({ top: 1 });
       }, scrollSpeed);
     }
-  }, [scrollSpeed, autoScrolling]);
+  }, [scrollSpeed, autoScrolling, getActiveScrollRef]);
 
   const filteredPrograms = programas
     .filter(p => PROGRAMAS_VISIVEIS.some(name => p.nome.toUpperCase().includes(name)))
@@ -201,13 +238,15 @@ export default function PromocoesKiosk() {
     }
   }, []);
 
-  const toggleAutoScroll = () => {
+  const toggleAutoScroll = (target: "promo" | "program") => {
     if (autoScrolling) {
       if (autoScrollRef.current) { clearInterval(autoScrollRef.current); autoScrollRef.current = null; }
       setAutoScrolling(false);
     } else {
+      setActiveScrollTarget(target);
+      const ref = target === "promo" ? modalScrollRef : programModalScrollRef;
       autoScrollRef.current = setInterval(() => {
-        modalScrollRef.current?.scrollBy({ top: 1 });
+        ref.current?.scrollBy({ top: 1 });
       }, scrollSpeed);
       setAutoScrolling(true);
     }
@@ -219,12 +258,17 @@ export default function PromocoesKiosk() {
     if (autoScrollRef.current) { clearInterval(autoScrollRef.current); autoScrollRef.current = null; }
   };
 
+  const closeProgramModal = () => {
+    setSelectedProgram(null);
+    setAutoScrolling(false);
+    if (autoScrollRef.current) { clearInterval(autoScrollRef.current); autoScrollRef.current = null; }
+  };
+
   const getTestemunhaisForProgram = (programId: string) => {
     const today = new Date().toISOString().split("T")[0];
     return testemunhais.filter(t => t.programa_id === programId && t.data_inicio <= today && t.data_fim >= today);
   };
 
-  // SVG progress circle for banner pagination
   const ProgressCircle = ({ active, progress }: { active: boolean; progress: number }) => {
     const r = 5;
     const circumference = 2 * Math.PI * r;
@@ -247,6 +291,30 @@ export default function PromocoesKiosk() {
     );
   };
 
+  // Shared teleprompter controls component
+  const TeleprompterControls = ({ target }: { target: "promo" | "program" }) => (
+    <div className="flex items-center gap-3 px-4 py-1">
+      <button onClick={() => toggleAutoScroll(target)} className="w-7 h-7 rounded bg-zinc-800 hover:bg-zinc-700 text-white flex items-center justify-center">
+        {autoScrolling && activeScrollTarget === target ? <Pause size={12} /> : <Play size={12} />}
+      </button>
+      <div className="flex items-center gap-2 flex-1 max-w-[200px]">
+        <span className="text-[10px] text-white/50">Vel.</span>
+        <Slider
+          value={[60 - scrollSpeed]}
+          min={10}
+          max={55}
+          step={5}
+          onValueChange={([v]) => setScrollSpeed(60 - v)}
+          className="flex-1"
+        />
+      </div>
+      <div className="flex items-center gap-1 ml-auto">
+        <button onClick={() => setFontSize(s => Math.max(12, s - 2))} className="w-7 h-7 rounded bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-bold">A-</button>
+        <button onClick={() => setFontSize(s => Math.min(48, s + 2))} className="w-7 h-7 rounded bg-zinc-800 hover:bg-zinc-700 text-white text-sm font-bold">A+</button>
+      </div>
+    </div>
+  );
+
   return (
     <div className="text-white min-h-screen p-8 flex flex-col items-center" style={{ background: "url('/images/kiosk-bg.png') center center / cover no-repeat fixed", backgroundColor: "#000" }}>
       <style>{`
@@ -257,7 +325,6 @@ export default function PromocoesKiosk() {
         .promo-scroll::-webkit-scrollbar-thumb{background:white;border-radius:5px}
         .promo-scroll::-webkit-scrollbar-button{display:block;height:10px;background:white;border-radius:2px}
         .promo-scroll{scrollbar-width:thin;scrollbar-color:white #a60101}
-        .close-hover-red button[data-close]:hover{color:#ff0000!important}
       `}</style>
 
       <div className="w-full max-w-[1000px] flex flex-col gap-6">
@@ -354,9 +421,19 @@ export default function PromocoesKiosk() {
             </TooltipProvider>
           </div>
 
-          {config.logo && (
-            <img src={config.logo} alt={config.nome} className="h-[90px] w-auto object-contain" />
-          )}
+          {/* Logo + Fullscreen */}
+          <div className="flex items-center gap-3">
+            <button
+              onClick={toggleFullscreen}
+              className="w-8 h-8 rounded-full bg-black/40 hover:bg-black/70 text-white flex items-center justify-center transition-colors"
+              title={isFullscreen ? "Sair da tela cheia" : "Tela cheia"}
+            >
+              {isFullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
+            </button>
+            {config.logo && (
+              <img src={config.logo} alt={config.nome} className="h-[90px] w-auto object-contain" />
+            )}
+          </div>
         </div>
 
         {/* Banner with slide animation */}
@@ -466,63 +543,43 @@ export default function PromocoesKiosk() {
 
       {/* Modal da Promoção */}
       <Dialog open={!!selectedPromo} onOpenChange={(open) => { if (!open) closePromoModal(); }}>
-        <DialogContent className="bg-zinc-950 border-zinc-800 text-white max-w-2xl max-h-[90vh] overflow-hidden flex flex-col p-0 [&>button]:hover:text-red-600 [&>button]:transition-colors">
+        <DialogContent className="bg-zinc-950 border-zinc-800 text-white max-w-2xl h-[80vh] overflow-hidden flex flex-col p-0 [&>button]:hover:text-red-600 [&>button]:transition-colors">
           {/* Banner fixo */}
           {selectedPromo?.imagem_url && (
-            <img src={selectedPromo.imagem_url} alt="Banner" className="w-full object-contain max-h-[250px]" />
+            <img src={selectedPromo.imagem_url} alt="Banner" className="w-full object-contain max-h-[250px] flex-shrink-0" />
           )}
 
-          {/* Período */}
-          <div className="px-4 pt-2 text-xs text-white/60">
-            Período: {selectedPromo?.data_inicio} a {selectedPromo?.data_fim}
+          {/* Período com ícone de calendário */}
+          <div className="px-4 pt-2 text-xs text-white/60 flex items-center gap-1.5 flex-shrink-0">
+            <Calendar size={12} />
+            <span>Período: {selectedPromo?.data_inicio} a {selectedPromo?.data_fim}</span>
           </div>
 
-          {/* Controles: play + slider velocidade + font size */}
-          <div className="flex items-center gap-3 px-4 py-1">
-            <button onClick={toggleAutoScroll} className="w-7 h-7 rounded bg-zinc-800 hover:bg-zinc-700 text-white flex items-center justify-center">
-              {autoScrolling ? <Pause size={12} /> : <Play size={12} />}
-            </button>
-            <div className="flex items-center gap-2 flex-1 max-w-[200px]">
-              <span className="text-[10px] text-white/50">Vel.</span>
-              <Slider
-                value={[60 - scrollSpeed]}
-                min={10}
-                max={55}
-                step={5}
-                onValueChange={([v]) => setScrollSpeed(60 - v)}
-                className="flex-1"
-              />
-            </div>
-            <div className="flex items-center gap-1 ml-auto">
-              <button onClick={() => setFontSize(s => Math.max(12, s - 2))} className="w-7 h-7 rounded bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-bold">A-</button>
-              <button onClick={() => setFontSize(s => Math.min(48, s + 2))} className="w-7 h-7 rounded bg-zinc-800 hover:bg-zinc-700 text-white text-sm font-bold">A+</button>
-            </div>
+          {/* Controles teleprompter */}
+          <div className="flex-shrink-0">
+            <TeleprompterControls target="promo" />
           </div>
 
-          {/* Corpo: texto scrollável + oferecimento lateral */}
-          <div className="flex flex-1 min-h-0 px-4 pb-4 gap-3">
-            {/* Texto com scroll */}
-            <div ref={modalScrollRef} className="overflow-y-auto flex-1 min-h-0 promo-scroll pr-2">
-              <div className="text-white font-bold whitespace-pre-line" style={{ fontSize }}>
-                {selectedPromo?.texto?.split("\n").map((line, i) => (
-                  <p
-                    key={i}
-                    className="px-1 py-0.5 rounded transition-colors cursor-default"
-                    onMouseEnter={e => (e.currentTarget.style.backgroundColor = "#a30101")}
-                    onMouseLeave={e => (e.currentTarget.style.backgroundColor = "transparent")}
-                  >
-                    {line ? renderBoldMarkdown(line) : "\u00A0"}
-                  </p>
-                ))}
-              </div>
+          {/* Corpo: texto + oferecimento dentro do scroll */}
+          <div ref={modalScrollRef} className="overflow-y-auto flex-1 min-h-0 promo-scroll px-4 pb-4">
+            <div className="text-white font-bold whitespace-pre-line" style={{ fontSize }}>
+              {selectedPromo?.texto?.split("\n").map((line, i) => (
+                <p
+                  key={i}
+                  className="px-1 py-0.5 rounded transition-colors cursor-default"
+                  onMouseEnter={e => (e.currentTarget.style.backgroundColor = "#a30101")}
+                  onMouseLeave={e => (e.currentTarget.style.backgroundColor = "transparent")}
+                >
+                  {line ? renderBoldMarkdown(line) : "\u00A0"}
+                </p>
+              ))}
             </div>
 
-            {/* Oferecimento lateral */}
+            {/* Oferecimento dentro do scroll, após o texto */}
             {selectedPromo?.oferecimento && selectedPromo.oferecimento !== "-" && (
-              <div className="flex items-center justify-center" style={{ writingMode: "vertical-rl", textOrientation: "mixed" }}>
-                <span className="text-white text-xs font-semibold tracking-wider whitespace-nowrap">
-                  Oferecimento: {selectedPromo.oferecimento}
-                </span>
+              <div className="mt-6 pt-4 border-t border-white/10 text-center">
+                <span className="text-white/50 text-xs uppercase tracking-wider">Oferecimento</span>
+                <p className="text-white text-sm font-semibold mt-1">{selectedPromo.oferecimento}</p>
               </div>
             )}
           </div>
@@ -530,28 +587,42 @@ export default function PromocoesKiosk() {
       </Dialog>
 
       {/* Modal de Programação */}
-      <Dialog open={!!selectedProgram} onOpenChange={(open) => { if (!open) setSelectedProgram(null); }}>
-        <DialogContent className="bg-zinc-950 border-zinc-800 text-white max-w-2xl max-h-[90vh] overflow-hidden flex flex-col p-0 [&>button]:hover:text-red-600 [&>button]:transition-colors">
-          <div className="flex flex-col md:flex-row gap-0 flex-1 min-h-0">
-            {/* Lado esquerdo: capa */}
+      <Dialog open={!!selectedProgram} onOpenChange={(open) => { if (!open) closeProgramModal(); }}>
+        <DialogContent className="bg-zinc-950 border-zinc-800 text-white max-w-3xl h-[80vh] overflow-hidden flex flex-col p-0 [&>button]:hover:text-red-600 [&>button]:transition-colors">
+          <div className="flex flex-col md:flex-row flex-1 min-h-0">
+            {/* Coluna esquerda: capa com object-contain */}
             {selectedProgram?.capa && (
-              <div className="md:w-1/2 flex-shrink-0">
-                <img src={selectedProgram.capa} alt={selectedProgram.nome} className="w-full h-full object-cover" />
+              <div className="md:w-1/2 flex-shrink-0 bg-black flex items-center justify-center">
+                <img src={selectedProgram.capa} alt={selectedProgram.nome} className="w-full h-full object-contain" />
               </div>
             )}
 
-            {/* Lado direito: período + testemunhais */}
-            <div className="flex flex-col flex-1 min-h-0 p-4">
-              {/* Período */}
-              <div className="text-xs text-white/60 mb-2">
-                {selectedProgram?.horarioInicio.slice(0, 5)} às {selectedProgram?.horarioFim.slice(0, 5)}
+            {/* Coluna direita: info + conteúdo */}
+            <div className="flex flex-col flex-1 min-h-0">
+              {/* Horário em destaque */}
+              <div className="px-4 pt-4 pb-1 flex-shrink-0">
+                <div className="text-lg font-bold text-white">
+                  {selectedProgram?.horarioInicio.slice(0, 5)} às {selectedProgram?.horarioFim.slice(0, 5)}
+                </div>
                 {selectedProgram?.diasSemana && selectedProgram.diasSemana.length > 0 && (
-                  <span className="ml-2">• {selectedProgram.diasSemana.join(", ")}</span>
+                  <div className="text-xs text-white/60 mt-0.5">
+                    {selectedProgram.diasSemana.join(", ")}
+                  </div>
                 )}
               </div>
 
-              {/* Testemunhais */}
-              <div className="overflow-y-auto flex-1 min-h-0 promo-scroll pr-2">
+              {/* Rótulo Citações */}
+              <div className="px-4 py-1 flex-shrink-0">
+                <span className="text-sm font-bold" style={{ color: "#FF0000" }}>Citações</span>
+              </div>
+
+              {/* Controles teleprompter */}
+              <div className="flex-shrink-0">
+                <TeleprompterControls target="program" />
+              </div>
+
+              {/* Testemunhais com scroll */}
+              <div ref={programModalScrollRef} className="overflow-y-auto flex-1 min-h-0 promo-scroll px-4 pb-4">
                 {(() => {
                   const tests = selectedProgram ? getTestemunhaisForProgram(selectedProgram.id) : [];
                   if (tests.length === 0) {
@@ -562,7 +633,7 @@ export default function PromocoesKiosk() {
                       {t.imagem_url && (
                         <img src={t.imagem_url} alt="" className="w-full rounded-lg mb-2 object-contain max-h-[200px]" />
                       )}
-                      <div className="text-white whitespace-pre-line text-sm">
+                      <div className="text-white whitespace-pre-line" style={{ fontSize }}>
                         {t.texto.split("\n").map((line, i) => (
                           <p
                             key={i}
