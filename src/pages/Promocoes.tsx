@@ -90,6 +90,8 @@ export default function PromocoesKiosk() {
   const [autoScrolling, setAutoScrolling] = useState(false);
   const [activeScrollTarget, setActiveScrollTarget] = useState<"promo" | "program">("promo");
   const autoPlayTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const scrollSpeedRef = useRef(scrollSpeed);
+  scrollSpeedRef.current = scrollSpeed;
   const bannerTimerRef = useRef(0);
   const [bannerProgress, setBannerProgress] = useState(0);
 
@@ -213,16 +215,6 @@ export default function PromocoesKiosk() {
     return activeScrollTarget === "promo" ? modalScrollRef : programModalScrollRef;
   }, [activeScrollTarget]);
 
-  useEffect(() => {
-    if (autoScrolling && autoScrollRef.current) {
-      clearInterval(autoScrollRef.current);
-      const ref = getActiveScrollRef();
-      autoScrollRef.current = setInterval(() => {
-        ref.current?.scrollBy({ top: 1 });
-      }, scrollSpeed);
-    }
-  }, [scrollSpeed, autoScrolling, getActiveScrollRef]);
-
   const filteredPrograms = programas
     .filter(p => PROGRAMAS_VISIVEIS.some(name => p.nome.toUpperCase().includes(name)))
     .sort((a, b) => a.horarioInicio.localeCompare(b.horarioInicio));
@@ -249,8 +241,8 @@ export default function PromocoesKiosk() {
   }, []);
 
   const toggleAutoScroll = (target: "promo" | "program") => {
-    if (autoScrolling) {
-      if (autoScrollRef.current) { clearInterval(autoScrollRef.current); autoScrollRef.current = null; }
+    if (autoScrolling && activeScrollTarget === target) {
+      if (autoScrollRef.current) { clearTimeout(autoScrollRef.current); autoScrollRef.current = null; }
       setAutoScrolling(false);
     } else {
       startAutoScroll(target);
@@ -259,25 +251,31 @@ export default function PromocoesKiosk() {
 
   const startAutoScroll = (target: "promo" | "program") => {
     setActiveScrollTarget(target);
-    const ref = target === "promo" ? modalScrollRef : programModalScrollRef;
     if (autoScrollRef.current) clearInterval(autoScrollRef.current);
-    autoScrollRef.current = setInterval(() => {
+    const doScroll = () => {
+      const ref = target === "promo" ? modalScrollRef : programModalScrollRef;
       ref.current?.scrollBy({ top: 1 });
-    }, scrollSpeed);
+    };
+    // Use a dynamic interval that reads speed from ref
+    const tick = () => {
+      doScroll();
+      autoScrollRef.current = setTimeout(tick, scrollSpeedRef.current) as any;
+    };
+    autoScrollRef.current = setTimeout(tick, scrollSpeedRef.current) as any;
     setAutoScrolling(true);
   };
 
   const closePromoModal = () => {
     setSelectedPromo(null);
     setAutoScrolling(false);
-    if (autoScrollRef.current) { clearInterval(autoScrollRef.current); autoScrollRef.current = null; }
+    if (autoScrollRef.current) { clearTimeout(autoScrollRef.current); autoScrollRef.current = null; }
     if (autoPlayTimerRef.current) { clearTimeout(autoPlayTimerRef.current); autoPlayTimerRef.current = null; }
   };
 
   const closeProgramModal = () => {
     setSelectedProgram(null);
     setAutoScrolling(false);
-    if (autoScrollRef.current) { clearInterval(autoScrollRef.current); autoScrollRef.current = null; }
+    if (autoScrollRef.current) { clearTimeout(autoScrollRef.current); autoScrollRef.current = null; }
     if (autoPlayTimerRef.current) { clearTimeout(autoPlayTimerRef.current); autoPlayTimerRef.current = null; }
   };
 
@@ -604,8 +602,8 @@ export default function PromocoesKiosk() {
 
           {/* Corpo: texto + oferecimento dentro do scroll, alinhado ao X */}
           <div ref={modalScrollRef} className="overflow-y-auto flex-1 min-h-0 promo-scroll px-4 pb-4 mr-[1px]">
-            <div className="text-white font-bold whitespace-pre-line" style={{ fontSize }}>
-              {selectedPromo?.texto?.split("\n").map((line, i) => (
+            <div className="text-white font-bold whitespace-pre-line" style={{ fontSize: `${fontSize}px` }}>
+              {selectedPromo?.texto?.replace(/\/\//g, "\n").split("\n").map((line, i) => (
                 <p
                   key={i}
                   className="px-1 py-0.5 rounded transition-colors cursor-default"
@@ -620,8 +618,10 @@ export default function PromocoesKiosk() {
             {/* Oferecimento dentro do scroll, após o texto */}
             {selectedPromo?.oferecimento && selectedPromo.oferecimento !== "-" && (
               <div className="mt-6 pt-4 border-t border-white/10 text-center">
-                <span className="text-white/50 text-xs uppercase tracking-wider">Oferecimento</span>
-                <p className="text-white text-sm font-semibold mt-1">{selectedPromo.oferecimento}</p>
+              <span className="text-white/50 text-sm uppercase tracking-wider">Oferecimento</span>
+                <p className="text-white text-xl font-bold mt-2">{selectedPromo.oferecimento.replace(/\/\//g, "\n").split("\n").map((line, i) => (
+                  <span key={i}>{line}{i < selectedPromo.oferecimento.replace(/\/\//g, "\n").split("\n").length - 1 && <br />}</span>
+                ))}</p>
               </div>
             )}
           </div>
@@ -675,8 +675,8 @@ export default function PromocoesKiosk() {
                       {t.imagem_url && (
                         <img src={t.imagem_url} alt="" className="w-full rounded-lg mb-2 object-contain max-h-[200px]" />
                       )}
-                      <div className="text-white whitespace-pre-line" style={{ fontSize }}>
-                        {t.texto.split("\n").map((line, i) => (
+                      <div className="text-white whitespace-pre-line" style={{ fontSize: `${fontSize}px` }}>
+                        {t.texto.replace(/\/\//g, "\n").split("\n").map((line, i) => (
                           <p
                             key={i}
                             className="px-1 py-0.5 rounded transition-colors cursor-default"
