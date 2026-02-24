@@ -70,23 +70,23 @@ export default function PromocoesKiosk() {
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   // Shared persistent settings
-  const [fontSize, setFontSize] = useState(() => {
-    const saved = localStorage.getItem("kiosk-font-size");
-    return saved ? Number(saved) : 24;
-  });
-  const [scrollSpeed, setScrollSpeed] = useState(() => {
-    const saved = localStorage.getItem("promo-scroll-speed");
-    return saved ? Number(saved) : 30;
-  });
-  const [autoPlay, setAutoPlay] = useState(() => {
-    return localStorage.getItem("kiosk-auto-play") === "true";
-  });
+  const getStoredNumber = (key: string, fallback: number, min: number, max: number) => {
+    const raw = localStorage.getItem(key);
+    const parsed = Number(raw);
+    if (!Number.isFinite(parsed)) return fallback;
+    return Math.min(max, Math.max(min, parsed));
+  };
+
+  const [fontSize, setFontSize] = useState(() => getStoredNumber("kiosk-font-size", 24, 12, 56));
+  const [scrollSpeed, setScrollSpeed] = useState(() => getStoredNumber("promo-scroll-speed", 35, 1, 100));
+  const [autoPlay, setAutoPlay] = useState(() => localStorage.getItem("kiosk-auto-play") === "true");
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const promoScrollRef = useRef<HTMLDivElement>(null);
   const modalScrollRef = useRef<HTMLDivElement>(null);
   const programModalScrollRef = useRef<HTMLDivElement>(null);
-  const autoScrollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const autoScrollFrameRef = useRef<number | null>(null);
+  const lastFrameTimeRef = useRef<number | null>(null);
   const [autoScrolling, setAutoScrolling] = useState(false);
   const [activeScrollTarget, setActiveScrollTarget] = useState<"promo" | "program">("promo");
   const autoPlayTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -240,59 +240,107 @@ export default function PromocoesKiosk() {
     }
   }, []);
 
+  const stopAutoScroll = useCallback(() => {
+    if (autoScrollFrameRef.current !== null) {
+      cancelAnimationFrame(autoScrollFrameRef.current);
+      autoScrollFrameRef.current = null;
+    }
+    lastFrameTimeRef.current = null;
+    setAutoScrolling(false);
+  }, []);
+
+  const startAutoScroll = useCallback((target: "promo" | "program") => {
+    setActiveScrollTarget(target);
+
+    if (autoScrollFrameRef.current !== null) {
+      cancelAnimationFrame(autoScrollFrameRef.current);
+      autoScrollFrameRef.current = null;
+    }
+
+    lastFrameTimeRef.current = null;
+    setAutoScrolling(true);
+
+    const animate = (time: number) => {
+      const ref = target === "promo" ? modalScrollRef : programModalScrollRef;
+
+      if (ref.current) {
+        if (lastFrameTimeRef.current === null) {
+          lastFrameTimeRef.current = time;
+        }
+
+        const elapsed = time - lastFrameTimeRef.current;
+        lastFrameTimeRef.current = time;
+
+        const pixelsPerSecond = 15 + scrollSpeedRef.current * 1.8;
+        const pixelsToScroll = (pixelsPerSecond * elapsed) / 1000;
+        ref.current.scrollTop += pixelsToScroll;
+      }
+
+      autoScrollFrameRef.current = requestAnimationFrame(animate);
+    };
+
+    autoScrollFrameRef.current = requestAnimationFrame(animate);
+  }, []);
+
   const toggleAutoScroll = (target: "promo" | "program") => {
     if (autoScrolling && activeScrollTarget === target) {
-      if (autoScrollRef.current) { clearTimeout(autoScrollRef.current); autoScrollRef.current = null; }
-      setAutoScrolling(false);
-    } else {
-      startAutoScroll(target);
+      stopAutoScroll();
+      return;
     }
+    startAutoScroll(target);
   };
 
-  const startAutoScroll = (target: "promo" | "program") => {
-    setActiveScrollTarget(target);
-    if (autoScrollRef.current) clearInterval(autoScrollRef.current);
-    const doScroll = () => {
-      const ref = target === "promo" ? modalScrollRef : programModalScrollRef;
-      ref.current?.scrollBy({ top: 1 });
-    };
-    // Use a dynamic interval that reads speed from ref
-    const tick = () => {
-      doScroll();
-      autoScrollRef.current = setTimeout(tick, scrollSpeedRef.current) as any;
-    };
-    autoScrollRef.current = setTimeout(tick, scrollSpeedRef.current) as any;
-    setAutoScrolling(true);
+  const handleAutoPlayChange = (enabled: boolean) => {
+    setAutoPlay(enabled);
+
+    if (autoPlayTimerRef.current) {
+      clearTimeout(autoPlayTimerRef.current);
+      autoPlayTimerRef.current = null;
+    }
+
+    const hasOpenModal = !!selectedPromo || !!selectedProgram;
+    if (!enabled || !hasOpenModal) return;
+
+    autoPlayTimerRef.current = setTimeout(() => {
+      if (selectedProgram) startAutoScroll("program");
+      if (selectedPromo) startAutoScroll("promo");
+    }, 3000);
   };
 
   const closePromoModal = () => {
     setSelectedPromo(null);
-    setAutoScrolling(false);
-    if (autoScrollRef.current) { clearTimeout(autoScrollRef.current); autoScrollRef.current = null; }
+    stopAutoScroll();
     if (autoPlayTimerRef.current) { clearTimeout(autoPlayTimerRef.current); autoPlayTimerRef.current = null; }
   };
 
   const closeProgramModal = () => {
     setSelectedProgram(null);
-    setAutoScrolling(false);
-    if (autoScrollRef.current) { clearTimeout(autoScrollRef.current); autoScrollRef.current = null; }
+    stopAutoScroll();
     if (autoPlayTimerRef.current) { clearTimeout(autoPlayTimerRef.current); autoPlayTimerRef.current = null; }
   };
 
   // Auto-play on modal open
   useEffect(() => {
     if (selectedPromo && autoPlay) {
+      if (autoPlayTimerRef.current) clearTimeout(autoPlayTimerRef.current);
       autoPlayTimerRef.current = setTimeout(() => startAutoScroll("promo"), 3000);
     }
-    return () => { if (autoPlayTimerRef.current) clearTimeout(autoPlayTimerRef.current); };
-  }, [selectedPromo]);
+
+    return () => {
+      if (autoPlayTimerRef.current) clearTimeout(autoPlayTimerRef.current);
+    };
+  }, [selectedPromo, autoPlay, startAutoScroll]);
 
   useEffect(() => {
     if (selectedProgram && autoPlay) {
+      if (autoPlayTimerRef.current) clearTimeout(autoPlayTimerRef.current);
       autoPlayTimerRef.current = setTimeout(() => startAutoScroll("program"), 3000);
     }
-    return () => { if (autoPlayTimerRef.current) clearTimeout(autoPlayTimerRef.current); };
-  }, [selectedProgram]);
+
+    return () => {
+      if (autoPlayTimerRef.current) clearTimeout(autoPlayTimerRef.current);
+    };
+  }, [selectedProgram, autoPlay, startAutoScroll]);
 
   const getTestemunhaisForProgram = (programId: string) => {
     const today = new Date().toISOString().split("T")[0];
@@ -324,13 +372,17 @@ export default function PromocoesKiosk() {
   // Shared teleprompter controls component
   const TeleprompterControls = ({ target }: { target: "promo" | "program" }) => (
     <div className="flex items-center gap-3 p-[15px] rounded-xl" style={{ backgroundColor: "#1b1b1d" }}>
-      <button onClick={() => toggleAutoScroll(target)} className="w-8 h-8 rounded-lg flex items-center justify-center text-white hover:brightness-125 transition" style={{ backgroundColor: "#a60101" }}>
+      <button
+        onClick={() => toggleAutoScroll(target)}
+        className="w-8 h-8 rounded-lg flex items-center justify-center text-white hover:brightness-125 transition"
+        style={{ backgroundColor: "#a60101" }}
+      >
         {autoScrolling && activeScrollTarget === target ? <Pause size={14} /> : <Play size={14} />}
       </button>
       <div className="flex items-center gap-1">
         <Checkbox
           checked={autoPlay}
-          onCheckedChange={(v) => setAutoPlay(!!v)}
+          onCheckedChange={(v) => handleAutoPlayChange(v === true)}
           className="border-white/40 data-[state=checked]:bg-[#a60101] data-[state=checked]:border-[#a60101]"
         />
         <span className="text-[10px] text-white/60">Auto</span>
@@ -338,17 +390,17 @@ export default function PromocoesKiosk() {
       <div className="flex items-center gap-2 flex-1 max-w-[180px]">
         <span className="text-[10px] text-white/50">Vel.</span>
         <Slider
-          value={[60 - scrollSpeed]}
-          min={10}
-          max={55}
+          value={[scrollSpeed]}
+          min={1}
+          max={100}
           step={1}
-          onValueChange={([v]) => setScrollSpeed(60 - v)}
-          className="flex-1 [&_[role=slider]]:bg-[#a60101] [&_[role=slider]]:border-[#a60101] [&_.relative]:bg-white/20 [&_[data-orientation=horizontal]>.absolute]:bg-[#a60101]"
+          onValueChange={([v]) => setScrollSpeed(v)}
+          className="flex-1 [&_[role=slider]]:h-5 [&_[role=slider]]:w-5 [&_[role=slider]]:cursor-grab [&_[role=slider]]:active:cursor-grabbing [&_[role=slider]]:bg-[#a60101] [&_[role=slider]]:border-[#a60101] [&_.relative]:bg-white/20 [&_[data-orientation=horizontal]>.absolute]:bg-[#a60101]"
         />
       </div>
       <div className="flex items-center gap-1 ml-auto">
         <button onClick={() => setFontSize(s => Math.max(12, s - 2))} className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-bold hover:brightness-125 transition" style={{ backgroundColor: "#a60101" }}>A-</button>
-        <button onClick={() => setFontSize(s => Math.min(48, s + 2))} className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-sm font-bold hover:brightness-125 transition" style={{ backgroundColor: "#a60101" }}>A+</button>
+        <button onClick={() => setFontSize(s => Math.min(56, s + 2))} className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-sm font-bold hover:brightness-125 transition" style={{ backgroundColor: "#a60101" }}>A+</button>
       </div>
     </div>
   );
