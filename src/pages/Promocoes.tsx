@@ -369,10 +369,11 @@ export default function PromocoesKiosk() {
     );
   };
 
-  // Shared teleprompter controls component
-  const TeleprompterControls = ({ target }: { target: "promo" | "program" }) => (
+  // Inline teleprompter controls renderer (not a component to avoid remount)
+  const renderTeleprompterControls = (target: "promo" | "program") => (
     <div className="flex items-center gap-3 p-[15px] rounded-xl" style={{ backgroundColor: "#1b1b1d" }}>
       <button
+        type="button"
         onClick={() => toggleAutoScroll(target)}
         className="w-8 h-8 rounded-lg flex items-center justify-center text-white hover:brightness-125 transition"
         style={{ backgroundColor: "#a60101" }}
@@ -399,8 +400,8 @@ export default function PromocoesKiosk() {
         />
       </div>
       <div className="flex items-center gap-1 ml-auto">
-        <button onClick={() => setFontSize(s => Math.max(12, s - 2))} className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-bold hover:brightness-125 transition" style={{ backgroundColor: "#a60101" }}>A-</button>
-        <button onClick={() => setFontSize(s => Math.min(56, s + 2))} className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-sm font-bold hover:brightness-125 transition" style={{ backgroundColor: "#a60101" }}>A+</button>
+        <button type="button" onClick={() => setFontSize(s => Math.max(12, s - 2))} className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-bold hover:brightness-125 transition" style={{ backgroundColor: "#a60101" }}>A-</button>
+        <button type="button" onClick={() => setFontSize(s => Math.min(56, s + 2))} className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-sm font-bold hover:brightness-125 transition" style={{ backgroundColor: "#a60101" }}>A+</button>
       </div>
     </div>
   );
@@ -649,7 +650,7 @@ export default function PromocoesKiosk() {
 
           {/* Controles teleprompter - painel estilizado */}
           <div className="flex-shrink-0 px-4 pt-2">
-            <TeleprompterControls target="promo" />
+            {renderTeleprompterControls("promo")}
           </div>
 
           {/* Corpo: texto + oferecimento dentro do scroll, alinhado ao X */}
@@ -683,16 +684,7 @@ export default function PromocoesKiosk() {
       {/* Modal de Programação */}
       <Dialog open={!!selectedProgram} onOpenChange={(open) => { if (!open) closeProgramModal(); }}>
         <DialogContent className="bg-zinc-950 border-zinc-800 text-white max-w-4xl h-[80vh] overflow-hidden p-0 [&>button]:hover:text-red-600 [&>button]:transition-colors">
-          <div className="flex flex-row h-full">
-            {/* Coluna esquerda: capa fixa com padding, fora do scroll */}
-            {selectedProgram?.capa && (
-              <div className="w-[45%] flex-shrink-0 bg-black flex items-start justify-center pt-5 pl-5 pb-5">
-                <img src={selectedProgram.capa} alt={selectedProgram.nome} className="w-full h-full object-contain rounded-lg" />
-              </div>
-            )}
-
-            {/* Coluna direita: info + conteúdo */}
-            <div className="flex flex-col flex-1 min-h-0 min-w-0">
+          <div className="flex flex-col flex-1 min-h-0 min-w-0 h-full">
               {/* Horário em destaque */}
               <div className="px-4 pt-4 pb-1 flex-shrink-0">
                 <div className="text-lg font-bold text-white">
@@ -712,7 +704,7 @@ export default function PromocoesKiosk() {
 
               {/* Controles teleprompter - painel estilizado */}
               <div className="flex-shrink-0 px-4 pt-1 pb-2">
-                <TeleprompterControls target="program" />
+                {renderTeleprompterControls("program")}
               </div>
 
               {/* Testemunhais com scroll, alinhado ao X */}
@@ -744,7 +736,6 @@ export default function PromocoesKiosk() {
                 })()}
               </div>
             </div>
-          </div>
         </DialogContent>
       </Dialog>
     </div>
