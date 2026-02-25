@@ -433,7 +433,7 @@ export default function PromocoesKiosk() {
         .promo-scroll::-webkit-scrollbar-thumb{background:white;border-radius:5px}
         .promo-scroll::-webkit-scrollbar-button{display:block;height:10px;background:white;border-radius:2px}
         .promo-scroll{scrollbar-width:thin;scrollbar-color:white #a60101}
-        @keyframes pulse-border{0%,100%{box-shadow:0 0 0 3px rgba(255,255,255,1)}50%{box-shadow:0 0 0 3px rgba(255,255,255,0.2)}}
+        @keyframes pulse-border{0%,100%{box-shadow:0 0 0 3px rgba(251,216,55,1)}50%{box-shadow:0 0 0 3px rgba(251,216,55,0.2)}}
         .animate-pulse-border{animation:pulse-border 1.5s ease-in-out infinite}
       `}</style>
 
@@ -604,11 +604,11 @@ export default function PromocoesKiosk() {
               {filteredPrograms.map(prog => (
                 <div
                   key={prog.id}
-                  className={`min-w-[230px] relative rounded-lg overflow-hidden flex-shrink-0 cursor-pointer hover:opacity-70 transition-opacity ${onAirProgram?.nome === prog.nome ? "animate-pulse-border" : ""}`}
+                  className={`min-w-[230px] relative rounded-lg flex-shrink-0 cursor-pointer hover:opacity-70 transition-opacity ${onAirProgram?.nome === prog.nome ? "animate-pulse-border" : "overflow-hidden"}`}
                   onClick={() => setSelectedProgram(prog)}
                 >
                   {prog.capa ? (
-                    <img src={prog.capa} alt={prog.nome} className="w-full h-auto object-contain" />
+                    <img src={prog.capa} alt={prog.nome} className="w-full h-auto object-contain rounded-lg" />
                   ) : (
                     <div className="w-full h-[300px] bg-zinc-800 flex items-center justify-center">
                       <Clock size={24} className="text-zinc-600" />
