@@ -369,7 +369,23 @@ export default function PromocoesKiosk() {
     );
   };
 
-  // Inline teleprompter controls renderer (not a component to avoid remount)
+  // Spacebar to toggle play/pause when a modal is open
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code !== "Space") return;
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA") return;
+      e.preventDefault();
+      if (selectedPromo) toggleAutoScroll("promo");
+      else if (selectedProgram) toggleAutoScroll("program");
+    };
+    if (selectedPromo || selectedProgram) {
+      window.addEventListener("keydown", handleKeyDown);
+    }
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [selectedPromo, selectedProgram, autoScrolling, activeScrollTarget]);
+
+   // Inline teleprompter controls renderer (not a component to avoid remount)
   const renderTeleprompterControls = (target: "promo" | "program") => (
     <div className="flex items-center gap-3 p-[15px] rounded-xl" style={{ backgroundColor: "#1b1b1d" }}>
       <button
@@ -387,6 +403,7 @@ export default function PromocoesKiosk() {
           className="border-white/40 data-[state=checked]:bg-[#a60101] data-[state=checked]:border-[#a60101]"
         />
         <span className="text-[10px] text-white/60">Auto</span>
+        <span className="text-[9px] text-white/40 whitespace-nowrap">espaço = play/pause</span>
       </div>
       <div className="flex items-center gap-2 flex-1 max-w-[180px]">
         <span className="text-[10px] text-white/50">Vel.</span>
