@@ -604,15 +604,20 @@ export default function PromocoesKiosk() {
               {filteredPrograms.map(prog => (
                 <div
                   key={prog.id}
-                  className={`min-w-[230px] relative rounded-lg flex-shrink-0 cursor-pointer hover:opacity-70 transition-opacity ${onAirProgram?.nome === prog.nome ? "animate-pulse-border" : "overflow-hidden"}`}
+                  className="min-w-[230px] relative rounded-lg overflow-hidden flex-shrink-0 cursor-pointer hover:opacity-70 transition-opacity"
                   onClick={() => setSelectedProgram(prog)}
                 >
                   {prog.capa ? (
-                    <img src={prog.capa} alt={prog.nome} className="w-full h-auto object-contain rounded-lg" />
+                    <img src={prog.capa} alt={prog.nome} className="w-full h-auto object-contain" />
                   ) : (
                     <div className="w-full h-[300px] bg-zinc-800 flex items-center justify-center">
                       <Clock size={24} className="text-zinc-600" />
                     </div>
+                  )}
+                  {onAirProgram?.nome === prog.nome && (
+                    <span className="absolute top-2 left-2 text-[10px] font-bold uppercase px-2 py-0.5 rounded" style={{ backgroundColor: "#fbd837", color: "#000" }}>
+                      No Ar
+                    </span>
                   )}
                   <div className="absolute bottom-1 left-0 right-0 text-center">
                     <span className="text-[10px] font-bold text-white drop-shadow-lg bg-black/50 px-1.5 py-0.5 rounded">
