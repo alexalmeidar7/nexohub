@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [pass, setPass] = useState("");
-  const [isSignUp, setIsSignUp] = useState(false);
+  
   const [isForgot, setIsForgot] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -35,13 +35,8 @@ export default function LoginScreen() {
     setLoading(true);
     setError("");
 
-    if (isSignUp) {
-      const { error } = await supabase.auth.signUp({ email, password: pass });
-      if (error) setError(error.message);
-    } else {
-      const { error } = await supabase.auth.signInWithPassword({ email, password: pass });
-      if (error) setError(error.message);
-    }
+    const { error } = await supabase.auth.signInWithPassword({ email, password: pass });
+    if (error) setError(error.message);
     setLoading(false);
   };
 
@@ -49,7 +44,7 @@ export default function LoginScreen() {
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
       <div className="bg-login w-full max-w-md rounded-4xl p-10 shadow-2xl animate-fade-in">
         <h1 className="text-center text-login-foreground font-medium tracking-[0.2em] mb-8 text-xs">
-          MASTERVIEW / {isForgot ? "RECUPERAR SENHA" : isSignUp ? "CADASTRO" : "LOGIN"}
+          MASTERVIEW / {isForgot ? "RECUPERAR SENHA" : "LOGIN"}
         </h1>
 
         {isForgot && forgotSent ? (
@@ -89,14 +84,6 @@ export default function LoginScreen() {
 
             <div className="flex justify-between items-center pt-2">
               <div className="flex flex-col gap-1">
-                {!isForgot && (
-                  <button
-                    onClick={() => setIsSignUp(!isSignUp)}
-                    className="text-xs text-login-foreground/70 hover:text-login-foreground transition-colors"
-                  >
-                    {isSignUp ? "Já tenho conta" : "Criar conta"}
-                  </button>
-                )}
                 <button
                   onClick={() => { setIsForgot(!isForgot); setError(""); }}
                   className="text-xs text-login-foreground/70 hover:text-login-foreground transition-colors"
@@ -111,7 +98,7 @@ export default function LoginScreen() {
               >
                 {loading ? <Loader2 size={20} className="animate-spin" /> : (
                   <>
-                    {isForgot ? "enviar" : isSignUp ? "cadastrar" : "entrar"}
+                    {isForgot ? "enviar" : "entrar"}
                     <ArrowRight size={20} />
                   </>
                 )}
