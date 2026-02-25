@@ -433,6 +433,8 @@ export default function PromocoesKiosk() {
         .promo-scroll::-webkit-scrollbar-thumb{background:white;border-radius:5px}
         .promo-scroll::-webkit-scrollbar-button{display:block;height:10px;background:white;border-radius:2px}
         .promo-scroll{scrollbar-width:thin;scrollbar-color:white #a60101}
+        @keyframes pulse-border{0%,100%{box-shadow:0 0 0 3px rgba(255,255,255,1)}50%{box-shadow:0 0 0 3px rgba(255,255,255,0.2)}}
+        .animate-pulse-border{animation:pulse-border 1.5s ease-in-out infinite}
       `}</style>
 
       <div className="w-full max-w-[1000px] flex flex-col gap-6">
@@ -602,7 +604,7 @@ export default function PromocoesKiosk() {
               {filteredPrograms.map(prog => (
                 <div
                   key={prog.id}
-                  className="min-w-[230px] relative rounded-lg overflow-hidden flex-shrink-0 cursor-pointer hover:opacity-70 transition-opacity"
+                  className={`min-w-[230px] relative rounded-lg overflow-hidden flex-shrink-0 cursor-pointer hover:opacity-70 transition-opacity ${onAirProgram?.nome === prog.nome ? "animate-pulse-border" : ""}`}
                   onClick={() => setSelectedProgram(prog)}
                 >
                   {prog.capa ? (
