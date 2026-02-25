@@ -403,7 +403,6 @@ export default function PromocoesKiosk() {
           className="border-white/40 data-[state=checked]:bg-[#a60101] data-[state=checked]:border-[#a60101]"
         />
         <span className="text-[10px] text-white/60">Auto</span>
-        <span className="text-[9px] text-white/40 whitespace-nowrap">espaço = play/pause</span>
       </div>
       <div className="flex items-center gap-2 flex-1 max-w-[180px]">
         <span className="text-[10px] text-white/50">Vel.</span>
@@ -415,6 +414,7 @@ export default function PromocoesKiosk() {
           onValueChange={([v]) => setScrollSpeed(v)}
           className="flex-1 [&_[role=slider]]:h-5 [&_[role=slider]]:w-5 [&_[role=slider]]:cursor-grab [&_[role=slider]]:active:cursor-grabbing [&_[role=slider]]:bg-[#a60101] [&_[role=slider]]:border-[#a60101] [&_.relative]:bg-white/20 [&_[data-orientation=horizontal]>.absolute]:bg-[#a60101]"
         />
+        <span className="text-[9px] text-white/40 whitespace-nowrap">espaço = play/pause</span>
       </div>
       <div className="flex items-center gap-1 ml-auto">
         <button type="button" onClick={() => setFontSize(s => Math.max(12, s - 2))} className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-bold hover:brightness-125 transition" style={{ backgroundColor: "#a60101" }}>A-</button>
