@@ -224,13 +224,22 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               <p className="text-gray-500">
                 Bem-vindo ao MasterView. Selecione uma opção no menu lateral.
               </p>
-              <ComercialWidgets />
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="space-y-6">
                   <WeatherWidget />
                   <MusicWidget />
+                  <ComercialWidgets />
                 </div>
-                <OnAirWidget />
+                <div className="space-y-6">
+                  <button
+                    onClick={() => window.open('/promocoes-kiosk', '_blank')}
+                    className="w-full bg-gray-700 text-white px-4 py-3 rounded-xl shadow-lg hover:bg-gray-600 transition-colors flex items-center justify-center gap-2 font-bold text-sm"
+                  >
+                    <ExternalLink size={16} />
+                    Ver Promoções & Grade
+                  </button>
+                  <OnAirWidget />
+                </div>
                 <DashboardAgenda />
               </div>
               <UnifiedXmlField />
@@ -248,13 +257,6 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           {currentPage === "logos" && <LogosPatrocinadoresPage />}
         </section>
 
-        <button
-          onClick={() => window.open('/promocoes-kiosk', '_blank')}
-          className="fixed bottom-10 right-10 bg-[#d70d0e] text-white px-4 py-3 rounded-lg shadow-lg hover:scale-105 transition-transform z-50 flex items-center gap-2 font-bold text-sm"
-        >
-          <ExternalLink size={16} />
-          Ver Promoções & Grade
-        </button>
 
         <div className="absolute bottom-10 right-10 opacity-80 pointer-events-none">
           <span className="text-foreground font-bold text-3xl tracking-tighter">
@@ -606,7 +608,7 @@ function DashboardCalendar({ selected, onSelect, eventDates }: {
       selected={selected}
       onSelect={onSelect}
       locale={ptBR}
-      className="p-0 pointer-events-auto [&_.rdp-day]:h-7 [&_.rdp-day]:w-7 [&_.rdp-day]:text-xs [&_.rdp-day]:text-gray-700 [&_.rdp-day_button]:text-gray-700 [&_.rdp-head_cell]:text-gray-500 [&_.rdp-caption_label]:text-gray-700 [&_.rdp-caption_label]:text-sm [&_.rdp-caption_label]:font-semibold"
+      className="p-0 pointer-events-auto [&_.rdp-day]:h-7 [&_.rdp-day]:w-7 [&_.rdp-day]:text-xs [&_.rdp-day]:text-gray-700 [&_.rdp-day_button]:text-gray-700 [&_.rdp-head_cell]:text-gray-500 [&_.rdp-caption_label]:text-gray-600 [&_.rdp-caption_label]:text-sm [&_.rdp-caption_label]:font-semibold [&_.rdp-nav_button]:text-gray-600"
       modifiers={{ hasEvent: eventDates }}
       modifiersStyles={{
         hasEvent: { backgroundColor: "#d8f96c", fontWeight: "bold", color: "#333" },
