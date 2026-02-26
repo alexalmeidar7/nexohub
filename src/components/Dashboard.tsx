@@ -608,7 +608,13 @@ function DashboardCalendar({ selected, onSelect, eventDates }: {
       selected={selected}
       onSelect={onSelect}
       locale={ptBR}
-      className="p-0 pointer-events-auto [&_.rdp-day]:h-7 [&_.rdp-day]:w-7 [&_.rdp-day]:text-xs [&_.rdp-day]:text-gray-700 [&_.rdp-day_button]:text-gray-700 [&_.rdp-head_cell]:text-gray-500 [&_.rdp-caption_label]:text-gray-600 [&_.rdp-caption_label]:text-sm [&_.rdp-caption_label]:font-semibold [&_.rdp-nav_button]:text-gray-600"
+      className="p-0 pointer-events-auto [&_.rdp-day]:h-7 [&_.rdp-day]:w-7 [&_.rdp-day]:text-xs [&_.rdp-day]:text-gray-700 [&_.rdp-day_button]:text-gray-700 [&_.rdp-head_cell]:text-gray-500"
+      classNames={{
+        caption_label: "text-sm font-semibold text-gray-600",
+        nav_button: "h-7 w-7 bg-transparent p-0 text-gray-600 hover:text-gray-900 hover:bg-gray-200 inline-flex items-center justify-center rounded-md",
+        nav_button_previous: "absolute left-1",
+        nav_button_next: "absolute right-1",
+      }}
       modifiers={{ hasEvent: eventDates }}
       modifiersStyles={{
         hasEvent: { backgroundColor: "#d8f96c", fontWeight: "bold", color: "#333" },
