@@ -266,6 +266,7 @@ export type Database = {
           ativo: boolean
           capa: string | null
           created_at: string
+          data_variavel: string | null
           descricao: string | null
           dias_semana: string[] | null
           estudio: string | null
@@ -275,12 +276,14 @@ export type Database = {
           nome: string
           selo: string | null
           user_id: string
+          variavel: boolean
         }
         Insert: {
           apresentador_id?: string | null
           ativo?: boolean
           capa?: string | null
           created_at?: string
+          data_variavel?: string | null
           descricao?: string | null
           dias_semana?: string[] | null
           estudio?: string | null
@@ -290,12 +293,14 @@ export type Database = {
           nome: string
           selo?: string | null
           user_id: string
+          variavel?: boolean
         }
         Update: {
           apresentador_id?: string | null
           ativo?: boolean
           capa?: string | null
           created_at?: string
+          data_variavel?: string | null
           descricao?: string | null
           dias_semana?: string[] | null
           estudio?: string | null
@@ -305,6 +310,7 @@ export type Database = {
           nome?: string
           selo?: string | null
           user_id?: string
+          variavel?: boolean
         }
         Relationships: [
           {

@@ -1,5 +1,9 @@
 import { useState, useEffect, useMemo, useRef } from "react";
-import { AlertCircle, Trash2, Clock, Calendar, Building2, Pencil, X, Power, Loader2, Info } from "lucide-react";
+import { AlertCircle, Trash2, Clock, Calendar, Building2, Pencil, X, Power, Loader2, Info, CalendarDays } from "lucide-react";
+import { format, addDays, startOfWeek } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { Calendar as CalendarUI } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { getApresentadores, type Apresentador } from "./ApresentadorForm";
 import { supabase } from "@/integrations/supabase/client";
@@ -39,6 +43,7 @@ interface Programa {
   ativo: boolean;
   variavel: boolean;
   descricao: string;
+  dataVariavel: string | null;
 }
 
 const DIAS_SEMANA = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
@@ -59,6 +64,7 @@ async function getProgramas(): Promise<Programa[]> {
     ativo: (p as any).ativo ?? true,
     variavel: (p as any).variavel ?? false,
     descricao: (p as any).descricao || "",
+    dataVariavel: (p as any).data_variavel || null,
   }));
 }
 
@@ -86,6 +92,7 @@ export default function ProgramaForm() {
   const [estudio, setEstudio] = useState("");
   const [ativo, setAtivo] = useState(true);
   const [variavel, setVariavel] = useState(false);
+  const [dataVariavel, setDataVariavel] = useState<Date | undefined>(undefined);
   const [descricao, setDescricao] = useState("");
   const [apresentadores, setApresentadores] = useState<Apresentador[]>([]);
   const [programas, setProgramas] = useState<Programa[]>([]);
@@ -154,21 +161,48 @@ export default function ProgramaForm() {
   };
 
   const resetForm = () => {
-    setNome(""); setApresentadorId(""); setSelo(""); setCapa(""); setDiasSemana([]); setHorarioInicio(""); setHorarioFim(""); setEstudio(""); setAtivo(true); setVariavel(false); setDescricao(""); setConflictMsg(""); setEditingId(null);
+    setNome(""); setApresentadorId(""); setSelo(""); setCapa(""); setDiasSemana([]); setHorarioInicio(""); setHorarioFim(""); setEstudio(""); setAtivo(true); setVariavel(false); setDataVariavel(undefined); setDescricao(""); setConflictMsg(""); setEditingId(null);
   };
 
   const handleAdd = async () => {
     if (!nome.trim() || !user) return;
     if (!horarioInicio || !horarioFim) { setConflictMsg("Preencha o horário de início e fim."); return; }
     if (horarioInicio >= horarioFim) { setConflictMsg("O horário de início deve ser antes do fim."); return; }
-    if (diasSemana.length === 0) { setConflictMsg("Selecione ao menos um dia da semana."); return; }
     if (!estudio.trim()) { setConflictMsg("Informe o estúdio."); return; }
 
-    // Variable programs can override fixed ones — skip conflict check
-    if (!variavel) {
-      const conflict = checkConflict(programas, diasSemana, horarioInicio, horarioFim, estudio.trim(), editingId || undefined);
-      if (conflict) { setConflictMsg(`Conflito com "${conflict.nome}" no mesmo estúdio e horário.`); return; }
+    if (variavel) {
+      if (!dataVariavel) { setConflictMsg("Selecione a data para o programa variável."); return; }
+      // Auto-set diasSemana from date
+      const DIAS_MAP_REV: Record<number, string> = { 1: "Segunda", 2: "Terça", 3: "Quarta", 4: "Quinta", 5: "Sexta", 6: "Sábado", 0: "Domingo" };
+      const dayOfWeek = DIAS_MAP_REV[dataVariavel.getDay()];
+      const dataStr = format(dataVariavel, "yyyy-MM-dd");
+
+      setSaving(true);
+      if (editingId) {
+        await supabase.from("programas").update({
+          nome: nome.trim(), apresentador_id: apresentadorId || null, selo, capa, dias_semana: [dayOfWeek],
+          horario_inicio: horarioInicio, horario_fim: horarioFim, estudio: estudio.trim(), ativo, descricao: descricao.trim(),
+          variavel: true, data_variavel: dataStr,
+        } as any).eq("id", editingId);
+      } else {
+        await supabase.from("programas").insert({
+          user_id: user.id, nome: nome.trim(), apresentador_id: apresentadorId || null, selo, capa, dias_semana: [dayOfWeek],
+          horario_inicio: horarioInicio, horario_fim: horarioFim, estudio: estudio.trim(), ativo, descricao: descricao.trim(),
+          variavel: true, data_variavel: dataStr,
+        } as any);
+      }
+      await load();
+      resetForm();
+      setSaving(false);
+      return;
     }
+
+    if (diasSemana.length === 0) { setConflictMsg("Selecione ao menos um dia da semana."); return; }
+
+    // Fixed programs: conflict check excluding variable programs
+    const fixedProgramas = programas.filter(p => !p.variavel);
+    const conflict = checkConflict(fixedProgramas, diasSemana, horarioInicio, horarioFim, estudio.trim(), editingId || undefined);
+    if (conflict) { setConflictMsg(`Conflito com "${conflict.nome}" no mesmo estúdio e horário.`); return; }
 
     setSaving(true);
 
@@ -176,11 +210,13 @@ export default function ProgramaForm() {
       await supabase.from("programas").update({
         nome: nome.trim(), apresentador_id: apresentadorId || null, selo, capa, dias_semana: diasSemana,
         horario_inicio: horarioInicio, horario_fim: horarioFim, estudio: estudio.trim(), ativo, descricao: descricao.trim(),
+        variavel: false, data_variavel: null,
       } as any).eq("id", editingId);
     } else {
       await supabase.from("programas").insert({
         user_id: user.id, nome: nome.trim(), apresentador_id: apresentadorId || null, selo, capa, dias_semana: diasSemana,
         horario_inicio: horarioInicio, horario_fim: horarioFim, estudio: estudio.trim(), ativo, descricao: descricao.trim(),
+        variavel: false, data_variavel: null,
       } as any);
     }
     await load();
@@ -191,7 +227,9 @@ export default function ProgramaForm() {
   const startEdit = (p: Programa) => {
     setEditingId(p.id); setNome(p.nome); setApresentadorId(p.apresentadorId); setSelo(p.selo); setCapa(p.capa);
     setDiasSemana(p.diasSemana); setHorarioInicio(p.horarioInicio); setHorarioFim(p.horarioFim);
-    setEstudio(p.estudio); setAtivo(p.ativo); setVariavel(p.variavel); setDescricao(p.descricao); setConflictMsg("");
+    setEstudio(p.estudio); setAtivo(p.ativo); setVariavel(p.variavel); setDescricao(p.descricao);
+    setDataVariavel(p.dataVariavel ? new Date(p.dataVariavel + "T12:00:00") : undefined);
+    setConflictMsg("");
   };
 
   const removePrograma = async (id: string) => {
@@ -230,6 +268,17 @@ export default function ProgramaForm() {
   const diaAtual = DIAS_MAP[now.getDay()];
   const todayDateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
 
+  // Calculate dates for each day of the current week
+  const weekStart = startOfWeek(now, { weekStartsOn: 1 }); // Monday
+  const weekDates = useMemo(() => {
+    const dates: Record<string, string> = {};
+    DIAS_SEMANA.forEach((dia, i) => {
+      const date = addDays(weekStart, i);
+      dates[dia] = format(date, "dd/MM");
+    });
+    return dates;
+  }, [weekStart.toDateString()]);
+
   // Filter: variable programs only show on their specific day
   const gradeProgramas = useMemo(() => {
     let filtered = gradeEstudioFilter === "todos" ? programas : programas.filter(p => p.estudio === gradeEstudioFilter);
@@ -237,13 +286,25 @@ export default function ProgramaForm() {
     return filtered;
   }, [programas, gradeEstudioFilter]);
 
+  // Get the full date string for a given day of the week in current week
+  const getDateForDay = (dia: string): string => {
+    const idx = DIAS_SEMANA.indexOf(dia);
+    const date = addDays(weekStart, idx);
+    return format(date, "yyyy-MM-dd");
+  };
+
   const getProgramaForSlot = (dia: string, slotTime: string) => {
+    const dateForDay = getDateForDay(dia);
+
     const matching = gradeProgramas.filter(p =>
       p.diasSemana.includes(dia) && slotTime >= p.horarioInicio && slotTime < p.horarioFim && p.ativo
     );
-    // Variable programs take priority over fixed ones
-    const variable = matching.find(p => p.variavel);
-    if (variable && dia === diaAtual) return variable;
+
+    // Variable programs take priority but ONLY on their specific date
+    const variable = matching.find(p => p.variavel && p.dataVariavel === dateForDay);
+    if (variable) return variable;
+
+    // Otherwise show fixed (non-variable) program
     return matching.find(p => !p.variavel) || matching[0] || undefined;
   };
 
@@ -353,15 +414,37 @@ export default function ProgramaForm() {
             Programa Ativo
           </label>
           <label className="flex items-center gap-2 cursor-pointer text-foreground">
-            <input type="checkbox" checked={variavel} onChange={(e) => setVariavel(e.target.checked)} className="w-4 h-4 accent-primary" />
+            <input type="checkbox" checked={variavel} onChange={(e) => { setVariavel(e.target.checked); if (!e.target.checked) setDataVariavel(undefined); }} className="w-4 h-4 accent-primary" />
             Programa Variável
           </label>
         </div>
 
         {variavel && (
-          <p className="text-xs text-muted-foreground bg-muted/50 border border-border rounded-lg px-3 py-2">
-            ⚠️ Programa variável: aparece na grade apenas no dia e horário específicos definidos acima.
-          </p>
+          <div className="space-y-2">
+            <label className="block text-muted-foreground text-xs flex items-center gap-1">
+              <CalendarDays size={14} /> Data do Programa Variável
+            </label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !dataVariavel && "text-muted-foreground")}>
+                  <CalendarDays className="mr-2 h-4 w-4" />
+                  {dataVariavel ? format(dataVariavel, "dd/MM/yyyy (EEEE)", { locale: ptBR }) : "Selecione a data"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <CalendarUI
+                  mode="single"
+                  selected={dataVariavel}
+                  onSelect={setDataVariavel}
+                  initialFocus
+                  className={cn("p-3 pointer-events-auto")}
+                />
+              </PopoverContent>
+            </Popover>
+            <p className="text-xs text-muted-foreground bg-muted/50 border border-border rounded-lg px-3 py-2">
+              ⚠️ Este programa substituirá o programa fixo neste horário apenas na data selecionada. O programa anterior voltará automaticamente após essa data.
+            </p>
+          </div>
         )}
 
         {conflictMsg && <p className="text-destructive text-sm flex items-center gap-1"><AlertCircle size={14} /> {conflictMsg}</p>}
@@ -410,7 +493,8 @@ export default function ProgramaForm() {
                   <th className="px-2 py-2 text-left text-muted-foreground w-20 rounded-lg">Horário</th>
                   {DIAS_SEMANA.map(dia => (
                     <th key={dia} className={`px-2 py-2 text-center rounded-lg ${dia === diaAtual ? "text-primary font-bold" : "text-muted-foreground"}`}>
-                      {dia.slice(0, 3)}
+                      <div>{dia.slice(0, 3)}</div>
+                      <div className="text-[9px] font-normal opacity-70">{weekDates[dia]}</div>
                     </th>
                   ))}
                 </tr>
@@ -518,7 +602,7 @@ export default function ProgramaForm() {
                 <div className="p-4 space-y-2 text-sm">
                   <p className="text-foreground">Apresentador: {getApresentadorNome(p.apresentadorId)}</p>
                   <p className="text-muted-foreground flex items-center gap-1"><Building2 size={12} /> {p.estudio}</p>
-                  <p className="text-muted-foreground flex items-center gap-1"><Calendar size={12} /> {p.diasSemana.join(", ")}</p>
+                  <p className="text-muted-foreground flex items-center gap-1"><Calendar size={12} /> {p.variavel && p.dataVariavel ? `${format(new Date(p.dataVariavel + "T12:00:00"), "dd/MM/yyyy (EEEE)", { locale: ptBR })}` : p.diasSemana.join(", ")}</p>
                   <p className="text-muted-foreground flex items-center gap-1"><Clock size={12} /> {p.horarioInicio} — {p.horarioFim}</p>
                   {p.descricao && <p className="text-muted-foreground text-xs italic">{p.descricao}</p>}
                   <span className={`inline-block px-2 py-0.5 rounded text-xs font-semibold ${
