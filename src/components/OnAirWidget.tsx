@@ -211,9 +211,9 @@ export default function OnAirWidget() {
             </div>
           </div>
 
-          <div className="absolute bottom-[4px] left-0 right-0 z-10 px-5">
-            <p className="font-bold text-gray-800 truncate text-2xl">{programa.nome}</p>
-            <div className="flex items-center gap-3 mb-1">
+          <div className="absolute inset-0 z-10 px-5 flex flex-col justify-center">
+            <p className="font-bold text-gray-800 text-2xl leading-tight line-clamp-2" style={{ maxWidth: "55%" }}>{programa.nome}</p>
+            <div className="flex items-center gap-3 mt-1">
               <p className="text-gray-600 text-xs truncate">{apresentadorNome}</p>
               <p className="text-gray-600 text-xs whitespace-nowrap">
                 {programa.horarioInicio} — {programa.horarioFim}
