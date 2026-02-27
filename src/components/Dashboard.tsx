@@ -26,6 +26,7 @@ import {
 
 import { getMusicData } from "./MusicaNoAr";
 import { useAuth } from "@/hooks/useAuth";
+import VideoPlayer from "./VideoPlayer";
 
 type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos";
 
@@ -244,6 +245,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 <DashboardAgenda />
               </div>
               <UnifiedXmlField />
+              <VideoPlayer />
             </div>
           )}
           {currentPage === "previsao" && <PrevisaoTempo />}
