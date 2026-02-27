@@ -240,12 +240,12 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                     <ExternalLink size={16} />
                     Ver Promoções & Grade
                   </button>
+                  <VideoPlayer />
                   <OnAirWidget />
                 </div>
                 <DashboardAgenda />
               </div>
               <UnifiedXmlField />
-              <VideoPlayer />
             </div>
           )}
           {currentPage === "previsao" && <PrevisaoTempo />}

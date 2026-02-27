@@ -59,7 +59,7 @@ export default function VideoPlayer() {
 
   if (minimized) {
     return (
-      <div className="fixed bottom-4 right-4 z-50 rounded-xl overflow-hidden shadow-2xl" style={{ backgroundColor: "#2a2a2a", width: 431 }}>
+      <div className="rounded-xl overflow-hidden shadow-2xl" style={{ backgroundColor: "#2a2a2a" }}>
         <div className="flex items-center justify-between px-3 py-2">
           <div className="flex items-center gap-2">
             <Video size={14} className="text-red-400" />
@@ -91,13 +91,13 @@ export default function VideoPlayer() {
   return (
     <div
       ref={containerRef}
-      className={`fixed bottom-4 right-4 z-50 rounded-xl overflow-hidden shadow-2xl flex flex-col ${
-        fullscreen ? "!rounded-none" : ""
+      className={`rounded-xl overflow-hidden shadow-2xl flex flex-col ${
+        fullscreen ? "!rounded-none !fixed !inset-0 !z-50" : ""
       }`}
       style={
         fullscreen
-          ? { position: "fixed", top: 0, left: 0, right: 0, bottom: 0, width: "100%", height: "100%", backgroundColor: "#000" }
-          : { width: 431, backgroundColor: "#2a2a2a" }
+          ? { width: "100%", height: "100%", backgroundColor: "#000" }
+          : { backgroundColor: "#2a2a2a" }
       }
     >
       {/* Top bar */}
