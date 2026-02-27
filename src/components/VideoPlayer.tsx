@@ -1,15 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import Hls from "hls.js";
-import { Minimize2, Maximize2, X, Video } from "lucide-react";
+import { Minimize2, Maximize2, Video, Volume2, VolumeX } from "lucide-react";
 
 const STREAM_URL = "https://video04.logicahost.com.br/radiopositivafm/radiopositivafm/chunklist_w896619194.m3u8";
 
 export default function VideoPlayer() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<Hls | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [minimized, setMinimized] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const [muted, setMuted] = useState(true);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -41,6 +42,10 @@ export default function VideoPlayer() {
     return () => document.removeEventListener("fullscreenchange", handler);
   }, []);
 
+  useEffect(() => {
+    if (videoRef.current) videoRef.current.muted = muted;
+  }, [muted]);
+
   const toggleFullscreen = () => {
     if (!containerRef.current) return;
     if (!fullscreen) {
@@ -54,46 +59,87 @@ export default function VideoPlayer() {
 
   if (minimized) {
     return (
-      <button
-        onClick={() => setMinimized(false)}
-        className="fixed bottom-4 right-4 z-50 bg-gray-800 hover:bg-gray-700 text-white rounded-full w-12 h-12 flex items-center justify-center shadow-xl transition-all"
-        title="Abrir vídeo"
-      >
-        <Video size={20} />
-      </button>
+      <div className="fixed bottom-4 right-4 z-50 rounded-xl overflow-hidden shadow-2xl" style={{ backgroundColor: "#2a2a2a", width: 431 }}>
+        <div className="flex items-center justify-between px-3 py-2">
+          <div className="flex items-center gap-2">
+            <Video size={14} className="text-red-400" />
+            <span className="text-white text-xs font-semibold">Positiva FM - Vídeo ao vivo</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setMuted(!muted)}
+              className="bg-white/10 hover:bg-white/20 text-white rounded-full w-7 h-7 flex items-center justify-center transition-all"
+              title={muted ? "Ativar som" : "Desativar som"}
+            >
+              {muted ? <VolumeX size={13} /> : <Volume2 size={13} />}
+            </button>
+            <button
+              onClick={() => setMinimized(false)}
+              className="bg-white/10 hover:bg-white/20 text-white rounded-full w-7 h-7 flex items-center justify-center transition-all"
+              title="Expandir"
+            >
+              <Maximize2 size={13} />
+            </button>
+          </div>
+        </div>
+        {/* Keep video alive but hidden */}
+        <video ref={videoRef} className="hidden" muted={muted} playsInline autoPlay />
+      </div>
     );
   }
 
   return (
     <div
       ref={containerRef}
-      className={`fixed bottom-4 right-4 z-50 rounded-xl overflow-hidden shadow-2xl border border-white/10 bg-black ${
-        fullscreen ? "w-full h-full inset-0 rounded-none" : ""
+      className={`fixed bottom-4 right-4 z-50 rounded-xl overflow-hidden shadow-2xl flex flex-col ${
+        fullscreen ? "!rounded-none" : ""
       }`}
-      style={fullscreen ? { position: "fixed", top: 0, left: 0, bottom: 0, right: 0 } : { width: 431, height: 242 }}
+      style={
+        fullscreen
+          ? { position: "fixed", top: 0, left: 0, right: 0, bottom: 0, width: "100%", height: "100%", backgroundColor: "#000" }
+          : { width: 431, backgroundColor: "#2a2a2a" }
+      }
     >
-      <video
-        ref={videoRef}
-        className="w-full h-full object-cover"
-        muted
-        playsInline
-        autoPlay
-      />
-      <div className="absolute top-2 right-2 flex items-center gap-1">
-        <button
-          onClick={() => setMinimized(true)}
-          className="bg-black/60 hover:bg-black/80 text-white rounded-full w-7 h-7 flex items-center justify-center transition-all"
-          title="Minimizar"
-        >
-          <Minimize2 size={14} />
-        </button>
-        <button
-          onClick={toggleFullscreen}
-          className="bg-black/60 hover:bg-black/80 text-white rounded-full w-7 h-7 flex items-center justify-center transition-all"
-          title="Tela cheia"
-        >
-          <Maximize2 size={14} />
-        </button>
+      {/* Top bar */}
+      <div className="flex items-center justify-between px-3 py-2 shrink-0">
+        <div className="flex items-center gap-2">
+          <Video size={14} className="text-red-400" />
+          <span className="text-white text-xs font-semibold">Positiva FM - Vídeo ao vivo</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => setMuted(!muted)}
+            className="bg-white/10 hover:bg-white/20 text-white rounded-full w-7 h-7 flex items-center justify-center transition-all"
+            title={muted ? "Ativar som" : "Desativar som"}
+          >
+            {muted ? <VolumeX size={13} /> : <Volume2 size={13} />}
+          </button>
+          <button
+            onClick={() => setMinimized(true)}
+            className="bg-white/10 hover:bg-white/20 text-white rounded-full w-7 h-7 flex items-center justify-center transition-all"
+            title="Minimizar"
+          >
+            <Minimize2 size={13} />
+          </button>
+          <button
+            onClick={toggleFullscreen}
+            className="bg-white/10 hover:bg-white/20 text-white rounded-full w-7 h-7 flex items-center justify-center transition-all"
+            title="Tela cheia"
+          >
+            <Maximize2 size={13} />
+          </button>
+        </div>
+      </div>
+
+      {/* Video */}
+      <div style={fullscreen ? { flex: 1 } : { height: 242 }}>
+        <video
+          ref={videoRef}
+          className="w-full h-full object-cover"
+          muted={muted}
+          playsInline
+          autoPlay
+        />
       </div>
     </div>
   );
