@@ -78,12 +78,49 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const [currentPage, setCurrentPage] = useState<Page>("dashboard");
   const [comercialOpen, setComercialOpen] = useState(false);
   const [empresa, setEmpresa] = useState<import("./ConfiguracoesPage").EmpresaConfig>({} as any);
+  const [enabledModules, setEnabledModules] = useState<Set<string> | null>(null);
+
+  // Fetch enabled modules for the current user
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("client_modules")
+      .select("module_key, enabled")
+      .eq("user_id", user.id)
+      .then(({ data }) => {
+        if (data && data.length > 0) {
+          const enabled = new Set(data.filter((m: any) => m.enabled).map((m: any) => m.module_key));
+          setEnabledModules(enabled);
+        } else {
+          // No records means all modules enabled by default
+          setEnabledModules(null);
+        }
+      });
+  }, [user]);
+
+  const isModuleEnabled = (page: Page): boolean => {
+    if (page === "dashboard" || page === "configuracoes") return true;
+    if (!enabledModules) return true; // no restrictions
+    // Comercial sub-pages map to "comercial" module
+    if (page === "testemunhais" || page === "promocoes" || page === "logos") {
+      return enabledModules.has("comercial");
+    }
+    return enabledModules.has(page);
+  };
+
+  const filteredMenuItems = menuItems.filter((item) => isModuleEnabled(item.page));
+  const filteredComercialSubItems = comercialSubItems.filter((item) => isModuleEnabled(item.page));
+  const showComercial = filteredComercialSubItems.length > 0;
 
   const isComercialPage = comercialSubItems.some((s) => s.page === currentPage);
 
+  // Redirect to dashboard if current page's module is disabled
   useEffect(() => {
+    if (enabledModules !== null && currentPage !== "dashboard" && currentPage !== "configuracoes" && !isModuleEnabled(currentPage)) {
+      setCurrentPage("dashboard");
+    }
     if (isComercialPage) setComercialOpen(true);
-  }, [currentPage]);
+  }, [currentPage, enabledModules]);
 
   useEffect(() => {
     getEmpresaConfig().then(setEmpresa);
@@ -99,7 +136,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           <img src={logoMenu} alt="MasterView" className="w-10 h-auto" />
         </div>
 
-        {menuItems.map((item) => {
+        {filteredMenuItems.map((item) => {
           const isActive = currentPage === item.page;
           const Icon = item.icon;
           return (
@@ -120,6 +157,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         })}
 
         {/* Comercial expandable menu with glassmorphism container */}
+        {showComercial && (
         <div className={`flex flex-col items-center gap-1 rounded-xl py-2 px-1 transition-all ${comercialOpen || isComercialPage ? "bg-white/[0.06] backdrop-blur-md border border-white/[0.08] shadow-lg" : ""}`}>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -135,7 +173,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             <TooltipContent side="right"><p>Módulo Comercial</p></TooltipContent>
           </Tooltip>
 
-          {comercialOpen && comercialSubItems.map((item) => {
+          {comercialOpen && filteredComercialSubItems.map((item) => {
             const isActive = currentPage === item.page;
             const Icon = item.icon;
             return (
@@ -155,6 +193,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             );
           })}
         </div>
+        )}
 
         <div className="flex-1" />
 
