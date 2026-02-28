@@ -135,7 +135,7 @@ export default function VideoPlayer() {
       <div style={fullscreen ? { flex: 1 } : { height: 242 }}>
         <video
           ref={videoRef}
-          className="w-full h-full object-cover"
+          className="w-full h-full object-contain"
           muted={muted}
           playsInline
           autoPlay
