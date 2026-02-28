@@ -19,7 +19,14 @@ export default function ProtectedRoute({ children, requiredRole }: ProtectedRout
   }
 
   if (!user) {
+    if (requiredRole === "admin") {
+      return <Navigate to="/admin/login" replace />;
+    }
     return <Navigate to="/" replace />;
+  }
+
+  if (requiredRole === "admin" && role !== "admin") {
+    return <Navigate to="/admin/login" replace />;
   }
 
   if (requiredRole && role !== requiredRole) {
