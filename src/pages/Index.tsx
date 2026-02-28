@@ -1,10 +1,10 @@
-import { AuthProvider, useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/hooks/useAuth";
 import LoginScreen from "@/components/LoginScreen";
-import Dashboard from "@/components/Dashboard";
 import { Loader2 } from "lucide-react";
+import { Navigate } from "react-router-dom";
 
-function AppContent() {
-  const { user, loading, signOut } = useAuth();
+export default function Index() {
+  const { user, loading, role } = useAuth();
 
   if (loading) {
     return (
@@ -18,13 +18,10 @@ function AppContent() {
     return <LoginScreen />;
   }
 
-  return <Dashboard onLogout={signOut} />;
-}
+  // Redirect based on role
+  if (role === "admin") {
+    return <Navigate to="/admin/dashboard" replace />;
+  }
 
-export default function Index() {
-  return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
-  );
+  return <Navigate to="/masterview/home" replace />;
 }
