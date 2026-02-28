@@ -478,7 +478,9 @@ export type Database = {
           cover_url: string | null
           created_at: string
           id: string
+          logo_url: string | null
           name: string
+          numero_canal: number | null
           type: string
           updated_at: string
           url: string
@@ -490,7 +492,9 @@ export type Database = {
           cover_url?: string | null
           created_at?: string
           id?: string
+          logo_url?: string | null
           name: string
+          numero_canal?: number | null
           type?: string
           updated_at?: string
           url: string
@@ -502,7 +506,9 @@ export type Database = {
           cover_url?: string | null
           created_at?: string
           id?: string
+          logo_url?: string | null
           name?: string
+          numero_canal?: number | null
           type?: string
           updated_at?: string
           url?: string
