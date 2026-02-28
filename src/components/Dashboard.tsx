@@ -231,7 +231,12 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         style={currentPage === "dashboard" ? { backgroundColor: "#e0e0e0" } : undefined}
       >
         <header className="mb-10 flex items-center gap-4">
-          <h2 className={`text-3xl font-light ${currentPage === "dashboard" ? "text-gray-800" : ""}`}>{pageTitle[currentPage]}</h2>
+          <div>
+            <h2 className={`text-3xl font-light ${currentPage === "dashboard" ? "text-gray-800" : ""}`}>{pageTitle[currentPage]}</h2>
+            {currentPage === "dashboard" && user?.email && (
+              <p className="text-sm text-gray-500 mt-1">{user.email}</p>
+            )}
+          </div>
           {currentPage === "dashboard" && empresa.nome && (
             <div className="flex items-center gap-3">
               <span className="text-3xl font-bold text-gray-800">{empresa.nome}</span>
