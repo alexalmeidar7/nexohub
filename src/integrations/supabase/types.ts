@@ -480,7 +480,7 @@ export type Database = {
           id: string
           logo_url: string | null
           name: string
-          numero_canal: number | null
+          numero_canal: string | null
           type: string
           updated_at: string
           url: string
@@ -494,7 +494,7 @@ export type Database = {
           id?: string
           logo_url?: string | null
           name: string
-          numero_canal?: number | null
+          numero_canal?: string | null
           type?: string
           updated_at?: string
           url: string
@@ -508,7 +508,7 @@ export type Database = {
           id?: string
           logo_url?: string | null
           name?: string
-          numero_canal?: number | null
+          numero_canal?: string | null
           type?: string
           updated_at?: string
           url?: string
