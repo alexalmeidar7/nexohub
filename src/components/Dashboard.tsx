@@ -278,7 +278,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 </div>
                 <div className="space-y-6">
                   <button
-                    onClick={() => window.open('/promocoes-kiosk', '_blank')}
+                    onClick={() => window.open('/modulo-tela-estudio-promocao', '_blank')}
                     className="w-full bg-gray-700 text-white px-4 py-3 rounded-xl shadow-lg hover:bg-gray-600 transition-colors flex items-center justify-center gap-2 font-bold text-sm"
                   >
                     <ExternalLink size={16} />
