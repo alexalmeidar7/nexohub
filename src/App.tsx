@@ -12,7 +12,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminModules from "./pages/admin/AdminModules";
 import MasterViewHome from "./pages/masterview/MasterViewHome";
-import StreamingSettings from "./pages/masterview/StreamingSettings";
+
 
 const queryClient = new QueryClient();
 
@@ -31,7 +31,7 @@ const App = () => (
             <Route path="/admin/users" element={<AdminUsers />} />
             <Route path="/admin/modules" element={<AdminModules />} />
             <Route path="/masterview/home" element={<MasterViewHome />} />
-            <Route path="/masterview/settings/streaming" element={<StreamingSettings />} />
+            
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
