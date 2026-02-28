@@ -12,7 +12,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminModules from "./pages/admin/AdminModules";
 import MasterViewHome from "./pages/masterview/MasterViewHome";
-
+import AdminLogin from "./pages/admin/AdminLogin";
 
 const queryClient = new QueryClient();
 
@@ -27,6 +27,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/promocoes-kiosk" element={<PromocoesKiosk />} />
+            <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
             <Route path="/admin/users" element={<AdminUsers />} />
             <Route path="/admin/modules" element={<AdminModules />} />
