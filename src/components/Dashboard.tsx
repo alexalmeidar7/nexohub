@@ -31,13 +31,13 @@ import VideoPlayer from "./VideoPlayer";
 type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos";
 
 const menuItems: { icon: typeof Home; label: string; page: Page }[] = [
-  { icon: Home, label: "Home", page: "dashboard" },
-  { icon: Sun, label: "Previsão do Tempo", page: "previsao" },
-  { icon: FileText, label: "Notícias", page: "noticias" },
-  { icon: Mic2, label: "Apresentadores/Participantes", page: "apresentadores" },
-  { icon: PlaySquare, label: "Programas", page: "programas" },
-  { icon: Music, label: "Música tocando agora", page: "musica" },
-  { icon: CalendarDays, label: "Agenda", page: "agenda" },
+  { icon: Home, label: "MasterView Home", page: "dashboard" },
+  { icon: Sun, label: "Módulo Previsão do Tempo", page: "previsao" },
+  { icon: FileText, label: "Módulo Notícias", page: "noticias" },
+  { icon: Mic2, label: "Módulo Cadastro de Apresentadores/Participantes", page: "apresentadores" },
+  { icon: PlaySquare, label: "Módulo Cadastro de Programas", page: "programas" },
+  { icon: Music, label: "Módulo Música no Ar", page: "musica" },
+  { icon: CalendarDays, label: "Módulo Agenda", page: "agenda" },
 ];
 
 const comercialSubItems: { icon: typeof Home; label: string; page: Page }[] = [
@@ -47,17 +47,17 @@ const comercialSubItems: { icon: typeof Home; label: string; page: Page }[] = [
 ];
 
 const pageTitle: Record<Page, string> = {
-  dashboard: "Dashboard Home",
-  previsao: "Previsão do Tempo",
-  noticias: "Notícias",
-  apresentadores: "Apresentadores/Participantes",
-  programas: "Programas",
-  musica: "Música no Ar",
-  agenda: "Agenda",
+  dashboard: "MasterView Home",
+  previsao: "Módulo Previsão do Tempo",
+  noticias: "Módulo Notícias",
+  apresentadores: "Módulo Cadastro de Apresentadores/Participantes",
+  programas: "Módulo Cadastro de Programas",
+  musica: "Módulo Música no Ar",
+  agenda: "Módulo Agenda",
   configuracoes: "Configurações",
-  testemunhais: "Testemunhais",
-  promocoes: "Promoções",
-  logos: "Logos Patrocinadores",
+  testemunhais: "Módulo Comercial — Testemunhais",
+  promocoes: "Módulo Comercial — Promoções",
+  logos: "Módulo Comercial — Logos Patrocinadores",
 };
 
 function SocialIcon({ url, children }: { url: string; children: React.ReactNode }) {
@@ -132,7 +132,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 <ShoppingBag size={18} className={isComercialPage ? "text-[#333]" : "text-muted-foreground"} />
               </button>
             </TooltipTrigger>
-            <TooltipContent side="right"><p>Comercial</p></TooltipContent>
+            <TooltipContent side="right"><p>Módulo Comercial</p></TooltipContent>
           </Tooltip>
 
           {comercialOpen && comercialSubItems.map((item) => {
