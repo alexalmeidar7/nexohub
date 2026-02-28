@@ -26,7 +26,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/promocoes-kiosk" element={<PromocoesKiosk />} />
+            <Route path="/modulo-tela-estudio-promocao" element={<PromocoesKiosk />} />
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
