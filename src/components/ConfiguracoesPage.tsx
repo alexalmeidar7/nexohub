@@ -72,7 +72,7 @@ export default function ConfiguracoesPage() {
   // Canais
   const [canais, setCanais] = useState<Canal[]>([]);
   const [loadingCanais, setLoadingCanais] = useState(true);
-  const [canalForm, setCanalForm] = useState({ numero_canal: 0, name: "", logo_url: "", cover_url: "", url: "", type: "audio_live" });
+  const [canalForm, setCanalForm] = useState({ numero_canal: "", name: "", logo_url: "", cover_url: "", url: "", type: "audio_live" });
   const [savingCanal, setSavingCanal] = useState(false);
 
   useEffect(() => {
@@ -142,13 +142,13 @@ export default function ConfiguracoesPage() {
   const handleAddCanal = async () => {
     if (!user || !canalForm.name || !canalForm.url) { toast.error("Preencha Nome e URL do canal."); return; }
     setSavingCanal(true);
-    const { error } = await supabase.from("streaming_channels").insert({
-      user_id: user.id, numero_canal: canalForm.numero_canal, name: canalForm.name,
+    const { error } = await supabase.from("streaming_channels").insert([{
+      user_id: user.id, numero_canal: parseInt(canalForm.numero_canal) || 0, name: canalForm.name,
       logo_url: canalForm.logo_url, cover_url: canalForm.cover_url, url: canalForm.url, type: canalForm.type,
-    });
+    }]);
     setSavingCanal(false);
     if (error) { toast.error("Erro ao salvar canal."); }
-    else { toast.success("Canal adicionado!"); setCanalForm({ numero_canal: 0, name: "", logo_url: "", cover_url: "", url: "", type: "audio_live" }); loadCanais(); }
+    else { toast.success("Canal adicionado!"); setCanalForm({ numero_canal: "", name: "", logo_url: "", cover_url: "", url: "", type: "audio_live" }); loadCanais(); }
   };
 
   const handleRemoveCanal = async (id: string) => {
@@ -232,7 +232,7 @@ export default function ConfiguracoesPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="space-y-1">
             <label className="text-xs font-semibold text-muted-foreground">Número do Canal</label>
-            <input type="number" value={canalForm.numero_canal} onChange={(e) => setCanalForm(p => ({ ...p, numero_canal: parseInt(e.target.value) || 0 }))}
+            <input value={canalForm.numero_canal} onChange={(e) => setCanalForm(p => ({ ...p, numero_canal: e.target.value as any }))}
               className="w-full bg-muted border border-border p-3 rounded-lg text-foreground text-sm outline-none focus:ring-1 focus:ring-primary" />
           </div>
           <div className="space-y-1">
