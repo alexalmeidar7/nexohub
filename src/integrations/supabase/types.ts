@@ -126,6 +126,65 @@ export type Database = {
         }
         Relationships: []
       }
+      available_modules: {
+        Row: {
+          created_at: string
+          description: string | null
+          icon: string | null
+          id: string
+          key: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          key: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          key?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      client_modules: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          id: string
+          module_key: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          module_key: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          module_key?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_modules_module_key_fkey"
+            columns: ["module_key"]
+            isOneToOne: false
+            referencedRelation: "available_modules"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
       custom_news_sites: {
         Row: {
           created_at: string
@@ -412,6 +471,45 @@ export type Database = {
         }
         Relationships: []
       }
+      streaming_channels: {
+        Row: {
+          active: boolean
+          background_url: string | null
+          cover_url: string | null
+          created_at: string
+          id: string
+          name: string
+          type: string
+          updated_at: string
+          url: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          background_url?: string | null
+          cover_url?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          type?: string
+          updated_at?: string
+          url: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          background_url?: string | null
+          cover_url?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          type?: string
+          updated_at?: string
+          url?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       testemunhais: {
         Row: {
           created_at: string
@@ -453,6 +551,27 @@ export type Database = {
           },
         ]
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_settings: {
         Row: {
           id: string
@@ -480,9 +599,16 @@ export type Database = {
     }
     Functions: {
       cleanup_comercial: { Args: never; Returns: undefined }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -609,6 +735,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "user"],
+    },
   },
 } as const
