@@ -3,10 +3,16 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "@/hooks/useAuth";
 import Index from "./pages/Index";
 import ResetPassword from "./pages/ResetPassword";
 import PromocoesKiosk from "./pages/Promocoes";
 import NotFound from "./pages/NotFound";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminUsers from "./pages/admin/AdminUsers";
+import AdminModules from "./pages/admin/AdminModules";
+import MasterViewHome from "./pages/masterview/MasterViewHome";
+import StreamingSettings from "./pages/masterview/StreamingSettings";
 
 const queryClient = new QueryClient();
 
@@ -15,14 +21,21 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="/promocoes-kiosk" element={<PromocoesKiosk />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
+      <AuthProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/promocoes-kiosk" element={<PromocoesKiosk />} />
+            <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            <Route path="/admin/users" element={<AdminUsers />} />
+            <Route path="/admin/modules" element={<AdminModules />} />
+            <Route path="/masterview/home" element={<MasterViewHome />} />
+            <Route path="/masterview/settings/streaming" element={<StreamingSettings />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );
