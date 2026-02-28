@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Save, Loader2, ChevronDown, ChevronUp, Plus, Trash2, Upload } from "lucide-react";
+import { Save, Loader2, ChevronDown, ChevronUp, Plus, Trash2, Upload, Pencil } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -74,6 +74,7 @@ export default function ConfiguracoesPage() {
   const [loadingCanais, setLoadingCanais] = useState(true);
   const [canalForm, setCanalForm] = useState({ numero_canal: "", name: "", logo_url: "", cover_url: "", url: "", type: "audio_live" });
   const [savingCanal, setSavingCanal] = useState(false);
+  const [editingCanal, setEditingCanal] = useState<string | null>(null);
 
   useEffect(() => {
     getEmpresaConfig().then(c => { setConfig(c); setLoading(false); });
@@ -142,13 +143,33 @@ export default function ConfiguracoesPage() {
   const handleAddCanal = async () => {
     if (!user || !canalForm.name || !canalForm.url) { toast.error("Preencha Nome e URL do canal."); return; }
     setSavingCanal(true);
-    const { error } = await supabase.from("streaming_channels").insert([{
-      user_id: user.id, numero_canal: parseInt(canalForm.numero_canal) || 0, name: canalForm.name,
-      logo_url: canalForm.logo_url, cover_url: canalForm.cover_url, url: canalForm.url, type: canalForm.type,
-    }]);
-    setSavingCanal(false);
-    if (error) { toast.error("Erro ao salvar canal."); }
-    else { toast.success("Canal adicionado!"); setCanalForm({ numero_canal: "", name: "", logo_url: "", cover_url: "", url: "", type: "audio_live" }); loadCanais(); }
+    if (editingCanal) {
+      const { error } = await supabase.from("streaming_channels").update({
+        numero_canal: parseInt(canalForm.numero_canal) || 0, name: canalForm.name,
+        logo_url: canalForm.logo_url, cover_url: canalForm.cover_url, url: canalForm.url, type: canalForm.type,
+      }).eq("id", editingCanal);
+      setSavingCanal(false);
+      if (error) { toast.error("Erro ao atualizar canal."); }
+      else { toast.success("Canal atualizado!"); resetCanalForm(); loadCanais(); }
+    } else {
+      const { error } = await supabase.from("streaming_channels").insert([{
+        user_id: user.id, numero_canal: parseInt(canalForm.numero_canal) || 0, name: canalForm.name,
+        logo_url: canalForm.logo_url, cover_url: canalForm.cover_url, url: canalForm.url, type: canalForm.type,
+      }]);
+      setSavingCanal(false);
+      if (error) { toast.error("Erro ao salvar canal."); }
+      else { toast.success("Canal adicionado!"); resetCanalForm(); loadCanais(); }
+    }
+  };
+
+  const resetCanalForm = () => {
+    setCanalForm({ numero_canal: "", name: "", logo_url: "", cover_url: "", url: "", type: "audio_live" });
+    setEditingCanal(null);
+  };
+
+  const handleEditCanal = (c: Canal) => {
+    setCanalForm({ numero_canal: String(c.numero_canal), name: c.name, logo_url: c.logo_url, cover_url: c.cover_url, url: c.url, type: c.type });
+    setEditingCanal(c.id);
   };
 
   const handleRemoveCanal = async (id: string) => {
@@ -258,11 +279,6 @@ export default function ConfiguracoesPage() {
               </button>
             </div>
           </div>
-          <div className="space-y-1 sm:col-span-2">
-            <label className="text-xs font-semibold text-muted-foreground">URL do Streaming</label>
-            <input value={canalForm.url} onChange={(e) => setCanalForm(p => ({ ...p, url: e.target.value }))} placeholder="https://..."
-              className="w-full bg-muted border border-border p-3 rounded-lg text-foreground placeholder:text-muted-foreground text-sm outline-none focus:ring-1 focus:ring-primary" />
-          </div>
           <div className="space-y-1">
             <label className="text-xs font-semibold text-muted-foreground">Tipo de Transmissão</label>
             <select value={canalForm.type} onChange={(e) => setCanalForm(p => ({ ...p, type: e.target.value }))}
@@ -272,11 +288,23 @@ export default function ConfiguracoesPage() {
               <option value="youtube">Vídeo do YouTube</option>
             </select>
           </div>
-          <div className="flex items-end">
+          <div className="space-y-1 sm:col-span-2">
+            <label className="text-xs font-semibold text-muted-foreground">
+              {canalForm.type === "youtube" ? "URL da playlist do YouTube" : "URL do Streaming"}
+            </label>
+            <input value={canalForm.url} onChange={(e) => setCanalForm(p => ({ ...p, url: e.target.value }))} placeholder={canalForm.type === "youtube" ? "https://youtube.com/playlist?list=..." : "https://..."}
+              className="w-full bg-muted border border-border p-3 rounded-lg text-foreground placeholder:text-muted-foreground text-sm outline-none focus:ring-1 focus:ring-primary" />
+          </div>
+          <div className="flex items-end gap-2 sm:col-span-2">
             <button onClick={handleAddCanal} disabled={savingCanal}
-              className="bg-primary text-primary-foreground px-5 py-3 rounded-lg text-sm font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center gap-2 w-full justify-center">
-              {savingCanal ? <Loader2 size={14} className="animate-spin" /> : <><Plus size={14} /> Adicionar Canal</>}
+              className="bg-primary text-primary-foreground px-5 py-3 rounded-lg text-sm font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center gap-2 flex-1 justify-center">
+              {savingCanal ? <Loader2 size={14} className="animate-spin" /> : <><Plus size={14} /> {editingCanal ? "Salvar Alterações" : "Adicionar Canal"}</>}
             </button>
+            {editingCanal && (
+              <button onClick={resetCanalForm} className="bg-muted border border-border px-5 py-3 rounded-lg text-sm font-semibold text-foreground hover:bg-muted/80 transition-colors">
+                Cancelar
+              </button>
+            )}
           </div>
         </div>
 
@@ -295,9 +323,14 @@ export default function ConfiguracoesPage() {
                   <p className="text-sm font-medium text-foreground truncate">{c.name}</p>
                   <p className="text-xs text-muted-foreground">{typeLabels[c.type] || c.type} • Canal {c.numero_canal}</p>
                 </div>
-                <button onClick={() => handleRemoveCanal(c.id)} className="text-destructive hover:text-destructive/80 transition-colors">
-                  <Trash2 size={14} />
-                </button>
+                <div className="flex items-center gap-2">
+                  <button onClick={() => handleEditCanal(c)} className="text-primary hover:text-primary/80 transition-colors">
+                    <Pencil size={14} />
+                  </button>
+                  <button onClick={() => handleRemoveCanal(c.id)} className="text-destructive hover:text-destructive/80 transition-colors">
+                    <Trash2 size={14} />
+                  </button>
+                </div>
               </div>
             ))}
           </div>
