@@ -34,7 +34,7 @@ export async function getEmpresaConfig(): Promise<EmpresaConfig> {
 
 interface Canal {
   id: string;
-  numero_canal: number;
+  numero_canal: string;
   name: string;
   logo_url: string;
   cover_url: string;
@@ -85,7 +85,7 @@ export default function ConfiguracoesPage() {
     setLoadingCanais(true);
     const { data } = await supabase.from("streaming_channels").select("*").order("numero_canal", { ascending: true });
     if (data) setCanais(data.map((d: any) => ({
-      id: d.id, numero_canal: d.numero_canal || 0, name: d.name, logo_url: d.logo_url || "",
+      id: d.id, numero_canal: d.numero_canal || "", name: d.name, logo_url: d.logo_url || "",
       cover_url: d.cover_url || "", url: d.url, type: d.type, active: d.active,
     })));
     setLoadingCanais(false);
@@ -145,7 +145,7 @@ export default function ConfiguracoesPage() {
     setSavingCanal(true);
     if (editingCanal) {
       const { error } = await supabase.from("streaming_channels").update({
-        numero_canal: parseInt(canalForm.numero_canal) || 0, name: canalForm.name,
+        numero_canal: canalForm.numero_canal, name: canalForm.name,
         logo_url: canalForm.logo_url, cover_url: canalForm.cover_url, url: canalForm.url, type: canalForm.type,
       }).eq("id", editingCanal);
       setSavingCanal(false);
@@ -153,7 +153,7 @@ export default function ConfiguracoesPage() {
       else { toast.success("Canal atualizado!"); resetCanalForm(); loadCanais(); }
     } else {
       const { error } = await supabase.from("streaming_channels").insert([{
-        user_id: user.id, numero_canal: parseInt(canalForm.numero_canal) || 0, name: canalForm.name,
+        user_id: user.id, numero_canal: canalForm.numero_canal, name: canalForm.name,
         logo_url: canalForm.logo_url, cover_url: canalForm.cover_url, url: canalForm.url, type: canalForm.type,
       }]);
       setSavingCanal(false);
