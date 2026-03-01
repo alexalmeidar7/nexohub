@@ -15,6 +15,7 @@ import {
   Loader2,
   List,
   X,
+  Plus,
 } from "lucide-react";
 
 interface YoutubeVideo {
@@ -130,6 +131,7 @@ function generateGradeSlots(): string[] {
 }
 
 export default function PlayerPage() {
+  const [detailProg, setDetailProg] = useState<Programa | null>(null);
   const { user } = useAuth();
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -649,11 +651,24 @@ export default function PlayerPage() {
             <div className="text-white text-lg font-bold flex items-center gap-2">
               <span style={{ color: "#d30707" }}>■</span> Grade de Programação
             </div>
-            <button onClick={() => setGradeOpen(false)} className="hover:opacity-80 transition-opacity" style={{ color: "#d30707" }}>
+            <button onClick={() => { setGradeOpen(false); setDetailProg(null); }} className="hover:opacity-80 transition-opacity" style={{ color: "#d30707" }}>
               <X size={20} />
             </button>
           </div>
-          <div className="overflow-auto max-h-[75vh] px-4 pb-4">
+          <div
+            className="overflow-auto max-h-[75vh] px-4 pb-4 grade-scroll"
+            style={{
+              scrollbarWidth: "thin",
+              scrollbarColor: "#d30707 #222",
+            }}
+          >
+            <style>{`
+              .grade-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+              .grade-scroll::-webkit-scrollbar-track { background: #222; border-radius: 4px; }
+              .grade-scroll::-webkit-scrollbar-thumb { background: #d30707; border-radius: 4px; }
+              .grade-scroll::-webkit-scrollbar-thumb:hover { background: #ff1a1a; }
+              .grade-cell:hover { outline: 2px solid #ed0808 !important; outline-offset: -1px; }
+            `}</style>
             <table className="w-full text-xs border-separate border-spacing-1">
               <thead className="sticky top-0 z-10" style={{ backgroundColor: "#111" }}>
                 <tr>
@@ -668,30 +683,104 @@ export default function PlayerPage() {
                 </tr>
               </thead>
               <tbody>
-                {gradeSlots.map(slot => (
-                  <tr key={slot}>
-                    <td className="px-2 py-2 font-mono rounded-lg" style={{ color: "#666" }}>{slot.slice(0, 5)}</td>
-                    {DIAS_SEMANA.map(dia => {
+                {(() => {
+                  const skipMap: Record<string, boolean> = {};
+                  const spanMap: Record<string, { prog: Programa; rowSpan: number }> = {};
+
+                  DIAS_SEMANA.forEach(dia => {
+                    let i = 0;
+                    while (i < gradeSlots.length) {
+                      const slot = gradeSlots[i];
                       const prog = getProgramaForGradeSlot(dia, slot);
-                      const isOnAir = prog && dia === diaAtual && currentTimeStr >= prog.horario_inicio && currentTimeStr < prog.horario_fim;
-                      return (
-                        <td key={dia} className="px-1 py-1 text-center rounded-lg transition-all"
-                          style={{
-                            backgroundColor: isOnAir ? "#d30707" : prog ? "rgba(211,7,7,0.15)" : "transparent",
-                            color: isOnAir ? "#fff" : prog ? "#ccc" : "transparent",
-                            fontWeight: isOnAir ? "bold" : "normal",
-                          }}>
-                          {prog ? (
-                            <span className="text-[10px] truncate block">{prog.nome}</span>
-                          ) : null}
-                        </td>
-                      );
-                    })}
-                  </tr>
-                ))}
+                      if (prog) {
+                        let span = 1;
+                        while (i + span < gradeSlots.length) {
+                          const nextProg = getProgramaForGradeSlot(dia, gradeSlots[i + span]);
+                          if (nextProg && nextProg.id === prog.id) {
+                            skipMap[`${dia}-${gradeSlots[i + span]}`] = true;
+                            span++;
+                          } else break;
+                        }
+                        spanMap[`${dia}-${slot}`] = { prog, rowSpan: span };
+                        i += span;
+                      } else {
+                        i++;
+                      }
+                    }
+                  });
+
+                  return gradeSlots.map(slot => (
+                    <tr key={slot}>
+                      <td className="px-2 py-2 font-mono rounded-lg" style={{ color: "#666" }}>{slot.slice(0, 5)}</td>
+                      {DIAS_SEMANA.map(dia => {
+                        const key = `${dia}-${slot}`;
+                        if (skipMap[key]) return null;
+                        const cellData = spanMap[key];
+                        if (!cellData) {
+                          return <td key={dia} className="px-1 py-1 rounded-lg" style={{ backgroundColor: "transparent" }} />;
+                        }
+                        const { prog, rowSpan } = cellData;
+                        const isOnAir = prog && dia === diaAtual && currentTimeStr >= prog.horario_inicio && currentTimeStr < prog.horario_fim;
+                        return (
+                          <td
+                            key={dia}
+                            rowSpan={rowSpan}
+                            className="px-1 py-1 text-center rounded-lg transition-all grade-cell relative group"
+                            style={{
+                              backgroundColor: isOnAir ? "#d30707" : "rgba(211,7,7,0.15)",
+                              color: isOnAir ? "#fff" : "#ccc",
+                              fontWeight: isOnAir ? "bold" : "normal",
+                              verticalAlign: "middle",
+                              cursor: "pointer",
+                            }}
+                            onClick={() => setDetailProg(prog)}
+                          >
+                            <div className="flex items-center justify-center gap-1">
+                              <span className="text-[10px] truncate">{prog.nome}</span>
+                              <Plus size={10} className="shrink-0 opacity-60 group-hover:opacity-100 transition-opacity" />
+                            </div>
+                            <div className="text-[8px] opacity-60 mt-0.5">
+                              {prog.horario_inicio.slice(0, 5)} - {prog.horario_fim.slice(0, 5)}
+                            </div>
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ));
+                })()}
               </tbody>
             </table>
           </div>
+
+          {/* Program detail popup */}
+          {detailProg && (
+            <div className="absolute inset-0 z-20 flex items-center justify-center" style={{ backgroundColor: "rgba(0,0,0,0.8)" }}>
+              <div className="rounded-xl p-6 max-w-md w-full mx-4 relative" style={{ backgroundColor: "#1a1a1a", border: "1px solid #d30707" }}>
+                <button onClick={() => setDetailProg(null)} className="absolute top-3 right-3 hover:opacity-80" style={{ color: "#d30707" }}>
+                  <X size={18} />
+                </button>
+                {detailProg.capa && (
+                  <img src={detailProg.capa} alt={detailProg.nome} className="w-full h-40 object-cover rounded-lg mb-4" />
+                )}
+                {detailProg.selo && !detailProg.capa && (
+                  <img src={detailProg.selo} alt={detailProg.nome} className="w-24 h-24 object-contain mx-auto mb-4" />
+                )}
+                <h3 className="text-white text-lg font-bold mb-1">{detailProg.nome}</h3>
+                <div className="text-xs mb-2" style={{ color: "#d30707" }}>
+                  {detailProg.horario_inicio.slice(0, 5)} - {detailProg.horario_fim.slice(0, 5)}
+                </div>
+                {detailProg.estudio && (
+                  <div className="text-white/50 text-xs mb-2">Estúdio: {detailProg.estudio}</div>
+                )}
+                {detailProg.dias_semana && detailProg.dias_semana.length > 0 && (
+                  <div className="text-white/50 text-xs mb-2">Dias: {detailProg.dias_semana.join(", ")}</div>
+                )}
+                {detailProg.descricao && (
+                  <p className="text-white/70 text-sm mt-3 leading-relaxed">{detailProg.descricao}</p>
+                )}
+              </div>
+            </div>
+          )}
           </div>
         </div>
       )}
