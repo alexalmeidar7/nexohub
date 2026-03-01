@@ -784,10 +784,10 @@ export default function PlayerPage() {
 
                     return (
                     <tr key={slot} ref={isOnAirRow ? (el) => {
-                      if (el && gradeScrollRef.current) {
-                        setTimeout(() => {
+                      if (el) {
+                        requestAnimationFrame(() => {
                           el.scrollIntoView({ behavior: "smooth", block: "center" });
-                        }, 100);
+                        });
                       }
                     } : undefined}>
                       <td className="px-2 py-2 font-mono rounded-lg" style={{ color: "#666" }}>{slot.slice(0, 5)}</td>
@@ -839,29 +839,40 @@ export default function PlayerPage() {
           {/* Program detail popup */}
           {detailProg && (
             <div className="absolute inset-0 z-20 flex items-center justify-center" style={{ backgroundColor: "rgba(0,0,0,0.8)" }}>
-              <div className="rounded-xl p-6 max-w-md w-full mx-4 relative" style={{ backgroundColor: "#1a1a1a", border: "1px solid #d30707" }}>
-                <button onClick={() => setDetailProg(null)} className="absolute top-3 right-3 hover:opacity-80" style={{ color: "#d30707" }}>
+              <div className="rounded-xl p-6 max-w-lg w-full mx-4 relative" style={{ backgroundColor: "#1a1a1a", border: "1px solid #d30707" }}>
+                <button onClick={() => setDetailProg(null)} className="absolute top-3 right-3 hover:opacity-80 z-10" style={{ color: "#d30707" }}>
                   <X size={18} />
                 </button>
-                {detailProg.capa && (
-                  <img src={detailProg.capa} alt={detailProg.nome} className="w-full h-40 object-cover rounded-lg mb-4" />
-                )}
-                {detailProg.selo && !detailProg.capa && (
-                  <img src={detailProg.selo} alt={detailProg.nome} className="w-24 h-24 object-contain mx-auto mb-4" />
-                )}
-                <h3 className="text-white text-lg font-bold mb-1">{detailProg.nome}</h3>
-                <div className="text-xs mb-2" style={{ color: "#d30707" }}>
-                  {detailProg.horario_inicio.slice(0, 5)} - {detailProg.horario_fim.slice(0, 5)}
+                <div className="flex gap-4">
+                  {/* Capa à esquerda */}
+                  <div className="shrink-0">
+                    {detailProg.capa ? (
+                      <img src={detailProg.capa} alt={detailProg.nome} className="w-36 h-36 object-cover rounded-lg" />
+                    ) : detailProg.selo ? (
+                      <img src={detailProg.selo} alt={detailProg.nome} className="w-36 h-36 object-contain rounded-lg" />
+                    ) : (
+                      <div className="w-36 h-36 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#d30707" }}>
+                        <span className="text-white text-3xl font-bold">{detailProg.nome.charAt(0)}</span>
+                      </div>
+                    )}
+                  </div>
+                  {/* Informações à direita */}
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-white text-lg font-bold mb-1 pr-6">{detailProg.nome}</h3>
+                    <div className="text-xs mb-2" style={{ color: "#d30707" }}>
+                      {detailProg.horario_inicio.slice(0, 5)} - {detailProg.horario_fim.slice(0, 5)}
+                    </div>
+                    {detailProg.estudio && (
+                      <div className="text-white/50 text-xs mb-1">Estúdio: {detailProg.estudio}</div>
+                    )}
+                    {detailProg.dias_semana && detailProg.dias_semana.length > 0 && (
+                      <div className="text-white/50 text-xs mb-1">Dias: {detailProg.dias_semana.join(", ")}</div>
+                    )}
+                    {detailProg.descricao && (
+                      <p className="text-white/70 text-sm mt-2 leading-relaxed">{detailProg.descricao}</p>
+                    )}
+                  </div>
                 </div>
-                {detailProg.estudio && (
-                  <div className="text-white/50 text-xs mb-2">Estúdio: {detailProg.estudio}</div>
-                )}
-                {detailProg.dias_semana && detailProg.dias_semana.length > 0 && (
-                  <div className="text-white/50 text-xs mb-2">Dias: {detailProg.dias_semana.join(", ")}</div>
-                )}
-                {detailProg.descricao && (
-                  <p className="text-white/70 text-sm mt-3 leading-relaxed">{detailProg.descricao}</p>
-                )}
               </div>
             </div>
           )}
