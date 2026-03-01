@@ -96,26 +96,45 @@ function getCurrentProgram(programas: Programa[]): Programa | null {
 }
 
 function getNextProgram(programas: Programa[], current: Programa | null): Programa | null {
-  if (!current) return programas.find((p) => p.ativo) || null;
-  const now = new Date();
   const dayMapShort: Record<number, string> = {
     0: "dom", 1: "seg", 2: "ter", 3: "qua", 4: "qui", 5: "sex", 6: "sab",
   };
   const dayMapFull: Record<number, string> = {
     0: "Domingo", 1: "Segunda", 2: "Terça", 3: "Quarta", 4: "Quinta", 5: "Sexta", 6: "Sábado",
   };
+
+  const now = new Date();
+  const currentTime = now.getHours().toString().padStart(2, "0") + ":" + now.getMinutes().toString().padStart(2, "0");
   const todayShort = dayMapShort[now.getDay()];
   const todayFull = dayMapFull[now.getDay()];
 
-  const sorted = programas
-    .filter((p) => p.ativo && p.horario_inicio.slice(0, 5) >= current.horario_fim.slice(0, 5))
+  // Try to find the next program today (after current time or after current program ends)
+  const afterTime = current ? current.horario_fim.slice(0, 5) : currentTime;
+  const todayNext = programas
+    .filter((p) => p.ativo && p.horario_inicio.slice(0, 5) >= afterTime)
     .filter((p) => {
       const dias = p.dias_semana || [];
       return dias.length === 0 || dias.includes(todayShort) || dias.includes(todayFull);
     })
     .sort((a, b) => a.horario_inicio.localeCompare(b.horario_inicio));
 
-  return sorted[0] || null;
+  if (todayNext.length > 0) return todayNext[0];
+
+  // No more programs today — find the first program of the next day
+  const tomorrow = new Date(now);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const tomorrowShort = dayMapShort[tomorrow.getDay()];
+  const tomorrowFull = dayMapFull[tomorrow.getDay()];
+
+  const tomorrowNext = programas
+    .filter((p) => p.ativo)
+    .filter((p) => {
+      const dias = p.dias_semana || [];
+      return dias.length === 0 || dias.includes(tomorrowShort) || dias.includes(tomorrowFull);
+    })
+    .sort((a, b) => a.horario_inicio.localeCompare(b.horario_inicio));
+
+  return tomorrowNext[0] || null;
 }
 
 function getProgramProgress(prog: Programa | null): number {
