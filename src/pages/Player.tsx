@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 
 const PlayerChat = lazy(() => import("@/components/PlayerChat"));
+const AudioSpectrum = lazy(() => import("@/components/AudioSpectrum"));
 
 // Dynamic HLS loader — cached after first import
 let hlsModule: typeof import("hls.js") | null = null;
@@ -942,6 +943,10 @@ export default function PlayerPage() {
       {/* Audio channel: show presenter bg + music cover + info */}
       {isAudio && playing && (
         <div className="absolute inset-0 z-10">
+          {/* Audio spectrum visualization */}
+          <Suspense fallback={null}>
+            <AudioSpectrum audioRef={audioRef as React.RefObject<HTMLAudioElement>} />
+          </Suspense>
           {/* Presenter large background photo */}
           {currentPresenter?.foto && (
             <div className="absolute inset-0 flex items-end" style={{ left: "-250px" }}>
