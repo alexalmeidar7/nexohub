@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import Hls from "hls.js";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { format, addDays, startOfWeek } from "date-fns";
 import {
   ChevronUp,
   ChevronDown,
@@ -13,7 +14,14 @@ import {
   MessageSquare,
   Loader2,
   List,
+  X,
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface YoutubeVideo {
   videoId: string;
@@ -41,6 +49,11 @@ interface Programa {
   dias_semana: string[] | null;
   ativo: boolean;
   selo: string | null;
+  estudio: string | null;
+  variavel: boolean;
+  data_variavel: string | null;
+  capa: string | null;
+  descricao: string | null;
 }
 
 interface MusicData {
@@ -51,6 +64,7 @@ interface MusicData {
 }
 
 const MUSIC_DATA_KEY = "masterview_music_data";
+const DIAS_SEMANA = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
 
 function getCurrentProgram(programas: Programa[]): Programa | null {
   const now = new Date();
@@ -97,6 +111,18 @@ function getProgramProgress(prog: Programa | null): number {
   return Math.min(100, Math.max(0, ((nowMin - startMin) / (endMin - startMin)) * 100));
 }
 
+// Grade helpers for the popup
+const DIAS_MAP_FULL: Record<number, string> = { 1: "Segunda", 2: "Terça", 3: "Quarta", 4: "Quinta", 5: "Sexta", 6: "Sábado", 0: "Domingo" };
+
+function generateGradeSlots(): string[] {
+  const slots: string[] = [];
+  for (let h = 0; h < 24; h++) {
+    slots.push(`${String(h).padStart(2, "0")}:00:00`);
+    slots.push(`${String(h).padStart(2, "0")}:30:00`);
+  }
+  return slots;
+}
+
 export default function PlayerPage() {
   const { user } = useAuth();
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -110,6 +136,7 @@ export default function PlayerPage() {
   const [muted, setMuted] = useState(false);
   const [volume, setVolume] = useState(80);
   const [volumeHover, setVolumeHover] = useState(false);
+  const volumeHideTimeout = useRef<ReturnType<typeof setTimeout>>();
   const [fullscreen, setFullscreen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [buffering, setBuffering] = useState(false);
@@ -118,6 +145,7 @@ export default function PlayerPage() {
   const [youtubeVideos, setYoutubeVideos] = useState<YoutubeVideo[]>([]);
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [gradeOpen, setGradeOpen] = useState(false);
   const hideTimeout = useRef<ReturnType<typeof setTimeout>>();
 
   const canal = canais[currentIndex] || null;
@@ -188,16 +216,25 @@ export default function PlayerPage() {
       });
   }, [canal?.url, isYoutube]);
 
-  // Poll music data from localStorage (set by MusicaNoAr module)
+  // Poll music data from localStorage every 1s for real-time updates
   useEffect(() => {
     const readMusic = () => {
       try {
         const raw = localStorage.getItem(MUSIC_DATA_KEY);
-        if (raw) setMusicData(JSON.parse(raw));
+        if (raw) {
+          const parsed: MusicData = JSON.parse(raw);
+          setMusicData(prev => {
+            // Force re-render on any change
+            if (!prev || prev.titulo !== parsed.titulo || prev.artista !== parsed.artista || prev.capa !== parsed.capa) {
+              return parsed;
+            }
+            return prev;
+          });
+        }
       } catch {}
     };
     readMusic();
-    const interval = setInterval(readMusic, 3000);
+    const interval = setInterval(readMusic, 1000);
     return () => clearInterval(interval);
   }, []);
 
@@ -235,10 +272,9 @@ export default function PlayerPage() {
     };
   }, []);
 
-  // Play stream
+  // Play stream — always fresh URL with cache bust for audio
   const playStream = useCallback(
     (url: string, type: string) => {
-      // Cleanup previous HLS
       if (hlsRef.current) {
         hlsRef.current.destroy();
         hlsRef.current = null;
@@ -246,48 +282,47 @@ export default function PlayerPage() {
 
       setBuffering(true);
 
+      // Add cache buster for audio streams
+      const freshUrl = url.includes("?") ? `${url}&_t=${Date.now()}` : `${url}?_t=${Date.now()}`;
+
       if (type === "audio_live" || type === "audio") {
-        // Stop video
         if (videoRef.current) {
           videoRef.current.pause();
           videoRef.current.src = "";
         }
-        // Play audio
         const audio = audioRef.current;
         if (!audio) return;
         if (Hls.isSupported() && url.includes(".m3u8")) {
           const hls = new Hls({ enableWorker: true, lowLatencyMode: true });
           hlsRef.current = hls;
-          hls.loadSource(url);
+          hls.loadSource(freshUrl);
           hls.attachMedia(audio);
           hls.on(Hls.Events.MANIFEST_PARSED, () => {
             audio.play().then(() => setBuffering(false)).catch(() => {});
           });
           hls.on(Hls.Events.FRAG_BUFFERED, () => setBuffering(false));
         } else {
-          audio.src = url;
+          audio.src = freshUrl;
           audio.play().catch(() => {});
         }
       } else {
-        // Stop audio
         if (audioRef.current) {
           audioRef.current.pause();
           audioRef.current.src = "";
         }
-        // Play video
         const video = videoRef.current;
         if (!video) return;
         if (Hls.isSupported() && url.includes(".m3u8")) {
           const hls = new Hls({ enableWorker: true, lowLatencyMode: true });
           hlsRef.current = hls;
-          hls.loadSource(url);
+          hls.loadSource(freshUrl);
           hls.attachMedia(video);
           hls.on(Hls.Events.MANIFEST_PARSED, () => {
             video.play().then(() => setBuffering(false)).catch(() => {});
           });
           hls.on(Hls.Events.FRAG_BUFFERED, () => setBuffering(false));
         } else {
-          video.src = url;
+          video.src = freshUrl;
           video.addEventListener("loadedmetadata", () => video.play().catch(() => {}), { once: true });
         }
       }
@@ -359,7 +394,17 @@ export default function PlayerPage() {
     setBuffering(false);
   };
 
-  // Bar hover logic — only trigger on the bottom bar area
+  // Volume hover with delay
+  const showVolume = () => {
+    clearTimeout(volumeHideTimeout.current);
+    setVolumeHover(true);
+  };
+  const hideVolume = () => {
+    clearTimeout(volumeHideTimeout.current);
+    volumeHideTimeout.current = setTimeout(() => setVolumeHover(false), 800);
+  };
+
+  // Bar hover logic
   const showBar = () => {
     setBarVisible(true);
     clearTimeout(hideTimeout.current);
@@ -385,19 +430,59 @@ export default function PlayerPage() {
   const nextProg = getNextProgram(programas, currentProg);
   const progress = getProgramProgress(currentProg);
 
-  // Determine background image
-  const bgImage = isAudio
-    ? canal?.cover_url || canal?.background_url
-    : isYoutube
-    ? canal?.cover_url || canal?.background_url
-    : null;
+  // Background image — for audio use music cover if available, fallback to channel cover
+  const audioBg = isAudio && musicData?.capa ? musicData.capa : (canal?.cover_url || canal?.background_url);
+  const bgImage = (isAudio || isYoutube) ? audioBg : null;
 
-  // "No Ar" label
+  // "No Ar" label — for audio/video types: canal name + program name
   const noArLabel = canal
-    ? currentProg
-      ? `${canal.name} - ${currentProg.nome}`
-      : canal.name
+    ? (isAudio || isVideo)
+      ? currentProg
+        ? `${canal.name} - ${currentProg.nome}`
+        : canal.name
+      : currentProg
+        ? `${canal.name} - ${currentProg.nome}`
+        : canal.name
     : "Sem programação";
+
+  // Grade data
+  const gradeSlots = useMemo(() => generateGradeSlots(), []);
+  const now = new Date();
+  const diaAtual = DIAS_MAP_FULL[now.getDay()];
+  const currentTimeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
+  const weekStart = startOfWeek(now, { weekStartsOn: 1 });
+  const weekDates = useMemo(() => {
+    const dates: Record<string, string> = {};
+    DIAS_SEMANA.forEach((dia, i) => {
+      const date = addDays(weekStart, i);
+      dates[dia] = format(date, "dd/MM");
+    });
+    return dates;
+  }, [weekStart.toDateString()]);
+
+  const getDateForDay = (dia: string): string => {
+    const idx = DIAS_SEMANA.indexOf(dia);
+    const date = addDays(weekStart, idx);
+    return format(date, "yyyy-MM-dd");
+  };
+
+  // Map programas to grade format with dia names
+  const dayShortToFull: Record<string, string> = {
+    seg: "Segunda", ter: "Terça", qua: "Quarta", qui: "Quinta", sex: "Sexta", sab: "Sábado", dom: "Domingo",
+    Segunda: "Segunda", Terça: "Terça", Quarta: "Quarta", Quinta: "Quinta", Sexta: "Sexta", Sábado: "Sábado", Domingo: "Domingo",
+  };
+
+  const getProgramaForGradeSlot = (dia: string, slotTime: string) => {
+    const dateForDay = getDateForDay(dia);
+    const matching = programas.filter(p => {
+      if (!p.ativo) return false;
+      const dias = (p.dias_semana || []).map(d => dayShortToFull[d] || d);
+      return dias.includes(dia) && slotTime >= p.horario_inicio && slotTime < p.horario_fim;
+    });
+    const variable = matching.find(p => p.variavel && p.data_variavel === dateForDay);
+    if (variable) return variable;
+    return matching.find(p => !p.variavel) || matching[0] || undefined;
+  };
 
   if (loading) {
     return (
@@ -407,14 +492,6 @@ export default function PlayerPage() {
     );
   }
 
-  // Extract YouTube playlist ID
-  const youtubePlaylistId = isYoutube && canal?.url
-    ? (() => {
-        const match = canal.url.match(/[?&]list=([a-zA-Z0-9_-]+)/);
-        return match ? match[1] : null;
-      })()
-    : null;
-
   return (
     <div
       ref={containerRef}
@@ -423,7 +500,7 @@ export default function PlayerPage() {
       {/* Background image for audio/youtube channels */}
       {bgImage && (
         <div
-          className="absolute inset-0 bg-cover bg-center"
+          className="absolute inset-0 bg-cover bg-center transition-all duration-700"
           style={{
             backgroundImage: `url(${bgImage})`,
             filter: "blur(8px) brightness(0.4)",
@@ -441,7 +518,7 @@ export default function PlayerPage() {
         autoPlay={false}
       />
 
-      {/* YouTube video iframe — only plays selected video, no autoplay */}
+      {/* YouTube video iframe */}
       {isYoutube && selectedVideoId && (
         <iframe
           className="absolute inset-0 w-full h-full z-10"
@@ -500,14 +577,14 @@ export default function PlayerPage() {
         </div>
       )}
 
-      {/* Audio channel: show music cover */}
+      {/* Audio channel: show music cover + info */}
       {isAudio && playing && (
         <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
           {musicData?.capa ? (
             <img
               src={musicData.capa}
               alt={musicData.titulo}
-              className="w-64 h-64 rounded-2xl object-cover shadow-2xl mb-6"
+              className="w-64 h-64 rounded-2xl object-cover shadow-2xl mb-6 transition-all duration-500"
             />
           ) : canal?.logo_url ? (
             <img
@@ -547,7 +624,57 @@ export default function PlayerPage() {
         </div>
       )}
 
-      {/* Control bar hover zone — taller invisible area at the bottom */}
+      {/* Grade Dialog */}
+      <Dialog open={gradeOpen} onOpenChange={setGradeOpen}>
+        <DialogContent className="max-w-[95vw] max-h-[90vh] p-0 border-0 overflow-hidden" style={{ backgroundColor: "#111" }}>
+          <DialogHeader className="px-6 pt-5 pb-3 border-b" style={{ borderColor: "#d30707" }}>
+            <DialogTitle className="text-white text-lg font-bold flex items-center gap-2">
+              <span style={{ color: "#d30707" }}>■</span> Grade de Programação
+            </DialogTitle>
+          </DialogHeader>
+          <div className="overflow-auto max-h-[75vh] px-4 pb-4">
+            <table className="w-full text-xs border-separate border-spacing-1">
+              <thead className="sticky top-0 z-10" style={{ backgroundColor: "#111" }}>
+                <tr>
+                  <th className="px-2 py-2 text-left w-20 rounded-lg" style={{ color: "#d30707" }}>Horário</th>
+                  {DIAS_SEMANA.map(dia => (
+                    <th key={dia} className={`px-2 py-2 text-center rounded-lg ${dia === diaAtual ? "font-bold" : ""}`}
+                      style={{ color: dia === diaAtual ? "#d30707" : "#999" }}>
+                      <div>{dia.slice(0, 3)}</div>
+                      <div className="text-[9px] font-normal opacity-70">{weekDates[dia]}</div>
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {gradeSlots.map(slot => (
+                  <tr key={slot}>
+                    <td className="px-2 py-2 font-mono rounded-lg" style={{ color: "#666" }}>{slot.slice(0, 5)}</td>
+                    {DIAS_SEMANA.map(dia => {
+                      const prog = getProgramaForGradeSlot(dia, slot);
+                      const isOnAir = prog && dia === diaAtual && currentTimeStr >= prog.horario_inicio && currentTimeStr < prog.horario_fim;
+                      return (
+                        <td key={dia} className="px-1 py-1 text-center rounded-lg transition-all"
+                          style={{
+                            backgroundColor: isOnAir ? "#d30707" : prog ? "rgba(211,7,7,0.15)" : "transparent",
+                            color: isOnAir ? "#fff" : prog ? "#ccc" : "transparent",
+                            fontWeight: isOnAir ? "bold" : "normal",
+                          }}>
+                          {prog ? (
+                            <span className="text-[10px] truncate block">{prog.nome}</span>
+                          ) : null}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Control bar hover zone */}
       <div
         className="absolute left-0 right-0 bottom-0 z-30"
         style={{ height: "140px" }}
@@ -637,21 +764,24 @@ export default function PlayerPage() {
             <button className="bg-white/10 hover:bg-white/20 text-white/70 rounded-full w-8 h-8 flex items-center justify-center transition-all">
               <MessageSquare size={14} />
             </button>
-            <button
-              onClick={toggleMute}
-              className="text-white/70 hover:text-white transition-colors relative"
-              title={muted ? "Ativar som" : "Desativar som"}
-              onMouseEnter={() => setVolumeHover(true)}
-              onMouseLeave={() => setVolumeHover(false)}
+            {/* Volume button + slider with extended hover area */}
+            <div
+              className="relative"
+              onMouseEnter={showVolume}
+              onMouseLeave={hideVolume}
             >
-              {muted ? <VolumeX size={18} /> : <Volume2 size={18} />}
+              <button
+                onClick={toggleMute}
+                className="text-white/70 hover:text-white transition-colors"
+                title={muted ? "Ativar som" : "Desativar som"}
+              >
+                {muted ? <VolumeX size={18} /> : <Volume2 size={18} />}
+              </button>
               {/* Volume slider popup */}
               {volumeHover && (
                 <div
-                  className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-black/95 rounded-lg px-2 py-3 flex flex-col items-center"
-                  style={{ height: "120px", width: "32px" }}
-                  onMouseEnter={() => setVolumeHover(true)}
-                  onMouseLeave={() => setVolumeHover(false)}
+                  className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-black/95 rounded-lg px-3 py-4 flex flex-col items-center"
+                  style={{ height: "140px", width: "40px" }}
                 >
                   <input
                     type="range"
@@ -663,7 +793,7 @@ export default function PlayerPage() {
                     style={{
                       writingMode: "vertical-lr",
                       direction: "rtl",
-                      width: "4px",
+                      width: "6px",
                       accentColor: "#e60000",
                     }}
                     onClick={(e) => e.stopPropagation()}
@@ -671,7 +801,7 @@ export default function PlayerPage() {
                   <span className="text-white/60 text-[9px] mt-1">{volume}</span>
                 </div>
               )}
-            </button>
+            </div>
           </div>
 
           {/* Next / Schedule */}
@@ -686,7 +816,11 @@ export default function PlayerPage() {
                 : "--:-- - --:--"}
             </span>
             <div className="mt-1">
-              <button className="flex items-center gap-1 text-white text-[10px] font-bold uppercase px-3 py-1 rounded-full transition-all" style={{ backgroundColor: "#e60000" }}>
+              <button
+                onClick={() => setGradeOpen(true)}
+                className="flex items-center gap-1 text-white text-[10px] font-bold uppercase px-3 py-1 rounded-full transition-all"
+                style={{ backgroundColor: "#e60000" }}
+              >
                 + Grade
               </button>
             </div>
