@@ -1,12 +1,19 @@
 import { useEffect, useRef, useState } from "react";
-import Hls from "hls.js";
+import type HlsType from "hls.js";
 import { Minimize2, Maximize2, Video, Volume2, VolumeX } from "lucide-react";
 
 const STREAM_URL = "https://video04.logicahost.com.br/radiopositivafm/radiopositivafm/chunklist_w896619194.m3u8";
 
+// Dynamic HLS loader — cached after first import
+let hlsModule: typeof import("hls.js") | null = null;
+const getHls = async () => {
+  if (!hlsModule) hlsModule = await import("hls.js");
+  return hlsModule.default;
+};
+
 export default function VideoPlayer() {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const hlsRef = useRef<Hls | null>(null);
+  const hlsRef = useRef<HlsType | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [minimized, setMinimized] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
@@ -15,23 +22,32 @@ export default function VideoPlayer() {
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
+    let cancelled = false;
 
-    if (Hls.isSupported()) {
-      const hls = new Hls({ enableWorker: true, lowLatencyMode: true });
-      hlsRef.current = hls;
-      hls.loadSource(STREAM_URL);
-      hls.attachMedia(video);
-      hls.on(Hls.Events.MANIFEST_PARSED, () => {
-        video.play().catch(() => {});
-      });
-      return () => {
-        hls.destroy();
+    (async () => {
+      const Hls = await getHls();
+      if (cancelled) return;
+      if (Hls.isSupported()) {
+        const hls = new Hls({ enableWorker: true, lowLatencyMode: true });
+        hlsRef.current = hls;
+        hls.loadSource(STREAM_URL);
+        hls.attachMedia(video);
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          video.play().catch(() => {});
+        });
+      } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+        video.src = STREAM_URL;
+        video.addEventListener("loadedmetadata", () => video.play().catch(() => {}));
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      if (hlsRef.current) {
+        hlsRef.current.destroy();
         hlsRef.current = null;
-      };
-    } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
-      video.src = STREAM_URL;
-      video.addEventListener("loadedmetadata", () => video.play().catch(() => {}));
-    }
+      }
+    };
   }, [minimized]);
 
   useEffect(() => {

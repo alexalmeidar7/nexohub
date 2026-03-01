@@ -1,7 +1,9 @@
 import { useAuth } from "@/hooks/useAuth";
-import LoginScreen from "@/components/LoginScreen";
+import { lazy, Suspense } from "react";
 import { Loader2 } from "lucide-react";
 import { Navigate } from "react-router-dom";
+
+const LoginScreen = lazy(() => import("@/components/LoginScreen"));
 
 export default function Index() {
   const { user, loading, role } = useAuth();
@@ -15,7 +17,11 @@ export default function Index() {
   }
 
   if (!user) {
-    return <LoginScreen />;
+    return (
+      <Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center"><Loader2 className="animate-spin text-primary" size={32} /></div>}>
+        <LoginScreen />
+      </Suspense>
+    );
   }
 
   // Redirect based on role

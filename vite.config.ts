@@ -20,6 +20,17 @@ export default defineConfig(({ mode }) => ({
     dedupe: ["react", "react-dom", "react/jsx-runtime", "@tanstack/react-query"],
   },
   optimizeDeps: {
-    include: ["@tanstack/react-query"],
+    include: ["@tanstack/react-query", "react", "react-dom", "react-router-dom"],
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ["react", "react-dom", "react-router-dom"],
+          supabase: ["@supabase/supabase-js"],
+          ui: ["lucide-react", "@radix-ui/react-tooltip", "@radix-ui/react-dialog"],
+        },
+      },
+    },
   },
 }));
