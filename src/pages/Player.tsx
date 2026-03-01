@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState, useCallback, useMemo } from "react";
-import Hls from "hls.js";
+import { useEffect, useRef, useState, useCallback, useMemo, lazy, Suspense } from "react";
+import type HlsType from "hls.js";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { format, addDays, startOfWeek } from "date-fns";
@@ -20,7 +20,17 @@ import {
   CaptionsOff,
   Mic,
 } from "lucide-react";
-import PlayerChat from "@/components/PlayerChat";
+
+const PlayerChat = lazy(() => import("@/components/PlayerChat"));
+
+// Dynamic HLS loader — cached after first import
+let hlsModule: typeof import("hls.js") | null = null;
+const getHls = async () => {
+  if (!hlsModule) {
+    hlsModule = await import("hls.js");
+  }
+  return hlsModule.default;
+};
 
 interface YoutubeVideo {
   videoId: string;
@@ -167,7 +177,7 @@ export default function PlayerPage() {
   const { user } = useAuth();
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
-  const hlsRef = useRef<Hls | null>(null);
+  const hlsRef = useRef<HlsType | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [canais, setCanais] = useState<Canal[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -420,17 +430,22 @@ export default function PlayerPage() {
       } catch { return null; }
     };
 
+    let cachedXmlUrl: string | null = null;
+
     const fetchAndSync = async () => {
-      const { data: settings } = await supabase
-        .from("user_settings")
-        .select("music_xml_url")
-        .eq("user_id", user.id)
-        .maybeSingle();
-      const url = settings?.music_xml_url;
-      if (!url) return;
+      // Only fetch user_settings once, then reuse cached URL
+      if (!cachedXmlUrl) {
+        const { data: settings } = await supabase
+          .from("user_settings")
+          .select("music_xml_url")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        cachedXmlUrl = settings?.music_xml_url || null;
+      }
+      if (!cachedXmlUrl) return;
 
       try {
-        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(cachedXmlUrl)}`;
         const res = await fetch(proxyUrl, { cache: "no-store" });
         const text = await res.text();
         const data = parseXml(text);
@@ -509,7 +524,7 @@ export default function PlayerPage() {
 
   // Play stream — always fresh URL with cache bust for audio
   const playStream = useCallback(
-    (url: string, type: string) => {
+    async (url: string, type: string) => {
       if (hlsRef.current) {
         hlsRef.current.destroy();
         hlsRef.current = null;
@@ -520,6 +535,12 @@ export default function PlayerPage() {
       // Add cache buster for audio streams
       const freshUrl = url.includes("?") ? `${url}&_t=${Date.now()}` : `${url}?_t=${Date.now()}`;
 
+      const useHls = url.includes(".m3u8");
+      let Hls: typeof HlsType | null = null;
+      if (useHls) {
+        Hls = await getHls();
+      }
+
       if (type === "audio_live" || type === "audio") {
         if (videoRef.current) {
           videoRef.current.pause();
@@ -527,7 +548,7 @@ export default function PlayerPage() {
         }
         const audio = audioRef.current;
         if (!audio) return;
-        if (Hls.isSupported() && url.includes(".m3u8")) {
+        if (Hls && Hls.isSupported()) {
           const hls = new Hls({ enableWorker: true, lowLatencyMode: true });
           hlsRef.current = hls;
           hls.loadSource(freshUrl);
@@ -547,7 +568,7 @@ export default function PlayerPage() {
         }
         const video = videoRef.current;
         if (!video) return;
-        if (Hls.isSupported() && url.includes(".m3u8")) {
+        if (Hls && Hls.isSupported()) {
           const hls = new Hls({ enableWorker: true, lowLatencyMode: true });
           hlsRef.current = hls;
           hls.loadSource(freshUrl);
@@ -1305,10 +1326,12 @@ export default function PlayerPage() {
       </div>
       </div>
       {chatOpen && (
-        <PlayerChat
-          channelId={canal?.id || "default"}
-          onClose={() => setChatOpen(false)}
-        />
+        <Suspense fallback={<div className="fixed z-[55] w-[290px] rounded-2xl border border-white/10 flex items-center justify-center" style={{ backgroundColor: "rgba(10,10,10,0.95)", bottom: "110px", right: "80px", height: "700px" }}><Loader2 className="animate-spin text-white" size={24} /></div>}>
+          <PlayerChat
+            channelId={canal?.id || "default"}
+            onClose={() => setChatOpen(false)}
+          />
+        </Suspense>
       )}
     </div>
   );
