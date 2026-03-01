@@ -226,20 +226,83 @@ export default function PlayerPage() {
       });
   }, [canal?.url, isYoutube]);
 
-  // Poll music data from localStorage every 1s for real-time updates
+  // Sync music data directly from XML (independent of Dashboard)
+  const coverCacheRef = useRef<Record<string, string>>({});
   useEffect(() => {
-    const readMusic = () => {
+    if (!user) return;
+
+    const parseXml = (xmlStr: string) => {
       try {
-        const raw = localStorage.getItem(MUSIC_DATA_KEY);
-        if (raw) {
-          const parsed: MusicData = JSON.parse(raw);
-          // Always set a new object to force re-render
-          setMusicData({ ...parsed });
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(xmlStr, "application/xml");
+        if (doc.querySelector("parsererror")) return null;
+        const titulo = doc.querySelector("nome_musica")?.textContent || doc.querySelector("titulo")?.textContent || doc.querySelector("title")?.textContent || "Sem título";
+        const artista = doc.querySelector("interprete")?.textContent || doc.querySelector("nome_interprete")?.textContent || doc.querySelector("artista")?.textContent || doc.querySelector("artist")?.textContent || "Desconhecido";
+        const duracaoStr = doc.querySelector("duracao")?.textContent || doc.querySelector("duration")?.textContent || "0";
+        const capa = doc.querySelector("capa")?.textContent || doc.querySelector("cover")?.textContent || "";
+        let duracao = 0;
+        if (duracaoStr.includes(":")) {
+          const parts = duracaoStr.split(":").map(Number);
+          if (parts.length === 2) duracao = parts[0] * 60 + parts[1];
+          else if (parts.length === 3) duracao = parts[0] * 3600 + parts[1] * 60 + parts[2];
+        } else {
+          duracao = parseFloat(duracaoStr) || 0;
+          if (duracao > 600) duracao = duracao / 1000;
         }
+        return { titulo, artista, duracao, capa };
+      } catch { return null; }
+    };
+
+    const fetchAndSync = async () => {
+      const { data: settings } = await supabase
+        .from("user_settings")
+        .select("music_xml_url")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      const url = settings?.music_xml_url;
+      if (!url) return;
+
+      try {
+        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+        const res = await fetch(proxyUrl, { cache: "no-store" });
+        const text = await res.text();
+        const data = parseXml(text);
+        if (!data) return;
+
+        // Try iTunes cover if missing
+        if (!data.capa) {
+          const cacheKey = `${data.artista}-${data.titulo}`;
+          if (coverCacheRef.current[cacheKey]) {
+            data.capa = coverCacheRef.current[cacheKey];
+          } else {
+            try {
+              const query = encodeURIComponent(`${data.artista} ${data.titulo}`);
+              const itunesRes = await fetch(`https://itunes.apple.com/search?term=${query}&media=music&limit=1`);
+              const itunesData = await itunesRes.json();
+              if (itunesData.results?.length > 0) {
+                const cover = itunesData.results[0].artworkUrl100?.replace("100x100", "600x600") || "";
+                if (cover) {
+                  data.capa = cover;
+                  coverCacheRef.current[cacheKey] = cover;
+                }
+              }
+            } catch {}
+          }
+        }
+
+        // Update state directly + localStorage for other components
+        setMusicData(prev => {
+          if (!prev || prev.titulo !== data.titulo || prev.artista !== data.artista || prev.capa !== data.capa) {
+            localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify(data));
+            return { ...data };
+          }
+          return prev;
+        });
       } catch {}
     };
-    readMusic();
-    const interval = setInterval(readMusic, 1000);
+
+    fetchAndSync();
+    const interval = setInterval(fetchAndSync, 2000);
     return () => clearInterval(interval);
   }, []);
 
