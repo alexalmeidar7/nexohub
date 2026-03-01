@@ -1305,7 +1305,7 @@ export default function PlayerPage() {
               <button
                 onClick={() => navigateChannel(-1)}
                 className="text-white/60 hover:text-white transition-colors"
-                title="Canal anterior"
+                title="Use seu teclado para cima e para baixo para navegar entre os canais"
               >
                 <ChevronUp size={16} />
               </button>
@@ -1319,7 +1319,7 @@ export default function PlayerPage() {
               <button
                 onClick={() => navigateChannel(1)}
                 className="text-white/60 hover:text-white transition-colors"
-                title="Próximo canal"
+                title="Use seu teclado para cima e para baixo para navegar entre os canais"
               >
                 <ChevronDown size={16} />
               </button>
