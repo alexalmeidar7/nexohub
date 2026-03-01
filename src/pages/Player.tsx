@@ -945,7 +945,7 @@ export default function PlayerPage() {
         <div className="absolute inset-0 z-10">
           {/* Audio spectrum visualization */}
           <Suspense fallback={null}>
-            <AudioSpectrum audioRef={audioRef as React.RefObject<HTMLAudioElement>} />
+            <AudioSpectrum audioElement={audioRef.current} />
           </Suspense>
           {/* Presenter large background photo */}
           {currentPresenter?.foto && (
