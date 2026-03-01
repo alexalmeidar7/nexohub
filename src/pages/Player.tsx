@@ -25,6 +25,7 @@ import {
 
 const PlayerChat = lazy(() => import("@/components/PlayerChat"));
 const AudioSpectrum = lazy(() => import("@/components/AudioSpectrum"));
+import PreRollOverlay from "@/components/PreRollOverlay";
 
 // Dynamic HLS loader — cached after first import
 let hlsModule: typeof import("hls.js") | null = null;
@@ -1045,31 +1046,13 @@ export default function PlayerPage() {
     >
       {/* Pre-Roll Overlay */}
       {prerollUrl && !prerollDone && (
-        <div className="absolute inset-0 z-[100] bg-black flex items-center justify-center">
-          <video
-            ref={prerollVideoRef}
-            src={prerollUrl}
-            autoPlay
-            className="w-full h-full object-contain"
-            onEnded={() => { setPrerollDone(true); setPrerollUrl(null); }}
-          />
-          <button
-            onClick={() => { setPrerollDone(true); setPrerollUrl(null); setPrerollLinkUrl(null); }}
-            className="absolute top-6 right-6 bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg text-sm font-bold transition-all backdrop-blur-sm"
-          >
-            Pular Anúncio ›
-          </button>
-          {prerollLinkUrl && (
-            <a
-              href={prerollLinkUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="absolute bottom-10 right-6 bg-[#d30707] hover:bg-[#b00606] text-white px-6 py-3 rounded-lg text-sm font-bold transition-all shadow-lg"
-            >
-              Clique Aqui ›
-            </a>
-          )}
-        </div>
+        <PreRollOverlay
+          prerollUrl={prerollUrl}
+          prerollVideoRef={prerollVideoRef}
+          prerollLinkUrl={prerollLinkUrl}
+          onSkip={() => { setPrerollDone(true); setPrerollUrl(null); setPrerollLinkUrl(null); }}
+          onEnded={() => { setPrerollDone(true); setPrerollUrl(null); }}
+        />
       )}
 
       {/* Shopping Popup */}
