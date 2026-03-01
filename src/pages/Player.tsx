@@ -222,9 +222,10 @@ export default function PlayerPage() {
   const autoPlayedRef = useRef(false);
 
   // Shopping & Pre-Roll state
-  const [shopProducts, setShopProducts] = useState<{ id: string; name: string; image_url: string | null; price: number; stock: number; program_id: string | null }[]>([]);
+  const [shopProducts, setShopProducts] = useState<{ id: string; name: string; description: string | null; image_url: string | null; price: number; stock: number; program_id: string | null; payment_url: string | null }[]>([]);
   const [shopOpen, setShopOpen] = useState(false);
   const [shopPopupDismissed, setShopPopupDismissed] = useState(false);
+  const shopPopupTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [prerollUrl, setPrerollUrl] = useState<string | null>(null);
   const [prerollLinkUrl, setPrerollLinkUrl] = useState<string | null>(null);
   const [prerollDone, setPrerollDone] = useState(false);
@@ -542,7 +543,7 @@ export default function PlayerPage() {
         if (currentProg) {
           const { data: shopData } = await supabase
             .from("shopping_products")
-            .select("id, name, image_url, price, stock, program_id")
+            .select("id, name, description, image_url, price, stock, program_id, payment_url")
             .eq("user_id", user.id)
             .eq("active", true)
             .gt("stock", 0)
@@ -578,7 +579,7 @@ export default function PlayerPage() {
       }
       const { data } = await supabase
         .from("shopping_products")
-        .select("id, name, image_url, price, stock, program_id")
+        .select("id, name, description, image_url, price, stock, program_id, payment_url")
         .eq("user_id", user.id)
         .eq("active", true)
         .gt("stock", 0)
@@ -1013,6 +1014,8 @@ export default function PlayerPage() {
       setShopPopupDismissed(false);
     }
   }, [currentProg?.id]);
+
+
   const nextProg = getNextProgram(programas, currentProg);
   const progress = getProgramProgress(currentProg);
   const currentPresenter = useMemo(() => {
@@ -1080,6 +1083,17 @@ export default function PlayerPage() {
 
   const showShopIcon = currentShopProducts.length > 0;
 
+  // Auto-show shopping popup every 5 minutes
+  useEffect(() => {
+    if (shopPopupTimerRef.current) clearInterval(shopPopupTimerRef.current);
+    if (currentShopProducts.length > 0) {
+      shopPopupTimerRef.current = setInterval(() => {
+        setShopPopupDismissed(false);
+      }, 5 * 60 * 1000);
+    }
+    return () => { if (shopPopupTimerRef.current) clearInterval(shopPopupTimerRef.current); };
+  }, [currentShopProducts.length]);
+
   if (loading) {
     return (
       <div className="h-screen w-screen bg-black flex flex-col items-center justify-center gap-4">
@@ -1105,10 +1119,10 @@ export default function PlayerPage() {
         />
       )}
 
-      {/* Shopping Popup */}
+      {/* Shopping Popup — auto-shows every 5 min */}
       {showShopIcon && !shopPopupDismissed && currentShopProducts.length > 0 && (
         <div className="absolute top-6 right-6 z-50 animate-fade-in">
-          <div className="bg-black/90 backdrop-blur-md border border-white/15 rounded-2xl p-4 w-72 shadow-2xl">
+          <div className="bg-black/90 backdrop-blur-md border border-white/15 rounded-2xl p-5 w-80 shadow-2xl">
             <div className="flex items-center justify-between mb-3">
               <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#e60000" }}>
                 <ShoppingCart size={12} className="inline mr-1" />
@@ -1119,30 +1133,47 @@ export default function PlayerPage() {
               </button>
             </div>
             {currentShopProducts.slice(0, 1).map((p) => (
-              <div key={p.id} className="flex gap-3 items-center">
-                {p.image_url ? (
-                  <img src={p.image_url} alt={p.name} className="w-16 h-16 rounded-lg object-cover" />
-                ) : (
-                  <div className="w-16 h-16 rounded-lg bg-white/10 flex items-center justify-center">
-                    <ShoppingCart size={20} className="text-white/30" />
+              <div key={p.id}>
+                <div className="flex gap-3 items-center">
+                  {p.image_url ? (
+                    <img src={p.image_url} alt={p.name} className="w-20 h-20 rounded-lg object-cover" />
+                  ) : (
+                    <div className="w-20 h-20 rounded-lg bg-white/10 flex items-center justify-center">
+                      <ShoppingCart size={20} className="text-white/30" />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="text-white text-sm font-bold truncate">{p.name}</div>
+                    <div className="text-lg font-bold" style={{ color: "#e60000" }}>
+                      R$ {Number(p.price).toFixed(2)}
+                    </div>
+                    <div className="text-white/40 text-[10px]">{p.stock} disponíveis</div>
                   </div>
-                )}
-                <div className="flex-1 min-w-0">
-                  <div className="text-white text-sm font-bold truncate">{p.name}</div>
-                  <div className="text-lg font-bold" style={{ color: "#e60000" }}>
-                    R$ {Number(p.price).toFixed(2)}
-                  </div>
-                  <div className="text-white/40 text-[10px]">{p.stock} disponíveis</div>
                 </div>
+                {p.description && (
+                  <p className="text-white/60 text-xs mt-2 line-clamp-2">{p.description}</p>
+                )}
+                {p.payment_url ? (
+                  <a
+                    href={p.payment_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block w-full mt-3 py-2.5 rounded-lg text-sm font-bold text-white text-center transition-all hover:brightness-110"
+                    style={{ backgroundColor: "#009ee3" }}
+                  >
+                    💳 Comprar via Mercado Pago
+                  </a>
+                ) : (
+                  <button
+                    onClick={() => setShopOpen(true)}
+                    className="w-full mt-3 py-2.5 rounded-lg text-sm font-bold text-white transition-all"
+                    style={{ backgroundColor: "#e60000" }}
+                  >
+                    Ver Produto
+                  </button>
+                )}
               </div>
             ))}
-            <button
-              onClick={() => setShopOpen(true)}
-              className="w-full mt-3 py-2 rounded-lg text-sm font-bold text-white transition-all"
-              style={{ backgroundColor: "#e60000" }}
-            >
-              Comprar Agora
-            </button>
           </div>
         </div>
       )}
@@ -1160,21 +1191,37 @@ export default function PlayerPage() {
             </div>
             <div className="space-y-3">
               {currentShopProducts.map((p) => (
-                <div key={p.id} className="flex gap-4 items-center bg-white/5 border border-white/10 rounded-xl p-4">
-                  {p.image_url ? (
-                    <img src={p.image_url} alt={p.name} className="w-20 h-20 rounded-lg object-cover" />
-                  ) : (
-                    <div className="w-20 h-20 rounded-lg bg-white/10 flex items-center justify-center">
-                      <ShoppingCart size={24} className="text-white/30" />
+                <div key={p.id} className="bg-white/5 border border-white/10 rounded-xl p-4">
+                  <div className="flex gap-4 items-center">
+                    {p.image_url ? (
+                      <img src={p.image_url} alt={p.name} className="w-20 h-20 rounded-lg object-cover" />
+                    ) : (
+                      <div className="w-20 h-20 rounded-lg bg-white/10 flex items-center justify-center">
+                        <ShoppingCart size={24} className="text-white/30" />
+                      </div>
+                    )}
+                    <div className="flex-1">
+                      <div className="text-white font-bold">{p.name}</div>
+                      <div className="text-xl font-bold mt-1" style={{ color: "#e60000" }}>
+                        R$ {Number(p.price).toFixed(2)}
+                      </div>
+                      <div className="text-white/40 text-xs">{p.stock} em estoque</div>
                     </div>
-                  )}
-                  <div className="flex-1">
-                    <div className="text-white font-bold">{p.name}</div>
-                    <div className="text-xl font-bold mt-1" style={{ color: "#e60000" }}>
-                      R$ {Number(p.price).toFixed(2)}
-                    </div>
-                    <div className="text-white/40 text-xs">{p.stock} em estoque</div>
                   </div>
+                  {p.description && (
+                    <p className="text-white/60 text-sm mt-2">{p.description}</p>
+                  )}
+                  {p.payment_url && (
+                    <a
+                      href={p.payment_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block w-full mt-3 py-2.5 rounded-lg text-sm font-bold text-white text-center transition-all hover:brightness-110"
+                      style={{ backgroundColor: "#009ee3" }}
+                    >
+                      💳 Comprar via Mercado Pago
+                    </a>
+                  )}
                 </div>
               ))}
               {currentShopProducts.length === 0 && (
