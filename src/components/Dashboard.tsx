@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Calendar as CalendarUI } from "@/components/ui/calendar";
-import { Home, Sun, FileText, Mic2, PlaySquare, Music, CalendarDays, Settings, LogOut, Loader2, ShoppingBag, ChevronDown, ChevronUp, MessageSquareQuote, Tag, Image, ExternalLink, MonitorPlay } from "lucide-react";
+import { Home, Sun, FileText, Mic2, PlaySquare, Music, CalendarDays, Settings, LogOut, Loader2, ShoppingBag, ChevronDown, ChevronUp, MessageSquareQuote, Tag, Image, ExternalLink, MonitorPlay, Heart } from "lucide-react";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import ApresentadorForm from "./ApresentadorForm";
@@ -28,8 +28,9 @@ import { getMusicData } from "./MusicaNoAr";
 import { useAuth } from "@/hooks/useAuth";
 import VideoPlayer from "./VideoPlayer";
 import TopLikedSongs from "./TopLikedSongs";
+import MusicasCurtidasPage from "./MusicasCurtidasPage";
 
-type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos";
+type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas";
 
 const menuItems: { icon: typeof Home; label: string; page: Page }[] = [
   { icon: Home, label: "MasterView Home", page: "dashboard" },
@@ -38,6 +39,7 @@ const menuItems: { icon: typeof Home; label: string; page: Page }[] = [
   { icon: Mic2, label: "Módulo Cadastro de Apresentadores/Participantes", page: "apresentadores" },
   { icon: PlaySquare, label: "Módulo Cadastro de Programas", page: "programas" },
   { icon: Music, label: "Módulo Música no Ar", page: "musica" },
+  { icon: Heart, label: "Módulo Músicas Curtidas", page: "curtidas" },
   { icon: CalendarDays, label: "Módulo Agenda", page: "agenda" },
 ];
 
@@ -55,6 +57,7 @@ const pageTitle: Record<Page, string> = {
   programas: "Módulo Cadastro de Programas",
   musica: "Módulo Música no Ar",
   agenda: "Módulo Agenda",
+  curtidas: "Módulo Músicas Curtidas",
   configuracoes: "Configurações",
   testemunhais: "Módulo Comercial — Testemunhais",
   promocoes: "Módulo Comercial — Promoções",
@@ -315,6 +318,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           {currentPage === "programas" && <ProgramaForm />}
           {currentPage === "musica" && <MusicaNoAr />}
           {currentPage === "agenda" && <AgendaPage />}
+          {currentPage === "curtidas" && <MusicasCurtidasPage />}
           {currentPage === "configuracoes" && <ConfiguracoesPage />}
           {currentPage === "testemunhais" && <TestemunhaisPage />}
           {currentPage === "promocoes" && <PromocoesPage />}
