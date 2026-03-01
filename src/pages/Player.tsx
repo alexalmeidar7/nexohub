@@ -359,6 +359,27 @@ export default function PlayerPage() {
     };
   }, []);
 
+  // Fetch streaming channels
+  useEffect(() => {
+    if (!user) return;
+    const fetchChannels = async () => {
+      try {
+        const { data } = await supabase
+          .from("streaming_channels")
+          .select("*")
+          .eq("user_id", user.id)
+          .eq("active", true)
+          .order("numero_canal");
+        if (data) setCanais(data as Canal[]);
+      } catch (err) {
+        console.error("Error fetching channels:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchChannels();
+  }, [user]);
+
 
   // Load programs and apresentadores
   useEffect(() => {
