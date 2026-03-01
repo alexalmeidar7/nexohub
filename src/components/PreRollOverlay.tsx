@@ -23,9 +23,9 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
   const canSkip = countdown <= 0;
 
   return (
-    <div className="absolute inset-0 z-[100] bg-black flex">
-      {/* Video area */}
-      <div className={`relative ${prerollLinkUrl ? "flex-1" : "w-full"} h-full`}>
+    <div className="absolute inset-0 z-[100] bg-black flex flex-row overflow-hidden">
+      {/* Video area — takes remaining space */}
+      <div className="relative flex-1 min-w-0 h-full">
         <video
           ref={prerollVideoRef}
           src={prerollUrl}
@@ -33,9 +33,23 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
           className="w-full h-full object-contain"
           onEnded={onEnded}
         />
+        {/* Skip button — anchored inside video area */}
+        <div className="absolute bottom-10 right-6 flex items-center gap-3">
+          <button
+            onClick={canSkip ? onSkip : undefined}
+            className={`px-4 py-3 rounded-lg text-sm font-bold transition-all backdrop-blur-sm ${
+              canSkip
+                ? "bg-white/20 hover:bg-white/30 text-white cursor-pointer"
+                : "bg-white/10 text-white/50 cursor-not-allowed"
+            }`}
+            disabled={!canSkip}
+          >
+            {canSkip ? "Pular Anúncio ›" : `Pular em ${countdown}s`}
+          </button>
+        </div>
       </div>
 
-      {/* QR Code sidebar */}
+      {/* QR Code sidebar — fixed width, never overlaps video */}
       {prerollLinkUrl && (
         <div className="w-[280px] shrink-0 bg-white flex flex-col items-center justify-center gap-5 px-6">
           <span className="text-black text-sm font-bold uppercase tracking-wider text-center">
@@ -60,21 +74,6 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
           </a>
         </div>
       )}
-
-      {/* Skip button */}
-      <div className="absolute bottom-10 right-6 flex items-center gap-3">
-        <button
-          onClick={canSkip ? onSkip : undefined}
-          className={`px-4 py-3 rounded-lg text-sm font-bold transition-all backdrop-blur-sm ${
-            canSkip
-              ? "bg-white/20 hover:bg-white/30 text-white cursor-pointer"
-              : "bg-white/10 text-white/50 cursor-not-allowed"
-          }`}
-          disabled={!canSkip}
-        >
-          {canSkip ? "Pular Anúncio ›" : `Pular em ${countdown}s`}
-        </button>
-      </div>
     </div>
   );
 }
