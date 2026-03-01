@@ -16,12 +16,6 @@ import {
   List,
   X,
 } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 
 interface YoutubeVideo {
   videoId: string;
@@ -430,15 +424,14 @@ export default function PlayerPage() {
   const nextProg = getNextProgram(programas, currentProg);
   const progress = getProgramProgress(currentProg);
 
-  // Background image — for audio use music cover if available, fallback to channel cover
-  const audioBg = isAudio && musicData?.capa ? musicData.capa : (canal?.cover_url || canal?.background_url);
-  const bgImage = (isAudio || isYoutube) ? audioBg : null;
+  // Remove unused bg variable
+  
 
-  // "No Ar" label — for audio/video types: canal name + program name
+  // "No Ar" label — for audio: show current program from grade; for others: canal + program
   const noArLabel = canal
-    ? (isAudio || isVideo)
+    ? isAudio
       ? currentProg
-        ? `${canal.name} - ${currentProg.nome}`
+        ? currentProg.nome
         : canal.name
       : currentProg
         ? `${canal.name} - ${currentProg.nome}`
@@ -495,14 +488,22 @@ export default function PlayerPage() {
   return (
     <div
       ref={containerRef}
-      className="relative h-screen w-screen bg-black overflow-hidden cursor-pointer select-none"
+      className={`relative h-screen w-screen bg-black overflow-hidden select-none ${barVisible ? "cursor-default" : "cursor-none"}`}
     >
       {/* Background image for audio/youtube channels */}
-      {bgImage && (
+      {isAudio && canal?.cover_url && (
         <div
           className="absolute inset-0 bg-cover bg-center transition-all duration-700"
           style={{
-            backgroundImage: `url(${bgImage})`,
+            backgroundImage: `url(${canal.cover_url})`,
+          }}
+        />
+      )}
+      {isYoutube && (canal?.cover_url || canal?.background_url) && (
+        <div
+          className="absolute inset-0 bg-cover bg-center transition-all duration-700"
+          style={{
+            backgroundImage: `url(${canal.cover_url || canal.background_url})`,
             filter: "blur(8px) brightness(0.4)",
             transform: "scale(1.1)",
           }}
@@ -570,8 +571,8 @@ export default function PlayerPage() {
       {/* Hidden audio element */}
       <audio ref={audioRef} muted={muted} />
 
-      {/* Buffering overlay */}
-      {buffering && playing && !isYoutube && (
+      {/* Buffering overlay — only for video, not audio */}
+      {buffering && playing && !isYoutube && !isAudio && (
         <div className="absolute inset-0 flex items-center justify-center z-20 bg-black/60">
           <Loader2 className="animate-spin" size={56} style={{ color: "#d30707" }} />
         </div>
@@ -624,14 +625,18 @@ export default function PlayerPage() {
         </div>
       )}
 
-      {/* Grade Dialog */}
-      <Dialog open={gradeOpen} onOpenChange={setGradeOpen}>
-        <DialogContent className="max-w-[95vw] max-h-[90vh] p-0 border-0 overflow-hidden" style={{ backgroundColor: "#111" }}>
-          <DialogHeader className="px-6 pt-5 pb-3 border-b" style={{ borderColor: "#d30707" }}>
-            <DialogTitle className="text-white text-lg font-bold flex items-center gap-2">
+      {/* Grade Dialog — rendered inside containerRef so it works in fullscreen */}
+      {gradeOpen && (
+        <div className="absolute inset-0 z-[100] flex items-center justify-center" style={{ backgroundColor: "rgba(0,0,0,0.85)" }}>
+          <div className="relative w-[95vw] max-h-[90vh] rounded-lg overflow-hidden" style={{ backgroundColor: "#111" }}>
+          <div className="flex items-center justify-between px-6 pt-5 pb-3 border-b" style={{ borderColor: "#d30707" }}>
+            <div className="text-white text-lg font-bold flex items-center gap-2">
               <span style={{ color: "#d30707" }}>■</span> Grade de Programação
-            </DialogTitle>
-          </DialogHeader>
+            </div>
+            <button onClick={() => setGradeOpen(false)} className="text-white/60 hover:text-white transition-colors">
+              <X size={20} />
+            </button>
+          </div>
           <div className="overflow-auto max-h-[75vh] px-4 pb-4">
             <table className="w-full text-xs border-separate border-spacing-1">
               <thead className="sticky top-0 z-10" style={{ backgroundColor: "#111" }}>
@@ -671,8 +676,9 @@ export default function PlayerPage() {
               </tbody>
             </table>
           </div>
-        </DialogContent>
-      </Dialog>
+          </div>
+        </div>
+      )}
 
       {/* Control bar hover zone */}
       <div
