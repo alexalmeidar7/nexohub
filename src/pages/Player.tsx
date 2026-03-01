@@ -264,7 +264,7 @@ export default function PlayerPage() {
       return Date.now();
     };
     const isAudioStream = canal?.type === "audio_live" || canal?.type === "audio";
-    const audioDelay = isAudioStream ? 5000 : 0;
+    const audioDelay = isAudioStream ? 10000 : 0;
     ccMusicStartRef.current = calcMusicStartTimestamp() + audioDelay;
 
     const fetchLyrics = async () => {
