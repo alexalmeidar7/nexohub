@@ -397,7 +397,7 @@ export default function PlayerPage() {
       .then(({ data }) => {
         if (data?.videos) {
           setYoutubeVideos(data.videos);
-          setSidebarOpen(true);
+          // Playlist is always visible for YouTube, no need for sidebar toggle
         }
       });
   }, [canal?.url, isYoutube]);
@@ -791,7 +791,26 @@ export default function PlayerPage() {
           }}
         />
       )}
-      {isYoutube && (canal?.cover_url || canal?.background_url) && (
+      {/* YouTube: Fullscreen background video iframe (overscaled, muted, no controls) */}
+      {isYoutube && selectedVideoId && (
+        <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+          <iframe
+            className="absolute"
+            style={{
+              width: "150%",
+              height: "150%",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              border: "none",
+            }}
+            src={`https://www.youtube.com/embed/${selectedVideoId}?autoplay=1&mute=1&controls=0&loop=1&playlist=${selectedVideoId}&showinfo=0&rel=0&modestbranding=1`}
+            allow="autoplay; encrypted-media"
+          />
+        </div>
+      )}
+      {/* YouTube: Thumbnail placeholder before first play */}
+      {isYoutube && !selectedVideoId && (canal?.cover_url || canal?.background_url) && (
         <div
           className="absolute inset-0 bg-cover bg-center transition-all duration-700"
           style={{
@@ -800,6 +819,68 @@ export default function PlayerPage() {
             transform: "scale(1.1)",
           }}
         />
+      )}
+      {/* YouTube: Dark gradient overlay */}
+      {isYoutube && (
+        <div
+          className="absolute inset-0 z-[1]"
+          style={{
+            background: "linear-gradient(90deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.15) 100%)",
+          }}
+        />
+      )}
+
+      {/* YouTube: Playlist sidebar — always visible on left */}
+      {isYoutube && (
+        <div
+          className="absolute z-[15] flex flex-col rounded-2xl overflow-hidden"
+          style={{
+            left: "150px",
+            top: "50%",
+            transform: "translateY(-50%)",
+            width: "450px",
+            height: "730px",
+            backgroundColor: "rgba(20, 20, 20, 0.9)",
+            border: "1px solid rgba(255, 0, 0, 0.3)",
+            boxShadow: "0 20px 50px rgba(0,0,0,0.5)",
+          }}
+        >
+          <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
+            <span className="text-white text-sm font-bold flex items-center gap-2">
+              <List size={16} /> Playlist
+            </span>
+            <span className="text-white/40 text-xs">{youtubeVideos.length} vídeos</span>
+          </div>
+          <div className="flex-1 overflow-y-auto" ref={gradeScrollRef}>
+            {youtubeVideos.map((v, i) => (
+              <button
+                key={v.videoId}
+                onClick={() => handleSelectVideo(v.videoId)}
+                className={`flex items-start gap-3 px-4 py-3 w-full text-left transition-colors ${
+                  selectedVideoId === v.videoId
+                    ? "bg-[#e60000]/20 border-l-2 border-[#e60000]"
+                    : "hover:bg-white/10 border-l-2 border-transparent"
+                }`}
+              >
+                <div className="relative shrink-0">
+                  <img src={v.thumbnail} alt="" className="w-32 h-[72px] rounded-lg object-cover" />
+                  {selectedVideoId === v.videoId && (
+                    <div className="absolute inset-0 bg-black/40 rounded-lg flex items-center justify-center">
+                      <Play size={20} className="text-white fill-white" />
+                    </div>
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-white text-xs font-semibold line-clamp-2 leading-relaxed">{v.title}</div>
+                  <div className="text-white/40 text-[10px] mt-1.5">#{i + 1}</div>
+                </div>
+              </button>
+            ))}
+            {youtubeVideos.length === 0 && (
+              <div className="text-white/40 text-xs text-center py-12">Carregando playlist...</div>
+            )}
+          </div>
+        </div>
       )}
 
       {/* Video element (hidden for audio/youtube channels) */}
@@ -810,55 +891,6 @@ export default function PlayerPage() {
         playsInline
         autoPlay={false}
       />
-
-      {/* YouTube video iframe */}
-      {isYoutube && selectedVideoId && (
-        <iframe
-          className="absolute inset-0 w-full h-full z-10"
-          style={{ border: "none", left: sidebarOpen ? "320px" : "0", width: sidebarOpen ? "calc(100% - 320px)" : "100%" }}
-          src={`https://www.youtube.com/embed/${selectedVideoId}`}
-          allow="encrypted-media; fullscreen"
-          allowFullScreen
-        />
-      )}
-
-      {/* YouTube playlist sidebar */}
-      {isYoutube && sidebarOpen && (
-        <div className="absolute left-0 top-0 bottom-0 w-80 z-20 overflow-y-auto" style={{ backgroundColor: "rgba(0,0,0,0.95)" }}>
-          <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
-            <span className="text-white text-sm font-bold flex items-center gap-2"><List size={14} /> Playlist</span>
-            <button onClick={() => setSidebarOpen(false)} className="text-white/50 hover:text-white text-xs">Fechar</button>
-          </div>
-          <div className="flex flex-col">
-            {youtubeVideos.map((v, i) => (
-              <button
-                key={v.videoId}
-                onClick={() => handleSelectVideo(v.videoId)}
-                className={`flex items-start gap-3 px-3 py-2 text-left hover:bg-white/10 transition-colors ${selectedVideoId === v.videoId ? "bg-white/10" : ""}`}
-              >
-                <img src={v.thumbnail} alt="" className="w-28 h-16 rounded object-cover shrink-0" />
-                <div className="min-w-0">
-                  <div className="text-white text-xs font-semibold line-clamp-2">{v.title}</div>
-                  <div className="text-white/40 text-[10px] mt-1">#{i + 1}</div>
-                </div>
-              </button>
-            ))}
-            {youtubeVideos.length === 0 && (
-              <div className="text-white/40 text-xs text-center py-8">Carregando playlist...</div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Toggle sidebar button when closed */}
-      {isYoutube && !sidebarOpen && youtubeVideos.length > 0 && (
-        <button
-          onClick={() => setSidebarOpen(true)}
-          className="absolute left-3 top-3 z-20 bg-black/70 hover:bg-black/90 text-white rounded-lg px-3 py-2 text-xs flex items-center gap-1 transition-all"
-        >
-          <List size={14} /> Playlist
-        </button>
-      )}
 
       {/* Hidden audio element */}
       <audio ref={audioRef} muted={muted} />
