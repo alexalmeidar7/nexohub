@@ -46,7 +46,7 @@ const menuItems: { icon: typeof Home; label: string; page: Page }[] = [
   { icon: Music, label: "Módulo Música no Ar", page: "musica" },
   { icon: Heart, label: "Módulo Músicas Curtidas", page: "curtidas" },
   { icon: CalendarDays, label: "Módulo Agenda", page: "agenda" },
-  { icon: ShoppingCart, label: "Módulo Shopping", page: "shopping" },
+  
 ];
 
 const comercialSubItems: { icon: typeof Home; label: string; page: Page }[] = [
@@ -54,6 +54,7 @@ const comercialSubItems: { icon: typeof Home; label: string; page: Page }[] = [
   { icon: Tag, label: "Promoções", page: "promocoes" },
   { icon: Image, label: "Logos Patrocinadores", page: "logos" },
   { icon: Film, label: "Pre-Roll", page: "preroll" },
+  { icon: ShoppingCart, label: "Shopping", page: "shopping" },
 ];
 
 const pageTitle: Record<Page, string> = {
@@ -69,7 +70,7 @@ const pageTitle: Record<Page, string> = {
   testemunhais: "Módulo Comercial — Testemunhais",
   promocoes: "Módulo Comercial — Promoções",
   logos: "Módulo Comercial — Logos Patrocinadores",
-  shopping: "Módulo Shopping",
+  shopping: "Módulo Comercial — Shopping",
   preroll: "Módulo Comercial — Pre-Roll",
 };
 
