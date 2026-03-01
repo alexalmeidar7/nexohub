@@ -158,8 +158,8 @@ export default function PlayerChat({ channelId, onClose }: PlayerChatProps) {
   if (minimized) {
     return (
       <div
-        className="fixed bottom-24 right-5 z-[55] rounded-xl border border-white/10 px-4 py-2 flex items-center gap-3 cursor-pointer"
-        style={{ backgroundColor: "rgba(15,15,15,0.95)" }}
+        className="fixed z-[55] rounded-xl border border-white/10 px-4 py-2 flex items-center gap-3 cursor-pointer"
+        style={{ backgroundColor: "rgba(15,15,15,0.95)", bottom: "110px", right: "80px" }}
         onClick={() => setMinimized(false)}
       >
         <span className="text-white text-sm font-bold">💬 Chat</span>
@@ -168,11 +168,16 @@ export default function PlayerChat({ channelId, onClose }: PlayerChatProps) {
     );
   }
 
-  // Full chat
+  // Full chat — positioned above control bar
   return (
     <div
-      className="fixed top-0 right-0 bottom-0 z-[55] w-[340px] flex flex-col border-l border-white/10"
-      style={{ backgroundColor: "rgba(10,10,10,0.95)" }}
+      className="fixed z-[55] w-[340px] flex flex-col rounded-2xl border border-white/10"
+      style={{
+        backgroundColor: "rgba(10,10,10,0.95)",
+        bottom: "110px",
+        right: "80px",
+        top: "30px",
+      }}
     >
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
