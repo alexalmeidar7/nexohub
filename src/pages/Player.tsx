@@ -365,22 +365,32 @@ export default function PlayerPage() {
   const [liked, setLiked] = useState(false);
   const [likeAnimating, setLikeAnimating] = useState(false);
   const [floatingHearts, setFloatingHearts] = useState<{ id: number; x: number; delay: number }[]>([]);
+  const [likeCount, setLikeCount] = useState(0);
 
-  // Check if current song is already liked
+  // Check if current song is already liked + fetch total count
   useEffect(() => {
     if (!user || !musicData?.titulo || !musicData?.artista) {
       setLiked(false);
+      setLikeCount(0);
       return;
     }
     const check = async () => {
-      const { data } = await supabase
-        .from("music_likes")
-        .select("id")
-        .eq("user_id", user.id)
-        .eq("titulo", musicData.titulo)
-        .eq("artista", musicData.artista)
-        .limit(1);
-      setLiked(!!(data && data.length > 0));
+      const [{ data: myLike }, { count }] = await Promise.all([
+        supabase
+          .from("music_likes")
+          .select("id")
+          .eq("user_id", user.id)
+          .eq("titulo", musicData.titulo)
+          .eq("artista", musicData.artista)
+          .limit(1),
+        supabase
+          .from("music_likes")
+          .select("*", { count: "exact", head: true })
+          .eq("titulo", musicData.titulo)
+          .eq("artista", musicData.artista),
+      ]);
+      setLiked(!!(myLike && myLike.length > 0));
+      setLikeCount(count ?? 0);
     };
     check();
   }, [user, musicData?.titulo, musicData?.artista]);
@@ -395,6 +405,7 @@ export default function PlayerPage() {
         .eq("titulo", musicData.titulo)
         .eq("artista", musicData.artista);
       setLiked(false);
+      setLikeCount((c) => Math.max(0, c - 1));
     } else {
       await supabase.from("music_likes").insert({
         user_id: user.id,
@@ -403,6 +414,7 @@ export default function PlayerPage() {
         capa: musicData.capa || "",
       });
       setLiked(true);
+      setLikeCount((c) => c + 1);
       setLikeAnimating(true);
       setTimeout(() => setLikeAnimating(false), 600);
       // Spawn floating hearts
@@ -1364,7 +1376,7 @@ export default function PlayerPage() {
           <div className="flex items-center gap-3 px-5 border-l border-white/10 shrink-0">
             {/* Like button */}
             {isAudio && musicData?.titulo && (
-              <div className="relative">
+              <div className="relative flex items-center gap-1.5">
                 <button
                   onClick={toggleLike}
                   className={`p-1.5 rounded transition-all ${likeAnimating ? "scale-125" : "scale-100"}`}
@@ -1378,6 +1390,9 @@ export default function PlayerPage() {
                     className="transition-colors"
                   />
                 </button>
+                {likeCount > 0 && (
+                  <span className="text-[11px] font-bold text-white/60">{likeCount}</span>
+                )}
                 {/* Floating hearts */}
                 {floatingHearts.map((h) => (
                   <Heart
