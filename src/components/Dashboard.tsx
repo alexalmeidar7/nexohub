@@ -116,7 +116,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     if (page === "dashboard" || page === "configuracoes") return true;
     if (!enabledModules) return true; // no restrictions
     // Comercial sub-pages map to "comercial" module
-    if (page === "testemunhais" || page === "promocoes" || page === "logos" || page === "preroll") {
+    if (page === "testemunhais" || page === "promocoes" || page === "logos" || page === "preroll" || page === "shopping") {
       return enabledModules.has("comercial");
     }
     return enabledModules.has(page);
