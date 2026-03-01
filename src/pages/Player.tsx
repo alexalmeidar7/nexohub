@@ -198,7 +198,12 @@ export default function PlayerPage() {
   const [loadingStatus, setLoadingStatus] = useState("Iniciando...");
   const [buffering, setBuffering] = useState(false);
   const [barVisible, setBarVisible] = useState(true);
-  const [musicData, setMusicData] = useState<MusicData | null>(null);
+  const [musicData, setMusicData] = useState<MusicData | null>(() => {
+    try {
+      const stored = localStorage.getItem(MUSIC_DATA_KEY);
+      return stored ? JSON.parse(stored) : null;
+    } catch { return null; }
+  });
   const [youtubeVideos, setYoutubeVideos] = useState<YoutubeVideo[]>([]);
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
