@@ -4,34 +4,6 @@ interface AudioSpectrumProps {
   audioElement: HTMLAudioElement | null;
 }
 
-type SpectrumAudioState = {
-  ctx: AudioContext;
-  analyser: AnalyserNode;
-};
-
-const spectrumStateMap = new WeakMap<HTMLAudioElement, SpectrumAudioState>();
-
-function createSpectrumState(audio: HTMLAudioElement): SpectrumAudioState | null {
-  const media = audio as HTMLMediaElement & {
-    captureStream?: () => MediaStream;
-    mozCaptureStream?: () => MediaStream;
-  };
-
-  const stream = media.captureStream?.() ?? media.mozCaptureStream?.();
-  if (!stream) return null;
-
-  const ctx = new (window.AudioContext || (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext)();
-  const analyser = ctx.createAnalyser();
-  analyser.fftSize = 256;
-  analyser.smoothingTimeConstant = 0.75;
-
-  // IMPORTANT: use MediaStreamSource so we do not reroute/replace the original audio output
-  const source = ctx.createMediaStreamSource(stream);
-  source.connect(analyser);
-
-  return { ctx, analyser };
-}
-
 export default function AudioSpectrum({ audioElement }: AudioSpectrumProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rafRef = useRef<number>(0);
@@ -39,12 +11,6 @@ export default function AudioSpectrum({ audioElement }: AudioSpectrumProps) {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!audioElement || !canvas) return;
-
-    let state = spectrumStateMap.get(audioElement) ?? null;
-    if (!state) {
-      state = createSpectrumState(audioElement);
-      if (state) spectrumStateMap.set(audioElement, state);
-    }
 
     const ctx2d = canvas.getContext("2d");
     if (!ctx2d) return;
@@ -61,54 +27,31 @@ export default function AudioSpectrum({ audioElement }: AudioSpectrumProps) {
       const barCount = 64;
       const barWidth = w / barCount;
       const gap = 2;
+      const t = performance.now() / 350;
+      const active = !audioElement.paused && !audioElement.muted;
 
-      if (state) {
-        if (state.ctx.state === "suspended") {
-          state.ctx.resume().catch(() => {});
-        }
-
-        const bufferLength = state.analyser.frequencyBinCount;
-        const dataArray = new Uint8Array(bufferLength);
-        state.analyser.getByteFrequencyData(dataArray);
-
-        for (let i = 0; i < barCount; i++) {
-          const srcIndex = Math.floor((i / barCount) * bufferLength);
-          const val = dataArray[srcIndex] / 255;
-          const barHeight = val * h * 0.95;
-          const x = i * barWidth;
-          const alpha = 0.35 + val * 0.65;
-          ctx2d.fillStyle = `rgba(211, 7, 7, ${alpha})`;
-          ctx2d.fillRect(x + gap / 2, h - barHeight, barWidth - gap, barHeight);
-        }
-      } else {
-        // Safe fallback animation if stream capture is unavailable (does not touch audio pipeline)
-        const t = performance.now() / 380;
-        const active = !audioElement.paused && !audioElement.muted;
-
-        for (let i = 0; i < barCount; i++) {
-          const wave = Math.sin(t + i * 0.35 + fallbackSeed) * 0.5 + 0.5;
-          const pulse = active ? 0.35 : 0.12;
-          const val = pulse + wave * (active ? 0.55 : 0.18);
-          const barHeight = val * h * 0.9;
-          const x = i * barWidth;
-          const alpha = 0.25 + val * 0.6;
-          ctx2d.fillStyle = `rgba(211, 7, 7, ${alpha})`;
-          ctx2d.fillRect(x + gap / 2, h - barHeight, barWidth - gap, barHeight);
-        }
+      for (let i = 0; i < barCount; i++) {
+        const wave1 = Math.sin(t + i * 0.3 + fallbackSeed) * 0.5 + 0.5;
+        const wave2 = Math.sin(t * 1.7 + i * 0.5) * 0.3 + 0.5;
+        const wave3 = Math.sin(t * 0.6 + i * 0.15 + 2) * 0.2 + 0.5;
+        const combined = (wave1 * 0.5 + wave2 * 0.3 + wave3 * 0.2);
+        const pulse = active ? 0.3 : 0.08;
+        const val = pulse + combined * (active ? 0.6 : 0.12);
+        const barHeight = val * h * 0.95;
+        const x = i * barWidth;
+        const alpha = 0.3 + val * 0.7;
+        ctx2d.fillStyle = `rgba(211, 7, 7, ${alpha})`;
+        ctx2d.fillRect(x + gap / 2, h - barHeight, barWidth - gap, barHeight);
       }
     };
 
     draw();
-
-    return () => {
-      cancelAnimationFrame(rafRef.current);
-    };
+    return () => cancelAnimationFrame(rafRef.current);
   }, [audioElement]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-
     const resize = () => {
       const parent = canvas.parentElement;
       if (parent) {
@@ -116,7 +59,6 @@ export default function AudioSpectrum({ audioElement }: AudioSpectrumProps) {
         canvas.height = parent.clientHeight;
       }
     };
-
     resize();
     window.addEventListener("resize", resize);
     return () => window.removeEventListener("resize", resize);
