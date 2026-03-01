@@ -1066,6 +1066,24 @@ export default function PlayerPage() {
                 <div key={`${musicData.titulo}-${musicData.artista}`} className="text-center animate-fade-in" style={{ animationDuration: "0.7s" }}>
                   <div className="text-white text-2xl font-bold drop-shadow-lg">{musicData.titulo}</div>
                   <div className="text-white/70 text-lg mt-1 drop-shadow-lg">{musicData.artista}</div>
+                  {currentPresenter && (
+                    <div className="mt-2 flex flex-col items-center gap-0.5">
+                      <span className="text-white/60 text-sm font-semibold drop-shadow-lg flex items-center gap-1.5">
+                        <Mic size={12} />
+                        {currentPresenter.nome}
+                      </span>
+                      {currentPresenter.instagram && (
+                        <a
+                          href={`https://instagram.com/${currentPresenter.instagram.replace(/^@/, "")}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-white/40 text-xs hover:text-white/70 transition-colors drop-shadow-lg"
+                        >
+                          @{currentPresenter.instagram.replace(/^@/, "")}
+                        </a>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
