@@ -1812,18 +1812,18 @@ export default function PlayerPage() {
             >
               {fullscreen ? <Minimize size={18} /> : <Maximize size={18} />}
             </button>
-            {/* Shopping icon */}
-            {showShopIcon && (
-              <button
-                onClick={() => { setShopOpen(!shopOpen); setShopPopupDismissed(true); }}
-                className="hover:bg-white/20 rounded-full w-8 h-8 flex items-center justify-center transition-all relative"
-                style={shopOpen ? { backgroundColor: "#d30707", color: "#fff" } : { backgroundColor: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)" }}
-                title="Shopping ao Vivo"
-              >
-                <ShoppingCart size={14} />
+            {/* Shopping icon — always visible */}
+            <button
+              onClick={() => { setShopOpen(!shopOpen); setShopPopupDismissed(true); }}
+              className="hover:bg-white/20 rounded-full w-8 h-8 flex items-center justify-center transition-all relative"
+              style={shopOpen ? { backgroundColor: "#d30707", color: "#fff" } : { backgroundColor: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)" }}
+              title="Shopping ao Vivo"
+            >
+              <ShoppingCart size={14} />
+              {showShopIcon && (
                 <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full animate-pulse" style={{ backgroundColor: "#e60000" }} />
-              </button>
-            )}
+              )}
+            </button>
             <button
               onClick={() => setChatOpen(!chatOpen)}
               className="hover:bg-white/20 rounded-full w-8 h-8 flex items-center justify-center transition-all"
