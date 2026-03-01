@@ -15,7 +15,10 @@ export default function AudioSpectrum({ audioElement }: AudioSpectrumProps) {
     const ctx2d = canvas.getContext("2d");
     if (!ctx2d) return;
 
-    const fallbackSeed = Math.random() * 1000;
+    const seed = Math.random() * 1000;
+    // Random per-bar offsets for organic feel
+    const barOffsets = Array.from({ length: 80 }, () => Math.random() * Math.PI * 2);
+    const barSpeeds = Array.from({ length: 80 }, () => 0.7 + Math.random() * 1.8);
 
     const draw = () => {
       rafRef.current = requestAnimationFrame(draw);
@@ -24,23 +27,41 @@ export default function AudioSpectrum({ audioElement }: AudioSpectrumProps) {
       const h = canvas.height;
       ctx2d.clearRect(0, 0, w, h);
 
-      const barCount = 64;
+      const barCount = 80;
       const barWidth = w / barCount;
-      const gap = 2;
-      const t = performance.now() / 350;
+      const gap = 1.5;
+      const t = performance.now() / 280;
       const active = !audioElement.paused && !audioElement.muted;
 
       for (let i = 0; i < barCount; i++) {
-        const wave1 = Math.sin(t + i * 0.3 + fallbackSeed) * 0.5 + 0.5;
-        const wave2 = Math.sin(t * 1.7 + i * 0.5) * 0.3 + 0.5;
-        const wave3 = Math.sin(t * 0.6 + i * 0.15 + 2) * 0.2 + 0.5;
-        const combined = (wave1 * 0.5 + wave2 * 0.3 + wave3 * 0.2);
-        const pulse = active ? 0.3 : 0.08;
-        const val = pulse + combined * (active ? 0.6 : 0.12);
-        const barHeight = val * h * 0.95;
+        const off = barOffsets[i];
+        const spd = barSpeeds[i];
+
+        // Multiple layered waves for realism
+        const w1 = Math.sin(t * spd + i * 0.22 + off) * 0.5 + 0.5;
+        const w2 = Math.sin(t * 1.4 * spd + i * 0.45 + seed) * 0.4 + 0.5;
+        const w3 = Math.cos(t * 0.8 + i * 0.12 + off * 2) * 0.3 + 0.5;
+        const w4 = Math.sin(t * 2.2 + i * 0.7 + seed * 0.5) * 0.25 + 0.5;
+        const spike = Math.pow(Math.sin(t * 0.5 + i * 0.08), 8) * 0.4;
+
+        const combined = w1 * 0.3 + w2 * 0.25 + w3 * 0.2 + w4 * 0.15 + spike * 0.1;
+
+        // Bass-heavy distribution (lower bars = higher amplitude)
+        const bassBoost = i < barCount * 0.3 ? 1.3 : i < barCount * 0.6 ? 1.0 : 0.7;
+
+        const base = active ? 0.15 : 0.04;
+        const intensity = active ? 0.85 : 0.08;
+        const val = Math.min(1, (base + combined * intensity) * bassBoost);
+        const barHeight = val * h;
         const x = i * barWidth;
-        const alpha = 0.3 + val * 0.7;
-        ctx2d.fillStyle = `rgba(211, 7, 7, ${alpha})`;
+
+        // Gradient per bar
+        const gradient = ctx2d.createLinearGradient(x, h, x, h - barHeight);
+        gradient.addColorStop(0, `rgba(211, 7, 7, ${0.9 * val})`);
+        gradient.addColorStop(0.5, `rgba(230, 30, 30, ${0.7 * val})`);
+        gradient.addColorStop(1, `rgba(255, 60, 60, ${0.4 * val})`);
+
+        ctx2d.fillStyle = gradient;
         ctx2d.fillRect(x + gap / 2, h - barHeight, barWidth - gap, barHeight);
       }
     };
@@ -65,7 +86,10 @@ export default function AudioSpectrum({ audioElement }: AudioSpectrumProps) {
   }, []);
 
   return (
-    <div className="absolute bottom-0 left-0 right-0 z-[5] pointer-events-none" style={{ height: "120px" }}>
+    <div
+      className="absolute left-0 right-0 z-[5] pointer-events-none"
+      style={{ bottom: "120px", height: "150px" }}
+    >
       <canvas ref={canvasRef} className="w-full h-full" />
     </div>
   );
