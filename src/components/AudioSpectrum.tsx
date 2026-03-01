@@ -1,35 +1,41 @@
 import { useEffect, useRef } from "react";
 
-interface AudioSpectrumProps {
-  audioRef: React.RefObject<HTMLAudioElement>;
+// Global singleton — createMediaElementSource can only be called ONCE per element
+const audioCtxMap = new WeakMap<HTMLAudioElement, { ctx: AudioContext; analyser: AnalyserNode }>();
+
+function getOrCreateAnalyser(audio: HTMLAudioElement) {
+  if (audioCtxMap.has(audio)) return audioCtxMap.get(audio)!;
+  const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+  const analyser = ctx.createAnalyser();
+  analyser.fftSize = 256;
+  const source = ctx.createMediaElementSource(audio);
+  source.connect(analyser);
+  analyser.connect(ctx.destination);
+  audioCtxMap.set(audio, { ctx, analyser });
+  return { ctx, analyser };
 }
 
-export default function AudioSpectrum({ audioRef }: AudioSpectrumProps) {
+interface AudioSpectrumProps {
+  audioElement: HTMLAudioElement | null;
+}
+
+export default function AudioSpectrum({ audioElement }: AudioSpectrumProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const ctxRef = useRef<{ analyser: AnalyserNode; source: MediaElementAudioSourceNode } | null>(null);
   const rafRef = useRef<number>(0);
 
   useEffect(() => {
-    const audio = audioRef.current;
     const canvas = canvasRef.current;
-    if (!audio || !canvas) return;
+    if (!audioElement || !canvas) return;
 
-    // Only create the audio context once per audio element
-    if (!ctxRef.current) {
-      try {
-        const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
-        const analyser = audioCtx.createAnalyser();
-        analyser.fftSize = 256;
-        const source = audioCtx.createMediaElementSource(audio);
-        source.connect(analyser);
-        analyser.connect(audioCtx.destination);
-        ctxRef.current = { analyser, source };
-      } catch {
-        return;
-      }
+    let analyser: AnalyserNode;
+    try {
+      const result = getOrCreateAnalyser(audioElement);
+      if (result.ctx.state === "suspended") result.ctx.resume();
+      analyser = result.analyser;
+    } catch {
+      return;
     }
 
-    const { analyser } = ctxRef.current;
     const bufferLength = analyser.frequencyBinCount;
     const dataArray = new Uint8Array(bufferLength);
 
@@ -52,7 +58,6 @@ export default function AudioSpectrum({ audioRef }: AudioSpectrumProps) {
         const val = dataArray[i] / 255;
         const barHeight = val * h * 0.9;
         const x = i * barWidth;
-        // Gradient from bottom
         const alpha = 0.4 + val * 0.6;
         ctx.fillStyle = `rgba(211, 7, 7, ${alpha})`;
         ctx.fillRect(x + gap / 2, h - barHeight, barWidth - gap, barHeight);
@@ -60,13 +65,10 @@ export default function AudioSpectrum({ audioRef }: AudioSpectrumProps) {
     };
 
     draw();
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [audioElement]);
 
-    return () => {
-      cancelAnimationFrame(rafRef.current);
-    };
-  }, [audioRef]);
-
-  // Resize canvas to container
+  // Resize canvas
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
