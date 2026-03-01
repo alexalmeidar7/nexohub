@@ -319,6 +319,33 @@ export type Database = {
           },
         ]
       }
+      player_chat_messages: {
+        Row: {
+          channel_id: string
+          cidade: string
+          created_at: string
+          id: string
+          message: string
+          nome: string
+        }
+        Insert: {
+          channel_id: string
+          cidade: string
+          created_at?: string
+          id?: string
+          message: string
+          nome: string
+        }
+        Update: {
+          channel_id?: string
+          cidade?: string
+          created_at?: string
+          id?: string
+          message?: string
+          nome?: string
+        }
+        Relationships: []
+      }
       programas: {
         Row: {
           apresentador_id: string | null
@@ -605,6 +632,7 @@ export type Database = {
     }
     Functions: {
       cleanup_comercial: { Args: never; Returns: undefined }
+      cleanup_old_chat_messages: { Args: never; Returns: undefined }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

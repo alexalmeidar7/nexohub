@@ -20,6 +20,7 @@ import {
   CaptionsOff,
   Mic,
 } from "lucide-react";
+import PlayerChat from "@/components/PlayerChat";
 
 interface YoutubeVideo {
   videoId: string;
@@ -165,6 +166,7 @@ export default function PlayerPage() {
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [gradeOpen, setGradeOpen] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
   const [clock, setClock] = useState(0);
   const [apresentadores, setApresentadores] = useState<Apresentador[]>([]);
   const gradeScrollRef = useRef<HTMLDivElement>(null);
@@ -1305,7 +1307,11 @@ export default function PlayerPage() {
             >
               {fullscreen ? <Minimize size={18} /> : <Maximize size={18} />}
             </button>
-            <button className="bg-white/10 hover:bg-white/20 text-white/70 rounded-full w-8 h-8 flex items-center justify-center transition-all">
+            <button
+              onClick={() => setChatOpen(true)}
+              className="bg-white/10 hover:bg-white/20 text-white/70 rounded-full w-8 h-8 flex items-center justify-center transition-all"
+              title="Chat ao Vivo"
+            >
               <MessageSquare size={14} />
             </button>
             {/* Volume button + slider with extended hover area */}
@@ -1374,6 +1380,12 @@ export default function PlayerPage() {
         </div>
       </div>
       </div>
+      {chatOpen && (
+        <PlayerChat
+          channelId={canal?.id || "default"}
+          onClose={() => setChatOpen(false)}
+        />
+      )}
     </div>
   );
 }
