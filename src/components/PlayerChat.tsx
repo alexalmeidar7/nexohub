@@ -173,7 +173,7 @@ export default function PlayerChat({ channelId, onClose }: PlayerChatProps) {
         backgroundColor: "rgba(10,10,10,0.95)",
         top: "85px",
         right: "80px",
-        bottom: "110px",
+        bottom: "250px",
       }}
     >
       {/* Header */}
