@@ -18,6 +18,7 @@ import {
   Plus,
   Captions,
   CaptionsOff,
+  Mic,
 } from "lucide-react";
 
 interface YoutubeVideo {
@@ -58,6 +59,7 @@ interface Apresentador {
   id: string;
   nome: string;
   foto: string | null;
+  instagram: string | null;
 }
 
 interface MusicData {
@@ -404,7 +406,7 @@ export default function PlayerPage() {
       });
     supabase
       .from("apresentadores")
-      .select("id, nome, foto")
+      .select("id, nome, foto, instagram")
       .eq("user_id", user.id)
       .eq("ativo", true)
       .then(({ data }) => {
@@ -902,11 +904,17 @@ export default function PlayerPage() {
                   style={{ animationDuration: "1s" }}
                 />
               </div>
-              {/* Presenter name bottom-left */}
-              <div className="absolute z-20" style={{ left: "350px", bottom: "200px" }}>
-                <span className="text-white/80 text-lg font-bold tracking-widest uppercase drop-shadow-lg">
+              {/* Presenter name + instagram bottom-left */}
+              <div className="absolute z-20 flex flex-col gap-1" style={{ left: "350px", bottom: "200px" }}>
+                <span className="text-white/80 text-lg font-bold tracking-widest uppercase drop-shadow-lg flex items-center gap-2">
+                  <Mic size={18} className="text-red-500" />
                   {currentPresenter.nome}
                 </span>
+                {currentPresenter.instagram && (
+                  <span className="text-white/50 text-sm drop-shadow-lg flex items-center gap-1.5" style={{ marginLeft: "26px" }}>
+                    @{currentPresenter.instagram.replace(/^@/, "")}
+                  </span>
+                )}
               </div>
             </div>
           )}
