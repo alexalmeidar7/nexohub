@@ -455,7 +455,12 @@ export default function PlayerPage() {
     const fetchAll = async () => {
       setLoadingStatus("Carregando canais...");
 
-      const [channelsRes, programasRes, apresentadoresRes] = await Promise.all([
+      const now = new Date();
+      const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+      const dayMap: Record<number, string> = { 0: "Domingo", 1: "Segunda", 2: "Terça", 3: "Quarta", 4: "Quinta", 5: "Sexta", 6: "Sábado" };
+      const today = dayMap[now.getDay()];
+
+      const [channelsRes, programasRes, apresentadoresRes, shopRes, prerollRes] = await Promise.all([
         supabase
           .from("streaming_channels")
           .select("*")
@@ -473,6 +478,22 @@ export default function PlayerPage() {
           .select("id, nome, foto, instagram")
           .eq("user_id", user.id)
           .eq("ativo", true),
+        supabase
+          .from("shopping_products")
+          .select("id, name, image_url, price, stock, program_id")
+          .eq("user_id", user.id)
+          .eq("active", true)
+          .gt("stock", 0),
+        !prerollDone
+          ? supabase
+              .from("comercial_preroll")
+              .select("*")
+              .eq("user_id", user.id)
+              .eq("active", true)
+              .lte("horario_inicio", currentTime)
+              .gte("horario_fim", currentTime)
+              .order("priority", { ascending: true })
+          : Promise.resolve({ data: null }),
       ]);
 
       setLoadingStatus("Preparando player...");
@@ -492,13 +513,32 @@ export default function PlayerPage() {
         setApresentadores(apresentadoresRes.data as Apresentador[]);
       }
 
+      if (shopRes.data) setShopProducts(shopRes.data);
+
+      // Process preroll
+      if (!prerollDone && prerollRes.data && prerollRes.data.length > 0) {
+        const matching = prerollRes.data.filter((p: any) => {
+          if (!p.dias_semana || p.dias_semana.length === 0) return true;
+          return p.dias_semana.includes(today);
+        });
+        if (matching.length > 0) {
+          const selected = matching[Math.floor(Math.random() * matching.length)];
+          setPrerollUrl(selected.video_url);
+          setPrerollLinkUrl((selected as any).link_url || null);
+        } else {
+          setPrerollDone(true);
+        }
+      } else if (!prerollDone) {
+        setPrerollDone(true);
+      }
+
       setLoading(false);
     };
 
     fetchAll();
   }, [user, authLoading]);
 
-  // Fetch shopping products for current program
+  // Refresh shopping products periodically
   useEffect(() => {
     if (!user) return;
     const fetchShop = async () => {
@@ -510,49 +550,9 @@ export default function PlayerPage() {
         .gt("stock", 0);
       if (data) setShopProducts(data);
     };
-    fetchShop();
     const interval = setInterval(fetchShop, 30000);
     return () => clearInterval(interval);
   }, [user]);
-
-  // Fetch pre-roll for current time
-  useEffect(() => {
-    if (!user || prerollDone) return;
-    const fetchPreroll = async () => {
-      const now = new Date();
-      const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-      const dayMap: Record<number, string> = { 0: "Domingo", 1: "Segunda", 2: "Terça", 3: "Quarta", 4: "Quinta", 5: "Sexta", 6: "Sábado" };
-      const today = dayMap[now.getDay()];
-
-      const { data } = await supabase
-        .from("comercial_preroll")
-        .select("*")
-        .eq("user_id", user.id)
-        .eq("active", true)
-        .lte("horario_inicio", currentTime)
-        .gte("horario_fim", currentTime)
-        .order("priority", { ascending: true });
-
-      if (data && data.length > 0) {
-        const matching = data.filter((p: any) => {
-          if (!p.dias_semana || p.dias_semana.length === 0) return true;
-          return p.dias_semana.includes(today);
-        });
-        if (matching.length > 0) {
-          const selected = matching[Math.floor(Math.random() * matching.length)];
-          setPrerollUrl(selected.video_url);
-          setPrerollLinkUrl((selected as any).link_url || null);
-        } else {
-          // No matching preroll, mark done so streaming can start
-          setPrerollDone(true);
-        }
-      } else {
-        // No preroll available, mark done so streaming can start
-        setPrerollDone(true);
-      }
-    };
-    fetchPreroll();
-  }, [user, prerollDone]);
 
 
   // Fetch YouTube playlist videos when channel is YouTube
