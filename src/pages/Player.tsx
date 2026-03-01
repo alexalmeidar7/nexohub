@@ -109,7 +109,7 @@ export default function PlayerPage() {
   const hideTimeout = useRef<ReturnType<typeof setTimeout>>();
 
   const canal = canais[currentIndex] || null;
-  const isAudio = canal?.type === "audio";
+  const isAudio = canal?.type === "audio_live" || canal?.type === "audio";
   const isYoutube = canal?.type === "youtube";
   const isVideo = canal?.type === "video";
 
@@ -214,7 +214,7 @@ export default function PlayerPage() {
 
       setBuffering(true);
 
-      if (type === "audio") {
+      if (type === "audio_live" || type === "audio") {
         // Stop video
         if (videoRef.current) {
           videoRef.current.pause();
@@ -229,8 +229,9 @@ export default function PlayerPage() {
           hls.loadSource(url);
           hls.attachMedia(audio);
           hls.on(Hls.Events.MANIFEST_PARSED, () => {
-            audio.play().catch(() => {});
+            audio.play().then(() => setBuffering(false)).catch(() => {});
           });
+          hls.on(Hls.Events.FRAG_BUFFERED, () => setBuffering(false));
         } else {
           audio.src = url;
           audio.play().catch(() => {});
@@ -250,8 +251,9 @@ export default function PlayerPage() {
           hls.loadSource(url);
           hls.attachMedia(video);
           hls.on(Hls.Events.MANIFEST_PARSED, () => {
-            video.play().catch(() => {});
+            video.play().then(() => setBuffering(false)).catch(() => {});
           });
+          hls.on(Hls.Events.FRAG_BUFFERED, () => setBuffering(false));
         } else {
           video.src = url;
           video.addEventListener("loadedmetadata", () => video.play().catch(() => {}), { once: true });
