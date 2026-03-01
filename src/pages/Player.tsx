@@ -193,28 +193,49 @@ export default function PlayerPage() {
         return;
       }
 
-      // Try to get stream from the media element
-      let stream: MediaStream | null = null;
-      try {
-        stream = (mediaEl as any).captureStream?.() || (mediaEl as any).mozCaptureStream?.();
-      } catch (err) {
-        console.warn("captureStream failed, trying MediaElementSource:", err);
-      }
-
+      // Try multiple methods to capture the stream audio
       const audioCtx = new AudioContext();
       ccAudioCtxRef.current = audioCtx;
 
-      let source: AudioNode;
-      if (stream && stream.getAudioTracks().length > 0) {
-        source = audioCtx.createMediaStreamSource(stream);
-      } else {
-        // Fallback: createMediaElementSource (takes over audio routing)
+      let source: AudioNode | null = null;
+
+      // Method 1: captureStream
+      try {
+        const stream = (mediaEl as any).captureStream?.() || (mediaEl as any).mozCaptureStream?.();
+        if (stream && stream.getAudioTracks().length > 0) {
+          source = audioCtx.createMediaStreamSource(stream);
+          console.log("CC: Using captureStream, tracks:", stream.getAudioTracks().length);
+        } else {
+          console.warn("CC: captureStream returned no audio tracks");
+        }
+      } catch (err) {
+        console.warn("CC: captureStream failed:", err);
+      }
+
+      // Method 2: createMediaElementSource
+      if (!source) {
         try {
-          source = audioCtx.createMediaElementSource(mediaEl);
-          // Re-connect to destination so user still hears audio
-          source.connect(audioCtx.destination);
+          const elSource = audioCtx.createMediaElementSource(mediaEl);
+          elSource.connect(audioCtx.destination);
+          source = elSource;
+          console.log("CC: Using createMediaElementSource");
         } catch (err) {
-          console.error("Cannot capture stream audio:", err);
+          console.warn("CC: createMediaElementSource failed:", err);
+        }
+      }
+
+      // Method 3: Microphone fallback (captures audio playing through speakers)
+      if (!source) {
+        try {
+          const micStream = await navigator.mediaDevices.getUserMedia({
+            audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
+          });
+          source = audioCtx.createMediaStreamSource(micStream);
+          // Store for cleanup
+          (ccWsRef as any)._micStream = micStream;
+          console.log("CC: Using microphone fallback");
+        } catch (micErr) {
+          console.error("CC: All audio capture methods failed:", micErr);
           audioCtx.close();
           setCcEnabled(false);
           setCcListening(false);
@@ -289,6 +310,12 @@ export default function PlayerPage() {
       ccProcessorRef.current = null;
     }
     if (ccWsRef.current) {
+      // Stop microphone tracks if used
+      const micStream = (ccWsRef as any)?._micStream as MediaStream | undefined;
+      if (micStream) {
+        micStream.getTracks().forEach(t => t.stop());
+        (ccWsRef as any)._micStream = null;
+      }
       ccWsRef.current.close();
       ccWsRef.current = null;
     }
@@ -780,7 +807,6 @@ export default function PlayerPage() {
         muted={muted}
         playsInline
         autoPlay={false}
-        crossOrigin="anonymous"
       />
 
       {/* YouTube video iframe */}
@@ -833,7 +859,7 @@ export default function PlayerPage() {
       )}
 
       {/* Hidden audio element */}
-      <audio ref={audioRef} muted={muted} crossOrigin="anonymous" />
+      <audio ref={audioRef} muted={muted} />
 
       {/* Buffering overlay — only for video, not audio */}
       {buffering && playing && !isYoutube && !isAudio && (
