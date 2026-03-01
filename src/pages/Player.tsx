@@ -12,7 +12,14 @@ import {
   VolumeX,
   MessageSquare,
   Loader2,
+  List,
 } from "lucide-react";
+
+interface YoutubeVideo {
+  videoId: string;
+  title: string;
+  thumbnail: string;
+}
 
 interface Canal {
   id: string;
@@ -101,11 +108,16 @@ export default function PlayerPage() {
   const [programas, setProgramas] = useState<Programa[]>([]);
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(false);
+  const [volume, setVolume] = useState(80);
+  const [volumeHover, setVolumeHover] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [buffering, setBuffering] = useState(false);
   const [barVisible, setBarVisible] = useState(true);
   const [musicData, setMusicData] = useState<MusicData | null>(null);
+  const [youtubeVideos, setYoutubeVideos] = useState<YoutubeVideo[]>([]);
+  const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const hideTimeout = useRef<ReturnType<typeof setTimeout>>();
 
   const canal = canais[currentIndex] || null;
@@ -155,6 +167,26 @@ export default function PlayerPage() {
         if (data) setProgramas(data as Programa[]);
       });
   }, [user]);
+
+  // Fetch YouTube playlist videos when channel is YouTube
+  useEffect(() => {
+    if (!isYoutube || !canal?.url) {
+      setYoutubeVideos([]);
+      setSelectedVideoId(null);
+      return;
+    }
+    const match = canal.url.match(/[?&]list=([a-zA-Z0-9_-]+)/);
+    if (!match) return;
+    const playlistId = match[1];
+    supabase.functions
+      .invoke("youtube-playlist", { body: { playlistId } })
+      .then(({ data }) => {
+        if (data?.videos) {
+          setYoutubeVideos(data.videos);
+          setSidebarOpen(true);
+        }
+      });
+  }, [canal?.url, isYoutube]);
 
   // Poll music data from localStorage (set by MusicaNoAr module)
   useEffect(() => {
@@ -313,6 +345,20 @@ export default function PlayerPage() {
     if (audioRef.current) audioRef.current.muted = newMuted;
   };
 
+  const handleVolumeChange = (val: number) => {
+    setVolume(val);
+    const v = val / 100;
+    if (videoRef.current) { videoRef.current.volume = v; videoRef.current.muted = false; }
+    if (audioRef.current) { audioRef.current.volume = v; audioRef.current.muted = false; }
+    setMuted(val === 0);
+  };
+
+  const handleSelectVideo = (videoId: string) => {
+    setSelectedVideoId(videoId);
+    setPlaying(true);
+    setBuffering(false);
+  };
+
   // Bar hover logic — only trigger on the bottom bar area
   const showBar = () => {
     setBarVisible(true);
@@ -395,15 +441,53 @@ export default function PlayerPage() {
         autoPlay={false}
       />
 
-      {/* YouTube playlist iframe */}
-      {isYoutube && playing && youtubePlaylistId && (
+      {/* YouTube video iframe — only plays selected video, no autoplay */}
+      {isYoutube && selectedVideoId && (
         <iframe
           className="absolute inset-0 w-full h-full z-10"
-          src={`https://www.youtube.com/embed/videoseries?list=${youtubePlaylistId}&autoplay=1`}
-          allow="autoplay; encrypted-media; fullscreen"
+          style={{ border: "none", left: sidebarOpen ? "320px" : "0", width: sidebarOpen ? "calc(100% - 320px)" : "100%" }}
+          src={`https://www.youtube.com/embed/${selectedVideoId}`}
+          allow="encrypted-media; fullscreen"
           allowFullScreen
-          style={{ border: "none" }}
         />
+      )}
+
+      {/* YouTube playlist sidebar */}
+      {isYoutube && sidebarOpen && (
+        <div className="absolute left-0 top-0 bottom-0 w-80 z-20 overflow-y-auto" style={{ backgroundColor: "rgba(0,0,0,0.95)" }}>
+          <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
+            <span className="text-white text-sm font-bold flex items-center gap-2"><List size={14} /> Playlist</span>
+            <button onClick={() => setSidebarOpen(false)} className="text-white/50 hover:text-white text-xs">Fechar</button>
+          </div>
+          <div className="flex flex-col">
+            {youtubeVideos.map((v, i) => (
+              <button
+                key={v.videoId}
+                onClick={() => handleSelectVideo(v.videoId)}
+                className={`flex items-start gap-3 px-3 py-2 text-left hover:bg-white/10 transition-colors ${selectedVideoId === v.videoId ? "bg-white/10" : ""}`}
+              >
+                <img src={v.thumbnail} alt="" className="w-28 h-16 rounded object-cover shrink-0" />
+                <div className="min-w-0">
+                  <div className="text-white text-xs font-semibold line-clamp-2">{v.title}</div>
+                  <div className="text-white/40 text-[10px] mt-1">#{i + 1}</div>
+                </div>
+              </button>
+            ))}
+            {youtubeVideos.length === 0 && (
+              <div className="text-white/40 text-xs text-center py-8">Carregando playlist...</div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Toggle sidebar button when closed */}
+      {isYoutube && !sidebarOpen && youtubeVideos.length > 0 && (
+        <button
+          onClick={() => setSidebarOpen(true)}
+          className="absolute left-3 top-3 z-20 bg-black/70 hover:bg-black/90 text-white rounded-lg px-3 py-2 text-xs flex items-center gap-1 transition-all"
+        >
+          <List size={14} /> Playlist
+        </button>
       )}
 
       {/* Hidden audio element */}
@@ -555,10 +639,38 @@ export default function PlayerPage() {
             </button>
             <button
               onClick={toggleMute}
-              className="text-white/70 hover:text-white transition-colors"
+              className="text-white/70 hover:text-white transition-colors relative"
               title={muted ? "Ativar som" : "Desativar som"}
+              onMouseEnter={() => setVolumeHover(true)}
+              onMouseLeave={() => setVolumeHover(false)}
             >
               {muted ? <VolumeX size={18} /> : <Volume2 size={18} />}
+              {/* Volume slider popup */}
+              {volumeHover && (
+                <div
+                  className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-black/95 rounded-lg px-2 py-3 flex flex-col items-center"
+                  style={{ height: "120px", width: "32px" }}
+                  onMouseEnter={() => setVolumeHover(true)}
+                  onMouseLeave={() => setVolumeHover(false)}
+                >
+                  <input
+                    type="range"
+                    min={0}
+                    max={100}
+                    value={volume}
+                    onChange={(e) => handleVolumeChange(Number(e.target.value))}
+                    className="h-full appearance-none cursor-pointer"
+                    style={{
+                      writingMode: "vertical-lr",
+                      direction: "rtl",
+                      width: "4px",
+                      accentColor: "#e60000",
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                  <span className="text-white/60 text-[9px] mt-1">{volume}</span>
+                </div>
+              )}
             </button>
           </div>
 
