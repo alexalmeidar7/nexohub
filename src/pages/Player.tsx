@@ -442,7 +442,7 @@ export default function PlayerPage() {
     }
   }, [user, musicData, liked]);
 
-  // Fetch all initial data (prioriza first render e carrega dados secundários em segundo plano)
+  // Fetch all initial data — 3 stages for fastest possible first paint
   useEffect(() => {
     let cancelled = false;
 
@@ -466,47 +466,26 @@ export default function PlayerPage() {
       const dayMap: Record<number, string> = { 0: "Domingo", 1: "Segunda", 2: "Terça", 3: "Quarta", 4: "Quinta", 5: "Sexta", 6: "Sábado" };
       const today = dayMap[now.getDay()];
 
-      const channelsPromise = supabase
-        .from("streaming_channels")
-        .select("*")
-        .eq("user_id", user.id)
-        .eq("active", true)
-        .order("numero_canal");
-
-      const prerollPromise = !prerollDone
-        ? supabase
-            .from("comercial_preroll")
+      try {
+        // STAGE 1 — Critical: only channels + preroll (show UI ASAP)
+        const [channelsRes, prerollRes] = await Promise.all([
+          supabase
+            .from("streaming_channels")
             .select("*")
             .eq("user_id", user.id)
             .eq("active", true)
-            .lte("horario_inicio", currentTime)
-            .gte("horario_fim", currentTime)
-            .order("priority", { ascending: true })
-        : Promise.resolve({ data: null, error: null } as const);
-
-      const programasPromise = supabase
-        .from("programas")
-        .select("id, nome, horario_inicio, horario_fim, dias_semana, ativo, selo, estudio, variavel, data_variavel, capa, descricao, apresentador_id")
-        .eq("user_id", user.id)
-        .eq("ativo", true)
-        .order("horario_inicio");
-
-      const apresentadoresPromise = supabase
-        .from("apresentadores")
-        .select("id, nome, foto, instagram")
-        .eq("user_id", user.id)
-        .eq("ativo", true);
-
-      const shopPromise = supabase
-        .from("shopping_products")
-        .select("id, name, image_url, price, stock, program_id")
-        .eq("user_id", user.id)
-        .eq("active", true)
-        .gt("stock", 0);
-
-      try {
-        // Critical path: canais + preroll (libera UI mais rápido)
-        const [channelsRes, prerollRes] = await Promise.all([channelsPromise, prerollPromise]);
+            .order("numero_canal"),
+          !prerollDone
+            ? supabase
+                .from("comercial_preroll")
+                .select("*")
+                .eq("user_id", user.id)
+                .eq("active", true)
+                .lte("horario_inicio", currentTime)
+                .gte("horario_fim", currentTime)
+                .order("priority", { ascending: true })
+            : Promise.resolve({ data: null, error: null } as const),
+        ]);
         if (cancelled) return;
 
         if (!channelsRes.error && channelsRes.data) {
@@ -532,26 +511,46 @@ export default function PlayerPage() {
           setPrerollDone(true);
         }
 
+        // UI is now visible — release loading gate
         setLoading(false);
-        setLoadingStatus("Carregando programação...");
 
-        // Non-critical path: carrega após tela já exibida
-        const [programasRes, apresentadoresRes, shopRes] = await Promise.all([
-          programasPromise,
-          apresentadoresPromise,
-          shopPromise,
+        // STAGE 2 — Secondary: programas + apresentadores (needed for schedule/presenter info)
+        const [programasRes, apresentadoresRes] = await Promise.all([
+          supabase
+            .from("programas")
+            .select("id, nome, horario_inicio, horario_fim, dias_semana, ativo, selo, estudio, variavel, data_variavel, capa, descricao, apresentador_id")
+            .eq("user_id", user.id)
+            .eq("ativo", true)
+            .order("horario_inicio"),
+          supabase
+            .from("apresentadores")
+            .select("id, nome, foto, instagram")
+            .eq("user_id", user.id)
+            .eq("ativo", true),
         ]);
         if (cancelled) return;
 
-        if (!programasRes.error && programasRes.data) {
-          setProgramas(programasRes.data as Programa[]);
-        }
+        const fetchedProgramas = (!programasRes.error && programasRes.data) ? programasRes.data as Programa[] : [];
+        setProgramas(fetchedProgramas);
 
         if (!apresentadoresRes.error && apresentadoresRes.data) {
           setApresentadores(apresentadoresRes.data as Apresentador[]);
         }
 
-        if (shopRes.data) setShopProducts(shopRes.data);
+        // STAGE 3 — Deferred: shop products only if current program has any
+        const currentProg = getCurrentProgram(fetchedProgramas);
+        if (currentProg) {
+          const { data: shopData } = await supabase
+            .from("shopping_products")
+            .select("id, name, image_url, price, stock, program_id")
+            .eq("user_id", user.id)
+            .eq("active", true)
+            .gt("stock", 0)
+            .eq("program_id", currentProg.id);
+          if (!cancelled && shopData && shopData.length > 0) {
+            setShopProducts(shopData);
+          }
+        }
       } catch (error) {
         console.error("Error fetching player initial data:", error);
         if (cancelled) return;
@@ -568,21 +567,27 @@ export default function PlayerPage() {
     };
   }, [user, authLoading]);
 
-  // Refresh shopping products periodically
+  // Refresh shopping products periodically — only for current program
   useEffect(() => {
-    if (!user) return;
+    if (!user || programas.length === 0) return;
     const fetchShop = async () => {
+      const currentProg = getCurrentProgram(programas);
+      if (!currentProg) {
+        setShopProducts([]);
+        return;
+      }
       const { data } = await supabase
         .from("shopping_products")
         .select("id, name, image_url, price, stock, program_id")
         .eq("user_id", user.id)
         .eq("active", true)
-        .gt("stock", 0);
+        .gt("stock", 0)
+        .eq("program_id", currentProg.id);
       if (data) setShopProducts(data);
     };
     const interval = setInterval(fetchShop, 30000);
     return () => clearInterval(interval);
-  }, [user]);
+  }, [user, programas]);
 
 
   // Fetch YouTube playlist videos when channel is YouTube
@@ -711,11 +716,13 @@ export default function PlayerPage() {
       }
     };
 
-    fetchAndSync();
+    // Defer first XML fetch to not compete with stream loading
+    const initialDelay = setTimeout(fetchAndSync, 2000);
     const interval = setInterval(fetchAndSync, 10000);
 
     return () => {
       cancelled = true;
+      clearTimeout(initialDelay);
       clearInterval(interval);
     };
   }, [user]);
