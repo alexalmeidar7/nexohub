@@ -893,7 +893,7 @@ export default function PlayerPage() {
         <div className="absolute inset-0 z-10">
           {/* Presenter large background photo */}
           {currentPresenter?.foto && (
-            <div className="absolute inset-0 flex items-end" style={{ paddingLeft: "50px" }}>
+            <div className="absolute inset-0 flex items-end" style={{ left: "-50px" }}>
               <div className="relative h-[92%]">
                 <img
                   src={currentPresenter.foto}
@@ -901,10 +901,9 @@ export default function PlayerPage() {
                   className="h-full object-contain object-bottom animate-fade-in"
                   style={{ animationDuration: "1s" }}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/60" />
               </div>
-              {/* Presenter name on top */}
-              <div className="absolute top-6 left-0 right-0 text-center z-20">
+              {/* Presenter name bottom-left */}
+              <div className="absolute z-20" style={{ left: "50px", bottom: "95px" }}>
                 <span className="text-white/80 text-lg font-bold tracking-widest uppercase drop-shadow-lg">
                   {currentPresenter.nome}
                 </span>
