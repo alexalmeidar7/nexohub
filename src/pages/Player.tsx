@@ -439,8 +439,10 @@ export default function PlayerPage() {
     }
   }, [user, musicData, liked]);
 
-  // Fetch all initial data in parallel
+  // Fetch all initial data (prioriza first render e carrega dados secundários em segundo plano)
   useEffect(() => {
+    let cancelled = false;
+
     if (authLoading) {
       setLoadingStatus("Autenticando...");
       return;
@@ -453,6 +455,7 @@ export default function PlayerPage() {
     }
 
     const fetchAll = async () => {
+      setLoading(true);
       setLoadingStatus("Carregando canais...");
 
       const now = new Date();
@@ -460,82 +463,106 @@ export default function PlayerPage() {
       const dayMap: Record<number, string> = { 0: "Domingo", 1: "Segunda", 2: "Terça", 3: "Quarta", 4: "Quinta", 5: "Sexta", 6: "Sábado" };
       const today = dayMap[now.getDay()];
 
-      const [channelsRes, programasRes, apresentadoresRes, shopRes, prerollRes] = await Promise.all([
-        supabase
-          .from("streaming_channels")
-          .select("*")
-          .eq("user_id", user.id)
-          .eq("active", true)
-          .order("numero_canal"),
-        supabase
-          .from("programas")
-          .select("*")
-          .eq("user_id", user.id)
-          .eq("ativo", true)
-          .order("horario_inicio"),
-        supabase
-          .from("apresentadores")
-          .select("id, nome, foto, instagram")
-          .eq("user_id", user.id)
-          .eq("ativo", true),
-        supabase
-          .from("shopping_products")
-          .select("id, name, image_url, price, stock, program_id")
-          .eq("user_id", user.id)
-          .eq("active", true)
-          .gt("stock", 0),
-        !prerollDone
-          ? supabase
-              .from("comercial_preroll")
-              .select("*")
-              .eq("user_id", user.id)
-              .eq("active", true)
-              .lte("horario_inicio", currentTime)
-              .gte("horario_fim", currentTime)
-              .order("priority", { ascending: true })
-          : Promise.resolve({ data: null }),
-      ]);
+      const channelsPromise = supabase
+        .from("streaming_channels")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("active", true)
+        .order("numero_canal");
 
-      setLoadingStatus("Preparando player...");
+      const prerollPromise = !prerollDone
+        ? supabase
+            .from("comercial_preroll")
+            .select("*")
+            .eq("user_id", user.id)
+            .eq("active", true)
+            .lte("horario_inicio", currentTime)
+            .gte("horario_fim", currentTime)
+            .order("priority", { ascending: true })
+        : Promise.resolve({ data: null, error: null } as const);
 
-      if (!channelsRes.error) {
-        setCanais((channelsRes.data as Canal[]) || []);
-      } else {
-        console.error("Error fetching channels:", channelsRes.error);
-        setCanais([]);
-      }
+      const programasPromise = supabase
+        .from("programas")
+        .select("id, nome, horario_inicio, horario_fim, dias_semana, ativo, selo, estudio, variavel, data_variavel, capa, descricao, apresentador_id")
+        .eq("user_id", user.id)
+        .eq("ativo", true)
+        .order("horario_inicio");
 
-      if (!programasRes.error && programasRes.data) {
-        setProgramas(programasRes.data as Programa[]);
-      }
+      const apresentadoresPromise = supabase
+        .from("apresentadores")
+        .select("id, nome, foto, instagram")
+        .eq("user_id", user.id)
+        .eq("ativo", true);
 
-      if (!apresentadoresRes.error && apresentadoresRes.data) {
-        setApresentadores(apresentadoresRes.data as Apresentador[]);
-      }
+      const shopPromise = supabase
+        .from("shopping_products")
+        .select("id, name, image_url, price, stock, program_id")
+        .eq("user_id", user.id)
+        .eq("active", true)
+        .gt("stock", 0);
 
-      if (shopRes.data) setShopProducts(shopRes.data);
+      try {
+        // Critical path: canais + preroll (libera UI mais rápido)
+        const [channelsRes, prerollRes] = await Promise.all([channelsPromise, prerollPromise]);
+        if (cancelled) return;
 
-      // Process preroll
-      if (!prerollDone && prerollRes.data && prerollRes.data.length > 0) {
-        const matching = prerollRes.data.filter((p: any) => {
-          if (!p.dias_semana || p.dias_semana.length === 0) return true;
-          return p.dias_semana.includes(today);
-        });
-        if (matching.length > 0) {
-          const selected = matching[Math.floor(Math.random() * matching.length)];
-          setPrerollUrl(selected.video_url);
-          setPrerollLinkUrl((selected as any).link_url || null);
+        if (!channelsRes.error && channelsRes.data) {
+          setCanais(channelsRes.data as Canal[]);
         } else {
+          console.error("Error fetching channels:", channelsRes.error);
+          setCanais([]);
+        }
+
+        if (!prerollDone && prerollRes.data && prerollRes.data.length > 0) {
+          const matching = prerollRes.data.filter((p: any) => {
+            if (!p.dias_semana || p.dias_semana.length === 0) return true;
+            return p.dias_semana.includes(today);
+          });
+          if (matching.length > 0) {
+            const selected = matching[Math.floor(Math.random() * matching.length)];
+            setPrerollUrl(selected.video_url);
+            setPrerollLinkUrl((selected as any).link_url || null);
+          } else {
+            setPrerollDone(true);
+          }
+        } else if (!prerollDone) {
           setPrerollDone(true);
         }
-      } else if (!prerollDone) {
-        setPrerollDone(true);
-      }
 
-      setLoading(false);
+        setLoading(false);
+        setLoadingStatus("Carregando programação...");
+
+        // Non-critical path: carrega após tela já exibida
+        const [programasRes, apresentadoresRes, shopRes] = await Promise.all([
+          programasPromise,
+          apresentadoresPromise,
+          shopPromise,
+        ]);
+        if (cancelled) return;
+
+        if (!programasRes.error && programasRes.data) {
+          setProgramas(programasRes.data as Programa[]);
+        }
+
+        if (!apresentadoresRes.error && apresentadoresRes.data) {
+          setApresentadores(apresentadoresRes.data as Apresentador[]);
+        }
+
+        if (shopRes.data) setShopProducts(shopRes.data);
+      } catch (error) {
+        console.error("Error fetching player initial data:", error);
+        if (cancelled) return;
+        setCanais([]);
+        if (!prerollDone) setPrerollDone(true);
+        setLoading(false);
+      }
     };
 
     fetchAll();
+
+    return () => {
+      cancelled = true;
+    };
   }, [user, authLoading]);
 
   // Refresh shopping products periodically
@@ -577,6 +604,7 @@ export default function PlayerPage() {
 
   // Sync music data directly from XML (independent of Dashboard)
   const coverCacheRef = useRef<Record<string, string>>({});
+  const noCoverCacheRef = useRef<Record<string, true>>({});
   useEffect(() => {
     if (!user) return;
 
@@ -604,32 +632,47 @@ export default function PlayerPage() {
     };
 
     let cachedXmlUrl: string | null = null;
+    let inFlight = false;
+    let cancelled = false;
 
     const fetchAndSync = async () => {
-      // Only fetch user_settings once, then reuse cached URL
-      if (!cachedXmlUrl) {
-        const { data: settings } = await supabase
-          .from("user_settings")
-          .select("music_xml_url")
-          .eq("user_id", user.id)
-          .maybeSingle();
-        cachedXmlUrl = settings?.music_xml_url || null;
-      }
-      if (!cachedXmlUrl) return;
+      if (inFlight || cancelled) return;
+      inFlight = true;
 
       try {
+        // Only fetch user_settings once, then reuse cached URL
+        if (!cachedXmlUrl) {
+          const { data: settings } = await supabase
+            .from("user_settings")
+            .select("music_xml_url")
+            .eq("user_id", user.id)
+            .maybeSingle();
+          cachedXmlUrl = settings?.music_xml_url || null;
+        }
+        if (!cachedXmlUrl || cancelled) return;
+
         const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(cachedXmlUrl)}`;
-        const res = await fetch(proxyUrl, { cache: "no-store" });
-        const text = await res.text();
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 3500);
+
+        let text = "";
+        try {
+          const res = await fetch(proxyUrl, { cache: "no-store", signal: controller.signal });
+          if (!res.ok) return;
+          text = await res.text();
+        } finally {
+          clearTimeout(timeout);
+        }
+
         const data = parseXml(text);
-        if (!data) return;
+        if (!data || cancelled) return;
 
         // Try iTunes cover if missing
         if (!data.capa) {
           const cacheKey = `${data.artista}-${data.titulo}`;
           if (coverCacheRef.current[cacheKey]) {
             data.capa = coverCacheRef.current[cacheKey];
-          } else {
+          } else if (!noCoverCacheRef.current[cacheKey]) {
             try {
               const query = encodeURIComponent(`${data.artista} ${data.titulo}`);
               const itunesRes = await fetch(`https://itunes.apple.com/search?term=${query}&media=music&limit=1`);
@@ -639,9 +682,15 @@ export default function PlayerPage() {
                 if (cover) {
                   data.capa = cover;
                   coverCacheRef.current[cacheKey] = cover;
+                } else {
+                  noCoverCacheRef.current[cacheKey] = true;
                 }
+              } else {
+                noCoverCacheRef.current[cacheKey] = true;
               }
-            } catch {}
+            } catch {
+              noCoverCacheRef.current[cacheKey] = true;
+            }
           }
         }
 
@@ -654,12 +703,19 @@ export default function PlayerPage() {
           return prev;
         });
       } catch {}
+      finally {
+        inFlight = false;
+      }
     };
 
     fetchAndSync();
-    const interval = setInterval(fetchAndSync, 2000);
-    return () => clearInterval(interval);
-  }, []);
+    const interval = setInterval(fetchAndSync, 10000);
+
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [user]);
 
   // Buffering detection for video
   useEffect(() => {
