@@ -740,9 +740,9 @@ export default function PlayerPage() {
     };
   }, []);
 
-  // Periodic clock tick to re-compute currentProg every 30s
+  // Periodic clock tick to re-compute currentProg every 10s
   useEffect(() => {
-    const interval = setInterval(() => setClock(c => c + 1), 30000);
+    const interval = setInterval(() => setClock(c => c + 1), 10000);
     return () => clearInterval(interval);
   }, []);
 
