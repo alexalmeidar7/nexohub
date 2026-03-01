@@ -637,14 +637,20 @@ export default function PlayerPage() {
     clearTimeout(hideTimeout.current);
   };
   const hideBar = () => {
+    if (isAudio) return; // Keep bar always visible for audio streams
     clearTimeout(hideTimeout.current);
     hideTimeout.current = setTimeout(() => setBarVisible(false), 500);
   };
 
   useEffect(() => {
+    if (isAudio) {
+      setBarVisible(true);
+      clearTimeout(hideTimeout.current);
+      return;
+    }
     hideTimeout.current = setTimeout(() => setBarVisible(false), 4000);
     return () => clearTimeout(hideTimeout.current);
-  }, []);
+  }, [isAudio]);
 
   // Cleanup on unmount
   useEffect(() => {
