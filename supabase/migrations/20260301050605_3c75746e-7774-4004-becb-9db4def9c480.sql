@@ -1,0 +1,1 @@
+ALTER TABLE public.comercial_preroll ADD COLUMN link_url text DEFAULT '';

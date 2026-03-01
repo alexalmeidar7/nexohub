@@ -31,6 +31,7 @@ export default function PreRollPage() {
   const [horarioInicio, setHorarioInicio] = useState("00:00");
   const [horarioFim, setHorarioFim] = useState("23:59");
   const [priority, setPriority] = useState("1");
+  const [linkUrl, setLinkUrl] = useState("");
   const [editId, setEditId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -70,6 +71,7 @@ export default function PreRollPage() {
     setHorarioInicio("00:00");
     setHorarioFim("23:59");
     setPriority("1");
+    setLinkUrl("");
     setEditId(null);
   };
 
@@ -91,6 +93,7 @@ export default function PreRollPage() {
           horario_inicio: horarioInicio,
           horario_fim: horarioFim,
           priority: parseInt(priority) || 1,
+          link_url: linkUrl,
         };
         if (videoUrl) update.video_url = videoUrl;
         await supabase.from("comercial_preroll").update(update).eq("id", editId);
@@ -103,6 +106,7 @@ export default function PreRollPage() {
           horario_inicio: horarioInicio,
           horario_fim: horarioFim,
           priority: parseInt(priority) || 1,
+          link_url: linkUrl,
         });
         toast({ title: "Pre-Roll cadastrado!" });
       }
@@ -120,6 +124,7 @@ export default function PreRollPage() {
     setHorarioInicio(p.horario_inicio);
     setHorarioFim(p.horario_fim);
     setPriority(String(p.priority));
+    setLinkUrl((p as any).link_url || "");
     setVideoPreview(p.video_url);
     setVideoFile(null);
   };
@@ -181,6 +186,18 @@ export default function PreRollPage() {
             ))}
           </div>
           {diasSemana.length === 0 && <p className="text-xs text-muted-foreground mt-1">Todos os dias se nenhum selecionado.</p>}
+        </div>
+
+        <div>
+          <label className="text-sm font-medium block mb-1">Link do Anúncio (opcional)</label>
+          <input
+            type="url"
+            placeholder="https://exemplo.com/oferta"
+            value={linkUrl}
+            onChange={(e) => setLinkUrl(e.target.value)}
+            className="w-full rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm"
+          />
+          <p className="text-xs text-muted-foreground mt-1">Exibirá botão "Clique Aqui" durante o pre-roll.</p>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">

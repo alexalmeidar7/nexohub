@@ -225,6 +225,7 @@ export default function PlayerPage() {
   const [shopOpen, setShopOpen] = useState(false);
   const [shopPopupDismissed, setShopPopupDismissed] = useState(false);
   const [prerollUrl, setPrerollUrl] = useState<string | null>(null);
+  const [prerollLinkUrl, setPrerollLinkUrl] = useState<string | null>(null);
   const [prerollDone, setPrerollDone] = useState(false);
   const prerollVideoRef = useRef<HTMLVideoElement>(null);
 
@@ -539,9 +540,9 @@ export default function PlayerPage() {
           return p.dias_semana.includes(today);
         });
         if (matching.length > 0) {
-          // Random selection for rotation
           const selected = matching[Math.floor(Math.random() * matching.length)];
           setPrerollUrl(selected.video_url);
+          setPrerollLinkUrl((selected as any).link_url || null);
         }
       }
     };
@@ -976,11 +977,21 @@ export default function PlayerPage() {
             onEnded={() => { setPrerollDone(true); setPrerollUrl(null); }}
           />
           <button
-            onClick={() => { setPrerollDone(true); setPrerollUrl(null); }}
+            onClick={() => { setPrerollDone(true); setPrerollUrl(null); setPrerollLinkUrl(null); }}
             className="absolute top-6 right-6 bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg text-sm font-bold transition-all backdrop-blur-sm"
           >
             Pular Anúncio ›
           </button>
+          {prerollLinkUrl && (
+            <a
+              href={prerollLinkUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="absolute bottom-10 right-6 bg-[#d30707] hover:bg-[#b00606] text-white px-6 py-3 rounded-lg text-sm font-bold transition-all shadow-lg"
+            >
+              Clique Aqui ›
+            </a>
+          )}
         </div>
       )}
 
