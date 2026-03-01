@@ -68,6 +68,7 @@ interface MusicData {
   artista: string;
   duracao: number;
   capa: string;
+  horario?: string; // HH:MM:SS when song started playing
 }
 
 const MUSIC_DATA_KEY = "masterview_music_data";
@@ -228,9 +229,25 @@ export default function PlayerPage() {
     ccLyricsRef.current = [];
     setCcText("");
 
-    // Calculate when this song started playing based on musicData
-    // musicData.duracao is in seconds, we estimate start time
-    ccMusicStartRef.current = Date.now();
+    // Calculate when this song actually started based on horario from XML
+    // horario is HH:MM:SS — the clock time the song started playing
+    const calcMusicStartTimestamp = (): number => {
+      if (musicData.horario) {
+        const parts = musicData.horario.split(":").map(Number);
+        if (parts.length >= 2) {
+          const now = new Date();
+          const songStart = new Date(now);
+          songStart.setHours(parts[0] || 0, parts[1] || 0, parts[2] || 0, 0);
+          // If songStart is in the future (e.g. just past midnight), assume yesterday
+          if (songStart.getTime() > Date.now() + 60000) {
+            songStart.setDate(songStart.getDate() - 1);
+          }
+          return songStart.getTime();
+        }
+      }
+      return Date.now();
+    };
+    ccMusicStartRef.current = calcMusicStartTimestamp();
 
     const fetchLyrics = async () => {
       try {
@@ -254,8 +271,6 @@ export default function PlayerPage() {
           const parsed = parseLRC(data.syncedLyrics);
           console.log(`CC: Got ${parsed.length} synced lyric lines`);
           ccLyricsRef.current = parsed;
-          // Reset start time when lyrics are loaded
-          ccMusicStartRef.current = Date.now();
         } else if (data.plainLyrics) {
           // Fallback: show plain lyrics line by line with estimated timing
           const plainLines = data.plainLyrics.split("\n").filter((l: string) => l.trim());
@@ -265,7 +280,7 @@ export default function PlayerPage() {
             time: i * interval,
             text,
           }));
-          ccMusicStartRef.current = Date.now();
+          // ccMusicStartRef already set from horario
           console.log(`CC: Using plain lyrics, ${plainLines.length} lines estimated`);
         }
       } catch (err) {
@@ -419,6 +434,7 @@ export default function PlayerPage() {
         const artista = doc.querySelector("interprete")?.textContent || doc.querySelector("nome_interprete")?.textContent || doc.querySelector("artista")?.textContent || doc.querySelector("artist")?.textContent || "Desconhecido";
         const duracaoStr = doc.querySelector("duracao")?.textContent || doc.querySelector("duration")?.textContent || "0";
         const capa = doc.querySelector("capa")?.textContent || doc.querySelector("cover")?.textContent || "";
+        const horario = doc.querySelector("horario")?.textContent || "";
         let duracao = 0;
         if (duracaoStr.includes(":")) {
           const parts = duracaoStr.split(":").map(Number);
@@ -428,7 +444,7 @@ export default function PlayerPage() {
           duracao = parseFloat(duracaoStr) || 0;
           if (duracao > 600) duracao = duracao / 1000;
         }
-        return { titulo, artista, duracao, capa };
+        return { titulo, artista, duracao, capa, horario };
       } catch { return null; }
     };
 
