@@ -165,7 +165,6 @@ export default function PlayerPage() {
   const [ccText, setCcText] = useState("");
   const ccWsRef = useRef<WebSocket | null>(null);
   const ccAudioCtxRef = useRef<AudioContext | null>(null);
-  const ccSourceRef = useRef<MediaElementAudioSourceNode | null>(null);
   const ccProcessorRef = useRef<ScriptProcessorNode | null>(null);
 
   const startCC = useCallback(async () => {
@@ -179,58 +178,65 @@ export default function PlayerPage() {
       }
 
       const token = data.token;
-
-      // Create AudioContext and capture from media element
       const mediaEl = currentIsAudio ? audioRef.current : videoRef.current;
       if (!mediaEl) return;
 
-      const audioCtx = new AudioContext({ sampleRate: 16000 });
+      // Use default sample rate AudioContext
+      const audioCtx = new AudioContext();
       ccAudioCtxRef.current = audioCtx;
 
-      // Only create source once per element
-      if (!ccSourceRef.current) {
-        const source = audioCtx.createMediaElementSource(mediaEl);
-        ccSourceRef.current = source;
-        source.connect(audioCtx.destination); // Keep playing through speakers
-      } else {
-        // Reconnect existing source
-        ccSourceRef.current.connect(audioCtx.destination);
+      // captureStream doesn't interfere with normal playback
+      const stream = (mediaEl as any).captureStream?.() || (mediaEl as any).mozCaptureStream?.();
+      if (!stream) {
+        console.error("captureStream not supported");
+        audioCtx.close();
+        return;
       }
+
+      const source = audioCtx.createMediaStreamSource(stream);
+
+      // Target sample rate for ElevenLabs
+      const targetRate = 16000;
 
       // Open WebSocket to ElevenLabs realtime scribe
       const ws = new WebSocket(
-        `wss://api.elevenlabs.io/v1/speech-to-text/realtime?model_id=scribe_v2_realtime&language_code=por&encoding=pcm_s16le&sample_rate=16000`
+        `wss://api.elevenlabs.io/v1/speech-to-text/realtime?model_id=scribe_v2_realtime&language_code=por&encoding=pcm_s16le&sample_rate=${targetRate}`
       );
       ccWsRef.current = ws;
 
       ws.onopen = () => {
-        // Send auth
         ws.send(JSON.stringify({ type: "auth", token }));
 
-        // Create ScriptProcessor to capture PCM chunks
+        // ScriptProcessor to capture and downsample audio
         const processor = audioCtx.createScriptProcessor(4096, 1, 1);
         ccProcessorRef.current = processor;
 
-        ccSourceRef.current!.connect(processor);
+        source.connect(processor);
+        // Connect processor to a silent destination (required for it to process)
         processor.connect(audioCtx.destination);
+
+        const ratio = audioCtx.sampleRate / targetRate;
 
         processor.onaudioprocess = (e) => {
           if (ws.readyState !== WebSocket.OPEN) return;
           const inputData = e.inputBuffer.getChannelData(0);
-          // Convert float32 to int16
-          const pcm16 = new Int16Array(inputData.length);
-          for (let i = 0; i < inputData.length; i++) {
-            const s = Math.max(-1, Math.min(1, inputData[i]));
+
+          // Downsample to 16kHz
+          const outputLength = Math.floor(inputData.length / ratio);
+          const pcm16 = new Int16Array(outputLength);
+          for (let i = 0; i < outputLength; i++) {
+            const srcIdx = Math.floor(i * ratio);
+            const s = Math.max(-1, Math.min(1, inputData[srcIdx]));
             pcm16[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
           }
+
           // Convert to base64
           const bytes = new Uint8Array(pcm16.buffer);
           let binary = "";
           for (let i = 0; i < bytes.length; i++) {
             binary += String.fromCharCode(bytes[i]);
           }
-          const base64 = btoa(binary);
-          ws.send(JSON.stringify({ type: "audio", data: base64 }));
+          ws.send(JSON.stringify({ type: "audio", data: btoa(binary) }));
         };
       };
 
@@ -241,7 +247,6 @@ export default function PlayerPage() {
             setCcText(msg.text);
           } else if (msg.type === "committed_transcript" && msg.text) {
             setCcText(msg.text);
-            // Clear after 8 seconds
             setTimeout(() => setCcText(prev => prev === msg.text ? "" : prev), 8000);
           }
         } catch {}
@@ -268,7 +273,6 @@ export default function PlayerPage() {
     if (ccAudioCtxRef.current) {
       ccAudioCtxRef.current.close();
       ccAudioCtxRef.current = null;
-      ccSourceRef.current = null; // Source is invalid after context close
     }
     setCcEnabled(false);
     setCcText("");
