@@ -550,7 +550,19 @@ export default function PlayerPage() {
             .eq("user_id", user.id)
             .eq("active", true)
             .gt("stock", 0)
-            .eq("program_id", currentProg.id);
+            .or(`program_id.eq.${currentProg.id},program_id.is.null`);
+          if (!cancelled && shopData && shopData.length > 0) {
+            setShopProducts(shopData);
+          }
+        } else {
+          // No program on air — fetch products with no program (todos os programas)
+          const { data: shopData } = await supabase
+            .from("shopping_products")
+            .select("id, name, description, image_url, price, stock, program_id, payment_url")
+            .eq("user_id", user.id)
+            .eq("active", true)
+            .gt("stock", 0)
+            .is("program_id", null);
           if (!cancelled && shopData && shopData.length > 0) {
             setShopProducts(shopData);
           }
@@ -576,17 +588,18 @@ export default function PlayerPage() {
     if (!user || programas.length === 0) return;
     const fetchShop = async () => {
       const currentProg = getCurrentProgram(programas);
-      if (!currentProg) {
-        setShopProducts([]);
-        return;
-      }
-      const { data } = await supabase
+      let query = supabase
         .from("shopping_products")
         .select("id, name, description, image_url, price, stock, program_id, payment_url")
         .eq("user_id", user.id)
         .eq("active", true)
-        .gt("stock", 0)
-        .eq("program_id", currentProg.id);
+        .gt("stock", 0);
+      if (currentProg) {
+        query = query.or(`program_id.eq.${currentProg.id},program_id.is.null`);
+      } else {
+        query = query.is("program_id", null);
+      }
+      const { data } = await query;
       if (data) setShopProducts(data);
     };
     const interval = setInterval(fetchShop, 30000);
