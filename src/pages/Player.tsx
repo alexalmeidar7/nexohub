@@ -364,6 +364,7 @@ export default function PlayerPage() {
   // Music like state
   const [liked, setLiked] = useState(false);
   const [likeAnimating, setLikeAnimating] = useState(false);
+  const [floatingHearts, setFloatingHearts] = useState<{ id: number; x: number; delay: number }[]>([]);
 
   // Check if current song is already liked
   useEffect(() => {
@@ -404,6 +405,14 @@ export default function PlayerPage() {
       setLiked(true);
       setLikeAnimating(true);
       setTimeout(() => setLikeAnimating(false), 600);
+      // Spawn floating hearts
+      const hearts = Array.from({ length: 6 }, (_, i) => ({
+        id: Date.now() + i,
+        x: Math.random() * 40 - 20,
+        delay: Math.random() * 0.3,
+      }));
+      setFloatingHearts(hearts);
+      setTimeout(() => setFloatingHearts([]), 1500);
     }
   }, [user, musicData, liked]);
 
@@ -1355,19 +1364,37 @@ export default function PlayerPage() {
           <div className="flex items-center gap-3 px-5 border-l border-white/10 shrink-0">
             {/* Like button */}
             {isAudio && musicData?.titulo && (
-              <button
-                onClick={toggleLike}
-                className={`p-1.5 rounded transition-all ${likeAnimating ? "scale-125" : "scale-100"}`}
-                title={liked ? "Descurtir música" : "Curtir música"}
-                style={{ transition: "transform 0.3s ease" }}
-              >
-                <Heart
-                  size={18}
-                  fill={liked ? "#ed0808" : "none"}
-                  color={liked ? "#ed0808" : "rgba(255,255,255,0.6)"}
-                  className="transition-colors"
-                />
-              </button>
+              <div className="relative">
+                <button
+                  onClick={toggleLike}
+                  className={`p-1.5 rounded transition-all ${likeAnimating ? "scale-125" : "scale-100"}`}
+                  title={liked ? "Descurtir música" : "Curtir música"}
+                  style={{ transition: "transform 0.3s ease" }}
+                >
+                  <Heart
+                    size={18}
+                    fill={liked ? "#ed0808" : "none"}
+                    color={liked ? "#ed0808" : "rgba(255,255,255,0.6)"}
+                    className="transition-colors"
+                  />
+                </button>
+                {/* Floating hearts */}
+                {floatingHearts.map((h) => (
+                  <Heart
+                    key={h.id}
+                    size={12 + Math.random() * 6}
+                    fill="#ed0808"
+                    color="#ed0808"
+                    className="absolute pointer-events-none"
+                    style={{
+                      left: `calc(50% + ${h.x}px)`,
+                      bottom: "100%",
+                      opacity: 0,
+                      animation: `floatHeart 1.2s ease-out ${h.delay}s forwards`,
+                    }}
+                  />
+                ))}
+              </div>
             )}
             <button
               onClick={toggleCC}
