@@ -59,3 +59,23 @@
     font-size: 12px;
   }
 }
+
+/* Chat scrollbar */
+.chat-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+.chat-scroll::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 3px;
+}
+.chat-scroll::-webkit-scrollbar-thumb {
+  background: #d30707;
+  border-radius: 3px;
+}
+.chat-scroll::-webkit-scrollbar-thumb:hover {
+  background: #ff1a1a;
+}
+.chat-scroll {
+  scrollbar-color: #d30707 rgba(255, 255, 255, 0.05);
+  scrollbar-width: thin;
+}
