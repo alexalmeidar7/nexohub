@@ -171,7 +171,7 @@ export default function PlayerChat({ channelId, onClose }: PlayerChatProps) {
       className="fixed z-[55] w-[290px] flex flex-col rounded-2xl border border-white/10"
       style={{
         backgroundColor: "rgba(10,10,10,0.95)",
-        top: "115px",
+        top: "85px",
         right: "80px",
         bottom: "110px",
       }}
