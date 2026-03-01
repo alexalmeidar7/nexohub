@@ -184,36 +184,45 @@ export default function PlayerPage() {
     setCcListening(true);
     setCcText("");
 
+    const currentCanal = canais[currentIndex] || null;
+    const currentIsAudio = currentCanal?.type === "audio_live" || currentCanal?.type === "audio";
+    const mediaEl = currentIsAudio ? audioRef.current : videoRef.current;
+
+    if (!mediaEl) {
+      setCcEnabled(false);
+      setCcListening(false);
+      return;
+    }
+
     try {
-      const { data, error } = await supabase.functions.invoke("elevenlabs-scribe-token");
-      if (error || !data?.token) {
-        console.error("Failed to get scribe token:", error);
-        setCcEnabled(false);
-        setCcListening(false);
-        return;
-      }
-
-      const token = data.token;
-      const currentCanal = canais[currentIndex] || null;
-      const currentIsAudio = currentCanal?.type === "audio_live" || currentCanal?.type === "audio";
-      const mediaEl = currentIsAudio ? audioRef.current : videoRef.current;
-      if (!mediaEl) {
-        setCcEnabled(false);
-        setCcListening(false);
-        return;
-      }
-
-      // Try multiple methods to capture the stream audio
+      // Create/resume AudioContext FIRST (inside user gesture path) to avoid muting stream on some browsers
       const audioCtx = new AudioContext();
       ccAudioCtxRef.current = audioCtx;
+      if (audioCtx.state === "suspended") {
+        await audioCtx.resume();
+      }
+
+      // Keep media unlocked/playing before async token fetch
+      if (mediaEl.paused) {
+        await mediaEl.play().catch(() => {});
+      }
 
       let source: AudioNode | null = null;
+      let captureMethod = "none";
+      const mediaUrl = mediaEl.currentSrc || mediaEl.src || "";
+      let isCrossOriginMedia = false;
+      try {
+        isCrossOriginMedia = !!mediaUrl && new URL(mediaUrl, window.location.href).origin !== window.location.origin;
+      } catch {
+        isCrossOriginMedia = true;
+      }
 
-      // Method 1: captureStream
+      // Method 1: captureStream (preferred)
       try {
         const stream = (mediaEl as any).captureStream?.() || (mediaEl as any).mozCaptureStream?.();
         if (stream && stream.getAudioTracks().length > 0) {
           source = audioCtx.createMediaStreamSource(stream);
+          captureMethod = "captureStream";
           console.log("CC: Using captureStream, tracks:", stream.getAudioTracks().length);
         } else {
           console.warn("CC: captureStream returned no audio tracks");
@@ -222,27 +231,29 @@ export default function PlayerPage() {
         console.warn("CC: captureStream failed:", err);
       }
 
-      // Method 2: createMediaElementSource
-      if (!source) {
+      // Method 2: createMediaElementSource (video only, and only when not cross-origin)
+      // For cross-origin audio streams this can reroute audio to silence and appear as "stream stopped"
+      if (!source && !currentIsAudio && !isCrossOriginMedia) {
         try {
           const elSource = audioCtx.createMediaElementSource(mediaEl);
           elSource.connect(audioCtx.destination);
           source = elSource;
+          captureMethod = "createMediaElementSource";
           console.log("CC: Using createMediaElementSource");
         } catch (err) {
           console.warn("CC: createMediaElementSource failed:", err);
         }
       }
 
-      // Method 3: Microphone fallback (captures audio playing through speakers)
+      // Method 3: Microphone fallback
       if (!source) {
         try {
           const micStream = await navigator.mediaDevices.getUserMedia({
             audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
           });
           source = audioCtx.createMediaStreamSource(micStream);
-          // Store for cleanup
           (ccWsRef as any)._micStream = micStream;
+          captureMethod = "microphone";
           console.log("CC: Using microphone fallback");
         } catch (micErr) {
           console.error("CC: All audio capture methods failed:", micErr);
@@ -253,6 +264,16 @@ export default function PlayerPage() {
         }
       }
 
+      const { data, error } = await supabase.functions.invoke("elevenlabs-scribe-token");
+      if (error || !data?.token) {
+        console.error("Failed to get scribe token:", error);
+        audioCtx.close();
+        setCcEnabled(false);
+        setCcListening(false);
+        return;
+      }
+
+      const token = data.token;
       const targetRate = 16000;
 
       const ws = new WebSocket(
@@ -262,12 +283,18 @@ export default function PlayerPage() {
 
       ws.onopen = () => {
         ws.send(JSON.stringify({ type: "auth", token }));
+        console.log(`CC: Connected with method ${captureMethod}`);
 
         const processor = audioCtx.createScriptProcessor(4096, 1, 1);
         ccProcessorRef.current = processor;
 
         source.connect(processor);
-        processor.connect(audioCtx.destination);
+
+        // Keep processor alive without audible output/feedback
+        const silent = audioCtx.createGain();
+        silent.gain.value = 0;
+        processor.connect(silent);
+        silent.connect(audioCtx.destination);
 
         const ratio = audioCtx.sampleRate / targetRate;
 
