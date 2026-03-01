@@ -264,8 +264,8 @@ export default function PlayerPage() {
       return Date.now();
     };
     const isAudioStream = canal?.type === "audio_live" || canal?.type === "audio";
-    const audioDelay = isAudioStream ? -23000 : 0;
-    ccMusicStartRef.current = calcMusicStartTimestamp() + audioDelay;
+    const ccDelay = isAudioStream ? 24000 : -23000;
+    ccMusicStartRef.current = calcMusicStartTimestamp() + ccDelay;
 
     const fetchLyrics = async () => {
       try {
