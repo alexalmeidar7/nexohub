@@ -27,6 +27,44 @@ export default function PlayerChat({ channelId, onClose }: PlayerChatProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Drag state
+  const [pos, setPos] = useState({ x: window.innerWidth - 370, y: 85 });
+  const dragRef = useRef<{ dragging: boolean; startX: number; startY: number; origX: number; origY: number }>({
+    dragging: false, startX: 0, startY: 0, origX: 0, origY: 0,
+  });
+  const chatRef = useRef<HTMLDivElement>(null);
+
+  const onDragStart = useCallback((e: React.MouseEvent | React.TouchEvent) => {
+    const clientX = "touches" in e ? e.touches[0].clientX : e.clientX;
+    const clientY = "touches" in e ? e.touches[0].clientY : e.clientY;
+    dragRef.current = { dragging: true, startX: clientX, startY: clientY, origX: pos.x, origY: pos.y };
+  }, [pos]);
+
+  useEffect(() => {
+    const onMove = (e: MouseEvent | TouchEvent) => {
+      if (!dragRef.current.dragging) return;
+      const clientX = "touches" in e ? e.touches[0].clientX : e.clientX;
+      const clientY = "touches" in e ? e.touches[0].clientY : e.clientY;
+      const dx = clientX - dragRef.current.startX;
+      const dy = clientY - dragRef.current.startY;
+      setPos({
+        x: Math.max(0, Math.min(window.innerWidth - 300, dragRef.current.origX + dx)),
+        y: Math.max(0, Math.min(window.innerHeight - 200, dragRef.current.origY + dy)),
+      });
+    };
+    const onUp = () => { dragRef.current.dragging = false; };
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+    window.addEventListener("touchmove", onMove);
+    window.addEventListener("touchend", onUp);
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+      window.removeEventListener("touchmove", onMove);
+      window.removeEventListener("touchend", onUp);
+    };
+  }, []);
+
   // Load messages
   useEffect(() => {
     if (!joined) return;
@@ -165,19 +203,24 @@ export default function PlayerChat({ channelId, onClose }: PlayerChatProps) {
     );
   }
 
-  // Full chat — positioned above control bar
+  // Full chat — draggable
   return (
     <div
+      ref={chatRef}
       className="fixed z-[55] w-[290px] flex flex-col rounded-2xl border border-white/10"
       style={{
         backgroundColor: "rgba(10,10,10,0.95)",
-        top: "85px",
-        right: "80px",
-        bottom: "250px",
+        left: `${pos.x}px`,
+        top: `${pos.y}px`,
+        height: "calc(100vh - 335px)",
+        maxHeight: "500px",
       }}
     >
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
+      <div
+        className="flex items-center justify-between px-4 py-3 border-b border-white/10 cursor-grab active:cursor-grabbing select-none"
+        onMouseDown={onDragStart}
+        onTouchStart={onDragStart}
+      >
         <span className="text-white font-bold text-sm">💬 Chat ao Vivo</span>
         <div className="flex items-center gap-2">
           <button
