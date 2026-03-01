@@ -164,78 +164,137 @@ export default function PlayerPage() {
   const [ccEnabled, setCcEnabled] = useState(false);
   const [ccListening, setCcListening] = useState(false);
   const [ccText, setCcText] = useState("");
-  const ccRecognitionRef = useRef<any>(null);
-  const ccIsListeningRef = useRef(false);
+  const ccWsRef = useRef<WebSocket | null>(null);
+  const ccAudioCtxRef = useRef<AudioContext | null>(null);
+  const ccProcessorRef = useRef<ScriptProcessorNode | null>(null);
   const ccClearTimeout = useRef<ReturnType<typeof setTimeout>>();
 
-  const startCC = useCallback(() => {
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      console.error("SpeechRecognition not supported");
-      return;
-    }
-
-    const recognition = new SpeechRecognition();
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = "pt-BR";
-
-    recognition.onresult = (event: any) => {
-      let interim = "";
-      let final_ = "";
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const transcript = event.results[i][0].transcript;
-        if (event.results[i].isFinal) {
-          final_ += transcript;
-        } else {
-          interim += transcript;
-        }
-      }
-      setCcListening(false);
-      if (final_) {
-        setCcText(final_);
-        if (ccClearTimeout.current) clearTimeout(ccClearTimeout.current);
-        ccClearTimeout.current = setTimeout(() => setCcText(""), 8000);
-      } else if (interim) {
-        setCcText(interim);
-      }
-    };
-
-    recognition.onend = () => {
-      if (ccIsListeningRef.current) {
-        try { recognition.start(); } catch {}
-      }
-    };
-
-    recognition.onerror = (event: any) => {
-      console.error("SpeechRecognition error:", event.error);
-      if (event.error === "not-allowed") {
-        ccIsListeningRef.current = false;
-        setCcEnabled(false);
-        setCcListening(false);
-      }
-    };
-
-    ccRecognitionRef.current = recognition;
-    ccIsListeningRef.current = true;
+  const startCC = useCallback(async () => {
     setCcEnabled(true);
     setCcListening(true);
     setCcText("");
 
     try {
-      recognition.start();
+      const { data, error } = await supabase.functions.invoke("elevenlabs-scribe-token");
+      if (error || !data?.token) {
+        console.error("Failed to get scribe token:", error);
+        setCcEnabled(false);
+        setCcListening(false);
+        return;
+      }
+
+      const token = data.token;
+      const currentCanal = canais[currentIndex] || null;
+      const currentIsAudio = currentCanal?.type === "audio_live" || currentCanal?.type === "audio";
+      const mediaEl = currentIsAudio ? audioRef.current : videoRef.current;
+      if (!mediaEl) {
+        setCcEnabled(false);
+        setCcListening(false);
+        return;
+      }
+
+      // Try to get stream from the media element
+      let stream: MediaStream | null = null;
+      try {
+        stream = (mediaEl as any).captureStream?.() || (mediaEl as any).mozCaptureStream?.();
+      } catch (err) {
+        console.warn("captureStream failed, trying MediaElementSource:", err);
+      }
+
+      const audioCtx = new AudioContext();
+      ccAudioCtxRef.current = audioCtx;
+
+      let source: AudioNode;
+      if (stream && stream.getAudioTracks().length > 0) {
+        source = audioCtx.createMediaStreamSource(stream);
+      } else {
+        // Fallback: createMediaElementSource (takes over audio routing)
+        try {
+          source = audioCtx.createMediaElementSource(mediaEl);
+          // Re-connect to destination so user still hears audio
+          source.connect(audioCtx.destination);
+        } catch (err) {
+          console.error("Cannot capture stream audio:", err);
+          audioCtx.close();
+          setCcEnabled(false);
+          setCcListening(false);
+          return;
+        }
+      }
+
+      const targetRate = 16000;
+
+      const ws = new WebSocket(
+        `wss://api.elevenlabs.io/v1/speech-to-text/realtime?model_id=scribe_v2_realtime&language_code=por&encoding=pcm_s16le&sample_rate=${targetRate}`
+      );
+      ccWsRef.current = ws;
+
+      ws.onopen = () => {
+        ws.send(JSON.stringify({ type: "auth", token }));
+
+        const processor = audioCtx.createScriptProcessor(4096, 1, 1);
+        ccProcessorRef.current = processor;
+
+        source.connect(processor);
+        processor.connect(audioCtx.destination);
+
+        const ratio = audioCtx.sampleRate / targetRate;
+
+        processor.onaudioprocess = (e) => {
+          if (ws.readyState !== WebSocket.OPEN) return;
+          const inputData = e.inputBuffer.getChannelData(0);
+          const outputLength = Math.floor(inputData.length / ratio);
+          const pcm16 = new Int16Array(outputLength);
+          for (let i = 0; i < outputLength; i++) {
+            const srcIdx = Math.floor(i * ratio);
+            const s = Math.max(-1, Math.min(1, inputData[srcIdx]));
+            pcm16[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
+          }
+          const bytes = new Uint8Array(pcm16.buffer);
+          let binary = "";
+          for (let i = 0; i < bytes.length; i++) {
+            binary += String.fromCharCode(bytes[i]);
+          }
+          ws.send(JSON.stringify({ type: "audio", data: btoa(binary) }));
+        };
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const msg = JSON.parse(event.data);
+          if (msg.type === "partial_transcript" && msg.text) {
+            setCcListening(false);
+            setCcText(msg.text);
+          } else if (msg.type === "committed_transcript" && msg.text) {
+            setCcListening(false);
+            setCcText(msg.text);
+            if (ccClearTimeout.current) clearTimeout(ccClearTimeout.current);
+            ccClearTimeout.current = setTimeout(() => setCcText(prev => prev === msg.text ? "" : prev), 8000);
+          }
+        } catch {}
+      };
+
+      ws.onerror = (e) => console.error("CC WebSocket error:", e);
+      ws.onclose = () => console.log("CC WebSocket closed");
     } catch (e) {
-      console.error("Failed to start SpeechRecognition:", e);
+      console.error("Failed to start CC:", e);
       setCcEnabled(false);
       setCcListening(false);
     }
-  }, []);
+  }, [canais, currentIndex]);
 
   const stopCC = useCallback(() => {
-    ccIsListeningRef.current = false;
-    if (ccRecognitionRef.current) {
-      ccRecognitionRef.current.stop();
-      ccRecognitionRef.current = null;
+    if (ccProcessorRef.current) {
+      ccProcessorRef.current.disconnect();
+      ccProcessorRef.current = null;
+    }
+    if (ccWsRef.current) {
+      ccWsRef.current.close();
+      ccWsRef.current = null;
+    }
+    if (ccAudioCtxRef.current) {
+      ccAudioCtxRef.current.close();
+      ccAudioCtxRef.current = null;
     }
     if (ccClearTimeout.current) clearTimeout(ccClearTimeout.current);
     setCcEnabled(false);
@@ -254,8 +313,8 @@ export default function PlayerPage() {
   // Cleanup CC on unmount
   useEffect(() => {
     return () => {
-      ccIsListeningRef.current = false;
-      ccRecognitionRef.current?.stop();
+      if (ccWsRef.current) ccWsRef.current.close();
+      if (ccAudioCtxRef.current) ccAudioCtxRef.current.close();
     };
   }, []);
 
@@ -721,6 +780,7 @@ export default function PlayerPage() {
         muted={muted}
         playsInline
         autoPlay={false}
+        crossOrigin="anonymous"
       />
 
       {/* YouTube video iframe */}
@@ -773,7 +833,7 @@ export default function PlayerPage() {
       )}
 
       {/* Hidden audio element */}
-      <audio ref={audioRef} muted={muted} />
+      <audio ref={audioRef} muted={muted} crossOrigin="anonymous" />
 
       {/* Buffering overlay — only for video, not audio */}
       {buffering && playing && !isYoutube && !isAudio && (
