@@ -1161,17 +1161,10 @@ export default function PlayerPage() {
       {ccEnabled && (
         <div
           className="absolute left-0 right-0 z-25 flex justify-center pointer-events-none transition-all duration-500 ease-in-out"
-          style={{ bottom: "160px", opacity: (ccText || ccListening) ? 1 : 0, transform: (ccText || ccListening) ? "translateY(0)" : "translateY(10px)" }}
+          style={{ bottom: "160px", opacity: ccText ? 1 : 0, transform: ccText ? "translateY(0)" : "translateY(10px)" }}
         >
           <div className="px-6 py-3 rounded-lg max-w-3xl text-center" style={{ backgroundColor: "rgba(0,0,0,0.85)" }}>
-            {ccListening && !ccText ? (
-              <span className="text-white/70 text-lg font-medium leading-relaxed italic flex items-center gap-2 justify-center">
-                <Loader2 size={16} className="animate-spin" />
-                Ouvindo áudio...
-              </span>
-            ) : (
-              <span className="text-white text-lg font-medium leading-relaxed">{ccText}</span>
-            )}
+            <span className="text-white text-lg font-medium leading-relaxed">{ccText}</span>
           </div>
         </div>
       )}
