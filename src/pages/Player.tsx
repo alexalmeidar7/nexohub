@@ -1687,17 +1687,19 @@ export default function PlayerPage() {
         </div>
       )}
 
-      {/* CC subtitle display */}
-      {ccEnabled && (
-        <div
-          className="absolute left-0 right-0 z-25 flex justify-center pointer-events-none transition-all duration-500 ease-in-out"
-          style={{ bottom: "160px", opacity: ccText ? 1 : 0, transform: ccText ? "translateY(0)" : "translateY(10px)" }}
-        >
-          <div className="px-6 py-3 rounded-lg max-w-3xl text-center" style={{ backgroundColor: "rgba(0,0,0,0.85)" }}>
-            <span className="text-white text-lg font-medium leading-relaxed">{ccText}</span>
-          </div>
+      {/* CC subtitle display — always mounted for fade animation */}
+      <div
+        className="absolute left-0 right-0 z-25 flex justify-center pointer-events-none transition-all duration-500 ease-in-out"
+        style={{
+          bottom: "160px",
+          opacity: ccEnabled && ccText ? 1 : 0,
+          transform: ccEnabled && ccText ? "translateY(0)" : "translateY(10px)",
+        }}
+      >
+        <div className="px-6 py-3 rounded-lg max-w-3xl text-center" style={{ backgroundColor: "rgba(0,0,0,0.85)" }}>
+          <span className="text-white text-lg font-medium leading-relaxed">{ccText}</span>
         </div>
-      )}
+      </div>
 
       {/* Control bar hover zone */}
       <div
