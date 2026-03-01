@@ -27,6 +27,7 @@ import {
 import { getMusicData } from "./MusicaNoAr";
 import { useAuth } from "@/hooks/useAuth";
 import VideoPlayer from "./VideoPlayer";
+import TopLikedSongs from "./TopLikedSongs";
 
 type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos";
 
@@ -289,6 +290,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 <div className="space-y-6">
                   <WeatherWidget />
                   <MusicWidget />
+                  <TopLikedSongs />
                   <ComercialWidgets />
                 </div>
                 <div className="space-y-6">

@@ -19,6 +19,7 @@ import {
   Captions,
   CaptionsOff,
   Mic,
+  Heart,
 } from "lucide-react";
 
 const PlayerChat = lazy(() => import("@/components/PlayerChat"));
@@ -359,6 +360,52 @@ export default function PlayerPage() {
       if (ccTimerRef.current) clearInterval(ccTimerRef.current);
     };
   }, []);
+
+  // Music like state
+  const [liked, setLiked] = useState(false);
+  const [likeAnimating, setLikeAnimating] = useState(false);
+
+  // Check if current song is already liked
+  useEffect(() => {
+    if (!user || !musicData?.titulo || !musicData?.artista) {
+      setLiked(false);
+      return;
+    }
+    const check = async () => {
+      const { data } = await supabase
+        .from("music_likes")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("titulo", musicData.titulo)
+        .eq("artista", musicData.artista)
+        .limit(1);
+      setLiked(!!(data && data.length > 0));
+    };
+    check();
+  }, [user, musicData?.titulo, musicData?.artista]);
+
+  const toggleLike = useCallback(async () => {
+    if (!user || !musicData?.titulo || !musicData?.artista) return;
+    if (liked) {
+      await supabase
+        .from("music_likes")
+        .delete()
+        .eq("user_id", user.id)
+        .eq("titulo", musicData.titulo)
+        .eq("artista", musicData.artista);
+      setLiked(false);
+    } else {
+      await supabase.from("music_likes").insert({
+        user_id: user.id,
+        titulo: musicData.titulo,
+        artista: musicData.artista,
+        capa: musicData.capa || "",
+      });
+      setLiked(true);
+      setLikeAnimating(true);
+      setTimeout(() => setLikeAnimating(false), 600);
+    }
+  }, [user, musicData, liked]);
 
   // Fetch streaming channels
   useEffect(() => {
@@ -1306,6 +1353,22 @@ export default function PlayerPage() {
 
           {/* Controls */}
           <div className="flex items-center gap-3 px-5 border-l border-white/10 shrink-0">
+            {/* Like button */}
+            {isAudio && musicData?.titulo && (
+              <button
+                onClick={toggleLike}
+                className={`p-1.5 rounded transition-all ${likeAnimating ? "scale-125" : "scale-100"}`}
+                title={liked ? "Descurtir música" : "Curtir música"}
+                style={{ transition: "transform 0.3s ease" }}
+              >
+                <Heart
+                  size={18}
+                  fill={liked ? "#ed0808" : "none"}
+                  color={liked ? "#ed0808" : "rgba(255,255,255,0.6)"}
+                  className="transition-colors"
+                />
+              </button>
+            )}
             <button
               onClick={toggleCC}
               className={`px-3 py-1.5 rounded text-[11px] font-bold transition-all flex items-center gap-1 border ${

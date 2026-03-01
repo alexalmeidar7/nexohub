@@ -319,6 +319,33 @@ export type Database = {
           },
         ]
       }
+      music_likes: {
+        Row: {
+          artista: string
+          capa: string | null
+          created_at: string
+          id: string
+          titulo: string
+          user_id: string
+        }
+        Insert: {
+          artista: string
+          capa?: string | null
+          created_at?: string
+          id?: string
+          titulo: string
+          user_id: string
+        }
+        Update: {
+          artista?: string
+          capa?: string | null
+          created_at?: string
+          id?: string
+          titulo?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       player_chat_messages: {
         Row: {
           channel_id: string
