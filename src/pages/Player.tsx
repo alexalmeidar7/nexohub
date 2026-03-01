@@ -1380,7 +1380,7 @@ export default function PlayerPage() {
                 <button
                   onClick={toggleLike}
                   className={`p-1.5 rounded transition-all ${likeAnimating ? "scale-125" : "scale-100"}`}
-                  title={liked ? "Descurtir música" : "Curtir música"}
+                  title={liked ? "Descurtir música" : "Curtiu essa música?"}
                   style={{ transition: "transform 0.3s ease" }}
                 >
                   <Heart
