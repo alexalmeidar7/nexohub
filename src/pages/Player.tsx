@@ -217,13 +217,8 @@ export default function PlayerPage() {
         const raw = localStorage.getItem(MUSIC_DATA_KEY);
         if (raw) {
           const parsed: MusicData = JSON.parse(raw);
-          setMusicData(prev => {
-            // Force re-render on any change
-            if (!prev || prev.titulo !== parsed.titulo || prev.artista !== parsed.artista || prev.capa !== parsed.capa) {
-              return parsed;
-            }
-            return prev;
-          });
+          // Always set a new object to force re-render
+          setMusicData({ ...parsed });
         }
       } catch {}
     };
@@ -488,7 +483,7 @@ export default function PlayerPage() {
   return (
     <div
       ref={containerRef}
-      className={`relative h-screen w-screen bg-black overflow-hidden select-none ${barVisible ? "cursor-default" : "cursor-none"}`}
+      className={`relative h-screen w-screen bg-black overflow-hidden select-none ${gradeOpen ? "cursor-default" : barVisible ? "cursor-default" : "cursor-none"}`}
     >
       {/* Background image for audio/youtube channels */}
       {isAudio && canal?.cover_url && (
@@ -578,28 +573,31 @@ export default function PlayerPage() {
         </div>
       )}
 
-      {/* Audio channel: show music cover + info */}
+      {/* Audio channel: show music cover + info at left 350px */}
       {isAudio && playing && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
-          {musicData?.capa ? (
-            <img
-              src={musicData.capa}
-              alt={musicData.titulo}
-              className="w-64 h-64 rounded-2xl object-cover shadow-2xl mb-6 transition-all duration-500"
-            />
-          ) : canal?.logo_url ? (
-            <img
-              src={canal.logo_url}
-              alt={canal.name}
-              className="w-48 h-48 rounded-2xl object-contain mb-6"
-            />
-          ) : null}
-          {musicData && (
-            <div className="text-center">
-              <div className="text-white text-2xl font-bold">{musicData.titulo}</div>
-              <div className="text-white/60 text-lg mt-1">{musicData.artista}</div>
-            </div>
-          )}
+        <div className="absolute inset-0 flex items-center z-10" style={{ paddingLeft: "350px" }}>
+          <div className="flex flex-col items-center">
+            {musicData?.capa ? (
+              <img
+                key={musicData.capa}
+                src={musicData.capa}
+                alt={musicData.titulo}
+                className="w-64 h-64 rounded-2xl object-cover shadow-2xl mb-6 transition-all duration-500"
+              />
+            ) : canal?.logo_url ? (
+              <img
+                src={canal.logo_url}
+                alt={canal.name}
+                className="w-48 h-48 rounded-2xl object-contain mb-6"
+              />
+            ) : null}
+            {musicData && (
+              <div className="text-center">
+                <div className="text-white text-2xl font-bold drop-shadow-lg">{musicData.titulo}</div>
+                <div className="text-white/70 text-lg mt-1 drop-shadow-lg">{musicData.artista}</div>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -633,7 +631,7 @@ export default function PlayerPage() {
             <div className="text-white text-lg font-bold flex items-center gap-2">
               <span style={{ color: "#d30707" }}>■</span> Grade de Programação
             </div>
-            <button onClick={() => setGradeOpen(false)} className="text-white/60 hover:text-white transition-colors">
+            <button onClick={() => setGradeOpen(false)} className="hover:opacity-80 transition-opacity" style={{ color: "#d30707" }}>
               <X size={20} />
             </button>
           </div>
@@ -742,6 +740,11 @@ export default function PlayerPage() {
             <div className="text-white text-lg font-bold truncate leading-tight mt-0.5">
               {noArLabel}
             </div>
+            {currentProg && (
+              <div className="text-white/50 text-xs mt-0.5 truncate">
+                {currentProg.nome} • {currentProg.horario_inicio} - {currentProg.horario_fim}
+              </div>
+            )}
             <div className="w-full h-1 bg-white/10 rounded-full mt-2 overflow-hidden">
               <div
                 className="h-full rounded-full transition-all duration-1000"
