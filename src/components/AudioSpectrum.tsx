@@ -31,7 +31,7 @@ export default function AudioSpectrum({ audioElement }: AudioSpectrumProps) {
       const barWidth = w / barCount;
       const gap = 1.5;
       const t = performance.now() / 280;
-      const active = !audioElement.paused && !audioElement.muted;
+      const active = !audioElement.paused;
 
       for (let i = 0; i < barCount; i++) {
         const off = barOffsets[i];
