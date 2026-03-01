@@ -51,6 +51,13 @@ interface Programa {
   data_variavel: string | null;
   capa: string | null;
   descricao: string | null;
+  apresentador_id: string | null;
+}
+
+interface Apresentador {
+  id: string;
+  nome: string;
+  foto: string | null;
 }
 
 interface MusicData {
@@ -157,6 +164,7 @@ export default function PlayerPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [gradeOpen, setGradeOpen] = useState(false);
   const [clock, setClock] = useState(0);
+  const [apresentadores, setApresentadores] = useState<Apresentador[]>([]);
   const gradeScrollRef = useRef<HTMLDivElement>(null);
   const hideTimeout = useRef<ReturnType<typeof setTimeout>>();
 
@@ -382,7 +390,7 @@ export default function PlayerPage() {
   }, [user]);
 
 
-  // Load programs
+  // Load programs and apresentadores
   useEffect(() => {
     if (!user) return;
     supabase
@@ -393,6 +401,14 @@ export default function PlayerPage() {
       .order("horario_inicio")
       .then(({ data }) => {
         if (data) setProgramas(data as Programa[]);
+      });
+    supabase
+      .from("apresentadores")
+      .select("id, nome, foto")
+      .eq("user_id", user.id)
+      .eq("ativo", true)
+      .then(({ data }) => {
+        if (data) setApresentadores(data as Apresentador[]);
       });
   }, [user]);
 
@@ -714,6 +730,10 @@ export default function PlayerPage() {
   const currentProg = getCurrentProgram(programas);
   const nextProg = getNextProgram(programas, currentProg);
   const progress = getProgramProgress(currentProg);
+  const currentPresenter = useMemo(() => {
+    if (!currentProg?.apresentador_id) return null;
+    return apresentadores.find(a => a.id === currentProg.apresentador_id) || null;
+  }, [currentProg, apresentadores]);
 
   
 
@@ -868,34 +888,58 @@ export default function PlayerPage() {
         </div>
       )}
 
-      {/* Audio channel: show music cover + info at left 350px */}
+      {/* Audio channel: show presenter bg + music cover + info */}
       {isAudio && playing && (
-        <div className="absolute inset-0 flex items-center z-10" style={{ paddingLeft: "350px" }}>
-          <div className="flex flex-col items-center">
-            <div className="relative w-64 h-64 mb-6">
-              {musicData?.capa ? (
+        <div className="absolute inset-0 z-10">
+          {/* Presenter large background photo */}
+          {currentPresenter?.foto && (
+            <div className="absolute inset-0 flex justify-center items-end">
+              <div className="relative w-full h-[92%] flex justify-center">
                 <img
-                  key={musicData.capa}
-                  src={musicData.capa}
-                  alt={musicData.titulo}
-                  className="absolute inset-0 w-full h-full rounded-2xl object-cover shadow-2xl animate-fade-in"
-                  style={{ animationDuration: "0.7s" }}
+                  src={currentPresenter.foto}
+                  alt={currentPresenter.nome}
+                  className="h-full object-contain object-bottom opacity-40 animate-fade-in"
+                  style={{ animationDuration: "1s", maxWidth: "70%" }}
                 />
-              ) : canal?.logo_url ? (
-                <img
-                  src={canal.logo_url}
-                  alt={canal.name}
-                  className="absolute inset-0 w-48 h-48 m-auto rounded-2xl object-contain animate-fade-in"
-                  style={{ animationDuration: "0.7s" }}
-                />
-              ) : null}
-            </div>
-            {musicData && (
-              <div key={`${musicData.titulo}-${musicData.artista}`} className="text-center animate-fade-in" style={{ animationDuration: "0.7s" }}>
-                <div className="text-white text-2xl font-bold drop-shadow-lg">{musicData.titulo}</div>
-                <div className="text-white/70 text-lg mt-1 drop-shadow-lg">{musicData.artista}</div>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/60" />
               </div>
-            )}
+              {/* Presenter name on top */}
+              <div className="absolute top-6 left-0 right-0 text-center z-20">
+                <span className="text-white/80 text-lg font-bold tracking-widest uppercase drop-shadow-lg">
+                  {currentPresenter.nome}
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Music cover + info centered with left padding */}
+          <div className="absolute inset-0 flex items-center z-20" style={{ paddingLeft: "350px" }}>
+            <div className="flex flex-col items-center">
+              <div className="relative w-64 h-64 mb-6">
+                {musicData?.capa ? (
+                  <img
+                    key={musicData.capa}
+                    src={musicData.capa}
+                    alt={musicData.titulo}
+                    className="absolute inset-0 w-full h-full rounded-2xl object-cover shadow-2xl animate-fade-in"
+                    style={{ animationDuration: "0.7s" }}
+                  />
+                ) : canal?.logo_url ? (
+                  <img
+                    src={canal.logo_url}
+                    alt={canal.name}
+                    className="absolute inset-0 w-48 h-48 m-auto rounded-2xl object-contain animate-fade-in"
+                    style={{ animationDuration: "0.7s" }}
+                  />
+                ) : null}
+              </div>
+              {musicData && (
+                <div key={`${musicData.titulo}-${musicData.artista}`} className="text-center animate-fade-in" style={{ animationDuration: "0.7s" }}>
+                  <div className="text-white text-2xl font-bold drop-shadow-lg">{musicData.titulo}</div>
+                  <div className="text-white/70 text-lg mt-1 drop-shadow-lg">{musicData.artista}</div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
