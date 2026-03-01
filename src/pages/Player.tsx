@@ -833,8 +833,10 @@ export default function PlayerPage() {
               <div className="text-white text-xs font-bold">{canal?.numero_canal || "--"}</div>
               <button
                 onClick={handlePlayCanal}
-                className="mt-1 flex items-center gap-1 text-white text-[10px] font-bold uppercase px-3 py-1 rounded-full transition-all"
-                style={{ backgroundColor: "#e60000" }}
+                className="mt-1 flex items-center gap-1 text-white text-[10px] font-bold uppercase px-3 py-1 rounded-full transition-all hover:!bg-black"
+                style={{ backgroundColor: "#e60000", border: "1px solid transparent" }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = "#ed0808"; e.currentTarget.style.backgroundColor = "#000"; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = "transparent"; e.currentTarget.style.backgroundColor = "#e60000"; }}
               >
                 <Play size={10} fill="white" /> Play Canal
               </button>
@@ -849,7 +851,17 @@ export default function PlayerPage() {
             </div>
             {currentProg && (
               <div className="text-white/50 text-xs mt-0.5 truncate">
-                {currentProg.nome} • {currentProg.horario_inicio} - {currentProg.horario_fim}
+                {currentProg.nome} • {currentProg.horario_inicio.slice(0, 5)} - {currentProg.horario_fim.slice(0, 5)}
+                {musicData?.titulo && (
+                  <span className="ml-2 text-white/70">
+                    ♫ {musicData.titulo} — {musicData.artista}
+                  </span>
+                )}
+              </div>
+            )}
+            {!currentProg && musicData?.titulo && (
+              <div className="text-white/50 text-xs mt-0.5 truncate">
+                ♫ {musicData.titulo} — {musicData.artista}
               </div>
             )}
             <div className="w-full h-1 bg-white/10 rounded-full mt-2 overflow-hidden">
@@ -860,7 +872,7 @@ export default function PlayerPage() {
             </div>
             <span className="text-[10px] mt-1 inline-block" style={{ color: "#e60000" }}>
               {currentProg
-                ? `${currentProg.horario_inicio} - ${currentProg.horario_fim}`
+                ? `${currentProg.horario_inicio.slice(0, 5)} - ${currentProg.horario_fim.slice(0, 5)}`
                 : "--:-- - --:--"}
             </span>
           </div>
@@ -935,7 +947,9 @@ export default function PlayerPage() {
               <button
                 onClick={() => setGradeOpen(true)}
                 className="flex items-center gap-1 text-white text-[10px] font-bold uppercase px-3 py-1 rounded-full transition-all"
-                style={{ backgroundColor: "#e60000" }}
+                style={{ backgroundColor: "#e60000", border: "1px solid transparent" }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = "#ed0808"; e.currentTarget.style.backgroundColor = "#000"; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = "transparent"; e.currentTarget.style.backgroundColor = "#e60000"; }}
               >
                 + Grade
               </button>
