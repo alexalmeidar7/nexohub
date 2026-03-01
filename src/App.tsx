@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -6,14 +7,16 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import Index from "./pages/Index";
 import ResetPassword from "./pages/ResetPassword";
-import PromocoesKiosk from "./pages/Promocoes";
 import NotFound from "./pages/NotFound";
-import AdminDashboard from "./pages/admin/AdminDashboard";
-import AdminUsers from "./pages/admin/AdminUsers";
-import AdminModules from "./pages/admin/AdminModules";
-import MasterViewHome from "./pages/masterview/MasterViewHome";
-import AdminLogin from "./pages/admin/AdminLogin";
-import PlayerPage from "./pages/Player";
+
+// Lazy-loaded heavy pages
+const PlayerPage = lazy(() => import("./pages/Player"));
+const PromocoesKiosk = lazy(() => import("./pages/Promocoes"));
+const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
+const AdminUsers = lazy(() => import("./pages/admin/AdminUsers"));
+const AdminModules = lazy(() => import("./pages/admin/AdminModules"));
+const MasterViewHome = lazy(() => import("./pages/masterview/MasterViewHome"));
+const AdminLogin = lazy(() => import("./pages/admin/AdminLogin"));
 
 const queryClient = new QueryClient();
 
@@ -24,6 +27,7 @@ const App = () => (
       <Sonner />
       <AuthProvider>
         <BrowserRouter>
+          <Suspense fallback={<div className="h-screen w-screen bg-black" />}>
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/reset-password" element={<ResetPassword />} />
@@ -39,6 +43,7 @@ const App = () => (
             
             <Route path="*" element={<NotFound />} />
           </Routes>
+          </Suspense>
         </BrowserRouter>
       </AuthProvider>
     </TooltipProvider>
