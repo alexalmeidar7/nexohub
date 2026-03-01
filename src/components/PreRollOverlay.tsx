@@ -30,27 +30,29 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
         className="w-full h-full object-contain"
         onEnded={onEnded}
       />
-      <button
-        onClick={canSkip ? onSkip : undefined}
-        className={`absolute top-6 right-6 px-4 py-2 rounded-lg text-sm font-bold transition-all backdrop-blur-sm ${
-          canSkip
-            ? "bg-white/20 hover:bg-white/30 text-white cursor-pointer"
-            : "bg-white/10 text-white/50 cursor-not-allowed"
-        }`}
-        disabled={!canSkip}
-      >
-        {canSkip ? "Pular Anúncio ›" : `Pular em ${countdown}s`}
-      </button>
-      {prerollLinkUrl && (
-        <a
-          href={prerollLinkUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="absolute bottom-10 right-6 bg-[#d30707] hover:bg-[#b00606] text-white px-6 py-3 rounded-lg text-sm font-bold transition-all shadow-lg"
+      <div className="absolute bottom-10 right-6 flex items-center gap-3">
+        {prerollLinkUrl && (
+          <a
+            href={prerollLinkUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="bg-[#d30707] hover:bg-[#b00606] text-white px-6 py-3 rounded-lg text-sm font-bold transition-all shadow-lg"
+          >
+            Saiba Mais ›
+          </a>
+        )}
+        <button
+          onClick={canSkip ? onSkip : undefined}
+          className={`px-4 py-3 rounded-lg text-sm font-bold transition-all backdrop-blur-sm ${
+            canSkip
+              ? "bg-white/20 hover:bg-white/30 text-white cursor-pointer"
+              : "bg-white/10 text-white/50 cursor-not-allowed"
+          }`}
+          disabled={!canSkip}
         >
-          Clique Aqui ›
-        </a>
-      )}
+          {canSkip ? "Pular Anúncio ›" : `Pular em ${countdown}s`}
+        </button>
+      </div>
     </div>
   );
 }
