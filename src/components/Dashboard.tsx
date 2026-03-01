@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Calendar as CalendarUI } from "@/components/ui/calendar";
-import { Home, Sun, FileText, Mic2, PlaySquare, Music, CalendarDays, Settings, LogOut, Loader2, ShoppingBag, ChevronDown, ChevronUp, MessageSquareQuote, Tag, Image, ExternalLink, MonitorPlay, Heart } from "lucide-react";
+import { Home, Sun, FileText, Mic2, PlaySquare, Music, CalendarDays, Settings, LogOut, Loader2, ShoppingBag, ChevronDown, ChevronUp, MessageSquareQuote, Tag, Image, ExternalLink, MonitorPlay, Heart, ShoppingCart, Film } from "lucide-react";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import ApresentadorForm from "./ApresentadorForm";
@@ -29,8 +29,10 @@ import { useAuth } from "@/hooks/useAuth";
 import VideoPlayer from "./VideoPlayer";
 import TopLikedSongs from "./TopLikedSongs";
 import MusicasCurtidasPage from "./MusicasCurtidasPage";
+import ShoppingPage from "./ShoppingPage";
+import PreRollPage from "./PreRollPage";
 
-type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas";
+type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll";
 
 const menuItems: { icon: typeof Home; label: string; page: Page }[] = [
   { icon: Home, label: "MasterView Home", page: "dashboard" },
@@ -41,12 +43,14 @@ const menuItems: { icon: typeof Home; label: string; page: Page }[] = [
   { icon: Music, label: "Módulo Música no Ar", page: "musica" },
   { icon: Heart, label: "Módulo Músicas Curtidas", page: "curtidas" },
   { icon: CalendarDays, label: "Módulo Agenda", page: "agenda" },
+  { icon: ShoppingCart, label: "Módulo Shopping", page: "shopping" },
 ];
 
 const comercialSubItems: { icon: typeof Home; label: string; page: Page }[] = [
   { icon: MessageSquareQuote, label: "Testemunhais", page: "testemunhais" },
   { icon: Tag, label: "Promoções", page: "promocoes" },
   { icon: Image, label: "Logos Patrocinadores", page: "logos" },
+  { icon: Film, label: "Pre-Roll", page: "preroll" },
 ];
 
 const pageTitle: Record<Page, string> = {
@@ -62,6 +66,8 @@ const pageTitle: Record<Page, string> = {
   testemunhais: "Módulo Comercial — Testemunhais",
   promocoes: "Módulo Comercial — Promoções",
   logos: "Módulo Comercial — Logos Patrocinadores",
+  shopping: "Módulo Shopping",
+  preroll: "Módulo Comercial — Pre-Roll",
 };
 
 function SocialIcon({ url, children }: { url: string; children: React.ReactNode }) {
@@ -106,7 +112,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     if (page === "dashboard" || page === "configuracoes") return true;
     if (!enabledModules) return true; // no restrictions
     // Comercial sub-pages map to "comercial" module
-    if (page === "testemunhais" || page === "promocoes" || page === "logos") {
+    if (page === "testemunhais" || page === "promocoes" || page === "logos" || page === "preroll") {
       return enabledModules.has("comercial");
     }
     return enabledModules.has(page);
@@ -323,6 +329,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           {currentPage === "testemunhais" && <TestemunhaisPage />}
           {currentPage === "promocoes" && <PromocoesPage />}
           {currentPage === "logos" && <LogosPatrocinadoresPage />}
+          {currentPage === "shopping" && <ShoppingPage />}
+          {currentPage === "preroll" && <PreRollPage />}
         </section>
 
 
