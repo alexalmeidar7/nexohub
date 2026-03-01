@@ -174,7 +174,7 @@ function generateGradeSlots(): string[] {
 
 export default function PlayerPage() {
   const [detailProg, setDetailProg] = useState<Programa | null>(null);
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const hlsRef = useRef<HlsType | null>(null);
@@ -361,24 +361,40 @@ export default function PlayerPage() {
 
   // Fetch streaming channels
   useEffect(() => {
-    if (!user) return;
+    if (authLoading) return;
+
+    if (!user) {
+      setCanais([]);
+      setLoading(false);
+      return;
+    }
+
     const fetchChannels = async () => {
       try {
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from("streaming_channels")
           .select("*")
           .eq("user_id", user.id)
           .eq("active", true)
           .order("numero_canal");
-        if (data) setCanais(data as Canal[]);
+
+        if (error) {
+          console.error("Error fetching channels:", error);
+          setCanais([]);
+          return;
+        }
+
+        setCanais((data as Canal[]) || []);
       } catch (err) {
-        console.error("Error fetching channels:", err);
+        console.error("Unexpected error fetching channels:", err);
+        setCanais([]);
       } finally {
         setLoading(false);
       }
     };
+
     fetchChannels();
-  }, [user]);
+  }, [user, authLoading]);
 
 
   // Load programs and apresentadores
