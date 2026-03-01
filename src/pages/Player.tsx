@@ -197,132 +197,108 @@ export default function PlayerPage() {
     }
 
     try {
-      // Create/resume AudioContext FIRST (inside user gesture path) to avoid muting stream on some browsers
-      const audioCtx = new AudioContext();
-      ccAudioCtxRef.current = audioCtx;
-      if (audioCtx.state === "suspended") {
-        await audioCtx.resume();
-      }
-
-      // Keep media unlocked/playing before async token fetch
-      if (mediaEl.paused) {
-        await mediaEl.play().catch(() => {});
-      }
-
-      let source: AudioNode | null = null;
-      let captureMethod = "none";
-      const mediaUrl = mediaEl.currentSrc || mediaEl.src || "";
-      let isCrossOriginMedia = false;
-      try {
-        isCrossOriginMedia = !!mediaUrl && new URL(mediaUrl, window.location.href).origin !== window.location.origin;
-      } catch {
-        isCrossOriginMedia = true;
-      }
-
-      // Method 1: captureStream (preferred)
-      try {
-        const stream = (mediaEl as any).captureStream?.() || (mediaEl as any).mozCaptureStream?.();
-        if (stream && stream.getAudioTracks().length > 0) {
-          source = audioCtx.createMediaStreamSource(stream);
-          captureMethod = "captureStream";
-          console.log("CC: Using captureStream, tracks:", stream.getAudioTracks().length);
-        } else {
-          console.warn("CC: captureStream returned no audio tracks");
-        }
-      } catch (err) {
-        console.warn("CC: captureStream failed:", err);
-      }
-
-      // Method 2: createMediaElementSource (video only, and only when not cross-origin)
-      // For cross-origin audio streams this can reroute audio to silence and appear as "stream stopped"
-      if (!source && !currentIsAudio && !isCrossOriginMedia) {
-        try {
-          const elSource = audioCtx.createMediaElementSource(mediaEl);
-          elSource.connect(audioCtx.destination);
-          source = elSource;
-          captureMethod = "createMediaElementSource";
-          console.log("CC: Using createMediaElementSource");
-        } catch (err) {
-          console.warn("CC: createMediaElementSource failed:", err);
-        }
-      }
-
-      // Method 3: Microphone fallback
-      if (!source) {
-        try {
-          const micStream = await navigator.mediaDevices.getUserMedia({
-            audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
-          });
-          source = audioCtx.createMediaStreamSource(micStream);
-          (ccWsRef as any)._micStream = micStream;
-          captureMethod = "microphone";
-          console.log("CC: Using microphone fallback");
-        } catch (micErr) {
-          console.error("CC: All audio capture methods failed:", micErr);
-          audioCtx.close();
-          setCcEnabled(false);
-          setCcListening(false);
-          return;
-        }
-      }
-
+      // 1. Get token FIRST (before any AudioContext/getUserMedia, to keep user gesture fresh)
       const { data, error } = await supabase.functions.invoke("elevenlabs-scribe-token");
       if (error || !data?.token) {
-        console.error("Failed to get scribe token:", error);
-        audioCtx.close();
+        console.error("CC: Failed to get scribe token:", error);
         setCcEnabled(false);
         setCcListening(false);
         return;
       }
-
       const token = data.token;
-      const targetRate = 16000;
+      console.log("CC: Got token successfully");
 
+      // 2. Get microphone stream IMMEDIATELY (user gesture context)
+      // We always use the microphone to capture the stream audio from speakers
+      // because HLS cross-origin streams block captureStream() and createMediaElementSource()
+      let micStream: MediaStream;
+      try {
+        micStream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+            sampleRate: 16000,
+          },
+        });
+        console.log("CC: Microphone acquired, tracks:", micStream.getAudioTracks().length);
+      } catch (micErr) {
+        console.error("CC: Microphone access denied:", micErr);
+        setCcEnabled(false);
+        setCcListening(false);
+        setCcText("Acesso ao microfone negado");
+        setTimeout(() => setCcText(""), 3000);
+        return;
+      }
+
+      // 3. Create AudioContext and connect microphone
+      const audioCtx = new AudioContext({ sampleRate: 16000 });
+      ccAudioCtxRef.current = audioCtx;
+      if (audioCtx.state === "suspended") {
+        await audioCtx.resume();
+      }
+      console.log("CC: AudioContext ready, sampleRate:", audioCtx.sampleRate);
+
+      const source = audioCtx.createMediaStreamSource(micStream);
+
+      // 4. Connect WebSocket
+      const targetRate = 16000;
       const ws = new WebSocket(
         `wss://api.elevenlabs.io/v1/speech-to-text/realtime?model_id=scribe_v2_realtime&language_code=por&encoding=pcm_s16le&sample_rate=${targetRate}`
       );
       ccWsRef.current = ws;
+      (ccWsRef as any)._micStream = micStream;
+
+      let audioChunkCount = 0;
 
       ws.onopen = () => {
+        console.log("CC: WebSocket opened, sending auth...");
         ws.send(JSON.stringify({ type: "auth", token }));
-        console.log(`CC: Connected with method ${captureMethod}`);
-
-        const processor = audioCtx.createScriptProcessor(4096, 1, 1);
-        ccProcessorRef.current = processor;
-
-        source.connect(processor);
-
-        // Keep processor alive without audible output/feedback
-        const silent = audioCtx.createGain();
-        silent.gain.value = 0;
-        processor.connect(silent);
-        silent.connect(audioCtx.destination);
-
-        const ratio = audioCtx.sampleRate / targetRate;
-
-        processor.onaudioprocess = (e) => {
-          if (ws.readyState !== WebSocket.OPEN) return;
-          const inputData = e.inputBuffer.getChannelData(0);
-          const outputLength = Math.floor(inputData.length / ratio);
-          const pcm16 = new Int16Array(outputLength);
-          for (let i = 0; i < outputLength; i++) {
-            const srcIdx = Math.floor(i * ratio);
-            const s = Math.max(-1, Math.min(1, inputData[srcIdx]));
-            pcm16[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
-          }
-          const bytes = new Uint8Array(pcm16.buffer);
-          let binary = "";
-          for (let i = 0; i < bytes.length; i++) {
-            binary += String.fromCharCode(bytes[i]);
-          }
-          ws.send(JSON.stringify({ type: "audio", data: btoa(binary) }));
-        };
       };
 
       ws.onmessage = (event) => {
         try {
           const msg = JSON.parse(event.data);
-          if (msg.type === "partial_transcript" && msg.text) {
+          console.log("CC: WS message:", msg.type, msg.text ? `"${msg.text.substring(0, 50)}"` : "");
+
+          if (msg.type === "session_started") {
+            console.log("CC: Session started, beginning audio capture");
+            // Start audio processor AFTER session is confirmed
+            const processor = audioCtx.createScriptProcessor(4096, 1, 1);
+            ccProcessorRef.current = processor;
+            source.connect(processor);
+
+            const silent = audioCtx.createGain();
+            silent.gain.value = 0;
+            processor.connect(silent);
+            silent.connect(audioCtx.destination);
+
+            const ratio = audioCtx.sampleRate / targetRate;
+
+            processor.onaudioprocess = (e) => {
+              if (ws.readyState !== WebSocket.OPEN) return;
+              const inputData = e.inputBuffer.getChannelData(0);
+              const outputLength = Math.floor(inputData.length / ratio);
+              const pcm16 = new Int16Array(outputLength);
+              let maxAmp = 0;
+              for (let i = 0; i < outputLength; i++) {
+                const srcIdx = Math.floor(i * ratio);
+                const s = Math.max(-1, Math.min(1, inputData[srcIdx]));
+                pcm16[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
+                maxAmp = Math.max(maxAmp, Math.abs(s));
+              }
+              const bytes = new Uint8Array(pcm16.buffer);
+              let binary = "";
+              for (let i = 0; i < bytes.length; i++) {
+                binary += String.fromCharCode(bytes[i]);
+              }
+              ws.send(JSON.stringify({ type: "audio", data: btoa(binary) }));
+              audioChunkCount++;
+              if (audioChunkCount % 50 === 0) {
+                console.log(`CC: Sent ${audioChunkCount} chunks, max amplitude: ${maxAmp.toFixed(4)}`);
+              }
+            };
+          } else if (msg.type === "partial_transcript" && msg.text) {
             setCcListening(false);
             setCcText(msg.text);
           } else if (msg.type === "committed_transcript" && msg.text) {
@@ -330,14 +306,20 @@ export default function PlayerPage() {
             setCcText(msg.text);
             if (ccClearTimeout.current) clearTimeout(ccClearTimeout.current);
             ccClearTimeout.current = setTimeout(() => setCcText(prev => prev === msg.text ? "" : prev), 8000);
+          } else if (msg.type === "error") {
+            console.error("CC: Server error:", msg);
+            setCcText("Erro na transcrição");
+            setTimeout(() => setCcText(""), 3000);
           }
-        } catch {}
+        } catch (parseErr) {
+          console.error("CC: Failed to parse WS message:", parseErr);
+        }
       };
 
-      ws.onerror = (e) => console.error("CC WebSocket error:", e);
-      ws.onclose = () => console.log("CC WebSocket closed");
+      ws.onerror = (e) => console.error("CC: WebSocket error:", e);
+      ws.onclose = (e) => console.log("CC: WebSocket closed, code:", e.code, "reason:", e.reason);
     } catch (e) {
-      console.error("Failed to start CC:", e);
+      console.error("CC: Failed to start:", e);
       setCcEnabled(false);
       setCcListening(false);
     }
