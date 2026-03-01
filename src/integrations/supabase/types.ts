@@ -185,6 +185,48 @@ export type Database = {
           },
         ]
       }
+      comercial_preroll: {
+        Row: {
+          active: boolean
+          created_at: string
+          dias_semana: string[] | null
+          horario_fim: string
+          horario_inicio: string
+          id: string
+          priority: number
+          skip_enabled: boolean
+          updated_at: string
+          user_id: string
+          video_url: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          dias_semana?: string[] | null
+          horario_fim: string
+          horario_inicio: string
+          id?: string
+          priority?: number
+          skip_enabled?: boolean
+          updated_at?: string
+          user_id: string
+          video_url?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          dias_semana?: string[] | null
+          horario_fim?: string
+          horario_inicio?: string
+          id?: string
+          priority?: number
+          skip_enabled?: boolean
+          updated_at?: string
+          user_id?: string
+          video_url?: string
+        }
+        Relationships: []
+      }
       custom_news_sites: {
         Row: {
           created_at: string
@@ -524,6 +566,53 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      shopping_products: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          image_url: string | null
+          name: string
+          price: number
+          program_id: string | null
+          stock: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          name: string
+          price?: number
+          program_id?: string | null
+          stock?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          name?: string
+          price?: number
+          program_id?: string | null
+          stock?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shopping_products_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "programas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       streaming_channels: {
         Row: {
