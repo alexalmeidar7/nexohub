@@ -949,7 +949,7 @@ export default function PlayerPage() {
           </Suspense>
           {/* Presenter large background photo */}
           {currentPresenter?.foto && (
-            <div className="absolute inset-0 flex items-end" style={{ left: "-250px" }}>
+            <div className="absolute inset-0 flex items-end z-[3]" style={{ left: "-250px" }}>
               <div className="relative h-[92%]">
                 <img
                   src={currentPresenter.foto}
