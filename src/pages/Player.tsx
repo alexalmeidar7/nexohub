@@ -191,6 +191,7 @@ export default function PlayerPage() {
   const volumeHideTimeout = useRef<ReturnType<typeof setTimeout>>();
   const [fullscreen, setFullscreen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [loadingStatus, setLoadingStatus] = useState("Iniciando...");
   const [buffering, setBuffering] = useState(false);
   const [barVisible, setBarVisible] = useState(true);
   const [musicData, setMusicData] = useState<MusicData | null>(null);
@@ -428,9 +429,12 @@ export default function PlayerPage() {
     }
   }, [user, musicData, liked]);
 
-  // Fetch streaming channels
+  // Fetch all initial data in parallel
   useEffect(() => {
-    if (authLoading) return;
+    if (authLoading) {
+      setLoadingStatus("Autenticando...");
+      return;
+    }
 
     if (!user) {
       setCanais([]);
@@ -438,55 +442,53 @@ export default function PlayerPage() {
       return;
     }
 
-    const fetchChannels = async () => {
-      try {
-        const { data, error } = await supabase
+    const fetchAll = async () => {
+      setLoadingStatus("Carregando canais...");
+
+      const [channelsRes, programasRes, apresentadoresRes] = await Promise.all([
+        supabase
           .from("streaming_channels")
           .select("*")
           .eq("user_id", user.id)
           .eq("active", true)
-          .order("numero_canal");
+          .order("numero_canal"),
+        supabase
+          .from("programas")
+          .select("*")
+          .eq("user_id", user.id)
+          .eq("ativo", true)
+          .order("horario_inicio"),
+        supabase
+          .from("apresentadores")
+          .select("id, nome, foto, instagram")
+          .eq("user_id", user.id)
+          .eq("ativo", true),
+      ]);
 
-        if (error) {
-          console.error("Error fetching channels:", error);
-          setCanais([]);
-          return;
-        }
+      setLoadingStatus("Preparando player...");
 
-        setCanais((data as Canal[]) || []);
-      } catch (err) {
-        console.error("Unexpected error fetching channels:", err);
+      if (!channelsRes.error) {
+        setCanais((channelsRes.data as Canal[]) || []);
+      } else {
+        console.error("Error fetching channels:", channelsRes.error);
         setCanais([]);
-      } finally {
-        setLoading(false);
       }
+
+      if (!programasRes.error && programasRes.data) {
+        setProgramas(programasRes.data as Programa[]);
+      }
+
+      if (!apresentadoresRes.error && apresentadoresRes.data) {
+        setApresentadores(apresentadoresRes.data as Apresentador[]);
+      }
+
+      setLoading(false);
     };
 
-    fetchChannels();
+    fetchAll();
   }, [user, authLoading]);
 
 
-  // Load programs and apresentadores
-  useEffect(() => {
-    if (!user) return;
-    supabase
-      .from("programas")
-      .select("*")
-      .eq("user_id", user.id)
-      .eq("ativo", true)
-      .order("horario_inicio")
-      .then(({ data }) => {
-        if (data) setProgramas(data as Programa[]);
-      });
-    supabase
-      .from("apresentadores")
-      .select("id, nome, foto, instagram")
-      .eq("user_id", user.id)
-      .eq("ativo", true)
-      .then(({ data }) => {
-        if (data) setApresentadores(data as Apresentador[]);
-      });
-  }, [user]);
 
   // Fetch YouTube playlist videos when channel is YouTube
   useEffect(() => {
@@ -877,8 +879,9 @@ export default function PlayerPage() {
 
   if (loading) {
     return (
-      <div className="h-screen w-screen bg-black flex items-center justify-center">
+      <div className="h-screen w-screen bg-black flex flex-col items-center justify-center gap-4">
         <Loader2 className="animate-spin" size={48} style={{ color: "#d30707" }} />
+        <p className="text-white/60 text-sm animate-pulse">{loadingStatus}</p>
       </div>
     );
   }
