@@ -228,7 +228,9 @@ export default function PlayerPage() {
   const [prerollUrl, setPrerollUrl] = useState<string | null>(null);
   const [prerollLinkUrl, setPrerollLinkUrl] = useState<string | null>(null);
   const [prerollDone, setPrerollDone] = useState(false);
+  const [prerollShowing, setPrerollShowing] = useState(false);
   const prerollVideoRef = useRef<HTMLVideoElement>(null);
+  const prerollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Parse LRC format: [mm:ss.xx] text
   const parseLRC = useCallback((lrc: string): { time: number; text: string }[] => {
@@ -833,6 +835,47 @@ export default function PlayerPage() {
     }
   }, [canais, playing, playStream, prerollDone]);
 
+  // Recurring pre-roll every 15 minutes
+  const fetchAndShowPreroll = useCallback(async () => {
+    if (!user || prerollShowing) return;
+    const now = new Date();
+    const hh = String(now.getHours()).padStart(2, "0");
+    const mm = String(now.getMinutes()).padStart(2, "0");
+    const currentTime = `${hh}:${mm}`;
+    const days = ["dom", "seg", "ter", "qua", "qui", "sex", "sab"];
+    const today = days[now.getDay()];
+
+    const { data } = await supabase
+      .from("comercial_preroll")
+      .select("*")
+      .eq("user_id", user.id)
+      .eq("active", true)
+      .lte("horario_inicio", currentTime)
+      .gte("horario_fim", currentTime)
+      .order("priority", { ascending: true });
+
+    if (data && data.length > 0) {
+      const matching = data.filter((p: any) => {
+        if (!p.dias_semana || p.dias_semana.length === 0) return true;
+        return p.dias_semana.includes(today);
+      });
+      if (matching.length > 0) {
+        const selected = matching[Math.floor(Math.random() * matching.length)];
+        setPrerollUrl(selected.video_url);
+        setPrerollLinkUrl((selected as any).link_url || null);
+        setPrerollShowing(true);
+      }
+    }
+  }, [user, prerollShowing]);
+
+  useEffect(() => {
+    if (!prerollDone || !playing) return;
+    prerollIntervalRef.current = setInterval(fetchAndShowPreroll, 15 * 60 * 1000);
+    return () => {
+      if (prerollIntervalRef.current) clearInterval(prerollIntervalRef.current);
+    };
+  }, [prerollDone, playing, fetchAndShowPreroll]);
+
   const handlePlayCanal = () => {
     if (!canal) return;
     if (canal.type === "youtube") {
@@ -1045,13 +1088,13 @@ export default function PlayerPage() {
       className="relative h-screen w-screen bg-black overflow-hidden select-none cursor-default"
     >
       {/* Pre-Roll Overlay */}
-      {prerollUrl && !prerollDone && (
+      {prerollUrl && (!prerollDone || prerollShowing) && (
         <PreRollOverlay
           prerollUrl={prerollUrl}
           prerollVideoRef={prerollVideoRef}
           prerollLinkUrl={prerollLinkUrl}
-          onSkip={() => { setPrerollDone(true); setPrerollUrl(null); setPrerollLinkUrl(null); }}
-          onEnded={() => { setPrerollDone(true); setPrerollUrl(null); }}
+          onSkip={() => { setPrerollDone(true); setPrerollShowing(false); setPrerollUrl(null); setPrerollLinkUrl(null); }}
+          onEnded={() => { setPrerollDone(true); setPrerollShowing(false); setPrerollUrl(null); }}
         />
       )}
 
