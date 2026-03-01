@@ -1290,8 +1290,9 @@ export default function PlayerPage() {
               {fullscreen ? <Minimize size={18} /> : <Maximize size={18} />}
             </button>
             <button
-              onClick={() => setChatOpen(true)}
-              className="bg-white/10 hover:bg-white/20 text-white/70 rounded-full w-8 h-8 flex items-center justify-center transition-all"
+              onClick={() => setChatOpen(!chatOpen)}
+              className="hover:bg-white/20 rounded-full w-8 h-8 flex items-center justify-center transition-all"
+              style={chatOpen ? { backgroundColor: "#d30707", color: "#fff" } : { backgroundColor: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)" }}
               title="Chat ao Vivo"
             >
               <MessageSquare size={14} />

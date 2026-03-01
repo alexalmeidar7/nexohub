@@ -35,7 +35,6 @@ export default function PlayerChat({ channelId, onClose }: PlayerChatProps) {
       const { data } = await supabase
         .from("player_chat_messages")
         .select("*")
-        .eq("channel_id", channelId)
         .order("created_at", { ascending: true })
         .limit(100);
       if (data) setMessages(data);
@@ -50,7 +49,6 @@ export default function PlayerChat({ channelId, onClose }: PlayerChatProps) {
           event: "INSERT",
           schema: "public",
           table: "player_chat_messages",
-          filter: `channel_id=eq.${channelId}`,
         },
         (payload) => {
           setMessages((prev) => {
@@ -94,7 +92,6 @@ export default function PlayerChat({ channelId, onClose }: PlayerChatProps) {
     const { data: allMsgs } = await supabase
       .from("player_chat_messages")
       .select("id")
-      .eq("channel_id", channelId)
       .order("created_at", { ascending: true });
     if (allMsgs && allMsgs.length > 100) {
       const idsToDelete = allMsgs.slice(0, allMsgs.length - 100).map((m) => m.id);
@@ -171,7 +168,7 @@ export default function PlayerChat({ channelId, onClose }: PlayerChatProps) {
   // Full chat — positioned above control bar
   return (
     <div
-      className="fixed z-[55] w-[340px] flex flex-col rounded-2xl border border-white/10"
+      className="fixed z-[55] w-[290px] flex flex-col rounded-2xl border border-white/10"
       style={{
         backgroundColor: "rgba(10,10,10,0.95)",
         bottom: "110px",
