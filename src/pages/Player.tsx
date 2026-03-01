@@ -170,50 +170,54 @@ export default function PlayerPage() {
 
   const startCC = useCallback(async () => {
     try {
-      const currentCanal = canais[currentIndex] || null;
-      const currentIsAudio = currentCanal?.type === "audio_live" || currentCanal?.type === "audio";
+      setCcEnabled(true);
+      setCcListening(true);
+      setCcText("");
+
       const { data, error } = await supabase.functions.invoke("elevenlabs-scribe-token");
       if (error || !data?.token) {
         console.error("Failed to get scribe token:", error);
+        setCcEnabled(false);
+        setCcListening(false);
         return;
       }
 
       const token = data.token;
-      const mediaEl = currentIsAudio ? audioRef.current : videoRef.current;
-      if (!mediaEl) return;
 
-      // Use default sample rate AudioContext
-      const audioCtx = new AudioContext();
-      ccAudioCtxRef.current = audioCtx;
-
-      // captureStream doesn't interfere with normal playback
-      const stream = (mediaEl as any).captureStream?.() || (mediaEl as any).mozCaptureStream?.();
-      if (!stream) {
-        console.error("captureStream not supported");
-        audioCtx.close();
+      // Use microphone to capture audio (captureStream fails with cross-origin streams)
+      let stream: MediaStream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+        });
+      } catch (micErr) {
+        console.error("Microphone access denied:", micErr);
+        setCcEnabled(false);
+        setCcListening(false);
         return;
       }
 
-      const source = audioCtx.createMediaStreamSource(stream);
+      const audioCtx = new AudioContext();
+      ccAudioCtxRef.current = audioCtx;
 
-      // Target sample rate for ElevenLabs
+      const source = audioCtx.createMediaStreamSource(stream);
       const targetRate = 16000;
 
-      // Open WebSocket to ElevenLabs realtime scribe
       const ws = new WebSocket(
         `wss://api.elevenlabs.io/v1/speech-to-text/realtime?model_id=scribe_v2_realtime&language_code=por&encoding=pcm_s16le&sample_rate=${targetRate}`
       );
       ccWsRef.current = ws;
 
+      // Store stream tracks to stop them on cleanup
+      (ccWsRef as any)._micStream = stream;
+
       ws.onopen = () => {
         ws.send(JSON.stringify({ type: "auth", token }));
 
-        // ScriptProcessor to capture and downsample audio
         const processor = audioCtx.createScriptProcessor(4096, 1, 1);
         ccProcessorRef.current = processor;
 
         source.connect(processor);
-        // Connect processor to a silent destination (required for it to process)
         processor.connect(audioCtx.destination);
 
         const ratio = audioCtx.sampleRate / targetRate;
@@ -221,8 +225,6 @@ export default function PlayerPage() {
         processor.onaudioprocess = (e) => {
           if (ws.readyState !== WebSocket.OPEN) return;
           const inputData = e.inputBuffer.getChannelData(0);
-
-          // Downsample to 16kHz
           const outputLength = Math.floor(inputData.length / ratio);
           const pcm16 = new Int16Array(outputLength);
           for (let i = 0; i < outputLength; i++) {
@@ -230,8 +232,6 @@ export default function PlayerPage() {
             const s = Math.max(-1, Math.min(1, inputData[srcIdx]));
             pcm16[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
           }
-
-          // Convert to base64
           const bytes = new Uint8Array(pcm16.buffer);
           let binary = "";
           for (let i = 0; i < bytes.length; i++) {
@@ -257,13 +257,12 @@ export default function PlayerPage() {
 
       ws.onerror = (e) => console.error("CC WebSocket error:", e);
       ws.onclose = () => console.log("CC WebSocket closed");
-
-      setCcEnabled(true);
-      setCcListening(true);
     } catch (e) {
       console.error("Failed to start CC:", e);
+      setCcEnabled(false);
+      setCcListening(false);
     }
-  }, [canais, currentIndex]);
+  }, []);
 
   const stopCC = useCallback(() => {
     if (ccProcessorRef.current) {
@@ -271,6 +270,12 @@ export default function PlayerPage() {
       ccProcessorRef.current = null;
     }
     if (ccWsRef.current) {
+      // Stop microphone tracks
+      const micStream = (ccWsRef as any)._micStream as MediaStream | undefined;
+      if (micStream) {
+        micStream.getTracks().forEach(t => t.stop());
+        (ccWsRef as any)._micStream = null;
+      }
       ccWsRef.current.close();
       ccWsRef.current = null;
     }
