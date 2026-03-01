@@ -13,6 +13,7 @@ import AdminUsers from "./pages/admin/AdminUsers";
 import AdminModules from "./pages/admin/AdminModules";
 import MasterViewHome from "./pages/masterview/MasterViewHome";
 import AdminLogin from "./pages/admin/AdminLogin";
+import PlayerPage from "./pages/Player";
 
 const queryClient = new QueryClient();
 
@@ -34,6 +35,7 @@ const App = () => (
             <Route path="/admin/modules" element={<AdminModules />} />
             <Route path="/user" element={<Navigate to="/masterview/home" replace />} />
             <Route path="/masterview/home" element={<MasterViewHome />} />
+            <Route path="/player" element={<PlayerPage />} />
             
             <Route path="*" element={<NotFound />} />
           </Routes>

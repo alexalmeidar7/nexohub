@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Calendar as CalendarUI } from "@/components/ui/calendar";
-import { Home, Sun, FileText, Mic2, PlaySquare, Music, CalendarDays, Settings, LogOut, Loader2, ShoppingBag, ChevronDown, ChevronUp, MessageSquareQuote, Tag, Image, ExternalLink } from "lucide-react";
+import { Home, Sun, FileText, Mic2, PlaySquare, Music, CalendarDays, Settings, LogOut, Loader2, ShoppingBag, ChevronDown, ChevronUp, MessageSquareQuote, Tag, Image, ExternalLink, MonitorPlay } from "lucide-react";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import ApresentadorForm from "./ApresentadorForm";
@@ -155,6 +155,21 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             </Tooltip>
           );
         })}
+
+        {/* Player - opens in new tab */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <a
+              href="/player"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-10 h-10 rounded-full flex items-center justify-center transition-all bg-transparent hover:bg-white/10"
+            >
+              <MonitorPlay size={18} className="text-muted-foreground" />
+            </a>
+          </TooltipTrigger>
+          <TooltipContent side="right"><p>Módulo Player</p></TooltipContent>
+        </Tooltip>
 
         {/* Comercial expandable menu with glassmorphism container */}
         {showComercial && (
