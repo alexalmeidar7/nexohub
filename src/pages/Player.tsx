@@ -299,6 +299,8 @@ export default function PlayerPage() {
   const isYoutube = canal?.type === "youtube";
   const isVideo = canal?.type === "video";
 
+  const autoPlayedRef = useRef(false);
+
   // Load channels
   useEffect(() => {
     if (!user) return;
@@ -327,6 +329,7 @@ export default function PlayerPage() {
         setLoading(false);
       });
   }, [user]);
+
 
   // Load programs
   useEffect(() => {
@@ -534,6 +537,21 @@ export default function PlayerPage() {
     },
     []
   );
+
+  // Auto-play first channel on load
+  useEffect(() => {
+    if (autoPlayedRef.current || canais.length === 0 || playing) return;
+    autoPlayedRef.current = true;
+    const first = canais[0];
+    if (!first) return;
+    setCurrentIndex(0);
+    if (first.type === "youtube") {
+      setPlaying(true);
+      setBuffering(false);
+    } else {
+      setTimeout(() => playStream(first.url, first.type), 200);
+    }
+  }, [canais, playing, playStream]);
 
   const handlePlayCanal = () => {
     if (!canal) return;
