@@ -603,14 +603,14 @@ export default function PlayerPage() {
   };
 
   useEffect(() => {
+    clearTimeout(hideTimeout.current);
     if (isAudio) {
       setBarVisible(true);
-      clearTimeout(hideTimeout.current);
       return;
     }
     hideTimeout.current = setTimeout(() => setBarVisible(false), 4000);
     return () => clearTimeout(hideTimeout.current);
-  }, [isAudio]);
+  }, [isAudio, currentIndex]);
 
   // Cleanup on unmount
   useEffect(() => {
