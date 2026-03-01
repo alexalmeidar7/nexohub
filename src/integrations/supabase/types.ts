@@ -574,9 +574,11 @@ export type Database = {
         Row: {
           active: boolean
           created_at: string
+          description: string | null
           id: string
           image_url: string | null
           name: string
+          payment_url: string | null
           price: number
           program_id: string | null
           stock: number
@@ -586,9 +588,11 @@ export type Database = {
         Insert: {
           active?: boolean
           created_at?: string
+          description?: string | null
           id?: string
           image_url?: string | null
           name: string
+          payment_url?: string | null
           price?: number
           program_id?: string | null
           stock?: number
@@ -598,9 +602,11 @@ export type Database = {
         Update: {
           active?: boolean
           created_at?: string
+          description?: string | null
           id?: string
           image_url?: string | null
           name?: string
+          payment_url?: string | null
           price?: number
           program_id?: string | null
           stock?: number

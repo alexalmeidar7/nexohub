@@ -7,10 +7,12 @@ import { toast } from "@/components/ui/use-toast";
 interface ShoppingProduct {
   id: string;
   name: string;
+  description: string | null;
   image_url: string | null;
   price: number;
   stock: number;
   program_id: string | null;
+  payment_url: string | null;
   active: boolean;
   created_at: string;
 }
@@ -29,9 +31,11 @@ export default function ShoppingPage() {
 
   // Form
   const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
   const [stock, setStock] = useState("");
   const [programId, setProgramId] = useState("");
+  const [paymentUrl, setPaymentUrl] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState("");
   const [editId, setEditId] = useState<string | null>(null);
@@ -72,9 +76,11 @@ export default function ShoppingPage() {
 
   const resetForm = () => {
     setName("");
+    setDescription("");
     setPrice("");
     setStock("");
     setProgramId("");
+    setPaymentUrl("");
     setImageFile(null);
     setImagePreview("");
     setEditId(null);
@@ -91,9 +97,11 @@ export default function ShoppingPage() {
       if (editId) {
         const update: any = {
           name: name.trim(),
+          description: description.trim(),
           price: parseFloat(price) || 0,
           stock: parseInt(stock) || 0,
           program_id: programId || null,
+          payment_url: paymentUrl.trim() || null,
         };
         if (imageUrl) update.image_url = imageUrl;
         await supabase.from("shopping_products").update(update).eq("id", editId);
@@ -102,10 +110,12 @@ export default function ShoppingPage() {
         await supabase.from("shopping_products").insert({
           user_id: user.id,
           name: name.trim(),
+          description: description.trim(),
           image_url: imageUrl,
           price: parseFloat(price) || 0,
           stock: parseInt(stock) || 0,
           program_id: programId || null,
+          payment_url: paymentUrl.trim() || null,
         });
         toast({ title: "Produto cadastrado!" });
       }
@@ -120,9 +130,11 @@ export default function ShoppingPage() {
   const startEdit = (p: ShoppingProduct) => {
     setEditId(p.id);
     setName(p.name);
+    setDescription(p.description || "");
     setPrice(String(p.price));
     setStock(String(p.stock));
     setProgramId(p.program_id || "");
+    setPaymentUrl(p.payment_url || "");
     setImagePreview(p.image_url || "");
     setImageFile(null);
   };
@@ -171,6 +183,15 @@ export default function ShoppingPage() {
               ))}
             </select>
           </div>
+          <div className="md:col-span-2">
+            <label className="text-sm font-medium block mb-1">Descrição do Produto</label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="w-full rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm min-h-[60px]"
+              placeholder="Descrição do produto..."
+            />
+          </div>
           <div>
             <label className="text-sm font-medium block mb-1">Preço (R$)</label>
             <input
@@ -192,6 +213,15 @@ export default function ShoppingPage() {
               onChange={(e) => setStock(e.target.value)}
               className="w-full rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm"
               placeholder="100"
+            />
+          </div>
+          <div className="md:col-span-2">
+            <label className="text-sm font-medium block mb-1">Link de Pagamento (Mercado Pago)</label>
+            <input
+              value={paymentUrl}
+              onChange={(e) => setPaymentUrl(e.target.value)}
+              className="w-full rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm"
+              placeholder="https://mpago.la/..."
             />
           </div>
         </div>
@@ -240,6 +270,8 @@ export default function ShoppingPage() {
                   R$ {Number(p.price).toFixed(2)} • Estoque: {p.stock}
                   {prog && <span> • {prog.nome}</span>}
                 </div>
+                {p.description && <div className="text-xs text-muted-foreground truncate mt-0.5">{p.description}</div>}
+                {p.payment_url && <div className="text-xs text-green-400 mt-0.5">💳 Link de pagamento configurado</div>}
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 <button
