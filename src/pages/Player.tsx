@@ -6,6 +6,8 @@ import { format, addDays, startOfWeek } from "date-fns";
 import {
   ChevronUp,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Play,
   Maximize,
   Minimize,
@@ -225,6 +227,7 @@ export default function PlayerPage() {
   const [shopProducts, setShopProducts] = useState<{ id: string; name: string; description: string | null; image_url: string | null; price: number; stock: number; program_id: string | null; payment_url: string | null }[]>([]);
   const [shopOpen, setShopOpen] = useState(false);
   const [shopPopupDismissed, setShopPopupDismissed] = useState(false);
+  const [shopProductIndex, setShopProductIndex] = useState(0);
   const shopPopupTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [prerollUrl, setPrerollUrl] = useState<string | null>(null);
   const [prerollLinkUrl, setPrerollLinkUrl] = useState<string | null>(null);
@@ -1012,6 +1015,7 @@ export default function PlayerPage() {
     if (currentProg?.id !== prevProgIdRef.current) {
       prevProgIdRef.current = currentProg?.id || null;
       setShopPopupDismissed(false);
+      setShopProductIndex(0);
     }
   }, [currentProg?.id]);
 
@@ -1127,53 +1131,78 @@ export default function PlayerPage() {
               <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#e60000" }}>
                 <ShoppingCart size={12} className="inline mr-1" />
                 Oferta ao vivo
+                {currentShopProducts.length > 1 && (
+                  <span className="ml-1 text-white/40">({shopProductIndex + 1}/{currentShopProducts.length})</span>
+                )}
               </span>
               <button onClick={() => setShopPopupDismissed(true)} className="text-white/40 hover:text-white">
                 <X size={14} />
               </button>
             </div>
-            {currentShopProducts.slice(0, 1).map((p) => (
-              <div key={p.id}>
-                <div className="flex gap-3 items-center">
-                  {p.image_url ? (
-                    <img src={p.image_url} alt={p.name} className="w-20 h-20 rounded-lg object-cover" />
-                  ) : (
-                    <div className="w-20 h-20 rounded-lg bg-white/10 flex items-center justify-center">
-                      <ShoppingCart size={20} className="text-white/30" />
-                    </div>
+            {(() => {
+              const idx = Math.min(shopProductIndex, currentShopProducts.length - 1);
+              const p = currentShopProducts[idx];
+              if (!p) return null;
+              return (
+                <div className="relative">
+                  {/* Navigation arrows */}
+                  {currentShopProducts.length > 1 && (
+                    <>
+                      <button
+                        onClick={() => setShopProductIndex(i => (i - 1 + currentShopProducts.length) % currentShopProducts.length)}
+                        className="absolute -left-3 top-1/2 -translate-y-1/2 z-10 bg-white/10 hover:bg-white/20 text-white rounded-full w-7 h-7 flex items-center justify-center transition-all"
+                      >
+                        <ChevronLeft size={16} />
+                      </button>
+                      <button
+                        onClick={() => setShopProductIndex(i => (i + 1) % currentShopProducts.length)}
+                        className="absolute -right-3 top-1/2 -translate-y-1/2 z-10 bg-white/10 hover:bg-white/20 text-white rounded-full w-7 h-7 flex items-center justify-center transition-all"
+                      >
+                        <ChevronRight size={16} />
+                      </button>
+                    </>
                   )}
-                  <div className="flex-1 min-w-0">
-                    <div className="text-white text-sm font-bold truncate">{p.name}</div>
-                    <div className="text-lg font-bold" style={{ color: "#e60000" }}>
-                      R$ {Number(p.price).toFixed(2)}
+                  <div className="flex gap-3 items-center">
+                    {p.image_url ? (
+                      <img src={p.image_url} alt={p.name} className="w-20 h-20 rounded-lg object-cover" />
+                    ) : (
+                      <div className="w-20 h-20 rounded-lg bg-white/10 flex items-center justify-center">
+                        <ShoppingCart size={20} className="text-white/30" />
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="text-white text-sm font-bold truncate">{p.name}</div>
+                      <div className="text-lg font-bold" style={{ color: "#e60000" }}>
+                        R$ {Number(p.price).toFixed(2)}
+                      </div>
+                      <div className="text-white/40 text-[10px]">{p.stock} disponíveis</div>
                     </div>
-                    <div className="text-white/40 text-[10px]">{p.stock} disponíveis</div>
                   </div>
+                  {p.description && (
+                    <p className="text-white/60 text-xs mt-2 line-clamp-2">{p.description}</p>
+                  )}
+                  {p.payment_url ? (
+                    <a
+                      href={p.payment_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block w-full mt-3 py-2.5 rounded-lg text-sm font-bold text-white text-center transition-all hover:brightness-110"
+                      style={{ backgroundColor: "#009ee3" }}
+                    >
+                      💳 Comprar via Mercado Pago
+                    </a>
+                  ) : (
+                    <button
+                      onClick={() => setShopOpen(true)}
+                      className="w-full mt-3 py-2.5 rounded-lg text-sm font-bold text-white transition-all"
+                      style={{ backgroundColor: "#e60000" }}
+                    >
+                      Ver Produto
+                    </button>
+                  )}
                 </div>
-                {p.description && (
-                  <p className="text-white/60 text-xs mt-2 line-clamp-2">{p.description}</p>
-                )}
-                {p.payment_url ? (
-                  <a
-                    href={p.payment_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block w-full mt-3 py-2.5 rounded-lg text-sm font-bold text-white text-center transition-all hover:brightness-110"
-                    style={{ backgroundColor: "#009ee3" }}
-                  >
-                    💳 Comprar via Mercado Pago
-                  </a>
-                ) : (
-                  <button
-                    onClick={() => setShopOpen(true)}
-                    className="w-full mt-3 py-2.5 rounded-lg text-sm font-bold text-white transition-all"
-                    style={{ backgroundColor: "#e60000" }}
-                  >
-                    Ver Produto
-                  </button>
-                )}
-              </div>
-            ))}
+              );
+            })()}
           </div>
         </div>
       )}
