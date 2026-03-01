@@ -793,22 +793,26 @@ export default function PlayerPage() {
       {isAudio && playing && (
         <div className="absolute inset-0 flex items-center z-10" style={{ paddingLeft: "350px" }}>
           <div className="flex flex-col items-center">
-            {musicData?.capa ? (
-              <img
-                key={musicData.capa}
-                src={musicData.capa}
-                alt={musicData.titulo}
-                className="w-64 h-64 rounded-2xl object-cover shadow-2xl mb-6 transition-all duration-500"
-              />
-            ) : canal?.logo_url ? (
-              <img
-                src={canal.logo_url}
-                alt={canal.name}
-                className="w-48 h-48 rounded-2xl object-contain mb-6"
-              />
-            ) : null}
+            <div className="relative w-64 h-64 mb-6">
+              {musicData?.capa ? (
+                <img
+                  key={musicData.capa}
+                  src={musicData.capa}
+                  alt={musicData.titulo}
+                  className="absolute inset-0 w-full h-full rounded-2xl object-cover shadow-2xl animate-fade-in"
+                  style={{ animationDuration: "0.7s" }}
+                />
+              ) : canal?.logo_url ? (
+                <img
+                  src={canal.logo_url}
+                  alt={canal.name}
+                  className="absolute inset-0 w-48 h-48 m-auto rounded-2xl object-contain animate-fade-in"
+                  style={{ animationDuration: "0.7s" }}
+                />
+              ) : null}
+            </div>
             {musicData && (
-              <div className="text-center">
+              <div key={`${musicData.titulo}-${musicData.artista}`} className="text-center animate-fade-in" style={{ animationDuration: "0.7s" }}>
                 <div className="text-white text-2xl font-bold drop-shadow-lg">{musicData.titulo}</div>
                 <div className="text-white/70 text-lg mt-1 drop-shadow-lg">{musicData.artista}</div>
               </div>
@@ -1013,8 +1017,11 @@ export default function PlayerPage() {
       )}
 
       {/* CC subtitle display */}
-      {ccEnabled && ccText && (
-        <div className="absolute left-0 right-0 z-25 flex justify-center pointer-events-none" style={{ bottom: "160px" }}>
+      {ccEnabled && (
+        <div
+          className="absolute left-0 right-0 z-25 flex justify-center pointer-events-none transition-all duration-500 ease-in-out"
+          style={{ bottom: "160px", opacity: ccText ? 1 : 0, transform: ccText ? "translateY(0)" : "translateY(10px)" }}
+        >
           <div className="px-6 py-3 rounded-lg max-w-3xl text-center" style={{ backgroundColor: "rgba(0,0,0,0.85)" }}>
             <span className="text-white text-lg font-medium leading-relaxed">{ccText}</span>
           </div>
