@@ -53,7 +53,11 @@ export default function PlayerChat({ channelId, onClose }: PlayerChatProps) {
           filter: `channel_id=eq.${channelId}`,
         },
         (payload) => {
-          setMessages((prev) => [...prev, payload.new as ChatMessage]);
+          setMessages((prev) => {
+            const updated = [...prev, payload.new as ChatMessage];
+            // Keep only last 100 messages
+            return updated.slice(-100);
+          });
         }
       )
       .subscribe();
@@ -86,6 +90,16 @@ export default function PlayerChat({ channelId, onClose }: PlayerChatProps) {
       cidade,
       message: msg,
     });
+    // Cleanup: keep only last 100 messages per channel
+    const { data: allMsgs } = await supabase
+      .from("player_chat_messages")
+      .select("id")
+      .eq("channel_id", channelId)
+      .order("created_at", { ascending: true });
+    if (allMsgs && allMsgs.length > 100) {
+      const idsToDelete = allMsgs.slice(0, allMsgs.length - 100).map((m) => m.id);
+      await supabase.from("player_chat_messages").delete().in("id", idsToDelete);
+    }
   }, [input, channelId, nome, cidade]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -182,7 +196,7 @@ export default function PlayerChat({ channelId, onClose }: PlayerChatProps) {
       </div>
 
       {/* Messages */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-3 space-y-3 chat-scroll">
         {messages.map((msg) => {
           const isMe = msg.nome === nome && msg.cidade === cidade;
           return (
