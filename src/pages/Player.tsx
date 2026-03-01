@@ -191,197 +191,138 @@ export default function PlayerPage() {
   const gradeScrollRef = useRef<HTMLDivElement>(null);
   const hideTimeout = useRef<ReturnType<typeof setTimeout>>();
 
-  // Closed Captions state
+  // Closed Captions state — lyrics-based
   const [ccEnabled, setCcEnabled] = useState(false);
-  const [ccListening, setCcListening] = useState(false);
   const [ccText, setCcText] = useState("");
-  const ccWsRef = useRef<WebSocket | null>(null);
-  const ccAudioCtxRef = useRef<AudioContext | null>(null);
-  const ccProcessorRef = useRef<ScriptProcessorNode | null>(null);
-  const ccClearTimeout = useRef<ReturnType<typeof setTimeout>>();
+  const ccLyricsRef = useRef<{ time: number; text: string }[]>([]);
+  const ccTimerRef = useRef<ReturnType<typeof setInterval>>();
+  const ccCurrentSongRef = useRef<string>("");
+  const ccMusicStartRef = useRef<number>(0);
 
-  const startCC = useCallback(async () => {
-    setCcEnabled(true);
-    setCcListening(true);
-    setCcText("");
+  // Parse LRC format: [mm:ss.xx] text
+  const parseLRC = useCallback((lrc: string): { time: number; text: string }[] => {
+    const lines: { time: number; text: string }[] = [];
+    for (const line of lrc.split("\n")) {
+      const match = line.match(/^\[(\d{2}):(\d{2})\.(\d{2,3})\]\s*(.*)/);
+      if (match) {
+        const mins = parseInt(match[1]);
+        const secs = parseInt(match[2]);
+        const ms = parseInt(match[3].padEnd(3, "0"));
+        const time = mins * 60 + secs + ms / 1000;
+        const text = match[4].trim();
+        if (text) lines.push({ time, text });
+      }
+    }
+    return lines.sort((a, b) => a.time - b.time);
+  }, []);
 
-    const currentCanal = canais[currentIndex] || null;
-    const currentIsAudio = currentCanal?.type === "audio_live" || currentCanal?.type === "audio";
-    const mediaEl = currentIsAudio ? audioRef.current : videoRef.current;
-
-    if (!mediaEl) {
-      setCcEnabled(false);
-      setCcListening(false);
+  // Fetch lyrics when CC is enabled and music changes
+  useEffect(() => {
+    if (!ccEnabled || !musicData?.artista || !musicData?.titulo) {
       return;
     }
 
-    try {
-      // 1. Get token FIRST (before any AudioContext/getUserMedia, to keep user gesture fresh)
-      const { data, error } = await supabase.functions.invoke("elevenlabs-scribe-token");
-      if (error || !data?.token) {
-        console.error("CC: Failed to get scribe token:", error);
-        setCcEnabled(false);
-        setCcListening(false);
-        return;
-      }
-      const token = data.token;
-      console.log("CC: Got token successfully");
+    const songKey = `${musicData.artista}-${musicData.titulo}`;
+    if (songKey === ccCurrentSongRef.current) return;
+    ccCurrentSongRef.current = songKey;
+    ccLyricsRef.current = [];
+    setCcText("");
 
-      // 2. Get microphone stream IMMEDIATELY (user gesture context)
-      // We always use the microphone to capture the stream audio from speakers
-      // because HLS cross-origin streams block captureStream() and createMediaElementSource()
-      let micStream: MediaStream;
+    // Calculate when this song started playing based on musicData
+    // musicData.duracao is in seconds, we estimate start time
+    ccMusicStartRef.current = Date.now();
+
+    const fetchLyrics = async () => {
       try {
-        micStream = await navigator.mediaDevices.getUserMedia({
-          audio: {
-            echoCancellation: true,
-            noiseSuppression: true,
-            autoGainControl: true,
-            sampleRate: 16000,
+        console.log(`CC: Fetching lyrics for ${musicData.artista} - ${musicData.titulo}`);
+        const { data, error } = await supabase.functions.invoke("fetch-lyrics", {
+          body: {
+            artist: musicData.artista,
+            title: musicData.titulo,
+            duration: musicData.duracao || undefined,
           },
         });
-        console.log("CC: Microphone acquired, tracks:", micStream.getAudioTracks().length);
-      } catch (micErr) {
-        console.error("CC: Microphone access denied:", micErr);
-        setCcEnabled(false);
-        setCcListening(false);
-        setCcText("Acesso ao microfone negado");
-        setTimeout(() => setCcText(""), 3000);
-        return;
-      }
 
-      // 3. Create AudioContext and connect microphone
-      const audioCtx = new AudioContext({ sampleRate: 16000 });
-      ccAudioCtxRef.current = audioCtx;
-      if (audioCtx.state === "suspended") {
-        await audioCtx.resume();
-      }
-      console.log("CC: AudioContext ready, sampleRate:", audioCtx.sampleRate);
-
-      const source = audioCtx.createMediaStreamSource(micStream);
-
-      // 4. Connect WebSocket
-      const targetRate = 16000;
-      const ws = new WebSocket(
-        `wss://api.elevenlabs.io/v1/speech-to-text/realtime?model_id=scribe_v2_realtime&language_code=por&encoding=pcm_s16le&sample_rate=${targetRate}`
-      );
-      ccWsRef.current = ws;
-      (ccWsRef as any)._micStream = micStream;
-
-      let audioChunkCount = 0;
-
-      ws.onopen = () => {
-        console.log("CC: WebSocket opened, sending auth...");
-        ws.send(JSON.stringify({ type: "auth", token }));
-      };
-
-      ws.onmessage = (event) => {
-        try {
-          const msg = JSON.parse(event.data);
-          console.log("CC: WS message:", msg.type, msg.text ? `"${msg.text.substring(0, 50)}"` : "");
-
-          if (msg.type === "session_started") {
-            console.log("CC: Session started, beginning audio capture");
-            // Start audio processor AFTER session is confirmed
-            const processor = audioCtx.createScriptProcessor(4096, 1, 1);
-            ccProcessorRef.current = processor;
-            source.connect(processor);
-
-            const silent = audioCtx.createGain();
-            silent.gain.value = 0;
-            processor.connect(silent);
-            silent.connect(audioCtx.destination);
-
-            const ratio = audioCtx.sampleRate / targetRate;
-
-            processor.onaudioprocess = (e) => {
-              if (ws.readyState !== WebSocket.OPEN) return;
-              const inputData = e.inputBuffer.getChannelData(0);
-              const outputLength = Math.floor(inputData.length / ratio);
-              const pcm16 = new Int16Array(outputLength);
-              let maxAmp = 0;
-              for (let i = 0; i < outputLength; i++) {
-                const srcIdx = Math.floor(i * ratio);
-                const s = Math.max(-1, Math.min(1, inputData[srcIdx]));
-                pcm16[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
-                maxAmp = Math.max(maxAmp, Math.abs(s));
-              }
-              const bytes = new Uint8Array(pcm16.buffer);
-              let binary = "";
-              for (let i = 0; i < bytes.length; i++) {
-                binary += String.fromCharCode(bytes[i]);
-              }
-              ws.send(JSON.stringify({ type: "audio", data: btoa(binary) }));
-              audioChunkCount++;
-              if (audioChunkCount % 50 === 0) {
-                console.log(`CC: Sent ${audioChunkCount} chunks, max amplitude: ${maxAmp.toFixed(4)}`);
-              }
-            };
-          } else if (msg.type === "partial_transcript" && msg.text) {
-            setCcListening(false);
-            setCcText(msg.text);
-          } else if (msg.type === "committed_transcript" && msg.text) {
-            setCcListening(false);
-            setCcText(msg.text);
-            if (ccClearTimeout.current) clearTimeout(ccClearTimeout.current);
-            ccClearTimeout.current = setTimeout(() => setCcText(prev => prev === msg.text ? "" : prev), 8000);
-          } else if (msg.type === "error") {
-            console.error("CC: Server error:", msg);
-            setCcText("Erro na transcrição");
-            setTimeout(() => setCcText(""), 3000);
-          }
-        } catch (parseErr) {
-          console.error("CC: Failed to parse WS message:", parseErr);
+        if (error || !data?.success) {
+          console.log("CC: No lyrics found for", songKey);
+          setCcText("");
+          ccLyricsRef.current = [];
+          return;
         }
-      };
 
-      ws.onerror = (e) => console.error("CC: WebSocket error:", e);
-      ws.onclose = (e) => console.log("CC: WebSocket closed, code:", e.code, "reason:", e.reason);
-    } catch (e) {
-      console.error("CC: Failed to start:", e);
-      setCcEnabled(false);
-      setCcListening(false);
-    }
-  }, [canais, currentIndex]);
-
-  const stopCC = useCallback(() => {
-    if (ccProcessorRef.current) {
-      ccProcessorRef.current.disconnect();
-      ccProcessorRef.current = null;
-    }
-    if (ccWsRef.current) {
-      // Stop microphone tracks if used
-      const micStream = (ccWsRef as any)?._micStream as MediaStream | undefined;
-      if (micStream) {
-        micStream.getTracks().forEach(t => t.stop());
-        (ccWsRef as any)._micStream = null;
+        if (data.syncedLyrics) {
+          const parsed = parseLRC(data.syncedLyrics);
+          console.log(`CC: Got ${parsed.length} synced lyric lines`);
+          ccLyricsRef.current = parsed;
+          // Reset start time when lyrics are loaded
+          ccMusicStartRef.current = Date.now();
+        } else if (data.plainLyrics) {
+          // Fallback: show plain lyrics line by line with estimated timing
+          const plainLines = data.plainLyrics.split("\n").filter((l: string) => l.trim());
+          const totalDuration = musicData.duracao || 180;
+          const interval = totalDuration / plainLines.length;
+          ccLyricsRef.current = plainLines.map((text: string, i: number) => ({
+            time: i * interval,
+            text,
+          }));
+          ccMusicStartRef.current = Date.now();
+          console.log(`CC: Using plain lyrics, ${plainLines.length} lines estimated`);
+        }
+      } catch (err) {
+        console.error("CC: Error fetching lyrics:", err);
       }
-      ccWsRef.current.close();
-      ccWsRef.current = null;
+    };
+
+    fetchLyrics();
+  }, [ccEnabled, musicData?.artista, musicData?.titulo, parseLRC]);
+
+  // Timer to update current lyric line
+  useEffect(() => {
+    if (!ccEnabled) {
+      if (ccTimerRef.current) clearInterval(ccTimerRef.current);
+      return;
     }
-    if (ccAudioCtxRef.current) {
-      ccAudioCtxRef.current.close();
-      ccAudioCtxRef.current = null;
-    }
-    if (ccClearTimeout.current) clearTimeout(ccClearTimeout.current);
-    setCcEnabled(false);
-    setCcListening(false);
-    setCcText("");
-  }, []);
+
+    ccTimerRef.current = setInterval(() => {
+      const lyrics = ccLyricsRef.current;
+      if (!lyrics.length) return;
+
+      const elapsed = (Date.now() - ccMusicStartRef.current) / 1000;
+
+      // Find current line
+      let currentLine = "";
+      for (let i = lyrics.length - 1; i >= 0; i--) {
+        if (elapsed >= lyrics[i].time) {
+          currentLine = lyrics[i].text;
+          break;
+        }
+      }
+
+      setCcText(currentLine);
+    }, 200);
+
+    return () => {
+      if (ccTimerRef.current) clearInterval(ccTimerRef.current);
+    };
+  }, [ccEnabled]);
 
   const toggleCC = useCallback(() => {
     if (ccEnabled) {
-      stopCC();
+      setCcEnabled(false);
+      setCcText("");
+      ccLyricsRef.current = [];
+      ccCurrentSongRef.current = "";
+      if (ccTimerRef.current) clearInterval(ccTimerRef.current);
     } else {
-      startCC();
+      setCcEnabled(true);
+      ccCurrentSongRef.current = ""; // Force refetch
     }
-  }, [ccEnabled, startCC, stopCC]);
+  }, [ccEnabled]);
 
   // Cleanup CC on unmount
   useEffect(() => {
     return () => {
-      if (ccWsRef.current) ccWsRef.current.close();
-      if (ccAudioCtxRef.current) ccAudioCtxRef.current.close();
+      if (ccTimerRef.current) clearInterval(ccTimerRef.current);
     };
   }, []);
 
