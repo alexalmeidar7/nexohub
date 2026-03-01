@@ -1207,40 +1207,62 @@ export default function PlayerPage() {
         </div>
       )}
 
-      {/* Shopping Full Panel */}
+      {/* Shopping Panel — aligned right, above control bar, no overlay */}
       {shopOpen && (
-        <div className="absolute inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center" onClick={() => setShopOpen(false)}>
-          <div className="bg-black/95 border border-white/15 rounded-2xl p-6 w-[500px] max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-white text-lg font-bold flex items-center gap-2">
-                <ShoppingCart size={20} style={{ color: "#e60000" }} />
+        <div className="absolute right-5 z-40" style={{ bottom: "110px", maxWidth: "340px", width: "100%" }}>
+          <div className="bg-black/90 backdrop-blur-md border border-white/15 rounded-2xl p-5 shadow-2xl">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#e60000" }}>
+                <ShoppingCart size={12} className="inline mr-1" />
                 Produtos ao Vivo
-              </h3>
-              <button onClick={() => setShopOpen(false)} className="text-white/40 hover:text-white"><X size={18} /></button>
+                {currentShopProducts.length > 1 && (
+                  <span className="ml-1 text-white/40">({shopProductIndex + 1}/{currentShopProducts.length})</span>
+                )}
+              </span>
+              <button onClick={() => setShopOpen(false)} className="text-white/40 hover:text-white"><X size={14} /></button>
             </div>
-            <div className="space-y-3">
-              {currentShopProducts.map((p) => (
-                <div key={p.id} className="bg-white/5 border border-white/10 rounded-xl p-4">
-                  <div className="flex gap-4 items-center">
+            {currentShopProducts.length > 0 ? (() => {
+              const idx = Math.min(shopProductIndex, currentShopProducts.length - 1);
+              const p = currentShopProducts[idx];
+              if (!p) return null;
+              return (
+                <div className="relative">
+                  {currentShopProducts.length > 1 && (
+                    <>
+                      <button
+                        onClick={() => setShopProductIndex(i => (i - 1 + currentShopProducts.length) % currentShopProducts.length)}
+                        className="absolute -left-3 top-1/2 -translate-y-1/2 z-10 bg-white/10 hover:bg-white/20 text-white rounded-full w-7 h-7 flex items-center justify-center transition-all"
+                      >
+                        <ChevronLeft size={16} />
+                      </button>
+                      <button
+                        onClick={() => setShopProductIndex(i => (i + 1) % currentShopProducts.length)}
+                        className="absolute -right-3 top-1/2 -translate-y-1/2 z-10 bg-white/10 hover:bg-white/20 text-white rounded-full w-7 h-7 flex items-center justify-center transition-all"
+                      >
+                        <ChevronRight size={16} />
+                      </button>
+                    </>
+                  )}
+                  <div className="flex gap-3 items-center">
                     {p.image_url ? (
                       <img src={p.image_url} alt={p.name} className="w-20 h-20 rounded-lg object-cover" />
                     ) : (
                       <div className="w-20 h-20 rounded-lg bg-white/10 flex items-center justify-center">
-                        <ShoppingCart size={24} className="text-white/30" />
+                        <ShoppingCart size={20} className="text-white/30" />
                       </div>
                     )}
-                    <div className="flex-1">
-                      <div className="text-white font-bold">{p.name}</div>
-                      <div className="text-xl font-bold mt-1" style={{ color: "#e60000" }}>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-white text-sm font-bold truncate">{p.name}</div>
+                      <div className="text-lg font-bold" style={{ color: "#e60000" }}>
                         R$ {Number(p.price).toFixed(2)}
                       </div>
-                      <div className="text-white/40 text-xs">{p.stock} em estoque</div>
+                      <div className="text-white/40 text-[10px]">{p.stock} disponíveis</div>
                     </div>
                   </div>
                   {p.description && (
-                    <p className="text-white/60 text-sm mt-2">{p.description}</p>
+                    <p className="text-white/60 text-xs mt-2 line-clamp-2">{p.description}</p>
                   )}
-                  {p.payment_url && (
+                  {p.payment_url ? (
                     <a
                       href={p.payment_url}
                       target="_blank"
@@ -1250,13 +1272,19 @@ export default function PlayerPage() {
                     >
                       💳 Comprar via Mercado Pago
                     </a>
+                  ) : (
+                    <button
+                      className="w-full mt-3 py-2.5 rounded-lg text-sm font-bold text-white transition-all"
+                      style={{ backgroundColor: "#e60000" }}
+                    >
+                      Ver Produto
+                    </button>
                   )}
                 </div>
-              ))}
-              {currentShopProducts.length === 0 && (
-                <p className="text-white/40 text-sm text-center py-6">Nenhum produto disponível neste momento.</p>
-              )}
-            </div>
+              );
+            })() : (
+              <p className="text-white/40 text-sm text-center py-4">Nenhum produto disponível neste momento.</p>
+            )}
           </div>
         </div>
       )}
