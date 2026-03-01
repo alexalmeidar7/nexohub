@@ -193,6 +193,7 @@ export type Database = {
           horario_fim: string
           horario_inicio: string
           id: string
+          link_url: string | null
           priority: number
           skip_enabled: boolean
           updated_at: string
@@ -206,6 +207,7 @@ export type Database = {
           horario_fim: string
           horario_inicio: string
           id?: string
+          link_url?: string | null
           priority?: number
           skip_enabled?: boolean
           updated_at?: string
@@ -219,6 +221,7 @@ export type Database = {
           horario_fim?: string
           horario_inicio?: string
           id?: string
+          link_url?: string | null
           priority?: number
           skip_enabled?: boolean
           updated_at?: string
