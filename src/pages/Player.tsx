@@ -1222,7 +1222,7 @@ export default function PlayerPage() {
 
       {/* Shopping Panel — aligned right, above control bar, no overlay */}
       {shopOpen && (
-        <div className="absolute right-5 z-40" style={{ bottom: "110px", maxWidth: "340px", width: "100%" }}>
+        <div className="absolute right-5 z-40" style={{ bottom: "150px", maxWidth: "340px", width: "100%" }}>
           <div className="bg-black/90 backdrop-blur-md border border-white/15 rounded-2xl p-5 shadow-2xl">
             <div className="flex items-center justify-between mb-3">
               <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#e60000" }}>
