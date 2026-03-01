@@ -20,6 +20,7 @@ import {
   CaptionsOff,
   Mic,
   Heart,
+  ShoppingCart,
 } from "lucide-react";
 
 const PlayerChat = lazy(() => import("@/components/PlayerChat"));
@@ -218,6 +219,14 @@ export default function PlayerPage() {
   const isYoutube = canal?.type === "youtube";
   const isVideo = canal?.type === "video";
   const autoPlayedRef = useRef(false);
+
+  // Shopping & Pre-Roll state
+  const [shopProducts, setShopProducts] = useState<{ id: string; name: string; image_url: string | null; price: number; stock: number; program_id: string | null }[]>([]);
+  const [shopOpen, setShopOpen] = useState(false);
+  const [shopPopupDismissed, setShopPopupDismissed] = useState(false);
+  const [prerollUrl, setPrerollUrl] = useState<string | null>(null);
+  const [prerollDone, setPrerollDone] = useState(false);
+  const prerollVideoRef = useRef<HTMLVideoElement>(null);
 
   // Parse LRC format: [mm:ss.xx] text
   const parseLRC = useCallback((lrc: string): { time: number; text: string }[] => {
@@ -488,6 +497,56 @@ export default function PlayerPage() {
     fetchAll();
   }, [user, authLoading]);
 
+  // Fetch shopping products for current program
+  useEffect(() => {
+    if (!user) return;
+    const fetchShop = async () => {
+      const { data } = await supabase
+        .from("shopping_products")
+        .select("id, name, image_url, price, stock, program_id")
+        .eq("user_id", user.id)
+        .eq("active", true)
+        .gt("stock", 0);
+      if (data) setShopProducts(data);
+    };
+    fetchShop();
+    const interval = setInterval(fetchShop, 30000);
+    return () => clearInterval(interval);
+  }, [user]);
+
+  // Fetch pre-roll for current time
+  useEffect(() => {
+    if (!user || prerollDone) return;
+    const fetchPreroll = async () => {
+      const now = new Date();
+      const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+      const dayMap: Record<number, string> = { 0: "Domingo", 1: "Segunda", 2: "Terça", 3: "Quarta", 4: "Quinta", 5: "Sexta", 6: "Sábado" };
+      const today = dayMap[now.getDay()];
+
+      const { data } = await supabase
+        .from("comercial_preroll")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("active", true)
+        .lte("horario_inicio", currentTime)
+        .gte("horario_fim", currentTime)
+        .order("priority", { ascending: true });
+
+      if (data && data.length > 0) {
+        // Filter by day
+        const matching = data.filter((p: any) => {
+          if (!p.dias_semana || p.dias_semana.length === 0) return true;
+          return p.dias_semana.includes(today);
+        });
+        if (matching.length > 0) {
+          // Random selection for rotation
+          const selected = matching[Math.floor(Math.random() * matching.length)];
+          setPrerollUrl(selected.video_url);
+        }
+      }
+    };
+    fetchPreroll();
+  }, [user, prerollDone]);
 
 
   // Fetch YouTube playlist videos when channel is YouTube
@@ -818,6 +877,13 @@ export default function PlayerPage() {
   }, []);
 
   const currentProg = getCurrentProgram(programas);
+  const prevProgIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (currentProg?.id !== prevProgIdRef.current) {
+      prevProgIdRef.current = currentProg?.id || null;
+      setShopPopupDismissed(false);
+    }
+  }, [currentProg?.id]);
   const nextProg = getNextProgram(programas, currentProg);
   const progress = getProgramProgress(currentProg);
   const currentPresenter = useMemo(() => {
@@ -877,6 +943,14 @@ export default function PlayerPage() {
     return matching.find(p => !p.variavel) || matching[0] || undefined;
   };
 
+  // Shopping products for current program
+  const currentShopProducts = useMemo(() => {
+    if (!currentProg) return shopProducts.filter(p => !p.program_id);
+    return shopProducts.filter(p => !p.program_id || p.program_id === currentProg.id);
+  }, [shopProducts, currentProg]);
+
+  const showShopIcon = currentShopProducts.length > 0;
+
   if (loading) {
     return (
       <div className="h-screen w-screen bg-black flex flex-col items-center justify-center gap-4">
@@ -891,6 +965,104 @@ export default function PlayerPage() {
       ref={containerRef}
       className="relative h-screen w-screen bg-black overflow-hidden select-none cursor-default"
     >
+      {/* Pre-Roll Overlay */}
+      {prerollUrl && !prerollDone && (
+        <div className="absolute inset-0 z-[100] bg-black flex items-center justify-center">
+          <video
+            ref={prerollVideoRef}
+            src={prerollUrl}
+            autoPlay
+            className="w-full h-full object-contain"
+            onEnded={() => { setPrerollDone(true); setPrerollUrl(null); }}
+          />
+          <button
+            onClick={() => { setPrerollDone(true); setPrerollUrl(null); }}
+            className="absolute top-6 right-6 bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg text-sm font-bold transition-all backdrop-blur-sm"
+          >
+            Pular Anúncio ›
+          </button>
+        </div>
+      )}
+
+      {/* Shopping Popup */}
+      {showShopIcon && !shopPopupDismissed && currentShopProducts.length > 0 && (
+        <div className="absolute top-6 right-6 z-50 animate-fade-in">
+          <div className="bg-black/90 backdrop-blur-md border border-white/15 rounded-2xl p-4 w-72 shadow-2xl">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#e60000" }}>
+                <ShoppingCart size={12} className="inline mr-1" />
+                Oferta ao vivo
+              </span>
+              <button onClick={() => setShopPopupDismissed(true)} className="text-white/40 hover:text-white">
+                <X size={14} />
+              </button>
+            </div>
+            {currentShopProducts.slice(0, 1).map((p) => (
+              <div key={p.id} className="flex gap-3 items-center">
+                {p.image_url ? (
+                  <img src={p.image_url} alt={p.name} className="w-16 h-16 rounded-lg object-cover" />
+                ) : (
+                  <div className="w-16 h-16 rounded-lg bg-white/10 flex items-center justify-center">
+                    <ShoppingCart size={20} className="text-white/30" />
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <div className="text-white text-sm font-bold truncate">{p.name}</div>
+                  <div className="text-lg font-bold" style={{ color: "#e60000" }}>
+                    R$ {Number(p.price).toFixed(2)}
+                  </div>
+                  <div className="text-white/40 text-[10px]">{p.stock} disponíveis</div>
+                </div>
+              </div>
+            ))}
+            <button
+              onClick={() => setShopOpen(true)}
+              className="w-full mt-3 py-2 rounded-lg text-sm font-bold text-white transition-all"
+              style={{ backgroundColor: "#e60000" }}
+            >
+              Comprar Agora
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Shopping Full Panel */}
+      {shopOpen && (
+        <div className="absolute inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center" onClick={() => setShopOpen(false)}>
+          <div className="bg-black/95 border border-white/15 rounded-2xl p-6 w-[500px] max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-white text-lg font-bold flex items-center gap-2">
+                <ShoppingCart size={20} style={{ color: "#e60000" }} />
+                Produtos ao Vivo
+              </h3>
+              <button onClick={() => setShopOpen(false)} className="text-white/40 hover:text-white"><X size={18} /></button>
+            </div>
+            <div className="space-y-3">
+              {currentShopProducts.map((p) => (
+                <div key={p.id} className="flex gap-4 items-center bg-white/5 border border-white/10 rounded-xl p-4">
+                  {p.image_url ? (
+                    <img src={p.image_url} alt={p.name} className="w-20 h-20 rounded-lg object-cover" />
+                  ) : (
+                    <div className="w-20 h-20 rounded-lg bg-white/10 flex items-center justify-center">
+                      <ShoppingCart size={24} className="text-white/30" />
+                    </div>
+                  )}
+                  <div className="flex-1">
+                    <div className="text-white font-bold">{p.name}</div>
+                    <div className="text-xl font-bold mt-1" style={{ color: "#e60000" }}>
+                      R$ {Number(p.price).toFixed(2)}
+                    </div>
+                    <div className="text-white/40 text-xs">{p.stock} em estoque</div>
+                  </div>
+                </div>
+              ))}
+              {currentShopProducts.length === 0 && (
+                <p className="text-white/40 text-sm text-center py-6">Nenhum produto disponível neste momento.</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
       {/* Background image for audio/youtube channels */}
       {isAudio && canal?.cover_url && (
         <div
@@ -1443,6 +1615,18 @@ export default function PlayerPage() {
             >
               {fullscreen ? <Minimize size={18} /> : <Maximize size={18} />}
             </button>
+            {/* Shopping icon */}
+            {showShopIcon && (
+              <button
+                onClick={() => { setShopOpen(!shopOpen); setShopPopupDismissed(true); }}
+                className="hover:bg-white/20 rounded-full w-8 h-8 flex items-center justify-center transition-all relative"
+                style={shopOpen ? { backgroundColor: "#d30707", color: "#fff" } : { backgroundColor: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)" }}
+                title="Shopping ao Vivo"
+              >
+                <ShoppingCart size={14} />
+                <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full animate-pulse" style={{ backgroundColor: "#e60000" }} />
+              </button>
+            )}
             <button
               onClick={() => setChatOpen(!chatOpen)}
               className="hover:bg-white/20 rounded-full w-8 h-8 flex items-center justify-center transition-all"
