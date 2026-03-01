@@ -266,6 +266,11 @@ export default function PlayerPage() {
 
   const handlePlayCanal = () => {
     if (!canal) return;
+    if (canal.type === "youtube") {
+      setPlaying(true);
+      setBuffering(false);
+      return;
+    }
     playStream(canal.url, canal.type);
   };
 
@@ -308,11 +313,14 @@ export default function PlayerPage() {
     if (audioRef.current) audioRef.current.muted = newMuted;
   };
 
-  // Bar hover logic
+  // Bar hover logic — only trigger on the bottom bar area
   const showBar = () => {
     setBarVisible(true);
     clearTimeout(hideTimeout.current);
-    hideTimeout.current = setTimeout(() => setBarVisible(false), 3000);
+  };
+  const hideBar = () => {
+    clearTimeout(hideTimeout.current);
+    hideTimeout.current = setTimeout(() => setBarVisible(false), 500);
   };
 
   useEffect(() => {
@@ -353,12 +361,18 @@ export default function PlayerPage() {
     );
   }
 
+  // Extract YouTube playlist ID
+  const youtubePlaylistId = isYoutube && canal?.url
+    ? (() => {
+        const match = canal.url.match(/[?&]list=([a-zA-Z0-9_-]+)/);
+        return match ? match[1] : null;
+      })()
+    : null;
+
   return (
     <div
       ref={containerRef}
       className="relative h-screen w-screen bg-black overflow-hidden cursor-pointer select-none"
-      onMouseMove={showBar}
-      onMouseEnter={showBar}
     >
       {/* Background image for audio/youtube channels */}
       {bgImage && (
@@ -372,20 +386,31 @@ export default function PlayerPage() {
         />
       )}
 
-      {/* Video element (hidden for audio channels) */}
+      {/* Video element (hidden for audio/youtube channels) */}
       <video
         ref={videoRef}
-        className={`absolute inset-0 w-full h-full object-contain bg-black ${isAudio ? "hidden" : ""}`}
+        className={`absolute inset-0 w-full h-full object-contain bg-black ${isAudio || isYoutube ? "hidden" : ""}`}
         muted={muted}
         playsInline
         autoPlay={false}
       />
 
+      {/* YouTube playlist iframe */}
+      {isYoutube && playing && youtubePlaylistId && (
+        <iframe
+          className="absolute inset-0 w-full h-full z-10"
+          src={`https://www.youtube.com/embed/videoseries?list=${youtubePlaylistId}&autoplay=1`}
+          allow="autoplay; encrypted-media; fullscreen"
+          allowFullScreen
+          style={{ border: "none" }}
+        />
+      )}
+
       {/* Hidden audio element */}
       <audio ref={audioRef} muted={muted} />
 
       {/* Buffering overlay */}
-      {buffering && playing && (
+      {buffering && playing && !isYoutube && (
         <div className="absolute inset-0 flex items-center justify-center z-20 bg-black/60">
           <Loader2 className="animate-spin" size={56} style={{ color: "#d30707" }} />
         </div>
@@ -438,15 +463,21 @@ export default function PlayerPage() {
         </div>
       )}
 
-      {/* Control bar overlay */}
+      {/* Control bar hover zone — taller invisible area at the bottom */}
       <div
-        className="absolute left-5 right-5 bottom-5 z-30 transition-all duration-400 ease-in-out"
-        style={{
-          opacity: barVisible ? 1 : 0,
-          transform: barVisible ? "translateY(0)" : "translateY(20px)",
-          pointerEvents: barVisible ? "auto" : "none",
-        }}
+        className="absolute left-0 right-0 bottom-0 z-30"
+        style={{ height: "140px" }}
+        onMouseEnter={showBar}
+        onMouseLeave={hideBar}
       >
+        <div
+          className="absolute left-5 right-5 bottom-5 transition-all duration-400 ease-in-out"
+          style={{
+            opacity: barVisible ? 1 : 0,
+            transform: barVisible ? "translateY(0)" : "translateY(20px)",
+            pointerEvents: barVisible ? "auto" : "none",
+          }}
+        >
         <div
           className="flex items-center gap-0 rounded-2xl border border-white/10 px-5 py-3"
           style={{ backgroundColor: "rgba(0, 0, 0, 0.9)" }}
@@ -549,6 +580,7 @@ export default function PlayerPage() {
             </div>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );
