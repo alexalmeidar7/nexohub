@@ -2,12 +2,9 @@ import { useEffect, useRef, useState, useCallback, useMemo, lazy, Suspense } fro
 import type HlsType from "hls.js";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { format, addDays, startOfWeek } from "date-fns";
 import {
   ChevronUp,
   ChevronDown,
-  ChevronLeft,
-  ChevronRight,
   Play,
   Maximize,
   Minimize,
@@ -17,7 +14,6 @@ import {
   Loader2,
   List,
   X,
-  Plus,
   Captions,
   CaptionsOff,
   Mic,
@@ -27,6 +23,8 @@ import {
 
 const PlayerChat = lazy(() => import("@/components/PlayerChat"));
 const AudioSpectrum = lazy(() => import("@/components/AudioSpectrum"));
+const PlayerGradeDialog = lazy(() => import("@/components/player/PlayerGradeDialog"));
+import PlayerShopProduct from "@/components/player/PlayerShopProduct";
 import PreRollOverlay from "@/components/PreRollOverlay";
 
 // Dynamic HLS loader — cached after first import
@@ -84,22 +82,29 @@ interface MusicData {
   artista: string;
   duracao: number;
   capa: string;
-  horario?: string; // HH:MM:SS when song started playing
+  horario?: string;
+}
+
+interface ShopProduct {
+  id: string;
+  name: string;
+  description: string | null;
+  image_url: string | null;
+  price: number;
+  stock: number;
+  program_id: string | null;
+  payment_url: string | null;
 }
 
 const MUSIC_DATA_KEY = "masterview_music_data";
-const DIAS_SEMANA = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
+
+const DAY_MAP_SHORT: Record<number, string> = { 0: "dom", 1: "seg", 2: "ter", 3: "qua", 4: "qui", 5: "sex", 6: "sab" };
+const DAY_MAP_FULL: Record<number, string> = { 0: "Domingo", 1: "Segunda", 2: "Terça", 3: "Quarta", 4: "Quinta", 5: "Sexta", 6: "Sábado" };
 
 function getCurrentProgram(programas: Programa[]): Programa | null {
   const now = new Date();
-  const dayMapShort: Record<number, string> = {
-    0: "dom", 1: "seg", 2: "ter", 3: "qua", 4: "qui", 5: "sex", 6: "sab",
-  };
-  const dayMapFull: Record<number, string> = {
-    0: "Domingo", 1: "Segunda", 2: "Terça", 3: "Quarta", 4: "Quinta", 5: "Sexta", 6: "Sábado",
-  };
-  const todayShort = dayMapShort[now.getDay()];
-  const todayFull = dayMapFull[now.getDay()];
+  const todayShort = DAY_MAP_SHORT[now.getDay()];
+  const todayFull = DAY_MAP_FULL[now.getDay()];
   const currentTime = now.getHours().toString().padStart(2, "0") + ":" + now.getMinutes().toString().padStart(2, "0");
 
   return (
@@ -113,19 +118,11 @@ function getCurrentProgram(programas: Programa[]): Programa | null {
 }
 
 function getNextProgram(programas: Programa[], current: Programa | null): Programa | null {
-  const dayMapShort: Record<number, string> = {
-    0: "dom", 1: "seg", 2: "ter", 3: "qua", 4: "qui", 5: "sex", 6: "sab",
-  };
-  const dayMapFull: Record<number, string> = {
-    0: "Domingo", 1: "Segunda", 2: "Terça", 3: "Quarta", 4: "Quinta", 5: "Sexta", 6: "Sábado",
-  };
-
   const now = new Date();
   const currentTime = now.getHours().toString().padStart(2, "0") + ":" + now.getMinutes().toString().padStart(2, "0");
-  const todayShort = dayMapShort[now.getDay()];
-  const todayFull = dayMapFull[now.getDay()];
+  const todayShort = DAY_MAP_SHORT[now.getDay()];
+  const todayFull = DAY_MAP_FULL[now.getDay()];
 
-  // Try to find the next program today (after current time or after current program ends)
   const afterTime = current ? current.horario_fim.slice(0, 5) : currentTime;
   const todayNext = programas
     .filter((p) => p.ativo && p.horario_inicio.slice(0, 5) >= afterTime)
@@ -137,11 +134,10 @@ function getNextProgram(programas: Programa[], current: Programa | null): Progra
 
   if (todayNext.length > 0) return todayNext[0];
 
-  // No more programs today — find the first program of the next day
   const tomorrow = new Date(now);
   tomorrow.setDate(tomorrow.getDate() + 1);
-  const tomorrowShort = dayMapShort[tomorrow.getDay()];
-  const tomorrowFull = dayMapFull[tomorrow.getDay()];
+  const tomorrowShort = DAY_MAP_SHORT[tomorrow.getDay()];
+  const tomorrowFull = DAY_MAP_FULL[tomorrow.getDay()];
 
   const tomorrowNext = programas
     .filter((p) => p.ativo)
@@ -166,20 +162,33 @@ function getProgramProgress(prog: Programa | null): number {
   return Math.min(100, Math.max(0, ((nowMin - startMin) / (endMin - startMin)) * 100));
 }
 
-// Grade helpers for the popup
-const DIAS_MAP_FULL: Record<number, string> = { 1: "Segunda", 2: "Terça", 3: "Quarta", 4: "Quinta", 5: "Sexta", 6: "Sábado", 0: "Domingo" };
+// Unified buffering hook for video/audio elements
+function useBufferingDetection(videoRef: React.RefObject<HTMLVideoElement | null>, audioRef: React.RefObject<HTMLAudioElement | null>) {
+  const [buffering, setBuffering] = useState(false);
 
-function generateGradeSlots(): string[] {
-  const slots: string[] = [];
-  for (let h = 0; h < 24; h++) {
-    slots.push(`${String(h).padStart(2, "0")}:00:00`);
-    slots.push(`${String(h).padStart(2, "0")}:30:00`);
-  }
-  return slots;
+  useEffect(() => {
+    const elements = [videoRef.current, audioRef.current].filter(Boolean) as HTMLMediaElement[];
+    const onWaiting = () => setBuffering(true);
+    const onReady = () => setBuffering(false);
+    
+    elements.forEach(el => {
+      el.addEventListener("waiting", onWaiting);
+      el.addEventListener("playing", onReady);
+      el.addEventListener("canplay", onReady);
+    });
+    return () => {
+      elements.forEach(el => {
+        el.removeEventListener("waiting", onWaiting);
+        el.removeEventListener("playing", onReady);
+        el.removeEventListener("canplay", onReady);
+      });
+    };
+  }, []);
+
+  return { buffering, setBuffering };
 }
 
 export default function PlayerPage() {
-  const [detailProg, setDetailProg] = useState<Programa | null>(null);
   const { user, loading: authLoading } = useAuth();
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -196,7 +205,6 @@ export default function PlayerPage() {
   const [fullscreen, setFullscreen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [loadingStatus, setLoadingStatus] = useState("Iniciando...");
-  const [buffering, setBuffering] = useState(false);
   const [barVisible, setBarVisible] = useState(true);
   const [musicData, setMusicData] = useState<MusicData | null>(() => {
     try {
@@ -214,7 +222,7 @@ export default function PlayerPage() {
   const gradeScrollRef = useRef<HTMLDivElement>(null);
   const hideTimeout = useRef<ReturnType<typeof setTimeout>>();
 
-  // Closed Captions state — lyrics-based
+  // Closed Captions state
   const [ccEnabled, setCcEnabled] = useState(false);
   const [ccText, setCcText] = useState("");
   const ccLyricsRef = useRef<{ time: number; text: string }[]>([]);
@@ -229,7 +237,7 @@ export default function PlayerPage() {
   const autoPlayedRef = useRef(false);
 
   // Shopping & Pre-Roll state
-  const [shopProducts, setShopProducts] = useState<{ id: string; name: string; description: string | null; image_url: string | null; price: number; stock: number; program_id: string | null; payment_url: string | null }[]>([]);
+  const [shopProducts, setShopProducts] = useState<ShopProduct[]>([]);
   const [shopOpen, setShopOpen] = useState(false);
   const [shopPopupDismissed, setShopPopupDismissed] = useState(false);
   const [shopProductIndex, setShopProductIndex] = useState(0);
@@ -241,7 +249,10 @@ export default function PlayerPage() {
   const prerollVideoRef = useRef<HTMLVideoElement>(null);
   const prerollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Parse LRC format: [mm:ss.xx] text
+  // Unified buffering detection
+  const { buffering, setBuffering } = useBufferingDetection(videoRef, audioRef);
+
+  // Parse LRC format
   const parseLRC = useCallback((lrc: string): { time: number; text: string }[] => {
     const lines: { time: number; text: string }[] = [];
     for (const line of lrc.split("\n")) {
@@ -260,9 +271,7 @@ export default function PlayerPage() {
 
   // Fetch lyrics when CC is enabled and music changes
   useEffect(() => {
-    if (!ccEnabled || !musicData?.artista || !musicData?.titulo) {
-      return;
-    }
+    if (!ccEnabled || !musicData?.artista || !musicData?.titulo) return;
 
     const songKey = `${musicData.artista}-${musicData.titulo}`;
     if (songKey === ccCurrentSongRef.current) return;
@@ -270,8 +279,6 @@ export default function PlayerPage() {
     ccLyricsRef.current = [];
     setCcText("");
 
-    // Calculate when this song actually started based on horario from XML
-    // horario is HH:MM:SS — the clock time the song started playing
     const calcMusicStartTimestamp = (): number => {
       if (musicData.horario) {
         const parts = musicData.horario.split(":").map(Number);
@@ -279,10 +286,7 @@ export default function PlayerPage() {
           const now = new Date();
           const songStart = new Date(now);
           songStart.setHours(parts[0] || 0, parts[1] || 0, parts[2] || 0, 0);
-          // If songStart is in the future (e.g. just past midnight), assume yesterday
-          if (songStart.getTime() > Date.now() + 60000) {
-            songStart.setDate(songStart.getDate() - 1);
-          }
+          if (songStart.getTime() > Date.now() + 60000) songStart.setDate(songStart.getDate() - 1);
           return songStart.getTime();
         }
       }
@@ -294,43 +298,24 @@ export default function PlayerPage() {
 
     const fetchLyrics = async () => {
       try {
-        console.log(`CC: Fetching lyrics for ${musicData.artista} - ${musicData.titulo}`);
         const { data, error } = await supabase.functions.invoke("fetch-lyrics", {
-          body: {
-            artist: musicData.artista,
-            title: musicData.titulo,
-            duration: musicData.duracao || undefined,
-          },
+          body: { artist: musicData.artista, title: musicData.titulo, duration: musicData.duracao || undefined },
         });
-
         if (error || !data?.success) {
-          console.log("CC: No lyrics found for", songKey);
           setCcText("");
           ccLyricsRef.current = [];
           return;
         }
-
         if (data.syncedLyrics) {
-          const parsed = parseLRC(data.syncedLyrics);
-          console.log(`CC: Got ${parsed.length} synced lyric lines`);
-          ccLyricsRef.current = parsed;
+          ccLyricsRef.current = parseLRC(data.syncedLyrics);
         } else if (data.plainLyrics) {
-          // Fallback: show plain lyrics line by line with estimated timing
           const plainLines = data.plainLyrics.split("\n").filter((l: string) => l.trim());
           const totalDuration = musicData.duracao || 180;
           const interval = totalDuration / plainLines.length;
-          ccLyricsRef.current = plainLines.map((text: string, i: number) => ({
-            time: i * interval,
-            text,
-          }));
-          // ccMusicStartRef already set from horario
-          console.log(`CC: Using plain lyrics, ${plainLines.length} lines estimated`);
+          ccLyricsRef.current = plainLines.map((text: string, i: number) => ({ time: i * interval, text }));
         }
-      } catch (err) {
-        console.error("CC: Error fetching lyrics:", err);
-      }
+      } catch {}
     };
-
     fetchLyrics();
   }, [ccEnabled, musicData?.artista, musicData?.titulo, parseLRC, canal?.type]);
 
@@ -340,28 +325,17 @@ export default function PlayerPage() {
       if (ccTimerRef.current) clearInterval(ccTimerRef.current);
       return;
     }
-
     ccTimerRef.current = setInterval(() => {
       const lyrics = ccLyricsRef.current;
       if (!lyrics.length) return;
-
       const elapsed = (Date.now() - ccMusicStartRef.current) / 1000;
-
-      // Find current line
       let currentLine = "";
       for (let i = lyrics.length - 1; i >= 0; i--) {
-        if (elapsed >= lyrics[i].time) {
-          currentLine = lyrics[i].text;
-          break;
-        }
+        if (elapsed >= lyrics[i].time) { currentLine = lyrics[i].text; break; }
       }
-
       setCcText(currentLine);
     }, 200);
-
-    return () => {
-      if (ccTimerRef.current) clearInterval(ccTimerRef.current);
-    };
+    return () => { if (ccTimerRef.current) clearInterval(ccTimerRef.current); };
   }, [ccEnabled]);
 
   const toggleCC = useCallback(() => {
@@ -373,16 +347,11 @@ export default function PlayerPage() {
       if (ccTimerRef.current) clearInterval(ccTimerRef.current);
     } else {
       setCcEnabled(true);
-      ccCurrentSongRef.current = ""; // Force refetch
+      ccCurrentSongRef.current = "";
     }
   }, [ccEnabled]);
 
-  // Cleanup CC on unmount
-  useEffect(() => {
-    return () => {
-      if (ccTimerRef.current) clearInterval(ccTimerRef.current);
-    };
-  }, []);
+  useEffect(() => { return () => { if (ccTimerRef.current) clearInterval(ccTimerRef.current); }; }, []);
 
   // Music like state
   const [liked, setLiked] = useState(false);
@@ -390,7 +359,6 @@ export default function PlayerPage() {
   const [floatingHearts, setFloatingHearts] = useState<{ id: number; x: number; delay: number }[]>([]);
   const [likeCount, setLikeCount] = useState(0);
 
-  // Check if current song is already liked + fetch total count
   useEffect(() => {
     if (!user || !musicData?.titulo || !musicData?.artista) {
       setLiked(false);
@@ -399,18 +367,8 @@ export default function PlayerPage() {
     }
     const check = async () => {
       const [{ data: myLike }, { count }] = await Promise.all([
-        supabase
-          .from("music_likes")
-          .select("id")
-          .eq("user_id", user.id)
-          .eq("titulo", musicData.titulo)
-          .eq("artista", musicData.artista)
-          .limit(1),
-        supabase
-          .from("music_likes")
-          .select("*", { count: "exact", head: true })
-          .eq("titulo", musicData.titulo)
-          .eq("artista", musicData.artista),
+        supabase.from("music_likes").select("id").eq("user_id", user.id).eq("titulo", musicData.titulo).eq("artista", musicData.artista).limit(1),
+        supabase.from("music_likes").select("*", { count: "exact", head: true }).eq("titulo", musicData.titulo).eq("artista", musicData.artista),
       ]);
       setLiked(!!(myLike && myLike.length > 0));
       setLikeCount(count ?? 0);
@@ -421,31 +379,16 @@ export default function PlayerPage() {
   const toggleLike = useCallback(async () => {
     if (!user || !musicData?.titulo || !musicData?.artista) return;
     if (liked) {
-      await supabase
-        .from("music_likes")
-        .delete()
-        .eq("user_id", user.id)
-        .eq("titulo", musicData.titulo)
-        .eq("artista", musicData.artista);
+      await supabase.from("music_likes").delete().eq("user_id", user.id).eq("titulo", musicData.titulo).eq("artista", musicData.artista);
       setLiked(false);
       setLikeCount((c) => Math.max(0, c - 1));
     } else {
-      await supabase.from("music_likes").insert({
-        user_id: user.id,
-        titulo: musicData.titulo,
-        artista: musicData.artista,
-        capa: musicData.capa || "",
-      });
+      await supabase.from("music_likes").insert({ user_id: user.id, titulo: musicData.titulo, artista: musicData.artista, capa: musicData.capa || "" });
       setLiked(true);
       setLikeCount((c) => c + 1);
       setLikeAnimating(true);
       setTimeout(() => setLikeAnimating(false), 600);
-      // Spawn floating hearts
-      const hearts = Array.from({ length: 6 }, (_, i) => ({
-        id: Date.now() + i,
-        x: Math.random() * 40 - 20,
-        delay: Math.random() * 0.3,
-      }));
+      const hearts = Array.from({ length: 6 }, (_, i) => ({ id: Date.now() + i, x: Math.random() * 40 - 20, delay: Math.random() * 0.3 }));
       setFloatingHearts(hearts);
       setTimeout(() => setFloatingHearts([]), 1500);
     }
@@ -455,16 +398,8 @@ export default function PlayerPage() {
   useEffect(() => {
     let cancelled = false;
 
-    if (authLoading) {
-      setLoadingStatus("Autenticando...");
-      return;
-    }
-
-    if (!user) {
-      setCanais([]);
-      setLoading(false);
-      return;
-    }
+    if (authLoading) { setLoadingStatus("Autenticando..."); return; }
+    if (!user) { setCanais([]); setLoading(false); return; }
 
     const fetchAll = async () => {
       setLoading(true);
@@ -472,27 +407,14 @@ export default function PlayerPage() {
 
       const now = new Date();
       const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-      const dayMap: Record<number, string> = { 0: "Domingo", 1: "Segunda", 2: "Terça", 3: "Quarta", 4: "Quinta", 5: "Sexta", 6: "Sábado" };
-      const today = dayMap[now.getDay()];
+      const today = DAY_MAP_FULL[now.getDay()];
 
       try {
         // STAGE 1 — Critical: only channels + preroll (show UI ASAP)
         const [channelsRes, prerollRes] = await Promise.all([
-          supabase
-            .from("streaming_channels")
-            .select("*")
-            .eq("user_id", user.id)
-            .eq("active", true)
-            .order("numero_canal"),
+          supabase.from("streaming_channels").select("*").eq("user_id", user.id).eq("active", true).order("numero_canal"),
           !prerollDone
-            ? supabase
-                .from("comercial_preroll")
-                .select("*")
-                .eq("user_id", user.id)
-                .eq("active", true)
-                .lte("horario_inicio", currentTime)
-                .gte("horario_fim", currentTime)
-                .order("priority", { ascending: true })
+            ? supabase.from("comercial_preroll").select("*").eq("user_id", user.id).eq("active", true).lte("horario_inicio", currentTime).gte("horario_fim", currentTime).order("priority", { ascending: true })
             : Promise.resolve({ data: null, error: null } as const),
         ]);
         if (cancelled) return;
@@ -500,7 +422,6 @@ export default function PlayerPage() {
         if (!channelsRes.error && channelsRes.data) {
           setCanais(channelsRes.data as Canal[]);
         } else {
-          console.error("Error fetching channels:", channelsRes.error);
           setCanais([]);
         }
 
@@ -523,57 +444,28 @@ export default function PlayerPage() {
         // UI is now visible — release loading gate
         setLoading(false);
 
-        // STAGE 2 — Secondary: programas + apresentadores (needed for schedule/presenter info)
+        // STAGE 2 — Secondary: programas + apresentadores
         const [programasRes, apresentadoresRes] = await Promise.all([
-          supabase
-            .from("programas")
-            .select("id, nome, horario_inicio, horario_fim, dias_semana, ativo, selo, estudio, variavel, data_variavel, capa, descricao, apresentador_id")
-            .eq("user_id", user.id)
-            .eq("ativo", true)
-            .order("horario_inicio"),
-          supabase
-            .from("apresentadores")
-            .select("id, nome, foto, instagram")
-            .eq("user_id", user.id)
-            .eq("ativo", true),
+          supabase.from("programas").select("id, nome, horario_inicio, horario_fim, dias_semana, ativo, selo, estudio, variavel, data_variavel, capa, descricao, apresentador_id").eq("user_id", user.id).eq("ativo", true).order("horario_inicio"),
+          supabase.from("apresentadores").select("id, nome, foto, instagram").eq("user_id", user.id).eq("ativo", true),
         ]);
         if (cancelled) return;
 
         const fetchedProgramas = (!programasRes.error && programasRes.data) ? programasRes.data as Programa[] : [];
         setProgramas(fetchedProgramas);
+        if (!apresentadoresRes.error && apresentadoresRes.data) setApresentadores(apresentadoresRes.data as Apresentador[]);
 
-        if (!apresentadoresRes.error && apresentadoresRes.data) {
-          setApresentadores(apresentadoresRes.data as Apresentador[]);
-        }
-
-        // STAGE 3 — Deferred: shop products only if current program has any
+        // STAGE 3 — Deferred: shop products
         const currentProg = getCurrentProgram(fetchedProgramas);
+        let shopQuery = supabase.from("shopping_products").select("id, name, description, image_url, price, stock, program_id, payment_url").eq("user_id", user.id).eq("active", true).gt("stock", 0);
         if (currentProg) {
-          const { data: shopData } = await supabase
-            .from("shopping_products")
-            .select("id, name, description, image_url, price, stock, program_id, payment_url")
-            .eq("user_id", user.id)
-            .eq("active", true)
-            .gt("stock", 0)
-            .or(`program_id.eq.${currentProg.id},program_id.is.null`);
-          if (!cancelled && shopData && shopData.length > 0) {
-            setShopProducts(shopData);
-          }
+          shopQuery = shopQuery.or(`program_id.eq.${currentProg.id},program_id.is.null`);
         } else {
-          // No program on air — fetch products with no program (todos os programas)
-          const { data: shopData } = await supabase
-            .from("shopping_products")
-            .select("id, name, description, image_url, price, stock, program_id, payment_url")
-            .eq("user_id", user.id)
-            .eq("active", true)
-            .gt("stock", 0)
-            .is("program_id", null);
-          if (!cancelled && shopData && shopData.length > 0) {
-            setShopProducts(shopData);
-          }
+          shopQuery = shopQuery.is("program_id", null);
         }
+        const { data: shopData } = await shopQuery;
+        if (!cancelled && shopData && shopData.length > 0) setShopProducts(shopData);
       } catch (error) {
-        console.error("Error fetching player initial data:", error);
         if (cancelled) return;
         setCanais([]);
         if (!prerollDone) setPrerollDone(true);
@@ -582,28 +474,17 @@ export default function PlayerPage() {
     };
 
     fetchAll();
-
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [user, authLoading]);
 
-  // Refresh shopping products periodically — only for current program
+  // Refresh shopping products periodically
   useEffect(() => {
     if (!user || programas.length === 0) return;
     const fetchShop = async () => {
       const currentProg = getCurrentProgram(programas);
-      let query = supabase
-        .from("shopping_products")
-        .select("id, name, description, image_url, price, stock, program_id, payment_url")
-        .eq("user_id", user.id)
-        .eq("active", true)
-        .gt("stock", 0);
-      if (currentProg) {
-        query = query.or(`program_id.eq.${currentProg.id},program_id.is.null`);
-      } else {
-        query = query.is("program_id", null);
-      }
+      let query = supabase.from("shopping_products").select("id, name, description, image_url, price, stock, program_id, payment_url").eq("user_id", user.id).eq("active", true).gt("stock", 0);
+      if (currentProg) query = query.or(`program_id.eq.${currentProg.id},program_id.is.null`);
+      else query = query.is("program_id", null);
       const { data } = await query;
       if (data) setShopProducts(data);
     };
@@ -611,28 +492,17 @@ export default function PlayerPage() {
     return () => clearInterval(interval);
   }, [user, programas]);
 
-
-  // Fetch YouTube playlist videos when channel is YouTube
+  // Fetch YouTube playlist videos
   useEffect(() => {
-    if (!isYoutube || !canal?.url) {
-      setYoutubeVideos([]);
-      setSelectedVideoId(null);
-      return;
-    }
+    if (!isYoutube || !canal?.url) { setYoutubeVideos([]); setSelectedVideoId(null); return; }
     const match = canal.url.match(/[?&]list=([a-zA-Z0-9_-]+)/);
     if (!match) return;
-    const playlistId = match[1];
-    supabase.functions
-      .invoke("youtube-playlist", { body: { playlistId } })
-      .then(({ data }) => {
-        if (data?.videos) {
-          setYoutubeVideos(data.videos);
-          // Playlist is always visible for YouTube, no need for sidebar toggle
-        }
-      });
+    supabase.functions.invoke("youtube-playlist", { body: { playlistId: match[1] } }).then(({ data }) => {
+      if (data?.videos) setYoutubeVideos(data.videos);
+    });
   }, [canal?.url, isYoutube]);
 
-  // Sync music data directly from XML (independent of Dashboard)
+  // Sync music data directly from XML
   const coverCacheRef = useRef<Record<string, string>>({});
   const noCoverCacheRef = useRef<Record<string, true>>({});
   useEffect(() => {
@@ -668,15 +538,9 @@ export default function PlayerPage() {
     const fetchAndSync = async () => {
       if (inFlight || cancelled) return;
       inFlight = true;
-
       try {
-        // Only fetch user_settings once, then reuse cached URL
         if (!cachedXmlUrl) {
-          const { data: settings } = await supabase
-            .from("user_settings")
-            .select("music_xml_url")
-            .eq("user_id", user.id)
-            .maybeSingle();
+          const { data: settings } = await supabase.from("user_settings").select("music_xml_url").eq("user_id", user.id).maybeSingle();
           cachedXmlUrl = settings?.music_xml_url || null;
         }
         if (!cachedXmlUrl || cancelled) return;
@@ -697,7 +561,6 @@ export default function PlayerPage() {
         const data = parseXml(text);
         if (!data || cancelled) return;
 
-        // Try iTunes cover if missing
         if (!data.capa) {
           const cacheKey = `${data.artista}-${data.titulo}`;
           if (coverCacheRef.current[cacheKey]) {
@@ -709,22 +572,13 @@ export default function PlayerPage() {
               const itunesData = await itunesRes.json();
               if (itunesData.results?.length > 0) {
                 const cover = itunesData.results[0].artworkUrl100?.replace("100x100", "600x600") || "";
-                if (cover) {
-                  data.capa = cover;
-                  coverCacheRef.current[cacheKey] = cover;
-                } else {
-                  noCoverCacheRef.current[cacheKey] = true;
-                }
-              } else {
-                noCoverCacheRef.current[cacheKey] = true;
-              }
-            } catch {
-              noCoverCacheRef.current[cacheKey] = true;
-            }
+                if (cover) { data.capa = cover; coverCacheRef.current[cacheKey] = cover; }
+                else noCoverCacheRef.current[cacheKey] = true;
+              } else noCoverCacheRef.current[cacheKey] = true;
+            } catch { noCoverCacheRef.current[cacheKey] = true; }
           }
         }
 
-        // Update state directly + localStorage for other components
         setMusicData(prev => {
           if (!prev || prev.titulo !== data.titulo || prev.artista !== data.artista || prev.capa !== data.capa) {
             localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify(data));
@@ -733,80 +587,27 @@ export default function PlayerPage() {
           return prev;
         });
       } catch {}
-      finally {
-        inFlight = false;
-      }
+      finally { inFlight = false; }
     };
 
-    // Defer first XML fetch to not compete with stream loading
     const initialDelay = setTimeout(fetchAndSync, 2000);
     const interval = setInterval(fetchAndSync, 10000);
-
-    return () => {
-      cancelled = true;
-      clearTimeout(initialDelay);
-      clearInterval(interval);
-    };
+    return () => { cancelled = true; clearTimeout(initialDelay); clearInterval(interval); };
   }, [user]);
 
-  // Buffering detection for video
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-    const onWaiting = () => setBuffering(true);
-    const onPlaying = () => setBuffering(false);
-    const onCanPlay = () => setBuffering(false);
-    video.addEventListener("waiting", onWaiting);
-    video.addEventListener("playing", onPlaying);
-    video.addEventListener("canplay", onCanPlay);
-    return () => {
-      video.removeEventListener("waiting", onWaiting);
-      video.removeEventListener("playing", onPlaying);
-      video.removeEventListener("canplay", onCanPlay);
-    };
-  }, []);
-
-  // Buffering detection for audio
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
-    const onWaiting = () => setBuffering(true);
-    const onPlaying = () => setBuffering(false);
-    const onCanPlay = () => setBuffering(false);
-    audio.addEventListener("waiting", onWaiting);
-    audio.addEventListener("playing", onPlaying);
-    audio.addEventListener("canplay", onCanPlay);
-    return () => {
-      audio.removeEventListener("waiting", onWaiting);
-      audio.removeEventListener("playing", onPlaying);
-      audio.removeEventListener("canplay", onCanPlay);
-    };
-  }, []);
-
-  // Play stream — always fresh URL with cache bust for audio
+  // Play stream
   const playStream = useCallback(
     async (url: string, type: string) => {
-      if (hlsRef.current) {
-        hlsRef.current.destroy();
-        hlsRef.current = null;
-      }
-
+      if (hlsRef.current) { hlsRef.current.destroy(); hlsRef.current = null; }
       setBuffering(true);
 
-      // Add cache buster for audio streams
       const freshUrl = url.includes("?") ? `${url}&_t=${Date.now()}` : `${url}?_t=${Date.now()}`;
-
       const useHls = url.includes(".m3u8");
       let Hls: typeof HlsType | null = null;
-      if (useHls) {
-        Hls = await getHls();
-      }
+      if (useHls) Hls = await getHls();
 
       if (type === "audio_live" || type === "audio") {
-        if (videoRef.current) {
-          videoRef.current.pause();
-          videoRef.current.src = "";
-        }
+        if (videoRef.current) { videoRef.current.pause(); videoRef.current.src = ""; }
         const audio = audioRef.current;
         if (!audio) return;
         if (Hls && Hls.isSupported()) {
@@ -814,19 +615,14 @@ export default function PlayerPage() {
           hlsRef.current = hls;
           hls.loadSource(freshUrl);
           hls.attachMedia(audio);
-          hls.on(Hls.Events.MANIFEST_PARSED, () => {
-            audio.play().then(() => setBuffering(false)).catch(() => {});
-          });
+          hls.on(Hls.Events.MANIFEST_PARSED, () => { audio.play().then(() => setBuffering(false)).catch(() => {}); });
           hls.on(Hls.Events.FRAG_BUFFERED, () => setBuffering(false));
         } else {
           audio.src = freshUrl;
           audio.play().catch(() => {});
         }
       } else {
-        if (audioRef.current) {
-          audioRef.current.pause();
-          audioRef.current.src = "";
-        }
+        if (audioRef.current) { audioRef.current.pause(); audioRef.current.src = ""; }
         const video = videoRef.current;
         if (!video) return;
         if (Hls && Hls.isSupported()) {
@@ -834,9 +630,7 @@ export default function PlayerPage() {
           hlsRef.current = hls;
           hls.loadSource(freshUrl);
           hls.attachMedia(video);
-          hls.on(Hls.Events.MANIFEST_PARSED, () => {
-            video.play().then(() => setBuffering(false)).catch(() => {});
-          });
+          hls.on(Hls.Events.MANIFEST_PARSED, () => { video.play().then(() => setBuffering(false)).catch(() => {}); });
           hls.on(Hls.Events.FRAG_BUFFERED, () => setBuffering(false));
         } else {
           video.src = freshUrl;
@@ -848,7 +642,7 @@ export default function PlayerPage() {
     []
   );
 
-  // Auto-play first channel on load — only after preroll finishes
+  // Auto-play first channel after preroll
   useEffect(() => {
     if (!prerollDone) return;
     if (autoPlayedRef.current || canais.length === 0 || playing) return;
@@ -856,38 +650,21 @@ export default function PlayerPage() {
     const first = canais[0];
     if (!first) return;
     setCurrentIndex(0);
-    if (first.type === "youtube") {
-      setPlaying(true);
-      setBuffering(false);
-    } else {
-      setTimeout(() => playStream(first.url, first.type), 200);
-    }
+    if (first.type === "youtube") { setPlaying(true); setBuffering(false); }
+    else setTimeout(() => playStream(first.url, first.type), 200);
   }, [canais, playing, playStream, prerollDone]);
 
   // Recurring pre-roll every 15 minutes
   const fetchAndShowPreroll = useCallback(async () => {
     if (!user || prerollShowing) return;
     const now = new Date();
-    const hh = String(now.getHours()).padStart(2, "0");
-    const mm = String(now.getMinutes()).padStart(2, "0");
-    const currentTime = `${hh}:${mm}`;
-    const days = ["dom", "seg", "ter", "qua", "qui", "sex", "sab"];
-    const today = days[now.getDay()];
+    const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+    const today = ["dom", "seg", "ter", "qua", "qui", "sex", "sab"][now.getDay()];
 
-    const { data } = await supabase
-      .from("comercial_preroll")
-      .select("*")
-      .eq("user_id", user.id)
-      .eq("active", true)
-      .lte("horario_inicio", currentTime)
-      .gte("horario_fim", currentTime)
-      .order("priority", { ascending: true });
+    const { data } = await supabase.from("comercial_preroll").select("*").eq("user_id", user.id).eq("active", true).lte("horario_inicio", currentTime).gte("horario_fim", currentTime).order("priority", { ascending: true });
 
     if (data && data.length > 0) {
-      const matching = data.filter((p: any) => {
-        if (!p.dias_semana || p.dias_semana.length === 0) return true;
-        return p.dias_semana.includes(today);
-      });
+      const matching = data.filter((p: any) => !p.dias_semana || p.dias_semana.length === 0 || p.dias_semana.includes(today));
       if (matching.length > 0) {
         const selected = matching[Math.floor(Math.random() * matching.length)];
         setPrerollUrl(selected.video_url);
@@ -900,18 +677,12 @@ export default function PlayerPage() {
   useEffect(() => {
     if (!prerollDone || !playing) return;
     prerollIntervalRef.current = setInterval(fetchAndShowPreroll, 15 * 60 * 1000);
-    return () => {
-      if (prerollIntervalRef.current) clearInterval(prerollIntervalRef.current);
-    };
+    return () => { if (prerollIntervalRef.current) clearInterval(prerollIntervalRef.current); };
   }, [prerollDone, playing, fetchAndShowPreroll]);
 
   const handlePlayCanal = () => {
     if (!canal) return;
-    if (canal.type === "youtube") {
-      setPlaying(true);
-      setBuffering(false);
-      return;
-    }
+    if (canal.type === "youtube") { setPlaying(true); setBuffering(false); return; }
     playStream(canal.url, canal.type);
   };
 
@@ -919,24 +690,13 @@ export default function PlayerPage() {
     if (canais.length === 0) return;
     const next = (currentIndex + dir + canais.length) % canais.length;
     setCurrentIndex(next);
-    if (playing) {
-      setTimeout(() => {
-        const c = canais[next];
-        if (c) playStream(c.url, c.type);
-      }, 100);
-    }
+    if (playing) setTimeout(() => { const c = canais[next]; if (c) playStream(c.url, c.type); }, 100);
   }, [canais, currentIndex, playing]);
 
-  // Keyboard arrow navigation between channels
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "ArrowUp") {
-        e.preventDefault();
-        navigateChannel(-1);
-      } else if (e.key === "ArrowDown") {
-        e.preventDefault();
-        navigateChannel(1);
-      }
+      if (e.key === "ArrowUp") { e.preventDefault(); navigateChannel(-1); }
+      else if (e.key === "ArrowDown") { e.preventDefault(); navigateChannel(1); }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
@@ -944,22 +704,15 @@ export default function PlayerPage() {
 
   // Fullscreen
   useEffect(() => {
-    const handler = () => {
-      if (!document.fullscreenElement) setFullscreen(false);
-    };
+    const handler = () => { if (!document.fullscreenElement) setFullscreen(false); };
     document.addEventListener("fullscreenchange", handler);
     return () => document.removeEventListener("fullscreenchange", handler);
   }, []);
 
   const toggleFullscreen = () => {
     if (!containerRef.current) return;
-    if (!fullscreen) {
-      containerRef.current.requestFullscreen?.();
-      setFullscreen(true);
-    } else {
-      document.exitFullscreen?.();
-      setFullscreen(false);
-    }
+    if (!fullscreen) { containerRef.current.requestFullscreen?.(); setFullscreen(true); }
+    else { document.exitFullscreen?.(); setFullscreen(false); }
   };
 
   const toggleMute = () => {
@@ -977,49 +730,31 @@ export default function PlayerPage() {
     setMuted(val === 0);
   };
 
-  const handleSelectVideo = (videoId: string) => {
+  const handleSelectVideo = useCallback((videoId: string) => {
     setSelectedVideoId(videoId);
     setPlaying(true);
     setBuffering(false);
-  };
+  }, []);
 
-  // Volume hover with delay
-  const showVolume = () => {
-    clearTimeout(volumeHideTimeout.current);
-    setVolumeHover(true);
-  };
-  const hideVolume = () => {
-    clearTimeout(volumeHideTimeout.current);
-    volumeHideTimeout.current = setTimeout(() => setVolumeHover(false), 800);
-  };
+  const showVolume = () => { clearTimeout(volumeHideTimeout.current); setVolumeHover(true); };
+  const hideVolume = () => { volumeHideTimeout.current = setTimeout(() => setVolumeHover(false), 600); };
 
-  // Bar hover logic
-  const showBar = () => {
-    setBarVisible(true);
-    clearTimeout(hideTimeout.current);
-  };
+  const showBar = () => { clearTimeout(hideTimeout.current); setBarVisible(true); };
   const hideBar = () => {
-    if (isAudio) return; // Keep bar always visible for audio streams
+    if (isAudio) return;
     clearTimeout(hideTimeout.current);
     hideTimeout.current = setTimeout(() => setBarVisible(false), 500);
   };
 
   useEffect(() => {
     clearTimeout(hideTimeout.current);
-    if (isAudio) {
-      setBarVisible(true);
-      return;
-    }
+    if (isAudio) { setBarVisible(true); return; }
     hideTimeout.current = setTimeout(() => setBarVisible(false), 4000);
     return () => clearTimeout(hideTimeout.current);
   }, [isAudio, currentIndex]);
 
   // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (hlsRef.current) hlsRef.current.destroy();
-    };
-  }, []);
+  useEffect(() => { return () => { if (hlsRef.current) hlsRef.current.destroy(); }; }, []);
 
   // Periodic clock tick to re-compute currentProg every 10s
   useEffect(() => {
@@ -1037,7 +772,6 @@ export default function PlayerPage() {
     }
   }, [currentProg?.id]);
 
-
   const nextProg = getNextProgram(programas, currentProg);
   const progress = getProgramProgress(currentProg);
   const currentPresenter = useMemo(() => {
@@ -1045,57 +779,11 @@ export default function PlayerPage() {
     return apresentadores.find(a => a.id === currentProg.apresentador_id) || null;
   }, [currentProg, apresentadores]);
 
-  
-
-  // "No Ar" label — for audio: show current program from grade; for others: canal + program
   const noArLabel = canal
     ? isAudio
-      ? currentProg
-        ? currentProg.nome
-        : canal.name
-      : currentProg
-        ? `${canal.name} - ${currentProg.nome}`
-        : canal.name
+      ? currentProg ? currentProg.nome : canal.name
+      : currentProg ? `${canal.name} - ${currentProg.nome}` : canal.name
     : "Sem programação";
-
-  // Grade data
-  const gradeSlots = useMemo(() => generateGradeSlots(), []);
-  const now = new Date();
-  const diaAtual = DIAS_MAP_FULL[now.getDay()];
-  const currentTimeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
-  const weekStart = startOfWeek(now, { weekStartsOn: 1 });
-  const weekDates = useMemo(() => {
-    const dates: Record<string, string> = {};
-    DIAS_SEMANA.forEach((dia, i) => {
-      const date = addDays(weekStart, i);
-      dates[dia] = format(date, "dd/MM");
-    });
-    return dates;
-  }, [weekStart.toDateString()]);
-
-  const getDateForDay = (dia: string): string => {
-    const idx = DIAS_SEMANA.indexOf(dia);
-    const date = addDays(weekStart, idx);
-    return format(date, "yyyy-MM-dd");
-  };
-
-  // Map programas to grade format with dia names
-  const dayShortToFull: Record<string, string> = {
-    seg: "Segunda", ter: "Terça", qua: "Quarta", qui: "Quinta", sex: "Sexta", sab: "Sábado", dom: "Domingo",
-    Segunda: "Segunda", Terça: "Terça", Quarta: "Quarta", Quinta: "Quinta", Sexta: "Sexta", Sábado: "Sábado", Domingo: "Domingo",
-  };
-
-  const getProgramaForGradeSlot = (dia: string, slotTime: string) => {
-    const dateForDay = getDateForDay(dia);
-    const matching = programas.filter(p => {
-      if (!p.ativo) return false;
-      const dias = (p.dias_semana || []).map(d => dayShortToFull[d] || d);
-      return dias.includes(dia) && slotTime >= p.horario_inicio && slotTime < p.horario_fim;
-    });
-    const variable = matching.find(p => p.variavel && p.data_variavel === dateForDay);
-    if (variable) return variable;
-    return matching.find(p => !p.variavel) || matching[0] || undefined;
-  };
 
   // Shopping products for current program
   const currentShopProducts = useMemo(() => {
@@ -1109,9 +797,7 @@ export default function PlayerPage() {
   useEffect(() => {
     if (shopPopupTimerRef.current) clearInterval(shopPopupTimerRef.current);
     if (currentShopProducts.length > 0) {
-      shopPopupTimerRef.current = setInterval(() => {
-        setShopPopupDismissed(false);
-      }, 5 * 60 * 1000);
+      shopPopupTimerRef.current = setInterval(() => setShopPopupDismissed(false), 5 * 60 * 1000);
     }
     return () => { if (shopPopupTimerRef.current) clearInterval(shopPopupTimerRef.current); };
   }, [currentShopProducts.length]);
@@ -1126,10 +812,7 @@ export default function PlayerPage() {
   }
 
   return (
-    <div
-      ref={containerRef}
-      className="relative h-screen w-screen bg-black overflow-hidden select-none cursor-default"
-    >
+    <div ref={containerRef} className="relative h-screen w-screen bg-black overflow-hidden select-none cursor-default">
       {/* Pre-Roll Overlay */}
       {prerollUrl && (!prerollDone || prerollShowing) && (
         <PreRollOverlay
@@ -1145,246 +828,74 @@ export default function PlayerPage() {
       {showShopIcon && !shopPopupDismissed && currentShopProducts.length > 0 && (
         <div className="absolute top-6 right-6 z-50 animate-fade-in">
           <div className="bg-black/90 backdrop-blur-md border border-white/15 rounded-2xl p-5 w-80 shadow-2xl">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#e60000" }}>
-                <ShoppingCart size={12} className="inline mr-1" />
-                Oferta ao vivo
-                {currentShopProducts.length > 1 && (
-                  <span className="ml-1 text-white/40">({shopProductIndex + 1}/{currentShopProducts.length})</span>
-                )}
-              </span>
-              <button onClick={() => setShopPopupDismissed(true)} className="text-white/40 hover:text-white">
-                <X size={14} />
-              </button>
-            </div>
-            {(() => {
-              const idx = Math.min(shopProductIndex, currentShopProducts.length - 1);
-              const p = currentShopProducts[idx];
-              if (!p) return null;
-              return (
-                <div className="relative">
-                  {/* Navigation arrows */}
-                  {currentShopProducts.length > 1 && (
-                    <>
-                      <button
-                        onClick={() => setShopProductIndex(i => (i - 1 + currentShopProducts.length) % currentShopProducts.length)}
-                        className="absolute -left-3 top-1/2 -translate-y-1/2 z-10 bg-white/10 hover:bg-white/20 text-white rounded-full w-7 h-7 flex items-center justify-center transition-all"
-                      >
-                        <ChevronLeft size={16} />
-                      </button>
-                      <button
-                        onClick={() => setShopProductIndex(i => (i + 1) % currentShopProducts.length)}
-                        className="absolute -right-3 top-1/2 -translate-y-1/2 z-10 bg-white/10 hover:bg-white/20 text-white rounded-full w-7 h-7 flex items-center justify-center transition-all"
-                      >
-                        <ChevronRight size={16} />
-                      </button>
-                    </>
-                  )}
-                  <div className="flex gap-3 items-center">
-                    {p.image_url ? (
-                      <img src={p.image_url} alt={p.name} className="w-20 h-20 rounded-lg object-cover" />
-                    ) : (
-                      <div className="w-20 h-20 rounded-lg bg-white/10 flex items-center justify-center">
-                        <ShoppingCart size={20} className="text-white/30" />
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <div className="text-white text-sm font-bold truncate">{p.name}</div>
-                      <div className="text-lg font-bold" style={{ color: "#e60000" }}>
-                        R$ {Number(p.price).toFixed(2)}
-                      </div>
-                      <div className="text-white/40 text-[10px]">{p.stock} disponíveis</div>
-                    </div>
-                  </div>
-                  {p.description && (
-                    <p className="text-white/60 text-xs mt-2 line-clamp-2">{p.description}</p>
-                  )}
-                  {p.payment_url ? (
-                    <a
-                      href={p.payment_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block w-full mt-3 py-2.5 rounded-lg text-sm font-bold text-white text-center transition-all hover:brightness-110"
-                      style={{ backgroundColor: "#009ee3" }}
-                    >
-                      💳 Comprar via Mercado Pago
-                    </a>
-                  ) : (
-                    <button
-                      onClick={() => setShopOpen(true)}
-                      className="w-full mt-3 py-2.5 rounded-lg text-sm font-bold text-white transition-all"
-                      style={{ backgroundColor: "#e60000" }}
-                    >
-                      Ver Produto
-                    </button>
-                  )}
-                </div>
-              );
-            })()}
+            <PlayerShopProduct
+              products={currentShopProducts}
+              productIndex={shopProductIndex}
+              setProductIndex={setShopProductIndex}
+              onClose={() => setShopPopupDismissed(true)}
+              variant="popup"
+            />
           </div>
         </div>
       )}
 
-      {/* Shopping Panel — aligned right, above control bar, no overlay */}
+      {/* Shopping Panel */}
       {shopOpen && (
         <div className="absolute right-5 z-40" style={{ bottom: "150px", maxWidth: "340px", width: "100%" }}>
           <div className="bg-black/90 backdrop-blur-md border border-white/15 rounded-2xl p-5 shadow-2xl">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#e60000" }}>
-                <ShoppingCart size={12} className="inline mr-1" />
-                Produtos ao Vivo
-                {currentShopProducts.length > 1 && (
-                  <span className="ml-1 text-white/40">({shopProductIndex + 1}/{currentShopProducts.length})</span>
-                )}
-              </span>
-              <button onClick={() => setShopOpen(false)} className="text-white/40 hover:text-white"><X size={14} /></button>
-            </div>
-            {currentShopProducts.length > 0 ? (() => {
-              const idx = Math.min(shopProductIndex, currentShopProducts.length - 1);
-              const p = currentShopProducts[idx];
-              if (!p) return null;
-              return (
-                <div className="relative">
-                  {currentShopProducts.length > 1 && (
-                    <>
-                      <button
-                        onClick={() => setShopProductIndex(i => (i - 1 + currentShopProducts.length) % currentShopProducts.length)}
-                        className="absolute -left-3 top-1/2 -translate-y-1/2 z-10 bg-white/10 hover:bg-white/20 text-white rounded-full w-7 h-7 flex items-center justify-center transition-all"
-                      >
-                        <ChevronLeft size={16} />
-                      </button>
-                      <button
-                        onClick={() => setShopProductIndex(i => (i + 1) % currentShopProducts.length)}
-                        className="absolute -right-3 top-1/2 -translate-y-1/2 z-10 bg-white/10 hover:bg-white/20 text-white rounded-full w-7 h-7 flex items-center justify-center transition-all"
-                      >
-                        <ChevronRight size={16} />
-                      </button>
-                    </>
-                  )}
-                  <div className="flex gap-3 items-center">
-                    {p.image_url ? (
-                      <img src={p.image_url} alt={p.name} className="w-20 h-20 rounded-lg object-cover" />
-                    ) : (
-                      <div className="w-20 h-20 rounded-lg bg-white/10 flex items-center justify-center">
-                        <ShoppingCart size={20} className="text-white/30" />
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <div className="text-white text-sm font-bold truncate">{p.name}</div>
-                      <div className="text-lg font-bold" style={{ color: "#e60000" }}>
-                        R$ {Number(p.price).toFixed(2)}
-                      </div>
-                      <div className="text-white/40 text-[10px]">{p.stock} disponíveis</div>
-                    </div>
-                  </div>
-                  {p.description && (
-                    <p className="text-white/60 text-xs mt-2 line-clamp-2">{p.description}</p>
-                  )}
-                  {p.payment_url ? (
-                    <a
-                      href={p.payment_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block w-full mt-3 py-2.5 rounded-lg text-sm font-bold text-white text-center transition-all hover:brightness-110"
-                      style={{ backgroundColor: "#009ee3" }}
-                    >
-                      💳 Comprar via Mercado Pago
-                    </a>
-                  ) : (
-                    <button
-                      className="w-full mt-3 py-2.5 rounded-lg text-sm font-bold text-white transition-all"
-                      style={{ backgroundColor: "#e60000" }}
-                    >
-                      Ver Produto
-                    </button>
-                  )}
-                </div>
-              );
-            })() : (
-              <p className="text-white/40 text-sm text-center py-4">Nenhum produto disponível neste momento.</p>
-            )}
+            <PlayerShopProduct
+              products={currentShopProducts}
+              productIndex={shopProductIndex}
+              setProductIndex={setShopProductIndex}
+              onClose={() => setShopOpen(false)}
+              variant="panel"
+            />
           </div>
         </div>
       )}
-      {/* Background image for audio/youtube channels */}
+
+      {/* Background image for audio channels */}
       {isAudio && canal?.cover_url && (
-        <div
-          className="absolute inset-0 bg-cover bg-center transition-all duration-700"
-          style={{
-            backgroundImage: `url(${canal.cover_url})`,
-          }}
-        />
+        <div className="absolute inset-0 bg-cover bg-center transition-all duration-700" style={{ backgroundImage: `url(${canal.cover_url})` }} />
       )}
-      {/* YouTube: Fullscreen background video iframe (overscaled, muted, no controls) */}
+
+      {/* YouTube: Fullscreen background video iframe */}
       {isYoutube && selectedVideoId && (
         <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
           <iframe
             className="absolute"
-            style={{
-              width: "150%",
-              height: "150%",
-              top: "50%",
-              left: "50%",
-              transform: "translate(-50%, -50%)",
-              border: "none",
-            }}
+            style={{ width: "150%", height: "150%", top: "50%", left: "50%", transform: "translate(-50%, -50%)", border: "none" }}
             src={`https://www.youtube.com/embed/${selectedVideoId}?autoplay=1&mute=1&controls=0&loop=1&playlist=${selectedVideoId}&showinfo=0&rel=0&modestbranding=1`}
             allow="autoplay; encrypted-media"
           />
         </div>
       )}
-      {/* YouTube: Thumbnail placeholder before first play */}
+
+      {/* YouTube: Thumbnail placeholder */}
       {isYoutube && !selectedVideoId && (canal?.cover_url || canal?.background_url) && (
-        <div
-          className="absolute inset-0 bg-cover bg-center transition-all duration-700"
-          style={{
-            backgroundImage: `url(${canal.cover_url || canal.background_url})`,
-            filter: "blur(8px) brightness(0.4)",
-            transform: "scale(1.1)",
-          }}
-        />
-      )}
-      {/* YouTube: Dark gradient overlay */}
-      {isYoutube && (
-        <div
-          className="absolute inset-0 z-[1]"
-          style={{
-            background: "linear-gradient(90deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.15) 100%)",
-          }}
+        <div className="absolute inset-0 bg-cover bg-center transition-all duration-700"
+          style={{ backgroundImage: `url(${canal.cover_url || canal.background_url})`, filter: "blur(8px) brightness(0.4)", transform: "scale(1.1)" }}
         />
       )}
 
-      {/* YouTube: Playlist sidebar — always visible on left */}
+      {/* YouTube: Dark gradient overlay */}
       {isYoutube && (
-        <div
-          className="absolute z-[15] flex flex-col rounded-2xl overflow-hidden"
-          style={{
-            left: "150px",
-            top: "50%",
-            transform: "translateY(-50%)",
-            width: "450px",
-            height: "730px",
-            backgroundColor: "rgba(20, 20, 20, 0.9)",
-            border: "1px solid rgba(255, 0, 0, 0.3)",
-            boxShadow: "0 20px 50px rgba(0,0,0,0.5)",
-          }}
+        <div className="absolute inset-0 z-[1]" style={{ background: "linear-gradient(90deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.15) 100%)" }} />
+      )}
+
+      {/* YouTube: Playlist sidebar */}
+      {isYoutube && (
+        <div className="absolute z-[15] flex flex-col rounded-2xl overflow-hidden"
+          style={{ left: "150px", top: "50%", transform: "translateY(-50%)", width: "450px", height: "730px", backgroundColor: "rgba(20, 20, 20, 0.9)", border: "1px solid rgba(255, 0, 0, 0.3)", boxShadow: "0 20px 50px rgba(0,0,0,0.5)" }}
         >
           <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
-            <span className="text-white text-sm font-bold flex items-center gap-2">
-              <List size={16} /> Playlist
-            </span>
+            <span className="text-white text-sm font-bold flex items-center gap-2"><List size={16} /> Playlist</span>
             <span className="text-white/40 text-xs">{youtubeVideos.length} vídeos</span>
           </div>
           <div className="flex-1 overflow-y-auto" ref={gradeScrollRef}>
             {youtubeVideos.map((v, i) => (
-              <button
-                key={v.videoId}
-                onClick={() => handleSelectVideo(v.videoId)}
-                className={`flex items-start gap-3 px-4 py-3 w-full text-left transition-colors ${
-                  selectedVideoId === v.videoId
-                    ? "bg-[#e60000]/20 border-l-2 border-[#e60000]"
-                    : "hover:bg-white/10 border-l-2 border-transparent"
-                }`}
+              <button key={v.videoId} onClick={() => handleSelectVideo(v.videoId)}
+                className={`flex items-start gap-3 px-4 py-3 w-full text-left transition-colors ${selectedVideoId === v.videoId ? "bg-[#e60000]/20 border-l-2 border-[#e60000]" : "hover:bg-white/10 border-l-2 border-transparent"}`}
               >
                 <div className="relative shrink-0">
                   <img src={v.thumbnail} alt="" className="w-32 h-[72px] rounded-lg object-cover" />
@@ -1407,65 +918,37 @@ export default function PlayerPage() {
         </div>
       )}
 
-      {/* Video element (hidden for audio/youtube channels) */}
-      <video
-        ref={videoRef}
-        className={`absolute inset-0 w-full h-full object-contain bg-black ${isAudio || isYoutube ? "hidden" : ""}`}
-        muted={muted}
-        playsInline
-        autoPlay={false}
-      />
-
-      {/* Hidden audio element */}
+      {/* Video element */}
+      <video ref={videoRef} className={`absolute inset-0 w-full h-full object-contain bg-black ${isAudio || isYoutube ? "hidden" : ""}`} muted={muted} playsInline autoPlay={false} />
       <audio ref={audioRef} muted={muted} />
 
-      {/* Buffering overlay — only for video, not audio */}
+      {/* Buffering overlay */}
       {buffering && playing && !isYoutube && !isAudio && (
         <div className="absolute inset-0 flex items-center justify-center z-20 bg-black/60">
           <Loader2 className="animate-spin" size={56} style={{ color: "#d30707" }} />
         </div>
       )}
 
-      {/* Audio channel: show presenter bg + music cover + info */}
+      {/* Audio channel: presenter bg + music cover + info */}
       {isAudio && playing && (
         <div className="absolute inset-0 z-10">
-          {/* Audio spectrum visualization */}
           <Suspense fallback={null}>
             <AudioSpectrum audioElement={audioRef.current} />
           </Suspense>
-          {/* Presenter large background photo */}
           {currentPresenter?.foto && (
             <div className="absolute inset-0 flex items-end z-[3]" style={{ left: "-250px" }}>
               <div className="relative h-[92%]">
-                <img
-                  src={currentPresenter.foto}
-                  alt={currentPresenter.nome}
-                  className="h-full object-contain object-bottom animate-fade-in"
-                  style={{ animationDuration: "1s" }}
-                />
+                <img src={currentPresenter.foto} alt={currentPresenter.nome} className="h-full object-contain object-bottom animate-fade-in" style={{ animationDuration: "1s" }} />
               </div>
             </div>
           )}
-
-          {/* Music cover + info centered with left padding */}
           <div className="absolute inset-0 flex items-center z-20" style={{ paddingLeft: "350px" }}>
             <div className="flex flex-col items-center">
               <div className="relative w-64 h-64 mb-6">
                 {musicData?.capa ? (
-                  <img
-                    key={musicData.capa}
-                    src={musicData.capa}
-                    alt={musicData.titulo}
-                    className="absolute inset-0 w-full h-full rounded-2xl object-cover shadow-2xl animate-fade-in"
-                    style={{ animationDuration: "0.7s" }}
-                  />
+                  <img key={musicData.capa} src={musicData.capa} alt={musicData.titulo} className="absolute inset-0 w-full h-full rounded-2xl object-cover shadow-2xl animate-fade-in" style={{ animationDuration: "0.7s" }} />
                 ) : canal?.logo_url ? (
-                  <img
-                    src={canal.logo_url}
-                    alt={canal.name}
-                    className="absolute inset-0 w-48 h-48 m-auto rounded-2xl object-contain animate-fade-in"
-                    style={{ animationDuration: "0.7s" }}
-                  />
+                  <img src={canal.logo_url} alt={canal.name} className="absolute inset-0 w-48 h-48 m-auto rounded-2xl object-contain animate-fade-in" style={{ animationDuration: "0.7s" }} />
                 ) : null}
               </div>
               {musicData && (
@@ -1475,16 +958,10 @@ export default function PlayerPage() {
                   {currentPresenter && (
                     <div className="mt-2 flex flex-col items-center gap-0.5">
                       <span className="text-white/60 text-sm font-semibold drop-shadow-lg flex items-center gap-1.5">
-                        <Mic size={12} />
-                        {currentPresenter.nome}
+                        <Mic size={12} />{currentPresenter.nome}
                       </span>
                       {currentPresenter.instagram && (
-                        <a
-                          href={`https://instagram.com/${currentPresenter.instagram.replace(/^@/, "")}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-white/40 text-xs hover:text-white/70 transition-colors drop-shadow-lg"
-                        >
+                        <a href={`https://instagram.com/${currentPresenter.instagram.replace(/^@/, "")}`} target="_blank" rel="noopener noreferrer" className="text-white/40 text-xs hover:text-white/70 transition-colors drop-shadow-lg">
                           @{currentPresenter.instagram.replace(/^@/, "")}
                         </a>
                       )}
@@ -1497,209 +974,35 @@ export default function PlayerPage() {
         </div>
       )}
 
-      {/* Idle state (no video playing) */}
+      {/* Idle state */}
       {!playing && (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#1a1a1a] z-10">
-          {canal?.logo_url && (
-            <img src={canal.logo_url} alt={canal.name} className="w-32 h-32 object-contain mb-6 rounded-xl" />
-          )}
+          {canal?.logo_url && <img src={canal.logo_url} alt={canal.name} className="w-32 h-32 object-contain mb-6 rounded-xl" />}
           <h1 className="text-white text-3xl font-bold mb-2">{canal?.name || "Nenhum canal"}</h1>
+          {canal && <p className="text-white/50 text-sm mb-8">Canal {canal.numero_canal}</p>}
           {canal && (
-            <p className="text-white/50 text-sm mb-8">Canal {canal.numero_canal}</p>
-          )}
-          {canal && (
-            <button
-              onClick={handlePlayCanal}
-              className="flex items-center gap-2 text-white px-8 py-3 rounded-full font-bold text-lg transition-all"
-              style={{ backgroundColor: "#e60000" }}
-            >
+            <button onClick={handlePlayCanal} className="flex items-center gap-2 text-white px-8 py-3 rounded-full font-bold text-lg transition-all" style={{ backgroundColor: "#e60000" }}>
               <Play size={20} fill="white" /> Assistir
             </button>
           )}
         </div>
       )}
 
-      {/* Grade Dialog — rendered inside containerRef so it works in fullscreen */}
+      {/* Grade Dialog — lazy loaded */}
       {gradeOpen && (
-        <div className="absolute inset-0 z-[100] flex items-center justify-center" style={{ backgroundColor: "rgba(0,0,0,0.85)" }}>
-          <div className="relative w-[95vw] max-h-[90vh] rounded-lg overflow-hidden" style={{ backgroundColor: "#111" }}>
-          <div className="flex items-center justify-between px-6 pt-5 pb-3 border-b" style={{ borderColor: "#d30707" }}>
-            <div className="text-white text-lg font-bold flex items-center gap-2">
-              <span style={{ color: "#d30707" }}>■</span> Grade de Programação
-            </div>
-            <button onClick={() => { setGradeOpen(false); setDetailProg(null); }} className="hover:opacity-80 transition-opacity" style={{ color: "#d30707" }}>
-              <X size={20} />
-            </button>
+        <Suspense fallback={
+          <div className="absolute inset-0 z-[100] flex items-center justify-center" style={{ backgroundColor: "rgba(0,0,0,0.85)" }}>
+            <Loader2 className="animate-spin" size={32} style={{ color: "#d30707" }} />
           </div>
-          <div
-            ref={gradeScrollRef}
-            className="overflow-auto max-h-[75vh] px-4 pb-4 grade-scroll"
-            style={{
-              scrollbarWidth: "thin",
-              scrollbarColor: "#d30707 #222",
-            }}
-          >
-            <style>{`
-              .grade-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
-              .grade-scroll::-webkit-scrollbar-track { background: #222; border-radius: 4px; }
-              .grade-scroll::-webkit-scrollbar-thumb { background: #d30707; border-radius: 4px; }
-              .grade-scroll::-webkit-scrollbar-thumb:hover { background: #ff1a1a; }
-              .grade-cell:hover { outline: 2px solid #ed0808 !important; outline-offset: -1px; }
-            `}</style>
-            <table className="w-full text-xs border-separate border-spacing-1">
-              <thead className="sticky top-0 z-10" style={{ backgroundColor: "#111" }}>
-                <tr>
-                  <th className="px-2 py-2 text-left w-20 rounded-lg" style={{ color: "#d30707" }}>Horário</th>
-                  {DIAS_SEMANA.map(dia => (
-                    <th key={dia} className={`px-2 py-2 text-center rounded-lg ${dia === diaAtual ? "font-bold" : ""}`}
-                      style={{ color: dia === diaAtual ? "#d30707" : "#999" }}>
-                      <div>{dia.slice(0, 3)}</div>
-                      <div className="text-[9px] font-normal opacity-70">{weekDates[dia]}</div>
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {(() => {
-                  const skipMap: Record<string, boolean> = {};
-                  const spanMap: Record<string, { prog: Programa; rowSpan: number }> = {};
-
-                  DIAS_SEMANA.forEach(dia => {
-                    let i = 0;
-                    while (i < gradeSlots.length) {
-                      const slot = gradeSlots[i];
-                      const prog = getProgramaForGradeSlot(dia, slot);
-                      if (prog) {
-                        let span = 1;
-                        while (i + span < gradeSlots.length) {
-                          const nextProg = getProgramaForGradeSlot(dia, gradeSlots[i + span]);
-                          if (nextProg && nextProg.id === prog.id) {
-                            skipMap[`${dia}-${gradeSlots[i + span]}`] = true;
-                            span++;
-                          } else break;
-                        }
-                        spanMap[`${dia}-${slot}`] = { prog, rowSpan: span };
-                        i += span;
-                      } else {
-                        i++;
-                      }
-                    }
-                  });
-
-                  return gradeSlots.map(slot => {
-                    // Check if this row contains the on-air program for today
-                    const onAirKey = `${diaAtual}-${slot}`;
-                    const isOnAirRow = spanMap[onAirKey] && (() => {
-                      const p = spanMap[onAirKey].prog;
-                      return p && currentTimeStr >= p.horario_inicio && currentTimeStr < p.horario_fim;
-                    })();
-
-                    return (
-                    <tr key={slot} ref={isOnAirRow ? (el) => {
-                      if (el) {
-                        requestAnimationFrame(() => {
-                          el.scrollIntoView({ behavior: "smooth", block: "center" });
-                        });
-                      }
-                    } : undefined}>
-                      <td className="px-2 py-2 font-mono rounded-lg" style={{ color: "#666" }}>{slot.slice(0, 5)}</td>
-                      {DIAS_SEMANA.map(dia => {
-                        const key = `${dia}-${slot}`;
-                        if (skipMap[key]) return null;
-                        const cellData = spanMap[key];
-                        if (!cellData) {
-                          return <td key={dia} className="px-1 py-1 rounded-lg" style={{ backgroundColor: "transparent" }} />;
-                        }
-                        const { prog, rowSpan } = cellData;
-                        const isOnAir = prog && dia === diaAtual && currentTimeStr >= prog.horario_inicio && currentTimeStr < prog.horario_fim;
-                        return (
-                          <td
-                            key={dia}
-                            rowSpan={rowSpan}
-                            className="px-1 py-1 text-center rounded-lg transition-all grade-cell relative group"
-                            style={{
-                              backgroundColor: isOnAir ? "#d30707" : "rgba(211,7,7,0.15)",
-                              color: isOnAir ? "#fff" : "#ccc",
-                              fontWeight: isOnAir ? "bold" : "normal",
-                              verticalAlign: "middle",
-                              cursor: "pointer",
-                            }}
-                            onClick={() => setDetailProg(prog)}
-                          >
-                            <div className="flex items-center justify-center gap-1">
-                              <span className="text-[10px] truncate">{prog.nome}</span>
-                              <Plus size={10} className="shrink-0 opacity-60 group-hover:opacity-100 transition-opacity" />
-                            </div>
-                            <div className="text-[8px] opacity-60 mt-0.5">
-                              {prog.horario_inicio.slice(0, 5)} - {prog.horario_fim.slice(0, 5)}
-                            </div>
-                            {isOnAir && (
-                              <div className="mt-1 inline-block rounded px-1.5 py-0.5 text-[8px] font-bold" style={{ backgroundColor: "#fff", color: "#333" }}>
-                                no ar
-                              </div>
-                            )}
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  )});
-                })()}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Program detail popup */}
-          {detailProg && (
-            <div className="absolute inset-0 z-20 flex items-center justify-center" style={{ backgroundColor: "rgba(0,0,0,0.8)" }}>
-              <div className="rounded-xl p-6 max-w-lg w-full mx-4 relative" style={{ backgroundColor: "#1a1a1a", border: "1px solid #d30707" }}>
-                <button onClick={() => setDetailProg(null)} className="absolute top-3 right-3 hover:opacity-80 z-10" style={{ color: "#d30707" }}>
-                  <X size={18} />
-                </button>
-                <div className="flex gap-4">
-                  {/* Capa à esquerda */}
-                  <div className="shrink-0">
-                    {detailProg.capa ? (
-                      <img src={detailProg.capa} alt={detailProg.nome} className="w-36 h-36 object-cover rounded-lg" />
-                    ) : detailProg.selo ? (
-                      <img src={detailProg.selo} alt={detailProg.nome} className="w-36 h-36 object-contain rounded-lg" />
-                    ) : (
-                      <div className="w-36 h-36 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#d30707" }}>
-                        <span className="text-white text-3xl font-bold">{detailProg.nome.charAt(0)}</span>
-                      </div>
-                    )}
-                  </div>
-                  {/* Informações à direita */}
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-white text-lg font-bold mb-1 pr-6">{detailProg.nome}</h3>
-                    <div className="text-xs mb-2" style={{ color: "#d30707" }}>
-                      {detailProg.horario_inicio.slice(0, 5)} - {detailProg.horario_fim.slice(0, 5)}
-                    </div>
-                    {detailProg.estudio && (
-                      <div className="text-white/50 text-xs mb-1">Estúdio: {detailProg.estudio}</div>
-                    )}
-                    {detailProg.dias_semana && detailProg.dias_semana.length > 0 && (
-                      <div className="text-white/50 text-xs mb-1">Dias: {detailProg.dias_semana.join(", ")}</div>
-                    )}
-                    {detailProg.descricao && (
-                      <p className="text-white/70 text-sm mt-2 leading-relaxed">{detailProg.descricao}</p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-          </div>
-        </div>
+        }>
+          <PlayerGradeDialog programas={programas} onClose={() => setGradeOpen(false)} />
+        </Suspense>
       )}
 
-      {/* CC subtitle display — always mounted for fade animation */}
+      {/* CC subtitle display */}
       <div
         className="absolute left-0 right-0 z-25 flex justify-center pointer-events-none transition-all duration-500 ease-in-out"
-        style={{
-          bottom: "160px",
-          opacity: ccEnabled && ccText ? 1 : 0,
-          transform: ccEnabled && ccText ? "translateY(0)" : "translateY(10px)",
-        }}
+        style={{ bottom: "160px", opacity: ccEnabled && ccText ? 1 : 0, transform: ccEnabled && ccText ? "translateY(0)" : "translateY(10px)" }}
       >
         <div className="px-6 py-3 rounded-lg max-w-3xl text-center" style={{ backgroundColor: "rgba(0,0,0,0.85)" }}>
           <span className="text-white text-lg font-medium leading-relaxed">{ccText}</span>
@@ -1707,57 +1010,25 @@ export default function PlayerPage() {
       </div>
 
       {/* Control bar hover zone */}
-      <div
-        className="absolute left-0 right-0 bottom-0 z-30"
-        style={{ height: "140px" }}
-        onMouseEnter={showBar}
-        onMouseLeave={hideBar}
-      >
-        <div
-          className="absolute left-0 right-0 bottom-5 mx-auto transition-all duration-400 ease-in-out"
-          style={{
-            maxWidth: "1400px",
-            width: "100%",
-            paddingLeft: "20px",
-            paddingRight: "20px",
-            opacity: barVisible ? 1 : 0,
-            transform: barVisible ? "translateY(0)" : "translateY(20px)",
-            pointerEvents: barVisible ? "auto" : "none",
-          }}
+      <div className="absolute left-0 right-0 bottom-0 z-30" style={{ height: "140px" }} onMouseEnter={showBar} onMouseLeave={hideBar}>
+        <div className="absolute left-0 right-0 bottom-5 mx-auto transition-all duration-400 ease-in-out"
+          style={{ maxWidth: "1400px", width: "100%", paddingLeft: "20px", paddingRight: "20px", opacity: barVisible ? 1 : 0, transform: barVisible ? "translateY(0)" : "translateY(20px)", pointerEvents: barVisible ? "auto" : "none" }}
         >
-        <div
-          className="flex items-center gap-0 rounded-2xl border border-white/10 px-5 py-3"
-          style={{ backgroundColor: "rgba(0, 0, 0, 0.9)" }}
-        >
+        <div className="flex items-center gap-0 rounded-2xl border border-white/10 px-5 py-3" style={{ backgroundColor: "rgba(0, 0, 0, 0.9)" }}>
           {/* Channel Info */}
           <div className="flex items-center gap-3 pr-5 border-r border-white/10 shrink-0">
             <div className="flex flex-col items-center gap-1">
-              <button
-                onClick={() => navigateChannel(-1)}
-                className="text-white/60 hover:text-white transition-colors"
-                title="Use teclado tecla para cima"
-              >
-                <ChevronUp size={16} />
-              </button>
+              <button onClick={() => navigateChannel(-1)} className="text-white/60 hover:text-white transition-colors" title="Use teclado tecla para cima"><ChevronUp size={16} /></button>
               {canal?.logo_url ? (
                 <img src={canal.logo_url} alt="" className="w-10 h-10 rounded-lg object-contain" />
               ) : (
-                <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center text-white text-xs font-bold">
-                  {canal?.numero_canal || "?"}
-                </div>
+                <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center text-white text-xs font-bold">{canal?.numero_canal || "?"}</div>
               )}
-              <button
-                onClick={() => navigateChannel(1)}
-                className="text-white/60 hover:text-white transition-colors"
-                title="Use teclado seta para baixo"
-              >
-                <ChevronDown size={16} />
-              </button>
+              <button onClick={() => navigateChannel(1)} className="text-white/60 hover:text-white transition-colors" title="Use teclado seta para baixo"><ChevronDown size={16} /></button>
             </div>
             <div className="text-center">
               <div className="text-white text-xs font-bold">{canal?.numero_canal || "--"}</div>
-              <button
-                onClick={handlePlayCanal}
+              <button onClick={handlePlayCanal}
                 className="mt-1 flex items-center gap-1 text-white text-[10px] font-bold uppercase px-3 py-1 rounded-full transition-all hover:!bg-black"
                 style={{ backgroundColor: "#e60000", border: "1px solid transparent" }}
                 onMouseEnter={e => { e.currentTarget.style.borderColor = "#ed0808"; e.currentTarget.style.backgroundColor = "#000"; }}
@@ -1771,149 +1042,73 @@ export default function PlayerPage() {
           {/* Program Info */}
           <div className="flex-1 px-5 min-w-0">
             <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#e60000" }}>No Ar:</span>
-            <div className="text-white text-lg font-bold truncate leading-tight mt-0.5">
-              {noArLabel}
-            </div>
+            <div className="text-white text-lg font-bold truncate leading-tight mt-0.5">{noArLabel}</div>
             {currentProg && (
               <div className="text-white/50 text-xs mt-0.5 truncate">
                 {currentProg.nome} • {currentProg.horario_inicio.slice(0, 5)} - {currentProg.horario_fim.slice(0, 5)}
-                {musicData?.titulo && (
-                  <span className="ml-2 text-white/70">
-                    ♫ {musicData.titulo} — {musicData.artista}
-                  </span>
-                )}
+                {musicData?.titulo && <span className="ml-2 text-white/70">♫ {musicData.titulo} — {musicData.artista}</span>}
               </div>
             )}
             {!currentProg && musicData?.titulo && (
-              <div className="text-white/50 text-xs mt-0.5 truncate">
-                ♫ {musicData.titulo} — {musicData.artista}
-              </div>
+              <div className="text-white/50 text-xs mt-0.5 truncate">♫ {musicData.titulo} — {musicData.artista}</div>
             )}
             <div className="w-full h-1 bg-white/10 rounded-full mt-2 overflow-hidden">
-              <div
-                className="h-full rounded-full transition-all duration-1000"
-                style={{ width: `${progress}%`, backgroundColor: "#e60000" }}
-              />
+              <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${progress}%`, backgroundColor: "#e60000" }} />
             </div>
             <span className="text-[10px] mt-1 inline-block" style={{ color: "#e60000" }}>
-              {currentProg
-                ? `${currentProg.horario_inicio.slice(0, 5)} - ${currentProg.horario_fim.slice(0, 5)}`
-                : "--:-- - --:--"}
+              {currentProg ? `${currentProg.horario_inicio.slice(0, 5)} - ${currentProg.horario_fim.slice(0, 5)}` : "--:-- - --:--"}
             </span>
           </div>
 
           {/* Controls */}
           <div className="flex items-center gap-3 px-5 border-l border-white/10 shrink-0">
-            {/* Like button */}
             {isAudio && musicData?.titulo && (
               <div className="relative flex items-center gap-1.5">
-                <button
-                  onClick={toggleLike}
-                  className={`p-1.5 rounded transition-all ${likeAnimating ? "scale-125" : "scale-100"}`}
-                  title={liked ? "Descurtir música" : "Curtiu essa música?"}
-                  style={{ transition: "transform 0.3s ease" }}
-                >
-                  <Heart
-                    size={18}
-                    fill={liked ? "#ed0808" : "none"}
-                    color={liked ? "#ed0808" : "rgba(255,255,255,0.6)"}
-                    className="transition-colors"
-                  />
+                <button onClick={toggleLike} className={`p-1.5 rounded transition-all ${likeAnimating ? "scale-125" : "scale-100"}`}
+                  title={liked ? "Descurtir música" : "Curtiu essa música?"} style={{ transition: "transform 0.3s ease" }}>
+                  <Heart size={18} fill={liked ? "#ed0808" : "none"} color={liked ? "#ed0808" : "rgba(255,255,255,0.6)"} className="transition-colors" />
                 </button>
-                {likeCount > 0 && (
-                  <span className="text-[11px] font-bold text-white/60">{likeCount}</span>
-                )}
-                {/* Floating hearts */}
+                {likeCount > 0 && <span className="text-[11px] font-bold text-white/60">{likeCount}</span>}
                 {floatingHearts.map((h) => (
-                  <Heart
-                    key={h.id}
-                    size={12 + Math.random() * 6}
-                    fill="#ed0808"
-                    color="#ed0808"
-                    className="absolute pointer-events-none"
-                    style={{
-                      left: `calc(50% + ${h.x}px)`,
-                      bottom: "100%",
-                      opacity: 0,
-                      animation: `floatHeart 1.2s ease-out ${h.delay}s forwards`,
-                    }}
-                  />
+                  <Heart key={h.id} size={12 + Math.random() * 6} fill="#ed0808" color="#ed0808" className="absolute pointer-events-none"
+                    style={{ left: `calc(50% + ${h.x}px)`, bottom: "100%", opacity: 0, animation: `floatHeart 1.2s ease-out ${h.delay}s forwards` }} />
                 ))}
               </div>
             )}
-            <button
-              onClick={toggleCC}
-              className={`px-3 py-1.5 rounded text-[11px] font-bold transition-all flex items-center gap-1 border ${
-                ccEnabled
-                  ? "bg-[#ed0808] text-white border-[#ed0808] shadow-[0_0_8px_rgba(237,8,8,0.5)]"
-                  : "bg-white/10 text-white/60 border-white/20 hover:bg-white/20 hover:text-white"
-              }`}
-              title={ccEnabled ? "Desativar Closed Captions" : "Ativar Closed Captions"}
-            >
-              {ccEnabled ? <CaptionsOff size={14} /> : <Captions size={14} />}
-              CC
+            <button onClick={toggleCC}
+              className={`px-3 py-1.5 rounded text-[11px] font-bold transition-all flex items-center gap-1 border ${ccEnabled ? "bg-[#ed0808] text-white border-[#ed0808] shadow-[0_0_8px_rgba(237,8,8,0.5)]" : "bg-white/10 text-white/60 border-white/20 hover:bg-white/20 hover:text-white"}`}
+              title={ccEnabled ? "Desativar Closed Captions" : "Ativar Closed Captions"}>
+              {ccEnabled ? <CaptionsOff size={14} /> : <Captions size={14} />} CC
             </button>
-            <button
-              onClick={toggleFullscreen}
-              className="text-white/70 hover:text-white transition-colors"
-              title={fullscreen ? "Sair tela cheia" : "Tela cheia"}
-            >
+            <button onClick={toggleMute} className="text-white/70 hover:text-white transition-colors" title={muted ? "Ativar som" : "Desativar som"}>
+              {muted ? <VolumeX size={18} /> : <Volume2 size={18} />}
+            </button>
+            <button onClick={toggleFullscreen} className="text-white/70 hover:text-white transition-colors" title={fullscreen ? "Sair tela cheia" : "Tela cheia"}>
               {fullscreen ? <Minimize size={18} /> : <Maximize size={18} />}
             </button>
-            {/* Shopping icon — always visible */}
-            <button
-              onClick={() => { setShopOpen(!shopOpen); setShopPopupDismissed(true); }}
+            <button onClick={() => { setShopOpen(!shopOpen); setShopPopupDismissed(true); }}
               className="hover:bg-white/20 rounded-full w-8 h-8 flex items-center justify-center transition-all relative"
               style={shopOpen ? { backgroundColor: "#d30707", color: "#fff" } : { backgroundColor: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)" }}
-              title="Shopping ao Vivo"
-            >
+              title="Shopping ao Vivo">
               <ShoppingCart size={14} />
-              {showShopIcon && (
-                <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full animate-pulse" style={{ backgroundColor: "#e60000" }} />
-              )}
+              {showShopIcon && <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full animate-pulse" style={{ backgroundColor: "#e60000" }} />}
             </button>
-            <button
-              onClick={() => setChatOpen(!chatOpen)}
+            <button onClick={() => setChatOpen(!chatOpen)}
               className="hover:bg-white/20 rounded-full w-8 h-8 flex items-center justify-center transition-all"
               style={chatOpen ? { backgroundColor: "#d30707", color: "#fff" } : { backgroundColor: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)" }}
-              title="Chat ao Vivo"
-            >
+              title="Chat ao Vivo">
               <MessageSquare size={14} />
             </button>
-            {/* Volume button + slider with extended hover area */}
-            <div
-              className="relative"
-              onMouseEnter={showVolume}
-              onMouseLeave={hideVolume}
-            >
-              <button
-                onClick={toggleMute}
-                className="text-white/70 hover:text-white transition-colors"
-                title={muted ? "Ativar som" : "Desativar som"}
-              >
+            <div className="relative" onMouseEnter={showVolume} onMouseLeave={hideVolume}>
+              <button onClick={toggleMute} className="text-white/70 hover:text-white transition-colors" title={muted ? "Ativar som" : "Desativar som"}>
                 {muted ? <VolumeX size={18} /> : <Volume2 size={18} />}
               </button>
-              {/* Volume slider popup */}
               {volumeHover && (
-                <div
-                  className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-black/95 rounded-lg px-3 py-4 flex flex-col items-center"
-                  style={{ height: "140px", width: "40px" }}
-                >
-                  <input
-                    type="range"
-                    min={0}
-                    max={100}
-                    value={volume}
-                    onChange={(e) => handleVolumeChange(Number(e.target.value))}
+                <div className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-black/95 rounded-lg px-3 py-4 flex flex-col items-center" style={{ height: "140px", width: "40px" }}>
+                  <input type="range" min={0} max={100} value={volume} onChange={(e) => handleVolumeChange(Number(e.target.value))}
                     className="h-full appearance-none cursor-pointer"
-                    style={{
-                      writingMode: "vertical-lr",
-                      direction: "rtl",
-                      width: "6px",
-                      accentColor: "#e60000",
-                    }}
-                    onClick={(e) => e.stopPropagation()}
-                  />
+                    style={{ writingMode: "vertical-lr", direction: "rtl", width: "6px", accentColor: "#e60000" }}
+                    onClick={(e) => e.stopPropagation()} />
                   <span className="text-white/60 text-[9px] mt-1">{volume}</span>
                 </div>
               )}
@@ -1923,17 +1118,12 @@ export default function PlayerPage() {
           {/* Next / Schedule */}
           <div className="pl-5 border-l border-white/10 shrink-0">
             <span className="text-[10px] font-bold uppercase" style={{ color: "#e60000" }}>A seguir:</span>
-            <div className="text-white text-sm truncate max-w-[180px]">
-              {nextProg?.nome || "Sem programação"}
-            </div>
+            <div className="text-white text-sm truncate max-w-[180px]">{nextProg?.nome || "Sem programação"}</div>
             <span className="text-[10px]" style={{ color: "#e60000" }}>
-              {nextProg
-                ? `${nextProg.horario_inicio} - ${nextProg.horario_fim}`
-                : "--:-- - --:--"}
+              {nextProg ? `${nextProg.horario_inicio} - ${nextProg.horario_fim}` : "--:-- - --:--"}
             </span>
             <div className="mt-1">
-              <button
-                onClick={() => setGradeOpen(true)}
+              <button onClick={() => setGradeOpen(true)}
                 className="flex items-center gap-1 text-white text-[10px] font-bold uppercase px-3 py-1 rounded-full transition-all"
                 style={{ backgroundColor: "#e60000", border: "1px solid transparent" }}
                 onMouseEnter={e => { e.currentTarget.style.borderColor = "#ed0808"; e.currentTarget.style.backgroundColor = "#000"; }}
@@ -1946,14 +1136,20 @@ export default function PlayerPage() {
         </div>
       </div>
       </div>
+
       {chatOpen && (
         <Suspense fallback={<div className="fixed z-[55] w-[290px] rounded-2xl border border-white/10 flex items-center justify-center" style={{ backgroundColor: "rgba(10,10,10,0.95)", bottom: "110px", right: "80px", height: "700px" }}><Loader2 className="animate-spin text-white" size={24} /></div>}>
-          <PlayerChat
-            channelId={canal?.id || "default"}
-            onClose={() => setChatOpen(false)}
-          />
+          <PlayerChat channelId={canal?.id || "default"} onClose={() => setChatOpen(false)} />
         </Suspense>
       )}
+
+      {/* Floating heart animation keyframes */}
+      <style>{`
+        @keyframes floatHeart {
+          0% { opacity: 1; transform: translateY(0) scale(1); }
+          100% { opacity: 0; transform: translateY(-60px) scale(0.5); }
+        }
+      `}</style>
     </div>
   );
 }
