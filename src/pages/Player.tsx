@@ -1297,8 +1297,12 @@ export default function PlayerPage() {
         onMouseLeave={hideBar}
       >
         <div
-          className="absolute left-5 right-5 bottom-5 transition-all duration-400 ease-in-out"
+          className="absolute left-0 right-0 bottom-5 mx-auto transition-all duration-400 ease-in-out"
           style={{
+            maxWidth: "1400px",
+            width: "100%",
+            paddingLeft: "20px",
+            paddingRight: "20px",
             opacity: barVisible ? 1 : 0,
             transform: barVisible ? "translateY(0)" : "translateY(20px)",
             pointerEvents: barVisible ? "auto" : "none",
