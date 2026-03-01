@@ -62,17 +62,22 @@ const DIAS_SEMANA = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"
 
 function getCurrentProgram(programas: Programa[]): Programa | null {
   const now = new Date();
-  const dayMap: Record<number, string> = {
+  const dayMapShort: Record<number, string> = {
     0: "dom", 1: "seg", 2: "ter", 3: "qua", 4: "qui", 5: "sex", 6: "sab",
   };
-  const today = dayMap[now.getDay()];
+  const dayMapFull: Record<number, string> = {
+    0: "Domingo", 1: "Segunda", 2: "Terça", 3: "Quarta", 4: "Quinta", 5: "Sexta", 6: "Sábado",
+  };
+  const todayShort = dayMapShort[now.getDay()];
+  const todayFull = dayMapFull[now.getDay()];
   const currentTime = now.getHours().toString().padStart(2, "0") + ":" + now.getMinutes().toString().padStart(2, "0");
 
   return (
     programas.find((p) => {
       if (!p.ativo) return false;
-      const inDay = !p.dias_semana || p.dias_semana.length === 0 || p.dias_semana.includes(today);
-      return inDay && currentTime >= p.horario_inicio && currentTime < p.horario_fim;
+      const dias = p.dias_semana || [];
+      const inDay = dias.length === 0 || dias.includes(todayShort) || dias.includes(todayFull);
+      return inDay && currentTime >= p.horario_inicio.slice(0, 5) && currentTime < p.horario_fim.slice(0, 5);
     }) || null
   );
 }
@@ -80,14 +85,21 @@ function getCurrentProgram(programas: Programa[]): Programa | null {
 function getNextProgram(programas: Programa[], current: Programa | null): Programa | null {
   if (!current) return programas.find((p) => p.ativo) || null;
   const now = new Date();
-  const dayMap: Record<number, string> = {
+  const dayMapShort: Record<number, string> = {
     0: "dom", 1: "seg", 2: "ter", 3: "qua", 4: "qui", 5: "sex", 6: "sab",
   };
-  const today = dayMap[now.getDay()];
+  const dayMapFull: Record<number, string> = {
+    0: "Domingo", 1: "Segunda", 2: "Terça", 3: "Quarta", 4: "Quinta", 5: "Sexta", 6: "Sábado",
+  };
+  const todayShort = dayMapShort[now.getDay()];
+  const todayFull = dayMapFull[now.getDay()];
 
   const sorted = programas
-    .filter((p) => p.ativo && p.horario_inicio >= current.horario_fim)
-    .filter((p) => !p.dias_semana || p.dias_semana.length === 0 || p.dias_semana.includes(today))
+    .filter((p) => p.ativo && p.horario_inicio.slice(0, 5) >= current.horario_fim.slice(0, 5))
+    .filter((p) => {
+      const dias = p.dias_semana || [];
+      return dias.length === 0 || dias.includes(todayShort) || dias.includes(todayFull);
+    })
     .sort((a, b) => a.horario_inicio.localeCompare(b.horario_inicio));
 
   return sorted[0] || null;
@@ -140,6 +152,7 @@ export default function PlayerPage() {
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [gradeOpen, setGradeOpen] = useState(false);
+  const [clock, setClock] = useState(0); // forces periodic re-render for currentProg
   const hideTimeout = useRef<ReturnType<typeof setTimeout>>();
 
   const canal = canais[currentIndex] || null;
@@ -415,11 +428,16 @@ export default function PlayerPage() {
     };
   }, []);
 
+  // Periodic clock tick to re-compute currentProg every 30s
+  useEffect(() => {
+    const interval = setInterval(() => setClock(c => c + 1), 30000);
+    return () => clearInterval(interval);
+  }, []);
+
   const currentProg = getCurrentProgram(programas);
   const nextProg = getNextProgram(programas, currentProg);
   const progress = getProgramProgress(currentProg);
 
-  // Remove unused bg variable
   
 
   // "No Ar" label — for audio: show current program from grade; for others: canal + program
@@ -483,7 +501,7 @@ export default function PlayerPage() {
   return (
     <div
       ref={containerRef}
-      className={`relative h-screen w-screen bg-black overflow-hidden select-none ${gradeOpen ? "cursor-default" : barVisible ? "cursor-default" : "cursor-none"}`}
+      className="relative h-screen w-screen bg-black overflow-hidden select-none cursor-default"
     >
       {/* Background image for audio/youtube channels */}
       {isAudio && canal?.cover_url && (
