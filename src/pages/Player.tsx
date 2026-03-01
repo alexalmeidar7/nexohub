@@ -200,6 +200,12 @@ export default function PlayerPage() {
   const ccCurrentSongRef = useRef<string>("");
   const ccMusicStartRef = useRef<number>(0);
 
+  const canal = canais[currentIndex] || null;
+  const isAudio = canal?.type === "audio_live" || canal?.type === "audio";
+  const isYoutube = canal?.type === "youtube";
+  const isVideo = canal?.type === "video";
+  const autoPlayedRef = useRef(false);
+
   // Parse LRC format: [mm:ss.xx] text
   const parseLRC = useCallback((lrc: string): { time: number; text: string }[] => {
     const lines: { time: number; text: string }[] = [];
@@ -247,7 +253,9 @@ export default function PlayerPage() {
       }
       return Date.now();
     };
-    ccMusicStartRef.current = calcMusicStartTimestamp();
+    const isAudioStream = canal?.type === "audio_live" || canal?.type === "audio";
+    const audioDelay = isAudioStream ? 21000 : 0;
+    ccMusicStartRef.current = calcMusicStartTimestamp() + audioDelay;
 
     const fetchLyrics = async () => {
       try {
@@ -289,7 +297,7 @@ export default function PlayerPage() {
     };
 
     fetchLyrics();
-  }, [ccEnabled, musicData?.artista, musicData?.titulo, parseLRC]);
+  }, [ccEnabled, musicData?.artista, musicData?.titulo, parseLRC, canal?.type]);
 
   // Timer to update current lyric line
   useEffect(() => {
@@ -340,42 +348,6 @@ export default function PlayerPage() {
       if (ccTimerRef.current) clearInterval(ccTimerRef.current);
     };
   }, []);
-
-  const canal = canais[currentIndex] || null;
-  const isAudio = canal?.type === "audio_live" || canal?.type === "audio";
-  const isYoutube = canal?.type === "youtube";
-  const isVideo = canal?.type === "video";
-
-  const autoPlayedRef = useRef(false);
-
-  // Load channels
-  useEffect(() => {
-    if (!user) return;
-    supabase
-      .from("streaming_channels")
-      .select("*")
-      .eq("user_id", user.id)
-      .eq("active", true)
-      .order("numero_canal", { ascending: true })
-      .then(({ data }) => {
-        if (data) {
-          setCanais(
-            data.map((d: any) => ({
-              id: d.id,
-              numero_canal: d.numero_canal || "",
-              name: d.name,
-              logo_url: d.logo_url || "",
-              url: d.url,
-              type: d.type,
-              active: d.active,
-              cover_url: d.cover_url || "",
-              background_url: d.background_url || "",
-            }))
-          );
-        }
-        setLoading(false);
-      });
-  }, [user]);
 
 
   // Load programs and apresentadores
