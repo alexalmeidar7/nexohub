@@ -534,7 +534,6 @@ export default function PlayerPage() {
         .order("priority", { ascending: true });
 
       if (data && data.length > 0) {
-        // Filter by day
         const matching = data.filter((p: any) => {
           if (!p.dias_semana || p.dias_semana.length === 0) return true;
           return p.dias_semana.includes(today);
@@ -543,7 +542,13 @@ export default function PlayerPage() {
           const selected = matching[Math.floor(Math.random() * matching.length)];
           setPrerollUrl(selected.video_url);
           setPrerollLinkUrl((selected as any).link_url || null);
+        } else {
+          // No matching preroll, mark done so streaming can start
+          setPrerollDone(true);
         }
+      } else {
+        // No preroll available, mark done so streaming can start
+        setPrerollDone(true);
       }
     };
     fetchPreroll();
@@ -755,8 +760,9 @@ export default function PlayerPage() {
     []
   );
 
-  // Auto-play first channel on load
+  // Auto-play first channel on load — only after preroll finishes
   useEffect(() => {
+    if (!prerollDone) return;
     if (autoPlayedRef.current || canais.length === 0 || playing) return;
     autoPlayedRef.current = true;
     const first = canais[0];
@@ -768,7 +774,7 @@ export default function PlayerPage() {
     } else {
       setTimeout(() => playStream(first.url, first.type), 200);
     }
-  }, [canais, playing, playStream]);
+  }, [canais, playing, playStream, prerollDone]);
 
   const handlePlayCanal = () => {
     if (!canal) return;
