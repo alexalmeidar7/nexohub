@@ -903,7 +903,7 @@ export default function PlayerPage() {
                 />
               </div>
               {/* Presenter name bottom-left */}
-              <div className="absolute z-20" style={{ left: "190px", bottom: "200px" }}>
+              <div className="absolute z-20" style={{ left: "350px", bottom: "200px" }}>
                 <span className="text-white/80 text-lg font-bold tracking-widest uppercase drop-shadow-lg">
                   {currentPresenter.nome}
                 </span>
