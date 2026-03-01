@@ -1,36 +1,39 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, lazy, Suspense } from "react";
 import { Calendar as CalendarUI } from "@/components/ui/calendar";
 import { Home, Sun, FileText, Mic2, PlaySquare, Music, CalendarDays, Settings, LogOut, Loader2, ShoppingBag, ChevronDown, ChevronUp, MessageSquareQuote, Tag, Image, ExternalLink, MonitorPlay, Heart, ShoppingCart, Film } from "lucide-react";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
-import ApresentadorForm from "./ApresentadorForm";
-import ProgramaForm from "./ProgramaForm";
-import PrevisaoTempo from "./PrevisaoTempo";
-import NoticiasPanel from "./NoticiasPanel";
-import WeatherWidget from "./WeatherWidget";
-import OnAirWidget from "./OnAirWidget";
-import MusicaNoAr from "./MusicaNoAr";
-import AgendaPage from "./AgendaPage";
-import MusicWidget from "./MusicWidget";
-import XmlLinkRow from "./XmlLinkRow";
-import ConfiguracoesPage, { getEmpresaConfig } from "./ConfiguracoesPage";
-import TestemunhaisPage from "./TestemunhaisPage";
-import PromocoesPage from "./PromocoesPage";
-import LogosPatrocinadoresPage from "./LogosPatrocinadoresPage";
 import logoMenu from "@/assets/logo-menu.png";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-
-import { getMusicData } from "./MusicaNoAr";
 import { useAuth } from "@/hooks/useAuth";
-import VideoPlayer from "./VideoPlayer";
-import TopLikedSongs from "./TopLikedSongs";
-import MusicasCurtidasPage from "./MusicasCurtidasPage";
-import ShoppingPage from "./ShoppingPage";
-import PreRollPage from "./PreRollPage";
+
+// Lazy-load all tab pages for faster initial render
+const ApresentadorForm = lazy(() => import("./ApresentadorForm"));
+const ProgramaForm = lazy(() => import("./ProgramaForm"));
+const PrevisaoTempo = lazy(() => import("./PrevisaoTempo"));
+const NoticiasPanel = lazy(() => import("./NoticiasPanel"));
+const WeatherWidget = lazy(() => import("./WeatherWidget"));
+const OnAirWidget = lazy(() => import("./OnAirWidget"));
+const MusicaNoAr = lazy(() => import("./MusicaNoAr"));
+const AgendaPage = lazy(() => import("./AgendaPage"));
+const MusicWidget = lazy(() => import("./MusicWidget"));
+const XmlLinkRow = lazy(() => import("./XmlLinkRow"));
+const ConfiguracoesPage = lazy(() => import("./ConfiguracoesPage"));
+// Import utility functions directly (not lazy)
+import { getEmpresaConfig } from "./ConfiguracoesPage";
+import { getMusicData } from "./MusicaNoAr";
+const TestemunhaisPage = lazy(() => import("./TestemunhaisPage"));
+const PromocoesPage = lazy(() => import("./PromocoesPage"));
+const LogosPatrocinadoresPage = lazy(() => import("./LogosPatrocinadoresPage"));
+const VideoPlayer = lazy(() => import("./VideoPlayer"));
+const TopLikedSongs = lazy(() => import("./TopLikedSongs"));
+const MusicasCurtidasPage = lazy(() => import("./MusicasCurtidasPage"));
+const ShoppingPage = lazy(() => import("./ShoppingPage"));
+const PreRollPage = lazy(() => import("./PreRollPage"));
 
 type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll";
 
@@ -134,7 +137,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
   useEffect(() => {
     getEmpresaConfig().then(setEmpresa);
-  }, [currentPage]);
+  }, []);
 
   useGlobalMusicXmlUpload();
   useGlobalMusicSync();
@@ -290,6 +293,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           className={`rounded-2xl p-8 min-h-[400px] ${currentPage === "dashboard" ? "" : "bg-surface-elevated border border-border"}`}
           style={currentPage === "dashboard" ? { backgroundColor: "#efefef" } : undefined}
         >
+          <Suspense fallback={<div className="flex justify-center py-16"><Loader2 className="animate-spin" size={28} /></div>}>
           {currentPage === "dashboard" && (
             <div className="animate-fade-in space-y-6">
               <p className="text-gray-500">
@@ -331,6 +335,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           {currentPage === "logos" && <LogosPatrocinadoresPage />}
           {currentPage === "shopping" && <ShoppingPage />}
           {currentPage === "preroll" && <PreRollPage />}
+          </Suspense>
         </section>
 
 
