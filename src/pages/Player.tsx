@@ -11,7 +11,6 @@ import {
   Volume2,
   VolumeX,
   MessageSquare,
-  Captions,
   Loader2,
 } from "lucide-react";
 
@@ -23,6 +22,8 @@ interface Canal {
   url: string;
   type: string;
   active: boolean;
+  cover_url: string;
+  background_url: string;
 }
 
 interface Programa {
@@ -34,6 +35,15 @@ interface Programa {
   ativo: boolean;
   selo: string | null;
 }
+
+interface MusicData {
+  titulo: string;
+  artista: string;
+  duracao: number;
+  capa: string;
+}
+
+const MUSIC_DATA_KEY = "masterview_music_data";
 
 function getCurrentProgram(programas: Programa[]): Programa | null {
   const now = new Date();
@@ -83,6 +93,7 @@ function getProgramProgress(prog: Programa | null): number {
 export default function PlayerPage() {
   const { user } = useAuth();
   const videoRef = useRef<HTMLVideoElement>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
   const hlsRef = useRef<Hls | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [canais, setCanais] = useState<Canal[]>([]);
@@ -92,10 +103,15 @@ export default function PlayerPage() {
   const [muted, setMuted] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [buffering, setBuffering] = useState(false);
   const [barVisible, setBarVisible] = useState(true);
+  const [musicData, setMusicData] = useState<MusicData | null>(null);
   const hideTimeout = useRef<ReturnType<typeof setTimeout>>();
 
   const canal = canais[currentIndex] || null;
+  const isAudio = canal?.type === "audio";
+  const isYoutube = canal?.type === "youtube";
+  const isVideo = canal?.type === "video";
 
   // Load channels
   useEffect(() => {
@@ -117,6 +133,8 @@ export default function PlayerPage() {
               url: d.url,
               type: d.type,
               active: d.active,
+              cover_url: d.cover_url || "",
+              background_url: d.background_url || "",
             }))
           );
         }
@@ -138,29 +156,106 @@ export default function PlayerPage() {
       });
   }, [user]);
 
+  // Poll music data from localStorage (set by MusicaNoAr module)
+  useEffect(() => {
+    const readMusic = () => {
+      try {
+        const raw = localStorage.getItem(MUSIC_DATA_KEY);
+        if (raw) setMusicData(JSON.parse(raw));
+      } catch {}
+    };
+    readMusic();
+    const interval = setInterval(readMusic, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Buffering detection for video
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    const onWaiting = () => setBuffering(true);
+    const onPlaying = () => setBuffering(false);
+    const onCanPlay = () => setBuffering(false);
+    video.addEventListener("waiting", onWaiting);
+    video.addEventListener("playing", onPlaying);
+    video.addEventListener("canplay", onCanPlay);
+    return () => {
+      video.removeEventListener("waiting", onWaiting);
+      video.removeEventListener("playing", onPlaying);
+      video.removeEventListener("canplay", onCanPlay);
+    };
+  }, []);
+
+  // Buffering detection for audio
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    const onWaiting = () => setBuffering(true);
+    const onPlaying = () => setBuffering(false);
+    const onCanPlay = () => setBuffering(false);
+    audio.addEventListener("waiting", onWaiting);
+    audio.addEventListener("playing", onPlaying);
+    audio.addEventListener("canplay", onCanPlay);
+    return () => {
+      audio.removeEventListener("waiting", onWaiting);
+      audio.removeEventListener("playing", onPlaying);
+      audio.removeEventListener("canplay", onCanPlay);
+    };
+  }, []);
+
   // Play stream
   const playStream = useCallback(
-    (url: string) => {
-      const video = videoRef.current;
-      if (!video) return;
-
-      // Cleanup previous
+    (url: string, type: string) => {
+      // Cleanup previous HLS
       if (hlsRef.current) {
         hlsRef.current.destroy();
         hlsRef.current = null;
       }
 
-      if (Hls.isSupported()) {
-        const hls = new Hls({ enableWorker: true, lowLatencyMode: true });
-        hlsRef.current = hls;
-        hls.loadSource(url);
-        hls.attachMedia(video);
-        hls.on(Hls.Events.MANIFEST_PARSED, () => {
-          video.play().catch(() => {});
-        });
-      } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
-        video.src = url;
-        video.addEventListener("loadedmetadata", () => video.play().catch(() => {}), { once: true });
+      setBuffering(true);
+
+      if (type === "audio") {
+        // Stop video
+        if (videoRef.current) {
+          videoRef.current.pause();
+          videoRef.current.src = "";
+        }
+        // Play audio
+        const audio = audioRef.current;
+        if (!audio) return;
+        if (Hls.isSupported() && url.includes(".m3u8")) {
+          const hls = new Hls({ enableWorker: true, lowLatencyMode: true });
+          hlsRef.current = hls;
+          hls.loadSource(url);
+          hls.attachMedia(audio);
+          hls.on(Hls.Events.MANIFEST_PARSED, () => {
+            audio.play().catch(() => {});
+          });
+        } else {
+          audio.src = url;
+          audio.play().catch(() => {});
+        }
+      } else {
+        // Stop audio
+        if (audioRef.current) {
+          audioRef.current.pause();
+          audioRef.current.src = "";
+        }
+        // Play video
+        const video = videoRef.current;
+        if (!video) return;
+        if (Hls.isSupported() && url.includes(".m3u8")) {
+          const hls = new Hls({ enableWorker: true, lowLatencyMode: true });
+          hlsRef.current = hls;
+          hls.loadSource(url);
+          hls.attachMedia(video);
+          hls.on(Hls.Events.MANIFEST_PARSED, () => {
+            video.play().catch(() => {});
+          });
+        } else {
+          video.src = url;
+          video.addEventListener("loadedmetadata", () => video.play().catch(() => {}), { once: true });
+        }
       }
       setPlaying(true);
     },
@@ -169,18 +264,17 @@ export default function PlayerPage() {
 
   const handlePlayCanal = () => {
     if (!canal) return;
-    playStream(canal.url);
+    playStream(canal.url, canal.type);
   };
 
   const navigateChannel = (dir: 1 | -1) => {
     if (canais.length === 0) return;
     const next = (currentIndex + dir + canais.length) % canais.length;
     setCurrentIndex(next);
-    // Auto-play new channel if already playing
     if (playing) {
       setTimeout(() => {
         const c = canais[next];
-        if (c) playStream(c.url);
+        if (c) playStream(c.url, c.type);
       }, 100);
     }
   };
@@ -205,6 +299,13 @@ export default function PlayerPage() {
     }
   };
 
+  const toggleMute = () => {
+    const newMuted = !muted;
+    setMuted(newMuted);
+    if (videoRef.current) videoRef.current.muted = newMuted;
+    if (audioRef.current) audioRef.current.muted = newMuted;
+  };
+
   // Bar hover logic
   const showBar = () => {
     setBarVisible(true);
@@ -213,12 +314,11 @@ export default function PlayerPage() {
   };
 
   useEffect(() => {
-    // Initial show
     hideTimeout.current = setTimeout(() => setBarVisible(false), 4000);
     return () => clearTimeout(hideTimeout.current);
   }, []);
 
-  // Cleanup HLS on unmount
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (hlsRef.current) hlsRef.current.destroy();
@@ -229,10 +329,24 @@ export default function PlayerPage() {
   const nextProg = getNextProgram(programas, currentProg);
   const progress = getProgramProgress(currentProg);
 
+  // Determine background image
+  const bgImage = isAudio
+    ? canal?.cover_url || canal?.background_url
+    : isYoutube
+    ? canal?.cover_url || canal?.background_url
+    : null;
+
+  // "No Ar" label
+  const noArLabel = canal
+    ? currentProg
+      ? `${canal.name} - ${currentProg.nome}`
+      : canal.name
+    : "Sem programação";
+
   if (loading) {
     return (
-      <div className="h-screen w-screen bg-[#1a1a1a] flex items-center justify-center">
-        <Loader2 className="animate-spin text-white" size={48} />
+      <div className="h-screen w-screen bg-black flex items-center justify-center">
+        <Loader2 className="animate-spin" size={48} style={{ color: "#d30707" }} />
       </div>
     );
   }
@@ -244,14 +358,61 @@ export default function PlayerPage() {
       onMouseMove={showBar}
       onMouseEnter={showBar}
     >
-      {/* Video background */}
+      {/* Background image for audio/youtube channels */}
+      {bgImage && (
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{
+            backgroundImage: `url(${bgImage})`,
+            filter: "blur(8px) brightness(0.4)",
+            transform: "scale(1.1)",
+          }}
+        />
+      )}
+
+      {/* Video element (hidden for audio channels) */}
       <video
         ref={videoRef}
-        className="absolute inset-0 w-full h-full object-contain bg-black"
+        className={`absolute inset-0 w-full h-full object-contain bg-black ${isAudio ? "hidden" : ""}`}
         muted={muted}
         playsInline
         autoPlay={false}
       />
+
+      {/* Hidden audio element */}
+      <audio ref={audioRef} muted={muted} />
+
+      {/* Buffering overlay */}
+      {buffering && playing && (
+        <div className="absolute inset-0 flex items-center justify-center z-20 bg-black/60">
+          <Loader2 className="animate-spin" size={56} style={{ color: "#d30707" }} />
+        </div>
+      )}
+
+      {/* Audio channel: show music cover */}
+      {isAudio && playing && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
+          {musicData?.capa ? (
+            <img
+              src={musicData.capa}
+              alt={musicData.titulo}
+              className="w-64 h-64 rounded-2xl object-cover shadow-2xl mb-6"
+            />
+          ) : canal?.logo_url ? (
+            <img
+              src={canal.logo_url}
+              alt={canal.name}
+              className="w-48 h-48 rounded-2xl object-contain mb-6"
+            />
+          ) : null}
+          {musicData && (
+            <div className="text-center">
+              <div className="text-white text-2xl font-bold">{musicData.titulo}</div>
+              <div className="text-white/60 text-lg mt-1">{musicData.artista}</div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Idle state (no video playing) */}
       {!playing && (
@@ -266,7 +427,8 @@ export default function PlayerPage() {
           {canal && (
             <button
               onClick={handlePlayCanal}
-              className="flex items-center gap-2 bg-[#e60000] hover:bg-[#cc0000] text-white px-8 py-3 rounded-full font-bold text-lg transition-all"
+              className="flex items-center gap-2 text-white px-8 py-3 rounded-full font-bold text-lg transition-all"
+              style={{ backgroundColor: "#e60000" }}
             >
               <Play size={20} fill="white" /> Assistir
             </button>
@@ -316,7 +478,8 @@ export default function PlayerPage() {
               <div className="text-white text-xs font-bold">{canal?.numero_canal || "--"}</div>
               <button
                 onClick={handlePlayCanal}
-                className="mt-1 flex items-center gap-1 bg-[#e60000] hover:bg-[#cc0000] text-white text-[10px] font-bold uppercase px-3 py-1 rounded-full transition-all"
+                className="mt-1 flex items-center gap-1 text-white text-[10px] font-bold uppercase px-3 py-1 rounded-full transition-all"
+                style={{ backgroundColor: "#e60000" }}
               >
                 <Play size={10} fill="white" /> Play Canal
               </button>
@@ -325,9 +488,9 @@ export default function PlayerPage() {
 
           {/* Program Info */}
           <div className="flex-1 px-5 min-w-0">
-            <span className="text-[#e60000] text-[10px] font-bold uppercase tracking-wider">No Ar:</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#e60000" }}>No Ar:</span>
             <div className="text-white text-lg font-bold truncate leading-tight mt-0.5">
-              {currentProg?.nome || "Sem programação"}
+              {noArLabel}
             </div>
             <div className="w-full h-1 bg-white/10 rounded-full mt-2 overflow-hidden">
               <div
@@ -335,16 +498,16 @@ export default function PlayerPage() {
                 style={{ width: `${progress}%`, backgroundColor: "#e60000" }}
               />
             </div>
-            <span className="text-[#e60000] text-[10px] mt-1 inline-block">
+            <span className="text-[10px] mt-1 inline-block" style={{ color: "#e60000" }}>
               {currentProg
-                ? `${currentProg.horario_inicio} às ${currentProg.horario_fim}`
-                : "--:-- às --:--"}
+                ? `${currentProg.horario_inicio} - ${currentProg.horario_fim}`
+                : "--:-- - --:--"}
             </span>
           </div>
 
           {/* Controls */}
           <div className="flex items-center gap-3 px-5 border-l border-white/10 shrink-0">
-            <button className="bg-white/10 hover:bg-white/20 text-[#e60000] px-2 py-1 rounded text-[10px] font-bold transition-all">
+            <button className="bg-white/10 hover:bg-white/20 px-2 py-1 rounded text-[10px] font-bold transition-all" style={{ color: "#e60000" }}>
               CC
             </button>
             <button
@@ -358,10 +521,7 @@ export default function PlayerPage() {
               <MessageSquare size={14} />
             </button>
             <button
-              onClick={() => {
-                setMuted(!muted);
-                if (videoRef.current) videoRef.current.muted = !muted;
-              }}
+              onClick={toggleMute}
               className="text-white/70 hover:text-white transition-colors"
               title={muted ? "Ativar som" : "Desativar som"}
             >
@@ -371,17 +531,17 @@ export default function PlayerPage() {
 
           {/* Next / Schedule */}
           <div className="pl-5 border-l border-white/10 shrink-0">
-            <span className="text-[#e60000] text-[10px] font-bold uppercase">A seguir:</span>
+            <span className="text-[10px] font-bold uppercase" style={{ color: "#e60000" }}>A seguir:</span>
             <div className="text-white text-sm truncate max-w-[180px]">
               {nextProg?.nome || "Sem programação"}
             </div>
-            <span className="text-[#e60000] text-[10px]">
+            <span className="text-[10px]" style={{ color: "#e60000" }}>
               {nextProg
-                ? `${nextProg.horario_inicio} às ${nextProg.horario_fim}`
-                : "--:-- às --:--"}
+                ? `${nextProg.horario_inicio} - ${nextProg.horario_fim}`
+                : "--:-- - --:--"}
             </span>
             <div className="mt-1">
-              <button className="flex items-center gap-1 bg-[#e60000] hover:bg-[#cc0000] text-white text-[10px] font-bold uppercase px-3 py-1 rounded-full transition-all">
+              <button className="flex items-center gap-1 text-white text-[10px] font-bold uppercase px-3 py-1 rounded-full transition-all" style={{ backgroundColor: "#e60000" }}>
                 + Grade
               </button>
             </div>
