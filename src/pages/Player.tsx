@@ -16,6 +16,8 @@ import {
   List,
   X,
   Plus,
+  Captions,
+  CaptionsOff,
 } from "lucide-react";
 
 interface YoutubeVideo {
@@ -157,6 +159,136 @@ export default function PlayerPage() {
   const [clock, setClock] = useState(0);
   const gradeScrollRef = useRef<HTMLDivElement>(null);
   const hideTimeout = useRef<ReturnType<typeof setTimeout>>();
+
+  // Closed Captions state
+  const [ccEnabled, setCcEnabled] = useState(false);
+  const [ccText, setCcText] = useState("");
+  const ccWsRef = useRef<WebSocket | null>(null);
+  const ccAudioCtxRef = useRef<AudioContext | null>(null);
+  const ccSourceRef = useRef<MediaElementAudioSourceNode | null>(null);
+  const ccProcessorRef = useRef<ScriptProcessorNode | null>(null);
+
+  const startCC = useCallback(async () => {
+    try {
+      const currentCanal = canais[currentIndex] || null;
+      const currentIsAudio = currentCanal?.type === "audio_live" || currentCanal?.type === "audio";
+      const { data, error } = await supabase.functions.invoke("elevenlabs-scribe-token");
+      if (error || !data?.token) {
+        console.error("Failed to get scribe token:", error);
+        return;
+      }
+
+      const token = data.token;
+
+      // Create AudioContext and capture from media element
+      const mediaEl = currentIsAudio ? audioRef.current : videoRef.current;
+      if (!mediaEl) return;
+
+      const audioCtx = new AudioContext({ sampleRate: 16000 });
+      ccAudioCtxRef.current = audioCtx;
+
+      // Only create source once per element
+      if (!ccSourceRef.current) {
+        const source = audioCtx.createMediaElementSource(mediaEl);
+        ccSourceRef.current = source;
+        source.connect(audioCtx.destination); // Keep playing through speakers
+      } else {
+        // Reconnect existing source
+        ccSourceRef.current.connect(audioCtx.destination);
+      }
+
+      // Open WebSocket to ElevenLabs realtime scribe
+      const ws = new WebSocket(
+        `wss://api.elevenlabs.io/v1/speech-to-text/realtime?model_id=scribe_v2_realtime&language_code=por&encoding=pcm_s16le&sample_rate=16000`
+      );
+      ccWsRef.current = ws;
+
+      ws.onopen = () => {
+        // Send auth
+        ws.send(JSON.stringify({ type: "auth", token }));
+
+        // Create ScriptProcessor to capture PCM chunks
+        const processor = audioCtx.createScriptProcessor(4096, 1, 1);
+        ccProcessorRef.current = processor;
+
+        ccSourceRef.current!.connect(processor);
+        processor.connect(audioCtx.destination);
+
+        processor.onaudioprocess = (e) => {
+          if (ws.readyState !== WebSocket.OPEN) return;
+          const inputData = e.inputBuffer.getChannelData(0);
+          // Convert float32 to int16
+          const pcm16 = new Int16Array(inputData.length);
+          for (let i = 0; i < inputData.length; i++) {
+            const s = Math.max(-1, Math.min(1, inputData[i]));
+            pcm16[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
+          }
+          // Convert to base64
+          const bytes = new Uint8Array(pcm16.buffer);
+          let binary = "";
+          for (let i = 0; i < bytes.length; i++) {
+            binary += String.fromCharCode(bytes[i]);
+          }
+          const base64 = btoa(binary);
+          ws.send(JSON.stringify({ type: "audio", data: base64 }));
+        };
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const msg = JSON.parse(event.data);
+          if (msg.type === "partial_transcript" && msg.text) {
+            setCcText(msg.text);
+          } else if (msg.type === "committed_transcript" && msg.text) {
+            setCcText(msg.text);
+            // Clear after 8 seconds
+            setTimeout(() => setCcText(prev => prev === msg.text ? "" : prev), 8000);
+          }
+        } catch {}
+      };
+
+      ws.onerror = (e) => console.error("CC WebSocket error:", e);
+      ws.onclose = () => console.log("CC WebSocket closed");
+
+      setCcEnabled(true);
+    } catch (e) {
+      console.error("Failed to start CC:", e);
+    }
+  }, [canais, currentIndex]);
+
+  const stopCC = useCallback(() => {
+    if (ccProcessorRef.current) {
+      ccProcessorRef.current.disconnect();
+      ccProcessorRef.current = null;
+    }
+    if (ccWsRef.current) {
+      ccWsRef.current.close();
+      ccWsRef.current = null;
+    }
+    if (ccAudioCtxRef.current) {
+      ccAudioCtxRef.current.close();
+      ccAudioCtxRef.current = null;
+      ccSourceRef.current = null; // Source is invalid after context close
+    }
+    setCcEnabled(false);
+    setCcText("");
+  }, []);
+
+  const toggleCC = useCallback(() => {
+    if (ccEnabled) {
+      stopCC();
+    } else {
+      startCC();
+    }
+  }, [ccEnabled, startCC, stopCC]);
+
+  // Cleanup CC on unmount
+  useEffect(() => {
+    return () => {
+      if (ccWsRef.current) ccWsRef.current.close();
+      if (ccAudioCtxRef.current) ccAudioCtxRef.current.close();
+    };
+  }, []);
 
   const canal = canais[currentIndex] || null;
   const isAudio = canal?.type === "audio_live" || canal?.type === "audio";
@@ -880,6 +1012,15 @@ export default function PlayerPage() {
         </div>
       )}
 
+      {/* CC subtitle display */}
+      {ccEnabled && ccText && (
+        <div className="absolute left-0 right-0 z-25 flex justify-center pointer-events-none" style={{ bottom: "160px" }}>
+          <div className="px-6 py-3 rounded-lg max-w-3xl text-center" style={{ backgroundColor: "rgba(0,0,0,0.85)" }}>
+            <span className="text-white text-lg font-medium leading-relaxed">{ccText}</span>
+          </div>
+        </div>
+      )}
+
       {/* Control bar hover zone */}
       <div
         className="absolute left-0 right-0 bottom-0 z-30"
@@ -974,7 +1115,13 @@ export default function PlayerPage() {
 
           {/* Controls */}
           <div className="flex items-center gap-3 px-5 border-l border-white/10 shrink-0">
-            <button className="bg-white/10 hover:bg-white/20 px-2 py-1 rounded text-[10px] font-bold transition-all" style={{ color: "#e60000" }}>
+            <button
+              onClick={toggleCC}
+              className={`px-2 py-1 rounded text-[10px] font-bold transition-all flex items-center gap-1 ${ccEnabled ? "bg-white/30" : "bg-white/10 hover:bg-white/20"}`}
+              style={{ color: ccEnabled ? "#fff" : "#e60000" }}
+              title="Closed Captions"
+            >
+              {ccEnabled ? <CaptionsOff size={14} /> : <Captions size={14} />}
               CC
             </button>
             <button
