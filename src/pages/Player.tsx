@@ -154,7 +154,8 @@ export default function PlayerPage() {
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [gradeOpen, setGradeOpen] = useState(false);
-  const [clock, setClock] = useState(0); // forces periodic re-render for currentProg
+  const [clock, setClock] = useState(0);
+  const gradeScrollRef = useRef<HTMLDivElement>(null);
   const hideTimeout = useRef<ReturnType<typeof setTimeout>>();
 
   const canal = canais[currentIndex] || null;
@@ -656,6 +657,7 @@ export default function PlayerPage() {
             </button>
           </div>
           <div
+            ref={gradeScrollRef}
             className="overflow-auto max-h-[75vh] px-4 pb-4 grade-scroll"
             style={{
               scrollbarWidth: "thin",
@@ -709,8 +711,22 @@ export default function PlayerPage() {
                     }
                   });
 
-                  return gradeSlots.map(slot => (
-                    <tr key={slot}>
+                  return gradeSlots.map(slot => {
+                    // Check if this row contains the on-air program for today
+                    const onAirKey = `${diaAtual}-${slot}`;
+                    const isOnAirRow = spanMap[onAirKey] && (() => {
+                      const p = spanMap[onAirKey].prog;
+                      return p && currentTimeStr >= p.horario_inicio && currentTimeStr < p.horario_fim;
+                    })();
+
+                    return (
+                    <tr key={slot} ref={isOnAirRow ? (el) => {
+                      if (el && gradeScrollRef.current) {
+                        setTimeout(() => {
+                          el.scrollIntoView({ behavior: "smooth", block: "center" });
+                        }, 100);
+                      }
+                    } : undefined}>
                       <td className="px-2 py-2 font-mono rounded-lg" style={{ color: "#666" }}>{slot.slice(0, 5)}</td>
                       {DIAS_SEMANA.map(dia => {
                         const key = `${dia}-${slot}`;
@@ -742,11 +758,16 @@ export default function PlayerPage() {
                             <div className="text-[8px] opacity-60 mt-0.5">
                               {prog.horario_inicio.slice(0, 5)} - {prog.horario_fim.slice(0, 5)}
                             </div>
+                            {isOnAir && (
+                              <div className="mt-1 inline-block rounded px-1.5 py-0.5 text-[8px] font-bold" style={{ backgroundColor: "#fff", color: "#333" }}>
+                                no ar
+                              </div>
+                            )}
                           </td>
                         );
                       })}
                     </tr>
-                  ));
+                  )});
                 })()}
               </tbody>
             </table>
