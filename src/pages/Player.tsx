@@ -1026,18 +1026,6 @@ export default function PlayerPage() {
                   style={{ animationDuration: "1s" }}
                 />
               </div>
-              {/* Presenter name + instagram bottom-left */}
-              <div className="absolute z-20 flex flex-col gap-1" style={{ left: "350px", bottom: "200px" }}>
-                <span className="text-white/80 text-lg font-bold tracking-widest uppercase drop-shadow-lg flex items-center gap-2">
-                  <Mic size={18} className="text-red-500" />
-                  {currentPresenter.nome}
-                </span>
-                {currentPresenter.instagram && (
-                  <span className="text-white/50 text-sm drop-shadow-lg flex items-center gap-1.5" style={{ marginLeft: "26px" }}>
-                    @{currentPresenter.instagram.replace(/^@/, "")}
-                  </span>
-                )}
-              </div>
             </div>
           )}
 
