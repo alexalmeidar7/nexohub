@@ -162,6 +162,7 @@ export default function PlayerPage() {
 
   // Closed Captions state
   const [ccEnabled, setCcEnabled] = useState(false);
+  const [ccListening, setCcListening] = useState(false); // waiting for first transcript
   const [ccText, setCcText] = useState("");
   const ccWsRef = useRef<WebSocket | null>(null);
   const ccAudioCtxRef = useRef<AudioContext | null>(null);
@@ -244,8 +245,10 @@ export default function PlayerPage() {
         try {
           const msg = JSON.parse(event.data);
           if (msg.type === "partial_transcript" && msg.text) {
+            setCcListening(false);
             setCcText(msg.text);
           } else if (msg.type === "committed_transcript" && msg.text) {
+            setCcListening(false);
             setCcText(msg.text);
             setTimeout(() => setCcText(prev => prev === msg.text ? "" : prev), 8000);
           }
@@ -256,6 +259,7 @@ export default function PlayerPage() {
       ws.onclose = () => console.log("CC WebSocket closed");
 
       setCcEnabled(true);
+      setCcListening(true);
     } catch (e) {
       console.error("Failed to start CC:", e);
     }
@@ -275,6 +279,7 @@ export default function PlayerPage() {
       ccAudioCtxRef.current = null;
     }
     setCcEnabled(false);
+    setCcListening(false);
     setCcText("");
   }, []);
 
@@ -1042,10 +1047,17 @@ export default function PlayerPage() {
       {ccEnabled && (
         <div
           className="absolute left-0 right-0 z-25 flex justify-center pointer-events-none transition-all duration-500 ease-in-out"
-          style={{ bottom: "160px", opacity: ccText ? 1 : 0, transform: ccText ? "translateY(0)" : "translateY(10px)" }}
+          style={{ bottom: "160px", opacity: (ccText || ccListening) ? 1 : 0, transform: (ccText || ccListening) ? "translateY(0)" : "translateY(10px)" }}
         >
           <div className="px-6 py-3 rounded-lg max-w-3xl text-center" style={{ backgroundColor: "rgba(0,0,0,0.85)" }}>
-            <span className="text-white text-lg font-medium leading-relaxed">{ccText}</span>
+            {ccListening && !ccText ? (
+              <span className="text-white/70 text-lg font-medium leading-relaxed italic flex items-center gap-2 justify-center">
+                <Loader2 size={16} className="animate-spin" />
+                Ouvindo áudio...
+              </span>
+            ) : (
+              <span className="text-white text-lg font-medium leading-relaxed">{ccText}</span>
+            )}
           </div>
         </div>
       )}
@@ -1146,9 +1158,12 @@ export default function PlayerPage() {
           <div className="flex items-center gap-3 px-5 border-l border-white/10 shrink-0">
             <button
               onClick={toggleCC}
-              className={`px-2 py-1 rounded text-[10px] font-bold transition-all flex items-center gap-1 ${ccEnabled ? "bg-white/30" : "bg-white/10 hover:bg-white/20"}`}
-              style={{ color: ccEnabled ? "#fff" : "#e60000" }}
-              title="Closed Captions"
+              className={`px-3 py-1.5 rounded text-[11px] font-bold transition-all flex items-center gap-1 border ${
+                ccEnabled
+                  ? "bg-[#ed0808] text-white border-[#ed0808] shadow-[0_0_8px_rgba(237,8,8,0.5)]"
+                  : "bg-white/10 text-white/60 border-white/20 hover:bg-white/20 hover:text-white"
+              }`}
+              title={ccEnabled ? "Desativar Closed Captions" : "Ativar Closed Captions"}
             >
               {ccEnabled ? <CaptionsOff size={14} /> : <Captions size={14} />}
               CC
