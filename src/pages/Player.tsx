@@ -842,7 +842,7 @@ export default function PlayerPage() {
     playStream(canal.url, canal.type);
   };
 
-  const navigateChannel = (dir: 1 | -1) => {
+  const navigateChannel = useCallback((dir: 1 | -1) => {
     if (canais.length === 0) return;
     const next = (currentIndex + dir + canais.length) % canais.length;
     setCurrentIndex(next);
@@ -852,7 +852,22 @@ export default function PlayerPage() {
         if (c) playStream(c.url, c.type);
       }, 100);
     }
-  };
+  }, [canais, currentIndex, playing]);
+
+  // Keyboard arrow navigation between channels
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        navigateChannel(-1);
+      } else if (e.key === "ArrowDown") {
+        e.preventDefault();
+        navigateChannel(1);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [navigateChannel]);
 
   // Fullscreen
   useEffect(() => {
@@ -1563,7 +1578,7 @@ export default function PlayerPage() {
               <button
                 onClick={() => navigateChannel(-1)}
                 className="text-white/60 hover:text-white transition-colors"
-                title="Use seu teclado para cima e para baixo para navegar entre os canais"
+                title="Use teclado tecla para cima"
               >
                 <ChevronUp size={16} />
               </button>
@@ -1577,7 +1592,7 @@ export default function PlayerPage() {
               <button
                 onClick={() => navigateChannel(1)}
                 className="text-white/60 hover:text-white transition-colors"
-                title="Use seu teclado para cima e para baixo para navegar entre os canais"
+                title="Use teclado seta para baixo"
               >
                 <ChevronDown size={16} />
               </button>
