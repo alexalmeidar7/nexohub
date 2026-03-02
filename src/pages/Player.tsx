@@ -610,16 +610,29 @@ export default function PlayerPage() {
         if (videoRef.current) { videoRef.current.pause(); videoRef.current.src = ""; }
         const audio = audioRef.current;
         if (!audio) return;
+        audio.volume = volume / 100;
+        audio.muted = muted;
         if (Hls && Hls.isSupported()) {
           const hls = new Hls({ enableWorker: true, lowLatencyMode: true });
           hlsRef.current = hls;
           hls.loadSource(freshUrl);
           hls.attachMedia(audio);
-          hls.on(Hls.Events.MANIFEST_PARSED, () => { audio.play().then(() => setBuffering(false)).catch(() => {}); });
+          hls.on(Hls.Events.MANIFEST_PARSED, () => { audio.play().then(() => setBuffering(false)).catch((e) => console.warn("Audio play blocked:", e)); });
           hls.on(Hls.Events.FRAG_BUFFERED, () => setBuffering(false));
+          hls.on(Hls.Events.ERROR, (_event, data) => {
+            if (data.fatal) {
+              console.warn("HLS fatal error on audio, recovering...", data.type);
+              if (data.type === Hls.ErrorTypes.NETWORK_ERROR) hls.startLoad();
+              else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) hls.recoverMediaError();
+              else { hls.destroy(); hlsRef.current = null; }
+            }
+          });
+        } else if (audio.canPlayType("application/vnd.apple.mpegurl")) {
+          audio.src = freshUrl;
+          audio.play().catch((e) => console.warn("Audio play blocked:", e));
         } else {
           audio.src = freshUrl;
-          audio.play().catch(() => {});
+          audio.play().catch((e) => console.warn("Audio play blocked:", e));
         }
       } else {
         if (audioRef.current) { audioRef.current.pause(); audioRef.current.src = ""; }
@@ -632,6 +645,13 @@ export default function PlayerPage() {
           hls.attachMedia(video);
           hls.on(Hls.Events.MANIFEST_PARSED, () => { video.play().then(() => setBuffering(false)).catch(() => {}); });
           hls.on(Hls.Events.FRAG_BUFFERED, () => setBuffering(false));
+          hls.on(Hls.Events.ERROR, (_event, data) => {
+            if (data.fatal) {
+              if (data.type === Hls.ErrorTypes.NETWORK_ERROR) hls.startLoad();
+              else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) hls.recoverMediaError();
+              else { hls.destroy(); hlsRef.current = null; }
+            }
+          });
         } else {
           video.src = freshUrl;
           video.addEventListener("loadedmetadata", () => video.play().catch(() => {}), { once: true });
@@ -1001,7 +1021,7 @@ export default function PlayerPage() {
 
       {/* CC subtitle display */}
       <div
-        className="absolute left-0 right-0 z-25 flex justify-center pointer-events-none transition-all duration-500 ease-in-out"
+        className="absolute left-0 right-0 z-[30] flex justify-center pointer-events-none transition-all duration-500 ease-in-out"
         style={{ bottom: "160px", opacity: ccEnabled && ccText ? 1 : 0, transform: ccEnabled && ccText ? "translateY(0)" : "translateY(10px)" }}
       >
         <div className="px-6 py-3 rounded-lg max-w-3xl text-center" style={{ backgroundColor: "rgba(0,0,0,0.85)" }}>
