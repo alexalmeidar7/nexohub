@@ -239,7 +239,7 @@ export default function PlayerPage() {
   // Shopping & Pre-Roll state
   const [shopProducts, setShopProducts] = useState<ShopProduct[]>([]);
   const [shopOpen, setShopOpen] = useState(false);
-  const [shopPopupDismissed, setShopPopupDismissed] = useState(false);
+  const [shopPopupDismissed, setShopPopupDismissed] = useState(true);
   const [shopProductIndex, setShopProductIndex] = useState(0);
   const shopPopupTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [prerollUrl, setPrerollUrl] = useState<string | null>(null);
@@ -293,7 +293,7 @@ export default function PlayerPage() {
       return Date.now();
     };
     const isAudioStream = canal?.type === "audio_live" || canal?.type === "audio";
-    const ccDelay = isAudioStream ? 24000 : -23000;
+    const ccDelay = isAudioStream ? 18000 : -18000;
     ccMusicStartRef.current = calcMusicStartTimestamp() + ccDelay;
 
     const fetchLyrics = async () => {
@@ -826,7 +826,7 @@ export default function PlayerPage() {
 
       {/* Shopping Popup — auto-shows every 5 min */}
       {showShopIcon && !shopPopupDismissed && currentShopProducts.length > 0 && (
-        <div className="absolute top-6 right-6 z-50 animate-fade-in">
+        <div className="absolute right-6 z-50 animate-fade-in" style={{ bottom: "150px" }}>
           <div className="bg-black/90 backdrop-blur-md border border-white/15 rounded-2xl p-5 w-80 shadow-2xl">
             <PlayerShopProduct
               products={currentShopProducts}
@@ -1079,9 +1079,6 @@ export default function PlayerPage() {
               className={`px-3 py-1.5 rounded text-[11px] font-bold transition-all flex items-center gap-1 border ${ccEnabled ? "bg-[#ed0808] text-white border-[#ed0808] shadow-[0_0_8px_rgba(237,8,8,0.5)]" : "bg-white/10 text-white/60 border-white/20 hover:bg-white/20 hover:text-white"}`}
               title={ccEnabled ? "Desativar Closed Captions" : "Ativar Closed Captions"}>
               {ccEnabled ? <CaptionsOff size={14} /> : <Captions size={14} />} CC
-            </button>
-            <button onClick={toggleMute} className="text-white/70 hover:text-white transition-colors" title={muted ? "Ativar som" : "Desativar som"}>
-              {muted ? <VolumeX size={18} /> : <Volume2 size={18} />}
             </button>
             <button onClick={toggleFullscreen} className="text-white/70 hover:text-white transition-colors" title={fullscreen ? "Sair tela cheia" : "Tela cheia"}>
               {fullscreen ? <Minimize size={18} /> : <Maximize size={18} />}
