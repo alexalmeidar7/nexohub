@@ -214,7 +214,7 @@ export default function PlayerPage() {
   });
   const [youtubeVideos, setYoutubeVideos] = useState<YoutubeVideo[]>([]);
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [gradeOpen, setGradeOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
   const [clock, setClock] = useState(0);
@@ -378,21 +378,15 @@ export default function PlayerPage() {
 
   const toggleLike = useCallback(async () => {
     if (!user || !musicData?.titulo || !musicData?.artista) return;
-    if (liked) {
-      await supabase.from("music_likes").delete().eq("user_id", user.id).eq("titulo", musicData.titulo).eq("artista", musicData.artista);
-      setLiked(false);
-      setLikeCount((c) => Math.max(0, c - 1));
-    } else {
-      await supabase.from("music_likes").insert({ user_id: user.id, titulo: musicData.titulo, artista: musicData.artista, capa: musicData.capa || "" });
-      setLiked(true);
-      setLikeCount((c) => c + 1);
-      setLikeAnimating(true);
-      setTimeout(() => setLikeAnimating(false), 600);
-      const hearts = Array.from({ length: 6 }, (_, i) => ({ id: Date.now() + i, x: Math.random() * 40 - 20, delay: Math.random() * 0.3 }));
-      setFloatingHearts(hearts);
-      setTimeout(() => setFloatingHearts([]), 1500);
-    }
-  }, [user, musicData, liked]);
+    await supabase.from("music_likes").insert({ user_id: user.id, titulo: musicData.titulo, artista: musicData.artista, capa: musicData.capa || "" });
+    setLiked(true);
+    setLikeCount((c) => c + 1);
+    setLikeAnimating(true);
+    setTimeout(() => setLikeAnimating(false), 600);
+    const hearts = Array.from({ length: 6 }, (_, i) => ({ id: Date.now() + i, x: Math.random() * 40 - 20, delay: Math.random() * 0.3 }));
+    setFloatingHearts(hearts);
+    setTimeout(() => setFloatingHearts([]), 1500);
+  }, [user, musicData]);
 
   // Fetch all initial data — 3 stages for fastest possible first paint
   useEffect(() => {
@@ -754,6 +748,7 @@ export default function PlayerPage() {
     setSelectedVideoId(videoId);
     setPlaying(true);
     setBuffering(false);
+    setSidebarOpen(false);
   }, []);
 
   const showVolume = () => { clearTimeout(volumeHideTimeout.current); setVolumeHover(true); };
@@ -787,7 +782,6 @@ export default function PlayerPage() {
   useEffect(() => {
     if (currentProg?.id !== prevProgIdRef.current) {
       prevProgIdRef.current = currentProg?.id || null;
-      setShopPopupDismissed(false);
       setShopProductIndex(0);
     }
   }, [currentProg?.id]);
@@ -813,14 +807,7 @@ export default function PlayerPage() {
 
   const showShopIcon = currentShopProducts.length > 0;
 
-  // Auto-show shopping popup every 5 minutes
-  useEffect(() => {
-    if (shopPopupTimerRef.current) clearInterval(shopPopupTimerRef.current);
-    if (currentShopProducts.length > 0) {
-      shopPopupTimerRef.current = setInterval(() => setShopPopupDismissed(false), 5 * 60 * 1000);
-    }
-    return () => { if (shopPopupTimerRef.current) clearInterval(shopPopupTimerRef.current); };
-  }, [currentShopProducts.length]);
+  // Shopping popup is manual-only via icon click
 
   if (loading) {
     return (
@@ -844,32 +831,19 @@ export default function PlayerPage() {
         />
       )}
 
-      {/* Shopping Popup — auto-shows every 5 min */}
-      {showShopIcon && !shopPopupDismissed && currentShopProducts.length > 0 && (
-        <div className="absolute right-6 z-50 animate-fade-in" style={{ bottom: "150px" }}>
-          <div className="bg-black/90 backdrop-blur-md border border-white/15 rounded-2xl p-5 w-80 shadow-2xl">
-            <PlayerShopProduct
-              products={currentShopProducts}
-              productIndex={shopProductIndex}
-              setProductIndex={setShopProductIndex}
-              onClose={() => setShopPopupDismissed(true)}
-              variant="popup"
-            />
-          </div>
-        </div>
-      )}
-
-      {/* Shopping Panel */}
+      {/* Shopping Panel — above control bar, right-aligned */}
       {shopOpen && (
-        <div className="absolute right-5 z-40" style={{ bottom: "150px", maxWidth: "340px", width: "100%" }}>
-          <div className="bg-black/90 backdrop-blur-md border border-white/15 rounded-2xl p-5 shadow-2xl">
-            <PlayerShopProduct
-              products={currentShopProducts}
-              productIndex={shopProductIndex}
-              setProductIndex={setShopProductIndex}
-              onClose={() => setShopOpen(false)}
-              variant="panel"
-            />
+        <div className="absolute left-0 right-0 z-40 mx-auto" style={{ bottom: "130px", maxWidth: "1400px", paddingLeft: "20px", paddingRight: "20px" }}>
+          <div className="ml-auto" style={{ maxWidth: "340px" }}>
+            <div className="bg-black/90 backdrop-blur-md border border-white/15 rounded-2xl p-5 shadow-2xl">
+              <PlayerShopProduct
+                products={currentShopProducts}
+                productIndex={shopProductIndex}
+                setProductIndex={setShopProductIndex}
+                onClose={() => setShopOpen(false)}
+                variant="panel"
+              />
+            </div>
           </div>
         </div>
       )}
@@ -879,61 +853,64 @@ export default function PlayerPage() {
         <div className="absolute inset-0 bg-cover bg-center transition-all duration-700" style={{ backgroundImage: `url(${canal.cover_url})` }} />
       )}
 
-      {/* YouTube: Fullscreen background video iframe */}
+      {/* YouTube: Fullscreen background video iframe — proper aspect ratio */}
       {isYoutube && selectedVideoId && (
         <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
           <iframe
             className="absolute"
-            style={{ width: "150%", height: "150%", top: "50%", left: "50%", transform: "translate(-50%, -50%)", border: "none" }}
+            style={{ width: "115%", height: "115%", top: "50%", left: "50%", transform: "translate(-50%, -50%)", border: "none" }}
             src={`https://www.youtube.com/embed/${selectedVideoId}?autoplay=1&mute=1&controls=0&loop=1&playlist=${selectedVideoId}&showinfo=0&rel=0&modestbranding=1`}
             allow="autoplay; encrypted-media"
           />
         </div>
       )}
 
-      {/* YouTube: Thumbnail placeholder */}
+      {/* YouTube: Thumbnail placeholder when no video selected */}
       {isYoutube && !selectedVideoId && (canal?.cover_url || canal?.background_url) && (
         <div className="absolute inset-0 bg-cover bg-center transition-all duration-700"
-          style={{ backgroundImage: `url(${canal.cover_url || canal.background_url})`, filter: "blur(8px) brightness(0.4)", transform: "scale(1.1)" }}
+          style={{ backgroundImage: `url(${canal.cover_url || canal.background_url})` }}
         />
       )}
 
       {/* YouTube: Dark gradient overlay */}
       {isYoutube && (
-        <div className="absolute inset-0 z-[1]" style={{ background: "linear-gradient(90deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.15) 100%)" }} />
+        <div className="absolute inset-0 z-[1]" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 40%, rgba(0,0,0,0.2) 100%)" }} />
       )}
 
-      {/* YouTube: Playlist sidebar */}
-      {isYoutube && (
-        <div className="absolute z-[15] flex flex-col rounded-2xl overflow-hidden"
-          style={{ left: "150px", top: "50%", transform: "translateY(-50%)", width: "450px", height: "730px", backgroundColor: "rgba(20, 20, 20, 0.9)", border: "1px solid rgba(255, 0, 0, 0.3)", boxShadow: "0 20px 50px rgba(0,0,0,0.5)" }}
-        >
-          <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
-            <span className="text-white text-sm font-bold flex items-center gap-2"><List size={16} /> Playlist</span>
-            <span className="text-white/40 text-xs">{youtubeVideos.length} vídeos</span>
-          </div>
-          <div className="flex-1 overflow-y-auto" ref={gradeScrollRef}>
-            {youtubeVideos.map((v, i) => (
-              <button key={v.videoId} onClick={() => handleSelectVideo(v.videoId)}
-                className={`flex items-start gap-3 px-4 py-3 w-full text-left transition-colors ${selectedVideoId === v.videoId ? "bg-[#e60000]/20 border-l-2 border-[#e60000]" : "hover:bg-white/10 border-l-2 border-transparent"}`}
-              >
-                <div className="relative shrink-0">
-                  <img src={v.thumbnail} alt="" className="w-32 h-[72px] rounded-lg object-cover" />
-                  {selectedVideoId === v.videoId && (
-                    <div className="absolute inset-0 bg-black/40 rounded-lg flex items-center justify-center">
-                      <Play size={20} className="text-white fill-white" />
-                    </div>
-                  )}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="text-white text-xs font-semibold line-clamp-2 leading-relaxed">{v.title}</div>
-                  <div className="text-white/40 text-[10px] mt-1.5">#{i + 1}</div>
-                </div>
-              </button>
-            ))}
-            {youtubeVideos.length === 0 && (
-              <div className="text-white/40 text-xs text-center py-12">Carregando playlist...</div>
-            )}
+      {/* YouTube: Horizontal playlist above controls */}
+      {isYoutube && sidebarOpen && (
+        <div className="absolute left-0 right-0 z-[25] mx-auto" style={{ bottom: "130px", maxWidth: "1400px", paddingLeft: "20px", paddingRight: "20px" }}>
+          <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "rgba(20, 20, 20, 0.95)", border: "1px solid rgba(255, 0, 0, 0.3)", boxShadow: "0 20px 50px rgba(0,0,0,0.5)" }}>
+            <div className="flex items-center justify-between px-5 py-3 border-b border-white/10">
+              <span className="text-white text-sm font-bold flex items-center gap-2"><List size={16} /> Playlist</span>
+              <div className="flex items-center gap-3">
+                <span className="text-white/40 text-xs">{youtubeVideos.length} vídeos</span>
+                <button onClick={() => setSidebarOpen(false)} className="text-white/40 hover:text-white transition-colors" title="Minimizar"><X size={16} /></button>
+              </div>
+            </div>
+            <div className="flex gap-3 overflow-x-auto px-4 py-3" style={{ scrollbarWidth: "thin" }}>
+              {youtubeVideos.map((v, i) => (
+                <button key={v.videoId} onClick={() => handleSelectVideo(v.videoId)}
+                  className={`flex flex-col shrink-0 rounded-lg overflow-hidden transition-all ${selectedVideoId === v.videoId ? "ring-2 ring-[#e60000]" : "hover:ring-1 hover:ring-white/30"}`}
+                  style={{ width: "180px" }}
+                >
+                  <div className="relative">
+                    <img src={v.thumbnail} alt="" className="w-full h-[100px] object-cover" />
+                    {selectedVideoId === v.videoId && (
+                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                        <Play size={20} className="text-white fill-white" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-2 bg-white/5">
+                    <div className="text-white text-[11px] font-semibold line-clamp-2 leading-tight">{v.title}</div>
+                  </div>
+                </button>
+              ))}
+              {youtubeVideos.length === 0 && (
+                <div className="text-white/40 text-xs text-center py-6 w-full">Carregando playlist...</div>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -1100,10 +1077,18 @@ export default function PlayerPage() {
               title={ccEnabled ? "Desativar Closed Captions" : "Ativar Closed Captions"}>
               {ccEnabled ? <CaptionsOff size={14} /> : <Captions size={14} />} CC
             </button>
+            {isYoutube && (
+              <button onClick={() => setSidebarOpen(!sidebarOpen)}
+                className="hover:bg-white/20 rounded-full w-8 h-8 flex items-center justify-center transition-all"
+                style={sidebarOpen ? { backgroundColor: "#d30707", color: "#fff" } : { backgroundColor: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)" }}
+                title={sidebarOpen ? "Fechar Playlist" : "Abrir Playlist"}>
+                <List size={14} />
+              </button>
+            )}
             <button onClick={toggleFullscreen} className="text-white/70 hover:text-white transition-colors" title={fullscreen ? "Sair tela cheia" : "Tela cheia"}>
               {fullscreen ? <Minimize size={18} /> : <Maximize size={18} />}
             </button>
-            <button onClick={() => { setShopOpen(!shopOpen); setShopPopupDismissed(true); }}
+            <button onClick={() => setShopOpen(!shopOpen)}
               className="hover:bg-white/20 rounded-full w-8 h-8 flex items-center justify-center transition-all relative"
               style={shopOpen ? { backgroundColor: "#d30707", color: "#fff" } : { backgroundColor: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)" }}
               title="Shopping ao Vivo">
