@@ -225,6 +225,7 @@ export default function PlayerPage() {
   // Closed Captions state
   const [ccEnabled, setCcEnabled] = useState(false);
   const [ccText, setCcText] = useState("");
+  const [ccLoading, setCcLoading] = useState(false);
   const ccLyricsRef = useRef<{ time: number; text: string }[]>([]);
   const ccTimerRef = useRef<ReturnType<typeof setInterval>>();
   const ccCurrentSongRef = useRef<string>("");
@@ -278,6 +279,7 @@ export default function PlayerPage() {
     ccCurrentSongRef.current = songKey;
     ccLyricsRef.current = [];
     setCcText("");
+    setCcLoading(true);
 
     const calcMusicStartTimestamp = (): number => {
       if (musicData.horario) {
@@ -304,6 +306,7 @@ export default function PlayerPage() {
         if (error || !data?.success) {
           setCcText("");
           ccLyricsRef.current = [];
+          setCcLoading(false);
           return;
         }
         if (data.syncedLyrics) {
@@ -314,7 +317,8 @@ export default function PlayerPage() {
           const interval = totalDuration / plainLines.length;
           ccLyricsRef.current = plainLines.map((text: string, i: number) => ({ time: i * interval, text }));
         }
-      } catch {}
+        setCcLoading(false);
+      } catch { setCcLoading(false); }
     };
     fetchLyrics();
   }, [ccEnabled, musicData?.artista, musicData?.titulo, parseLRC, canal?.type]);
@@ -342,6 +346,7 @@ export default function PlayerPage() {
     if (ccEnabled) {
       setCcEnabled(false);
       setCcText("");
+      setCcLoading(false);
       ccLyricsRef.current = [];
       ccCurrentSongRef.current = "";
       if (ccTimerRef.current) clearInterval(ccTimerRef.current);
@@ -833,7 +838,7 @@ export default function PlayerPage() {
 
       {/* Shopping Panel — above control bar, right-aligned */}
       {shopOpen && (
-        <div className="absolute left-0 right-0 z-40 mx-auto" style={{ bottom: "130px", maxWidth: "1400px", paddingLeft: "20px", paddingRight: "20px" }}>
+        <div className="absolute left-0 right-0 z-40 mx-auto" style={{ bottom: "155px", maxWidth: "1400px", paddingLeft: "20px", paddingRight: "20px" }}>
           <div className="ml-auto" style={{ maxWidth: "340px" }}>
             <div className="bg-black/90 backdrop-blur-md border border-white/15 rounded-2xl p-5 shadow-2xl">
               <PlayerShopProduct
@@ -858,8 +863,8 @@ export default function PlayerPage() {
         <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
           <iframe
             className="absolute"
-            style={{ width: "115%", height: "115%", top: "50%", left: "50%", transform: "translate(-50%, -50%)", border: "none" }}
-            src={`https://www.youtube.com/embed/${selectedVideoId}?autoplay=1&mute=1&controls=0&loop=1&playlist=${selectedVideoId}&showinfo=0&rel=0&modestbranding=1`}
+            style={{ width: "100%", height: "100%", top: "0", left: "0", border: "none" }}
+            src={`https://www.youtube.com/embed/${selectedVideoId}?autoplay=1&mute=0&controls=0&loop=1&playlist=${selectedVideoId}&showinfo=0&rel=0&modestbranding=1`}
             allow="autoplay; encrypted-media"
           />
         </div>
@@ -872,14 +877,14 @@ export default function PlayerPage() {
         />
       )}
 
-      {/* YouTube: Dark gradient overlay */}
+      {/* YouTube: Subtle bottom gradient only for control bar readability */}
       {isYoutube && (
-        <div className="absolute inset-0 z-[1]" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 40%, rgba(0,0,0,0.2) 100%)" }} />
+        <div className="absolute inset-x-0 bottom-0 z-[1]" style={{ height: "200px", background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%)" }} />
       )}
 
       {/* YouTube: Horizontal playlist above controls */}
       {isYoutube && sidebarOpen && (
-        <div className="absolute left-0 right-0 z-[25] mx-auto" style={{ bottom: "130px", maxWidth: "1400px", paddingLeft: "20px", paddingRight: "20px" }}>
+        <div className="absolute left-0 right-0 z-[25] mx-auto" style={{ bottom: "155px", maxWidth: "1400px", paddingLeft: "20px", paddingRight: "20px" }}>
           <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "rgba(20, 20, 20, 0.95)", border: "1px solid rgba(255, 0, 0, 0.3)", boxShadow: "0 20px 50px rgba(0,0,0,0.5)" }}>
             <div className="flex items-center justify-between px-5 py-3 border-b border-white/10">
               <span className="text-white text-sm font-bold flex items-center gap-2"><List size={16} /> Playlist</span>
@@ -1059,7 +1064,7 @@ export default function PlayerPage() {
 
           {/* Controls */}
           <div className="flex items-center gap-3 px-5 border-l border-white/10 shrink-0">
-            {isAudio && musicData?.titulo && (
+            {(isAudio || isVideo) && musicData?.titulo && (
               <div className="relative flex items-center gap-1.5">
                 <button onClick={toggleLike} className={`p-1.5 rounded transition-all ${likeAnimating ? "scale-125" : "scale-100"}`}
                   title={liked ? "Descurtir música" : "Curtiu essa música?"} style={{ transition: "transform 0.3s ease" }}>
@@ -1075,7 +1080,7 @@ export default function PlayerPage() {
             <button onClick={toggleCC}
               className={`px-3 py-1.5 rounded text-[11px] font-bold transition-all flex items-center gap-1 border ${ccEnabled ? "bg-[#ed0808] text-white border-[#ed0808] shadow-[0_0_8px_rgba(237,8,8,0.5)]" : "bg-white/10 text-white/60 border-white/20 hover:bg-white/20 hover:text-white"}`}
               title={ccEnabled ? "Desativar Closed Captions" : "Ativar Closed Captions"}>
-              {ccEnabled ? <CaptionsOff size={14} /> : <Captions size={14} />} CC
+              {ccLoading ? <Loader2 size={14} className="animate-spin" /> : ccEnabled ? <CaptionsOff size={14} /> : <Captions size={14} />} CC
             </button>
             {isYoutube && (
               <button onClick={() => setSidebarOpen(!sidebarOpen)}
