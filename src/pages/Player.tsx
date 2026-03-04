@@ -1023,7 +1023,7 @@ export default function PlayerPage() {
       {/* YouTube: Horizontal playlist — shown on home by default OR when sidebarOpen */}
       {isYoutube && (isYtHome || sidebarOpen) && (
         <div className="absolute left-0 right-0 z-[25] mx-auto" style={{ bottom: "155px", maxWidth: "1400px", paddingLeft: "20px", paddingRight: "20px" }}>
-          <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "rgba(20, 20, 20, 0.95)", border: "1px solid rgba(255, 0, 0, 0.3)", boxShadow: "0 20px 50px rgba(0,0,0,0.5)" }}>
+          <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "transparent", border: "none", boxShadow: "none" }}>
             <div className="flex items-center justify-between px-5 py-3 border-b border-white/10">
               <span className="text-white text-sm font-bold flex items-center gap-2"><List size={16} /> Últimos Programas</span>
               <div className="flex items-center gap-3">
