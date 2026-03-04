@@ -1283,8 +1283,8 @@ export default function PlayerPage() {
         className="absolute left-0 right-0 z-[30] flex justify-center pointer-events-none transition-all duration-500 ease-in-out"
         style={{ bottom: "160px", opacity: ccEnabled && ccText ? 1 : 0, transform: ccEnabled && ccText ? "translateY(0)" : "translateY(10px)" }}
       >
-        <div className="px-6 py-3 rounded-lg max-w-3xl text-center" style={{ backgroundColor: "rgba(0,0,0,0.85)" }}>
-          <span className="text-white text-lg font-medium leading-relaxed">{ccText}</span>
+        <div className="px-6 py-3 rounded-lg max-w-3xl text-center overflow-hidden" style={{ backgroundColor: "rgba(0,0,0,0.85)" }}>
+          <span className="text-white text-lg font-medium leading-relaxed whitespace-nowrap overflow-hidden text-ellipsis block">{ccText}</span>
         </div>
       </div>
 
