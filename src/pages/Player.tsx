@@ -1136,6 +1136,19 @@ export default function PlayerPage() {
               title={ccEnabled ? "Desativar Closed Captions" : "Ativar Closed Captions"}>
               {ccLoading ? <Loader2 size={14} className="animate-spin" /> : ccEnabled ? <CaptionsOff size={14} /> : <Captions size={14} />} CC
             </button>
+            {isYoutube && selectedVideoId && (
+              <>
+                <button onClick={ytPrevVideo} className="text-white/70 hover:text-white transition-colors" title="Vídeo anterior">
+                  <SkipBack size={16} />
+                </button>
+                <button onClick={ytTogglePlay} className="text-white/70 hover:text-white transition-colors" title={ytPlaying ? "Pausar" : "Reproduzir"}>
+                  {ytPlaying ? <Pause size={16} /> : <Play size={16} fill="white" />}
+                </button>
+                <button onClick={ytNextVideo} className="text-white/70 hover:text-white transition-colors" title="Próximo vídeo">
+                  <SkipForward size={16} />
+                </button>
+              </>
+            )}
             {isYoutube && (
               <button onClick={() => setSidebarOpen(!sidebarOpen)}
                 className="hover:bg-white/20 rounded-full w-8 h-8 flex items-center justify-center transition-all"
