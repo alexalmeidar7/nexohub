@@ -683,7 +683,7 @@ export default function PlayerPage() {
     const first = canais[0];
     if (!first) return;
     setCurrentIndex(0);
-    if (first.type === "youtube") { setPlaying(true); setBuffering(false); }
+    if (first.type === "youtube") { setPlaying(true); setBuffering(false); setSelectedVideoId(null); setSidebarOpen(true); }
     else setTimeout(() => playStream(first.url, first.type), 200);
   }, [canais, playing, playStream, prerollDone]);
 
