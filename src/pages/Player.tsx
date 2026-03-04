@@ -1020,39 +1020,64 @@ export default function PlayerPage() {
         <div className="absolute inset-x-0 bottom-0 z-[1]" style={{ height: "200px", background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%)" }} />
       )}
 
-      {/* YouTube: Horizontal playlist above controls */}
-      {isYoutube && sidebarOpen && (
+      {/* YouTube: Horizontal playlist — shown on home by default OR when sidebarOpen */}
+      {isYoutube && (isYtHome || sidebarOpen) && (
         <div className="absolute left-0 right-0 z-[25] mx-auto" style={{ bottom: "155px", maxWidth: "1400px", paddingLeft: "20px", paddingRight: "20px" }}>
           <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "rgba(20, 20, 20, 0.95)", border: "1px solid rgba(255, 0, 0, 0.3)", boxShadow: "0 20px 50px rgba(0,0,0,0.5)" }}>
             <div className="flex items-center justify-between px-5 py-3 border-b border-white/10">
-              <span className="text-white text-sm font-bold flex items-center gap-2"><List size={16} /> Playlist</span>
+              <span className="text-white text-sm font-bold flex items-center gap-2"><List size={16} /> Últimos Programas</span>
               <div className="flex items-center gap-3">
-                <span className="text-white/40 text-xs">{youtubeVideos.length} vídeos</span>
-                <button onClick={() => setSidebarOpen(false)} className="text-white/40 hover:text-white transition-colors" title="Minimizar"><X size={16} /></button>
+                {canal?.url && (
+                  <a href={canal.url} target="_blank" rel="noopener noreferrer" className="text-white/50 hover:text-white/80 text-xs flex items-center gap-1.5 transition-colors">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" className="text-red-500"><path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814z"/><path d="M9.545 15.568V8.432L15.818 12l-6.273 3.568z" fill="#fff"/></svg>
+                    veja todos os programas no youtube
+                  </a>
+                )}
+                {!isYtHome && (
+                  <button onClick={() => setSidebarOpen(false)} className="text-white/40 hover:text-white transition-colors" title="Fechar"><X size={16} /></button>
+                )}
               </div>
             </div>
-            <div className="flex gap-3 overflow-x-auto px-4 py-3" style={{ scrollbarWidth: "thin" }}>
-              {youtubeVideos.map((v, i) => (
-                <button key={v.videoId} onClick={() => handleSelectVideo(v.videoId)}
-                  className={`flex flex-col shrink-0 rounded-lg overflow-hidden transition-all ${selectedVideoId === v.videoId ? "ring-2 ring-[#e60000]" : "hover:ring-1 hover:ring-white/30"}`}
-                  style={{ width: "180px" }}
-                >
-                  <div className="relative">
-                    <img src={v.thumbnail} alt="" className="w-full h-[100px] object-cover" />
-                    {selectedVideoId === v.videoId && (
-                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                        <Play size={20} className="text-white fill-white" />
-                      </div>
-                    )}
-                  </div>
-                  <div className="p-2 bg-white/5">
-                    <div className="text-white text-[11px] font-semibold line-clamp-2 leading-tight">{v.title}</div>
-                  </div>
-                </button>
-              ))}
-              {youtubeVideos.length === 0 && (
-                <div className="text-white/40 text-xs text-center py-6 w-full">Carregando playlist...</div>
-              )}
+            <div className="relative group">
+              {/* Left arrow */}
+              <button
+                onClick={() => { const el = document.getElementById('yt-playlist-scroll'); if (el) el.scrollBy({ left: -400, behavior: 'smooth' }); }}
+                onMouseEnter={() => { const el = document.getElementById('yt-playlist-scroll'); if (el) el.scrollBy({ left: -200, behavior: 'smooth' }); }}
+                className="absolute left-0 top-0 bottom-0 z-10 w-10 flex items-center justify-center bg-gradient-to-r from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity text-white/80 hover:text-white"
+              >
+                <ChevronUp size={20} className="rotate-[-90deg]" />
+              </button>
+              {/* Right arrow */}
+              <button
+                onClick={() => { const el = document.getElementById('yt-playlist-scroll'); if (el) el.scrollBy({ left: 400, behavior: 'smooth' }); }}
+                onMouseEnter={() => { const el = document.getElementById('yt-playlist-scroll'); if (el) el.scrollBy({ left: 200, behavior: 'smooth' }); }}
+                className="absolute right-0 top-0 bottom-0 z-10 w-10 flex items-center justify-center bg-gradient-to-l from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity text-white/80 hover:text-white"
+              >
+                <ChevronDown size={20} className="rotate-[-90deg]" />
+              </button>
+              <div id="yt-playlist-scroll" className="flex gap-3 overflow-x-hidden px-4 py-3 scroll-smooth">
+                {youtubeVideos.map((v) => (
+                  <button key={v.videoId} onClick={() => handleSelectVideo(v.videoId)}
+                    className={`flex flex-col shrink-0 rounded-lg overflow-hidden transition-all ${selectedVideoId === v.videoId ? "ring-2 ring-[#e60000]" : "hover:ring-1 hover:ring-white/30"}`}
+                    style={{ width: "180px" }}
+                  >
+                    <div className="relative">
+                      <img src={v.thumbnail} alt="" className="w-full h-[100px] object-cover" />
+                      {selectedVideoId === v.videoId && (
+                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                          <Play size={20} className="text-white fill-white" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="p-2 bg-white/5">
+                      <div className="text-white text-[11px] font-semibold line-clamp-2 leading-tight">{v.title}</div>
+                    </div>
+                  </button>
+                ))}
+                {youtubeVideos.length === 0 && (
+                  <div className="text-white/40 text-xs text-center py-6 w-full">Carregando programas...</div>
+                )}
+              </div>
             </div>
           </div>
         </div>
