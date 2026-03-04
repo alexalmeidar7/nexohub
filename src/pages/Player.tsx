@@ -759,7 +759,46 @@ export default function PlayerPage() {
     setPlaying(true);
     setBuffering(false);
     setSidebarOpen(false);
+    setYtPlaying(true);
   }, []);
+
+  // YouTube IFrame API: sync volume
+  const ytPostMessage = useCallback((command: string, args: any[] = []) => {
+    if (ytIframeRef.current?.contentWindow) {
+      ytIframeRef.current.contentWindow.postMessage(JSON.stringify({ event: "command", func: command, args }), "*");
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isYoutube || !selectedVideoId) return;
+    const timer = setTimeout(() => {
+      ytPostMessage("setVolume", [volume]);
+      if (muted) ytPostMessage("mute");
+      else ytPostMessage("unMute");
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, [volume, muted, isYoutube, selectedVideoId, ytPostMessage]);
+
+  const ytPrevVideo = useCallback(() => {
+    if (youtubeVideos.length === 0) return;
+    const idx = youtubeVideos.findIndex(v => v.videoId === selectedVideoId);
+    const prev = idx > 0 ? idx - 1 : youtubeVideos.length - 1;
+    handleSelectVideo(youtubeVideos[prev].videoId);
+    setSidebarOpen(false);
+  }, [youtubeVideos, selectedVideoId, handleSelectVideo]);
+
+  const ytNextVideo = useCallback(() => {
+    if (youtubeVideos.length === 0) return;
+    const idx = youtubeVideos.findIndex(v => v.videoId === selectedVideoId);
+    const next = idx < youtubeVideos.length - 1 ? idx + 1 : 0;
+    handleSelectVideo(youtubeVideos[next].videoId);
+    setSidebarOpen(false);
+  }, [youtubeVideos, selectedVideoId, handleSelectVideo]);
+
+  const ytTogglePlay = useCallback(() => {
+    if (ytPlaying) { ytPostMessage("pauseVideo"); setYtPlaying(false); }
+    else { ytPostMessage("playVideo"); setYtPlaying(true); }
+  }, [ytPlaying, ytPostMessage]);
 
   const showVolume = () => { clearTimeout(volumeHideTimeout.current); setVolumeHover(true); };
   const hideVolume = () => { volumeHideTimeout.current = setTimeout(() => setVolumeHover(false), 600); };
