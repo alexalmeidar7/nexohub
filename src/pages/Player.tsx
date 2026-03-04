@@ -192,6 +192,39 @@ function useBufferingDetection(videoRef: React.RefObject<HTMLVideoElement | null
   return { buffering, setBuffering };
 }
 
+// Conditional marquee: only scrolls when text overflows container
+function MarqueeText({ text, className }: { text: string; className?: string }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const textRef = useRef<HTMLDivElement>(null);
+  const [overflow, setOverflow] = useState(false);
+
+  useEffect(() => {
+    const check = () => {
+      if (containerRef.current && textRef.current) {
+        const containerW = containerRef.current.offsetWidth;
+        const textW = textRef.current.scrollWidth;
+        const isOverflow = textW > containerW + 2;
+        setOverflow(isOverflow);
+        if (isOverflow) {
+          textRef.current.style.setProperty("--marquee-distance", `${containerW - textW}px`);
+        }
+      }
+    };
+    check();
+    const ro = new ResizeObserver(check);
+    if (containerRef.current) ro.observe(containerRef.current);
+    return () => ro.disconnect();
+  }, [text]);
+
+  return (
+    <div ref={containerRef} className="overflow-hidden mt-0.5" style={{ maxWidth: "100%" }}>
+      <div ref={textRef} className={`whitespace-nowrap inline-block marquee-scroll ${className || ""}`} data-overflow={overflow}>
+        {text}
+      </div>
+    </div>
+  );
+}
+
 export default function PlayerPage() {
   const { user, loading: authLoading } = useAuth();
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -606,8 +639,8 @@ export default function PlayerPage() {
       finally { inFlight = false; }
     };
 
-    const initialDelay = setTimeout(fetchAndSync, 2000);
-    const interval = setInterval(fetchAndSync, 10000);
+    const initialDelay = setTimeout(fetchAndSync, 800);
+    const interval = setInterval(fetchAndSync, 3000);
     return () => { cancelled = true; clearTimeout(initialDelay); clearInterval(interval); };
   }, [user]);
 
@@ -877,13 +910,11 @@ export default function PlayerPage() {
     return youtubeVideos[idx + 1];
   }, [isYoutube, youtubeVideos, selectedVideoId]);
 
-  const noArLabel = canal
-    ? isYoutube
-      ? currentYtVideo ? currentYtVideo.title : canal.name
-      : isAudio
-        ? currentProg ? currentProg.nome : canal.name
-        : currentProg ? `${canal.name} - ${currentProg.nome}` : canal.name
-    : "Sem programação";
+  // Line 1: Channel name | Line 2: Program name
+  const channelLabel = canal?.name || "Sem canal";
+  const programLabel = isYoutube
+    ? (currentYtVideo ? currentYtVideo.title : "")
+    : (currentProg ? currentProg.nome : "");
 
   const handleYtHome = useCallback(() => {
     if (selectedVideoId) {
@@ -1145,23 +1176,15 @@ export default function PlayerPage() {
           {/* Program Info */}
           <div className="flex-1 px-5 min-w-0">
             <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#e60000" }}>No Ar:</span>
-            <div className="overflow-hidden mt-0.5" style={{ maxWidth: "100%" }}>
-              <div className="text-white text-lg font-bold leading-tight whitespace-nowrap inline-block marquee-scroll">
-                {noArLabel}
-              </div>
-            </div>
-            {currentProg && (
-              <div className="overflow-hidden mt-0.5" style={{ maxWidth: "100%" }}>
-                <div className="text-white/50 text-xs whitespace-nowrap inline-block marquee-scroll">
-                  {currentProg.nome} • {currentProg.horario_inicio.slice(0, 5)} - {currentProg.horario_fim.slice(0, 5)}
-                  {musicData?.titulo && <span className="ml-2 text-white/70">♫ {musicData.titulo} — {musicData.artista}</span>}
-                </div>
-              </div>
+            <MarqueeText className="text-white text-lg font-bold leading-tight" text={channelLabel} />
+            {programLabel && (
+              <MarqueeText className="text-white/60 text-sm leading-tight" text={programLabel} />
+            )}
+            {currentProg && musicData?.titulo && (
+              <MarqueeText className="text-white/50 text-xs" text={`♫ ${musicData.titulo} — ${musicData.artista}`} />
             )}
             {!currentProg && musicData?.titulo && (
-              <div className="overflow-hidden mt-0.5" style={{ maxWidth: "100%" }}>
-                <div className="text-white/50 text-xs whitespace-nowrap inline-block marquee-scroll">♫ {musicData.titulo} — {musicData.artista}</div>
-              </div>
+              <MarqueeText className="text-white/50 text-xs" text={`♫ ${musicData.titulo} — ${musicData.artista}`} />
             )}
             {isYoutube && selectedVideoId ? (
               <div className="w-full mt-2 group cursor-pointer" onClick={(e) => {
@@ -1305,13 +1328,15 @@ export default function PlayerPage() {
           100% { opacity: 0; transform: translateY(-60px) scale(0.5); }
         }
         @keyframes marqueeScroll {
-          0% { transform: translateX(0); }
-          20% { transform: translateX(0); }
-          80% { transform: translateX(calc(-100% + 300px)); }
-          100% { transform: translateX(0); }
+          0%, 20% { transform: translateX(0); }
+          80% { transform: translateX(var(--marquee-distance, 0px)); }
+          95%, 100% { transform: translateX(0); }
         }
-        .marquee-scroll {
+        .marquee-scroll[data-overflow="true"] {
           animation: marqueeScroll 8s ease-in-out infinite;
+        }
+        .marquee-scroll[data-overflow="false"] {
+          animation: none;
         }
       `}</style>
     </div>
