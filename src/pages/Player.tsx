@@ -906,9 +906,10 @@ export default function PlayerPage() {
       {isYoutube && selectedVideoId && (
         <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
           <iframe
+            ref={ytIframeRef}
             className="absolute"
             style={{ width: "100%", height: "100%", top: "0", left: "0", border: "none" }}
-            src={`https://www.youtube.com/embed/${selectedVideoId}?autoplay=1&mute=0&controls=0&loop=1&playlist=${selectedVideoId}&showinfo=0&rel=0&modestbranding=1`}
+            src={`https://www.youtube.com/embed/${selectedVideoId}?autoplay=1&mute=0&controls=0&loop=1&playlist=${selectedVideoId}&showinfo=0&rel=0&modestbranding=1&enablejsapi=1&origin=${window.location.origin}`}
             allow="autoplay; encrypted-media"
           />
         </div>
