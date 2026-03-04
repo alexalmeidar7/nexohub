@@ -21,6 +21,7 @@ import {
   CaptionsOff,
   Mic,
   Heart,
+  Home,
   ShoppingCart,
 } from "lucide-react";
 
@@ -882,6 +883,14 @@ export default function PlayerPage() {
         : currentProg ? `${canal.name} - ${currentProg.nome}` : canal.name
     : "Sem programação";
 
+  const handleYtHome = useCallback(() => {
+    if (selectedVideoId) {
+      ytPostMessage("pauseVideo");
+      setSelectedVideoId(null);
+      setYtPlaying(false);
+    }
+  }, [selectedVideoId, ytPostMessage]);
+
   // Shopping products for current program
   const currentShopProducts = useMemo(() => {
     if (!currentProg) return shopProducts.filter(p => !p.program_id);
@@ -938,14 +947,16 @@ export default function PlayerPage() {
 
       {/* YouTube: Fullscreen background video iframe — proper aspect ratio */}
       {isYoutube && selectedVideoId && (
-        <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+        <div className="absolute inset-0 z-0 overflow-hidden">
           <iframe
             ref={ytIframeRef}
-            className="absolute"
+            className="absolute pointer-events-none"
             style={{ width: "100%", height: "100%", top: "0", left: "0", border: "none" }}
             src={`https://www.youtube.com/embed/${selectedVideoId}?autoplay=1&mute=0&controls=0&loop=1&playlist=${selectedVideoId}&showinfo=0&rel=0&modestbranding=1&enablejsapi=1&origin=${window.location.origin}`}
             allow="autoplay; encrypted-media"
           />
+          {/* Transparent overlay to block YouTube controls on pause */}
+          <div className="absolute inset-0 z-[1]" />
         </div>
       )}
 
@@ -1184,6 +1195,14 @@ export default function PlayerPage() {
               title={ccEnabled ? "Desativar Closed Captions" : "Ativar Closed Captions"}>
               {ccLoading ? <Loader2 size={14} className="animate-spin" /> : ccEnabled ? <CaptionsOff size={14} /> : <Captions size={14} />} CC
             </button>
+            {isYoutube && (
+              <button onClick={handleYtHome}
+                className="hover:bg-white/20 rounded-full w-8 h-8 flex items-center justify-center transition-all"
+                style={!selectedVideoId ? { backgroundColor: "#d30707", color: "#fff" } : { backgroundColor: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)" }}
+                title="Início do canal">
+                <Home size={14} />
+              </button>
+            )}
             {isYoutube && selectedVideoId && (
               <>
                 <button onClick={ytPrevVideo} className="text-white/70 hover:text-white transition-colors" title="Vídeo anterior">
