@@ -189,44 +189,56 @@ export type Database = {
         Row: {
           active: boolean
           created_at: string
+          data_final: string | null
+          data_inicial: string | null
           dias_semana: string[] | null
           horario_fim: string
           horario_inicio: string
           id: string
           link_url: string | null
+          media_type: string
           priority: number
           skip_enabled: boolean
           updated_at: string
           user_id: string
           video_url: string
+          youtube_url: string | null
         }
         Insert: {
           active?: boolean
           created_at?: string
+          data_final?: string | null
+          data_inicial?: string | null
           dias_semana?: string[] | null
           horario_fim: string
           horario_inicio: string
           id?: string
           link_url?: string | null
+          media_type?: string
           priority?: number
           skip_enabled?: boolean
           updated_at?: string
           user_id: string
           video_url?: string
+          youtube_url?: string | null
         }
         Update: {
           active?: boolean
           created_at?: string
+          data_final?: string | null
+          data_inicial?: string | null
           dias_semana?: string[] | null
           horario_fim?: string
           horario_inicio?: string
           id?: string
           link_url?: string | null
+          media_type?: string
           priority?: number
           skip_enabled?: boolean
           updated_at?: string
           user_id?: string
           video_url?: string
+          youtube_url?: string | null
         }
         Relationships: []
       }

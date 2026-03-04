@@ -283,6 +283,8 @@ export default function PlayerPage() {
   const shopPopupTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [prerollUrl, setPrerollUrl] = useState<string | null>(null);
   const [prerollLinkUrl, setPrerollLinkUrl] = useState<string | null>(null);
+  const [prerollMediaType, setPrerollMediaType] = useState<string>("video");
+  const [prerollYoutubeUrl, setPrerollYoutubeUrl] = useState<string | null>(null);
   const [prerollDone, setPrerollDone] = useState(false);
   const [prerollShowing, setPrerollShowing] = useState(false);
   const prerollVideoRef = useRef<HTMLVideoElement>(null);
@@ -438,14 +440,19 @@ export default function PlayerPage() {
         }
 
         if (!prerollDone && prerollRes.data && prerollRes.data.length > 0) {
+          const todayStr = now.toISOString().slice(0, 10);
           const matching = prerollRes.data.filter((p: any) => {
-            if (!p.dias_semana || p.dias_semana.length === 0) return true;
-            return p.dias_semana.includes(today);
+            if (p.dias_semana && p.dias_semana.length > 0 && !p.dias_semana.includes(today)) return false;
+            if (p.data_inicial && todayStr < p.data_inicial) return false;
+            if (p.data_final && todayStr > p.data_final) return false;
+            return true;
           });
           if (matching.length > 0) {
             const selected = matching[Math.floor(Math.random() * matching.length)];
             setPrerollUrl(selected.video_url);
             setPrerollLinkUrl((selected as any).link_url || null);
+            setPrerollMediaType((selected as any).media_type || "video");
+            setPrerollYoutubeUrl((selected as any).youtube_url || null);
           } else {
             setPrerollDone(true);
           }
@@ -696,11 +703,19 @@ export default function PlayerPage() {
     const { data } = await supabase.from("comercial_preroll").select("*").eq("user_id", user.id).eq("active", true).lte("horario_inicio", currentTime).gte("horario_fim", currentTime).order("priority", { ascending: true });
 
     if (data && data.length > 0) {
-      const matching = data.filter((p: any) => !p.dias_semana || p.dias_semana.length === 0 || p.dias_semana.includes(today));
+      const todayStr = new Date().toISOString().slice(0, 10);
+      const matching = data.filter((p: any) => {
+        if (p.dias_semana && p.dias_semana.length > 0 && !p.dias_semana.includes(today)) return false;
+        if (p.data_inicial && todayStr < p.data_inicial) return false;
+        if (p.data_final && todayStr > p.data_final) return false;
+        return true;
+      });
       if (matching.length > 0) {
         const selected = matching[Math.floor(Math.random() * matching.length)];
         setPrerollUrl(selected.video_url);
         setPrerollLinkUrl((selected as any).link_url || null);
+        setPrerollMediaType((selected as any).media_type || "video");
+        setPrerollYoutubeUrl((selected as any).youtube_url || null);
         setPrerollShowing(true);
       }
     }
@@ -909,13 +924,15 @@ export default function PlayerPage() {
   return (
     <div ref={containerRef} className="relative h-screen w-screen bg-black overflow-hidden select-none cursor-default">
       {/* Pre-Roll Overlay */}
-      {prerollUrl && (!prerollDone || prerollShowing) && (
+      {((prerollUrl || (prerollMediaType === "youtube" && prerollYoutubeUrl)) && (!prerollDone || prerollShowing)) && (
         <PreRollOverlay
-          prerollUrl={prerollUrl}
+          prerollUrl={prerollUrl || ""}
           prerollVideoRef={prerollVideoRef}
           prerollLinkUrl={prerollLinkUrl}
-          onSkip={() => { setPrerollDone(true); setPrerollShowing(false); setPrerollUrl(null); setPrerollLinkUrl(null); }}
-          onEnded={() => { setPrerollDone(true); setPrerollShowing(false); setPrerollUrl(null); }}
+          prerollMediaType={prerollMediaType}
+          prerollYoutubeUrl={prerollYoutubeUrl}
+          onSkip={() => { setPrerollDone(true); setPrerollShowing(false); setPrerollUrl(null); setPrerollLinkUrl(null); setPrerollMediaType("video"); setPrerollYoutubeUrl(null); }}
+          onEnded={() => { setPrerollDone(true); setPrerollShowing(false); setPrerollUrl(null); setPrerollMediaType("video"); setPrerollYoutubeUrl(null); }}
         />
       )}
 
