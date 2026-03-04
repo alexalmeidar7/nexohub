@@ -1149,13 +1149,17 @@ export default function PlayerPage() {
               </div>
             </div>
             {currentProg && (
-              <div className="text-white/50 text-xs mt-0.5 truncate">
-                {currentProg.nome} • {currentProg.horario_inicio.slice(0, 5)} - {currentProg.horario_fim.slice(0, 5)}
-                {musicData?.titulo && <span className="ml-2 text-white/70">♫ {musicData.titulo} — {musicData.artista}</span>}
+              <div className="overflow-hidden mt-0.5" style={{ maxWidth: "100%" }}>
+                <div className="text-white/50 text-xs whitespace-nowrap inline-block marquee-scroll">
+                  {currentProg.nome} • {currentProg.horario_inicio.slice(0, 5)} - {currentProg.horario_fim.slice(0, 5)}
+                  {musicData?.titulo && <span className="ml-2 text-white/70">♫ {musicData.titulo} — {musicData.artista}</span>}
+                </div>
               </div>
             )}
             {!currentProg && musicData?.titulo && (
-              <div className="text-white/50 text-xs mt-0.5 truncate">♫ {musicData.titulo} — {musicData.artista}</div>
+              <div className="overflow-hidden mt-0.5" style={{ maxWidth: "100%" }}>
+                <div className="text-white/50 text-xs whitespace-nowrap inline-block marquee-scroll">♫ {musicData.titulo} — {musicData.artista}</div>
+              </div>
             )}
             {isYoutube && selectedVideoId ? (
               <div className="w-full mt-2 group cursor-pointer" onClick={(e) => {
