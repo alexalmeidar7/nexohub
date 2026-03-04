@@ -53,7 +53,7 @@ const comercialSubItems: { icon: typeof Home; label: string; page: Page }[] = [
   { icon: MessageSquareQuote, label: "Testemunhais", page: "testemunhais" },
   { icon: Tag, label: "Promoções", page: "promocoes" },
   { icon: Image, label: "Logos Patrocinadores", page: "logos" },
-  { icon: Film, label: "Pre-Roll", page: "preroll" },
+  { icon: Film, label: "Pré-Roll", page: "preroll" },
   { icon: ShoppingCart, label: "Shopping", page: "shopping" },
 ];
 
@@ -71,7 +71,7 @@ const pageTitle: Record<Page, string> = {
   promocoes: "Módulo Comercial — Promoções",
   logos: "Módulo Comercial — Logos Patrocinadores",
   shopping: "Módulo Comercial — Shopping",
-  preroll: "Módulo Comercial — Pre-Roll",
+  preroll: "Módulo Comercial — Pré-Roll",
 };
 
 function SocialIcon({ url, children }: { url: string; children: React.ReactNode }) {
