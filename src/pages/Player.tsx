@@ -258,6 +258,10 @@ export default function PlayerPage() {
   const [chatOpen, setChatOpen] = useState(false);
   const [clock, setClock] = useState(0);
   const [apresentadores, setApresentadores] = useState<Apresentador[]>([]);
+
+  // YouTube video progress tracking
+  const [ytCurrentTime, setYtCurrentTime] = useState(0);
+  const [ytDuration, setYtDuration] = useState(0);
   const gradeScrollRef = useRef<HTMLDivElement>(null);
   const hideTimeout = useRef<ReturnType<typeof setTimeout>>();
 
@@ -815,6 +819,27 @@ export default function PlayerPage() {
     return () => clearTimeout(timer);
   }, [volume, muted, isYoutube, selectedVideoId, ytPostMessage]);
 
+  // Listen for YouTube player state messages to track currentTime/duration
+  useEffect(() => {
+    if (!isYoutube || !selectedVideoId) { setYtCurrentTime(0); setYtDuration(0); return; }
+    const onMessage = (e: MessageEvent) => {
+      try {
+        const data = typeof e.data === "string" ? JSON.parse(e.data) : e.data;
+        if (data?.event === "infoDelivery" && data?.info) {
+          if (typeof data.info.currentTime === "number") setYtCurrentTime(data.info.currentTime);
+          if (typeof data.info.duration === "number") setYtDuration(data.info.duration);
+        }
+      } catch {}
+    };
+    window.addEventListener("message", onMessage);
+    // Poll progress via postMessage
+    const poll = setInterval(() => {
+      ytPostMessage("getCurrentTime");
+      ytPostMessage("getDuration");
+    }, 500);
+    return () => { window.removeEventListener("message", onMessage); clearInterval(poll); };
+  }, [isYoutube, selectedVideoId, ytPostMessage]);
+
   const ytPrevVideo = useCallback(() => {
     if (youtubeVideos.length === 0) return;
     const idx = youtubeVideos.findIndex(v => v.videoId === selectedVideoId);
@@ -888,11 +913,21 @@ export default function PlayerPage() {
     return youtubeVideos[idx + 1];
   }, [isYoutube, youtubeVideos, selectedVideoId]);
 
-  // Line 1: Channel name | Line 2: Program name
+  // Line 1: Channel name | Line 2: Program name (blank when YouTube home)
   const channelLabel = canal?.name || "Sem canal";
+  const isYtHome = isYoutube && !selectedVideoId;
   const programLabel = isYoutube
     ? (currentYtVideo ? currentYtVideo.title : "")
     : (currentProg ? currentProg.nome : "");
+
+  // Format seconds to MM:SS
+  const fmtTime = (s: number) => {
+    if (!s || !isFinite(s)) return "00:00";
+    const m = Math.floor(s / 60);
+    const sec = Math.floor(s % 60);
+    return `${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
+  };
+  const ytProgressPct = ytDuration > 0 ? (ytCurrentTime / ytDuration) * 100 : 0;
 
   const handleYtHome = useCallback(() => {
     if (selectedVideoId) {
@@ -1160,20 +1195,18 @@ export default function PlayerPage() {
             {programLabel && (
               <MarqueeText className="text-white/60 text-sm leading-tight" text={programLabel} />
             )}
-            {currentProg && musicData?.titulo && (
-              <MarqueeText className="text-white/50 text-xs" text={`♫ ${musicData.titulo} — ${musicData.artista}`} />
-            )}
-            {!currentProg && musicData?.titulo && (
+            {!isYtHome && musicData?.titulo && (
               <MarqueeText className="text-white/50 text-xs" text={`♫ ${musicData.titulo} — ${musicData.artista}`} />
             )}
             {isYoutube && selectedVideoId ? (
               <div className="w-full mt-2 group cursor-pointer" onClick={(e) => {
                 const rect = e.currentTarget.getBoundingClientRect();
-                const pct = ((e.clientX - rect.left) / rect.width) * 100;
-                ytPostMessage("seekTo", [pct / 100 * 100, true]);
+                const pct = (e.clientX - rect.left) / rect.width;
+                const seekTime = pct * ytDuration;
+                ytPostMessage("seekTo", [seekTime, true]);
               }}>
                 <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden group-hover:h-2 transition-all">
-                  <div className="h-full rounded-full transition-all duration-300" style={{ width: `${progress}%`, backgroundColor: "#e60000" }} />
+                  <div className="h-full rounded-full transition-all duration-300" style={{ width: `${ytProgressPct}%`, backgroundColor: "#e60000" }} />
                 </div>
               </div>
             ) : (
@@ -1181,10 +1214,16 @@ export default function PlayerPage() {
                 <div className="w-full h-1 bg-white/10 rounded-full mt-2 overflow-hidden">
                   <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${progress}%`, backgroundColor: "#e60000" }} />
                 </div>
-                <span className="text-[10px] mt-1 inline-block" style={{ color: "#e60000" }}>
-                  {currentProg ? `${currentProg.horario_inicio.slice(0, 5)} - ${currentProg.horario_fim.slice(0, 5)}` : "--:-- - --:--"}
-                </span>
               </>
+            )}
+            {isYoutube && selectedVideoId ? (
+              <span className="text-[10px] mt-1 inline-block" style={{ color: "#e60000" }}>
+                {fmtTime(ytCurrentTime)} - {fmtTime(ytDuration)}
+              </span>
+            ) : (
+              <span className="text-[10px] mt-1 inline-block" style={{ color: "#e60000" }}>
+                {currentProg ? `${currentProg.horario_inicio.slice(0, 5)} - ${currentProg.horario_fim.slice(0, 5)}` : "--:-- - --:--"}
+              </span>
             )}
           </div>
 
