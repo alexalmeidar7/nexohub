@@ -29,7 +29,7 @@ export default function PlayerChat({ channelId, onClose, initialBottom = 165 }: 
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Drag state
-  const [pos, setPos] = useState({ x: window.innerWidth - 370, y: 85 });
+  const [pos, setPos] = useState({ x: window.innerWidth - 330, y: window.innerHeight - initialBottom - 400 });
   const dragRef = useRef<{ dragging: boolean; startX: number; startY: number; origX: number; origY: number }>({
     dragging: false, startX: 0, startY: 0, origX: 0, origY: 0,
   });
