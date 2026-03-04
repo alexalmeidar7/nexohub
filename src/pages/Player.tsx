@@ -217,7 +217,7 @@ export default function PlayerPage() {
   });
   const [youtubeVideos, setYoutubeVideos] = useState<YoutubeVideo[]>([]);
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [ytPlaying, setYtPlaying] = useState(true);
   const ytIframeRef = useRef<HTMLIFrameElement>(null);
   const [gradeOpen, setGradeOpen] = useState(false);
@@ -683,7 +683,7 @@ export default function PlayerPage() {
     const first = canais[0];
     if (!first) return;
     setCurrentIndex(0);
-    if (first.type === "youtube") { setPlaying(true); setBuffering(false); setSelectedVideoId(null); setSidebarOpen(true); }
+    if (first.type === "youtube") { setPlaying(true); setBuffering(false); setSelectedVideoId(null); setSidebarOpen(false); }
     else setTimeout(() => playStream(first.url, first.type), 200);
   }, [canais, playing, playStream, prerollDone]);
 
@@ -733,7 +733,7 @@ export default function PlayerPage() {
       setPlaying(true);
       setBuffering(false);
       setSelectedVideoId(null);
-      setSidebarOpen(true);
+      setSidebarOpen(false);
     } else if (playing) {
       setTimeout(() => playStream(c.url, c.type), 100);
     }
@@ -864,10 +864,22 @@ export default function PlayerPage() {
     return apresentadores.find(a => a.id === currentProg.apresentador_id) || null;
   }, [currentProg, apresentadores]);
 
+  // For YouTube channels, show the current video title as "No Ar"
+  const currentYtVideo = isYoutube && selectedVideoId ? youtubeVideos.find(v => v.videoId === selectedVideoId) : null;
+  const nextYtVideo = useMemo(() => {
+    if (!isYoutube || youtubeVideos.length === 0) return null;
+    if (!selectedVideoId) return youtubeVideos[0] || null;
+    const idx = youtubeVideos.findIndex(v => v.videoId === selectedVideoId);
+    if (idx < 0 || idx >= youtubeVideos.length - 1) return youtubeVideos[0] || null;
+    return youtubeVideos[idx + 1];
+  }, [isYoutube, youtubeVideos, selectedVideoId]);
+
   const noArLabel = canal
-    ? isAudio
-      ? currentProg ? currentProg.nome : canal.name
-      : currentProg ? `${canal.name} - ${currentProg.nome}` : canal.name
+    ? isYoutube
+      ? currentYtVideo ? currentYtVideo.title : canal.name
+      : isAudio
+        ? currentProg ? currentProg.nome : canal.name
+        : currentProg ? `${canal.name} - ${currentProg.nome}` : canal.name
     : "Sem programação";
 
   // Shopping products for current program
@@ -1130,12 +1142,26 @@ export default function PlayerPage() {
             {!currentProg && musicData?.titulo && (
               <div className="text-white/50 text-xs mt-0.5 truncate">♫ {musicData.titulo} — {musicData.artista}</div>
             )}
-            <div className="w-full h-1 bg-white/10 rounded-full mt-2 overflow-hidden">
-              <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${progress}%`, backgroundColor: "#e60000" }} />
-            </div>
-            <span className="text-[10px] mt-1 inline-block" style={{ color: "#e60000" }}>
-              {currentProg ? `${currentProg.horario_inicio.slice(0, 5)} - ${currentProg.horario_fim.slice(0, 5)}` : "--:-- - --:--"}
-            </span>
+            {isYoutube && selectedVideoId ? (
+              <div className="w-full mt-2 group cursor-pointer" onClick={(e) => {
+                const rect = e.currentTarget.getBoundingClientRect();
+                const pct = ((e.clientX - rect.left) / rect.width) * 100;
+                ytPostMessage("seekTo", [pct / 100 * 100, true]);
+              }}>
+                <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden group-hover:h-2 transition-all">
+                  <div className="h-full rounded-full transition-all duration-300" style={{ width: `${progress}%`, backgroundColor: "#e60000" }} />
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="w-full h-1 bg-white/10 rounded-full mt-2 overflow-hidden">
+                  <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${progress}%`, backgroundColor: "#e60000" }} />
+                </div>
+                <span className="text-[10px] mt-1 inline-block" style={{ color: "#e60000" }}>
+                  {currentProg ? `${currentProg.horario_inicio.slice(0, 5)} - ${currentProg.horario_fim.slice(0, 5)}` : "--:-- - --:--"}
+                </span>
+              </>
+            )}
           </div>
 
           {/* Controls */}
@@ -1214,10 +1240,14 @@ export default function PlayerPage() {
           {/* Next / Schedule */}
           <div className="pl-5 border-l border-white/10 shrink-0">
             <span className="text-[10px] font-bold uppercase" style={{ color: "#e60000" }}>A seguir:</span>
-            <div className="text-white text-sm truncate max-w-[180px]">{nextProg?.nome || "Sem programação"}</div>
-            <span className="text-[10px]" style={{ color: "#e60000" }}>
-              {nextProg ? `${nextProg.horario_inicio} - ${nextProg.horario_fim}` : "--:-- - --:--"}
-            </span>
+            <div className="text-white text-sm truncate max-w-[180px]">
+              {isYoutube ? (nextYtVideo?.title || "Sem vídeo") : (nextProg?.nome || "Sem programação")}
+            </div>
+            {!isYoutube && (
+              <span className="text-[10px]" style={{ color: "#e60000" }}>
+                {nextProg ? `${nextProg.horario_inicio} - ${nextProg.horario_fim}` : "--:-- - --:--"}
+              </span>
+            )}
             <div className="mt-1">
               <button onClick={() => setGradeOpen(true)}
                 className="flex items-center gap-1 text-white text-[10px] font-bold uppercase px-3 py-1 rounded-full transition-all"
