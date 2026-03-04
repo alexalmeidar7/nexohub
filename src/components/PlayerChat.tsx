@@ -17,7 +17,7 @@ interface PlayerChatProps {
   initialBottom?: number;
 }
 
-export default function PlayerChat({ channelId, onClose }: PlayerChatProps) {
+export default function PlayerChat({ channelId, onClose, initialBottom = 165 }: PlayerChatProps) {
   const [joined, setJoined] = useState(false);
   const [nome, setNome] = useState("");
   const [cidade, setCidade] = useState("");
