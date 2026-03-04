@@ -261,14 +261,13 @@ export default function PlayerPage() {
   const gradeScrollRef = useRef<HTMLDivElement>(null);
   const hideTimeout = useRef<ReturnType<typeof setTimeout>>();
 
-  // Closed Captions state
+  // Closed Captions state — Web SpeechRecognition
   const [ccEnabled, setCcEnabled] = useState(false);
   const [ccText, setCcText] = useState("");
   const [ccLoading, setCcLoading] = useState(false);
-  const ccLyricsRef = useRef<{ time: number; text: string }[]>([]);
-  const ccTimerRef = useRef<ReturnType<typeof setInterval>>();
-  const ccCurrentSongRef = useRef<string>("");
-  const ccMusicStartRef = useRef<number>(0);
+  const ccRecognitionRef = useRef<any>(null);
+  const ccIsListeningRef = useRef(false);
+  const ccClearTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
   const canal = canais[currentIndex] || null;
   const isAudio = canal?.type === "audio_live" || canal?.type === "audio";
@@ -292,119 +291,83 @@ export default function PlayerPage() {
   // Unified buffering detection
   const { buffering, setBuffering } = useBufferingDetection(videoRef, audioRef);
 
-  // Parse LRC format
-  const parseLRC = useCallback((lrc: string): { time: number; text: string }[] => {
-    const lines: { time: number; text: string }[] = [];
-    for (const line of lrc.split("\n")) {
-      const match = line.match(/^\[(\d{2}):(\d{2})\.(\d{2,3})\]\s*(.*)/);
-      if (match) {
-        const mins = parseInt(match[1]);
-        const secs = parseInt(match[2]);
-        const ms = parseInt(match[3].padEnd(3, "0"));
-        const time = mins * 60 + secs + ms / 1000;
-        const text = match[4].trim();
-        if (text) lines.push({ time, text });
-      }
+  // SpeechRecognition-based CC: transcribes audio in real-time
+  const startCCRecognition = useCallback(() => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      setCcText("⚠️ Navegador não suporta reconhecimento de fala");
+      setCcLoading(false);
+      return;
     }
-    return lines.sort((a, b) => a.time - b.time);
+
+    const recognition = new SpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = "pt-BR";
+
+    recognition.onresult = (event: any) => {
+      let transcript = "";
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        transcript = event.results[i][0].transcript;
+      }
+      if (transcript) {
+        setCcText(transcript);
+        // Clear after 5s of no new results
+        if (ccClearTimeoutRef.current) clearTimeout(ccClearTimeoutRef.current);
+        ccClearTimeoutRef.current = setTimeout(() => setCcText(""), 5000);
+      }
+    };
+
+    recognition.onend = () => {
+      if (ccIsListeningRef.current) {
+        try { recognition.start(); } catch {}
+      }
+    };
+
+    recognition.onerror = (event: any) => {
+      if (event.error === "not-allowed") {
+        setCcText("⚠️ Permissão de microfone negada");
+        ccIsListeningRef.current = false;
+        setCcEnabled(false);
+        setCcLoading(false);
+      } else if (event.error === "no-speech") {
+        // Normal, will auto-restart via onend
+      } else {
+        console.warn("CC error:", event.error);
+      }
+    };
+
+    ccRecognitionRef.current = recognition;
+    ccIsListeningRef.current = true;
+    setCcLoading(true);
+    try {
+      recognition.start();
+      setCcLoading(false);
+      setCcText("🎙️ Ouvindo...");
+    } catch {
+      setCcLoading(false);
+    }
   }, []);
 
-  // Fetch lyrics when CC is enabled and music changes
-  useEffect(() => {
-    if (!ccEnabled) return;
-    
-    // Show waiting state if no music data yet
-    if (!musicData?.artista || !musicData?.titulo || musicData.artista === "Desconhecido" || musicData.titulo === "Sem título") {
-      setCcText("🎙️ Aguardando conteúdo...");
-      setCcLoading(false);
-      ccLyricsRef.current = [];
-      ccCurrentSongRef.current = "";
-      return;
-    }
-
-    const songKey = `${musicData.artista}-${musicData.titulo}`;
-    if (songKey === ccCurrentSongRef.current) return;
-    ccCurrentSongRef.current = songKey;
-    ccLyricsRef.current = [];
+  const stopCCRecognition = useCallback(() => {
+    ccIsListeningRef.current = false;
+    ccRecognitionRef.current?.stop();
+    ccRecognitionRef.current = null;
     setCcText("");
-    setCcLoading(true);
-
-    const calcMusicStartTimestamp = (): number => {
-      if (musicData.horario) {
-        const parts = musicData.horario.split(":").map(Number);
-        if (parts.length >= 2) {
-          const now = new Date();
-          const songStart = new Date(now);
-          songStart.setHours(parts[0] || 0, parts[1] || 0, parts[2] || 0, 0);
-          if (songStart.getTime() > Date.now() + 60000) songStart.setDate(songStart.getDate() - 1);
-          return songStart.getTime();
-        }
-      }
-      return Date.now();
-    };
-    const isAudioStream = canal?.type === "audio_live" || canal?.type === "audio";
-    const ccDelay = isAudioStream ? 18000 : -18000;
-    ccMusicStartRef.current = calcMusicStartTimestamp() + ccDelay;
-
-    const fetchLyrics = async () => {
-      try {
-        const { data, error } = await supabase.functions.invoke("fetch-lyrics", {
-          body: { artist: musicData.artista, title: musicData.titulo, duration: musicData.duracao || undefined },
-        });
-        if (error || !data?.success) {
-          setCcText(`♫ ${musicData.titulo} — ${musicData.artista}`);
-          ccLyricsRef.current = [];
-          setCcLoading(false);
-          return;
-        }
-        if (data.syncedLyrics) {
-          ccLyricsRef.current = parseLRC(data.syncedLyrics);
-        } else if (data.plainLyrics) {
-          const plainLines = data.plainLyrics.split("\n").filter((l: string) => l.trim());
-          const totalDuration = musicData.duracao || 180;
-          const interval = totalDuration / plainLines.length;
-          ccLyricsRef.current = plainLines.map((text: string, i: number) => ({ time: i * interval, text }));
-        }
-        setCcLoading(false);
-      } catch { setCcLoading(false); }
-    };
-    fetchLyrics();
-  }, [ccEnabled, musicData?.artista, musicData?.titulo, parseLRC, canal?.type]);
-
-  // Timer to update current lyric line
-  useEffect(() => {
-    if (!ccEnabled) {
-      if (ccTimerRef.current) clearInterval(ccTimerRef.current);
-      return;
-    }
-    ccTimerRef.current = setInterval(() => {
-      const lyrics = ccLyricsRef.current;
-      if (!lyrics.length) return;
-      const elapsed = (Date.now() - ccMusicStartRef.current) / 1000;
-      let currentLine = "";
-      for (let i = lyrics.length - 1; i >= 0; i--) {
-        if (elapsed >= lyrics[i].time) { currentLine = lyrics[i].text; break; }
-      }
-      setCcText(currentLine);
-    }, 200);
-    return () => { if (ccTimerRef.current) clearInterval(ccTimerRef.current); };
-  }, [ccEnabled]);
+    if (ccClearTimeoutRef.current) clearTimeout(ccClearTimeoutRef.current);
+  }, []);
 
   const toggleCC = useCallback(() => {
     if (ccEnabled) {
       setCcEnabled(false);
-      setCcText("");
-      setCcLoading(false);
-      ccLyricsRef.current = [];
-      ccCurrentSongRef.current = "";
-      if (ccTimerRef.current) clearInterval(ccTimerRef.current);
+      stopCCRecognition();
     } else {
       setCcEnabled(true);
-      ccCurrentSongRef.current = "";
+      startCCRecognition();
     }
-  }, [ccEnabled]);
+  }, [ccEnabled, startCCRecognition, stopCCRecognition]);
 
-  useEffect(() => { return () => { if (ccTimerRef.current) clearInterval(ccTimerRef.current); }; }, []);
+  useEffect(() => { return () => { stopCCRecognition(); }; }, [stopCCRecognition]);
 
   // Music like state
   const [liked, setLiked] = useState(false);
@@ -1317,7 +1280,7 @@ export default function PlayerPage() {
 
       {chatOpen && (
         <Suspense fallback={<div className="fixed z-[55] w-[290px] rounded-2xl border border-white/10 flex items-center justify-center" style={{ backgroundColor: "rgba(10,10,10,0.95)", bottom: shopOpen ? "460px" : "165px", right: "20px", height: "400px" }}><Loader2 className="animate-spin text-white" size={24} /></div>}>
-          <PlayerChat channelId={canal?.id || "default"} onClose={() => setChatOpen(false)} initialBottom={shopOpen ? 460 : 165} />
+          <PlayerChat channelId={canal?.id || "default"} onClose={() => setChatOpen(false)} shopOpen={shopOpen} />
         </Suspense>
       )}
 

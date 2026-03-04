@@ -14,10 +14,23 @@ interface ChatMessage {
 interface PlayerChatProps {
   channelId: string;
   onClose: () => void;
-  initialBottom?: number;
+  shopOpen?: boolean;
 }
 
-export default function PlayerChat({ channelId, onClose, initialBottom = 165 }: PlayerChatProps) {
+function formatMsgTime(iso: string): string {
+  try {
+    const d = new Date(iso);
+    const day = String(d.getDate()).padStart(2, "0");
+    const mon = String(d.getMonth() + 1).padStart(2, "0");
+    const h = String(d.getHours()).padStart(2, "0");
+    const m = String(d.getMinutes()).padStart(2, "0");
+    return `${day}/${mon} ${h}:${m}`;
+  } catch {
+    return "";
+  }
+}
+
+export default function PlayerChat({ channelId, onClose, shopOpen = false }: PlayerChatProps) {
   const [joined, setJoined] = useState(false);
   const [nome, setNome] = useState("");
   const [cidade, setCidade] = useState("");
@@ -27,44 +40,6 @@ export default function PlayerChat({ channelId, onClose, initialBottom = 165 }: 
   const [showEmoji, setShowEmoji] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  // Drag state
-  const [pos, setPos] = useState({ x: window.innerWidth - 330, y: window.innerHeight - initialBottom - 400 });
-  const dragRef = useRef<{ dragging: boolean; startX: number; startY: number; origX: number; origY: number }>({
-    dragging: false, startX: 0, startY: 0, origX: 0, origY: 0,
-  });
-  const chatRef = useRef<HTMLDivElement>(null);
-
-  const onDragStart = useCallback((e: React.MouseEvent | React.TouchEvent) => {
-    const clientX = "touches" in e ? e.touches[0].clientX : e.clientX;
-    const clientY = "touches" in e ? e.touches[0].clientY : e.clientY;
-    dragRef.current = { dragging: true, startX: clientX, startY: clientY, origX: pos.x, origY: pos.y };
-  }, [pos]);
-
-  useEffect(() => {
-    const onMove = (e: MouseEvent | TouchEvent) => {
-      if (!dragRef.current.dragging) return;
-      const clientX = "touches" in e ? e.touches[0].clientX : e.clientX;
-      const clientY = "touches" in e ? e.touches[0].clientY : e.clientY;
-      const dx = clientX - dragRef.current.startX;
-      const dy = clientY - dragRef.current.startY;
-      setPos({
-        x: Math.max(0, Math.min(window.innerWidth - 300, dragRef.current.origX + dx)),
-        y: Math.max(0, Math.min(window.innerHeight - 200, dragRef.current.origY + dy)),
-      });
-    };
-    const onUp = () => { dragRef.current.dragging = false; };
-    window.addEventListener("mousemove", onMove);
-    window.addEventListener("mouseup", onUp);
-    window.addEventListener("touchmove", onMove);
-    window.addEventListener("touchend", onUp);
-    return () => {
-      window.removeEventListener("mousemove", onMove);
-      window.removeEventListener("mouseup", onUp);
-      window.removeEventListener("touchmove", onMove);
-      window.removeEventListener("touchend", onUp);
-    };
-  }, []);
 
   // Load messages
   useEffect(() => {
@@ -92,7 +67,6 @@ export default function PlayerChat({ channelId, onClose, initialBottom = 165 }: 
         (payload) => {
           setMessages((prev) => {
             const updated = [...prev, payload.new as ChatMessage];
-            // Keep only last 100 messages
             return updated.slice(-100);
           });
         }
@@ -195,7 +169,7 @@ export default function PlayerChat({ channelId, onClose, initialBottom = 165 }: 
     return (
       <div
         className="fixed z-[55] rounded-xl border border-white/10 px-4 py-2 flex items-center gap-3 cursor-pointer"
-        style={{ backgroundColor: "rgba(15,15,15,0.95)", bottom: `${initialBottom}px`, right: "20px" }}
+        style={{ backgroundColor: "rgba(15,15,15,0.95)", bottom: "165px", right: "20px" }}
         onClick={() => setMinimized(false)}
       >
         <span className="text-white text-sm font-bold">💬 Chat</span>
@@ -204,102 +178,92 @@ export default function PlayerChat({ channelId, onClose, initialBottom = 165 }: 
     );
   }
 
-  // Full chat — draggable
+  // Full chat — positioned same as shopping panel
   return (
     <div
-      ref={chatRef}
-      className="fixed z-[55] w-[290px] flex flex-col rounded-2xl border border-white/10"
-      style={{
-        backgroundColor: "rgba(10,10,10,0.95)",
-        left: `${pos.x}px`,
-        top: `${pos.y}px`,
-        height: "calc(100vh - 335px)",
-        maxHeight: "500px",
-      }}
+      className="absolute left-0 right-0 z-[55] mx-auto"
+      style={{ bottom: "155px", maxWidth: "1400px", paddingLeft: "20px", paddingRight: "20px" }}
     >
-      <div
-        className="flex items-center justify-between px-4 py-3 border-b border-white/10 cursor-grab active:cursor-grabbing select-none"
-        onMouseDown={onDragStart}
-        onTouchStart={onDragStart}
-      >
-        <span className="text-white font-bold text-sm">💬 Chat ao Vivo</span>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setMinimized(true)}
-            className="text-white/50 hover:text-white"
-            title="Minimizar"
-          >
-            <Minus size={16} />
-          </button>
-          <button
-            onClick={onClose}
-            className="text-white/50 hover:text-white"
-            title="Fechar"
-          >
-            <X size={16} />
-          </button>
-        </div>
-      </div>
-
-      {/* Messages */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-3 space-y-3 chat-scroll">
-        {messages.map((msg) => {
-          const isMe = msg.nome === nome && msg.cidade === cidade;
-          return (
-            <div key={msg.id} className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}>
-              <span className="text-[10px] text-white/40 mb-0.5">
-                <span className="font-bold text-white/60">{msg.nome}</span> • {msg.cidade}
-              </span>
-              <div
-                className={`rounded-xl px-3 py-1.5 text-sm max-w-[85%] break-words ${
-                  isMe
-                    ? "bg-[#e60000] text-white"
-                    : "bg-white/10 text-white/90"
-                }`}
-              >
-                {msg.message}
-              </div>
+      <div className="ml-auto" style={{ maxWidth: "340px" }}>
+        <div
+          className="flex flex-col rounded-2xl border border-white/10"
+          style={{
+            backgroundColor: "rgba(10,10,10,0.95)",
+            height: "clamp(300px, calc(100vh - 335px), 500px)",
+          }}
+        >
+          <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
+            <span className="text-white font-bold text-sm">💬 Chat ao Vivo</span>
+            <div className="flex items-center gap-2">
+              <button onClick={() => setMinimized(true)} className="text-white/50 hover:text-white" title="Minimizar">
+                <Minus size={16} />
+              </button>
+              <button onClick={onClose} className="text-white/50 hover:text-white" title="Fechar">
+                <X size={16} />
+              </button>
             </div>
-          );
-        })}
-      </div>
+          </div>
 
-      {/* Emoji picker */}
-      {showEmoji && (
-        <div className="absolute bottom-16 left-2 right-2 z-10">
-          <EmojiPicker
-            onEmojiClick={onEmojiClick}
-            theme={Theme.DARK}
-            width="100%"
-            height={300}
-            searchPlaceholder="Buscar emoji..."
-          />
+          {/* Messages */}
+          <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-3 space-y-3 chat-scroll">
+            {messages.map((msg) => {
+              const isMe = msg.nome === nome && msg.cidade === cidade;
+              return (
+                <div key={msg.id} className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}>
+                  <span className="text-[10px] text-white/40 mb-0.5">
+                    <span className="font-bold text-white/60">{msg.nome}</span> • {msg.cidade}
+                    <span className="ml-1.5 text-white/30">{formatMsgTime(msg.created_at)}</span>
+                  </span>
+                  <div
+                    className={`rounded-xl px-3 py-1.5 text-sm max-w-[85%] break-words ${
+                      isMe ? "bg-[#e60000] text-white" : "bg-white/10 text-white/90"
+                    }`}
+                  >
+                    {msg.message}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Emoji picker */}
+          {showEmoji && (
+            <div className="absolute bottom-16 left-2 right-2 z-10">
+              <EmojiPicker
+                onEmojiClick={onEmojiClick}
+                theme={Theme.DARK}
+                width="100%"
+                height={300}
+                searchPlaceholder="Buscar emoji..."
+              />
+            </div>
+          )}
+
+          {/* Input */}
+          <div className="px-3 py-3 border-t border-white/10 flex items-center gap-2">
+            <button
+              onClick={() => setShowEmoji(!showEmoji)}
+              className={`text-white/50 hover:text-white transition-colors ${showEmoji ? "text-yellow-400" : ""}`}
+            >
+              <Smile size={20} />
+            </button>
+            <input
+              ref={inputRef}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Digite sua mensagem..."
+              className="flex-1 rounded-lg bg-white/10 border border-white/10 text-white px-3 py-2 text-sm placeholder:text-white/40 focus:outline-none focus:border-[#e60000]"
+            />
+            <button
+              onClick={handleSend}
+              disabled={!input.trim()}
+              className="text-white/70 hover:text-white disabled:opacity-30 transition-colors"
+            >
+              <Send size={18} />
+            </button>
+          </div>
         </div>
-      )}
-
-      {/* Input */}
-      <div className="px-3 py-3 border-t border-white/10 flex items-center gap-2">
-        <button
-          onClick={() => setShowEmoji(!showEmoji)}
-          className={`text-white/50 hover:text-white transition-colors ${showEmoji ? "text-yellow-400" : ""}`}
-        >
-          <Smile size={20} />
-        </button>
-        <input
-          ref={inputRef}
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="Digite sua mensagem..."
-          className="flex-1 rounded-lg bg-white/10 border border-white/10 text-white px-3 py-2 text-sm placeholder:text-white/40 focus:outline-none focus:border-[#e60000]"
-        />
-        <button
-          onClick={handleSend}
-          disabled={!input.trim()}
-          className="text-white/70 hover:text-white disabled:opacity-30 transition-colors"
-        >
-          <Send size={18} />
-        </button>
       </div>
     </div>
   );
