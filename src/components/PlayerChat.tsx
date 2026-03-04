@@ -14,6 +14,7 @@ interface ChatMessage {
 interface PlayerChatProps {
   channelId: string;
   onClose: () => void;
+  initialBottom?: number;
 }
 
 export default function PlayerChat({ channelId, onClose }: PlayerChatProps) {
