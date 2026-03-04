@@ -195,7 +195,7 @@ export default function PlayerChat({ channelId, onClose, initialBottom = 165 }: 
     return (
       <div
         className="fixed z-[55] rounded-xl border border-white/10 px-4 py-2 flex items-center gap-3 cursor-pointer"
-        style={{ backgroundColor: "rgba(15,15,15,0.95)", bottom: "140px", right: "16px" }}
+        style={{ backgroundColor: "rgba(15,15,15,0.95)", bottom: `${initialBottom}px`, right: "20px" }}
         onClick={() => setMinimized(false)}
       >
         <span className="text-white text-sm font-bold">💬 Chat</span>
