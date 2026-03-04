@@ -723,8 +723,21 @@ export default function PlayerPage() {
     if (canais.length === 0) return;
     const next = (currentIndex + dir + canais.length) % canais.length;
     setCurrentIndex(next);
-    if (playing) setTimeout(() => { const c = canais[next]; if (c) playStream(c.url, c.type); }, 100);
-  }, [canais, currentIndex, playing]);
+    const c = canais[next];
+    if (!c) return;
+    // Stop any playing audio/video when switching channels
+    if (hlsRef.current) { hlsRef.current.destroy(); hlsRef.current = null; }
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current.src = ""; }
+    if (videoRef.current) { videoRef.current.pause(); videoRef.current.src = ""; }
+    if (c.type === "youtube") {
+      setPlaying(true);
+      setBuffering(false);
+      setSelectedVideoId(null);
+      setSidebarOpen(true);
+    } else if (playing) {
+      setTimeout(() => playStream(c.url, c.type), 100);
+    }
+  }, [canais, currentIndex, playing, playStream]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
