@@ -829,9 +829,11 @@ export default function PlayerPage() {
           if (typeof data.info.currentTime === "number") setYtCurrentTime(data.info.currentTime);
           if (typeof data.info.duration === "number") setYtDuration(data.info.duration);
         }
-        // When iframe is ready, start listening
+        // When iframe is ready, start listening and force HD quality
         if (data?.event === "onReady" || data?.event === "initialDelivery") {
           ytPostMessage("addEventListener", ["onStateChange"]);
+          ytPostMessage("setPlaybackQuality", ["hd1080"]);
+          ytPostMessage("setPlaybackQualityRange", [{ min: "hd1080", max: "highres" }]);
         }
       } catch {}
     };
@@ -1011,7 +1013,7 @@ export default function PlayerPage() {
             ref={ytIframeRef}
             className="absolute pointer-events-none"
             style={{ width: "100%", height: "100%", top: "0", left: "0", border: "none" }}
-            src={`https://www.youtube.com/embed/${selectedVideoId}?autoplay=1&mute=0&controls=0&loop=1&playlist=${selectedVideoId}&showinfo=0&rel=0&modestbranding=1&enablejsapi=1&origin=${window.location.origin}`}
+            src={`https://www.youtube.com/embed/${selectedVideoId}?autoplay=1&mute=0&controls=0&loop=1&playlist=${selectedVideoId}&showinfo=0&rel=0&modestbranding=1&enablejsapi=1&vq=hd1080&origin=${window.location.origin}`}
             allow="autoplay; encrypted-media"
           />
           {/* Transparent overlay to block YouTube controls on pause */}
