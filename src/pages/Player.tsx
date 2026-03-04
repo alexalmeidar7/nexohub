@@ -943,7 +943,16 @@ export default function PlayerPage() {
           {currentPresenter?.foto && (
             <div className="absolute inset-0 flex items-end z-[3]" style={{ left: "-250px" }}>
               <div className="relative h-[92%]">
-                <img src={currentPresenter.foto} alt={currentPresenter.nome} className="h-full object-contain object-bottom animate-fade-in" style={{ animationDuration: "1s" }} />
+                <img src={currentPresenter.foto} alt={currentPresenter.nome}
+                  className="h-full object-contain object-bottom animate-fade-in"
+                  style={{ animationDuration: "1s", imageRendering: "auto", filter: "none" }}
+                  loading="eager"
+                  decoding="async"
+                  srcSet={currentPresenter.foto.includes("supabase.co")
+                    ? `${currentPresenter.foto}?width=800 800w, ${currentPresenter.foto}?width=1200 1200w, ${currentPresenter.foto} 1600w`
+                    : undefined}
+                  sizes="(max-width: 768px) 400px, 600px"
+                />
               </div>
             </div>
           )}
