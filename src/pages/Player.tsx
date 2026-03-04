@@ -218,6 +218,8 @@ export default function PlayerPage() {
   const [youtubeVideos, setYoutubeVideos] = useState<YoutubeVideo[]>([]);
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [ytPlaying, setYtPlaying] = useState(true);
+  const ytIframeRef = useRef<HTMLIFrameElement>(null);
   const [gradeOpen, setGradeOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
   const [clock, setClock] = useState(0);
