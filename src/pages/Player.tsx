@@ -294,6 +294,12 @@ export default function PlayerPage() {
   const prerollVideoRef = useRef<HTMLVideoElement>(null);
   const prerollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // Mid-roll state for YouTube
+  const [midrollActive, setMidrollActive] = useState(false);
+  const [midrollResumeTime, setMidrollResumeTime] = useState(0);
+  const midrollTriggeredRef = useRef<Set<number>>(new Set());
+  const [midrollPreroll, setMidrollPreroll] = useState<{ url: string; linkUrl: string | null; mediaType: string; youtubeUrl: string | null } | null>(null);
+
   // Unified buffering detection
   const { buffering, setBuffering } = useBufferingDetection(videoRef, audioRef);
 
@@ -942,6 +948,79 @@ export default function PlayerPage() {
   };
   const ytProgressPct = ytDuration > 0 ? (ytCurrentTime / ytDuration) * 100 : 0;
 
+  // Mid-roll break points: divide video into 6 segments → 5 break points
+  const midrollBreakPoints = useMemo(() => {
+    if (!isYoutube || ytDuration < 60) return []; // skip for very short videos
+    const points: number[] = [];
+    for (let i = 1; i <= 5; i++) {
+      points.push((ytDuration / 6) * i);
+    }
+    return points;
+  }, [isYoutube, ytDuration]);
+
+  // Reset mid-roll triggered set when video changes
+  useEffect(() => {
+    midrollTriggeredRef.current = new Set();
+    setMidrollActive(false);
+    setMidrollPreroll(null);
+  }, [selectedVideoId]);
+
+  // Monitor currentTime and trigger mid-roll at break points
+  useEffect(() => {
+    if (!isYoutube || !selectedVideoId || midrollActive || midrollBreakPoints.length === 0) return;
+    for (const bp of midrollBreakPoints) {
+      const bpIdx = Math.round(bp);
+      if (midrollTriggeredRef.current.has(bpIdx)) continue;
+      // Trigger within 2-second window
+      if (Math.abs(ytCurrentTime - bp) < 2) {
+        midrollTriggeredRef.current.add(bpIdx);
+        // Pause YouTube and show mid-roll
+        ytPostMessage("pauseVideo");
+        setMidrollResumeTime(ytCurrentTime);
+        setMidrollActive(true);
+        // Fetch a preroll to show
+        (async () => {
+          if (!user) return;
+          const now = new Date();
+          const ct = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+          const today = ["dom", "seg", "ter", "qua", "qui", "sex", "sab"][now.getDay()];
+          const todayStr = now.toISOString().slice(0, 10);
+          const { data } = await supabase.from("comercial_preroll").select("*").eq("user_id", user.id).eq("active", true).lte("horario_inicio", ct).gte("horario_fim", ct).order("priority", { ascending: true });
+          if (data && data.length > 0) {
+            const matching = data.filter((p: any) => {
+              if (p.dias_semana && p.dias_semana.length > 0 && !p.dias_semana.includes(today)) return false;
+              if (p.data_inicial && todayStr < p.data_inicial) return false;
+              if (p.data_final && todayStr > p.data_final) return false;
+              return true;
+            });
+            if (matching.length > 0) {
+              const selected = matching[Math.floor(Math.random() * matching.length)];
+              setMidrollPreroll({
+                url: selected.video_url,
+                linkUrl: (selected as any).link_url || null,
+                mediaType: (selected as any).media_type || "video",
+                youtubeUrl: (selected as any).youtube_url || null,
+              });
+              return;
+            }
+          }
+          // No preroll found, resume immediately
+          setMidrollActive(false);
+          ytPostMessage("playVideo");
+        })();
+        break;
+      }
+    }
+  }, [ytCurrentTime, isYoutube, selectedVideoId, midrollActive, midrollBreakPoints, user, ytPostMessage]);
+
+  // Handle mid-roll end/skip
+  const handleMidrollEnd = useCallback(() => {
+    setMidrollActive(false);
+    setMidrollPreroll(null);
+    ytPostMessage("seekTo", [midrollResumeTime, true]);
+    setTimeout(() => ytPostMessage("playVideo"), 300);
+  }, [ytPostMessage, midrollResumeTime]);
+
   const handleYtHome = useCallback(() => {
     if (selectedVideoId) {
       ytPostMessage("pauseVideo");
@@ -981,6 +1060,19 @@ export default function PlayerPage() {
           prerollYoutubeUrl={prerollYoutubeUrl}
           onSkip={() => { setPrerollDone(true); setPrerollShowing(false); setPrerollUrl(null); setPrerollLinkUrl(null); setPrerollMediaType("video"); setPrerollYoutubeUrl(null); }}
           onEnded={() => { setPrerollDone(true); setPrerollShowing(false); setPrerollUrl(null); setPrerollMediaType("video"); setPrerollYoutubeUrl(null); }}
+        />
+      )}
+
+      {/* Mid-Roll Overlay */}
+      {midrollActive && midrollPreroll && (
+        <PreRollOverlay
+          prerollUrl={midrollPreroll.url}
+          prerollVideoRef={prerollVideoRef}
+          prerollLinkUrl={midrollPreroll.linkUrl}
+          prerollMediaType={midrollPreroll.mediaType}
+          prerollYoutubeUrl={midrollPreroll.youtubeUrl}
+          onSkip={handleMidrollEnd}
+          onEnded={handleMidrollEnd}
         />
       )}
 
@@ -1237,15 +1329,30 @@ export default function PlayerPage() {
               <MarqueeText className="text-white/50 text-xs" text={`♫ ${musicData.titulo} — ${musicData.artista}`} />
             )}
             {isYoutube && selectedVideoId ? (
-              <div className="w-full mt-2 group cursor-pointer" onClick={(e) => {
+              <div className="w-full mt-2 group cursor-pointer relative" onClick={(e) => {
                 const rect = e.currentTarget.getBoundingClientRect();
                 const pct = (e.clientX - rect.left) / rect.width;
                 const seekTime = pct * ytDuration;
                 ytPostMessage("seekTo", [seekTime, true]);
               }}>
-                <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden group-hover:h-2 transition-all">
+                <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden group-hover:h-2 transition-all relative">
                   <div className="h-full rounded-full transition-all duration-300" style={{ width: `${ytProgressPct}%`, backgroundColor: "#e60000" }} />
                 </div>
+                {/* Mid-roll break point markers */}
+                {midrollBreakPoints.map((bp, i) => (
+                  <div
+                    key={i}
+                    className="absolute top-0 w-[3px] rounded-full bg-white"
+                    style={{
+                      left: `${(bp / ytDuration) * 100}%`,
+                      height: "100%",
+                      minHeight: "4px",
+                      transform: "translateX(-50%)",
+                      opacity: 0.9,
+                    }}
+                    title={`Intervalo ${i + 1} — ${fmtTime(bp)}`}
+                  />
+                ))}
               </div>
             ) : (
               <>
