@@ -6,6 +6,9 @@ import {
   ChevronUp,
   ChevronDown,
   Play,
+  Pause,
+  SkipBack,
+  SkipForward,
   Maximize,
   Minimize,
   Volume2,
@@ -215,6 +218,8 @@ export default function PlayerPage() {
   const [youtubeVideos, setYoutubeVideos] = useState<YoutubeVideo[]>([]);
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [ytPlaying, setYtPlaying] = useState(true);
+  const ytIframeRef = useRef<HTMLIFrameElement>(null);
   const [gradeOpen, setGradeOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
   const [clock, setClock] = useState(0);
@@ -272,7 +277,16 @@ export default function PlayerPage() {
 
   // Fetch lyrics when CC is enabled and music changes
   useEffect(() => {
-    if (!ccEnabled || !musicData?.artista || !musicData?.titulo) return;
+    if (!ccEnabled) return;
+    
+    // Show waiting state if no music data yet
+    if (!musicData?.artista || !musicData?.titulo || musicData.artista === "Desconhecido" || musicData.titulo === "Sem título") {
+      setCcText("🎙️ Aguardando conteúdo...");
+      setCcLoading(false);
+      ccLyricsRef.current = [];
+      ccCurrentSongRef.current = "";
+      return;
+    }
 
     const songKey = `${musicData.artista}-${musicData.titulo}`;
     if (songKey === ccCurrentSongRef.current) return;
@@ -304,7 +318,7 @@ export default function PlayerPage() {
           body: { artist: musicData.artista, title: musicData.titulo, duration: musicData.duracao || undefined },
         });
         if (error || !data?.success) {
-          setCcText("");
+          setCcText(`♫ ${musicData.titulo} — ${musicData.artista}`);
           ccLyricsRef.current = [];
           setCcLoading(false);
           return;
@@ -754,7 +768,46 @@ export default function PlayerPage() {
     setPlaying(true);
     setBuffering(false);
     setSidebarOpen(false);
+    setYtPlaying(true);
   }, []);
+
+  // YouTube IFrame API: sync volume
+  const ytPostMessage = useCallback((command: string, args: any[] = []) => {
+    if (ytIframeRef.current?.contentWindow) {
+      ytIframeRef.current.contentWindow.postMessage(JSON.stringify({ event: "command", func: command, args }), "*");
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isYoutube || !selectedVideoId) return;
+    const timer = setTimeout(() => {
+      ytPostMessage("setVolume", [volume]);
+      if (muted) ytPostMessage("mute");
+      else ytPostMessage("unMute");
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, [volume, muted, isYoutube, selectedVideoId, ytPostMessage]);
+
+  const ytPrevVideo = useCallback(() => {
+    if (youtubeVideos.length === 0) return;
+    const idx = youtubeVideos.findIndex(v => v.videoId === selectedVideoId);
+    const prev = idx > 0 ? idx - 1 : youtubeVideos.length - 1;
+    handleSelectVideo(youtubeVideos[prev].videoId);
+    setSidebarOpen(false);
+  }, [youtubeVideos, selectedVideoId, handleSelectVideo]);
+
+  const ytNextVideo = useCallback(() => {
+    if (youtubeVideos.length === 0) return;
+    const idx = youtubeVideos.findIndex(v => v.videoId === selectedVideoId);
+    const next = idx < youtubeVideos.length - 1 ? idx + 1 : 0;
+    handleSelectVideo(youtubeVideos[next].videoId);
+    setSidebarOpen(false);
+  }, [youtubeVideos, selectedVideoId, handleSelectVideo]);
+
+  const ytTogglePlay = useCallback(() => {
+    if (ytPlaying) { ytPostMessage("pauseVideo"); setYtPlaying(false); }
+    else { ytPostMessage("playVideo"); setYtPlaying(true); }
+  }, [ytPlaying, ytPostMessage]);
 
   const showVolume = () => { clearTimeout(volumeHideTimeout.current); setVolumeHover(true); };
   const hideVolume = () => { volumeHideTimeout.current = setTimeout(() => setVolumeHover(false), 600); };
@@ -862,9 +915,10 @@ export default function PlayerPage() {
       {isYoutube && selectedVideoId && (
         <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
           <iframe
+            ref={ytIframeRef}
             className="absolute"
             style={{ width: "100%", height: "100%", top: "0", left: "0", border: "none" }}
-            src={`https://www.youtube.com/embed/${selectedVideoId}?autoplay=1&mute=0&controls=0&loop=1&playlist=${selectedVideoId}&showinfo=0&rel=0&modestbranding=1`}
+            src={`https://www.youtube.com/embed/${selectedVideoId}?autoplay=1&mute=0&controls=0&loop=1&playlist=${selectedVideoId}&showinfo=0&rel=0&modestbranding=1&enablejsapi=1&origin=${window.location.origin}`}
             allow="autoplay; encrypted-media"
           />
         </div>
@@ -940,7 +994,16 @@ export default function PlayerPage() {
           {currentPresenter?.foto && (
             <div className="absolute inset-0 flex items-end z-[3]" style={{ left: "-250px" }}>
               <div className="relative h-[92%]">
-                <img src={currentPresenter.foto} alt={currentPresenter.nome} className="h-full object-contain object-bottom animate-fade-in" style={{ animationDuration: "1s" }} />
+                <img src={currentPresenter.foto} alt={currentPresenter.nome}
+                  className="h-full object-contain object-bottom animate-fade-in"
+                  style={{ animationDuration: "1s", imageRendering: "auto", filter: "none" }}
+                  loading="eager"
+                  decoding="async"
+                  srcSet={currentPresenter.foto.includes("supabase.co")
+                    ? `${currentPresenter.foto}?width=800 800w, ${currentPresenter.foto}?width=1200 1200w, ${currentPresenter.foto} 1600w`
+                    : undefined}
+                  sizes="(max-width: 768px) 400px, 600px"
+                />
               </div>
             </div>
           )}
@@ -1082,6 +1145,19 @@ export default function PlayerPage() {
               title={ccEnabled ? "Desativar Closed Captions" : "Ativar Closed Captions"}>
               {ccLoading ? <Loader2 size={14} className="animate-spin" /> : ccEnabled ? <CaptionsOff size={14} /> : <Captions size={14} />} CC
             </button>
+            {isYoutube && selectedVideoId && (
+              <>
+                <button onClick={ytPrevVideo} className="text-white/70 hover:text-white transition-colors" title="Vídeo anterior">
+                  <SkipBack size={16} />
+                </button>
+                <button onClick={ytTogglePlay} className="text-white/70 hover:text-white transition-colors" title={ytPlaying ? "Pausar" : "Reproduzir"}>
+                  {ytPlaying ? <Pause size={16} /> : <Play size={16} fill="white" />}
+                </button>
+                <button onClick={ytNextVideo} className="text-white/70 hover:text-white transition-colors" title="Próximo vídeo">
+                  <SkipForward size={16} />
+                </button>
+              </>
+            )}
             {isYoutube && (
               <button onClick={() => setSidebarOpen(!sidebarOpen)}
                 className="hover:bg-white/20 rounded-full w-8 h-8 flex items-center justify-center transition-all"
@@ -1145,8 +1221,8 @@ export default function PlayerPage() {
       </div>
 
       {chatOpen && (
-        <Suspense fallback={<div className="fixed z-[55] w-[290px] rounded-2xl border border-white/10 flex items-center justify-center" style={{ backgroundColor: "rgba(10,10,10,0.95)", bottom: "110px", right: "80px", height: "700px" }}><Loader2 className="animate-spin text-white" size={24} /></div>}>
-          <PlayerChat channelId={canal?.id || "default"} onClose={() => setChatOpen(false)} />
+        <Suspense fallback={<div className="fixed z-[55] w-[290px] rounded-2xl border border-white/10 flex items-center justify-center" style={{ backgroundColor: "rgba(10,10,10,0.95)", bottom: shopOpen ? "460px" : "165px", right: "20px", height: "400px" }}><Loader2 className="animate-spin text-white" size={24} /></div>}>
+          <PlayerChat channelId={canal?.id || "default"} onClose={() => setChatOpen(false)} initialBottom={shopOpen ? 460 : 165} />
         </Suspense>
       )}
 

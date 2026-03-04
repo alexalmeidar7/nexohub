@@ -14,9 +14,10 @@ interface ChatMessage {
 interface PlayerChatProps {
   channelId: string;
   onClose: () => void;
+  initialBottom?: number;
 }
 
-export default function PlayerChat({ channelId, onClose }: PlayerChatProps) {
+export default function PlayerChat({ channelId, onClose, initialBottom = 165 }: PlayerChatProps) {
   const [joined, setJoined] = useState(false);
   const [nome, setNome] = useState("");
   const [cidade, setCidade] = useState("");
@@ -28,7 +29,7 @@ export default function PlayerChat({ channelId, onClose }: PlayerChatProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Drag state
-  const [pos, setPos] = useState({ x: window.innerWidth - 370, y: 85 });
+  const [pos, setPos] = useState({ x: window.innerWidth - 330, y: window.innerHeight - initialBottom - 400 });
   const dragRef = useRef<{ dragging: boolean; startX: number; startY: number; origX: number; origY: number }>({
     dragging: false, startX: 0, startY: 0, origX: 0, origY: 0,
   });
@@ -194,7 +195,7 @@ export default function PlayerChat({ channelId, onClose }: PlayerChatProps) {
     return (
       <div
         className="fixed z-[55] rounded-xl border border-white/10 px-4 py-2 flex items-center gap-3 cursor-pointer"
-        style={{ backgroundColor: "rgba(15,15,15,0.95)", bottom: "140px", right: "16px" }}
+        style={{ backgroundColor: "rgba(15,15,15,0.95)", bottom: `${initialBottom}px`, right: "20px" }}
         onClick={() => setMinimized(false)}
       >
         <span className="text-white text-sm font-bold">💬 Chat</span>
