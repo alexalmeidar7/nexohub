@@ -1143,7 +1143,11 @@ export default function PlayerPage() {
           {/* Program Info */}
           <div className="flex-1 px-5 min-w-0">
             <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#e60000" }}>No Ar:</span>
-            <div className="text-white text-lg font-bold truncate leading-tight mt-0.5">{noArLabel}</div>
+            <div className="overflow-hidden mt-0.5" style={{ maxWidth: "100%" }}>
+              <div className="text-white text-lg font-bold leading-tight whitespace-nowrap inline-block marquee-scroll">
+                {noArLabel}
+              </div>
+            </div>
             {currentProg && (
               <div className="text-white/50 text-xs mt-0.5 truncate">
                 {currentProg.nome} • {currentProg.horario_inicio.slice(0, 5)} - {currentProg.horario_fim.slice(0, 5)}
@@ -1293,6 +1297,15 @@ export default function PlayerPage() {
         @keyframes floatHeart {
           0% { opacity: 1; transform: translateY(0) scale(1); }
           100% { opacity: 0; transform: translateY(-60px) scale(0.5); }
+        }
+        @keyframes marqueeScroll {
+          0% { transform: translateX(0); }
+          20% { transform: translateX(0); }
+          80% { transform: translateX(calc(-100% + 300px)); }
+          100% { transform: translateX(0); }
+        }
+        .marquee-scroll {
+          animation: marqueeScroll 8s ease-in-out infinite;
         }
       `}</style>
     </div>
