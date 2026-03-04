@@ -380,9 +380,11 @@ export default function PlayerPage() {
   const [likeCount, setLikeCount] = useState(0);
 
   useEffect(() => {
+    // Reset immediately on music change
+    setLiked(false);
+    setLikeCount(0);
+    
     if (!user || !musicData?.titulo || !musicData?.artista) {
-      setLiked(false);
-      setLikeCount(0);
       return;
     }
     const check = async () => {
