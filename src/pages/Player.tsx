@@ -829,15 +829,26 @@ export default function PlayerPage() {
           if (typeof data.info.currentTime === "number") setYtCurrentTime(data.info.currentTime);
           if (typeof data.info.duration === "number") setYtDuration(data.info.duration);
         }
+        // When iframe is ready, start listening
+        if (data?.event === "onReady" || data?.event === "initialDelivery") {
+          ytPostMessage("addEventListener", ["onStateChange"]);
+        }
       } catch {}
     };
     window.addEventListener("message", onMessage);
-    // Poll progress via postMessage
-    const poll = setInterval(() => {
-      ytPostMessage("getCurrentTime");
-      ytPostMessage("getDuration");
-    }, 500);
-    return () => { window.removeEventListener("message", onMessage); clearInterval(poll); };
+
+    // Send "listening" handshake so YouTube sends infoDelivery events
+    const sendListening = () => {
+      if (ytIframeRef.current?.contentWindow) {
+        ytIframeRef.current.contentWindow.postMessage(JSON.stringify({ event: "listening" }), "*");
+      }
+    };
+    // Retry a few times since iframe may not be ready immediately
+    const t1 = setTimeout(sendListening, 500);
+    const t2 = setTimeout(sendListening, 1500);
+    const t3 = setTimeout(sendListening, 3000);
+
+    return () => { window.removeEventListener("message", onMessage); clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
   }, [isYoutube, selectedVideoId, ytPostMessage]);
 
   const ytPrevVideo = useCallback(() => {
@@ -1220,7 +1231,7 @@ export default function PlayerPage() {
             {programLabel && (
               <MarqueeText className="text-white/60 text-sm leading-tight" text={programLabel} />
             )}
-            {!isYtHome && musicData?.titulo && (
+            {!isYoutube && musicData?.titulo && (
               <MarqueeText className="text-white/50 text-xs" text={`♫ ${musicData.titulo} — ${musicData.artista}`} />
             )}
             {isYoutube && selectedVideoId ? (
