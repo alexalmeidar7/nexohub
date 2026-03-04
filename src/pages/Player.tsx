@@ -277,7 +277,16 @@ export default function PlayerPage() {
 
   // Fetch lyrics when CC is enabled and music changes
   useEffect(() => {
-    if (!ccEnabled || !musicData?.artista || !musicData?.titulo) return;
+    if (!ccEnabled) return;
+    
+    // Show waiting state if no music data yet
+    if (!musicData?.artista || !musicData?.titulo || musicData.artista === "Desconhecido" || musicData.titulo === "Sem título") {
+      setCcText("🎙️ Aguardando conteúdo...");
+      setCcLoading(false);
+      ccLyricsRef.current = [];
+      ccCurrentSongRef.current = "";
+      return;
+    }
 
     const songKey = `${musicData.artista}-${musicData.titulo}`;
     if (songKey === ccCurrentSongRef.current) return;
@@ -309,7 +318,7 @@ export default function PlayerPage() {
           body: { artist: musicData.artista, title: musicData.titulo, duration: musicData.duracao || undefined },
         });
         if (error || !data?.success) {
-          setCcText("");
+          setCcText(`♫ ${musicData.titulo} — ${musicData.artista}`);
           ccLyricsRef.current = [];
           setCcLoading(false);
           return;
