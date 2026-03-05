@@ -285,9 +285,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         {/* === MAIN CONTENT === */}
         <main className="flex-1 flex flex-col min-w-0">
           {/* Header */}
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center justify-between mb-3" style={{ marginLeft: "25px" }}>
             <div>
-              <h1 className="text-2xl font-bold text-white">{empresa.nome || "Dashboard"}</h1>
+              <h1 className="font-bold text-white" style={{ fontSize: "45px", lineHeight: 1.1 }}>{empresa.nome || "Dashboard"}</h1>
               <p className="text-white/60 text-xs">{user?.email || ""}</p>
             </div>
             <div className="flex items-center gap-4">
