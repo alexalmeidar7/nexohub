@@ -560,7 +560,7 @@ export default function AgendaPage() {
       </Dialog>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="bg-muted rounded-xl border border-border p-4">
+        <div className="rounded-xl p-4" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)" }}>
           <Calendar
             mode="single"
             selected={selectedDate}
