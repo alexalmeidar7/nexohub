@@ -413,19 +413,40 @@ function DashboardHome({ empresa, onNavigate }: { empresa: import("./Configuraco
 
   return (
     <div className="animate-fade-in">
-      <div className="flex items-center gap-3">
-        {/* Left arrow */}
-        <button
-          onClick={scrollLeft}
-          className="flex-shrink-0 z-10 w-8 h-8 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60 transition-colors"
-        >
-          <ChevronDown size={16} className="rotate-90" />
-        </button>
+      <div className="relative">
+        {/* Left hover zone */}
+        <div
+          className="absolute left-0 top-0 bottom-0 w-16 z-20 cursor-pointer"
+          onMouseEnter={() => {
+            const el = scrollRef.current;
+            if (!el) return;
+            const id = setInterval(() => el.scrollBy({ left: -4 }), 16);
+            (el as any)._scrollInterval = id;
+          }}
+          onMouseLeave={() => {
+            const el = scrollRef.current;
+            if (el && (el as any)._scrollInterval) { clearInterval((el as any)._scrollInterval); delete (el as any)._scrollInterval; }
+          }}
+        />
+        {/* Right hover zone */}
+        <div
+          className="absolute right-0 top-0 bottom-0 w-16 z-20 cursor-pointer"
+          onMouseEnter={() => {
+            const el = scrollRef.current;
+            if (!el) return;
+            const id = setInterval(() => el.scrollBy({ left: 4 }), 16);
+            (el as any)._scrollInterval = id;
+          }}
+          onMouseLeave={() => {
+            const el = scrollRef.current;
+            if (el && (el as any)._scrollInterval) { clearInterval((el as any)._scrollInterval); delete (el as any)._scrollInterval; }
+          }}
+        />
 
         {/* Scrollable cards row */}
         <div
           ref={scrollRef}
-          className="flex gap-3 overflow-x-auto scrollbar-hide flex-1"
+          className="flex gap-3 overflow-x-auto scrollbar-hide"
           style={{ scrollSnapType: "x mandatory" }}
         >
           {orderedWidgets.map(widget => (
@@ -451,14 +472,6 @@ function DashboardHome({ empresa, onNavigate }: { empresa: import("./Configuraco
             </div>
           ))}
         </div>
-
-        {/* Right arrow */}
-        <button
-          onClick={scrollRight}
-          className="flex-shrink-0 z-10 w-8 h-8 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60 transition-colors"
-        >
-          <ChevronDown size={16} className="-rotate-90" />
-        </button>
       </div>
     </div>
   );
