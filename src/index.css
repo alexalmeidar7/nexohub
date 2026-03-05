@@ -108,8 +108,6 @@
   from { width: 100%; }
   to { width: 0%; }
 }
-  to { width: 0%; }
-}
 
 /* Sidebar thin white scrollbar */
 .sidebar-scroll::-webkit-scrollbar {
