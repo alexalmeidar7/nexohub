@@ -193,7 +193,7 @@ export default function LoginScreen() {
                     onClick={handleForgot}
                     disabled={forgotLoading}
                     className="group flex items-center gap-3 px-6 py-2 rounded-full font-medium disabled:opacity-50 transition-all duration-300 text-white border-2 border-transparent"
-                    style={{ fontSize: "12px", backgroundColor: "#0f1058" }}
+                    style={{ fontSize: "12px", backgroundColor: "#268ffa" }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.backgroundColor = "transparent";
                       e.currentTarget.style.borderColor = "rgba(255,255,255,0.5)";
