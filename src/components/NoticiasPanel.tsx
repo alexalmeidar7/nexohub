@@ -498,12 +498,12 @@ export default function NoticiasPanel() {
           <div className={headerStyle} style={headerInline}>🎯 Notícias Escalada</div>
           <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
             <table className="w-full text-xs">
-              <thead>
-                <tr className="border-b border-gray-200 text-gray-500">
-                  <th className="text-left px-3 py-2">Portal</th>
-                  <th className="text-left px-3 py-2">Título</th>
-                  <th className="px-3 py-2 w-10"></th>
-                </tr>
+                <thead>
+                  <tr style={{ borderBottom: "1px solid rgba(13,4,70,0.1)", color: "rgba(13,4,70,0.5)" }}>
+                    <th className="text-left px-3 py-2">Portal</th>
+                    <th className="text-left px-3 py-2">Título</th>
+                    <th className="px-3 py-2 w-10"></th>
+                  </tr>
               </thead>
               <tbody>
                 {escaladaNews.map((en, i) => (
