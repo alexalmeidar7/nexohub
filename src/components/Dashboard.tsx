@@ -172,7 +172,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   }, [currentPage]);
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#268ffa" }}>
+    <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#268ffa", paddingTop: "40px" }}>
       <div className="flex p-3 pb-0 gap-3" style={{ height: "650px" }}>
         {/* === SIDEBAR === */}
         <aside className="flex flex-col rounded-[24px] overflow-hidden flex-shrink-0 backdrop-blur-md" style={{ backgroundColor: "rgba(0, 0, 0, 0.98)", width: "400px", height: "650px" }}>
