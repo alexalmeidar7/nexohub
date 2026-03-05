@@ -782,7 +782,7 @@ function DashboardCalendar({ selected, onSelect, eventDates, month, onMonthChang
       month={month}
       onMonthChange={onMonthChange}
       locale={ptBR}
-      className="p-0 pointer-events-auto [&_.rdp-month]:w-full [&_.rdp-table]:w-full [&_.rdp-caption]:hidden [&_.rdp-day]:h-[22px] [&_.rdp-day]:w-[22px] [&_.rdp-day]:text-[9px] [&_.rdp-day]:p-0 [&_.rdp-cell]:p-0 [&_.rdp-head_cell]:text-[8px] [&_.rdp-head_cell]:py-0 [&_.rdp-head_cell]:font-medium [&_.rdp-row]:h-[22px] [&_.rdp-day_button]:h-[22px] [&_.rdp-day_button]:w-[22px] [&_.rdp-day_button]:p-0"
+      className="p-0 pointer-events-auto [&_.rdp-month]:w-full [&_.rdp-table]:w-full [&_.rdp-caption]:hidden [&_.rdp-day]:h-[22px] [&_.rdp-day]:w-[22px] [&_.rdp-day]:text-[9px] [&_.rdp-day]:p-0 [&_.rdp-cell]:p-0 [&_.rdp-head_cell]:text-[8px] [&_.rdp-head_cell]:py-0 [&_.rdp-head_cell]:font-medium [&_.rdp-row]:h-[22px] [&_.rdp-day_button]:h-[22px] [&_.rdp-day_button]:w-[22px] [&_.rdp-day_button]:p-0 [&_.rdp-day_button:hover]:bg-[#7fbcfa] [&_.rdp-day_button:hover]:rounded-full [&_.rdp-day_button:hover]:text-white"
       modifiers={{ hasEvent: eventDates }}
       modifiersStyles={{
         hasEvent: { backgroundColor: "#268ffa", fontWeight: "bold", color: "#fff", borderRadius: "50%" },
