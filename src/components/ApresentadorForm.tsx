@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
-import { Instagram, UserCheck, UserX, Trash2, Pencil, X, Loader2, CheckCircle, ImageIcon } from "lucide-react";
+import { Instagram, UserCheck, UserX, Trash2, Pencil, X, Loader2, CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { useToast } from "@/hooks/use-toast";
 import {
   Select,
   SelectContent,
@@ -37,7 +36,7 @@ export async function getApresentadores(): Promise<Apresentador[]> {
 
 export default function ApresentadorForm() {
   const { user } = useAuth();
-  const { toast } = useToast();
+  const [showSuccess, setShowSuccess] = useState(false);
   const [nome, setNome] = useState("");
   const [categoria, setCategoria] = useState("");
   const [cargoConvidado, setCargoConvidado] = useState("");
@@ -102,7 +101,8 @@ export default function ApresentadorForm() {
     await load();
     resetForm();
     setSaving(false);
-    toast({ title: "Salvo com sucesso!" });
+    setShowSuccess(true);
+    setTimeout(() => setShowSuccess(false), 3000);
   };
 
   const startEdit = (a: Apresentador) => {
@@ -290,6 +290,14 @@ export default function ApresentadorForm() {
           </div>
         </div>
       ) : null}
+
+      {showSuccess && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: "rgba(13, 4, 70, 0.9)", backdropFilter: "blur(8px)" }}>
+          <div className="text-white text-2xl font-bold flex items-center gap-3 animate-fade-in">
+            <CheckCircle size={32} /> Salvo com sucesso!
+          </div>
+        </div>
+      )}
     </div>
   );
 }
