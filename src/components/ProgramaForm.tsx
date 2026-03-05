@@ -140,72 +140,28 @@ function GradeBody({ gradeSlots, diasSemana, diaAtual, currentTimeStr, getProgra
     return apresentadores.find(a => a.id === apresentadorId) || null;
   };
 
-  // Calculate needle position
-  const currentMinutes = (() => {
-    const parts = currentTimeStr.split(":");
-    return parseInt(parts[0]) * 60 + parseInt(parts[1]);
-  })();
-
   return (
     <>
       <tbody>
-        {gradeSlots.map((slot, slotIdx) => {
+        {gradeSlots.map((slot) => {
           const slotParts = slot.split(":");
           const slotMinutes = parseInt(slotParts[0]) * 60 + parseInt(slotParts[1]);
           const nextSlotMinutes = slotMinutes + 30;
+          const currentParts = currentTimeStr.split(":");
+          const currentMinutes = parseInt(currentParts[0]) * 60 + parseInt(currentParts[1]);
           const isNeedleRow = currentMinutes >= slotMinutes && currentMinutes < nextSlotMinutes;
-          const needlePercent = isNeedleRow ? ((currentMinutes - slotMinutes) / 30) * 100 : 0;
 
           return (
-            <tr key={slot} style={{ position: "relative" }}>
-              <td className="px-2 py-2 font-mono rounded-lg" style={{ color: "rgba(13,4,70,0.5)", position: "relative" }}>
-                {slot.slice(0, 5)}
-                {isNeedleRow && (
-                  <div style={{
-                    position: "absolute",
-                    left: 0,
-                    right: 0,
-                    top: `${needlePercent}%`,
-                    height: "2px",
-                    backgroundColor: "#0d0446",
-                    zIndex: 5,
-                    pointerEvents: "none",
-                  }}>
-                    <div style={{
-                      position: "absolute",
-                      left: -4,
-                      top: -3,
-                      width: 8,
-                      height: 8,
-                      borderRadius: "50%",
-                      backgroundColor: "#0d0446",
-                    }} />
-                  </div>
-                )}
-              </td>
+            <tr key={slot} data-needle-row={isNeedleRow ? "true" : undefined} data-needle-percent={isNeedleRow ? ((currentMinutes - slotMinutes) / 30) * 100 : undefined}>
+              <td className="px-2 py-2 font-mono rounded-lg" style={{ color: "rgba(13,4,70,0.5)" }}>{slot.slice(0, 5)}</td>
               {diasSemana.map(dia => {
                 const key = `${dia}-${slot}`;
                 if (skipMap[key]) return null;
                 const cellData = spanMap[key];
-                if (!cellData) return (
-                  <td key={dia} className="px-1 py-1 rounded-lg" style={{ position: "relative" }}>
-                    {isNeedleRow && (
-                      <div style={{
-                        position: "absolute", left: 0, right: 0, top: `${needlePercent}%`,
-                        height: "2px", backgroundColor: "#0d0446", zIndex: 5, pointerEvents: "none",
-                      }} />
-                    )}
-                  </td>
-                );
+                if (!cellData) return <td key={dia} className="px-1 py-1 rounded-lg" />;
                 const { prog, rowSpan } = cellData;
                 const isOnAir = prog && dia === diaAtual && currentTimeStr >= prog.horarioInicio && currentTimeStr < prog.horarioFim;
                 const presenterName = getPresenterName(prog.apresentadorId);
-
-                // For merged cells, check if needle falls within this cell's span
-                const cellEndMinutes = slotMinutes + rowSpan * 30;
-                const needleInCell = currentMinutes >= slotMinutes && currentMinutes < cellEndMinutes;
-                const needleCellPercent = needleInCell ? ((currentMinutes - slotMinutes) / (rowSpan * 30)) * 100 : 0;
-
                 return (
                   <td key={dia} rowSpan={rowSpan}
                     className="rounded-lg transition-all relative hover:!border-[#2dbef3] hover:border-2"
@@ -216,14 +172,7 @@ function GradeBody({ gradeSlots, diasSemana, diaAtual, currentTimeStr, getProgra
                       border: isOnAir ? "2px solid #2dbef3" : "1px solid #ccc",
                       verticalAlign: "top",
                       padding: "8px 10px",
-                      position: "relative",
                     }}>
-                    {needleInCell && (
-                      <div style={{
-                        position: "absolute", left: 0, right: 0, top: `${needleCellPercent}%`,
-                        height: "2px", backgroundColor: "#0d0446", zIndex: 5, pointerEvents: "none",
-                      }} />
-                    )}
                     <div className="text-[10px] font-bold leading-tight" style={{ wordBreak: "break-word", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{prog.nome}</div>
                     <div className="text-[9px] mt-0.5" style={{ color: isOnAir ? "rgba(255,255,255,0.8)" : "rgba(13,4,70,0.5)" }}>
                       {prog.horarioInicio.slice(0, 5)} - {prog.horarioFim.slice(0, 5)}
@@ -236,10 +185,7 @@ function GradeBody({ gradeSlots, diasSemana, diaAtual, currentTimeStr, getProgra
                     <button
                       onClick={(e) => { e.stopPropagation(); setDetailProg(prog); }}
                       className="mt-1 px-2 py-0.5 rounded text-[8px] font-bold flex items-center gap-1 transition-colors"
-                      style={{
-                        backgroundColor: "#0d0446",
-                        color: "#ffffff",
-                      }}
+                      style={{ backgroundColor: "#0d0446", color: "#ffffff" }}
                       onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#2dbef3"; }}
                       onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#0d0446"; }}
                     >
@@ -320,6 +266,7 @@ export default function ProgramaForm() {
   // Grade filter
   const [gradeEstudioFilter, setGradeEstudioFilter] = useState("todos");
   const gradeRef = useRef<HTMLDivElement>(null);
+  const needleRef = useRef<HTMLDivElement>(null);
 
   // Sorting
   const [sortBy, setSortBy] = useState<"horario" | "nome" | "estudio" | "status">("horario");
@@ -340,6 +287,12 @@ export default function ProgramaForm() {
 
   useEffect(() => { load(); }, []);
 
+  const now = new Date();
+  const currentTimeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
+  const DIAS_MAP: Record<number, string> = { 1: "Segunda", 2: "Terça", 3: "Quarta", 4: "Quinta", 5: "Sexta", 6: "Sábado", 0: "Domingo" };
+  const diaAtual = DIAS_MAP[now.getDay()];
+  const todayDateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+
   // Auto-scroll to current on-air program
   useEffect(() => {
     if (loadingData || !gradeRef.current) return;
@@ -350,6 +303,27 @@ export default function ProgramaForm() {
       rows[currentSlotIndex].scrollIntoView({ block: "center", behavior: "smooth" });
     }
   }, [loadingData, programas]);
+
+  // Position the time needle
+  useEffect(() => {
+    if (loadingData || !gradeRef.current || !needleRef.current) return;
+    const positionNeedle = () => {
+      const container = gradeRef.current;
+      const needle = needleRef.current;
+      if (!container || !needle) return;
+      const row = container.querySelector('tr[data-needle-row="true"]') as HTMLElement;
+      if (!row) { needle.style.display = "none"; return; }
+      const percent = parseFloat(row.dataset.needlePercent || "0");
+      const containerRect = container.getBoundingClientRect();
+      const rowRect = row.getBoundingClientRect();
+      const top = rowRect.top - containerRect.top + container.scrollTop + (rowRect.height * percent / 100);
+      needle.style.display = "block";
+      needle.style.top = `${top}px`;
+    };
+    positionNeedle();
+    const interval = setInterval(positionNeedle, 30000);
+    return () => clearInterval(interval);
+  }, [loadingData, programas, currentTimeStr]);
 
   const handleSelo = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -477,11 +451,8 @@ export default function ProgramaForm() {
     return slots;
   }, []);
 
-  const now = new Date();
-  const currentTimeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
-  const DIAS_MAP: Record<number, string> = { 1: "Segunda", 2: "Terça", 3: "Quarta", 4: "Quinta", 5: "Sexta", 6: "Sábado", 0: "Domingo" };
-  const diaAtual = DIAS_MAP[now.getDay()];
-  const todayDateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+
+
 
   // Calculate dates for each day of the current week
   const weekStart = startOfWeek(now, { weekStartsOn: 1 }); // Monday
@@ -785,7 +756,7 @@ export default function ProgramaForm() {
           <div
             ref={gradeRef}
             className="rounded-xl overflow-auto max-h-[300px] grade-scroll"
-            style={{ border: "1px solid rgba(13,4,70,0.1)", backgroundColor: "#ffffff", scrollbarWidth: "thin", scrollbarColor: "#0d0446 transparent" }}
+            style={{ border: "1px solid rgba(13,4,70,0.1)", backgroundColor: "#ffffff", scrollbarWidth: "thin", scrollbarColor: "#0d0446 transparent", position: "relative" }}
           >
             <table className="w-full text-xs border-separate border-spacing-1">
               <thead className="sticky top-0 z-10" style={{ backgroundColor: "#ffffff" }}>
@@ -808,6 +779,27 @@ export default function ProgramaForm() {
                 apresentadores={apresentadores}
               />
             </table>
+            {/* Time needle overlay */}
+            <div ref={needleRef} style={{
+              position: "absolute",
+              left: 0,
+              right: 0,
+              height: "2px",
+              backgroundColor: "#0d0446",
+              zIndex: 15,
+              pointerEvents: "none",
+              display: "none",
+            }}>
+              <div style={{
+                position: "absolute",
+                left: -4,
+                top: -3,
+                width: 8,
+                height: 8,
+                borderRadius: "50%",
+                backgroundColor: "#0d0446",
+              }} />
+            </div>
           </div>
         </div>
       )}
