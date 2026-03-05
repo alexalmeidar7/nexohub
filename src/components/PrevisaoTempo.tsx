@@ -246,13 +246,13 @@ export default function PrevisaoTempo() {
             style={{ backgroundColor: "#0d0446" }}>
             {suggestions.map((s, i) => (
               <button key={i} onClick={() => selectSuggestion(s)}
-                className="w-full text-left px-4 py-2 transition-colors flex items-center justify-between"
+                className="w-full text-left px-4 py-2 transition-colors flex items-center justify-between text-xs"
                 style={{ color: "#ffffff" }}
                 onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#2dbef3"; }}
                 onMouseLeave={e => { e.currentTarget.style.backgroundColor = "transparent"; }}
               >
                 <span>{s.name}{s.admin1 ? `, ${s.admin1}` : ""}</span>
-                <span className="text-xs" style={{ color: "rgba(255,255,255,0.6)" }}>{s.country}</span>
+                <span style={{ color: "rgba(255,255,255,0.6)", fontSize: "10px" }}>{s.country}</span>
               </button>
             ))}
           </div>
