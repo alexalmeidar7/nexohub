@@ -417,64 +417,28 @@ function DashboardHome({ empresa, onNavigate }: { empresa: import("./Configuraco
   };
 
   return (
-    <div className="animate-fade-in">
-      <div
-        className="relative"
-        onMouseMove={(e) => {
-          const el = scrollRef.current;
-          if (!el) return;
-          const rect = e.currentTarget.getBoundingClientRect();
-          const x = e.clientX - rect.left;
-          const zone = 60;
-
-          // Clear any existing animation
-          if ((el as any)._raf) { cancelAnimationFrame((el as any)._raf); delete (el as any)._raf; }
-
-          if (x < zone && el.scrollLeft > 0) {
-            const speed = ((zone - x) / zone) * 4;
-            const step = () => { el.scrollLeft -= speed; (el as any)._raf = requestAnimationFrame(step); };
-            (el as any)._raf = requestAnimationFrame(step);
-          } else if (x > rect.width - zone && el.scrollLeft < el.scrollWidth - el.clientWidth) {
-            const speed = ((x - (rect.width - zone)) / zone) * 4;
-            const step = () => { el.scrollLeft += speed; (el as any)._raf = requestAnimationFrame(step); };
-            (el as any)._raf = requestAnimationFrame(step);
-          }
-        }}
-        onMouseLeave={() => {
-          const el = scrollRef.current;
-          if (el && (el as any)._raf) { cancelAnimationFrame((el as any)._raf); delete (el as any)._raf; }
-        }}
-      >
-        {/* Scrollable cards row */}
+    <div className="animate-fade-in grid grid-cols-2 gap-3 h-full">
+      {orderedWidgets.map(widget => (
         <div
-          ref={scrollRef}
-          className="flex gap-3 overflow-x-auto scrollbar-hide"
-          style={{ scrollBehavior: "auto" }}
+          key={widget.id}
+          className={`rounded-2xl p-4 overflow-hidden relative ${
+            draggedId === widget.id ? "opacity-50 scale-95" : ""
+          } ${dragOverId === widget.id ? "ring-2 ring-[#268ffa]" : ""}`}
+          style={{ backgroundColor: widget.bg, height: "225px" }}
+          onDragOver={(e) => handleDragOver(e, widget.id)}
+          onDrop={(e) => handleDrop(e, widget.id)}
+          onDragEnd={handleDragEnd}
         >
-          {orderedWidgets.map(widget => (
-            <div
-              key={widget.id}
-              className={`rounded-2xl p-4 flex-shrink-0 overflow-hidden relative ${
-                draggedId === widget.id ? "opacity-50 scale-95" : ""
-              } ${dragOverId === widget.id ? "ring-2 ring-[#268ffa]" : ""}`}
-              style={{ backgroundColor: widget.bg, width: "calc((100vw - 100px - 36px) / 4)", height: "225px", scrollSnapAlign: "start" }}
-              onDragOver={(e) => handleDragOver(e, widget.id)}
-              onDrop={(e) => handleDrop(e, widget.id)}
-              onDragEnd={handleDragEnd}
-            >
-              {/* Invisible drag handle over title area */}
-              <div
-                draggable
-                onDragStart={(e) => handleDragStart(e, widget.id)}
-                className="absolute top-0 left-0 right-0 h-[28px] z-10 cursor-grab active:cursor-grabbing"
-              />
-              <Suspense fallback={<Loader2 className="animate-spin text-gray-400" size={16} />}>
-                {widget.render(onNavigate)}
-              </Suspense>
-            </div>
-          ))}
+          <div
+            draggable
+            onDragStart={(e) => handleDragStart(e, widget.id)}
+            className="absolute top-0 left-0 right-0 h-[28px] z-10 cursor-grab active:cursor-grabbing"
+          />
+          <Suspense fallback={<Loader2 className="animate-spin text-gray-400" size={16} />}>
+            {widget.render(onNavigate)}
+          </Suspense>
         </div>
-      </div>
+      ))}
     </div>
   );
 }
