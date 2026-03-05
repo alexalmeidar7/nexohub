@@ -654,6 +654,7 @@ function DashboardAgenda() {
   const [loading, setLoading] = useState(true);
   const [eventos, setEventos] = useState<any[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [calMonth, setCalMonth] = useState(new Date());
 
   useEffect(() => {
     if (!user) return;
@@ -722,25 +723,43 @@ function DashboardAgenda() {
     );
   }
 
+
+
+  const prevMonth = () => setCalMonth(new Date(calMonth.getFullYear(), calMonth.getMonth() - 1, 1));
+  const nextMonth = () => setCalMonth(new Date(calMonth.getFullYear(), calMonth.getMonth() + 1, 1));
+
+  const monthLabel = calMonth.toLocaleDateString("pt-BR", { month: "short", year: "numeric" });
+
   return (
-    <div className="flex flex-col h-full">
-      {/* Header aligned like "NO AR" */}
+    <div className="flex flex-col h-full overflow-hidden">
+      {/* Header: icon + AGENDA + month nav */}
       <div className="flex items-center gap-1.5 mb-1">
         <CalendarDays size={14} style={{ color: "#268ffa" }} />
         <span className="font-bold text-xs uppercase tracking-wide" style={{ color: "#268ffa" }}>Agenda</span>
+        <div className="flex items-center gap-1 ml-auto">
+          <button onClick={prevMonth} className="w-4 h-4 flex items-center justify-center rounded hover:opacity-70">
+            <ChevronDown size={10} className="rotate-90" style={{ color: "#268ffa" }} />
+          </button>
+          <span className="text-[9px] font-semibold capitalize" style={{ color: "#268ffa", minWidth: "55px", textAlign: "center" }}>{monthLabel}</span>
+          <button onClick={nextMonth} className="w-4 h-4 flex items-center justify-center rounded hover:opacity-70">
+            <ChevronDown size={10} className="-rotate-90" style={{ color: "#268ffa" }} />
+          </button>
+        </div>
       </div>
 
       <DashboardCalendar
         selected={selectedDate}
         onSelect={setSelectedDate}
         eventDates={eventDates}
+        month={calMonth}
+        onMonthChange={setCalMonth}
       />
       {dayEvents.length > 0 && (
         <div className="mt-1 space-y-1 overflow-y-auto flex-1 scrollbar-hide">
           {dayEvents.map((evt: any) => (
-            <div key={evt.id} className="rounded-lg px-2 py-1 text-[10px]" style={{ backgroundColor: "#d8f96c" }}>
-              <p className="font-semibold" style={{ color: "#0d0446" }}>{evt.programa?.nome || "Evento"}</p>
-              {evt.programa && <p style={{ color: "#0d0446", opacity: 0.6 }}>{evt.programa.horario_inicio} - {evt.programa.horario_fim}</p>}
+            <div key={evt.id} className="rounded-lg px-2 py-1 text-[10px]" style={{ backgroundColor: "#268ffa", color: "#fff" }}>
+              <p className="font-semibold">{evt.programa?.nome || "Evento"}</p>
+              {evt.programa && <p className="opacity-70">{evt.programa.horario_inicio} - {evt.programa.horario_fim}</p>}
             </div>
           ))}
         </div>
@@ -749,33 +768,30 @@ function DashboardAgenda() {
   );
 }
 
-function DashboardCalendar({ selected, onSelect, eventDates }: {
+function DashboardCalendar({ selected, onSelect, eventDates, month, onMonthChange }: {
   selected: Date | undefined;
   onSelect: (d: Date | undefined) => void;
   eventDates: Date[];
+  month: Date;
+  onMonthChange: (d: Date) => void;
 }) {
   return (
     <CalendarUI
       mode="single"
       selected={selected}
       onSelect={onSelect}
+      month={month}
+      onMonthChange={onMonthChange}
       locale={ptBR}
-      className="p-0 pointer-events-auto [&_.rdp-month]:w-full [&_.rdp-table]:w-full [&_.rdp-day]:h-5 [&_.rdp-day]:w-5 [&_.rdp-day]:text-[10px] [&_.rdp-head_cell]:text-[9px] [&_.rdp-head_cell]:py-0 [&_.rdp-caption]:flex [&_.rdp-caption]:items-center [&_.rdp-caption]:justify-between [&_.rdp-caption]:relative [&_.rdp-caption]:px-0"
-      classNames={{
-        caption_label: "text-[10px] font-semibold",
-        nav_button: "h-5 w-5 bg-transparent p-0 inline-flex items-center justify-center rounded-md",
-        nav_button_previous: "",
-        nav_button_next: "",
-      }}
+      className="p-0 pointer-events-auto [&_.rdp-month]:w-full [&_.rdp-table]:w-full [&_.rdp-caption]:hidden [&_.rdp-day]:h-[22px] [&_.rdp-day]:w-[22px] [&_.rdp-day]:text-[9px] [&_.rdp-day]:p-0 [&_.rdp-cell]:p-0 [&_.rdp-head_cell]:text-[8px] [&_.rdp-head_cell]:py-0 [&_.rdp-head_cell]:font-medium [&_.rdp-row]:h-[22px] [&_.rdp-day_button]:h-[22px] [&_.rdp-day_button]:w-[22px] [&_.rdp-day_button]:p-0"
       modifiers={{ hasEvent: eventDates }}
       modifiersStyles={{
-        hasEvent: { backgroundColor: "#d8f96c", fontWeight: "bold", color: "#333" },
+        hasEvent: { backgroundColor: "#268ffa", fontWeight: "bold", color: "#fff", borderRadius: "50%" },
+        selected: { backgroundColor: "#0d0446", color: "#fff", borderRadius: "50%" },
       }}
       styles={{
-        caption_label: { color: "#268ffa" },
-        nav_button: { color: "#268ffa" },
-        day: { color: "#0d0446" },
-        head_cell: { color: "#0d0446", opacity: 0.5 },
+        day: { color: "#0d0446", fontSize: "9px" },
+        head_cell: { color: "#0d0446", opacity: 0.4 },
       }}
     />
   );
