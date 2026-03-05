@@ -216,7 +216,10 @@ export default function OnAirWidget() {
 
         {/* Top right buttons */}
         <div className="absolute top-1 right-1 z-20 flex items-center gap-1">
-          <button className="bg-white/10 rounded-full px-2 py-1 text-white/60 text-[9px] font-semibold hover:bg-white/20 transition-colors">
+          <button
+            onClick={() => setGradeOpen(true)}
+            className="bg-white/10 rounded-full px-2 py-1 text-white/60 text-[9px] font-semibold hover:bg-white/20 transition-colors cursor-pointer"
+          >
             grade
           </button>
           {firstNext && (
