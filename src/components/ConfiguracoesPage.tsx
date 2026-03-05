@@ -7,6 +7,7 @@ import { toast } from "sonner";
 export interface EmpresaConfig {
   nome: string;
   logo: string;
+  backgroundUrl: string;
   endereco: string;
   telefoneComercial: string;
   telefoneParticipacao: string;
