@@ -1,7 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { Radio, ChevronRight, Clock, Loader2, ArrowRight, Mic, Music } from "lucide-react";
 import { getApresentadores } from "./ApresentadorForm";
 import { supabase } from "@/integrations/supabase/client";
+
+const DashboardGradeDialog = lazy(() => import("./DashboardGradeDialog"));
 
 interface Programa {
   id: string;
