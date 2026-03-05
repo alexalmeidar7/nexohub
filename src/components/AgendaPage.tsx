@@ -395,7 +395,7 @@ export default function AgendaPage() {
           <h3 className="text-lg font-semibold text-foreground">Calendário de Eventos</h3>
           {locais.length > 0 && (
             <Select value={filterLocal} onValueChange={setFilterLocal}>
-              <SelectTrigger className="w-[180px] h-8 text-sm [&>span]:text-white" style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "20px", border: "none" }}>
+              <SelectTrigger className="w-[160px] h-7 text-xs [&>span]:text-white" style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "20px", border: "none" }}>
                 <MapPin size={14} className="mr-1 text-white" />
                 <SelectValue placeholder="Filtrar por local" />
               </SelectTrigger>
@@ -410,7 +410,7 @@ export default function AgendaPage() {
         </div>
 
         <button type="button" onClick={openNewDialog}
-          className="flex items-center gap-1 px-4 py-1.5 text-sm font-bold transition-all"
+          className="flex items-center gap-1 px-3 py-1 text-xs font-bold transition-all"
           style={{ backgroundColor: "#2ec0f6", color: "#ffffff", borderRadius: "20px", border: "2px solid #2ec0f6" }}
           onMouseEnter={e => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = "#2ec0f6"; }}
           onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#2ec0f6"; e.currentTarget.style.color = "#ffffff"; }}
@@ -567,14 +567,20 @@ export default function AgendaPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="rounded-xl p-4" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)" }}>
+          <style>{`
+            .agenda-calendar .rdp-day:hover { background-color: rgba(46,192,246,0.15) !important; color: #2ec0f6 !important; }
+            .agenda-calendar .rdp-day_selected { background-color: #2ec0f6 !important; color: #fff !important; }
+            .agenda-calendar .rdp-day_selected:hover { background-color: #2ec0f6 !important; }
+            .agenda-calendar .has-event-day { background-color: rgba(46,192,246,0.15) !important; color: #2ec0f6 !important; font-weight: bold; }
+          `}</style>
           <Calendar
             mode="single"
             selected={selectedDate}
             onSelect={setSelectedDate}
-            className={cn("p-3 pointer-events-auto")}
+            className={cn("p-3 pointer-events-auto agenda-calendar")}
             locale={ptBR}
             modifiers={{ hasEvent: eventDates }}
-            modifiersClassNames={{ hasEvent: "bg-primary/20 font-bold text-primary" }}
+            modifiersClassNames={{ hasEvent: "has-event-day" }}
           />
         </div>
 
