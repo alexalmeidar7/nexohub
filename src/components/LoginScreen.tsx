@@ -55,8 +55,8 @@ export default function LoginScreen() {
     >
       <div className="relative w-full max-w-md">
         {/* Main Login Box */}
-        <div className="relative z-10 w-full rounded-3xl p-10 shadow-2xl animate-fade-in bg-white">
-          <h1 className="text-center font-semibold tracking-wide mb-8 text-sm" style={{ color: "#0f1058" }}>
+        <div className="relative z-10 w-full rounded-3xl p-10 shadow-2xl animate-fade-in bg-white" style={{ fontSize: "12px" }}>
+          <h1 className="text-center font-semibold tracking-wide mb-8" style={{ color: "#0f1058", fontSize: "12px" }}>
             NexoHub login
           </h1>
 
@@ -66,8 +66,8 @@ export default function LoginScreen() {
               placeholder="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-full px-6 py-4 outline-none text-sm transition-colors"
-              style={{ color: "#0f1058", border: "2px solid #0d379a", backgroundColor: "#fff" }}
+              className="w-full rounded-full px-6 py-4 outline-none transition-colors"
+              style={{ fontSize: "12px", color: "#0f1058", border: "2px solid #0d379a", backgroundColor: "#fff" }}
               onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#268ffa")}
               onMouseLeave={(e) => { if (document.activeElement !== e.currentTarget) e.currentTarget.style.borderColor = "#0d379a"; }}
               onFocus={(e) => (e.currentTarget.style.borderColor = "#268ffa")}
@@ -79,21 +79,21 @@ export default function LoginScreen() {
               value={pass}
               onChange={(e) => setPass(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-              className="w-full rounded-full px-6 py-4 outline-none text-sm transition-colors"
-              style={{ color: "#0f1058", border: "2px solid #0d379a", backgroundColor: "#fff" }}
+              className="w-full rounded-full px-6 py-4 outline-none transition-colors"
+              style={{ fontSize: "12px", color: "#0f1058", border: "2px solid #0d379a", backgroundColor: "#fff" }}
               onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#268ffa")}
               onMouseLeave={(e) => { if (document.activeElement !== e.currentTarget) e.currentTarget.style.borderColor = "#0d379a"; }}
               onFocus={(e) => (e.currentTarget.style.borderColor = "#268ffa")}
               onBlur={(e) => (e.currentTarget.style.borderColor = "#0d379a")}
             />
 
-            {error && <p className="text-red-500 text-xs text-center">{error}</p>}
+            {error && <p className="text-red-500 text-center" style={{ fontSize: "12px" }}>{error}</p>}
 
             <div className="flex justify-between items-center pt-2">
               <button
                 onClick={() => { setShowForgot(!showForgot); setError(""); }}
-                className="text-xs transition-colors duration-200"
-                style={{ color: "#0f1058" }}
+                className="transition-colors duration-200"
+                style={{ fontSize: "12px", color: "#0f1058" }}
                 onMouseEnter={(e) => (e.currentTarget.style.color = "#268ffa")}
                 onMouseLeave={(e) => (e.currentTarget.style.color = "#0f1058")}
               >
@@ -104,8 +104,8 @@ export default function LoginScreen() {
               <button
                 onClick={handleSubmit}
                 disabled={loading}
-                className="group relative flex items-center gap-3 px-8 py-3 rounded-full font-medium text-sm disabled:opacity-50 transition-all duration-300 text-white border-2 border-transparent hover:bg-transparent"
-                style={{ backgroundColor: "#0f1058" }}
+                className="group relative flex items-center gap-3 px-8 py-3 rounded-full font-medium disabled:opacity-50 transition-all duration-300 text-white border-2 border-transparent hover:bg-transparent"
+                style={{ fontSize: "12px", backgroundColor: "#0f1058" }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.backgroundColor = "transparent";
                   e.currentTarget.style.borderColor = "#0c0440";
@@ -143,17 +143,17 @@ export default function LoginScreen() {
             pointerEvents: showForgot ? "auto" : "none",
           }}
         >
-          <div className="rounded-b-3xl rounded-t-none px-10 pt-10 pb-8 shadow-xl" style={{ backgroundColor: "#0d0446" }}>
+          <div className="rounded-b-3xl rounded-t-none px-10 pt-10 pb-8 shadow-xl" style={{ backgroundColor: "#0d0446", fontSize: "12px" }}>
             {forgotSent ? (
               <div className="flex flex-col items-center gap-3">
                 <CheckCircle className="text-green-400" size={40} />
-                <p className="text-center text-white" style={{ fontSize: "14px" }}>
+                <p className="text-center text-white" style={{ fontSize: "12px" }}>
                   Link enviado para <strong>{forgotEmail}</strong>
                 </p>
                 <button
                   onClick={closeForgot}
                   className="mt-2 font-medium transition-colors duration-200 text-white"
-                  style={{ fontSize: "14px" }}
+                  style={{ fontSize: "12px" }}
                   onMouseEnter={(e) => (e.currentTarget.style.color = "#268ffa")}
                   onMouseLeave={(e) => (e.currentTarget.style.color = "#ffffff")}
                 >
@@ -162,7 +162,7 @@ export default function LoginScreen() {
               </div>
             ) : (
               <div className="space-y-4">
-                <p className="text-center text-white" style={{ fontSize: "14px" }}>
+                <p className="text-center text-white" style={{ fontSize: "12px" }}>
                   Informe seu email para redefinir a senha
                 </p>
                 <input
@@ -172,18 +172,18 @@ export default function LoginScreen() {
                   onChange={(e) => setForgotEmail(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleForgot()}
                   className="w-full rounded-full px-6 py-4 outline-none transition-colors"
-                  style={{ fontSize: "14px", color: "#0f1058", border: "2px solid rgba(255,255,255,0.3)", backgroundColor: "#fff" }}
+                  style={{ fontSize: "12px", color: "#0f1058", border: "2px solid rgba(255,255,255,0.3)", backgroundColor: "#fff" }}
                   onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#268ffa")}
                   onMouseLeave={(e) => { if (document.activeElement !== e.currentTarget) e.currentTarget.style.borderColor = "#0d379a"; }}
                   onFocus={(e) => (e.currentTarget.style.borderColor = "#268ffa")}
                   onBlur={(e) => (e.currentTarget.style.borderColor = "#0d379a")}
                 />
-                {forgotError && <p className="text-red-400 text-center" style={{ fontSize: "14px" }}>{forgotError}</p>}
+                {forgotError && <p className="text-red-400 text-center" style={{ fontSize: "12px" }}>{forgotError}</p>}
                 <div className="flex justify-between items-center">
                   <button
                     onClick={closeForgot}
                     className="flex items-center gap-1 transition-colors duration-200 text-white"
-                    style={{ fontSize: "14px" }}
+                    style={{ fontSize: "12px" }}
                     onMouseEnter={(e) => (e.currentTarget.style.color = "#268ffa")}
                     onMouseLeave={(e) => (e.currentTarget.style.color = "#ffffff")}
                   >
@@ -193,7 +193,7 @@ export default function LoginScreen() {
                     onClick={handleForgot}
                     disabled={forgotLoading}
                     className="group flex items-center gap-3 px-8 py-3 rounded-full font-medium disabled:opacity-50 transition-all duration-300 text-white border-2 border-transparent"
-                    style={{ fontSize: "14px", backgroundColor: "#0f1058" }}
+                    style={{ fontSize: "12px", backgroundColor: "#0f1058" }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.backgroundColor = "transparent";
                       e.currentTarget.style.borderColor = "rgba(255,255,255,0.5)";
