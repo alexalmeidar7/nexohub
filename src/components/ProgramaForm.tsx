@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from "react";
+import { createPortal } from "react-dom";
 import { AlertCircle, Trash2, Clock, Calendar, Building2, Pencil, X, Power, Loader2, Info, CalendarDays, CheckCircle, ChevronsUpDown, Check } from "lucide-react";
 import { format, addDays, startOfWeek } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -89,13 +90,16 @@ function checkConflict(programas: Programa[], diasSemana: string[], horarioInici
 }
 
 // Grade body with merged cells for same program across consecutive time slots
-function GradeBody({ gradeSlots, diasSemana, diaAtual, currentTimeStr, getProgramaForSlot }: {
+function GradeBody({ gradeSlots, diasSemana, diaAtual, currentTimeStr, getProgramaForSlot, apresentadores }: {
   gradeSlots: string[];
   diasSemana: string[];
   diaAtual: string;
   currentTimeStr: string;
   getProgramaForSlot: (dia: string, slot: string) => Programa | undefined;
+  apresentadores: Apresentador[];
 }) {
+  const [detailProg, setDetailProg] = useState<Programa | null>(null);
+
   // Pre-compute skip/span maps per column
   const { skipMap, spanMap } = useMemo(() => {
     const skip: Record<string, boolean> = {};
@@ -125,61 +129,94 @@ function GradeBody({ gradeSlots, diasSemana, diaAtual, currentTimeStr, getProgra
     return { skipMap: skip, spanMap: span };
   }, [gradeSlots, diasSemana, getProgramaForSlot]);
 
+  const getPresenterName = (apresentadorId: string) => {
+    if (!apresentadorId) return null;
+    const ap = apresentadores.find(a => a.id === apresentadorId);
+    return ap ? ap.nome : null;
+  };
+
   return (
-    <tbody>
-      {gradeSlots.map(slot => (
-        <tr key={slot}>
-          <td className="px-2 py-2 font-mono rounded-lg" style={{ color: "rgba(13,4,70,0.5)" }}>{slot.slice(0, 5)}</td>
-          {diasSemana.map(dia => {
-            const key = `${dia}-${slot}`;
-            if (skipMap[key]) return null;
-            const cellData = spanMap[key];
-            if (!cellData) return <td key={dia} className="px-1 py-1 rounded-lg" />;
-            const { prog, rowSpan } = cellData;
-            const isOnAir = prog && dia === diaAtual && currentTimeStr >= prog.horarioInicio && currentTimeStr < prog.horarioFim;
-            return (
-              <td key={dia} rowSpan={rowSpan}
-                className="px-1 py-1 text-center rounded-lg transition-all border-2 hover:border-[#2dbef3] border-transparent"
-                style={{
-                  backgroundColor: isOnAir ? "#2dbef3" : "rgba(13,4,70,0.05)",
-                  color: isOnAir ? "#ffffff" : "#0d0446",
-                  fontWeight: isOnAir ? "bold" : undefined,
-                  borderColor: isOnAir ? "#2dbef3" : undefined,
-                  verticalAlign: "middle",
-                }}>
-                <div className="flex items-center justify-between gap-0.5 group/cell">
-                  <span className="text-[10px] truncate">{prog.nome}</span>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <button onClick={(e) => e.stopPropagation()} className="opacity-0 group-hover/cell:opacity-100 transition-opacity shrink-0">
-                        <Info size={10} style={{ color: isOnAir ? "#ffffff" : "#0d0446" }} />
-                      </button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-96 p-0 overflow-hidden" side="right" align="start">
-                      <div className="flex">
-                        {prog.capa && <img src={prog.capa} alt={prog.nome} className="w-36 h-auto object-cover shrink-0" />}
-                        <div className="p-3 space-y-1.5 flex-1 min-w-0">
-                          <p className="font-bold text-sm" style={{ color: "#0d0446" }}>{prog.nome}</p>
-                          <p className="text-xs flex items-center gap-1" style={{ color: "rgba(13,4,70,0.5)" }}>
-                            <Clock size={10} /> {prog.horarioInicio.slice(0, 5)} — {prog.horarioFim.slice(0, 5)}
-                          </p>
-                          <p className="text-xs flex items-center gap-1" style={{ color: "rgba(13,4,70,0.5)" }}>
-                            <Calendar size={10} /> {prog.diasSemana.join(", ")}
-                          </p>
-                          {prog.descricao && (
-                            <p className="text-xs italic border-t pt-1.5 mt-1.5" style={{ color: "rgba(13,4,70,0.5)", borderColor: "rgba(13,4,70,0.1)" }}>{prog.descricao}</p>
-                          )}
-                        </div>
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                </div>
-              </td>
-            );
-          })}
-        </tr>
-      ))}
-    </tbody>
+    <>
+      <tbody>
+        {gradeSlots.map(slot => (
+          <tr key={slot}>
+            <td className="px-2 py-2 font-mono rounded-lg" style={{ color: "rgba(13,4,70,0.5)" }}>{slot.slice(0, 5)}</td>
+            {diasSemana.map(dia => {
+              const key = `${dia}-${slot}`;
+              if (skipMap[key]) return null;
+              const cellData = spanMap[key];
+              if (!cellData) return <td key={dia} className="px-1 py-1 rounded-lg" />;
+              const { prog, rowSpan } = cellData;
+              const isOnAir = prog && dia === diaAtual && currentTimeStr >= prog.horarioInicio && currentTimeStr < prog.horarioFim;
+              const presenterName = getPresenterName(prog.apresentadorId);
+              return (
+                <td key={dia} rowSpan={rowSpan}
+                  className="rounded-lg transition-all relative group/cell"
+                  style={{
+                    backgroundColor: isOnAir ? "#2dbef3" : "#ffffff",
+                    color: isOnAir ? "#ffffff" : "#0d0446",
+                    fontWeight: isOnAir ? "bold" : undefined,
+                    border: isOnAir ? "2px solid #2dbef3" : "1px solid #ccc",
+                    verticalAlign: "top",
+                    padding: "8px 10px",
+                  }}>
+                  <div className="text-[10px] font-bold truncate pr-[60px]">{prog.nome}</div>
+                  <div className="text-[9px] mt-0.5" style={{ color: isOnAir ? "rgba(255,255,255,0.8)" : "rgba(13,4,70,0.5)" }}>
+                    {prog.horarioInicio.slice(0, 5)} - {prog.horarioFim.slice(0, 5)}
+                  </div>
+                  {presenterName && (
+                    <div className="text-[9px] font-semibold mt-0.5" style={{ color: isOnAir ? "rgba(255,255,255,0.9)" : "#0d0446" }}>
+                      {presenterName}
+                    </div>
+                  )}
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setDetailProg(prog); }}
+                    className="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded text-[8px] font-bold transition-all opacity-0 group-hover/cell:opacity-100"
+                    style={{
+                      backgroundColor: isOnAir ? "#ffffff" : "#0d0446",
+                      color: isOnAir ? "#0d0446" : "#ffffff",
+                    }}
+                  >
+                    + info
+                  </button>
+                </td>
+              );
+            })}
+          </tr>
+        ))}
+      </tbody>
+
+      {/* Detail popup */}
+      {detailProg && createPortal(
+        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: "rgba(0,0,0,0.5)" }} onClick={() => setDetailProg(null)}>
+          <div className="rounded-xl max-w-md w-full mx-4 relative overflow-hidden" style={{ backgroundColor: "#ffffff" }} onClick={e => e.stopPropagation()}>
+            <button onClick={() => setDetailProg(null)} className="absolute top-3 right-3 z-10 font-bold text-sm" style={{ color: "#0d0446" }}>
+              <X size={18} />
+            </button>
+            {detailProg.capa && (
+              <img src={detailProg.capa} alt={detailProg.nome} className="w-full h-auto rounded-t-xl" />
+            )}
+            <div className="p-5 space-y-2">
+              <h2 className="text-lg font-bold" style={{ color: "#0d0446" }}>{detailProg.nome}</h2>
+              <p className="text-xs flex items-center gap-1" style={{ color: "rgba(13,4,70,0.5)" }}>
+                <Clock size={12} /> {detailProg.horarioInicio.slice(0, 5)} — {detailProg.horarioFim.slice(0, 5)}
+              </p>
+              <p className="text-xs flex items-center gap-1" style={{ color: "rgba(13,4,70,0.5)" }}>
+                <Calendar size={12} /> {detailProg.diasSemana.join(", ")}
+              </p>
+              {getPresenterName(detailProg.apresentadorId) && (
+                <p className="text-xs font-semibold" style={{ color: "#0d0446" }}>
+                  Locutor: {getPresenterName(detailProg.apresentadorId)}
+                </p>
+              )}
+              {detailProg.descricao && (
+                <p className="text-sm mt-2 leading-relaxed" style={{ color: "rgba(13,4,70,0.7)" }}>{detailProg.descricao}</p>
+              )}
+            </div>
+          </div>
+        </div>
+      , document.body)}
+    </>
   );
 }
 
@@ -692,6 +729,7 @@ export default function ProgramaForm() {
                 diaAtual={diaAtual}
                 currentTimeStr={currentTimeStr}
                 getProgramaForSlot={getProgramaForSlot}
+                apresentadores={apresentadores}
               />
             </table>
           </div>
