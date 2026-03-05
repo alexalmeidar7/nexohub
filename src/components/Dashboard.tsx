@@ -184,7 +184,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         animation: "fade-in 1s ease-out",
       } : {}),
     }}>
-      <div className="flex gap-[30px] flex-1" style={{ paddingLeft: "50px", paddingRight: "50px", paddingTop: "12px" }}>
+      <div className="flex gap-[30px]" style={{ paddingLeft: "50px", paddingRight: "50px", paddingTop: "12px", flex: "1 1 0", minHeight: 0 }}>
         {/* === LEFT COLUMN: SIDEBAR + NO AR === */}
         <div className="flex flex-col gap-5 flex-shrink-0" style={{ width: "400px" }}>
           {/* === SIDEBAR === */}
