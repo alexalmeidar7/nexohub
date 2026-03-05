@@ -345,12 +345,13 @@ export default function NoticiasPanel() {
     setLoadingSummary(false);
   };
 
-  const headerStyle = "px-4 py-3 font-bold text-sm tracking-wide bg-primary text-primary-foreground";
+  const headerStyle = "px-4 py-3 font-bold text-sm tracking-wide text-white" + " " + "rounded-t-xl";
+  const headerInline = { backgroundColor: "#0d0446" } as React.CSSProperties;
 
   return (
     <div className="animate-fade-in space-y-6">
       <div className="flex items-center justify-between">
-        <h3 className="text-xl text-primary">Principais Notícias</h3>
+        <h3 className="text-xl font-bold" style={{ color: "#0d0446" }}>Principais Notícias</h3>
         <button onClick={() => { loadAll(); loadCotacoes(); }} disabled={loading}
           className="text-muted-foreground hover:text-primary transition-colors disabled:opacity-50">
           <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
@@ -361,9 +362,17 @@ export default function NoticiasPanel() {
         <input value={customUrl} onChange={(e) => setCustomUrl(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && addCustomSite()}
           placeholder="URL do RSS feed (ex: https://site.com/feed)"
-          className="flex-1 bg-muted border border-border p-2 rounded-lg text-foreground placeholder:text-muted-foreground outline-none focus:ring-1 focus:ring-primary" />
+          className="flex-1 px-4 py-1.5 outline-none transition-colors text-sm"
+          style={{ backgroundColor: "#ffffff", border: "1px solid #0d0446", color: "#0d0446", borderRadius: "20px" }}
+          onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
+          onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
+        />
         <button onClick={addCustomSite}
-          className="bg-primary text-primary-foreground px-4 py-2 rounded-lg font-bold hover:brightness-95 transition-all flex items-center gap-1">
+          className="px-5 py-1.5 font-bold transition-all flex items-center gap-1"
+          style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "20px", border: "2px solid #0d0446" }}
+          onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#ffffff"; e.currentTarget.style.color = "#0d0446"; }}
+          onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#0d0446"; e.currentTarget.style.color = "#ffffff"; }}
+        >
           <Plus size={16} /> Adicionar Site
         </button>
       </div>
@@ -371,15 +380,15 @@ export default function NoticiasPanel() {
       {/* Top row: Noticias Selecionadas + Cotações side by side */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Notícias Selecionadas */}
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-          <div className={headerStyle}>📋 Notícias Selecionadas</div>
+        <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)" }}>
+          <div className={headerStyle} style={headerInline}>📋 Notícias Selecionadas</div>
           <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
             {selectedNews.length === 0 ? (
               <p className="text-gray-500 text-xs p-4">Nenhuma notícia selecionada.</p>
             ) : (
               <table className="w-full text-xs">
                 <thead>
-                  <tr className="border-b border-gray-200 text-gray-500">
+                  <tr style={{ borderBottom: "1px solid rgba(13,4,70,0.1)", color: "rgba(13,4,70,0.5)" }}>
                     <th className="text-left px-3 py-2">Portal</th>
                     <th className="text-left px-3 py-2">Título</th>
                     <th className="text-left px-3 py-2">Imagem URL</th>
@@ -388,26 +397,26 @@ export default function NoticiasPanel() {
                 </thead>
                 <tbody>
                   {selectedNews.map((sn, i) => (
-                    <tr key={sn.id || i} className="border-b border-gray-100">
+                    <tr key={sn.id || i} style={{ borderBottom: "1px solid rgba(13,4,70,0.05)" }}>
                       <td className="px-3 py-2">
                         <input
                           defaultValue={sn.portal}
                           onBlur={(e) => updateSelectedField(i, "portal", e.target.value)}
-                          className="bg-transparent border-b border-transparent hover:border-gray-300 focus:border-primary outline-none text-gray-700 font-semibold w-full text-xs"
+                          className="bg-transparent border-b border-transparent hover:border-gray-300 outline-none font-semibold w-full text-xs" style={{ color: "#0d0446" }}
                         />
                       </td>
                       <td className="px-3 py-2">
                         <input
                           defaultValue={sn.title}
                           onBlur={(e) => updateSelectedField(i, "title", e.target.value)}
-                          className="bg-transparent border-b border-transparent hover:border-gray-300 focus:border-primary outline-none text-gray-700 w-full text-xs"
+                          className="bg-transparent border-b border-transparent hover:border-gray-300 outline-none w-full text-xs" style={{ color: "#0d0446" }}
                         />
                       </td>
                       <td className="px-3 py-2">
                         <input
                           defaultValue={sn.imageUrl}
                           onBlur={(e) => updateSelectedField(i, "imageUrl", e.target.value)}
-                          className="bg-transparent border-b border-transparent hover:border-gray-300 focus:border-primary outline-none text-gray-500 w-full text-xs truncate"
+                          className="bg-transparent border-b border-transparent hover:border-gray-300 outline-none w-full text-xs truncate" style={{ color: "rgba(13,4,70,0.5)" }}
                           title={sn.imageUrl}
                         />
                       </td>
@@ -433,7 +442,7 @@ export default function NoticiasPanel() {
         {/* Cotações ao lado */}
         <div className="space-y-4">
           <div className="bg-muted rounded-xl border border-border overflow-hidden">
-            <div className={headerStyle}>💹 Cotações - Bolsas e Moedas</div>
+            <div className={headerStyle} style={headerInline}>💹 Cotações - Bolsas e Moedas</div>
             <div className="p-4">
               {loadingCotacoes ? (
                 <p className="text-muted-foreground text-sm">Carregando cotações...</p>
@@ -465,7 +474,7 @@ export default function NoticiasPanel() {
 
           {selectedCotacoes.length > 0 && (
             <div className="bg-muted rounded-xl border border-border overflow-hidden">
-              <div className={headerStyle}>📊 Cotações Selecionadas</div>
+              <div className={headerStyle} style={headerInline}>📊 Cotações Selecionadas</div>
               <div className="p-4 flex flex-wrap gap-2">
                 {selectedCotacoes.map(sc => (
                   <div key={sc.id || sc.name} className="bg-background/50 rounded-lg px-3 py-2 flex items-center gap-2 text-xs">
@@ -485,22 +494,22 @@ export default function NoticiasPanel() {
 
       {/* Notícias Escalada - below Selecionadas */}
       {escaladaNews.length > 0 && (
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-          <div className={headerStyle}>🎯 Notícias Escalada</div>
+        <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)" }}>
+          <div className={headerStyle} style={headerInline}>🎯 Notícias Escalada</div>
           <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
             <table className="w-full text-xs">
-              <thead>
-                <tr className="border-b border-gray-200 text-gray-500">
-                  <th className="text-left px-3 py-2">Portal</th>
-                  <th className="text-left px-3 py-2">Título</th>
-                  <th className="px-3 py-2 w-10"></th>
-                </tr>
+                <thead>
+                  <tr style={{ borderBottom: "1px solid rgba(13,4,70,0.1)", color: "rgba(13,4,70,0.5)" }}>
+                    <th className="text-left px-3 py-2">Portal</th>
+                    <th className="text-left px-3 py-2">Título</th>
+                    <th className="px-3 py-2 w-10"></th>
+                  </tr>
               </thead>
               <tbody>
                 {escaladaNews.map((en, i) => (
-                  <tr key={en.id || i} className="border-b border-gray-100">
-                    <td className="px-3 py-2 text-gray-700 font-semibold whitespace-nowrap">{en.portal}</td>
-                    <td className="px-3 py-2 text-gray-700">{en.title}</td>
+                    <tr key={en.id || i} style={{ borderBottom: "1px solid rgba(13,4,70,0.05)" }}>
+                      <td className="px-3 py-2 font-semibold whitespace-nowrap" style={{ color: "#0d0446" }}>{en.portal}</td>
+                      <td className="px-3 py-2" style={{ color: "#0d0446" }}>{en.title}</td>
                     <td className="px-3 py-2">
                       <button onClick={() => removeFromEscalada(i)} className="text-destructive hover:text-destructive/80">
                         <Trash2 size={12} />
@@ -529,6 +538,7 @@ export default function NoticiasPanel() {
               onDrop={portalDrag.handleDrop}
             >
               <div className={`${headerStyle} flex items-center justify-between cursor-pointer select-none`}
+                style={headerInline}
                 onClick={() => setExpandedPortals(prev => ({ ...prev, [portal.name]: !prev[portal.name] }))}>
                 <span className="flex items-center gap-2">
                   <GripVertical size={14} className="opacity-50" />
