@@ -183,6 +183,7 @@ function GradeBody({ gradeSlots, diasSemana, diaAtual, currentTimeStr, getProgra
   );
 }
 
+export default function ProgramaForm() {
   const { user } = useAuth();
   const [nome, setNome] = useState("");
   const [apresentadorId, setApresentadorId] = useState("");
