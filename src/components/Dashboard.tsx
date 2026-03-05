@@ -196,7 +196,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           </div>
 
           {/* Menu items with scroll */}
-          <nav className="flex-1 overflow-y-auto px-3 space-y-0.5" style={{ scrollbarWidth: "thin", scrollbarColor: "#268ffa transparent" }}>
+          <nav className="flex-1 overflow-y-auto px-3 space-y-0.5 sidebar-scroll">
             {sidebarMenu.map(item => {
               const Icon = item.icon;
               const active = isItemActive(item);
