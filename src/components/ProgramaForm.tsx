@@ -609,51 +609,63 @@ export default function ProgramaForm() {
         </div>
       ) : programas.length > 0 && (
         <div>
-          <div className="flex items-center justify-between mb-4">
-            <h4 className="text-lg font-medium" style={{ color: "#0d0446" }}>Programas Cadastrados</h4>
-            <Select value={sortBy} onValueChange={(v) => setSortBy(v as any)}>
-              <SelectTrigger className="w-[180px]" style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "20px", border: "none", fontSize: "14px", height: "28px", padding: "0 12px" }}>
-                <SelectValue placeholder="Ordenar por" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="horario">Horário</SelectItem>
-                <SelectItem value="nome">Ordem Alfabética</SelectItem>
-                <SelectItem value="estudio">Estúdio</SelectItem>
-                <SelectItem value="status">Status</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {sortedProgramas.map((p) => (
-              <div key={p.id} className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", border: `1px solid ${p.ativo ? "rgba(13,4,70,0.1)" : "rgba(220,38,38,0.3)"}`, opacity: p.ativo ? 1 : 0.6 }}>
-                <div className="px-4 py-3 font-bold text-sm flex items-center justify-between" style={{ backgroundColor: "#0d0446", color: "#ffffff" }}>
-                  <div className="flex items-center gap-2">
-                    {p.selo && <img src={p.selo} alt="Selo" className="h-6 rounded grayscale brightness-50" />}
-                    <span>{p.nome}</span>
-                    {p.variavel && <span className="text-[9px] bg-white/20 px-1.5 py-0.5 rounded">Variável</span>}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button onClick={() => startEdit(p)} title="Editar" className="hover:opacity-70 transition-opacity"><Pencil size={14} /></button>
-                    <button onClick={() => toggleAtivo(p.id, p.ativo)} title={p.ativo ? "Desativar" : "Ativar"} className="hover:opacity-70 transition-opacity">
-                      <Power size={14} className={p.ativo ? "" : "text-red-300"} />
-                    </button>
-                    <button onClick={() => removePrograma(p.id)} title="Remover" className="hover:opacity-70 transition-opacity"><Trash2 size={14} /></button>
-                  </div>
-                </div>
-                <div className="p-4 space-y-2 text-sm">
-                  <p style={{ color: "#0d0446" }}>Apresentador: {getApresentadorNome(p.apresentadorId)}</p>
-                  <p className="flex items-center gap-1" style={{ color: "rgba(13,4,70,0.5)" }}><Building2 size={12} /> {p.estudio}</p>
-                  <p className="flex items-center gap-1" style={{ color: "rgba(13,4,70,0.5)" }}><Calendar size={12} /> {p.variavel && p.dataVariavel ? `${format(new Date(p.dataVariavel + "T12:00:00"), "dd/MM/yyyy (EEEE)", { locale: ptBR })}` : p.diasSemana.join(", ")}</p>
-                  <p className="flex items-center gap-1" style={{ color: "rgba(13,4,70,0.5)" }}><Clock size={12} /> {p.horarioInicio} — {p.horarioFim}</p>
-                  {p.descricao && <p className="text-xs italic" style={{ color: "rgba(13,4,70,0.5)" }}>{p.descricao}</p>}
-                  <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${
-                    p.ativo ? "bg-green-100 text-green-700" : "bg-red-100 text-red-600"
-                  }`}>
-                    {p.ativo ? "Ativo" : "Inativo"}
-                  </span>
-                </div>
-              </div>
-            ))}
+          <h4 className="text-lg font-medium mb-4" style={{ color: "#0d0446" }}>Programas Cadastrados</h4>
+          <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(13,4,70,0.1)" }}>
+            <table className="w-full text-sm">
+              <thead>
+                <tr style={{ backgroundColor: "#0d0446", color: "#ffffff" }}>
+                  <th className="px-4 py-3 text-left font-semibold">Nome do Programa</th>
+                  <th className="px-4 py-3 text-left font-semibold">Dia de Exibição</th>
+                  <th className="px-4 py-3 text-left font-semibold">Horário</th>
+                  <th className="px-4 py-3 text-left font-semibold">Apresentador</th>
+                  <th className="px-4 py-3 text-center font-semibold">Editar</th>
+                  <th className="px-4 py-3 text-center font-semibold">Status</th>
+                  <th className="px-4 py-3 text-center font-semibold">Excluir</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sortedProgramas.map((p) => (
+                  <tr key={p.id} className="border-b" style={{ backgroundColor: "#ffffff", borderColor: "rgba(13,4,70,0.08)", opacity: p.ativo ? 1 : 0.6 }}>
+                    <td className="px-4 py-3 font-medium" style={{ color: "#0d0446" }}>
+                      <div className="flex items-center gap-2">
+                        {p.nome}
+                        {p.variavel && <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ backgroundColor: "rgba(13,4,70,0.1)", color: "#0d0446" }}>Variável</span>}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3" style={{ color: "rgba(13,4,70,0.6)" }}>
+                      {p.variavel && p.dataVariavel
+                        ? format(new Date(p.dataVariavel + "T12:00:00"), "dd/MM/yyyy (EEEE)", { locale: ptBR })
+                        : p.diasSemana.join(", ")}
+                    </td>
+                    <td className="px-4 py-3" style={{ color: "rgba(13,4,70,0.6)" }}>
+                      {p.horarioInicio.slice(0, 5)} — {p.horarioFim.slice(0, 5)}
+                    </td>
+                    <td className="px-4 py-3" style={{ color: "rgba(13,4,70,0.6)" }}>
+                      {getApresentadorNome(p.apresentadorId)}
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <button onClick={() => startEdit(p)} title="Editar" className="hover:opacity-70 transition-opacity" style={{ color: "#0d0446" }}>
+                        <Pencil size={16} />
+                      </button>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <button onClick={() => toggleAtivo(p.id, p.ativo)} title={p.ativo ? "Desativar" : "Ativar"}>
+                        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold cursor-pointer ${
+                          p.ativo ? "bg-green-100 text-green-700" : "bg-red-100 text-red-600"
+                        }`}>
+                          {p.ativo ? "Ativo" : "Inativo"}
+                        </span>
+                      </button>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <button onClick={() => removePrograma(p.id)} title="Remover" className="hover:opacity-70 transition-opacity" style={{ color: "#dc2626" }}>
+                        <Trash2 size={16} />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       )}
