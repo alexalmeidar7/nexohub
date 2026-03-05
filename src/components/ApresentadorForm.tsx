@@ -299,7 +299,7 @@ export default function ApresentadorForm() {
               <CheckCircle size={22} /> Salvo com sucesso!
             </div>
             <div className="w-full" style={{ height: "4px", backgroundColor: "rgba(255,255,255,0.15)" }}>
-              <div style={{ height: "100%", backgroundColor: "#2dbff4", animation: "shrinkBar 3s linear forwards" }} />
+              <div style={{ height: "100%", backgroundColor: "#2dbff4", animation: "shrinkBar 2s linear forwards" }} />
             </div>
           </div>
         </div>
