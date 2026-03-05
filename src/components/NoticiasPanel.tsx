@@ -538,6 +538,7 @@ export default function NoticiasPanel() {
               onDrop={portalDrag.handleDrop}
             >
               <div className={`${headerStyle} flex items-center justify-between cursor-pointer select-none`}
+                style={headerInline}
                 onClick={() => setExpandedPortals(prev => ({ ...prev, [portal.name]: !prev[portal.name] }))}>
                 <span className="flex items-center gap-2">
                   <GripVertical size={14} className="opacity-50" />
