@@ -148,20 +148,35 @@ export default function OnAirWidget() {
               style={{ right: 0, bottom: 0, width: "50%", height: "100%", objectPosition: "right bottom" }}
             />
           )}
-          <div className="absolute top-2 left-1 z-10 flex items-center gap-2">
-            <ArrowRight size={14} className="text-white/60" />
-            <span className="font-bold text-white/60 text-[10px]">PRÓXIMO</span>
+          {/* Top right buttons */}
+          <div className="absolute top-1 right-1 z-30 flex items-center gap-1">
+            <button
+              onClick={() => setIsHovered(false)}
+              className="bg-white/10 rounded-full px-2 py-1 cursor-pointer"
+            >
+              <ArrowRight size={10} className="text-white/60 rotate-180" />
+            </button>
           </div>
-          <div className="absolute bottom-3 left-1 right-0 z-10">
-            <p className="font-bold text-white truncate text-sm">{firstNext.nome}</p>
-            <p className="text-white/50 text-[10px] truncate">{firstNextAp?.nome} • {firstNext.horarioInicio} — {firstNext.horarioFim}</p>
+
+          <div className="flex items-center gap-2 mb-1 pt-1 pl-1">
+            <ArrowRight size={14} style={{ color: "#268ffa" }} />
+            <span className="font-bold text-[10px]" style={{ color: "#268ffa" }}>PRÓXIMO</span>
           </div>
-          <button
-            onClick={() => setIsHovered(false)}
-            className="absolute top-1 right-1 z-30 bg-white/10 rounded-full px-2 py-1 cursor-pointer"
-          >
-            <ArrowRight size={10} className="text-white/60 rotate-180" />
-          </button>
+
+          <div className="flex-1 flex flex-col justify-center z-10 pl-1">
+            <p className="font-bold text-white text-lg leading-tight line-clamp-2" style={{ maxWidth: "55%" }}>{firstNext.nome}</p>
+            <p className="text-white/50 text-[10px] whitespace-nowrap mt-1">
+              {firstNext.horarioInicio} — {firstNext.horarioFim}
+            </p>
+          </div>
+
+          <div className="z-10 mb-4 pl-1">
+            <p className="font-semibold text-white/80 text-xs">{firstNextAp?.nome}</p>
+          </div>
+
+          <div className="absolute bottom-0 left-0 right-0 z-10">
+            <div className="w-full h-1 bg-white/20 overflow-hidden" />
+          </div>
         </div>
       )}
 
@@ -204,7 +219,7 @@ export default function OnAirWidget() {
           </p>
         </div>
 
-        <div className="z-10 mb-1">
+        <div className="z-10 mb-4">
           <p className="font-semibold text-white/80 text-xs">{apresentadorNome}</p>
         </div>
 
