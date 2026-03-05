@@ -225,12 +225,12 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                             key={child.page}
                             onClick={() => setCurrentPage(child.page)}
                             className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-[11px] transition-colors ${
-                              childActive ? "text-[#268ffa]" : "text-white/60"
+                              childActive ? "text-[#268ffa]" : "text-white"
                             }`}
                             onMouseEnter={e => { if (!childActive) { e.currentTarget.style.color = "#268ffa"; } }}
                             onMouseLeave={e => { if (!childActive) { e.currentTarget.style.color = ""; } }}
                           >
-                            <ChildIcon size={12} className={childActive ? "text-[#268ffa]" : "text-white/40"} />
+                            <ChildIcon size={12} className={childActive ? "text-[#268ffa]" : "text-white"} />
                             <span>{child.label}</span>
                           </button>
                         );
