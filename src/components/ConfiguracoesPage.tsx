@@ -121,6 +121,19 @@ export default function ConfiguracoesPage() {
     input.click();
   };
 
+  const handleBackgroundUpload = () => {
+    const input = document.createElement("input");
+    input.type = "file"; input.accept = "image/*";
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => saveConfig({ ...config, backgroundUrl: ev.target?.result as string });
+      reader.readAsDataURL(file);
+    };
+    input.click();
+  };
+
   const handleChangePassword = async () => {
     if (!newPassword || newPassword.length < 6) { toast.error("A senha deve ter no mínimo 6 caracteres."); return; }
     setSavingPassword(true);
