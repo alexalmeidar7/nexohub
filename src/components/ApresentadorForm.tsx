@@ -163,7 +163,7 @@ export default function ApresentadorForm() {
         <div className="flex items-center gap-2">
           <Instagram size={18} style={{ color: "#0d0446" }} />
           <input value={instagram} onChange={(e) => setInstagram(e.target.value)} placeholder="@usuario_instagram"
-            className="flex-1 p-3 outline-none transition-colors"
+            className="flex-1 px-4 py-1.5 outline-none transition-colors text-sm"
             style={{ backgroundColor: "#ffffff", border: "1px solid #0d0446", color: "#0d0446", borderRadius: "20px" }}
             onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
             onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
