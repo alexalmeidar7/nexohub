@@ -41,7 +41,7 @@ function getLabel(code: number) {
 
 const STORAGE_KEY = "masterview_last_city";
 
-export default function WeatherWidget() {
+export default function WeatherWidget({ onNavigate }: { onNavigate?: (page: string) => void }) {
   const [weather, setWeather] = useState<WidgetWeather | null>(null);
 
   useEffect(() => {
