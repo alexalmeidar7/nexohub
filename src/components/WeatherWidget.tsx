@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Droplets, CloudRain, Thermometer, Sun } from "lucide-react";
+import { Droplets, CloudRain, Thermometer, Sun, Settings } from "lucide-react";
 
 interface WidgetWeather {
   city: string;
