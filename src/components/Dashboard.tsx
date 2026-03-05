@@ -357,7 +357,6 @@ interface WidgetCard {
 }
 
 const defaultWidgets: WidgetCard[] = [
-  { id: "onair", bg: "#0c0441", render: () => <OnAirWidget /> },
   { id: "weather", bg: "#ffffff", render: (nav) => <WeatherWidget onNavigate={nav} /> },
   { id: "top10", bg: "#ffffff", render: () => <TopLikedSongs /> },
   { id: "agenda", bg: "#ffffff", render: () => <DashboardAgenda /> },
