@@ -354,17 +354,39 @@ export default function ProgramaForm() {
 
         <div>
           <label className="block text-xs mb-1" style={{ color: "#0d0446", fontWeight: 600 }}>Apresentador Responsável</label>
-          <Select value={apresentadorId || "none"} onValueChange={(v) => setApresentadorId(v === "none" ? "" : v)}>
-            <SelectTrigger className="w-full h-8" style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "20px", border: "none" }}>
-              <SelectValue placeholder="Selecionar Apresentador" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="none">Nenhum</SelectItem>
-              {apresentadores.filter(a => a.ativo).map(a => (
-                <SelectItem key={a.id} value={a.id}>{a.nome}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                className="w-full h-8 flex items-center justify-between px-4 text-sm"
+                style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "20px", border: "none" }}
+              >
+                <span className={apresentadorId ? "" : "opacity-60"}>
+                  {apresentadorId ? (apresentadores.find(a => a.id === apresentadorId)?.nome || "Selecionar") : "Selecionar Apresentador"}
+                </span>
+                <ChevronsUpDown size={14} className="opacity-60" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+              <Command>
+                <CommandInput placeholder="Buscar apresentador..." />
+                <CommandList>
+                  <CommandEmpty>Nenhum encontrado.</CommandEmpty>
+                  <CommandGroup>
+                    <CommandItem value="__none__" onSelect={() => setApresentadorId("")}>
+                      <Check size={14} className={cn("mr-2", !apresentadorId ? "opacity-100" : "opacity-0")} />
+                      Nenhum
+                    </CommandItem>
+                    {apresentadores.filter(a => a.ativo && a.cargo?.toLowerCase() !== "convidado").map(a => (
+                      <CommandItem key={a.id} value={a.nome} onSelect={() => setApresentadorId(a.id)}>
+                        <Check size={14} className={cn("mr-2", apresentadorId === a.id ? "opacity-100" : "opacity-0")} />
+                        {a.nome}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
         </div>
 
         <div>
