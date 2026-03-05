@@ -98,7 +98,6 @@
 /* Sidebar thin white scrollbar */
 .sidebar-scroll::-webkit-scrollbar {
   width: 4px;
-  margin-right: 4px;
 }
 .sidebar-scroll::-webkit-scrollbar-track {
   background: transparent;
@@ -111,5 +110,5 @@
 .sidebar-scroll {
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.5) transparent;
-  padding-right: 8px;
+  padding-right: 20px;
 }
