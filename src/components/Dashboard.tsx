@@ -326,44 +326,75 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
 /* ========== DASHBOARD HOME ========== */
 function DashboardHome({ empresa }: { empresa: import("./ConfiguracoesPage").EmpresaConfig }) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const scrollLeft = () => {
+    scrollRef.current?.scrollBy({ left: -370, behavior: "smooth" });
+  };
+  const scrollRight = () => {
+    scrollRef.current?.scrollBy({ left: 370, behavior: "smooth" });
+  };
+
   return (
-    <div className="animate-fade-in space-y-4">
-      {/* Widget cards row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-        {/* Card 1 - No Ar */}
-        <div className="rounded-2xl p-4 min-h-[200px]" style={{ backgroundColor: "#0c0441" }}>
-          <Suspense fallback={<Loader2 className="animate-spin text-white/50" size={16} />}>
-            <OnAirWidget />
-          </Suspense>
+    <div className="animate-fade-in flex flex-col justify-end flex-1">
+      <div className="relative">
+        {/* Left arrow */}
+        <button
+          onClick={scrollLeft}
+          className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 w-8 h-8 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60 transition-colors"
+        >
+          <ChevronDown size={16} className="rotate-90" />
+        </button>
+
+        {/* Scrollable cards row */}
+        <div
+          ref={scrollRef}
+          className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide"
+          style={{ scrollSnapType: "x mandatory" }}
+        >
+          {/* Card 1 - No Ar */}
+          <div className="rounded-2xl p-4 flex-shrink-0 overflow-hidden" style={{ backgroundColor: "#0c0441", width: "350px", height: "225px", scrollSnapAlign: "start" }}>
+            <Suspense fallback={<Loader2 className="animate-spin text-white/50" size={16} />}>
+              <OnAirWidget />
+            </Suspense>
+          </div>
+
+          {/* Card 2 - Tempo */}
+          <div className="rounded-2xl p-4 bg-white flex-shrink-0 overflow-hidden" style={{ width: "350px", height: "225px", scrollSnapAlign: "start" }}>
+            <Suspense fallback={<Loader2 className="animate-spin text-gray-400" size={16} />}>
+              <WeatherWidget />
+            </Suspense>
+          </div>
+
+          {/* Card 3 - Top 10 */}
+          <div className="rounded-2xl p-4 bg-white flex-shrink-0 overflow-hidden" style={{ width: "350px", height: "225px", scrollSnapAlign: "start" }}>
+            <Suspense fallback={<Loader2 className="animate-spin text-gray-400" size={16} />}>
+              <TopLikedSongs />
+            </Suspense>
+          </div>
+
+          {/* Card 4 - Agenda */}
+          <div className="rounded-2xl p-4 bg-white flex-shrink-0 overflow-hidden" style={{ width: "350px", height: "225px", scrollSnapAlign: "start" }}>
+            <Suspense fallback={<Loader2 className="animate-spin text-gray-400" size={16} />}>
+              <DashboardAgenda />
+            </Suspense>
+          </div>
+
+          {/* Card 5 - Patrocinadores */}
+          <div className="rounded-2xl p-4 bg-white flex-shrink-0 overflow-hidden" style={{ width: "350px", height: "225px", scrollSnapAlign: "start" }}>
+            <Suspense fallback={<Loader2 className="animate-spin text-gray-400" size={16} />}>
+              <ComercialWidgets />
+            </Suspense>
+          </div>
         </div>
 
-        {/* Card 2 - Tempo */}
-        <div className="rounded-2xl p-4 bg-white min-h-[200px]">
-          <Suspense fallback={<Loader2 className="animate-spin text-gray-400" size={16} />}>
-            <WeatherWidget />
-          </Suspense>
-        </div>
-
-        {/* Card 3 - Top 10 */}
-        <div className="rounded-2xl p-4 bg-white min-h-[200px]">
-          <Suspense fallback={<Loader2 className="animate-spin text-gray-400" size={16} />}>
-            <TopLikedSongs />
-          </Suspense>
-        </div>
-      </div>
-
-      {/* Secondary row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-        <div className="rounded-2xl p-4 bg-white">
-          <Suspense fallback={<Loader2 className="animate-spin text-gray-400" size={16} />}>
-            <DashboardAgenda />
-          </Suspense>
-        </div>
-        <div className="rounded-2xl p-4 bg-white">
-          <Suspense fallback={<Loader2 className="animate-spin text-gray-400" size={16} />}>
-            <ComercialWidgets />
-          </Suspense>
-        </div>
+        {/* Right arrow */}
+        <button
+          onClick={scrollRight}
+          className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 w-8 h-8 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60 transition-colors"
+        >
+          <ChevronDown size={16} className="-rotate-90" />
+        </button>
       </div>
     </div>
   );
