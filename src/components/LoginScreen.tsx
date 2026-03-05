@@ -55,7 +55,7 @@ export default function LoginScreen() {
     >
       <div className="relative w-full max-w-md">
         {/* Main Login Box */}
-        <div className="relative z-10 w-full rounded-3xl p-10 shadow-2xl animate-fade-in bg-white" style={{ fontSize: "12px" }}>
+        <div className="relative z-10 w-full p-10 shadow-2xl animate-fade-in bg-white" style={{ fontSize: "12px", borderRadius: "2rem" }}>
           <h1 className="text-center font-semibold tracking-wide mb-8" style={{ color: "#0f1058", fontSize: "12px" }}>
             NexoHub login
           </h1>
