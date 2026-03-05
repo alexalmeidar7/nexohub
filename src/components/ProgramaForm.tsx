@@ -758,7 +758,6 @@ export default function ProgramaForm() {
             .grade-scroll::-webkit-scrollbar-thumb:hover { background: #2dbef3; }
             .grade-scroll::-webkit-scrollbar-button { display: none; }
           `}</style>
-          <div style={{ position: "relative" }}>
           <div
             ref={gradeRef}
             className="rounded-xl overflow-auto max-h-[300px] grade-scroll"
@@ -785,28 +784,27 @@ export default function ProgramaForm() {
                 apresentadores={apresentadores}
               />
             </table>
-          </div>
-          {/* Time needle overlay */}
-          <div ref={needleRef} style={{
-            position: "absolute",
-            left: 0,
-            right: 0,
-            height: "2px",
-            backgroundColor: "#0d0446",
-            zIndex: 15,
-            pointerEvents: "none",
-            display: "none",
-          }}>
-            <div style={{
+            {/* Time needle overlay */}
+            <div ref={needleRef} style={{
               position: "absolute",
-              left: -4,
-              top: -3,
-              width: 8,
-              height: 8,
-              borderRadius: "50%",
+              left: 0,
+              right: 0,
+              height: "2px",
               backgroundColor: "#0d0446",
-            }} />
-          </div>
+              zIndex: 15,
+              pointerEvents: "none",
+              display: "none",
+            }}>
+              <div style={{
+                position: "absolute",
+                left: -4,
+                top: -3,
+                width: 8,
+                height: 8,
+                borderRadius: "50%",
+                backgroundColor: "#0d0446",
+              }} />
+            </div>
           </div>
         </div>
       )}
