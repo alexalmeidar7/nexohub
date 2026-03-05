@@ -16,7 +16,7 @@ function sanitizeFileName(label: string): string {
     .replace(/[^a-z0-9\-]/g, "") + ".xml";
 }
 
-export default function XmlLinkRow({ label, xmlContent, dark }: XmlLinkRowProps) {
+export default function XmlLinkRow({ label, xmlContent, dark, compact }: XmlLinkRowProps) {
   const [copied, setCopied] = useState(false);
   const [permanentUrl, setPermanentUrl] = useState<string>("");
   const [uploading, setUploading] = useState(false);
