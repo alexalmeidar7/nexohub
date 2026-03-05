@@ -328,40 +328,61 @@ export default function ProgramaForm() {
   return (
     <div className="animate-fade-in space-y-6">
       <div className="max-w-lg space-y-4">
-        <h3 className="text-xl mb-4 text-primary">
+        <h3 className="text-xl mb-4" style={{ color: "#0d0446" }}>
           {editingId ? "Editar Programa" : "Cadastro de Programa"}
         </h3>
         <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Nome do Programa"
-          className="w-full bg-muted border border-border p-3 rounded-lg text-foreground placeholder:text-muted-foreground outline-none focus:ring-1 focus:ring-primary" />
+          className="w-full px-4 py-1.5 outline-none transition-colors text-sm"
+          style={{ backgroundColor: "#ffffff", border: "1px solid #0d0446", color: "#0d0446", borderRadius: "20px" }}
+          onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
+          onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
+        />
         <Textarea value={descricao} onChange={(e) => setDescricao(e.target.value)} placeholder="Descrição do Programa (opcional)"
-          className="bg-muted border-border text-foreground placeholder:text-muted-foreground min-h-[60px]" />
-        <select value={apresentadorId} onChange={(e) => setApresentadorId(e.target.value)}
-          className="w-full bg-muted border border-border p-3 rounded-lg text-foreground outline-none focus:ring-1 focus:ring-primary">
-          <option value="">Selecionar Apresentador Responsável</option>
-          {apresentadores.filter(a => a.ativo).map(a => (
-            <option key={a.id} value={a.id}>{a.nome}</option>
-          ))}
-        </select>
+          className="min-h-[60px] px-4 py-2 outline-none transition-colors text-sm"
+          style={{ backgroundColor: "#ffffff", border: "1px solid #0d0446", color: "#0d0446", borderRadius: "16px" }}
+          onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
+          onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
+        />
+
         <div>
-          <label className="block text-muted-foreground text-xs mb-2">Selo do Programa (1080 x 1080 px - PNG com fundo alpha)</label>
-          <input type="file" accept="image/*" onChange={handleSelo}
-            className="w-full bg-muted border border-border p-2 rounded-lg text-foreground text-sm file:mr-3 file:rounded file:border-0 file:bg-primary file:text-primary-foreground file:px-3 file:py-1 file:font-bold file:text-xs" />
-          {selo && <img src={selo} alt="Selo" className="mt-2 h-16 rounded border border-border" />}
-        </div>
-        <div>
-          <label className="block text-muted-foreground text-xs mb-2">Capa do Programa (1080 x 1080 px - PNG com fundo alpha)</label>
-          <input type="file" accept="image/*" onChange={handleCapa}
-            className="w-full bg-muted border border-border p-2 rounded-lg text-foreground text-sm file:mr-3 file:rounded file:border-0 file:bg-primary file:text-primary-foreground file:px-3 file:py-1 file:font-bold file:text-xs" />
-          {capa && <img src={capa} alt="Capa" className="mt-2 h-16 rounded border border-border" />}
+          <label className="block text-xs mb-1" style={{ color: "#0d0446", fontWeight: 600 }}>Apresentador Responsável</label>
+          <Select value={apresentadorId} onValueChange={setApresentadorId}>
+            <SelectTrigger className="w-full h-8" style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "20px", border: "none" }}>
+              <SelectValue placeholder="Selecionar Apresentador" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">Nenhum</SelectItem>
+              {apresentadores.filter(a => a.ativo).map(a => (
+                <SelectItem key={a.id} value={a.id}>{a.nome}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <div>
-          <label className="block text-muted-foreground text-xs mb-1 flex items-center gap-1">
+          <label className="block text-xs mb-2" style={{ color: "#0d0446", fontWeight: 600 }}>Selo do Programa (1080 x 1080 px - PNG com fundo alpha)</label>
+          <input type="file" accept="image/*" onChange={handleSelo}
+            className="w-full p-2 text-sm file:mr-3 file:rounded-full file:border-0 file:px-3 file:py-1 file:font-bold file:text-xs"
+            style={{ backgroundColor: "#ffffff", border: "1px solid #0d0446", color: "#0d0446", borderRadius: "20px" }}
+          />
+          {selo && <img src={selo} alt="Selo" className="mt-2 h-16 rounded" style={{ border: "1px solid #0d0446" }} />}
+        </div>
+        <div>
+          <label className="block text-xs mb-2" style={{ color: "#0d0446", fontWeight: 600 }}>Capa do Programa (1080 x 1080 px - PNG com fundo alpha)</label>
+          <input type="file" accept="image/*" onChange={handleCapa}
+            className="w-full p-2 text-sm file:mr-3 file:rounded-full file:border-0 file:px-3 file:py-1 file:font-bold file:text-xs"
+            style={{ backgroundColor: "#ffffff", border: "1px solid #0d0446", color: "#0d0446", borderRadius: "20px" }}
+          />
+          {capa && <img src={capa} alt="Capa" className="mt-2 h-16 rounded" style={{ border: "1px solid #0d0446" }} />}
+        </div>
+
+        <div>
+          <label className="block text-xs mb-1 flex items-center gap-1" style={{ color: "#0d0446", fontWeight: 600 }}>
             <Building2 size={14} /> Estúdio
           </label>
           <div className="flex gap-2">
             <Select value={estudio} onValueChange={setEstudio}>
-              <SelectTrigger className="flex-1">
+              <SelectTrigger className="flex-1 h-8" style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "20px", border: "none" }}>
                 <SelectValue placeholder="Selecione o estúdio" />
               </SelectTrigger>
               <SelectContent>
@@ -372,13 +393,26 @@ export default function ProgramaForm() {
             </Select>
             <Dialog open={estudioDialogOpen} onOpenChange={setEstudioDialogOpen}>
               <DialogTrigger asChild>
-                <Button variant="outline" size="sm" className="shrink-0">+ Novo</Button>
+                <button className="px-4 py-1 text-sm font-bold transition-all shrink-0"
+                  style={{ backgroundColor: "#0d0446", color: "#ffffff", border: "2px solid #0d0446", borderRadius: "20px" }}
+                  onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#ffffff"; e.currentTarget.style.color = "#0d0446"; }}
+                  onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#0d0446"; e.currentTarget.style.color = "#ffffff"; }}
+                >+ Novo</button>
               </DialogTrigger>
               <DialogContent className="max-w-sm">
-                <DialogHeader><DialogTitle>Cadastrar Estúdio</DialogTitle></DialogHeader>
+                <DialogHeader><DialogTitle style={{ color: "#0d0446" }}>Cadastrar Estúdio</DialogTitle></DialogHeader>
                 <div className="space-y-3">
-                  <Input value={newEstudio} onChange={(e) => setNewEstudio(e.target.value)} placeholder="Nome do estúdio" />
-                  <Button onClick={addEstudio} className="w-full">Adicionar</Button>
+                  <input value={newEstudio} onChange={(e) => setNewEstudio(e.target.value)} placeholder="Nome do estúdio"
+                    className="w-full px-4 py-1.5 outline-none transition-colors text-sm"
+                    style={{ backgroundColor: "#ffffff", border: "1px solid #0d0446", color: "#0d0446", borderRadius: "20px" }}
+                    onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
+                    onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
+                  />
+                  <button onClick={addEstudio} className="w-full py-2 font-bold transition-all"
+                    style={{ backgroundColor: "#0d0446", color: "#ffffff", border: "2px solid #0d0446", borderRadius: "20px" }}
+                    onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#ffffff"; e.currentTarget.style.color = "#0d0446"; }}
+                    onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#0d0446"; e.currentTarget.style.color = "#ffffff"; }}
+                  >Adicionar</button>
                 </div>
               </DialogContent>
             </Dialog>
@@ -386,15 +420,19 @@ export default function ProgramaForm() {
         </div>
 
         <div>
-          <label className="block text-muted-foreground text-xs mb-2 flex items-center gap-1">
+          <label className="block text-xs mb-2 flex items-center gap-1" style={{ color: "#0d0446", fontWeight: 600 }}>
             <Calendar size={14} /> Dias da Semana
           </label>
           <div className="flex flex-wrap gap-2">
             {DIAS_SEMANA.map(dia => (
               <button key={dia} onClick={() => toggleDia(dia)}
-                className={`px-3 py-1 rounded-lg text-xs font-semibold border transition-all ${
-                  diasSemana.includes(dia) ? "bg-primary text-primary-foreground border-primary" : "bg-muted text-muted-foreground border-border hover:border-primary"
-                }`}>
+                className="px-3 py-1 text-xs font-semibold transition-all"
+                style={{
+                  backgroundColor: diasSemana.includes(dia) ? "#0d0446" : "#ffffff",
+                  color: diasSemana.includes(dia) ? "#ffffff" : "#0d0446",
+                  border: `1px solid #0d0446`,
+                  borderRadius: "20px",
+                }}>
                 {dia}
               </button>
             ))}
@@ -402,39 +440,48 @@ export default function ProgramaForm() {
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-muted-foreground text-xs mb-1 flex items-center gap-1"><Clock size={12} /> Início</label>
+            <label className="block text-xs mb-1 flex items-center gap-1" style={{ color: "#0d0446", fontWeight: 600 }}><Clock size={12} /> Início</label>
             <input type="time" step="1" value={horarioInicio} onChange={(e) => setHorarioInicio(e.target.value)}
-              className="w-full bg-muted border border-border p-3 rounded-lg text-foreground outline-none focus:ring-1 focus:ring-primary" />
+              className="w-full px-4 py-1.5 outline-none transition-colors text-sm"
+              style={{ backgroundColor: "#ffffff", border: "1px solid #0d0446", color: "#0d0446", borderRadius: "20px" }}
+              onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
+              onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
+            />
           </div>
           <div>
-            <label className="block text-muted-foreground text-xs mb-1 flex items-center gap-1"><Clock size={12} /> Fim</label>
+            <label className="block text-xs mb-1 flex items-center gap-1" style={{ color: "#0d0446", fontWeight: 600 }}><Clock size={12} /> Fim</label>
             <input type="time" step="1" value={horarioFim} onChange={(e) => setHorarioFim(e.target.value)}
-              className="w-full bg-muted border border-border p-3 rounded-lg text-foreground outline-none focus:ring-1 focus:ring-primary" />
+              className="w-full px-4 py-1.5 outline-none transition-colors text-sm"
+              style={{ backgroundColor: "#ffffff", border: "1px solid #0d0446", color: "#0d0446", borderRadius: "20px" }}
+              onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
+              onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
+            />
           </div>
         </div>
 
         <div className="flex gap-4">
-          <label className="flex items-center gap-2 cursor-pointer text-foreground">
-            <input type="checkbox" checked={ativo} onChange={(e) => setAtivo(e.target.checked)} className="w-4 h-4 accent-primary" />
+          <label className="flex items-center gap-2 cursor-pointer" style={{ color: "#0d0446" }}>
+            <input type="checkbox" checked={ativo} onChange={(e) => setAtivo(e.target.checked)} className="w-4 h-4" style={{ accentColor: "#0d0446" }} />
             Programa Ativo
           </label>
-          <label className="flex items-center gap-2 cursor-pointer text-foreground">
-            <input type="checkbox" checked={variavel} onChange={(e) => { setVariavel(e.target.checked); if (!e.target.checked) setDataVariavel(undefined); }} className="w-4 h-4 accent-primary" />
+          <label className="flex items-center gap-2 cursor-pointer" style={{ color: "#0d0446" }}>
+            <input type="checkbox" checked={variavel} onChange={(e) => { setVariavel(e.target.checked); if (!e.target.checked) setDataVariavel(undefined); }} className="w-4 h-4" style={{ accentColor: "#0d0446" }} />
             Programa Variável
           </label>
         </div>
 
         {variavel && (
           <div className="space-y-2">
-            <label className="block text-muted-foreground text-xs flex items-center gap-1">
+            <label className="block text-xs flex items-center gap-1" style={{ color: "#0d0446", fontWeight: 600 }}>
               <CalendarDays size={14} /> Data do Programa Variável
             </label>
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !dataVariavel && "text-muted-foreground")}>
-                  <CalendarDays className="mr-2 h-4 w-4" />
+                <button className={cn("w-full justify-start text-left font-normal flex items-center gap-2 px-4 py-1.5 text-sm")}
+                  style={{ backgroundColor: "#ffffff", border: "1px solid #0d0446", color: "#0d0446", borderRadius: "20px" }}>
+                  <CalendarDays className="h-4 w-4" />
                   {dataVariavel ? format(dataVariavel, "dd/MM/yyyy (EEEE)", { locale: ptBR }) : "Selecione a data"}
-                </Button>
+                </button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
                 <CalendarUI
@@ -446,20 +493,28 @@ export default function ProgramaForm() {
                 />
               </PopoverContent>
             </Popover>
-            <p className="text-xs text-muted-foreground bg-muted/50 border border-border rounded-lg px-3 py-2">
+            <p className="text-xs px-3 py-2 rounded-lg" style={{ color: "#0d0446", backgroundColor: "rgba(13,4,70,0.05)", border: "1px solid rgba(13,4,70,0.1)" }}>
               ⚠️ Este programa substituirá o programa fixo neste horário apenas na data selecionada. O programa anterior voltará automaticamente após essa data.
             </p>
           </div>
         )}
 
-        {conflictMsg && <p className="text-destructive text-sm flex items-center gap-1"><AlertCircle size={14} /> {conflictMsg}</p>}
+        {conflictMsg && <p className="text-sm flex items-center gap-1" style={{ color: "#dc2626" }}><AlertCircle size={14} /> {conflictMsg}</p>}
         <div className="flex gap-2 items-center">
-          <button onClick={handleAdd} disabled={saving} className="bg-primary text-primary-foreground px-6 py-2 rounded-lg font-bold hover:brightness-95 transition-all flex items-center gap-2 disabled:opacity-70">
+          <button onClick={handleAdd} disabled={saving}
+            className="px-6 py-2 font-bold transition-all flex items-center gap-2 disabled:opacity-70"
+            style={{ backgroundColor: "#0d0446", color: "#ffffff", border: "2px solid #0d0446", borderRadius: "20px" }}
+            onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#ffffff"; e.currentTarget.style.color = "#0d0446"; }}
+            onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#0d0446"; e.currentTarget.style.color = "#ffffff"; }}
+          >
             {saving && <Loader2 size={14} className="animate-spin" />}
             {saving ? "Salvando..." : editingId ? "Atualizar Programa" : "Adicionar Programa"}
           </button>
           {editingId && (
-            <button onClick={resetForm} className="bg-muted border border-border text-foreground px-4 py-2 rounded-lg font-bold hover:brightness-95 transition-all flex items-center gap-1">
+            <button onClick={resetForm}
+              className="px-4 py-2 font-bold transition-all flex items-center gap-1"
+              style={{ backgroundColor: "#ffffff", color: "#0d0446", border: "2px solid #0d0446", borderRadius: "20px" }}
+            >
               <X size={14} /> Cancelar
             </button>
           )}
@@ -469,15 +524,15 @@ export default function ProgramaForm() {
       {/* Grade de Programação */}
       {loadingData ? (
         <div className="flex items-center gap-2 py-8 justify-center">
-          <Loader2 size={20} className="animate-spin text-primary" />
-          <span className="text-muted-foreground text-sm">Carregando grade de programação...</span>
+          <Loader2 size={20} className="animate-spin" style={{ color: "#0d0446" }} />
+          <span className="text-sm" style={{ color: "rgba(13,4,70,0.5)" }}>Carregando grade de programação...</span>
         </div>
       ) : programas.length > 0 && (
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h4 className="text-lg font-medium text-foreground">Grade de Programação</h4>
+            <h4 className="text-lg font-medium" style={{ color: "#0d0446" }}>Grade de Programação</h4>
             <Select value={gradeEstudioFilter} onValueChange={setGradeEstudioFilter}>
-              <SelectTrigger className="w-[200px] h-8 text-sm">
+              <SelectTrigger className="w-[200px]" style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "20px", border: "none", fontSize: "14px", height: "28px", padding: "0 12px" }}>
                 <SelectValue placeholder="Filtrar por estúdio" />
               </SelectTrigger>
               <SelectContent>
@@ -490,14 +545,15 @@ export default function ProgramaForm() {
           </div>
           <div
             ref={gradeRef}
-            className="bg-muted rounded-xl border border-border overflow-auto max-h-[300px]"
+            className="rounded-xl overflow-auto max-h-[300px]"
+            style={{ border: "1px solid rgba(13,4,70,0.1)", backgroundColor: "#ffffff" }}
           >
             <table className="w-full text-xs border-separate border-spacing-1">
-              <thead className="sticky top-0 z-10 bg-muted">
+              <thead className="sticky top-0 z-10" style={{ backgroundColor: "#ffffff" }}>
                 <tr>
-                  <th className="px-2 py-2 text-left text-muted-foreground w-20 rounded-lg">Horário</th>
+                  <th className="px-2 py-2 text-left w-20 rounded-lg" style={{ color: "#0d0446" }}>Horário</th>
                   {DIAS_SEMANA.map(dia => (
-                    <th key={dia} className={`px-2 py-2 text-center rounded-lg ${dia === diaAtual ? "text-primary font-bold" : "text-muted-foreground"}`}>
+                    <th key={dia} className={`px-2 py-2 text-center rounded-lg ${dia === diaAtual ? "font-bold" : ""}`} style={{ color: dia === diaAtual ? "#2dbef3" : "#0d0446" }}>
                       <div>{dia.slice(0, 3)}</div>
                       <div className="text-[9px] font-normal opacity-70">{weekDates[dia]}</div>
                     </th>
@@ -507,19 +563,19 @@ export default function ProgramaForm() {
               <tbody>
                 {gradeSlots.map(slot => (
                   <tr key={slot}>
-                    <td className="px-2 py-2 text-muted-foreground font-mono rounded-lg">{slot.slice(0, 5)}</td>
+                    <td className="px-2 py-2 font-mono rounded-lg" style={{ color: "rgba(13,4,70,0.5)" }}>{slot.slice(0, 5)}</td>
                     {DIAS_SEMANA.map(dia => {
                       const prog = getProgramaForSlot(dia, slot);
                       const isOnAir = prog && dia === diaAtual && currentTimeStr >= prog.horarioInicio && currentTimeStr < prog.horarioFim;
                       return (
-                        <td key={dia} className={`px-1 py-1 text-center rounded-lg transition-all border-2 hover:border-[#d4f959] ${
-                          isOnAir ? "font-bold" :
-                          prog ? "bg-primary/10 text-foreground border-transparent" : "border-transparent"
+                        <td key={dia} className={`px-1 py-1 text-center rounded-lg transition-all border-2 hover:border-[#2dbef3] ${
+                          prog && !isOnAir ? "border-transparent" : "border-transparent"
                         }`}
                         style={{
-                          backgroundColor: isOnAir ? "#d4f959" : undefined,
-                          color: isOnAir ? "#333" : undefined,
-                          borderColor: isOnAir ? "#d4f959" : undefined,
+                          backgroundColor: isOnAir ? "#2dbef3" : prog ? "rgba(13,4,70,0.05)" : undefined,
+                          color: isOnAir ? "#ffffff" : "#0d0446",
+                          fontWeight: isOnAir ? "bold" : undefined,
+                          borderColor: isOnAir ? "#2dbef3" : undefined,
                         }}>
                           {prog ? (
                             <div className="flex items-center justify-between gap-0.5 group/cell">
@@ -530,7 +586,7 @@ export default function ProgramaForm() {
                                     onClick={(e) => e.stopPropagation()}
                                     className="opacity-0 group-hover/cell:opacity-100 transition-opacity shrink-0"
                                   >
-                                    <Info size={10} className="text-white" />
+                                    <Info size={10} style={{ color: isOnAir ? "#ffffff" : "#0d0446" }} />
                                   </button>
                                 </PopoverTrigger>
                                 <PopoverContent className="w-96 p-0 overflow-hidden" side="right" align="start">
@@ -539,15 +595,15 @@ export default function ProgramaForm() {
                                       <img src={prog.capa} alt={prog.nome} className="w-36 h-auto object-cover shrink-0" />
                                     )}
                                     <div className="p-3 space-y-1.5 flex-1 min-w-0">
-                                      <p className="font-bold text-sm text-foreground">{prog.nome}</p>
-                                      <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                      <p className="font-bold text-sm" style={{ color: "#0d0446" }}>{prog.nome}</p>
+                                      <p className="text-xs flex items-center gap-1" style={{ color: "rgba(13,4,70,0.5)" }}>
                                         <Clock size={10} /> {prog.horarioInicio.slice(0, 5)} — {prog.horarioFim.slice(0, 5)}
                                       </p>
-                                      <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                      <p className="text-xs flex items-center gap-1" style={{ color: "rgba(13,4,70,0.5)" }}>
                                         <Calendar size={10} /> {prog.diasSemana.join(", ")}
                                       </p>
                                       {prog.descricao && (
-                                        <p className="text-xs text-muted-foreground italic border-t border-border pt-1.5 mt-1.5">{prog.descricao}</p>
+                                        <p className="text-xs italic border-t pt-1.5 mt-1.5" style={{ color: "rgba(13,4,70,0.5)", borderColor: "rgba(13,4,70,0.1)" }}>{prog.descricao}</p>
                                       )}
                                     </div>
                                   </div>
@@ -568,15 +624,15 @@ export default function ProgramaForm() {
 
       {loadingData ? (
         <div className="flex items-center gap-2 py-8 justify-center">
-          <Loader2 size={20} className="animate-spin text-primary" />
-          <span className="text-muted-foreground text-sm">Carregando programas cadastrados...</span>
+          <Loader2 size={20} className="animate-spin" style={{ color: "#0d0446" }} />
+          <span className="text-sm" style={{ color: "rgba(13,4,70,0.5)" }}>Carregando programas cadastrados...</span>
         </div>
       ) : programas.length > 0 && (
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h4 className="text-lg font-medium text-foreground">Programas Cadastrados</h4>
+            <h4 className="text-lg font-medium" style={{ color: "#0d0446" }}>Programas Cadastrados</h4>
             <Select value={sortBy} onValueChange={(v) => setSortBy(v as any)}>
-              <SelectTrigger className="w-[180px] h-8 text-sm">
+              <SelectTrigger className="w-[180px]" style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "20px", border: "none", fontSize: "14px", height: "28px", padding: "0 12px" }}>
                 <SelectValue placeholder="Ordenar por" />
               </SelectTrigger>
               <SelectContent>
@@ -589,35 +645,49 @@ export default function ProgramaForm() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {sortedProgramas.map((p) => (
-              <div key={p.id} className={`bg-muted rounded-xl border overflow-hidden ${p.ativo ? "border-border" : "border-destructive/30 opacity-60"}`}>
-                <div className="px-4 py-3 font-bold text-sm bg-primary text-primary-foreground flex items-center justify-between">
+              <div key={p.id} className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", border: `1px solid ${p.ativo ? "rgba(13,4,70,0.1)" : "rgba(220,38,38,0.3)"}`, opacity: p.ativo ? 1 : 0.6 }}>
+                <div className="px-4 py-3 font-bold text-sm flex items-center justify-between" style={{ backgroundColor: "#0d0446", color: "#ffffff" }}>
                   <div className="flex items-center gap-2">
                     {p.selo && <img src={p.selo} alt="Selo" className="h-6 rounded grayscale brightness-50" />}
                     <span>{p.nome}</span>
                     {p.variavel && <span className="text-[9px] bg-white/20 px-1.5 py-0.5 rounded">Variável</span>}
                   </div>
                   <div className="flex items-center gap-2">
-                    <button onClick={() => startEdit(p)} title="Editar"><Pencil size={14} /></button>
-                    <button onClick={() => toggleAtivo(p.id, p.ativo)} title={p.ativo ? "Desativar" : "Ativar"}>
+                    <button onClick={() => startEdit(p)} title="Editar" className="hover:opacity-70 transition-opacity"><Pencil size={14} /></button>
+                    <button onClick={() => toggleAtivo(p.id, p.ativo)} title={p.ativo ? "Desativar" : "Ativar"} className="hover:opacity-70 transition-opacity">
                       <Power size={14} className={p.ativo ? "" : "text-red-300"} />
                     </button>
-                    <button onClick={() => removePrograma(p.id)} title="Remover"><Trash2 size={14} /></button>
+                    <button onClick={() => removePrograma(p.id)} title="Remover" className="hover:opacity-70 transition-opacity"><Trash2 size={14} /></button>
                   </div>
                 </div>
                 <div className="p-4 space-y-2 text-sm">
-                  <p className="text-foreground">Apresentador: {getApresentadorNome(p.apresentadorId)}</p>
-                  <p className="text-muted-foreground flex items-center gap-1"><Building2 size={12} /> {p.estudio}</p>
-                  <p className="text-muted-foreground flex items-center gap-1"><Calendar size={12} /> {p.variavel && p.dataVariavel ? `${format(new Date(p.dataVariavel + "T12:00:00"), "dd/MM/yyyy (EEEE)", { locale: ptBR })}` : p.diasSemana.join(", ")}</p>
-                  <p className="text-muted-foreground flex items-center gap-1"><Clock size={12} /> {p.horarioInicio} — {p.horarioFim}</p>
-                  {p.descricao && <p className="text-muted-foreground text-xs italic">{p.descricao}</p>}
-                  <span className={`inline-block px-2 py-0.5 rounded text-xs font-semibold ${
-                    p.ativo ? "bg-primary/20 text-primary" : "bg-destructive/20 text-destructive"
+                  <p style={{ color: "#0d0446" }}>Apresentador: {getApresentadorNome(p.apresentadorId)}</p>
+                  <p className="flex items-center gap-1" style={{ color: "rgba(13,4,70,0.5)" }}><Building2 size={12} /> {p.estudio}</p>
+                  <p className="flex items-center gap-1" style={{ color: "rgba(13,4,70,0.5)" }}><Calendar size={12} /> {p.variavel && p.dataVariavel ? `${format(new Date(p.dataVariavel + "T12:00:00"), "dd/MM/yyyy (EEEE)", { locale: ptBR })}` : p.diasSemana.join(", ")}</p>
+                  <p className="flex items-center gap-1" style={{ color: "rgba(13,4,70,0.5)" }}><Clock size={12} /> {p.horarioInicio} — {p.horarioFim}</p>
+                  {p.descricao && <p className="text-xs italic" style={{ color: "rgba(13,4,70,0.5)" }}>{p.descricao}</p>}
+                  <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${
+                    p.ativo ? "bg-green-100 text-green-700" : "bg-red-100 text-red-600"
                   }`}>
                     {p.ativo ? "Ativo" : "Inativo"}
                   </span>
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {showSuccess && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: "rgba(0,0,0,0.3)" }}>
+          <div className="flex flex-col items-center justify-center animate-fade-in overflow-hidden"
+            style={{ width: "450px", height: "165px", backgroundColor: "rgba(13, 4, 70, 0.92)", borderRadius: "16px" }}>
+            <div className="flex items-center gap-3 flex-1 justify-center" style={{ fontSize: "14px", color: "#ffffff", fontWeight: 600 }}>
+              <CheckCircle size={22} /> Salvo com sucesso!
+            </div>
+            <div className="w-full" style={{ height: "4px", backgroundColor: "rgba(255,255,255,0.15)" }}>
+              <div style={{ height: "100%", backgroundColor: "#2dbff4", animation: "shrinkBar 2s linear forwards" }} />
+            </div>
           </div>
         </div>
       )}
