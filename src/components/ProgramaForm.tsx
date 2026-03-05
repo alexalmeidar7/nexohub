@@ -215,7 +215,7 @@ function GradeBody({ gradeSlots, diasSemana, diaAtual, currentTimeStr, getProgra
             </div>
           </div>
         </div>
-      )}
+      , document.body)}
     </>
   );
 }
