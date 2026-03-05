@@ -715,10 +715,17 @@ export default function ProgramaForm() {
               </SelectContent>
             </Select>
           </div>
+          <style>{`
+            .grade-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+            .grade-scroll::-webkit-scrollbar-track { background: transparent; }
+            .grade-scroll::-webkit-scrollbar-thumb { background: #0d0446; border-radius: 3px; }
+            .grade-scroll::-webkit-scrollbar-thumb:hover { background: #2dbef3; }
+            .grade-scroll::-webkit-scrollbar-button { display: none; }
+          `}</style>
           <div
             ref={gradeRef}
-            className="rounded-xl overflow-auto max-h-[300px]"
-            style={{ border: "1px solid rgba(13,4,70,0.1)", backgroundColor: "#ffffff" }}
+            className="rounded-xl overflow-auto max-h-[300px] grade-scroll"
+            style={{ border: "1px solid rgba(13,4,70,0.1)", backgroundColor: "#ffffff", scrollbarWidth: "thin", scrollbarColor: "#0d0446 transparent" }}
           >
             <table className="w-full text-xs border-separate border-spacing-1">
               <thead className="sticky top-0 z-10" style={{ backgroundColor: "#ffffff" }}>
