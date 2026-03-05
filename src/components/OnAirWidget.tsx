@@ -166,25 +166,31 @@ export default function OnAirWidget() {
         style={{ opacity: isHovered ? 0 : 1 }}
         onMouseEnter={() => firstNext && setIsHovered(true)}
       >
-        {/* Presenter photo - anchored to bottom */}
+        {/* Presenter photo - anchored to bottom, larger */}
         {apresentadorFoto && (
           <img
             src={apresentadorFoto}
             alt={apresentadorNome}
             className="absolute object-contain pointer-events-none"
-            style={{ right: 0, bottom: 0, width: "50%", height: "100%", objectPosition: "right bottom" }}
+            style={{ right: 0, bottom: 0, width: "60%", height: "110%", objectPosition: "right bottom" }}
           />
         )}
 
-        {firstNext && (
-          <div className="absolute top-1 right-1 z-20 flex items-center gap-1 bg-white/10 rounded-full px-2 py-1 cursor-pointer">
-            <ArrowRight size={10} className="text-white/60" />
-          </div>
-        )}
+        {/* Top right buttons */}
+        <div className="absolute top-1 right-1 z-20 flex items-center gap-1">
+          <button className="bg-white/10 rounded-full px-2 py-1 text-white/60 text-[9px] font-semibold hover:bg-white/20 transition-colors">
+            grade
+          </button>
+          {firstNext && (
+            <div className="bg-white/10 rounded-full px-2 py-1 cursor-pointer">
+              <ArrowRight size={10} className="text-white/60" />
+            </div>
+          )}
+        </div>
 
         <div className="flex items-center gap-2 mb-1">
-          <Radio size={14} className="text-white/70 animate-pulse" />
-          <span className="font-bold text-white text-xs animate-pulse">NO AR</span>
+          <Radio size={14} style={{ color: "#268ffa" }} className="animate-pulse" />
+          <span className="font-bold text-xs animate-pulse" style={{ color: "#268ffa" }}>NO AR</span>
         </div>
 
         <div className="flex-1 flex flex-col justify-center z-10">
