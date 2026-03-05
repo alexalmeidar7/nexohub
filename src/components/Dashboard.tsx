@@ -248,6 +248,13 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             })}
           </nav>
 
+          {/* XML Master */}
+          <div className="px-3 py-2 border-t border-white/10">
+            <Suspense fallback={null}>
+              <UnifiedXmlField />
+            </Suspense>
+          </div>
+
           {/* User profile at bottom */}
           <div className="px-4 py-4 border-t border-white/10">
             <div className="flex items-center gap-3">
@@ -322,7 +329,7 @@ function DashboardHome({ empresa }: { empresa: import("./ConfiguracoesPage").Emp
   return (
     <div className="animate-fade-in space-y-4">
       {/* Widget cards row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
         {/* Card 1 - No Ar */}
         <div className="rounded-2xl p-4 min-h-[200px]" style={{ backgroundColor: "#0c0441" }}>
           <Suspense fallback={<Loader2 className="animate-spin text-white/50" size={16} />}>
@@ -337,14 +344,7 @@ function DashboardHome({ empresa }: { empresa: import("./ConfiguracoesPage").Emp
           </Suspense>
         </div>
 
-        {/* Card 3 - Views / Video */}
-        <div className="rounded-2xl p-4 bg-white min-h-[200px]">
-          <Suspense fallback={<Loader2 className="animate-spin text-gray-400" size={16} />}>
-            <VideoPlayer />
-          </Suspense>
-        </div>
-
-        {/* Card 4 - Top 10 */}
+        {/* Card 3 - Top 10 */}
         <div className="rounded-2xl p-4 bg-white min-h-[200px]">
           <Suspense fallback={<Loader2 className="animate-spin text-gray-400" size={16} />}>
             <TopLikedSongs />
@@ -353,12 +353,7 @@ function DashboardHome({ empresa }: { empresa: import("./ConfiguracoesPage").Emp
       </div>
 
       {/* Secondary row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-        <div className="rounded-2xl p-4 bg-white">
-          <Suspense fallback={<Loader2 className="animate-spin text-gray-400" size={16} />}>
-            <MusicWidget />
-          </Suspense>
-        </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
         <div className="rounded-2xl p-4 bg-white">
           <Suspense fallback={<Loader2 className="animate-spin text-gray-400" size={16} />}>
             <DashboardAgenda />
@@ -370,10 +365,6 @@ function DashboardHome({ empresa }: { empresa: import("./ConfiguracoesPage").Emp
           </Suspense>
         </div>
       </div>
-
-      <Suspense fallback={null}>
-        <UnifiedXmlField />
-      </Suspense>
     </div>
   );
 }
