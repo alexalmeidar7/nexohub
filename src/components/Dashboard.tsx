@@ -257,7 +257,15 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       </aside>
 
       <main className={`flex-1 p-10 relative`}
-        style={currentPage === "dashboard" ? { backgroundColor: "#e0e0e0" } : undefined}
+        style={currentPage === "dashboard" ? {
+          backgroundColor: "#e0e0e0",
+          ...(empresa.backgroundUrl ? {
+            backgroundImage: `url(${empresa.backgroundUrl})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
+          } : {}),
+        } : undefined}
       >
         <header className="mb-10 flex items-center gap-4">
           <div>
