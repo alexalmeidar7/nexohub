@@ -213,20 +213,11 @@ function GradeBody({ gradeSlots, diasSemana, diaAtual, currentTimeStr, getProgra
                 <p className="text-xs flex items-center gap-1" style={{ color: "rgba(13,4,70,0.5)" }}>
                   <Calendar size={12} /> {detailProg.diasSemana.join(", ")}
                 </p>
-                {(() => {
-                  const presenter = getPresenter(detailProg.apresentadorId);
-                  if (!presenter) return null;
-                  return (
-                    <div className="flex items-center gap-3 pt-1">
-                      {presenter.foto && (
-                        <img src={presenter.foto} alt={presenter.nome} className="w-10 h-10 rounded-full object-cover shrink-0" style={{ border: "2px solid #0d0446" }} />
-                      )}
-                      <p className="text-xs font-semibold" style={{ color: "#0d0446" }}>
-                        Locutor: {presenter.nome}
-                      </p>
-                    </div>
-                  );
-                })()}
+                {getPresenterName(detailProg.apresentadorId) && (
+                  <p className="text-xs font-semibold" style={{ color: "#0d0446" }}>
+                    Locutor: {getPresenterName(detailProg.apresentadorId)}
+                  </p>
+                )}
                 {detailProg.descricao && (
                   <p className="text-sm mt-2 leading-relaxed" style={{ color: "rgba(13,4,70,0.7)" }}>{detailProg.descricao}</p>
                 )}
