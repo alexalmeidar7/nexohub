@@ -172,7 +172,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   }, [currentPage]);
 
   return (
-    <div className="min-h-screen flex flex-col animate-fade-in" style={{
+    <div className="h-screen flex flex-col animate-fade-in overflow-hidden" style={{
       backgroundColor: "#268ffa",
       paddingTop: "40px",
       ...(empresa.backgroundUrl ? {
@@ -346,7 +346,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       )}
 
       {/* === FOOTER === */}
-      <footer className="flex items-center gap-3 pb-2" style={{ paddingLeft: "50px" }}>
+      <footer className="flex items-center gap-3" style={{ paddingLeft: "50px", paddingBottom: "10px" }}>
         <img src={logoFooter} alt="Nexo" className="h-5 opacity-80" />
         <span className="text-white/60 text-[11px]">Copyrighted 2026 - Todos os direitos reservados.</span>
       </footer>
