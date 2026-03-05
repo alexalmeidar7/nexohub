@@ -723,19 +723,24 @@ function DashboardAgenda() {
   }
 
   return (
-    <div>
-      <h4 className="text-xs font-semibold text-gray-600 mb-2">📅 Agenda</h4>
+    <div className="flex flex-col h-full">
+      {/* Header aligned like "NO AR" */}
+      <div className="flex items-center gap-1.5 mb-1">
+        <CalendarDays size={14} style={{ color: "#268ffa" }} />
+        <span className="font-bold text-xs uppercase tracking-wide" style={{ color: "#268ffa" }}>Agenda</span>
+      </div>
+
       <DashboardCalendar
         selected={selectedDate}
         onSelect={setSelectedDate}
         eventDates={eventDates}
       />
       {dayEvents.length > 0 && (
-        <div className="mt-2 space-y-1">
+        <div className="mt-1 space-y-1 overflow-y-auto flex-1 scrollbar-hide">
           {dayEvents.map((evt: any) => (
-            <div key={evt.id} className="rounded-lg px-3 py-2 text-xs" style={{ backgroundColor: "#d8f96c" }}>
-              <p className="font-semibold text-gray-700">{evt.programa?.nome || "Evento"}</p>
-              {evt.programa && <p className="text-gray-600">{evt.programa.horario_inicio} - {evt.programa.horario_fim}</p>}
+            <div key={evt.id} className="rounded-lg px-2 py-1 text-[10px]" style={{ backgroundColor: "#d8f96c" }}>
+              <p className="font-semibold" style={{ color: "#0d0446" }}>{evt.programa?.nome || "Evento"}</p>
+              {evt.programa && <p style={{ color: "#0d0446", opacity: 0.6 }}>{evt.programa.horario_inicio} - {evt.programa.horario_fim}</p>}
             </div>
           ))}
         </div>
@@ -755,19 +760,22 @@ function DashboardCalendar({ selected, onSelect, eventDates }: {
       selected={selected}
       onSelect={onSelect}
       locale={ptBR}
-      className="p-0 pointer-events-auto [&_.rdp-day]:h-7 [&_.rdp-day]:w-7 [&_.rdp-day]:text-xs [&_.rdp-day]:text-gray-700 [&_.rdp-day_button]:text-gray-700 [&_.rdp-head_cell]:text-gray-500"
+      className="p-0 pointer-events-auto [&_.rdp-month]:w-full [&_.rdp-table]:w-full [&_.rdp-day]:h-5 [&_.rdp-day]:w-5 [&_.rdp-day]:text-[10px] [&_.rdp-head_cell]:text-[9px] [&_.rdp-head_cell]:py-0 [&_.rdp-caption]:flex [&_.rdp-caption]:items-center [&_.rdp-caption]:justify-between [&_.rdp-caption]:relative [&_.rdp-caption]:px-0"
       classNames={{
-        caption_label: "text-sm font-semibold text-gray-600",
-        nav_button: "h-7 w-7 bg-transparent p-0 text-gray-600 hover:text-gray-900 hover:bg-gray-200 inline-flex items-center justify-center rounded-md",
-        nav_button_previous: "absolute left-1",
-        nav_button_next: "absolute right-1",
+        caption_label: "text-[10px] font-semibold",
+        nav_button: "h-5 w-5 bg-transparent p-0 inline-flex items-center justify-center rounded-md",
+        nav_button_previous: "",
+        nav_button_next: "",
       }}
       modifiers={{ hasEvent: eventDates }}
       modifiersStyles={{
         hasEvent: { backgroundColor: "#d8f96c", fontWeight: "bold", color: "#333" },
       }}
       styles={{
-        day: { color: "#555" },
+        caption_label: { color: "#268ffa" },
+        nav_button: { color: "#268ffa" },
+        day: { color: "#0d0446" },
+        head_cell: { color: "#0d0446", opacity: 0.5 },
       }}
     />
   );
