@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Radio, ChevronRight, Clock, Loader2, ArrowRight } from "lucide-react";
+import { Radio, ChevronRight, Clock, Loader2, ArrowRight, Mic } from "lucide-react";
 import { getApresentadores } from "./ApresentadorForm";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -219,7 +219,8 @@ export default function OnAirWidget() {
           </p>
         </div>
 
-        <div className="z-10 mb-4">
+        <div className="z-10 mb-4 flex items-center gap-1">
+          <Mic size={12} style={{ color: "#268ffa" }} />
           <p className="font-semibold text-white/80 text-xs">{apresentadorNome}</p>
         </div>
 
