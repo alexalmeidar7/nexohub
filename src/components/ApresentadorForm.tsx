@@ -127,16 +127,20 @@ export default function ApresentadorForm() {
   return (
     <div className="animate-fade-in space-y-6">
       <div className="max-w-md space-y-4">
-        <h3 className="text-xl mb-4 text-primary">
+        <h3 className="text-xl mb-4" style={{ color: "#0d0446" }}>
           {editingId ? "Editar Apresentador/Participante" : "Novo Apresentador/Participante"}
         </h3>
         <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Nome Completo"
-          className="w-full bg-muted border border-border p-3 rounded-lg text-foreground placeholder:text-muted-foreground outline-none focus:ring-1 focus:ring-primary" />
+          className="w-full p-3 outline-none transition-colors"
+          style={{ backgroundColor: "#ffffff", border: "1px solid #0d0446", color: "#0d0446", borderRadius: "20px" }}
+          onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
+          onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
+        />
 
         <div>
-          <label className="block text-muted-foreground text-xs mb-1">Categoria</label>
+          <label className="block text-xs mb-1" style={{ color: "#0d0446", fontWeight: 600 }}>Categoria</label>
           <Select value={categoria} onValueChange={setCategoria}>
-            <SelectTrigger className="w-full">
+            <SelectTrigger className="w-full" style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "20px", border: "none" }}>
               <SelectValue placeholder="Selecione a categoria" />
             </SelectTrigger>
             <SelectContent>
@@ -149,37 +153,55 @@ export default function ApresentadorForm() {
 
         {categoria === "Convidado" && (
           <input value={cargoConvidado} onChange={(e) => setCargoConvidado(e.target.value)} placeholder="Cargo (ex: Médico, Advogado...)"
-            className="w-full bg-muted border border-border p-3 rounded-lg text-foreground placeholder:text-muted-foreground outline-none focus:ring-1 focus:ring-primary" />
+            className="w-full p-3 outline-none transition-colors"
+            style={{ backgroundColor: "#ffffff", border: "1px solid #0d0446", color: "#0d0446", borderRadius: "20px" }}
+            onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
+            onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
+          />
         )}
 
         <div className="flex items-center gap-2">
-          <Instagram size={18} className="text-muted-foreground" />
+          <Instagram size={18} style={{ color: "#0d0446" }} />
           <input value={instagram} onChange={(e) => setInstagram(e.target.value)} placeholder="@usuario_instagram"
-            className="flex-1 bg-muted border border-border p-3 rounded-lg text-foreground placeholder:text-muted-foreground outline-none focus:ring-1 focus:ring-primary" />
+            className="flex-1 p-3 outline-none transition-colors"
+            style={{ backgroundColor: "#ffffff", border: "1px solid #0d0446", color: "#0d0446", borderRadius: "20px" }}
+            onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
+            onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
+          />
         </div>
 
         {showFoto && (
           <div>
-            <label className="block text-muted-foreground text-xs mb-2">
+            <label className="block text-xs mb-2" style={{ color: "#0d0446", fontWeight: 600 }}>
               Foto (tamanho 1080 x 1080 px - PNG com fundo alpha)
             </label>
             <input type="file" accept="image/*" onChange={handleFoto}
-              className="w-full bg-muted border border-border p-2 rounded-lg text-foreground text-sm file:mr-3 file:rounded file:border-0 file:bg-primary file:text-primary-foreground file:px-3 file:py-1 file:font-bold file:text-xs" />
-            {foto && <img src={foto} alt="Preview" className="mt-2 h-24 rounded-lg object-cover border border-border" />}
+              className="w-full p-2 text-sm file:mr-3 file:rounded-full file:border-0 file:px-3 file:py-1 file:font-bold file:text-xs"
+              style={{ backgroundColor: "#ffffff", border: "1px solid #0d0446", color: "#0d0446", borderRadius: "20px" }}
+            />
+            {foto && <img src={foto} alt="Preview" className="mt-2 h-24 rounded-lg object-cover" style={{ border: "1px solid #0d0446" }} />}
           </div>
         )}
 
-        <label className="flex items-center gap-2 cursor-pointer text-foreground">
-          <input type="checkbox" checked={ativo} onChange={(e) => setAtivo(e.target.checked)} className="w-4 h-4 accent-primary" />
+        <label className="flex items-center gap-2 cursor-pointer" style={{ color: "#0d0446" }}>
+          <input type="checkbox" checked={ativo} onChange={(e) => setAtivo(e.target.checked)} className="w-4 h-4" style={{ accentColor: "#0d0446" }} />
           Ativo
         </label>
         <div className="flex gap-2 items-center">
-          <button onClick={handleSave} disabled={saving} className="bg-primary text-primary-foreground px-6 py-2 rounded-lg font-bold hover:brightness-95 transition-all flex items-center gap-2 disabled:opacity-70">
+          <button onClick={handleSave} disabled={saving}
+            className="px-6 py-2 font-bold transition-all flex items-center gap-2 disabled:opacity-70"
+            style={{ backgroundColor: "#0d0446", color: "#ffffff", border: "2px solid #0d0446", borderRadius: "20px" }}
+            onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#ffffff"; e.currentTarget.style.color = "#0d0446"; }}
+            onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#0d0446"; e.currentTarget.style.color = "#ffffff"; }}
+          >
             {saving && <Loader2 size={14} className="animate-spin" />}
             {saving ? "Salvando..." : editingId ? "Atualizar" : "Salvar"}
           </button>
           {editingId && (
-            <button onClick={resetForm} className="bg-muted border border-border text-foreground px-4 py-2 rounded-lg font-bold hover:brightness-95 transition-all flex items-center gap-1">
+            <button onClick={resetForm}
+              className="px-4 py-2 font-bold transition-all flex items-center gap-1"
+              style={{ backgroundColor: "#ffffff", color: "#0d0446", border: "2px solid #0d0446", borderRadius: "20px" }}
+            >
               <X size={14} /> Cancelar
             </button>
           )}
@@ -188,15 +210,15 @@ export default function ApresentadorForm() {
 
       {loadingList ? (
         <div className="flex items-center gap-2 py-8 justify-center">
-          <Loader2 size={20} className="animate-spin text-primary" />
-          <span className="text-muted-foreground text-sm">Carregando cadastrados...</span>
+          <Loader2 size={20} className="animate-spin" style={{ color: "#0d0446" }} />
+          <span className="text-sm" style={{ color: "rgba(13,4,70,0.5)" }}>Carregando cadastrados...</span>
         </div>
       ) : apresentadores.length > 0 ? (
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h4 className="text-lg font-medium text-foreground">Cadastrados</h4>
+            <h4 className="text-lg font-medium" style={{ color: "#0d0446" }}>Cadastrados</h4>
             <Select value={filterCategoria} onValueChange={setFilterCategoria}>
-              <SelectTrigger className="w-[180px] h-8 text-sm">
+              <SelectTrigger className="w-[180px] h-8 text-sm" style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "20px", border: "none" }}>
                 <SelectValue placeholder="Filtrar por categoria" />
               </SelectTrigger>
               <SelectContent>
@@ -209,8 +231,8 @@ export default function ApresentadorForm() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {filtered.map((a) => (
-              <div key={a.id} className="bg-muted rounded-xl border border-border overflow-hidden">
-                <div className="px-4 py-3 font-bold text-sm bg-primary text-primary-foreground flex items-center justify-between">
+              <div key={a.id} className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)" }}>
+                <div className="px-4 py-3 font-bold text-sm flex items-center justify-between" style={{ backgroundColor: "#0d0446", color: "#ffffff" }}>
                   <span>{a.nome}</span>
                   <div className="flex items-center gap-2">
                     <button onClick={() => startEdit(a)} title="Editar">
@@ -225,16 +247,16 @@ export default function ApresentadorForm() {
                   </div>
                 </div>
                 <div className="p-4 flex gap-3">
-                  {a.foto && <img src={a.foto} alt={a.nome} className="w-16 h-20 object-cover rounded-lg border border-border" />}
+                  {a.foto && <img src={a.foto} alt={a.nome} className="w-16 h-20 object-cover rounded-lg" style={{ border: "1px solid #0d0446" }} />}
                   <div className="space-y-1 text-sm">
-                    <p className="text-foreground">{a.cargo || "Sem categoria"}</p>
+                    <p style={{ color: "#0d0446" }}>{a.cargo || "Sem categoria"}</p>
                     {a.instagram && (
-                      <p className="text-muted-foreground flex items-center gap-1">
+                      <p className="flex items-center gap-1" style={{ color: "rgba(13,4,70,0.5)" }}>
                         <Instagram size={12} /> {a.instagram}
                       </p>
                     )}
                     <span className={`inline-block px-2 py-0.5 rounded text-xs font-semibold ${
-                      a.ativo ? "bg-primary/20 text-primary" : "bg-destructive/20 text-destructive"
+                      a.ativo ? "bg-green-100 text-green-700" : "bg-red-100 text-red-600"
                     }`}>
                       {a.ativo ? "Ativo" : "Inativo"}
                     </span>
