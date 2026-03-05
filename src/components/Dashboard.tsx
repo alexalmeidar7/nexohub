@@ -419,11 +419,14 @@ function ServerClock() {
     return () => clearInterval(interval);
   }, []);
 
-  const time = now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  const hours = now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  const seconds = now.toLocaleTimeString("pt-BR", { second: "2-digit" }).split(":").pop();
 
   return (
     <div className="text-right">
-      <p className="font-light text-white tracking-wider" style={{ fontFamily: "Poppins, sans-serif", fontSize: "45px", lineHeight: 1.1 }}>{time}</p>
+      <p className="font-light text-white tracking-wider" style={{ fontFamily: "Poppins, sans-serif", fontSize: "45px", lineHeight: 1.1 }}>
+        {hours}<sup className="font-light text-white/70" style={{ fontSize: "18px" }}>{seconds}</sup>
+      </p>
     </div>
   );
 }
