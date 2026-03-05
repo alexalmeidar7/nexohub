@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
-import { Instagram, UserCheck, UserX, Trash2, Pencil, X, Loader2, CheckCircle, ImageIcon } from "lucide-react";
+import { Instagram, UserCheck, UserX, Trash2, Pencil, X, Loader2, CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { useToast } from "@/hooks/use-toast";
 import {
   Select,
   SelectContent,
