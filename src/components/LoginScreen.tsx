@@ -153,7 +153,7 @@ export default function LoginScreen() {
                 <button
                   onClick={closeForgot}
                   className="mt-2 font-medium transition-colors duration-200 text-white"
-                  style={{ fontSize: "14px" }}
+                  style={{ fontSize: "12px" }}
                   onMouseEnter={(e) => (e.currentTarget.style.color = "#268ffa")}
                   onMouseLeave={(e) => (e.currentTarget.style.color = "#ffffff")}
                 >
