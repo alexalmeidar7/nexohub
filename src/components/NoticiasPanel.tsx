@@ -402,7 +402,7 @@ export default function NoticiasPanel() {
                         <input
                           defaultValue={sn.portal}
                           onBlur={(e) => updateSelectedField(i, "portal", e.target.value)}
-                          className="bg-transparent border-b border-transparent hover:border-gray-300 focus:border-primary outline-none text-gray-700 font-semibold w-full text-xs"
+                          className="bg-transparent border-b border-transparent hover:border-gray-300 outline-none font-semibold w-full text-xs" style={{ color: "#0d0446" }}
                         />
                       </td>
                       <td className="px-3 py-2">
