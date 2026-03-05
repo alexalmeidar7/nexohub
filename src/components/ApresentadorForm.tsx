@@ -36,7 +36,7 @@ export async function getApresentadores(): Promise<Apresentador[]> {
 
 export default function ApresentadorForm() {
   const { user } = useAuth();
-  const { toast } = useToast();
+  const [showSuccess, setShowSuccess] = useState(false);
   const [nome, setNome] = useState("");
   const [categoria, setCategoria] = useState("");
   const [cargoConvidado, setCargoConvidado] = useState("");
