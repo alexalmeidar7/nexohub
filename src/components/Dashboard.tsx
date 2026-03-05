@@ -793,7 +793,7 @@ function DashboardCalendar({ selected, onSelect, eventDates, month, onMonthChang
         head_cell: "flex-1 text-center font-medium",
         row: "flex w-full",
         cell: "flex-1 text-center p-0",
-        day: "h-[20px] w-[20px] p-0 font-normal text-[9px] mx-auto flex items-center justify-center rounded-full hover:!bg-[#7fbcfa] hover:text-white transition-colors",
+        day: "h-[24px] w-[24px] p-0 font-normal text-[14px] mx-auto flex items-center justify-center rounded-full hover:!bg-[#7fbcfa] hover:text-white transition-colors",
         day_selected: "!bg-[#0d0446] !text-white",
         day_today: "font-bold text-[#268ffa]",
         day_outside: "opacity-30",
