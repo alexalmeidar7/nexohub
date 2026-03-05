@@ -153,7 +153,7 @@ export default function ApresentadorForm() {
 
         {categoria === "Convidado" && (
           <input value={cargoConvidado} onChange={(e) => setCargoConvidado(e.target.value)} placeholder="Cargo (ex: Médico, Advogado...)"
-            className="w-full p-3 outline-none transition-colors"
+            className="w-full px-4 py-1.5 outline-none transition-colors text-sm"
             style={{ backgroundColor: "#ffffff", border: "1px solid #0d0446", color: "#0d0446", borderRadius: "20px" }}
             onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
             onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
