@@ -290,7 +290,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               <h1 className="font-bold text-white" style={{ fontSize: "45px", lineHeight: 1.1 }}>{empresa.nome || "Dashboard"}</h1>
               <p className="text-white/60 text-xs">{user?.email || ""}</p>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4" style={{ marginRight: "50px" }}>
               <div className="relative">
                 <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ backgroundColor: "#0d0446" }}>
                   <Mail size={16} className="text-white" />
