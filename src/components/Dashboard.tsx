@@ -292,7 +292,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           </div>
 
           {/* Content area */}
-          <div className={`flex-1 overflow-y-auto rounded-2xl ${currentPage === "dashboard" ? "flex flex-col" : ""}`} style={currentPage === "dashboard" ? {} : { backgroundColor: "#111", padding: "2rem" }}>
+          <div className={`flex-1 overflow-y-auto overflow-x-hidden rounded-2xl ${currentPage === "dashboard" ? "flex flex-col" : ""}`} style={currentPage === "dashboard" ? {} : { backgroundColor: "#111", padding: "2rem" }}>
             <Suspense fallback={<div className="flex justify-center py-16"><Loader2 className="animate-spin text-white" size={28} /></div>}>
               {currentPage === "dashboard" && (
                 <DashboardHome empresa={empresa} />
