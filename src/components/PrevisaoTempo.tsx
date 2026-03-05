@@ -321,10 +321,12 @@ export default function PrevisaoTempo() {
             <h4 className="text-lg font-bold mb-4" style={{ color: "#0d0446" }}>Próximos 5 dias</h4>
             <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
               {weather.forecast.map((day) => (
-                <div key={day.date} className="rounded-xl p-4 text-center space-y-2"
-                  style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)" }}>
-                  <p className="text-xs capitalize" style={{ color: "rgba(13,4,70,0.5)" }}>{formatDay(day.date)}</p>
-                  <span className="text-3xl block">{getWeatherIcon(day.weatherCode, true)}</span>
+                <div key={day.date} className="rounded-xl p-4 text-center space-y-2 transition-colors"
+                   style={{ backgroundColor: "#ffffff", border: "2px solid rgba(13,4,70,0.1)" }}
+                   onMouseEnter={e => { e.currentTarget.style.borderColor = "#2ec1f7"; }}
+                   onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(13,4,70,0.1)"; }}>
+                   <p className="text-xs capitalize" style={{ color: "rgba(13,4,70,0.5)" }}>{formatDay(day.date)}</p>
+                   <span className="text-3xl block animate-bounce" style={{ animationDuration: "3s", animationIterationCount: "infinite" }}>{getWeatherIcon(day.weatherCode, true)}</span>
                   <p className="text-sm" style={{ color: "rgba(13,4,70,0.5)" }}>{getWeatherLabel(day.weatherCode)}</p>
                   <p className="text-xl font-semibold" style={{ color: "#0d0446" }}>{day.temp}°C</p>
                   <div className="text-xs space-y-1" style={{ color: "rgba(13,4,70,0.5)" }}>
