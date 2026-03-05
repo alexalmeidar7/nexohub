@@ -423,7 +423,7 @@ function ServerClock() {
 
   return (
     <div className="text-right">
-      <p className="text-xl font-light text-white tracking-wider" style={{ fontFamily: "Poppins, sans-serif" }}>{time}</p>
+      <p className="font-light text-white tracking-wider" style={{ fontFamily: "Poppins, sans-serif", fontSize: "45px", lineHeight: 1.1 }}>{time}</p>
     </div>
   );
 }
