@@ -362,9 +362,17 @@ export default function NoticiasPanel() {
         <input value={customUrl} onChange={(e) => setCustomUrl(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && addCustomSite()}
           placeholder="URL do RSS feed (ex: https://site.com/feed)"
-          className="flex-1 bg-muted border border-border p-2 rounded-lg text-foreground placeholder:text-muted-foreground outline-none focus:ring-1 focus:ring-primary" />
+          className="flex-1 px-4 py-1.5 outline-none transition-colors text-sm"
+          style={{ backgroundColor: "#ffffff", border: "1px solid #0d0446", color: "#0d0446", borderRadius: "20px" }}
+          onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
+          onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
+        />
         <button onClick={addCustomSite}
-          className="bg-primary text-primary-foreground px-4 py-2 rounded-lg font-bold hover:brightness-95 transition-all flex items-center gap-1">
+          className="px-5 py-1.5 font-bold transition-all flex items-center gap-1"
+          style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "20px", border: "2px solid #0d0446" }}
+          onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#ffffff"; e.currentTarget.style.color = "#0d0446"; }}
+          onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#0d0446"; e.currentTarget.style.color = "#ffffff"; }}
+        >
           <Plus size={16} /> Adicionar Site
         </button>
       </div>
