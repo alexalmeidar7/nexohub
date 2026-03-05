@@ -335,8 +335,67 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 }
 
 /* ========== DASHBOARD HOME ========== */
+const WIDGETS_ORDER_KEY = "masterview_widgets_order";
+
+interface WidgetCard {
+  id: string;
+  bg: string;
+  render: (onNavigate: (page: Page) => void) => React.ReactNode;
+}
+
+const defaultWidgets: WidgetCard[] = [
+  { id: "onair", bg: "#0c0441", render: () => <OnAirWidget /> },
+  { id: "weather", bg: "#ffffff", render: (nav) => <WeatherWidget onNavigate={nav} /> },
+  { id: "top10", bg: "#ffffff", render: () => <TopLikedSongs /> },
+  { id: "agenda", bg: "#ffffff", render: () => <DashboardAgenda /> },
+  { id: "comercial", bg: "#ffffff", render: () => <ComercialWidgets /> },
+];
+
 function DashboardHome({ empresa, onNavigate }: { empresa: import("./ConfiguracoesPage").EmpresaConfig; onNavigate: (page: Page) => void }) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [widgetOrder, setWidgetOrder] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem(WIDGETS_ORDER_KEY);
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return defaultWidgets.map(w => w.id);
+  });
+  const [draggedId, setDraggedId] = useState<string | null>(null);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
+
+  const orderedWidgets = widgetOrder
+    .map(id => defaultWidgets.find(w => w.id === id))
+    .filter(Boolean) as WidgetCard[];
+
+  const handleDragStart = (e: React.DragEvent, id: string) => {
+    setDraggedId(id);
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleDragOver = (e: React.DragEvent, id: string) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    if (id !== draggedId) setDragOverId(id);
+  };
+
+  const handleDrop = (e: React.DragEvent, targetId: string) => {
+    e.preventDefault();
+    if (!draggedId || draggedId === targetId) return;
+    const newOrder = [...widgetOrder];
+    const fromIdx = newOrder.indexOf(draggedId);
+    const toIdx = newOrder.indexOf(targetId);
+    newOrder.splice(fromIdx, 1);
+    newOrder.splice(toIdx, 0, draggedId);
+    setWidgetOrder(newOrder);
+    localStorage.setItem(WIDGETS_ORDER_KEY, JSON.stringify(newOrder));
+    setDraggedId(null);
+    setDragOverId(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedId(null);
+    setDragOverId(null);
+  };
 
   const scrollLeft = () => {
     scrollRef.current?.scrollBy({ left: -370, behavior: "smooth" });
@@ -348,7 +407,7 @@ function DashboardHome({ empresa, onNavigate }: { empresa: import("./Configuraco
   return (
     <div className="animate-fade-in flex flex-col justify-end flex-1">
       <div className="flex items-center gap-3">
-        {/* Left arrow - outside cards */}
+        {/* Left arrow */}
         <button
           onClick={scrollLeft}
           className="flex-shrink-0 z-10 w-8 h-8 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60 transition-colors"
@@ -362,43 +421,32 @@ function DashboardHome({ empresa, onNavigate }: { empresa: import("./Configuraco
           className="flex gap-3 overflow-x-auto scrollbar-hide flex-1"
           style={{ scrollSnapType: "x mandatory" }}
         >
-          {/* Card 1 - No Ar */}
-          <div className="rounded-2xl p-4 flex-shrink-0 overflow-hidden" style={{ backgroundColor: "#0c0441", width: "350px", height: "225px", scrollSnapAlign: "start" }}>
-            <Suspense fallback={<Loader2 className="animate-spin text-white/50" size={16} />}>
-              <OnAirWidget />
-            </Suspense>
-          </div>
-
-          {/* Card 2 - Tempo */}
-          <div className="rounded-2xl p-4 bg-white flex-shrink-0 overflow-hidden" style={{ width: "350px", height: "225px", scrollSnapAlign: "start" }}>
-            <Suspense fallback={<Loader2 className="animate-spin text-gray-400" size={16} />}>
-              <WeatherWidget onNavigate={onNavigate} />
-            </Suspense>
-          </div>
-
-          {/* Card 3 - Top 10 */}
-          <div className="rounded-2xl p-4 bg-white flex-shrink-0 overflow-hidden" style={{ width: "350px", height: "225px", scrollSnapAlign: "start" }}>
-            <Suspense fallback={<Loader2 className="animate-spin text-gray-400" size={16} />}>
-              <TopLikedSongs />
-            </Suspense>
-          </div>
-
-          {/* Card 4 - Agenda */}
-          <div className="rounded-2xl p-4 bg-white flex-shrink-0 overflow-hidden" style={{ width: "350px", height: "225px", scrollSnapAlign: "start" }}>
-            <Suspense fallback={<Loader2 className="animate-spin text-gray-400" size={16} />}>
-              <DashboardAgenda />
-            </Suspense>
-          </div>
-
-          {/* Card 5 - Patrocinadores */}
-          <div className="rounded-2xl p-4 bg-white flex-shrink-0 overflow-hidden" style={{ width: "350px", height: "225px", scrollSnapAlign: "start" }}>
-            <Suspense fallback={<Loader2 className="animate-spin text-gray-400" size={16} />}>
-              <ComercialWidgets />
-            </Suspense>
-          </div>
+          {orderedWidgets.map(widget => (
+            <div
+              key={widget.id}
+              className={`rounded-2xl p-4 flex-shrink-0 overflow-hidden transition-all duration-200 ${
+                draggedId === widget.id ? "opacity-50 scale-95" : ""
+              } ${dragOverId === widget.id ? "ring-2 ring-[#268ffa]" : ""}`}
+              style={{ backgroundColor: widget.bg, width: "350px", height: "225px", scrollSnapAlign: "start" }}
+              onDragOver={(e) => handleDragOver(e, widget.id)}
+              onDrop={(e) => handleDrop(e, widget.id)}
+              onDragEnd={handleDragEnd}
+            >
+              {/* Drag handle - title area */}
+              <div
+                draggable
+                onDragStart={(e) => handleDragStart(e, widget.id)}
+                className="cursor-grab active:cursor-grabbing absolute top-0 left-0 right-0 h-[28px] z-10"
+                style={{ position: "relative", height: 0, marginBottom: 0 }}
+              />
+              <Suspense fallback={<Loader2 className="animate-spin text-gray-400" size={16} />}>
+                {widget.render(onNavigate)}
+              </Suspense>
+            </div>
+          ))}
         </div>
 
-        {/* Right arrow - outside cards */}
+        {/* Right arrow */}
         <button
           onClick={scrollRight}
           className="flex-shrink-0 z-10 w-8 h-8 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60 transition-colors"
