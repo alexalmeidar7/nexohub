@@ -292,7 +292,7 @@ export default function ApresentadorForm() {
       ) : null}
 
       {showSuccess && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backdropFilter: "blur(8px)", backgroundColor: "rgba(0,0,0,0.3)" }}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: "rgba(0,0,0,0.3)" }}>
           <div className="flex flex-col items-center justify-center animate-fade-in overflow-hidden"
             style={{ width: "450px", height: "165px", backgroundColor: "rgba(13, 4, 70, 0.92)", borderRadius: "16px" }}>
             <div className="flex items-center gap-3 flex-1 justify-center" style={{ fontSize: "14px", color: "#ffffff", fontWeight: 600 }}>
