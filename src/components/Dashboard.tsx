@@ -175,7 +175,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#268ffa" }}>
       <div className="flex flex-1 p-3 pb-0 gap-3">
         {/* === SIDEBAR === */}
-        <aside className="flex flex-col rounded-2xl overflow-hidden flex-shrink-0" style={{ backgroundColor: "#000000", width: "400px", height: "650px" }}>
+        <aside className="flex flex-col rounded-[24px] overflow-hidden flex-shrink-0" style={{ backgroundColor: "#000000", width: "400px", height: "650px" }}>
           {/* Selo + Settings */}
           <div className="flex items-center justify-between px-4 pt-3 pb-2">
             <img src={seloNexohub} alt="NexoHUB" className="h-4" />
@@ -254,7 +254,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               <div className="min-w-0 flex-1">
                 <p className="text-white text-xs font-bold truncate">{empresa.nome || "Empresa"}</p>
                 <p className="text-white/50 text-[10px] truncate">{user?.email || ""}</p>
-                <button onClick={onLogout} className="text-white/40 text-[10px] underline hover:text-white/70 transition-colors mt-0.5">
+                <button onClick={onLogout} className="text-[10px] underline hover:opacity-70 transition-colors mt-0.5" style={{ color: "#268ffa" }}>
                   sair
                 </button>
               </div>
