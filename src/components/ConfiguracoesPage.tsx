@@ -236,7 +236,6 @@ export default function ConfiguracoesPage() {
               </div>
             </div>
           </div>
-          </div>
           {field("Endereço", "endereco", "Endereço completo")}
           {field("Telefone Comercial", "telefoneComercial", "(00) 0000-0000")}
           {field("Telefone Participação", "telefoneParticipacao", "(00) 0000-0000")}
