@@ -409,7 +409,8 @@ export default function AgendaPage() {
           )}
         </div>
 
-        <Button size="sm" className="gap-1" onClick={openNewDialog}>
+        <Button size="sm" className="gap-1" onClick={openNewDialog}
+          style={{ backgroundColor: "#2ec0f6", color: "#ffffff", borderRadius: "20px", border: "none" }}>
           <Plus size={16} /> Novo Evento
         </Button>
       </div>
