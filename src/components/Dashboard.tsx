@@ -292,7 +292,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             </div>
             <div className="flex items-center gap-4">
               <div className="relative">
-                <div className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center">
+                <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ backgroundColor: "#0d0446" }}>
                   <Mail size={16} className="text-white" />
                 </div>
                 <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center">3</span>
