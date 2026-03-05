@@ -335,7 +335,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 }
 
 /* ========== DASHBOARD HOME ========== */
-function DashboardHome({ empresa, onNavigate }: { empresa: import("./ConfiguracoesPage").EmpresaConfig; onNavigate: (page: string) => void }) {
+function DashboardHome({ empresa, onNavigate }: { empresa: import("./ConfiguracoesPage").EmpresaConfig; onNavigate: (page: Page) => void }) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const scrollLeft = () => {
