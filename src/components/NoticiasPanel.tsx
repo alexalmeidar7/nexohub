@@ -474,7 +474,7 @@ export default function NoticiasPanel() {
 
           {selectedCotacoes.length > 0 && (
             <div className="bg-muted rounded-xl border border-border overflow-hidden">
-              <div className={headerStyle}>📊 Cotações Selecionadas</div>
+              <div className={headerStyle} style={headerInline}>📊 Cotações Selecionadas</div>
               <div className="p-4 flex flex-wrap gap-2">
                 {selectedCotacoes.map(sc => (
                   <div key={sc.id || sc.name} className="bg-background/50 rounded-lg px-3 py-2 flex items-center gap-2 text-xs">
