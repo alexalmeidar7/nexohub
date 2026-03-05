@@ -793,7 +793,7 @@ function DashboardCalendar({ selected, onSelect, eventDates, month, onMonthChang
         head_cell: "flex-1 text-center font-medium",
         row: "flex w-full",
         cell: "flex-1 text-center p-0",
-        day: "h-[20px] w-[20px] p-0 font-normal text-[9px] mx-auto flex items-center justify-center rounded-full hover:!bg-[#7fbcfa] hover:text-white transition-colors",
+        day: "h-[24px] w-[24px] p-0 font-normal text-[14px] mx-auto flex items-center justify-center rounded-full hover:!bg-[#7fbcfa] hover:text-white transition-colors",
         day_selected: "!bg-[#0d0446] !text-white",
         day_today: "font-bold text-[#268ffa]",
         day_outside: "opacity-30",
@@ -803,8 +803,8 @@ function DashboardCalendar({ selected, onSelect, eventDates, month, onMonthChang
         hasEvent: { backgroundColor: "#268ffa", fontWeight: "bold", color: "#fff", borderRadius: "50%" },
       }}
       styles={{
-        day: { color: "#0d0446", fontSize: "9px" },
-        head_cell: { color: "#0d0446", opacity: 0.4, fontSize: "8px", padding: 0 },
+        day: { color: "#0d0446", fontSize: "14px" },
+        head_cell: { color: "#0d0446", opacity: 0.4, fontSize: "10px", padding: 0 },
       }}
     />
   );
