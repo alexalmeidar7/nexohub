@@ -101,7 +101,8 @@ export default function ApresentadorForm() {
     await load();
     resetForm();
     setSaving(false);
-    toast({ title: "Salvo com sucesso!" });
+    setShowSuccess(true);
+    setTimeout(() => setShowSuccess(false), 3000);
   };
 
   const startEdit = (a: Apresentador) => {
