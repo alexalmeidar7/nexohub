@@ -507,9 +507,9 @@ export default function NoticiasPanel() {
               </thead>
               <tbody>
                 {escaladaNews.map((en, i) => (
-                  <tr key={en.id || i} className="border-b border-gray-100">
-                    <td className="px-3 py-2 text-gray-700 font-semibold whitespace-nowrap">{en.portal}</td>
-                    <td className="px-3 py-2 text-gray-700">{en.title}</td>
+                    <tr key={en.id || i} style={{ borderBottom: "1px solid rgba(13,4,70,0.05)" }}>
+                      <td className="px-3 py-2 font-semibold whitespace-nowrap" style={{ color: "#0d0446" }}>{en.portal}</td>
+                      <td className="px-3 py-2" style={{ color: "#0d0446" }}>{en.title}</td>
                     <td className="px-3 py-2">
                       <button onClick={() => removeFromEscalada(i)} className="text-destructive hover:text-destructive/80">
                         <Trash2 size={12} />
