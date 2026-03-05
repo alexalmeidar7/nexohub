@@ -106,7 +106,6 @@ export default function PrevisaoTempo() {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [favorites, setFavorites] = useState<FavoriteCity[]>(getFavorites);
 
-  // Autocomplete
   const [suggestions, setSuggestions] = useState<GeoResult[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -219,8 +218,6 @@ export default function PrevisaoTempo() {
 
   const isFavorited = weather ? favorites.some(f => f.name === weather.city) : false;
 
-  
-
   return (
     <div className="animate-fade-in space-y-8">
       {/* Search with autocomplete */}
@@ -230,19 +227,32 @@ export default function PrevisaoTempo() {
             onKeyDown={(e) => e.key === "Enter" && searchWeather()}
             onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
             placeholder="Buscar cidade..."
-            className="flex-1 bg-muted border border-border p-3 rounded-lg text-foreground placeholder:text-muted-foreground outline-none focus:ring-1 focus:ring-primary" />
+            className="flex-1 px-4 py-1.5 outline-none transition-colors text-sm"
+            style={{ backgroundColor: "#ffffff", border: "1px solid #0d0446", color: "#0d0446", borderRadius: "20px" }}
+            onFocusCapture={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
+            onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
+          />
           <button onClick={searchWeather} disabled={loading}
-            className="bg-primary text-primary-foreground px-5 py-3 rounded-lg font-bold hover:brightness-95 transition-all flex items-center gap-2 disabled:opacity-50">
-            <Search size={18} /> Buscar
+            className="px-5 py-1.5 font-bold transition-all flex items-center gap-2 disabled:opacity-50"
+            style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "20px", border: "2px solid #0d0446" }}
+            onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#ffffff"; e.currentTarget.style.color = "#0d0446"; }}
+            onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#0d0446"; e.currentTarget.style.color = "#ffffff"; }}
+          >
+            <Search size={16} /> Buscar
           </button>
         </div>
         {showSuggestions && suggestions.length > 0 && (
-          <div className="absolute z-50 top-full left-0 right-16 mt-1 bg-muted border border-border rounded-lg overflow-hidden shadow-lg">
+          <div className="absolute z-50 top-full left-0 right-16 mt-1 rounded-lg overflow-hidden shadow-lg"
+            style={{ backgroundColor: "#0d0446" }}>
             {suggestions.map((s, i) => (
               <button key={i} onClick={() => selectSuggestion(s)}
-                className="w-full text-left px-4 py-2 text-foreground hover:bg-primary/10 transition-colors flex items-center justify-between">
+                className="w-full text-left px-4 py-2 transition-colors flex items-center justify-between"
+                style={{ color: "#ffffff" }}
+                onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#2dbef3"; }}
+                onMouseLeave={e => { e.currentTarget.style.backgroundColor = "transparent"; }}
+              >
                 <span>{s.name}{s.admin1 ? `, ${s.admin1}` : ""}</span>
-                <span className="text-muted-foreground text-xs">{s.country}</span>
+                <span className="text-xs" style={{ color: "rgba(255,255,255,0.6)" }}>{s.country}</span>
               </button>
             ))}
           </div>
@@ -253,39 +263,52 @@ export default function PrevisaoTempo() {
       {favorites.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {favorites.map(f => (
-            <div key={f.name} className="flex items-center gap-2 bg-muted border border-border rounded-lg px-3 py-1.5">
+            <div key={f.name} className="flex items-center gap-2 rounded-full px-3 py-1.5"
+              style={{ backgroundColor: "#ffffff", border: "1px solid #0d0446" }}>
               <input type="checkbox" checked={f.inXml} onChange={() => toggleFavoriteXml(f.name)}
-                className="w-3 h-3 accent-primary" title="Incluir no XML" />
+                className="w-3 h-3" style={{ accentColor: "#2dbef3" }} title="Incluir no XML" />
               <button onClick={() => { setCity(f.name); fetchWeather(f.name); }}
-                className="text-xs text-foreground hover:text-primary transition-colors">{f.name}</button>
-              <button onClick={() => removeFavorite(f.name)} className="text-muted-foreground hover:text-destructive text-xs">✕</button>
+                className="text-xs transition-colors"
+                style={{ color: "#0d0446" }}
+                onMouseEnter={e => { e.currentTarget.style.color = "#2dbef3"; }}
+                onMouseLeave={e => { e.currentTarget.style.color = "#0d0446"; }}
+              >{f.name}</button>
+              <button onClick={() => removeFavorite(f.name)} className="text-xs"
+                style={{ color: "rgba(13,4,70,0.4)" }}
+                onMouseEnter={e => { e.currentTarget.style.color = "#dc2626"; }}
+                onMouseLeave={e => { e.currentTarget.style.color = "rgba(13,4,70,0.4)"; }}
+              >✕</button>
             </div>
           ))}
         </div>
       )}
 
-      {error && <p className="text-destructive">{error}</p>}
-      {loading && <p className="text-muted-foreground">Buscando...</p>}
+      {error && <p style={{ color: "#dc2626" }}>{error}</p>}
+      {loading && <p style={{ color: "rgba(13,4,70,0.5)" }}>Buscando...</p>}
 
       {weather && (
         <>
-          <div className="bg-muted rounded-2xl p-6 border border-border">
+          <div className="rounded-2xl p-6" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)" }}>
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="text-2xl font-semibold text-foreground">{weather.city}</h3>
-                <p className="text-muted-foreground text-sm">{getWeatherLabel(weather.current.weatherCode)}</p>
+                <h3 className="text-2xl font-semibold" style={{ color: "#0d0446" }}>{weather.city}</h3>
+                <p className="text-sm" style={{ color: "rgba(13,4,70,0.5)" }}>{getWeatherLabel(weather.current.weatherCode)}</p>
               </div>
               <div className="flex items-center gap-3">
                 {!isFavorited && (
                   <button onClick={addFavorite}
-                    className="flex items-center gap-1 bg-primary/10 text-primary px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-primary/20 transition-all">
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold transition-all"
+                    style={{ backgroundColor: "rgba(13,4,70,0.08)", color: "#0d0446", border: "1px solid rgba(13,4,70,0.15)" }}
+                    onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#2dbef3"; e.currentTarget.style.color = "#ffffff"; }}
+                    onMouseLeave={e => { e.currentTarget.style.backgroundColor = "rgba(13,4,70,0.08)"; e.currentTarget.style.color = "#0d0446"; }}
+                  >
                     <Star size={14} /> Favoritar cidade
                   </button>
                 )}
                 <span className="text-6xl">{getWeatherIcon(weather.current.weatherCode)}</span>
               </div>
             </div>
-            <div className="text-5xl font-light text-primary mb-6">{weather.current.temp}°C</div>
+            <div className="text-5xl font-light mb-6" style={{ color: "#2dbef3" }}>{weather.current.temp}°C</div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <Stat icon={<Thermometer size={16} />} label="Mínima" value={`${weather.current.tempMin}°C`} />
               <Stat icon={<Thermometer size={16} />} label="Máxima" value={`${weather.current.tempMax}°C`} />
@@ -295,15 +318,16 @@ export default function PrevisaoTempo() {
           </div>
 
           <div>
-            <h4 className="text-lg font-medium text-foreground mb-4">Próximos 5 dias</h4>
+            <h4 className="text-lg font-medium mb-4" style={{ color: "#0d0446" }}>Próximos 5 dias</h4>
             <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
               {weather.forecast.map((day) => (
-                <div key={day.date} className="bg-muted rounded-xl p-4 border border-border text-center space-y-2">
-                  <p className="text-xs text-muted-foreground capitalize">{formatDay(day.date)}</p>
+                <div key={day.date} className="rounded-xl p-4 text-center space-y-2"
+                  style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)" }}>
+                  <p className="text-xs capitalize" style={{ color: "rgba(13,4,70,0.5)" }}>{formatDay(day.date)}</p>
                   <span className="text-3xl block">{getWeatherIcon(day.weatherCode, true)}</span>
-                  <p className="text-sm text-muted-foreground">{getWeatherLabel(day.weatherCode)}</p>
-                  <p className="text-xl font-semibold text-foreground">{day.temp}°C</p>
-                  <div className="text-xs text-muted-foreground space-y-1">
+                  <p className="text-sm" style={{ color: "rgba(13,4,70,0.5)" }}>{getWeatherLabel(day.weatherCode)}</p>
+                  <p className="text-xl font-semibold" style={{ color: "#0d0446" }}>{day.temp}°C</p>
+                  <div className="text-xs space-y-1" style={{ color: "rgba(13,4,70,0.5)" }}>
                     <p>↓ {day.tempMin}° / ↑ {day.tempMax}°</p>
                     <p><Droplets size={12} className="inline mr-1" />{day.humidity}%</p>
                     <p><CloudRain size={12} className="inline mr-1" />{day.rainChance}%</p>
@@ -327,12 +351,12 @@ export default function PrevisaoTempo() {
 
 function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
-    <div className="bg-background/50 rounded-lg p-3 text-center">
-      <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
+    <div className="rounded-lg p-3 text-center" style={{ backgroundColor: "rgba(13,4,70,0.04)" }}>
+      <div className="flex items-center justify-center gap-1 mb-1" style={{ color: "rgba(13,4,70,0.5)" }}>
         {icon}
         <span className="text-xs">{label}</span>
       </div>
-      <p className="text-lg font-semibold text-foreground">{value}</p>
+      <p className="text-lg font-semibold" style={{ color: "#0d0446" }}>{value}</p>
     </div>
   );
 }
