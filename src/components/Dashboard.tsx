@@ -184,104 +184,116 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         animation: "fade-in 1s ease-out",
       } : {}),
     }}>
-      <div className="flex pb-0 gap-3" style={{ height: "500px", paddingLeft: "50px", paddingRight: "50px", paddingTop: "12px" }}>
-        {/* === SIDEBAR === */}
-        <aside className="flex flex-col rounded-[24px] overflow-hidden flex-shrink-0 backdrop-blur-xl" style={{ backgroundColor: "rgba(0, 0, 0, 0.70)", width: "400px", height: "500px" }}>
-          {/* Selo + Settings */}
-          <div className="flex items-center justify-between px-4 pt-3 pb-2">
-            <img src={seloNexohub} alt="NexoHUB" className="h-4" />
-            <button
-              onClick={() => setCurrentPage("configuracoes")}
-              className="p-1.5 rounded-full transition-colors"
-              style={{ backgroundColor: "#268ffa" }}
-              onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#0d0446"; }}
-              onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#268ffa"; }}
-            >
-              <Settings size={16} className="text-white" />
-            </button>
-          </div>
+      <div className="flex gap-[30px] flex-1" style={{ paddingLeft: "50px", paddingRight: "50px", paddingTop: "12px" }}>
+        {/* === LEFT COLUMN: SIDEBAR + NO AR === */}
+        <div className="flex flex-col gap-5 flex-shrink-0" style={{ width: "400px" }}>
+          {/* === SIDEBAR === */}
+          <aside className="flex flex-col rounded-[24px] overflow-hidden backdrop-blur-xl" style={{ backgroundColor: "rgba(0, 0, 0, 0.70)", height: "500px" }}>
+            {/* Selo + Settings */}
+            <div className="flex items-center justify-between px-4 pt-3 pb-2">
+              <img src={seloNexohub} alt="NexoHUB" className="h-4" />
+              <button
+                onClick={() => setCurrentPage("configuracoes")}
+                className="p-1.5 rounded-full transition-colors"
+                style={{ backgroundColor: "#268ffa" }}
+                onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#0d0446"; }}
+                onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#268ffa"; }}
+              >
+                <Settings size={16} className="text-white" />
+              </button>
+            </div>
 
-          {/* Module header */}
-          <div className="mx-3 mb-2 px-3 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest text-white/70 flex items-center justify-between" style={{ backgroundColor: "#0d0446" }}>
-            <span>módulos ativos</span>
-            <span className="bg-white/20 text-white rounded-full px-2 py-0.5 text-[9px] font-bold normal-case tracking-normal">
-              {enabledModules ? enabledModules.size : "—"}
-            </span>
-          </div>
+            {/* Module header */}
+            <div className="mx-3 mb-2 px-3 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest text-white/70 flex items-center justify-between" style={{ backgroundColor: "#0d0446" }}>
+              <span>módulos ativos</span>
+              <span className="bg-white/20 text-white rounded-full px-2 py-0.5 text-[9px] font-bold normal-case tracking-normal">
+                {enabledModules ? enabledModules.size : "—"}
+              </span>
+            </div>
 
-          {/* Menu items with scroll */}
-          <nav className="flex-1 overflow-y-auto px-3 space-y-0.5 sidebar-scroll">
-            {sidebarMenu.map(item => {
-              const Icon = item.icon;
-              const active = isItemActive(item);
-              const expanded = expandedMenus.has(item.label);
+            {/* Menu items with scroll */}
+            <nav className="flex-1 overflow-y-auto px-3 space-y-0.5 sidebar-scroll">
+              {sidebarMenu.map(item => {
+                const Icon = item.icon;
+                const active = isItemActive(item);
+                const expanded = expandedMenus.has(item.label);
 
-              return (
-                <div key={item.label}>
-                  <button
-                    onClick={() => handleMenuClick(item)}
-                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs transition-colors ${
-                      active ? "text-[#268ffa]" : "text-white hover:bg-white/5"
-                    }`}
-                    onMouseEnter={e => { if (!active) { e.currentTarget.style.color = "#268ffa"; } }}
-                    onMouseLeave={e => { if (!active) { e.currentTarget.style.color = ""; } }}
-                  >
-                    <Icon size={14} className={active ? "text-[#268ffa]" : "text-white"} />
-                    <span className="flex-1 text-left">{item.label}</span>
-                    {item.children && (
-                      expanded ? <ChevronUp size={12} className="text-white/30" /> : <ChevronDown size={12} className="text-white/30" />
+                return (
+                  <div key={item.label}>
+                    <button
+                      onClick={() => handleMenuClick(item)}
+                      className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs transition-colors ${
+                        active ? "text-[#268ffa]" : "text-white hover:bg-white/5"
+                      }`}
+                      onMouseEnter={e => { if (!active) { e.currentTarget.style.color = "#268ffa"; } }}
+                      onMouseLeave={e => { if (!active) { e.currentTarget.style.color = ""; } }}
+                    >
+                      <Icon size={14} className={active ? "text-[#268ffa]" : "text-white"} />
+                      <span className="flex-1 text-left">{item.label}</span>
+                      {item.children && (
+                        expanded ? <ChevronUp size={12} className="text-white/30" /> : <ChevronDown size={12} className="text-white/30" />
+                      )}
+                    </button>
+                    {item.children && expanded && (
+                      <div className="ml-6 space-y-0.5 mt-0.5">
+                        {item.children.map(child => {
+                          const ChildIcon = child.icon;
+                          const childActive = currentPage === child.page;
+                          return (
+                            <button
+                              key={child.page}
+                              onClick={() => setCurrentPage(child.page)}
+                              className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-[11px] transition-colors ${
+                                childActive ? "text-[#268ffa]" : "text-white"
+                              }`}
+                              onMouseEnter={e => { if (!childActive) { e.currentTarget.style.color = "#268ffa"; } }}
+                              onMouseLeave={e => { if (!childActive) { e.currentTarget.style.color = ""; } }}
+                            >
+                              <ChildIcon size={12} className={childActive ? "text-[#268ffa]" : "text-white"} />
+                              <span>{child.label}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
                     )}
-                  </button>
-                  {item.children && expanded && (
-                    <div className="ml-6 space-y-0.5 mt-0.5">
-                      {item.children.map(child => {
-                        const ChildIcon = child.icon;
-                        const childActive = currentPage === child.page;
-                        return (
-                          <button
-                            key={child.page}
-                            onClick={() => setCurrentPage(child.page)}
-                            className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-[11px] transition-colors ${
-                              childActive ? "text-[#268ffa]" : "text-white"
-                            }`}
-                            onMouseEnter={e => { if (!childActive) { e.currentTarget.style.color = "#268ffa"; } }}
-                            onMouseLeave={e => { if (!childActive) { e.currentTarget.style.color = ""; } }}
-                          >
-                            <ChildIcon size={12} className={childActive ? "text-[#268ffa]" : "text-white"} />
-                            <span>{child.label}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
+                  </div>
+                );
+              })}
+            </nav>
+
+            {/* XML Master */}
+            <div className="px-3 py-2 border-t border-white/10">
+              <Suspense fallback={null}>
+                <UnifiedXmlField />
+              </Suspense>
+            </div>
+
+            {/* User profile at bottom */}
+            <div className="px-4 py-4 border-t border-white/10">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style={{ backgroundColor: "#268ffa" }}>
+                  {empresa.nome ? empresa.nome.charAt(0).toUpperCase() : "U"}
                 </div>
-              );
-            })}
-          </nav>
-
-          {/* XML Master */}
-          <div className="px-3 py-2 border-t border-white/10">
-            <Suspense fallback={null}>
-              <UnifiedXmlField />
-            </Suspense>
-          </div>
-
-          {/* User profile at bottom */}
-          <div className="px-4 py-4 border-t border-white/10">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style={{ backgroundColor: "#268ffa" }}>
-                {empresa.nome ? empresa.nome.charAt(0).toUpperCase() : "U"}
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-white text-xs font-bold truncate">{empresa.nome || "Empresa"}</p>
-                <p className="text-white/50 text-[10px] truncate">{user?.email || ""}</p>
-                <button onClick={onLogout} className="text-[10px] underline hover:opacity-70 transition-colors mt-0.5" style={{ color: "#268ffa" }}>
-                  sair
-                </button>
+                <div className="min-w-0 flex-1">
+                  <p className="text-white text-xs font-bold truncate">{empresa.nome || "Empresa"}</p>
+                  <p className="text-white/50 text-[10px] truncate">{user?.email || ""}</p>
+                  <button onClick={onLogout} className="text-[10px] underline hover:opacity-70 transition-colors mt-0.5" style={{ color: "#268ffa" }}>
+                    sair
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        </aside>
+          </aside>
+
+          {/* === NO AR WIDGET (below sidebar, same width) === */}
+          {currentPage === "dashboard" && (
+            <div className="rounded-2xl p-4 overflow-hidden" style={{ backgroundColor: "#0c0441", height: "225px" }}>
+              <Suspense fallback={null}>
+                <OnAirWidget />
+              </Suspense>
+            </div>
+          )}
+        </div>
 
         {/* === MAIN CONTENT === */}
         <main className="flex-1 flex flex-col min-w-0">
@@ -305,6 +317,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           {/* Content area */}
           <div className={`flex-1 overflow-y-auto overflow-x-hidden rounded-2xl`} style={currentPage === "dashboard" ? {} : { backgroundColor: "#111", padding: "2rem" }}>
             <Suspense fallback={<div className="flex justify-center py-16"><Loader2 className="animate-spin text-white" size={28} /></div>}>
+              {currentPage === "dashboard" && (
+                <DashboardHome empresa={empresa} onNavigate={setCurrentPage} />
+              )}
               {currentPage === "previsao" && <PrevisaoTempo />}
               {currentPage === "noticias" && <NoticiasPanel />}
               {currentPage === "apresentadores" && <ApresentadorForm />}
@@ -322,15 +337,6 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           </div>
         </main>
       </div>
-
-      {/* === WIDGETS BELOW MENU === */}
-      {currentPage === "dashboard" && (
-        <div style={{ paddingLeft: "50px", paddingRight: "50px", paddingTop: "20px" }}>
-          <Suspense fallback={null}>
-            <DashboardHome empresa={empresa} onNavigate={setCurrentPage} />
-          </Suspense>
-        </div>
-      )}
 
       {/* === FOOTER === */}
       <footer className="flex items-center gap-3 mt-auto pb-6" style={{ paddingLeft: "50px" }}>
