@@ -183,7 +183,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         backgroundAttachment: "fixed",
       } : {}),
     }}>
-      <div className="flex p-3 pb-0 gap-3" style={{ height: "650px" }}>
+      <div className="flex pb-0 gap-3" style={{ height: "650px", paddingLeft: "50px", paddingRight: "50px", paddingTop: "12px" }}>
         {/* === SIDEBAR === */}
         <aside className="flex flex-col rounded-[24px] overflow-hidden flex-shrink-0 backdrop-blur-xl" style={{ backgroundColor: "rgba(0, 0, 0, 0.90)", width: "400px", height: "650px" }}>
           {/* Selo + Settings */}
