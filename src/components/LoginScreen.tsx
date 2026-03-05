@@ -104,8 +104,8 @@ export default function LoginScreen() {
               <button
                 onClick={handleSubmit}
                 disabled={loading}
-                className="group relative flex items-center gap-3 px-8 py-3 rounded-full font-medium text-sm disabled:opacity-50 transition-all duration-300 text-white border-2 border-transparent hover:bg-transparent"
-                style={{ backgroundColor: "#0f1058" }}
+                className="group relative flex items-center gap-3 px-8 py-3 rounded-full font-medium disabled:opacity-50 transition-all duration-300 text-white border-2 border-transparent hover:bg-transparent"
+                style={{ fontSize: "12px", backgroundColor: "#0f1058" }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.backgroundColor = "transparent";
                   e.currentTarget.style.borderColor = "#0c0440";
