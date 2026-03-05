@@ -102,7 +102,7 @@ export default function ApresentadorForm() {
     resetForm();
     setSaving(false);
     setShowSuccess(true);
-    setTimeout(() => setShowSuccess(false), 3000);
+    setTimeout(() => setShowSuccess(false), 2000);
   };
 
   const startEdit = (a: Apresentador) => {
@@ -292,14 +292,14 @@ export default function ApresentadorForm() {
       ) : null}
 
       {showSuccess && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backdropFilter: "blur(8px)", backgroundColor: "rgba(0,0,0,0.3)" }}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: "rgba(0,0,0,0.3)" }}>
           <div className="flex flex-col items-center justify-center animate-fade-in overflow-hidden"
             style={{ width: "450px", height: "165px", backgroundColor: "rgba(13, 4, 70, 0.92)", borderRadius: "16px" }}>
             <div className="flex items-center gap-3 flex-1 justify-center" style={{ fontSize: "14px", color: "#ffffff", fontWeight: 600 }}>
               <CheckCircle size={22} /> Salvo com sucesso!
             </div>
             <div className="w-full" style={{ height: "4px", backgroundColor: "rgba(255,255,255,0.15)" }}>
-              <div style={{ height: "100%", backgroundColor: "#2dbff4", animation: "shrinkBar 3s linear forwards" }} />
+              <div style={{ height: "100%", backgroundColor: "#2dbff4", animation: "shrinkBar 2s linear forwards" }} />
             </div>
           </div>
         </div>
