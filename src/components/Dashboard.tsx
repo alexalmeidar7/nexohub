@@ -325,7 +325,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
       {/* === WIDGETS BELOW MENU === */}
       {currentPage === "dashboard" && (
-        <div style={{ paddingLeft: "50px", paddingRight: "50px", paddingTop: "10px" }}>
+        <div style={{ paddingLeft: "50px", paddingRight: "50px", paddingTop: "20px" }}>
           <Suspense fallback={null}>
             <DashboardHome empresa={empresa} onNavigate={setCurrentPage} />
           </Suspense>
