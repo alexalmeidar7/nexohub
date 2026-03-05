@@ -147,7 +147,7 @@ export default function LoginScreen() {
             {forgotSent ? (
               <div className="flex flex-col items-center gap-3">
                 <CheckCircle className="text-green-400" size={40} />
-                <p className="text-center text-white" style={{ fontSize: "14px" }}>
+                <p className="text-center text-white" style={{ fontSize: "12px" }}>
                   Link enviado para <strong>{forgotEmail}</strong>
                 </p>
                 <button
