@@ -223,6 +223,8 @@ export default function ProgramaForm() {
     await load();
     resetForm();
     setSaving(false);
+    setShowSuccess(true);
+    setTimeout(() => setShowSuccess(false), 2000);
   };
 
   const startEdit = (p: Programa) => {
