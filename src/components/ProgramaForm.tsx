@@ -511,9 +511,9 @@ export default function ProgramaForm() {
               <SelectTrigger className="flex-1 h-8" style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "20px", border: "none" }}>
                 <SelectValue placeholder="Selecione o estúdio" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent style={{ backgroundColor: "#0d0446", border: "1px solid #0d0446" }}>
                 {estudios.map(e => (
-                  <SelectItem key={e} value={e}>{e}</SelectItem>
+                  <SelectItem key={e} value={e} className="text-white focus:bg-white/20 focus:text-white">{e}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
