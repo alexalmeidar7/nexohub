@@ -416,15 +416,53 @@ function DashboardHome({ empresa, onNavigate }: { empresa: import("./Configuraco
     setDragOverId(null);
   };
 
-  const scrollLeft = () => {
-    scrollRef.current?.scrollBy({ left: -370, behavior: "smooth" });
-  };
-  const scrollRight = () => {
-    scrollRef.current?.scrollBy({ left: 370, behavior: "smooth" });
-  };
+  // Proximity scroll: smooth scroll when mouse near edges
+  const scrollAnimRef = useRef<number | null>(null);
+
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    const container = scrollRef.current;
+    if (!container) return;
+    const rect = container.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const edgeZone = 80; // px from edge to trigger scroll
+
+    if (scrollAnimRef.current) {
+      cancelAnimationFrame(scrollAnimRef.current);
+      scrollAnimRef.current = null;
+    }
+
+    let speed = 0;
+    if (x < edgeZone) {
+      speed = -((edgeZone - x) / edgeZone) * 8;
+    } else if (x > rect.width - edgeZone) {
+      speed = ((x - (rect.width - edgeZone)) / edgeZone) * 8;
+    }
+
+    if (speed !== 0) {
+      const tick = () => {
+        if (container) {
+          container.scrollLeft += speed;
+          scrollAnimRef.current = requestAnimationFrame(tick);
+        }
+      };
+      scrollAnimRef.current = requestAnimationFrame(tick);
+    }
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    if (scrollAnimRef.current) {
+      cancelAnimationFrame(scrollAnimRef.current);
+      scrollAnimRef.current = null;
+    }
+  }, []);
 
   return (
-    <div className="animate-fade-in flex gap-3 overflow-x-auto scrollbar-hide h-[225px]">
+    <div
+      ref={scrollRef}
+      className="animate-fade-in flex gap-3 overflow-x-auto scrollbar-hide h-[225px]"
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+    >
       {orderedWidgets.map(widget => (
         <div
           key={widget.id}
