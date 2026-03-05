@@ -268,6 +268,7 @@ export type Database = {
       }
       empresa_config: {
         Row: {
+          background_url: string | null
           endereco: string | null
           facebook: string | null
           id: string
@@ -282,6 +283,7 @@ export type Database = {
           youtube: string | null
         }
         Insert: {
+          background_url?: string | null
           endereco?: string | null
           facebook?: string | null
           id?: string
@@ -296,6 +298,7 @@ export type Database = {
           youtube?: string | null
         }
         Update: {
+          background_url?: string | null
           endereco?: string | null
           facebook?: string | null
           id?: string
