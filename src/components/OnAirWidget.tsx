@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Radio, ChevronRight, Clock, Loader2, ArrowRight, Mic } from "lucide-react";
+import { Radio, ChevronRight, Clock, Loader2, ArrowRight, Mic, Music } from "lucide-react";
 import { getApresentadores } from "./ApresentadorForm";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -76,6 +76,7 @@ export default function OnAirWidget() {
   const [nextPrograms, setNextPrograms] = useState<Programa[]>([]);
   const [nextApresentadores, setNextApresentadores] = useState<Record<string, ApresentadorInfo>>({});
   const [isHovered, setIsHovered] = useState(false);
+  const [musicData, setMusicData] = useState<{ titulo?: string; artista?: string } | null>(null);
 
   useEffect(() => {
     const update = async () => {
@@ -100,6 +101,22 @@ export default function OnAirWidget() {
     update();
     const interval = setInterval(update, 30 * 1000);
     return () => clearInterval(interval);
+  }, []);
+
+  // Poll music data from localStorage
+  useEffect(() => {
+    const readMusic = () => {
+      try {
+        const raw = localStorage.getItem("masterview_music_data");
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          setMusicData({ titulo: parsed.titulo || parsed.title, artista: parsed.artista || parsed.artist });
+        }
+      } catch {}
+    };
+    readMusic();
+    const mi = setInterval(readMusic, 3000);
+    return () => clearInterval(mi);
   }, []);
 
   const firstNext = nextPrograms[0] || null;
@@ -218,6 +235,16 @@ export default function OnAirWidget() {
             {programa.horarioInicio} — {programa.horarioFim}
           </p>
         </div>
+
+        {/* Music info */}
+        {musicData?.titulo && (
+          <div className="z-10 flex items-center gap-1.5 mb-1" style={{ maxWidth: "55%" }}>
+            <Music size={11} style={{ color: "#268ffa" }} className="flex-shrink-0" />
+            <p className="text-white/70 text-[10px] truncate">
+              {musicData.titulo}{musicData.artista ? ` — ${musicData.artista}` : ""}
+            </p>
+          </div>
+        )}
 
         <div className="z-10 mb-4 flex items-center gap-1">
           <Mic size={12} style={{ color: "#268ffa" }} />
