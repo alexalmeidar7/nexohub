@@ -449,7 +449,7 @@ export default function ProgramaForm() {
 
         <div>
           <label className="block text-xs mb-1" style={{ color: "#0d0446", fontWeight: 600 }}>Apresentador Responsável</label>
-          <Popover>
+          <Popover open={apresentadorComboOpen} onOpenChange={setApresentadorComboOpen}>
             <PopoverTrigger asChild>
               <button
                 className="w-full h-8 flex items-center justify-between px-4 text-sm"
@@ -461,18 +461,18 @@ export default function ProgramaForm() {
                 <ChevronsUpDown size={14} className="opacity-60" />
               </button>
             </PopoverTrigger>
-            <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-              <Command>
-                <CommandInput placeholder="Buscar apresentador..." />
+            <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start" style={{ backgroundColor: "#0d0446", border: "1px solid #0d0446" }}>
+              <Command style={{ backgroundColor: "#0d0446" }}>
+                <CommandInput placeholder="Buscar apresentador..." className="text-white" style={{ color: "#ffffff" }} />
                 <CommandList>
-                  <CommandEmpty>Nenhum encontrado.</CommandEmpty>
+                  <CommandEmpty className="text-white/60 py-4 text-center text-sm">Nenhum encontrado.</CommandEmpty>
                   <CommandGroup>
-                    <CommandItem value="__none__" onSelect={() => setApresentadorId("")}>
+                    <CommandItem value="__none__" onSelect={() => { setApresentadorId(""); setApresentadorComboOpen(false); }} className="text-white data-[selected=true]:bg-white/20 data-[selected=true]:text-white">
                       <Check size={14} className={cn("mr-2", !apresentadorId ? "opacity-100" : "opacity-0")} />
                       Nenhum
                     </CommandItem>
                     {apresentadores.filter(a => a.ativo && a.cargo?.toLowerCase() !== "convidado").map(a => (
-                      <CommandItem key={a.id} value={a.nome} onSelect={() => setApresentadorId(a.id)}>
+                      <CommandItem key={a.id} value={a.nome} onSelect={() => { setApresentadorId(a.id); setApresentadorComboOpen(false); }} className="text-white data-[selected=true]:bg-white/20 data-[selected=true]:text-white">
                         <Check size={14} className={cn("mr-2", apresentadorId === a.id ? "opacity-100" : "opacity-0")} />
                         {a.nome}
                       </CommandItem>
