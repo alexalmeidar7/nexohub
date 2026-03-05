@@ -416,7 +416,7 @@ export default function NoticiasPanel() {
                         <input
                           defaultValue={sn.imageUrl}
                           onBlur={(e) => updateSelectedField(i, "imageUrl", e.target.value)}
-                          className="bg-transparent border-b border-transparent hover:border-gray-300 focus:border-primary outline-none text-gray-500 w-full text-xs truncate"
+                          className="bg-transparent border-b border-transparent hover:border-gray-300 outline-none w-full text-xs truncate" style={{ color: "rgba(13,4,70,0.5)" }}
                           title={sn.imageUrl}
                         />
                       </td>
