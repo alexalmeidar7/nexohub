@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Radio, ChevronRight, Clock, Loader2, ArrowRight, Mic } from "lucide-react";
+import { Radio, ChevronRight, Clock, Loader2, ArrowRight, Mic, Music } from "lucide-react";
 import { getApresentadores } from "./ApresentadorForm";
 import { supabase } from "@/integrations/supabase/client";
 
