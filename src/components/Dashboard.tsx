@@ -204,13 +204,12 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   <button
                     onClick={() => handleMenuClick(item)}
                     className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs transition-colors ${
-                      active ? "text-[#268ffa]" : "text-white/80 hover:bg-white/5"
+                      active ? "text-[#268ffa]" : "text-white hover:bg-white/5"
                     }`}
-                    style={!active ? {} : {}}
                     onMouseEnter={e => { if (!active) { e.currentTarget.style.color = "#268ffa"; } }}
                     onMouseLeave={e => { if (!active) { e.currentTarget.style.color = ""; } }}
                   >
-                    <Icon size={14} className={active ? "text-[#268ffa]" : "text-white/50"} />
+                    <Icon size={14} className={active ? "text-[#268ffa]" : "text-white"} />
                     <span className="flex-1 text-left">{item.label}</span>
                     {item.children && (
                       expanded ? <ChevronUp size={12} className="text-white/30" /> : <ChevronDown size={12} className="text-white/30" />
