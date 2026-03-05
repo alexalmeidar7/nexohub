@@ -222,8 +222,8 @@ export default function ApresentadorForm() {
           <div className="flex items-center justify-between mb-4">
             <h4 className="text-lg font-medium" style={{ color: "#0d0446" }}>Cadastrados</h4>
             <Select value={filterCategoria} onValueChange={setFilterCategoria}>
-              <SelectTrigger className="w-[180px] h-8 text-sm" style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "20px", border: "none" }}>
-                <SelectValue placeholder="Filtrar por categoria" />
+              <SelectTrigger className="w-[160px]" style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "20px", border: "none", fontSize: "14px", height: "28px", padding: "0 12px" }}>
+                <SelectValue placeholder="Filtrar por" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="todos">Todos</SelectItem>
