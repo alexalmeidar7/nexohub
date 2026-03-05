@@ -62,7 +62,7 @@ export default function TopLikedSongs() {
     <div className="flex flex-col h-full">
       {/* Header aligned like "NO AR" */}
       <div className="flex items-center gap-1.5 mb-2">
-        <Heart size={14} fill="#268ffa" style={{ color: "#268ffa" }} />
+        <Heart size={14} fill="#268ffa" style={{ color: "#268ffa" }} className="animate-pulse" />
         <span className="font-bold text-xs uppercase tracking-wide" style={{ color: "#268ffa" }}>Músicas Curtidas</span>
       </div>
 
