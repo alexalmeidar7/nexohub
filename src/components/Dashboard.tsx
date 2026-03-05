@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef, useCallback, lazy, Suspense } from "react";
 import { Calendar as CalendarUI } from "@/components/ui/calendar";
-import { Home, Sun, FileText, Mic2, PlaySquare, Music, CalendarDays, Settings, LogOut, Loader2, ShoppingBag, ChevronDown, ChevronUp, MessageSquareQuote, Tag, Image, ExternalLink, MonitorPlay, Heart, ShoppingCart, Film } from "lucide-react";
+import { Home, Sun, FileText, Mic2, PlaySquare, Music, CalendarDays, Settings, LogOut, Loader2, ShoppingBag, ChevronDown, ChevronUp, MessageSquareQuote, Tag, Image, ExternalLink, MonitorPlay, Heart, ShoppingCart, Film, Mail, Users, Newspaper, CloudSun } from "lucide-react";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
-import logoMenu from "@/assets/logo-menu.png";
+import seloNexohub from "@/assets/selo-nexohub.png";
+import logoFooter from "@/assets/logo-footer.png";
 import {
   Tooltip,
   TooltipContent,
@@ -23,7 +24,6 @@ const AgendaPage = lazy(() => import("./AgendaPage"));
 const MusicWidget = lazy(() => import("./MusicWidget"));
 const XmlLinkRow = lazy(() => import("./XmlLinkRow"));
 const ConfiguracoesPage = lazy(() => import("./ConfiguracoesPage"));
-// Import utility functions directly (not lazy)
 import { getEmpresaConfig } from "./ConfiguracoesPage";
 import { getMusicData } from "./MusicaNoAr";
 const TestemunhaisPage = lazy(() => import("./TestemunhaisPage"));
@@ -37,51 +37,54 @@ const PreRollPage = lazy(() => import("./PreRollPage"));
 
 type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll";
 
-const menuItems: { icon: typeof Home; label: string; page: Page }[] = [
-  { icon: Home, label: "MasterView Home", page: "dashboard" },
-  { icon: Sun, label: "Módulo Previsão do Tempo", page: "previsao" },
-  { icon: FileText, label: "Módulo Notícias", page: "noticias" },
-  { icon: Mic2, label: "Módulo Cadastro de Apresentadores/Participantes", page: "apresentadores" },
-  { icon: PlaySquare, label: "Módulo Cadastro de Programas", page: "programas" },
-  { icon: Music, label: "Módulo Música no Ar", page: "musica" },
-  { icon: Heart, label: "Módulo Músicas Curtidas", page: "curtidas" },
-  { icon: CalendarDays, label: "Módulo Agenda", page: "agenda" },
-  
-];
+// Sidebar structured menu
+interface MenuItem {
+  icon: typeof Home;
+  label: string;
+  page?: Page;
+  children?: { icon: typeof Home; label: string; page: Page }[];
+}
 
-const comercialSubItems: { icon: typeof Home; label: string; page: Page }[] = [
-  { icon: MessageSquareQuote, label: "Testemunhais", page: "testemunhais" },
-  { icon: Tag, label: "Promoções", page: "promocoes" },
-  { icon: Image, label: "Logos Patrocinadores", page: "logos" },
-  { icon: Film, label: "Pré-Roll", page: "preroll" },
-  { icon: ShoppingCart, label: "Shopping", page: "shopping" },
+const sidebarMenu: MenuItem[] = [
+  { icon: Home, label: "home", page: "dashboard" },
+  {
+    icon: Users, label: "cadastros", children: [
+      { icon: Mic2, label: "Apresentadores", page: "apresentadores" },
+      { icon: PlaySquare, label: "Programas", page: "programas" },
+    ]
+  },
+  { icon: CloudSun, label: "previsão do tempo", page: "previsao" },
+  { icon: Newspaper, label: "notícias", page: "noticias" },
+  { icon: Music, label: "música no ar", page: "musica" },
+  { icon: CalendarDays, label: "agenda", page: "agenda" },
+  { icon: MonitorPlay, label: "player", page: undefined }, // opens new tab
+  {
+    icon: ShoppingBag, label: "comercial", children: [
+      { icon: MessageSquareQuote, label: "Testemunhais", page: "testemunhais" },
+      { icon: Tag, label: "Promoções", page: "promocoes" },
+      { icon: Image, label: "Logos", page: "logos" },
+      { icon: Film, label: "Pre Roll", page: "preroll" },
+      { icon: ShoppingCart, label: "Shopping", page: "shopping" },
+    ]
+  },
 ];
 
 const pageTitle: Record<Page, string> = {
-  dashboard: "MasterView Home",
-  previsao: "Módulo Previsão do Tempo",
-  noticias: "Módulo Notícias",
-  apresentadores: "Módulo Cadastro de Apresentadores/Participantes",
-  programas: "Módulo Cadastro de Programas",
-  musica: "Módulo Música no Ar",
-  agenda: "Módulo Agenda",
-  curtidas: "Módulo Músicas Curtidas",
+  dashboard: "Home",
+  previsao: "Previsão do Tempo",
+  noticias: "Notícias",
+  apresentadores: "Cadastro de Apresentadores",
+  programas: "Cadastro de Programas",
+  musica: "Música no Ar",
+  agenda: "Agenda",
+  curtidas: "Músicas Curtidas",
   configuracoes: "Configurações",
-  testemunhais: "Módulo Comercial — Testemunhais",
-  promocoes: "Módulo Comercial — Promoções",
-  logos: "Módulo Comercial — Logos Patrocinadores",
-  shopping: "Módulo Comercial — Shopping",
-  preroll: "Módulo Comercial — Pré-Roll",
+  testemunhais: "Comercial — Testemunhais",
+  promocoes: "Comercial — Promoções",
+  logos: "Comercial — Logos Patrocinadores",
+  shopping: "Comercial — Shopping",
+  preroll: "Comercial — Pré-Roll",
 };
-
-function SocialIcon({ url, children }: { url: string; children: React.ReactNode }) {
-  if (!url) return null;
-  return (
-    <a href={url} target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-gray-800 transition-colors">
-      {children}
-    </a>
-  );
-}
 
 interface DashboardProps {
   onLogout?: () => void;
@@ -90,11 +93,10 @@ interface DashboardProps {
 export default function Dashboard({ onLogout }: DashboardProps) {
   const { user } = useAuth();
   const [currentPage, setCurrentPage] = useState<Page>("dashboard");
-  const [comercialOpen, setComercialOpen] = useState(false);
+  const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set());
   const [empresa, setEmpresa] = useState<import("./ConfiguracoesPage").EmpresaConfig>({} as any);
   const [enabledModules, setEnabledModules] = useState<Set<string> | null>(null);
 
-  // Fetch enabled modules for the current user
   useEffect(() => {
     if (!user) return;
     supabase
@@ -106,7 +108,6 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           const enabled = new Set(data.filter((m: any) => m.enabled).map((m: any) => m.module_key));
           setEnabledModules(enabled);
         } else {
-          // No records means all modules enabled by default
           setEnabledModules(null);
         }
       });
@@ -114,26 +115,17 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
   const isModuleEnabled = (page: Page): boolean => {
     if (page === "dashboard" || page === "configuracoes") return true;
-    if (!enabledModules) return true; // no restrictions
-    // Comercial sub-pages map to "comercial" module
+    if (!enabledModules) return true;
     if (page === "testemunhais" || page === "promocoes" || page === "logos" || page === "preroll" || page === "shopping") {
       return enabledModules.has("comercial");
     }
     return enabledModules.has(page);
   };
 
-  const filteredMenuItems = menuItems.filter((item) => isModuleEnabled(item.page));
-  const filteredComercialSubItems = comercialSubItems.filter((item) => isModuleEnabled(item.page));
-  const showComercial = filteredComercialSubItems.length > 0;
-
-  const isComercialPage = comercialSubItems.some((s) => s.page === currentPage);
-
-  // Redirect to dashboard if current page's module is disabled
   useEffect(() => {
     if (enabledModules !== null && currentPage !== "dashboard" && currentPage !== "configuracoes" && !isModuleEnabled(currentPage)) {
       setCurrentPage("dashboard");
     }
-    if (isComercialPage) setComercialOpen(true);
   }, [currentPage, enabledModules]);
 
   useEffect(() => {
@@ -143,221 +135,240 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   useGlobalMusicXmlUpload();
   useGlobalMusicSync();
 
+  const toggleMenu = (label: string) => {
+    setExpandedMenus(prev => {
+      const next = new Set(prev);
+      if (next.has(label)) next.delete(label);
+      else next.add(label);
+      return next;
+    });
+  };
+
+  const handleMenuClick = (item: MenuItem) => {
+    if (item.label === "player") {
+      window.open("/player", "_blank");
+      return;
+    }
+    if (item.children) {
+      toggleMenu(item.label);
+    } else if (item.page) {
+      setCurrentPage(item.page);
+    }
+  };
+
+  const isItemActive = (item: MenuItem): boolean => {
+    if (item.page === currentPage) return true;
+    if (item.children) return item.children.some(c => c.page === currentPage);
+    return false;
+  };
+
+  // Auto-expand parent when child is active
+  useEffect(() => {
+    sidebarMenu.forEach(item => {
+      if (item.children?.some(c => c.page === currentPage)) {
+        setExpandedMenus(prev => new Set(prev).add(item.label));
+      }
+    });
+  }, [currentPage]);
+
   return (
-    <div className="min-h-screen bg-background flex text-foreground">
-      <aside className="w-16 flex flex-col items-center py-4 gap-3" style={{ backgroundColor: "#1e1e1e" }}>
-        <div className="mb-4">
-          <img src={logoMenu} alt="MasterView" className="w-10 h-auto" />
-        </div>
-
-        {filteredMenuItems.map((item) => {
-          const isActive = currentPage === item.page;
-          const Icon = item.icon;
-          return (
-            <Tooltip key={item.page}>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={() => setCurrentPage(item.page)}
-                  className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
-                    isActive ? "bg-primary" : "bg-transparent hover:bg-white/10"
-                  }`}
-                >
-                  <Icon size={18} className={isActive ? "text-[#333]" : "text-muted-foreground"} />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="right"><p>{item.label}</p></TooltipContent>
-            </Tooltip>
-          );
-        })}
-
-        {/* Player - opens in new tab */}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <a
-              href="/player"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-10 h-10 rounded-full flex items-center justify-center transition-all bg-transparent hover:bg-white/10"
-            >
-              <MonitorPlay size={18} className="text-muted-foreground" />
-            </a>
-          </TooltipTrigger>
-          <TooltipContent side="right"><p>Módulo Player</p></TooltipContent>
-        </Tooltip>
-
-        {/* Comercial expandable menu with glassmorphism container */}
-        {showComercial && (
-        <div className={`flex flex-col items-center gap-1 rounded-xl py-2 px-1 transition-all ${comercialOpen || isComercialPage ? "bg-white/[0.06] backdrop-blur-md border border-white/[0.08] shadow-lg" : ""}`}>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                onClick={() => setComercialOpen(!comercialOpen)}
-                className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
-                  isComercialPage ? "bg-primary" : "bg-transparent hover:bg-white/10"
-                }`}
-              >
-                <ShoppingBag size={18} className={isComercialPage ? "text-[#333]" : "text-muted-foreground"} />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="right"><p>Módulo Comercial</p></TooltipContent>
-          </Tooltip>
-
-          {comercialOpen && filteredComercialSubItems.map((item) => {
-            const isActive = currentPage === item.page;
-            const Icon = item.icon;
-            return (
-              <Tooltip key={item.page}>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={() => setCurrentPage(item.page)}
-                    className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
-                      isActive ? "bg-primary" : "bg-transparent hover:bg-white/10"
-                    }`}
-                  >
-                    <Icon size={14} className={isActive ? "text-[#333]" : "text-muted-foreground"} />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="right"><p>{item.label}</p></TooltipContent>
-              </Tooltip>
-            );
-          })}
-        </div>
-        )}
-
-        <div className="flex-1" />
-
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button onClick={onLogout} className="w-10 h-10 rounded-full flex items-center justify-center transition-all bg-transparent hover:bg-red-500/20 mb-1">
-              <LogOut size={18} className="text-red-400" />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent side="right"><p>Sair</p></TooltipContent>
-        </Tooltip>
-
-        <Tooltip>
-          <TooltipTrigger asChild>
+    <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#268ffa" }}>
+      <div className="flex flex-1 p-3 pb-0 gap-3">
+        {/* === SIDEBAR === */}
+        <aside className="w-56 flex flex-col rounded-2xl overflow-hidden flex-shrink-0" style={{ backgroundColor: "#000000" }}>
+          {/* Selo + Settings */}
+          <div className="flex items-center justify-between px-4 pt-5 pb-3">
+            <img src={seloNexohub} alt="NexoHUB" className="h-6" />
             <button
               onClick={() => setCurrentPage("configuracoes")}
-              className={`w-10 h-10 rounded-full flex items-center justify-center transition-all mb-2 ${
-                currentPage === "configuracoes" ? "bg-primary" : "bg-transparent hover:bg-white/10"
-              }`}
+              className="p-1 rounded-full hover:bg-white/10 transition-colors"
             >
-              <Settings size={18} className={currentPage === "configuracoes" ? "text-[#333]" : "text-muted-foreground"} />
+              <Settings size={16} style={{ color: "#268ffa" }} />
             </button>
-          </TooltipTrigger>
-          <TooltipContent side="right"><p>Configurações</p></TooltipContent>
-        </Tooltip>
-
-        <div className="opacity-50">
-          <span className="text-[8px] font-bold italic text-muted-foreground writing-mode-vertical" style={{ writingMode: "vertical-rl" }}>
-            svn✦broadcast
-          </span>
-        </div>
-      </aside>
-
-      <main className={`flex-1 p-10 relative`}
-        style={currentPage === "dashboard" ? {
-          backgroundColor: "#e0e0e0",
-          ...(empresa.backgroundUrl ? {
-            backgroundImage: `url(${empresa.backgroundUrl})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-            backgroundRepeat: "no-repeat",
-          } : {}),
-        } : undefined}
-      >
-        <header className="mb-10 flex items-center gap-4">
-          <div>
-            <h2 className={`text-3xl font-light ${currentPage === "dashboard" ? "text-gray-800" : ""}`}>{pageTitle[currentPage]}</h2>
-            {currentPage === "dashboard" && user?.email && (
-              <p className="text-sm text-gray-500 mt-1">{user.email}</p>
-            )}
           </div>
-          {currentPage === "dashboard" && empresa.nome && (
-            <div className="flex items-center gap-3">
-              <span className="text-3xl font-bold text-gray-800">{empresa.nome}</span>
-              <div className="flex items-center gap-2">
-                <SocialIcon url={empresa.instagram}>
-                  <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
-                </SocialIcon>
-                <SocialIcon url={empresa.facebook}>
-                  <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
-                </SocialIcon>
-                <SocialIcon url={empresa.youtube}>
-                  <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
-                </SocialIcon>
-                {empresa.site && (
-                  <SocialIcon url={empresa.site}>
-                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
-                  </SocialIcon>
-                )}
-              </div>
-            </div>
-          )}
-          <div className="flex-1" />
-          {currentPage === "dashboard" && <ServerClock />}
-        </header>
-        <section
-          className={`rounded-2xl p-8 min-h-[400px] ${currentPage === "dashboard" ? "" : "bg-surface-elevated border border-border"}`}
-          style={currentPage === "dashboard" ? { backgroundColor: "#efefef" } : undefined}
-        >
-          <Suspense fallback={<div className="flex justify-center py-16"><Loader2 className="animate-spin" size={28} /></div>}>
-          {currentPage === "dashboard" && (
-            <div className="animate-fade-in space-y-6">
-              <p className="text-gray-500">
-                Bem-vindo ao MasterView. Selecione uma opção no menu lateral.
-              </p>
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="space-y-6">
-                  <WeatherWidget />
-                  <MusicWidget />
-                  <TopLikedSongs />
-                  <ComercialWidgets />
-                </div>
-                <div className="space-y-6">
+
+          {/* Module header */}
+          <div className="mx-3 mb-2 px-3 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest text-white/70" style={{ backgroundColor: "#0d0446" }}>
+            módulos ativos
+          </div>
+
+          {/* Menu items */}
+          <nav className="flex-1 overflow-y-auto px-3 space-y-0.5">
+            {sidebarMenu.map(item => {
+              const Icon = item.icon;
+              const active = isItemActive(item);
+              const expanded = expandedMenus.has(item.label);
+
+              return (
+                <div key={item.label}>
                   <button
-                    onClick={() => window.open('/modulo-tela-estudio-promocao', '_blank')}
-                    className="w-full bg-gray-700 text-white px-4 py-3 rounded-xl shadow-lg hover:bg-gray-600 transition-colors flex items-center justify-center gap-2 font-bold text-sm"
+                    onClick={() => handleMenuClick(item)}
+                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs transition-colors ${
+                      active ? "text-[#268ffa]" : "text-white/80 hover:text-white hover:bg-white/5"
+                    }`}
                   >
-                    <ExternalLink size={16} />
-                    Ver Promoções & Grade
+                    <Icon size={14} className={active ? "text-[#268ffa]" : "text-white/50"} />
+                    <span className="flex-1 text-left">{item.label}</span>
+                    {item.children && (
+                      expanded ? <ChevronUp size={12} className="text-white/30" /> : <ChevronDown size={12} className="text-white/30" />
+                    )}
                   </button>
-                  <VideoPlayer />
-                  <OnAirWidget />
+                  {item.children && expanded && (
+                    <div className="ml-6 space-y-0.5 mt-0.5">
+                      {item.children.map(child => {
+                        const ChildIcon = child.icon;
+                        const childActive = currentPage === child.page;
+                        return (
+                          <button
+                            key={child.page}
+                            onClick={() => setCurrentPage(child.page)}
+                            className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-[11px] transition-colors ${
+                              childActive ? "text-[#268ffa]" : "text-white/60 hover:text-white hover:bg-white/5"
+                            }`}
+                          >
+                            <ChildIcon size={12} className={childActive ? "text-[#268ffa]" : "text-white/40"} />
+                            <span>{child.label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
-                <DashboardAgenda />
+              );
+            })}
+          </nav>
+
+          {/* User profile at bottom */}
+          <div className="px-4 py-4 border-t border-white/10">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style={{ backgroundColor: "#268ffa" }}>
+                {empresa.nome ? empresa.nome.charAt(0).toUpperCase() : "U"}
               </div>
-              <UnifiedXmlField />
+              <div className="min-w-0 flex-1">
+                <p className="text-white text-xs font-bold truncate">{empresa.nome || "Empresa"}</p>
+                <p className="text-white/50 text-[10px] truncate">{user?.email || ""}</p>
+                <button onClick={onLogout} className="text-white/40 text-[10px] underline hover:text-white/70 transition-colors mt-0.5">
+                  sair
+                </button>
+              </div>
             </div>
-          )}
-          {currentPage === "previsao" && <PrevisaoTempo />}
-          {currentPage === "noticias" && <NoticiasPanel />}
-          {currentPage === "apresentadores" && <ApresentadorForm />}
-          {currentPage === "programas" && <ProgramaForm />}
-          {currentPage === "musica" && <MusicaNoAr />}
-          {currentPage === "agenda" && <AgendaPage />}
-          {currentPage === "curtidas" && <MusicasCurtidasPage />}
-          {currentPage === "configuracoes" && <ConfiguracoesPage />}
-          {currentPage === "testemunhais" && <TestemunhaisPage />}
-          {currentPage === "promocoes" && <PromocoesPage />}
-          {currentPage === "logos" && <LogosPatrocinadoresPage />}
-          {currentPage === "shopping" && <ShoppingPage />}
-          {currentPage === "preroll" && <PreRollPage />}
-          </Suspense>
-        </section>
+          </div>
+        </aside>
 
+        {/* === MAIN CONTENT === */}
+        <main className="flex-1 flex flex-col min-w-0">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <h1 className="text-2xl font-bold text-white">{empresa.nome || "Dashboard"}</h1>
+              <p className="text-white/60 text-xs">{user?.email || ""}</p>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="relative">
+                <div className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center">
+                  <Mail size={16} className="text-white" />
+                </div>
+                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center">3</span>
+              </div>
+              <ServerClock />
+            </div>
+          </div>
 
-        <div className="absolute bottom-10 right-10 opacity-80 pointer-events-none">
-          <span className="text-foreground font-bold text-3xl tracking-tighter">
-            svn<span className="text-lg">✦</span>broadcast
-          </span>
-        </div>
-      </main>
+          {/* Content area */}
+          <div className="flex-1 overflow-y-auto rounded-2xl" style={currentPage === "dashboard" ? {} : { backgroundColor: "#111", padding: "2rem" }}>
+            <Suspense fallback={<div className="flex justify-center py-16"><Loader2 className="animate-spin text-white" size={28} /></div>}>
+              {currentPage === "dashboard" && (
+                <DashboardHome empresa={empresa} />
+              )}
+              {currentPage === "previsao" && <PrevisaoTempo />}
+              {currentPage === "noticias" && <NoticiasPanel />}
+              {currentPage === "apresentadores" && <ApresentadorForm />}
+              {currentPage === "programas" && <ProgramaForm />}
+              {currentPage === "musica" && <MusicaNoAr />}
+              {currentPage === "agenda" && <AgendaPage />}
+              {currentPage === "curtidas" && <MusicasCurtidasPage />}
+              {currentPage === "configuracoes" && <ConfiguracoesPage />}
+              {currentPage === "testemunhais" && <TestemunhaisPage />}
+              {currentPage === "promocoes" && <PromocoesPage />}
+              {currentPage === "logos" && <LogosPatrocinadoresPage />}
+              {currentPage === "shopping" && <ShoppingPage />}
+              {currentPage === "preroll" && <PreRollPage />}
+            </Suspense>
+          </div>
+        </main>
+      </div>
+
+      {/* === FOOTER === */}
+      <footer className="flex items-center gap-3 px-6 py-3">
+        <img src={logoFooter} alt="Nexo" className="h-5 opacity-80" />
+        <span className="text-white/60 text-[11px]">Copyrighted 2026 - Todos os direitos reservados.</span>
+      </footer>
     </div>
   );
 }
 
+/* ========== DASHBOARD HOME ========== */
+function DashboardHome({ empresa }: { empresa: import("./ConfiguracoesPage").EmpresaConfig }) {
+  return (
+    <div className="animate-fade-in space-y-4">
+      {/* Widget cards row */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+        {/* Card 1 - No Ar */}
+        <div className="rounded-2xl p-4 min-h-[200px]" style={{ backgroundColor: "#0c0441" }}>
+          <Suspense fallback={<Loader2 className="animate-spin text-white/50" size={16} />}>
+            <OnAirWidget />
+          </Suspense>
+        </div>
+
+        {/* Card 2 - Tempo */}
+        <div className="rounded-2xl p-4 bg-white min-h-[200px]">
+          <Suspense fallback={<Loader2 className="animate-spin text-gray-400" size={16} />}>
+            <WeatherWidget />
+          </Suspense>
+        </div>
+
+        {/* Card 3 - Views / Video */}
+        <div className="rounded-2xl p-4 bg-white min-h-[200px]">
+          <Suspense fallback={<Loader2 className="animate-spin text-gray-400" size={16} />}>
+            <VideoPlayer />
+          </Suspense>
+        </div>
+
+        {/* Card 4 - Top 10 */}
+        <div className="rounded-2xl p-4 bg-white min-h-[200px]">
+          <Suspense fallback={<Loader2 className="animate-spin text-gray-400" size={16} />}>
+            <TopLikedSongs />
+          </Suspense>
+        </div>
+      </div>
+
+      {/* Secondary row */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+        <div className="rounded-2xl p-4 bg-white">
+          <Suspense fallback={<Loader2 className="animate-spin text-gray-400" size={16} />}>
+            <MusicWidget />
+          </Suspense>
+        </div>
+        <div className="rounded-2xl p-4 bg-white">
+          <Suspense fallback={<Loader2 className="animate-spin text-gray-400" size={16} />}>
+            <DashboardAgenda />
+          </Suspense>
+        </div>
+        <div className="rounded-2xl p-4 bg-white">
+          <Suspense fallback={<Loader2 className="animate-spin text-gray-400" size={16} />}>
+            <ComercialWidgets />
+          </Suspense>
+        </div>
+      </div>
+
+      <Suspense fallback={null}>
+        <UnifiedXmlField />
+      </Suspense>
+    </div>
+  );
+}
+
+/* ========== SERVER CLOCK ========== */
 function ServerClock() {
   const [now, setNow] = useState(new Date());
 
@@ -366,17 +377,16 @@ function ServerClock() {
     return () => clearInterval(interval);
   }, []);
 
-  const time = now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
-  const date = now.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+  const time = now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
 
   return (
     <div className="text-right">
-      <p className="text-2xl font-bold text-gray-800 font-mono tracking-wider">{time}</p>
-      <p className="text-xs text-gray-500 capitalize">{date}</p>
+      <p className="text-xl font-bold text-white font-mono tracking-wider">{time}</p>
     </div>
   );
 }
 
+/* ========== UNIFIED XML FIELD ========== */
 const WEATHER_KEY = "masterview_last_city";
 
 function UnifiedXmlField() {
@@ -442,6 +452,7 @@ function UnifiedXmlField() {
   );
 }
 
+/* ========== HOOKS ========== */
 function useGlobalMusicXmlUpload() {
   const { user } = useAuth();
   const lastContentRef = useRef<string>("");
@@ -477,7 +488,6 @@ function useGlobalMusicXmlUpload() {
   }, [user]);
 }
 
-// Global music data sync - keeps localStorage music data always fresh
 function useGlobalMusicSync() {
   const { user } = useAuth();
   const coverCacheRef = useRef<Record<string, string>>({});
@@ -526,7 +536,6 @@ function useGlobalMusicSync() {
         const data = parseXml(text);
         if (!data) return;
 
-        // Try iTunes cover if missing
         if (!data.capa) {
           const cacheKey = `${data.artista}-${data.titulo}`;
           if (coverCacheRef.current[cacheKey]) {
@@ -547,7 +556,6 @@ function useGlobalMusicSync() {
           }
         }
 
-        // Update localStorage if song changed
         const prevRaw = localStorage.getItem(MUSIC_DATA_KEY);
         const prev = prevRaw ? JSON.parse(prevRaw) : null;
         if (!prev || prev.titulo !== data.titulo || prev.artista !== data.artista) {
@@ -565,7 +573,7 @@ function useGlobalMusicSync() {
   }, [user]);
 }
 
-
+/* ========== COMERCIAL WIDGETS ========== */
 function ComercialWidgets() {
   const { user } = useAuth();
   const [totalLogos, setTotalLogos] = useState(0);
@@ -586,17 +594,15 @@ function ComercialWidgets() {
   if (loading) return null;
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <div className="bg-white/80 rounded-2xl border border-gray-200 p-4">
-        <p className="text-xs text-gray-500 mb-1">🏷️ Patrocinadores Ativos</p>
-        <p className="text-3xl font-bold text-gray-800">{totalLogos}</p>
-        <p className="text-[10px] text-gray-400 mt-1">logos vinculadas a programas</p>
-      </div>
+    <div>
+      <p className="text-xs text-gray-500 mb-2 font-semibold">🏷️ Patrocinadores Ativos</p>
+      <p className="text-3xl font-bold text-gray-800">{totalLogos}</p>
+      <p className="text-[10px] text-gray-400 mt-1">logos vinculadas a programas</p>
     </div>
   );
 }
 
-// Dashboard mini-agenda widget
+/* ========== DASHBOARD AGENDA ========== */
 function DashboardAgenda() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
@@ -656,39 +662,6 @@ function DashboardAgenda() {
   };
   const eventDates = getCalendarDates();
 
-  const today = new Date();
-  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-
-  const getUpcoming = () => {
-    const results: { evt: any; dateStr: string }[] = [];
-    for (let i = 0; i < 60; i++) {
-      const d = new Date(today);
-      d.setDate(d.getDate() + i);
-      const ds = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-      for (const evt of eventos) {
-        if (eventMatchesDate(evt, ds)) {
-          results.push({ evt, dateStr: ds });
-        }
-      }
-      if (results.length >= 3) break;
-    }
-    return results.slice(0, 3);
-  };
-  const upcoming = getUpcoming();
-
-  // Get last 3 past events
-  const getPastEvents = () => {
-    const pastResults: { evt: any; dateStr: string }[] = [];
-    for (const evt of eventos) {
-      if (evt.recorrencia === "unico" && evt.data < todayStr) {
-        pastResults.push({ evt, dateStr: evt.data });
-      }
-    }
-    pastResults.sort((a, b) => b.dateStr.localeCompare(a.dateStr));
-    return pastResults.slice(0, 3);
-  };
-  const pastEvents = getPastEvents();
-
   const selDateStr = selectedDate
     ? `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, "0")}-${String(selectedDate.getDate()).padStart(2, "0")}`
     : "";
@@ -696,85 +669,35 @@ function DashboardAgenda() {
 
   if (loading) {
     return (
-      <div className="space-y-4">
-        <div className="bg-white/80 rounded-2xl border border-gray-200 p-4 flex items-center gap-2">
-          <Loader2 size={16} className="text-gray-500 animate-spin" />
-          <span className="text-gray-500 text-xs">Carregando dados</span>
-        </div>
+      <div className="flex items-center gap-2">
+        <Loader2 size={14} className="text-gray-400 animate-spin" />
+        <span className="text-gray-400 text-xs">Carregando...</span>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
-      <div className="bg-white/80 rounded-2xl border border-gray-200 p-4">
-        <h4 className="text-sm font-semibold text-gray-700 mb-2">📅 Agenda</h4>
-        <DashboardCalendar
-          selected={selectedDate}
-          onSelect={setSelectedDate}
-          eventDates={eventDates}
-        />
-        {dayEvents.length > 0 && (
-          <div className="mt-3 space-y-1">
-            {dayEvents.map((evt: any) => (
-              <div key={evt.id} className="rounded-lg px-3 py-2 text-xs" style={{ backgroundColor: "#d8f96c" }}>
-                <p className="font-semibold text-gray-700">{evt.programa?.nome || "Evento"}</p>
-                {evt.programa && <p className="text-gray-600">{evt.programa.horario_inicio} - {evt.programa.horario_fim}</p>}
-                {evt.descricao && <p className="text-gray-600">{evt.descricao}</p>}
-                {evt.local && <p className="text-gray-500">📍 {evt.local}</p>}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {upcoming.length > 0 && (
-        <div className="bg-white/80 rounded-2xl border border-gray-200 p-4">
-          <h4 className="text-sm font-semibold text-gray-700 mb-2">Próximos Eventos</h4>
-          <div className="space-y-2">
-            {upcoming.map((item: any, idx: number) => {
-              const d = new Date(item.dateStr + "T12:00:00");
-              const dateLabel = d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
-              return (
-                <div key={`${item.evt.id}-${idx}`} className="flex items-center gap-3 bg-muted/50 rounded-lg px-3 py-2">
-                  <span className="text-xs font-bold text-white bg-gray-700 rounded px-2 py-1">{dateLabel}</span>
-                  <div className="text-xs">
-                    <p className="font-semibold text-foreground">{item.evt.programa?.nome || "Evento"}</p>
-                    {item.evt.programa && <p className="text-muted-foreground">{item.evt.programa.horario_inicio} - {item.evt.programa.horario_fim}</p>}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Past events */}
-      {pastEvents.length > 0 && (
-        <div className="bg-white/80 rounded-2xl border border-gray-200 p-4">
-          <h4 className="text-sm font-semibold text-gray-400 mb-2">Eventos Passados</h4>
-          <div className="space-y-2">
-            {pastEvents.map((item: any, idx: number) => {
-              const d = new Date(item.dateStr + "T12:00:00");
-              const dateLabel = d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
-              return (
-                <div key={`past-${item.evt.id}-${idx}`} className="flex items-center gap-3 bg-muted/30 rounded-lg px-3 py-2 opacity-50 grayscale">
-                  <span className="text-xs font-bold text-white bg-gray-400 rounded px-2 py-1">{dateLabel}</span>
-                  <div className="text-xs">
-                    <p className="font-semibold text-foreground">{item.evt.programa?.nome || "Evento"}</p>
-                    {item.evt.programa && <p className="text-muted-foreground">{item.evt.programa.horario_inicio} - {item.evt.programa.horario_fim}</p>}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+    <div>
+      <h4 className="text-xs font-semibold text-gray-600 mb-2">📅 Agenda</h4>
+      <DashboardCalendar
+        selected={selectedDate}
+        onSelect={setSelectedDate}
+        eventDates={eventDates}
+      />
+      {dayEvents.length > 0 && (
+        <div className="mt-2 space-y-1">
+          {dayEvents.map((evt: any) => (
+            <div key={evt.id} className="rounded-lg px-3 py-2 text-xs" style={{ backgroundColor: "#d8f96c" }}>
+              <p className="font-semibold text-gray-700">{evt.programa?.nome || "Evento"}</p>
+              {evt.programa && <p className="text-gray-600">{evt.programa.horario_inicio} - {evt.programa.horario_fim}</p>}
+            </div>
+          ))}
         </div>
       )}
     </div>
   );
 }
 
-// Small calendar for dashboard with custom styling
 function DashboardCalendar({ selected, onSelect, eventDates }: {
   selected: Date | undefined;
   onSelect: (d: Date | undefined) => void;
