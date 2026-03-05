@@ -151,33 +151,34 @@ function GradeBody({ gradeSlots, diasSemana, diaAtual, currentTimeStr, getProgra
               const presenterName = getPresenterName(prog.apresentadorId);
               return (
                 <td key={dia} rowSpan={rowSpan}
-                  className="rounded-lg transition-all relative group/cell"
+                  className="rounded-lg transition-all relative"
                   style={{
                     backgroundColor: isOnAir ? "#2dbef3" : "#ffffff",
                     color: isOnAir ? "#ffffff" : "#0d0446",
                     fontWeight: isOnAir ? "bold" : undefined,
                     border: isOnAir ? "2px solid #2dbef3" : "1px solid #ccc",
                     verticalAlign: "top",
-                    padding: "8px 10px",
+                    padding: "12px 14px",
                   }}>
-                  <div className="text-[10px] font-bold truncate pr-[60px]">{prog.nome}</div>
-                  <div className="text-[9px] mt-0.5" style={{ color: isOnAir ? "rgba(255,255,255,0.8)" : "rgba(13,4,70,0.5)" }}>
+                  <div className="text-[10px] font-bold truncate pr-[75px]">{prog.nome}</div>
+                  <div className="text-[9px] mt-1" style={{ color: isOnAir ? "rgba(255,255,255,0.8)" : "rgba(13,4,70,0.5)" }}>
                     {prog.horarioInicio.slice(0, 5)} - {prog.horarioFim.slice(0, 5)}
                   </div>
                   {presenterName && (
-                    <div className="text-[9px] font-semibold mt-0.5" style={{ color: isOnAir ? "rgba(255,255,255,0.9)" : "#0d0446" }}>
+                    <div className="text-[9px] font-semibold mt-1" style={{ color: isOnAir ? "rgba(255,255,255,0.9)" : "#0d0446" }}>
                       {presenterName}
                     </div>
                   )}
                   <button
                     onClick={(e) => { e.stopPropagation(); setDetailProg(prog); }}
-                    className="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded text-[8px] font-bold transition-all opacity-0 group-hover/cell:opacity-100"
+                    className="absolute top-2 right-2 px-2 py-1 rounded text-[8px] font-bold flex items-center gap-1"
                     style={{
-                      backgroundColor: isOnAir ? "#ffffff" : "#0d0446",
-                      color: isOnAir ? "#0d0446" : "#ffffff",
+                      backgroundColor: "#0d0446",
+                      color: "#ffffff",
                     }}
                   >
-                    + info
+                    <Info size={9} className="shrink-0" style={{ color: "#ffffff" }} />
+                    + informações
                   </button>
                 </td>
               );
