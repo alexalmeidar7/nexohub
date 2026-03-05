@@ -424,14 +424,14 @@ function DashboardHome({ empresa, onNavigate }: { empresa: import("./Configuraco
   };
 
   return (
-    <div className="animate-fade-in grid grid-cols-2 gap-3 h-full">
+    <div className="animate-fade-in flex gap-3 overflow-x-auto scrollbar-hide h-[225px]">
       {orderedWidgets.map(widget => (
         <div
           key={widget.id}
-          className={`rounded-2xl p-4 overflow-hidden relative ${
+          className={`rounded-2xl p-4 flex-shrink-0 overflow-hidden relative ${
             draggedId === widget.id ? "opacity-50 scale-95" : ""
           } ${dragOverId === widget.id ? "ring-2 ring-[#268ffa]" : ""}`}
-          style={{ backgroundColor: widget.bg, height: "225px" }}
+          style={{ backgroundColor: widget.bg, width: "300px", height: "225px" }}
           onDragOver={(e) => handleDragOver(e, widget.id)}
           onDrop={(e) => handleDrop(e, widget.id)}
           onDragEnd={handleDragEnd}
