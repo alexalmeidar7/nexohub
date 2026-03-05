@@ -325,11 +325,29 @@ export default function ProgramaForm() {
         const container = gradeRef.current;
         const needle = needleRef.current;
         if (!container || !needle) return;
-        const row = container.querySelector('tr[data-needle-row="true"]') as HTMLElement;
-        if (!row) { needle.style.display = "none"; return; }
-        const percent = parseFloat(row.dataset.needlePercent || "0");
+        
+        // Recalculate current time for accurate positioning
+        const n = new Date();
+        const totalMinutes = n.getHours() * 60 + n.getMinutes();
+        
+        // Find the matching row by checking all rows
+        const rows = container.querySelectorAll("tbody tr");
+        let targetRow: HTMLElement | null = null;
+        let percent = 0;
+        
+        for (const row of rows) {
+          const el = row as HTMLElement;
+          if (el.dataset.needleRow === "true") {
+            targetRow = el;
+            percent = parseFloat(el.dataset.needlePercent || "0");
+            break;
+          }
+        }
+        
+        if (!targetRow) { needle.style.display = "none"; return; }
+        
         const containerRect = container.getBoundingClientRect();
-        const rowRect = row.getBoundingClientRect();
+        const rowRect = targetRow.getBoundingClientRect();
         const top = rowRect.top - containerRect.top + container.scrollTop + (rowRect.height * percent / 100);
         needle.style.display = "block";
         needle.style.top = `${top}px`;
@@ -338,8 +356,13 @@ export default function ProgramaForm() {
       }
     };
     positionNeedle();
-    const interval = setInterval(positionNeedle, 30000);
-    return () => clearInterval(interval);
+    const interval = setInterval(positionNeedle, 10000);
+    const container = gradeRef.current;
+    container?.addEventListener("scroll", positionNeedle);
+    return () => {
+      clearInterval(interval);
+      container?.removeEventListener("scroll", positionNeedle);
+    };
   }, [loadingData, programas, currentTimeStr]);
 
   const handleSelo = (e: React.ChangeEvent<HTMLInputElement>) => {
