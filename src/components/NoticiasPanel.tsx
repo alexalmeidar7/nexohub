@@ -388,7 +388,7 @@ export default function NoticiasPanel() {
             ) : (
               <table className="w-full text-xs">
                 <thead>
-                  <tr className="border-b border-gray-200 text-gray-500">
+                  <tr style={{ borderBottom: "1px solid rgba(13,4,70,0.1)", color: "rgba(13,4,70,0.5)" }}>
                     <th className="text-left px-3 py-2">Portal</th>
                     <th className="text-left px-3 py-2">Título</th>
                     <th className="text-left px-3 py-2">Imagem URL</th>
