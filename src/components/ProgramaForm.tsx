@@ -326,29 +326,24 @@ export default function ProgramaForm() {
         const needle = needleRef.current;
         if (!container || !needle) return;
         
-        // Recalculate current time for accurate positioning
         const n = new Date();
-        const totalMinutes = n.getHours() * 60 + n.getMinutes();
+        const currentMinutes = n.getHours() * 60 + n.getMinutes();
         
-        // Find the matching row by checking all rows
+        // Find all tbody rows to measure the grid area
         const rows = container.querySelectorAll("tbody tr");
-        let targetRow: HTMLElement | null = null;
-        let percent = 0;
+        if (rows.length === 0) { needle.style.display = "none"; return; }
         
-        for (const row of rows) {
-          const el = row as HTMLElement;
-          if (el.dataset.needleRow === "true") {
-            targetRow = el;
-            percent = parseFloat(el.dataset.needlePercent || "0");
-            break;
-          }
-        }
+        // Each row represents a 30-min slot. Find the slot index for current time.
+        const slotIndex = Math.floor(currentMinutes / 30);
+        const percentInSlot = (currentMinutes % 30) / 30;
         
-        if (!targetRow) { needle.style.display = "none"; return; }
+        if (slotIndex >= rows.length) { needle.style.display = "none"; return; }
         
+        const targetRow = rows[slotIndex] as HTMLElement;
         const containerRect = container.getBoundingClientRect();
         const rowRect = targetRow.getBoundingClientRect();
-        const top = rowRect.top - containerRect.top + container.scrollTop + (rowRect.height * percent / 100);
+        const top = rowRect.top - containerRect.top + container.scrollTop + (rowRect.height * percentInSlot);
+        
         needle.style.display = "block";
         needle.style.top = `${top}px`;
       } catch (err) {
