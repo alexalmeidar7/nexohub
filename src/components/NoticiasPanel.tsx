@@ -397,7 +397,7 @@ export default function NoticiasPanel() {
                 </thead>
                 <tbody>
                   {selectedNews.map((sn, i) => (
-                    <tr key={sn.id || i} className="border-b border-gray-100">
+                    <tr key={sn.id || i} style={{ borderBottom: "1px solid rgba(13,4,70,0.05)" }}>
                       <td className="px-3 py-2">
                         <input
                           defaultValue={sn.portal}
