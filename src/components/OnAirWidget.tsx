@@ -1,7 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { Radio, ChevronRight, Clock, Loader2, ArrowRight, Mic, Music } from "lucide-react";
 import { getApresentadores } from "./ApresentadorForm";
 import { supabase } from "@/integrations/supabase/client";
+
+const DashboardGradeDialog = lazy(() => import("./DashboardGradeDialog"));
 
 interface Programa {
   id: string;
@@ -77,7 +79,7 @@ export default function OnAirWidget() {
   const [nextApresentadores, setNextApresentadores] = useState<Record<string, ApresentadorInfo>>({});
   const [isHovered, setIsHovered] = useState(false);
   const [musicData, setMusicData] = useState<{ titulo?: string; artista?: string } | null>(null);
-
+  const [gradeOpen, setGradeOpen] = useState(false);
   useEffect(() => {
     const update = async () => {
       const [programas, apresentadores] = await Promise.all([getProgramas(), getApresentadores()]);
@@ -214,7 +216,10 @@ export default function OnAirWidget() {
 
         {/* Top right buttons */}
         <div className="absolute top-1 right-1 z-20 flex items-center gap-1">
-          <button className="bg-white/10 rounded-full px-2 py-1 text-white/60 text-[9px] font-semibold hover:bg-white/20 transition-colors">
+          <button
+            onClick={() => setGradeOpen(true)}
+            className="bg-white/10 rounded-full px-2 py-1 text-white/60 text-[9px] font-semibold hover:bg-white/20 transition-colors cursor-pointer"
+          >
             grade
           </button>
           {firstNext && (
@@ -260,6 +265,9 @@ export default function OnAirWidget() {
           </div>
         </div>
       </div>
+      <Suspense fallback={null}>
+        <DashboardGradeDialog open={gradeOpen} onOpenChange={setGradeOpen} />
+      </Suspense>
     </div>
   );
 }
