@@ -839,6 +839,20 @@ export default function ProgramaForm() {
                 borderRadius: "50%",
                 backgroundColor: "#0d0446",
               }} />
+              <div style={{
+                position: "absolute",
+                left: 10,
+                top: -8,
+                fontSize: "9px",
+                fontWeight: 700,
+                color: "#0d0446",
+                backgroundColor: "#ffffff",
+                padding: "1px 4px",
+                borderRadius: "3px",
+                whiteSpace: "nowrap",
+              }}>
+                {currentTimeStr.slice(0, 5)}
+              </div>
             </div>
           </div>
         </div>
