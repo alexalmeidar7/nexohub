@@ -726,7 +726,7 @@ function DashboardAgenda() {
     <div className="flex flex-col h-full">
       {/* Header aligned like "NO AR" */}
       <div className="flex items-center gap-1.5 mb-1">
-        <CalendarIcon size={14} style={{ color: "#268ffa" }} />
+        <CalendarDays size={14} style={{ color: "#268ffa" }} />
         <span className="font-bold text-xs uppercase tracking-wide" style={{ color: "#268ffa" }}>Agenda</span>
       </div>
 
