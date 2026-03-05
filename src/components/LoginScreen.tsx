@@ -143,7 +143,7 @@ export default function LoginScreen() {
             pointerEvents: showForgot ? "auto" : "none",
           }}
         >
-          <div className="rounded-b-3xl rounded-t-none px-10 pt-10 pb-8 shadow-xl" style={{ backgroundColor: "#0d0446" }}>
+          <div className="rounded-b-3xl rounded-t-none px-10 pt-10 pb-8 shadow-xl" style={{ backgroundColor: "#0d0446", fontSize: "12px" }}>
             {forgotSent ? (
               <div className="flex flex-col items-center gap-3">
                 <CheckCircle className="text-green-400" size={40} />
