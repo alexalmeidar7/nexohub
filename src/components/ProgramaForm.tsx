@@ -317,46 +317,58 @@ export default function ProgramaForm() {
     }
   }, [loadingData, programas]);
 
-  // Position the time needle
+  // Position the time needle aligned with the "Horário" column
   useEffect(() => {
     if (loadingData || !gradeRef.current || !needleRef.current) return;
+
     const positionNeedle = () => {
       try {
         const container = gradeRef.current;
         const needle = needleRef.current;
         if (!container || !needle) return;
-        
+
         const n = new Date();
         const currentMinutes = n.getHours() * 60 + n.getMinutes();
-        
-        // Find all tbody rows to measure the grid area
-        const rows = container.querySelectorAll("tbody tr");
-        if (rows.length === 0) { needle.style.display = "none"; return; }
-        
-        // Each row represents a 30-min slot. Find the slot index for current time.
         const slotIndex = Math.floor(currentMinutes / 30);
         const percentInSlot = (currentMinutes % 30) / 30;
-        
-        if (slotIndex >= rows.length) { needle.style.display = "none"; return; }
-        
-        const targetRow = rows[slotIndex] as HTMLElement;
+
+        // Use first column (Horário) cells as the source of truth for vertical alignment
+        const timeCells = container.querySelectorAll("tbody tr > td:first-child");
+        if (timeCells.length === 0 || slotIndex < 0 || slotIndex >= timeCells.length) {
+          needle.style.display = "none";
+          return;
+        }
+
+        const currentCell = timeCells[slotIndex] as HTMLElement;
+        const nextCell = (slotIndex + 1 < timeCells.length ? timeCells[slotIndex + 1] : null) as HTMLElement | null;
+
         const containerRect = container.getBoundingClientRect();
-        const rowRect = targetRow.getBoundingClientRect();
-        const top = rowRect.top - containerRect.top + container.scrollTop + (rowRect.height * percentInSlot);
-        
+        const currentRect = currentCell.getBoundingClientRect();
+
+        const currentTop = currentRect.top - containerRect.top + container.scrollTop;
+        const slotVisualHeight = nextCell
+          ? (nextCell.getBoundingClientRect().top - currentRect.top)
+          : currentRect.height;
+
+        const top = currentTop + slotVisualHeight * percentInSlot;
+
         needle.style.display = "block";
         needle.style.top = `${top}px`;
       } catch (err) {
         console.error("Error positioning needle:", err);
       }
     };
+
     positionNeedle();
     const interval = setInterval(positionNeedle, 10000);
     const container = gradeRef.current;
     container?.addEventListener("scroll", positionNeedle);
+    window.addEventListener("resize", positionNeedle);
+
     return () => {
       clearInterval(interval);
       container?.removeEventListener("scroll", positionNeedle);
+      window.removeEventListener("resize", positionNeedle);
     };
   }, [loadingData, programas, currentTimeStr]);
 
