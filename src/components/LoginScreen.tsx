@@ -178,7 +178,7 @@ export default function LoginScreen() {
                   onFocus={(e) => (e.currentTarget.style.borderColor = "#268ffa")}
                   onBlur={(e) => (e.currentTarget.style.borderColor = "#0d379a")}
                 />
-                {forgotError && <p className="text-red-400 text-center" style={{ fontSize: "14px" }}>{forgotError}</p>}
+                {forgotError && <p className="text-red-400 text-center" style={{ fontSize: "12px" }}>{forgotError}</p>}
                 <div className="flex justify-between items-center">
                   <button
                     onClick={closeForgot}
