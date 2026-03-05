@@ -746,7 +746,6 @@ function DashboardAgenda() {
           </button>
         </div>
       </div>
-
       <DashboardCalendar
         selected={selectedDate}
         onSelect={setSelectedDate}
