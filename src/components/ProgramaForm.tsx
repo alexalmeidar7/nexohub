@@ -271,11 +271,24 @@ export default function ProgramaForm() {
   // Sorting
   const [sortBy, setSortBy] = useState<"horario" | "nome" | "estudio" | "status">("horario");
 
+  const [currentTimeStr, setCurrentTimeStr] = useState(() => {
+    const n = new Date();
+    return `${String(n.getHours()).padStart(2, "0")}:${String(n.getMinutes()).padStart(2, "0")}:${String(n.getSeconds()).padStart(2, "0")}`;
+  });
   const now = new Date();
-  const currentTimeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
   const DIAS_MAP: Record<number, string> = { 1: "Segunda", 2: "Terça", 3: "Quarta", 4: "Quinta", 5: "Sexta", 6: "Sábado", 0: "Domingo" };
   const diaAtual = DIAS_MAP[now.getDay()];
   const todayDateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+
+  // Update currentTimeStr every 30 seconds for real-time needle
+  useEffect(() => {
+    const tick = () => {
+      const n = new Date();
+      setCurrentTimeStr(`${String(n.getHours()).padStart(2, "0")}:${String(n.getMinutes()).padStart(2, "0")}:${String(n.getSeconds()).padStart(2, "0")}`);
+    };
+    const interval = setInterval(tick, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   const load = async () => {
     setLoadingData(true);
@@ -296,8 +309,8 @@ export default function ProgramaForm() {
   // Auto-scroll to current on-air program
   useEffect(() => {
     if (loadingData || !gradeRef.current) return;
-    const now = new Date();
-    const currentSlotIndex = now.getHours() * 2 + (now.getMinutes() >= 30 ? 1 : 0);
+    const n = new Date();
+    const currentSlotIndex = n.getHours() * 2 + (n.getMinutes() >= 30 ? 1 : 0);
     const rows = gradeRef.current.querySelectorAll("tbody tr");
     if (rows[currentSlotIndex]) {
       rows[currentSlotIndex].scrollIntoView({ block: "center", behavior: "smooth" });
@@ -308,17 +321,21 @@ export default function ProgramaForm() {
   useEffect(() => {
     if (loadingData || !gradeRef.current || !needleRef.current) return;
     const positionNeedle = () => {
-      const container = gradeRef.current;
-      const needle = needleRef.current;
-      if (!container || !needle) return;
-      const row = container.querySelector('tr[data-needle-row="true"]') as HTMLElement;
-      if (!row) { needle.style.display = "none"; return; }
-      const percent = parseFloat(row.dataset.needlePercent || "0");
-      const containerRect = container.getBoundingClientRect();
-      const rowRect = row.getBoundingClientRect();
-      const top = rowRect.top - containerRect.top + container.scrollTop + (rowRect.height * percent / 100);
-      needle.style.display = "block";
-      needle.style.top = `${top}px`;
+      try {
+        const container = gradeRef.current;
+        const needle = needleRef.current;
+        if (!container || !needle) return;
+        const row = container.querySelector('tr[data-needle-row="true"]') as HTMLElement;
+        if (!row) { needle.style.display = "none"; return; }
+        const percent = parseFloat(row.dataset.needlePercent || "0");
+        const containerRect = container.getBoundingClientRect();
+        const rowRect = row.getBoundingClientRect();
+        const top = rowRect.top - containerRect.top + container.scrollTop + (rowRect.height * percent / 100);
+        needle.style.display = "block";
+        needle.style.top = `${top}px`;
+      } catch (err) {
+        console.error("Error positioning needle:", err);
+      }
     };
     positionNeedle();
     const interval = setInterval(positionNeedle, 30000);
