@@ -184,7 +184,6 @@ function GradeBody({ gradeSlots, diasSemana, diaAtual, currentTimeStr, getProgra
                     onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#2dbef3"; }}
                     onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#0d0446"; }}
                   >
-                    <Info size={9} className="shrink-0" style={{ color: "#ffffff" }} />
                     + informações
                   </button>
                 </td>
