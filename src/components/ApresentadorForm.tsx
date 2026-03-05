@@ -131,7 +131,7 @@ export default function ApresentadorForm() {
           {editingId ? "Editar Apresentador/Participante" : "Novo Apresentador/Participante"}
         </h3>
         <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Nome Completo"
-          className="w-full p-3 outline-none transition-colors"
+          className="w-full px-4 py-1.5 outline-none transition-colors text-sm"
           style={{ backgroundColor: "#ffffff", border: "1px solid #0d0446", color: "#0d0446", borderRadius: "20px" }}
           onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
           onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
