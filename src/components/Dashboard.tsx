@@ -353,12 +353,7 @@ function DashboardHome({ empresa }: { empresa: import("./ConfiguracoesPage").Emp
       </div>
 
       {/* Secondary row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-        <div className="rounded-2xl p-4 bg-white">
-          <Suspense fallback={<Loader2 className="animate-spin text-gray-400" size={16} />}>
-            <MusicWidget />
-          </Suspense>
-        </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
         <div className="rounded-2xl p-4 bg-white">
           <Suspense fallback={<Loader2 className="animate-spin text-gray-400" size={16} />}>
             <DashboardAgenda />
@@ -370,10 +365,6 @@ function DashboardHome({ empresa }: { empresa: import("./ConfiguracoesPage").Emp
           </Suspense>
         </div>
       </div>
-
-      <Suspense fallback={null}>
-        <UnifiedXmlField />
-      </Suspense>
     </div>
   );
 }
