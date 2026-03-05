@@ -309,9 +309,6 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           {/* Content area */}
           <div className={`flex-1 overflow-y-auto overflow-x-hidden rounded-2xl`} style={currentPage === "dashboard" ? {} : { backgroundColor: "#111", padding: "2rem" }}>
             <Suspense fallback={<div className="flex justify-center py-16"><Loader2 className="animate-spin text-white" size={28} /></div>}>
-              {currentPage === "dashboard" && (
-                <DashboardHome empresa={empresa} onNavigate={setCurrentPage} />
-              )}
               {currentPage === "previsao" && <PrevisaoTempo />}
               {currentPage === "noticias" && <NoticiasPanel />}
               {currentPage === "apresentadores" && <ApresentadorForm />}
@@ -329,6 +326,24 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           </div>
         </main>
       </div>
+
+      {/* === NO AR + WIDGET LIST ROW === */}
+      {currentPage === "dashboard" && (
+        <div className="flex gap-5" style={{ paddingLeft: "50px", paddingRight: "50px", paddingTop: "20px" }}>
+          {/* No Ar box */}
+          <div className="rounded-2xl p-4 overflow-hidden flex-shrink-0" style={{ backgroundColor: "#0c0441", width: "400px", height: "225px" }}>
+            <Suspense fallback={null}>
+              <OnAirWidget />
+            </Suspense>
+          </div>
+          {/* Widget list */}
+          <div className="flex-1 min-w-0">
+            <Suspense fallback={null}>
+              <DashboardHome empresa={empresa} onNavigate={setCurrentPage} />
+            </Suspense>
+          </div>
+        </div>
+      )}
 
       {/* === FOOTER === */}
       <footer className="flex items-center gap-3 mt-auto pb-6" style={{ paddingLeft: "50px" }}>
