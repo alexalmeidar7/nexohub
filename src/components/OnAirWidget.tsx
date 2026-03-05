@@ -131,7 +131,7 @@ export default function OnAirWidget() {
 
   return (
     <div className="h-full relative overflow-hidden">
-      {/* Next program hover overlay */}
+      {/* Next program click overlay */}
       {firstNext && (
         <div
           className="absolute inset-0 z-20 flex flex-col transition-all duration-500 ease-in-out"
@@ -139,7 +139,6 @@ export default function OnAirWidget() {
             opacity: isHovered ? 1 : 0,
             pointerEvents: isHovered ? "auto" : "none",
           }}
-          onMouseLeave={() => setIsHovered(false)}
         >
           {firstNextAp?.foto && (
             <img
@@ -157,6 +156,12 @@ export default function OnAirWidget() {
             <p className="font-bold text-white truncate text-sm">{firstNext.nome}</p>
             <p className="text-white/50 text-[10px] truncate">{firstNextAp?.nome} • {firstNext.horarioInicio} — {firstNext.horarioFim}</p>
           </div>
+          <button
+            onClick={() => setIsHovered(false)}
+            className="absolute top-1 right-1 z-30 bg-white/10 rounded-full px-2 py-1 cursor-pointer"
+          >
+            <ArrowRight size={10} className="text-white/60 rotate-180" />
+          </button>
         </div>
       )}
 
@@ -164,7 +169,6 @@ export default function OnAirWidget() {
       <div
         className="h-full relative flex flex-col transition-all duration-500"
         style={{ opacity: isHovered ? 0 : 1 }}
-        onMouseEnter={() => firstNext && setIsHovered(true)}
       >
         {/* Presenter photo - anchored to bottom, larger */}
         {apresentadorFoto && (
