@@ -329,7 +329,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
       {/* === NO AR + WIDGET LIST ROW === */}
       {currentPage === "dashboard" && (
-        <div className="flex gap-5" style={{ paddingLeft: "50px", paddingRight: "50px", paddingTop: "20px" }}>
+        <div className="flex gap-5" style={{ paddingLeft: "50px", paddingRight: "50px", paddingTop: "8px" }}>
           {/* No Ar box */}
           <div className="rounded-2xl p-4 overflow-hidden flex-shrink-0" style={{ backgroundColor: "#0c0441", width: "400px", height: "225px" }}>
             <Suspense fallback={null}>
