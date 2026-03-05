@@ -298,6 +298,32 @@ export default function ProgramaForm() {
     }
   }, [loadingData, programas]);
 
+  // Position the time needle
+  useEffect(() => {
+    if (loadingData || !gradeRef.current || !needleRef.current) return;
+    const positionNeedle = () => {
+      const container = gradeRef.current;
+      const needle = needleRef.current;
+      if (!container || !needle) return;
+      const row = container.querySelector('tr[data-needle-row="true"]') as HTMLElement;
+      if (!row) { needle.style.display = "none"; return; }
+      const percent = parseFloat(row.dataset.needlePercent || "0");
+      const containerRect = container.getBoundingClientRect();
+      const rowRect = row.getBoundingClientRect();
+      const top = rowRect.top - containerRect.top + container.scrollTop + (rowRect.height * percent / 100);
+      needle.style.display = "block";
+      needle.style.top = `${top}px`;
+    };
+    positionNeedle();
+    const interval = setInterval(positionNeedle, 5000);
+    const scrollHandler = () => positionNeedle();
+    gradeRef.current.addEventListener("scroll", scrollHandler);
+    return () => {
+      clearInterval(interval);
+      gradeRef.current?.removeEventListener("scroll", scrollHandler);
+    };
+  }, [loadingData, programas, currentTimeStr]);
+
   const handleSelo = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
