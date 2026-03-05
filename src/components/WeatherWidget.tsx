@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Droplets, CloudRain, Thermometer } from "lucide-react";
+import { Droplets, CloudRain, Thermometer, Sun } from "lucide-react";
 
 interface WidgetWeather {
   city: string;
@@ -81,30 +81,41 @@ export default function WeatherWidget() {
 
   if (!weather) {
     return (
-      <div className="rounded-xl p-4 text-gray-500" style={{ backgroundColor: "#ffffff" }}>
+      <div className="rounded-xl p-4" style={{ backgroundColor: "#ffffff", color: "#0d0446" }}>
         Nenhuma cidade pesquisada ainda. Vá em Previsão do Tempo para buscar.
       </div>
     );
   }
 
   return (
-    <div className="rounded-xl p-5" style={{ backgroundColor: "#ffffff" }}>
+    <div className="rounded-xl p-5 flex flex-col h-full" style={{ backgroundColor: "#ffffff" }}>
+      {/* Header: icon + "Tempo" */}
+      <div className="flex items-center gap-2 mb-3">
+        <Sun size={20} className="animate-spin" style={{ color: "#268ffa", animationDuration: "8s" }} />
+        <span className="font-semibold text-sm" style={{ color: "#268ffa" }}>Tempo</span>
+      </div>
+
+      {/* City + condition */}
       <div className="flex items-center gap-3 mb-3">
         <span className="text-4xl">{getIcon(weather.weatherCode)}</span>
         <div>
-          <p className="font-semibold text-gray-800">{weather.city}</p>
-          <p className="text-gray-500 text-xs">{getLabel(weather.weatherCode)}</p>
+          <p className="font-semibold" style={{ color: "#0d0446" }}>{weather.city}</p>
+          <p className="text-xs" style={{ color: "#0d0446", opacity: 0.7 }}>{getLabel(weather.weatherCode)}</p>
         </div>
       </div>
-      <p className="text-5xl font-bold text-gray-700 mb-4">{weather.temp}°C</p>
-      <div className="flex items-center gap-4 text-xs flex-wrap">
-        <div className="flex items-center gap-1 text-gray-500">
+
+      {/* Temperature */}
+      <p className="text-5xl font-bold mb-4" style={{ color: "#0d0446" }}>{weather.temp}°C</p>
+
+      {/* Bottom stats - pushed to bottom */}
+      <div className="flex items-center gap-4 text-xs flex-wrap mt-auto">
+        <div className="flex items-center gap-1" style={{ color: "#0d0446", opacity: 0.7 }}>
           <Thermometer size={12} /> ↓{weather.tempMin}° / ↑{weather.tempMax}°
         </div>
-        <div className="flex items-center gap-1 text-gray-500">
+        <div className="flex items-center gap-1" style={{ color: "#0d0446", opacity: 0.7 }}>
           <Droplets size={12} /> {weather.humidity}%
         </div>
-        <div className="flex items-center gap-1 text-gray-500">
+        <div className="flex items-center gap-1" style={{ color: "#0d0446", opacity: 0.7 }}>
           <CloudRain size={12} /> Chuva: {weather.rainChance}%
         </div>
       </div>
