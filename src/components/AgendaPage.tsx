@@ -409,8 +409,12 @@ export default function AgendaPage() {
           )}
         </div>
 
-        <Button size="sm" className="gap-1" onClick={openNewDialog}
-          style={{ backgroundColor: "#2ec0f6", color: "#ffffff", borderRadius: "20px", border: "none" }}>
+        <button type="button" onClick={openNewDialog}
+          className="flex items-center gap-1 px-4 py-1.5 text-sm font-bold transition-all"
+          style={{ backgroundColor: "#2ec0f6", color: "#ffffff", borderRadius: "20px", border: "2px solid #2ec0f6" }}
+          onMouseEnter={e => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = "#2ec0f6"; }}
+          onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#2ec0f6"; e.currentTarget.style.color = "#ffffff"; }}
+        >
           <Plus size={16} /> Novo Evento
         </Button>
       </div>
