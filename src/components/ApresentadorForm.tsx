@@ -140,7 +140,7 @@ export default function ApresentadorForm() {
         <div>
           <label className="block text-xs mb-1" style={{ color: "#0d0446", fontWeight: 600 }}>Categoria</label>
           <Select value={categoria} onValueChange={setCategoria}>
-            <SelectTrigger className="w-full" style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "20px", border: "none" }}>
+            <SelectTrigger className="w-full h-8" style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "20px", border: "none" }}>
               <SelectValue placeholder="Selecione a categoria" />
             </SelectTrigger>
             <SelectContent>
