@@ -398,10 +398,10 @@ function DashboardHome({ empresa }: { empresa: import("./ConfiguracoesPage").Emp
           </div>
         </div>
 
-        {/* Right arrow */}
+        {/* Right arrow - outside cards */}
         <button
           onClick={scrollRight}
-          className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 w-8 h-8 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60 transition-colors"
+          className="flex-shrink-0 z-10 w-8 h-8 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60 transition-colors"
         >
           <ChevronDown size={16} className="-rotate-90" />
         </button>
