@@ -349,7 +349,7 @@ function DashboardHome({ empresa }: { empresa: import("./ConfiguracoesPage").Emp
         {/* Scrollable cards row */}
         <div
           ref={scrollRef}
-          className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide"
+          className="flex gap-3 overflow-x-auto scrollbar-hide"
           style={{ scrollSnapType: "x mandatory" }}
         >
           {/* Card 1 - No Ar */}
