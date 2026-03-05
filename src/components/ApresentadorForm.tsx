@@ -131,7 +131,7 @@ export default function ApresentadorForm() {
           {editingId ? "Editar Apresentador/Participante" : "Novo Apresentador/Participante"}
         </h3>
         <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Nome Completo"
-          className="w-full p-3 outline-none transition-colors"
+          className="w-full px-4 py-1.5 outline-none transition-colors text-sm"
           style={{ backgroundColor: "#ffffff", border: "1px solid #0d0446", color: "#0d0446", borderRadius: "20px" }}
           onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
           onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
@@ -140,7 +140,7 @@ export default function ApresentadorForm() {
         <div>
           <label className="block text-xs mb-1" style={{ color: "#0d0446", fontWeight: 600 }}>Categoria</label>
           <Select value={categoria} onValueChange={setCategoria}>
-            <SelectTrigger className="w-full" style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "20px", border: "none" }}>
+            <SelectTrigger className="w-full h-8" style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "20px", border: "none" }}>
               <SelectValue placeholder="Selecione a categoria" />
             </SelectTrigger>
             <SelectContent>
@@ -153,7 +153,7 @@ export default function ApresentadorForm() {
 
         {categoria === "Convidado" && (
           <input value={cargoConvidado} onChange={(e) => setCargoConvidado(e.target.value)} placeholder="Cargo (ex: Médico, Advogado...)"
-            className="w-full p-3 outline-none transition-colors"
+            className="w-full px-4 py-1.5 outline-none transition-colors text-sm"
             style={{ backgroundColor: "#ffffff", border: "1px solid #0d0446", color: "#0d0446", borderRadius: "20px" }}
             onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
             onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
@@ -163,7 +163,7 @@ export default function ApresentadorForm() {
         <div className="flex items-center gap-2">
           <Instagram size={18} style={{ color: "#0d0446" }} />
           <input value={instagram} onChange={(e) => setInstagram(e.target.value)} placeholder="@usuario_instagram"
-            className="flex-1 p-3 outline-none transition-colors"
+            className="flex-1 px-4 py-1.5 outline-none transition-colors text-sm"
             style={{ backgroundColor: "#ffffff", border: "1px solid #0d0446", color: "#0d0446", borderRadius: "20px" }}
             onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
             onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}

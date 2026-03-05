@@ -211,3 +211,21 @@
 .mv-content-area .text-destructive {
   color: #dc2626;
 }
+
+/* Select dropdown inside mv-content-area */
+.mv-content-area [data-radix-popper-content-wrapper] [role="listbox"],
+.mv-content-area + [data-radix-popper-content-wrapper] [role="listbox"] {
+  background-color: #0d0446 !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 12px !important;
+}
+
+[data-radix-popper-content-wrapper] [role="option"] {
+  color: #ffffff !important;
+}
+
+[data-radix-popper-content-wrapper] [role="option"][data-highlighted] {
+  background-color: #2dbff4 !important;
+  color: #ffffff !important;
+}
