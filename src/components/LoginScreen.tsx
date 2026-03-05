@@ -130,7 +130,7 @@ export default function LoginScreen() {
           </div>
 
           <div className="mt-8">
-            <img src={logoNexo} alt="Nexo Soluções Visuais" className="h-8 opacity-80" />
+            <img src={logoNexo} alt="Nexo Soluções Visuais" className="h-10 opacity-80" />
           </div>
         </div>
 
