@@ -265,9 +265,11 @@ export default function OnAirWidget() {
           </div>
         </div>
       </div>
+      <Suspense fallback={null}>
+        <DashboardGradeDialog open={gradeOpen} onOpenChange={setGradeOpen} />
+      </Suspense>
     </div>
   );
-}
 
 function UpcomingProgramsList({ programs, apresentadores }: { programs: Programa[]; apresentadores: Record<string, ApresentadorInfo> }) {
   if (programs.length === 0) return null;
