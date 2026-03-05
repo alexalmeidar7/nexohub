@@ -571,6 +571,8 @@ export default function AgendaPage() {
             .agenda-calendar .rdp-day:hover { background-color: rgba(46,192,246,0.15) !important; color: #2ec0f6 !important; }
             .agenda-calendar .rdp-day_selected { background-color: #2ec0f6 !important; color: #fff !important; }
             .agenda-calendar .rdp-day_selected:hover { background-color: #2ec0f6 !important; }
+            .agenda-calendar .rdp-day_today { background-color: #0d0446 !important; color: #ffffff !important; font-weight: bold; }
+            .agenda-calendar .rdp-day_today:hover { background-color: #0d0446 !important; color: #ffffff !important; }
             .agenda-calendar .has-event-day { background-color: rgba(46,192,246,0.15) !important; color: #2ec0f6 !important; font-weight: bold; }
           `}</style>
           <Calendar
