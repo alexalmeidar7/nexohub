@@ -151,7 +151,7 @@ function GradeBody({ gradeSlots, diasSemana, diaAtual, currentTimeStr, getProgra
               const presenterName = getPresenterName(prog.apresentadorId);
               return (
                 <td key={dia} rowSpan={rowSpan}
-                  className="rounded-lg transition-all relative"
+                  className="rounded-lg transition-all relative hover:!border-[#2dbef3] hover:border-2"
                   style={{
                     backgroundColor: isOnAir ? "#2dbef3" : "#ffffff",
                     color: isOnAir ? "#ffffff" : "#0d0446",
@@ -160,7 +160,7 @@ function GradeBody({ gradeSlots, diasSemana, diaAtual, currentTimeStr, getProgra
                     verticalAlign: "top",
                     padding: "12px 14px",
                   }}>
-                  <div className="text-[10px] font-bold truncate pr-[75px]">{prog.nome}</div>
+                  <div className="text-[10px] font-bold pr-[75px] leading-tight" style={{ wordBreak: "break-word", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{prog.nome}</div>
                   <div className="text-[9px] mt-1" style={{ color: isOnAir ? "rgba(255,255,255,0.8)" : "rgba(13,4,70,0.5)" }}>
                     {prog.horarioInicio.slice(0, 5)} - {prog.horarioFim.slice(0, 5)}
                   </div>
@@ -171,11 +171,13 @@ function GradeBody({ gradeSlots, diasSemana, diaAtual, currentTimeStr, getProgra
                   )}
                   <button
                     onClick={(e) => { e.stopPropagation(); setDetailProg(prog); }}
-                    className="absolute top-2 right-2 px-2 py-1 rounded text-[8px] font-bold flex items-center gap-1"
+                    className="absolute top-2 right-2 px-2 py-1 rounded text-[8px] font-bold flex items-center gap-1 transition-colors"
                     style={{
                       backgroundColor: "#0d0446",
                       color: "#ffffff",
                     }}
+                    onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#2dbef3"; }}
+                    onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#0d0446"; }}
                   >
                     <Info size={9} className="shrink-0" style={{ color: "#ffffff" }} />
                     + informações
