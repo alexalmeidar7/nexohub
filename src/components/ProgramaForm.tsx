@@ -163,20 +163,20 @@ function GradeBody({ gradeSlots, diasSemana, diaAtual, currentTimeStr, getProgra
                     fontWeight: isOnAir ? "bold" : undefined,
                     border: isOnAir ? "2px solid #2dbef3" : "1px solid #ccc",
                     verticalAlign: "top",
-                    padding: "12px 14px",
+                    padding: "8px 10px",
                   }}>
-                  <div className="text-[10px] font-bold pr-[75px] leading-tight" style={{ wordBreak: "break-word", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{prog.nome}</div>
-                  <div className="text-[9px] mt-1" style={{ color: isOnAir ? "rgba(255,255,255,0.8)" : "rgba(13,4,70,0.5)" }}>
+                  <div className="text-[10px] font-bold leading-tight" style={{ wordBreak: "break-word", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{prog.nome}</div>
+                  <div className="text-[9px] mt-0.5" style={{ color: isOnAir ? "rgba(255,255,255,0.8)" : "rgba(13,4,70,0.5)" }}>
                     {prog.horarioInicio.slice(0, 5)} - {prog.horarioFim.slice(0, 5)}
                   </div>
                   {presenterName && (
-                    <div className="text-[9px] font-semibold mt-1" style={{ color: isOnAir ? "rgba(255,255,255,0.9)" : "#0d0446" }}>
+                    <div className="text-[9px] font-semibold mt-0.5" style={{ color: isOnAir ? "rgba(255,255,255,0.9)" : "#0d0446" }}>
                       {presenterName}
                     </div>
                   )}
                   <button
                     onClick={(e) => { e.stopPropagation(); setDetailProg(prog); }}
-                    className="absolute top-2 right-2 px-2 py-1 rounded text-[8px] font-bold flex items-center gap-1 transition-colors"
+                    className="mt-1 px-2 py-0.5 rounded text-[8px] font-bold flex items-center gap-1 transition-colors"
                     style={{
                       backgroundColor: "#0d0446",
                       color: "#ffffff",
