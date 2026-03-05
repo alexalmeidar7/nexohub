@@ -187,7 +187,7 @@ function GradeBody({ gradeSlots, diasSemana, diaAtual, currentTimeStr, getProgra
       </tbody>
 
       {/* Detail popup */}
-      {detailProg && (
+      {detailProg && createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: "rgba(0,0,0,0.5)" }} onClick={() => setDetailProg(null)}>
           <div className="rounded-xl max-w-md w-full mx-4 relative overflow-hidden" style={{ backgroundColor: "#ffffff" }} onClick={e => e.stopPropagation()}>
             <button onClick={() => setDetailProg(null)} className="absolute top-3 right-3 z-10 font-bold text-sm" style={{ color: "#0d0446" }}>
