@@ -329,7 +329,7 @@ function DashboardHome({ empresa }: { empresa: import("./ConfiguracoesPage").Emp
   return (
     <div className="animate-fade-in space-y-4">
       {/* Widget cards row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
         {/* Card 1 - No Ar */}
         <div className="rounded-2xl p-4 min-h-[200px]" style={{ backgroundColor: "#0c0441" }}>
           <Suspense fallback={<Loader2 className="animate-spin text-white/50" size={16} />}>
@@ -344,14 +344,7 @@ function DashboardHome({ empresa }: { empresa: import("./ConfiguracoesPage").Emp
           </Suspense>
         </div>
 
-        {/* Card 3 - Views / Video */}
-        <div className="rounded-2xl p-4 bg-white min-h-[200px]">
-          <Suspense fallback={<Loader2 className="animate-spin text-gray-400" size={16} />}>
-            <VideoPlayer />
-          </Suspense>
-        </div>
-
-        {/* Card 4 - Top 10 */}
+        {/* Card 3 - Top 10 */}
         <div className="rounded-2xl p-4 bg-white min-h-[200px]">
           <Suspense fallback={<Loader2 className="animate-spin text-gray-400" size={16} />}>
             <TopLikedSongs />
