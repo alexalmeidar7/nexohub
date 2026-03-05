@@ -303,11 +303,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           </div>
 
           {/* Content area */}
-          <div className={`flex-1 overflow-y-auto overflow-x-hidden rounded-2xl ${currentPage === "dashboard" ? "flex flex-col" : ""}`} style={currentPage === "dashboard" ? {} : { backgroundColor: "#111", padding: "2rem" }}>
+          <div className={`flex-1 overflow-y-auto overflow-x-hidden rounded-2xl`} style={currentPage === "dashboard" ? {} : { backgroundColor: "#111", padding: "2rem" }}>
             <Suspense fallback={<div className="flex justify-center py-16"><Loader2 className="animate-spin text-white" size={28} /></div>}>
-              {currentPage === "dashboard" && (
-                <DashboardHome empresa={empresa} onNavigate={setCurrentPage} />
-              )}
               {currentPage === "previsao" && <PrevisaoTempo />}
               {currentPage === "noticias" && <NoticiasPanel />}
               {currentPage === "apresentadores" && <ApresentadorForm />}
@@ -325,6 +322,15 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           </div>
         </main>
       </div>
+
+      {/* === WIDGETS BELOW MENU === */}
+      {currentPage === "dashboard" && (
+        <div style={{ paddingLeft: "50px", paddingRight: "50px", paddingTop: "10px" }}>
+          <Suspense fallback={null}>
+            <DashboardHome empresa={empresa} onNavigate={setCurrentPage} />
+          </Suspense>
+        </div>
+      )}
 
       {/* === FOOTER === */}
       <footer className="flex items-center gap-3 mt-auto pb-6" style={{ paddingLeft: "50px" }}>
@@ -406,7 +412,7 @@ function DashboardHome({ empresa, onNavigate }: { empresa: import("./Configuraco
   };
 
   return (
-    <div className="animate-fade-in flex flex-col justify-end flex-1" style={{ paddingBottom: "10px" }}>
+    <div className="animate-fade-in">
       <div className="flex items-center gap-3">
         {/* Left arrow */}
         <button
