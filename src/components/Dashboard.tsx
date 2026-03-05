@@ -172,7 +172,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   }, [currentPage]);
 
   return (
-    <div className="min-h-screen flex flex-col animate-fade-in" style={{
+    <div className="h-screen flex flex-col animate-fade-in overflow-hidden" style={{
       backgroundColor: "#268ffa",
       paddingTop: "40px",
       ...(empresa.backgroundUrl ? {
