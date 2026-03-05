@@ -441,27 +441,30 @@ export default function NoticiasPanel() {
 
         {/* Cotações ao lado */}
         <div className="space-y-4">
-          <div className="bg-muted rounded-xl border border-border overflow-hidden">
+          <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)" }}>
             <div className={headerStyle} style={headerInline}>💹 Cotações - Bolsas e Moedas</div>
             <div className="p-4">
               {loadingCotacoes ? (
-                <p className="text-muted-foreground text-sm">Carregando cotações...</p>
+                <p className="text-sm" style={{ color: "rgba(13,4,70,0.5)" }}>Carregando cotações...</p>
               ) : cotacoes.length === 0 ? (
-                <p className="text-muted-foreground text-sm">Cotações indisponíveis</p>
+                <p className="text-sm" style={{ color: "rgba(13,4,70,0.5)" }}>Cotações indisponíveis</p>
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {cotacoes.map(c => (
-                    <div key={c.name} className="bg-background/50 rounded-lg p-3 text-center relative group">
+                    <div key={c.name} className="rounded-lg p-3 text-center relative group" style={{ backgroundColor: "rgba(13,4,70,0.04)" }}>
                       <button onClick={() => addCotacao(c)}
-                        className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-primary transition-all"
+                        className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-all"
+                        style={{ color: "rgba(13,4,70,0.4)" }}
+                        onMouseEnter={e => { e.currentTarget.style.color = "#2dbef3"; }}
+                        onMouseLeave={e => { e.currentTarget.style.color = "rgba(13,4,70,0.4)"; }}
                         title="Adicionar cotação">
                         <Plus size={12} />
                       </button>
-                      <p className="text-[10px] text-muted-foreground mb-1">{c.name}</p>
-                      <p className="text-sm font-semibold text-foreground">{c.value}</p>
+                      <p className="text-[10px] mb-1" style={{ color: "rgba(13,4,70,0.5)" }}>{c.name}</p>
+                      <p className="text-sm font-semibold" style={{ color: "#0d0446" }}>{c.value}</p>
                       <div className={`flex items-center justify-center gap-1 text-xs mt-1 ${
-                        c.direction === "up" ? "text-green-400" : c.direction === "down" ? "text-red-400" : "text-muted-foreground"
-                      }`}>
+                        c.direction === "up" ? "text-green-500" : c.direction === "down" ? "text-red-500" : ""
+                      }`} style={c.direction !== "up" && c.direction !== "down" ? { color: "rgba(13,4,70,0.4)" } : undefined}>
                         {c.direction === "up" ? <TrendingUp size={12} /> : c.direction === "down" ? <TrendingDown size={12} /> : <Minus size={12} />}
                         {c.change}
                       </div>
@@ -473,14 +476,14 @@ export default function NoticiasPanel() {
           </div>
 
           {selectedCotacoes.length > 0 && (
-            <div className="bg-muted rounded-xl border border-border overflow-hidden">
+            <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)" }}>
               <div className={headerStyle} style={headerInline}>📊 Cotações Selecionadas</div>
               <div className="p-4 flex flex-wrap gap-2">
                 {selectedCotacoes.map(sc => (
-                  <div key={sc.id || sc.name} className="bg-background/50 rounded-lg px-3 py-2 flex items-center gap-2 text-xs">
-                    <span className="font-semibold text-foreground">{sc.name}</span>
-                    <span className="text-muted-foreground">{sc.value}</span>
-                    <span className="text-muted-foreground">{sc.change}</span>
+                  <div key={sc.id || sc.name} className="rounded-lg px-3 py-2 flex items-center gap-2 text-xs" style={{ backgroundColor: "rgba(13,4,70,0.04)" }}>
+                    <span className="font-semibold" style={{ color: "#0d0446" }}>{sc.name}</span>
+                    <span style={{ color: "rgba(13,4,70,0.5)" }}>{sc.value}</span>
+                    <span style={{ color: "rgba(13,4,70,0.5)" }}>{sc.change}</span>
                     <button onClick={() => removeCotacao(sc.name)} className="text-destructive hover:text-destructive/80">
                       <Trash2 size={10} />
                     </button>
