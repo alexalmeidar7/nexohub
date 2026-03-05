@@ -424,9 +424,10 @@ function ServerClock() {
 
   return (
     <div className="text-right">
-      <p className="font-light text-white tracking-wider" style={{ fontFamily: "Poppins, sans-serif", fontSize: "45px", lineHeight: 1.1 }}>
-        {hours}<sup className="font-light text-white/70" style={{ fontSize: "18px" }}>{seconds}</sup>
-      </p>
+      <span className="font-light text-white tracking-wider inline-flex items-start" style={{ fontFamily: "Poppins, sans-serif", fontSize: "45px", lineHeight: 1.1 }}>
+        {hours}
+        <span className="font-light text-white/70 inline-block" style={{ fontSize: "18px", width: "28px", textAlign: "left", marginTop: "4px" }}>{seconds}</span>
+      </span>
     </div>
   );
 }
