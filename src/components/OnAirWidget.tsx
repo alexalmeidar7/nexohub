@@ -107,25 +107,21 @@ export default function OnAirWidget() {
 
   if (loading) {
     return (
-      <div className="space-y-4">
-        <div className="rounded-xl p-5 flex items-start gap-2" style={{ backgroundColor: "#dff06f", height: 330 }}>
-          <Loader2 size={16} className="text-gray-600 animate-spin" />
-          <span className="text-gray-600 text-xs">Carregando dados</span>
-        </div>
+      <div className="h-full flex items-center gap-2">
+        <Loader2 size={16} className="text-white/50 animate-spin" />
+        <span className="text-white/50 text-xs">Carregando dados</span>
       </div>
     );
   }
 
   if (!onAir) {
     return (
-      <div className="space-y-4">
-        <div className="rounded-xl p-5" style={{ backgroundColor: "#dff06f", height: 330 }}>
-          <div className="flex items-center gap-2 mb-2">
-            <Radio size={16} className="text-gray-600" />
-            <span className="font-semibold text-gray-600 text-sm">No Ar</span>
-          </div>
-          <p className="text-gray-500 text-xs">Nenhum programa no ar neste momento.</p>
+      <div className="h-full flex flex-col">
+        <div className="flex items-center gap-2 mb-2">
+          <Radio size={16} className="text-white/70" />
+          <span className="font-semibold text-white text-sm">NO AR</span>
         </div>
+        <p className="text-white/50 text-xs">Nenhum programa no ar neste momento.</p>
         <UpcomingProgramsList programs={nextPrograms} apresentadores={nextApresentadores} />
       </div>
     );
@@ -134,106 +130,83 @@ export default function OnAirWidget() {
   const { programa, progress } = onAir;
 
   return (
-    <div className="space-y-4">
+    <div className="h-full relative overflow-hidden">
+      {/* Next program hover overlay */}
+      {firstNext && (
+        <div
+          className="absolute inset-0 z-20 flex flex-col transition-all duration-500 ease-in-out"
+          style={{
+            opacity: isHovered ? 1 : 0,
+            pointerEvents: isHovered ? "auto" : "none",
+          }}
+          onMouseLeave={() => setIsHovered(false)}
+        >
+          {firstNextAp?.foto && (
+            <img
+              src={firstNextAp.foto}
+              alt={firstNextAp.nome}
+              className="absolute object-contain pointer-events-none"
+              style={{ right: 0, bottom: 0, width: "50%", height: "100%", objectPosition: "right bottom" }}
+            />
+          )}
+          <div className="absolute top-2 left-1 z-10 flex items-center gap-2">
+            <ArrowRight size={14} className="text-white/60" />
+            <span className="font-bold text-white/60 text-[10px]">PRÓXIMO</span>
+          </div>
+          <div className="absolute bottom-3 left-1 right-0 z-10">
+            <p className="font-bold text-white truncate text-sm">{firstNext.nome}</p>
+            <p className="text-white/50 text-[10px] truncate">{firstNextAp?.nome} • {firstNext.horarioInicio} — {firstNext.horarioFim}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Current program */}
       <div
-        className="relative"
-        style={{ height: 330 }}
+        className="h-full relative flex flex-col transition-all duration-500"
+        style={{ opacity: isHovered ? 0 : 1 }}
         onMouseEnter={() => firstNext && setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
       >
-        {/* Next program box - behind, peeking from right */}
+        {/* Presenter photo - anchored to bottom */}
+        {apresentadorFoto && (
+          <img
+            src={apresentadorFoto}
+            alt={apresentadorNome}
+            className="absolute object-contain pointer-events-none"
+            style={{ right: 0, bottom: 0, width: "50%", height: "100%", objectPosition: "right bottom" }}
+          />
+        )}
+
         {firstNext && (
-          <div
-            className="absolute top-0 rounded-xl overflow-hidden flex flex-col transition-all duration-500 ease-in-out"
-            style={{
-              backgroundColor: "#2d2d2d",
-              height: 330,
-              right: 0,
-              width: isHovered ? "100%" : "0px",
-              zIndex: isHovered ? 20 : 5,
-              opacity: isHovered ? 1 : 0,
-            }}
-          >
-            {isHovered && (
-              <>
-                {firstNextAp?.foto && (
-                  <img
-                    src={firstNextAp.foto}
-                    alt={firstNextAp.nome}
-                    className="absolute object-contain pointer-events-none"
-                    style={{ right: 0, top: 0, width: "60%", height: "100%", objectPosition: "right top" }}
-                  />
-                )}
-
-                <div className="absolute top-4 left-5 z-10 flex items-center gap-2 animate-fade-in">
-                  <ArrowRight size={16} className="text-gray-300" />
-                  <span className="font-bold text-gray-300 text-sm">PRÓXIMO PROGRAMA</span>
-                </div>
-
-                <div className="absolute bottom-4 left-0 right-0 z-10 px-5 animate-fade-in">
-                  <p className="font-bold text-white truncate" style={{ fontSize: 14 }}>{firstNext.nome}</p>
-                  <p className="text-gray-400 text-xs truncate">{firstNextAp?.nome} • {firstNext.horarioInicio} — {firstNext.horarioFim}</p>
-                </div>
-              </>
-            )}
+          <div className="absolute top-1 right-1 z-20 flex items-center gap-1 bg-white/10 rounded-full px-2 py-1 cursor-pointer">
+            <ArrowRight size={10} className="text-white/60" />
           </div>
         )}
 
-        {/* Current program - main box */}
-        <div
-          className="rounded-xl relative overflow-hidden flex flex-col transition-all duration-500 ease-in-out"
-          style={{
-            backgroundColor: "#dff06f",
-            height: 330,
-            opacity: isHovered ? 0 : 1,
-            zIndex: isHovered ? 1 : 10,
-          }}
-        >
-          {apresentadorFoto && (
-            <img
-              src={apresentadorFoto}
-              alt={apresentadorNome}
-              className="absolute object-contain pointer-events-none"
-              style={{ right: 0, top: 0, width: "60%", height: "100%", objectPosition: "right top" }}
+        <div className="flex items-center gap-2 mb-1">
+          <Radio size={14} className="text-white/70 animate-pulse" />
+          <span className="font-bold text-white text-xs animate-pulse">NO AR</span>
+        </div>
+
+        <div className="flex-1 flex flex-col justify-center z-10">
+          <p className="font-bold text-white text-lg leading-tight line-clamp-2" style={{ maxWidth: "55%" }}>{programa.nome}</p>
+          <p className="text-white/50 text-[10px] whitespace-nowrap mt-1">
+            {programa.horarioInicio} — {programa.horarioFim}
+          </p>
+        </div>
+
+        <div className="z-10 mb-1">
+          <p className="font-semibold text-white/80 text-xs">{apresentadorNome}</p>
+        </div>
+
+        <div className="absolute bottom-0 left-0 right-0 z-10">
+          <div className="w-full h-1 bg-white/20 overflow-hidden">
+            <div
+              className="h-full transition-all duration-1000"
+              style={{ width: `${progress}%`, backgroundColor: "#268ffa" }}
             />
-          )}
-
-          {firstNext && (
-            <div className="absolute top-3 right-3 z-20 flex items-center gap-1 bg-[#2d2d2d] rounded-full px-3 py-1 cursor-pointer">
-              <ArrowRight size={12} className="text-gray-300" />
-            </div>
-          )}
-
-          <div className="absolute top-4 left-5 z-10">
-            <div className="flex items-center gap-2">
-              <Radio size={16} className="text-gray-700 animate-pulse" />
-              <span className="font-bold text-gray-700 text-sm animate-pulse">NO AR</span>
-            </div>
-          </div>
-
-          <div className="absolute inset-0 z-10 px-5 flex flex-col justify-center">
-            <p className="font-bold text-gray-800 text-2xl leading-tight line-clamp-2" style={{ maxWidth: "55%" }}>{programa.nome}</p>
-            <p className="text-gray-600 text-xs whitespace-nowrap mt-1">
-              {programa.horarioInicio} — {programa.horarioFim}
-            </p>
-          </div>
-
-          <div className="absolute bottom-3 left-5 z-10">
-            <p className="font-semibold text-gray-700 text-sm">{apresentadorNome}</p>
-          </div>
-
-          <div className="absolute bottom-0 left-0 right-0 z-10">
-            <div className="w-full h-1 bg-gray-300 overflow-hidden">
-              <div
-                className="h-full bg-gray-700 transition-all duration-1000"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
           </div>
         </div>
       </div>
-
-      <UpcomingProgramsList programs={nextPrograms} apresentadores={nextApresentadores} />
     </div>
   );
 }
@@ -242,17 +215,17 @@ function UpcomingProgramsList({ programs, apresentadores }: { programs: Programa
   if (programs.length === 0) return null;
 
   return (
-    <div className="space-y-2">
-      <p className="text-gray-500 text-xs font-semibold uppercase tracking-wider flex items-center gap-1">
-        <Clock size={12} /> Próximos programas
+    <div className="space-y-1 mt-2">
+      <p className="text-white/40 text-[9px] font-semibold uppercase tracking-wider flex items-center gap-1">
+        <Clock size={10} /> Próximos
       </p>
       {programs.map(p => (
-        <div key={p.id} className="flex items-center gap-3 bg-white rounded-lg p-3 border border-gray-300">
+        <div key={p.id} className="flex items-center gap-2 bg-white/5 rounded-lg p-2">
           <div className="flex-1 min-w-0">
-            <p className="font-semibold text-gray-800 text-xs truncate">{p.nome}</p>
-            <p className="text-gray-500 text-[10px] truncate">{apresentadores[p.id]?.nome || "—"}</p>
+            <p className="font-semibold text-white text-[10px] truncate">{p.nome}</p>
+            <p className="text-white/40 text-[8px] truncate">{apresentadores[p.id]?.nome || "—"}</p>
           </div>
-          <p className="text-gray-500 text-[10px] whitespace-nowrap font-mono">
+          <p className="text-white/40 text-[8px] whitespace-nowrap font-mono">
             {p.horarioInicio} — {p.horarioFim}
           </p>
         </div>
