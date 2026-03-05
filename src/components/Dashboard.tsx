@@ -307,7 +307,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           </div>
 
           {/* Content area */}
-          <div className={`flex-1 overflow-y-auto overflow-x-hidden rounded-2xl`} style={currentPage === "dashboard" ? {} : { backgroundColor: "#111", padding: "2rem" }}>
+          <div className={`flex-1 overflow-y-auto overflow-x-hidden rounded-2xl ${currentPage !== "dashboard" ? "mv-content-area" : ""}`} style={currentPage === "dashboard" ? {} : { padding: "2rem" }}>
             <Suspense fallback={<div className="flex justify-center py-16"><Loader2 className="animate-spin text-white" size={28} /></div>}>
               {currentPage === "previsao" && <PrevisaoTempo />}
               {currentPage === "noticias" && <NoticiasPanel />}
