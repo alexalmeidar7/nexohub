@@ -824,7 +824,7 @@ export default function ProgramaForm() {
               position: "absolute",
               left: 0,
               right: 0,
-              height: "2px",
+              height: "1px",
               backgroundColor: "#0d0446",
               zIndex: 15,
               pointerEvents: "none",
