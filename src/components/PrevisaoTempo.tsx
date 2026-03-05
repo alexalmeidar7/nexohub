@@ -251,7 +251,7 @@ export default function PrevisaoTempo() {
                 onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#2dbef3"; }}
                 onMouseLeave={e => { e.currentTarget.style.backgroundColor = "transparent"; }}
               >
-                <span>{s.name}{s.admin1 ? `, ${s.admin1}` : ""}</span>
+                <span style={{ color: "#ffffff" }}>{s.name}{s.admin1 ? `, ${s.admin1}` : ""}</span>
                 <span style={{ color: "rgba(255,255,255,0.6)", fontSize: "10px" }}>{s.country}</span>
               </button>
             ))}
