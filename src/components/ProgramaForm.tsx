@@ -100,6 +100,7 @@ export default function ProgramaForm() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   // Estúdio management
   const [estudios, setEstudios] = useState<string[]>([]);
