@@ -688,10 +688,13 @@ function ComercialWidgets() {
   if (loading) return null;
 
   return (
-    <div>
-      <p className="text-xs text-gray-500 mb-2 font-semibold">🏷️ Patrocinadores Ativos</p>
-      <p className="text-3xl font-bold text-gray-800">{totalLogos}</p>
-      <p className="text-[10px] text-gray-400 mt-1">logos vinculadas a programas</p>
+    <div style={{ color: "#0d0446" }}>
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-xs font-bold" style={{ color: "#268ffa" }}>🏆 Patrocinadores Ativos</p>
+        <span className="text-[10px] font-semibold" style={{ color: "#0d0446" }}>no ar</span>
+      </div>
+      <p className="text-3xl font-bold" style={{ color: "#0d0446" }}>{totalLogos}</p>
+      <p className="text-[10px] mt-1" style={{ color: "#0d0446", opacity: 0.5 }}>logos vinculadas a programas</p>
     </div>
   );
 }
