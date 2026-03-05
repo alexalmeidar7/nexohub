@@ -409,7 +409,7 @@ export default function NoticiasPanel() {
                         <input
                           defaultValue={sn.title}
                           onBlur={(e) => updateSelectedField(i, "title", e.target.value)}
-                          className="bg-transparent border-b border-transparent hover:border-gray-300 focus:border-primary outline-none text-gray-700 w-full text-xs"
+                          className="bg-transparent border-b border-transparent hover:border-gray-300 outline-none w-full text-xs" style={{ color: "#0d0446" }}
                         />
                       </td>
                       <td className="px-3 py-2">
