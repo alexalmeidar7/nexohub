@@ -118,7 +118,7 @@ export default function LoginScreen() {
                 }}
               >
                 {loading ? (
-                  <Loader2 size={20} className="animate-spin" />
+                  <Loader2 size={20} className="animate-spin" style={{ color: "#268ffa" }} />
                 ) : (
                   <>
                     entrar
