@@ -317,7 +317,7 @@ export default function ProgramaForm() {
     }
   }, [loadingData, programas]);
 
-  // Position the time needle aligned with the "Horário" column
+  // Position the time needle using proportional tbody height
   useEffect(() => {
     if (loadingData || !gradeRef.current || !needleRef.current) return;
 
@@ -327,30 +327,17 @@ export default function ProgramaForm() {
         const needle = needleRef.current;
         if (!container || !needle) return;
 
+        const tbody = container.querySelector("tbody");
+        if (!tbody) { needle.style.display = "none"; return; }
+
         const n = new Date();
         const currentMinutes = n.getHours() * 60 + n.getMinutes();
-        const slotIndex = Math.floor(currentMinutes / 30);
-        const percentInSlot = (currentMinutes % 30) / 30;
-
-        // Use first column (Horário) cells as the source of truth for vertical alignment
-        const timeCells = container.querySelectorAll("tbody tr > td:first-child");
-        if (timeCells.length === 0 || slotIndex < 0 || slotIndex >= timeCells.length) {
-          needle.style.display = "none";
-          return;
-        }
-
-        const currentCell = timeCells[slotIndex] as HTMLElement;
-        const nextCell = (slotIndex + 1 < timeCells.length ? timeCells[slotIndex + 1] : null) as HTMLElement | null;
+        const dayFraction = currentMinutes / (24 * 60); // 0..1 across the day
 
         const containerRect = container.getBoundingClientRect();
-        const currentRect = currentCell.getBoundingClientRect();
-
-        const currentTop = currentRect.top - containerRect.top + container.scrollTop;
-        const slotVisualHeight = nextCell
-          ? (nextCell.getBoundingClientRect().top - currentRect.top)
-          : currentRect.height;
-
-        const top = currentTop + slotVisualHeight * percentInSlot;
+        const tbodyRect = tbody.getBoundingClientRect();
+        const tbodyTop = tbodyRect.top - containerRect.top + container.scrollTop;
+        const top = tbodyTop + tbodyRect.height * dayFraction;
 
         needle.style.display = "block";
         needle.style.top = `${top}px`;
