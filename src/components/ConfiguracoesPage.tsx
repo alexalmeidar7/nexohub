@@ -216,14 +216,26 @@ export default function ConfiguracoesPage() {
       <CollapsibleBox title="Configurações da Empresa">
         <div className="space-y-4">
           {field("Nome da Empresa", "nome", "Nome da empresa")}
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-muted-foreground">Logo da Empresa</label>
-            <div className="flex items-center gap-4">
-              {config.logo && <img src={config.logo} alt="Logo" className="w-16 h-16 rounded-lg object-contain border border-border" />}
-              <button onClick={handleLogoUpload} className="bg-muted border border-border px-4 py-2 rounded-lg text-foreground hover:bg-muted/80 transition-all text-xs">
-                {config.logo ? "Trocar Logo" : "Carregar Logo"}
-              </button>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-muted-foreground">Logo da Empresa</label>
+              <div className="flex items-center gap-4">
+                {config.logo && <img src={config.logo} alt="Logo" className="w-16 h-16 rounded-lg object-contain border border-border" />}
+                <button onClick={handleLogoUpload} className="bg-muted border border-border px-4 py-2 rounded-lg text-foreground hover:bg-muted/80 transition-all text-xs">
+                  {config.logo ? "Trocar Logo" : "Carregar Logo"}
+                </button>
+              </div>
             </div>
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-muted-foreground">Imagem de Fundo do Painel</label>
+              <div className="flex items-center gap-4">
+                {config.backgroundUrl && <img src={config.backgroundUrl} alt="Fundo" className="w-16 h-16 rounded-lg object-cover border border-border" />}
+                <button onClick={handleBackgroundUpload} className="bg-muted border border-border px-4 py-2 rounded-lg text-foreground hover:bg-muted/80 transition-all text-xs flex items-center gap-1">
+                  <Upload size={12} /> {config.backgroundUrl ? "Trocar Fundo" : "Carregar Fundo"}
+                </button>
+              </div>
+            </div>
+          </div>
           </div>
           {field("Endereço", "endereco", "Endereço completo")}
           {field("Telefone Comercial", "telefoneComercial", "(00) 0000-0000")}
