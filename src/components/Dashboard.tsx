@@ -654,6 +654,7 @@ function DashboardAgenda() {
   const [loading, setLoading] = useState(true);
   const [eventos, setEventos] = useState<any[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [calMonth, setCalMonth] = useState(new Date());
 
   useEffect(() => {
     if (!user) return;
