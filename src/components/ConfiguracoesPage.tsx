@@ -23,6 +23,7 @@ export async function getEmpresaConfig(): Promise<EmpresaConfig> {
   return {
     nome: data.nome || "",
     logo: data.logo || "",
+    backgroundUrl: data.background_url || "",
     endereco: data.endereco || "",
     telefoneComercial: data.telefone_comercial || "",
     telefoneParticipacao: data.telefone_participacao || "",
