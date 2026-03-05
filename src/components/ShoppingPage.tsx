@@ -29,7 +29,6 @@ export default function ShoppingPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  // Form
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
@@ -75,15 +74,8 @@ export default function ShoppingPage() {
   };
 
   const resetForm = () => {
-    setName("");
-    setDescription("");
-    setPrice("");
-    setStock("");
-    setProgramId("");
-    setPaymentUrl("");
-    setImageFile(null);
-    setImagePreview("");
-    setEditId(null);
+    setName(""); setDescription(""); setPrice(""); setStock("");
+    setProgramId(""); setPaymentUrl(""); setImageFile(null); setImagePreview(""); setEditId(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -93,34 +85,24 @@ export default function ShoppingPage() {
     try {
       let imageUrl = "";
       if (imageFile) imageUrl = await uploadImage(imageFile);
-
       if (editId) {
         const update: any = {
-          name: name.trim(),
-          description: description.trim(),
-          price: parseFloat(price) || 0,
-          stock: parseInt(stock) || 0,
-          program_id: programId || null,
-          payment_url: paymentUrl.trim() || null,
+          name: name.trim(), description: description.trim(),
+          price: parseFloat(price) || 0, stock: parseInt(stock) || 0,
+          program_id: programId || null, payment_url: paymentUrl.trim() || null,
         };
         if (imageUrl) update.image_url = imageUrl;
         await supabase.from("shopping_products").update(update).eq("id", editId);
         toast({ title: "Produto atualizado!" });
       } else {
         await supabase.from("shopping_products").insert({
-          user_id: user.id,
-          name: name.trim(),
-          description: description.trim(),
-          image_url: imageUrl,
-          price: parseFloat(price) || 0,
-          stock: parseInt(stock) || 0,
-          program_id: programId || null,
-          payment_url: paymentUrl.trim() || null,
+          user_id: user.id, name: name.trim(), description: description.trim(),
+          image_url: imageUrl, price: parseFloat(price) || 0, stock: parseInt(stock) || 0,
+          program_id: programId || null, payment_url: paymentUrl.trim() || null,
         });
         toast({ title: "Produto cadastrado!" });
       }
-      resetForm();
-      loadData();
+      resetForm(); loadData();
     } catch (err: any) {
       toast({ title: "Erro", description: err.message, variant: "destructive" });
     }
@@ -128,21 +110,15 @@ export default function ShoppingPage() {
   };
 
   const startEdit = (p: ShoppingProduct) => {
-    setEditId(p.id);
-    setName(p.name);
-    setDescription(p.description || "");
-    setPrice(String(p.price));
-    setStock(String(p.stock));
-    setProgramId(p.program_id || "");
-    setPaymentUrl(p.payment_url || "");
-    setImagePreview(p.image_url || "");
-    setImageFile(null);
+    setEditId(p.id); setName(p.name); setDescription(p.description || "");
+    setPrice(String(p.price)); setStock(String(p.stock));
+    setProgramId(p.program_id || ""); setPaymentUrl(p.payment_url || "");
+    setImagePreview(p.image_url || ""); setImageFile(null);
   };
 
   const handleDelete = async (id: string) => {
     await supabase.from("shopping_products").delete().eq("id", id);
-    toast({ title: "Produto removido" });
-    loadData();
+    toast({ title: "Produto removido" }); loadData();
   };
 
   const toggleActive = async (id: string, active: boolean) => {
@@ -150,140 +126,150 @@ export default function ShoppingPage() {
     loadData();
   };
 
-  if (loading) return <div className="flex justify-center py-16"><Loader2 className="animate-spin" size={32} /></div>;
+  if (loading) return <div className="flex justify-center py-16"><Loader2 className="animate-spin" size={32} style={{ color: "#2dbef3" }} /></div>;
+
+  const inputStyle: React.CSSProperties = {
+    backgroundColor: "#ffffff", border: "1px solid #0d0446", color: "#0d0446", borderRadius: "20px",
+  };
 
   return (
     <div className="space-y-8 max-w-4xl">
-      <form onSubmit={handleSubmit} className="bg-white/5 border border-white/10 rounded-xl p-6 space-y-4">
-        <h3 className="text-lg font-bold flex items-center gap-2">
+      <form onSubmit={handleSubmit} className="rounded-xl p-6 space-y-4" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)" }}>
+        <h3 className="text-lg font-bold flex items-center gap-2" style={{ color: "#0d0446" }}>
           <Package size={20} />
           {editId ? "Editar Produto" : "Novo Produto"}
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="text-sm font-medium block mb-1">Nome do Produto</label>
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm"
-              placeholder="Ex: Caneca Positiva FM"
-              required
+            <label className="text-sm font-medium block mb-1" style={{ color: "#0d0446" }}>Nome do Produto</label>
+            <input value={name} onChange={(e) => setName(e.target.value)}
+              className="w-full px-4 py-1.5 text-sm outline-none transition-colors"
+              style={inputStyle} placeholder="Ex: Caneca Positiva FM" required
+              onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
+              onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
             />
           </div>
           <div>
-            <label className="text-sm font-medium block mb-1">Programa vinculado</label>
-            <select
-              value={programId}
-              onChange={(e) => setProgramId(e.target.value)}
-              className="w-full rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm"
+            <label className="text-sm font-medium block mb-1" style={{ color: "#0d0446" }}>Programa vinculado</label>
+            <select value={programId} onChange={(e) => setProgramId(e.target.value)}
+              className="w-full px-4 py-1.5 text-sm outline-none transition-colors appearance-none"
+              style={inputStyle}
+              onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
+              onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
             >
               <option value="">Nenhum (todos)</option>
-              {programas.map((p) => (
-                <option key={p.id} value={p.id}>{p.nome}</option>
-              ))}
+              {programas.map((p) => <option key={p.id} value={p.id}>{p.nome}</option>)}
             </select>
           </div>
           <div className="md:col-span-2">
-            <label className="text-sm font-medium block mb-1">Descrição do Produto</label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="w-full rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm min-h-[60px]"
-              placeholder="Descrição do produto..."
+            <label className="text-sm font-medium block mb-1" style={{ color: "#0d0446" }}>Descrição do Produto</label>
+            <textarea value={description} onChange={(e) => setDescription(e.target.value)}
+              className="w-full px-4 py-2 text-sm outline-none transition-colors min-h-[60px]"
+              style={{ ...inputStyle, borderRadius: "12px" }} placeholder="Descrição do produto..."
+              onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
+              onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
             />
           </div>
           <div>
-            <label className="text-sm font-medium block mb-1">Preço (R$)</label>
-            <input
-              type="number"
-              step="0.01"
-              min="0"
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
-              className="w-full rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm"
-              placeholder="29.90"
+            <label className="text-sm font-medium block mb-1" style={{ color: "#0d0446" }}>Preço (R$)</label>
+            <input type="number" step="0.01" min="0" value={price} onChange={(e) => setPrice(e.target.value)}
+              className="w-full px-4 py-1.5 text-sm outline-none transition-colors" style={inputStyle} placeholder="29.90"
+              onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
+              onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
             />
           </div>
           <div>
-            <label className="text-sm font-medium block mb-1">Estoque</label>
-            <input
-              type="number"
-              min="0"
-              value={stock}
-              onChange={(e) => setStock(e.target.value)}
-              className="w-full rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm"
-              placeholder="100"
+            <label className="text-sm font-medium block mb-1" style={{ color: "#0d0446" }}>Estoque</label>
+            <input type="number" min="0" value={stock} onChange={(e) => setStock(e.target.value)}
+              className="w-full px-4 py-1.5 text-sm outline-none transition-colors" style={inputStyle} placeholder="100"
+              onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
+              onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
             />
           </div>
           <div className="md:col-span-2">
-            <label className="text-sm font-medium block mb-1">Link de Pagamento (Mercado Pago)</label>
-            <input
-              value={paymentUrl}
-              onChange={(e) => setPaymentUrl(e.target.value)}
-              className="w-full rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm"
-              placeholder="https://mpago.la/..."
+            <label className="text-sm font-medium block mb-1" style={{ color: "#0d0446" }}>Link de Pagamento (Mercado Pago)</label>
+            <input value={paymentUrl} onChange={(e) => setPaymentUrl(e.target.value)}
+              className="w-full px-4 py-1.5 text-sm outline-none transition-colors" style={inputStyle} placeholder="https://mpago.la/..."
+              onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
+              onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
             />
           </div>
         </div>
         <div>
-          <label className="text-sm font-medium block mb-1">Imagem do Produto</label>
-          <input type="file" accept="image/*" onChange={handleImageChange} className="text-sm" />
+          <label className="text-sm font-medium block mb-1" style={{ color: "#0d0446" }}>Imagem do Produto</label>
+          <input type="file" accept="image/*" onChange={handleImageChange} className="text-sm" style={{ color: "#0d0446" }} />
           {imagePreview && (
-            <img src={imagePreview} alt="Preview" className="mt-2 w-24 h-24 object-cover rounded-lg border border-white/20" />
+            <img src={imagePreview} alt="Preview" className="mt-2 w-24 h-24 object-cover rounded-lg" style={{ border: "1px solid rgba(13,4,70,0.1)" }} />
           )}
         </div>
         <div className="flex gap-2">
-          <button
-            type="submit"
-            disabled={saving}
-            className="bg-[#d30707] text-white px-6 py-2 rounded-lg font-bold text-sm hover:bg-[#b00606] transition-colors flex items-center gap-2 disabled:opacity-50"
+          <button type="submit" disabled={saving}
+            className="px-6 py-2 font-bold text-sm transition-all flex items-center gap-2 disabled:opacity-50"
+            style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "20px", border: "2px solid #0d0446" }}
+            onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#ffffff"; e.currentTarget.style.color = "#0d0446"; }}
+            onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#0d0446"; e.currentTarget.style.color = "#ffffff"; }}
           >
             {saving ? <Loader2 className="animate-spin" size={16} /> : <Plus size={16} />}
             {editId ? "Salvar Alterações" : "Cadastrar Produto"}
           </button>
           {editId && (
-            <button type="button" onClick={resetForm} className="px-4 py-2 rounded-lg text-sm border border-white/20 hover:bg-white/5">
+            <button type="button" onClick={resetForm}
+              className="px-4 py-2 text-sm transition-colors"
+              style={{ borderRadius: "20px", border: "1px solid #0d0446", color: "#0d0446" }}
+              onMouseEnter={e => { e.currentTarget.style.backgroundColor = "rgba(13,4,70,0.05)"; }}
+              onMouseLeave={e => { e.currentTarget.style.backgroundColor = "transparent"; }}
+            >
               Cancelar
             </button>
           )}
         </div>
       </form>
 
-      {/* Product list */}
       <div className="space-y-3">
-        <h3 className="text-lg font-bold">Produtos Cadastrados ({products.length})</h3>
-        {products.length === 0 && <p className="text-sm text-muted-foreground">Nenhum produto cadastrado.</p>}
+        <h3 className="text-lg font-bold" style={{ color: "#0d0446" }}>Produtos Cadastrados ({products.length})</h3>
+        {products.length === 0 && <p className="text-sm" style={{ color: "rgba(13,4,70,0.5)" }}>Nenhum produto cadastrado.</p>}
         {products.map((p) => {
           const prog = programas.find((pr) => pr.id === p.program_id);
           return (
-            <div key={p.id} className="flex items-center gap-4 bg-white/5 border border-white/10 rounded-xl p-4">
+            <div key={p.id} className="flex items-center gap-4 rounded-xl p-4" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)" }}>
               {p.image_url ? (
                 <img src={p.image_url} alt={p.name} className="w-16 h-16 object-cover rounded-lg" />
               ) : (
-                <div className="w-16 h-16 rounded-lg bg-white/10 flex items-center justify-center">
-                  <Package size={24} className="text-white/30" />
+                <div className="w-16 h-16 rounded-lg flex items-center justify-center" style={{ backgroundColor: "rgba(13,4,70,0.04)" }}>
+                  <Package size={24} style={{ color: "rgba(13,4,70,0.2)" }} />
                 </div>
               )}
               <div className="flex-1 min-w-0">
-                <div className="font-bold truncate">{p.name}</div>
-                <div className="text-sm text-muted-foreground">
+                <div className="font-bold truncate" style={{ color: "#0d0446" }}>{p.name}</div>
+                <div className="text-sm" style={{ color: "rgba(13,4,70,0.5)" }}>
                   R$ {Number(p.price).toFixed(2)} • Estoque: {p.stock}
                   {prog && <span> • {prog.nome}</span>}
                 </div>
-                {p.description && <div className="text-xs text-muted-foreground truncate mt-0.5">{p.description}</div>}
-                {p.payment_url && <div className="text-xs text-green-400 mt-0.5">💳 Link de pagamento configurado</div>}
+                {p.description && <div className="text-xs truncate mt-0.5" style={{ color: "rgba(13,4,70,0.4)" }}>{p.description}</div>}
+                {p.payment_url && <div className="text-xs mt-0.5" style={{ color: "#2dbef3" }}>💳 Link de pagamento configurado</div>}
               </div>
               <div className="flex items-center gap-2 shrink-0">
-                <button
-                  onClick={() => toggleActive(p.id, p.active)}
-                  className={`text-xs px-3 py-1 rounded-full font-bold ${p.active ? "bg-green-600/20 text-green-400" : "bg-red-600/20 text-red-400"}`}
+                <button onClick={() => toggleActive(p.id, p.active)}
+                  className="text-xs px-3 py-1 rounded-full font-bold"
+                  style={p.active
+                    ? { backgroundColor: "rgba(45,190,243,0.1)", color: "#2dbef3" }
+                    : { backgroundColor: "rgba(220,38,38,0.1)", color: "#dc2626" }
+                  }
                 >
                   {p.active ? "Ativo" : "Inativo"}
                 </button>
-                <button onClick={() => startEdit(p)} className="p-2 hover:bg-white/10 rounded-lg transition-colors">
+                <button onClick={() => startEdit(p)} className="p-2 rounded-lg transition-colors"
+                  style={{ color: "rgba(13,4,70,0.4)" }}
+                  onMouseEnter={e => { e.currentTarget.style.color = "#2dbef3"; }}
+                  onMouseLeave={e => { e.currentTarget.style.color = "rgba(13,4,70,0.4)"; }}
+                >
                   <Pencil size={14} />
                 </button>
-                <button onClick={() => handleDelete(p.id)} className="p-2 hover:bg-red-500/20 rounded-lg transition-colors text-red-400">
+                <button onClick={() => handleDelete(p.id)} className="p-2 rounded-lg transition-colors"
+                  style={{ color: "rgba(13,4,70,0.4)" }}
+                  onMouseEnter={e => { e.currentTarget.style.color = "#dc2626"; }}
+                  onMouseLeave={e => { e.currentTarget.style.color = "rgba(13,4,70,0.4)"; }}
+                >
                   <Trash2 size={14} />
                 </button>
               </div>
