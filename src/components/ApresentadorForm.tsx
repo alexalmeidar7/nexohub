@@ -102,7 +102,7 @@ export default function ApresentadorForm() {
     resetForm();
     setSaving(false);
     setShowSuccess(true);
-    setTimeout(() => setShowSuccess(false), 3000);
+    setTimeout(() => setShowSuccess(false), 2000);
   };
 
   const startEdit = (a: Apresentador) => {
