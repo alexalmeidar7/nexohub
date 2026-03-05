@@ -380,8 +380,8 @@ export default function NoticiasPanel() {
       {/* Top row: Noticias Selecionadas + Cotações side by side */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Notícias Selecionadas */}
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-          <div className={headerStyle}>📋 Notícias Selecionadas</div>
+        <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)" }}>
+          <div className={headerStyle} style={headerInline}>📋 Notícias Selecionadas</div>
           <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
             {selectedNews.length === 0 ? (
               <p className="text-gray-500 text-xs p-4">Nenhuma notícia selecionada.</p>
