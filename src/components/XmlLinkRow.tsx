@@ -105,7 +105,7 @@ export default function XmlLinkRow({ label, xmlContent, dark, compact }: XmlLink
     >
       <Code2 size={18} style={dark ? { color: "#2ec1f7" } : undefined} className={dark ? "shrink-0" : "text-primary shrink-0"} />
       <span className={`text-xs font-bold whitespace-nowrap ${dark ? "text-white" : "text-foreground"}`}>{label}</span>
-      <span className={`text-[10px] truncate flex-1 font-mono ${dark ? "text-white/50" : "text-muted-foreground"}`}>
+      <span className={`text-[10px] truncate flex-1 font-mono ${dark ? "text-white" : "text-muted-foreground"}`}>
         {uploading ? "Enviando..." : permanentUrl || "Gerando link..."}
       </span>
       {uploading ? (
