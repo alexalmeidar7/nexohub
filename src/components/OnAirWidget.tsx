@@ -79,7 +79,7 @@ export default function OnAirWidget() {
   const [nextApresentadores, setNextApresentadores] = useState<Record<string, ApresentadorInfo>>({});
   const [isHovered, setIsHovered] = useState(false);
   const [musicData, setMusicData] = useState<{ titulo?: string; artista?: string } | null>(null);
-
+  const [gradeOpen, setGradeOpen] = useState(false);
   useEffect(() => {
     const update = async () => {
       const [programas, apresentadores] = await Promise.all([getProgramas(), getApresentadores()]);
