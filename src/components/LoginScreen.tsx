@@ -92,8 +92,8 @@ export default function LoginScreen() {
             <div className="flex justify-between items-center pt-2">
               <button
                 onClick={() => { setShowForgot(!showForgot); setError(""); }}
-                className="text-xs transition-colors duration-200"
-                style={{ color: "#0f1058" }}
+                className="transition-colors duration-200"
+                style={{ fontSize: "12px", color: "#0f1058" }}
                 onMouseEnter={(e) => (e.currentTarget.style.color = "#268ffa")}
                 onMouseLeave={(e) => (e.currentTarget.style.color = "#0f1058")}
               >
