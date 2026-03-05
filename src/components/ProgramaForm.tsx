@@ -140,57 +140,117 @@ function GradeBody({ gradeSlots, diasSemana, diaAtual, currentTimeStr, getProgra
     return apresentadores.find(a => a.id === apresentadorId) || null;
   };
 
+  // Calculate needle position
+  const currentMinutes = (() => {
+    const parts = currentTimeStr.split(":");
+    return parseInt(parts[0]) * 60 + parseInt(parts[1]);
+  })();
+
   return (
     <>
       <tbody>
-        {gradeSlots.map(slot => (
-          <tr key={slot}>
-            <td className="px-2 py-2 font-mono rounded-lg" style={{ color: "rgba(13,4,70,0.5)" }}>{slot.slice(0, 5)}</td>
-            {diasSemana.map(dia => {
-              const key = `${dia}-${slot}`;
-              if (skipMap[key]) return null;
-              const cellData = spanMap[key];
-              if (!cellData) return <td key={dia} className="px-1 py-1 rounded-lg" />;
-              const { prog, rowSpan } = cellData;
-              const isOnAir = prog && dia === diaAtual && currentTimeStr >= prog.horarioInicio && currentTimeStr < prog.horarioFim;
-              const presenterName = getPresenterName(prog.apresentadorId);
-              return (
-                <td key={dia} rowSpan={rowSpan}
-                  className="rounded-lg transition-all relative hover:!border-[#2dbef3] hover:border-2"
-                  style={{
-                    backgroundColor: isOnAir ? "#2dbef3" : "#ffffff",
-                    color: isOnAir ? "#ffffff" : "#0d0446",
-                    fontWeight: isOnAir ? "bold" : undefined,
-                    border: isOnAir ? "2px solid #2dbef3" : "1px solid #ccc",
-                    verticalAlign: "top",
-                    padding: "8px 10px",
+        {gradeSlots.map((slot, slotIdx) => {
+          const slotParts = slot.split(":");
+          const slotMinutes = parseInt(slotParts[0]) * 60 + parseInt(slotParts[1]);
+          const nextSlotMinutes = slotMinutes + 30;
+          const isNeedleRow = currentMinutes >= slotMinutes && currentMinutes < nextSlotMinutes;
+          const needlePercent = isNeedleRow ? ((currentMinutes - slotMinutes) / 30) * 100 : 0;
+
+          return (
+            <tr key={slot} style={{ position: "relative" }}>
+              <td className="px-2 py-2 font-mono rounded-lg" style={{ color: "rgba(13,4,70,0.5)", position: "relative" }}>
+                {slot.slice(0, 5)}
+                {isNeedleRow && (
+                  <div style={{
+                    position: "absolute",
+                    left: 0,
+                    right: 0,
+                    top: `${needlePercent}%`,
+                    height: "2px",
+                    backgroundColor: "#0d0446",
+                    zIndex: 5,
+                    pointerEvents: "none",
                   }}>
-                  <div className="text-[10px] font-bold leading-tight" style={{ wordBreak: "break-word", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{prog.nome}</div>
-                  <div className="text-[9px] mt-0.5" style={{ color: isOnAir ? "rgba(255,255,255,0.8)" : "rgba(13,4,70,0.5)" }}>
-                    {prog.horarioInicio.slice(0, 5)} - {prog.horarioFim.slice(0, 5)}
-                  </div>
-                  {presenterName && (
-                    <div className="text-[9px] font-semibold mt-0.5" style={{ color: isOnAir ? "rgba(255,255,255,0.9)" : "#0d0446" }}>
-                      {presenterName}
-                    </div>
-                  )}
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setDetailProg(prog); }}
-                    className="mt-1 px-2 py-0.5 rounded text-[8px] font-bold flex items-center gap-1 transition-colors"
-                    style={{
+                    <div style={{
+                      position: "absolute",
+                      left: -4,
+                      top: -3,
+                      width: 8,
+                      height: 8,
+                      borderRadius: "50%",
                       backgroundColor: "#0d0446",
-                      color: "#ffffff",
-                    }}
-                    onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#2dbef3"; }}
-                    onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#0d0446"; }}
-                  >
-                    + informações
-                  </button>
-                </td>
-              );
-            })}
-          </tr>
-        ))}
+                    }} />
+                  </div>
+                )}
+              </td>
+              {diasSemana.map(dia => {
+                const key = `${dia}-${slot}`;
+                if (skipMap[key]) return null;
+                const cellData = spanMap[key];
+                if (!cellData) return (
+                  <td key={dia} className="px-1 py-1 rounded-lg" style={{ position: "relative" }}>
+                    {isNeedleRow && (
+                      <div style={{
+                        position: "absolute", left: 0, right: 0, top: `${needlePercent}%`,
+                        height: "2px", backgroundColor: "#0d0446", zIndex: 5, pointerEvents: "none",
+                      }} />
+                    )}
+                  </td>
+                );
+                const { prog, rowSpan } = cellData;
+                const isOnAir = prog && dia === diaAtual && currentTimeStr >= prog.horarioInicio && currentTimeStr < prog.horarioFim;
+                const presenterName = getPresenterName(prog.apresentadorId);
+
+                // For merged cells, check if needle falls within this cell's span
+                const cellEndMinutes = slotMinutes + rowSpan * 30;
+                const needleInCell = currentMinutes >= slotMinutes && currentMinutes < cellEndMinutes;
+                const needleCellPercent = needleInCell ? ((currentMinutes - slotMinutes) / (rowSpan * 30)) * 100 : 0;
+
+                return (
+                  <td key={dia} rowSpan={rowSpan}
+                    className="rounded-lg transition-all relative hover:!border-[#2dbef3] hover:border-2"
+                    style={{
+                      backgroundColor: isOnAir ? "#2dbef3" : "#ffffff",
+                      color: isOnAir ? "#ffffff" : "#0d0446",
+                      fontWeight: isOnAir ? "bold" : undefined,
+                      border: isOnAir ? "2px solid #2dbef3" : "1px solid #ccc",
+                      verticalAlign: "top",
+                      padding: "8px 10px",
+                      position: "relative",
+                    }}>
+                    {needleInCell && (
+                      <div style={{
+                        position: "absolute", left: 0, right: 0, top: `${needleCellPercent}%`,
+                        height: "2px", backgroundColor: "#0d0446", zIndex: 5, pointerEvents: "none",
+                      }} />
+                    )}
+                    <div className="text-[10px] font-bold leading-tight" style={{ wordBreak: "break-word", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{prog.nome}</div>
+                    <div className="text-[9px] mt-0.5" style={{ color: isOnAir ? "rgba(255,255,255,0.8)" : "rgba(13,4,70,0.5)" }}>
+                      {prog.horarioInicio.slice(0, 5)} - {prog.horarioFim.slice(0, 5)}
+                    </div>
+                    {presenterName && (
+                      <div className="text-[9px] font-semibold mt-0.5" style={{ color: isOnAir ? "rgba(255,255,255,0.9)" : "#0d0446" }}>
+                        {presenterName}
+                      </div>
+                    )}
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setDetailProg(prog); }}
+                      className="mt-1 px-2 py-0.5 rounded text-[8px] font-bold flex items-center gap-1 transition-colors"
+                      style={{
+                        backgroundColor: "#0d0446",
+                        color: "#ffffff",
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#2dbef3"; }}
+                      onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#0d0446"; }}
+                    >
+                      + informações
+                    </button>
+                  </td>
+                );
+              })}
+            </tr>
+          );
+        })}
       </tbody>
 
       {/* Detail popup */}
