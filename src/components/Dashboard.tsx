@@ -175,7 +175,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#268ffa" }}>
       <div className="flex flex-1 p-3 pb-0 gap-3">
         {/* === SIDEBAR === */}
-        <aside className="w-56 flex flex-col rounded-2xl overflow-hidden flex-shrink-0" style={{ backgroundColor: "#000000" }}>
+        <aside className="flex flex-col rounded-2xl overflow-hidden flex-shrink-0" style={{ backgroundColor: "#000000", width: "420px", height: "880px" }}>
           {/* Selo + Settings */}
           <div className="flex items-center justify-between px-4 pt-5 pb-3">
             <img src={seloNexohub} alt="NexoHUB" className="h-6" />
@@ -192,8 +192,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             módulos ativos
           </div>
 
-          {/* Menu items */}
-          <nav className="flex-1 overflow-y-auto px-3 space-y-0.5">
+          {/* Menu items with scroll */}
+          <nav className="flex-1 overflow-y-auto px-3 space-y-0.5" style={{ scrollbarWidth: "thin", scrollbarColor: "#268ffa transparent" }}>
             {sidebarMenu.map(item => {
               const Icon = item.icon;
               const active = isItemActive(item);
@@ -204,8 +204,11 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   <button
                     onClick={() => handleMenuClick(item)}
                     className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs transition-colors ${
-                      active ? "text-[#268ffa]" : "text-white/80 hover:text-white hover:bg-white/5"
+                      active ? "text-[#268ffa]" : "text-white/80 hover:bg-white/5"
                     }`}
+                    style={!active ? {} : {}}
+                    onMouseEnter={e => { if (!active) { e.currentTarget.style.color = "#268ffa"; } }}
+                    onMouseLeave={e => { if (!active) { e.currentTarget.style.color = ""; } }}
                   >
                     <Icon size={14} className={active ? "text-[#268ffa]" : "text-white/50"} />
                     <span className="flex-1 text-left">{item.label}</span>
@@ -223,8 +226,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                             key={child.page}
                             onClick={() => setCurrentPage(child.page)}
                             className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-[11px] transition-colors ${
-                              childActive ? "text-[#268ffa]" : "text-white/60 hover:text-white hover:bg-white/5"
+                              childActive ? "text-[#268ffa]" : "text-white/60"
                             }`}
+                            onMouseEnter={e => { if (!childActive) { e.currentTarget.style.color = "#268ffa"; } }}
+                            onMouseLeave={e => { if (!childActive) { e.currentTarget.style.color = ""; } }}
                           >
                             <ChildIcon size={12} className={childActive ? "text-[#268ffa]" : "text-white/40"} />
                             <span>{child.label}</span>
