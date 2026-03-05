@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ArrowRight, Loader2, CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import logoNexo from "@/assets/logo-nexo.png";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
@@ -41,21 +42,25 @@ export default function LoginScreen() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
-      <div className="bg-login w-full max-w-md rounded-4xl p-10 shadow-2xl animate-fade-in">
-        <h1 className="text-center text-login-foreground font-medium tracking-[0.2em] mb-8 text-xs">
-          MASTERVIEW / {isForgot ? "RECUPERAR SENHA" : "LOGIN"}
+    <div
+      className="min-h-screen flex flex-col items-center justify-center p-4"
+      style={{ background: "linear-gradient(135deg, #004dc0 0%, #0c0440 100%)" }}
+    >
+      <div className="w-full max-w-md rounded-3xl p-10 shadow-2xl animate-fade-in bg-white relative">
+        <h1 className="text-center font-semibold tracking-wide mb-8 text-sm" style={{ color: "#0f1058" }}>
+          NexoHub {isForgot ? "/ recuperar senha" : "login"}
         </h1>
 
         {isForgot && forgotSent ? (
           <div className="flex flex-col items-center gap-4">
-            <CheckCircle className="text-green-400" size={48} />
-            <p className="text-login-foreground/70 text-sm text-center">
+            <CheckCircle className="text-green-500" size={48} />
+            <p className="text-sm text-center" style={{ color: "#0f1058" }}>
               Link de recuperação enviado para <strong>{email}</strong>. Verifique sua caixa de entrada.
             </p>
             <button
               onClick={() => { setIsForgot(false); setForgotSent(false); }}
-              className="text-xs text-login-foreground/70 hover:text-login-foreground transition-colors mt-2"
+              className="text-xs hover:opacity-80 transition-opacity mt-2"
+              style={{ color: "#0f1058" }}
             >
               Voltar ao login
             </button>
@@ -67,7 +72,16 @@ export default function LoginScreen() {
               placeholder="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full bg-foreground text-muted-foreground rounded-full px-6 py-4 outline-none placeholder:text-muted-foreground/50"
+              className="w-full rounded-full px-6 py-4 outline-none text-sm transition-colors"
+              style={{
+                color: "#0f1058",
+                border: "2px solid #0d379a",
+                backgroundColor: "#fff",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#268ffa")}
+              onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#0d379a")}
+              onFocus={(e) => (e.currentTarget.style.borderColor = "#268ffa")}
+              onBlur={(e) => (e.currentTarget.style.borderColor = "#0d379a")}
             />
             {!isForgot && (
               <input
@@ -76,17 +90,27 @@ export default function LoginScreen() {
                 value={pass}
                 onChange={(e) => setPass(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-                className="w-full bg-foreground text-muted-foreground rounded-full px-6 py-4 outline-none placeholder:text-muted-foreground/50"
+                className="w-full rounded-full px-6 py-4 outline-none text-sm transition-colors"
+                style={{
+                  color: "#0f1058",
+                  border: "2px solid #0d379a",
+                  backgroundColor: "#fff",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#268ffa")}
+                onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#0d379a")}
+                onFocus={(e) => (e.currentTarget.style.borderColor = "#268ffa")}
+                onBlur={(e) => (e.currentTarget.style.borderColor = "#0d379a")}
               />
             )}
 
-            {error && <p className="text-red-400 text-xs text-center">{error}</p>}
+            {error && <p className="text-red-500 text-xs text-center">{error}</p>}
 
             <div className="flex justify-between items-center pt-2">
               <div className="flex flex-col gap-1">
                 <button
                   onClick={() => { setIsForgot(!isForgot); setError(""); }}
-                  className="text-xs text-login-foreground/70 hover:text-login-foreground transition-colors"
+                  className="text-xs hover:opacity-80 transition-opacity"
+                  style={{ color: "#0f1058" }}
                 >
                   {isForgot ? "Voltar ao login" : "Esqueci a senha"}
                 </button>
@@ -94,7 +118,8 @@ export default function LoginScreen() {
               <button
                 onClick={handleSubmit}
                 disabled={loading}
-                className="bg-primary hover:brightness-95 transition-all flex items-center gap-3 px-8 py-3 rounded-full font-medium text-primary-foreground text-sm disabled:opacity-50"
+                className="hover:brightness-110 transition-all flex items-center gap-3 px-8 py-3 rounded-full font-medium text-sm disabled:opacity-50 text-white"
+                style={{ backgroundColor: "#0f1058" }}
               >
                 {loading ? <Loader2 size={20} className="animate-spin" /> : (
                   <>
@@ -106,11 +131,11 @@ export default function LoginScreen() {
             </div>
           </div>
         )}
-      </div>
-      <div className="mt-20">
-        <span className="text-foreground font-bold text-2xl tracking-tighter flex items-center gap-1">
-          svn<span className="text-sm">✦</span>broadcast
-        </span>
+
+        {/* Logo no canto inferior esquerdo do box */}
+        <div className="mt-8">
+          <img src={logoNexo} alt="Nexo Soluções Visuais" className="h-8 opacity-80" />
+        </div>
       </div>
     </div>
   );
