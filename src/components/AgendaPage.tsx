@@ -416,7 +416,7 @@ export default function AgendaPage() {
           onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#2ec0f6"; e.currentTarget.style.color = "#ffffff"; }}
         >
           <Plus size={16} /> Novo Evento
-        </Button>
+        </button>
       </div>
 
       <Dialog open={dialogOpen} onOpenChange={(open) => { if (!open) resetForm(); setDialogOpen(open); }}>
