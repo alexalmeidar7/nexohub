@@ -346,12 +346,12 @@ export default function ProgramaForm() {
 
         <div>
           <label className="block text-xs mb-1" style={{ color: "#0d0446", fontWeight: 600 }}>Apresentador Responsável</label>
-          <Select value={apresentadorId} onValueChange={setApresentadorId}>
+          <Select value={apresentadorId || "none"} onValueChange={(v) => setApresentadorId(v === "none" ? "" : v)}>
             <SelectTrigger className="w-full h-8" style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "20px", border: "none" }}>
               <SelectValue placeholder="Selecionar Apresentador" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Nenhum</SelectItem>
+              <SelectItem value="none">Nenhum</SelectItem>
               {apresentadores.filter(a => a.ativo).map(a => (
                 <SelectItem key={a.id} value={a.id}>{a.nome}</SelectItem>
               ))}
