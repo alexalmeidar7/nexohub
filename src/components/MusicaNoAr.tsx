@@ -74,7 +74,7 @@ async function fetchCoverFromiTunes(titulo: string, artista: string): Promise<st
     if (data.results && data.results.length > 0) {
       return data.results[0].artworkUrl100?.replace("100x100", "600x600") || "";
     }
-  } catch {}
+  } catch { }
   return "";
 }
 
@@ -118,7 +118,6 @@ export default function MusicaNoAr() {
       if (data?.music_xml_url) {
         setXmlUrl(data.music_xml_url);
       } else {
-        // Save default
         await supabase.from("user_settings").upsert({
           user_id: user.id,
           music_xml_url: DEFAULT_XML_URL,
@@ -129,7 +128,6 @@ export default function MusicaNoAr() {
     loadUrl();
   }, [user]);
 
-  // Fetch current presenter for fallback
   useEffect(() => {
     const fetchPresenter = async () => {
       const [{ data: progsData }, apresentadores] = await Promise.all([
@@ -212,9 +210,7 @@ export default function MusicaNoAr() {
       const text = await res.text();
       const parsed = parseXmlString(text);
       if (parsed) await processMusic(parsed);
-    } catch {
-      // Silently handle errors - no error messages shown to user
-    }
+    } catch { }
   }, [xmlUrl, processMusic]);
 
   useEffect(() => {
@@ -242,7 +238,6 @@ export default function MusicaNoAr() {
 
   const progress = music && music.duracao > 0 ? Math.min(100, (elapsed / music.duracao) * 100) : 0;
 
-  // Determine display data with fallback logic
   const hasCover = music?.capa && music.capa.length > 0;
   const useFallback = !hasCover && presenterFallback;
   const displayTitulo = useFallback ? presenterFallback!.nome : (music?.titulo || "Aguardando leitura...");
@@ -251,30 +246,39 @@ export default function MusicaNoAr() {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[500px] animate-fade-in">
-      <div className="bg-zinc-900 p-8 rounded-[2rem] shadow-2xl w-full max-w-md">
+      <div className="p-8 rounded-2xl shadow-lg w-full max-w-md" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)" }}>
         <div className="mb-4">
-          <p className="text-zinc-500 text-xs mb-1">URL do XML:</p>
+          <p className="text-xs mb-1" style={{ color: "rgba(13,4,70,0.5)" }}>URL do XML:</p>
           {editingUrl ? (
             <div className="flex gap-2">
               <input
                 value={tempUrl}
                 onChange={(e) => setTempUrl(e.target.value)}
-                className="flex-1 text-zinc-400 text-xs bg-zinc-800 rounded-lg px-3 py-2 border border-zinc-700 outline-none focus:border-violet-500"
+                className="flex-1 text-xs px-3 py-1.5 outline-none transition-colors"
+                style={{ backgroundColor: "#ffffff", border: "1px solid #0d0446", color: "#0d0446", borderRadius: "20px" }}
+                onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
+                onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
                 placeholder="URL do XML"
               />
               <button
                 onClick={() => { saveUrl(tempUrl); setEditingUrl(false); }}
-                className="bg-violet-600 text-white rounded-lg px-3 py-2 hover:bg-violet-500 transition-colors"
+                className="px-3 py-1.5 font-bold transition-all"
+                style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "20px" }}
+                onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#2dbef3"; }}
+                onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#0d0446"; }}
               >
                 <Check size={14} />
               </button>
             </div>
           ) : (
             <div className="flex items-center gap-2">
-              <p className="text-zinc-400 text-xs truncate bg-zinc-800 rounded-lg px-3 py-2 border border-zinc-700 flex-1">{xmlUrl}</p>
+              <p className="text-xs truncate px-3 py-1.5 flex-1" style={{ backgroundColor: "rgba(13,4,70,0.04)", color: "#0d0446", borderRadius: "20px", border: "1px solid rgba(13,4,70,0.1)" }}>{xmlUrl}</p>
               <button
                 onClick={() => { setTempUrl(xmlUrl); setEditingUrl(true); }}
-                className="text-zinc-500 hover:text-violet-400 transition-colors"
+                className="transition-colors"
+                style={{ color: "rgba(13,4,70,0.4)" }}
+                onMouseEnter={e => { e.currentTarget.style.color = "#2dbef3"; }}
+                onMouseLeave={e => { e.currentTarget.style.color = "rgba(13,4,70,0.4)"; }}
               >
                 <Pencil size={14} />
               </button>
@@ -282,16 +286,16 @@ export default function MusicaNoAr() {
           )}
         </div>
 
-        <div className="relative aspect-square mb-8 overflow-hidden rounded-2xl bg-zinc-800 shadow-lg group">
+        <div className="relative aspect-square mb-8 overflow-hidden rounded-2xl shadow-lg group" style={{ backgroundColor: "rgba(13,4,70,0.04)" }}>
           {loadingCover && (
             <div className="absolute inset-0 flex items-center justify-center bg-black/40 z-10 backdrop-blur-sm">
-              <Loader2 className="animate-spin text-violet-500" size={48} />
+              <Loader2 className="animate-spin" size={48} style={{ color: "#2dbef3" }} />
             </div>
           )}
           {displayCover ? (
             <img src={displayCover} alt="Capa do Álbum" className="object-cover w-full h-full transition-transform duration-700 group-hover:scale-105" />
           ) : (
-            <div className="w-full h-full flex flex-col items-center justify-center text-zinc-600 gap-3">
+            <div className="w-full h-full flex flex-col items-center justify-center gap-3" style={{ color: "rgba(13,4,70,0.3)" }}>
               <Music size={48} />
               <span className="italic text-sm">{music ? "Nenhuma capa encontrada" : "Aguardando leitura..."}</span>
             </div>
@@ -299,20 +303,19 @@ export default function MusicaNoAr() {
         </div>
 
         <div className="space-y-2 text-center mb-4">
-          <h1 className="text-2xl font-bold tracking-tight truncate px-2 text-zinc-100">{displayTitulo}</h1>
-          <p className="text-violet-400 font-semibold flex items-center justify-center gap-2 text-lg">
+          <h1 className="text-2xl font-bold tracking-tight truncate px-2" style={{ color: "#0d0446" }}>{displayTitulo}</h1>
+          <p className="font-semibold flex items-center justify-center gap-2 text-lg" style={{ color: "#2dbef3" }}>
             <User size={20} />
             {displayArtista}
           </p>
         </div>
 
-        {/* Duration display */}
         {music && music.duracao > 0 && (
           <div className="mb-6">
-            <div className="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden mb-2">
-              <div className="h-full bg-violet-500 rounded-full transition-all duration-300" style={{ width: `${progress}%` }} />
+            <div className="w-full h-1.5 rounded-full overflow-hidden mb-2" style={{ backgroundColor: "rgba(13,4,70,0.1)" }}>
+              <div className="h-full rounded-full transition-all duration-300" style={{ width: `${progress}%`, backgroundColor: "#2dbef3" }} />
             </div>
-            <div className="flex justify-between text-zinc-500 text-xs font-mono">
+            <div className="flex justify-between text-xs font-mono" style={{ color: "rgba(13,4,70,0.4)" }}>
               <span>{formatTime(elapsed)}</span>
               <span>{formatTime(music.duracao)}</span>
             </div>
@@ -324,23 +327,18 @@ export default function MusicaNoAr() {
         )}
 
         <div className="mt-8 flex justify-center">
-          <span className="inline-flex items-center gap-2 px-3 py-1 bg-green-500/10 text-green-500 text-[10px] uppercase tracking-widest font-bold rounded-full border border-green-500/20">
+          <span className="inline-flex items-center gap-2 px-3 py-1 text-[10px] uppercase tracking-widest font-bold rounded-full" style={{ backgroundColor: "rgba(45,190,243,0.1)", color: "#2dbef3", border: "1px solid rgba(45,190,243,0.2)" }}>
             <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: "#2dbef3" }}></span>
+              <span className="relative inline-flex rounded-full h-2 w-2" style={{ backgroundColor: "#2dbef3" }}></span>
             </span>
             Monitorando a cada 2s
           </span>
         </div>
 
-        <div className="mt-6 bg-zinc-800/50 rounded-xl p-4">
-          <p className="text-xs text-zinc-500 mb-2 font-semibold">Estrutura esperada do XML:</p>
-          <pre className="text-[10px] text-zinc-600 font-mono leading-relaxed">{`<musica>
-  <nome_musica>Nome da Música</nome_musica>
-  <nome_interprete>Artista</nome_interprete>
-  <duracao>03:45</duracao>
-  <capa>https://url.jpg</capa> <!-- opcional -->
-</musica>`}</pre>
+        <div className="mt-6 rounded-xl p-4" style={{ backgroundColor: "rgba(13,4,70,0.04)" }}>
+          <p className="text-xs mb-2 font-semibold" style={{ color: "rgba(13,4,70,0.5)" }}>Estrutura esperada do XML:</p>
+          <pre className="text-[10px] font-mono leading-relaxed" style={{ color: "rgba(13,4,70,0.4)" }}>{`<musica>\n  <nome_musica>Nome da Música</nome_musica>\n  <nome_interprete>Artista</nome_interprete>\n  <duracao>03:45</duracao>\n  <capa>https://url.jpg</capa> <!-- opcional -->\n</musica>`}</pre>
         </div>
       </div>
     </div>
