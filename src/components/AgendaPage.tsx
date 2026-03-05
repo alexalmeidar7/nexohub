@@ -395,14 +395,14 @@ export default function AgendaPage() {
           <h3 className="text-lg font-semibold text-foreground">Calendário de Eventos</h3>
           {locais.length > 0 && (
             <Select value={filterLocal} onValueChange={setFilterLocal}>
-              <SelectTrigger className="w-[180px] h-8 text-sm">
+              <SelectTrigger className="w-[180px] h-8 text-sm" style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "20px", border: "none" }}>
                 <MapPin size={14} className="mr-1" />
                 <SelectValue placeholder="Filtrar por local" />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todos os locais</SelectItem>
+              <SelectContent style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "12px" }}>
+                <SelectItem value="todos" className="text-white focus:bg-[#2dbef3] focus:text-white">Todos os locais</SelectItem>
                 {locais.map((l) => (
-                  <SelectItem key={l} value={l}>{l}</SelectItem>
+                  <SelectItem key={l} value={l} className="text-white focus:bg-[#2dbef3] focus:text-white">{l}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
