@@ -172,7 +172,7 @@ export default function LoginScreen() {
                   onChange={(e) => setForgotEmail(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleForgot()}
                   className="w-full rounded-full px-6 py-4 outline-none transition-colors"
-                  style={{ fontSize: "14px", color: "#0f1058", border: "2px solid rgba(255,255,255,0.3)", backgroundColor: "#fff" }}
+                  style={{ fontSize: "12px", color: "#0f1058", border: "2px solid rgba(255,255,255,0.3)", backgroundColor: "#fff" }}
                   onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#268ffa")}
                   onMouseLeave={(e) => { if (document.activeElement !== e.currentTarget) e.currentTarget.style.borderColor = "#0d379a"; }}
                   onFocus={(e) => (e.currentTarget.style.borderColor = "#268ffa")}
