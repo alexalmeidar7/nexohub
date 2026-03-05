@@ -270,6 +270,7 @@ export default function OnAirWidget() {
       </Suspense>
     </div>
   );
+}
 
 function UpcomingProgramsList({ programs, apresentadores }: { programs: Programa[]; apresentadores: Record<string, ApresentadorInfo> }) {
   if (programs.length === 0) return null;
