@@ -6,6 +6,7 @@ interface XmlLinkRowProps {
   label: string;
   xmlContent: string;
   dark?: boolean;
+  compact?: boolean;
 }
 
 function sanitizeFileName(label: string): string {
