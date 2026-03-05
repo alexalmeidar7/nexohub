@@ -192,29 +192,31 @@ function GradeBody({ gradeSlots, diasSemana, diaAtual, currentTimeStr, getProgra
       {/* Detail popup */}
       {detailProg && createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: "rgba(0,0,0,0.5)" }} onClick={() => setDetailProg(null)}>
-          <div className="rounded-xl max-w-md w-full mx-4 relative" style={{ backgroundColor: "#ffffff", padding: "20px" }} onClick={e => e.stopPropagation()}>
+          <div className="rounded-xl max-w-2xl w-full mx-4 relative" style={{ backgroundColor: "#ffffff", padding: "20px" }} onClick={e => e.stopPropagation()}>
             <button onClick={() => setDetailProg(null)} className="absolute top-4 right-4 z-10 font-bold text-sm" style={{ color: "#0d0446" }}>
               <X size={18} />
             </button>
-            {detailProg.capa && (
-              <img src={detailProg.capa} alt={detailProg.nome} className="w-full h-auto rounded-lg mb-4" />
-            )}
-            <div className="space-y-2">
-              <h2 className="text-lg font-bold" style={{ color: "#0d0446" }}>{detailProg.nome}</h2>
-              <p className="text-xs flex items-center gap-1" style={{ color: "rgba(13,4,70,0.5)" }}>
-                <Clock size={12} /> {detailProg.horarioInicio.slice(0, 5)} — {detailProg.horarioFim.slice(0, 5)}
-              </p>
-              <p className="text-xs flex items-center gap-1" style={{ color: "rgba(13,4,70,0.5)" }}>
-                <Calendar size={12} /> {detailProg.diasSemana.join(", ")}
-              </p>
-              {getPresenterName(detailProg.apresentadorId) && (
-                <p className="text-xs font-semibold" style={{ color: "#0d0446" }}>
-                  Locutor: {getPresenterName(detailProg.apresentadorId)}
+            <div className="flex gap-5">
+              {detailProg.capa && (
+                <img src={detailProg.capa} alt={detailProg.nome} className="w-48 h-48 object-cover rounded-lg shrink-0" />
+              )}
+              <div className="space-y-2 flex-1 min-w-0">
+                <h2 className="text-lg font-bold pr-6" style={{ color: "#0d0446" }}>{detailProg.nome}</h2>
+                <p className="text-xs flex items-center gap-1" style={{ color: "rgba(13,4,70,0.5)" }}>
+                  <Clock size={12} /> {detailProg.horarioInicio.slice(0, 5)} — {detailProg.horarioFim.slice(0, 5)}
                 </p>
-              )}
-              {detailProg.descricao && (
-                <p className="text-sm mt-2 leading-relaxed" style={{ color: "rgba(13,4,70,0.7)" }}>{detailProg.descricao}</p>
-              )}
+                <p className="text-xs flex items-center gap-1" style={{ color: "rgba(13,4,70,0.5)" }}>
+                  <Calendar size={12} /> {detailProg.diasSemana.join(", ")}
+                </p>
+                {getPresenterName(detailProg.apresentadorId) && (
+                  <p className="text-xs font-semibold" style={{ color: "#0d0446" }}>
+                    Locutor: {getPresenterName(detailProg.apresentadorId)}
+                  </p>
+                )}
+                {detailProg.descricao && (
+                  <p className="text-sm mt-2 leading-relaxed" style={{ color: "rgba(13,4,70,0.7)" }}>{detailProg.descricao}</p>
+                )}
+              </div>
             </div>
           </div>
         </div>
