@@ -318,7 +318,7 @@ export default function PrevisaoTempo() {
           </div>
 
           <div>
-            <h4 className="text-lg font-medium mb-4" style={{ color: "#0d0446" }}>Próximos 5 dias</h4>
+            <h4 className="text-lg font-bold mb-4" style={{ color: "#0d0446" }}>Próximos 5 dias</h4>
             <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
               {weather.forecast.map((day) => (
                 <div key={day.date} className="rounded-xl p-4 text-center space-y-2"
