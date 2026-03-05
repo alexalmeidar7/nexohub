@@ -134,13 +134,6 @@ export default function ApresentadorForm() {
         <h3 className="text-xl mb-4" style={{ color: "#0d0446" }}>
           {editingId ? "Editar Apresentador/Participante" : "Novo Apresentador/Participante"}
         </h3>
-        <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Nome Completo"
-          className="w-full px-4 py-1.5 outline-none transition-colors text-sm"
-          style={{ backgroundColor: "#ffffff", border: "1px solid #0d0446", color: "#0d0446", borderRadius: "20px" }}
-          onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
-          onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
-        />
-
         <div>
           <label className="block text-xs mb-1" style={{ color: "#0d0446", fontWeight: 600 }}>Categoria</label>
           <Select value={categoria} onValueChange={setCategoria} open={catOpen} onOpenChange={setCatOpen}>
@@ -154,6 +147,13 @@ export default function ApresentadorForm() {
             </SelectContent>
           </Select>
         </div>
+
+        <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Nome Completo"
+          className="w-full px-4 py-1.5 outline-none transition-colors text-sm"
+          style={{ backgroundColor: "#ffffff", border: "1px solid #0d0446", color: "#0d0446", borderRadius: "20px" }}
+          onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
+          onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
+        />
 
         {categoria === "Convidado" && (
           <input value={cargoConvidado} onChange={(e) => setCargoConvidado(e.target.value)} placeholder="Cargo (ex: Médico, Advogado...)"
@@ -222,8 +222,8 @@ export default function ApresentadorForm() {
           <div className="flex items-center justify-between mb-4">
             <h4 className="text-lg font-medium" style={{ color: "#0d0446" }}>Cadastrados</h4>
             <Select value={filterCategoria} onValueChange={setFilterCategoria}>
-              <SelectTrigger className="w-[180px] h-8 text-sm" style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "20px", border: "none" }}>
-                <SelectValue placeholder="Filtrar por categoria" />
+              <SelectTrigger className="w-[160px]" style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "20px", border: "none", fontSize: "14px", height: "28px", padding: "0 12px" }}>
+                <SelectValue placeholder="Filtrar por" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="todos">Todos</SelectItem>
