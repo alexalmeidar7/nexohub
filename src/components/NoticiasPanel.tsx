@@ -345,7 +345,8 @@ export default function NoticiasPanel() {
     setLoadingSummary(false);
   };
 
-  const headerStyle = "px-4 py-3 font-bold text-sm tracking-wide bg-primary text-primary-foreground";
+  const headerStyle = "px-4 py-3 font-bold text-sm tracking-wide text-white" + " " + "rounded-t-xl";
+  const headerInline = { backgroundColor: "#0d0446" } as React.CSSProperties;
 
   return (
     <div className="animate-fade-in space-y-6">
