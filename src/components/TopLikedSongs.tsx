@@ -59,47 +59,44 @@ export default function TopLikedSongs() {
   }, [user]);
 
   return (
-    <div className="rounded-2xl p-5 shadow-lg" style={{ backgroundColor: "#fff" }}>
-      <div className="flex items-center gap-2 mb-4">
-        <Heart size={18} className="text-red-500" fill="#ef4444" />
-        <h3 className="font-bold text-gray-800 text-sm">Top 10 Músicas Curtidas</h3>
+    <div className="flex flex-col h-full">
+      {/* Header aligned like "NO AR" */}
+      <div className="flex items-center gap-1.5 mb-2">
+        <Heart size={14} fill="#268ffa" style={{ color: "#268ffa" }} />
+        <span className="font-bold text-xs uppercase tracking-wide" style={{ color: "#268ffa" }}>Músicas Curtidas</span>
       </div>
 
       {loading ? (
-        <p className="text-gray-400 text-xs">Carregando...</p>
+        <p className="text-xs" style={{ color: "#0d0446", opacity: 0.5 }}>Carregando...</p>
       ) : songs.length === 0 ? (
-        <p className="text-gray-400 text-xs">Nenhuma música curtida ainda. Curta músicas no Player!</p>
+        <p className="text-xs" style={{ color: "#0d0446", opacity: 0.5 }}>Nenhuma música curtida ainda.</p>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-1 overflow-y-auto flex-1 scrollbar-hide">
           {songs.map((song, i) => (
             <div
               key={`${song.artista}-${song.titulo}`}
-              className="flex items-center gap-3 py-1.5 px-2 rounded-lg hover:bg-gray-50 transition-colors"
+              className="flex items-center gap-2 py-1 px-1.5 rounded-lg"
             >
               <span
-                className="w-5 h-5 flex items-center justify-center rounded-full text-[10px] font-bold text-white shrink-0"
-                style={{ backgroundColor: i < 3 ? "#ed0808" : "#999" }}
+                className="w-4 h-4 flex items-center justify-center rounded-full text-[9px] font-bold text-white shrink-0"
+                style={{ backgroundColor: i < 3 ? "#268ffa" : "#0d0446" }}
               >
                 {i + 1}
               </span>
               {song.capa ? (
-                <img
-                  src={song.capa}
-                  alt={song.titulo}
-                  className="w-8 h-8 rounded object-cover shrink-0"
-                />
+                <img src={song.capa} alt={song.titulo} className="w-7 h-7 rounded object-cover shrink-0" />
               ) : (
-                <div className="w-8 h-8 rounded bg-gray-200 flex items-center justify-center shrink-0">
-                  <Music size={14} className="text-gray-400" />
+                <div className="w-7 h-7 rounded flex items-center justify-center shrink-0" style={{ backgroundColor: "#0d0446", opacity: 0.1 }}>
+                  <Music size={12} style={{ color: "#0d0446" }} />
                 </div>
               )}
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold text-gray-800 truncate">{song.titulo}</p>
-                <p className="text-[10px] text-gray-500 truncate">{song.artista}</p>
+                <p className="text-[11px] font-semibold truncate" style={{ color: "#0d0446" }}>{song.titulo}</p>
+                <p className="text-[9px] truncate" style={{ color: "#0d0446", opacity: 0.5 }}>{song.artista}</p>
               </div>
-              <div className="flex items-center gap-1 shrink-0">
-                <Heart size={10} className="text-red-400" fill="#f87171" />
-                <span className="text-[10px] text-gray-500 font-bold">{song.count}</span>
+              <div className="flex items-center gap-0.5 shrink-0">
+                <Heart size={8} fill="#268ffa" style={{ color: "#268ffa" }} />
+                <span className="text-[9px] font-bold" style={{ color: "#0d0446" }}>{song.count}</span>
               </div>
             </div>
           ))}
