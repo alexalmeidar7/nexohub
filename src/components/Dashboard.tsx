@@ -184,9 +184,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         animation: "fade-in 1s ease-out",
       } : {}),
     }}>
-      <div className="flex pb-0 gap-3" style={{ height: "650px", paddingLeft: "50px", paddingRight: "50px", paddingTop: "12px" }}>
+      <div className="flex pb-0 gap-3" style={{ height: "600px", paddingLeft: "50px", paddingRight: "50px", paddingTop: "12px" }}>
         {/* === SIDEBAR === */}
-        <aside className="flex flex-col rounded-[24px] overflow-hidden flex-shrink-0 backdrop-blur-xl" style={{ backgroundColor: "rgba(0, 0, 0, 0.70)", width: "400px", height: "650px" }}>
+        <aside className="flex flex-col rounded-[24px] overflow-hidden flex-shrink-0 backdrop-blur-xl" style={{ backgroundColor: "rgba(0, 0, 0, 0.70)", width: "400px", height: "600px" }}>
           {/* Selo + Settings */}
           <div className="flex items-center justify-between px-4 pt-3 pb-2">
             <img src={seloNexohub} alt="NexoHUB" className="h-4" />
@@ -325,7 +325,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
       {/* === WIDGETS BELOW MENU === */}
       {currentPage === "dashboard" && (
-        <div style={{ paddingLeft: "50px", paddingRight: "50px", paddingTop: "10px" }}>
+        <div style={{ paddingLeft: "50px", paddingRight: "50px", paddingTop: "20px" }}>
           <Suspense fallback={null}>
             <DashboardHome empresa={empresa} onNavigate={setCurrentPage} />
           </Suspense>
