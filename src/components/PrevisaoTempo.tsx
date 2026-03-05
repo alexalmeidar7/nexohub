@@ -308,7 +308,7 @@ export default function PrevisaoTempo() {
                 <span className="text-6xl">{getWeatherIcon(weather.current.weatherCode)}</span>
               </div>
             </div>
-            <div className="text-5xl font-light mb-6" style={{ color: "#2dbef3" }}>{weather.current.temp}°C</div>
+            <div className="text-5xl font-bold mb-6" style={{ color: "#2dbef3" }}>{weather.current.temp}°C</div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <Stat icon={<Thermometer size={16} />} label="Mínima" value={`${weather.current.tempMin}°C`} />
               <Stat icon={<Thermometer size={16} />} label="Máxima" value={`${weather.current.tempMax}°C`} />
