@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from "react";
-import { AlertCircle, Trash2, Clock, Calendar, Building2, Pencil, X, Power, Loader2, Info, CalendarDays, CheckCircle } from "lucide-react";
+import { AlertCircle, Trash2, Clock, Calendar, Building2, Pencil, X, Power, Loader2, Info, CalendarDays, CheckCircle, ChevronsUpDown, Check } from "lucide-react";
 import { format, addDays, startOfWeek } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Calendar as CalendarUI } from "@/components/ui/calendar";
@@ -28,6 +28,14 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { Button } from "@/components/ui/button";
 
 interface Programa {
@@ -78,6 +86,101 @@ function checkConflict(programas: Programa[], diasSemana: string[], horarioInici
     if (horarioInicio < p.horarioFim && horarioFim > p.horarioInicio) return p;
   }
   return null;
+}
+
+// Grade body with merged cells for same program across consecutive time slots
+function GradeBody({ gradeSlots, diasSemana, diaAtual, currentTimeStr, getProgramaForSlot }: {
+  gradeSlots: string[];
+  diasSemana: string[];
+  diaAtual: string;
+  currentTimeStr: string;
+  getProgramaForSlot: (dia: string, slot: string) => Programa | undefined;
+}) {
+  // Pre-compute skip/span maps per column
+  const { skipMap, spanMap } = useMemo(() => {
+    const skip: Record<string, boolean> = {};
+    const span: Record<string, { prog: Programa; rowSpan: number }> = {};
+
+    diasSemana.forEach(dia => {
+      let i = 0;
+      while (i < gradeSlots.length) {
+        const slot = gradeSlots[i];
+        const prog = getProgramaForSlot(dia, slot);
+        if (prog) {
+          let s = 1;
+          while (i + s < gradeSlots.length) {
+            const nextProg = getProgramaForSlot(dia, gradeSlots[i + s]);
+            if (nextProg && nextProg.id === prog.id) {
+              skip[`${dia}-${gradeSlots[i + s]}`] = true;
+              s++;
+            } else break;
+          }
+          span[`${dia}-${slot}`] = { prog, rowSpan: s };
+          i += s;
+        } else {
+          i++;
+        }
+      }
+    });
+    return { skipMap: skip, spanMap: span };
+  }, [gradeSlots, diasSemana, getProgramaForSlot]);
+
+  return (
+    <tbody>
+      {gradeSlots.map(slot => (
+        <tr key={slot}>
+          <td className="px-2 py-2 font-mono rounded-lg" style={{ color: "rgba(13,4,70,0.5)" }}>{slot.slice(0, 5)}</td>
+          {diasSemana.map(dia => {
+            const key = `${dia}-${slot}`;
+            if (skipMap[key]) return null;
+            const cellData = spanMap[key];
+            if (!cellData) return <td key={dia} className="px-1 py-1 rounded-lg" />;
+            const { prog, rowSpan } = cellData;
+            const isOnAir = prog && dia === diaAtual && currentTimeStr >= prog.horarioInicio && currentTimeStr < prog.horarioFim;
+            return (
+              <td key={dia} rowSpan={rowSpan}
+                className="px-1 py-1 text-center rounded-lg transition-all border-2 hover:border-[#2dbef3] border-transparent"
+                style={{
+                  backgroundColor: isOnAir ? "#2dbef3" : "rgba(13,4,70,0.05)",
+                  color: isOnAir ? "#ffffff" : "#0d0446",
+                  fontWeight: isOnAir ? "bold" : undefined,
+                  borderColor: isOnAir ? "#2dbef3" : undefined,
+                  verticalAlign: "middle",
+                }}>
+                <div className="flex items-center justify-between gap-0.5 group/cell">
+                  <span className="text-[10px] truncate">{prog.nome}</span>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button onClick={(e) => e.stopPropagation()} className="opacity-0 group-hover/cell:opacity-100 transition-opacity shrink-0">
+                        <Info size={10} style={{ color: isOnAir ? "#ffffff" : "#0d0446" }} />
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-96 p-0 overflow-hidden" side="right" align="start">
+                      <div className="flex">
+                        {prog.capa && <img src={prog.capa} alt={prog.nome} className="w-36 h-auto object-cover shrink-0" />}
+                        <div className="p-3 space-y-1.5 flex-1 min-w-0">
+                          <p className="font-bold text-sm" style={{ color: "#0d0446" }}>{prog.nome}</p>
+                          <p className="text-xs flex items-center gap-1" style={{ color: "rgba(13,4,70,0.5)" }}>
+                            <Clock size={10} /> {prog.horarioInicio.slice(0, 5)} — {prog.horarioFim.slice(0, 5)}
+                          </p>
+                          <p className="text-xs flex items-center gap-1" style={{ color: "rgba(13,4,70,0.5)" }}>
+                            <Calendar size={10} /> {prog.diasSemana.join(", ")}
+                          </p>
+                          {prog.descricao && (
+                            <p className="text-xs italic border-t pt-1.5 mt-1.5" style={{ color: "rgba(13,4,70,0.5)", borderColor: "rgba(13,4,70,0.1)" }}>{prog.descricao}</p>
+                          )}
+                        </div>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              </td>
+            );
+          })}
+        </tr>
+      ))}
+    </tbody>
+  );
 }
 
 export default function ProgramaForm() {
@@ -346,17 +449,39 @@ export default function ProgramaForm() {
 
         <div>
           <label className="block text-xs mb-1" style={{ color: "#0d0446", fontWeight: 600 }}>Apresentador Responsável</label>
-          <Select value={apresentadorId || "none"} onValueChange={(v) => setApresentadorId(v === "none" ? "" : v)}>
-            <SelectTrigger className="w-full h-8" style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "20px", border: "none" }}>
-              <SelectValue placeholder="Selecionar Apresentador" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="none">Nenhum</SelectItem>
-              {apresentadores.filter(a => a.ativo).map(a => (
-                <SelectItem key={a.id} value={a.id}>{a.nome}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                className="w-full h-8 flex items-center justify-between px-4 text-sm"
+                style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "20px", border: "none" }}
+              >
+                <span className={apresentadorId ? "" : "opacity-60"}>
+                  {apresentadorId ? (apresentadores.find(a => a.id === apresentadorId)?.nome || "Selecionar") : "Selecionar Apresentador"}
+                </span>
+                <ChevronsUpDown size={14} className="opacity-60" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+              <Command>
+                <CommandInput placeholder="Buscar apresentador..." />
+                <CommandList>
+                  <CommandEmpty>Nenhum encontrado.</CommandEmpty>
+                  <CommandGroup>
+                    <CommandItem value="__none__" onSelect={() => setApresentadorId("")}>
+                      <Check size={14} className={cn("mr-2", !apresentadorId ? "opacity-100" : "opacity-0")} />
+                      Nenhum
+                    </CommandItem>
+                    {apresentadores.filter(a => a.ativo && a.cargo?.toLowerCase() !== "convidado").map(a => (
+                      <CommandItem key={a.id} value={a.nome} onSelect={() => setApresentadorId(a.id)}>
+                        <Check size={14} className={cn("mr-2", apresentadorId === a.id ? "opacity-100" : "opacity-0")} />
+                        {a.nome}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
         </div>
 
         <div>
@@ -560,63 +685,13 @@ export default function ProgramaForm() {
                   ))}
                 </tr>
               </thead>
-              <tbody>
-                {gradeSlots.map(slot => (
-                  <tr key={slot}>
-                    <td className="px-2 py-2 font-mono rounded-lg" style={{ color: "rgba(13,4,70,0.5)" }}>{slot.slice(0, 5)}</td>
-                    {DIAS_SEMANA.map(dia => {
-                      const prog = getProgramaForSlot(dia, slot);
-                      const isOnAir = prog && dia === diaAtual && currentTimeStr >= prog.horarioInicio && currentTimeStr < prog.horarioFim;
-                      return (
-                        <td key={dia} className={`px-1 py-1 text-center rounded-lg transition-all border-2 hover:border-[#2dbef3] ${
-                          prog && !isOnAir ? "border-transparent" : "border-transparent"
-                        }`}
-                        style={{
-                          backgroundColor: isOnAir ? "#2dbef3" : prog ? "rgba(13,4,70,0.05)" : undefined,
-                          color: isOnAir ? "#ffffff" : "#0d0446",
-                          fontWeight: isOnAir ? "bold" : undefined,
-                          borderColor: isOnAir ? "#2dbef3" : undefined,
-                        }}>
-                          {prog ? (
-                            <div className="flex items-center justify-between gap-0.5 group/cell">
-                              <span className="text-[10px] truncate">{prog.nome}</span>
-                              <Popover>
-                                <PopoverTrigger asChild>
-                                  <button
-                                    onClick={(e) => e.stopPropagation()}
-                                    className="opacity-0 group-hover/cell:opacity-100 transition-opacity shrink-0"
-                                  >
-                                    <Info size={10} style={{ color: isOnAir ? "#ffffff" : "#0d0446" }} />
-                                  </button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-96 p-0 overflow-hidden" side="right" align="start">
-                                  <div className="flex">
-                                    {prog.capa && (
-                                      <img src={prog.capa} alt={prog.nome} className="w-36 h-auto object-cover shrink-0" />
-                                    )}
-                                    <div className="p-3 space-y-1.5 flex-1 min-w-0">
-                                      <p className="font-bold text-sm" style={{ color: "#0d0446" }}>{prog.nome}</p>
-                                      <p className="text-xs flex items-center gap-1" style={{ color: "rgba(13,4,70,0.5)" }}>
-                                        <Clock size={10} /> {prog.horarioInicio.slice(0, 5)} — {prog.horarioFim.slice(0, 5)}
-                                      </p>
-                                      <p className="text-xs flex items-center gap-1" style={{ color: "rgba(13,4,70,0.5)" }}>
-                                        <Calendar size={10} /> {prog.diasSemana.join(", ")}
-                                      </p>
-                                      {prog.descricao && (
-                                        <p className="text-xs italic border-t pt-1.5 mt-1.5" style={{ color: "rgba(13,4,70,0.5)", borderColor: "rgba(13,4,70,0.1)" }}>{prog.descricao}</p>
-                                      )}
-                                    </div>
-                                  </div>
-                                </PopoverContent>
-                              </Popover>
-                            </div>
-                          ) : null}
-                        </td>
-                      );
-                    })}
-                  </tr>
-                ))}
-              </tbody>
+              <GradeBody
+                gradeSlots={gradeSlots}
+                diasSemana={DIAS_SEMANA}
+                diaAtual={diaAtual}
+                currentTimeStr={currentTimeStr}
+                getProgramaForSlot={getProgramaForSlot}
+              />
             </table>
           </div>
         </div>
@@ -629,51 +704,63 @@ export default function ProgramaForm() {
         </div>
       ) : programas.length > 0 && (
         <div>
-          <div className="flex items-center justify-between mb-4">
-            <h4 className="text-lg font-medium" style={{ color: "#0d0446" }}>Programas Cadastrados</h4>
-            <Select value={sortBy} onValueChange={(v) => setSortBy(v as any)}>
-              <SelectTrigger className="w-[180px]" style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "20px", border: "none", fontSize: "14px", height: "28px", padding: "0 12px" }}>
-                <SelectValue placeholder="Ordenar por" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="horario">Horário</SelectItem>
-                <SelectItem value="nome">Ordem Alfabética</SelectItem>
-                <SelectItem value="estudio">Estúdio</SelectItem>
-                <SelectItem value="status">Status</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {sortedProgramas.map((p) => (
-              <div key={p.id} className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", border: `1px solid ${p.ativo ? "rgba(13,4,70,0.1)" : "rgba(220,38,38,0.3)"}`, opacity: p.ativo ? 1 : 0.6 }}>
-                <div className="px-4 py-3 font-bold text-sm flex items-center justify-between" style={{ backgroundColor: "#0d0446", color: "#ffffff" }}>
-                  <div className="flex items-center gap-2">
-                    {p.selo && <img src={p.selo} alt="Selo" className="h-6 rounded grayscale brightness-50" />}
-                    <span>{p.nome}</span>
-                    {p.variavel && <span className="text-[9px] bg-white/20 px-1.5 py-0.5 rounded">Variável</span>}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button onClick={() => startEdit(p)} title="Editar" className="hover:opacity-70 transition-opacity"><Pencil size={14} /></button>
-                    <button onClick={() => toggleAtivo(p.id, p.ativo)} title={p.ativo ? "Desativar" : "Ativar"} className="hover:opacity-70 transition-opacity">
-                      <Power size={14} className={p.ativo ? "" : "text-red-300"} />
-                    </button>
-                    <button onClick={() => removePrograma(p.id)} title="Remover" className="hover:opacity-70 transition-opacity"><Trash2 size={14} /></button>
-                  </div>
-                </div>
-                <div className="p-4 space-y-2 text-sm">
-                  <p style={{ color: "#0d0446" }}>Apresentador: {getApresentadorNome(p.apresentadorId)}</p>
-                  <p className="flex items-center gap-1" style={{ color: "rgba(13,4,70,0.5)" }}><Building2 size={12} /> {p.estudio}</p>
-                  <p className="flex items-center gap-1" style={{ color: "rgba(13,4,70,0.5)" }}><Calendar size={12} /> {p.variavel && p.dataVariavel ? `${format(new Date(p.dataVariavel + "T12:00:00"), "dd/MM/yyyy (EEEE)", { locale: ptBR })}` : p.diasSemana.join(", ")}</p>
-                  <p className="flex items-center gap-1" style={{ color: "rgba(13,4,70,0.5)" }}><Clock size={12} /> {p.horarioInicio} — {p.horarioFim}</p>
-                  {p.descricao && <p className="text-xs italic" style={{ color: "rgba(13,4,70,0.5)" }}>{p.descricao}</p>}
-                  <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${
-                    p.ativo ? "bg-green-100 text-green-700" : "bg-red-100 text-red-600"
-                  }`}>
-                    {p.ativo ? "Ativo" : "Inativo"}
-                  </span>
-                </div>
-              </div>
-            ))}
+          <h4 className="text-lg font-medium mb-4" style={{ color: "#0d0446" }}>Programas Cadastrados</h4>
+          <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(13,4,70,0.1)" }}>
+            <table className="w-full text-sm">
+              <thead>
+                <tr style={{ backgroundColor: "#0d0446", color: "#ffffff" }}>
+                  <th className="px-4 py-3 text-left font-semibold">Nome do Programa</th>
+                  <th className="px-4 py-3 text-left font-semibold">Dia de Exibição</th>
+                  <th className="px-4 py-3 text-left font-semibold">Horário</th>
+                  <th className="px-4 py-3 text-left font-semibold">Apresentador</th>
+                  <th className="px-4 py-3 text-center font-semibold">Editar</th>
+                  <th className="px-4 py-3 text-center font-semibold">Status</th>
+                  <th className="px-4 py-3 text-center font-semibold">Excluir</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sortedProgramas.map((p) => (
+                  <tr key={p.id} className="border-b" style={{ backgroundColor: "#ffffff", borderColor: "rgba(13,4,70,0.08)", opacity: p.ativo ? 1 : 0.6 }}>
+                    <td className="px-4 py-3 font-medium" style={{ color: "#0d0446" }}>
+                      <div className="flex items-center gap-2">
+                        {p.nome}
+                        {p.variavel && <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ backgroundColor: "rgba(13,4,70,0.1)", color: "#0d0446" }}>Variável</span>}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3" style={{ color: "rgba(13,4,70,0.6)" }}>
+                      {p.variavel && p.dataVariavel
+                        ? format(new Date(p.dataVariavel + "T12:00:00"), "dd/MM/yyyy (EEEE)", { locale: ptBR })
+                        : p.diasSemana.join(", ")}
+                    </td>
+                    <td className="px-4 py-3" style={{ color: "rgba(13,4,70,0.6)" }}>
+                      {p.horarioInicio.slice(0, 5)} — {p.horarioFim.slice(0, 5)}
+                    </td>
+                    <td className="px-4 py-3" style={{ color: "rgba(13,4,70,0.6)" }}>
+                      {getApresentadorNome(p.apresentadorId)}
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <button onClick={() => startEdit(p)} title="Editar" className="hover:opacity-70 transition-opacity" style={{ color: "#0d0446" }}>
+                        <Pencil size={16} />
+                      </button>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <button onClick={() => toggleAtivo(p.id, p.ativo)} title={p.ativo ? "Desativar" : "Ativar"}>
+                        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold cursor-pointer ${
+                          p.ativo ? "bg-green-100 text-green-700" : "bg-red-100 text-red-600"
+                        }`}>
+                          {p.ativo ? "Ativo" : "Inativo"}
+                        </span>
+                      </button>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <button onClick={() => removePrograma(p.id)} title="Remover" className="hover:opacity-70 transition-opacity" style={{ color: "#dc2626" }}>
+                        <Trash2 size={16} />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       )}
