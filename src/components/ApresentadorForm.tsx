@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { Instagram, UserCheck, UserX, Trash2, Pencil, X, Loader2 } from "lucide-react";
+import { Instagram, UserCheck, UserX, Trash2, Pencil, X, Loader2, CheckCircle, ImageIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
 import {
   Select,
   SelectContent,
@@ -36,6 +37,7 @@ export async function getApresentadores(): Promise<Apresentador[]> {
 
 export default function ApresentadorForm() {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [nome, setNome] = useState("");
   const [categoria, setCategoria] = useState("");
   const [cargoConvidado, setCargoConvidado] = useState("");
@@ -47,6 +49,7 @@ export default function ApresentadorForm() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [loadingList, setLoadingList] = useState(true);
+  const [catOpen, setCatOpen] = useState(false);
 
   const load = async () => {
     setLoadingList(true);
@@ -99,6 +102,7 @@ export default function ApresentadorForm() {
     await load();
     resetForm();
     setSaving(false);
+    toast({ title: "Salvo com sucesso!" });
   };
 
   const startEdit = (a: Apresentador) => {
@@ -139,8 +143,8 @@ export default function ApresentadorForm() {
 
         <div>
           <label className="block text-xs mb-1" style={{ color: "#0d0446", fontWeight: 600 }}>Categoria</label>
-          <Select value={categoria} onValueChange={setCategoria}>
-            <SelectTrigger className="w-full h-8" style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "20px", border: "none" }}>
+          <Select value={categoria} onValueChange={setCategoria} open={catOpen} onOpenChange={setCatOpen}>
+            <SelectTrigger className="w-full h-8" style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "20px", border: catOpen ? "2px solid #2dbef3" : "2px solid #0d0446", transition: "border-color 0.3s" }}>
               <SelectValue placeholder="Selecione a categoria" />
             </SelectTrigger>
             <SelectContent>
@@ -229,41 +233,60 @@ export default function ApresentadorForm() {
               </SelectContent>
             </Select>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filtered.map((a) => (
-              <div key={a.id} className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)" }}>
-                <div className="px-4 py-3 font-bold text-sm flex items-center justify-between" style={{ backgroundColor: "#0d0446", color: "#ffffff" }}>
-                  <span>{a.nome}</span>
-                  <div className="flex items-center gap-2">
-                    <button onClick={() => startEdit(a)} title="Editar">
-                      <Pencil size={14} />
-                    </button>
-                    <button onClick={() => toggleAtivo(a.id, a.ativo)} title={a.ativo ? "Desativar" : "Ativar"}>
-                      {a.ativo ? <UserCheck size={14} /> : <UserX size={14} />}
-                    </button>
-                    <button onClick={() => removeApresentador(a.id)} title="Remover">
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                </div>
-                <div className="p-4 flex gap-3">
-                  {a.foto && <img src={a.foto} alt={a.nome} className="w-16 h-20 object-cover rounded-lg" style={{ border: "1px solid #0d0446" }} />}
-                  <div className="space-y-1 text-sm">
-                    <p style={{ color: "#0d0446" }}>{a.cargo || "Sem categoria"}</p>
-                    {a.instagram && (
-                      <p className="flex items-center gap-1" style={{ color: "rgba(13,4,70,0.5)" }}>
-                        <Instagram size={12} /> {a.instagram}
-                      </p>
-                    )}
-                    <span className={`inline-block px-2 py-0.5 rounded text-xs font-semibold ${
-                      a.ativo ? "bg-green-100 text-green-700" : "bg-red-100 text-red-600"
-                    }`}>
-                      {a.ativo ? "Ativo" : "Inativo"}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            ))}
+
+          <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(13,4,70,0.1)" }}>
+            <table className="w-full text-sm" style={{ color: "#0d0446" }}>
+              <thead>
+                <tr style={{ backgroundColor: "#0d0446", color: "#ffffff" }}>
+                  <th className="px-4 py-2 text-left font-semibold">Categoria</th>
+                  <th className="px-4 py-2 text-left font-semibold">Nome</th>
+                  <th className="px-4 py-2 text-left font-semibold">Rede Social</th>
+                  <th className="px-4 py-2 text-center font-semibold">Imagem</th>
+                  <th className="px-4 py-2 text-center font-semibold">Status</th>
+                  <th className="px-4 py-2 text-center font-semibold">Editar</th>
+                  <th className="px-4 py-2 text-center font-semibold">Ativo/Inativo</th>
+                  <th className="px-4 py-2 text-center font-semibold">Excluir</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((a, i) => (
+                  <tr key={a.id} style={{ backgroundColor: i % 2 === 0 ? "#ffffff" : "#f8f8fc", borderTop: "1px solid rgba(13,4,70,0.08)" }}>
+                    <td className="px-4 py-2">{a.cargo || "—"}</td>
+                    <td className="px-4 py-2 font-medium">{a.nome}</td>
+                    <td className="px-4 py-2">
+                      {a.instagram ? (
+                        <span className="flex items-center gap-1"><Instagram size={12} /> {a.instagram}</span>
+                      ) : "—"}
+                    </td>
+                    <td className="px-4 py-2 text-center">
+                      {a.foto ? <CheckCircle size={16} className="inline" style={{ color: "#22c55e" }} /> : <span style={{ color: "rgba(13,4,70,0.25)" }}>—</span>}
+                    </td>
+                    <td className="px-4 py-2 text-center">
+                      <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${
+                        a.ativo ? "bg-green-100 text-green-700" : "bg-red-100 text-red-600"
+                      }`}>
+                        {a.ativo ? "Ativo" : "Inativo"}
+                      </span>
+                    </td>
+                    <td className="px-4 py-2 text-center">
+                      <button onClick={() => startEdit(a)} title="Editar" className="hover:opacity-70 transition-opacity">
+                        <Pencil size={14} style={{ color: "#0d0446" }} />
+                      </button>
+                    </td>
+                    <td className="px-4 py-2 text-center">
+                      <button onClick={() => toggleAtivo(a.id, a.ativo)} title={a.ativo ? "Desativar" : "Ativar"} className="hover:opacity-70 transition-opacity">
+                        {a.ativo ? <UserCheck size={14} style={{ color: "#22c55e" }} /> : <UserX size={14} style={{ color: "#dc2626" }} />}
+                      </button>
+                    </td>
+                    <td className="px-4 py-2 text-center">
+                      <button onClick={() => removeApresentador(a.id)} title="Remover" className="hover:opacity-70 transition-opacity">
+                        <Trash2 size={14} style={{ color: "#dc2626" }} />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       ) : null}
