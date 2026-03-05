@@ -308,7 +308,7 @@ export default function PrevisaoTempo() {
                 <span className="text-6xl">{getWeatherIcon(weather.current.weatherCode)}</span>
               </div>
             </div>
-            <div className="text-5xl font-light mb-6" style={{ color: "#2dbef3" }}>{weather.current.temp}°C</div>
+            <div className="text-5xl font-bold mb-6" style={{ color: "#2dbef3" }}>{weather.current.temp}°C</div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <Stat icon={<Thermometer size={16} />} label="Mínima" value={`${weather.current.tempMin}°C`} />
               <Stat icon={<Thermometer size={16} />} label="Máxima" value={`${weather.current.tempMax}°C`} />
@@ -318,13 +318,15 @@ export default function PrevisaoTempo() {
           </div>
 
           <div>
-            <h4 className="text-lg font-medium mb-4" style={{ color: "#0d0446" }}>Próximos 5 dias</h4>
+            <h4 className="text-lg font-bold mb-4" style={{ color: "#0d0446" }}>Próximos 5 dias</h4>
             <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
               {weather.forecast.map((day) => (
-                <div key={day.date} className="rounded-xl p-4 text-center space-y-2"
-                  style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)" }}>
-                  <p className="text-xs capitalize" style={{ color: "rgba(13,4,70,0.5)" }}>{formatDay(day.date)}</p>
-                  <span className="text-3xl block">{getWeatherIcon(day.weatherCode, true)}</span>
+                <div key={day.date} className="rounded-xl p-4 text-center space-y-2 transition-colors"
+                   style={{ backgroundColor: "#ffffff", border: "2px solid rgba(13,4,70,0.1)" }}
+                   onMouseEnter={e => { e.currentTarget.style.borderColor = "#2ec1f7"; }}
+                   onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(13,4,70,0.1)"; }}>
+                   <p className="text-xs capitalize" style={{ color: "rgba(13,4,70,0.5)" }}>{formatDay(day.date)}</p>
+                   <span className="text-3xl block animate-bounce" style={{ animationDuration: "3s", animationIterationCount: "infinite" }}>{getWeatherIcon(day.weatherCode, true)}</span>
                   <p className="text-sm" style={{ color: "rgba(13,4,70,0.5)" }}>{getWeatherLabel(day.weatherCode)}</p>
                   <p className="text-xl font-semibold" style={{ color: "#0d0446" }}>{day.temp}°C</p>
                   <div className="text-xs space-y-1" style={{ color: "rgba(13,4,70,0.5)" }}>
@@ -337,7 +339,7 @@ export default function PrevisaoTempo() {
             </div>
           </div>
 
-          <XmlLinkRow label="XML TEMPO" xmlContent={(() => {
+          <XmlLinkRow label="XML TEMPO" dark xmlContent={(() => {
             if (!weather) return "";
             const dayToXml = (d: DayWeather, tag: string) =>
               `  <${tag} date="${d.date}">\n    <temperatura>${d.temp}</temperatura>\n    <minima>${d.tempMin}</minima>\n    <maxima>${d.tempMax}</maxima>\n    <humidade>${d.humidity}</humidade>\n    <chance_chuva>${d.rainChance}</chance_chuva>\n    <condicao>${getWeatherLabel(d.weatherCode)}</condicao>\n  </${tag}>`;
