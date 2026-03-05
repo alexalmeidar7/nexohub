@@ -347,11 +347,11 @@ function DashboardHome({ empresa }: { empresa: import("./ConfiguracoesPage").Emp
 
   return (
     <div className="animate-fade-in flex flex-col justify-end flex-1">
-      <div className="relative">
-        {/* Left arrow */}
+      <div className="flex items-center gap-3">
+        {/* Left arrow - outside cards */}
         <button
           onClick={scrollLeft}
-          className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 w-8 h-8 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60 transition-colors"
+          className="flex-shrink-0 z-10 w-8 h-8 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60 transition-colors"
         >
           <ChevronDown size={16} className="rotate-90" />
         </button>
@@ -359,7 +359,7 @@ function DashboardHome({ empresa }: { empresa: import("./ConfiguracoesPage").Emp
         {/* Scrollable cards row */}
         <div
           ref={scrollRef}
-          className="flex gap-3 overflow-x-auto scrollbar-hide"
+          className="flex gap-3 overflow-x-auto scrollbar-hide flex-1"
           style={{ scrollSnapType: "x mandatory" }}
         >
           {/* Card 1 - No Ar */}
