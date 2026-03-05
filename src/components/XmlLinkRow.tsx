@@ -6,6 +6,7 @@ interface XmlLinkRowProps {
   label: string;
   xmlContent: string;
   dark?: boolean;
+  compact?: boolean;
 }
 
 function sanitizeFileName(label: string): string {
@@ -15,7 +16,7 @@ function sanitizeFileName(label: string): string {
     .replace(/[^a-z0-9\-]/g, "") + ".xml";
 }
 
-export default function XmlLinkRow({ label, xmlContent, dark }: XmlLinkRowProps) {
+export default function XmlLinkRow({ label, xmlContent, dark, compact }: XmlLinkRowProps) {
   const [copied, setCopied] = useState(false);
   const [permanentUrl, setPermanentUrl] = useState<string>("");
   const [uploading, setUploading] = useState(false);
@@ -66,6 +67,28 @@ export default function XmlLinkRow({ label, xmlContent, dark }: XmlLinkRowProps)
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+
+  if (compact) {
+    return (
+      <div
+        onClick={copy}
+        className="flex items-center gap-2 cursor-pointer py-1 transition-opacity hover:opacity-80"
+      >
+        <Code2 size={14} className="shrink-0" style={{ color: "#268ffa" }} />
+        <span className="text-[10px] text-white/70 font-bold whitespace-nowrap">{label}</span>
+        <span className="text-[9px] truncate flex-1 font-mono text-white/40">
+          {uploading ? "..." : permanentUrl ? "copiar" : "..."}
+        </span>
+        {uploading ? (
+          <Loader2 size={12} className="shrink-0 animate-spin text-white/40" />
+        ) : copied ? (
+          <Check size={12} className="shrink-0 text-green-400" />
+        ) : (
+          <Copy size={12} className="shrink-0 text-white/40" />
+        )}
+      </div>
+    );
+  }
 
   return (
     <div
