@@ -494,8 +494,8 @@ export default function NoticiasPanel() {
 
       {/* Notícias Escalada - below Selecionadas */}
       {escaladaNews.length > 0 && (
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-          <div className={headerStyle}>🎯 Notícias Escalada</div>
+        <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)" }}>
+          <div className={headerStyle} style={headerInline}>🎯 Notícias Escalada</div>
           <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
             <table className="w-full text-xs">
               <thead>
