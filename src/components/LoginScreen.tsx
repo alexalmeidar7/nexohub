@@ -178,14 +178,14 @@ export default function LoginScreen() {
                   onFocus={(e) => (e.currentTarget.style.borderColor = "#268ffa")}
                   onBlur={(e) => (e.currentTarget.style.borderColor = "#0d379a")}
                 />
-                {forgotError && <p className="text-red-500 text-xs text-center">{forgotError}</p>}
+                {forgotError && <p className="text-red-400 text-center" style={{ fontSize: "14px" }}>{forgotError}</p>}
                 <div className="flex justify-between items-center">
                   <button
                     onClick={closeForgot}
-                    className="flex items-center gap-1 text-xs transition-colors duration-200"
-                    style={{ color: "#0f1058" }}
+                    className="flex items-center gap-1 transition-colors duration-200 text-white"
+                    style={{ fontSize: "14px" }}
                     onMouseEnter={(e) => (e.currentTarget.style.color = "#268ffa")}
-                    onMouseLeave={(e) => (e.currentTarget.style.color = "#0f1058")}
+                    onMouseLeave={(e) => (e.currentTarget.style.color = "#ffffff")}
                   >
                     <X size={14} /> Fechar
                   </button>
