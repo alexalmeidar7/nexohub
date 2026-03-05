@@ -172,7 +172,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   }, [currentPage]);
 
   return (
-    <div className="min-h-screen flex flex-col" style={{
+    <div className="min-h-screen flex flex-col animate-fade-in" style={{
       backgroundColor: "#268ffa",
       paddingTop: "40px",
       ...(empresa.backgroundUrl ? {
@@ -181,6 +181,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
         backgroundAttachment: "fixed",
+        animation: "fade-in 1s ease-out",
       } : {}),
     }}>
       <div className="flex pb-0 gap-3" style={{ height: "650px", paddingLeft: "50px", paddingRight: "50px", paddingTop: "12px" }}>
