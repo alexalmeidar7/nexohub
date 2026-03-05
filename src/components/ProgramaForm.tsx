@@ -450,11 +450,8 @@ export default function ProgramaForm() {
     return slots;
   }, []);
 
-  const now = new Date();
-  const currentTimeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
-  const DIAS_MAP: Record<number, string> = { 1: "Segunda", 2: "Terça", 3: "Quarta", 4: "Quinta", 5: "Sexta", 6: "Sábado", 0: "Domingo" };
-  const diaAtual = DIAS_MAP[now.getDay()];
-  const todayDateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+
+
 
   // Calculate dates for each day of the current week
   const weekStart = startOfWeek(now, { weekStartsOn: 1 }); // Monday
