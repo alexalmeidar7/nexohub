@@ -723,7 +723,7 @@ function DashboardAgenda() {
     );
   }
 
-  const [calMonth, setCalMonth] = useState(new Date());
+
 
   const prevMonth = () => setCalMonth(new Date(calMonth.getFullYear(), calMonth.getMonth() - 1, 1));
   const nextMonth = () => setCalMonth(new Date(calMonth.getFullYear(), calMonth.getMonth() + 1, 1));
