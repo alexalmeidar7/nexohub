@@ -127,3 +127,86 @@
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* ====== Form styling for masterview content area ====== */
+.mv-content-area {
+  background-color: #ffffff;
+  border-radius: 12px;
+  color: #0d0446;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+.mv-content-area h2,
+.mv-content-area h3 {
+  color: #0d0446;
+}
+
+.mv-content-area label {
+  color: #0d0446;
+  font-weight: 600;
+}
+
+.mv-content-area input[type="text"],
+.mv-content-area input[type="email"],
+.mv-content-area input[type="password"],
+.mv-content-area input[type="number"],
+.mv-content-area input[type="date"],
+.mv-content-area input[type="time"],
+.mv-content-area input[type="url"],
+.mv-content-area input[type="tel"],
+.mv-content-area textarea,
+.mv-content-area select {
+  background-color: #ffffff;
+  border: 1px solid #0d0446;
+  color: #0d0446;
+  border-radius: 6px;
+  transition: border-color 0.3s ease;
+}
+
+.mv-content-area input:focus,
+.mv-content-area textarea:focus,
+.mv-content-area select:focus {
+  border-color: #2dbef3;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(45, 190, 243, 0.2);
+}
+
+.mv-content-area .mv-form-header {
+  background-color: #0d0446;
+  color: #ffffff;
+  padding: 15px 20px;
+  border-radius: 12px 12px 0 0;
+  font-weight: bold;
+  font-size: 1.2em;
+  margin: -2rem -2rem 1.5rem -2rem;
+}
+
+.mv-content-area button[type="submit"],
+.mv-content-area .mv-btn-primary {
+  background-color: #0d0446;
+  color: #ffffff;
+  border: 2px solid #0d0446;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.mv-content-area button[type="submit"]:hover,
+.mv-content-area .mv-btn-primary:hover {
+  background-color: #ffffff;
+  color: #0d0446;
+}
+
+.mv-content-area p,
+.mv-content-area span {
+  color: #0d0446;
+}
+
+.mv-content-area .text-muted-foreground {
+  color: rgba(13, 4, 70, 0.5);
+}
+
+.mv-content-area .text-destructive {
+  color: #dc2626;
+}
