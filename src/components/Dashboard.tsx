@@ -183,7 +183,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         backgroundAttachment: "fixed",
       } : {}),
     }}>
-      <div className="flex p-3 pb-0 gap-3" style={{ height: "650px" }}>
+      <div className="flex pb-0 gap-3" style={{ height: "650px", paddingLeft: "50px", paddingRight: "50px", paddingTop: "12px" }}>
         {/* === SIDEBAR === */}
         <aside className="flex flex-col rounded-[24px] overflow-hidden flex-shrink-0 backdrop-blur-xl" style={{ backgroundColor: "rgba(0, 0, 0, 0.90)", width: "400px", height: "650px" }}>
           {/* Selo + Settings */}
@@ -285,12 +285,12 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         {/* === MAIN CONTENT === */}
         <main className="flex-1 flex flex-col min-w-0">
           {/* Header */}
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center justify-between mb-3" style={{ marginLeft: "25px" }}>
             <div>
-              <h1 className="text-2xl font-bold text-white">{empresa.nome || "Dashboard"}</h1>
+              <h1 className="font-bold text-white" style={{ fontSize: "45px", lineHeight: 1.1 }}>{empresa.nome || "Dashboard"}</h1>
               <p className="text-white/60 text-xs">{user?.email || ""}</p>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4" style={{ marginRight: "50px" }}>
               <div className="relative">
                 <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ backgroundColor: "#0d0446" }}>
                   <Mail size={16} className="text-white" />
@@ -347,11 +347,11 @@ function DashboardHome({ empresa }: { empresa: import("./ConfiguracoesPage").Emp
 
   return (
     <div className="animate-fade-in flex flex-col justify-end flex-1">
-      <div className="relative">
-        {/* Left arrow */}
+      <div className="flex items-center gap-3">
+        {/* Left arrow - outside cards */}
         <button
           onClick={scrollLeft}
-          className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 w-8 h-8 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60 transition-colors"
+          className="flex-shrink-0 z-10 w-8 h-8 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60 transition-colors"
         >
           <ChevronDown size={16} className="rotate-90" />
         </button>
@@ -359,7 +359,7 @@ function DashboardHome({ empresa }: { empresa: import("./ConfiguracoesPage").Emp
         {/* Scrollable cards row */}
         <div
           ref={scrollRef}
-          className="flex gap-3 overflow-x-auto scrollbar-hide"
+          className="flex gap-3 overflow-x-auto scrollbar-hide flex-1"
           style={{ scrollSnapType: "x mandatory" }}
         >
           {/* Card 1 - No Ar */}
@@ -398,10 +398,10 @@ function DashboardHome({ empresa }: { empresa: import("./ConfiguracoesPage").Emp
           </div>
         </div>
 
-        {/* Right arrow */}
+        {/* Right arrow - outside cards */}
         <button
           onClick={scrollRight}
-          className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 w-8 h-8 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60 transition-colors"
+          className="flex-shrink-0 z-10 w-8 h-8 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60 transition-colors"
         >
           <ChevronDown size={16} className="-rotate-90" />
         </button>
@@ -423,7 +423,7 @@ function ServerClock() {
 
   return (
     <div className="text-right">
-      <p className="text-xl font-light text-white tracking-wider" style={{ fontFamily: "Poppins, sans-serif" }}>{time}</p>
+      <p className="font-light text-white tracking-wider" style={{ fontFamily: "Poppins, sans-serif", fontSize: "45px", lineHeight: 1.1 }}>{time}</p>
     </div>
   );
 }
