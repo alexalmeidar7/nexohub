@@ -424,7 +424,7 @@ function DashboardHome({ empresa, onNavigate }: { empresa: import("./Configuraco
           {orderedWidgets.map(widget => (
             <div
               key={widget.id}
-              className={`rounded-2xl p-4 flex-shrink-0 overflow-hidden transition-all duration-200 ${
+              className={`rounded-2xl p-4 flex-shrink-0 overflow-hidden transition-all duration-200 relative ${
                 draggedId === widget.id ? "opacity-50 scale-95" : ""
               } ${dragOverId === widget.id ? "ring-2 ring-[#268ffa]" : ""}`}
               style={{ backgroundColor: widget.bg, width: "350px", height: "225px", scrollSnapAlign: "start" }}
@@ -432,12 +432,11 @@ function DashboardHome({ empresa, onNavigate }: { empresa: import("./Configuraco
               onDrop={(e) => handleDrop(e, widget.id)}
               onDragEnd={handleDragEnd}
             >
-              {/* Drag handle - title area */}
+              {/* Invisible drag handle over title area */}
               <div
                 draggable
                 onDragStart={(e) => handleDragStart(e, widget.id)}
-                className="cursor-grab active:cursor-grabbing absolute top-0 left-0 right-0 h-[28px] z-10"
-                style={{ position: "relative", height: 0, marginBottom: 0 }}
+                className="absolute top-0 left-0 right-0 h-[28px] z-10 cursor-grab active:cursor-grabbing"
               />
               <Suspense fallback={<Loader2 className="animate-spin text-gray-400" size={16} />}>
                 {widget.render(onNavigate)}
