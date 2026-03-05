@@ -420,12 +420,14 @@ function DashboardHome({ empresa, onNavigate }: { empresa: import("./Configuraco
           onMouseEnter={() => {
             const el = scrollRef.current;
             if (!el) return;
-            const id = setInterval(() => el.scrollBy({ left: -4 }), 16);
-            (el as any)._scrollInterval = id;
+            let raf: number;
+            const step = () => { el.scrollLeft -= 2; raf = requestAnimationFrame(step); };
+            raf = requestAnimationFrame(step);
+            (el as any)._raf = raf;
           }}
           onMouseLeave={() => {
             const el = scrollRef.current;
-            if (el && (el as any)._scrollInterval) { clearInterval((el as any)._scrollInterval); delete (el as any)._scrollInterval; }
+            if (el && (el as any)._raf) { cancelAnimationFrame((el as any)._raf); delete (el as any)._raf; }
           }}
         />
         {/* Right hover zone */}
@@ -434,12 +436,14 @@ function DashboardHome({ empresa, onNavigate }: { empresa: import("./Configuraco
           onMouseEnter={() => {
             const el = scrollRef.current;
             if (!el) return;
-            const id = setInterval(() => el.scrollBy({ left: 4 }), 16);
-            (el as any)._scrollInterval = id;
+            let raf: number;
+            const step = () => { el.scrollLeft += 2; raf = requestAnimationFrame(step); };
+            raf = requestAnimationFrame(step);
+            (el as any)._raf = raf;
           }}
           onMouseLeave={() => {
             const el = scrollRef.current;
-            if (el && (el as any)._scrollInterval) { clearInterval((el as any)._scrollInterval); delete (el as any)._scrollInterval; }
+            if (el && (el as any)._raf) { cancelAnimationFrame((el as any)._raf); delete (el as any)._raf; }
           }}
         />
 
