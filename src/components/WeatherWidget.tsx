@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Droplets, CloudRain, Thermometer, Sun } from "lucide-react";
+import { Droplets, CloudRain, Thermometer, Sun, Settings } from "lucide-react";
 
 interface WidgetWeather {
   city: string;
@@ -41,7 +41,7 @@ function getLabel(code: number) {
 
 const STORAGE_KEY = "masterview_last_city";
 
-export default function WeatherWidget() {
+export default function WeatherWidget({ onNavigate }: { onNavigate?: (page: string) => void } = {}) {
   const [weather, setWeather] = useState<WidgetWeather | null>(null);
 
   useEffect(() => {
@@ -89,10 +89,10 @@ export default function WeatherWidget() {
 
   return (
     <div className="rounded-xl p-4 flex flex-col h-full" style={{ backgroundColor: "#ffffff" }}>
-      {/* Header: icon + "Tempo" - aligned like "No Ar" */}
-      <div className="flex items-center gap-1.5 mb-2">
+      {/* Header: icon + "Tempo" - no extra top margin, aligned like "NO AR" */}
+      <div className="flex items-center gap-1.5 mb-1">
         <Sun size={14} className="animate-spin" style={{ color: "#268ffa", animationDuration: "8s" }} />
-        <span className="font-semibold text-xs uppercase tracking-wide" style={{ color: "#268ffa" }}>Tempo</span>
+        <span className="font-bold text-xs" style={{ color: "#268ffa" }}>TEMPO</span>
       </div>
 
       {/* City + condition + icon */}
@@ -107,18 +107,27 @@ export default function WeatherWidget() {
       {/* Temperature */}
       <p className="text-4xl font-bold mb-1" style={{ color: "#268ffa" }}>{weather.temp}°C</p>
 
-      {/* Bottom stats - pushed to bottom */}
-      <div className="flex items-center gap-3 text-[10px] flex-wrap mt-auto">
-        <div className="flex items-center gap-1" style={{ color: "#0d0446", opacity: 0.6 }}>
+      {/* Bottom stats */}
+      <div className="flex items-center gap-3 text-[10px] flex-wrap" style={{ color: "#0d0446", opacity: 0.6 }}>
+        <div className="flex items-center gap-1">
           <Thermometer size={10} /> ↓{weather.tempMin}° / ↑{weather.tempMax}°
         </div>
-        <div className="flex items-center gap-1" style={{ color: "#0d0446", opacity: 0.6 }}>
+        <div className="flex items-center gap-1">
           <Droplets size={10} /> {weather.humidity}%
         </div>
-        <div className="flex items-center gap-1" style={{ color: "#0d0446", opacity: 0.6 }}>
+        <div className="flex items-center gap-1">
           <CloudRain size={10} /> {weather.rainChance}%
         </div>
       </div>
+
+      {/* Config button - pushed to bottom */}
+      <button
+        onClick={() => onNavigate?.("previsao")}
+        className="mt-auto flex items-center gap-1.5 text-[10px] font-semibold rounded-lg px-2 py-1 self-start hover:opacity-80 transition-opacity"
+        style={{ color: "#268ffa", backgroundColor: "rgba(38,143,250,0.1)" }}
+      >
+        <Settings size={10} /> Configuração
+      </button>
     </div>
   );
 }

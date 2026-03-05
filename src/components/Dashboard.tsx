@@ -305,7 +305,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           <div className={`flex-1 overflow-y-auto overflow-x-hidden rounded-2xl ${currentPage === "dashboard" ? "flex flex-col" : ""}`} style={currentPage === "dashboard" ? {} : { backgroundColor: "#111", padding: "2rem" }}>
             <Suspense fallback={<div className="flex justify-center py-16"><Loader2 className="animate-spin text-white" size={28} /></div>}>
               {currentPage === "dashboard" && (
-                <DashboardHome empresa={empresa} />
+                <DashboardHome empresa={empresa} onNavigate={setCurrentPage} />
               )}
               {currentPage === "previsao" && <PrevisaoTempo />}
               {currentPage === "noticias" && <NoticiasPanel />}
@@ -335,7 +335,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 }
 
 /* ========== DASHBOARD HOME ========== */
-function DashboardHome({ empresa }: { empresa: import("./ConfiguracoesPage").EmpresaConfig }) {
+function DashboardHome({ empresa, onNavigate }: { empresa: import("./ConfiguracoesPage").EmpresaConfig; onNavigate: (page: Page) => void }) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const scrollLeft = () => {
@@ -372,7 +372,7 @@ function DashboardHome({ empresa }: { empresa: import("./ConfiguracoesPage").Emp
           {/* Card 2 - Tempo */}
           <div className="rounded-2xl p-4 bg-white flex-shrink-0 overflow-hidden" style={{ width: "350px", height: "225px", scrollSnapAlign: "start" }}>
             <Suspense fallback={<Loader2 className="animate-spin text-gray-400" size={16} />}>
-              <WeatherWidget />
+              <WeatherWidget onNavigate={onNavigate} />
             </Suspense>
           </div>
 
