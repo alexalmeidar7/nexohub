@@ -467,7 +467,7 @@ function ServerClock() {
   }, []);
 
   const hours = now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
-  const seconds = now.toLocaleTimeString("pt-BR", { second: "2-digit" }).split(":").pop();
+  const seconds = String(now.getSeconds()).padStart(2, "0");
 
   return (
     <div className="text-right">
