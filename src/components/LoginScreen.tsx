@@ -55,7 +55,7 @@ export default function LoginScreen() {
     >
       <div className="relative w-full max-w-md">
         {/* Main Login Box */}
-        <div className="relative z-10 w-full rounded-3xl p-10 shadow-2xl animate-fade-in bg-white" style={{ fontSize: "12px" }}>
+        <div className="relative z-10 w-full p-10 shadow-2xl animate-fade-in bg-white" style={{ fontSize: "12px", borderRadius: "2rem" }}>
           <h1 className="text-center font-semibold tracking-wide mb-8" style={{ color: "#0f1058", fontSize: "12px" }}>
             NexoHub login
           </h1>
@@ -143,7 +143,7 @@ export default function LoginScreen() {
             pointerEvents: showForgot ? "auto" : "none",
           }}
         >
-          <div className="rounded-b-3xl rounded-t-none px-10 pt-10 pb-8 shadow-xl" style={{ backgroundColor: "#0d0446", fontSize: "12px" }}>
+          <div className="px-10 pt-10 pb-8 shadow-xl" style={{ backgroundColor: "#0d0446", fontSize: "12px", borderRadius: "0 0 2rem 2rem" }}>
             {forgotSent ? (
               <div className="flex flex-col items-center gap-3">
                 <CheckCircle className="text-green-400" size={40} />
@@ -193,14 +193,14 @@ export default function LoginScreen() {
                     onClick={handleForgot}
                     disabled={forgotLoading}
                     className="group flex items-center gap-3 px-6 py-2 rounded-full font-medium disabled:opacity-50 transition-all duration-300 text-white border-2 border-transparent"
-                    style={{ fontSize: "12px", backgroundColor: "#0f1058" }}
+                    style={{ fontSize: "12px", backgroundColor: "#268ffa" }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.backgroundColor = "transparent";
                       e.currentTarget.style.borderColor = "rgba(255,255,255,0.5)";
                       e.currentTarget.style.color = "#ffffff";
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = "#0f1058";
+                      e.currentTarget.style.backgroundColor = "#268ffa";
                       e.currentTarget.style.borderColor = "transparent";
                       e.currentTarget.style.color = "#ffffff";
                     }}
