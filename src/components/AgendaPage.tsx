@@ -395,7 +395,7 @@ export default function AgendaPage() {
           <h3 className="text-lg font-semibold text-foreground">Calendário de Eventos</h3>
           {locais.length > 0 && (
             <Select value={filterLocal} onValueChange={setFilterLocal}>
-              <SelectTrigger className="w-[180px] h-8 text-sm [&>span]:text-white" style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "20px", border: "none" }}>
+              <SelectTrigger className="w-[160px] h-7 text-xs [&>span]:text-white" style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "20px", border: "none" }}>
                 <MapPin size={14} className="mr-1 text-white" />
                 <SelectValue placeholder="Filtrar por local" />
               </SelectTrigger>
