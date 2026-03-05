@@ -122,7 +122,7 @@ export default function WeatherWidget({ onNavigate }: { onNavigate?: (page: stri
 
       {/* Config button - pushed to bottom */}
       <button
-        onClick={() => onNavigate?.("previsao-tempo")}
+        onClick={() => onNavigate?.("previsao")}
         className="mt-auto flex items-center gap-1.5 text-[10px] font-semibold rounded-lg px-2 py-1 self-start hover:opacity-80 transition-opacity"
         style={{ color: "#268ffa", backgroundColor: "rgba(38,143,250,0.1)" }}
       >
