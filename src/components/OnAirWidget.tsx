@@ -186,7 +186,7 @@ export default function OnAirWidget() {
             grade
           </button>
           {firstNext && (
-            <div className="bg-white/10 rounded-full px-2 py-1 cursor-pointer">
+            <div className="bg-white/10 rounded-full px-2 py-1 cursor-pointer" onClick={() => setIsHovered(true)}>
               <ArrowRight size={10} className="text-white/60" />
             </div>
           )}
