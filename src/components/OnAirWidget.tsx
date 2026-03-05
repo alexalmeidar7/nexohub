@@ -176,7 +176,7 @@ export default function OnAirWidget() {
             src={apresentadorFoto}
             alt={apresentadorNome}
             className="absolute object-contain pointer-events-none"
-            style={{ right: 0, bottom: 0, width: "60%", height: "110%", objectPosition: "right bottom" }}
+            style={{ right: 0, bottom: 0, width: "60%", height: "100%", objectPosition: "right bottom" }}
           />
         )}
 
