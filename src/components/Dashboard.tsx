@@ -248,6 +248,13 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             })}
           </nav>
 
+          {/* XML Master */}
+          <div className="px-3 py-2 border-t border-white/10">
+            <Suspense fallback={null}>
+              <UnifiedXmlField />
+            </Suspense>
+          </div>
+
           {/* User profile at bottom */}
           <div className="px-4 py-4 border-t border-white/10">
             <div className="flex items-center gap-3">
