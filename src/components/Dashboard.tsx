@@ -285,14 +285,6 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             </div>
           </aside>
 
-          {/* === NO AR WIDGET (below sidebar, same width) === */}
-          {currentPage === "dashboard" && (
-            <div className="rounded-2xl p-4 overflow-hidden" style={{ backgroundColor: "#0c0441", height: "225px" }}>
-              <Suspense fallback={null}>
-                <OnAirWidget />
-              </Suspense>
-            </div>
-          )}
         </div>
 
         {/* === MAIN CONTENT === */}
