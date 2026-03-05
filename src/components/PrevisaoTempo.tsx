@@ -339,7 +339,7 @@ export default function PrevisaoTempo() {
             </div>
           </div>
 
-          <XmlLinkRow label="XML TEMPO" xmlContent={(() => {
+          <XmlLinkRow label="XML TEMPO" dark xmlContent={(() => {
             if (!weather) return "";
             const dayToXml = (d: DayWeather, tag: string) =>
               `  <${tag} date="${d.date}">\n    <temperatura>${d.temp}</temperatura>\n    <minima>${d.tempMin}</minima>\n    <maxima>${d.tempMax}</maxima>\n    <humidade>${d.humidity}</humidade>\n    <chance_chuva>${d.rainChance}</chance_chuva>\n    <condicao>${getWeatherLabel(d.weatherCode)}</condicao>\n  </${tag}>`;

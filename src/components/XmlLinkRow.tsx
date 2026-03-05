@@ -95,11 +95,13 @@ export default function XmlLinkRow({ label, xmlContent, dark, compact }: XmlLink
   return (
     <div
       onClick={copy}
-      className={`flex items-center gap-3 rounded-xl p-4 border cursor-pointer transition-colors ${
-        dark
-          ? "bg-zinc-800 border-zinc-700 hover:border-zinc-500"
-          : "bg-muted border-border hover:border-primary"
-      }`}
+      className="flex items-center gap-3 rounded-xl p-4 cursor-pointer transition-colors"
+      style={dark
+        ? { backgroundColor: "#0d0446", border: "2px solid #0d0446" }
+        : undefined
+      }
+      onMouseEnter={e => { if (dark) e.currentTarget.style.borderColor = "#2dbef3"; }}
+      onMouseLeave={e => { if (dark) e.currentTarget.style.borderColor = "#0d0446"; }}
     >
       <Code2 size={18} className={dark ? "text-violet-400 shrink-0" : "text-primary shrink-0"} />
       <span className={`text-xs font-bold whitespace-nowrap ${dark ? "text-zinc-300" : "text-foreground"}`}>{label}</span>
