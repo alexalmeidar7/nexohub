@@ -728,6 +728,7 @@ export default function ProgramaForm() {
                 diaAtual={diaAtual}
                 currentTimeStr={currentTimeStr}
                 getProgramaForSlot={getProgramaForSlot}
+                apresentadores={apresentadores}
               />
             </table>
           </div>
