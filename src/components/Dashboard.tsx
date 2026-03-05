@@ -372,7 +372,7 @@ function DashboardHome({ empresa, onNavigate }: { empresa: import("./Configuraco
           {/* Card 2 - Tempo */}
           <div className="rounded-2xl p-4 bg-white flex-shrink-0 overflow-hidden" style={{ width: "350px", height: "225px", scrollSnapAlign: "start" }}>
             <Suspense fallback={<Loader2 className="animate-spin text-gray-400" size={16} />}>
-              <WeatherWidget onNavigate={setCurrentPage} />
+              <WeatherWidget onNavigate={onNavigate} />
             </Suspense>
           </div>
 
