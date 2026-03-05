@@ -442,7 +442,7 @@ export default function NoticiasPanel() {
         {/* Cotações ao lado */}
         <div className="space-y-4">
           <div className="bg-muted rounded-xl border border-border overflow-hidden">
-            <div className={headerStyle}>💹 Cotações - Bolsas e Moedas</div>
+            <div className={headerStyle} style={headerInline}>💹 Cotações - Bolsas e Moedas</div>
             <div className="p-4">
               {loadingCotacoes ? (
                 <p className="text-muted-foreground text-sm">Carregando cotações...</p>
