@@ -209,6 +209,7 @@ export default function ProgramaForm() {
   const [estudios, setEstudios] = useState<string[]>([]);
   const [newEstudio, setNewEstudio] = useState("");
   const [estudioDialogOpen, setEstudioDialogOpen] = useState(false);
+  const [apresentadorComboOpen, setApresentadorComboOpen] = useState(false);
 
   // Grade filter
   const [gradeEstudioFilter, setGradeEstudioFilter] = useState("todos");
