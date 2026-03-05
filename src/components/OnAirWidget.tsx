@@ -103,6 +103,22 @@ export default function OnAirWidget() {
     return () => clearInterval(interval);
   }, []);
 
+  // Poll music data from localStorage
+  useEffect(() => {
+    const readMusic = () => {
+      try {
+        const raw = localStorage.getItem("masterview_music_data");
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          setMusicData({ titulo: parsed.titulo || parsed.title, artista: parsed.artista || parsed.artist });
+        }
+      } catch {}
+    };
+    readMusic();
+    const mi = setInterval(readMusic, 3000);
+    return () => clearInterval(mi);
+  }, []);
+
   const firstNext = nextPrograms[0] || null;
   const firstNextAp = firstNext ? nextApresentadores[firstNext.id] : null;
 
