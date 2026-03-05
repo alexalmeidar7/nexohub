@@ -143,26 +143,26 @@ export default function LoginScreen() {
             pointerEvents: showForgot ? "auto" : "none",
           }}
         >
-          <div className="bg-white/95 backdrop-blur-sm rounded-b-3xl rounded-t-none px-10 pt-10 pb-8 shadow-xl">
+          <div className="rounded-b-3xl rounded-t-none px-10 pt-10 pb-8 shadow-xl" style={{ backgroundColor: "#0d0446" }}>
             {forgotSent ? (
               <div className="flex flex-col items-center gap-3">
-                <CheckCircle className="text-green-500" size={40} />
-                <p className="text-sm text-center" style={{ color: "#0f1058" }}>
+                <CheckCircle className="text-green-400" size={40} />
+                <p className="text-center text-white" style={{ fontSize: "14px" }}>
                   Link enviado para <strong>{forgotEmail}</strong>
                 </p>
                 <button
                   onClick={closeForgot}
-                  className="mt-2 text-xs font-medium transition-colors duration-200"
-                  style={{ color: "#0f1058" }}
+                  className="mt-2 font-medium transition-colors duration-200 text-white"
+                  style={{ fontSize: "14px" }}
                   onMouseEnter={(e) => (e.currentTarget.style.color = "#268ffa")}
-                  onMouseLeave={(e) => (e.currentTarget.style.color = "#0f1058")}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = "#ffffff")}
                 >
                   Fechar
                 </button>
               </div>
             ) : (
               <div className="space-y-4">
-                <p className="text-xs text-center" style={{ color: "#0f1058" }}>
+                <p className="text-center text-white" style={{ fontSize: "14px" }}>
                   Informe seu email para redefinir a senha
                 </p>
                 <input
