@@ -285,14 +285,6 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             </div>
           </aside>
 
-          {/* === NO AR WIDGET (below sidebar, same width) === */}
-          {currentPage === "dashboard" && (
-            <div className="rounded-2xl p-4 overflow-hidden" style={{ backgroundColor: "#0c0441", height: "225px" }}>
-              <Suspense fallback={null}>
-                <OnAirWidget />
-              </Suspense>
-            </div>
-          )}
         </div>
 
         {/* === MAIN CONTENT === */}
@@ -317,9 +309,6 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           {/* Content area */}
           <div className={`flex-1 overflow-y-auto overflow-x-hidden rounded-2xl`} style={currentPage === "dashboard" ? {} : { backgroundColor: "#111", padding: "2rem" }}>
             <Suspense fallback={<div className="flex justify-center py-16"><Loader2 className="animate-spin text-white" size={28} /></div>}>
-              {currentPage === "dashboard" && (
-                <DashboardHome empresa={empresa} onNavigate={setCurrentPage} />
-              )}
               {currentPage === "previsao" && <PrevisaoTempo />}
               {currentPage === "noticias" && <NoticiasPanel />}
               {currentPage === "apresentadores" && <ApresentadorForm />}
@@ -337,6 +326,24 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           </div>
         </main>
       </div>
+
+      {/* === NO AR + WIDGET LIST ROW === */}
+      {currentPage === "dashboard" && (
+        <div className="flex gap-5" style={{ paddingLeft: "50px", paddingRight: "50px", paddingTop: "20px" }}>
+          {/* No Ar box */}
+          <div className="rounded-2xl p-4 overflow-hidden flex-shrink-0" style={{ backgroundColor: "#0c0441", width: "400px", height: "225px" }}>
+            <Suspense fallback={null}>
+              <OnAirWidget />
+            </Suspense>
+          </div>
+          {/* Widget list */}
+          <div className="flex-1 min-w-0">
+            <Suspense fallback={null}>
+              <DashboardHome empresa={empresa} onNavigate={setCurrentPage} />
+            </Suspense>
+          </div>
+        </div>
+      )}
 
       {/* === FOOTER === */}
       <footer className="flex items-center gap-3 mt-auto pb-6" style={{ paddingLeft: "50px" }}>
@@ -417,14 +424,14 @@ function DashboardHome({ empresa, onNavigate }: { empresa: import("./Configuraco
   };
 
   return (
-    <div className="animate-fade-in grid grid-cols-2 gap-3 h-full">
+    <div className="animate-fade-in flex gap-3 overflow-x-auto scrollbar-hide h-[225px]">
       {orderedWidgets.map(widget => (
         <div
           key={widget.id}
-          className={`rounded-2xl p-4 overflow-hidden relative ${
+          className={`rounded-2xl p-4 flex-shrink-0 overflow-hidden relative ${
             draggedId === widget.id ? "opacity-50 scale-95" : ""
           } ${dragOverId === widget.id ? "ring-2 ring-[#268ffa]" : ""}`}
-          style={{ backgroundColor: widget.bg, height: "225px" }}
+          style={{ backgroundColor: widget.bg, width: "300px", height: "225px" }}
           onDragOver={(e) => handleDragOver(e, widget.id)}
           onDrop={(e) => handleDrop(e, widget.id)}
           onDragEnd={handleDragEnd}
