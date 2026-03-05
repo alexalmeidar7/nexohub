@@ -456,7 +456,7 @@ function DashboardHome({ empresa, onNavigate }: { empresa: import("./Configuraco
           {orderedWidgets.map(widget => (
             <div
               key={widget.id}
-              className={`rounded-2xl p-4 flex-shrink-0 overflow-hidden transition-all duration-200 relative ${
+              className={`rounded-2xl p-4 flex-shrink-0 overflow-hidden relative ${
                 draggedId === widget.id ? "opacity-50 scale-95" : ""
               } ${dragOverId === widget.id ? "ring-2 ring-[#268ffa]" : ""}`}
               style={{ backgroundColor: widget.bg, width: "350px", height: "225px", scrollSnapAlign: "start" }}
