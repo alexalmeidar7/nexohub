@@ -405,7 +405,7 @@ function DashboardHome({ empresa, onNavigate }: { empresa: import("./Configuraco
   };
 
   return (
-    <div className="animate-fade-in flex flex-col justify-end flex-1" style={{ paddingBottom: "75px" }}>
+    <div className="animate-fade-in flex flex-col justify-end flex-1" style={{ paddingBottom: "25px" }}>
       <div className="flex items-center gap-3">
         {/* Left arrow */}
         <button
