@@ -204,7 +204,7 @@ export default function OnAirWidget() {
           </p>
         </div>
 
-        <div className="z-10 mb-1">
+        <div className="z-10 mb-4">
           <p className="font-semibold text-white/80 text-xs">{apresentadorNome}</p>
         </div>
 
