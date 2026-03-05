@@ -755,7 +755,7 @@ export default function ProgramaForm() {
         <div>
           <h4 className="text-lg font-medium mb-4" style={{ color: "#0d0446" }}>Programas Cadastrados</h4>
           <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(13,4,70,0.1)" }}>
-            <table className="w-full text-sm">
+            <table className="w-full" style={{ fontSize: "14px" }}>
               <thead>
                 <tr style={{ backgroundColor: "#0d0446", color: "#ffffff" }}>
                   <th className="px-4 py-3 text-left font-semibold">Nome do Programa</th>
