@@ -567,14 +567,20 @@ export default function AgendaPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="rounded-xl p-4" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)" }}>
+          <style>{`
+            .agenda-calendar .rdp-day:hover { background-color: rgba(46,192,246,0.15) !important; color: #2ec0f6 !important; }
+            .agenda-calendar .rdp-day_selected { background-color: #2ec0f6 !important; color: #fff !important; }
+            .agenda-calendar .rdp-day_selected:hover { background-color: #2ec0f6 !important; }
+            .agenda-calendar .has-event-day { background-color: rgba(46,192,246,0.15) !important; color: #2ec0f6 !important; font-weight: bold; }
+          `}</style>
           <Calendar
             mode="single"
             selected={selectedDate}
             onSelect={setSelectedDate}
-            className={cn("p-3 pointer-events-auto")}
+            className={cn("p-3 pointer-events-auto agenda-calendar")}
             locale={ptBR}
             modifiers={{ hasEvent: eventDates }}
-            modifiersClassNames={{ hasEvent: "bg-primary/20 font-bold text-primary" }}
+            modifiersClassNames={{ hasEvent: "has-event-day" }}
           />
         </div>
 
