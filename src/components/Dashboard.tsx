@@ -186,7 +186,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     }}>
       <div className="flex pb-0 gap-3" style={{ height: "650px", paddingLeft: "50px", paddingRight: "50px", paddingTop: "12px" }}>
         {/* === SIDEBAR === */}
-        <aside className="flex flex-col rounded-[24px] overflow-hidden flex-shrink-0 backdrop-blur-xl" style={{ backgroundColor: "rgba(0, 0, 0, 0.90)", width: "400px", height: "650px" }}>
+        <aside className="flex flex-col rounded-[24px] overflow-hidden flex-shrink-0 backdrop-blur-xl" style={{ backgroundColor: "rgba(0, 0, 0, 0.70)", width: "400px", height: "650px" }}>
           {/* Selo + Settings */}
           <div className="flex items-center justify-between px-4 pt-3 pb-2">
             <img src={seloNexohub} alt="NexoHUB" className="h-4" />
