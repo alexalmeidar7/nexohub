@@ -266,6 +266,7 @@ export default function ProgramaForm() {
   // Grade filter
   const [gradeEstudioFilter, setGradeEstudioFilter] = useState("todos");
   const gradeRef = useRef<HTMLDivElement>(null);
+  const needleRef = useRef<HTMLDivElement>(null);
 
   // Sorting
   const [sortBy, setSortBy] = useState<"horario" | "nome" | "estudio" | "status">("horario");
