@@ -135,6 +135,11 @@ function GradeBody({ gradeSlots, diasSemana, diaAtual, currentTimeStr, getProgra
     return ap ? ap.nome : null;
   };
 
+  const getPresenter = (apresentadorId: string) => {
+    if (!apresentadorId) return null;
+    return apresentadores.find(a => a.id === apresentadorId) || null;
+  };
+
   return (
     <>
       <tbody>
