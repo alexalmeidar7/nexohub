@@ -192,12 +192,12 @@ export default function LoginScreen() {
                   <button
                     onClick={handleForgot}
                     disabled={forgotLoading}
-                    className="group flex items-center gap-3 px-8 py-3 rounded-full font-medium text-sm disabled:opacity-50 transition-all duration-300 text-white border-2 border-transparent"
-                    style={{ backgroundColor: "#0f1058" }}
+                    className="group flex items-center gap-3 px-8 py-3 rounded-full font-medium disabled:opacity-50 transition-all duration-300 text-white border-2 border-transparent"
+                    style={{ fontSize: "14px", backgroundColor: "#0f1058" }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.backgroundColor = "transparent";
-                      e.currentTarget.style.borderColor = "#0c0440";
-                      e.currentTarget.style.color = "#0c0440";
+                      e.currentTarget.style.borderColor = "rgba(255,255,255,0.5)";
+                      e.currentTarget.style.color = "#ffffff";
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.backgroundColor = "#0f1058";
