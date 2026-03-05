@@ -162,7 +162,7 @@ export default function LoginScreen() {
               </div>
             ) : (
               <div className="space-y-4">
-                <p className="text-center text-white" style={{ fontSize: "14px" }}>
+                <p className="text-center text-white" style={{ fontSize: "12px" }}>
                   Informe seu email para redefinir a senha
                 </p>
                 <input
