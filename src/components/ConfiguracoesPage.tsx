@@ -99,7 +99,8 @@ export default function ConfiguracoesPage() {
     saveTimeoutRef.current = setTimeout(async () => {
       if (!user) return;
       await supabase.from("empresa_config").upsert({
-        user_id: user.id, nome: newConfig.nome, logo: newConfig.logo, endereco: newConfig.endereco,
+        user_id: user.id, nome: newConfig.nome, logo: newConfig.logo, background_url: newConfig.backgroundUrl,
+        endereco: newConfig.endereco,
         telefone_comercial: newConfig.telefoneComercial, telefone_participacao: newConfig.telefoneParticipacao,
         site: newConfig.site, instagram: newConfig.instagram, facebook: newConfig.facebook,
         youtube: newConfig.youtube, updated_at: new Date().toISOString(),
