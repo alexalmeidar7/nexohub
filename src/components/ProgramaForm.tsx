@@ -321,13 +321,8 @@ export default function ProgramaForm() {
       needle.style.top = `${top}px`;
     };
     positionNeedle();
-    const interval = setInterval(positionNeedle, 5000);
-    const scrollHandler = () => positionNeedle();
-    gradeRef.current.addEventListener("scroll", scrollHandler);
-    return () => {
-      clearInterval(interval);
-      gradeRef.current?.removeEventListener("scroll", scrollHandler);
-    };
+    const interval = setInterval(positionNeedle, 30000);
+    return () => clearInterval(interval);
   }, [loadingData, programas, currentTimeStr]);
 
   const handleSelo = (e: React.ChangeEvent<HTMLInputElement>) => {
