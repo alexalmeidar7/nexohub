@@ -413,45 +413,38 @@ function DashboardHome({ empresa, onNavigate }: { empresa: import("./Configuraco
 
   return (
     <div className="animate-fade-in">
-      <div className="relative">
-        {/* Left hover zone */}
-        <div
-          className="absolute left-0 top-0 bottom-0 w-16 z-20 cursor-pointer"
-          onMouseEnter={() => {
-            const el = scrollRef.current;
-            if (!el) return;
-            let raf: number;
-            const step = () => { el.scrollLeft -= 2; raf = requestAnimationFrame(step); };
-            raf = requestAnimationFrame(step);
-            (el as any)._raf = raf;
-          }}
-          onMouseLeave={() => {
-            const el = scrollRef.current;
-            if (el && (el as any)._raf) { cancelAnimationFrame((el as any)._raf); delete (el as any)._raf; }
-          }}
-        />
-        {/* Right hover zone */}
-        <div
-          className="absolute right-0 top-0 bottom-0 w-16 z-20 cursor-pointer"
-          onMouseEnter={() => {
-            const el = scrollRef.current;
-            if (!el) return;
-            let raf: number;
-            const step = () => { el.scrollLeft += 2; raf = requestAnimationFrame(step); };
-            raf = requestAnimationFrame(step);
-            (el as any)._raf = raf;
-          }}
-          onMouseLeave={() => {
-            const el = scrollRef.current;
-            if (el && (el as any)._raf) { cancelAnimationFrame((el as any)._raf); delete (el as any)._raf; }
-          }}
-        />
+      <div
+        className="relative"
+        onMouseMove={(e) => {
+          const el = scrollRef.current;
+          if (!el) return;
+          const rect = e.currentTarget.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const zone = 60;
 
+          // Clear any existing animation
+          if ((el as any)._raf) { cancelAnimationFrame((el as any)._raf); delete (el as any)._raf; }
+
+          if (x < zone && el.scrollLeft > 0) {
+            const speed = ((zone - x) / zone) * 4;
+            const step = () => { el.scrollLeft -= speed; (el as any)._raf = requestAnimationFrame(step); };
+            (el as any)._raf = requestAnimationFrame(step);
+          } else if (x > rect.width - zone && el.scrollLeft < el.scrollWidth - el.clientWidth) {
+            const speed = ((x - (rect.width - zone)) / zone) * 4;
+            const step = () => { el.scrollLeft += speed; (el as any)._raf = requestAnimationFrame(step); };
+            (el as any)._raf = requestAnimationFrame(step);
+          }
+        }}
+        onMouseLeave={() => {
+          const el = scrollRef.current;
+          if (el && (el as any)._raf) { cancelAnimationFrame((el as any)._raf); delete (el as any)._raf; }
+        }}
+      >
         {/* Scrollable cards row */}
         <div
           ref={scrollRef}
           className="flex gap-3 overflow-x-auto scrollbar-hide"
-          style={{ scrollSnapType: "x mandatory" }}
+          style={{ scrollBehavior: "auto" }}
         >
           {orderedWidgets.map(widget => (
             <div
@@ -459,7 +452,7 @@ function DashboardHome({ empresa, onNavigate }: { empresa: import("./Configuraco
               className={`rounded-2xl p-4 flex-shrink-0 overflow-hidden relative ${
                 draggedId === widget.id ? "opacity-50 scale-95" : ""
               } ${dragOverId === widget.id ? "ring-2 ring-[#268ffa]" : ""}`}
-              style={{ backgroundColor: widget.bg, width: "350px", height: "225px", scrollSnapAlign: "start" }}
+              style={{ backgroundColor: widget.bg, width: "calc((100vw - 100px - 36px) / 4)", height: "225px", scrollSnapAlign: "start" }}
               onDragOver={(e) => handleDragOver(e, widget.id)}
               onDrop={(e) => handleDrop(e, widget.id)}
               onDragEnd={handleDragEnd}
