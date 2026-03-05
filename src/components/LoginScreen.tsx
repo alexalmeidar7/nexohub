@@ -218,8 +218,11 @@ export default function LoginScreen() {
               </div>
             )}
           </div>
-        </div>
       </div>
+
+      <p className="mt-8 text-center text-white/60" style={{ fontSize: "11px" }}>
+        Copyrighted 2026 - Todos os direitos reservados a Nexo Soluções Visuais
+      </p>
     </div>
   );
 }
