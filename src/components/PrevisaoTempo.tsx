@@ -242,8 +242,8 @@ export default function PrevisaoTempo() {
           </button>
         </div>
         {showSuggestions && suggestions.length > 0 && (
-          <div className="absolute z-50 top-full left-0 right-16 mt-1 rounded-lg overflow-hidden shadow-lg"
-            style={{ backgroundColor: "#0d0446" }}>
+           <div className="absolute z-50 top-full left-0 right-0 mt-1 rounded-lg overflow-hidden shadow-lg"
+             style={{ backgroundColor: "#0d0446", marginRight: "90px" }}>
             {suggestions.map((s, i) => (
               <button key={i} onClick={() => selectSuggestion(s)}
                 className="w-full text-left px-4 py-2 transition-colors flex items-center justify-between text-xs"
