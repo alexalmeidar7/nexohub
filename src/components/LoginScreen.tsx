@@ -200,7 +200,7 @@ export default function LoginScreen() {
                       e.currentTarget.style.color = "#ffffff";
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = "#0f1058";
+                      e.currentTarget.style.backgroundColor = "#268ffa";
                       e.currentTarget.style.borderColor = "transparent";
                       e.currentTarget.style.color = "#ffffff";
                     }}
