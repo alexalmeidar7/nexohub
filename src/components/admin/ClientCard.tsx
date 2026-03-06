@@ -20,10 +20,16 @@ interface ClientRow {
   modules: Record<string, boolean>;
 }
 
+interface PlanOption {
+  value: string;
+  label: string;
+}
+
 interface ClientCardProps {
   client: ClientRow;
   clientEmail: string;
   modules: AvailableModule[];
+  plans: PlanOption[];
   saving: string | null;
   onToggleModule: (userId: string, moduleKey: string, enabled: boolean) => void;
   onClientUpdated: () => void;
@@ -39,13 +45,9 @@ const inputStyle: React.CSSProperties = {
   padding: "6px 12px",
 };
 
-const plans = [
-  { value: "basic", label: "Basic" },
-  { value: "pro", label: "Pro" },
-  { value: "enterprise", label: "Enterprise" },
-];
+// plans now come from props
 
-export default function ClientCard({ client, clientEmail, modules, saving, onToggleModule, onClientUpdated, onSendMessage }: ClientCardProps) {
+export default function ClientCard({ client, clientEmail, modules, plans, saving, onToggleModule, onClientUpdated, onSendMessage }: ClientCardProps) {
   const { toast } = useToast();
   const [editing, setEditing] = useState(false);
   const [savingEdit, setSavingEdit] = useState(false);
