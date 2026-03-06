@@ -746,9 +746,20 @@ export default function PlayerPage() {
           hls.loadSource(freshUrl);
           hls.attachMedia(video);
           hls.on(Hls.Events.MANIFEST_PARSED, (_e, data) => {
-            // Select highest quality level
-            if (data.levels && data.levels.length > 1) {
-              hls.currentLevel = data.levels.length - 1;
+            // Populate quality levels for selector
+            if (data.levels && data.levels.length > 0) {
+              const levels = data.levels.map((l: any, i: number) => ({
+                height: l.height || 0,
+                bitrate: l.bitrate || 0,
+                index: i,
+              }));
+              setHlsLevels(levels);
+              setHlsCurrentLevel(-1); // auto by default
+              // Select highest quality level
+              if (data.levels.length > 1) {
+                hls.currentLevel = data.levels.length - 1;
+                setHlsCurrentLevel(data.levels.length - 1);
+              }
             }
             video.play().then(() => setBuffering(false)).catch(() => {});
           });
