@@ -974,6 +974,10 @@ export default function PlayerPage() {
     if (!currentProg?.apresentador_id) return null;
     return apresentadores.find(a => a.id === currentProg.apresentador_id) || null;
   }, [currentProg, apresentadores]);
+  const nextPresenter = useMemo(() => {
+    if (!nextProg?.apresentador_id) return null;
+    return apresentadores.find(a => a.id === nextProg.apresentador_id) || null;
+  }, [nextProg, apresentadores]);
 
   // For YouTube channels, show the current video title as "No Ar"
   const currentYtVideo = isYoutube && selectedVideoId ? youtubeVideos.find(v => v.videoId === selectedVideoId) : null;
