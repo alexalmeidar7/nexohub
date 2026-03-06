@@ -17,6 +17,7 @@ export interface EmpresaConfig {
   instagram: string;
   facebook: string;
   youtube: string;
+  plano: string;
 }
 
 export async function getEmpresaConfig(userId?: string): Promise<EmpresaConfig> {
