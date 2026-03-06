@@ -53,7 +53,7 @@ export default function AudioSpectrum({ audioElement }: AudioSpectrumProps) {
         if (barHeight > peaksRef.current[i]) {
           peaksRef.current[i] = barHeight;
         } else {
-          peaksRef.current[i] -= 1.2;
+          peaksRef.current[i] -= 2.5;
           if (peaksRef.current[i] < 0) peaksRef.current[i] = 0;
         }
 
