@@ -231,10 +231,13 @@ export default function MusicaNoAr() {
   const fetchXml = useCallback(async () => {
     if (!xmlUrl.trim()) return;
     try {
-      const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(xmlUrl.trim())}`;
-      const res = await fetch(proxyUrl, { cache: "no-store" });
-      const text = await res.text();
-      const parsed = parseXmlString(text);
+      const { data, error } = await supabase.functions.invoke("fetch-rss", {
+        body: { url: xmlUrl.trim() },
+      });
+
+      if (error || !data?.content) return;
+
+      const parsed = parseXmlString(data.content);
       if (parsed) await processMusic(parsed);
     } catch { }
   }, [xmlUrl, processMusic]);

@@ -753,9 +753,12 @@ function useGlobalMusicSync() {
       if (!url) return;
 
       try {
-        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
-        const res = await fetch(proxyUrl, { cache: "no-store" });
-        const text = await res.text();
+        const { data: rssData, error: rssError } = await supabase.functions.invoke("fetch-rss", {
+          body: { url },
+        });
+        if (rssError || !rssData?.content) return;
+
+        const text = rssData.content;
         const data = parseXml(text);
         if (!data) return;
 
