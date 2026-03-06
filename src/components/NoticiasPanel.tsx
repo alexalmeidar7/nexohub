@@ -216,6 +216,7 @@ export default function NoticiasPanel() {
   const [wizardOpen, setWizardOpen] = useState(false);
   const [jornalConfig, setJornalConfig] = useState<JornalConfig | null>(null);
   const [programas, setProgramas] = useState<{ id: string; nome: string }[]>([]);
+  const [showAddSiteInput, setShowAddSiteInput] = useState(false);
 
   // Load programas for wizard
   useEffect(() => {
