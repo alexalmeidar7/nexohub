@@ -636,18 +636,15 @@ export default function PlayerPage() {
         }
         if (!cachedXmlUrl || cancelled) return;
 
-        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(cachedXmlUrl)}`;
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 3500);
-
+        // Use edge function instead of unreliable allorigins proxy
         let text = "";
         try {
-          const res = await fetch(proxyUrl, { cache: "no-store", signal: controller.signal });
-          if (!res.ok) return;
-          text = await res.text();
-        } finally {
-          clearTimeout(timeout);
-        }
+          const { data: rssData, error: rssError } = await supabase.functions.invoke("fetch-rss", {
+            body: { url: cachedXmlUrl },
+          });
+          if (rssError || !rssData?.content) return;
+          text = rssData.content;
+        } catch { return; }
 
         const data = parseXml(text);
         if (!data || cancelled) return;
