@@ -135,13 +135,23 @@ export default function MontarJornalWizard({ open, onOpenChange, programas, onFi
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) { reset(); onOpenChange(false); } }}>
-      <DialogContent className="sm:max-w-lg" style={{ backgroundColor: "#ffffff", border: "none" }}>
+      <DialogContent className="sm:max-w-lg relative" style={{ backgroundColor: "#ffffff", border: "none" }}>
+        <button
+          onClick={() => { reset(); onOpenChange(false); }}
+          className="absolute top-3 right-3 rounded-full p-1 hover:opacity-70 transition-opacity"
+          style={{ color: "#0d0446" }}
+        >
+          <X size={18} />
+        </button>
         <style>{`
           .jornal-wizard-input:focus, .jornal-wizard-input:focus-visible, .jornal-wizard-input:active {
             outline: none !important;
             box-shadow: none !important;
             ring: none !important;
             border-color: #2ec1f7 !important;
+          }
+          .jornal-wizard-input, .jornal-wizard-input::placeholder {
+            color: #0d0446 !important;
           }
         `}</style>
         <DialogHeader>
