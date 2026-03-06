@@ -179,10 +179,14 @@ function AdminUsersContent() {
             <ClientCard
               key={client.user_id}
               client={client}
+              clientEmail={emailMap[client.user_id] || ""}
               modules={modules}
               saving={saving}
               onToggleModule={toggleModule}
               onClientUpdated={loadData}
+              onSendMessage={(userId, nome) => {
+                navigate("/admin/messages", { state: { recipientId: userId, recipientNome: nome } });
+              }}
             />
           ))}
         </div>

@@ -137,19 +137,34 @@ export default function ClientCard({ client, clientEmail, modules, saving, onTog
             <p style={{ fontSize: "10px", color: "#9ca3af" }}>{client.user_id.slice(0, 8)}...</p>
           </div>
         </div>
-        <button
-          onClick={() => setEditing(!editing)}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all duration-200"
-          style={{
-            fontSize: "11px",
-            fontWeight: 500,
-            backgroundColor: editing ? "#0d0446" : "transparent",
-            color: editing ? "#fff" : "#0d0446",
-            border: "1px solid #0d0446",
-          }}
-        >
-          <Pencil size={12} /> {editing ? "Editando" : "Editar"}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => onSendMessage(client.user_id, client.nome)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all duration-200"
+            style={{
+              fontSize: "11px",
+              fontWeight: 500,
+              backgroundColor: "transparent",
+              color: "#2ec0f6",
+              border: "1px solid #2ec0f6",
+            }}
+          >
+            <MessageSquare size={12} /> Enviar Mensagem
+          </button>
+          <button
+            onClick={() => setEditing(!editing)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all duration-200"
+            style={{
+              fontSize: "11px",
+              fontWeight: 500,
+              backgroundColor: editing ? "#0d0446" : "transparent",
+              color: editing ? "#fff" : "#0d0446",
+              border: "1px solid #0d0446",
+            }}
+          >
+            <Pencil size={12} /> {editing ? "Editando" : "Editar"}
+          </button>
+        </div>
       </div>
 
       {/* Edit form */}
