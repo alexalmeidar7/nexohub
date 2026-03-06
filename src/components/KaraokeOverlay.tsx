@@ -76,7 +76,7 @@ export default function KaraokeOverlay({ artist, title, audioElement, visible, d
     const tick = () => {
       const startStr = localStorage.getItem(MUSIC_START_KEY);
       if (startStr) {
-        const elapsed = (Date.now() - parseInt(startStr, 10)) / 1000;
+        const elapsed = (Date.now() - parseInt(startStr, 10)) / 1000 + 3;
         
         // Find current line
         let idx = -1;
