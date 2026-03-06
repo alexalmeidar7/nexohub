@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { Users, Puzzle, Radio } from "lucide-react";
+import { Users, Puzzle, Radio, ClipboardList } from "lucide-react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AdminLayout from "./AdminLayout";
 import AdminSkeleton from "@/components/skeletons/AdminSkeleton";
@@ -10,12 +10,13 @@ interface ClientInfo {
   user_id: string;
   nome: string;
   logo: string;
+  plano: string;
 }
 
 function AdminDashboardContent() {
   const navigate = useNavigate();
   const [clients, setClients] = useState<ClientInfo[]>([]);
-  const [stats, setStats] = useState({ totalClients: 0, totalModules: 0, totalChannels: 0 });
+  const [stats, setStats] = useState({ totalClients: 0, totalModules: 0, totalChannels: 0, totalPlans: 0 });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -23,17 +24,19 @@ function AdminDashboardContent() {
   }, []);
 
   const loadData = async () => {
-    const [{ data: empresas }, { data: modules }, { data: channels }] = await Promise.all([
-      supabase.from("empresa_config").select("user_id, nome, logo"),
+    const [{ data: empresas }, { data: modules }, { data: channels }, { data: planos }] = await Promise.all([
+      supabase.from("empresa_config").select("user_id, nome, logo, plano"),
       supabase.from("client_modules").select("id"),
       supabase.from("streaming_channels").select("id"),
+      supabase.from("planos").select("id"),
     ]);
 
-    setClients((empresas || []).map((e: any) => ({ user_id: e.user_id, nome: e.nome || "Sem nome", logo: e.logo || "" })));
+    setClients((empresas || []).map((e: any) => ({ user_id: e.user_id, nome: e.nome || "Sem nome", logo: e.logo || "", plano: e.plano || "" })));
     setStats({
       totalClients: (empresas || []).length,
       totalModules: (modules || []).length,
       totalChannels: (channels || []).length,
+      totalPlans: (planos || []).length,
     });
     setLoading(false);
   };
@@ -44,6 +47,7 @@ function AdminDashboardContent() {
 
   const statCards = [
     { icon: Users, value: stats.totalClients, label: "Clientes Cadastrados", color: "#2ec0f6" },
+    { icon: ClipboardList, value: stats.totalPlans, label: "Planos Cadastrados", color: "#f59e0b" },
     { icon: Puzzle, value: stats.totalModules, label: "Módulos Ativos", color: "#22c55e" },
     { icon: Radio, value: stats.totalChannels, label: "Canais de Streaming", color: "#a855f7" },
   ];
@@ -51,7 +55,7 @@ function AdminDashboardContent() {
   return (
     <div className="space-y-8 animate-fade-in">
       {/* Metric Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {statCards.map((card) => {
           const Icon = card.icon;
           return (
@@ -138,6 +142,11 @@ function AdminDashboardContent() {
                     </div>
                   )}
                   <span className="font-medium" style={{ fontSize: "12px", color: "#0d0446" }}>{client.nome}</span>
+                  {client.plano && (
+                    <span className="px-2 py-0.5 rounded-full" style={{ fontSize: "9px", backgroundColor: "#e0f2fe", color: "#0284c7", fontWeight: 600 }}>
+                      {client.plano}
+                    </span>
+                  )}
                 </div>
                 <button
                   onClick={() => navigate(`/admin/users?client=${client.user_id}`)}
