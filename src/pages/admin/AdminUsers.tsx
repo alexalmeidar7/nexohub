@@ -51,7 +51,7 @@ function AdminUsersContent() {
         supabase.from("empresa_config").select("user_id, nome, logo, ativo, plano, updated_at"),
         supabase.from("available_modules").select("key, name, icon"),
         supabase.from("client_modules").select("user_id, module_key, enabled"),
-        supabase.from("planos").select("name").order("name"),
+        supabase.from("planos").select("name, enabled_modules").order("name"),
       ]);
 
       if (empresasError) throw empresasError;
