@@ -192,13 +192,13 @@ export default function ClientCard({ client, clientEmail, modules, saving, onTog
 
             {/* Password */}
             <div className="space-y-1">
-              <label style={{ fontSize: "10px", color: "#6b7280", fontWeight: 600 }}>Nova senha (deixe vazio para manter)</label>
+              <label style={{ fontSize: "10px", color: "#6b7280", fontWeight: 600 }}>Senha</label>
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
+                  placeholder="Senha atual protegida · digite para alterar"
                   className="w-full outline-none pr-10"
                   style={inputStyle}
                 />
