@@ -82,7 +82,7 @@ export default function ConfiguracoesPage() {
   const [editingCanal, setEditingCanal] = useState<string | null>(null);
 
   useEffect(() => {
-    getEmpresaConfig().then(c => { setConfig(c); setLoading(false); });
+    if (user) getEmpresaConfig(user.id).then(c => { setConfig(c); setLoading(false); });
     loadCanais();
   }, []);
 
