@@ -471,6 +471,29 @@ export default function NoticiasPanel() {
         </div>
       )}
 
+      {showNoticiaAvulsaInput && (
+        <div className="flex gap-2 animate-fade-in">
+          <input value={noticiaAvulsaUrl} onChange={(e) => setNoticiaAvulsaUrl(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") addNoticiaAvulsa(); }}
+            placeholder="URL da notícia (ex: https://site.com/noticia)"
+            className="flex-1 px-3 py-1 outline-none transition-colors text-xs"
+            style={{ backgroundColor: "#ffffff", border: "1px solid #0d0446", color: "#0d0446", borderRadius: "20px" }}
+            onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
+            onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
+            autoFocus
+          />
+          <button onClick={addNoticiaAvulsa} disabled={loadingAvulsa}
+            className="px-3 py-1 font-bold transition-all flex items-center gap-1 text-xs"
+            style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "20px" }}
+          >
+            {loadingAvulsa ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />} Adicionar
+          </button>
+          <button onClick={() => setShowNoticiaAvulsaInput(false)} className="px-2 py-1 rounded-full" style={{ color: "#0d0446" }}>
+            <X size={14} />
+          </button>
+        </div>
+      )}
+
       {/* Main two-column layout: Left (Cotações + Portais) | Right (Jornal Builder) */}
       <div className="flex gap-4">
         {/* LEFT COLUMN */}
