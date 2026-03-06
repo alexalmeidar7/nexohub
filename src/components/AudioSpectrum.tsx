@@ -64,7 +64,7 @@ export default function AudioSpectrum({ audioElement }: AudioSpectrumProps) {
         ctx.fillRect(x, h - barHeight, barWidth, barHeight);
 
         // Peak marker (yellow)
-        ctx.fillStyle = "rgba(254, 240, 138, 0.9)";
+        ctx.fillStyle = "rgba(255, 120, 120, 0.85)";
         ctx.fillRect(x, h - peaksRef.current[i] - 4, barWidth, 3);
       }
     };
