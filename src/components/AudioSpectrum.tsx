@@ -32,8 +32,7 @@ export default function AudioSpectrum({ audioElement }: AudioSpectrumProps) {
       const t = performance.now() / 280;
       const active = !audioElement.paused;
 
-      ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
-      ctx.fillRect(0, 0, w, h);
+      ctx.clearRect(0, 0, w, h);
 
       const barWidth = (w / bufferLength) * 0.8;
 
@@ -92,7 +91,7 @@ export default function AudioSpectrum({ audioElement }: AudioSpectrumProps) {
   return (
     <div
       className="absolute left-0 right-0 z-[1] pointer-events-none"
-      style={{ bottom: "120px", height: "150px" }}
+      style={{ bottom: "130px", height: "100px" }}
     >
       <canvas ref={canvasRef} className="w-full h-full" />
     </div>
