@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate, useLocation } from "react-router-dom";
-import { LayoutDashboard, Users, Puzzle, MessageSquare, LogOut } from "lucide-react";
+import { LayoutDashboard, Users, Puzzle, MessageSquare, LogOut, ClipboardList } from "lucide-react";
 import logoMenu from "@/assets/logo-admin-menu.png";
 import {
   Tooltip,
@@ -12,6 +12,7 @@ import {
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/admin/dashboard" },
   { icon: Users, label: "Gestão de Clientes", path: "/admin/users" },
+  { icon: ClipboardList, label: "Cadastro de Planos", path: "/admin/plans" },
   { icon: Puzzle, label: "Catálogo de Módulos", path: "/admin/modules" },
   { icon: MessageSquare, label: "Mensagens", path: "/admin/messages" },
 ];

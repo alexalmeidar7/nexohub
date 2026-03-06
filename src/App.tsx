@@ -15,6 +15,7 @@ const PromocoesKiosk = lazy(() => import("./pages/Promocoes"));
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
 const AdminUsers = lazy(() => import("./pages/admin/AdminUsers"));
 const AdminModules = lazy(() => import("./pages/admin/AdminModules"));
+const AdminPlans = lazy(() => import("./pages/admin/AdminPlans"));
 const AdminMessages = lazy(() => import("./pages/admin/AdminMessages"));
 const MasterViewHome = lazy(() => import("./pages/masterview/MasterViewHome"));
 const AdminLogin = lazy(() => import("./pages/admin/AdminLogin"));
@@ -53,6 +54,7 @@ const App = () => (
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
             <Route path="/admin/users" element={<AdminUsers />} />
             <Route path="/admin/modules" element={<AdminModules />} />
+            <Route path="/admin/plans" element={<AdminPlans />} />
             <Route path="/admin/messages" element={<AdminMessages />} />
 
             <Route path="*" element={<NotFound />} />
