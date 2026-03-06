@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { X, GripVertical, Clock, Trash2, Newspaper } from "lucide-react";
 import type { JornalConfig } from "./MontarJornalWizard";
 
