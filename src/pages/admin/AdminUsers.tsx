@@ -219,6 +219,7 @@ function AdminUsersContent() {
               client={client}
               clientEmail={emailMap[client.user_id] || ""}
               modules={modules}
+              plans={planOptions}
               saving={saving}
               onToggleModule={toggleModule}
               onClientUpdated={loadData}
