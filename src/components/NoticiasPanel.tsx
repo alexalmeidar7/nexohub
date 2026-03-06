@@ -889,6 +889,34 @@ export default function NoticiasPanel() {
         </div>
       )}
 
+      {/* Reading Popup for Notícia Avulsa */}
+      {readingPopup && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4" onClick={() => setReadingPopup(null)}>
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-6 relative" onClick={(e) => e.stopPropagation()}>
+            <button onClick={() => setReadingPopup(null)} className="absolute top-3 right-3 text-gray-400 hover:text-gray-700">
+              <X size={20} />
+            </button>
+            <div className="flex gap-4 mb-4">
+              {readingPopup.thumbnail && (
+                <img src={readingPopup.thumbnail} alt="" className="w-28 h-20 object-cover rounded-lg shrink-0" />
+              )}
+              <div className="flex-1 min-w-0">
+                <h3 className="font-bold text-lg leading-tight pr-6" style={{ color: "#0d0446" }}>{readingPopup.title}</h3>
+                <a href={readingPopup.link} target="_blank" rel="noopener noreferrer"
+                  className="text-[10px] mt-1 inline-block hover:underline" style={{ color: "#2ec1f7" }}>
+                  {readingPopup.link}
+                </a>
+              </div>
+            </div>
+            {readingPopup.body ? (
+              <p className="text-sm leading-relaxed whitespace-pre-line" style={{ color: "#0d0446" }}>{readingPopup.body}</p>
+            ) : (
+              <p className="text-sm italic" style={{ color: "rgba(13,4,70,0.4)" }}>Conteúdo da matéria não disponível. Clique no link acima para ler no site original.</p>
+            )}
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
