@@ -97,12 +97,7 @@ function AdminMessagesContent() {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center gap-2" style={{ color: "#0d0446" }}>
-        <Loader2 className="animate-spin" size={18} style={{ color: "#2ec0f6" }} />
-        <span style={{ fontSize: "12px" }}>Carregando...</span>
-      </div>
-    );
+    return <AdminSkeleton variant="messages" />;
   }
 
   return (
