@@ -306,6 +306,38 @@ export default function NoticiasPanel() {
     }
   };
 
+  const addNoticiaAvulsa = async () => {
+    if (!noticiaAvulsaUrl.trim()) return;
+    const url = noticiaAvulsaUrl.trim();
+    setLoadingAvulsa(true);
+    try {
+      // Try to fetch the page title via proxy
+      let title = url;
+      try {
+        const res = await fetch(`${PROXY}${encodeURIComponent(url)}`, { signal: AbortSignal.timeout(8000) });
+        const html = await res.text();
+        const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+        if (titleMatch) title = decodeHtmlEntities(titleMatch[1].trim());
+        // Try og:image
+        let thumbnail = "";
+        const ogImageMatch = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i);
+        if (ogImageMatch) thumbnail = ogImageMatch[1];
+        setNoticiasAvulsas(prev => [...prev, { title, link: url, thumbnail }]);
+      } catch {
+        setNoticiasAvulsas(prev => [...prev, { title, link: url }]);
+      }
+    } catch {
+      setNoticiasAvulsas(prev => [...prev, { title: url, link: url }]);
+    }
+    setNoticiaAvulsaUrl("");
+    setShowNoticiaAvulsaInput(false);
+    setLoadingAvulsa(false);
+  };
+
+  const removeNoticiaAvulsa = (index: number) => {
+    setNoticiasAvulsas(prev => prev.filter((_, i) => i !== index));
+  };
+
   const addToSelected = async (portal: string, news: NewsItem) => {
     if (!user) return;
     const item: SelectedNews = { portal, title: news.title, imageUrl: news.thumbnail || "" };
