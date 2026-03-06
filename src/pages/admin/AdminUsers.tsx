@@ -89,6 +89,7 @@ function AdminUsersContent() {
 
       const moduleList = mods || [];
       setModules(moduleList);
+      setPlanOptions((planosData || []).map((p: any) => ({ value: p.name, label: p.name })));
 
       const clientList = (empresas || []).map((e: any) => {
         const moduleMap: Record<string, boolean> = {};
