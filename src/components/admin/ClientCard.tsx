@@ -130,6 +130,9 @@ export default function ClientCard({ client, clientEmail, modules, saving, onTog
               <span className="px-2 py-0.5 rounded-full" style={{ fontSize: "9px", backgroundColor: "#e0f2fe", color: "#0284c7", fontWeight: 600 }}>
                 {planLabel}
               </span>
+              {clientEmail && (
+                <span style={{ fontSize: "10px", color: "#6b7280" }}>{clientEmail}</span>
+              )}
             </div>
             <p style={{ fontSize: "10px", color: "#9ca3af" }}>{client.user_id.slice(0, 8)}...</p>
           </div>
