@@ -162,6 +162,3 @@ export default function JornalBlockBuilder({ config, selectedNews, onClose }: Pr
     </div>
   );
 }
-
-// Need useRef import
-import { useRef } from "react";
