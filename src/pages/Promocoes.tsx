@@ -142,6 +142,7 @@ export default function PromocoesKiosk() {
           endereco: empresa.endereco || "", telefoneComercial: empresa.telefone_comercial || "",
           telefoneParticipacao: empresa.telefone_participacao || "", site: empresa.site || "",
           instagram: empresa.instagram || "", facebook: empresa.facebook || "", youtube: empresa.youtube || "",
+          plano: empresa.plano || "",
         });
       }
 
