@@ -24,17 +24,19 @@ function AdminDashboardContent() {
   }, []);
 
   const loadData = async () => {
-    const [{ data: empresas }, { data: modules }, { data: channels }] = await Promise.all([
-      supabase.from("empresa_config").select("user_id, nome, logo"),
+    const [{ data: empresas }, { data: modules }, { data: channels }, { data: planos }] = await Promise.all([
+      supabase.from("empresa_config").select("user_id, nome, logo, plano"),
       supabase.from("client_modules").select("id"),
       supabase.from("streaming_channels").select("id"),
+      supabase.from("planos").select("id"),
     ]);
 
-    setClients((empresas || []).map((e: any) => ({ user_id: e.user_id, nome: e.nome || "Sem nome", logo: e.logo || "" })));
+    setClients((empresas || []).map((e: any) => ({ user_id: e.user_id, nome: e.nome || "Sem nome", logo: e.logo || "", plano: e.plano || "" })));
     setStats({
       totalClients: (empresas || []).length,
       totalModules: (modules || []).length,
       totalChannels: (channels || []).length,
+      totalPlans: (planos || []).length,
     });
     setLoading(false);
   };
