@@ -301,6 +301,16 @@ export default function CortesVideoPage() {
                 <ExternalLink size={12} />
                 Abrir no YouTube
               </a>
+              <a
+                href={`https://www.ssyoutube.com/watch?v=${videoId}&t=${result.duration > 0 ? startSeconds : 0}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold transition-opacity hover:opacity-80"
+                style={{ backgroundColor: "#dc2626", color: "#fff" }}
+              >
+                <Download size={12} />
+                Baixar Vídeo
+              </a>
             </div>
           </div>
         </div>
