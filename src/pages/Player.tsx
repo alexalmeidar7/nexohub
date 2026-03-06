@@ -1358,7 +1358,7 @@ export default function PlayerPage() {
               <div className="w-14 h-14 rounded-lg bg-white/10 flex items-center justify-center text-white text-sm font-bold">{canal?.numero_canal || "?"}</div>
             )}
             <div>
-              <div className="text-white text-xs font-bold">{canal?.nome || canal?.numero_canal || "--"}</div>
+              <div className="text-white text-xs font-bold">{canal?.name || canal?.numero_canal || "--"}</div>
               <button onClick={handlePlayCanal} className="mt-1 transition-colors" title={playing ? "Pausar" : "Reproduzir"}>
                 {playing ? <Pause size={18} color="#e60000" /> : <Play size={18} color="#e60000" fill="#e60000" />}
               </button>
