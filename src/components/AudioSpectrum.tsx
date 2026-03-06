@@ -7,6 +7,7 @@ interface AudioSpectrumProps {
 export default function AudioSpectrum({ audioElement }: AudioSpectrumProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rafRef = useRef<number>(0);
+  const peaksRef = useRef<number[]>([]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -15,23 +16,26 @@ export default function AudioSpectrum({ audioElement }: AudioSpectrumProps) {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const bufferLength = 64;
+    const bufferLength = 32;
     const barOffsets = Array.from({ length: bufferLength }, () => Math.random() * Math.PI * 2);
     const barSpeeds = Array.from({ length: bufferLength }, () => 0.7 + Math.random() * 1.8);
+
+    if (peaksRef.current.length !== bufferLength) {
+      peaksRef.current = new Array(bufferLength).fill(0);
+    }
 
     const draw = () => {
       rafRef.current = requestAnimationFrame(draw);
 
       const w = canvas.width;
       const h = canvas.height;
-      const centerY = h / 2;
       const t = performance.now() / 280;
       const active = !audioElement.paused;
 
-      ctx.fillStyle = "rgba(0, 0, 0, 0.35)";
+      ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
       ctx.fillRect(0, 0, w, h);
 
-      const barWidth = w / bufferLength;
+      const barWidth = (w / bufferLength) * 0.8;
 
       for (let i = 0; i < bufferLength; i++) {
         const off = barOffsets[i];
@@ -43,20 +47,26 @@ export default function AudioSpectrum({ audioElement }: AudioSpectrumProps) {
         const combined = w1 * 0.35 + w2 * 0.3 + w3 * 0.2 + spike * 0.15;
         const bassBoost = i < bufferLength * 0.3 ? 1.3 : i < bufferLength * 0.6 ? 1.0 : 0.7;
 
-        const intensity = active ? 0.8 : 0.08;
-        const val = Math.min(1, combined * bassBoost * intensity);
-        const barHeight = val * (h / 2) * 0.85;
+        const intensity = active ? 0.85 : 0.08;
+        const barHeight = Math.min(1, combined * bassBoost * intensity) * h * 0.85;
 
-        const x = i * barWidth;
+        // Peak logic
+        if (barHeight > peaksRef.current[i]) {
+          peaksRef.current[i] = barHeight;
+        } else {
+          peaksRef.current[i] -= 1.2;
+          if (peaksRef.current[i] < 0) peaksRef.current[i] = 0;
+        }
 
-        // Red gradient per bar
-        const r = 211 + Math.round(val * 44);
-        const g = 7 + Math.round(val * 23);
-        const b = 7 + Math.round(val * 53);
-        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${0.6 + val * 0.4})`;
+        const x = i * (w / bufferLength);
 
-        // Draw symmetrically from center
-        ctx.fillRect(x + 1, centerY - barHeight, barWidth - 2, barHeight * 2);
+        // Main bar (red)
+        ctx.fillStyle = `rgba(211, 7, 7, ${0.7 + (barHeight / h) * 0.3})`;
+        ctx.fillRect(x, h - barHeight, barWidth, barHeight);
+
+        // Peak marker (yellow)
+        ctx.fillStyle = "rgba(254, 240, 138, 0.9)";
+        ctx.fillRect(x, h - peaksRef.current[i] - 4, barWidth, 3);
       }
     };
 
