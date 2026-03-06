@@ -48,13 +48,14 @@ interface SelectedCotacao {
 
 const DEFAULT_PORTALS: Portal[] = [
   { name: "G1", rssUrl: "https://g1.globo.com/rss/g1/" },
+  { name: "G1 Goiás", rssUrl: "https://g1.globo.com/rss/g1/goias/" },
   { name: "UOL", rssUrl: "https://rss.uol.com.br/feed/noticias.xml" },
   { name: "GloboNews", rssUrl: "https://g1.globo.com/rss/g1/globonews/" },
   { name: "Folha de S.Paulo", rssUrl: "https://feeds.folha.uol.com.br/emcimadahora/rss091.xml" },
-  { name: "CNN Brasil", rssUrl: "https://www.cnnbrasil.com.br/feed/" },
-  { name: "R7", rssUrl: "https://noticias.r7.com/feed.xml" },
-  { name: "Estadão", rssUrl: "https://rss.estadao.com.br/ultimas" },
-  { name: "Terra", rssUrl: "https://www.terra.com.br/rss/controller.htm?path=/noticias/rss" },
+  { name: "CNN Brasil", rssUrl: "https://www.cnnbrasil.com.br/rss/noticias/" },
+  { name: "R7", rssUrl: "https://noticias.r7.com/feed/" },
+  { name: "Estadão", rssUrl: "https://www.estadao.com.br/pf/rss/ultimas.xml" },
+  { name: "Terra", rssUrl: "https://www.terra.com.br/rss/noticias/" },
 ];
 
 const PROXY = "https://api.allorigins.win/raw?url=";
@@ -507,7 +508,7 @@ export default function NoticiasPanel() {
           {/* Cotações marquee */}
           <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)", width: (jornalConfig || wizardOpen) ? "100%" : "50%" }}>
             <div className="px-3 py-2 font-bold text-xs tracking-wide text-white rounded-t-xl flex items-center justify-between" style={{ backgroundColor: "#0d0446" }}>
-              <span>💹 Cotações - Bolsas e Moedas</span>
+              <span style={{ color: "#ffffff" }}>💹 Cotações - Bolsas e Moedas</span>
               <button onClick={() => toggleBox('cotacoes')} className="p-0.5 rounded hover:bg-white/20 transition-colors">
                 {collapsedBoxes['cotacoes'] ? <ChevronDown size={12} /> : <ChevronUp size={12} />}
               </button>
@@ -562,7 +563,7 @@ export default function NoticiasPanel() {
               <div className="px-3 py-2 font-bold text-xs tracking-wide text-white rounded-t-xl flex items-center justify-between cursor-grab" style={{ backgroundColor: "#0d0446" }}>
                 <span className="flex items-center gap-1.5">
                   <GripVertical size={12} className="opacity-60" />
-                  📊 Bloco de Economia
+                  <span style={{ color: "#ffffff" }}>📊 Bloco de Economia</span>
                 </span>
                 <button onClick={() => toggleBox('blocoEconomia')} className="p-0.5 rounded hover:bg-white/20 transition-colors">
                   {collapsedBoxes['blocoEconomia'] ? <ChevronDown size={12} /> : <ChevronUp size={12} />}
@@ -593,7 +594,7 @@ export default function NoticiasPanel() {
           {/* News Portals Accordion */}
           <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)", width: (jornalConfig || wizardOpen) ? "100%" : "50%" }}>
             <div className="px-3 py-2 font-bold text-xs tracking-wide text-white rounded-t-xl flex items-center justify-between" style={{ backgroundColor: "#0d0446" }}>
-              <span>📰 Portais de Notícias</span>
+              <span style={{ color: "#ffffff" }}>📰 Portais de Notícias</span>
               <button onClick={() => toggleBox('portais')} className="p-0.5 rounded hover:bg-white/20 transition-colors">
                 {collapsedBoxes['portais'] ? <ChevronDown size={12} /> : <ChevronUp size={12} />}
               </button>
@@ -655,7 +656,7 @@ export default function NoticiasPanel() {
           {customSites.length > 0 && (
             <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)", width: (jornalConfig || wizardOpen) ? "100%" : "50%" }}>
               <div className="px-3 py-2 font-bold text-xs tracking-wide text-white rounded-t-xl flex items-center justify-between" style={{ backgroundColor: "#0d0446" }}>
-                <span>🌐 Sites Adicionados</span>
+                <span style={{ color: "#ffffff" }}>🌐 Sites Adicionados</span>
                 <button onClick={() => toggleBox('sitesAdicionados')} className="p-0.5 rounded hover:bg-white/20 transition-colors">
                   {collapsedBoxes['sitesAdicionados'] ? <ChevronDown size={12} /> : <ChevronUp size={12} />}
                 </button>
@@ -722,7 +723,7 @@ export default function NoticiasPanel() {
           {noticiasAvulsas.length > 0 && (
             <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)", width: (jornalConfig || wizardOpen) ? "100%" : "50%" }}>
               <div className="px-3 py-2 font-bold text-xs tracking-wide text-white rounded-t-xl flex items-center justify-between" style={{ backgroundColor: "#0d0446" }}>
-                <span>📌 Notícia Avulsa</span>
+                <span style={{ color: "#ffffff" }}>📌 Notícia Avulsa</span>
                 <button onClick={() => toggleBox('noticiaAvulsa')} className="p-0.5 rounded hover:bg-white/20 transition-colors">
                   {collapsedBoxes['noticiaAvulsa'] ? <ChevronDown size={12} /> : <ChevronUp size={12} />}
                 </button>
