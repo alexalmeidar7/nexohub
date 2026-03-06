@@ -103,6 +103,7 @@ const pageTitle: Record<Page, string> = {
   logos: "Comercial — Logos Patrocinadores",
   shopping: "Comercial — Shopping",
   preroll: "Comercial — Pré-Roll",
+  cortevideo: "Ferramentas — Cortes de Vídeo",
 };
 
 interface DashboardProps {
