@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Loader2, Trash2, Pencil, Plus, Package } from "lucide-react";
+import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import { toast } from "@/components/ui/use-toast";
 
 interface ShoppingProduct {
@@ -126,7 +127,7 @@ export default function ShoppingPage() {
     loadData();
   };
 
-  if (loading) return <div className="flex justify-center py-16"><Loader2 className="animate-spin" size={32} style={{ color: "#2dbef3" }} /></div>;
+  if (loading) return <ModulePageSkeleton />;
 
   const inputStyle: React.CSSProperties = {
     backgroundColor: "#ffffff", border: "1px solid #0d0446", color: "#0d0446", borderRadius: "20px",

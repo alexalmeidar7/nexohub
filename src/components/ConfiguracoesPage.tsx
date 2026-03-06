@@ -3,6 +3,7 @@ import { Save, Loader2, ChevronDown, ChevronUp, Plus, Trash2, Upload, Pencil } f
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 
 export interface EmpresaConfig {
   nome: string;
@@ -205,7 +206,7 @@ export default function ConfiguracoesPage() {
     </div>
   );
 
-  if (loading) return <div className="flex items-center gap-2 text-muted-foreground"><Loader2 size={16} className="animate-spin" /> Carregando...</div>;
+  if (loading) return <ModulePageSkeleton />;
 
   const typeLabels: Record<string, string> = { audio_live: "Áudio ao vivo", video: "Vídeo ao vivo", youtube: "Vídeo do YouTube" };
 

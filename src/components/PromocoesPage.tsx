@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Trash2, Upload, ImageIcon, Pencil, X } from "lucide-react";
+import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import { useToast } from "@/hooks/use-toast";
 
 interface Promocao {
@@ -156,12 +157,7 @@ export default function PromocoesPage() {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center gap-2 text-muted-foreground">
-        <Loader2 className="animate-spin" size={18} />
-        <span>Carregando...</span>
-      </div>
-    );
+    return <ModulePageSkeleton />;
   }
 
   return (

@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Trash2, Upload, ImageIcon, Pencil, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 
 interface Testemunhal {
   id: string;
@@ -158,12 +159,7 @@ export default function TestemunhaisPage() {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center gap-2 text-muted-foreground">
-        <Loader2 className="animate-spin" size={18} />
-        <span>Carregando...</span>
-      </div>
-    );
+    return <ModulePageSkeleton />;
   }
 
   return (
