@@ -8,6 +8,7 @@ interface AudioDualCardProps {
   musicArtist?: string | null;
   musicCover?: string | null;
   channelLogo?: string | null;
+  channelThumb?: string | null;
   liked?: boolean;
   onToggleLike?: () => void;
 }
@@ -20,15 +21,25 @@ export default function AudioDualCard({
   musicArtist,
   musicCover,
   channelLogo,
+  channelThumb,
   liked,
   onToggleLike,
 }: AudioDualCardProps) {
   return (
-    <div className="absolute inset-0 z-10 flex items-center justify-center"
-      style={{
-        background: "linear-gradient(135deg, hsl(0 0% 0%) 0%, hsl(0 70% 20%) 100%)",
-      }}
-    >
+    <div className="absolute inset-0 z-10 flex items-center justify-center overflow-hidden">
+      {/* Background — channel thumb, fixed and covering */}
+      {channelThumb && (
+        <img
+          src={channelThumb}
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover"
+          style={{ filter: "brightness(0.3) blur(2px)" }}
+        />
+      )}
+      {/* Fallback gradient when no thumb */}
+      {!channelThumb && (
+        <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, hsl(0 0% 0%) 0%, hsl(0 70% 20%) 100%)" }} />
+      )}
       {/* Wrapper with relative positioning so presenter sits behind music card */}
       <div className="relative w-[90vw] max-w-[900px]" style={{ minHeight: "420px" }}>
 
