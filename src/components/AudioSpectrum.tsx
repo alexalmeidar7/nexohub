@@ -92,7 +92,7 @@ export default function AudioSpectrum({ audioElement, barColor }: AudioSpectrumP
   return (
     <div
       className="absolute left-1/2 -translate-x-1/2 z-[1] pointer-events-none"
-      style={{ bottom: "160px", height: "100px", width: "100%", maxWidth: "800px" }}
+      style={{ bottom: 0, top: 0, width: "100%", maxWidth: "800px" }}
     >
       <canvas ref={canvasRef} className="w-full h-full" />
     </div>
