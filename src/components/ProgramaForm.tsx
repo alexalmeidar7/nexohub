@@ -760,9 +760,35 @@ export default function ProgramaForm() {
 
       {/* Grade de Programação */}
       {loadingData ? (
-        <div className="flex items-center gap-2 py-8 justify-center">
-          <Loader2 size={20} className="animate-spin" style={{ color: "#0d0446" }} />
-          <span className="text-sm" style={{ color: "rgba(13,4,70,0.5)" }}>Carregando grade de programação...</span>
+        <div className="animate-pulse space-y-3">
+          <div className="flex items-center justify-between mb-4">
+            <div className="h-5 w-48 rounded bg-[#0d0446]/10" />
+            <div className="h-7 w-48 rounded-full bg-[#0d0446]/10" />
+          </div>
+          <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(13,4,70,0.1)" }}>
+            <table className="w-full">
+              <thead>
+                <tr style={{ backgroundColor: "rgba(13,4,70,0.05)" }}>
+                  <th className="px-2 py-2 w-20"><div className="h-3 w-12 rounded bg-[#0d0446]/10" /></th>
+                  {Array.from({ length: 7 }).map((_, i) => (
+                    <th key={i} className="px-2 py-2 text-center"><div className="h-3 w-8 mx-auto rounded bg-[#0d0446]/10" /></th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {Array.from({ length: 10 }).map((_, row) => (
+                  <tr key={row}>
+                    <td className="px-2 py-1.5"><div className="h-2.5 w-10 rounded bg-[#0d0446]/5" /></td>
+                    {Array.from({ length: 7 }).map((_, col) => (
+                      <td key={col} className="px-1 py-1">
+                        <div className="h-6 rounded" style={{ backgroundColor: `rgba(13,4,70,${Math.random() * 0.08 + 0.02})` }} />
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       ) : programas.length > 0 && (
         <div>
@@ -853,9 +879,23 @@ export default function ProgramaForm() {
       )}
 
       {loadingData ? (
-        <div className="flex items-center gap-2 py-8 justify-center">
-          <Loader2 size={20} className="animate-spin" style={{ color: "#0d0446" }} />
-          <span className="text-sm" style={{ color: "rgba(13,4,70,0.5)" }}>Carregando programas cadastrados...</span>
+        <div className="animate-pulse space-y-3">
+          <div className="h-5 w-52 rounded bg-[#0d0446]/10 mb-4" />
+          <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(13,4,70,0.1)" }}>
+            <div className="h-10 w-full" style={{ backgroundColor: "rgba(13,4,70,0.08)" }} />
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-4 px-4 py-3" style={{ borderBottom: "1px solid rgba(13,4,70,0.05)" }}>
+                <div className="h-3 w-32 rounded bg-[#0d0446]/8" />
+                <div className="h-3 w-24 rounded bg-[#0d0446]/5" />
+                <div className="h-3 w-20 rounded bg-[#0d0446]/5" />
+                <div className="h-3 w-28 rounded bg-[#0d0446]/5" />
+                <div className="ml-auto flex gap-2">
+                  <div className="h-6 w-6 rounded bg-[#0d0446]/5" />
+                  <div className="h-6 w-6 rounded bg-[#0d0446]/5" />
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       ) : programas.length > 0 && (
         <div>

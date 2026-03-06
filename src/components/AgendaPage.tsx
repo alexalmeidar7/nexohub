@@ -92,6 +92,7 @@ export default function AgendaPage() {
     { nome: "", instagram: "" },
   ]);
 
+  const [loadingData, setLoadingData] = useState(true);
   const estudios = Array.from(new Set(programas.map(p => p.estudio).filter(Boolean)));
 
   const fetchProgramas = useCallback(async () => {
@@ -137,7 +138,12 @@ export default function AgendaPage() {
   }, [user]);
 
   useEffect(() => {
-    fetchProgramas();
+    const loadAll = async () => {
+      setLoadingData(true);
+      await Promise.all([fetchProgramas(), fetchEventos()]);
+      setLoadingData(false);
+    };
+    loadAll();
     fetchEventos();
   }, [fetchProgramas, fetchEventos]);
 
@@ -387,6 +393,45 @@ export default function AgendaPage() {
       )}
     </div>
   );
+
+  if (loadingData) {
+    return (
+      <div className="animate-pulse space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="h-5 w-52 rounded bg-[#0d0446]/10" />
+          <div className="h-8 w-32 rounded-full bg-[#0d0446]/10" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] gap-6">
+          {/* Calendar skeleton */}
+          <div className="space-y-2">
+            <div className="rounded-xl p-4" style={{ backgroundColor: "rgba(13,4,70,0.04)", border: "1px solid rgba(13,4,70,0.08)" }}>
+              <div className="h-4 w-24 mx-auto rounded bg-[#0d0446]/10 mb-3" />
+              <div className="grid grid-cols-7 gap-1">
+                {Array.from({ length: 7 }).map((_, i) => (
+                  <div key={`h-${i}`} className="h-3 w-full rounded bg-[#0d0446]/8" />
+                ))}
+                {Array.from({ length: 35 }).map((_, i) => (
+                  <div key={i} className="aspect-square rounded bg-[#0d0446]/5" />
+                ))}
+              </div>
+            </div>
+          </div>
+          {/* Events skeleton */}
+          <div className="space-y-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="rounded-xl p-4" style={{ backgroundColor: "rgba(13,4,70,0.04)", border: "1px solid rgba(13,4,70,0.08)" }}>
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="h-4 w-32 rounded bg-[#0d0446]/10" />
+                  <div className="h-3 w-20 rounded-full bg-[#0d0446]/5" />
+                </div>
+                <div className="h-3 w-48 rounded bg-[#0d0446]/5" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="animate-fade-in space-y-6">

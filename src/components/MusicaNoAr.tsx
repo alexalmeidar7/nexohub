@@ -244,6 +244,31 @@ export default function MusicaNoAr() {
   const displayArtista = useFallback ? "no ar agora" : (music?.artista || "Intérprete");
   const displayCover = useFallback ? presenterFallback!.foto : (music?.capa || "");
 
+  if (!music && !presenterFallback) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[500px] animate-pulse">
+        <div className="p-8 rounded-2xl shadow-lg w-full max-w-md" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)" }}>
+          <div className="mb-4 space-y-1.5">
+            <div className="h-2.5 w-20 rounded bg-[#0d0446]/8" />
+            <div className="h-7 w-full rounded-full bg-[#0d0446]/5" />
+          </div>
+          <div className="aspect-square mb-8 rounded-2xl bg-[#0d0446]/5" />
+          <div className="space-y-3 flex flex-col items-center mb-4">
+            <div className="h-6 w-48 rounded bg-[#0d0446]/10" />
+            <div className="h-4 w-32 rounded bg-[#2dbef3]/20" />
+          </div>
+          <div className="space-y-2 mb-6">
+            <div className="h-1.5 w-full rounded-full bg-[#0d0446]/5" />
+            <div className="flex justify-between">
+              <div className="h-2.5 w-10 rounded bg-[#0d0446]/5" />
+              <div className="h-2.5 w-10 rounded bg-[#0d0446]/5" />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col items-center justify-center min-h-[500px] animate-fade-in">
       <div className="p-8 rounded-2xl shadow-lg w-full max-w-md" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)" }}>
