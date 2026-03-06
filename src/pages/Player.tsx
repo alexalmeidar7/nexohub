@@ -681,9 +681,9 @@ export default function PlayerPage() {
       finally { inFlight = false; }
     };
 
-    const initialDelay = setTimeout(fetchAndSync, 800);
+    fetchAndSync(); // immediate first fetch
     const interval = setInterval(fetchAndSync, 3000);
-    return () => { cancelled = true; clearTimeout(initialDelay); clearInterval(interval); };
+    return () => { cancelled = true; clearInterval(interval); };
   }, [user]);
 
   // Play stream
