@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Pencil, Save, X } from "lucide-react";
+import { Pencil, Save, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AdminLayout from "./AdminLayout";
+import AdminSkeleton from "@/components/skeletons/AdminSkeleton";
 
 interface ModuleRow {
   id: string;
