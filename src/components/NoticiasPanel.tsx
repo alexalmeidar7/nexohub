@@ -790,13 +790,13 @@ export default function NoticiasPanel() {
                     >
                       <GripVertical size={10} className="shrink-0 opacity-20" />
                       <span className="flex-1 line-clamp-1" style={{ color: "#0d0446" }}>{item.title}</span>
-                      <a href={item.link} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}
+                      <button onClick={(e) => { e.stopPropagation(); setReadingPopup(item); }}
                         className="shrink-0 p-0.5 rounded hover:bg-blue-50 transition-opacity" title="Ler notícia">
                         <BookOpen size={12} style={{ color: "#2ec1f7" }} />
-                      </a>
+                      </button>
                       {item.thumbnail && (
                         <div className="shrink-0 relative"
-                          onMouseEnter={(e) => handleImageHover(e, item.thumbnail || "")}
+                          onMouseEnter={(ev) => handleImageHover(ev, item.thumbnail || "")}
                           onMouseLeave={() => setHoveredImage(null)}>
                           <ImageIcon size={12} style={{ color: "rgba(13,4,70,0.3)" }} className="cursor-pointer hover:opacity-70" />
                         </div>
