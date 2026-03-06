@@ -108,20 +108,35 @@ export default function AudioDualCard({
           }}
         >
           {isSemTitulo ? (
-            /* "Sem título" state: dark red bg + audio spectrum */
-            <div className="absolute inset-0 flex items-center justify-center rounded-3xl overflow-hidden">
+            /* "Sem título" state: dark red bg + logo + audio spectrum */
+            <div className="absolute inset-0 flex flex-col items-center justify-center rounded-3xl overflow-hidden">
+              {/* Subtle radial glow */}
+              <div className="absolute inset-0" style={{ background: "radial-gradient(circle at center, hsla(0,70%,20%,0.4) 0%, transparent 70%)" }} />
+
+              {/* Channel logo centered */}
               {channelLogo && (
                 <img
                   src={channelLogo}
                   alt="Logo"
-                  className="absolute w-28 h-28 object-contain opacity-20 z-[1]"
+                  className="w-32 h-32 object-contain opacity-25 z-[1] animate-fade-in"
+                  style={{ animationDuration: "1s" }}
                 />
               )}
+
+              {/* Spectrum fills bottom half */}
               <Suspense fallback={null}>
-                <div className="absolute inset-0 z-[2]" style={{ filter: "hue-rotate(0deg)" }}>
-                  <AudioSpectrum audioElement={audioElement ?? null} barColor="#a10a0b" />
+                <div className="absolute inset-x-0 bottom-0 z-[2]" style={{ height: "55%" }}>
+                  <div className="relative w-full h-full">
+                    <AudioSpectrum audioElement={audioElement ?? null} barColor="#a10a0b" />
+                  </div>
                 </div>
               </Suspense>
+
+              {/* "NO AR" subtle label */}
+              <div className="absolute bottom-4 left-5 z-[3] flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: "#a10a0b" }} />
+                <span className="text-white/30 text-xs font-semibold tracking-widest uppercase">no ar</span>
+              </div>
             </div>
           ) : (
             <>
