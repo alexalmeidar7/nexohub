@@ -1162,6 +1162,21 @@ export default function PlayerPage() {
     return () => clearTimeout(hideTimeout.current);
   }, [isAudio, currentIndex]);
 
+  // Prevent tab switch from destroying the stream — keep playing in background
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        // Resume playback if it was paused by the browser
+        const media = isAudio ? audioRef.current : videoRef.current;
+        if (media && media.paused && playing) {
+          media.play().catch(() => {});
+        }
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => document.removeEventListener("visibilitychange", handleVisibility);
+  }, [isAudio, playing]);
+
   // Cleanup on unmount
   useEffect(() => { return () => { if (hlsRef.current) hlsRef.current.destroy(); }; }, []);
 
