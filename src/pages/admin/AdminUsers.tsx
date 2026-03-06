@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, UserPlus } from "lucide-react";
-import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -12,13 +11,8 @@ interface ClientRow {
   user_id: string;
   nome: string;
   logo: string;
-  endereco: string;
-  telefone_comercial: string;
-  telefone_participacao: string;
-  site: string;
-  instagram: string;
-  facebook: string;
-  youtube: string;
+  ativo: boolean;
+  plano: string;
   modules: Record<string, boolean>;
   updated_at: string;
 }
@@ -42,13 +36,11 @@ function AdminUsersContent() {
   const [newNome, setNewNome] = useState("");
   const [creating, setCreating] = useState(false);
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  useEffect(() => { loadData(); }, []);
 
   const loadData = async () => {
     const [{ data: empresas }, { data: mods }, { data: clientMods }] = await Promise.all([
-      supabase.from("empresa_config").select("user_id, nome, logo, endereco, telefone_comercial, telefone_participacao, site, instagram, facebook, youtube, updated_at"),
+      supabase.from("empresa_config").select("user_id, nome, logo, ativo, plano, updated_at"),
       supabase.from("available_modules").select("key, name, icon"),
       supabase.from("client_modules").select("user_id, module_key, enabled"),
     ]);
@@ -66,21 +58,14 @@ function AdminUsersContent() {
         user_id: e.user_id,
         nome: e.nome || "Sem nome",
         logo: e.logo || "",
-        endereco: e.endereco || "",
-        telefone_comercial: e.telefone_comercial || "",
-        telefone_participacao: e.telefone_participacao || "",
-        site: e.site || "",
-        instagram: e.instagram || "",
-        facebook: e.facebook || "",
-        youtube: e.youtube || "",
+        ativo: e.ativo ?? true,
+        plano: e.plano || "basic",
         modules: moduleMap,
         updated_at: e.updated_at || "",
       };
     });
 
-    // Sort newest first
     clientList.sort((a: ClientRow, b: ClientRow) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
-
     setClients(clientList);
     setLoading(false);
   };
@@ -95,9 +80,7 @@ function AdminUsersContent() {
       toast({ title: "Erro ao atualizar módulo", description: error.message, variant: "destructive" });
     } else {
       setClients((prev) =>
-        prev.map((c) =>
-          c.user_id === userId ? { ...c, modules: { ...c.modules, [moduleKey]: enabled } } : c
-        )
+        prev.map((c) => c.user_id === userId ? { ...c, modules: { ...c.modules, [moduleKey]: enabled } } : c)
       );
     }
     setSaving(null);
@@ -111,20 +94,13 @@ function AdminUsersContent() {
     setCreating(true);
     try {
       const res = await supabase.functions.invoke("create-user", {
-        body: { email: newEmail, password: newPassword, nome: newNome },
+        body: { action: "create", email: newEmail, password: newPassword, nome: newNome },
       });
-
       if (res.error || res.data?.error) {
-        toast({
-          title: "Erro ao criar usuário",
-          description: res.data?.error || res.error?.message || "Erro desconhecido",
-          variant: "destructive",
-        });
+        toast({ title: "Erro ao criar usuário", description: res.data?.error || res.error?.message, variant: "destructive" });
       } else {
         toast({ title: "Usuário criado com sucesso!" });
-        setNewEmail("");
-        setNewPassword("");
-        setNewNome("");
+        setNewEmail(""); setNewPassword(""); setNewNome("");
         setShowNewUser(false);
         loadData();
       }
@@ -144,12 +120,8 @@ function AdminUsersContent() {
   }
 
   const inputStyle: React.CSSProperties = {
-    fontSize: "12px",
-    color: "#0d0446",
-    border: "2px solid #0d379a",
-    borderRadius: "20px",
-    backgroundColor: "#fff",
-    padding: "8px 16px",
+    fontSize: "12px", color: "#0d0446", border: "2px solid #0d379a",
+    borderRadius: "20px", backgroundColor: "#fff", padding: "8px 16px",
   };
 
   return (
@@ -160,21 +132,9 @@ function AdminUsersContent() {
           <DialogTrigger asChild>
             <button
               className="flex items-center gap-2 px-5 py-2 font-medium transition-all duration-200"
-              style={{
-                fontSize: "12px",
-                backgroundColor: "#2ec0f6",
-                color: "#ffffff",
-                border: "2px solid #2ec0f6",
-                borderRadius: "20px",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = "transparent";
-                e.currentTarget.style.color = "#2ec0f6";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "#2ec0f6";
-                e.currentTarget.style.color = "#ffffff";
-              }}
+              style={{ fontSize: "12px", backgroundColor: "#2ec0f6", color: "#ffffff", border: "2px solid #2ec0f6", borderRadius: "20px" }}
+              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = "#2ec0f6"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "#2ec0f6"; e.currentTarget.style.color = "#ffffff"; }}
             >
               <UserPlus size={14} /> Novo Usuário
             </button>

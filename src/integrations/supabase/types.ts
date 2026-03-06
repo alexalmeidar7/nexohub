@@ -301,6 +301,7 @@ export type Database = {
       }
       empresa_config: {
         Row: {
+          ativo: boolean
           background_url: string | null
           endereco: string | null
           facebook: string | null
@@ -308,6 +309,7 @@ export type Database = {
           instagram: string | null
           logo: string | null
           nome: string | null
+          plano: string
           site: string | null
           telefone_comercial: string | null
           telefone_participacao: string | null
@@ -316,6 +318,7 @@ export type Database = {
           youtube: string | null
         }
         Insert: {
+          ativo?: boolean
           background_url?: string | null
           endereco?: string | null
           facebook?: string | null
@@ -323,6 +326,7 @@ export type Database = {
           instagram?: string | null
           logo?: string | null
           nome?: string | null
+          plano?: string
           site?: string | null
           telefone_comercial?: string | null
           telefone_participacao?: string | null
@@ -331,6 +335,7 @@ export type Database = {
           youtube?: string | null
         }
         Update: {
+          ativo?: boolean
           background_url?: string | null
           endereco?: string | null
           facebook?: string | null
@@ -338,6 +343,7 @@ export type Database = {
           instagram?: string | null
           logo?: string | null
           nome?: string | null
+          plano?: string
           site?: string | null
           telefone_comercial?: string | null
           telefone_participacao?: string | null
