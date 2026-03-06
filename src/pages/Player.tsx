@@ -1442,6 +1442,7 @@ export default function PlayerPage() {
             title={musicData?.titulo}
             audioElement={audioRef.current}
             visible={karaokeEnabled}
+            duration={musicData?.duracao}
           />
         </Suspense>
       )}
