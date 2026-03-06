@@ -1,0 +1,1 @@
+ALTER TABLE public.planos ADD COLUMN price numeric NOT NULL DEFAULT 0;
