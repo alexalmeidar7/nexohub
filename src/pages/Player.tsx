@@ -553,7 +553,7 @@ export default function PlayerPage() {
 
     fetchAll();
     return () => { cancelled = true; };
-  }, [user, authLoading]);
+  }, [user, authLoading, isPublicMode, userSlug]);
 
   // Refresh shopping products periodically
   useEffect(() => {
