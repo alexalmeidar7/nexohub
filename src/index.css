@@ -99,15 +99,19 @@
   }
 }
 
-@keyframes slideOutFromBehind {
-  0% { opacity: 0; transform: translateX(80%); }
-  30% { opacity: 0.5; }
-  100% { opacity: 1; transform: translateX(0); }
+/* Cover card: fade-in center (0-1s), hold (1-3s), slide right (3-3.5s) */
+@keyframes coverFadeAndSlide {
+  0%   { opacity: 0; transform: translateX(0) scale(0.95); }
+  20%  { opacity: 1; transform: translateX(0) scale(1); }
+  80%  { opacity: 1; transform: translateX(0) scale(1); }
+  100% { opacity: 1; transform: translateX(22%); }
 }
 
-@keyframes coverSlideIn {
-  0% { opacity: 0; transform: translateX(40px); }
-  100% { opacity: 1; transform: translateX(0); }
+/* Presenter: starts behind cover center, slides left to final position */
+@keyframes presenterReveal {
+  0%   { opacity: 0; left: 50%; transform: translateX(-50%); }
+  30%  { opacity: 1; }
+  100% { opacity: 1; left: 0%; transform: translateX(0); }
 }
 
 @keyframes shrinkBar {
