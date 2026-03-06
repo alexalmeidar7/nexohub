@@ -24,6 +24,7 @@ import {
   Heart,
   Home,
   ShoppingCart,
+  Settings2,
 } from "lucide-react";
 
 const PlayerChat = lazy(() => import("@/components/PlayerChat"));
