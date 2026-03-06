@@ -23,8 +23,10 @@ interface MessageRow {
 
 function AdminMessagesContent() {
   const { user } = useAuth();
+  const location = useLocation();
+  const navState = location.state as { recipientId?: string; recipientNome?: string } | null;
   const [clients, setClients] = useState<ClientOption[]>([]);
-  const [recipient, setRecipient] = useState("all");
+  const [recipient, setRecipient] = useState(navState?.recipientId || "all");
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
