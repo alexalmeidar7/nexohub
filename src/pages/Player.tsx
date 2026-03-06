@@ -1520,15 +1520,16 @@ export default function PlayerPage() {
                   {nextProg ? `${nextProg.horario_inicio} - ${nextProg.horario_fim}` : "--:-- - --:--"}
                 </span>
               )}
-            <div className="mt-1">
-              <button onClick={() => setGradeOpen(true)}
-                className="flex items-center gap-1 text-white text-[10px] font-bold uppercase px-3 py-1 rounded-full transition-all"
-                style={{ backgroundColor: "#e60000", border: "1px solid transparent" }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = "#ed0808"; e.currentTarget.style.backgroundColor = "#000"; }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = "transparent"; e.currentTarget.style.backgroundColor = "#e60000"; }}
-              >
-                + Grade
-              </button>
+              <div className="mt-1">
+                <button onClick={() => setGradeOpen(true)}
+                  className="flex items-center gap-1 text-white text-[10px] font-bold uppercase px-3 py-1 rounded-full transition-all"
+                  style={{ backgroundColor: "#e60000", border: "1px solid transparent" }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = "#ed0808"; e.currentTarget.style.backgroundColor = "#000"; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = "transparent"; e.currentTarget.style.backgroundColor = "#e60000"; }}
+                >
+                  + Grade
+                </button>
+              </div>
             </div>
           </div>
         </div>
