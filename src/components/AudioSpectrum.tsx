@@ -24,18 +24,15 @@ export default function AudioSpectrum({ audioElement }: AudioSpectrumProps) {
 
       const w = canvas.width;
       const h = canvas.height;
-      const centerX = w / 2;
       const centerY = h / 2;
-      const baseRadius = Math.min(w, h) * 0.18;
       const t = performance.now() / 280;
       const active = !audioElement.paused;
 
-      // Trail effect
-      ctx.fillStyle = "rgba(0, 0, 0, 0.25)";
+      ctx.fillStyle = "rgba(0, 0, 0, 0.35)";
       ctx.fillRect(0, 0, w, h);
 
-      // Simulated frequency data (math-based, avoids CORS issues)
-      const dataArray = new Float32Array(bufferLength);
+      const barWidth = w / bufferLength;
+
       for (let i = 0; i < bufferLength; i++) {
         const off = barOffsets[i];
         const spd = barSpeeds[i];
@@ -45,34 +42,22 @@ export default function AudioSpectrum({ audioElement }: AudioSpectrumProps) {
         const spike = Math.pow(Math.sin(t * 0.5 + i * 0.08), 8) * 0.4;
         const combined = w1 * 0.35 + w2 * 0.3 + w3 * 0.2 + spike * 0.15;
         const bassBoost = i < bufferLength * 0.3 ? 1.3 : i < bufferLength * 0.6 ? 1.0 : 0.7;
-        dataArray[i] = active ? Math.min(1, combined * bassBoost) : combined * 0.08;
+
+        const intensity = active ? 0.8 : 0.08;
+        const val = Math.min(1, combined * bassBoost * intensity);
+        const barHeight = val * (h / 2) * 0.85;
+
+        const x = i * barWidth;
+
+        // Red gradient per bar
+        const r = 211 + Math.round(val * 44);
+        const g = 7 + Math.round(val * 23);
+        const b = 7 + Math.round(val * 53);
+        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${0.6 + val * 0.4})`;
+
+        // Draw symmetrically from center
+        ctx.fillRect(x + 1, centerY - barHeight, barWidth - 2, barHeight * 2);
       }
-
-      // Draw blob
-      ctx.beginPath();
-      for (let i = 0; i <= bufferLength; i++) {
-        const idx = i % bufferLength;
-        const bump = dataArray[idx] * (active ? 80 : 12);
-        const radius = baseRadius + bump;
-        const rads = (Math.PI * 2 * i) / bufferLength;
-        const x = centerX + Math.cos(rads) * radius;
-        const y = centerY + Math.sin(rads) * radius;
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-      }
-      ctx.closePath();
-
-      // Fill with radio red gradient
-      const grad = ctx.createRadialGradient(centerX, centerY, baseRadius * 0.3, centerX, centerY, baseRadius + 80);
-      grad.addColorStop(0, "rgba(211, 7, 7, 0.9)");
-      grad.addColorStop(0.6, "rgba(230, 30, 30, 0.7)");
-      grad.addColorStop(1, "rgba(255, 60, 60, 0.3)");
-      ctx.fillStyle = grad;
-      ctx.fill();
-
-      ctx.strokeStyle = "rgba(255, 100, 100, 0.5)";
-      ctx.lineWidth = 2;
-      ctx.stroke();
     };
 
     draw();
