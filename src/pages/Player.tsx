@@ -1425,7 +1425,7 @@ export default function PlayerPage() {
           </div>
 
           {/* Controls */}
-          <div className="flex items-center gap-1.5 px-3 border-l border-white/10 shrink-0">
+          <div className="flex items-center gap-2.5 px-3 border-l border-white/10 shrink-0">
             {(isAudio || isVideo) && musicData?.titulo && (
               <div className="relative flex items-center gap-1.5">
                 <button onClick={toggleLike} className={`p-1.5 rounded transition-all ${likeAnimating ? "scale-125" : "scale-100"}`}
