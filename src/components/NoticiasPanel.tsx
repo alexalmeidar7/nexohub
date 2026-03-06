@@ -427,12 +427,19 @@ export default function NoticiasPanel() {
           >
             <Newspaper size={10} /> Montar Jornal
           </button>
-          <button
-            onClick={() => setShowAddSiteInput(prev => !prev)}
+           <button
+            onClick={() => { setShowAddSiteInput(prev => !prev); setShowNoticiaAvulsaInput(false); }}
             className="flex items-center gap-1 px-2.5 py-1 rounded-full font-semibold text-[10px] transition-all"
             style={{ backgroundColor: "#0d0446", color: "#ffffff" }}
           >
             <Plus size={10} /> Adicionar Site
+          </button>
+          <button
+            onClick={() => { setShowNoticiaAvulsaInput(prev => !prev); setShowAddSiteInput(false); }}
+            className="flex items-center gap-1 px-2.5 py-1 rounded-full font-semibold text-[10px] transition-all"
+            style={{ backgroundColor: "#0d0446", color: "#ffffff" }}
+          >
+            <LinkIcon size={10} /> Notícia Avulsa
           </button>
         </div>
         <button onClick={() => { loadAll(); loadCotacoes(); }} disabled={loading}
