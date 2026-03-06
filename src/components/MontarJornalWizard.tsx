@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { ChevronLeft, ChevronRight, Newspaper, Check, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Newspaper, Check, X as XIcon } from "lucide-react";
 
 interface Programa {
   id: string;
@@ -141,7 +141,7 @@ export default function MontarJornalWizard({ open, onOpenChange, programas, onFi
           className="absolute top-3 right-3 rounded-full p-1 hover:opacity-70 transition-opacity"
           style={{ color: "#0d0446" }}
         >
-          <X size={18} />
+          <XIcon size={18} />
         </button>
         <style>{`
           .jornal-wizard-input:focus, .jornal-wizard-input:focus-visible, .jornal-wizard-input:active {
