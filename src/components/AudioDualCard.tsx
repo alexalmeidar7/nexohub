@@ -1,4 +1,7 @@
 import { Heart, Mic } from "lucide-react";
+import { lazy, Suspense, useEffect, useRef } from "react";
+
+const AudioSpectrum = lazy(() => import("@/components/AudioSpectrum"));
 
 interface AudioDualCardProps {
   presenterName?: string | null;
@@ -11,6 +14,7 @@ interface AudioDualCardProps {
   channelThumb?: string | null;
   liked?: boolean;
   onToggleLike?: () => void;
+  audioElement?: HTMLAudioElement | null;
 }
 
 export default function AudioDualCard({
@@ -24,7 +28,10 @@ export default function AudioDualCard({
   channelThumb,
   liked,
   onToggleLike,
+  audioElement,
 }: AudioDualCardProps) {
+  const isSemTitulo = !musicTitle || musicTitle === "Sem título";
+
   return (
     <div className="absolute inset-0 z-10 flex items-center justify-center overflow-hidden" style={{ paddingBottom: "140px" }}>
       {/* Background — channel thumb, fixed and covering */}
@@ -93,74 +100,94 @@ export default function AudioDualCard({
         <div
           className="relative md:w-[55%] w-full rounded-3xl overflow-hidden shadow-2xl"
           style={{
-            backgroundColor: "hsl(0 0% 5%)",
+            backgroundColor: isSemTitulo ? "#880000" : "hsl(0 0% 5%)",
             minHeight: "420px",
             zIndex: 2,
             animation: "coverFadeAndSlide 3.5s cubic-bezier(0.22, 1, 0.36, 1) forwards",
             opacity: 0,
           }}
         >
-          {/* Cover image fills the card with rounded corners */}
-          {musicCover ? (
-            <img
-              key={musicCover}
-              src={musicCover}
-              alt={musicTitle || "Capa"}
-              className="absolute inset-0 w-full h-full object-cover rounded-3xl animate-fade-in"
-              style={{ animationDuration: "0.7s" }}
-            />
-          ) : channelLogo ? (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <img
-                src={channelLogo}
-                alt="Logo"
-                className="w-36 h-36 object-contain opacity-40 animate-fade-in"
-                style={{ animationDuration: "0.7s" }}
-              />
+          {isSemTitulo ? (
+            /* "Sem título" state: dark red bg + audio spectrum */
+            <div className="absolute inset-0 flex items-center justify-center rounded-3xl overflow-hidden">
+              {channelLogo && (
+                <img
+                  src={channelLogo}
+                  alt="Logo"
+                  className="absolute w-28 h-28 object-contain opacity-20 z-[1]"
+                />
+              )}
+              <Suspense fallback={null}>
+                <div className="absolute inset-0 z-[2]" style={{ filter: "hue-rotate(0deg)" }}>
+                  <AudioSpectrum audioElement={audioElement ?? null} barColor="#a10a0b" />
+                </div>
+              </Suspense>
             </div>
           ) : (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-white/20 text-sm font-medium tracking-wide">imagem capa música</span>
-            </div>
-          )}
-
-          {/* Bottom gradient for readability */}
-          <div className="absolute inset-x-0 bottom-0 rounded-b-3xl" style={{ height: "50%", background: "linear-gradient(to top, hsla(0,0%,0%,0.85) 0%, transparent 100%)" }} />
-
-          {/* Footer: heart → title → artist (stacked) */}
-          <div className="absolute bottom-0 left-0 right-0 p-5 z-[3] flex flex-col items-start gap-1 animate-fade-in" style={{ animationDuration: "0.7s" }}>
-            {/* Heart like button */}
-            {onToggleLike && musicTitle && (
-              <button
-                onClick={onToggleLike}
-                className="mb-1 p-1.5 rounded-full transition-all hover:scale-110 active:scale-95"
-                style={{ backgroundColor: "hsla(0, 0%, 100%, 0.15)" }}
-              >
-                <Heart
-                  size={20}
-                  className="transition-colors"
-                  style={{
-                    color: liked ? "hsl(0 80% 50%)" : "white",
-                    fill: liked ? "hsl(0 80% 50%)" : "none",
-                  }}
+            <>
+              {/* Cover image fills the card with rounded corners */}
+              {musicCover ? (
+                <img
+                  key={musicCover}
+                  src={musicCover}
+                  alt={musicTitle || "Capa"}
+                  className="absolute inset-0 w-full h-full object-cover rounded-3xl animate-fade-in"
+                  style={{ animationDuration: "0.7s" }}
                 />
-              </button>
-            )}
+              ) : channelLogo ? (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <img
+                    src={channelLogo}
+                    alt="Logo"
+                    className="w-36 h-36 object-contain opacity-40 animate-fade-in"
+                    style={{ animationDuration: "0.7s" }}
+                  />
+                </div>
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-white/20 text-sm font-medium tracking-wide">imagem capa música</span>
+                </div>
+              )}
 
-            {/* Song title */}
-            {musicTitle && (
-              <span className="text-white font-bold text-lg md:text-xl leading-tight drop-shadow-lg">
-                {musicTitle}
-              </span>
-            )}
+              {/* Bottom gradient for readability */}
+              <div className="absolute inset-x-0 bottom-0 rounded-b-3xl" style={{ height: "50%", background: "linear-gradient(to top, hsla(0,0%,0%,0.85) 0%, transparent 100%)" }} />
 
-            {/* Artist name */}
-            {musicArtist && (
-              <span className="text-white/70 text-sm leading-tight drop-shadow-lg">
-                {musicArtist}
-              </span>
-            )}
-          </div>
+              {/* Footer: heart → title → artist (stacked) */}
+              <div className="absolute bottom-0 left-0 right-0 p-5 z-[3] flex flex-col items-start gap-1 animate-fade-in" style={{ animationDuration: "0.7s" }}>
+                {/* Heart like button */}
+                {onToggleLike && musicTitle && (
+                  <button
+                    onClick={onToggleLike}
+                    className="mb-1 p-1.5 rounded-full transition-all hover:scale-110 active:scale-95"
+                    style={{ backgroundColor: "hsla(0, 0%, 100%, 0.15)" }}
+                  >
+                    <Heart
+                      size={20}
+                      className="transition-colors"
+                      style={{
+                        color: liked ? "hsl(0 80% 50%)" : "white",
+                        fill: liked ? "hsl(0 80% 50%)" : "none",
+                      }}
+                    />
+                  </button>
+                )}
+
+                {/* Song title */}
+                {musicTitle && (
+                  <span className="text-white font-bold text-lg md:text-xl leading-tight drop-shadow-lg">
+                    {musicTitle}
+                  </span>
+                )}
+
+                {/* Artist name */}
+                {musicArtist && (
+                  <span className="text-white/70 text-sm leading-tight drop-shadow-lg">
+                    {musicArtist}
+                  </span>
+                )}
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>
