@@ -1,4 +1,4 @@
-import { Disc3 } from "lucide-react";
+import { Heart } from "lucide-react";
 
 interface AudioDualCardProps {
   presenterName?: string | null;
@@ -8,6 +8,8 @@ interface AudioDualCardProps {
   musicArtist?: string | null;
   musicCover?: string | null;
   channelLogo?: string | null;
+  liked?: boolean;
+  onToggleLike?: () => void;
 }
 
 export default function AudioDualCard({
@@ -18,6 +20,8 @@ export default function AudioDualCard({
   musicArtist,
   musicCover,
   channelLogo,
+  liked,
+  onToggleLike,
 }: AudioDualCardProps) {
   return (
     <div className="absolute inset-0 z-10 flex items-center justify-center"
@@ -28,7 +32,7 @@ export default function AudioDualCard({
       <div className="flex flex-col md:flex-row w-[90vw] max-w-[900px] rounded-3xl overflow-hidden shadow-2xl"
         style={{ minHeight: "420px" }}
       >
-        {/* Left — Presenter */}
+        {/* Left — Presenter (behind music card visually) */}
         <div
           className="relative flex flex-col justify-end md:w-[45%] w-full p-6"
           style={{
@@ -39,10 +43,7 @@ export default function AudioDualCard({
             minHeight: "260px",
           }}
         >
-          {/* Red overlay */}
-          <div className="absolute inset-0" style={{ backgroundColor: "hsla(0, 60%, 22%, 0.55)" }} />
-
-          {/* Center placeholder when no photo */}
+          {/* No overlay — full opacity photo */}
           {!presenterPhoto && (
             <div className="absolute inset-0 flex items-center justify-center z-[1]">
               <span className="text-white/30 text-sm font-medium tracking-wide">foto locutor</span>
@@ -67,55 +68,64 @@ export default function AudioDualCard({
           </div>
         </div>
 
-        {/* Right — Music */}
+        {/* Right — Music (cover fills entire box) */}
         <div
-          className="relative flex flex-col justify-end md:w-[55%] w-full p-6"
-          style={{ backgroundColor: "hsl(0 0% 0%)" }}
+          className="relative flex flex-col justify-end md:w-[55%] w-full overflow-hidden"
+          style={{ backgroundColor: "hsl(0 0% 0%)", minHeight: "260px" }}
         >
-          {/* Center — cover or placeholder */}
-          <div className="flex-1 flex items-center justify-center">
-            {musicCover ? (
-              <img
-                key={musicCover}
-                src={musicCover}
-                alt={musicTitle || "Capa"}
-                className="w-48 h-48 md:w-56 md:h-56 rounded-2xl object-cover shadow-2xl animate-fade-in"
-                style={{ animationDuration: "0.7s" }}
-              />
-            ) : channelLogo ? (
+          {/* Cover image fills entire box */}
+          {musicCover ? (
+            <img
+              key={musicCover}
+              src={musicCover}
+              alt={musicTitle || "Capa"}
+              className="absolute inset-0 w-full h-full object-cover animate-fade-in"
+              style={{ animationDuration: "0.7s" }}
+            />
+          ) : channelLogo ? (
+            <div className="absolute inset-0 flex items-center justify-center">
               <img
                 src={channelLogo}
                 alt="Logo"
                 className="w-36 h-36 object-contain opacity-40 animate-fade-in"
                 style={{ animationDuration: "0.7s" }}
               />
-            ) : (
+            </div>
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center">
               <span className="text-white/20 text-sm font-medium tracking-wide">imagem capa música</span>
-            )}
-          </div>
+            </div>
+          )}
 
-          {/* Footer — stacked labels */}
+          {/* Heart button — bottom-left over the cover */}
+          {onToggleLike && musicTitle && (
+            <button
+              onClick={onToggleLike}
+              className="absolute bottom-16 left-3 z-[5] p-2 rounded-full transition-transform hover:scale-110 active:scale-95"
+              style={{ backgroundColor: "hsla(0, 0%, 0%, 0.5)" }}
+            >
+              <Heart
+                size={22}
+                className={liked ? "text-red-500 fill-red-500" : "text-white"}
+              />
+            </button>
+          )}
+
+          {/* Footer — stacked labels, width adapts to text */}
           {(musicTitle || musicArtist) && (
-            <div className="relative z-[2] mt-4 self-start animate-fade-in" style={{ animationDuration: "0.7s" }}>
+            <div className="relative z-[3] self-start animate-fade-in mb-4 ml-3" style={{ animationDuration: "0.7s" }}>
               <div
-                className="px-4 py-1.5 font-bold text-white text-base md:text-lg leading-tight"
+                className="px-4 py-1.5 font-bold text-white text-base md:text-lg leading-tight inline-block"
                 style={{ backgroundColor: "hsl(0 80% 45%)" }}
               >
                 {musicTitle || "—"}
               </div>
               <div
-                className="px-4 py-1 text-white text-sm leading-tight"
+                className="px-4 py-1 text-white text-sm leading-tight inline-block"
                 style={{ backgroundColor: "hsl(0 60% 25%)" }}
               >
                 {musicArtist || "—"}
               </div>
-            </div>
-          )}
-
-          {/* Spinning disc accent */}
-          {musicTitle && (
-            <div className="absolute top-5 right-5 opacity-20">
-              <Disc3 size={40} className="text-white animate-spin" style={{ animationDuration: "4s" }} />
             </div>
           )}
         </div>
