@@ -45,8 +45,9 @@ export default function AudioDualCard({
 
         {/* Left — Presenter (sits BEHIND the music card) */}
         <div
-          className="absolute left-0 top-0 bottom-0 md:w-[50%] w-full rounded-3xl overflow-hidden shadow-xl animate-fade-in"
+          className="absolute left-0 top-0 bottom-0 md:w-[50%] w-full rounded-3xl overflow-hidden shadow-xl"
           style={{
+            animation: "slideInFromLeft 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards",
             backgroundColor: "hsl(0 60% 22%)",
             backgroundImage: presenterPhoto ? `url(${presenterPhoto})` : undefined,
             backgroundSize: "cover",
