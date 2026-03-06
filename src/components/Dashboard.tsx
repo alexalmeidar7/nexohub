@@ -313,10 +313,14 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   {empresa.nome ? empresa.nome.charAt(0).toUpperCase() : "U"}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-white text-xs font-bold truncate">{empresa.nome || "Empresa"}</p>
-                  {empresa.plano && (
-                    <p className="text-[10px] font-semibold truncate" style={{ color: "#268ffa" }}>{empresa.plano}</p>
-                  )}
+                  <div className="flex items-center gap-2">
+                    <p className="text-white text-xs font-bold truncate">{empresa.nome || "Empresa"}</p>
+                    {empresa.plano && (
+                      <span className="px-2 py-0.5 rounded-full text-[9px] font-semibold flex-shrink-0" style={{ backgroundColor: "#268ffa", color: "#fff" }}>
+                        {empresa.plano}
+                      </span>
+                    )}
+                  </div>
                   <p className="text-white/50 text-[10px] truncate">{user?.email || ""}</p>
                   <button onClick={onLogout} className="text-[10px] underline hover:opacity-70 transition-colors mt-0.5" style={{ color: "#268ffa" }}>
                     sair
