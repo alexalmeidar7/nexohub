@@ -426,6 +426,51 @@ export default function PlayerPage() {
   useEffect(() => {
     let cancelled = false;
 
+    // PUBLIC MODE: fetch via edge function
+    if (isPublicMode) {
+      setLoading(true);
+      setLoadingStatus("Carregando canais...");
+
+      supabase.functions.invoke("public-player-data", { body: { slug: userSlug } })
+        .then(({ data, error }) => {
+          if (cancelled) return;
+          if (error || !data) {
+            setCanais([]);
+            setPrerollDone(true);
+            setLoading(false);
+            return;
+          }
+          setPublicUserId(data.userId);
+          setCanais((data.channels || []) as Canal[]);
+          setProgramas((data.programas || []) as Programa[]);
+          setApresentadores((data.apresentadores || []) as Apresentador[]);
+          setShopProducts(data.shopProducts || []);
+
+          // Handle prerolls
+          const now = new Date();
+          const today = DAY_MAP_FULL[now.getDay()];
+          const todayStr = now.toISOString().slice(0, 10);
+          const prerolls = (data.prerolls || []).filter((p: any) => {
+            if (p.dias_semana && p.dias_semana.length > 0 && !p.dias_semana.includes(today)) return false;
+            if (p.data_inicial && todayStr < p.data_inicial) return false;
+            if (p.data_final && todayStr > p.data_final) return false;
+            return true;
+          });
+          if (prerolls.length > 0 && !prerollDone) {
+            const selected = prerolls[Math.floor(Math.random() * prerolls.length)];
+            setPrerollUrl(selected.video_url);
+            setPrerollLinkUrl(selected.link_url || null);
+            setPrerollMediaType(selected.media_type || "video");
+            setPrerollYoutubeUrl(selected.youtube_url || null);
+          } else {
+            setPrerollDone(true);
+          }
+          setLoading(false);
+        });
+      return () => { cancelled = true; };
+    }
+
+    // AUTHENTICATED MODE (original logic)
     if (authLoading) { setLoadingStatus("Autenticando..."); return; }
     if (!user) { setCanais([]); setLoading(false); return; }
 
