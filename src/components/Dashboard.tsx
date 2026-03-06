@@ -172,6 +172,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     });
   }, [currentPage]);
 
+  if (initialLoading) {
+    return <DashboardSkeleton />;
+  }
+
   return (
     <div className="h-screen flex flex-col animate-fade-in overflow-hidden" style={{
       backgroundColor: "#268ffa",
