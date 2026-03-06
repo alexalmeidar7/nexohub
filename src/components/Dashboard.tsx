@@ -242,13 +242,11 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             {/* Menu items with scroll */}
             <nav className="flex-1 overflow-y-auto px-3 space-y-0.5 sidebar-scroll">
               {sidebarMenu.filter(item => {
-                // Home and items without module mapping always show
-                if (item.label === "home") return true;
+                // Home and cadastros always show
+                if (item.label === "home" || item.label === "cadastros") return true;
                 const modKey = menuToModuleKey[item.label];
                 if (!modKey) return true;
-                // If plan modules loaded, filter by plan
                 if (planModules) return planModules.has(modKey);
-                // Fallback to enabled modules
                 if (enabledModules) return enabledModules.has(modKey);
                 return true;
               }).map(item => {
