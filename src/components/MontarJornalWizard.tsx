@@ -122,7 +122,7 @@ export default function MontarJornalWizard({ open, onOpenChange, programas, onFi
   if (mounting) {
     return (
       <Dialog open={open} onOpenChange={(v) => { if (!v) { reset(); onOpenChange(false); } }}>
-        <DialogContent className="sm:max-w-md" style={{ backgroundColor: "#ffffff", border: "2px solid #2ec1f7" }}>
+        <DialogContent className="sm:max-w-md" style={{ backgroundColor: "#ffffff", border: "none" }}>
           <div className="flex flex-col items-center justify-center py-12 gap-4">
             <div className="animate-spin rounded-full h-12 w-12 border-4 border-t-transparent" style={{ borderColor: "#2ec1f7", borderTopColor: "transparent" }} />
             <p className="text-lg font-bold" style={{ color: "#0d0446" }}>Montando Programa...</p>
