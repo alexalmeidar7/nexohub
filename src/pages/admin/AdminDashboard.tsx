@@ -10,6 +10,7 @@ interface ClientInfo {
   user_id: string;
   nome: string;
   logo: string;
+  plano: string;
 }
 
 function AdminDashboardContent() {
