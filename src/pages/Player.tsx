@@ -679,7 +679,7 @@ export default function PlayerPage() {
     };
 
     fetchAndSync(); // immediate first fetch
-    const interval = setInterval(fetchAndSync, 3000);
+    const interval = setInterval(fetchAndSync, 2000);
     return () => { cancelled = true; clearInterval(interval); };
   }, [user]);
 
