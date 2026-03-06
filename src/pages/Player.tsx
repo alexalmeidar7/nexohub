@@ -954,10 +954,12 @@ export default function PlayerPage() {
     setCurrentIndex(next);
     const c = canais[next];
     if (!c) return;
-    // Stop any playing audio/video when switching channels
+    // Stop any playing audio/video when switching channels — full cleanup
     if (hlsRef.current) { hlsRef.current.destroy(); hlsRef.current = null; }
-    if (audioRef.current) { audioRef.current.pause(); audioRef.current.src = ""; }
-    if (videoRef.current) { videoRef.current.pause(); videoRef.current.src = ""; }
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current.removeAttribute("src"); audioRef.current.load(); }
+    if (videoRef.current) { videoRef.current.pause(); videoRef.current.removeAttribute("src"); videoRef.current.load(); }
+    setHlsLevels([]);
+    setHlsCurrentLevel(-1);
     if (c.type === "youtube") {
       setPlaying(true);
       setBuffering(false);
