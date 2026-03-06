@@ -52,6 +52,7 @@ const DEFAULT_PORTALS: Portal[] = [
 ];
 
 const PROXY = "https://api.allorigins.win/raw?url=";
+const PROXY_FALLBACK = "https://corsproxy.io/?url=";
 
 function decodeHtmlEntities(str: string): string {
   const textarea = document.createElement("textarea");
