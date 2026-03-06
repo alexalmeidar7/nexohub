@@ -507,8 +507,13 @@ export default function NoticiasPanel() {
         <div className="space-y-4" style={{ width: (jornalConfig || wizardOpen) ? "50%" : "100%" }}>
           {/* Cotações marquee - 50% width */}
           <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)", width: (jornalConfig || wizardOpen) ? "100%" : "50%" }}>
-            <div className="px-3 py-2 font-bold text-xs tracking-wide text-white rounded-t-xl" style={{ backgroundColor: "#0d0446" }}>
-              💹 Cotações - Bolsas e Moedas
+            <div className="px-3 py-2 font-bold text-xs tracking-wide text-white rounded-t-xl flex items-center justify-between" style={{ backgroundColor: "#0d0446" }}>
+              <span>💹 Cotações - Bolsas e Moedas</span>
+              <button onClick={() => toggleBox('cotacoes')} className="p-0.5 rounded hover:bg-white/20 transition-colors">
+                {collapsedBoxes['cotacoes'] ? <ChevronDown size={12} /> : <ChevronUp size={12} />}
+              </button>
+            </div>
+            {!collapsedBoxes['cotacoes'] && (
             </div>
             <div className="p-2 overflow-hidden">
               {loadingCotacoes ? (
