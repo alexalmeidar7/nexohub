@@ -717,9 +717,13 @@ export default function NoticiasPanel() {
             </div>
             {!collapsedBoxes['portais'] && (
               loading ? (
-                <div className="p-4 flex items-center gap-2">
-                  <Loader2 size={14} className="animate-spin" style={{ color: "#2ec1f7" }} />
-                  <span className="text-xs" style={{ color: "rgba(13,4,70,0.5)" }}>Carregando notícias...</span>
+                <div className="animate-pulse p-3 space-y-2">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} className="flex items-center gap-2 px-3 py-1.5">
+                      <div className="w-2.5 h-2.5 rounded bg-[#0d0446]/8 shrink-0" />
+                      <div className="h-2.5 rounded bg-[#0d0446]/8" style={{ width: `${50 + Math.random() * 40}%` }} />
+                    </div>
+                  ))}
                 </div>
               ) : (
                 <Accordion type="multiple" className="w-full">
