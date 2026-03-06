@@ -244,11 +244,6 @@ export default function NoticiasPanel() {
     loadDb();
   }, [user]);
 
-  // No longer need portalOrder state/effect - using separate boxes
-
-  const defaultPortalOrder = DEFAULT_PORTALS.map(p => p.name);
-  const customPortalOrder = customSites.map(s => s.name);
-
   const allPortals = [...customSites, ...DEFAULT_PORTALS];
 
   const loadAll = async () => {
