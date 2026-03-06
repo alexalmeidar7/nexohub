@@ -18,8 +18,10 @@ export interface EmpresaConfig {
   youtube: string;
 }
 
-export async function getEmpresaConfig(): Promise<EmpresaConfig> {
-  const { data } = await supabase.from("empresa_config").select("*").maybeSingle();
+export async function getEmpresaConfig(userId?: string): Promise<EmpresaConfig> {
+  let query = supabase.from("empresa_config").select("*");
+  if (userId) query = query.eq("user_id", userId);
+  const { data } = await query.maybeSingle();
   if (!data) return {} as EmpresaConfig;
   return {
     nome: data.nome || "",
