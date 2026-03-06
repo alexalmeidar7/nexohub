@@ -351,7 +351,7 @@ export default function NoticiasPanel() {
   return (
     <div className="animate-fade-in space-y-6">
       <div className="flex items-center justify-between">
-        <h3 className="text-xl font-bold" style={{ color: "#0d0446" }}>Principais Notícias</h3>
+        <h3 className="text-xl font-bold" style={{ color: "#0d0446" }}>Notícias do momento</h3>
         <button onClick={() => { loadAll(); loadCotacoes(); }} disabled={loading}
           className="text-muted-foreground hover:text-primary transition-colors disabled:opacity-50">
           <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
@@ -531,10 +531,13 @@ export default function NoticiasPanel() {
         <p className="text-muted-foreground">Carregando notícias...</p>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-          {orderedPortals.map((portal, idx) => (
+          {orderedPortals.map((portal, idx) => {
+            const isCustom = customSites.some(s => s.name === portal.name);
+            return (
             <div
               key={portal.name}
-              className="bg-muted rounded-xl border border-border overflow-hidden cursor-grab active:cursor-grabbing"
+              className={`rounded-xl border border-border overflow-hidden cursor-grab active:cursor-grabbing ${isCustom ? "" : "bg-muted"}`}
+              style={isCustom ? { backgroundColor: "#0d0446", color: "#ffffff" } : {}}
               draggable
               onDragStart={() => portalDrag.handleDragStart(idx)}
               onDragOver={(e) => portalDrag.handleDragOver(e, idx)}
@@ -555,9 +558,9 @@ export default function NoticiasPanel() {
                 </div>
               </div>
               {expandedPortals[portal.name] && (
-                <ul className="divide-y divide-border">
+                <ul className={`divide-y ${isCustom ? "divide-white/10" : "divide-border"}`}>
                   {(newsByPortal[portal.name] || []).length === 0 ? (
-                    <li className="px-4 py-3 text-sm text-muted-foreground">Sem notícias disponíveis</li>
+                    <li className={`px-4 py-3 text-sm ${isCustom ? "text-white/60" : "text-muted-foreground"}`}>Sem notícias disponíveis</li>
                   ) : (
                     newsByPortal[portal.name].map((news, i) => (
                       <li key={i} className="flex items-center">
@@ -565,12 +568,12 @@ export default function NoticiasPanel() {
                           <img src={news.thumbnail} alt="" className="w-10 h-10 object-cover rounded ml-2 shrink-0" />
                         )}
                         <a href={news.link} target="_blank" rel="noopener noreferrer"
-                          className="flex-1 px-3 py-3 text-sm text-foreground hover:text-primary hover:bg-background/50 transition-colors flex items-start gap-2 group">
+                          className={`flex-1 px-3 py-3 text-sm hover:text-primary transition-colors flex items-start gap-2 group ${isCustom ? "text-white" : "text-foreground"}`}>
                           <span className="flex-1 line-clamp-2">{news.title}</span>
-                          <ExternalLink size={14} className="shrink-0 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground" />
+                          <ExternalLink size={14} className={`shrink-0 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity ${isCustom ? "text-white/50" : "text-muted-foreground"}`} />
                         </a>
                         <button onClick={() => addToSelected(portal.name, news)}
-                          className="px-2 py-1 mr-2 text-muted-foreground hover:text-primary transition-colors" title="Adicionar à seleção">
+                          className={`px-2 py-1 mr-2 hover:text-primary transition-colors ${isCustom ? "text-white/60" : "text-muted-foreground"}`} title="Adicionar à seleção">
                           <Plus size={14} />
                         </button>
                       </li>
@@ -579,7 +582,7 @@ export default function NoticiasPanel() {
                 </ul>
               )}
             </div>
-          ))}
+          )})}
         </div>
       )}
 
