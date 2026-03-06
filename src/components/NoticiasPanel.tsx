@@ -264,7 +264,16 @@ export default function NoticiasPanel() {
     setLoadingCotacoes(false);
   };
 
-  useEffect(() => { loadAll(); loadCotacoes(); const interval = setInterval(loadCotacoes, 60 * 1000); return () => clearInterval(interval); }, [customSites.length]);
+  const customSitesCountRef = useRef(0);
+  useEffect(() => {
+    // Only reload news when sites are added (count increases), not removed
+    if (customSites.length > customSitesCountRef.current || customSitesCountRef.current === 0) {
+      loadAll();
+    }
+    customSitesCountRef.current = customSites.length;
+  }, [customSites.length]);
+
+  useEffect(() => { loadCotacoes(); const interval = setInterval(loadCotacoes, 60 * 1000); return () => clearInterval(interval); }, []);
 
   const addCustomSite = async () => {
     if (!customUrl.trim() || !user) return;
