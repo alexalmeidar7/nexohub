@@ -733,7 +733,7 @@ export default function PlayerPage() {
             if (data.fatal) {
               if (data.type === Hls.ErrorTypes.NETWORK_ERROR) hls.startLoad();
               else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) hls.recoverMediaError();
-              else { hls.destroy(); hlsRef.current = null; }
+              else { hls.destroy(); hlsRef.current = null; setStreamStalled(true); }
             }
           });
         } else {
