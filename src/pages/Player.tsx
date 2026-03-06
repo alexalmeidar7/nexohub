@@ -986,6 +986,17 @@ export default function PlayerPage() {
     return () => document.removeEventListener("fullscreenchange", handler);
   }, []);
 
+  // Auto-fullscreen for TV browsers (Smart TV, Tizen, webOS, etc.)
+  useEffect(() => {
+    const ua = navigator.userAgent.toLowerCase();
+    const isTV = /smart-?tv|tizen|webos|netcast|hbbtv|viera|nettv|philipstv|roku|firetv|appletv|android.*tv|crkey/i.test(ua)
+      || window.matchMedia("(display-mode: fullscreen)").matches
+      || (screen.width >= 1280 && screen.height >= 720 && !("ontouchstart" in window) && window.innerWidth === screen.width);
+    if (isTV && containerRef.current && !document.fullscreenElement) {
+      containerRef.current.requestFullscreen?.().then(() => setFullscreen(true)).catch(() => {});
+    }
+  }, [loading]);
+
   const toggleFullscreen = () => {
     if (!containerRef.current) return;
     if (!fullscreen) { containerRef.current.requestFullscreen?.(); setFullscreen(true); }
