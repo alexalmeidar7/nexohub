@@ -92,6 +92,7 @@ export default function AgendaPage() {
     { nome: "", instagram: "" },
   ]);
 
+  const [loadingData, setLoadingData] = useState(true);
   const estudios = Array.from(new Set(programas.map(p => p.estudio).filter(Boolean)));
 
   const fetchProgramas = useCallback(async () => {
