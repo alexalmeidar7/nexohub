@@ -3,6 +3,7 @@ import { Save, Loader2, ChevronDown, ChevronUp, Plus, Trash2, Upload, Pencil } f
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 
 export interface EmpresaConfig {
   nome: string;
