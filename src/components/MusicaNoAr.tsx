@@ -18,29 +18,6 @@ const MUSIC_DATA_KEY = "masterview_music_data";
 const MUSIC_START_KEY = "masterview_music_start";
 const DEFAULT_XML_URL = "https://positivafm.com.br/storage/pulsar/positivafm.xml";
 
-function decodeEntities(str: string): string {
-  const ta = document.createElement("textarea");
-  ta.innerHTML = str;
-  return ta.value;
-}
-
-function maybeFixMojibake(str: string): string {
-  if (!/(Ã.|Â.|â[\u0080-\u00BF]|�)/.test(str)) return str;
-
-  try {
-    const charCodes = Array.from(str).map((char) => char.charCodeAt(0));
-    if (charCodes.some((code) => code > 255)) return str;
-
-    const fixed = new TextDecoder("utf-8", { fatal: false }).decode(Uint8Array.from(charCodes));
-    return fixed.includes("�") ? str : fixed;
-  } catch {
-    return str;
-  }
-}
-
-function normalizeMusicText(str: string): string {
-  return maybeFixMojibake(decodeEntities(str).trim());
-}
 
 function parseXmlString(xmlStr: string): MusicData | null {
   try {
