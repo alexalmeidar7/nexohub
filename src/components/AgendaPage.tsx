@@ -138,7 +138,12 @@ export default function AgendaPage() {
   }, [user]);
 
   useEffect(() => {
-    fetchProgramas();
+    const loadAll = async () => {
+      setLoadingData(true);
+      await Promise.all([fetchProgramas(), fetchEventos()]);
+      setLoadingData(false);
+    };
+    loadAll();
     fetchEventos();
   }, [fetchProgramas, fetchEventos]);
 
