@@ -56,8 +56,8 @@ const DEFAULT_PORTALS: Portal[] = [
   { name: "Folha de S.Paulo", rssUrl: "https://feeds.folha.uol.com.br/emcimadahora/rss091.xml" },
   { name: "CNN Brasil", rssUrl: "https://www.cnnbrasil.com.br/feed/" },
   { name: "R7", rssUrl: "https://noticias.r7.com/feed.xml" },
-  { name: "Estadão", rssUrl: "https://rss.estadao.com.br/ultimas" },
-  { name: "Terra", rssUrl: "https://www.terra.com.br/rss/controller.htm?path=/noticias/rss" },
+  { name: "Estadão", rssUrl: "https://www.estadao.com.br/arc/outboundfeeds/rss/?outputType=xml" },
+  { name: "Gazeta do Povo", rssUrl: "https://www.gazetadopovo.com.br/feed/rss/" },
 ];
 
 const PROXY = "https://api.allorigins.win/raw?url=";
