@@ -785,7 +785,16 @@ function ComercialWidgets() {
     fetch();
   }, [user]);
 
-  if (loading) return null;
+  if (loading) return (
+    <div className="animate-pulse" style={{ color: "#0d0446" }}>
+      <div className="flex items-center gap-1.5 mb-2">
+        <div className="w-3.5 h-3.5 rounded bg-[#268ffa]/20" />
+        <div className="w-28 h-3 rounded bg-[#268ffa]/20" />
+      </div>
+      <div className="w-12 h-8 rounded bg-[#0d0446]/10 mb-1" />
+      <div className="w-36 h-2.5 rounded bg-[#0d0446]/5" />
+    </div>
+  );
 
   return (
     <div style={{ color: "#0d0446" }}>
