@@ -1355,8 +1355,9 @@ export default function PlayerPage() {
         <div className="flex items-center gap-0 rounded-2xl border border-white/10 px-5 py-3" style={{ backgroundColor: "rgba(0, 0, 0, 0.9)" }}>
           {/* Channel Info */}
           <div className="flex items-center gap-3 pr-5 border-r border-white/10 shrink-0">
-            <div className="flex flex-col items-center gap-4">
+            <div className="flex flex-col items-center gap-1">
               <button onClick={() => navigateChannel(-1)} className="text-white/60 hover:text-white hover:bg-[#e60000] rounded px-1.5 py-0.5 transition-all" title="Canal anterior"><ChevronUp size={16} /></button>
+              <div className="text-white text-xs font-bold py-0.5">{canal?.numero_canal || "--"}</div>
               <button onClick={() => navigateChannel(1)} className="text-white/60 hover:text-white hover:bg-[#e60000] rounded px-1.5 py-0.5 transition-all" title="Próximo canal"><ChevronDown size={16} /></button>
             </div>
             {canal?.logo_url ? (
@@ -1364,12 +1365,9 @@ export default function PlayerPage() {
             ) : (
               <div className="w-16 h-16 rounded-lg bg-white/10 flex items-center justify-center text-white text-sm font-bold">{canal?.numero_canal || "?"}</div>
             )}
-            <div className="flex flex-col items-center gap-1">
-              <div className="text-white text-xs font-bold">{canal?.numero_canal || "--"}</div>
-              <button onClick={handlePlayCanal} className="w-9 h-9 rounded-full border-2 border-[#e60000] flex items-center justify-center transition-all hover:bg-[#e60000]/20" title={playing ? "Pausar" : "Reproduzir"}>
-                {playing ? <Pause size={20} color="#e60000" /> : <Play size={20} color="#e60000" fill="#e60000" />}
-              </button>
-            </div>
+            <button onClick={handlePlayCanal} className="w-11 h-11 rounded-full border-2 border-[#e60000] flex items-center justify-center transition-all hover:bg-[#e60000]/20" title={playing ? "Pausar" : "Reproduzir"}>
+              {playing ? <Pause size={24} color="#e60000" /> : <Play size={24} color="#e60000" fill="#e60000" />}
+            </button>
           </div>
 
           {/* Program Info */}
