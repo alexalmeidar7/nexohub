@@ -46,8 +46,8 @@ export default function AudioSpectrum({ audioElement }: AudioSpectrumProps) {
         const combined = w1 * 0.35 + w2 * 0.3 + w3 * 0.2 + spike * 0.15;
         const bassBoost = i < bufferLength * 0.3 ? 1.3 : i < bufferLength * 0.6 ? 1.0 : 0.7;
 
-        const intensity = active ? 0.85 : 0.08;
-        const barHeight = Math.min(1, combined * bassBoost * intensity) * h * 0.85;
+        const intensity = active ? 1.1 : 0.08;
+        const barHeight = Math.min(1, combined * bassBoost * intensity) * h * 0.95;
 
         // Peak logic
         if (barHeight > peaksRef.current[i]) {
