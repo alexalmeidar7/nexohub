@@ -615,15 +615,6 @@ export default function NoticiasPanel() {
         </div>
       )}
 
-      <MontarJornalWizard
-        open={wizardOpen}
-        onOpenChange={setWizardOpen}
-        programas={programas}
-        onFinish={(config) => {
-          setJornalConfig(config);
-          setWizardOpen(false);
-        }}
-      />
     </div>
   );
 }
