@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { RefreshCw, ExternalLink, Plus, TrendingUp, TrendingDown, Minus, Trash2, ChevronDown, ChevronUp, ListPlus, GripVertical, BookOpen, Loader2, X, Image as ImageIcon } from "lucide-react";
+import { RefreshCw, ExternalLink, Plus, TrendingUp, TrendingDown, Minus, Trash2, ChevronDown, ChevronUp, ListPlus, GripVertical, BookOpen, Loader2, X, Image as ImageIcon, Link as LinkIcon } from "lucide-react";
 import XmlLinkRow from "./XmlLinkRow";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -52,6 +52,7 @@ const DEFAULT_PORTALS: Portal[] = [
 ];
 
 const PROXY = "https://api.allorigins.win/raw?url=";
+const PROXY_FALLBACK = "https://corsproxy.io/?url=";
 
 function decodeHtmlEntities(str: string): string {
   const textarea = document.createElement("textarea");
@@ -60,9 +61,7 @@ function decodeHtmlEntities(str: string): string {
 }
 
 async function fetchNews(rssUrl: string): Promise<NewsItem[]> {
-  try {
-    const res = await fetch(`${PROXY}${encodeURIComponent(rssUrl)}`);
-    const text = await res.text();
+  const parseRss = (text: string): NewsItem[] => {
     const parser = new DOMParser();
     const doc = parser.parseFromString(text, "application/xml");
     const items = doc.querySelectorAll("item");
@@ -72,46 +71,54 @@ async function fetchNews(rssUrl: string): Promise<NewsItem[]> {
       const title = decodeHtmlEntities(item.querySelector("title")?.textContent || "");
       const link = item.querySelector("link")?.textContent || "";
       let thumbnail = "";
-      // Try media:content, media:thumbnail, enclosure, or image in description
       const mediaContent = item.querySelector("content[url]") || item.querySelector("thumbnail[url]");
-      if (mediaContent) {
-        thumbnail = mediaContent.getAttribute("url") || "";
-      }
+      if (mediaContent) thumbnail = mediaContent.getAttribute("url") || "";
       if (!thumbnail) {
         const enclosure = item.querySelector("enclosure[url]");
-        if (enclosure && (enclosure.getAttribute("type") || "").startsWith("image")) {
-          thumbnail = enclosure.getAttribute("url") || "";
-        }
+        if (enclosure && (enclosure.getAttribute("type") || "").startsWith("image")) thumbnail = enclosure.getAttribute("url") || "";
       }
       if (!thumbnail) {
         const desc = item.querySelector("description")?.textContent || "";
         const imgMatch = desc.match(/<img[^>]+src=["']([^"']+)["']/i);
         if (imgMatch) thumbnail = imgMatch[1];
       }
-      // Only add news with images
-      if (title && thumbnail) {
-        results.push({ title, link, thumbnail });
-      }
+      if (title && thumbnail) results.push({ title, link, thumbnail });
     });
     return results;
-  } catch {
-    // Fallback to rss2json
-    try {
-      const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`);
-      const data = await res.json();
-      if (data.status === "ok" && data.items) {
-        return data.items
-          .slice(0, 10)
-          .map((item: any) => ({
-            title: decodeHtmlEntities(item.title || ""),
-            link: item.link,
-            thumbnail: item.thumbnail || item.enclosure?.link || "",
-          }))
-          .filter((n: NewsItem) => n.thumbnail);
-      }
-    } catch {}
-    return [];
-  }
+  };
+
+  // Try primary proxy
+  try {
+    const res = await fetch(`${PROXY}${encodeURIComponent(rssUrl)}`, { signal: AbortSignal.timeout(8000) });
+    const text = await res.text();
+    const results = parseRss(text);
+    if (results.length > 0) return results;
+  } catch {}
+
+  // Try fallback proxy
+  try {
+    const res = await fetch(`${PROXY_FALLBACK}${encodeURIComponent(rssUrl)}`, { signal: AbortSignal.timeout(8000) });
+    const text = await res.text();
+    const results = parseRss(text);
+    if (results.length > 0) return results;
+  } catch {}
+
+  // Final fallback: rss2json
+  try {
+    const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`);
+    const data = await res.json();
+    if (data.status === "ok" && data.items) {
+      return data.items
+        .slice(0, 10)
+        .map((item: any) => ({
+          title: decodeHtmlEntities(item.title || ""),
+          link: item.link,
+          thumbnail: item.thumbnail || item.enclosure?.link || "",
+        }))
+        .filter((n: NewsItem) => n.thumbnail);
+    }
+  } catch {}
+  return [];
 }
 
 async function fetchCotacoes(): Promise<CotacaoItem[]> {
@@ -389,38 +396,51 @@ export default function NoticiasPanel() {
               <table className="w-full text-xs">
                 <thead>
                   <tr style={{ borderBottom: "1px solid rgba(13,4,70,0.1)", color: "rgba(13,4,70,0.5)" }}>
-                    <th className="text-left px-3 py-2">Portal</th>
-                    <th className="text-left px-3 py-2">Título</th>
-                    <th className="text-left px-3 py-2">Imagem URL</th>
-                    <th className="px-3 py-2 w-24"></th>
+                    <th className="text-left px-2 py-2 w-16">Portal</th>
+                    <th className="text-left px-2 py-2">Título</th>
+                    <th className="text-center px-2 py-2 w-10">Img</th>
+                    <th className="text-center px-2 py-2 w-10">URL</th>
+                    <th className="px-2 py-2 w-24"></th>
                   </tr>
                 </thead>
                 <tbody>
                   {selectedNews.map((sn, i) => (
                     <tr key={sn.id || i} style={{ borderBottom: "1px solid rgba(13,4,70,0.05)" }}>
-                      <td className="px-3 py-2">
+                      <td className="px-2 py-2">
                         <input
                           defaultValue={sn.portal}
                           onBlur={(e) => updateSelectedField(i, "portal", e.target.value)}
-                          className="bg-transparent border-b border-transparent hover:border-gray-300 outline-none font-semibold w-full text-xs" style={{ color: "#0d0446" }}
+                          className="bg-transparent border-b border-transparent hover:border-gray-300 outline-none font-semibold w-full text-xs" style={{ color: "#0d0446", maxWidth: "60px" }}
                         />
                       </td>
-                      <td className="px-3 py-2">
+                      <td className="px-2 py-2">
                         <input
                           defaultValue={sn.title}
                           onBlur={(e) => updateSelectedField(i, "title", e.target.value)}
                           className="bg-transparent border-b border-transparent hover:border-gray-300 outline-none w-full text-xs" style={{ color: "#0d0446" }}
                         />
                       </td>
-                      <td className="px-3 py-2">
-                        <input
-                          defaultValue={sn.imageUrl}
-                          onBlur={(e) => updateSelectedField(i, "imageUrl", e.target.value)}
-                          className="bg-transparent border-b border-transparent hover:border-gray-300 outline-none w-full text-xs truncate" style={{ color: "rgba(13,4,70,0.5)" }}
-                          title={sn.imageUrl}
-                        />
+                      <td className="px-2 py-2 text-center">
+                        <div className="relative group inline-block">
+                          <ImageIcon size={14} className="cursor-pointer" style={{ color: sn.imageUrl ? "#2dbef3" : "rgba(13,4,70,0.3)" }} />
+                          {sn.imageUrl && (
+                            <div className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block">
+                              <img src={sn.imageUrl} alt="preview" className="w-32 h-20 object-cover rounded-lg shadow-lg border border-gray-200" />
+                            </div>
+                          )}
+                        </div>
                       </td>
-                      <td className="px-3 py-2 flex items-center gap-1">
+                      <td className="px-2 py-2 text-center">
+                        <div className="relative group inline-block">
+                          <LinkIcon size={14} className="cursor-pointer" style={{ color: sn.imageUrl ? "#2dbef3" : "rgba(13,4,70,0.3)" }} />
+                          {sn.imageUrl && (
+                            <div className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-gray-900 text-white text-[10px] px-2 py-1 rounded shadow-lg whitespace-nowrap max-w-[250px] truncate">
+                              {sn.imageUrl}
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-2 py-2 flex items-center gap-1">
                         <button onClick={() => openSummary(sn)} className="text-blue-500 hover:text-blue-700" title="Ler resumo">
                           <BookOpen size={14} />
                         </button>
@@ -550,8 +570,10 @@ export default function NoticiasPanel() {
                   <GripVertical size={14} className="opacity-50" />
                   {expandedPortals[portal.name] ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                   {portal.name}
+                  {isCustom && <span className="text-[9px] bg-white/20 px-1.5 py-0.5 rounded-full">Adicionado</span>}
                 </span>
                 <div className="flex items-center gap-2">
+                  <span className="text-[10px] opacity-70">{(newsByPortal[portal.name] || []).length} notícias</span>
                   {customSites.some(s => s.name === portal.name) && (
                     <button onClick={(e) => { e.stopPropagation(); removeCustomSite(portal.name); }} className="text-primary-foreground/70 hover:text-primary-foreground text-xs">✕</button>
                   )}
@@ -568,7 +590,7 @@ export default function NoticiasPanel() {
                           <img src={news.thumbnail} alt="" className="w-10 h-10 object-cover rounded ml-2 shrink-0" />
                         )}
                         <a href={news.link} target="_blank" rel="noopener noreferrer"
-                          className={`flex-1 px-3 py-3 text-sm hover:text-primary transition-colors flex items-start gap-2 group ${isCustom ? "text-white" : "text-foreground"}`}>
+                          className={`flex-1 px-3 py-3 text-sm transition-colors flex items-start gap-2 group ${isCustom ? "text-white hover:text-blue-300" : "text-foreground hover:text-primary"}`}>
                           <span className="flex-1 line-clamp-2">{news.title}</span>
                           <ExternalLink size={14} className={`shrink-0 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity ${isCustom ? "text-white/50" : "text-muted-foreground"}`} />
                         </a>
