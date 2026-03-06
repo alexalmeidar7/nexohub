@@ -16,7 +16,7 @@ interface ClientInfo {
 function AdminDashboardContent() {
   const navigate = useNavigate();
   const [clients, setClients] = useState<ClientInfo[]>([]);
-  const [stats, setStats] = useState({ totalClients: 0, totalModules: 0, totalChannels: 0 });
+  const [stats, setStats] = useState({ totalClients: 0, totalModules: 0, totalChannels: 0, totalPlans: 0 });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
