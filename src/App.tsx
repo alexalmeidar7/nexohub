@@ -31,16 +31,26 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/modulo-tela-estudio-promocao" element={<PromocoesKiosk />} />
-            <Route path="/admin/login" element={<AdminLogin />} />
+
+            {/* User / NexoHub routes */}
+            <Route path="/user" element={<Navigate to="/user/nexohub/home" replace />} />
+            <Route path="/user/login" element={<Index />} />
+            <Route path="/user/nexohub/home" element={<MasterViewHome />} />
+            <Route path="/user/nexohub/telapromo" element={<PromocoesKiosk />} />
+            <Route path="/user/nexohub/player" element={<PlayerPage />} />
+
+            {/* Legacy redirects */}
+            <Route path="/masterview/home" element={<Navigate to="/user/nexohub/home" replace />} />
+            <Route path="/modulo-tela-estudio-promocao" element={<Navigate to="/user/nexohub/telapromo" replace />} />
+            <Route path="/player" element={<Navigate to="/user/nexohub/player" replace />} />
+
+            {/* Admin routes */}
             <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
+            <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
             <Route path="/admin/users" element={<AdminUsers />} />
             <Route path="/admin/modules" element={<AdminModules />} />
-            <Route path="/user" element={<Navigate to="/masterview/home" replace />} />
-            <Route path="/masterview/home" element={<MasterViewHome />} />
-            <Route path="/player" element={<PlayerPage />} />
-            
+
             <Route path="*" element={<NotFound />} />
           </Routes>
           </Suspense>

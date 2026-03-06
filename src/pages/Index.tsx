@@ -29,5 +29,5 @@ export default function Index() {
     return <Navigate to="/admin/dashboard" replace />;
   }
 
-  return <Navigate to="/masterview/home" replace />;
+  return <Navigate to="/user/nexohub/home" replace />;
 }
