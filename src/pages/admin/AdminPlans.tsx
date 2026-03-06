@@ -15,6 +15,7 @@ interface Plan {
   name: string;
   image_url: string;
   enabled_modules: string[];
+  price: number;
   created_at: string;
 }
 
