@@ -42,11 +42,16 @@ function AdminUsersContent() {
   useEffect(() => { loadData(); }, []);
 
   const loadData = async () => {
-    const [{ data: empresas }, { data: mods }, { data: clientMods }] = await Promise.all([
+    const [{ data: empresas }, { data: mods }, { data: clientMods }, emailsRes] = await Promise.all([
       supabase.from("empresa_config").select("user_id, nome, logo, ativo, plano, updated_at"),
       supabase.from("available_modules").select("key, name, icon"),
       supabase.from("client_modules").select("user_id, module_key, enabled"),
+      supabase.functions.invoke("create-user", { body: { action: "list_emails" } }),
     ]);
+
+    if (emailsRes.data?.emails) {
+      setEmailMap(emailsRes.data.emails);
+    }
 
     const moduleList = mods || [];
     setModules(moduleList);
