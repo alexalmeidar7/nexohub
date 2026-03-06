@@ -55,6 +55,7 @@ function AdminPlansContent() {
   const openNew = () => {
     setEditingPlan(null);
     setName("");
+    setPrice("");
     setEnabledModules([]);
     setImageFile(null);
     setImagePreview("");
