@@ -15,6 +15,7 @@ interface Plan {
   name: string;
   image_url: string;
   enabled_modules: string[];
+  price: number;
   created_at: string;
 }
 
@@ -32,6 +33,7 @@ function AdminPlansContent() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingPlan, setEditingPlan] = useState<Plan | null>(null);
   const [name, setName] = useState("");
+  const [price, setPrice] = useState("");
   const [enabledModules, setEnabledModules] = useState<string[]>([]);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState("");
@@ -53,6 +55,7 @@ function AdminPlansContent() {
   const openNew = () => {
     setEditingPlan(null);
     setName("");
+    setPrice("");
     setEnabledModules([]);
     setImageFile(null);
     setImagePreview("");
@@ -62,6 +65,7 @@ function AdminPlansContent() {
   const openEdit = (plan: Plan) => {
     setEditingPlan(plan);
     setName(plan.name);
+    setPrice(String(plan.price || 0));
     setEnabledModules(plan.enabled_modules || []);
     setImageFile(null);
     setImagePreview(plan.image_url || "");
@@ -111,7 +115,7 @@ function AdminPlansContent() {
       imageUrl = urlData.publicUrl;
     }
 
-    const payload = { name: name.trim(), enabled_modules: enabledModules, image_url: imageUrl };
+    const payload = { name: name.trim(), enabled_modules: enabledModules, image_url: imageUrl, price: parseFloat(price) || 0 };
 
     if (editingPlan) {
       const { error } = await supabase.from("planos").update(payload).eq("id", editingPlan.id);
@@ -187,7 +191,10 @@ function AdminPlansContent() {
               )}
               <div className="p-4 space-y-3">
                 <div className="flex items-center justify-between">
-                  <p className="font-semibold" style={{ fontSize: "14px", color: "#0d0446" }}>{plan.name}</p>
+                  <div>
+                    <p className="font-semibold" style={{ fontSize: "14px", color: "#0d0446" }}>{plan.name}</p>
+                    <p style={{ fontSize: "12px", color: "#2ec0f6", fontWeight: 600 }}>R$ {(plan.price || 0).toFixed(2)}</p>
+                  </div>
                   <div className="flex items-center gap-1">
                     <button onClick={() => openEdit(plan)} className="p-1.5 rounded-full transition-colors hover:bg-gray-100">
                       <Pencil size={13} style={{ color: "#0d0446" }} />
@@ -255,6 +262,17 @@ function AdminPlansContent() {
               placeholder="Nome do plano"
               value={name}
               onChange={(e) => setName(e.target.value)}
+              className="w-full outline-none"
+              style={inputStyle}
+            />
+
+            <input
+              placeholder="Preço do plano (R$)"
+              type="number"
+              min="0"
+              step="0.01"
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
               className="w-full outline-none"
               style={inputStyle}
             />
