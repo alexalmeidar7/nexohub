@@ -1506,7 +1506,7 @@ export default function PlayerPage() {
           </div>
 
           {/* Next / Schedule */}
-          <div className="pl-3 border-l border-white/10 flex-1 min-w-0 flex items-stretch gap-3 overflow-hidden">
+          <div className="pl-3 border-l border-white/10 flex-1 min-w-0 flex items-stretch gap-3">
             <div className="min-w-0 flex-1">
               <span className="text-[10px] font-bold uppercase" style={{ color: "#e60000" }}>A seguir:</span>
               <div className="text-white text-sm truncate">
