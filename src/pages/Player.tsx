@@ -894,6 +894,17 @@ export default function PlayerPage() {
     return () => { if (prerollIntervalRef.current) clearInterval(prerollIntervalRef.current); };
   }, [prerollDone, playing, fetchAndShowPreroll]);
 
+  const handleQualityChange = useCallback((levelIndex: number) => {
+    if (!hlsRef.current) return;
+    if (levelIndex === -1) {
+      hlsRef.current.currentLevel = -1; // auto
+    } else {
+      hlsRef.current.currentLevel = levelIndex;
+    }
+    setHlsCurrentLevel(levelIndex);
+    setQualityMenuOpen(false);
+  }, []);
+
   const handlePlayCanal = () => {
     if (!canal) return;
     if (playing) {
