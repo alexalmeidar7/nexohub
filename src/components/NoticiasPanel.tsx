@@ -464,18 +464,15 @@ export default function NoticiasPanel() {
         </div>
       )}
 
-      {/* News portals grid */}
+      {/* News portals grid - only default portals, no custom site boxes */}
       {loading && Object.keys(newsByPortal).length === 0 ? (
         <p className="text-muted-foreground">Carregando notícias...</p>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-          {orderedPortals.map((portal, idx) => {
-            const isCustom = customSites.some(s => s.name === portal.name);
-            return (
+          {orderedPortals.filter(portal => !customSites.some(s => s.name === portal.name)).map((portal, idx) => (
             <div
               key={portal.name}
-              className={`rounded-xl border border-border overflow-hidden cursor-grab active:cursor-grabbing ${isCustom ? "" : "bg-muted"}`}
-              style={isCustom ? { backgroundColor: "#0d0446", color: "#ffffff" } : {}}
+              className="rounded-xl border border-border overflow-hidden cursor-grab active:cursor-grabbing bg-muted"
               draggable
               onDragStart={() => portalDrag.handleDragStart(idx)}
               onDragOver={(e) => portalDrag.handleDragOver(e, idx)}
@@ -488,19 +485,13 @@ export default function NoticiasPanel() {
                   <GripVertical size={14} className="opacity-50" />
                   {expandedPortals[portal.name] ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                   {portal.name}
-                  {isCustom && <span className="text-[9px] bg-white/20 px-1.5 py-0.5 rounded-full">Adicionado</span>}
                 </span>
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] opacity-70">{(newsByPortal[portal.name] || []).length} notícias</span>
-                  {customSites.some(s => s.name === portal.name) && (
-                    <button onClick={(e) => { e.stopPropagation(); removeCustomSite(portal.name); }} className="text-primary-foreground/70 hover:text-primary-foreground text-xs">✕</button>
-                  )}
-                </div>
+                <span className="text-[10px] opacity-70">{(newsByPortal[portal.name] || []).length} notícias</span>
               </div>
               {expandedPortals[portal.name] && (
-                <ul className={`divide-y ${isCustom ? "divide-white/10" : "divide-border"}`}>
+                <ul className="divide-y divide-border">
                   {(newsByPortal[portal.name] || []).length === 0 ? (
-                    <li className={`px-4 py-3 text-sm ${isCustom ? "text-white/60" : "text-muted-foreground"}`}>Sem notícias disponíveis</li>
+                    <li className="px-4 py-3 text-sm text-muted-foreground">Sem notícias disponíveis</li>
                   ) : (
                     newsByPortal[portal.name].map((news, i) => (
                       <li key={i} className="flex items-center">
@@ -508,12 +499,12 @@ export default function NoticiasPanel() {
                           <img src={news.thumbnail} alt="" className="w-10 h-10 object-cover rounded ml-2 shrink-0" />
                         )}
                         <a href={news.link} target="_blank" rel="noopener noreferrer"
-                          className={`flex-1 px-3 py-3 text-sm transition-colors flex items-start gap-2 group ${isCustom ? "text-white hover:text-blue-300" : "text-foreground hover:text-primary"}`}>
+                          className="flex-1 px-3 py-3 text-sm transition-colors flex items-start gap-2 group text-foreground hover:text-primary">
                           <span className="flex-1 line-clamp-2">{news.title}</span>
-                          <ExternalLink size={14} className={`shrink-0 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity ${isCustom ? "text-white/50" : "text-muted-foreground"}`} />
+                          <ExternalLink size={14} className="shrink-0 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground" />
                         </a>
                         <button onClick={() => addToSelected(portal.name, news)}
-                          className={`px-2 py-1 mr-2 hover:text-primary transition-colors ${isCustom ? "text-white/60" : "text-muted-foreground"}`} title="Adicionar à seleção">
+                          className="px-2 py-1 mr-2 hover:text-primary transition-colors text-muted-foreground" title="Adicionar à seleção">
                           <Plus size={14} />
                         </button>
                       </li>
@@ -522,7 +513,7 @@ export default function NoticiasPanel() {
                 </ul>
               )}
             </div>
-          )})}
+          ))}
         </div>
       )}
 
