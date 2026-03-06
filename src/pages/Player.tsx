@@ -979,14 +979,35 @@ export default function PlayerPage() {
     }
   }, [canais, currentIndex, playing, playStream]);
 
+  // Keyboard & TV Remote Control handler
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "ArrowUp") { e.preventDefault(); navigateChannel(-1); }
-      else if (e.key === "ArrowDown") { e.preventDefault(); navigateChannel(1); }
+      // Channel navigation: ArrowUp/Down or ChannelUp/ChannelDown (TV remote)
+      if (e.key === "ArrowUp" || e.key === "ChannelUp") { e.preventDefault(); navigateChannel(-1); }
+      else if (e.key === "ArrowDown" || e.key === "ChannelDown") { e.preventDefault(); navigateChannel(1); }
+      // Volume: ArrowRight/Left for +/- 10, or VolumeUp/VolumeDown (TV remote)
+      else if (e.key === "VolumeUp" || e.key === "ArrowRight") {
+        e.preventDefault();
+        handleVolumeChange(Math.min(100, volume + 10));
+      }
+      else if (e.key === "VolumeDown" || e.key === "ArrowLeft") {
+        e.preventDefault();
+        handleVolumeChange(Math.max(0, volume - 10));
+      }
+      // Enter/OK to play/pause
+      else if (e.key === "Enter" || e.key === "Select") {
+        e.preventDefault();
+        handlePlayCanal();
+      }
+      // AudioVolumeMute for mute toggle
+      else if (e.key === "AudioVolumeMute") {
+        e.preventDefault();
+        toggleMute();
+      }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [navigateChannel]);
+  }, [navigateChannel, volume, handleVolumeChange, toggleMute, handlePlayCanal]);
 
   // Fullscreen
   useEffect(() => {
