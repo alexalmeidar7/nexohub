@@ -811,7 +811,7 @@ export default function PlayerPage() {
     []
   );
 
-  // Detect stream stall and auto-reconnect
+  // Detect stream stall and auto-reconnect — conservative approach for live streams
   useEffect(() => {
     if (!playing || !canal || canal.type === "youtube") {
       setStreamStalled(false);
@@ -823,6 +823,7 @@ export default function PlayerPage() {
 
     let reconnectAttempts = 0;
     const maxReconnects = 5;
+    let lastTimeUpdate = Date.now();
 
     const tryReconnect = () => {
       if (reconnectAttempts >= maxReconnects) return;
@@ -830,54 +831,53 @@ export default function PlayerPage() {
       setStreamStalled(true);
       setTimeout(() => {
         if (canal) playStream(canal.url, canal.type);
-      }, 2000 * reconnectAttempts);
+      }, 3000 * reconnectAttempts);
     };
 
-    const onStall = () => {
-      if (stallTimerRef.current) clearTimeout(stallTimerRef.current);
-      stallTimerRef.current = setTimeout(() => {
-        if (mediaEl.paused || mediaEl.ended || mediaEl.readyState < 2) {
-          tryReconnect();
-        }
-      }, 4000);
-    };
-
-    const onError = () => {
-      tryReconnect();
+    const onTimeUpdate = () => {
+      lastTimeUpdate = Date.now();
+      if (streamStalled) {
+        setStreamStalled(false);
+        reconnectAttempts = 0;
+      }
     };
 
     const onPlaying = () => {
+      lastTimeUpdate = Date.now();
       setStreamStalled(false);
       reconnectAttempts = 0;
       if (stallTimerRef.current) clearTimeout(stallTimerRef.current);
     };
 
-    // Periodic health check - catches cases where HLS dies silently
-    const healthCheck = setInterval(() => {
-      if (!playing || canal?.type === "youtube") return;
-      const el = (canal?.type === "audio_live" || canal?.type === "audio") ? audioRef.current : videoRef.current;
-      if (!el) return;
-      if (el.paused && playing && !el.ended) {
+    const onError = () => {
+      // Only reconnect if no timeupdate for 10s (real failure, not transient)
+      if (Date.now() - lastTimeUpdate > 10000) {
         tryReconnect();
       }
-    }, 8000);
+    };
 
-    mediaEl.addEventListener("stalled", onStall);
-    mediaEl.addEventListener("ended", onStall);
-    mediaEl.addEventListener("error", onError);
+    // Health check: only reconnect if no timeupdate for 15+ seconds (real dead stream)
+    const healthCheck = setInterval(() => {
+      if (!playing || canal?.type === "youtube") return;
+      const elapsed = Date.now() - lastTimeUpdate;
+      if (elapsed > 15000) {
+        console.warn("Stream health check: no data for", Math.round(elapsed / 1000), "s — reconnecting");
+        tryReconnect();
+      }
+    }, 10000);
+
+    mediaEl.addEventListener("timeupdate", onTimeUpdate);
     mediaEl.addEventListener("playing", onPlaying);
-    mediaEl.addEventListener("timeupdate", onPlaying);
+    mediaEl.addEventListener("error", onError);
 
     return () => {
-      mediaEl.removeEventListener("stalled", onStall);
-      mediaEl.removeEventListener("ended", onStall);
-      mediaEl.removeEventListener("error", onError);
+      mediaEl.removeEventListener("timeupdate", onTimeUpdate);
       mediaEl.removeEventListener("playing", onPlaying);
-      mediaEl.removeEventListener("timeupdate", onPlaying);
+      mediaEl.removeEventListener("error", onError);
       if (stallTimerRef.current) clearTimeout(stallTimerRef.current);
       clearInterval(healthCheck);
     };
-  }, [playing, canal, playStream]);
+  }, [playing, canal, playStream, streamStalled]);
 
   useEffect(() => {
     if (!prerollDone) return;
