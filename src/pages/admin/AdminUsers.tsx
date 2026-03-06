@@ -31,7 +31,7 @@ function AdminUsersContent() {
   const [clients, setClients] = useState<ClientRow[]>([]);
   const [emailMap, setEmailMap] = useState<Record<string, string>>({});
   const [modules, setModules] = useState<AvailableModule[]>([]);
-  const [planOptions, setPlanOptions] = useState<{ value: string; label: string }[]>([]);
+  const [planOptions, setPlanOptions] = useState<{ value: string; label: string; enabled_modules: string[] }[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | null>(null);
 
