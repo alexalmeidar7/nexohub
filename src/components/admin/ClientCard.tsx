@@ -45,11 +45,7 @@ const inputStyle: React.CSSProperties = {
   padding: "6px 12px",
 };
 
-const plans = [
-  { value: "basic", label: "Basic" },
-  { value: "pro", label: "Pro" },
-  { value: "enterprise", label: "Enterprise" },
-];
+// plans now come from props
 
 export default function ClientCard({ client, clientEmail, modules, saving, onToggleModule, onClientUpdated, onSendMessage }: ClientCardProps) {
   const { toast } = useToast();
