@@ -92,8 +92,14 @@ export default function AudioDualCard({
                   @{presenterInstagram.replace(/^@/, "")}
                 </a>
               )}
+              {/* Round + button */}
+              <button
+                className="mt-2 w-8 h-8 rounded-full flex items-center justify-center transition-all hover:scale-110 active:scale-95"
+                style={{ backgroundColor: "hsla(0, 0%, 100%, 0.2)" }}
+              >
+                <Plus size={18} className="text-white" />
+              </button>
             </div>
-          </div>
         </div>
 
         {/* Music card: fade-in center → wait 2s → slide right */}
