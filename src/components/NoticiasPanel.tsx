@@ -294,10 +294,17 @@ export default function NoticiasPanel() {
   };
 
   const removeCustomSite = async (name: string) => {
-    const site = customSites.find(s => s.name === name);
-    if (site?.id) await supabase.from("custom_news_sites").delete().eq("id", site.id);
-    setCustomSites(prev => prev.filter(s => s.name !== name));
+    // Optimistically remove from UI first, then delete from DB
+    let siteId: string | undefined;
+    setCustomSites(prev => {
+      const site = prev.find(s => s.name === name);
+      siteId = site?.id;
+      return prev.filter(s => s.name !== name);
+    });
     setNewsByPortal(prev => { const copy = { ...prev }; delete copy[name]; return copy; });
+    if (siteId) {
+      await supabase.from("custom_news_sites").delete().eq("id", siteId);
+    }
   };
 
   const addToSelected = async (portal: string, news: NewsItem) => {
