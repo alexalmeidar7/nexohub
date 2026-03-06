@@ -17,6 +17,7 @@ export default function MessageNotification() {
   const { user } = useAuth();
   const [messages, setMessages] = useState<AdminMessage[]>([]);
   const [hovering, setHovering] = useState(false);
+  const [openMsgId, setOpenMsgId] = useState<string | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const unreadCount = messages.filter((m) => !m.is_read).length;
