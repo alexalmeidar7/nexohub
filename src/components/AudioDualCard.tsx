@@ -26,7 +26,7 @@ export default function AudioDualCard({
   onToggleLike,
 }: AudioDualCardProps) {
   return (
-    <div className="absolute inset-0 z-10 flex items-start justify-center overflow-hidden" style={{ paddingTop: "5vh" }}>
+    <div className="absolute inset-0 z-10 flex items-center justify-center overflow-hidden" style={{ paddingBottom: "140px" }}>
       {/* Background — channel thumb, fixed and covering */}
       {channelThumb && (
         <img
