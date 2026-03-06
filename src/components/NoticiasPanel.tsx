@@ -52,10 +52,10 @@ const DEFAULT_PORTALS: Portal[] = [
   { name: "UOL", rssUrl: "https://rss.uol.com.br/feed/noticias.xml" },
   { name: "GloboNews", rssUrl: "https://g1.globo.com/rss/g1/globonews/" },
   { name: "Folha de S.Paulo", rssUrl: "https://feeds.folha.uol.com.br/emcimadahora/rss091.xml" },
-  { name: "CNN Brasil", rssUrl: "https://www.cnnbrasil.com.br/rss/noticias/" },
-  { name: "R7", rssUrl: "https://noticias.r7.com/feed/" },
-  { name: "Estadão", rssUrl: "https://www.estadao.com.br/pf/rss/ultimas.xml" },
-  { name: "Terra", rssUrl: "https://www.terra.com.br/rss/noticias/" },
+  { name: "CNN Brasil", rssUrl: "https://www.cnnbrasil.com.br/feed/" },
+  { name: "R7", rssUrl: "https://noticias.r7.com/feed.xml" },
+  { name: "Estadão", rssUrl: "https://rss.estadao.com.br/ultimas" },
+  { name: "Terra", rssUrl: "https://www.terra.com.br/rss/controller.htm?path=/noticias/rss" },
 ];
 
 const PROXY = "https://api.allorigins.win/raw?url=";
@@ -67,34 +67,56 @@ function decodeHtmlEntities(str: string): string {
   return textarea.value;
 }
 
-async function fetchNews(rssUrl: string): Promise<NewsItem[]> {
-  const parseRss = (text: string): NewsItem[] => {
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(text, "application/xml");
-    const items = doc.querySelectorAll("item");
-    const results: NewsItem[] = [];
-    items.forEach((item, i) => {
-      if (i >= 10) return;
-      const title = decodeHtmlEntities(item.querySelector("title")?.textContent || "");
-      const link = item.querySelector("link")?.textContent || "";
-      let thumbnail = "";
-      const mediaContent = item.querySelector("content[url]") || item.querySelector("thumbnail[url]");
-      if (mediaContent) thumbnail = mediaContent.getAttribute("url") || "";
-      if (!thumbnail) {
-        const enclosure = item.querySelector("enclosure[url]");
-        if (enclosure && (enclosure.getAttribute("type") || "").startsWith("image")) thumbnail = enclosure.getAttribute("url") || "";
-      }
-      if (!thumbnail) {
-        const desc = item.querySelector("description")?.textContent || "";
-        const imgMatch = desc.match(/<img[^>]+src=["']([^"']+)["']/i);
-        if (imgMatch) thumbnail = imgMatch[1];
-      }
-      if (title) results.push({ title, link, thumbnail });
-    });
-    return results;
-  };
+function parseRss(text: string): NewsItem[] {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(text, "application/xml");
+  const items = doc.querySelectorAll("item");
+  const results: NewsItem[] = [];
+  items.forEach((item, i) => {
+    if (i >= 10) return;
+    const title = decodeHtmlEntities(item.querySelector("title")?.textContent || "");
+    const link = item.querySelector("link")?.textContent || "";
+    let thumbnail = "";
+    const mediaContent = item.querySelector("content[url]") || item.querySelector("thumbnail[url]");
+    if (mediaContent) thumbnail = mediaContent.getAttribute("url") || "";
+    if (!thumbnail) {
+      const enclosure = item.querySelector("enclosure[url]");
+      if (enclosure && (enclosure.getAttribute("type") || "").startsWith("image")) thumbnail = enclosure.getAttribute("url") || "";
+    }
+    if (!thumbnail) {
+      const desc = item.querySelector("description")?.textContent || "";
+      const imgMatch = desc.match(/<img[^>]+src=["']([^"']+)["']/i);
+      if (imgMatch) thumbnail = imgMatch[1];
+    }
+    if (title) results.push({ title, link, thumbnail });
+  });
+  return results;
+}
 
-  // Try rss2json first (server-side, no CORS issues)
+async function fetchNews(rssUrl: string): Promise<NewsItem[]> {
+  // Try edge function first (server-side, no CORS issues)
+  try {
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+    if (supabaseUrl && supabaseKey) {
+      const res = await fetch(`${supabaseUrl}/functions/v1/fetch-rss`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${supabaseKey}`,
+        },
+        body: JSON.stringify({ url: rssUrl }),
+        signal: AbortSignal.timeout(18000),
+      });
+      const data = await res.json();
+      if (data.content) {
+        const results = parseRss(data.content);
+        if (results.length > 0) return results;
+      }
+    }
+  } catch {}
+
+  // Fallback: rss2json
   try {
     const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`, { signal: AbortSignal.timeout(10000) });
     const data = await res.json();
