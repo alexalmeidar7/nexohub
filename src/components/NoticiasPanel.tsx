@@ -406,132 +406,28 @@ export default function NoticiasPanel() {
         </button>
       </div>
 
-      {/* Top row: Noticias Selecionadas + Cotações side by side */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Notícias Selecionadas */}
-        <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)" }}>
-          <div className={headerStyle} style={headerInline}>📋 Notícias Selecionadas</div>
-          <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
-            {selectedNews.length === 0 ? (
-              <p className="text-gray-500 text-xs p-4">Nenhuma notícia selecionada.</p>
-            ) : (
-              <table className="w-full text-xs">
-                <thead>
-                  <tr style={{ borderBottom: "1px solid rgba(13,4,70,0.1)", color: "rgba(13,4,70,0.5)" }}>
-                    <th className="text-left px-2 py-2 w-16">Portal</th>
-                    <th className="text-left px-2 py-2">Título</th>
-                    <th className="text-center px-2 py-2 w-10">Img</th>
-                    <th className="text-center px-2 py-2 w-10">URL</th>
-                    <th className="px-2 py-2 w-24"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {selectedNews.map((sn, i) => (
-                    <tr key={sn.id || i} style={{ borderBottom: "1px solid rgba(13,4,70,0.05)" }}>
-                      <td className="px-2 py-2">
-                        <input
-                          defaultValue={sn.portal}
-                          onBlur={(e) => updateSelectedField(i, "portal", e.target.value)}
-                          className="bg-transparent border-b border-transparent hover:border-gray-300 outline-none font-semibold w-full text-xs" style={{ color: "#0d0446", maxWidth: "60px" }}
-                        />
-                      </td>
-                      <td className="px-2 py-2">
-                        <input
-                          defaultValue={sn.title}
-                          onBlur={(e) => updateSelectedField(i, "title", e.target.value)}
-                          className="bg-transparent border-b border-transparent hover:border-gray-300 outline-none w-full text-xs" style={{ color: "#0d0446" }}
-                        />
-                      </td>
-                      <td className="px-2 py-2 text-center">
-                        <div className="relative group inline-block">
-                          <ImageIcon size={14} className="cursor-pointer" style={{ color: sn.imageUrl ? "#2dbef3" : "rgba(13,4,70,0.3)" }} />
-                          {sn.imageUrl && (
-                            <div className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block">
-                              <img src={sn.imageUrl} alt="preview" className="w-32 h-20 object-cover rounded-lg shadow-lg border border-gray-200" />
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-2 py-2 text-center">
-                        <div className="relative group inline-block">
-                          <LinkIcon size={14} className="cursor-pointer" style={{ color: sn.imageUrl ? "#2dbef3" : "rgba(13,4,70,0.3)" }} />
-                          {sn.imageUrl && (
-                            <div className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-gray-900 text-white text-[10px] px-2 py-1 rounded shadow-lg whitespace-nowrap max-w-[250px] truncate">
-                              {sn.imageUrl}
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-2 py-2 flex items-center gap-1">
-                        <button onClick={() => openSummary(sn)} className="text-blue-500 hover:text-blue-700" title="Ler resumo">
-                          <BookOpen size={14} />
-                        </button>
-                        <button onClick={() => addToEscalada(sn)} className="text-primary hover:text-primary/80" title="Inserir na escalada">
-                          <ListPlus size={14} />
-                        </button>
-                        <button onClick={() => removeFromSelected(i)} className="text-destructive hover:text-destructive/80">
-                          <Trash2 size={12} />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
-        </div>
-
-        {/* Cotações ao lado */}
-        <div className="space-y-4">
-          <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)" }}>
-            <div className={headerStyle} style={headerInline}>💹 Cotações - Bolsas e Moedas</div>
-            <div className="p-4">
-              {loadingCotacoes ? (
-                <p className="text-sm" style={{ color: "rgba(13,4,70,0.5)" }}>Carregando cotações...</p>
-              ) : cotacoes.length === 0 ? (
-                <p className="text-sm" style={{ color: "rgba(13,4,70,0.5)" }}>Cotações indisponíveis</p>
-              ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  {cotacoes.map(c => (
-                    <div key={c.name} className="rounded-lg p-3 text-center relative group" style={{ backgroundColor: "rgba(13,4,70,0.04)" }}>
-                      <button onClick={() => addCotacao(c)}
-                        className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-all"
-                        style={{ color: "rgba(13,4,70,0.4)" }}
-                        onMouseEnter={e => { e.currentTarget.style.color = "#2dbef3"; }}
-                        onMouseLeave={e => { e.currentTarget.style.color = "rgba(13,4,70,0.4)"; }}
-                        title="Adicionar cotação">
-                        <Plus size={12} />
-                      </button>
-                      <p className="text-[10px] mb-1" style={{ color: "rgba(13,4,70,0.5)" }}>{c.name}</p>
-                      <p className="text-sm font-semibold" style={{ color: "#0d0446" }}>{c.value}</p>
-                      <div className={`flex items-center justify-center gap-1 text-xs mt-1 ${
-                        c.direction === "up" ? "text-green-500" : c.direction === "down" ? "text-red-500" : ""
-                      }`} style={c.direction !== "up" && c.direction !== "down" ? { color: "rgba(13,4,70,0.4)" } : undefined}>
-                        {c.direction === "up" ? <TrendingUp size={12} /> : c.direction === "down" ? <TrendingDown size={12} /> : <Minus size={12} />}
-                        {c.change}
-                      </div>
-                    </div>
-                  ))}
+      {/* Cotações em linha */}
+      <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)" }}>
+        <div className={headerStyle} style={headerInline}>💹 Cotações - Bolsas e Moedas</div>
+        <div className="p-4">
+          {loadingCotacoes ? (
+            <p className="text-sm" style={{ color: "rgba(13,4,70,0.5)" }}>Carregando cotações...</p>
+          ) : cotacoes.length === 0 ? (
+            <p className="text-sm" style={{ color: "rgba(13,4,70,0.5)" }}>Cotações indisponíveis</p>
+          ) : (
+            <div className="flex flex-wrap gap-3">
+              {cotacoes.map(c => (
+                <div key={c.name} className="rounded-lg px-3 py-2 flex items-center gap-2 text-xs" style={{ backgroundColor: "rgba(13,4,70,0.04)" }}>
+                  <span className="font-semibold whitespace-nowrap" style={{ color: "#0d0446" }}>{c.name}</span>
+                  <span className="whitespace-nowrap" style={{ color: "#0d0446" }}>{c.value}</span>
+                  <span className={`flex items-center gap-0.5 whitespace-nowrap ${
+                    c.direction === "up" ? "text-green-500" : c.direction === "down" ? "text-red-500" : ""
+                  }`} style={c.direction !== "up" && c.direction !== "down" ? { color: "rgba(13,4,70,0.4)" } : undefined}>
+                    {c.direction === "up" ? <TrendingUp size={10} /> : c.direction === "down" ? <TrendingDown size={10} /> : <Minus size={10} />}
+                    {c.change}
+                  </span>
                 </div>
-              )}
-            </div>
-          </div>
-
-          {selectedCotacoes.length > 0 && (
-            <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)" }}>
-              <div className={headerStyle} style={headerInline}>📊 Cotações Selecionadas</div>
-              <div className="p-4 flex flex-wrap gap-2">
-                {selectedCotacoes.map(sc => (
-                  <div key={sc.id || sc.name} className="rounded-lg px-3 py-2 flex items-center gap-2 text-xs" style={{ backgroundColor: "rgba(13,4,70,0.04)" }}>
-                    <span className="font-semibold" style={{ color: "#0d0446" }}>{sc.name}</span>
-                    <span style={{ color: "rgba(13,4,70,0.5)" }}>{sc.value}</span>
-                    <span style={{ color: "rgba(13,4,70,0.5)" }}>{sc.change}</span>
-                    <button onClick={() => removeCotacao(sc.name)} className="text-destructive hover:text-destructive/80">
-                      <Trash2 size={10} />
-                    </button>
-                  </div>
-                ))}
-              </div>
+              ))}
             </div>
           )}
         </div>
