@@ -33,12 +33,12 @@ export default function AudioDualCard({
           src={channelThumb}
           alt=""
           className="absolute inset-0 w-full h-full object-cover"
-          style={{ filter: "brightness(0.15) blur(6px)", transform: "scale(1.05)" }}
+          style={{ transform: "scale(1.05)" }}
         />
       )}
-      {/* Fallback gradient when no thumb */}
+      {/* Fallback solid black when no thumb */}
       {!channelThumb && (
-        <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, hsl(0 0% 0%) 0%, hsl(0 70% 20%) 100%)" }} />
+        <div className="absolute inset-0" style={{ backgroundColor: "hsl(0 0% 0%)" }} />
       )}
       {/* Wrapper with relative positioning so presenter sits behind music card */}
       <div className="relative w-[90vw] max-w-[900px]" style={{ minHeight: "420px" }}>
