@@ -213,6 +213,17 @@ export default function NoticiasPanel() {
   const [portalOrder, setPortalOrder] = useState<string[]>([]);
   const [summaryPopup, setSummaryPopup] = useState<{ title: string; resumo: string; tempoLeitura: string } | null>(null);
   const [loadingSummary, setLoadingSummary] = useState(false);
+  const [wizardOpen, setWizardOpen] = useState(false);
+  const [jornalConfig, setJornalConfig] = useState<JornalConfig | null>(null);
+  const [programas, setProgramas] = useState<{ id: string; nome: string }[]>([]);
+
+  // Load programas for wizard
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("programas").select("id, nome").then(({ data }) => {
+      if (data) setProgramas(data);
+    });
+  }, [user]);
 
   // Load from DB
   useEffect(() => {
