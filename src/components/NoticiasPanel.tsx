@@ -61,9 +61,7 @@ function decodeHtmlEntities(str: string): string {
 }
 
 async function fetchNews(rssUrl: string): Promise<NewsItem[]> {
-  try {
-    const res = await fetch(`${PROXY}${encodeURIComponent(rssUrl)}`);
-    const text = await res.text();
+  const parseRss = (text: string): NewsItem[] => {
     const parser = new DOMParser();
     const doc = parser.parseFromString(text, "application/xml");
     const items = doc.querySelectorAll("item");
@@ -73,46 +71,54 @@ async function fetchNews(rssUrl: string): Promise<NewsItem[]> {
       const title = decodeHtmlEntities(item.querySelector("title")?.textContent || "");
       const link = item.querySelector("link")?.textContent || "";
       let thumbnail = "";
-      // Try media:content, media:thumbnail, enclosure, or image in description
       const mediaContent = item.querySelector("content[url]") || item.querySelector("thumbnail[url]");
-      if (mediaContent) {
-        thumbnail = mediaContent.getAttribute("url") || "";
-      }
+      if (mediaContent) thumbnail = mediaContent.getAttribute("url") || "";
       if (!thumbnail) {
         const enclosure = item.querySelector("enclosure[url]");
-        if (enclosure && (enclosure.getAttribute("type") || "").startsWith("image")) {
-          thumbnail = enclosure.getAttribute("url") || "";
-        }
+        if (enclosure && (enclosure.getAttribute("type") || "").startsWith("image")) thumbnail = enclosure.getAttribute("url") || "";
       }
       if (!thumbnail) {
         const desc = item.querySelector("description")?.textContent || "";
         const imgMatch = desc.match(/<img[^>]+src=["']([^"']+)["']/i);
         if (imgMatch) thumbnail = imgMatch[1];
       }
-      // Only add news with images
-      if (title && thumbnail) {
-        results.push({ title, link, thumbnail });
-      }
+      if (title && thumbnail) results.push({ title, link, thumbnail });
     });
     return results;
-  } catch {
-    // Fallback to rss2json
-    try {
-      const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`);
-      const data = await res.json();
-      if (data.status === "ok" && data.items) {
-        return data.items
-          .slice(0, 10)
-          .map((item: any) => ({
-            title: decodeHtmlEntities(item.title || ""),
-            link: item.link,
-            thumbnail: item.thumbnail || item.enclosure?.link || "",
-          }))
-          .filter((n: NewsItem) => n.thumbnail);
-      }
-    } catch {}
-    return [];
-  }
+  };
+
+  // Try primary proxy
+  try {
+    const res = await fetch(`${PROXY}${encodeURIComponent(rssUrl)}`, { signal: AbortSignal.timeout(8000) });
+    const text = await res.text();
+    const results = parseRss(text);
+    if (results.length > 0) return results;
+  } catch {}
+
+  // Try fallback proxy
+  try {
+    const res = await fetch(`${PROXY_FALLBACK}${encodeURIComponent(rssUrl)}`, { signal: AbortSignal.timeout(8000) });
+    const text = await res.text();
+    const results = parseRss(text);
+    if (results.length > 0) return results;
+  } catch {}
+
+  // Final fallback: rss2json
+  try {
+    const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`);
+    const data = await res.json();
+    if (data.status === "ok" && data.items) {
+      return data.items
+        .slice(0, 10)
+        .map((item: any) => ({
+          title: decodeHtmlEntities(item.title || ""),
+          link: item.link,
+          thumbnail: item.thumbnail || item.enclosure?.link || "",
+        }))
+        .filter((n: NewsItem) => n.thumbnail);
+    }
+  } catch {}
+  return [];
 }
 
 async function fetchCotacoes(): Promise<CotacaoItem[]> {
