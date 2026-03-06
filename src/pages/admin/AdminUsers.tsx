@@ -43,40 +43,79 @@ function AdminUsersContent() {
   useEffect(() => { loadData(); }, []);
 
   const loadData = async () => {
-    const [{ data: empresas }, { data: mods }, { data: clientMods }, emailsRes] = await Promise.all([
-      supabase.from("empresa_config").select("user_id, nome, logo, ativo, plano, updated_at"),
-      supabase.from("available_modules").select("key, name, icon"),
-      supabase.from("client_modules").select("user_id, module_key, enabled"),
-      supabase.functions.invoke("create-user", { body: { action: "list_emails" } }),
-    ]);
+    setLoading(true);
 
-    if (emailsRes.data?.emails) {
-      setEmailMap(emailsRes.data.emails);
-    }
+    try {
+      const [{ data: empresas, error: empresasError }, { data: mods, error: modsError }, { data: clientMods, error: clientModsError }] = await Promise.all([
+        supabase.from("empresa_config").select("user_id, nome, logo, ativo, plano, updated_at"),
+        supabase.from("available_modules").select("key, name, icon"),
+        supabase.from("client_modules").select("user_id, module_key, enabled"),
+      ]);
 
-    const moduleList = mods || [];
-    setModules(moduleList);
+      if (empresasError) throw empresasError;
+      if (modsError) throw modsError;
+      if (clientModsError) throw clientModsError;
 
-    const clientList = (empresas || []).map((e: any) => {
-      const moduleMap: Record<string, boolean> = {};
-      moduleList.forEach((m: any) => {
-        const assignment = (clientMods || []).find((cm: any) => cm.user_id === e.user_id && cm.module_key === m.key);
-        moduleMap[m.key] = assignment ? assignment.enabled : false;
+      let emails: Record<string, string> = {};
+      try {
+        const emailsRes = await supabase.functions.invoke("create-user", { body: { action: "list_emails" } });
+        if (emailsRes.error) throw emailsRes.error;
+        emails = emailsRes.data?.emails || {};
+      } catch (err: any) {
+        const msg = String(err?.message || "").toLowerCase();
+        const unauthorized = msg.includes("401") || msg.includes("não autorizado") || msg.includes("unauthorized");
+
+        if (unauthorized) {
+          toast({
+            title: "Sessão expirada",
+            description: "Faça login novamente para continuar.",
+            variant: "destructive",
+          });
+          await supabase.auth.signOut();
+          navigate("/admin/login", { replace: true });
+          return;
+        }
+
+        toast({
+          title: "Falha ao carregar emails",
+          description: "Os clientes foram carregados, mas os emails não puderam ser consultados agora.",
+          variant: "destructive",
+        });
+      }
+
+      setEmailMap(emails);
+
+      const moduleList = mods || [];
+      setModules(moduleList);
+
+      const clientList = (empresas || []).map((e: any) => {
+        const moduleMap: Record<string, boolean> = {};
+        moduleList.forEach((m: any) => {
+          const assignment = (clientMods || []).find((cm: any) => cm.user_id === e.user_id && cm.module_key === m.key);
+          moduleMap[m.key] = assignment ? assignment.enabled : false;
+        });
+        return {
+          user_id: e.user_id,
+          nome: e.nome || "Sem nome",
+          logo: e.logo || "",
+          ativo: e.ativo ?? true,
+          plano: e.plano || "basic",
+          modules: moduleMap,
+          updated_at: e.updated_at || "",
+        };
       });
-      return {
-        user_id: e.user_id,
-        nome: e.nome || "Sem nome",
-        logo: e.logo || "",
-        ativo: e.ativo ?? true,
-        plano: e.plano || "basic",
-        modules: moduleMap,
-        updated_at: e.updated_at || "",
-      };
-    });
 
-    clientList.sort((a: ClientRow, b: ClientRow) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
-    setClients(clientList);
-    setLoading(false);
+      clientList.sort((a: ClientRow, b: ClientRow) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
+      setClients(clientList);
+    } catch (error: any) {
+      toast({
+        title: "Erro ao carregar clientes",
+        description: error?.message || "Não foi possível carregar os dados.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const toggleModule = async (userId: string, moduleKey: string, enabled: boolean) => {
