@@ -29,7 +29,7 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
   return (
     <div className="min-h-screen flex" style={{ backgroundColor: "#ffffff", color: "#0d0446" }}>
       <aside className="w-16 flex flex-col items-center py-4 gap-3" style={{ backgroundColor: "#0d0446" }}>
-        <div className="mb-4 mt-8">
+        <div className="mb-8 mt-8">
           <img src={logoMenu} alt="Admin" className="w-20 h-auto -rotate-90" />
         </div>
 
