@@ -1506,7 +1506,7 @@ export default function PlayerPage() {
           </div>
 
           {/* Next / Schedule */}
-          <div className="pl-3 border-l border-white/10 flex-1 min-w-0 flex items-center gap-3">
+          <div className="pl-3 border-l border-white/10 flex-1 min-w-0 flex items-stretch gap-3 overflow-hidden">
             <div className="min-w-0 flex-1">
               <span className="text-[10px] font-bold uppercase" style={{ color: "#e60000" }}>A seguir:</span>
               <div className="text-white text-sm truncate">
@@ -1529,7 +1529,7 @@ export default function PlayerPage() {
               </div>
             </div>
             {!isYoutube && nextPresenter?.foto && (
-              <img src={nextPresenter.foto} alt={nextPresenter.nome} className="h-full object-cover object-top shrink-0" style={{ maxHeight: "100%", width: "auto" }} />
+              <img src={nextPresenter.foto} alt={nextPresenter.nome} className="object-cover object-top shrink-0 self-stretch" style={{ width: "auto", minHeight: "100%" }} />
             )}
           </div>
         </div>
