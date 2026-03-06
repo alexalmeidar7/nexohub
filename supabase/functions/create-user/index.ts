@@ -150,6 +150,25 @@ Deno.serve(async (req) => {
       });
     }
 
+    // LIST ALL USER EMAILS
+    if (action === "list_emails") {
+      const { data, error } = await adminClient.auth.admin.listUsers({ perPage: 1000 });
+      if (error) {
+        return new Response(JSON.stringify({ error: error.message }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const emailMap: Record<string, string> = {};
+      for (const u of data.users) {
+        emailMap[u.id] = u.email || "";
+      }
+      return new Response(JSON.stringify({ emails: emailMap }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     return new Response(JSON.stringify({ error: "Ação inválida" }), {
       status: 400,
       headers: { ...corsHeaders, "Content-Type": "application/json" },

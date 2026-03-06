@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Pencil, Check, X, Eye, EyeOff } from "lucide-react";
+import { Loader2, Pencil, Check, X, Eye, EyeOff, MessageSquare } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
@@ -22,10 +22,12 @@ interface ClientRow {
 
 interface ClientCardProps {
   client: ClientRow;
+  clientEmail: string;
   modules: AvailableModule[];
   saving: string | null;
   onToggleModule: (userId: string, moduleKey: string, enabled: boolean) => void;
   onClientUpdated: () => void;
+  onSendMessage: (userId: string, nome: string) => void;
 }
 
 const inputStyle: React.CSSProperties = {
@@ -43,7 +45,7 @@ const plans = [
   { value: "enterprise", label: "Enterprise" },
 ];
 
-export default function ClientCard({ client, modules, saving, onToggleModule, onClientUpdated }: ClientCardProps) {
+export default function ClientCard({ client, clientEmail, modules, saving, onToggleModule, onClientUpdated, onSendMessage }: ClientCardProps) {
   const { toast } = useToast();
   const [editing, setEditing] = useState(false);
   const [savingEdit, setSavingEdit] = useState(false);
@@ -128,23 +130,41 @@ export default function ClientCard({ client, modules, saving, onToggleModule, on
               <span className="px-2 py-0.5 rounded-full" style={{ fontSize: "9px", backgroundColor: "#e0f2fe", color: "#0284c7", fontWeight: 600 }}>
                 {planLabel}
               </span>
+              {clientEmail && (
+                <span style={{ fontSize: "10px", color: "#6b7280" }}>{clientEmail}</span>
+              )}
             </div>
             <p style={{ fontSize: "10px", color: "#9ca3af" }}>{client.user_id.slice(0, 8)}...</p>
           </div>
         </div>
-        <button
-          onClick={() => setEditing(!editing)}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all duration-200"
-          style={{
-            fontSize: "11px",
-            fontWeight: 500,
-            backgroundColor: editing ? "#0d0446" : "transparent",
-            color: editing ? "#fff" : "#0d0446",
-            border: "1px solid #0d0446",
-          }}
-        >
-          <Pencil size={12} /> {editing ? "Editando" : "Editar"}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => onSendMessage(client.user_id, client.nome)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all duration-200"
+            style={{
+              fontSize: "11px",
+              fontWeight: 500,
+              backgroundColor: "transparent",
+              color: "#2ec0f6",
+              border: "1px solid #2ec0f6",
+            }}
+          >
+            <MessageSquare size={12} /> Enviar Mensagem
+          </button>
+          <button
+            onClick={() => setEditing(!editing)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all duration-200"
+            style={{
+              fontSize: "11px",
+              fontWeight: 500,
+              backgroundColor: editing ? "#0d0446" : "transparent",
+              color: editing ? "#fff" : "#0d0446",
+              border: "1px solid #0d0446",
+            }}
+          >
+            <Pencil size={12} /> {editing ? "Editando" : "Editar"}
+          </button>
+        </div>
       </div>
 
       {/* Edit form */}

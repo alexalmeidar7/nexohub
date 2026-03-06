@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, UserPlus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -24,8 +25,10 @@ interface AvailableModule {
 }
 
 function AdminUsersContent() {
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [clients, setClients] = useState<ClientRow[]>([]);
+  const [emailMap, setEmailMap] = useState<Record<string, string>>({});
   const [modules, setModules] = useState<AvailableModule[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | null>(null);
@@ -39,11 +42,16 @@ function AdminUsersContent() {
   useEffect(() => { loadData(); }, []);
 
   const loadData = async () => {
-    const [{ data: empresas }, { data: mods }, { data: clientMods }] = await Promise.all([
+    const [{ data: empresas }, { data: mods }, { data: clientMods }, emailsRes] = await Promise.all([
       supabase.from("empresa_config").select("user_id, nome, logo, ativo, plano, updated_at"),
       supabase.from("available_modules").select("key, name, icon"),
       supabase.from("client_modules").select("user_id, module_key, enabled"),
+      supabase.functions.invoke("create-user", { body: { action: "list_emails" } }),
     ]);
+
+    if (emailsRes.data?.emails) {
+      setEmailMap(emailsRes.data.emails);
+    }
 
     const moduleList = mods || [];
     setModules(moduleList);
@@ -171,10 +179,14 @@ function AdminUsersContent() {
             <ClientCard
               key={client.user_id}
               client={client}
+              clientEmail={emailMap[client.user_id] || ""}
               modules={modules}
               saving={saving}
               onToggleModule={toggleModule}
               onClientUpdated={loadData}
+              onSendMessage={(userId, nome) => {
+                navigate("/admin/messages", { state: { recipientId: userId, recipientNome: nome } });
+              }}
             />
           ))}
         </div>
