@@ -351,7 +351,7 @@ export default function NoticiasPanel() {
   return (
     <div className="animate-fade-in space-y-6">
       <div className="flex items-center justify-between">
-        <h3 className="text-xl font-bold" style={{ color: "#0d0446" }}>Principais Notícias</h3>
+        <h3 className="text-xl font-bold" style={{ color: "#0d0446" }}>Notícias do momento</h3>
         <button onClick={() => { loadAll(); loadCotacoes(); }} disabled={loading}
           className="text-muted-foreground hover:text-primary transition-colors disabled:opacity-50">
           <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
