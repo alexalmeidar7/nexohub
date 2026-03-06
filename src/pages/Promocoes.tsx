@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { getEmpresaConfig, type EmpresaConfig } from "@/components/ConfiguracoesPage";
 import { findCurrentProgram } from "@/components/OnAirWidget";
@@ -58,6 +59,8 @@ function renderBoldMarkdown(text: string) {
 }
 
 export default function PromocoesKiosk() {
+  const { userSlug } = useParams<{ userSlug?: string }>();
+  const isPublicMode = !!userSlug;
   const [promocoes, setPromocoes] = useState<Promocao[]>([]);
   const [config, setConfig] = useState<EmpresaConfig>({} as EmpresaConfig);
   const [programas, setProgramas] = useState<ProgramaGrade[]>([]);
@@ -126,7 +129,40 @@ export default function PromocoesKiosk() {
   }, []);
 
   useEffect(() => {
-    const load = async () => {
+    const loadPublic = async () => {
+      const { data, error } = await supabase.functions.invoke("public-promo-data", { body: { slug: userSlug } });
+      if (error || !data) return;
+
+      const empresa = data.empresa;
+      if (empresa) {
+        setConfig({
+          nome: empresa.nome || "", logo: empresa.logo || "", backgroundUrl: empresa.background_url || "",
+          endereco: empresa.endereco || "", telefoneComercial: empresa.telefone_comercial || "",
+          telefoneParticipacao: empresa.telefone_participacao || "", site: empresa.site || "",
+          instagram: empresa.instagram || "", facebook: empresa.facebook || "", youtube: empresa.youtube || "",
+        });
+      }
+
+      const today = new Date().toISOString().split("T")[0];
+      const activePromos = (data.promocoes || []).filter((p: any) => p.data_inicio <= today && p.data_fim >= today);
+      setPromocoes(activePromos);
+      setTestemunhais(data.testemunhais || []);
+
+      const mapped = (data.programas || []).map((p: any) => ({
+        id: p.id, nome: p.nome, apresentadorId: p.apresentador_id || "", selo: p.selo || "",
+        capa: p.capa || "", diasSemana: p.dias_semana || [], horarioInicio: p.horario_inicio,
+        horarioFim: p.horario_fim, descricao: p.descricao || "",
+      }));
+      setProgramas(mapped);
+
+      const aprs = (data.apresentadores || []).map((a: any) => ({
+        id: a.id, nome: a.nome, cargo: a.cargo || "", instagram: a.instagram || "",
+        foto: a.foto || "", ativo: a.ativo,
+      }));
+      setApresentadores(aprs);
+    };
+
+    const loadAuth = async () => {
       const [empresaData, { data: promoData }, { data: progsData }, { data: testData }] = await Promise.all([
         getEmpresaConfig(),
         supabase.from("promocoes").select("*").order("data_inicio"),
@@ -141,25 +177,21 @@ export default function PromocoesKiosk() {
       setTestemunhais(testData || []);
 
       const mapped = (progsData || []).map((p: any) => ({
-        id: p.id,
-        nome: p.nome,
-        apresentadorId: p.apresentador_id || "",
-        selo: p.selo || "",
-        capa: p.capa || "",
-        diasSemana: p.dias_semana || [],
-        horarioInicio: p.horario_inicio,
-        horarioFim: p.horario_fim,
-        descricao: p.descricao || "",
+        id: p.id, nome: p.nome, apresentadorId: p.apresentador_id || "", selo: p.selo || "",
+        capa: p.capa || "", diasSemana: p.dias_semana || [], horarioInicio: p.horario_inicio,
+        horarioFim: p.horario_fim, descricao: p.descricao || "",
       }));
       setProgramas(mapped);
 
       const aprs = await getApresentadores();
       setApresentadores(aprs);
     };
+
+    const load = isPublicMode ? loadPublic : loadAuth;
     load();
     const interval = setInterval(load, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [isPublicMode, userSlug]);
 
   // Banner auto-rotate with progress tracking
   const BANNER_DURATION = 5000;
