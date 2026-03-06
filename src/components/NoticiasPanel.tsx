@@ -505,7 +505,7 @@ export default function NoticiasPanel() {
       <div className="flex gap-4">
         {/* LEFT COLUMN */}
         <div className="space-y-4" style={{ width: (jornalConfig || wizardOpen) ? "50%" : "100%" }}>
-          {/* Cotações marquee - 50% width */}
+          {/* Cotações marquee */}
           <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)", width: (jornalConfig || wizardOpen) ? "100%" : "50%" }}>
             <div className="px-3 py-2 font-bold text-xs tracking-wide text-white rounded-t-xl flex items-center justify-between" style={{ backgroundColor: "#0d0446" }}>
               <span>💹 Cotações - Bolsas e Moedas</span>
@@ -514,152 +514,117 @@ export default function NoticiasPanel() {
               </button>
             </div>
             {!collapsedBoxes['cotacoes'] && (
-            </div>
-            <div className="p-2 overflow-hidden">
-              {loadingCotacoes ? (
-                <p className="text-xs" style={{ color: "rgba(13,4,70,0.5)" }}>Carregando cotações...</p>
-              ) : cotacoes.length === 0 ? (
-                <p className="text-xs" style={{ color: "rgba(13,4,70,0.5)" }}>Cotações indisponíveis</p>
-              ) : (
-                <div className="relative overflow-hidden">
-                  <style>{`
-                    @keyframes cotacoes-scroll {
-                      0% { transform: translateX(0); }
-                      100% { transform: translateX(-50%); }
-                    }
-                    .cotacoes-marquee {
-                      display: flex;
-                      gap: 8px;
-                      animation: cotacoes-scroll 30s linear infinite;
-                      width: max-content;
-                    }
-                    .cotacoes-marquee:hover {
-                      animation-play-state: paused;
-                    }
-                  `}</style>
-                  <div className="cotacoes-marquee">
-                    {[...cotacoes, ...cotacoes].map((c, i) => (
-                      <div
-                        key={`${c.name}-${i}`}
-                        onClick={() => addToBlocoEconomia(c)}
-                        className="rounded-md px-2 py-1.5 flex items-center gap-1.5 text-[10px] shrink-0 transition-colors"
-                        style={{
-                          backgroundColor: c.direction === "down" ? "rgba(239,68,68,0.15)" : c.direction === "up" ? "rgba(34,197,94,0.15)" : "rgba(13,4,70,0.04)",
-                          cursor: "copy",
-                        }}
-                        title="Clique para adicionar"
-                      >
-                        <span className="font-semibold whitespace-nowrap" style={{ color: "#0d0446" }}>{c.name}</span>
-                        <span className="whitespace-nowrap" style={{ color: "#0d0446" }}>{c.value}</span>
-                        <span className={`flex items-center gap-0.5 whitespace-nowrap font-semibold ${
-                          c.direction === "up" ? "text-green-600" : c.direction === "down" ? "text-red-600" : ""
-                        }`} style={c.direction === "neutral" ? { color: "rgba(13,4,70,0.4)" } : undefined}>
-                          {c.direction === "up" ? <TrendingUp size={9} /> : c.direction === "down" ? <TrendingDown size={9} /> : <Minus size={9} />}
-                          {c.change}
-                        </span>
-                      </div>
-                    ))}
+              <div className="p-2 overflow-hidden">
+                {loadingCotacoes ? (
+                  <p className="text-xs" style={{ color: "rgba(13,4,70,0.5)" }}>Carregando cotações...</p>
+                ) : cotacoes.length === 0 ? (
+                  <p className="text-xs" style={{ color: "rgba(13,4,70,0.5)" }}>Cotações indisponíveis</p>
+                ) : (
+                  <div className="relative overflow-hidden">
+                    <style>{`
+                      @keyframes cotacoes-scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+                      .cotacoes-marquee { display: flex; gap: 8px; animation: cotacoes-scroll 30s linear infinite; width: max-content; }
+                      .cotacoes-marquee:hover { animation-play-state: paused; }
+                    `}</style>
+                    <div className="cotacoes-marquee">
+                      {[...cotacoes, ...cotacoes].map((c, i) => (
+                        <div key={`${c.name}-${i}`} onClick={() => addToBlocoEconomia(c)}
+                          className="rounded-md px-2 py-1.5 flex items-center gap-1.5 text-[10px] shrink-0 transition-colors"
+                          style={{ backgroundColor: c.direction === "down" ? "rgba(239,68,68,0.15)" : c.direction === "up" ? "rgba(34,197,94,0.15)" : "rgba(13,4,70,0.04)", cursor: "copy" }}
+                          title="Clique para adicionar ao Bloco de Economia"
+                        >
+                          <span className="font-semibold whitespace-nowrap" style={{ color: "#0d0446" }}>{c.name}</span>
+                          <span className="whitespace-nowrap" style={{ color: "#0d0446" }}>{c.value}</span>
+                          <span className={`flex items-center gap-0.5 whitespace-nowrap font-semibold ${c.direction === "up" ? "text-green-600" : c.direction === "down" ? "text-red-600" : ""}`}
+                            style={c.direction === "neutral" ? { color: "rgba(13,4,70,0.4)" } : undefined}>
+                            {c.direction === "up" ? <TrendingUp size={9} /> : c.direction === "down" ? <TrendingDown size={9} /> : <Minus size={9} />}
+                            {c.change}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Bloco de Economia */}
+          {blocoEconomia.length > 0 && (
+            <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)", width: (jornalConfig || wizardOpen) ? "100%" : "50%" }}
+              draggable
+              onDragStart={(e) => {
+                e.dataTransfer.setData("text/plain", JSON.stringify({
+                  type: "bloco_economia",
+                  items: blocoEconomia.map(c => ({ name: c.name, value: c.value, change: c.change, direction: c.direction }))
+                }));
+              }}
+            >
+              <div className="px-3 py-2 font-bold text-xs tracking-wide text-white rounded-t-xl flex items-center justify-between cursor-grab" style={{ backgroundColor: "#0d0446" }}>
+                <span className="flex items-center gap-1.5">
+                  <GripVertical size={12} className="opacity-60" />
+                  📊 Bloco de Economia
+                </span>
+                <button onClick={() => toggleBox('blocoEconomia')} className="p-0.5 rounded hover:bg-white/20 transition-colors">
+                  {collapsedBoxes['blocoEconomia'] ? <ChevronDown size={12} /> : <ChevronUp size={12} />}
+                </button>
+              </div>
+              {!collapsedBoxes['blocoEconomia'] && (
+                <div className="divide-y" style={{ borderColor: "rgba(13,4,70,0.04)" }}>
+                  {blocoEconomia.map((c) => (
+                    <div key={c.name} className="flex items-center gap-2 px-3 py-1.5 text-[11px] hover:bg-gray-50">
+                      <span className="font-semibold" style={{ color: "#0d0446" }}>{c.name}</span>
+                      <span style={{ color: "#0d0446" }}>{c.value}</span>
+                      <span className={`flex items-center gap-0.5 font-semibold ${c.direction === "up" ? "text-green-600" : c.direction === "down" ? "text-red-600" : ""}`}
+                        style={c.direction === "neutral" ? { color: "rgba(13,4,70,0.4)" } : undefined}>
+                        {c.direction === "up" ? <TrendingUp size={9} /> : c.direction === "down" ? <TrendingDown size={9} /> : <Minus size={9} />}
+                        {c.change}
+                      </span>
+                      <button onClick={() => removeFromBlocoEconomia(c.name)}
+                        className="ml-auto p-0.5 rounded hover:bg-red-50 transition-colors" title="Remover">
+                        <Trash2 size={11} className="text-red-400 hover:text-red-600" />
+                      </button>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
-            )}
-          </div>
+          )}
 
-          {/* News Portals Accordion - Default only */}
+          {/* News Portals Accordion */}
           <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)", width: (jornalConfig || wizardOpen) ? "100%" : "50%" }}>
-            <div className="px-3 py-2 font-bold text-xs tracking-wide text-white rounded-t-xl" style={{ backgroundColor: "#0d0446" }}>
-              📰 Portais de Notícias
+            <div className="px-3 py-2 font-bold text-xs tracking-wide text-white rounded-t-xl flex items-center justify-between" style={{ backgroundColor: "#0d0446" }}>
+              <span>📰 Portais de Notícias</span>
+              <button onClick={() => toggleBox('portais')} className="p-0.5 rounded hover:bg-white/20 transition-colors">
+                {collapsedBoxes['portais'] ? <ChevronDown size={12} /> : <ChevronUp size={12} />}
+              </button>
             </div>
-            {loading ? (
-              <div className="p-4 flex items-center gap-2">
-                <Loader2 size={14} className="animate-spin" style={{ color: "#2ec1f7" }} />
-                <span className="text-xs" style={{ color: "rgba(13,4,70,0.5)" }}>Carregando notícias...</span>
-              </div>
-            ) : (
-              <Accordion type="multiple" className="w-full">
-                {DEFAULT_PORTALS.map(portal => {
-                  const news = newsByPortal[portal.name] || [];
-                  return (
-                    <AccordionItem key={portal.name} value={portal.name} className="border-b-0" style={{ borderBottom: "1px solid rgba(13,4,70,0.06)" }}>
-                      <AccordionTrigger className="px-3 py-2 text-xs font-bold hover:no-underline" style={{ color: "#0d0446" }}>
-                        <span className="flex items-center gap-2 flex-1">
-                          <Newspaper size={12} style={{ color: "#2ec1f7" }} />
-                          {portal.name}
-                          <span className="text-[9px] font-normal px-1.5 rounded-full" style={{ backgroundColor: "rgba(46,193,247,0.1)", color: "#2ec1f7" }}>
-                            {news.length}
-                          </span>
-                        </span>
-                      </AccordionTrigger>
-                      <AccordionContent className="pb-0">
-                        <div className="divide-y" style={{ borderColor: "rgba(13,4,70,0.04)" }}>
-                          {news.map((item, idx) => (
-                            <div key={idx} draggable
-                              onDragStart={(e) => { e.dataTransfer.setData("text/plain", JSON.stringify({ portal: portal.name, title: item.title, imageUrl: item.thumbnail || "" })); }}
-                              className="flex items-center gap-2 px-3 py-1.5 text-[11px] hover:bg-gray-50 cursor-grab active:cursor-grabbing group"
-                            >
-                              <GripVertical size={10} className="shrink-0 opacity-20" />
-                              <span className="flex-1 line-clamp-1" style={{ color: "#0d0446" }}>{item.title}</span>
-                              <a href={item.link} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}
-                                className="shrink-0 p-0.5 rounded hover:bg-blue-50 transition-opacity" title="Ler notícia">
-                                <BookOpen size={12} style={{ color: "#2ec1f7" }} />
-                              </a>
-                              {item.thumbnail && (
-                                <div className="shrink-0 relative"
-                                  onMouseEnter={(e) => handleImageHover(e, item.thumbnail || "")}
-                                  onMouseLeave={() => setHoveredImage(null)}>
-                                  <ImageIcon size={12} style={{ color: "rgba(13,4,70,0.3)" }} className="cursor-pointer hover:opacity-70" />
-                                </div>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      </AccordionContent>
-                    </AccordionItem>
-                  );
-                })}
-              </Accordion>
-            )}
-          </div>
-
-          {/* Sites Adicionados Box */}
-          {customSites.length > 0 && (
-            <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)", width: (jornalConfig || wizardOpen) ? "100%" : "50%" }}>
-              <div className="px-3 py-2 font-bold text-xs tracking-wide text-white rounded-t-xl" style={{ backgroundColor: "#0d0446" }}>
-                🌐 Sites Adicionados
-              </div>
-              {loading ? (
+            {!collapsedBoxes['portais'] && (
+              loading ? (
                 <div className="p-4 flex items-center gap-2">
                   <Loader2 size={14} className="animate-spin" style={{ color: "#2ec1f7" }} />
-                  <span className="text-xs" style={{ color: "rgba(13,4,70,0.5)" }}>Carregando...</span>
+                  <span className="text-xs" style={{ color: "rgba(13,4,70,0.5)" }}>Carregando notícias...</span>
                 </div>
               ) : (
                 <Accordion type="multiple" className="w-full">
-                  {customSites.map(site => {
-                    const news = newsByPortal[site.name] || [];
+                  {DEFAULT_PORTALS.map(portal => {
+                    const news = newsByPortal[portal.name] || [];
                     return (
-                      <AccordionItem key={site.name} value={site.name} className="border-b-0" style={{ borderBottom: "1px solid rgba(13,4,70,0.06)" }}>
+                      <AccordionItem key={portal.name} value={portal.name} className="border-b-0" style={{ borderBottom: "1px solid rgba(13,4,70,0.06)" }}>
                         <AccordionTrigger className="px-3 py-2 text-xs font-bold hover:no-underline" style={{ color: "#0d0446" }}>
                           <span className="flex items-center gap-2 flex-1">
                             <Newspaper size={12} style={{ color: "#2ec1f7" }} />
-                            {site.name}
+                            {portal.name}
                             <span className="text-[9px] font-normal px-1.5 rounded-full" style={{ backgroundColor: "rgba(46,193,247,0.1)", color: "#2ec1f7" }}>
                               {news.length}
                             </span>
-                            <button
-                              onClick={(e) => { e.stopPropagation(); removeCustomSite(site.name); }}
-                              className="ml-auto p-0.5 rounded hover:bg-red-50 transition-colors"
-                              title="Remover site"
-                            >
-                              <Trash2 size={11} className="text-red-400 hover:text-red-600" />
-                            </button>
                           </span>
                         </AccordionTrigger>
                         <AccordionContent className="pb-0">
                           <div className="divide-y" style={{ borderColor: "rgba(13,4,70,0.04)" }}>
                             {news.map((item, idx) => (
                               <div key={idx} draggable
-                                onDragStart={(e) => { e.dataTransfer.setData("text/plain", JSON.stringify({ portal: site.name, title: item.title, imageUrl: item.thumbnail || "" })); }}
+                                onDragStart={(e) => { e.dataTransfer.setData("text/plain", JSON.stringify({ portal: portal.name, title: item.title, imageUrl: item.thumbnail || "" })); }}
                                 className="flex items-center gap-2 px-3 py-1.5 text-[11px] hover:bg-gray-50 cursor-grab active:cursor-grabbing group"
                               >
                                 <GripVertical size={10} className="shrink-0 opacity-20" />
@@ -683,6 +648,73 @@ export default function NoticiasPanel() {
                     );
                   })}
                 </Accordion>
+              )
+            )}
+          </div>
+
+          {/* Sites Adicionados Box */}
+          {customSites.length > 0 && (
+            <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)", width: (jornalConfig || wizardOpen) ? "100%" : "50%" }}>
+              <div className="px-3 py-2 font-bold text-xs tracking-wide text-white rounded-t-xl flex items-center justify-between" style={{ backgroundColor: "#0d0446" }}>
+                <span>🌐 Sites Adicionados</span>
+                <button onClick={() => toggleBox('sitesAdicionados')} className="p-0.5 rounded hover:bg-white/20 transition-colors">
+                  {collapsedBoxes['sitesAdicionados'] ? <ChevronDown size={12} /> : <ChevronUp size={12} />}
+                </button>
+              </div>
+              {!collapsedBoxes['sitesAdicionados'] && (
+                loading ? (
+                  <div className="p-4 flex items-center gap-2">
+                    <Loader2 size={14} className="animate-spin" style={{ color: "#2ec1f7" }} />
+                    <span className="text-xs" style={{ color: "rgba(13,4,70,0.5)" }}>Carregando...</span>
+                  </div>
+                ) : (
+                  <Accordion type="multiple" className="w-full">
+                    {customSites.map(site => {
+                      const news = newsByPortal[site.name] || [];
+                      return (
+                        <AccordionItem key={site.name} value={site.name} className="border-b-0" style={{ borderBottom: "1px solid rgba(13,4,70,0.06)" }}>
+                          <AccordionTrigger className="px-3 py-2 text-xs font-bold hover:no-underline" style={{ color: "#0d0446" }}>
+                            <span className="flex items-center gap-2 flex-1">
+                              <Newspaper size={12} style={{ color: "#2ec1f7" }} />
+                              {site.name}
+                              <span className="text-[9px] font-normal px-1.5 rounded-full" style={{ backgroundColor: "rgba(46,193,247,0.1)", color: "#2ec1f7" }}>
+                                {news.length}
+                              </span>
+                              <button onClick={(e) => { e.stopPropagation(); removeCustomSite(site.name); }}
+                                className="ml-auto p-0.5 rounded hover:bg-red-50 transition-colors" title="Remover site">
+                                <Trash2 size={11} className="text-red-400 hover:text-red-600" />
+                              </button>
+                            </span>
+                          </AccordionTrigger>
+                          <AccordionContent className="pb-0">
+                            <div className="divide-y" style={{ borderColor: "rgba(13,4,70,0.04)" }}>
+                              {news.map((item, idx) => (
+                                <div key={idx} draggable
+                                  onDragStart={(e) => { e.dataTransfer.setData("text/plain", JSON.stringify({ portal: site.name, title: item.title, imageUrl: item.thumbnail || "" })); }}
+                                  className="flex items-center gap-2 px-3 py-1.5 text-[11px] hover:bg-gray-50 cursor-grab active:cursor-grabbing group"
+                                >
+                                  <GripVertical size={10} className="shrink-0 opacity-20" />
+                                  <span className="flex-1 line-clamp-1" style={{ color: "#0d0446" }}>{item.title}</span>
+                                  <a href={item.link} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}
+                                    className="shrink-0 p-0.5 rounded hover:bg-blue-50 transition-opacity" title="Ler notícia">
+                                    <BookOpen size={12} style={{ color: "#2ec1f7" }} />
+                                  </a>
+                                  {item.thumbnail && (
+                                    <div className="shrink-0 relative"
+                                      onMouseEnter={(e) => handleImageHover(e, item.thumbnail || "")}
+                                      onMouseLeave={() => setHoveredImage(null)}>
+                                      <ImageIcon size={12} style={{ color: "rgba(13,4,70,0.3)" }} className="cursor-pointer hover:opacity-70" />
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </AccordionContent>
+                        </AccordionItem>
+                      );
+                    })}
+                  </Accordion>
+                )
               )}
             </div>
           )}
@@ -690,35 +722,40 @@ export default function NoticiasPanel() {
           {/* Notícia Avulsa Box */}
           {noticiasAvulsas.length > 0 && (
             <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)", width: (jornalConfig || wizardOpen) ? "100%" : "50%" }}>
-              <div className="px-3 py-2 font-bold text-xs tracking-wide text-white rounded-t-xl" style={{ backgroundColor: "#0d0446" }}>
-                📌 Notícia Avulsa
+              <div className="px-3 py-2 font-bold text-xs tracking-wide text-white rounded-t-xl flex items-center justify-between" style={{ backgroundColor: "#0d0446" }}>
+                <span>📌 Notícia Avulsa</span>
+                <button onClick={() => toggleBox('noticiaAvulsa')} className="p-0.5 rounded hover:bg-white/20 transition-colors">
+                  {collapsedBoxes['noticiaAvulsa'] ? <ChevronDown size={12} /> : <ChevronUp size={12} />}
+                </button>
               </div>
-              <div className="divide-y" style={{ borderColor: "rgba(13,4,70,0.04)" }}>
-                {noticiasAvulsas.map((item, idx) => (
-                  <div key={idx} draggable
-                    onDragStart={(e) => { e.dataTransfer.setData("text/plain", JSON.stringify({ portal: "Avulsa", title: item.title, imageUrl: item.thumbnail || "" })); }}
-                    className="flex items-center gap-2 px-3 py-1.5 text-[11px] hover:bg-gray-50 cursor-grab active:cursor-grabbing group"
-                  >
-                    <GripVertical size={10} className="shrink-0 opacity-20" />
-                    <span className="flex-1 line-clamp-1" style={{ color: "#0d0446" }}>{item.title}</span>
-                    <a href={item.link} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}
-                      className="shrink-0 p-0.5 rounded hover:bg-blue-50 transition-opacity" title="Ler notícia">
-                      <BookOpen size={12} style={{ color: "#2ec1f7" }} />
-                    </a>
-                    {item.thumbnail && (
-                      <div className="shrink-0 relative"
-                        onMouseEnter={(e) => handleImageHover(e, item.thumbnail || "")}
-                        onMouseLeave={() => setHoveredImage(null)}>
-                        <ImageIcon size={12} style={{ color: "rgba(13,4,70,0.3)" }} className="cursor-pointer hover:opacity-70" />
-                      </div>
-                    )}
-                    <button onClick={() => removeNoticiaAvulsa(idx)}
-                      className="shrink-0 p-0.5 rounded hover:bg-red-50 transition-colors" title="Remover">
-                      <Trash2 size={11} className="text-red-400 hover:text-red-600" />
-                    </button>
-                  </div>
-                ))}
-              </div>
+              {!collapsedBoxes['noticiaAvulsa'] && (
+                <div className="divide-y" style={{ borderColor: "rgba(13,4,70,0.04)" }}>
+                  {noticiasAvulsas.map((item, idx) => (
+                    <div key={idx} draggable
+                      onDragStart={(e) => { e.dataTransfer.setData("text/plain", JSON.stringify({ portal: "Avulsa", title: item.title, imageUrl: item.thumbnail || "" })); }}
+                      className="flex items-center gap-2 px-3 py-1.5 text-[11px] hover:bg-gray-50 cursor-grab active:cursor-grabbing group"
+                    >
+                      <GripVertical size={10} className="shrink-0 opacity-20" />
+                      <span className="flex-1 line-clamp-1" style={{ color: "#0d0446" }}>{item.title}</span>
+                      <a href={item.link} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}
+                        className="shrink-0 p-0.5 rounded hover:bg-blue-50 transition-opacity" title="Ler notícia">
+                        <BookOpen size={12} style={{ color: "#2ec1f7" }} />
+                      </a>
+                      {item.thumbnail && (
+                        <div className="shrink-0 relative"
+                          onMouseEnter={(e) => handleImageHover(e, item.thumbnail || "")}
+                          onMouseLeave={() => setHoveredImage(null)}>
+                          <ImageIcon size={12} style={{ color: "rgba(13,4,70,0.3)" }} className="cursor-pointer hover:opacity-70" />
+                        </div>
+                      )}
+                      <button onClick={() => removeNoticiaAvulsa(idx)}
+                        className="shrink-0 p-0.5 rounded hover:bg-red-50 transition-colors" title="Remover">
+                        <Trash2 size={11} className="text-red-400 hover:text-red-600" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>
