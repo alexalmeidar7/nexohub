@@ -47,10 +47,11 @@ function AdminUsersContent() {
     setLoading(true);
 
     try {
-      const [{ data: empresas, error: empresasError }, { data: mods, error: modsError }, { data: clientMods, error: clientModsError }] = await Promise.all([
+      const [{ data: empresas, error: empresasError }, { data: mods, error: modsError }, { data: clientMods, error: clientModsError }, { data: planosData }] = await Promise.all([
         supabase.from("empresa_config").select("user_id, nome, logo, ativo, plano, updated_at"),
         supabase.from("available_modules").select("key, name, icon"),
         supabase.from("client_modules").select("user_id, module_key, enabled"),
+        supabase.from("planos").select("name").order("name"),
       ]);
 
       if (empresasError) throw empresasError;
