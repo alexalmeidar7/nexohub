@@ -792,6 +792,13 @@ export default function PlayerPage() {
 
   const handlePlayCanal = () => {
     if (!canal) return;
+    if (playing) {
+      // Pause
+      if (audioRef.current) audioRef.current.pause();
+      if (videoRef.current) videoRef.current.pause();
+      setPlaying(false);
+      return;
+    }
     if (canal.type === "youtube") { setPlaying(true); setBuffering(false); return; }
     playStream(canal.url, canal.type);
   };
