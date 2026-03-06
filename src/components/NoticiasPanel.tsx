@@ -531,10 +531,13 @@ export default function NoticiasPanel() {
         <p className="text-muted-foreground">Carregando notícias...</p>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-          {orderedPortals.map((portal, idx) => (
+          {orderedPortals.map((portal, idx) => {
+            const isCustom = customSites.some(s => s.name === portal.name);
+            return (
             <div
               key={portal.name}
-              className="bg-muted rounded-xl border border-border overflow-hidden cursor-grab active:cursor-grabbing"
+              className={`rounded-xl border border-border overflow-hidden cursor-grab active:cursor-grabbing ${isCustom ? "" : "bg-muted"}`}
+              style={isCustom ? { backgroundColor: "#0d0446", color: "#ffffff" } : {}}
               draggable
               onDragStart={() => portalDrag.handleDragStart(idx)}
               onDragOver={(e) => portalDrag.handleDragOver(e, idx)}
