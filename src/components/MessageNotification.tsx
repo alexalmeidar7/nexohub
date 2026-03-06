@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Mail, ChevronDown } from "lucide-react";
+import { Mail, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -71,6 +71,17 @@ export default function MessageNotification() {
       .eq("id", msgId)
       .then(() => {
         setMessages((prev) => prev.map((m) => m.id === msgId ? { ...m, is_read: true } : m));
+        setOpenMsgId(null);
+      });
+  };
+
+  const deleteMessage = (msgId: string) => {
+    supabase
+      .from("admin_messages")
+      .delete()
+      .eq("id", msgId)
+      .then(() => {
+        setMessages((prev) => prev.filter((m) => m.id !== msgId));
       });
   };
 
@@ -152,15 +163,36 @@ export default function MessageNotification() {
                   key={msg.id}
                   open={openMsgId === msg.id}
                   onOpenChange={(open) => {
-                    setOpenMsgId(open ? msg.id : null);
-                    if (open && !msg.is_read) markAsRead(msg.id);
+                    if (open) {
+                      setOpenMsgId(msg.id);
+                    } else {
+                      // Mark as read only when closing the message
+                      if (!msg.is_read) {
+                        markAsRead(msg.id);
+                      } else {
+                        setOpenMsgId(null);
+                      }
+                    }
                   }}
                 >
                   <div className="px-4 py-3 border-b" style={{ borderColor: "rgba(13,4,70,0.06)" }}>
-                    <p className="text-[11px] font-bold truncate" style={{ color: "#268ffa" }}>{msg.subject}</p>
-                    <p className="text-[9px] mt-0.5" style={{ color: "rgba(13,4,70,0.5)" }}>
-                      {new Date(msg.created_at).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
-                    </p>
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[11px] font-bold truncate" style={{ color: "#268ffa" }}>{msg.subject}</p>
+                        <p className="text-[9px] mt-0.5" style={{ color: "rgba(13,4,70,0.5)" }}>
+                          {new Date(msg.created_at).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                        </p>
+                      </div>
+                      {tab === "lidas" && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); deleteMessage(msg.id); }}
+                          className="ml-2 p-1 rounded-full hover:bg-red-50 transition-colors"
+                          title="Excluir mensagem"
+                        >
+                          <Trash2 size={12} color="#ef4444" />
+                        </button>
+                      )}
+                    </div>
                     <CollapsibleTrigger asChild>
                       <button
                         className="mt-1.5 text-[10px] font-semibold px-3 py-1 rounded-full transition-colors"
