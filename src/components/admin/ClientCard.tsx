@@ -281,7 +281,8 @@ export default function ClientCard({ client, clientEmail, modules, plans, saving
 
       {/* Modules */}
       {(() => {
-        const selectedPlan = plans.find((p) => p.value === client.plano);
+        const activePlano = editing ? plano : client.plano;
+        const selectedPlan = plans.find((p) => p.value === activePlano);
         const planModules = selectedPlan?.enabled_modules || [];
         return (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
