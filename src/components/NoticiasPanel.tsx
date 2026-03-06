@@ -246,6 +246,7 @@ export default function NoticiasPanel() {
   const [loadingAvulsa, setLoadingAvulsa] = useState(false);
   const [collapsedBoxes, setCollapsedBoxes] = useState<Record<string, boolean>>({});
   const [readingPopup, setReadingPopup] = useState<NewsItem | null>(null);
+  const [loadingReading, setLoadingReading] = useState(false);
   const [blocoEconomia, setBlocoEconomia] = useState<CotacaoItem[]>([]);
 
   const toggleBox = (key: string) => setCollapsedBoxes(prev => ({ ...prev, [key]: !prev[key] }));
@@ -475,6 +476,59 @@ export default function NoticiasPanel() {
     setHoveredImage({ url, x: e.clientX, y: e.clientY });
   };
 
+  const openReadingPopup = async (item: NewsItem) => {
+    setLoadingReading(true);
+    setReadingPopup({ ...item, body: "" });
+    try {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      if (supabaseUrl && supabaseKey) {
+        const res = await fetch(`${supabaseUrl}/functions/v1/fetch-rss`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${supabaseKey}` },
+          body: JSON.stringify({ url: item.link }),
+          signal: AbortSignal.timeout(15000),
+        });
+        const data = await res.json();
+        if (data.content) {
+          const html = data.content;
+          let title = item.title;
+          const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+          if (titleMatch) title = decodeHtmlEntities(titleMatch[1].trim());
+
+          let thumbnail = item.thumbnail || "";
+          if (!thumbnail) {
+            const ogImageMatch = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i);
+            if (ogImageMatch) thumbnail = ogImageMatch[1];
+          }
+          // If still no thumbnail, use a placeholder based on first keyword
+          if (!thumbnail) {
+            const keyword = title.split(/[\s,.:;!?]+/).filter(w => w.length > 4).slice(0, 2).join(" ");
+            thumbnail = `https://source.unsplash.com/400x250/?${encodeURIComponent(keyword || "news")}`;
+          }
+
+          let body = "";
+          const ogDescMatch = html.match(/<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']+)["']/i);
+          const articleMatch = html.match(/<article[^>]*>([\s\S]*?)<\/article>/i);
+          if (articleMatch) {
+            body = articleMatch[1].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 3000);
+          } else if (ogDescMatch) {
+            body = decodeHtmlEntities(ogDescMatch[1]);
+          } else {
+            const pMatches = html.match(/<p[^>]*>([^<]{40,})<\/p>/gi);
+            if (pMatches) {
+              body = pMatches.slice(0, 8).map(p => p.replace(/<[^>]+>/g, "").trim()).join("\n\n").slice(0, 3000);
+            }
+          }
+          setReadingPopup({ title, link: item.link, thumbnail, body });
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching article:", err);
+    }
+    setLoadingReading(false);
+  };
+
   return (
     <TooltipProvider delayDuration={300}>
     <div className="animate-fade-in space-y-4">
@@ -691,10 +745,10 @@ export default function NoticiasPanel() {
                                     {item.title}
                                   </TooltipContent>
                                 </Tooltip>
-                                <a href={item.link} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}
+                                <button onClick={(e) => { e.stopPropagation(); openReadingPopup(item); }}
                                   className="shrink-0 p-0.5 rounded hover:bg-blue-50 transition-opacity" title="Ler notícia">
                                   <BookOpen size={12} style={{ color: "#2ec1f7" }} />
-                                </a>
+                                </button>
                                 {item.thumbnail && (
                                   <div className="shrink-0 relative"
                                     onMouseEnter={(e) => handleImageHover(e, item.thumbnail || "")}
@@ -764,10 +818,10 @@ export default function NoticiasPanel() {
                                       {item.title}
                                     </TooltipContent>
                                   </Tooltip>
-                                  <a href={item.link} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}
+                                  <button onClick={(e) => { e.stopPropagation(); openReadingPopup(item); }}
                                     className="shrink-0 p-0.5 rounded hover:bg-blue-50 transition-opacity" title="Ler notícia">
                                     <BookOpen size={12} style={{ color: "#2ec1f7" }} />
-                                  </a>
+                                  </button>
                                   {item.thumbnail && (
                                     <div className="shrink-0 relative"
                                       onMouseEnter={(e) => handleImageHover(e, item.thumbnail || "")}
@@ -912,17 +966,20 @@ export default function NoticiasPanel() {
         </div>
       )}
 
-      {/* Reading Popup for Notícia Avulsa */}
+      {/* Reading Popup */}
       {readingPopup && (
         <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4" onClick={() => setReadingPopup(null)}>
-          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-6 relative" onClick={(e) => e.stopPropagation()}>
-            <button onClick={() => setReadingPopup(null)} className="absolute top-3 right-3 text-gray-400 hover:text-gray-700">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-6 relative max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <button onClick={() => setReadingPopup(null)} className="absolute top-3 right-3 text-gray-400 hover:text-gray-700 z-10">
               <X size={20} />
             </button>
             <div className="flex gap-4 mb-4">
-              {readingPopup.thumbnail && (
-                <img src={readingPopup.thumbnail} alt="" className="w-28 h-20 object-cover rounded-lg shrink-0" />
-              )}
+              <img
+                src={readingPopup.thumbnail || `https://source.unsplash.com/400x250/?${encodeURIComponent(readingPopup.title.split(/[\s,.:;!?]+/).filter(w => w.length > 4).slice(0, 2).join(" ") || "news")}`}
+                alt=""
+                className="w-28 h-20 object-cover rounded-lg shrink-0"
+                onError={(e) => { (e.target as HTMLImageElement).src = "/placeholder.svg"; }}
+              />
               <div className="flex-1 min-w-0">
                 <h3 className="font-bold text-lg leading-tight pr-6" style={{ color: "#0d0446" }}>{readingPopup.title}</h3>
                 <a href={readingPopup.link} target="_blank" rel="noopener noreferrer"
@@ -931,7 +988,12 @@ export default function NoticiasPanel() {
                 </a>
               </div>
             </div>
-            {readingPopup.body ? (
+            {loadingReading ? (
+              <div className="flex items-center gap-2 py-8 justify-center">
+                <Loader2 size={20} className="animate-spin" style={{ color: "#2ec1f7" }} />
+                <span className="text-sm" style={{ color: "rgba(13,4,70,0.5)" }}>Carregando conteúdo...</span>
+              </div>
+            ) : readingPopup.body ? (
               <p className="text-sm leading-relaxed whitespace-pre-line" style={{ color: "#0d0446" }}>{readingPopup.body}</p>
             ) : (
               <p className="text-sm italic" style={{ color: "rgba(13,4,70,0.4)" }}>Conteúdo da matéria não disponível. Clique no link acima para ler no site original.</p>
