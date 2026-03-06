@@ -251,11 +251,10 @@ export default function NoticiasPanel() {
     setPortalOrder([...customNames, ...defaultNames]);
   }, [customSites]);
 
+  const defaultPortalOrder = DEFAULT_PORTALS.map(p => p.name);
+  const customPortalOrder = customSites.map(s => s.name);
+
   const allPortals = [...customSites, ...DEFAULT_PORTALS];
-  const orderedPortals = portalOrder
-    .map(name => allPortals.find(p => p.name === name))
-    .filter(Boolean) as Portal[];
-  const portalDrag = useDragReorder(portalOrder, setPortalOrder);
 
   const loadAll = async () => {
     setLoading(true);
