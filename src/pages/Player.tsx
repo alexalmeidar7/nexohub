@@ -756,31 +756,61 @@ export default function PlayerPage() {
     const mediaEl = (canal.type === "audio_live" || canal.type === "audio") ? audioRef.current : videoRef.current;
     if (!mediaEl) return;
 
+    let reconnectAttempts = 0;
+    const maxReconnects = 5;
+
+    const tryReconnect = () => {
+      if (reconnectAttempts >= maxReconnects) return;
+      reconnectAttempts++;
+      setStreamStalled(true);
+      setTimeout(() => {
+        if (canal) playStream(canal.url, canal.type);
+      }, 2000 * reconnectAttempts);
+    };
+
     const onStall = () => {
       if (stallTimerRef.current) clearTimeout(stallTimerRef.current);
       stallTimerRef.current = setTimeout(() => {
         if (mediaEl.paused || mediaEl.ended || mediaEl.readyState < 2) {
-          setStreamStalled(true);
-          if (canal) playStream(canal.url, canal.type);
+          tryReconnect();
         }
-      }, 5000);
+      }, 4000);
     };
+
+    const onError = () => {
+      tryReconnect();
+    };
+
     const onPlaying = () => {
       setStreamStalled(false);
+      reconnectAttempts = 0;
       if (stallTimerRef.current) clearTimeout(stallTimerRef.current);
     };
 
+    // Periodic health check - catches cases where HLS dies silently
+    const healthCheck = setInterval(() => {
+      if (!playing || canal?.type === "youtube") return;
+      const el = (canal?.type === "audio_live" || canal?.type === "audio") ? audioRef.current : videoRef.current;
+      if (!el) return;
+      if (el.paused && playing && !el.ended) {
+        tryReconnect();
+      }
+    }, 8000);
+
     mediaEl.addEventListener("stalled", onStall);
     mediaEl.addEventListener("ended", onStall);
+    mediaEl.addEventListener("error", onError);
     mediaEl.addEventListener("playing", onPlaying);
     mediaEl.addEventListener("timeupdate", onPlaying);
 
     return () => {
       mediaEl.removeEventListener("stalled", onStall);
       mediaEl.removeEventListener("ended", onStall);
+      mediaEl.removeEventListener("error", onError);
       mediaEl.removeEventListener("playing", onPlaying);
       mediaEl.removeEventListener("timeupdate", onPlaying);
       if (stallTimerRef.current) clearTimeout(stallTimerRef.current);
+      clearInterval(healthCheck);
     };
   }, [playing, canal, playStream]);
 
