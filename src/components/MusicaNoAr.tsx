@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { findCurrentProgram } from "./OnAirWidget";
 import { getApresentadores } from "./ApresentadorForm";
+import { normalizeMusicText } from "@/lib/textEncoding";
 
 interface MusicData {
   titulo: string;
