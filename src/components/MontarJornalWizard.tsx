@@ -135,7 +135,7 @@ export default function MontarJornalWizard({ open, onOpenChange, programas, onFi
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) { reset(); onOpenChange(false); } }}>
-      <DialogContent className="sm:max-w-lg" style={{ backgroundColor: "#ffffff", border: "2px solid #2ec1f7" }}>
+      <DialogContent className="sm:max-w-lg" style={{ backgroundColor: "#ffffff", border: "none" }}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2" style={{ color: "#0d0446" }}>
             <Newspaper size={20} style={{ color: "#2ec1f7" }} />
