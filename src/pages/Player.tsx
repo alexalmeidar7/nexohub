@@ -674,9 +674,14 @@ export default function PlayerPage() {
         }
 
         setMusicData(prev => {
-          if (!prev || prev.titulo !== data.titulo || prev.artista !== data.artista || prev.capa !== data.capa) {
+          if (!prev || prev.titulo !== data.titulo || prev.artista !== data.artista) {
             localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify(data));
+            localStorage.setItem(MUSIC_START_KEY, Date.now().toString());
             return { ...data };
+          }
+          if (prev && data.capa && prev.capa !== data.capa) {
+            localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify({ ...prev, capa: data.capa }));
+            return { ...prev, capa: data.capa };
           }
           return prev;
         });
