@@ -1418,6 +1418,7 @@ export default function PlayerPage() {
             musicArtist={musicData?.artista}
             musicCover={musicData?.capa}
             channelLogo={canal?.logo_url}
+            channelThumb={canal?.cover_url}
             liked={liked}
             onToggleLike={toggleLike}
           />
