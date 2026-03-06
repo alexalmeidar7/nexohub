@@ -416,7 +416,7 @@ export default function NoticiasPanel() {
       {/* Main two-column layout: Left (Cotações + Portais) | Right (Jornal Builder) */}
       <div className="flex gap-4">
         {/* LEFT COLUMN */}
-        <div className="space-y-4" style={{ width: jornalConfig ? "50%" : "100%" }}>
+        <div className="space-y-4" style={{ width: (jornalConfig || wizardOpen) ? "50%" : "100%" }}>
           {/* Cotações marquee - 50% width */}
           <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)", width: jornalConfig ? "100%" : "50%" }}>
             <div className="px-3 py-2 font-bold text-xs tracking-wide text-white rounded-t-xl" style={{ backgroundColor: "#0d0446" }}>
