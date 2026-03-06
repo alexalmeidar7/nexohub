@@ -257,15 +257,14 @@ export default function NoticiasPanel() {
     loadDb();
   }, [user]);
 
-  const allPortals = [...customSites, ...DEFAULT_PORTALS];
-
-  const loadAll = async () => {
+  const loadAll = useCallback(async () => {
     setLoading(true);
+    const currentPortals = [...customSites, ...DEFAULT_PORTALS];
     const results: Record<string, NewsItem[]> = {};
-    await Promise.all(allPortals.map(async (portal) => { results[portal.name] = await fetchNews(portal.rssUrl); }));
+    await Promise.all(currentPortals.map(async (portal) => { results[portal.name] = await fetchNews(portal.rssUrl); }));
     setNewsByPortal(results);
     setLoading(false);
-  };
+  }, [customSites]);
 
   const loadCotacoes = async () => {
     setLoadingCotacoes(true);
