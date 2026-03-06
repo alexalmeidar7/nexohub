@@ -20,7 +20,14 @@ const AdminMessages = lazy(() => import("./pages/admin/AdminMessages"));
 const MasterViewHome = lazy(() => import("./pages/masterview/MasterViewHome"));
 const AdminLogin = lazy(() => import("./pages/admin/AdminLogin"));
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
