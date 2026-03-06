@@ -136,6 +136,14 @@ export default function MontarJornalWizard({ open, onOpenChange, programas, onFi
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) { reset(); onOpenChange(false); } }}>
       <DialogContent className="sm:max-w-lg" style={{ backgroundColor: "#ffffff", border: "none" }}>
+        <style>{`
+          .jornal-wizard-input:focus, .jornal-wizard-input:focus-visible, .jornal-wizard-input:active {
+            outline: none !important;
+            box-shadow: none !important;
+            ring: none !important;
+            border-color: #2ec1f7 !important;
+          }
+        `}</style>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2" style={{ color: "#0d0446" }}>
             <Newspaper size={20} style={{ color: "#2ec1f7" }} />
@@ -159,7 +167,7 @@ export default function MontarJornalWizard({ open, onOpenChange, programas, onFi
             <div className="space-y-3">
               <label className="text-sm font-semibold" style={{ color: "#0d0446" }}>Nome do Programa</label>
               <Select value={programaId} onValueChange={setProgramaId}>
-                <SelectTrigger style={{ borderColor: "#2ec1f7", borderRadius: "9999px", backgroundColor: "#2ec1f7", color: "#ffffff" }}>
+                <SelectTrigger className="jornal-wizard-input" style={{ borderColor: "#2ec1f7", borderRadius: "9999px", backgroundColor: "#ffffff", color: "#0d0446" }}>
                   <SelectValue placeholder="Selecione um programa" />
                 </SelectTrigger>
                 <SelectContent>
@@ -174,7 +182,7 @@ export default function MontarJornalWizard({ open, onOpenChange, programas, onFi
           {step === 2 && (
             <div className="space-y-3">
               <label className="text-sm font-semibold" style={{ color: "#0d0446" }}>Quantidade de Blocos</label>
-              <Input type="number" min={1} max={20} value={blocos} onChange={e => setBlocos(Number(e.target.value))} style={{ borderColor: "#2ec1f7" }} />
+              <Input type="number" min={1} max={20} value={blocos} onChange={e => setBlocos(Number(e.target.value))} className="jornal-wizard-input" style={{ borderColor: "#2ec1f7", borderRadius: "9999px", backgroundColor: "#ffffff" }} />
               <p className="text-xs" style={{ color: "rgba(13,4,70,0.4)" }}>Quantos blocos o programa terá?</p>
             </div>
           )}
@@ -182,7 +190,7 @@ export default function MontarJornalWizard({ open, onOpenChange, programas, onFi
           {step === 3 && (
             <div className="space-y-3">
               <label className="text-sm font-semibold" style={{ color: "#0d0446" }}>Tempo de Cada Bloco (minutos)</label>
-              <Input type="number" min={1} max={120} value={tempoBlocoMin} onChange={e => setTempoBlocoMin(Number(e.target.value))} style={{ borderColor: "#2ec1f7" }} />
+              <Input type="number" min={1} max={120} value={tempoBlocoMin} onChange={e => setTempoBlocoMin(Number(e.target.value))} className="jornal-wizard-input" style={{ borderColor: "#2ec1f7", borderRadius: "9999px", backgroundColor: "#ffffff" }} />
               <p className="text-xs" style={{ color: "rgba(13,4,70,0.4)" }}>Duração em minutos de cada bloco</p>
             </div>
           )}
@@ -190,7 +198,7 @@ export default function MontarJornalWizard({ open, onOpenChange, programas, onFi
           {step === 4 && (
             <div className="space-y-3">
               <label className="text-sm font-semibold" style={{ color: "#0d0446" }}>Quantidade de Intervalos</label>
-              <Input type="number" min={0} max={20} value={intervalos} onChange={e => setIntervalos(Number(e.target.value))} style={{ borderColor: "#2ec1f7" }} />
+              <Input type="number" min={0} max={20} value={intervalos} onChange={e => setIntervalos(Number(e.target.value))} className="jornal-wizard-input" style={{ borderColor: "#2ec1f7", borderRadius: "9999px", backgroundColor: "#ffffff" }} />
               <p className="text-xs" style={{ color: "rgba(13,4,70,0.4)" }}>Quantos intervalos haverá durante o programa?</p>
             </div>
           )}
@@ -198,7 +206,7 @@ export default function MontarJornalWizard({ open, onOpenChange, programas, onFi
           {step === 5 && (
             <div className="space-y-3">
               <label className="text-sm font-semibold" style={{ color: "#0d0446" }}>Tempo do Intervalo (minutos)</label>
-              <Input type="number" min={0} max={60} value={tempoIntervaloMin} onChange={e => setTempoIntervaloMin(Number(e.target.value))} style={{ borderColor: "#2ec1f7" }} />
+              <Input type="number" min={0} max={60} value={tempoIntervaloMin} onChange={e => setTempoIntervaloMin(Number(e.target.value))} className="jornal-wizard-input" style={{ borderColor: "#2ec1f7", borderRadius: "9999px", backgroundColor: "#ffffff" }} />
               <p className="text-xs" style={{ color: "rgba(13,4,70,0.4)" }}>Duração de cada intervalo em minutos</p>
             </div>
           )}
@@ -209,22 +217,22 @@ export default function MontarJornalWizard({ open, onOpenChange, programas, onFi
               <div className="flex gap-3">
                 <button
                   onClick={() => setTemTestemunha("sim")}
-                  className="flex-1 py-3 rounded-lg font-semibold text-sm transition-all"
+                  className="flex-1 py-3 rounded-full font-semibold text-sm transition-all"
                   style={{
-                    backgroundColor: temTestemunha === "sim" ? "#2ec1f7" : "rgba(13,4,70,0.05)",
+                    backgroundColor: temTestemunha === "sim" ? "#2ec1f7" : "#ffffff",
                     color: temTestemunha === "sim" ? "#ffffff" : "#0d0446",
-                    border: temTestemunha === "sim" ? "2px solid #2ec1f7" : "2px solid rgba(13,4,70,0.1)",
+                    border: "2px solid #2ec1f7",
                   }}
                 >
                   Sim
                 </button>
                 <button
                   onClick={() => setTemTestemunha("nao")}
-                  className="flex-1 py-3 rounded-lg font-semibold text-sm transition-all"
+                  className="flex-1 py-3 rounded-full font-semibold text-sm transition-all"
                   style={{
-                    backgroundColor: temTestemunha === "nao" ? "#2ec1f7" : "rgba(13,4,70,0.05)",
+                    backgroundColor: temTestemunha === "nao" ? "#2ec1f7" : "#ffffff",
                     color: temTestemunha === "nao" ? "#ffffff" : "#0d0446",
-                    border: temTestemunha === "nao" ? "2px solid #2ec1f7" : "2px solid rgba(13,4,70,0.1)",
+                    border: "2px solid #2ec1f7",
                   }}
                 >
                   Não
@@ -236,9 +244,9 @@ export default function MontarJornalWizard({ open, onOpenChange, programas, onFi
           {step === 7 && (
             <div className="space-y-3">
               <label className="text-sm font-semibold" style={{ color: "#0d0446" }}>Horário da Testemunha</label>
-              <Input type="time" value={horarioTestemunha} onChange={e => setHorarioTestemunha(e.target.value)} style={{ borderColor: "#2ec1f7" }} />
+              <Input type="time" value={horarioTestemunha} onChange={e => setHorarioTestemunha(e.target.value)} className="jornal-wizard-input" style={{ borderColor: "#2ec1f7", borderRadius: "9999px", backgroundColor: "#ffffff" }} />
               <label className="text-sm font-semibold" style={{ color: "#0d0446" }}>Texto do Testemunhal</label>
-              <Textarea value={textoTestemunhal} onChange={e => setTextoTestemunhal(e.target.value)} placeholder="Digite o texto do testemunhal..." rows={3} style={{ borderColor: "#2ec1f7" }} />
+              <Textarea value={textoTestemunhal} onChange={e => setTextoTestemunhal(e.target.value)} placeholder="Digite o texto do testemunhal..." rows={3} className="jornal-wizard-input" style={{ borderColor: "#2ec1f7", borderRadius: "16px", backgroundColor: "#ffffff" }} />
             </div>
           )}
         </div>
