@@ -540,7 +540,7 @@ export default function NoticiasPanel() {
 
         {/* RIGHT COLUMN - Wizard or Jornal Builder */}
         {(wizardOpen || jornalConfig) && (
-          <div className="flex-1">
+          <div className="flex-1" style={{ position: "sticky", top: "0", alignSelf: "flex-start" }}>
             {wizardOpen && !jornalConfig && (
               <MontarJornalInline
                 programas={programas}
