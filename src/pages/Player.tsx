@@ -1513,37 +1513,50 @@ export default function PlayerPage() {
       </div>
 
       {/* Control bar hover zone */}
-      <div className="absolute left-0 right-0 bottom-0 z-30" style={{ height: "140px" }} onMouseEnter={showBar} onMouseLeave={hideBar}>
-        <div className="absolute left-0 right-0 bottom-5 mx-auto transition-all duration-400 ease-in-out"
-          style={{ maxWidth: "1400px", width: "100%", paddingLeft: "20px", paddingRight: "20px", opacity: barVisible ? 1 : 0, transform: barVisible ? "translateY(0)" : "translateY(20px)", pointerEvents: barVisible ? "auto" : "none" }}
+      <div className="absolute left-0 right-0 bottom-0 z-30" style={{ height: "140px" }} onMouseEnter={showBar} onMouseLeave={hideBar}
+        onClick={() => setBarVisible(v => !v)}
+      >
+        <div className="absolute left-0 right-0 bottom-2 sm:bottom-5 mx-auto transition-all duration-400 ease-in-out"
+          style={{ maxWidth: "1400px", width: "100%", paddingLeft: "8px", paddingRight: "8px", opacity: barVisible ? 1 : 0, transform: barVisible ? "translateY(0)" : "translateY(20px)", pointerEvents: barVisible ? "auto" : "none" }}
+          onClick={(e) => e.stopPropagation()}
         >
-        <div className="flex items-center gap-0 rounded-2xl border border-white/10 px-5 py-3" style={{ backgroundColor: "rgba(0, 0, 0, 0.9)" }}>
-          {/* Channel Info */}
-          <div className="flex items-center gap-3 pr-5 border-r border-white/10 shrink-0">
-            <div className="flex flex-col items-center gap-1">
-              <button onClick={() => navigateChannel(-1)} className="text-white/60 hover:text-white hover:bg-[#e60000] rounded px-2 py-2 transition-all" title="Canal anterior"><ChevronUp size={16} /></button>
-              <div className="text-white text-xs font-bold py-0.5">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-0 rounded-2xl border border-white/10 px-3 sm:px-5 py-2 sm:py-3" style={{ backgroundColor: "rgba(0, 0, 0, 0.9)" }}>
+
+          {/* Row 1 on mobile: Channel + Play + Volume */}
+          <div className="flex items-center gap-2 sm:gap-3 sm:pr-5 sm:border-r border-white/10 shrink-0">
+            <div className="flex flex-col items-center gap-0.5 sm:gap-1">
+              <button onClick={() => navigateChannel(-1)} className="text-white/60 hover:text-white hover:bg-[#e60000] rounded px-1.5 py-1 sm:px-2 sm:py-2 transition-all" title="Canal anterior"><ChevronUp size={14} /></button>
+              <div className="text-white text-[10px] sm:text-xs font-bold py-0.5">
                 {(() => {
                   const num = canal?.numero_canal || "--";
                   const dashIdx = num.indexOf("-");
                   if (dashIdx < 0) return num;
-                  return <>{num.slice(0, dashIdx)} <sup className="text-[9px]" style={{ color: "#e60000" }}>{num.slice(dashIdx + 1)}</sup></>;
+                  return <>{num.slice(0, dashIdx)} <sup className="text-[8px] sm:text-[9px]" style={{ color: "#e60000" }}>{num.slice(dashIdx + 1)}</sup></>;
                 })()}
               </div>
-              <button onClick={() => navigateChannel(1)} className="text-white/60 hover:text-white hover:bg-[#e60000] rounded px-2 py-2 transition-all" title="Próximo canal"><ChevronDown size={16} /></button>
+              <button onClick={() => navigateChannel(1)} className="text-white/60 hover:text-white hover:bg-[#e60000] rounded px-1.5 py-1 sm:px-2 sm:py-2 transition-all" title="Próximo canal"><ChevronDown size={14} /></button>
             </div>
             {canal?.logo_url ? (
-              <img src={canal.logo_url} alt="" className="w-20 h-20 rounded-lg object-contain" />
+              <img src={canal.logo_url} alt="" className="w-12 h-12 sm:w-20 sm:h-20 rounded-lg object-contain" />
             ) : (
-              <div className="w-20 h-20 rounded-lg bg-white/10 flex items-center justify-center text-white text-lg font-bold">{canal?.numero_canal || "?"}</div>
+              <div className="w-12 h-12 sm:w-20 sm:h-20 rounded-lg bg-white/10 flex items-center justify-center text-white text-sm sm:text-lg font-bold">{canal?.numero_canal || "?"}</div>
             )}
-            <button onClick={handlePlayCanal} className="w-8 h-8 rounded-full border-2 border-[#e60000] flex items-center justify-center transition-all hover:bg-[#e60000]/20" title={playing ? "Pausar" : "Reproduzir"}>
-              {playing ? <Pause size={16} color="#e60000" /> : <Play size={16} color="#e60000" fill="#e60000" />}
+            <button onClick={handlePlayCanal} className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-[#e60000] flex items-center justify-center transition-all hover:bg-[#e60000]/20" title={playing ? "Pausar" : "Reproduzir"}>
+              {playing ? <Pause size={14} color="#e60000" /> : <Play size={14} color="#e60000" fill="#e60000" />}
             </button>
+
+            {/* Program info inline on mobile */}
+            <div className="flex-1 min-w-0 sm:hidden">
+              <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: "#e60000" }}>No Ar:</span>
+              <MarqueeText className="text-white text-sm font-bold leading-tight" text={channelLabel} />
+              {!isYoutube && musicData?.titulo && (
+                <MarqueeText className="text-white/50 text-[10px]" text={`♫ ${musicData.titulo} — ${musicData.artista}`} />
+              )}
+            </div>
           </div>
 
-          {/* Program Info */}
-          <div className="px-5 min-w-0" style={{ flex: "0 1 450px" }}>
+          {/* Program Info — desktop only as separate section */}
+          <div className="hidden sm:block px-5 min-w-0" style={{ flex: "0 1 450px" }}>
             <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#e60000" }}>No Ar:</span>
             <MarqueeText className="text-white text-lg font-bold leading-tight" text={channelLabel} />
             {programLabel && (
@@ -1562,7 +1575,6 @@ export default function PlayerPage() {
                 <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden group-hover:h-2 transition-all relative">
                   <div className="h-full rounded-full transition-all duration-300" style={{ width: `${ytProgressPct}%`, backgroundColor: "#e60000" }} />
                 </div>
-                {/* Mid-roll break point markers */}
                 {midrollBreakPoints.map((bp, i) => (
                   <div
                     key={i}
@@ -1579,11 +1591,9 @@ export default function PlayerPage() {
                 ))}
               </div>
             ) : (
-              <>
-                <div className="w-full h-1 bg-white/10 rounded-full mt-2 overflow-hidden">
-                  <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${progress}%`, backgroundColor: "#e60000" }} />
-                </div>
-              </>
+              <div className="w-full h-1 bg-white/10 rounded-full mt-2 overflow-hidden">
+                <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${progress}%`, backgroundColor: "#e60000" }} />
+              </div>
             )}
             {isYoutube && selectedVideoId ? (
               <span className="text-[10px] mt-1 inline-block" style={{ color: "#e60000" }}>
@@ -1596,15 +1606,28 @@ export default function PlayerPage() {
             )}
           </div>
 
+          {/* Progress bar on mobile */}
+          <div className="sm:hidden w-full">
+            {isYoutube && selectedVideoId ? (
+              <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden">
+                <div className="h-full rounded-full transition-all duration-300" style={{ width: `${ytProgressPct}%`, backgroundColor: "#e60000" }} />
+              </div>
+            ) : (
+              <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden">
+                <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${progress}%`, backgroundColor: "#e60000" }} />
+              </div>
+            )}
+          </div>
+
           {/* Controls */}
-          <div className="flex items-center gap-2.5 px-3 border-l border-white/10 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-2.5 px-1 sm:px-3 sm:border-l border-white/10 shrink-0 flex-wrap justify-center sm:justify-start">
             {(isAudio || isVideo) && musicData?.titulo && (
-              <div className="relative flex items-center gap-1.5">
-                <button onClick={toggleLike} className={`p-1.5 rounded transition-all ${likeAnimating ? "scale-125" : "scale-100"}`}
+              <div className="relative flex items-center gap-1">
+                <button onClick={toggleLike} className={`p-1 sm:p-1.5 rounded transition-all ${likeAnimating ? "scale-125" : "scale-100"}`}
                   title={liked ? "Descurtir música" : "Curtiu essa música?"} style={{ transition: "transform 0.3s ease" }}>
-                  <Heart size={18} fill={liked ? "#ed0808" : "none"} color={liked ? "#ed0808" : "rgba(255,255,255,0.6)"} className="transition-colors" />
+                  <Heart size={16} fill={liked ? "#ed0808" : "none"} color={liked ? "#ed0808" : "rgba(255,255,255,0.6)"} className="transition-colors" />
                 </button>
-                {likeCount > 0 && <span className="text-[11px] font-bold text-white/60">{likeCount}</span>}
+                {likeCount > 0 && <span className="text-[10px] sm:text-[11px] font-bold text-white/60">{likeCount}</span>}
                 {floatingHearts.map((h) => (
                   <Heart key={h.id} size={12 + Math.random() * 6} fill="#ed0808" color="#ed0808" className="absolute pointer-events-none"
                     style={{ left: `calc(50% + ${h.x}px)`, bottom: "100%", opacity: 0, animation: `floatHeart 1.2s ease-out ${h.delay}s forwards` }} />
@@ -1614,9 +1637,9 @@ export default function PlayerPage() {
             {/* Karaoke toggle — only for audio channels with music */}
             {(isAudio || isVideo) && musicData?.titulo && musicData.titulo !== "Sem título" && (
               <button onClick={() => setKaraokeEnabled(!karaokeEnabled)}
-                className={`px-3 py-1.5 rounded text-[11px] font-bold transition-all flex items-center gap-1 border ${karaokeEnabled ? "bg-[#a10a0b] text-white border-[#a10a0b] shadow-[0_0_8px_rgba(161,10,11,0.5)]" : "bg-white/10 text-white/60 border-white/20 hover:bg-white/20 hover:text-white"}`}
+                className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded text-[10px] sm:text-[11px] font-bold transition-all flex items-center gap-1 border ${karaokeEnabled ? "bg-[#a10a0b] text-white border-[#a10a0b] shadow-[0_0_8px_rgba(161,10,11,0.5)]" : "bg-white/10 text-white/60 border-white/20 hover:bg-white/20 hover:text-white"}`}
                 title={karaokeEnabled ? "Desativar Karaoke" : "Ativar Karaoke"}>
-                <MicVocal size={14} /> Karaoke
+                <MicVocal size={12} /> <span className="hidden sm:inline">Karaoke</span>
               </button>
             )}
             {/* Quality Selector — only for HLS video streams */}
@@ -1624,10 +1647,10 @@ export default function PlayerPage() {
               <div className="relative">
                 <button
                   onClick={() => setQualityMenuOpen(!qualityMenuOpen)}
-                  className={`px-3 py-1.5 rounded text-[11px] font-bold transition-all flex items-center gap-1 border ${qualityMenuOpen ? "bg-[#ed0808] text-white border-[#ed0808]" : "bg-white/10 text-white/60 border-white/20 hover:bg-white/20 hover:text-white"}`}
+                  className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded text-[10px] sm:text-[11px] font-bold transition-all flex items-center gap-1 border ${qualityMenuOpen ? "bg-[#ed0808] text-white border-[#ed0808]" : "bg-white/10 text-white/60 border-white/20 hover:bg-white/20 hover:text-white"}`}
                   title="Qualidade do vídeo"
                 >
-                  <Settings2 size={14} />
+                  <Settings2 size={12} />
                   {hlsCurrentLevel === -1 ? "Auto" : `${hlsLevels.find(l => l.index === hlsCurrentLevel)?.height || "?"}p`}
                 </button>
                 {qualityMenuOpen && (
@@ -1655,52 +1678,52 @@ export default function PlayerPage() {
             )}
             {isYoutube && (
               <button onClick={handleYtHome}
-                className="hover:bg-white/20 rounded-full w-8 h-8 flex items-center justify-center transition-all"
+                className="hover:bg-white/20 rounded-full w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center transition-all"
                 style={!selectedVideoId ? { backgroundColor: "#d30707", color: "#fff" } : { backgroundColor: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)" }}
                 title="Início do canal">
-                <Home size={14} />
+                <Home size={12} />
               </button>
             )}
             {isYoutube && selectedVideoId && (
               <>
                 <button onClick={ytPrevVideo} className="text-white/70 hover:text-white transition-colors" title="Vídeo anterior">
-                  <SkipBack size={16} />
+                  <SkipBack size={14} />
                 </button>
                 <button onClick={ytTogglePlay} className="text-white/70 hover:text-white transition-colors" title={ytPlaying ? "Pausar" : "Reproduzir"}>
-                  {ytPlaying ? <Pause size={16} /> : <Play size={16} fill="white" />}
+                  {ytPlaying ? <Pause size={14} /> : <Play size={14} fill="white" />}
                 </button>
                 <button onClick={ytNextVideo} className="text-white/70 hover:text-white transition-colors" title="Próximo vídeo">
-                  <SkipForward size={16} />
+                  <SkipForward size={14} />
                 </button>
               </>
             )}
             {isYoutube && (
               <button onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="hover:bg-white/20 rounded-full w-8 h-8 flex items-center justify-center transition-all"
+                className="hover:bg-white/20 rounded-full w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center transition-all"
                 style={sidebarOpen ? { backgroundColor: "#d30707", color: "#fff" } : { backgroundColor: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)" }}
                 title={sidebarOpen ? "Fechar Playlist" : "Abrir Playlist"}>
-                <List size={14} />
+                <List size={12} />
               </button>
             )}
             <button onClick={toggleFullscreen} className="text-white/70 hover:text-white transition-colors" title={fullscreen ? "Sair tela cheia" : "Tela cheia"}>
-              {fullscreen ? <Minimize size={18} /> : <Maximize size={18} />}
+              {fullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
             </button>
             <button onClick={() => setShopOpen(!shopOpen)}
-              className="hover:bg-white/20 rounded-full w-8 h-8 flex items-center justify-center transition-all relative"
+              className="hover:bg-white/20 rounded-full w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center transition-all relative"
               style={shopOpen ? { backgroundColor: "#d30707", color: "#fff" } : { backgroundColor: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)" }}
               title="Shopping ao Vivo">
-              <ShoppingCart size={14} />
-              {showShopIcon && <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full animate-pulse" style={{ backgroundColor: "#e60000" }} />}
+              <ShoppingCart size={12} />
+              {showShopIcon && <span className="absolute -top-1 -right-1 w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full animate-pulse" style={{ backgroundColor: "#e60000" }} />}
             </button>
             <button onClick={() => setChatOpen(!chatOpen)}
-              className="hover:bg-white/20 rounded-full w-8 h-8 flex items-center justify-center transition-all"
+              className="hover:bg-white/20 rounded-full w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center transition-all"
               style={chatOpen ? { backgroundColor: "#d30707", color: "#fff" } : { backgroundColor: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)" }}
               title="Chat ao Vivo">
-              <MessageSquare size={14} />
+              <MessageSquare size={12} />
             </button>
             <div className="relative" onMouseEnter={showVolume} onMouseLeave={hideVolume}>
               <button onClick={toggleMute} className="text-white/70 hover:text-white transition-colors" title={muted ? "Ativar som" : "Desativar som"}>
-                {muted ? <VolumeX size={18} /> : <Volume2 size={18} />}
+                {muted ? <VolumeX size={16} /> : <Volume2 size={16} />}
               </button>
               {volumeHover && (
                 <div className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-black/95 rounded-lg px-3 py-4 flex flex-col items-center" style={{ height: "140px", width: "40px" }}>
@@ -1714,8 +1737,8 @@ export default function PlayerPage() {
             </div>
           </div>
 
-          {/* Next / Schedule */}
-          <div className="pl-3 border-l border-white/10 flex-1 min-w-0 flex items-stretch gap-3">
+          {/* Next / Schedule — hidden on mobile */}
+          <div className="hidden md:flex pl-3 border-l border-white/10 flex-1 min-w-0 items-stretch gap-3">
             <div className="min-w-0 flex-1">
               <span className="text-[10px] font-bold uppercase" style={{ color: "#e60000" }}>A seguir:</span>
               <div className="text-white text-sm truncate">
