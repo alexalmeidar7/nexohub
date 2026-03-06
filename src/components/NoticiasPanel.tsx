@@ -245,11 +245,7 @@ export default function NoticiasPanel() {
     loadDb();
   }, [user]);
 
-  useEffect(() => {
-    const customNames = customSites.map(s => s.name);
-    const defaultNames = DEFAULT_PORTALS.map(p => p.name);
-    setPortalOrder([...customNames, ...defaultNames]);
-  }, [customSites]);
+  // No longer need portalOrder state/effect - using separate boxes
 
   const defaultPortalOrder = DEFAULT_PORTALS.map(p => p.name);
   const customPortalOrder = customSites.map(s => s.name);
