@@ -107,6 +107,7 @@ interface ShopProduct {
 }
 
 const MUSIC_DATA_KEY = "masterview_music_data";
+const MUSIC_START_KEY = "masterview_music_start";
 
 const DAY_MAP_SHORT: Record<number, string> = { 0: "dom", 1: "seg", 2: "ter", 3: "qua", 4: "qui", 5: "sex", 6: "sab" };
 const DAY_MAP_FULL: Record<number, string> = { 0: "Domingo", 1: "Segunda", 2: "Terça", 3: "Quarta", 4: "Quinta", 5: "Sexta", 6: "Sábado" };
