@@ -307,6 +307,8 @@ export default function PlayerPage() {
 
   // Unified buffering detection
   const { buffering, setBuffering } = useBufferingDetection(videoRef, audioRef);
+  const [streamStalled, setStreamStalled] = useState(false);
+  const stallTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // SpeechRecognition-based CC: transcribes audio in real-time
   const startCCRecognition = useCallback(() => {
@@ -744,7 +746,44 @@ export default function PlayerPage() {
     []
   );
 
-  // Auto-play first channel after preroll
+  // Detect stream stall and auto-reconnect
+  useEffect(() => {
+    if (!playing || !canal || canal.type === "youtube") {
+      setStreamStalled(false);
+      if (stallTimerRef.current) clearTimeout(stallTimerRef.current);
+      return;
+    }
+    const mediaEl = (canal.type === "audio_live" || canal.type === "audio") ? audioRef.current : videoRef.current;
+    if (!mediaEl) return;
+
+    const onStall = () => {
+      if (stallTimerRef.current) clearTimeout(stallTimerRef.current);
+      stallTimerRef.current = setTimeout(() => {
+        if (mediaEl.paused || mediaEl.ended || mediaEl.readyState < 2) {
+          setStreamStalled(true);
+          if (canal) playStream(canal.url, canal.type);
+        }
+      }, 5000);
+    };
+    const onPlaying = () => {
+      setStreamStalled(false);
+      if (stallTimerRef.current) clearTimeout(stallTimerRef.current);
+    };
+
+    mediaEl.addEventListener("stalled", onStall);
+    mediaEl.addEventListener("ended", onStall);
+    mediaEl.addEventListener("playing", onPlaying);
+    mediaEl.addEventListener("timeupdate", onPlaying);
+
+    return () => {
+      mediaEl.removeEventListener("stalled", onStall);
+      mediaEl.removeEventListener("ended", onStall);
+      mediaEl.removeEventListener("playing", onPlaying);
+      mediaEl.removeEventListener("timeupdate", onPlaying);
+      if (stallTimerRef.current) clearTimeout(stallTimerRef.current);
+    };
+  }, [playing, canal, playStream]);
+
   useEffect(() => {
     if (!prerollDone) return;
     if (autoPlayedRef.current || canais.length === 0 || playing) return;
@@ -1252,7 +1291,7 @@ export default function PlayerPage() {
       <audio ref={audioRef} muted={muted} />
 
       {/* Buffering overlay */}
-      {buffering && playing && (
+      {streamStalled && playing && (
         <div className="absolute inset-0 flex flex-col items-center justify-center z-20 bg-black/60 gap-4">
           <Loader2 className="animate-spin" size={56} style={{ color: "#d30707" }} />
           <span className="text-white text-sm font-bold tracking-wide uppercase animate-pulse">Sintonizando canal...</span>
