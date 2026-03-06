@@ -71,6 +71,17 @@ const sidebarMenu: MenuItem[] = [
   },
 ];
 
+// Map menu items to module keys for plan filtering
+const menuToModuleKey: Record<string, string> = {
+  "cadastros": "cadastros",
+  "previsão do tempo": "previsao",
+  "notícias": "noticias",
+  "música no ar": "musica",
+  "agenda": "agenda",
+  "player": "player",
+  "comercial": "comercial",
+};
+
 const pageTitle: Record<Page, string> = {
   dashboard: "Home",
   previsao: "Previsão do Tempo",
@@ -98,6 +109,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set());
   const [empresa, setEmpresa] = useState<import("./ConfiguracoesPage").EmpresaConfig>({} as any);
   const [enabledModules, setEnabledModules] = useState<Set<string> | null>(null);
+  const [planModules, setPlanModules] = useState<Set<string> | null>(null);
   const [initialLoading, setInitialLoading] = useState(true);
 
   useEffect(() => {
@@ -115,7 +127,17 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             setEnabledModules(null);
           }
         }),
-      getEmpresaConfig(user.id).then(setEmpresa),
+      getEmpresaConfig(user.id).then(cfg => {
+        setEmpresa(cfg);
+        // Load plan modules
+        if (cfg.plano) {
+          supabase.from("planos").select("enabled_modules").eq("name", cfg.plano).maybeSingle().then(({ data }) => {
+            if (data?.enabled_modules) {
+              setPlanModules(new Set(data.enabled_modules));
+            }
+          });
+        }
+      }),
     ]).finally(() => setInitialLoading(false));
   }, [user]);
 
@@ -213,13 +235,23 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             <div className="mx-3 mb-2 px-3 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest text-white/70 flex items-center justify-between" style={{ backgroundColor: "#0d0446" }}>
               <span>módulos ativos</span>
               <span className="bg-white/20 text-white rounded-full px-2 py-0.5 text-[9px] font-bold normal-case tracking-normal">
-                {enabledModules ? enabledModules.size : "—"}
+                {planModules ? planModules.size : (enabledModules ? enabledModules.size : "—")}
               </span>
             </div>
 
             {/* Menu items with scroll */}
             <nav className="flex-1 overflow-y-auto px-3 space-y-0.5 sidebar-scroll">
-              {sidebarMenu.map(item => {
+              {sidebarMenu.filter(item => {
+                // Home and items without module mapping always show
+                if (item.label === "home") return true;
+                const modKey = menuToModuleKey[item.label];
+                if (!modKey) return true;
+                // If plan modules loaded, filter by plan
+                if (planModules) return planModules.has(modKey);
+                // Fallback to enabled modules
+                if (enabledModules) return enabledModules.has(modKey);
+                return true;
+              }).map(item => {
                 const Icon = item.icon;
                 const active = isItemActive(item);
                 const expanded = expandedMenus.has(item.label);
@@ -281,10 +313,14 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   {empresa.nome ? empresa.nome.charAt(0).toUpperCase() : "U"}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-white text-xs font-bold truncate">{empresa.nome || "Empresa"}</p>
-                  {empresa.plano && (
-                    <p className="text-[10px] font-semibold truncate" style={{ color: "#268ffa" }}>{empresa.plano}</p>
-                  )}
+                  <div className="flex items-center gap-2">
+                    <p className="text-white text-xs font-bold truncate">{empresa.nome || "Empresa"}</p>
+                    {empresa.plano && (
+                      <span className="px-2 py-0.5 rounded-full text-[9px] font-semibold flex-shrink-0" style={{ backgroundColor: "#268ffa", color: "#fff" }}>
+                        {empresa.plano}
+                      </span>
+                    )}
+                  </div>
                   <p className="text-white/50 text-[10px] truncate">{user?.email || ""}</p>
                   <button onClick={onLogout} className="text-[10px] underline hover:opacity-70 transition-colors mt-0.5" style={{ color: "#268ffa" }}>
                     sair
