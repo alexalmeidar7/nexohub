@@ -216,6 +216,10 @@ export default function NoticiasPanel() {
   const [programas, setProgramas] = useState<{ id: string; nome: string }[]>([]);
   const [showAddSiteInput, setShowAddSiteInput] = useState(false);
   const [hoveredImage, setHoveredImage] = useState<{ url: string; x: number; y: number } | null>(null);
+  const [showNoticiaAvulsaInput, setShowNoticiaAvulsaInput] = useState(false);
+  const [noticiaAvulsaUrl, setNoticiaAvulsaUrl] = useState("");
+  const [noticiasAvulsas, setNoticiasAvulsas] = useState<NewsItem[]>([]);
+  const [loadingAvulsa, setLoadingAvulsa] = useState(false);
 
   useEffect(() => {
     if (!user) return;
