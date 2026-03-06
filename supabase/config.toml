@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.public-promo-data]
 verify_jwt = false
+
+[functions.create-user]
+verify_jwt = false
