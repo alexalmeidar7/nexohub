@@ -251,7 +251,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             <nav className="flex-1 overflow-y-auto px-3 space-y-0.5 sidebar-scroll">
               {sidebarMenu.filter(item => {
                 // Home and cadastros always show
-                if (item.label === "home" || item.label === "cadastros") return true;
+                if (item.label === "home" || item.label === "cadastros" || item.label === "ferramentas") return true;
                 const modKey = menuToModuleKey[item.label];
                 if (!modKey) return true;
                 if (planModules) return planModules.has(modKey);
