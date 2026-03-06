@@ -1529,7 +1529,9 @@ export default function PlayerPage() {
               </div>
             </div>
             {!isYoutube && nextPresenter?.foto && (
-              <img src={nextPresenter.foto} alt={nextPresenter.nome} className="object-cover object-top shrink-0 self-stretch" style={{ width: "auto", minHeight: "100%", maxWidth: "80px" }} />
+              <div className="relative shrink-0" style={{ width: "120px" }}>
+                <img src={nextPresenter.foto} alt={nextPresenter.nome} className="absolute bottom-0 right-0 object-contain object-bottom" style={{ height: "180px", width: "auto", maxWidth: "120px" }} />
+              </div>
             )}
           </div>
         </div>
