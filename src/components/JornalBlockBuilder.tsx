@@ -30,13 +30,38 @@ export default function JornalBlockBuilder({ config, selectedNews, onClose }: Pr
   const handleDropOnBlock = (blockNum: number, e: React.DragEvent) => {
     e.preventDefault();
 
-    // Try to get data from portal drag (from NoticiasPanel accordion)
     const jsonData = e.dataTransfer.getData("text/plain");
     if (jsonData) {
       try {
-        const item = JSON.parse(jsonData) as NewsItem;
+        const parsed = JSON.parse(jsonData);
+
+        // Handle Bloco de Economia
+        if (parsed.type === "bloco_economia" && Array.isArray(parsed.items)) {
+          const moedas = parsed.items.filter((c: any) => c.name.includes("/"));
+          const bolsas = parsed.items.filter((c: any) => !c.name.includes("/"));
+
+          const moedasText = moedas.map((c: any) => `${c.name} ${c.value} (${c.change})`).join(", ");
+          const bolsasText = bolsas.map((c: any) => `${c.name} ${c.value} (${c.change})`).join(", ");
+
+          let text = "Vamos ver como anda o mercado no dia de hoje";
+          if (moedasText) text += ` - ${moedasText}`;
+          if (bolsasText) text += ` - e as bolsas operam ${bolsasText}`;
+
+          const econItem: NewsItem = { portal: "Economia", title: text, imageUrl: "" };
+          const alreadyInBlock = blocks[blockNum]?.some(n => n.portal === "Economia" && n.title.startsWith("Vamos ver como anda"));
+          if (!alreadyInBlock) {
+            setBlocks(prev => ({
+              ...prev,
+              [blockNum]: [...(prev[blockNum] || []), econItem],
+            }));
+          }
+          dragItem.current = null;
+          return;
+        }
+
+        // Handle regular news item
+        const item = parsed as NewsItem;
         if (item.portal && item.title) {
-          // Check if already in this block
           const alreadyInBlock = blocks[blockNum]?.some(n => n.title === item.title);
           if (!alreadyInBlock) {
             setBlocks(prev => ({
