@@ -52,10 +52,10 @@ const DEFAULT_PORTALS: Portal[] = [
   { name: "UOL", rssUrl: "https://rss.uol.com.br/feed/noticias.xml" },
   { name: "GloboNews", rssUrl: "https://g1.globo.com/rss/g1/globonews/" },
   { name: "Folha de S.Paulo", rssUrl: "https://feeds.folha.uol.com.br/emcimadahora/rss091.xml" },
-  { name: "CNN Brasil", rssUrl: "https://www.cnnbrasil.com.br/rss/noticias/" },
-  { name: "R7", rssUrl: "https://noticias.r7.com/feed/" },
-  { name: "Estadão", rssUrl: "https://www.estadao.com.br/pf/rss/ultimas.xml" },
-  { name: "Terra", rssUrl: "https://www.terra.com.br/rss/noticias/" },
+  { name: "CNN Brasil", rssUrl: "https://www.cnnbrasil.com.br/feed/" },
+  { name: "R7", rssUrl: "https://noticias.r7.com/feed.xml" },
+  { name: "Estadão", rssUrl: "https://rss.estadao.com.br/ultimas" },
+  { name: "Terra", rssUrl: "https://www.terra.com.br/rss/controller.htm?path=/noticias/rss" },
 ];
 
 const PROXY = "https://api.allorigins.win/raw?url=";
