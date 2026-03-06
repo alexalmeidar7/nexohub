@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, lazy, Suspense } from "react";
 import { Calendar as CalendarUI } from "@/components/ui/calendar";
-import { Home, Sun, FileText, Mic2, PlaySquare, Music, CalendarDays, Settings, LogOut, Loader2, ShoppingBag, ChevronDown, ChevronUp, MessageSquareQuote, Tag, Image, ExternalLink, MonitorPlay, Heart, ShoppingCart, Film, Mail, Users, Newspaper, CloudSun } from "lucide-react";
+import { Home, Sun, FileText, Mic2, PlaySquare, Music, CalendarDays, Settings, LogOut, Loader2, ShoppingBag, ChevronDown, ChevronUp, MessageSquareQuote, Tag, Image, ExternalLink, MonitorPlay, Heart, ShoppingCart, Film, Users, Newspaper, CloudSun } from "lucide-react";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import seloNexohub from "@/assets/selo-nexohub.png";
@@ -34,6 +34,7 @@ const TopLikedSongs = lazy(() => import("./TopLikedSongs"));
 const MusicasCurtidasPage = lazy(() => import("./MusicasCurtidasPage"));
 const ShoppingPage = lazy(() => import("./ShoppingPage"));
 const PreRollPage = lazy(() => import("./PreRollPage"));
+const MessageNotification = lazy(() => import("./MessageNotification"));
 
 type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll";
 
@@ -296,12 +297,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               <p className="text-white/60 text-xs">{user?.email || ""}</p>
             </div>
             <div className="flex items-center gap-3" style={{ marginRight: "50px" }}>
-              <div className="relative">
-                <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ backgroundColor: "#0d0446" }}>
-                  <Mail size={16} className="text-white" />
-                </div>
-                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full text-[9px] font-bold flex items-center justify-center" style={{ backgroundColor: "#268ffa", color: "#0d0446" }}>3</span>
-              </div>
+              <Suspense fallback={<div className="w-9 h-9 rounded-full" style={{ backgroundColor: "#0d0446" }} />}>
+                <MessageNotification />
+              </Suspense>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button
