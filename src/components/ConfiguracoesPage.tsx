@@ -206,7 +206,7 @@ export default function ConfiguracoesPage() {
     </div>
   );
 
-  if (loading) return <div className="flex items-center gap-2 text-muted-foreground"><Loader2 size={16} className="animate-spin" /> Carregando...</div>;
+  if (loading) return <ModulePageSkeleton />;
 
   const typeLabels: Record<string, string> = { audio_live: "Áudio ao vivo", video: "Vídeo ao vivo", youtube: "Vídeo do YouTube" };
 

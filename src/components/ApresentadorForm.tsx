@@ -214,10 +214,7 @@ export default function ApresentadorForm() {
       </div>
 
       {loadingList ? (
-        <div className="flex items-center gap-2 py-8 justify-center">
-          <Loader2 size={20} className="animate-spin" style={{ color: "#0d0446" }} />
-          <span className="text-sm" style={{ color: "rgba(13,4,70,0.5)" }}>Carregando cadastrados...</span>
-        </div>
+        <ModulePageSkeleton />
       ) : apresentadores.length > 0 ? (
         <div>
           <div className="flex items-center justify-between mb-4">
