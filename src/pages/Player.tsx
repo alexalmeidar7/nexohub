@@ -708,7 +708,7 @@ export default function PlayerPage() {
               console.warn("HLS fatal error on audio, recovering...", data.type);
               if (data.type === Hls.ErrorTypes.NETWORK_ERROR) hls.startLoad();
               else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) hls.recoverMediaError();
-              else { hls.destroy(); hlsRef.current = null; }
+              else { hls.destroy(); hlsRef.current = null; setStreamStalled(true); }
             }
           });
         } else if (audio.canPlayType("application/vnd.apple.mpegurl")) {
