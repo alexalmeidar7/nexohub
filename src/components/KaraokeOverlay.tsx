@@ -111,8 +111,8 @@ export default function KaraokeOverlay({ artist, title, audioElement, visible, d
 
   return (
     <div
-      className="absolute inset-0 z-[25] flex flex-col items-center justify-center pointer-events-none animate-fade-in"
-      style={{ paddingBottom: "160px" }}
+      className="absolute left-0 right-0 z-[25] flex flex-col items-center pointer-events-none animate-fade-in"
+      style={{ bottom: "160px" }}
     >
       {/* Karaoke ON badge */}
       <div className="flex items-center gap-2 mb-8 px-5 py-2.5 rounded-full pointer-events-auto"
