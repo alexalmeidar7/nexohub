@@ -47,7 +47,7 @@ const inputStyle: React.CSSProperties = {
 
 // plans now come from props
 
-export default function ClientCard({ client, clientEmail, modules, saving, onToggleModule, onClientUpdated, onSendMessage }: ClientCardProps) {
+export default function ClientCard({ client, clientEmail, modules, plans, saving, onToggleModule, onClientUpdated, onSendMessage }: ClientCardProps) {
   const { toast } = useToast();
   const [editing, setEditing] = useState(false);
   const [savingEdit, setSavingEdit] = useState(false);
