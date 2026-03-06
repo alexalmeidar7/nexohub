@@ -1502,9 +1502,9 @@ export default function PlayerPage() {
           </div>
 
           {/* Next / Schedule */}
-          <div className="pl-3 border-l border-white/10 shrink-0">
+          <div className="pl-3 border-l border-white/10 flex-1 min-w-0">
             <span className="text-[10px] font-bold uppercase" style={{ color: "#e60000" }}>A seguir:</span>
-            <div className="text-white text-sm truncate max-w-[180px]">
+            <div className="text-white text-sm truncate">
               {isYoutube ? (nextYtVideo?.title || "Sem vídeo") : (nextProg?.nome || "Sem programação")}
             </div>
             {!isYoutube && (
