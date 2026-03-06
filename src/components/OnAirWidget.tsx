@@ -126,9 +126,29 @@ export default function OnAirWidget() {
 
   if (loading) {
     return (
-      <div className="h-full flex items-center gap-2">
-        <Loader2 size={16} className="text-white/50 animate-spin" />
-        <span className="text-white/50 text-xs">Carregando dados</span>
+      <div className="h-full flex flex-col animate-pulse">
+        {/* NO AR label skeleton */}
+        <div className="flex items-center gap-2 mb-2">
+          <div className="w-3.5 h-3.5 rounded-full bg-white/10" />
+          <div className="w-12 h-3 rounded bg-white/10" />
+        </div>
+        {/* Program name skeleton */}
+        <div className="flex-1 flex flex-col justify-center gap-2" style={{ maxWidth: "55%" }}>
+          <div className="w-full h-5 rounded bg-white/10" />
+          <div className="w-3/4 h-5 rounded bg-white/10" />
+          <div className="w-24 h-2.5 rounded bg-white/10 mt-1" />
+        </div>
+        {/* Presenter skeleton */}
+        <div className="flex items-center gap-1.5 mb-4">
+          <div className="w-3 h-3 rounded-full bg-white/10" />
+          <div className="w-28 h-3 rounded bg-white/10" />
+        </div>
+        {/* Progress bar skeleton */}
+        <div className="absolute bottom-0 left-0 right-0">
+          <div className="w-full h-1 bg-white/10" />
+        </div>
+        {/* Fake presenter photo placeholder */}
+        <div className="absolute right-0 bottom-0 w-[50%] h-[80%] rounded-tl-2xl bg-white/5" />
       </div>
     );
   }
