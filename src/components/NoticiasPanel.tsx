@@ -563,8 +563,10 @@ export default function NoticiasPanel() {
                   <GripVertical size={14} className="opacity-50" />
                   {expandedPortals[portal.name] ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                   {portal.name}
+                  {isCustom && <span className="text-[9px] bg-white/20 px-1.5 py-0.5 rounded-full">Adicionado</span>}
                 </span>
                 <div className="flex items-center gap-2">
+                  <span className="text-[10px] opacity-70">{(newsByPortal[portal.name] || []).length} notícias</span>
                   {customSites.some(s => s.name === portal.name) && (
                     <button onClick={(e) => { e.stopPropagation(); removeCustomSite(portal.name); }} className="text-primary-foreground/70 hover:text-primary-foreground text-xs">✕</button>
                   )}
@@ -581,7 +583,7 @@ export default function NoticiasPanel() {
                           <img src={news.thumbnail} alt="" className="w-10 h-10 object-cover rounded ml-2 shrink-0" />
                         )}
                         <a href={news.link} target="_blank" rel="noopener noreferrer"
-                          className={`flex-1 px-3 py-3 text-sm hover:text-primary transition-colors flex items-start gap-2 group ${isCustom ? "text-white" : "text-foreground"}`}>
+                          className={`flex-1 px-3 py-3 text-sm transition-colors flex items-start gap-2 group ${isCustom ? "text-white hover:text-blue-300" : "text-foreground hover:text-primary"}`}>
                           <span className="flex-1 line-clamp-2">{news.title}</span>
                           <ExternalLink size={14} className={`shrink-0 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity ${isCustom ? "text-white/50" : "text-muted-foreground"}`} />
                         </a>
