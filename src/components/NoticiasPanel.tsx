@@ -536,7 +536,7 @@ export default function NoticiasPanel() {
                     {[...cotacoes, ...cotacoes].map((c, i) => (
                       <div
                         key={`${c.name}-${i}`}
-                        onClick={() => addCotacao(c)}
+                        onClick={() => addToBlocoEconomia(c)}
                         className="rounded-md px-2 py-1.5 flex items-center gap-1.5 text-[10px] shrink-0 transition-colors"
                         style={{
                           backgroundColor: c.direction === "down" ? "rgba(239,68,68,0.15)" : c.direction === "up" ? "rgba(34,197,94,0.15)" : "rgba(13,4,70,0.04)",
