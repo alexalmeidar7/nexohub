@@ -2,9 +2,10 @@ import { useEffect, useRef } from "react";
 
 interface AudioSpectrumProps {
   audioElement: HTMLAudioElement | null;
+  barColor?: string;
 }
 
-export default function AudioSpectrum({ audioElement }: AudioSpectrumProps) {
+export default function AudioSpectrum({ audioElement, barColor }: AudioSpectrumProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rafRef = useRef<number>(0);
   const peaksRef = useRef<number[]>([]);
