@@ -1421,7 +1421,7 @@ export default function PlayerPage() {
           </div>
 
           {/* Controls */}
-          <div className="flex items-center gap-3 px-5 border-l border-white/10 shrink-0">
+          <div className="flex items-center gap-1.5 px-3 border-l border-white/10 shrink-0">
             {(isAudio || isVideo) && musicData?.titulo && (
               <div className="relative flex items-center gap-1.5">
                 <button onClick={toggleLike} className={`p-1.5 rounded transition-all ${likeAnimating ? "scale-125" : "scale-100"}`}
@@ -1502,7 +1502,7 @@ export default function PlayerPage() {
           </div>
 
           {/* Next / Schedule */}
-          <div className="pl-5 border-l border-white/10 shrink-0">
+          <div className="pl-3 border-l border-white/10 shrink-0">
             <span className="text-[10px] font-bold uppercase" style={{ color: "#e60000" }}>A seguir:</span>
             <div className="text-white text-sm truncate max-w-[180px]">
               {isYoutube ? (nextYtVideo?.title || "Sem vídeo") : (nextProg?.nome || "Sem programação")}
