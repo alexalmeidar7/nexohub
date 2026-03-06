@@ -656,7 +656,7 @@ export default function NoticiasPanel() {
           {customSites.length > 0 && (
             <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)", width: (jornalConfig || wizardOpen) ? "100%" : "50%" }}>
               <div className="px-3 py-2 font-bold text-xs tracking-wide text-white rounded-t-xl flex items-center justify-between" style={{ backgroundColor: "#0d0446" }}>
-                <span>🌐 Sites Adicionados</span>
+                <span style={{ color: "#ffffff" }}>🌐 Sites Adicionados</span>
                 <button onClick={() => toggleBox('sitesAdicionados')} className="p-0.5 rounded hover:bg-white/20 transition-colors">
                   {collapsedBoxes['sitesAdicionados'] ? <ChevronDown size={12} /> : <ChevronUp size={12} />}
                 </button>
