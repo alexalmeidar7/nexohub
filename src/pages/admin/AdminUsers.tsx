@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, UserPlus } from "lucide-react";
+import AdminSkeleton from "@/components/skeletons/AdminSkeleton";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import ProtectedRoute from "@/components/ProtectedRoute";
