@@ -85,6 +85,7 @@ const menuToModuleKey: Record<string, string> = {
   "agenda": "agenda",
   "player": "player",
   "comercial": "comercial",
+  "ferramentas": "ferramentas",
 };
 
 const pageTitle: Record<Page, string> = {
