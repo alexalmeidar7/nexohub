@@ -109,15 +109,25 @@ export default function ConfiguracoesPage() {
     }, 500);
   };
 
+  const uploadToStorage = async (file: File, folder: string): Promise<string | null> => {
+    if (!user) return null;
+    const ext = file.name.split(".").pop() || "png";
+    const path = `${user.id}/${folder}-${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from("empresa-assets").upload(path, file, { upsert: true });
+    if (error) { toast.error("Erro no upload: " + error.message); return null; }
+    const { data: urlData } = supabase.storage.from("empresa-assets").getPublicUrl(path);
+    return urlData.publicUrl;
+  };
+
   const handleLogoUpload = () => {
     const input = document.createElement("input");
     input.type = "file"; input.accept = "image/*";
-    input.onchange = (e) => {
+    input.onchange = async (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (!file) return;
-      const reader = new FileReader();
-      reader.onload = (ev) => saveConfig({ ...config, logo: ev.target?.result as string });
-      reader.readAsDataURL(file);
+      toast.info("Enviando logo...");
+      const url = await uploadToStorage(file, "logo");
+      if (url) saveConfig({ ...config, logo: url });
     };
     input.click();
   };
@@ -125,12 +135,12 @@ export default function ConfiguracoesPage() {
   const handleBackgroundUpload = () => {
     const input = document.createElement("input");
     input.type = "file"; input.accept = "image/*";
-    input.onchange = (e) => {
+    input.onchange = async (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (!file) return;
-      const reader = new FileReader();
-      reader.onload = (ev) => saveConfig({ ...config, backgroundUrl: ev.target?.result as string });
-      reader.readAsDataURL(file);
+      toast.info("Enviando imagem de fundo...");
+      const url = await uploadToStorage(file, "background");
+      if (url) saveConfig({ ...config, backgroundUrl: url });
     };
     input.click();
   };
