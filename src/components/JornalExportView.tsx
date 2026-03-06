@@ -105,6 +105,9 @@ export default function JornalExportView({ config, blocks, onClose }: Props) {
             {dia} · Montado às {hora}
           </p>
         </div>
+        <button onClick={handlePrint} className="hover:opacity-70 transition-opacity" style={{ color: "#ffffff" }} title="Imprimir jornal">
+          <Printer size={16} />
+        </button>
       </div>
 
       {/* Content */}
