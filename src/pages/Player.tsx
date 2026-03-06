@@ -21,6 +21,7 @@ import {
   Captions,
   CaptionsOff,
   Mic,
+  MicVocal,
   Heart,
   Home,
   ShoppingCart,
@@ -31,6 +32,7 @@ const PlayerChat = lazy(() => import("@/components/PlayerChat"));
 const AudioSpectrum = lazy(() => import("@/components/AudioSpectrum"));
 const AudioDualCard = lazy(() => import("@/components/AudioDualCard"));
 const PlayerGradeDialog = lazy(() => import("@/components/player/PlayerGradeDialog"));
+const KaraokeOverlay = lazy(() => import("@/components/KaraokeOverlay"));
 import PlayerShopProduct from "@/components/player/PlayerShopProduct";
 import PreRollOverlay from "@/components/PreRollOverlay";
 import PlayerSkeleton from "@/components/skeletons/PlayerSkeleton";
@@ -316,6 +318,9 @@ export default function PlayerPage() {
   const [hlsLevels, setHlsLevels] = useState<{ height: number; bitrate: number; index: number }[]>([]);
   const [hlsCurrentLevel, setHlsCurrentLevel] = useState(-1); // -1 = auto
   const [qualityMenuOpen, setQualityMenuOpen] = useState(false);
+
+  // Karaoke state
+  const [karaokeEnabled, setKaraokeEnabled] = useState(false);
 
   // SpeechRecognition-based CC: transcribes audio in real-time
   const startCCRecognition = useCallback(() => {
@@ -1423,6 +1428,18 @@ export default function PlayerPage() {
         </Suspense>
       )}
 
+      {/* Karaoke overlay */}
+      {karaokeEnabled && playing && (
+        <Suspense fallback={null}>
+          <KaraokeOverlay
+            artist={musicData?.artista}
+            title={musicData?.titulo}
+            audioElement={audioRef.current}
+            visible={karaokeEnabled}
+          />
+        </Suspense>
+      )}
+
       {/* Idle state */}
       {!playing && (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#1a1a1a] z-10">
@@ -1562,6 +1579,14 @@ export default function PlayerPage() {
               title={ccEnabled ? "Desativar Closed Captions" : "Ativar Closed Captions"}>
               {ccLoading ? <Loader2 size={14} className="animate-spin" /> : ccEnabled ? <CaptionsOff size={14} /> : <Captions size={14} />} CC
             </button>
+            {/* Karaoke toggle — only for audio channels with music */}
+            {(isAudio || isVideo) && musicData?.titulo && musicData.titulo !== "Sem título" && (
+              <button onClick={() => setKaraokeEnabled(!karaokeEnabled)}
+                className={`px-3 py-1.5 rounded text-[11px] font-bold transition-all flex items-center gap-1 border ${karaokeEnabled ? "bg-[#a10a0b] text-white border-[#a10a0b] shadow-[0_0_8px_rgba(161,10,11,0.5)]" : "bg-white/10 text-white/60 border-white/20 hover:bg-white/20 hover:text-white"}`}
+                title={karaokeEnabled ? "Desativar Karaoke" : "Ativar Karaoke"}>
+                <MicVocal size={14} /> Karaoke
+              </button>
+            )}
             {/* Quality Selector — only for HLS video streams */}
             {isVideo && hlsLevels.length > 1 && (
               <div className="relative">
