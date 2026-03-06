@@ -1507,10 +1507,7 @@ export default function PlayerPage() {
 
           {/* Next / Schedule */}
           <div className="pl-3 border-l border-white/10 flex-1 min-w-0 flex items-center gap-3">
-            {!isYoutube && nextPresenter?.foto && (
-              <img src={nextPresenter.foto} alt={nextPresenter.nome} className="w-10 h-10 rounded-full object-cover shrink-0 border border-white/20" />
-            )}
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <span className="text-[10px] font-bold uppercase" style={{ color: "#e60000" }}>A seguir:</span>
               <div className="text-white text-sm truncate">
                 {isYoutube ? (nextYtVideo?.title || "Sem vídeo") : (nextProg?.nome || "Sem programação")}
@@ -1531,6 +1528,9 @@ export default function PlayerPage() {
                 </button>
               </div>
             </div>
+            {!isYoutube && nextPresenter?.foto && (
+              <img src={nextPresenter.foto} alt={nextPresenter.nome} className="h-full object-cover object-top shrink-0" style={{ maxHeight: "100%", width: "auto" }} />
+            )}
           </div>
         </div>
       </div>
