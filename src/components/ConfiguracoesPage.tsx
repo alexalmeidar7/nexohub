@@ -36,6 +36,7 @@ export async function getEmpresaConfig(userId?: string): Promise<EmpresaConfig> 
     instagram: data.instagram || "",
     facebook: data.facebook || "",
     youtube: data.youtube || "",
+    plano: data.plano || "",
   };
 }
 
