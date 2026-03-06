@@ -48,12 +48,7 @@ Deno.serve(async (req) => {
 
     const callerId = callerUser.id;
 
-    if (!callerId) {
-      return new Response(JSON.stringify({ error: "Não autorizado" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    // Check admin role
 
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
     const { data: roles } = await adminClient
