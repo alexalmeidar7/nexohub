@@ -735,12 +735,30 @@ export default function PlayerPage() {
             capLevelToPlayerSize: false,
             startLevel: -1,
             autoStartLoad: true,
-            maxBufferLength: 30,
-            maxMaxBufferLength: 60,
-            maxBufferSize: 60 * 1000 * 1000,
+            // Larger buffers to prevent stalls
+            maxBufferLength: 60,
+            maxMaxBufferLength: 120,
+            maxBufferSize: 120 * 1000 * 1000,
+            maxBufferHole: 0.5,
+            // Aggressive ABR for stable playback
             abrEwmaDefaultEstimate: 5000000,
             abrBandWidthUpFactor: 0.7,
             abrBandWidthFactor: 0.95,
+            // Fragment loading tuning
+            fragLoadingMaxRetry: 6,
+            fragLoadingMaxRetryTimeout: 16000,
+            fragLoadingRetryDelay: 1000,
+            manifestLoadingMaxRetry: 4,
+            manifestLoadingRetryDelay: 1000,
+            levelLoadingMaxRetry: 4,
+            levelLoadingRetryDelay: 1000,
+            // Nudge stalls forward automatically
+            nudgeMaxRetry: 10,
+            nudgeOffset: 0.2,
+            maxStarvationDelay: 4,
+            maxLoadingDelay: 4,
+            // Back buffer to save memory
+            backBufferLength: 30,
           });
           hlsRef.current = hls;
           hls.loadSource(freshUrl);
@@ -754,8 +772,7 @@ export default function PlayerPage() {
                 index: i,
               }));
               setHlsLevels(levels);
-              setHlsCurrentLevel(-1); // auto by default
-              // Select highest quality level
+              setHlsCurrentLevel(-1);
               if (data.levels.length > 1) {
                 hls.currentLevel = data.levels.length - 1;
                 setHlsCurrentLevel(data.levels.length - 1);
@@ -766,9 +783,22 @@ export default function PlayerPage() {
           hls.on(Hls.Events.FRAG_BUFFERED, () => setBuffering(false));
           hls.on(Hls.Events.ERROR, (_event, data) => {
             if (data.fatal) {
-              if (data.type === Hls.ErrorTypes.NETWORK_ERROR) hls.startLoad();
-              else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) hls.recoverMediaError();
-              else { hls.destroy(); hlsRef.current = null; setStreamStalled(true); }
+              console.warn("HLS fatal error on video:", data.type, data.details);
+              if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+                hls.startLoad();
+              } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+                hls.recoverMediaError();
+              } else {
+                hls.destroy();
+                hlsRef.current = null;
+                setStreamStalled(true);
+              }
+            } else if (data.details === "bufferStalledError") {
+              // Non-fatal stall — nudge playback
+              console.warn("HLS buffer stalled, nudging...");
+              if (video.currentTime > 0) {
+                video.currentTime += 0.1;
+              }
             }
           });
         } else {
