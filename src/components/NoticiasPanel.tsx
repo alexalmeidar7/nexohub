@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import MontarJornalInline, { type JornalConfig } from "./MontarJornalInline";
 import JornalBlockBuilder from "./JornalBlockBuilder";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface NewsItem {
   title: string;
