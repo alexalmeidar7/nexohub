@@ -949,10 +949,9 @@ export default function PlayerPage() {
     setQualityMenuOpen(false);
   }, []);
 
-  const handlePlayCanal = () => {
+  const handlePlayCanal = useCallback(() => {
     if (!canal) return;
     if (playing) {
-      // Pause
       if (audioRef.current) audioRef.current.pause();
       if (videoRef.current) videoRef.current.pause();
       setPlaying(false);
@@ -960,7 +959,7 @@ export default function PlayerPage() {
     }
     if (canal.type === "youtube") { setPlaying(true); setBuffering(false); return; }
     playStream(canal.url, canal.type);
-  };
+  }, [canal, playing, playStream]);
 
   const navigateChannel = useCallback((dir: 1 | -1) => {
     if (canais.length === 0) return;
