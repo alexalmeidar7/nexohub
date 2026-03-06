@@ -563,7 +563,7 @@ export default function NoticiasPanel() {
               <div className="px-3 py-2 font-bold text-xs tracking-wide text-white rounded-t-xl flex items-center justify-between cursor-grab" style={{ backgroundColor: "#0d0446" }}>
                 <span className="flex items-center gap-1.5">
                   <GripVertical size={12} className="opacity-60" />
-                  📊 Bloco de Economia
+                  <span style={{ color: "#ffffff" }}>📊 Bloco de Economia</span>
                 </span>
                 <button onClick={() => toggleBox('blocoEconomia')} className="p-0.5 rounded hover:bg-white/20 transition-colors">
                   {collapsedBoxes['blocoEconomia'] ? <ChevronDown size={12} /> : <ChevronUp size={12} />}
