@@ -941,5 +941,6 @@ export default function NoticiasPanel() {
       )}
 
     </div>
+    </TooltipProvider>
   );
 }
