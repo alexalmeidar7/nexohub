@@ -563,6 +563,7 @@ export default function NoticiasPanel() {
                 </div>
               )}
             </div>
+            )}
           </div>
 
           {/* News Portals Accordion - Default only */}
