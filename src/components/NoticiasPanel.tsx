@@ -208,7 +208,6 @@ export default function NoticiasPanel() {
   const [escaladaNews, setEscaladaNews] = useState<EscaladaNews[]>([]);
   const [selectedCotacoes, setSelectedCotacoes] = useState<SelectedCotacao[]>([]);
   const [expandedPortals, setExpandedPortals] = useState<Record<string, boolean>>({});
-  const [portalOrder, setPortalOrder] = useState<string[]>([]);
   const [summaryPopup, setSummaryPopup] = useState<{ title: string; resumo: string; tempoLeitura: string } | null>(null);
   const [loadingSummary, setLoadingSummary] = useState(false);
   const [wizardOpen, setWizardOpen] = useState(false);
