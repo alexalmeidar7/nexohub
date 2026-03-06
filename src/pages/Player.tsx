@@ -1093,12 +1093,8 @@ export default function PlayerPage() {
   // Shopping popup is manual-only via icon click
 
   if (loading) {
-    return (
-      <div className="h-screen w-screen bg-black flex flex-col items-center justify-center gap-4">
-        <Loader2 className="animate-spin" size={48} style={{ color: "#d30707" }} />
-        <p className="text-white/60 text-sm animate-pulse">{loadingStatus}</p>
-      </div>
-    );
+    return <PlayerSkeleton status={loadingStatus} />;
+  }
   }
 
   return (

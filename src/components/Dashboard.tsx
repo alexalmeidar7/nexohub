@@ -35,7 +35,7 @@ const MusicasCurtidasPage = lazy(() => import("./MusicasCurtidasPage"));
 const ShoppingPage = lazy(() => import("./ShoppingPage"));
 const PreRollPage = lazy(() => import("./PreRollPage"));
 const MessageNotification = lazy(() => import("./MessageNotification"));
-
+import DashboardSkeleton from "./skeletons/DashboardSkeleton";
 type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll";
 
 // Sidebar structured menu
