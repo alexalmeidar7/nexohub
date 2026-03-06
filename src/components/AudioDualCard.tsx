@@ -86,12 +86,13 @@ export default function AudioDualCard({
 
         {/* Right — Music card (sits in front, narrower) */}
         <div
-          className="relative md:ml-auto ml-0 md:mt-0 mt-[260px] md:w-[55%] w-full rounded-3xl overflow-hidden shadow-2xl animate-fade-in"
+          className="relative md:ml-auto ml-0 md:mt-0 mt-[260px] md:w-[55%] w-full rounded-3xl overflow-hidden shadow-2xl"
           style={{
             backgroundColor: "hsl(0 0% 5%)",
             minHeight: "420px",
             zIndex: 2,
-            animationDuration: "0.6s",
+            animation: "coverSlideIn 1s cubic-bezier(0.22, 1, 0.36, 1) forwards",
+            opacity: 0,
           }}
         >
           {/* Cover image fills the card with rounded corners */}
