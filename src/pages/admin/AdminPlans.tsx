@@ -191,7 +191,10 @@ function AdminPlansContent() {
               )}
               <div className="p-4 space-y-3">
                 <div className="flex items-center justify-between">
-                  <p className="font-semibold" style={{ fontSize: "14px", color: "#0d0446" }}>{plan.name}</p>
+                  <div>
+                    <p className="font-semibold" style={{ fontSize: "14px", color: "#0d0446" }}>{plan.name}</p>
+                    <p style={{ fontSize: "12px", color: "#2ec0f6", fontWeight: 600 }}>R$ {(plan.price || 0).toFixed(2)}</p>
+                  </div>
                   <div className="flex items-center gap-1">
                     <button onClick={() => openEdit(plan)} className="p-1.5 rounded-full transition-colors hover:bg-gray-100">
                       <Pencil size={13} style={{ color: "#0d0446" }} />
