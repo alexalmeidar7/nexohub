@@ -35,10 +35,26 @@ Deno.serve(async (req) => {
       global: { headers: { Authorization: authHeader } },
     });
 
-    const { data: claimsData, error: claimsError } = await callerClient.auth.getClaims(token);
-    const callerId = claimsData?.claims?.sub;
+    let callerId: string | null = null;
 
-    if (claimsError || !callerId) {
+    // Primary validation path
+    const { data: userData, error: userError } = await callerClient.auth.getUser(token);
+    if (userData?.user?.id) {
+      callerId = userData.user.id;
+    } else {
+      // Fallback for signing-key edge cases
+      const { data: claimsData, error: claimsError } = await callerClient.auth.getClaims(token);
+      callerId = (claimsData?.claims?.sub as string | undefined) ?? null;
+
+      if (!callerId) {
+        console.error("create-user auth failed", {
+          userError: userError?.message,
+          claimsError: claimsError?.message,
+        });
+      }
+    }
+
+    if (!callerId) {
       return new Response(JSON.stringify({ error: "Não autorizado" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
