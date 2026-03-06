@@ -723,11 +723,29 @@ export default function PlayerPage() {
         const video = videoRef.current;
         if (!video) return;
         if (Hls && Hls.isSupported()) {
-          const hls = new Hls({ enableWorker: true, lowLatencyMode: true });
+          const hls = new Hls({
+            enableWorker: true,
+            lowLatencyMode: false,
+            capLevelToPlayerSize: false,
+            startLevel: -1,
+            autoStartLoad: true,
+            maxBufferLength: 30,
+            maxMaxBufferLength: 60,
+            maxBufferSize: 60 * 1000 * 1000,
+            abrEwmaDefaultEstimate: 5000000,
+            abrBandWidthUpFactor: 0.7,
+            abrBandWidthFactor: 0.95,
+          });
           hlsRef.current = hls;
           hls.loadSource(freshUrl);
           hls.attachMedia(video);
-          hls.on(Hls.Events.MANIFEST_PARSED, () => { video.play().then(() => setBuffering(false)).catch(() => {}); });
+          hls.on(Hls.Events.MANIFEST_PARSED, (_e, data) => {
+            // Select highest quality level
+            if (data.levels && data.levels.length > 1) {
+              hls.currentLevel = data.levels.length - 1;
+            }
+            video.play().then(() => setBuffering(false)).catch(() => {});
+          });
           hls.on(Hls.Events.FRAG_BUFFERED, () => setBuffering(false));
           hls.on(Hls.Events.ERROR, (_event, data) => {
             if (data.fatal) {
