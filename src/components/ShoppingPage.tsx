@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Loader2, Trash2, Pencil, Plus, Package } from "lucide-react";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import { toast } from "@/components/ui/use-toast";
+import { compressImage } from "@/lib/imageCompressor";
 
 interface ShoppingProduct {
   id: string;
@@ -66,9 +67,10 @@ export default function ShoppingPage() {
   };
 
   const uploadImage = async (file: File): Promise<string> => {
-    const ext = file.name.split(".").pop();
+    const compressed = await compressImage(file);
+    const ext = compressed.name.split(".").pop();
     const path = `${user!.id}/${Date.now()}.${ext}`;
-    const { error } = await supabase.storage.from("shopping").upload(path, file);
+    const { error } = await supabase.storage.from("shopping").upload(path, compressed);
     if (error) throw error;
     const { data } = supabase.storage.from("shopping").getPublicUrl(path);
     return data.publicUrl;

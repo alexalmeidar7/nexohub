@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Trash2, Upload, ImageIcon, Pencil, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { compressImage } from "@/lib/imageCompressor";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 
 interface Testemunhal {
@@ -74,9 +75,10 @@ export default function TestemunhaisPage() {
   };
 
   const uploadImage = async (file: File): Promise<string> => {
-    const ext = file.name.split(".").pop();
+    const compressed = await compressImage(file);
+    const ext = compressed.name.split(".").pop();
     const path = `testemunhais/${Date.now()}.${ext}`;
-    const { error } = await supabase.storage.from("comercial").upload(path, file, { upsert: true });
+    const { error } = await supabase.storage.from("comercial").upload(path, compressed, { upsert: true });
     if (error) throw error;
     const { data } = supabase.storage.from("comercial").getPublicUrl(path);
     return data.publicUrl;
