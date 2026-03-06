@@ -21,6 +21,7 @@ import {
   Captions,
   CaptionsOff,
   Mic,
+  MicVocal,
   Heart,
   Home,
   ShoppingCart,
