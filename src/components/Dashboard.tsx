@@ -98,6 +98,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set());
   const [empresa, setEmpresa] = useState<import("./ConfiguracoesPage").EmpresaConfig>({} as any);
   const [enabledModules, setEnabledModules] = useState<Set<string> | null>(null);
+  const [planModules, setPlanModules] = useState<Set<string> | null>(null);
   const [initialLoading, setInitialLoading] = useState(true);
 
   useEffect(() => {
