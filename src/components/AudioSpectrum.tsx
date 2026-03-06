@@ -32,8 +32,7 @@ export default function AudioSpectrum({ audioElement }: AudioSpectrumProps) {
       const t = performance.now() / 280;
       const active = !audioElement.paused;
 
-      ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
-      ctx.fillRect(0, 0, w, h);
+      ctx.clearRect(0, 0, w, h);
 
       const barWidth = (w / bufferLength) * 0.8;
 
