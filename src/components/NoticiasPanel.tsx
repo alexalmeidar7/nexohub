@@ -539,14 +539,26 @@ export default function NoticiasPanel() {
           </div>
         </div>
 
-        {/* RIGHT COLUMN - Jornal Builder (only visible when config exists) */}
-        {jornalConfig && (
+        {/* RIGHT COLUMN - Wizard or Jornal Builder */}
+        {(wizardOpen || jornalConfig) && (
           <div className="flex-1">
-            <JornalBlockBuilder
-              config={jornalConfig}
-              selectedNews={selectedNews.map(sn => ({ portal: sn.portal, title: sn.title, imageUrl: sn.imageUrl }))}
-              onClose={() => setJornalConfig(null)}
-            />
+            {wizardOpen && !jornalConfig && (
+              <MontarJornalInline
+                programas={programas}
+                onFinish={(config) => {
+                  setJornalConfig(config);
+                  setWizardOpen(false);
+                }}
+                onCancel={() => setWizardOpen(false)}
+              />
+            )}
+            {jornalConfig && (
+              <JornalBlockBuilder
+                config={jornalConfig}
+                selectedNews={selectedNews.map(sn => ({ portal: sn.portal, title: sn.title, imageUrl: sn.imageUrl }))}
+                onClose={() => setJornalConfig(null)}
+              />
+            )}
           </div>
         )}
       </div>
