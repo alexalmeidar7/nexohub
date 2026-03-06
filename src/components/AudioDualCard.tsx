@@ -33,7 +33,7 @@ export default function AudioDualCard({
           src={channelThumb}
           alt=""
           className="absolute inset-0 w-full h-full object-cover"
-          style={{ filter: "brightness(0.3) blur(2px)" }}
+          style={{ filter: "brightness(0.15) blur(6px)", transform: "scale(1.05)" }}
         />
       )}
       {/* Fallback gradient when no thumb */}
