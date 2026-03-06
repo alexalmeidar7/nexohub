@@ -263,6 +263,17 @@ function AdminPlansContent() {
               style={inputStyle}
             />
 
+            <input
+              placeholder="Preço do plano (R$)"
+              type="number"
+              min="0"
+              step="0.01"
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+              className="w-full outline-none"
+              style={inputStyle}
+            />
+
             {/* Image */}
             <div className="space-y-2">
               <label style={{ fontSize: "10px", color: "#6b7280", fontWeight: 600 }}>Imagem de capa</label>
