@@ -47,6 +47,7 @@ function AdminDashboardContent() {
 
   const statCards = [
     { icon: Users, value: stats.totalClients, label: "Clientes Cadastrados", color: "#2ec0f6" },
+    { icon: ClipboardList, value: stats.totalPlans, label: "Planos Cadastrados", color: "#f59e0b" },
     { icon: Puzzle, value: stats.totalModules, label: "Módulos Ativos", color: "#22c55e" },
     { icon: Radio, value: stats.totalChannels, label: "Canais de Streaming", color: "#a855f7" },
   ];
