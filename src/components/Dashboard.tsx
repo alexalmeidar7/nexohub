@@ -34,6 +34,7 @@ const TopLikedSongs = lazy(() => import("./TopLikedSongs"));
 const MusicasCurtidasPage = lazy(() => import("./MusicasCurtidasPage"));
 const ShoppingPage = lazy(() => import("./ShoppingPage"));
 const PreRollPage = lazy(() => import("./PreRollPage"));
+const MessageNotification = lazy(() => import("./MessageNotification"));
 
 type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll";
 
