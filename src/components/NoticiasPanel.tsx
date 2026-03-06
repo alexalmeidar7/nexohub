@@ -476,6 +476,7 @@ export default function NoticiasPanel() {
   };
 
   return (
+    <TooltipProvider delayDuration={300}>
     <div className="animate-fade-in space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
