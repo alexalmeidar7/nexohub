@@ -85,10 +85,29 @@ function AdminUsersContent() {
       return;
     }
     setCreating(true);
-    toast({
-      title: "Funcionalidade em desenvolvimento",
-      description: "A criação de novos usuários requer configuração adicional do backend.",
-    });
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await supabase.functions.invoke("create-user", {
+        body: { email: newEmail, password: newPassword, nome: newNome },
+      });
+
+      if (res.error || res.data?.error) {
+        toast({
+          title: "Erro ao criar usuário",
+          description: res.data?.error || res.error?.message || "Erro desconhecido",
+          variant: "destructive",
+        });
+      } else {
+        toast({ title: "Usuário criado com sucesso!" });
+        setNewEmail("");
+        setNewPassword("");
+        setNewNome("");
+        setShowNewUser(false);
+        loadData();
+      }
+    } catch (err: any) {
+      toast({ title: "Erro ao criar usuário", description: err.message, variant: "destructive" });
+    }
     setCreating(false);
   };
 
