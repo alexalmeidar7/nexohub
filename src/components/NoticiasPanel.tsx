@@ -3,7 +3,7 @@ import { RefreshCw, ExternalLink, Plus, TrendingUp, TrendingDown, Minus, Trash2,
 import XmlLinkRow from "./XmlLinkRow";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import MontarJornalWizard, { type JornalConfig } from "./MontarJornalWizard";
+import MontarJornalInline, { type JornalConfig } from "./MontarJornalInline";
 import JornalBlockBuilder from "./JornalBlockBuilder";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
