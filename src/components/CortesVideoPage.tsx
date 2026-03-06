@@ -1,9 +1,8 @@
 import { useState, useMemo } from "react";
-import { Scissors, Download, Clock, Link2, Loader2 } from "lucide-react";
+import { Scissors, Download, Clock, Link2, Loader2, Play, Copy, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
-import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 
 function extractYoutubeId(url: string): string | null {
   const m = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([A-Za-z0-9_-]{11})/);
@@ -33,8 +32,12 @@ export default function CortesVideoPage() {
   const [endMin, setEndMin] = useState("");
   const [endSec, setEndSec] = useState("");
   const [cutting, setCutting] = useState(false);
-  const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
-  const [expiresAt, setExpiresAt] = useState<Date | null>(null);
+  const [result, setResult] = useState<{
+    clip_embed_url: string;
+    share_url: string;
+    thumbnail_url: string;
+    duration: number;
+  } | null>(null);
 
   const videoId = useMemo(() => extractYoutubeId(youtubeUrl), [youtubeUrl]);
 
@@ -42,20 +45,13 @@ export default function CortesVideoPage() {
   const endSeconds = parseTime(endMin, endSec);
   const duration = endSeconds - startSeconds;
 
-  const startThumbUrl = videoId && startSeconds > 0
-    ? `https://img.youtube.com/vi/${videoId}/0.jpg`
-    : null;
-  const endThumbUrl = videoId && endSeconds > 0
-    ? `https://img.youtube.com/vi/${videoId}/0.jpg`
-    : null;
-
   const canCut = videoId && duration > 0 && duration <= 600;
 
   const handleCut = async () => {
     if (!canCut || !user) return;
 
     setCutting(true);
-    setDownloadUrl(null);
+    setResult(null);
 
     try {
       const { data, error } = await supabase.functions.invoke("cut-youtube-video", {
@@ -69,28 +65,31 @@ export default function CortesVideoPage() {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      setDownloadUrl(data.download_url);
-      setExpiresAt(new Date(Date.now() + 10 * 60 * 1000));
-
-      toast({
-        title: "Corte finalizado!",
-        description: "O link de download estará disponível por 10 minutos.",
+      setResult({
+        clip_embed_url: data.clip_embed_url,
+        share_url: data.share_url,
+        thumbnail_url: data.thumbnail_url,
+        duration: data.duration,
       });
 
-      // Auto-clear after 10 minutes
-      setTimeout(() => {
-        setDownloadUrl(null);
-        setExpiresAt(null);
-      }, 10 * 60 * 1000);
+      toast({
+        title: "Corte gerado!",
+        description: "O trecho do vídeo está pronto para visualização e compartilhamento.",
+      });
     } catch (err: any) {
       toast({
-        title: "Erro ao cortar vídeo",
+        title: "Erro ao processar vídeo",
         description: err.message || "Tente novamente mais tarde.",
         variant: "destructive",
       });
     } finally {
       setCutting(false);
     }
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast({ title: "Link copiado!", description: "O link foi copiado para a área de transferência." });
   };
 
   return (
@@ -105,7 +104,7 @@ export default function CortesVideoPage() {
           <input
             type="url"
             value={youtubeUrl}
-            onChange={(e) => setYoutubeUrl(e.target.value)}
+            onChange={(e) => { setYoutubeUrl(e.target.value); setResult(null); }}
             placeholder="https://www.youtube.com/watch?v=..."
             className="w-full pl-10 pr-4 py-3 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-[#268ffa]/30"
             style={{ borderColor: "#e2e8f0", backgroundColor: "#fff", color: "#0d0446" }}
@@ -161,7 +160,6 @@ export default function CortesVideoPage() {
               />
               <span className="text-xs" style={{ color: "#64748b" }}>seg</span>
             </div>
-            {/* Thumbnail at start */}
             {videoId && startSeconds > 0 && (
               <div className="w-24 h-14 rounded-lg overflow-hidden border flex-shrink-0" style={{ borderColor: "#e2e8f0" }}>
                 <iframe
@@ -216,7 +214,6 @@ export default function CortesVideoPage() {
               />
               <span className="text-xs" style={{ color: "#64748b" }}>seg</span>
             </div>
-            {/* Thumbnail at end */}
             {videoId && endSeconds > 0 && (
               <div className="w-24 h-14 rounded-lg overflow-hidden border flex-shrink-0" style={{ borderColor: "#e2e8f0" }}>
                 <iframe
@@ -241,35 +238,71 @@ export default function CortesVideoPage() {
         {cutting ? (
           <>
             <Loader2 size={16} className="animate-spin" />
-            Cortando vídeo...
+            Processando...
           </>
         ) : (
           <>
             <Scissors size={16} />
-            Cortar Vídeo
+            Gerar Corte
           </>
         )}
       </button>
 
-      {/* Download link */}
-      {downloadUrl && (
-        <div className="rounded-xl p-4 flex items-center gap-4" style={{ backgroundColor: "#f0fdf4", border: "1px solid #bbf7d0" }}>
-          <Download size={20} style={{ color: "#16a34a" }} />
-          <div className="flex-1">
-            <p className="text-sm font-bold" style={{ color: "#166534" }}>Vídeo cortado com sucesso!</p>
-            <p className="text-xs" style={{ color: "#15803d" }}>
-              Link expira em 10 minutos{expiresAt ? ` (${expiresAt.toLocaleTimeString("pt-BR")})` : ""}
-            </p>
+      {/* Result */}
+      {result && (
+        <div className="space-y-4">
+          {/* Clip preview */}
+          <div className="rounded-xl overflow-hidden" style={{ maxWidth: 640 }}>
+            <iframe
+              src={result.clip_embed_url}
+              title="Clip preview"
+              className="w-full aspect-video"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
           </div>
-          <a
-            href={downloadUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="px-5 py-2 rounded-lg text-sm font-bold transition-opacity hover:opacity-80"
-            style={{ backgroundColor: "#16a34a", color: "#fff" }}
-          >
-            Baixar Vídeo
-          </a>
+
+          {/* Actions */}
+          <div className="rounded-xl p-4 space-y-3" style={{ backgroundColor: "#f0fdf4", border: "1px solid #bbf7d0" }}>
+            <div className="flex items-center gap-3">
+              <Play size={20} style={{ color: "#16a34a" }} />
+              <div className="flex-1">
+                <p className="text-sm font-bold" style={{ color: "#166534" }}>Trecho gerado com sucesso!</p>
+                <p className="text-xs" style={{ color: "#15803d" }}>
+                  Duração: {formatDuration(result.duration)}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => copyToClipboard(result.share_url)}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold transition-opacity hover:opacity-80"
+                style={{ backgroundColor: "#268ffa", color: "#fff" }}
+              >
+                <Copy size={12} />
+                Copiar Link com Tempo
+              </button>
+              <button
+                onClick={() => copyToClipboard(result.clip_embed_url)}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold transition-opacity hover:opacity-80"
+                style={{ backgroundColor: "#0d0446", color: "#fff" }}
+              >
+                <Copy size={12} />
+                Copiar Embed
+              </button>
+              <a
+                href={result.share_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold transition-opacity hover:opacity-80"
+                style={{ backgroundColor: "#16a34a", color: "#fff" }}
+              >
+                <ExternalLink size={12} />
+                Abrir no YouTube
+              </a>
+            </div>
+          </div>
         </div>
       )}
     </div>
