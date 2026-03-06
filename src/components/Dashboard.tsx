@@ -38,6 +38,7 @@ const CortesVideoPage = lazy(() => import("./CortesVideoPage"));
 const MessageNotification = lazy(() => import("./MessageNotification"));
 import DashboardSkeleton from "./skeletons/DashboardSkeleton";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
+import { normalizeMusicText } from "@/lib/textEncoding";
 type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll" | "cortevideo";
 
 // Sidebar structured menu
@@ -701,25 +702,6 @@ function useGlobalMusicSync() {
     const MUSIC_DATA_KEY = "masterview_music_data";
     const MUSIC_START_KEY = "masterview_music_start";
 
-    const decodeEntities = (str: string) => {
-      const ta = document.createElement("textarea");
-      ta.innerHTML = str;
-      return ta.value;
-    };
-
-    const maybeFixMojibake = (str: string) => {
-      if (!/(Ã.|Â.|â[\u0080-\u00BF]|�)/.test(str)) return str;
-      try {
-        const charCodes = Array.from(str).map((char) => char.charCodeAt(0));
-        if (charCodes.some((code) => code > 255)) return str;
-        const fixed = new TextDecoder("utf-8", { fatal: false }).decode(Uint8Array.from(charCodes));
-        return fixed.includes("�") ? str : fixed;
-      } catch {
-        return str;
-      }
-    };
-
-    const normalizeMusicText = (str: string) => maybeFixMojibake(decodeEntities(str).trim());
 
     const parseXml = (xmlStr: string) => {
       try {
