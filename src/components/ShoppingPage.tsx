@@ -67,9 +67,10 @@ export default function ShoppingPage() {
   };
 
   const uploadImage = async (file: File): Promise<string> => {
-    const ext = file.name.split(".").pop();
+    const compressed = await compressImage(file);
+    const ext = compressed.name.split(".").pop();
     const path = `${user!.id}/${Date.now()}.${ext}`;
-    const { error } = await supabase.storage.from("shopping").upload(path, file);
+    const { error } = await supabase.storage.from("shopping").upload(path, compressed);
     if (error) throw error;
     const { data } = supabase.storage.from("shopping").getPublicUrl(path);
     return data.publicUrl;
