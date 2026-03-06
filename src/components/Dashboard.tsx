@@ -116,7 +116,17 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             setEnabledModules(null);
           }
         }),
-      getEmpresaConfig(user.id).then(setEmpresa),
+      getEmpresaConfig(user.id).then(cfg => {
+        setEmpresa(cfg);
+        // Load plan modules
+        if (cfg.plano) {
+          supabase.from("planos").select("enabled_modules").eq("name", cfg.plano).maybeSingle().then(({ data }) => {
+            if (data?.enabled_modules) {
+              setPlanModules(new Set(data.enabled_modules));
+            }
+          });
+        }
+      }),
     ]).finally(() => setInitialLoading(false));
   }, [user]);
 
