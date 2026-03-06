@@ -235,7 +235,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             <div className="mx-3 mb-2 px-3 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest text-white/70 flex items-center justify-between" style={{ backgroundColor: "#0d0446" }}>
               <span>módulos ativos</span>
               <span className="bg-white/20 text-white rounded-full px-2 py-0.5 text-[9px] font-bold normal-case tracking-normal">
-                {enabledModules ? enabledModules.size : "—"}
+                {planModules ? planModules.size : (enabledModules ? enabledModules.size : "—")}
               </span>
             </div>
 
