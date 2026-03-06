@@ -65,6 +65,7 @@ function AdminPlansContent() {
   const openEdit = (plan: Plan) => {
     setEditingPlan(plan);
     setName(plan.name);
+    setPrice(String(plan.price || 0));
     setEnabledModules(plan.enabled_modules || []);
     setImageFile(null);
     setImagePreview(plan.image_url || "");
