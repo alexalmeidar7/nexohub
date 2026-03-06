@@ -372,10 +372,19 @@ export default function NoticiasPanel() {
     <div className="animate-fade-in space-y-6">
       <div className="flex items-center justify-between">
         <h3 className="text-xl font-bold" style={{ color: "#0d0446" }}>Notícias do momento</h3>
-        <button onClick={() => { loadAll(); loadCotacoes(); }} disabled={loading}
-          className="text-muted-foreground hover:text-primary transition-colors disabled:opacity-50">
-          <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setWizardOpen(true)}
+            className="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-white font-bold text-sm transition-all hover:opacity-90"
+            style={{ backgroundColor: "#2ec1f7" }}
+          >
+            <Newspaper size={14} /> Montar Jornal
+          </button>
+          <button onClick={() => { loadAll(); loadCotacoes(); }} disabled={loading}
+            className="text-muted-foreground hover:text-primary transition-colors disabled:opacity-50">
+            <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
+          </button>
+        </div>
       </div>
 
       <div className="flex gap-2">
