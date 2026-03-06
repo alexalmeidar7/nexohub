@@ -979,15 +979,6 @@ export default function PlayerPage() {
     }
   }, [canais, currentIndex, playing, playStream]);
 
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "ArrowUp") { e.preventDefault(); navigateChannel(-1); }
-      else if (e.key === "ArrowDown") { e.preventDefault(); navigateChannel(1); }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [navigateChannel]);
-
   // Fullscreen
   useEffect(() => {
     const handler = () => { if (!document.fullscreenElement) setFullscreen(false); };
@@ -995,26 +986,65 @@ export default function PlayerPage() {
     return () => document.removeEventListener("fullscreenchange", handler);
   }, []);
 
+  // Auto-fullscreen for TV browsers (Smart TV, Tizen, webOS, etc.)
+  useEffect(() => {
+    const ua = navigator.userAgent.toLowerCase();
+    const isTV = /smart-?tv|tizen|webos|netcast|hbbtv|viera|nettv|philipstv|roku|firetv|appletv|android.*tv|crkey/i.test(ua)
+      || window.matchMedia("(display-mode: fullscreen)").matches
+      || (screen.width >= 1280 && screen.height >= 720 && !("ontouchstart" in window) && window.innerWidth === screen.width);
+    if (isTV && containerRef.current && !document.fullscreenElement) {
+      containerRef.current.requestFullscreen?.().then(() => setFullscreen(true)).catch(() => {});
+    }
+  }, [loading]);
+
   const toggleFullscreen = () => {
     if (!containerRef.current) return;
     if (!fullscreen) { containerRef.current.requestFullscreen?.(); setFullscreen(true); }
     else { document.exitFullscreen?.(); setFullscreen(false); }
   };
 
-  const toggleMute = () => {
-    const newMuted = !muted;
-    setMuted(newMuted);
-    if (videoRef.current) videoRef.current.muted = newMuted;
-    if (audioRef.current) audioRef.current.muted = newMuted;
-  };
+  const toggleMute = useCallback(() => {
+    setMuted(prev => {
+      const newMuted = !prev;
+      if (videoRef.current) videoRef.current.muted = newMuted;
+      if (audioRef.current) audioRef.current.muted = newMuted;
+      return newMuted;
+    });
+  }, []);
 
-  const handleVolumeChange = (val: number) => {
+  const handleVolumeChange = useCallback((val: number) => {
     setVolume(val);
     const v = val / 100;
     if (videoRef.current) { videoRef.current.volume = v; videoRef.current.muted = false; }
     if (audioRef.current) { audioRef.current.volume = v; audioRef.current.muted = false; }
     setMuted(val === 0);
-  };
+  }, []);
+
+  // Keyboard & TV Remote Control handler
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "ArrowUp" || e.key === "ChannelUp") { e.preventDefault(); navigateChannel(-1); }
+      else if (e.key === "ArrowDown" || e.key === "ChannelDown") { e.preventDefault(); navigateChannel(1); }
+      else if (e.key === "VolumeUp" || e.key === "ArrowRight") {
+        e.preventDefault();
+        handleVolumeChange(Math.min(100, volume + 10));
+      }
+      else if (e.key === "VolumeDown" || e.key === "ArrowLeft") {
+        e.preventDefault();
+        handleVolumeChange(Math.max(0, volume - 10));
+      }
+      else if (e.key === "Enter" || e.key === "Select") {
+        e.preventDefault();
+        handlePlayCanal();
+      }
+      else if (e.key === "AudioVolumeMute") {
+        e.preventDefault();
+        toggleMute();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [navigateChannel, volume, handleVolumeChange, toggleMute, handlePlayCanal]);
 
   const handleSelectVideo = useCallback((videoId: string) => {
     setSelectedVideoId(videoId);
