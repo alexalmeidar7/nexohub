@@ -1567,6 +1567,14 @@ export default function PlayerPage() {
               title={ccEnabled ? "Desativar Closed Captions" : "Ativar Closed Captions"}>
               {ccLoading ? <Loader2 size={14} className="animate-spin" /> : ccEnabled ? <CaptionsOff size={14} /> : <Captions size={14} />} CC
             </button>
+            {/* Karaoke toggle — only for audio channels with music */}
+            {(isAudio || isVideo) && musicData?.titulo && musicData.titulo !== "Sem título" && (
+              <button onClick={() => setKaraokeEnabled(!karaokeEnabled)}
+                className={`px-3 py-1.5 rounded text-[11px] font-bold transition-all flex items-center gap-1 border ${karaokeEnabled ? "bg-[#a10a0b] text-white border-[#a10a0b] shadow-[0_0_8px_rgba(161,10,11,0.5)]" : "bg-white/10 text-white/60 border-white/20 hover:bg-white/20 hover:text-white"}`}
+                title={karaokeEnabled ? "Desativar Karaoke" : "Ativar Karaoke"}>
+                <MicVocal size={14} /> Karaoke
+              </button>
+            )}
             {/* Quality Selector — only for HLS video streams */}
             {isVideo && hlsLevels.length > 1 && (
               <div className="relative">
