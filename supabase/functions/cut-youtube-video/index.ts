@@ -12,7 +12,6 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Auth check
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -66,50 +65,21 @@ Deno.serve(async (req) => {
 
     const videoId = match[1];
 
-    // Use cobalt API to download the specific segment
-    // cobalt.tools is a free, open-source media downloader
-    const cobaltResponse = await fetch("https://api.cobalt.tools/", {
-      method: "POST",
-      headers: {
-        "Accept": "application/json",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        url: youtube_url,
-        downloadMode: "auto",
-        filenameStyle: "basic",
-      }),
-    });
+    // Generate clip URL and embed URL with start/end parameters
+    const clipUrl = `https://www.youtube.com/embed/${videoId}?start=${start_seconds}&end=${end_seconds}&autoplay=1`;
+    const shareUrl = `https://youtu.be/${videoId}?t=${start_seconds}`;
+    const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
 
-    if (!cobaltResponse.ok) {
-      const errText = await cobaltResponse.text();
-      console.error("Cobalt error:", errText);
-      return new Response(
-        JSON.stringify({ error: "Não foi possível processar o vídeo. Tente novamente." }),
-        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const cobaltData = await cobaltResponse.json();
-
-    if (!cobaltData.url) {
-      return new Response(
-        JSON.stringify({ error: "Não foi possível obter o link de download do vídeo." }),
-        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // Note: Full video trimming requires ffmpeg which isn't available in edge functions.
-    // We return the full video download URL. For actual trimming, a dedicated server would be needed.
-    // The download link from cobalt is temporary by nature.
     return new Response(
       JSON.stringify({
-        download_url: cobaltData.url,
+        success: true,
         video_id: videoId,
+        clip_embed_url: clipUrl,
+        share_url: shareUrl,
+        thumbnail_url: thumbnailUrl,
         start_seconds,
         end_seconds,
         duration,
-        note: "O vídeo completo está disponível para download. O corte preciso requer processamento adicional.",
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
