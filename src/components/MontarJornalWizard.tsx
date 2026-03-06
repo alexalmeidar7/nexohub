@@ -159,7 +159,7 @@ export default function MontarJornalWizard({ open, onOpenChange, programas, onFi
             <div className="space-y-3">
               <label className="text-sm font-semibold" style={{ color: "#0d0446" }}>Nome do Programa</label>
               <Select value={programaId} onValueChange={setProgramaId}>
-                <SelectTrigger style={{ borderColor: "#2ec1f7" }}>
+                <SelectTrigger style={{ borderColor: "#2ec1f7", borderRadius: "9999px", backgroundColor: "#2ec1f7", color: "#ffffff" }}>
                   <SelectValue placeholder="Selecione um programa" />
                 </SelectTrigger>
                 <SelectContent>
