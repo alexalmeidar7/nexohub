@@ -157,12 +157,12 @@ export default function ConfiguracoesPage() {
   const handleImageUpload = (field: "logo_url" | "cover_url") => {
     const input = document.createElement("input");
     input.type = "file"; input.accept = "image/*";
-    input.onchange = (e) => {
+    input.onchange = async (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (!file) return;
-      const reader = new FileReader();
-      reader.onload = (ev) => setCanalForm(prev => ({ ...prev, [field]: ev.target?.result as string }));
-      reader.readAsDataURL(file);
+      toast.info("Enviando imagem...");
+      const url = await uploadToStorage(file, `canal-${field}`);
+      if (url) setCanalForm(prev => ({ ...prev, [field]: url }));
     };
     input.click();
   };
