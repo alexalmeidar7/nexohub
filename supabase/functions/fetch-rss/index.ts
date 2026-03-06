@@ -36,12 +36,10 @@ Deno.serve(async (req) => {
     const charset = charsetMatch ? charsetMatch[1].toLowerCase() : "";
 
     if (charset && charset !== "utf-8" && charset !== "utf8") {
-      // For non-UTF-8 charsets (like ISO-8859-1, Windows-1252), decode properly
       const buffer = await response.arrayBuffer();
-      const decoder = new TextDecoder(charset || "utf-8", { fatal: false });
+      const decoder = new TextDecoder(charset, { fatal: false });
       text = decoder.decode(buffer);
     } else {
-      // Try UTF-8 first
       const buffer = await response.arrayBuffer();
       // Check XML declaration for encoding
       const tempText = new TextDecoder("utf-8", { fatal: false }).decode(buffer);
@@ -52,7 +50,15 @@ Deno.serve(async (req) => {
         const decoder = new TextDecoder(xmlEncoding, { fatal: false });
         text = decoder.decode(buffer);
       } else {
-        text = tempText;
+        // Check for mojibake: common pattern when Latin-1 is decoded as UTF-8
+        // e.g. "Ã£" instead of "ã", "Ã§" instead of "ç"
+        const hasMojibake = /Ã[£¡¢¤¥©§«®°±²³´µ¶¹º»¼½¾¿]|Ã\u0083|Ã\u0082/.test(tempText);
+        if (hasMojibake) {
+          const decoder = new TextDecoder("iso-8859-1", { fatal: false });
+          text = decoder.decode(buffer);
+        } else {
+          text = tempText;
+        }
       }
     }
 
