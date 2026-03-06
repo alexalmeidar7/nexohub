@@ -115,7 +115,7 @@ function AdminPlansContent() {
       imageUrl = urlData.publicUrl;
     }
 
-    const payload = { name: name.trim(), enabled_modules: enabledModules, image_url: imageUrl };
+    const payload = { name: name.trim(), enabled_modules: enabledModules, image_url: imageUrl, price: parseFloat(price) || 0 };
 
     if (editingPlan) {
       const { error } = await supabase.from("planos").update(payload).eq("id", editingPlan.id);
