@@ -19,6 +19,7 @@ export type Database = {
           created_at: string
           id: string
           is_broadcast: boolean
+          is_read: boolean
           message: string
           recipient_id: string | null
           sender_id: string
@@ -28,6 +29,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_broadcast?: boolean
+          is_read?: boolean
           message?: string
           recipient_id?: string | null
           sender_id: string
@@ -37,6 +39,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_broadcast?: boolean
+          is_read?: boolean
           message?: string
           recipient_id?: string | null
           sender_id?: string
