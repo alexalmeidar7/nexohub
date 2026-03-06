@@ -71,6 +71,17 @@ export default function MessageNotification() {
       .eq("id", msgId)
       .then(() => {
         setMessages((prev) => prev.map((m) => m.id === msgId ? { ...m, is_read: true } : m));
+        setOpenMsgId(null);
+      });
+  };
+
+  const deleteMessage = (msgId: string) => {
+    supabase
+      .from("admin_messages")
+      .delete()
+      .eq("id", msgId)
+      .then(() => {
+        setMessages((prev) => prev.filter((m) => m.id !== msgId));
       });
   };
 
