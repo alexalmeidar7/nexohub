@@ -246,6 +246,7 @@ export default function NoticiasPanel() {
   const [loadingAvulsa, setLoadingAvulsa] = useState(false);
   const [collapsedBoxes, setCollapsedBoxes] = useState<Record<string, boolean>>({});
   const [readingPopup, setReadingPopup] = useState<NewsItem | null>(null);
+  const [loadingReading, setLoadingReading] = useState(false);
   const [blocoEconomia, setBlocoEconomia] = useState<CotacaoItem[]>([]);
 
   const toggleBox = (key: string) => setCollapsedBoxes(prev => ({ ...prev, [key]: !prev[key] }));
