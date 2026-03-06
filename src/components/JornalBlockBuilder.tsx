@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { X, GripVertical, Clock, Trash2, Newspaper } from "lucide-react";
-import type { JornalConfig } from "./MontarJornalWizard";
+import type { JornalConfig } from "./MontarJornalInline";
 
 interface NewsItem {
   portal: string;
