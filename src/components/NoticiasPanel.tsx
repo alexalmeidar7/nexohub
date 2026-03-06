@@ -489,12 +489,21 @@ export default function NoticiasPanel() {
                   return (
                     <AccordionItem key={portal.name} value={portal.name} className="border-b-0" style={{ borderBottom: "1px solid rgba(13,4,70,0.06)" }}>
                       <AccordionTrigger className="px-3 py-2 text-xs font-bold hover:no-underline" style={{ color: "#0d0446" }}>
-                        <span className="flex items-center gap-2">
+                        <span className="flex items-center gap-2 flex-1">
                           <Newspaper size={12} style={{ color: "#2ec1f7" }} />
                           {portal.name}
                           <span className="text-[9px] font-normal px-1.5 rounded-full" style={{ backgroundColor: "rgba(46,193,247,0.1)", color: "#2ec1f7" }}>
                             {news.length}
                           </span>
+                          {customSites.some(s => s.name === portal.name) && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); removeCustomSite(portal.name); }}
+                              className="ml-auto p-0.5 rounded hover:bg-red-50 transition-colors"
+                              title="Remover site"
+                            >
+                              <Trash2 size={11} className="text-red-400 hover:text-red-600" />
+                            </button>
+                          )}
                         </span>
                       </AccordionTrigger>
                       <AccordionContent className="pb-0">
@@ -510,13 +519,16 @@ export default function NoticiasPanel() {
                             >
                               <GripVertical size={10} className="shrink-0 opacity-20" />
                               <span className="flex-1 line-clamp-1" style={{ color: "#0d0446" }}>{item.title}</span>
-                              <button
-                                onClick={() => addToSelected(portal.name, item)}
-                                className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-blue-50"
-                                title="Adicionar ao jornal"
+                              <a
+                                href={item.link}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                className="shrink-0 p-0.5 rounded hover:bg-blue-50 transition-opacity"
+                                title="Ler notícia"
                               >
-                                <Plus size={12} style={{ color: "#2ec1f7" }} />
-                              </button>
+                                <BookOpen size={12} style={{ color: "#2ec1f7" }} />
+                              </a>
                               {item.thumbnail && (
                                 <div
                                   className="shrink-0 relative"
