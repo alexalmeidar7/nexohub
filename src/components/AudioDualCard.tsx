@@ -41,14 +41,16 @@ export default function AudioDualCard({
         <div className="absolute inset-0" style={{ backgroundColor: "hsl(0 0% 0%)" }} />
       )}
       {/* Wrapper with relative positioning so presenter sits behind music card */}
-      <div className="relative w-[90vw] max-w-[800px]" style={{ minHeight: "420px" }}>
+      <div className="relative w-[90vw] max-w-[800px] flex items-center justify-center" style={{ minHeight: "420px" }}>
 
-        {/* Left — Presenter (slides out from behind the music card) */}
+        {/* Left — Presenter (hidden behind cover, slides left at 3s) */}
         <div
-          className="absolute left-0 top-0 bottom-0 md:w-[50%] w-full rounded-3xl overflow-hidden shadow-xl"
+          className="absolute top-0 bottom-0 md:w-[50%] w-full rounded-3xl overflow-hidden shadow-xl"
           style={{
-            animation: "slideOutFromBehind 1.6s cubic-bezier(0.22, 1, 0.36, 1) 1.2s forwards",
+            animation: "presenterReveal 1.6s cubic-bezier(0.22, 1, 0.36, 1) 3s forwards",
             opacity: 0,
+            left: "50%",
+            transform: "translateX(-50%)",
             backgroundColor: "hsl(0 60% 22%)",
             backgroundImage: presenterPhoto ? `url(${presenterPhoto})` : undefined,
             backgroundSize: "cover",
@@ -84,14 +86,14 @@ export default function AudioDualCard({
           </div>
         </div>
 
-        {/* Right — Music card (sits in front, narrower) */}
+        {/* Music card: fade-in center → wait 2s → slide right */}
         <div
-          className="relative md:ml-auto ml-0 md:mt-0 mt-[260px] md:w-[55%] w-full rounded-3xl overflow-hidden shadow-2xl"
+          className="relative md:w-[55%] w-full rounded-3xl overflow-hidden shadow-2xl"
           style={{
             backgroundColor: "hsl(0 0% 5%)",
             minHeight: "420px",
             zIndex: 2,
-            animation: "coverSlideIn 1s cubic-bezier(0.22, 1, 0.36, 1) forwards",
+            animation: "coverFadeAndSlide 3.5s cubic-bezier(0.22, 1, 0.36, 1) forwards",
             opacity: 0,
           }}
         >
