@@ -342,18 +342,47 @@ export default function NoticiasPanel() {
     const url = noticiaAvulsaUrl.trim();
     setLoadingAvulsa(true);
     try {
-      // Try to fetch the page title via proxy
       let title = url;
+      let thumbnail = "";
+      let body = "";
       try {
-        const res = await fetch(`${PROXY}${encodeURIComponent(url)}`, { signal: AbortSignal.timeout(8000) });
-        const html = await res.text();
+        // Use edge function for reliable server-side fetch
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+        let html = "";
+        if (supabaseUrl && supabaseKey) {
+          const res = await fetch(`${supabaseUrl}/functions/v1/fetch-rss`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Authorization": `Bearer ${supabaseKey}` },
+            body: JSON.stringify({ url }),
+            signal: AbortSignal.timeout(15000),
+          });
+          const data = await res.json();
+          if (data.content) html = data.content;
+        }
+        if (!html) {
+          const res = await fetch(`${PROXY}${encodeURIComponent(url)}`, { signal: AbortSignal.timeout(8000) });
+          html = await res.text();
+        }
         const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
         if (titleMatch) title = decodeHtmlEntities(titleMatch[1].trim());
-        // Try og:image
-        let thumbnail = "";
         const ogImageMatch = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i);
         if (ogImageMatch) thumbnail = ogImageMatch[1];
-        setNoticiasAvulsas(prev => [...prev, { title, link: url, thumbnail }]);
+        // Extract article body from <article> or og:description or <p> tags
+        const ogDescMatch = html.match(/<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']+)["']/i);
+        const articleMatch = html.match(/<article[^>]*>([\s\S]*?)<\/article>/i);
+        if (articleMatch) {
+          body = articleMatch[1].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 2000);
+        } else if (ogDescMatch) {
+          body = decodeHtmlEntities(ogDescMatch[1]);
+        } else {
+          // Fallback: extract text from <p> tags
+          const pMatches = html.match(/<p[^>]*>([^<]{40,})<\/p>/gi);
+          if (pMatches) {
+            body = pMatches.slice(0, 5).map(p => p.replace(/<[^>]+>/g, "").trim()).join("\n\n").slice(0, 2000);
+          }
+        }
+        setNoticiasAvulsas(prev => [...prev, { title, link: url, thumbnail, body }]);
       } catch {
         setNoticiasAvulsas(prev => [...prev, { title, link: url }]);
       }
