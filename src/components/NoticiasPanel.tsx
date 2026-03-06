@@ -486,7 +486,6 @@ export default function NoticiasPanel() {
               <Accordion type="multiple" className="w-full">
                 {orderedPortals.map(portal => {
                   const news = newsByPortal[portal.name] || [];
-                  if (news.length === 0) return null;
                   return (
                     <AccordionItem key={portal.name} value={portal.name} className="border-b-0" style={{ borderBottom: "1px solid rgba(13,4,70,0.06)" }}>
                       <AccordionTrigger className="px-3 py-2 text-xs font-bold hover:no-underline" style={{ color: "#0d0446" }}>
@@ -541,7 +540,7 @@ export default function NoticiasPanel() {
 
         {/* RIGHT COLUMN - Wizard or Jornal Builder */}
         {(wizardOpen || jornalConfig) && (
-          <div className="flex-1">
+          <div className="flex-1" style={{ position: "sticky", top: "0", alignSelf: "flex-start" }}>
             {wizardOpen && !jornalConfig && (
               <MontarJornalInline
                 programas={programas}
