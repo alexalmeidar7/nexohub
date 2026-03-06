@@ -54,8 +54,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     // Then get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
       if (!session) {
+        // Clear any stale tokens from storage
+        if (error) {
+          supabase.auth.signOut();
+        }
         setLoading(false);
       }
     });

@@ -35,31 +35,20 @@ Deno.serve(async (req) => {
       global: { headers: { Authorization: authHeader } },
     });
 
-    let callerId: string | null = null;
+    // Validate caller using the user-context client (Authorization header already set)
+    const { data: { user: callerUser }, error: userError } = await callerClient.auth.getUser();
 
-    // Primary validation path
-    const { data: userData, error: userError } = await callerClient.auth.getUser(token);
-    if (userData?.user?.id) {
-      callerId = userData.user.id;
-    } else {
-      // Fallback for signing-key edge cases
-      const { data: claimsData, error: claimsError } = await callerClient.auth.getClaims(token);
-      callerId = (claimsData?.claims?.sub as string | undefined) ?? null;
-
-      if (!callerId) {
-        console.error("create-user auth failed", {
-          userError: userError?.message,
-          claimsError: claimsError?.message,
-        });
-      }
-    }
-
-    if (!callerId) {
+    if (userError || !callerUser?.id) {
+      console.error("create-user auth failed", { error: userError?.message });
       return new Response(JSON.stringify({ error: "Não autorizado" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    const callerId = callerUser.id;
+
+    // Check admin role
 
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
     const { data: roles } = await adminClient
