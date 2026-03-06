@@ -735,36 +735,30 @@ export default function PlayerPage() {
             capLevelToPlayerSize: false,
             startLevel: -1,
             autoStartLoad: true,
-            // Larger buffers to prevent stalls
-            maxBufferLength: 60,
-            maxMaxBufferLength: 120,
-            maxBufferSize: 120 * 1000 * 1000,
+            // Moderate buffer — too large causes bufferAppendError
+            maxBufferLength: 20,
+            maxMaxBufferLength: 40,
+            maxBufferSize: 30 * 1000 * 1000,
             maxBufferHole: 0.5,
-            // Aggressive ABR for stable playback
-            abrEwmaDefaultEstimate: 5000000,
+            // ABR tuning
+            abrEwmaDefaultEstimate: 3000000,
             abrBandWidthUpFactor: 0.7,
             abrBandWidthFactor: 0.95,
-            // Fragment loading tuning
-            fragLoadingMaxRetry: 6,
-            fragLoadingMaxRetryTimeout: 16000,
+            // Fragment loading retry
+            fragLoadingMaxRetry: 4,
+            fragLoadingMaxRetryTimeout: 8000,
             fragLoadingRetryDelay: 1000,
-            manifestLoadingMaxRetry: 4,
-            manifestLoadingRetryDelay: 1000,
-            levelLoadingMaxRetry: 4,
-            levelLoadingRetryDelay: 1000,
-            // Nudge stalls forward automatically
-            nudgeMaxRetry: 10,
-            nudgeOffset: 0.2,
-            maxStarvationDelay: 4,
-            maxLoadingDelay: 4,
-            // Back buffer to save memory
-            backBufferLength: 30,
+            manifestLoadingMaxRetry: 3,
+            levelLoadingMaxRetry: 3,
+            // Back buffer cleanup
+            backBufferLength: 15,
+            // Append error retry
+            appendErrorMaxRetry: 5,
           });
           hlsRef.current = hls;
           hls.loadSource(freshUrl);
           hls.attachMedia(video);
           hls.on(Hls.Events.MANIFEST_PARSED, (_e, data) => {
-            // Populate quality levels for selector
             if (data.levels && data.levels.length > 0) {
               const levels = data.levels.map((l: any, i: number) => ({
                 height: l.height || 0,
@@ -781,23 +775,29 @@ export default function PlayerPage() {
             video.play().then(() => setBuffering(false)).catch(() => {});
           });
           hls.on(Hls.Events.FRAG_BUFFERED, () => setBuffering(false));
+          let mediaErrorRecoveries = 0;
           hls.on(Hls.Events.ERROR, (_event, data) => {
             if (data.fatal) {
-              console.warn("HLS fatal error on video:", data.type, data.details);
+              console.warn("HLS fatal error:", data.type, data.details);
               if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
                 hls.startLoad();
               } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
-                hls.recoverMediaError();
+                mediaErrorRecoveries++;
+                if (mediaErrorRecoveries <= 2) {
+                  hls.recoverMediaError();
+                } else {
+                  // Too many media errors — full restart
+                  console.warn("Too many media errors, restarting HLS");
+                  hls.destroy();
+                  hlsRef.current = null;
+                  setTimeout(() => {
+                    if (canal) playStream(canal.url, canal.type);
+                  }, 2000);
+                }
               } else {
                 hls.destroy();
                 hlsRef.current = null;
                 setStreamStalled(true);
-              }
-            } else if (data.details === "bufferStalledError") {
-              // Non-fatal stall — nudge playback
-              console.warn("HLS buffer stalled, nudging...");
-              if (video.currentTime > 0) {
-                video.currentTime += 0.1;
               }
             }
           });
@@ -954,10 +954,12 @@ export default function PlayerPage() {
     setCurrentIndex(next);
     const c = canais[next];
     if (!c) return;
-    // Stop any playing audio/video when switching channels
+    // Stop any playing audio/video when switching channels — full cleanup
     if (hlsRef.current) { hlsRef.current.destroy(); hlsRef.current = null; }
-    if (audioRef.current) { audioRef.current.pause(); audioRef.current.src = ""; }
-    if (videoRef.current) { videoRef.current.pause(); videoRef.current.src = ""; }
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current.removeAttribute("src"); audioRef.current.load(); }
+    if (videoRef.current) { videoRef.current.pause(); videoRef.current.removeAttribute("src"); videoRef.current.load(); }
+    setHlsLevels([]);
+    setHlsCurrentLevel(-1);
     if (c.type === "youtube") {
       setPlaying(true);
       setBuffering(false);
