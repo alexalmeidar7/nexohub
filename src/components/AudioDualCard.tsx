@@ -98,8 +98,9 @@ export default function AudioDualCard({
                 style={{ backgroundColor: "hsla(0, 0%, 100%, 0.2)" }}
               >
                 <Plus size={18} className="text-white" />
-              </button>
+            </button>
             </div>
+          </div>
         </div>
 
         {/* Music card: fade-in center → wait 2s → slide right */}
