@@ -318,6 +318,9 @@ export default function PlayerPage() {
   const [hlsCurrentLevel, setHlsCurrentLevel] = useState(-1); // -1 = auto
   const [qualityMenuOpen, setQualityMenuOpen] = useState(false);
 
+  // Karaoke state
+  const [karaokeEnabled, setKaraokeEnabled] = useState(false);
+
   // SpeechRecognition-based CC: transcribes audio in real-time
   const startCCRecognition = useCallback(() => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
