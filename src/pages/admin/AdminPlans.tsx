@@ -33,6 +33,7 @@ function AdminPlansContent() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingPlan, setEditingPlan] = useState<Plan | null>(null);
   const [name, setName] = useState("");
+  const [price, setPrice] = useState("");
   const [enabledModules, setEnabledModules] = useState<string[]>([]);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState("");
