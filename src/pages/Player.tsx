@@ -31,6 +31,7 @@ const AudioSpectrum = lazy(() => import("@/components/AudioSpectrum"));
 const PlayerGradeDialog = lazy(() => import("@/components/player/PlayerGradeDialog"));
 import PlayerShopProduct from "@/components/player/PlayerShopProduct";
 import PreRollOverlay from "@/components/PreRollOverlay";
+import PlayerSkeleton from "@/components/skeletons/PlayerSkeleton";
 
 // Dynamic HLS loader — cached after first import
 let hlsModule: typeof import("hls.js") | null = null;
@@ -1092,12 +1093,7 @@ export default function PlayerPage() {
   // Shopping popup is manual-only via icon click
 
   if (loading) {
-    return (
-      <div className="h-screen w-screen bg-black flex flex-col items-center justify-center gap-4">
-        <Loader2 className="animate-spin" size={48} style={{ color: "#d30707" }} />
-        <p className="text-white/60 text-sm animate-pulse">{loadingStatus}</p>
-      </div>
-    );
+    return <PlayerSkeleton status={loadingStatus} />;
   }
 
   return (

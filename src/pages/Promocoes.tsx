@@ -5,6 +5,7 @@ import { getEmpresaConfig, type EmpresaConfig } from "@/components/Configuracoes
 import { findCurrentProgram } from "@/components/OnAirWidget";
 import { ChevronLeft, ChevronRight, Clock, Radio, Globe, Instagram, Youtube, Phone, MessageCircle, Play, Pause, Facebook, X, Maximize, Minimize, Calendar } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import PromoSkeleton from "@/components/skeletons/PromoSkeleton";
 import { getApresentadores } from "@/components/ApresentadorForm";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Slider } from "@/components/ui/slider";
@@ -61,6 +62,7 @@ function renderBoldMarkdown(text: string) {
 export default function PromocoesKiosk() {
   const { userSlug } = useParams<{ userSlug?: string }>();
   const isPublicMode = !!userSlug;
+  const [loading, setLoading] = useState(true);
   const [promocoes, setPromocoes] = useState<Promocao[]>([]);
   const [config, setConfig] = useState<EmpresaConfig>({} as EmpresaConfig);
   const [programas, setProgramas] = useState<ProgramaGrade[]>([]);
@@ -188,7 +190,7 @@ export default function PromocoesKiosk() {
     };
 
     const load = isPublicMode ? loadPublic : loadAuth;
-    load();
+    load().finally(() => setLoading(false));
     const interval = setInterval(load, 30000);
     return () => clearInterval(interval);
   }, [isPublicMode, userSlug]);
@@ -454,6 +456,10 @@ export default function PromocoesKiosk() {
       </div>
     </div>
   );
+
+  if (loading) {
+    return <PromoSkeleton />;
+  }
 
   return (
     <div className="text-white min-h-screen p-8 flex flex-col items-center" style={{ background: "url('/images/kiosk-bg.png') center center / cover no-repeat fixed", backgroundColor: "#000" }}>

@@ -35,7 +35,7 @@ const MusicasCurtidasPage = lazy(() => import("./MusicasCurtidasPage"));
 const ShoppingPage = lazy(() => import("./ShoppingPage"));
 const PreRollPage = lazy(() => import("./PreRollPage"));
 const MessageNotification = lazy(() => import("./MessageNotification"));
-
+import DashboardSkeleton from "./skeletons/DashboardSkeleton";
 type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll";
 
 // Sidebar structured menu
@@ -97,21 +97,25 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set());
   const [empresa, setEmpresa] = useState<import("./ConfiguracoesPage").EmpresaConfig>({} as any);
   const [enabledModules, setEnabledModules] = useState<Set<string> | null>(null);
+  const [initialLoading, setInitialLoading] = useState(true);
 
   useEffect(() => {
     if (!user) return;
-    supabase
-      .from("client_modules")
-      .select("module_key, enabled")
-      .eq("user_id", user.id)
-      .then(({ data }) => {
-        if (data && data.length > 0) {
-          const enabled = new Set(data.filter((m: any) => m.enabled).map((m: any) => m.module_key));
-          setEnabledModules(enabled);
-        } else {
-          setEnabledModules(null);
-        }
-      });
+    Promise.all([
+      supabase
+        .from("client_modules")
+        .select("module_key, enabled")
+        .eq("user_id", user.id)
+        .then(({ data }) => {
+          if (data && data.length > 0) {
+            const enabled = new Set(data.filter((m: any) => m.enabled).map((m: any) => m.module_key));
+            setEnabledModules(enabled);
+          } else {
+            setEnabledModules(null);
+          }
+        }),
+      getEmpresaConfig().then(setEmpresa),
+    ]).finally(() => setInitialLoading(false));
   }, [user]);
 
   const isModuleEnabled = (page: Page): boolean => {
@@ -128,10 +132,6 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       setCurrentPage("dashboard");
     }
   }, [currentPage, enabledModules]);
-
-  useEffect(() => {
-    getEmpresaConfig().then(setEmpresa);
-  }, []);
 
   useGlobalMusicXmlUpload();
   useGlobalMusicSync();
@@ -171,6 +171,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       }
     });
   }, [currentPage]);
+
+  if (initialLoading) {
+    return <DashboardSkeleton />;
+  }
 
   return (
     <div className="h-screen flex flex-col animate-fade-in overflow-hidden" style={{
