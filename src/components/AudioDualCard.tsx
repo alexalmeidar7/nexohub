@@ -8,6 +8,7 @@ interface AudioDualCardProps {
   musicArtist?: string | null;
   musicCover?: string | null;
   channelLogo?: string | null;
+  channelThumb?: string | null;
   liked?: boolean;
   onToggleLike?: () => void;
 }
