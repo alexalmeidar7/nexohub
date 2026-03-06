@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import MontarJornalInline, { type JornalConfig } from "./MontarJornalInline";
 import JornalBlockBuilder from "./JornalBlockBuilder";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface NewsItem {
   title: string;
@@ -475,6 +476,7 @@ export default function NoticiasPanel() {
   };
 
   return (
+    <TooltipProvider delayDuration={300}>
     <div className="animate-fade-in space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -681,7 +683,14 @@ export default function NoticiasPanel() {
                                 className="flex items-center gap-2 px-3 py-1.5 text-[11px] hover:bg-gray-50 cursor-grab active:cursor-grabbing group"
                               >
                                 <GripVertical size={10} className="shrink-0 opacity-20" />
-                                <span className="flex-1 line-clamp-1" style={{ color: "#0d0446" }}>{item.title}</span>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <span className="flex-1 line-clamp-1 cursor-default" style={{ color: "#0d0446" }}>{item.title}</span>
+                                  </TooltipTrigger>
+                                  <TooltipContent style={{ backgroundColor: "#2ec1f7", color: "#0d0446", maxWidth: 350 }} className="text-xs font-medium">
+                                    {item.title}
+                                  </TooltipContent>
+                                </Tooltip>
                                 <a href={item.link} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}
                                   className="shrink-0 p-0.5 rounded hover:bg-blue-50 transition-opacity" title="Ler notícia">
                                   <BookOpen size={12} style={{ color: "#2ec1f7" }} />
@@ -747,7 +756,14 @@ export default function NoticiasPanel() {
                                   className="flex items-center gap-2 px-3 py-1.5 text-[11px] hover:bg-gray-50 cursor-grab active:cursor-grabbing group"
                                 >
                                   <GripVertical size={10} className="shrink-0 opacity-20" />
-                                  <span className="flex-1 line-clamp-1" style={{ color: "#0d0446" }}>{item.title}</span>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <span className="flex-1 line-clamp-1 cursor-default" style={{ color: "#0d0446" }}>{item.title}</span>
+                                    </TooltipTrigger>
+                                    <TooltipContent style={{ backgroundColor: "#2ec1f7", color: "#0d0446", maxWidth: 350 }} className="text-xs font-medium">
+                                      {item.title}
+                                    </TooltipContent>
+                                  </Tooltip>
                                   <a href={item.link} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}
                                     className="shrink-0 p-0.5 rounded hover:bg-blue-50 transition-opacity" title="Ler notícia">
                                     <BookOpen size={12} style={{ color: "#2ec1f7" }} />
@@ -789,7 +805,14 @@ export default function NoticiasPanel() {
                       className="flex items-center gap-2 px-3 py-1.5 text-[11px] hover:bg-gray-50 cursor-grab active:cursor-grabbing group"
                     >
                       <GripVertical size={10} className="shrink-0 opacity-20" />
-                      <span className="flex-1 line-clamp-1" style={{ color: "#0d0446" }}>{item.title}</span>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="flex-1 line-clamp-1 cursor-default" style={{ color: "#0d0446" }}>{item.title}</span>
+                        </TooltipTrigger>
+                        <TooltipContent style={{ backgroundColor: "#2ec1f7", color: "#0d0446", maxWidth: 350 }} className="text-xs font-medium">
+                          {item.title}
+                        </TooltipContent>
+                      </Tooltip>
                       <button onClick={(e) => { e.stopPropagation(); setReadingPopup(item); }}
                         className="shrink-0 p-0.5 rounded hover:bg-blue-50 transition-opacity" title="Ler notícia">
                         <BookOpen size={12} style={{ color: "#2ec1f7" }} />
@@ -918,5 +941,6 @@ export default function NoticiasPanel() {
       )}
 
     </div>
+    </TooltipProvider>
   );
 }
