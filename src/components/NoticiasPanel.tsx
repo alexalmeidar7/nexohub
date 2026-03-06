@@ -281,7 +281,7 @@ export default function NoticiasPanel() {
       loadAll();
     }
     customSitesCountRef.current = customSites.length;
-  }, [customSites.length]);
+  }, [customSites.length, loadAll]);
 
   useEffect(() => { loadCotacoes(); const interval = setInterval(loadCotacoes, 60 * 1000); return () => clearInterval(interval); }, []);
 
