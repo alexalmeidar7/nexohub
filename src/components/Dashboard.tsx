@@ -71,6 +71,17 @@ const sidebarMenu: MenuItem[] = [
   },
 ];
 
+// Map menu items to module keys for plan filtering
+const menuToModuleKey: Record<string, string> = {
+  "cadastros": "cadastros",
+  "previsão do tempo": "previsao",
+  "notícias": "noticias",
+  "música no ar": "musica",
+  "agenda": "agenda",
+  "player": "player",
+  "comercial": "comercial",
+};
+
 const pageTitle: Record<Page, string> = {
   dashboard: "Home",
   previsao: "Previsão do Tempo",
