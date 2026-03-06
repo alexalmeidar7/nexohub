@@ -457,6 +457,10 @@ export default function PromocoesKiosk() {
     </div>
   );
 
+  if (loading) {
+    return <PromoSkeleton />;
+  }
+
   return (
     <div className="text-white min-h-screen p-8 flex flex-col items-center" style={{ background: "url('/images/kiosk-bg.png') center center / cover no-repeat fixed", backgroundColor: "#000" }}>
       <style>{`
