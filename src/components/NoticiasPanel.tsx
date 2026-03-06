@@ -818,10 +818,10 @@ export default function NoticiasPanel() {
                                       {item.title}
                                     </TooltipContent>
                                   </Tooltip>
-                                  <a href={item.link} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}
+                                  <button onClick={(e) => { e.stopPropagation(); openReadingPopup(item); }}
                                     className="shrink-0 p-0.5 rounded hover:bg-blue-50 transition-opacity" title="Ler notícia">
                                     <BookOpen size={12} style={{ color: "#2ec1f7" }} />
-                                  </a>
+                                  </button>
                                   {item.thumbnail && (
                                     <div className="shrink-0 relative"
                                       onMouseEnter={(e) => handleImageHover(e, item.thumbnail || "")}
