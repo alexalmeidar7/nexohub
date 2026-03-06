@@ -1362,7 +1362,7 @@ export default function PlayerPage() {
                   const num = canal?.numero_canal || "--";
                   const dashIdx = num.indexOf("-");
                   if (dashIdx < 0) return num;
-                  return <>{num.slice(0, dashIdx)}<sub className="text-[9px]" style={{ color: "#e60000" }}>{num.slice(dashIdx)}</sub></>;
+                  return <>{num.slice(0, dashIdx)} <sup className="text-[9px]" style={{ color: "#e60000" }}>{num.slice(dashIdx + 1)}</sup></>;
                 })()}
               </div>
               <button onClick={() => navigateChannel(1)} className="text-white/60 hover:text-white hover:bg-[#e60000] rounded px-2 py-2 transition-all" title="Próximo canal"><ChevronDown size={16} /></button>
