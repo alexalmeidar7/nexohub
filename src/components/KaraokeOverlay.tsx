@@ -1,6 +1,8 @@
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Mic } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+
+const MUSIC_START_KEY = "masterview_music_start";
 
 interface LrcLine {
   time: number; // seconds
@@ -12,6 +14,7 @@ interface KaraokeOverlayProps {
   title: string | null | undefined;
   audioElement: HTMLAudioElement | null | undefined;
   visible: boolean;
+  duration?: number;
 }
 
 function parseLrc(lrc: string): LrcLine[] {
@@ -30,10 +33,10 @@ function parseLrc(lrc: string): LrcLine[] {
   return lines;
 }
 
-export default function KaraokeOverlay({ artist, title, audioElement, visible }: KaraokeOverlayProps) {
+export default function KaraokeOverlay({ artist, title, audioElement, visible, duration }: KaraokeOverlayProps) {
   const [lines, setLines] = useState<LrcLine[]>([]);
   const [currentLineIdx, setCurrentLineIdx] = useState(-1);
-  const [progress, setProgress] = useState(0); // 0-1 progress within current line
+  const [progress, setProgress] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
   const animRef = useRef<number>(0);
@@ -50,7 +53,7 @@ export default function KaraokeOverlay({ artist, title, audioElement, visible }:
     setLoading(true);
 
     supabase.functions.invoke("fetch-lyrics", {
-      body: { artist, title },
+      body: { artist, title, duration: duration ? Math.round(duration) : undefined },
     }).then(({ data, error: err }) => {
       setLoading(false);
       if (err || !data?.success || !data?.syncedLyrics) {
@@ -64,64 +67,40 @@ export default function KaraokeOverlay({ artist, title, audioElement, visible }:
       }
       setLines(parsed);
     });
-  }, [artist, title]);
+  }, [artist, title, duration]);
 
-  // Sync with audio using SpeechRecognition-like approach:
-  // We use the audio element's currentTime to track position
-  // Since it's a live stream, we track elapsed time from when lyrics were loaded
-  const startTimeRef = useRef<number>(0);
-  const [elapsed, setElapsed] = useState(0);
-
-  // Reset elapsed when lines change
-  useEffect(() => {
-    startTimeRef.current = Date.now();
-    setElapsed(0);
-  }, [lines]);
-
-  // Animation loop to track elapsed time (for live streams without currentTime)
+  // Animation loop: read elapsed from MUSIC_START_KEY (real song start time)
   useEffect(() => {
     if (!visible || lines.length === 0) return;
 
     const tick = () => {
-      const now = Date.now();
-      const el = (now - startTimeRef.current) / 1000;
-      setElapsed(el);
+      const startStr = localStorage.getItem(MUSIC_START_KEY);
+      if (startStr) {
+        const elapsed = (Date.now() - parseInt(startStr, 10)) / 1000;
+        
+        // Find current line
+        let idx = -1;
+        for (let i = lines.length - 1; i >= 0; i--) {
+          if (elapsed >= lines[i].time) {
+            idx = i;
+            break;
+          }
+        }
+        setCurrentLineIdx(idx);
+
+        // Progress within current line
+        if (idx >= 0) {
+          const lineStart = lines[idx].time;
+          const lineEnd = idx + 1 < lines.length ? lines[idx + 1].time : lineStart + 4;
+          const p = Math.min(1, Math.max(0, (elapsed - lineStart) / (lineEnd - lineStart)));
+          setProgress(p);
+        }
+      }
       animRef.current = requestAnimationFrame(tick);
     };
     animRef.current = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(animRef.current);
   }, [visible, lines]);
-
-  // Find current line based on elapsed time
-  useEffect(() => {
-    if (lines.length === 0) return;
-
-    let idx = -1;
-    for (let i = lines.length - 1; i >= 0; i--) {
-      if (elapsed >= lines[i].time) {
-        idx = i;
-        break;
-      }
-    }
-    setCurrentLineIdx(idx);
-
-    // Calculate progress within current line
-    if (idx >= 0 && idx < lines.length) {
-      const lineStart = lines[idx].time;
-      const lineEnd = idx + 1 < lines.length ? lines[idx + 1].time : lineStart + 4;
-      const duration = lineEnd - lineStart;
-      const p = Math.min(1, Math.max(0, (elapsed - lineStart) / duration));
-      setProgress(p);
-    }
-  }, [elapsed, lines]);
-
-  // Restart lyrics cycle when they finish
-  useEffect(() => {
-    if (lines.length > 0 && currentLineIdx >= lines.length - 1 && progress >= 1) {
-      // Reset to loop
-      startTimeRef.current = Date.now();
-    }
-  }, [currentLineIdx, progress, lines]);
 
   if (!visible) return null;
 
@@ -152,11 +131,9 @@ export default function KaraokeOverlay({ artist, title, audioElement, visible }:
         )}
         {lines.length > 0 && (
           <>
-            {/* Current line — highlighted with word-level glow */}
             {line1 && (
               <KaraokeLine text={line1.text} progress={progress} active />
             )}
-            {/* Next line — dimmed */}
             {line2 && (
               <KaraokeLine text={line2.text} progress={0} active={false} />
             )}
