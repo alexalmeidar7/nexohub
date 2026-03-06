@@ -261,31 +261,43 @@ export default function ClientCard({ client, clientEmail, modules, plans, saving
       </Collapsible>
 
       {/* Modules */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-        {modules.map((mod) => {
-          const isEnabled = client.modules[mod.key] || false;
-          const isSaving = saving === `${client.user_id}-${mod.key}`;
-          return (
-            <div
-              key={mod.key}
-              className="flex items-center justify-between p-3 rounded-lg transition-colors"
-              style={{
-                border: isEnabled ? "1px solid rgba(46,192,246,0.3)" : "1px solid #e2e8f0",
-                backgroundColor: isEnabled ? "rgba(46,192,246,0.05)" : "#ffffff",
-              }}
-            >
-              <span className="truncate mr-2" style={{ fontSize: "11px", fontWeight: 500, color: "#0d0446" }}>
-                {mod.name.replace("Módulo ", "")}
-              </span>
-              {isSaving ? (
-                <Loader2 className="animate-spin" size={14} style={{ color: "#2ec0f6" }} />
-              ) : (
-                <Switch checked={isEnabled} onCheckedChange={(checked) => onToggleModule(client.user_id, mod.key, checked)} />
-              )}
-            </div>
-          );
-        })}
-      </div>
+      {(() => {
+        const selectedPlan = plans.find((p) => p.value === client.plano);
+        const planModules = selectedPlan?.enabled_modules || [];
+        return (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+            {modules.map((mod) => {
+              const isInPlan = planModules.includes(mod.key);
+              const isEnabled = isInPlan && (client.modules[mod.key] || false);
+              const isSaving = saving === `${client.user_id}-${mod.key}`;
+              return (
+                <div
+                  key={mod.key}
+                  className="flex items-center justify-between p-3 rounded-lg transition-colors"
+                  style={{
+                    border: isEnabled ? "1px solid rgba(46,192,246,0.3)" : "1px solid #e2e8f0",
+                    backgroundColor: isEnabled ? "rgba(46,192,246,0.05)" : "#ffffff",
+                    opacity: isInPlan ? 1 : 0.4,
+                  }}
+                >
+                  <span className="truncate mr-2" style={{ fontSize: "11px", fontWeight: 500, color: "#0d0446" }}>
+                    {mod.name.replace("Módulo ", "")}
+                  </span>
+                  {isSaving ? (
+                    <Loader2 className="animate-spin" size={14} style={{ color: "#2ec0f6" }} />
+                  ) : (
+                    <Switch
+                      checked={isEnabled}
+                      disabled={!isInPlan}
+                      onCheckedChange={(checked) => onToggleModule(client.user_id, mod.key, checked)}
+                    />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        );
+      })()}
     </div>
   );
 }
