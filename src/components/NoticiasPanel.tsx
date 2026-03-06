@@ -53,7 +53,7 @@ const DEFAULT_PORTALS: Portal[] = [
   { name: "Folha de S.Paulo", rssUrl: "https://feeds.folha.uol.com.br/emcimadahora/rss091.xml" },
   { name: "CNN Brasil", rssUrl: "https://www.cnnbrasil.com.br/feed/" },
   { name: "R7", rssUrl: "https://noticias.r7.com/feed.xml" },
-  { name: "Estadão", rssUrl: "https://www.estadao.com.br/rss/ultimas.xml" },
+  { name: "Estadão", rssUrl: "https://rss.estadao.com.br/ultimas" },
   { name: "Terra", rssUrl: "https://www.terra.com.br/rss/controller.htm?path=/noticias/rss" },
 ];
 
@@ -93,24 +93,11 @@ async function fetchNews(rssUrl: string): Promise<NewsItem[]> {
     return results;
   };
 
+  // Try rss2json first (server-side, no CORS issues)
   try {
-    const res = await fetch(`${PROXY}${encodeURIComponent(rssUrl)}`, { signal: AbortSignal.timeout(8000) });
-    const text = await res.text();
-    const results = parseRss(text);
-    if (results.length > 0) return results;
-  } catch {}
-
-  try {
-    const res = await fetch(`${PROXY_FALLBACK}${encodeURIComponent(rssUrl)}`, { signal: AbortSignal.timeout(8000) });
-    const text = await res.text();
-    const results = parseRss(text);
-    if (results.length > 0) return results;
-  } catch {}
-
-  try {
-    const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`);
+    const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`, { signal: AbortSignal.timeout(10000) });
     const data = await res.json();
-    if (data.status === "ok" && data.items) {
+    if (data.status === "ok" && data.items && data.items.length > 0) {
       return data.items
         .slice(0, 10)
         .map((item: any) => ({
@@ -120,6 +107,23 @@ async function fetchNews(rssUrl: string): Promise<NewsItem[]> {
         }));
     }
   } catch {}
+
+  // Fallback: allorigins proxy
+  try {
+    const res = await fetch(`${PROXY}${encodeURIComponent(rssUrl)}`, { signal: AbortSignal.timeout(10000) });
+    const text = await res.text();
+    const results = parseRss(text);
+    if (results.length > 0) return results;
+  } catch {}
+
+  // Fallback: corsproxy
+  try {
+    const res = await fetch(`${PROXY_FALLBACK}${encodeURIComponent(rssUrl)}`, { signal: AbortSignal.timeout(10000) });
+    const text = await res.text();
+    const results = parseRss(text);
+    if (results.length > 0) return results;
+  } catch {}
+
   return [];
 }
 
