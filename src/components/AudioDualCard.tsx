@@ -41,18 +41,17 @@ export default function AudioDualCard({
         <div className="absolute inset-0" style={{ backgroundColor: "hsl(0 0% 0%)" }} />
       )}
       {/* Wrapper with relative positioning so presenter sits behind music card */}
-      <div className="relative w-[90vw] max-w-[900px]" style={{ minHeight: "420px" }}>
+      <div className="relative w-[90vw] max-w-[800px]" style={{ minHeight: "420px" }}>
 
-        {/* Left — Presenter (sits BEHIND the music card) */}
+        {/* Left — Presenter (slides out from behind the music card) */}
         <div
           className="absolute left-0 top-0 bottom-0 md:w-[50%] w-full rounded-3xl overflow-hidden shadow-xl"
           style={{
-            animation: "slideInFromLeft 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+            animation: "slideOutFromBehind 1.8s cubic-bezier(0.22, 1, 0.36, 1) forwards",
             backgroundColor: "hsl(0 60% 22%)",
             backgroundImage: presenterPhoto ? `url(${presenterPhoto})` : undefined,
             backgroundSize: "cover",
             backgroundPosition: "center",
-            animationDuration: "0.8s",
             zIndex: 1,
           }}
         >
@@ -64,7 +63,6 @@ export default function AudioDualCard({
 
           {/* Footer */}
           <div className="absolute bottom-0 left-0 right-0 p-5">
-            {/* Gradient for readability */}
             <div className="absolute inset-0" style={{ background: "linear-gradient(to top, hsla(0,0%,0%,0.7) 0%, transparent 100%)" }} />
             <div className="relative z-[2]">
               <Mic size={16} className="mb-1" style={{ color: "hsl(0 80% 50%)" }} />
@@ -85,9 +83,9 @@ export default function AudioDualCard({
           </div>
         </div>
 
-        {/* Right — Music card (overlaps presenter, sits in front) */}
+        {/* Right — Music card (sits in front, narrower) */}
         <div
-          className="relative md:ml-[35%] ml-0 md:mt-0 mt-[260px] md:w-[65%] w-full rounded-3xl overflow-hidden shadow-2xl animate-fade-in"
+          className="relative md:ml-auto ml-0 md:mt-0 mt-[260px] md:w-[55%] w-full rounded-3xl overflow-hidden shadow-2xl animate-fade-in"
           style={{
             backgroundColor: "hsl(0 0% 5%)",
             minHeight: "420px",
