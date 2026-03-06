@@ -146,7 +146,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
   const handleMenuClick = (item: MenuItem) => {
     if (item.label === "player") {
-      window.open("/player", "_blank");
+      window.open("/user/nexohub/player", "_blank");
       return;
     }
     if (item.children) {
