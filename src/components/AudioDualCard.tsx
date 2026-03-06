@@ -1,4 +1,4 @@
-import { Heart } from "lucide-react";
+import { Heart, Mic } from "lucide-react";
 
 interface AudioDualCardProps {
   presenterName?: string | null;
@@ -29,57 +29,67 @@ export default function AudioDualCard({
         background: "linear-gradient(135deg, hsl(0 0% 0%) 0%, hsl(0 70% 20%) 100%)",
       }}
     >
-      <div className="flex flex-col md:flex-row w-[90vw] max-w-[900px] rounded-3xl overflow-hidden shadow-2xl"
-        style={{ minHeight: "420px" }}
-      >
-        {/* Left — Presenter (behind music card visually) */}
+      {/* Wrapper with relative positioning so presenter sits behind music card */}
+      <div className="relative w-[90vw] max-w-[900px]" style={{ minHeight: "420px" }}>
+
+        {/* Left — Presenter (sits BEHIND the music card) */}
         <div
-          className="relative flex flex-col justify-end md:w-[45%] w-full p-6"
+          className="absolute left-0 top-0 bottom-0 md:w-[50%] w-full rounded-3xl overflow-hidden shadow-xl animate-fade-in"
           style={{
             backgroundColor: "hsl(0 60% 22%)",
             backgroundImage: presenterPhoto ? `url(${presenterPhoto})` : undefined,
             backgroundSize: "cover",
             backgroundPosition: "center",
-            minHeight: "260px",
+            animationDuration: "0.8s",
+            zIndex: 1,
           }}
         >
-          {/* No overlay — full opacity photo */}
           {!presenterPhoto && (
-            <div className="absolute inset-0 flex items-center justify-center z-[1]">
+            <div className="absolute inset-0 flex items-center justify-center">
               <span className="text-white/30 text-sm font-medium tracking-wide">foto locutor</span>
             </div>
           )}
 
           {/* Footer */}
-          <div className="relative z-[2] mt-auto">
-            <p className="text-white font-bold text-xl md:text-2xl leading-tight drop-shadow-lg">
-              {presenterName || "Locutor"}
-            </p>
-            {presenterInstagram && (
-              <a
-                href={`https://instagram.com/${presenterInstagram.replace(/^@/, "")}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-white/70 text-sm hover:text-white transition-colors drop-shadow-lg"
-              >
-                @{presenterInstagram.replace(/^@/, "")}
-              </a>
-            )}
+          <div className="absolute bottom-0 left-0 right-0 p-5">
+            {/* Gradient for readability */}
+            <div className="absolute inset-0" style={{ background: "linear-gradient(to top, hsla(0,0%,0%,0.7) 0%, transparent 100%)" }} />
+            <div className="relative z-[2]">
+              <Mic size={16} className="mb-1" style={{ color: "hsl(0 80% 50%)" }} />
+              <p className="text-white font-semibold text-sm md:text-base leading-tight drop-shadow-lg">
+                {presenterName || "Locutor"}
+              </p>
+              {presenterInstagram && (
+                <a
+                  href={`https://instagram.com/${presenterInstagram.replace(/^@/, "")}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-white/60 text-xs hover:text-white transition-colors drop-shadow-lg"
+                >
+                  @{presenterInstagram.replace(/^@/, "")}
+                </a>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Right — Music (cover fills entire box) */}
+        {/* Right — Music card (overlaps presenter, sits in front) */}
         <div
-          className="relative flex flex-col justify-end md:w-[55%] w-full overflow-hidden"
-          style={{ backgroundColor: "hsl(0 0% 0%)", minHeight: "260px" }}
+          className="relative md:ml-[35%] ml-0 md:mt-0 mt-[260px] md:w-[65%] w-full rounded-3xl overflow-hidden shadow-2xl animate-fade-in"
+          style={{
+            backgroundColor: "hsl(0 0% 5%)",
+            minHeight: "420px",
+            zIndex: 2,
+            animationDuration: "0.6s",
+          }}
         >
-          {/* Cover image fills entire box */}
+          {/* Cover image fills the card with rounded corners */}
           {musicCover ? (
             <img
               key={musicCover}
               src={musicCover}
               alt={musicTitle || "Capa"}
-              className="absolute inset-0 w-full h-full object-cover animate-fade-in"
+              className="absolute inset-0 w-full h-full object-cover rounded-3xl animate-fade-in"
               style={{ animationDuration: "0.7s" }}
             />
           ) : channelLogo ? (
@@ -97,37 +107,43 @@ export default function AudioDualCard({
             </div>
           )}
 
-          {/* Heart button — bottom-left over the cover */}
-          {onToggleLike && musicTitle && (
-            <button
-              onClick={onToggleLike}
-              className="absolute bottom-16 left-3 z-[5] p-2 rounded-full transition-transform hover:scale-110 active:scale-95"
-              style={{ backgroundColor: "hsla(0, 0%, 0%, 0.5)" }}
-            >
-              <Heart
-                size={22}
-                className={liked ? "text-red-500 fill-red-500" : "text-white"}
-              />
-            </button>
-          )}
+          {/* Bottom gradient for readability */}
+          <div className="absolute inset-x-0 bottom-0 rounded-b-3xl" style={{ height: "50%", background: "linear-gradient(to top, hsla(0,0%,0%,0.85) 0%, transparent 100%)" }} />
 
-          {/* Footer — stacked labels, width adapts to text */}
-          {(musicTitle || musicArtist) && (
-            <div className="relative z-[3] self-start animate-fade-in mb-4 ml-3" style={{ animationDuration: "0.7s" }}>
-              <div
-                className="px-4 py-1.5 font-bold text-white text-base md:text-lg leading-tight inline-block"
-                style={{ backgroundColor: "hsl(0 80% 45%)" }}
+          {/* Footer: heart → title → artist (stacked) */}
+          <div className="absolute bottom-0 left-0 right-0 p-5 z-[3] flex flex-col items-start gap-1 animate-fade-in" style={{ animationDuration: "0.7s" }}>
+            {/* Heart like button */}
+            {onToggleLike && musicTitle && (
+              <button
+                onClick={onToggleLike}
+                className="mb-1 p-1.5 rounded-full transition-all hover:scale-110 active:scale-95"
+                style={{ backgroundColor: "hsla(0, 0%, 100%, 0.15)" }}
               >
-                {musicTitle || "—"}
-              </div>
-              <div
-                className="px-4 py-1 text-white text-sm leading-tight inline-block"
-                style={{ backgroundColor: "hsl(0 60% 25%)" }}
-              >
-                {musicArtist || "—"}
-              </div>
-            </div>
-          )}
+                <Heart
+                  size={20}
+                  className="transition-colors"
+                  style={{
+                    color: liked ? "hsl(0 80% 50%)" : "white",
+                    fill: liked ? "hsl(0 80% 50%)" : "none",
+                  }}
+                />
+              </button>
+            )}
+
+            {/* Song title */}
+            {musicTitle && (
+              <span className="text-white font-bold text-lg md:text-xl leading-tight drop-shadow-lg">
+                {musicTitle}
+              </span>
+            )}
+
+            {/* Artist name */}
+            {musicArtist && (
+              <span className="text-white/70 text-sm leading-tight drop-shadow-lg">
+                {musicArtist}
+              </span>
+            )}
+          </div>
         </div>
       </div>
     </div>
