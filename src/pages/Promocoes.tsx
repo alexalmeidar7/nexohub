@@ -62,6 +62,7 @@ function renderBoldMarkdown(text: string) {
 export default function PromocoesKiosk() {
   const { userSlug } = useParams<{ userSlug?: string }>();
   const isPublicMode = !!userSlug;
+  const [loading, setLoading] = useState(true);
   const [promocoes, setPromocoes] = useState<Promocao[]>([]);
   const [config, setConfig] = useState<EmpresaConfig>({} as EmpresaConfig);
   const [programas, setProgramas] = useState<ProgramaGrade[]>([]);
