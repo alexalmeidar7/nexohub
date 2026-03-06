@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Pencil, Check, X } from "lucide-react";
+import { Loader2, Pencil, Check, X, Eye, EyeOff } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
 
 interface AvailableModule {
   key: string;
@@ -15,13 +15,8 @@ interface ClientRow {
   user_id: string;
   nome: string;
   logo: string;
-  endereco: string;
-  telefone_comercial: string;
-  telefone_participacao: string;
-  site: string;
-  instagram: string;
-  facebook: string;
-  youtube: string;
+  ativo: boolean;
+  plano: string;
   modules: Record<string, boolean>;
 }
 
@@ -42,53 +37,73 @@ const inputStyle: React.CSSProperties = {
   padding: "6px 12px",
 };
 
-const fieldLabels: Record<string, string> = {
-  nome: "Nome da empresa",
-  endereco: "Endereço",
-  telefone_comercial: "Tel. Comercial",
-  telefone_participacao: "Tel. Participação",
-  site: "Site",
-  instagram: "Instagram",
-  facebook: "Facebook",
-  youtube: "YouTube",
-};
+const plans = [
+  { value: "basic", label: "Basic" },
+  { value: "pro", label: "Pro" },
+  { value: "enterprise", label: "Enterprise" },
+];
 
 export default function ClientCard({ client, modules, saving, onToggleModule, onClientUpdated }: ClientCardProps) {
   const { toast } = useToast();
   const [editing, setEditing] = useState(false);
   const [savingEdit, setSavingEdit] = useState(false);
-  const [form, setForm] = useState({
-    nome: client.nome,
-    endereco: client.endereco,
-    telefone_comercial: client.telefone_comercial,
-    telefone_participacao: client.telefone_participacao,
-    site: client.site,
-    instagram: client.instagram,
-    facebook: client.facebook,
-    youtube: client.youtube,
-  });
+  const [loadingEmail, setLoadingEmail] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
+  const [nome, setNome] = useState(client.nome);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [ativo, setAtivo] = useState(client.ativo);
+  const [plano, setPlano] = useState(client.plano);
+
+  // Load email when editing opens
+  useEffect(() => {
+    if (editing && !email) {
+      setLoadingEmail(true);
+      supabase.functions
+        .invoke("create-user", { body: { action: "get_email", user_id: client.user_id } })
+        .then(({ data }) => {
+          if (data?.email) setEmail(data.email);
+          setLoadingEmail(false);
+        });
+    }
+  }, [editing]);
 
   const handleSave = async () => {
     setSavingEdit(true);
-    const { error } = await supabase
-      .from("empresa_config")
-      .update(form)
-      .eq("user_id", client.user_id);
+    const res = await supabase.functions.invoke("create-user", {
+      body: {
+        action: "update",
+        user_id: client.user_id,
+        nome,
+        email: email || undefined,
+        password: password || undefined,
+        ativo,
+        plano,
+      },
+    });
 
-    if (error) {
-      toast({ title: "Erro ao salvar", description: error.message, variant: "destructive" });
+    if (res.error || res.data?.error) {
+      toast({ title: "Erro ao salvar", description: res.data?.error || res.error?.message, variant: "destructive" });
     } else {
       toast({ title: "Dados atualizados!" });
+      setPassword("");
       setEditing(false);
       onClientUpdated();
     }
     setSavingEdit(false);
   };
 
+  const planLabel = plans.find((p) => p.value === client.plano)?.label || client.plano;
+
   return (
     <div
       className="rounded-xl p-5 space-y-4 transition-all duration-200"
-      style={{ backgroundColor: "#ffffff", border: "1px solid #e2e8f0" }}
+      style={{
+        backgroundColor: client.ativo ? "#ffffff" : "#f9fafb",
+        border: "1px solid #e2e8f0",
+        opacity: client.ativo ? 1 : 0.7,
+      }}
       onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#2ec0f6")}
       onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#e2e8f0")}
     >
@@ -103,7 +118,17 @@ export default function ClientCard({ client, modules, saving, onToggleModule, on
             </div>
           )}
           <div>
-            <p className="font-semibold" style={{ fontSize: "13px", color: "#0d0446" }}>{client.nome}</p>
+            <div className="flex items-center gap-2">
+              <p className="font-semibold" style={{ fontSize: "13px", color: "#0d0446" }}>{client.nome}</p>
+              {!client.ativo && (
+                <span className="px-2 py-0.5 rounded-full" style={{ fontSize: "9px", backgroundColor: "#fee2e2", color: "#dc2626", fontWeight: 600 }}>
+                  Inativo
+                </span>
+              )}
+              <span className="px-2 py-0.5 rounded-full" style={{ fontSize: "9px", backgroundColor: "#e0f2fe", color: "#0284c7", fontWeight: 600 }}>
+                {planLabel}
+              </span>
+            </div>
             <p style={{ fontSize: "10px", color: "#9ca3af" }}>{client.user_id.slice(0, 8)}...</p>
           </div>
         </div>
@@ -125,21 +150,74 @@ export default function ClientCard({ client, modules, saving, onToggleModule, on
       {/* Edit form */}
       <Collapsible open={editing}>
         <CollapsibleContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 pb-4 border-b" style={{ borderColor: "#e2e8f0" }}>
-            {Object.entries(fieldLabels).map(([key, label]) => (
-              <div key={key} className="space-y-1">
-                <label style={{ fontSize: "10px", color: "#6b7280", fontWeight: 600 }}>{label}</label>
+          <div className="space-y-3 pt-2 pb-4 border-b" style={{ borderColor: "#e2e8f0" }}>
+            {/* Nome */}
+            <div className="space-y-1">
+              <label style={{ fontSize: "10px", color: "#6b7280", fontWeight: 600 }}>Nome da empresa</label>
+              <input value={nome} onChange={(e) => setNome(e.target.value)} className="w-full outline-none" style={inputStyle} />
+            </div>
+
+            {/* Email (login) */}
+            <div className="space-y-1">
+              <label style={{ fontSize: "10px", color: "#6b7280", fontWeight: 600 }}>Login (email)</label>
+              {loadingEmail ? (
+                <div className="flex items-center gap-2 py-1">
+                  <Loader2 className="animate-spin" size={12} style={{ color: "#2ec0f6" }} />
+                  <span style={{ fontSize: "11px", color: "#9ca3af" }}>Carregando...</span>
+                </div>
+              ) : (
+                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full outline-none" style={inputStyle} />
+              )}
+            </div>
+
+            {/* Password */}
+            <div className="space-y-1">
+              <label style={{ fontSize: "10px", color: "#6b7280", fontWeight: 600 }}>Nova senha (deixe vazio para manter)</label>
+              <div className="relative">
                 <input
-                  value={(form as any)[key] || ""}
-                  onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
-                  className="w-full outline-none"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full outline-none pr-10"
                   style={inputStyle}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2"
+                  style={{ color: "#9ca3af" }}
+                >
+                  {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+                </button>
               </div>
-            ))}
-            <div className="md:col-span-2 flex gap-2 justify-end pt-2">
+            </div>
+
+            {/* Ativo + Plano row */}
+            <div className="flex items-center gap-6 pt-1">
+              <div className="flex items-center gap-2">
+                <label style={{ fontSize: "10px", color: "#6b7280", fontWeight: 600 }}>Ativo</label>
+                <Switch checked={ativo} onCheckedChange={setAtivo} />
+              </div>
+              <div className="flex items-center gap-2">
+                <label style={{ fontSize: "10px", color: "#6b7280", fontWeight: 600 }}>Plano</label>
+                <select
+                  value={plano}
+                  onChange={(e) => setPlano(e.target.value)}
+                  className="outline-none"
+                  style={{ ...inputStyle, padding: "4px 10px", cursor: "pointer" }}
+                >
+                  {plans.map((p) => (
+                    <option key={p.value} value={p.value}>{p.label}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Buttons */}
+            <div className="flex gap-2 justify-end pt-2">
               <button
-                onClick={() => setEditing(false)}
+                onClick={() => { setEditing(false); setPassword(""); }}
                 className="flex items-center gap-1 px-4 py-1.5 rounded-full transition-all"
                 style={{ fontSize: "11px", border: "1px solid #d1d5db", color: "#6b7280" }}
               >

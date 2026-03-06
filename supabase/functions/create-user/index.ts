@@ -2,16 +2,15 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Verify the caller is an admin
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       return new Response(JSON.stringify({ error: "Não autorizado" }), {
@@ -23,7 +22,6 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    // Verify caller is admin using their token
     const callerClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
       global: { headers: { Authorization: authHeader } },
     });
@@ -36,7 +34,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Check admin role
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
     const { data: roles } = await adminClient
       .from("user_roles")
@@ -51,45 +48,112 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { email, password, nome } = await req.json();
+    const body = await req.json();
+    const { action } = body;
 
-    if (!email || !password || !nome) {
-      return new Response(JSON.stringify({ error: "Preencha todos os campos" }), {
-        status: 400,
+    // CREATE USER
+    if (action === "create") {
+      const { email, password, nome } = body;
+      if (!email || !password || !nome) {
+        return new Response(JSON.stringify({ error: "Preencha todos os campos" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+      });
+
+      if (createError) {
+        return new Response(JSON.stringify({ error: createError.message }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      await adminClient.from("empresa_config").insert({ user_id: newUser.user!.id, nome });
+      await adminClient.from("user_roles").insert({ user_id: newUser.user!.id, role: "user" });
+
+      return new Response(JSON.stringify({ success: true, user_id: newUser.user!.id }), {
+        status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Create user with admin API
-    const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true,
-    });
+    // UPDATE USER
+    if (action === "update") {
+      const { user_id, email, password, nome, ativo, plano } = body;
+      if (!user_id) {
+        return new Response(JSON.stringify({ error: "user_id obrigatório" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
 
-    if (createError) {
-      return new Response(JSON.stringify({ error: createError.message }), {
-        status: 400,
+      // Update auth (email/password) if provided
+      const authUpdate: Record<string, any> = {};
+      if (email) authUpdate.email = email;
+      if (password) authUpdate.password = password;
+
+      if (Object.keys(authUpdate).length > 0) {
+        const { error: authErr } = await adminClient.auth.admin.updateUserById(user_id, authUpdate);
+        if (authErr) {
+          return new Response(JSON.stringify({ error: authErr.message }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      }
+
+      // Update empresa_config fields
+      const configUpdate: Record<string, any> = {};
+      if (nome !== undefined) configUpdate.nome = nome;
+      if (ativo !== undefined) configUpdate.ativo = ativo;
+      if (plano !== undefined) configUpdate.plano = plano;
+
+      if (Object.keys(configUpdate).length > 0) {
+        const { error: configErr } = await adminClient
+          .from("empresa_config")
+          .update(configUpdate)
+          .eq("user_id", user_id);
+
+        if (configErr) {
+          return new Response(JSON.stringify({ error: configErr.message }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      }
+
+      return new Response(JSON.stringify({ success: true }), {
+        status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Create empresa_config for the new user
-    await adminClient.from("empresa_config").insert({
-      user_id: newUser.user!.id,
-      nome,
-    });
+    // GET USER EMAIL
+    if (action === "get_email") {
+      const { user_id } = body;
+      const { data, error } = await adminClient.auth.admin.getUserById(user_id);
+      if (error) {
+        return new Response(JSON.stringify({ error: error.message }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      return new Response(JSON.stringify({ email: data.user.email }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
-    // Assign 'user' role
-    await adminClient.from("user_roles").insert({
-      user_id: newUser.user!.id,
-      role: "user",
+    return new Response(JSON.stringify({ error: "Ação inválida" }), {
+      status: 400,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-
-    return new Response(
-      JSON.stringify({ success: true, user_id: newUser.user!.id }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
   } catch (err) {
     return new Response(JSON.stringify({ error: err.message }), {
       status: 500,
