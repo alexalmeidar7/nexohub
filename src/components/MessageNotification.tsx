@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from "react";
-import { Mail } from "lucide-react";
+import { Mail, ChevronDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface AdminMessage {
   id: string;
@@ -9,6 +10,7 @@ interface AdminMessage {
   message: string;
   is_read: boolean;
   created_at: string;
+  sender_id: string;
 }
 
 export default function MessageNotification() {
