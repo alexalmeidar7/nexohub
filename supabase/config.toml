@@ -2,3 +2,9 @@ project_id = "zzjfzxxvxbspbdkodoix"
 
 [functions.elevenlabs-scribe-token]
 verify_jwt = false
+
+[functions.public-player-data]
+verify_jwt = false
+
+[functions.public-promo-data]
+verify_jwt = false
