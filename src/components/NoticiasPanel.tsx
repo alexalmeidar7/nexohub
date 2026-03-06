@@ -3,7 +3,7 @@ import { RefreshCw, ExternalLink, Plus, TrendingUp, TrendingDown, Minus, Trash2,
 import XmlLinkRow from "./XmlLinkRow";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import MontarJornalWizard, { type JornalConfig } from "./MontarJornalWizard";
+import MontarJornalInline, { type JornalConfig } from "./MontarJornalInline";
 import JornalBlockBuilder from "./JornalBlockBuilder";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
@@ -416,9 +416,9 @@ export default function NoticiasPanel() {
       {/* Main two-column layout: Left (Cotações + Portais) | Right (Jornal Builder) */}
       <div className="flex gap-4">
         {/* LEFT COLUMN */}
-        <div className="space-y-4" style={{ width: jornalConfig ? "50%" : "100%" }}>
+        <div className="space-y-4" style={{ width: (jornalConfig || wizardOpen) ? "50%" : "100%" }}>
           {/* Cotações marquee - 50% width */}
-          <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)", width: jornalConfig ? "100%" : "50%" }}>
+          <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)", width: (jornalConfig || wizardOpen) ? "100%" : "50%" }}>
             <div className="px-3 py-2 font-bold text-xs tracking-wide text-white rounded-t-xl" style={{ backgroundColor: "#0d0446" }}>
               💹 Cotações - Bolsas e Moedas
             </div>
@@ -473,7 +473,7 @@ export default function NoticiasPanel() {
           </div>
 
           {/* News Portals Accordion */}
-          <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)", width: jornalConfig ? "100%" : "50%" }}>
+          <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)", width: (jornalConfig || wizardOpen) ? "100%" : "50%" }}>
             <div className="px-3 py-2 font-bold text-xs tracking-wide text-white rounded-t-xl" style={{ backgroundColor: "#0d0446" }}>
               📰 Portais de Notícias
             </div>
@@ -539,14 +539,26 @@ export default function NoticiasPanel() {
           </div>
         </div>
 
-        {/* RIGHT COLUMN - Jornal Builder (only visible when config exists) */}
-        {jornalConfig && (
+        {/* RIGHT COLUMN - Wizard or Jornal Builder */}
+        {(wizardOpen || jornalConfig) && (
           <div className="flex-1">
-            <JornalBlockBuilder
-              config={jornalConfig}
-              selectedNews={selectedNews.map(sn => ({ portal: sn.portal, title: sn.title, imageUrl: sn.imageUrl }))}
-              onClose={() => setJornalConfig(null)}
-            />
+            {wizardOpen && !jornalConfig && (
+              <MontarJornalInline
+                programas={programas}
+                onFinish={(config) => {
+                  setJornalConfig(config);
+                  setWizardOpen(false);
+                }}
+                onCancel={() => setWizardOpen(false)}
+              />
+            )}
+            {jornalConfig && (
+              <JornalBlockBuilder
+                config={jornalConfig}
+                selectedNews={selectedNews.map(sn => ({ portal: sn.portal, title: sn.title, imageUrl: sn.imageUrl }))}
+                onClose={() => setJornalConfig(null)}
+              />
+            )}
           </div>
         )}
       </div>
@@ -603,15 +615,6 @@ export default function NoticiasPanel() {
         </div>
       )}
 
-      <MontarJornalWizard
-        open={wizardOpen}
-        onOpenChange={setWizardOpen}
-        programas={programas}
-        onFinish={(config) => {
-          setJornalConfig(config);
-          setWizardOpen(false);
-        }}
-      />
     </div>
   );
 }
