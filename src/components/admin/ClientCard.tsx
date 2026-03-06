@@ -45,7 +45,7 @@ const plans = [
   { value: "enterprise", label: "Enterprise" },
 ];
 
-export default function ClientCard({ client, modules, saving, onToggleModule, onClientUpdated }: ClientCardProps) {
+export default function ClientCard({ client, clientEmail, modules, saving, onToggleModule, onClientUpdated, onSendMessage }: ClientCardProps) {
   const { toast } = useToast();
   const [editing, setEditing] = useState(false);
   const [savingEdit, setSavingEdit] = useState(false);
