@@ -28,6 +28,7 @@ function AdminUsersContent() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [clients, setClients] = useState<ClientRow[]>([]);
+  const [emailMap, setEmailMap] = useState<Record<string, string>>({});
   const [modules, setModules] = useState<AvailableModule[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | null>(null);
