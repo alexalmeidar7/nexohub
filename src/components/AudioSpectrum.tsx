@@ -2,9 +2,10 @@ import { useEffect, useRef } from "react";
 
 interface AudioSpectrumProps {
   audioElement: HTMLAudioElement | null;
+  barColor?: string;
 }
 
-export default function AudioSpectrum({ audioElement }: AudioSpectrumProps) {
+export default function AudioSpectrum({ audioElement, barColor }: AudioSpectrumProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rafRef = useRef<number>(0);
   const peaksRef = useRef<number[]>([]);
@@ -60,7 +61,7 @@ export default function AudioSpectrum({ audioElement }: AudioSpectrumProps) {
         const x = i * (w / bufferLength);
 
         // Main bar (red)
-        ctx.fillStyle = `rgba(211, 7, 7, ${0.7 + (barHeight / h) * 0.3})`;
+        ctx.fillStyle = barColor ? `${barColor}` : `rgba(211, 7, 7, ${0.7 + (barHeight / h) * 0.3})`;
         ctx.fillRect(x, h - barHeight, barWidth, barHeight);
 
         // Peak marker (yellow)

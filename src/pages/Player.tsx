@@ -1421,6 +1421,7 @@ export default function PlayerPage() {
             channelThumb={canal?.cover_url}
             liked={liked}
             onToggleLike={toggleLike}
+            audioElement={audioRef.current}
           />
         </Suspense>
       )}
