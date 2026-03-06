@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Instagram, UserCheck, UserX, Trash2, Pencil, X, Loader2, CheckCircle } from "lucide-react";
+import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import {
