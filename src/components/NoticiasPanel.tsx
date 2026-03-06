@@ -486,7 +486,6 @@ export default function NoticiasPanel() {
               <Accordion type="multiple" className="w-full">
                 {orderedPortals.map(portal => {
                   const news = newsByPortal[portal.name] || [];
-                  if (news.length === 0) return null;
                   return (
                     <AccordionItem key={portal.name} value={portal.name} className="border-b-0" style={{ borderBottom: "1px solid rgba(13,4,70,0.06)" }}>
                       <AccordionTrigger className="px-3 py-2 text-xs font-bold hover:no-underline" style={{ color: "#0d0446" }}>
