@@ -557,15 +557,18 @@ export default function PlayerPage() {
 
   // Refresh shopping products periodically
   useEffect(() => {
-    if (!user || programas.length === 0) return;
+    const ownerId = isPublicMode ? publicUserId : user?.id;
+    if (!ownerId || programas.length === 0) return;
     const fetchShop = async () => {
       const currentProg = getCurrentProgram(programas);
-      let query = supabase.from("shopping_products").select("id, name, description, image_url, price, stock, program_id, payment_url").eq("user_id", user.id).eq("active", true).gt("stock", 0);
+      let query = supabase.from("shopping_products").select("id, name, description, image_url, price, stock, program_id, payment_url").eq("user_id", ownerId).eq("active", true).gt("stock", 0);
       if (currentProg) query = query.or(`program_id.eq.${currentProg.id},program_id.is.null`);
       else query = query.is("program_id", null);
       const { data } = await query;
       if (data) setShopProducts(data);
     };
+    // In public mode, don't refresh via direct queries (RLS blocks it)
+    if (isPublicMode) return;
     const interval = setInterval(fetchShop, 30000);
     return () => clearInterval(interval);
   }, [user, programas]);
