@@ -219,6 +219,19 @@ export default function NoticiasPanel() {
   const [noticiaAvulsaUrl, setNoticiaAvulsaUrl] = useState("");
   const [noticiasAvulsas, setNoticiasAvulsas] = useState<NewsItem[]>([]);
   const [loadingAvulsa, setLoadingAvulsa] = useState(false);
+  const [collapsedBoxes, setCollapsedBoxes] = useState<Record<string, boolean>>({});
+  const [blocoEconomia, setBlocoEconomia] = useState<CotacaoItem[]>([]);
+
+  const toggleBox = (key: string) => setCollapsedBoxes(prev => ({ ...prev, [key]: !prev[key] }));
+
+  const addToBlocoEconomia = (c: CotacaoItem) => {
+    if (blocoEconomia.some(b => b.name === c.name)) return;
+    setBlocoEconomia(prev => [...prev, c]);
+  };
+
+  const removeFromBlocoEconomia = (name: string) => {
+    setBlocoEconomia(prev => prev.filter(c => c.name !== name));
+  };
 
   useEffect(() => {
     if (!user) return;
