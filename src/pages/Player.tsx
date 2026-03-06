@@ -107,6 +107,7 @@ interface ShopProduct {
 }
 
 const MUSIC_DATA_KEY = "masterview_music_data";
+const MUSIC_START_KEY = "masterview_music_start";
 
 const DAY_MAP_SHORT: Record<number, string> = { 0: "dom", 1: "seg", 2: "ter", 3: "qua", 4: "qui", 5: "sex", 6: "sab" };
 const DAY_MAP_FULL: Record<number, string> = { 0: "Domingo", 1: "Segunda", 2: "Terça", 3: "Quarta", 4: "Quinta", 5: "Sexta", 6: "Sábado" };
@@ -673,9 +674,14 @@ export default function PlayerPage() {
         }
 
         setMusicData(prev => {
-          if (!prev || prev.titulo !== data.titulo || prev.artista !== data.artista || prev.capa !== data.capa) {
+          if (!prev || prev.titulo !== data.titulo || prev.artista !== data.artista) {
             localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify(data));
+            localStorage.setItem(MUSIC_START_KEY, Date.now().toString());
             return { ...data };
+          }
+          if (prev && data.capa && prev.capa !== data.capa) {
+            localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify({ ...prev, capa: data.capa }));
+            return { ...prev, capa: data.capa };
           }
           return prev;
         });
@@ -1436,6 +1442,7 @@ export default function PlayerPage() {
             title={musicData?.titulo}
             audioElement={audioRef.current}
             visible={karaokeEnabled}
+            duration={musicData?.duracao}
           />
         </Suspense>
       )}
