@@ -208,7 +208,6 @@ export default function NoticiasPanel() {
   const [escaladaNews, setEscaladaNews] = useState<EscaladaNews[]>([]);
   const [selectedCotacoes, setSelectedCotacoes] = useState<SelectedCotacao[]>([]);
   const [expandedPortals, setExpandedPortals] = useState<Record<string, boolean>>({});
-  const [portalOrder, setPortalOrder] = useState<string[]>([]);
   const [summaryPopup, setSummaryPopup] = useState<{ title: string; resumo: string; tempoLeitura: string } | null>(null);
   const [loadingSummary, setLoadingSummary] = useState(false);
   const [wizardOpen, setWizardOpen] = useState(false);
@@ -216,6 +215,10 @@ export default function NoticiasPanel() {
   const [programas, setProgramas] = useState<{ id: string; nome: string }[]>([]);
   const [showAddSiteInput, setShowAddSiteInput] = useState(false);
   const [hoveredImage, setHoveredImage] = useState<{ url: string; x: number; y: number } | null>(null);
+  const [showNoticiaAvulsaInput, setShowNoticiaAvulsaInput] = useState(false);
+  const [noticiaAvulsaUrl, setNoticiaAvulsaUrl] = useState("");
+  const [noticiasAvulsas, setNoticiasAvulsas] = useState<NewsItem[]>([]);
+  const [loadingAvulsa, setLoadingAvulsa] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -241,17 +244,7 @@ export default function NoticiasPanel() {
     loadDb();
   }, [user]);
 
-  useEffect(() => {
-    const customNames = customSites.map(s => s.name);
-    const defaultNames = DEFAULT_PORTALS.map(p => p.name);
-    setPortalOrder([...customNames, ...defaultNames]);
-  }, [customSites]);
-
   const allPortals = [...customSites, ...DEFAULT_PORTALS];
-  const orderedPortals = portalOrder
-    .map(name => allPortals.find(p => p.name === name))
-    .filter(Boolean) as Portal[];
-  const portalDrag = useDragReorder(portalOrder, setPortalOrder);
 
   const loadAll = async () => {
     setLoading(true);
@@ -305,6 +298,38 @@ export default function NoticiasPanel() {
     if (siteId) {
       await supabase.from("custom_news_sites").delete().eq("id", siteId);
     }
+  };
+
+  const addNoticiaAvulsa = async () => {
+    if (!noticiaAvulsaUrl.trim()) return;
+    const url = noticiaAvulsaUrl.trim();
+    setLoadingAvulsa(true);
+    try {
+      // Try to fetch the page title via proxy
+      let title = url;
+      try {
+        const res = await fetch(`${PROXY}${encodeURIComponent(url)}`, { signal: AbortSignal.timeout(8000) });
+        const html = await res.text();
+        const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+        if (titleMatch) title = decodeHtmlEntities(titleMatch[1].trim());
+        // Try og:image
+        let thumbnail = "";
+        const ogImageMatch = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i);
+        if (ogImageMatch) thumbnail = ogImageMatch[1];
+        setNoticiasAvulsas(prev => [...prev, { title, link: url, thumbnail }]);
+      } catch {
+        setNoticiasAvulsas(prev => [...prev, { title, link: url }]);
+      }
+    } catch {
+      setNoticiasAvulsas(prev => [...prev, { title: url, link: url }]);
+    }
+    setNoticiaAvulsaUrl("");
+    setShowNoticiaAvulsaInput(false);
+    setLoadingAvulsa(false);
+  };
+
+  const removeNoticiaAvulsa = (index: number) => {
+    setNoticiasAvulsas(prev => prev.filter((_, i) => i !== index));
   };
 
   const addToSelected = async (portal: string, news: NewsItem) => {
@@ -396,12 +421,19 @@ export default function NoticiasPanel() {
           >
             <Newspaper size={10} /> Montar Jornal
           </button>
-          <button
-            onClick={() => setShowAddSiteInput(prev => !prev)}
+           <button
+            onClick={() => { setShowAddSiteInput(prev => !prev); setShowNoticiaAvulsaInput(false); }}
             className="flex items-center gap-1 px-2.5 py-1 rounded-full font-semibold text-[10px] transition-all"
             style={{ backgroundColor: "#0d0446", color: "#ffffff" }}
           >
             <Plus size={10} /> Adicionar Site
+          </button>
+          <button
+            onClick={() => { setShowNoticiaAvulsaInput(prev => !prev); setShowAddSiteInput(false); }}
+            className="flex items-center gap-1 px-2.5 py-1 rounded-full font-semibold text-[10px] transition-all"
+            style={{ backgroundColor: "#0d0446", color: "#ffffff" }}
+          >
+            <LinkIcon size={10} /> Notícia Avulsa
           </button>
         </div>
         <button onClick={() => { loadAll(); loadCotacoes(); }} disabled={loading}
@@ -428,6 +460,29 @@ export default function NoticiasPanel() {
             <Plus size={12} /> Adicionar
           </button>
           <button onClick={() => setShowAddSiteInput(false)} className="px-2 py-1 rounded-full" style={{ color: "#0d0446" }}>
+            <X size={14} />
+          </button>
+        </div>
+      )}
+
+      {showNoticiaAvulsaInput && (
+        <div className="flex gap-2 animate-fade-in">
+          <input value={noticiaAvulsaUrl} onChange={(e) => setNoticiaAvulsaUrl(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") addNoticiaAvulsa(); }}
+            placeholder="URL da notícia (ex: https://site.com/noticia)"
+            className="flex-1 px-3 py-1 outline-none transition-colors text-xs"
+            style={{ backgroundColor: "#ffffff", border: "1px solid #0d0446", color: "#0d0446", borderRadius: "20px" }}
+            onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
+            onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
+            autoFocus
+          />
+          <button onClick={addNoticiaAvulsa} disabled={loadingAvulsa}
+            className="px-3 py-1 font-bold transition-all flex items-center gap-1 text-xs"
+            style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "20px" }}
+          >
+            {loadingAvulsa ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />} Adicionar
+          </button>
+          <button onClick={() => setShowNoticiaAvulsaInput(false)} className="px-2 py-1 rounded-full" style={{ color: "#0d0446" }}>
             <X size={14} />
           </button>
         </div>
@@ -492,7 +547,7 @@ export default function NoticiasPanel() {
             </div>
           </div>
 
-          {/* News Portals Accordion */}
+          {/* News Portals Accordion - Default only */}
           <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)", width: (jornalConfig || wizardOpen) ? "100%" : "50%" }}>
             <div className="px-3 py-2 font-bold text-xs tracking-wide text-white rounded-t-xl" style={{ backgroundColor: "#0d0446" }}>
               📰 Portais de Notícias
@@ -504,7 +559,7 @@ export default function NoticiasPanel() {
               </div>
             ) : (
               <Accordion type="multiple" className="w-full">
-                {orderedPortals.map(portal => {
+                {DEFAULT_PORTALS.map(portal => {
                   const news = newsByPortal[portal.name] || [];
                   return (
                     <AccordionItem key={portal.name} value={portal.name} className="border-b-0" style={{ borderBottom: "1px solid rgba(13,4,70,0.06)" }}>
@@ -515,46 +570,25 @@ export default function NoticiasPanel() {
                           <span className="text-[9px] font-normal px-1.5 rounded-full" style={{ backgroundColor: "rgba(46,193,247,0.1)", color: "#2ec1f7" }}>
                             {news.length}
                           </span>
-                          {customSites.some(s => s.name === portal.name) && (
-                            <button
-                              onClick={(e) => { e.stopPropagation(); removeCustomSite(portal.name); }}
-                              className="ml-auto p-0.5 rounded hover:bg-red-50 transition-colors"
-                              title="Remover site"
-                            >
-                              <Trash2 size={11} className="text-red-400 hover:text-red-600" />
-                            </button>
-                          )}
                         </span>
                       </AccordionTrigger>
                       <AccordionContent className="pb-0">
                         <div className="divide-y" style={{ borderColor: "rgba(13,4,70,0.04)" }}>
                           {news.map((item, idx) => (
-                            <div
-                              key={idx}
-                              draggable
-                              onDragStart={(e) => {
-                                e.dataTransfer.setData("text/plain", JSON.stringify({ portal: portal.name, title: item.title, imageUrl: item.thumbnail || "" }));
-                              }}
+                            <div key={idx} draggable
+                              onDragStart={(e) => { e.dataTransfer.setData("text/plain", JSON.stringify({ portal: portal.name, title: item.title, imageUrl: item.thumbnail || "" })); }}
                               className="flex items-center gap-2 px-3 py-1.5 text-[11px] hover:bg-gray-50 cursor-grab active:cursor-grabbing group"
                             >
                               <GripVertical size={10} className="shrink-0 opacity-20" />
                               <span className="flex-1 line-clamp-1" style={{ color: "#0d0446" }}>{item.title}</span>
-                              <a
-                                href={item.link}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                onClick={(e) => e.stopPropagation()}
-                                className="shrink-0 p-0.5 rounded hover:bg-blue-50 transition-opacity"
-                                title="Ler notícia"
-                              >
+                              <a href={item.link} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}
+                                className="shrink-0 p-0.5 rounded hover:bg-blue-50 transition-opacity" title="Ler notícia">
                                 <BookOpen size={12} style={{ color: "#2ec1f7" }} />
                               </a>
                               {item.thumbnail && (
-                                <div
-                                  className="shrink-0 relative"
+                                <div className="shrink-0 relative"
                                   onMouseEnter={(e) => handleImageHover(e, item.thumbnail || "")}
-                                  onMouseLeave={() => setHoveredImage(null)}
-                                >
+                                  onMouseLeave={() => setHoveredImage(null)}>
                                   <ImageIcon size={12} style={{ color: "rgba(13,4,70,0.3)" }} className="cursor-pointer hover:opacity-70" />
                                 </div>
                               )}
@@ -568,6 +602,106 @@ export default function NoticiasPanel() {
               </Accordion>
             )}
           </div>
+
+          {/* Sites Adicionados Box */}
+          {customSites.length > 0 && (
+            <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)", width: (jornalConfig || wizardOpen) ? "100%" : "50%" }}>
+              <div className="px-3 py-2 font-bold text-xs tracking-wide text-white rounded-t-xl" style={{ backgroundColor: "#0d0446" }}>
+                🌐 Sites Adicionados
+              </div>
+              {loading ? (
+                <div className="p-4 flex items-center gap-2">
+                  <Loader2 size={14} className="animate-spin" style={{ color: "#2ec1f7" }} />
+                  <span className="text-xs" style={{ color: "rgba(13,4,70,0.5)" }}>Carregando...</span>
+                </div>
+              ) : (
+                <Accordion type="multiple" className="w-full">
+                  {customSites.map(site => {
+                    const news = newsByPortal[site.name] || [];
+                    return (
+                      <AccordionItem key={site.name} value={site.name} className="border-b-0" style={{ borderBottom: "1px solid rgba(13,4,70,0.06)" }}>
+                        <AccordionTrigger className="px-3 py-2 text-xs font-bold hover:no-underline" style={{ color: "#0d0446" }}>
+                          <span className="flex items-center gap-2 flex-1">
+                            <Newspaper size={12} style={{ color: "#2ec1f7" }} />
+                            {site.name}
+                            <span className="text-[9px] font-normal px-1.5 rounded-full" style={{ backgroundColor: "rgba(46,193,247,0.1)", color: "#2ec1f7" }}>
+                              {news.length}
+                            </span>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); removeCustomSite(site.name); }}
+                              className="ml-auto p-0.5 rounded hover:bg-red-50 transition-colors"
+                              title="Remover site"
+                            >
+                              <Trash2 size={11} className="text-red-400 hover:text-red-600" />
+                            </button>
+                          </span>
+                        </AccordionTrigger>
+                        <AccordionContent className="pb-0">
+                          <div className="divide-y" style={{ borderColor: "rgba(13,4,70,0.04)" }}>
+                            {news.map((item, idx) => (
+                              <div key={idx} draggable
+                                onDragStart={(e) => { e.dataTransfer.setData("text/plain", JSON.stringify({ portal: site.name, title: item.title, imageUrl: item.thumbnail || "" })); }}
+                                className="flex items-center gap-2 px-3 py-1.5 text-[11px] hover:bg-gray-50 cursor-grab active:cursor-grabbing group"
+                              >
+                                <GripVertical size={10} className="shrink-0 opacity-20" />
+                                <span className="flex-1 line-clamp-1" style={{ color: "#0d0446" }}>{item.title}</span>
+                                <a href={item.link} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}
+                                  className="shrink-0 p-0.5 rounded hover:bg-blue-50 transition-opacity" title="Ler notícia">
+                                  <BookOpen size={12} style={{ color: "#2ec1f7" }} />
+                                </a>
+                                {item.thumbnail && (
+                                  <div className="shrink-0 relative"
+                                    onMouseEnter={(e) => handleImageHover(e, item.thumbnail || "")}
+                                    onMouseLeave={() => setHoveredImage(null)}>
+                                    <ImageIcon size={12} style={{ color: "rgba(13,4,70,0.3)" }} className="cursor-pointer hover:opacity-70" />
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </AccordionContent>
+                      </AccordionItem>
+                    );
+                  })}
+                </Accordion>
+              )}
+            </div>
+          )}
+
+          {/* Notícia Avulsa Box */}
+          {noticiasAvulsas.length > 0 && (
+            <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)", width: (jornalConfig || wizardOpen) ? "100%" : "50%" }}>
+              <div className="px-3 py-2 font-bold text-xs tracking-wide text-white rounded-t-xl" style={{ backgroundColor: "#0d0446" }}>
+                📌 Notícia Avulsa
+              </div>
+              <div className="divide-y" style={{ borderColor: "rgba(13,4,70,0.04)" }}>
+                {noticiasAvulsas.map((item, idx) => (
+                  <div key={idx} draggable
+                    onDragStart={(e) => { e.dataTransfer.setData("text/plain", JSON.stringify({ portal: "Avulsa", title: item.title, imageUrl: item.thumbnail || "" })); }}
+                    className="flex items-center gap-2 px-3 py-1.5 text-[11px] hover:bg-gray-50 cursor-grab active:cursor-grabbing group"
+                  >
+                    <GripVertical size={10} className="shrink-0 opacity-20" />
+                    <span className="flex-1 line-clamp-1" style={{ color: "#0d0446" }}>{item.title}</span>
+                    <a href={item.link} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}
+                      className="shrink-0 p-0.5 rounded hover:bg-blue-50 transition-opacity" title="Ler notícia">
+                      <BookOpen size={12} style={{ color: "#2ec1f7" }} />
+                    </a>
+                    {item.thumbnail && (
+                      <div className="shrink-0 relative"
+                        onMouseEnter={(e) => handleImageHover(e, item.thumbnail || "")}
+                        onMouseLeave={() => setHoveredImage(null)}>
+                        <ImageIcon size={12} style={{ color: "rgba(13,4,70,0.3)" }} className="cursor-pointer hover:opacity-70" />
+                      </div>
+                    )}
+                    <button onClick={() => removeNoticiaAvulsa(idx)}
+                      className="shrink-0 p-0.5 rounded hover:bg-red-50 transition-colors" title="Remover">
+                      <Trash2 size={11} className="text-red-400 hover:text-red-600" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* RIGHT COLUMN - Wizard or Jornal Builder */}
