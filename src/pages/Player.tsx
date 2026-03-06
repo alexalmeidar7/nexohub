@@ -974,6 +974,10 @@ export default function PlayerPage() {
     if (!currentProg?.apresentador_id) return null;
     return apresentadores.find(a => a.id === currentProg.apresentador_id) || null;
   }, [currentProg, apresentadores]);
+  const nextPresenter = useMemo(() => {
+    if (!nextProg?.apresentador_id) return null;
+    return apresentadores.find(a => a.id === nextProg.apresentador_id) || null;
+  }, [nextProg, apresentadores]);
 
   // For YouTube channels, show the current video title as "No Ar"
   const currentYtVideo = isYoutube && selectedVideoId ? youtubeVideos.find(v => v.videoId === selectedVideoId) : null;
@@ -1502,25 +1506,30 @@ export default function PlayerPage() {
           </div>
 
           {/* Next / Schedule */}
-          <div className="pl-3 border-l border-white/10 flex-1 min-w-0">
-            <span className="text-[10px] font-bold uppercase" style={{ color: "#e60000" }}>A seguir:</span>
-            <div className="text-white text-sm truncate">
-              {isYoutube ? (nextYtVideo?.title || "Sem vídeo") : (nextProg?.nome || "Sem programação")}
-            </div>
-            {!isYoutube && (
-              <span className="text-[10px]" style={{ color: "#e60000" }}>
-                {nextProg ? `${nextProg.horario_inicio} - ${nextProg.horario_fim}` : "--:-- - --:--"}
-              </span>
+          <div className="pl-3 border-l border-white/10 flex-1 min-w-0 flex items-center gap-3">
+            {!isYoutube && nextPresenter?.foto && (
+              <img src={nextPresenter.foto} alt={nextPresenter.nome} className="w-10 h-10 rounded-full object-cover shrink-0 border border-white/20" />
             )}
-            <div className="mt-1">
-              <button onClick={() => setGradeOpen(true)}
-                className="flex items-center gap-1 text-white text-[10px] font-bold uppercase px-3 py-1 rounded-full transition-all"
-                style={{ backgroundColor: "#e60000", border: "1px solid transparent" }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = "#ed0808"; e.currentTarget.style.backgroundColor = "#000"; }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = "transparent"; e.currentTarget.style.backgroundColor = "#e60000"; }}
-              >
-                + Grade
-              </button>
+            <div className="min-w-0">
+              <span className="text-[10px] font-bold uppercase" style={{ color: "#e60000" }}>A seguir:</span>
+              <div className="text-white text-sm truncate">
+                {isYoutube ? (nextYtVideo?.title || "Sem vídeo") : (nextProg?.nome || "Sem programação")}
+              </div>
+              {!isYoutube && (
+                <span className="text-[10px]" style={{ color: "#e60000" }}>
+                  {nextProg ? `${nextProg.horario_inicio} - ${nextProg.horario_fim}` : "--:-- - --:--"}
+                </span>
+              )}
+              <div className="mt-1">
+                <button onClick={() => setGradeOpen(true)}
+                  className="flex items-center gap-1 text-white text-[10px] font-bold uppercase px-3 py-1 rounded-full transition-all"
+                  style={{ backgroundColor: "#e60000", border: "1px solid transparent" }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = "#ed0808"; e.currentTarget.style.backgroundColor = "#000"; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = "transparent"; e.currentTarget.style.backgroundColor = "#e60000"; }}
+                >
+                  + Grade
+                </button>
+              </div>
             </div>
           </div>
         </div>
