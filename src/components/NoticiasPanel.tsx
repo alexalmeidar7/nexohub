@@ -372,8 +372,8 @@ export default function NoticiasPanel() {
   return (
     <div className="animate-fade-in space-y-6">
       <div className="flex items-center justify-between">
-        <h3 className="text-xl font-bold" style={{ color: "#0d0446" }}>Notícias do momento</h3>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          <h3 className="text-xl font-bold" style={{ color: "#0d0446" }}>Notícias do momento</h3>
           <button
             onClick={() => setWizardOpen(true)}
             className="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-white font-bold text-sm transition-all hover:opacity-90"
@@ -381,31 +381,45 @@ export default function NoticiasPanel() {
           >
             <Newspaper size={14} /> Montar Jornal
           </button>
-          <button onClick={() => { loadAll(); loadCotacoes(); }} disabled={loading}
-            className="text-muted-foreground hover:text-primary transition-colors disabled:opacity-50">
-            <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
+          <button
+            onClick={() => setShowAddSiteInput(prev => !prev)}
+            className="flex items-center gap-1.5 px-4 py-1.5 rounded-full font-bold text-sm transition-all"
+            style={{ backgroundColor: "#0d0446", color: "#ffffff" }}
+          >
+            <Plus size={14} /> Adicionar Site
           </button>
         </div>
-      </div>
-
-      <div className="flex gap-2">
-        <input value={customUrl} onChange={(e) => setCustomUrl(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && addCustomSite()}
-          placeholder="URL do RSS feed (ex: https://site.com/feed)"
-          className="flex-1 px-4 py-1.5 outline-none transition-colors text-sm"
-          style={{ backgroundColor: "#ffffff", border: "1px solid #0d0446", color: "#0d0446", borderRadius: "20px" }}
-          onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
-          onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
-        />
-        <button onClick={addCustomSite}
-          className="px-5 py-1.5 font-bold transition-all flex items-center gap-1"
-          style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "20px", border: "2px solid #0d0446" }}
-          onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#ffffff"; e.currentTarget.style.color = "#0d0446"; }}
-          onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#0d0446"; e.currentTarget.style.color = "#ffffff"; }}
-        >
-          <Plus size={16} /> Adicionar Site
+        <button onClick={() => { loadAll(); loadCotacoes(); }} disabled={loading}
+          className="text-muted-foreground hover:text-primary transition-colors disabled:opacity-50">
+          <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
         </button>
       </div>
+
+      {showAddSiteInput && (
+        <div className="flex gap-2 animate-fade-in">
+          <input value={customUrl} onChange={(e) => setCustomUrl(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") { addCustomSite(); setShowAddSiteInput(false); } }}
+            placeholder="URL do RSS feed (ex: https://site.com/feed)"
+            className="flex-1 px-4 py-1.5 outline-none transition-colors text-sm"
+            style={{ backgroundColor: "#ffffff", border: "1px solid #0d0446", color: "#0d0446", borderRadius: "20px" }}
+            onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
+            onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
+            autoFocus
+          />
+          <button onClick={() => { addCustomSite(); setShowAddSiteInput(false); }}
+            className="px-5 py-1.5 font-bold transition-all flex items-center gap-1"
+            style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "20px", border: "2px solid #0d0446" }}
+          >
+            <Plus size={16} /> Adicionar
+          </button>
+          <button onClick={() => setShowAddSiteInput(false)}
+            className="px-3 py-1.5 rounded-full text-sm"
+            style={{ color: "#0d0446" }}
+          >
+            <X size={16} />
+          </button>
+        </div>
+      )}
 
       {/* Cotações em linha */}
       <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)" }}>
