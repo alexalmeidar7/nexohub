@@ -216,6 +216,7 @@ export default function NoticiasPanel() {
   const [wizardOpen, setWizardOpen] = useState(false);
   const [jornalConfig, setJornalConfig] = useState<JornalConfig | null>(null);
   const [programas, setProgramas] = useState<{ id: string; nome: string }[]>([]);
+  const [showAddSiteInput, setShowAddSiteInput] = useState(false);
 
   // Load programas for wizard
   useEffect(() => {
@@ -371,8 +372,8 @@ export default function NoticiasPanel() {
   return (
     <div className="animate-fade-in space-y-6">
       <div className="flex items-center justify-between">
-        <h3 className="text-xl font-bold" style={{ color: "#0d0446" }}>Notícias do momento</h3>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          <h3 className="text-xl font-bold" style={{ color: "#0d0446" }}>Notícias do momento</h3>
           <button
             onClick={() => setWizardOpen(true)}
             className="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-white font-bold text-sm transition-all hover:opacity-90"
@@ -380,62 +381,100 @@ export default function NoticiasPanel() {
           >
             <Newspaper size={14} /> Montar Jornal
           </button>
-          <button onClick={() => { loadAll(); loadCotacoes(); }} disabled={loading}
-            className="text-muted-foreground hover:text-primary transition-colors disabled:opacity-50">
-            <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
+          <button
+            onClick={() => setShowAddSiteInput(prev => !prev)}
+            className="flex items-center gap-1.5 px-4 py-1.5 rounded-full font-bold text-sm transition-all"
+            style={{ backgroundColor: "#0d0446", color: "#ffffff" }}
+          >
+            <Plus size={14} /> Adicionar Site
           </button>
         </div>
-      </div>
-
-      <div className="flex gap-2">
-        <input value={customUrl} onChange={(e) => setCustomUrl(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && addCustomSite()}
-          placeholder="URL do RSS feed (ex: https://site.com/feed)"
-          className="flex-1 px-4 py-1.5 outline-none transition-colors text-sm"
-          style={{ backgroundColor: "#ffffff", border: "1px solid #0d0446", color: "#0d0446", borderRadius: "20px" }}
-          onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
-          onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
-        />
-        <button onClick={addCustomSite}
-          className="px-5 py-1.5 font-bold transition-all flex items-center gap-1"
-          style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "20px", border: "2px solid #0d0446" }}
-          onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#ffffff"; e.currentTarget.style.color = "#0d0446"; }}
-          onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#0d0446"; e.currentTarget.style.color = "#ffffff"; }}
-        >
-          <Plus size={16} /> Adicionar Site
+        <button onClick={() => { loadAll(); loadCotacoes(); }} disabled={loading}
+          className="text-muted-foreground hover:text-primary transition-colors disabled:opacity-50">
+          <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
         </button>
       </div>
 
-      {/* Cotações em linha */}
+      {showAddSiteInput && (
+        <div className="flex gap-2 animate-fade-in">
+          <input value={customUrl} onChange={(e) => setCustomUrl(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") { addCustomSite(); setShowAddSiteInput(false); } }}
+            placeholder="URL do RSS feed (ex: https://site.com/feed)"
+            className="flex-1 px-4 py-1.5 outline-none transition-colors text-sm"
+            style={{ backgroundColor: "#ffffff", border: "1px solid #0d0446", color: "#0d0446", borderRadius: "20px" }}
+            onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
+            onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
+            autoFocus
+          />
+          <button onClick={() => { addCustomSite(); setShowAddSiteInput(false); }}
+            className="px-5 py-1.5 font-bold transition-all flex items-center gap-1"
+            style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "20px", border: "2px solid #0d0446" }}
+          >
+            <Plus size={16} /> Adicionar
+          </button>
+          <button onClick={() => setShowAddSiteInput(false)}
+            className="px-3 py-1.5 rounded-full text-sm"
+            style={{ color: "#0d0446" }}
+          >
+            <X size={16} />
+          </button>
+        </div>
+      )}
+
+      {/* Cotações com slide */}
       <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)" }}>
         <div className={headerStyle} style={headerInline}>💹 Cotações - Bolsas e Moedas</div>
-        <div className="p-4">
+        <div className="p-4 overflow-hidden">
           {loadingCotacoes ? (
             <p className="text-sm" style={{ color: "rgba(13,4,70,0.5)" }}>Carregando cotações...</p>
           ) : cotacoes.length === 0 ? (
             <p className="text-sm" style={{ color: "rgba(13,4,70,0.5)" }}>Cotações indisponíveis</p>
           ) : (
-            <div className="flex flex-wrap gap-3">
-              {cotacoes.map(c => (
-                <div key={c.name} className="rounded-lg px-3 py-2 flex items-center gap-2 text-xs" style={{ backgroundColor: "rgba(13,4,70,0.04)" }}>
-                  <span className="font-semibold whitespace-nowrap" style={{ color: "#0d0446" }}>{c.name}</span>
-                  <span className="whitespace-nowrap" style={{ color: "#0d0446" }}>{c.value}</span>
-                  <span className={`flex items-center gap-0.5 whitespace-nowrap ${
-                    c.direction === "up" ? "text-green-500" : c.direction === "down" ? "text-red-500" : ""
-                  }`} style={c.direction !== "up" && c.direction !== "down" ? { color: "rgba(13,4,70,0.4)" } : undefined}>
-                    {c.direction === "up" ? <TrendingUp size={10} /> : c.direction === "down" ? <TrendingDown size={10} /> : <Minus size={10} />}
-                    {c.change}
-                  </span>
-                </div>
-              ))}
+            <div className="relative overflow-hidden">
+              <style>{`
+                @keyframes cotacoes-scroll {
+                  0% { transform: translateX(0); }
+                  100% { transform: translateX(-50%); }
+                }
+                .cotacoes-marquee {
+                  display: flex;
+                  gap: 12px;
+                  animation: cotacoes-scroll 30s linear infinite;
+                  width: max-content;
+                }
+                .cotacoes-marquee:hover {
+                  animation-play-state: paused;
+                }
+              `}</style>
+              <div className="cotacoes-marquee">
+                {[...cotacoes, ...cotacoes].map((c, i) => (
+                  <div key={`${c.name}-${i}`} className="rounded-lg px-3 py-2 flex items-center gap-2 text-xs shrink-0" style={{ backgroundColor: "rgba(13,4,70,0.04)" }}>
+                    <span className="font-semibold whitespace-nowrap" style={{ color: "#0d0446" }}>{c.name}</span>
+                    <span className="whitespace-nowrap" style={{ color: "#0d0446" }}>{c.value}</span>
+                    <span className={`flex items-center gap-0.5 whitespace-nowrap ${
+                      c.direction === "up" ? "text-green-500" : c.direction === "down" ? "text-red-500" : ""
+                    }`} style={c.direction !== "up" && c.direction !== "down" ? { color: "rgba(13,4,70,0.4)" } : undefined}>
+                      {c.direction === "up" ? <TrendingUp size={10} /> : c.direction === "down" ? <TrendingDown size={10} /> : <Minus size={10} />}
+                      {c.change}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>
       </div>
 
+      {/* Jornal Block Builder */}
+      {jornalConfig && (
+        <JornalBlockBuilder
+          config={jornalConfig}
+          selectedNews={selectedNews.map(sn => ({ portal: sn.portal, title: sn.title, imageUrl: sn.imageUrl }))}
+          onClose={() => setJornalConfig(null)}
+        />
+      )}
 
-
-
+      {/* XML abaixo do jornal */}
       {(selectedNews.length > 0 || selectedCotacoes.length > 0) && (
         <XmlLinkRow label="XML NOTICIAS" xmlContent={(() => {
           const newsXml = selectedNews.map(sn =>
@@ -483,14 +522,7 @@ export default function NoticiasPanel() {
         }}
       />
 
-      {/* Jornal Block Builder */}
-      {jornalConfig && (
-        <JornalBlockBuilder
-          config={jornalConfig}
-          selectedNews={selectedNews.map(sn => ({ portal: sn.portal, title: sn.title, imageUrl: sn.imageUrl }))}
-          onClose={() => setJornalConfig(null)}
-        />
-      )}
+
     </div>
   );
 }
