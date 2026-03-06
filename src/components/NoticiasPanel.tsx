@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { RefreshCw, ExternalLink, Plus, TrendingUp, TrendingDown, Minus, Trash2, ChevronDown, ChevronUp, ListPlus, GripVertical, BookOpen, Loader2, X, Image as ImageIcon, Link as LinkIcon } from "lucide-react";
+import { RefreshCw, ExternalLink, Plus, TrendingUp, TrendingDown, Minus, Trash2, ChevronDown, ChevronUp, ListPlus, GripVertical, BookOpen, Loader2, X, Image as ImageIcon, Link as LinkIcon, Newspaper } from "lucide-react";
 import XmlLinkRow from "./XmlLinkRow";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import MontarJornalWizard, { type JornalConfig } from "./MontarJornalWizard";
+import JornalBlockBuilder from "./JornalBlockBuilder";
 
 interface NewsItem {
   title: string;
@@ -211,6 +213,17 @@ export default function NoticiasPanel() {
   const [portalOrder, setPortalOrder] = useState<string[]>([]);
   const [summaryPopup, setSummaryPopup] = useState<{ title: string; resumo: string; tempoLeitura: string } | null>(null);
   const [loadingSummary, setLoadingSummary] = useState(false);
+  const [wizardOpen, setWizardOpen] = useState(false);
+  const [jornalConfig, setJornalConfig] = useState<JornalConfig | null>(null);
+  const [programas, setProgramas] = useState<{ id: string; nome: string }[]>([]);
+
+  // Load programas for wizard
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("programas").select("id, nome").then(({ data }) => {
+      if (data) setProgramas(data);
+    });
+  }, [user]);
 
   // Load from DB
   useEffect(() => {
@@ -359,10 +372,19 @@ export default function NoticiasPanel() {
     <div className="animate-fade-in space-y-6">
       <div className="flex items-center justify-between">
         <h3 className="text-xl font-bold" style={{ color: "#0d0446" }}>Notícias do momento</h3>
-        <button onClick={() => { loadAll(); loadCotacoes(); }} disabled={loading}
-          className="text-muted-foreground hover:text-primary transition-colors disabled:opacity-50">
-          <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setWizardOpen(true)}
+            className="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-white font-bold text-sm transition-all hover:opacity-90"
+            style={{ backgroundColor: "#2ec1f7" }}
+          >
+            <Newspaper size={14} /> Montar Jornal
+          </button>
+          <button onClick={() => { loadAll(); loadCotacoes(); }} disabled={loading}
+            className="text-muted-foreground hover:text-primary transition-colors disabled:opacity-50">
+            <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
+          </button>
+        </div>
       </div>
 
       <div className="flex gap-2">
@@ -643,6 +665,25 @@ export default function NoticiasPanel() {
             )}
           </div>
         </div>
+      )}
+      {/* Montar Jornal Wizard */}
+      <MontarJornalWizard
+        open={wizardOpen}
+        onOpenChange={setWizardOpen}
+        programas={programas}
+        onFinish={(config) => {
+          setJornalConfig(config);
+          setWizardOpen(false);
+        }}
+      />
+
+      {/* Jornal Block Builder */}
+      {jornalConfig && (
+        <JornalBlockBuilder
+          config={jornalConfig}
+          selectedNews={selectedNews.map(sn => ({ portal: sn.portal, title: sn.title, imageUrl: sn.imageUrl }))}
+          onClose={() => setJornalConfig(null)}
+        />
       )}
     </div>
   );
