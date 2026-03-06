@@ -122,7 +122,7 @@ export default function MontarJornalWizard({ open, onOpenChange, programas, onFi
   if (mounting) {
     return (
       <Dialog open={open} onOpenChange={(v) => { if (!v) { reset(); onOpenChange(false); } }}>
-        <DialogContent className="sm:max-w-md" style={{ backgroundColor: "#ffffff", border: "2px solid #2ec1f7" }}>
+        <DialogContent className="sm:max-w-md" style={{ backgroundColor: "#ffffff", border: "none" }}>
           <div className="flex flex-col items-center justify-center py-12 gap-4">
             <div className="animate-spin rounded-full h-12 w-12 border-4 border-t-transparent" style={{ borderColor: "#2ec1f7", borderTopColor: "transparent" }} />
             <p className="text-lg font-bold" style={{ color: "#0d0446" }}>Montando Programa...</p>
@@ -135,7 +135,7 @@ export default function MontarJornalWizard({ open, onOpenChange, programas, onFi
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) { reset(); onOpenChange(false); } }}>
-      <DialogContent className="sm:max-w-lg" style={{ backgroundColor: "#ffffff", border: "2px solid #2ec1f7" }}>
+      <DialogContent className="sm:max-w-lg" style={{ backgroundColor: "#ffffff", border: "none" }}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2" style={{ color: "#0d0446" }}>
             <Newspaper size={20} style={{ color: "#2ec1f7" }} />
@@ -159,7 +159,7 @@ export default function MontarJornalWizard({ open, onOpenChange, programas, onFi
             <div className="space-y-3">
               <label className="text-sm font-semibold" style={{ color: "#0d0446" }}>Nome do Programa</label>
               <Select value={programaId} onValueChange={setProgramaId}>
-                <SelectTrigger style={{ borderColor: "#2ec1f7" }}>
+                <SelectTrigger style={{ borderColor: "#2ec1f7", borderRadius: "9999px", backgroundColor: "#2ec1f7", color: "#ffffff" }}>
                   <SelectValue placeholder="Selecione um programa" />
                 </SelectTrigger>
                 <SelectContent>
