@@ -666,6 +666,25 @@ export default function NoticiasPanel() {
           </div>
         </div>
       )}
+      {/* Montar Jornal Wizard */}
+      <MontarJornalWizard
+        open={wizardOpen}
+        onOpenChange={setWizardOpen}
+        programas={programas}
+        onFinish={(config) => {
+          setJornalConfig(config);
+          setWizardOpen(false);
+        }}
+      />
+
+      {/* Jornal Block Builder */}
+      {jornalConfig && (
+        <JornalBlockBuilder
+          config={jornalConfig}
+          selectedNews={selectedNews.map(sn => ({ portal: sn.portal, title: sn.title, imageUrl: sn.imageUrl }))}
+          onClose={() => setJornalConfig(null)}
+        />
+      )}
     </div>
   );
 }
