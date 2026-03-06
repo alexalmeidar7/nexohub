@@ -1428,6 +1428,18 @@ export default function PlayerPage() {
         </Suspense>
       )}
 
+      {/* Karaoke overlay */}
+      {karaokeEnabled && playing && (
+        <Suspense fallback={null}>
+          <KaraokeOverlay
+            artist={musicData?.artista}
+            title={musicData?.titulo}
+            audioElement={audioRef.current}
+            visible={karaokeEnabled}
+          />
+        </Suspense>
+      )}
+
       {/* Idle state */}
       {!playing && (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#1a1a1a] z-10">
