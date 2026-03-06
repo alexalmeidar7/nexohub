@@ -1095,7 +1095,6 @@ export default function PlayerPage() {
   if (loading) {
     return <PlayerSkeleton status={loadingStatus} />;
   }
-  }
 
   return (
     <div ref={containerRef} className="relative h-screen w-screen bg-black overflow-hidden select-none cursor-default">
