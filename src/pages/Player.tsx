@@ -36,6 +36,7 @@ const KaraokeOverlay = lazy(() => import("@/components/KaraokeOverlay"));
 import PlayerShopProduct from "@/components/player/PlayerShopProduct";
 import PreRollOverlay from "@/components/PreRollOverlay";
 import PlayerSkeleton from "@/components/skeletons/PlayerSkeleton";
+import { normalizeMusicText } from "@/lib/textEncoding";
 
 // Dynamic HLS loader — cached after first import
 let hlsModule: typeof import("hls.js") | null = null;
