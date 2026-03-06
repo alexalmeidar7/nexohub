@@ -421,36 +421,60 @@ export default function NoticiasPanel() {
         </div>
       )}
 
-      {/* Cotações em linha */}
+      {/* Cotações com slide */}
       <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)" }}>
         <div className={headerStyle} style={headerInline}>💹 Cotações - Bolsas e Moedas</div>
-        <div className="p-4">
+        <div className="p-4 overflow-hidden">
           {loadingCotacoes ? (
             <p className="text-sm" style={{ color: "rgba(13,4,70,0.5)" }}>Carregando cotações...</p>
           ) : cotacoes.length === 0 ? (
             <p className="text-sm" style={{ color: "rgba(13,4,70,0.5)" }}>Cotações indisponíveis</p>
           ) : (
-            <div className="flex flex-wrap gap-3">
-              {cotacoes.map(c => (
-                <div key={c.name} className="rounded-lg px-3 py-2 flex items-center gap-2 text-xs" style={{ backgroundColor: "rgba(13,4,70,0.04)" }}>
-                  <span className="font-semibold whitespace-nowrap" style={{ color: "#0d0446" }}>{c.name}</span>
-                  <span className="whitespace-nowrap" style={{ color: "#0d0446" }}>{c.value}</span>
-                  <span className={`flex items-center gap-0.5 whitespace-nowrap ${
-                    c.direction === "up" ? "text-green-500" : c.direction === "down" ? "text-red-500" : ""
-                  }`} style={c.direction !== "up" && c.direction !== "down" ? { color: "rgba(13,4,70,0.4)" } : undefined}>
-                    {c.direction === "up" ? <TrendingUp size={10} /> : c.direction === "down" ? <TrendingDown size={10} /> : <Minus size={10} />}
-                    {c.change}
-                  </span>
-                </div>
-              ))}
+            <div className="relative overflow-hidden">
+              <style>{`
+                @keyframes cotacoes-scroll {
+                  0% { transform: translateX(0); }
+                  100% { transform: translateX(-50%); }
+                }
+                .cotacoes-marquee {
+                  display: flex;
+                  gap: 12px;
+                  animation: cotacoes-scroll 30s linear infinite;
+                  width: max-content;
+                }
+                .cotacoes-marquee:hover {
+                  animation-play-state: paused;
+                }
+              `}</style>
+              <div className="cotacoes-marquee">
+                {[...cotacoes, ...cotacoes].map((c, i) => (
+                  <div key={`${c.name}-${i}`} className="rounded-lg px-3 py-2 flex items-center gap-2 text-xs shrink-0" style={{ backgroundColor: "rgba(13,4,70,0.04)" }}>
+                    <span className="font-semibold whitespace-nowrap" style={{ color: "#0d0446" }}>{c.name}</span>
+                    <span className="whitespace-nowrap" style={{ color: "#0d0446" }}>{c.value}</span>
+                    <span className={`flex items-center gap-0.5 whitespace-nowrap ${
+                      c.direction === "up" ? "text-green-500" : c.direction === "down" ? "text-red-500" : ""
+                    }`} style={c.direction !== "up" && c.direction !== "down" ? { color: "rgba(13,4,70,0.4)" } : undefined}>
+                      {c.direction === "up" ? <TrendingUp size={10} /> : c.direction === "down" ? <TrendingDown size={10} /> : <Minus size={10} />}
+                      {c.change}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>
       </div>
 
+      {/* Jornal Block Builder */}
+      {jornalConfig && (
+        <JornalBlockBuilder
+          config={jornalConfig}
+          selectedNews={selectedNews.map(sn => ({ portal: sn.portal, title: sn.title, imageUrl: sn.imageUrl }))}
+          onClose={() => setJornalConfig(null)}
+        />
+      )}
 
-
-
+      {/* XML abaixo do jornal */}
       {(selectedNews.length > 0 || selectedCotacoes.length > 0) && (
         <XmlLinkRow label="XML NOTICIAS" xmlContent={(() => {
           const newsXml = selectedNews.map(sn =>
