@@ -1367,7 +1367,7 @@ export default function PlayerPage() {
           </div>
 
           {/* Program Info */}
-          <div className="px-5 min-w-0" style={{ flex: "0 1 320px" }}>
+          <div className="px-5 min-w-0" style={{ flex: "0 1 335px" }}>
             <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#e60000" }}>No Ar:</span>
             <MarqueeText className="text-white text-lg font-bold leading-tight" text={channelLabel} />
             {programLabel && (
