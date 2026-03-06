@@ -606,25 +606,6 @@ export default function PlayerPage() {
   useEffect(() => {
     if (!user) return;
 
-    const decodeEntities = (str: string) => {
-      const ta = document.createElement("textarea");
-      ta.innerHTML = str;
-      return ta.value;
-    };
-
-    const maybeFixMojibake = (str: string) => {
-      if (!/(Ã.|Â.|â[\u0080-\u00BF]|�)/.test(str)) return str;
-      try {
-        const charCodes = Array.from(str).map((char) => char.charCodeAt(0));
-        if (charCodes.some((code) => code > 255)) return str;
-        const fixed = new TextDecoder("utf-8", { fatal: false }).decode(Uint8Array.from(charCodes));
-        return fixed.includes("�") ? str : fixed;
-      } catch {
-        return str;
-      }
-    };
-
-    const normalizeMusicText = (str: string) => maybeFixMojibake(decodeEntities(str).trim());
 
     const parseXml = (xmlStr: string) => {
       try {
