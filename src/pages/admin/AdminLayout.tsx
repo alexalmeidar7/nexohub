@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate, useLocation } from "react-router-dom";
-import { LayoutDashboard, Users, Puzzle, MessageSquare, LogOut } from "lucide-react";
+import { LayoutDashboard, Users, Puzzle, MessageSquare, LogOut, ClipboardList } from "lucide-react";
 import logoMenu from "@/assets/logo-admin-menu.png";
 import {
   Tooltip,
