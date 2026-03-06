@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Pencil, Check, X, Eye, EyeOff } from "lucide-react";
+import { Loader2, Pencil, Check, X, Eye, EyeOff, MessageSquare } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
@@ -22,10 +22,12 @@ interface ClientRow {
 
 interface ClientCardProps {
   client: ClientRow;
+  clientEmail: string;
   modules: AvailableModule[];
   saving: string | null;
   onToggleModule: (userId: string, moduleKey: string, enabled: boolean) => void;
   onClientUpdated: () => void;
+  onSendMessage: (userId: string, nome: string) => void;
 }
 
 const inputStyle: React.CSSProperties = {
