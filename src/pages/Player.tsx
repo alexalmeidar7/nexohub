@@ -29,6 +29,7 @@ import {
 
 const PlayerChat = lazy(() => import("@/components/PlayerChat"));
 const AudioSpectrum = lazy(() => import("@/components/AudioSpectrum"));
+const AudioDualCard = lazy(() => import("@/components/AudioDualCard"));
 const PlayerGradeDialog = lazy(() => import("@/components/player/PlayerGradeDialog"));
 import PlayerShopProduct from "@/components/player/PlayerShopProduct";
 import PreRollOverlay from "@/components/PreRollOverlay";
@@ -1406,58 +1407,19 @@ export default function PlayerPage() {
         </div>
       )}
 
-      {/* Audio channel: presenter bg + music cover + info */}
+      {/* Audio channel: dual card layout */}
       {isAudio && playing && (
-        <div className="absolute inset-0 z-10">
-          <Suspense fallback={null}>
-            <AudioSpectrum audioElement={audioRef.current} />
-          </Suspense>
-          {currentPresenter?.foto && (
-            <div className="absolute inset-0 flex items-end z-[3]" style={{ left: "-250px" }}>
-              <div className="relative h-[92%]">
-                <img src={currentPresenter.foto} alt={currentPresenter.nome}
-                  className="h-full object-contain object-bottom animate-fade-in"
-                  style={{ animationDuration: "1s", imageRendering: "auto", filter: "none" }}
-                  loading="eager"
-                  decoding="async"
-                  srcSet={currentPresenter.foto.includes("supabase.co")
-                    ? `${currentPresenter.foto}?width=800 800w, ${currentPresenter.foto}?width=1200 1200w, ${currentPresenter.foto} 1600w`
-                    : undefined}
-                  sizes="(max-width: 768px) 400px, 600px"
-                />
-              </div>
-            </div>
-          )}
-          <div className="absolute inset-0 flex items-center z-20" style={{ paddingLeft: "350px" }}>
-            <div className="flex flex-col items-center">
-              <div className="relative w-64 h-64 mb-6">
-                {musicData?.capa ? (
-                  <img key={musicData.capa} src={musicData.capa} alt={musicData.titulo} className="absolute inset-0 w-full h-full rounded-2xl object-cover shadow-2xl animate-fade-in" style={{ animationDuration: "0.7s" }} />
-                ) : canal?.logo_url ? (
-                  <img src={canal.logo_url} alt={canal.name} className="absolute inset-0 w-48 h-48 m-auto rounded-2xl object-contain animate-fade-in" style={{ animationDuration: "0.7s" }} />
-                ) : null}
-              </div>
-              {musicData && (
-                <div key={`${musicData.titulo}-${musicData.artista}`} className="text-center animate-fade-in" style={{ animationDuration: "0.7s" }}>
-                  <div className="text-white text-2xl font-bold drop-shadow-lg">{musicData.titulo}</div>
-                  <div className="text-white/70 text-lg mt-1 drop-shadow-lg">{musicData.artista}</div>
-                  {currentPresenter && (
-                    <div className="mt-2 flex flex-col items-center gap-0.5">
-                      <span className="text-white/60 text-sm font-semibold drop-shadow-lg flex items-center gap-1.5">
-                        <Mic size={12} />{currentPresenter.nome}
-                      </span>
-                      {currentPresenter.instagram && (
-                        <a href={`https://instagram.com/${currentPresenter.instagram.replace(/^@/, "")}`} target="_blank" rel="noopener noreferrer" className="text-white/40 text-xs hover:text-white/70 transition-colors drop-shadow-lg">
-                          @{currentPresenter.instagram.replace(/^@/, "")}
-                        </a>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+        <Suspense fallback={null}>
+          <AudioDualCard
+            presenterName={currentPresenter?.nome}
+            presenterInstagram={currentPresenter?.instagram}
+            presenterPhoto={currentPresenter?.foto}
+            musicTitle={musicData?.titulo}
+            musicArtist={musicData?.artista}
+            musicCover={musicData?.capa}
+            channelLogo={canal?.logo_url}
+          />
+        </Suspense>
       )}
 
       {/* Idle state */}
