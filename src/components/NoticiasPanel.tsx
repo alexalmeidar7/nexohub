@@ -11,6 +11,7 @@ interface NewsItem {
   title: string;
   link: string;
   thumbnail?: string;
+  body?: string;
 }
 
 interface Portal {
@@ -243,6 +244,7 @@ export default function NoticiasPanel() {
   const [noticiasAvulsas, setNoticiasAvulsas] = useState<NewsItem[]>([]);
   const [loadingAvulsa, setLoadingAvulsa] = useState(false);
   const [collapsedBoxes, setCollapsedBoxes] = useState<Record<string, boolean>>({});
+  const [readingPopup, setReadingPopup] = useState<NewsItem | null>(null);
   const [blocoEconomia, setBlocoEconomia] = useState<CotacaoItem[]>([]);
 
   const toggleBox = (key: string) => setCollapsedBoxes(prev => ({ ...prev, [key]: !prev[key] }));
@@ -340,18 +342,47 @@ export default function NoticiasPanel() {
     const url = noticiaAvulsaUrl.trim();
     setLoadingAvulsa(true);
     try {
-      // Try to fetch the page title via proxy
       let title = url;
+      let thumbnail = "";
+      let body = "";
       try {
-        const res = await fetch(`${PROXY}${encodeURIComponent(url)}`, { signal: AbortSignal.timeout(8000) });
-        const html = await res.text();
+        // Use edge function for reliable server-side fetch
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+        let html = "";
+        if (supabaseUrl && supabaseKey) {
+          const res = await fetch(`${supabaseUrl}/functions/v1/fetch-rss`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Authorization": `Bearer ${supabaseKey}` },
+            body: JSON.stringify({ url }),
+            signal: AbortSignal.timeout(15000),
+          });
+          const data = await res.json();
+          if (data.content) html = data.content;
+        }
+        if (!html) {
+          const res = await fetch(`${PROXY}${encodeURIComponent(url)}`, { signal: AbortSignal.timeout(8000) });
+          html = await res.text();
+        }
         const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
         if (titleMatch) title = decodeHtmlEntities(titleMatch[1].trim());
-        // Try og:image
-        let thumbnail = "";
         const ogImageMatch = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i);
         if (ogImageMatch) thumbnail = ogImageMatch[1];
-        setNoticiasAvulsas(prev => [...prev, { title, link: url, thumbnail }]);
+        // Extract article body from <article> or og:description or <p> tags
+        const ogDescMatch = html.match(/<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']+)["']/i);
+        const articleMatch = html.match(/<article[^>]*>([\s\S]*?)<\/article>/i);
+        if (articleMatch) {
+          body = articleMatch[1].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 2000);
+        } else if (ogDescMatch) {
+          body = decodeHtmlEntities(ogDescMatch[1]);
+        } else {
+          // Fallback: extract text from <p> tags
+          const pMatches = html.match(/<p[^>]*>([^<]{40,})<\/p>/gi);
+          if (pMatches) {
+            body = pMatches.slice(0, 5).map(p => p.replace(/<[^>]+>/g, "").trim()).join("\n\n").slice(0, 2000);
+          }
+        }
+        setNoticiasAvulsas(prev => [...prev, { title, link: url, thumbnail, body }]);
       } catch {
         setNoticiasAvulsas(prev => [...prev, { title, link: url }]);
       }
@@ -759,13 +790,13 @@ export default function NoticiasPanel() {
                     >
                       <GripVertical size={10} className="shrink-0 opacity-20" />
                       <span className="flex-1 line-clamp-1" style={{ color: "#0d0446" }}>{item.title}</span>
-                      <a href={item.link} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}
+                      <button onClick={(e) => { e.stopPropagation(); setReadingPopup(item); }}
                         className="shrink-0 p-0.5 rounded hover:bg-blue-50 transition-opacity" title="Ler notícia">
                         <BookOpen size={12} style={{ color: "#2ec1f7" }} />
-                      </a>
+                      </button>
                       {item.thumbnail && (
                         <div className="shrink-0 relative"
-                          onMouseEnter={(e) => handleImageHover(e, item.thumbnail || "")}
+                          onMouseEnter={(ev) => handleImageHover(ev, item.thumbnail || "")}
                           onMouseLeave={() => setHoveredImage(null)}>
                           <ImageIcon size={12} style={{ color: "rgba(13,4,70,0.3)" }} className="cursor-pointer hover:opacity-70" />
                         </div>
@@ -853,6 +884,34 @@ export default function NoticiasPanel() {
               </div>
             ) : (
               <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-line">{summaryPopup.resumo}</p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Reading Popup for Notícia Avulsa */}
+      {readingPopup && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4" onClick={() => setReadingPopup(null)}>
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-6 relative" onClick={(e) => e.stopPropagation()}>
+            <button onClick={() => setReadingPopup(null)} className="absolute top-3 right-3 text-gray-400 hover:text-gray-700">
+              <X size={20} />
+            </button>
+            <div className="flex gap-4 mb-4">
+              {readingPopup.thumbnail && (
+                <img src={readingPopup.thumbnail} alt="" className="w-28 h-20 object-cover rounded-lg shrink-0" />
+              )}
+              <div className="flex-1 min-w-0">
+                <h3 className="font-bold text-lg leading-tight pr-6" style={{ color: "#0d0446" }}>{readingPopup.title}</h3>
+                <a href={readingPopup.link} target="_blank" rel="noopener noreferrer"
+                  className="text-[10px] mt-1 inline-block hover:underline" style={{ color: "#2ec1f7" }}>
+                  {readingPopup.link}
+                </a>
+              </div>
+            </div>
+            {readingPopup.body ? (
+              <p className="text-sm leading-relaxed whitespace-pre-line" style={{ color: "#0d0446" }}>{readingPopup.body}</p>
+            ) : (
+              <p className="text-sm italic" style={{ color: "rgba(13,4,70,0.4)" }}>Conteúdo da matéria não disponível. Clique no link acima para ler no site original.</p>
             )}
           </div>
         </div>
