@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { ArrowLeft, Check } from "lucide-react";
+import { useRef, useState } from "react";
+import { ArrowLeft, Check, Printer } from "lucide-react";
 import type { JornalConfig } from "./MontarJornalInline";
 import type { JornalNewsItem } from "./JornalBlockBuilder";
 
