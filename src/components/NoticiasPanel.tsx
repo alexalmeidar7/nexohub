@@ -389,38 +389,51 @@ export default function NoticiasPanel() {
               <table className="w-full text-xs">
                 <thead>
                   <tr style={{ borderBottom: "1px solid rgba(13,4,70,0.1)", color: "rgba(13,4,70,0.5)" }}>
-                    <th className="text-left px-3 py-2">Portal</th>
-                    <th className="text-left px-3 py-2">Título</th>
-                    <th className="text-left px-3 py-2">Imagem URL</th>
-                    <th className="px-3 py-2 w-24"></th>
+                    <th className="text-left px-2 py-2 w-16">Portal</th>
+                    <th className="text-left px-2 py-2">Título</th>
+                    <th className="text-center px-2 py-2 w-10">Img</th>
+                    <th className="text-center px-2 py-2 w-10">URL</th>
+                    <th className="px-2 py-2 w-24"></th>
                   </tr>
                 </thead>
                 <tbody>
                   {selectedNews.map((sn, i) => (
                     <tr key={sn.id || i} style={{ borderBottom: "1px solid rgba(13,4,70,0.05)" }}>
-                      <td className="px-3 py-2">
+                      <td className="px-2 py-2">
                         <input
                           defaultValue={sn.portal}
                           onBlur={(e) => updateSelectedField(i, "portal", e.target.value)}
-                          className="bg-transparent border-b border-transparent hover:border-gray-300 outline-none font-semibold w-full text-xs" style={{ color: "#0d0446" }}
+                          className="bg-transparent border-b border-transparent hover:border-gray-300 outline-none font-semibold w-full text-xs" style={{ color: "#0d0446", maxWidth: "60px" }}
                         />
                       </td>
-                      <td className="px-3 py-2">
+                      <td className="px-2 py-2">
                         <input
                           defaultValue={sn.title}
                           onBlur={(e) => updateSelectedField(i, "title", e.target.value)}
                           className="bg-transparent border-b border-transparent hover:border-gray-300 outline-none w-full text-xs" style={{ color: "#0d0446" }}
                         />
                       </td>
-                      <td className="px-3 py-2">
-                        <input
-                          defaultValue={sn.imageUrl}
-                          onBlur={(e) => updateSelectedField(i, "imageUrl", e.target.value)}
-                          className="bg-transparent border-b border-transparent hover:border-gray-300 outline-none w-full text-xs truncate" style={{ color: "rgba(13,4,70,0.5)" }}
-                          title={sn.imageUrl}
-                        />
+                      <td className="px-2 py-2 text-center">
+                        <div className="relative group inline-block">
+                          <ImageIcon size={14} className="cursor-pointer" style={{ color: sn.imageUrl ? "#2dbef3" : "rgba(13,4,70,0.3)" }} />
+                          {sn.imageUrl && (
+                            <div className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block">
+                              <img src={sn.imageUrl} alt="preview" className="w-32 h-20 object-cover rounded-lg shadow-lg border border-gray-200" />
+                            </div>
+                          )}
+                        </div>
                       </td>
-                      <td className="px-3 py-2 flex items-center gap-1">
+                      <td className="px-2 py-2 text-center">
+                        <div className="relative group inline-block">
+                          <LinkIcon size={14} className="cursor-pointer" style={{ color: sn.imageUrl ? "#2dbef3" : "rgba(13,4,70,0.3)" }} />
+                          {sn.imageUrl && (
+                            <div className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-gray-900 text-white text-[10px] px-2 py-1 rounded shadow-lg whitespace-nowrap max-w-[250px] truncate">
+                              {sn.imageUrl}
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-2 py-2 flex items-center gap-1">
                         <button onClick={() => openSummary(sn)} className="text-blue-500 hover:text-blue-700" title="Ler resumo">
                           <BookOpen size={14} />
                         </button>
