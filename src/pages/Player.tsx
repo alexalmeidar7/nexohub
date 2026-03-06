@@ -311,6 +311,11 @@ export default function PlayerPage() {
   const [streamStalled, setStreamStalled] = useState(false);
   const stallTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // HLS Quality selector state
+  const [hlsLevels, setHlsLevels] = useState<{ height: number; bitrate: number; index: number }[]>([]);
+  const [hlsCurrentLevel, setHlsCurrentLevel] = useState(-1); // -1 = auto
+  const [qualityMenuOpen, setQualityMenuOpen] = useState(false);
+
   // SpeechRecognition-based CC: transcribes audio in real-time
   const startCCRecognition = useCallback(() => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
