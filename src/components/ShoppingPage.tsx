@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Loader2, Trash2, Pencil, Plus, Package } from "lucide-react";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import { toast } from "@/components/ui/use-toast";
+import { compressImage } from "@/lib/imageCompressor";
 
 interface ShoppingProduct {
   id: string;
