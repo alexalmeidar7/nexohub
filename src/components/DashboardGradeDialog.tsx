@@ -152,8 +152,21 @@ function DashboardGradeDialog({ open, onOpenChange }: Props) {
         </DialogHeader>
 
         {loading ? (
-          <div className="flex items-center justify-center py-16">
-            <Loader2 className="animate-spin" size={32} style={{ color: "#2dbef3" }} />
+          <div className="px-4 pb-4 animate-pulse">
+            <div className="flex gap-1 mb-3 mt-2">
+              <div className="w-20 h-5 rounded bg-[#0d0446]/10" />
+              {Array.from({ length: 7 }).map((_, i) => (
+                <div key={i} className="flex-1 h-5 rounded bg-[#0d0446]/5" />
+              ))}
+            </div>
+            {Array.from({ length: 12 }).map((_, row) => (
+              <div key={row} className="flex gap-1 mb-1">
+                <div className="w-20 h-8 rounded bg-[#0d0446]/5" />
+                {Array.from({ length: 7 }).map((_, col) => (
+                  <div key={col} className="flex-1 h-8 rounded" style={{ backgroundColor: Math.random() > 0.4 ? "rgba(13,4,70,0.06)" : "transparent" }} />
+                ))}
+              </div>
+            ))}
           </div>
         ) : (
           <div
