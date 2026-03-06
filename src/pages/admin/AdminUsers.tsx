@@ -31,7 +31,7 @@ function AdminUsersContent() {
   const [clients, setClients] = useState<ClientRow[]>([]);
   const [emailMap, setEmailMap] = useState<Record<string, string>>({});
   const [modules, setModules] = useState<AvailableModule[]>([]);
-  const [planOptions, setPlanOptions] = useState<{ value: string; label: string }[]>([]);
+  const [planOptions, setPlanOptions] = useState<{ value: string; label: string; enabled_modules: string[] }[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | null>(null);
 
@@ -51,7 +51,7 @@ function AdminUsersContent() {
         supabase.from("empresa_config").select("user_id, nome, logo, ativo, plano, updated_at"),
         supabase.from("available_modules").select("key, name, icon"),
         supabase.from("client_modules").select("user_id, module_key, enabled"),
-        supabase.from("planos").select("name").order("name"),
+        supabase.from("planos").select("name, enabled_modules").order("name"),
       ]);
 
       if (empresasError) throw empresasError;
@@ -89,7 +89,7 @@ function AdminUsersContent() {
 
       const moduleList = mods || [];
       setModules(moduleList);
-      setPlanOptions((planosData || []).map((p: any) => ({ value: p.name, label: p.name })));
+      setPlanOptions((planosData || []).map((p: any) => ({ value: p.name, label: p.name, enabled_modules: p.enabled_modules || [] })));
 
       const clientList = (empresas || []).map((e: any) => {
         const moduleMap: Record<string, boolean> = {};
