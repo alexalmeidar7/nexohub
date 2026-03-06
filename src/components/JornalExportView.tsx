@@ -11,9 +11,66 @@ interface Props {
 
 export default function JornalExportView({ config, blocks, onClose }: Props) {
   const [readTitles, setReadTitles] = useState<Set<string>>(new Set());
+  const printRef = useRef<HTMLDivElement>(null);
   const now = new Date();
   const dia = now.toLocaleDateString("pt-BR", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
   const hora = now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+
+  const handlePrint = () => {
+    const content = printRef.current;
+    if (!content) return;
+    const win = window.open("", "_blank");
+    if (!win) return;
+    win.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${config.programaNome}</title><style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { font-family: 'Inter', Arial, sans-serif; padding: 24px; color: #0d0446; font-size: 12px; }
+      .header { border-bottom: 2px solid #0d0446; padding-bottom: 8px; margin-bottom: 16px; }
+      .header h1 { font-size: 18px; font-weight: 700; }
+      .header p { font-size: 10px; color: #666; }
+      .bloco-label { background: #0d0446; color: #fff; display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; margin-bottom: 8px; }
+      .bloco-time { font-size: 10px; color: #999; margin-left: 8px; }
+      .intervalo { text-align: center; padding: 8px 0; font-size: 10px; color: #999; }
+      .news-item { border: 1px solid #eee; border-radius: 6px; padding: 10px; margin-bottom: 8px; page-break-inside: avoid; }
+      .news-title { font-weight: 700; font-size: 12px; margin-bottom: 4px; }
+      .news-portal { font-size: 9px; color: #2ec1f7; background: rgba(46,193,247,0.1); padding: 1px 4px; border-radius: 3px; display: inline-block; margin-bottom: 4px; }
+      .news-body { font-size: 11px; color: #444; line-height: 1.5; white-space: pre-line; }
+      .testemunha { border: 1px dashed #2ec1f7; border-radius: 6px; padding: 10px; margin-top: 12px; }
+      .testemunha-title { font-weight: 700; color: #2ec1f7; font-size: 11px; }
+      .section { margin-bottom: 16px; }
+      @media print { body { padding: 12px; } }
+    </style></head><body>`);
+    win.document.write(`<div class="header"><h1>${config.programaNome}</h1><p>${dia} · Montado às ${hora}</p></div>`);
+
+    const sequence: { type: "bloco" | "intervalo" | "testemunha"; num?: number }[] = [];
+    for (let i = 1; i <= config.blocos; i++) {
+      sequence.push({ type: "bloco", num: i });
+      if (i < config.blocos && i <= config.intervalos) sequence.push({ type: "intervalo", num: i });
+    }
+    if (config.temTestemunha) sequence.push({ type: "testemunha" });
+
+    for (const item of sequence) {
+      if (item.type === "intervalo") {
+        win.document.write(`<div class="intervalo">⏸ Intervalo ${item.num} — ${config.tempoIntervaloMin} min</div>`);
+      } else if (item.type === "testemunha") {
+        win.document.write(`<div class="testemunha"><p class="testemunha-title">🎤 Testemunha — ${config.horarioTestemunha || ""}</p><p style="font-size:11px;color:#666;margin-top:4px">${config.textoTestemunhal || ""}</p></div>`);
+      } else {
+        const items = blocks[item.num!] || [];
+        win.document.write(`<div class="section"><span class="bloco-label">Bloco ${item.num}</span><span class="bloco-time">${config.tempoBlocoMin} min</span>`);
+        if (items.length === 0) {
+          win.document.write(`<p style="font-size:10px;color:#999;font-style:italic;margin-top:4px">Nenhuma notícia neste bloco</p>`);
+        } else {
+          for (const n of items) {
+            const esc = (s: string) => s.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            win.document.write(`<div class="news-item"><p class="news-title">${esc(n.title)}</p><span class="news-portal">${esc(n.portal)}</span>${n.body ? `<p class="news-body">${esc(n.body)}</p>` : ""}</div>`);
+          }
+        }
+        win.document.write(`</div>`);
+      }
+    }
+    win.document.write(`</body></html>`);
+    win.document.close();
+    setTimeout(() => { win.print(); }, 300);
+  };
 
   const toggleRead = (title: string) => {
     setReadTitles(prev => {
