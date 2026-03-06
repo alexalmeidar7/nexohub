@@ -16,7 +16,7 @@ export default function AudioSpectrum({ audioElement }: AudioSpectrumProps) {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const bufferLength = 32;
+    const bufferLength = 64;
     const barOffsets = Array.from({ length: bufferLength }, () => Math.random() * Math.PI * 2);
     const barSpeeds = Array.from({ length: bufferLength }, () => 0.7 + Math.random() * 1.8);
 
