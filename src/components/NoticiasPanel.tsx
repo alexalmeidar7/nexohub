@@ -594,7 +594,7 @@ export default function NoticiasPanel() {
           {/* News Portals Accordion */}
           <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)", width: (jornalConfig || wizardOpen) ? "100%" : "50%" }}>
             <div className="px-3 py-2 font-bold text-xs tracking-wide text-white rounded-t-xl flex items-center justify-between" style={{ backgroundColor: "#0d0446" }}>
-              <span>📰 Portais de Notícias</span>
+              <span style={{ color: "#ffffff" }}>📰 Portais de Notícias</span>
               <button onClick={() => toggleBox('portais')} className="p-0.5 rounded hover:bg-white/20 transition-colors">
                 {collapsedBoxes['portais'] ? <ChevronDown size={12} /> : <ChevronUp size={12} />}
               </button>
