@@ -142,6 +142,11 @@ function AdminDashboardContent() {
                     </div>
                   )}
                   <span className="font-medium" style={{ fontSize: "12px", color: "#0d0446" }}>{client.nome}</span>
+                  {client.plano && (
+                    <span className="px-2 py-0.5 rounded-full" style={{ fontSize: "9px", backgroundColor: "#e0f2fe", color: "#0284c7", fontWeight: 600 }}>
+                      {client.plano}
+                    </span>
+                  )}
                 </div>
                 <button
                   onClick={() => navigate(`/admin/users?client=${client.user_id}`)}
