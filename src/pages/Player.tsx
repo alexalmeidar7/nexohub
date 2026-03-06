@@ -1479,13 +1479,13 @@ export default function PlayerPage() {
 
       {/* Idle state */}
       {!playing && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#1a1a1a] z-10">
-          {canal?.logo_url && <img src={canal.logo_url} alt={canal.name} className="w-32 h-32 object-contain mb-6 rounded-xl" />}
-          <h1 className="text-white text-3xl font-bold mb-2">{canal?.name || "Nenhum canal"}</h1>
-          {canal && <p className="text-white/50 text-sm mb-8">Canal {canal.numero_canal}</p>}
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#1a1a1a] z-10 px-4">
+          {canal?.logo_url && <img src={canal.logo_url} alt={canal.name} className="w-20 h-20 sm:w-32 sm:h-32 object-contain mb-4 sm:mb-6 rounded-xl" />}
+          <h1 className="text-white text-xl sm:text-3xl font-bold mb-2 text-center">{canal?.name || "Nenhum canal"}</h1>
+          {canal && <p className="text-white/50 text-xs sm:text-sm mb-6 sm:mb-8">Canal {canal.numero_canal}</p>}
           {canal && (
-            <button onClick={handlePlayCanal} className="flex items-center gap-2 text-white px-8 py-3 rounded-full font-bold text-lg transition-all" style={{ backgroundColor: "#e60000" }}>
-              <Play size={20} fill="white" /> Assistir
+            <button onClick={handlePlayCanal} className="flex items-center gap-2 text-white px-6 sm:px-8 py-2.5 sm:py-3 rounded-full font-bold text-base sm:text-lg transition-all" style={{ backgroundColor: "#e60000" }}>
+              <Play size={18} fill="white" /> Assistir
             </button>
           )}
         </div>
