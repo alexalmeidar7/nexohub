@@ -115,7 +115,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             setEnabledModules(null);
           }
         }),
-      getEmpresaConfig().then(setEmpresa),
+      getEmpresaConfig(user.id).then(setEmpresa),
     ]).finally(() => setInitialLoading(false));
   }, [user]);
 
