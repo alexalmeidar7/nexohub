@@ -1367,7 +1367,7 @@ export default function PlayerPage() {
           </div>
 
           {/* Program Info */}
-          <div className="flex-1 px-5 min-w-0">
+          <div className="px-5 min-w-0" style={{ flex: "0 1 320px" }}>
             <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#e60000" }}>No Ar:</span>
             <MarqueeText className="text-white text-lg font-bold leading-tight" text={channelLabel} />
             {programLabel && (
@@ -1502,9 +1502,9 @@ export default function PlayerPage() {
           </div>
 
           {/* Next / Schedule */}
-          <div className="pl-3 border-l border-white/10 shrink-0">
+          <div className="pl-3 border-l border-white/10 flex-1 min-w-0">
             <span className="text-[10px] font-bold uppercase" style={{ color: "#e60000" }}>A seguir:</span>
-            <div className="text-white text-sm truncate max-w-[180px]">
+            <div className="text-white text-sm truncate">
               {isYoutube ? (nextYtVideo?.title || "Sem vídeo") : (nextProg?.nome || "Sem programação")}
             </div>
             {!isYoutube && (
