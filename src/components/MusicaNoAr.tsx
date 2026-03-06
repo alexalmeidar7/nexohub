@@ -17,6 +17,12 @@ const MUSIC_DATA_KEY = "masterview_music_data";
 const MUSIC_START_KEY = "masterview_music_start";
 const DEFAULT_XML_URL = "https://positivafm.com.br/storage/pulsar/positivafm.xml";
 
+function decodeEntities(str: string): string {
+  const ta = document.createElement("textarea");
+  ta.innerHTML = str;
+  return ta.value;
+}
+
 function parseXmlString(xmlStr: string): MusicData | null {
   try {
     const parser = new DOMParser();
@@ -24,17 +30,19 @@ function parseXmlString(xmlStr: string): MusicData | null {
     const errorNode = doc.querySelector("parsererror");
     if (errorNode) return null;
 
-    const titulo =
+    const titulo = decodeEntities(
       doc.querySelector("nome_musica")?.textContent ||
       doc.querySelector("titulo")?.textContent ||
       doc.querySelector("title")?.textContent ||
-      "Sem título";
-    const artista =
+      "Sem título"
+    );
+    const artista = decodeEntities(
       doc.querySelector("interprete")?.textContent ||
       doc.querySelector("nome_interprete")?.textContent ||
       doc.querySelector("artista")?.textContent ||
       doc.querySelector("artist")?.textContent ||
-      "Desconhecido";
+      "Desconhecido"
+    );
     const duracaoStr =
       doc.querySelector("duracao")?.textContent ||
       doc.querySelector("duration")?.textContent ||

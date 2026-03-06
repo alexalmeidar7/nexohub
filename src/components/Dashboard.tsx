@@ -701,13 +701,18 @@ function useGlobalMusicSync() {
     const MUSIC_DATA_KEY = "masterview_music_data";
     const MUSIC_START_KEY = "masterview_music_start";
 
+    const decodeEntities = (str: string) => {
+      const ta = document.createElement("textarea");
+      ta.innerHTML = str;
+      return ta.value;
+    };
     const parseXml = (xmlStr: string) => {
       try {
         const parser = new DOMParser();
         const doc = parser.parseFromString(xmlStr, "application/xml");
         if (doc.querySelector("parsererror")) return null;
-        const titulo = doc.querySelector("nome_musica")?.textContent || doc.querySelector("titulo")?.textContent || doc.querySelector("title")?.textContent || "Sem título";
-        const artista = doc.querySelector("interprete")?.textContent || doc.querySelector("nome_interprete")?.textContent || doc.querySelector("artista")?.textContent || doc.querySelector("artist")?.textContent || "Desconhecido";
+        const titulo = decodeEntities(doc.querySelector("nome_musica")?.textContent || doc.querySelector("titulo")?.textContent || doc.querySelector("title")?.textContent || "Sem título");
+        const artista = decodeEntities(doc.querySelector("interprete")?.textContent || doc.querySelector("nome_interprete")?.textContent || doc.querySelector("artista")?.textContent || doc.querySelector("artist")?.textContent || "Desconhecido");
         const duracaoStr = doc.querySelector("duracao")?.textContent || doc.querySelector("duration")?.textContent || "0";
         const capa = doc.querySelector("capa")?.textContent || doc.querySelector("cover")?.textContent || "";
         let duracao = 0;
