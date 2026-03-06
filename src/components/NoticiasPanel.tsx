@@ -476,6 +476,59 @@ export default function NoticiasPanel() {
     setHoveredImage({ url, x: e.clientX, y: e.clientY });
   };
 
+  const openReadingPopup = async (item: NewsItem) => {
+    setLoadingReading(true);
+    setReadingPopup({ ...item, body: "" });
+    try {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      if (supabaseUrl && supabaseKey) {
+        const res = await fetch(`${supabaseUrl}/functions/v1/fetch-rss`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${supabaseKey}` },
+          body: JSON.stringify({ url: item.link }),
+          signal: AbortSignal.timeout(15000),
+        });
+        const data = await res.json();
+        if (data.content) {
+          const html = data.content;
+          let title = item.title;
+          const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+          if (titleMatch) title = decodeHtmlEntities(titleMatch[1].trim());
+
+          let thumbnail = item.thumbnail || "";
+          if (!thumbnail) {
+            const ogImageMatch = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i);
+            if (ogImageMatch) thumbnail = ogImageMatch[1];
+          }
+          // If still no thumbnail, use a placeholder based on first keyword
+          if (!thumbnail) {
+            const keyword = title.split(/[\s,.:;!?]+/).filter(w => w.length > 4).slice(0, 2).join(" ");
+            thumbnail = `https://source.unsplash.com/400x250/?${encodeURIComponent(keyword || "news")}`;
+          }
+
+          let body = "";
+          const ogDescMatch = html.match(/<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']+)["']/i);
+          const articleMatch = html.match(/<article[^>]*>([\s\S]*?)<\/article>/i);
+          if (articleMatch) {
+            body = articleMatch[1].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 3000);
+          } else if (ogDescMatch) {
+            body = decodeHtmlEntities(ogDescMatch[1]);
+          } else {
+            const pMatches = html.match(/<p[^>]*>([^<]{40,})<\/p>/gi);
+            if (pMatches) {
+              body = pMatches.slice(0, 8).map(p => p.replace(/<[^>]+>/g, "").trim()).join("\n\n").slice(0, 3000);
+            }
+          }
+          setReadingPopup({ title, link: item.link, thumbnail, body });
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching article:", err);
+    }
+    setLoadingReading(false);
+  };
+
   return (
     <TooltipProvider delayDuration={300}>
     <div className="animate-fade-in space-y-4">
