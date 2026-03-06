@@ -582,7 +582,7 @@ export default function NoticiasPanel() {
                 </ul>
               )}
             </div>
-          ))}
+          )})}
         </div>
       )}
 
