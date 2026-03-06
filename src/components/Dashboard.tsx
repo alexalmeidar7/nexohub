@@ -876,9 +876,19 @@ function DashboardAgenda() {
 
   if (loading) {
     return (
-      <div className="flex items-center gap-2">
-        <Loader2 size={14} className="text-gray-400 animate-spin" />
-        <span className="text-gray-400 text-xs">Carregando...</span>
+      <div className="flex flex-col h-full animate-pulse">
+        <div className="flex items-center gap-1.5 mb-1">
+          <div className="w-3.5 h-3.5 rounded bg-[#268ffa]/20" />
+          <div className="w-14 h-3 rounded bg-[#268ffa]/20" />
+        </div>
+        <div className="grid grid-cols-7 gap-0.5 mb-1">
+          {Array.from({ length: 35 }).map((_, i) => (
+            <div key={i} className="w-full aspect-square rounded bg-[#0d0446]/5" />
+          ))}
+        </div>
+        <div className="mt-1 space-y-1">
+          <div className="h-6 rounded-lg bg-[#268ffa]/15" />
+        </div>
       </div>
     );
   }

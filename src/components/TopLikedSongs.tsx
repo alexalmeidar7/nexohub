@@ -67,7 +67,18 @@ export default function TopLikedSongs() {
       </div>
 
       {loading ? (
-        <p className="text-xs" style={{ color: "#0d0446", opacity: 0.5 }}>Carregando...</p>
+        <div className="space-y-1.5 animate-pulse flex-1">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="flex items-center gap-2 py-1 px-1.5">
+              <div className="w-4 h-4 rounded-full bg-[#0d0446]/10 shrink-0" />
+              <div className="w-7 h-7 rounded bg-[#0d0446]/10 shrink-0" />
+              <div className="flex-1 space-y-1">
+                <div className="h-2.5 w-3/4 rounded bg-[#0d0446]/10" />
+                <div className="h-2 w-1/2 rounded bg-[#0d0446]/5" />
+              </div>
+            </div>
+          ))}
+        </div>
       ) : songs.length === 0 ? (
         <p className="text-xs" style={{ color: "#0d0446", opacity: 0.5 }}>Nenhuma música curtida ainda.</p>
       ) : (

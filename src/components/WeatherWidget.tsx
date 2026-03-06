@@ -81,8 +81,25 @@ export default function WeatherWidget({ onNavigate }: { onNavigate?: (page: any)
 
   if (!weather) {
     return (
-      <div className="rounded-xl p-4" style={{ backgroundColor: "#ffffff", color: "#0d0446" }}>
-        Nenhuma cidade pesquisada ainda. Vá em Previsão do Tempo para buscar.
+      <div className="flex flex-col h-full animate-pulse">
+        <div className="flex items-center gap-1.5 mb-1">
+          <div className="w-3.5 h-3.5 rounded-full bg-[#268ffa]/20" />
+          <div className="w-12 h-3 rounded bg-[#268ffa]/20" />
+        </div>
+        <div className="flex items-center gap-2 mb-1">
+          <div className="w-8 h-8 rounded bg-[#0d0446]/10" />
+          <div className="space-y-1">
+            <div className="w-20 h-3.5 rounded bg-[#0d0446]/10" />
+            <div className="w-16 h-2.5 rounded bg-[#0d0446]/5" />
+          </div>
+        </div>
+        <div className="w-24 h-10 rounded bg-[#268ffa]/15 mb-1" />
+        <div className="flex gap-3">
+          <div className="w-16 h-2.5 rounded bg-[#0d0446]/5" />
+          <div className="w-10 h-2.5 rounded bg-[#0d0446]/5" />
+          <div className="w-10 h-2.5 rounded bg-[#0d0446]/5" />
+        </div>
+        <div className="mt-auto w-24 h-6 rounded-lg bg-[#268ffa]/10" />
       </div>
     );
   }
