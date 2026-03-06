@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { ChevronLeft, ChevronRight, Newspaper, Check, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Newspaper, Check, X as XIcon } from "lucide-react";
 
 interface Programa {
   id: string;
