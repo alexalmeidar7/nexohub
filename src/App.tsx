@@ -37,6 +37,7 @@ const App = () => (
             <Route path="/user/login" element={<Index />} />
             <Route path="/user/nexohub/home" element={<MasterViewHome />} />
             <Route path="/user/nexohub/telapromo" element={<PromocoesKiosk />} />
+            <Route path="/user/:userSlug/nexohub/telapromo" element={<PromocoesKiosk />} />
             <Route path="/user/nexohub/player" element={<PlayerPage />} />
             <Route path="/user/:userSlug/nexohub/player" element={<PlayerPage />} />
 
