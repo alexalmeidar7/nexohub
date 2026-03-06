@@ -284,7 +284,34 @@ export default function PrevisaoTempo() {
       )}
 
       {error && <p style={{ color: "#dc2626" }}>{error}</p>}
-      {loading && <p style={{ color: "rgba(13,4,70,0.5)" }}>Buscando...</p>}
+      {loading && (
+        <div className="animate-pulse space-y-6">
+          <div className="rounded-2xl p-6" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)" }}>
+            <div className="flex items-center justify-between mb-4">
+              <div className="space-y-2">
+                <div className="h-6 w-36 rounded bg-[#0d0446]/10" />
+                <div className="h-3 w-24 rounded bg-[#0d0446]/5" />
+              </div>
+              <div className="h-14 w-14 rounded-full bg-[#0d0446]/5" />
+            </div>
+            <div className="h-12 w-28 rounded bg-[#2dbef3]/20 mb-6" />
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="h-12 rounded-lg bg-[#0d0446]/5" />
+              ))}
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="rounded-xl p-4 space-y-2" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.08)" }}>
+                <div className="h-3 w-12 mx-auto rounded bg-[#0d0446]/8" />
+                <div className="h-8 w-8 mx-auto rounded-full bg-[#0d0446]/5" />
+                <div className="h-3 w-16 mx-auto rounded bg-[#0d0446]/5" />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {weather && (
         <>
