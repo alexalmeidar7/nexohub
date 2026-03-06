@@ -1,7 +1,8 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Heart, Music, Trash2, Loader2 } from "lucide-react";
+import { Heart, Music, Trash2 } from "lucide-react";
+import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import { toast } from "@/hooks/use-toast";
 
 interface RankedSong {
