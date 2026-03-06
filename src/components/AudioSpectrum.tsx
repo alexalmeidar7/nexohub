@@ -90,8 +90,8 @@ export default function AudioSpectrum({ audioElement }: AudioSpectrumProps) {
 
   return (
     <div
-      className="absolute left-0 right-0 z-[1] pointer-events-none"
-      style={{ bottom: "160px", height: "100px" }}
+      className="absolute left-1/2 -translate-x-1/2 z-[1] pointer-events-none"
+      style={{ bottom: "160px", height: "100px", width: "100%", maxWidth: "800px" }}
     >
       <canvas ref={canvasRef} className="w-full h-full" />
     </div>
