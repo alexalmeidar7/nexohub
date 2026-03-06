@@ -1347,25 +1347,20 @@ export default function PlayerPage() {
         >
         <div className="flex items-center gap-0 rounded-2xl border border-white/10 px-5 py-3" style={{ backgroundColor: "rgba(0, 0, 0, 0.9)" }}>
           {/* Channel Info */}
-          <div className="flex items-center gap-3 pr-5 border-r border-white/10 shrink-0">
-            <div className="flex flex-col items-center gap-1">
-              <button onClick={() => navigateChannel(-1)} className="text-white/60 hover:text-white transition-colors" title="Use teclado tecla para cima"><ChevronUp size={16} /></button>
-              {canal?.logo_url ? (
-                <img src={canal.logo_url} alt="" className="w-10 h-10 rounded-lg object-contain" />
-              ) : (
-                <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center text-white text-xs font-bold">{canal?.numero_canal || "?"}</div>
-              )}
-              <button onClick={() => navigateChannel(1)} className="text-white/60 hover:text-white transition-colors" title="Use teclado seta para baixo"><ChevronDown size={16} /></button>
+          <div className="flex items-center gap-2 pr-5 border-r border-white/10 shrink-0">
+            <div className="flex flex-col items-center gap-0.5">
+              <button onClick={() => navigateChannel(-1)} className="text-white/60 hover:text-white transition-colors" title="Use teclado tecla para cima"><ChevronUp size={14} /></button>
+              <button onClick={() => navigateChannel(1)} className="text-white/60 hover:text-white transition-colors" title="Use teclado seta para baixo"><ChevronDown size={14} /></button>
             </div>
-            <div className="text-center">
-              <div className="text-white text-xs font-bold">{canal?.numero_canal || "--"}</div>
-              <button onClick={handlePlayCanal}
-                className="mt-1 flex items-center gap-1 text-white text-[10px] font-bold uppercase px-3 py-1 rounded-full transition-all hover:!bg-black"
-                style={{ backgroundColor: "#e60000", border: "1px solid transparent" }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = "#ed0808"; e.currentTarget.style.backgroundColor = "#000"; }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = "transparent"; e.currentTarget.style.backgroundColor = "#e60000"; }}
-              >
-                <Play size={10} fill="white" /> Play Canal
+            {canal?.logo_url ? (
+              <img src={canal.logo_url} alt="" className="w-14 h-14 rounded-lg object-contain" />
+            ) : (
+              <div className="w-14 h-14 rounded-lg bg-white/10 flex items-center justify-center text-white text-sm font-bold">{canal?.numero_canal || "?"}</div>
+            )}
+            <div>
+              <div className="text-white text-xs font-bold">{canal?.name || canal?.numero_canal || "--"}</div>
+              <button onClick={handlePlayCanal} className="mt-1 transition-colors" title={playing ? "Pausar" : "Reproduzir"}>
+                {playing ? <Pause size={18} color="#e60000" /> : <Play size={18} color="#e60000" fill="#e60000" />}
               </button>
             </div>
           </div>
