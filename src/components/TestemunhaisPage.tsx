@@ -158,12 +158,7 @@ export default function TestemunhaisPage() {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center gap-2 text-muted-foreground">
-        <Loader2 className="animate-spin" size={18} />
-        <span>Carregando...</span>
-      </div>
-    );
+    return <ModulePageSkeleton />;
   }
 
   return (
