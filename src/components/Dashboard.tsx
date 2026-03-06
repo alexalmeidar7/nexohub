@@ -36,6 +36,7 @@ const ShoppingPage = lazy(() => import("./ShoppingPage"));
 const PreRollPage = lazy(() => import("./PreRollPage"));
 const MessageNotification = lazy(() => import("./MessageNotification"));
 import DashboardSkeleton from "./skeletons/DashboardSkeleton";
+import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll";
 
 // Sidebar structured menu
@@ -340,7 +341,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
           {/* Content area */}
           <div className={`flex-1 overflow-y-auto overflow-x-hidden rounded-2xl ${currentPage !== "dashboard" ? "mv-content-area" : ""}`} style={currentPage === "dashboard" ? {} : { padding: "2rem" }}>
-            <Suspense fallback={<div className="flex justify-center py-16"><Loader2 className="animate-spin text-white" size={28} /></div>}>
+            <Suspense fallback={<ModulePageSkeleton />}>
               {currentPage === "previsao" && <PrevisaoTempo />}
               {currentPage === "noticias" && <NoticiasPanel />}
               {currentPage === "apresentadores" && <ApresentadorForm />}

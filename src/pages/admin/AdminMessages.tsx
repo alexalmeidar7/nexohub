@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Loader2, Send } from "lucide-react";
 import { toast } from "sonner";
+import AdminSkeleton from "@/components/skeletons/AdminSkeleton";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AdminLayout from "./AdminLayout";
 
@@ -96,12 +97,7 @@ function AdminMessagesContent() {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center gap-2" style={{ color: "#0d0446" }}>
-        <Loader2 className="animate-spin" size={18} style={{ color: "#2ec0f6" }} />
-        <span style={{ fontSize: "12px" }}>Carregando...</span>
-      </div>
-    );
+    return <AdminSkeleton variant="messages" />;
   }
 
   return (

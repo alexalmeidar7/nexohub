@@ -2,9 +2,9 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { Users, Puzzle, Radio } from "lucide-react";
-import { Loader2 } from "lucide-react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AdminLayout from "./AdminLayout";
+import AdminSkeleton from "@/components/skeletons/AdminSkeleton";
 
 interface ClientInfo {
   user_id: string;
@@ -39,12 +39,7 @@ function AdminDashboardContent() {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center gap-2" style={{ color: "#0d0446" }}>
-        <Loader2 className="animate-spin" size={18} style={{ color: "#2ec0f6" }} />
-        <span style={{ fontSize: "12px" }}>Carregando...</span>
-      </div>
-    );
+    return <AdminSkeleton variant="dashboard" />;
   }
 
   const statCards = [

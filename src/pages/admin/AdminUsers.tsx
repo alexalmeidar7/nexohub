@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, UserPlus } from "lucide-react";
+import AdminSkeleton from "@/components/skeletons/AdminSkeleton";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -119,12 +120,7 @@ function AdminUsersContent() {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center gap-2" style={{ color: "#0d0446" }}>
-        <Loader2 className="animate-spin" size={18} style={{ color: "#2ec0f6" }} />
-        <span style={{ fontSize: "12px" }}>Carregando...</span>
-      </div>
-    );
+    return <AdminSkeleton variant="list" />;
   }
 
   const inputStyle: React.CSSProperties = {
