@@ -141,7 +141,7 @@ export default function MontarJornalWizard({ open, onOpenChange, programas, onFi
           className="absolute top-3 right-3 rounded-full p-1 hover:opacity-70 transition-opacity"
           style={{ color: "#0d0446" }}
         >
-          <X size={18} />
+          <XIcon size={18} />
         </button>
         <style>{`
           .jornal-wizard-input:focus, .jornal-wizard-input:focus-visible, .jornal-wizard-input:active {
