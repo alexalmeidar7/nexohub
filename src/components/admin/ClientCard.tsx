@@ -20,10 +20,16 @@ interface ClientRow {
   modules: Record<string, boolean>;
 }
 
+interface PlanOption {
+  value: string;
+  label: string;
+}
+
 interface ClientCardProps {
   client: ClientRow;
   clientEmail: string;
   modules: AvailableModule[];
+  plans: PlanOption[];
   saving: string | null;
   onToggleModule: (userId: string, moduleKey: string, enabled: boolean) => void;
   onClientUpdated: () => void;
