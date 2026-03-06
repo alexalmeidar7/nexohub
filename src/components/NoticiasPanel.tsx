@@ -804,7 +804,14 @@ export default function NoticiasPanel() {
                       className="flex items-center gap-2 px-3 py-1.5 text-[11px] hover:bg-gray-50 cursor-grab active:cursor-grabbing group"
                     >
                       <GripVertical size={10} className="shrink-0 opacity-20" />
-                      <span className="flex-1 line-clamp-1" style={{ color: "#0d0446" }}>{item.title}</span>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="flex-1 line-clamp-1 cursor-default" style={{ color: "#0d0446" }}>{item.title}</span>
+                        </TooltipTrigger>
+                        <TooltipContent style={{ backgroundColor: "#2ec1f7", color: "#0d0446", maxWidth: 350 }} className="text-xs font-medium">
+                          {item.title}
+                        </TooltipContent>
+                      </Tooltip>
                       <button onClick={(e) => { e.stopPropagation(); setReadingPopup(item); }}
                         className="shrink-0 p-0.5 rounded hover:bg-blue-50 transition-opacity" title="Ler notícia">
                         <BookOpen size={12} style={{ color: "#2ec1f7" }} />
