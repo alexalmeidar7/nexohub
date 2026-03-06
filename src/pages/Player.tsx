@@ -31,6 +31,7 @@ const AudioSpectrum = lazy(() => import("@/components/AudioSpectrum"));
 const PlayerGradeDialog = lazy(() => import("@/components/player/PlayerGradeDialog"));
 import PlayerShopProduct from "@/components/player/PlayerShopProduct";
 import PreRollOverlay from "@/components/PreRollOverlay";
+import PlayerSkeleton from "@/components/skeletons/PlayerSkeleton";
 
 // Dynamic HLS loader — cached after first import
 let hlsModule: typeof import("hls.js") | null = null;
