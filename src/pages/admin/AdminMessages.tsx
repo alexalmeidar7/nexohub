@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Loader2, Send } from "lucide-react";
 import { toast } from "sonner";
+import AdminSkeleton from "@/components/skeletons/AdminSkeleton";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AdminLayout from "./AdminLayout";
 
