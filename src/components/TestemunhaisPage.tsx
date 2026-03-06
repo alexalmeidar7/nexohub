@@ -47,9 +47,8 @@ export default function TestemunhaisPage() {
 
   const loadData = async () => {
     if (!user) return;
-    await supabase.rpc("cleanup_comercial");
-
-    const [{ data: tData }, { data: pData }] = await Promise.all([
+    const [, { data: tData }, { data: pData }] = await Promise.all([
+      supabase.rpc("cleanup_comercial"),
       supabase.from("testemunhais").select("*").eq("user_id", user.id).order("data_fim"),
       supabase.from("programas").select("id, nome").eq("user_id", user.id).eq("ativo", true),
     ]);

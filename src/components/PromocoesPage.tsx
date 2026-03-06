@@ -43,8 +43,10 @@ export default function PromocoesPage() {
 
   const loadData = async () => {
     if (!user) return;
-    await supabase.rpc("cleanup_comercial");
-    const { data } = await supabase.from("promocoes").select("*").eq("user_id", user.id).order("data_inicio");
+    const [, { data }] = await Promise.all([
+      supabase.rpc("cleanup_comercial"),
+      supabase.from("promocoes").select("*").eq("user_id", user.id).order("data_inicio"),
+    ]);
     setItems(data || []);
     setLoading(false);
   };

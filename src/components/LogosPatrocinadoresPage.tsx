@@ -46,9 +46,8 @@ export default function LogosPatrocinadoresPage() {
 
   const loadData = async () => {
     if (!user) return;
-    await supabase.rpc("cleanup_comercial");
-
-    const [{ data: lData }, { data: pData }] = await Promise.all([
+    const [, { data: lData }, { data: pData }] = await Promise.all([
+      supabase.rpc("cleanup_comercial"),
       supabase.from("logos_patrocinadores").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
       supabase.from("programas").select("id, nome").eq("user_id", user.id).eq("ativo", true),
     ]);
