@@ -25,6 +25,7 @@ interface AvailableModule {
 }
 
 function AdminUsersContent() {
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [clients, setClients] = useState<ClientRow[]>([]);
   const [modules, setModules] = useState<AvailableModule[]>([]);
