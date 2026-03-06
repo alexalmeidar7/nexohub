@@ -29,6 +29,7 @@ import {
 
 const PlayerChat = lazy(() => import("@/components/PlayerChat"));
 const AudioSpectrum = lazy(() => import("@/components/AudioSpectrum"));
+const AudioDualCard = lazy(() => import("@/components/AudioDualCard"));
 const PlayerGradeDialog = lazy(() => import("@/components/player/PlayerGradeDialog"));
 import PlayerShopProduct from "@/components/player/PlayerShopProduct";
 import PreRollOverlay from "@/components/PreRollOverlay";
