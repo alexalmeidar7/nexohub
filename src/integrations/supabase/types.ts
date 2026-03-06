@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_messages: {
+        Row: {
+          created_at: string
+          id: string
+          is_broadcast: boolean
+          message: string
+          recipient_id: string | null
+          sender_id: string
+          subject: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_broadcast?: boolean
+          message?: string
+          recipient_id?: string | null
+          sender_id: string
+          subject?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_broadcast?: boolean
+          message?: string
+          recipient_id?: string | null
+          sender_id?: string
+          subject?: string
+        }
+        Relationships: []
+      }
       agenda_eventos: {
         Row: {
           created_at: string
