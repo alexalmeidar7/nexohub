@@ -24,6 +24,7 @@ import {
   Heart,
   Home,
   ShoppingCart,
+  Settings2,
 } from "lucide-react";
 
 const PlayerChat = lazy(() => import("@/components/PlayerChat"));
@@ -309,6 +310,11 @@ export default function PlayerPage() {
   const { buffering, setBuffering } = useBufferingDetection(videoRef, audioRef);
   const [streamStalled, setStreamStalled] = useState(false);
   const stallTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // HLS Quality selector state
+  const [hlsLevels, setHlsLevels] = useState<{ height: number; bitrate: number; index: number }[]>([]);
+  const [hlsCurrentLevel, setHlsCurrentLevel] = useState(-1); // -1 = auto
+  const [qualityMenuOpen, setQualityMenuOpen] = useState(false);
 
   // SpeechRecognition-based CC: transcribes audio in real-time
   const startCCRecognition = useCallback(() => {
@@ -740,9 +746,20 @@ export default function PlayerPage() {
           hls.loadSource(freshUrl);
           hls.attachMedia(video);
           hls.on(Hls.Events.MANIFEST_PARSED, (_e, data) => {
-            // Select highest quality level
-            if (data.levels && data.levels.length > 1) {
-              hls.currentLevel = data.levels.length - 1;
+            // Populate quality levels for selector
+            if (data.levels && data.levels.length > 0) {
+              const levels = data.levels.map((l: any, i: number) => ({
+                height: l.height || 0,
+                bitrate: l.bitrate || 0,
+                index: i,
+              }));
+              setHlsLevels(levels);
+              setHlsCurrentLevel(-1); // auto by default
+              // Select highest quality level
+              if (data.levels.length > 1) {
+                hls.currentLevel = data.levels.length - 1;
+                setHlsCurrentLevel(data.levels.length - 1);
+              }
             }
             video.play().then(() => setBuffering(false)).catch(() => {});
           });
@@ -876,6 +893,17 @@ export default function PlayerPage() {
     prerollIntervalRef.current = setInterval(fetchAndShowPreroll, 15 * 60 * 1000);
     return () => { if (prerollIntervalRef.current) clearInterval(prerollIntervalRef.current); };
   }, [prerollDone, playing, fetchAndShowPreroll]);
+
+  const handleQualityChange = useCallback((levelIndex: number) => {
+    if (!hlsRef.current) return;
+    if (levelIndex === -1) {
+      hlsRef.current.currentLevel = -1; // auto
+    } else {
+      hlsRef.current.currentLevel = levelIndex;
+    }
+    setHlsCurrentLevel(levelIndex);
+    setQualityMenuOpen(false);
+  }, []);
 
   const handlePlayCanal = () => {
     if (!canal) return;
@@ -1539,6 +1567,40 @@ export default function PlayerPage() {
               title={ccEnabled ? "Desativar Closed Captions" : "Ativar Closed Captions"}>
               {ccLoading ? <Loader2 size={14} className="animate-spin" /> : ccEnabled ? <CaptionsOff size={14} /> : <Captions size={14} />} CC
             </button>
+            {/* Quality Selector — only for HLS video streams */}
+            {isVideo && hlsLevels.length > 1 && (
+              <div className="relative">
+                <button
+                  onClick={() => setQualityMenuOpen(!qualityMenuOpen)}
+                  className={`px-3 py-1.5 rounded text-[11px] font-bold transition-all flex items-center gap-1 border ${qualityMenuOpen ? "bg-[#ed0808] text-white border-[#ed0808]" : "bg-white/10 text-white/60 border-white/20 hover:bg-white/20 hover:text-white"}`}
+                  title="Qualidade do vídeo"
+                >
+                  <Settings2 size={14} />
+                  {hlsCurrentLevel === -1 ? "Auto" : `${hlsLevels.find(l => l.index === hlsCurrentLevel)?.height || "?"}p`}
+                </button>
+                {qualityMenuOpen && (
+                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 rounded-lg overflow-hidden shadow-xl" style={{ backgroundColor: "rgba(0,0,0,0.95)", border: "1px solid rgba(255,255,255,0.15)", minWidth: "120px" }}>
+                    <button
+                      onClick={() => handleQualityChange(-1)}
+                      className={`w-full text-left px-4 py-2 text-xs font-semibold transition-colors ${hlsCurrentLevel === -1 ? "text-white" : "text-white/60 hover:text-white hover:bg-white/10"}`}
+                      style={hlsCurrentLevel === -1 ? { backgroundColor: "#e60000" } : {}}
+                    >
+                      Auto
+                    </button>
+                    {[...hlsLevels].sort((a, b) => b.height - a.height).map((level) => (
+                      <button
+                        key={level.index}
+                        onClick={() => handleQualityChange(level.index)}
+                        className={`w-full text-left px-4 py-2 text-xs font-semibold transition-colors ${hlsCurrentLevel === level.index ? "text-white" : "text-white/60 hover:text-white hover:bg-white/10"}`}
+                        style={hlsCurrentLevel === level.index ? { backgroundColor: "#e60000" } : {}}
+                      >
+                        {level.height}p {level.bitrate ? `(${(level.bitrate / 1000000).toFixed(1)}Mbps)` : ""}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
             {isYoutube && (
               <button onClick={handleYtHome}
                 className="hover:bg-white/20 rounded-full w-8 h-8 flex items-center justify-center transition-all"
