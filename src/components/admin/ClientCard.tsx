@@ -23,6 +23,7 @@ interface ClientRow {
 interface PlanOption {
   value: string;
   label: string;
+  enabled_modules: string[];
 }
 
 interface ClientCardProps {
