@@ -112,22 +112,22 @@ export default function KaraokeOverlay({ artist, title, audioElement, visible, d
   return (
     <div
       className="absolute left-0 right-0 z-[25] flex flex-col items-center pointer-events-none animate-fade-in"
-      style={{ bottom: "160px" }}
+      style={{ bottom: "70px" }}
     >
       {/* Karaoke ON badge */}
-      <div className="flex items-center gap-2 mb-8 px-5 py-2.5 rounded-full pointer-events-auto"
+      <div className="flex items-center gap-1.5 mb-3 px-3 py-1.5 rounded-full pointer-events-auto"
         style={{ backgroundColor: "#a10a0b" }}>
-        <Mic size={18} className="text-white" />
-        <span className="text-white font-bold text-sm tracking-wider uppercase">Karaoke ON</span>
+        <Mic size={14} className="text-white" />
+        <span className="text-white font-bold text-[11px] tracking-wider uppercase">Karaoke</span>
       </div>
 
       {/* Lyrics container */}
-      <div className="w-[90vw] max-w-[700px] flex flex-col items-center gap-3">
+      <div className="w-[90vw] max-w-[700px] flex flex-col items-center gap-0.5">
         {loading && (
-          <span className="text-white/50 text-sm animate-pulse">Buscando letra...</span>
+          <span className="text-white/50 text-xs animate-pulse">Buscando letra...</span>
         )}
         {error && !loading && (
-          <span className="text-white/30 text-sm">Letra não encontrada</span>
+          <span className="text-white/30 text-xs">Letra não encontrada</span>
         )}
         {lines.length > 0 && (
           <>
