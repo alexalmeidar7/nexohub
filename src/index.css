@@ -105,6 +105,11 @@
   100% { opacity: 1; transform: translateX(0); }
 }
 
+@keyframes coverSlideIn {
+  0% { opacity: 0; transform: translateX(40px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+
 @keyframes shrinkBar {
   from { width: 100%; }
   to { width: 0%; }
