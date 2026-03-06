@@ -1,18 +1,26 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, UserPlus } from "lucide-react";
-import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AdminLayout from "./AdminLayout";
+import ClientCard from "@/components/admin/ClientCard";
 
 interface ClientRow {
   user_id: string;
   nome: string;
   logo: string;
+  endereco: string;
+  telefone_comercial: string;
+  telefone_participacao: string;
+  site: string;
+  instagram: string;
+  facebook: string;
+  youtube: string;
   modules: Record<string, boolean>;
+  updated_at: string;
 }
 
 interface AvailableModule {
@@ -40,7 +48,7 @@ function AdminUsersContent() {
 
   const loadData = async () => {
     const [{ data: empresas }, { data: mods }, { data: clientMods }] = await Promise.all([
-      supabase.from("empresa_config").select("user_id, nome, logo"),
+      supabase.from("empresa_config").select("user_id, nome, logo, endereco, telefone_comercial, telefone_participacao, site, instagram, facebook, youtube, updated_at"),
       supabase.from("available_modules").select("key, name, icon"),
       supabase.from("client_modules").select("user_id, module_key, enabled"),
     ]);
@@ -54,8 +62,24 @@ function AdminUsersContent() {
         const assignment = (clientMods || []).find((cm: any) => cm.user_id === e.user_id && cm.module_key === m.key);
         moduleMap[m.key] = assignment ? assignment.enabled : false;
       });
-      return { user_id: e.user_id, nome: e.nome || "Sem nome", logo: e.logo || "", modules: moduleMap };
+      return {
+        user_id: e.user_id,
+        nome: e.nome || "Sem nome",
+        logo: e.logo || "",
+        endereco: e.endereco || "",
+        telefone_comercial: e.telefone_comercial || "",
+        telefone_participacao: e.telefone_participacao || "",
+        site: e.site || "",
+        instagram: e.instagram || "",
+        facebook: e.facebook || "",
+        youtube: e.youtube || "",
+        modules: moduleMap,
+        updated_at: e.updated_at || "",
+      };
     });
+
+    // Sort newest first
+    clientList.sort((a: ClientRow, b: ClientRow) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
 
     setClients(clientList);
     setLoading(false);
@@ -86,7 +110,6 @@ function AdminUsersContent() {
     }
     setCreating(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
       const res = await supabase.functions.invoke("create-user", {
         body: { email: newEmail, password: newPassword, nome: newNome },
       });
@@ -185,54 +208,14 @@ function AdminUsersContent() {
       ) : (
         <div className="space-y-4">
           {clients.map((client) => (
-            <div
+            <ClientCard
               key={client.user_id}
-              className="rounded-xl p-5 space-y-4 transition-all duration-200"
-              style={{ backgroundColor: "#ffffff", border: "1px solid #e2e8f0" }}
-              onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#2ec0f6")}
-              onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#e2e8f0")}
-            >
-              <div className="flex items-center gap-3">
-                {client.logo ? (
-                  <img src={client.logo} alt="" className="w-10 h-10 rounded-lg object-contain" />
-                ) : (
-                  <div className="w-10 h-10 rounded-lg flex items-center justify-center text-sm font-bold" style={{ backgroundColor: "#f0f4f8", color: "#0d0446" }}>
-                    {client.nome[0]}
-                  </div>
-                )}
-                <div>
-                  <p className="font-semibold" style={{ fontSize: "13px", color: "#0d0446" }}>{client.nome}</p>
-                  <p style={{ fontSize: "10px", color: "#9ca3af" }}>{client.user_id.slice(0, 8)}...</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                {modules.map((mod) => {
-                  const isEnabled = client.modules[mod.key] || false;
-                  const isSaving = saving === `${client.user_id}-${mod.key}`;
-                  return (
-                    <div
-                      key={mod.key}
-                      className="flex items-center justify-between p-3 rounded-lg transition-colors"
-                      style={{
-                        border: isEnabled ? "1px solid rgba(46,192,246,0.3)" : "1px solid #e2e8f0",
-                        backgroundColor: isEnabled ? "rgba(46,192,246,0.05)" : "#ffffff",
-                      }}
-                    >
-                      <span className="truncate mr-2" style={{ fontSize: "11px", fontWeight: 500, color: "#0d0446" }}>{mod.name.replace("Módulo ", "")}</span>
-                      {isSaving ? (
-                        <Loader2 className="animate-spin" size={14} style={{ color: "#2ec0f6" }} />
-                      ) : (
-                        <Switch
-                          checked={isEnabled}
-                          onCheckedChange={(checked) => toggleModule(client.user_id, mod.key, checked)}
-                        />
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
+              client={client}
+              modules={modules}
+              saving={saving}
+              onToggleModule={toggleModule}
+              onClientUpdated={loadData}
+            />
           ))}
         </div>
       )}
