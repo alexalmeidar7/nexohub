@@ -23,6 +23,24 @@ function decodeEntities(str: string): string {
   return ta.value;
 }
 
+function maybeFixMojibake(str: string): string {
+  if (!/(Ã.|Â.|â[\u0080-\u00BF]|�)/.test(str)) return str;
+
+  try {
+    const charCodes = Array.from(str).map((char) => char.charCodeAt(0));
+    if (charCodes.some((code) => code > 255)) return str;
+
+    const fixed = new TextDecoder("utf-8", { fatal: false }).decode(Uint8Array.from(charCodes));
+    return fixed.includes("�") ? str : fixed;
+  } catch {
+    return str;
+  }
+}
+
+function normalizeMusicText(str: string): string {
+  return maybeFixMojibake(decodeEntities(str).trim());
+}
+
 function parseXmlString(xmlStr: string): MusicData | null {
   try {
     const parser = new DOMParser();
@@ -30,13 +48,13 @@ function parseXmlString(xmlStr: string): MusicData | null {
     const errorNode = doc.querySelector("parsererror");
     if (errorNode) return null;
 
-    const titulo = decodeEntities(
+    const titulo = normalizeMusicText(
       doc.querySelector("nome_musica")?.textContent ||
       doc.querySelector("titulo")?.textContent ||
       doc.querySelector("title")?.textContent ||
       "Sem título"
     );
-    const artista = decodeEntities(
+    const artista = normalizeMusicText(
       doc.querySelector("interprete")?.textContent ||
       doc.querySelector("nome_interprete")?.textContent ||
       doc.querySelector("artista")?.textContent ||
@@ -213,10 +231,13 @@ export default function MusicaNoAr() {
   const fetchXml = useCallback(async () => {
     if (!xmlUrl.trim()) return;
     try {
-      const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(xmlUrl.trim())}`;
-      const res = await fetch(proxyUrl, { cache: "no-store" });
-      const text = await res.text();
-      const parsed = parseXmlString(text);
+      const { data, error } = await supabase.functions.invoke("fetch-rss", {
+        body: { url: xmlUrl.trim() },
+      });
+
+      if (error || !data?.content) return;
+
+      const parsed = parseXmlString(data.content);
       if (parsed) await processMusic(parsed);
     } catch { }
   }, [xmlUrl, processMusic]);

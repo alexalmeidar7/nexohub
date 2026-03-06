@@ -706,13 +706,28 @@ function useGlobalMusicSync() {
       ta.innerHTML = str;
       return ta.value;
     };
+
+    const maybeFixMojibake = (str: string) => {
+      if (!/(Ã.|Â.|â[\u0080-\u00BF]|�)/.test(str)) return str;
+      try {
+        const charCodes = Array.from(str).map((char) => char.charCodeAt(0));
+        if (charCodes.some((code) => code > 255)) return str;
+        const fixed = new TextDecoder("utf-8", { fatal: false }).decode(Uint8Array.from(charCodes));
+        return fixed.includes("�") ? str : fixed;
+      } catch {
+        return str;
+      }
+    };
+
+    const normalizeMusicText = (str: string) => maybeFixMojibake(decodeEntities(str).trim());
+
     const parseXml = (xmlStr: string) => {
       try {
         const parser = new DOMParser();
         const doc = parser.parseFromString(xmlStr, "application/xml");
         if (doc.querySelector("parsererror")) return null;
-        const titulo = decodeEntities(doc.querySelector("nome_musica")?.textContent || doc.querySelector("titulo")?.textContent || doc.querySelector("title")?.textContent || "Sem título");
-        const artista = decodeEntities(doc.querySelector("interprete")?.textContent || doc.querySelector("nome_interprete")?.textContent || doc.querySelector("artista")?.textContent || doc.querySelector("artist")?.textContent || "Desconhecido");
+        const titulo = normalizeMusicText(doc.querySelector("nome_musica")?.textContent || doc.querySelector("titulo")?.textContent || doc.querySelector("title")?.textContent || "Sem título");
+        const artista = normalizeMusicText(doc.querySelector("interprete")?.textContent || doc.querySelector("nome_interprete")?.textContent || doc.querySelector("artista")?.textContent || doc.querySelector("artist")?.textContent || "Desconhecido");
         const duracaoStr = doc.querySelector("duracao")?.textContent || doc.querySelector("duration")?.textContent || "0";
         const capa = doc.querySelector("capa")?.textContent || doc.querySelector("cover")?.textContent || "";
         let duracao = 0;
@@ -738,9 +753,12 @@ function useGlobalMusicSync() {
       if (!url) return;
 
       try {
-        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
-        const res = await fetch(proxyUrl, { cache: "no-store" });
-        const text = await res.text();
+        const { data: rssData, error: rssError } = await supabase.functions.invoke("fetch-rss", {
+          body: { url },
+        });
+        if (rssError || !rssData?.content) return;
+
+        const text = rssData.content;
         const data = parseXml(text);
         if (!data) return;
 

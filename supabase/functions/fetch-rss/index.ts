@@ -29,6 +29,10 @@ Deno.serve(async (req) => {
 
     // Handle encoding properly
     const contentType = response.headers.get("content-type") || "";
+    const buffer = await response.arrayBuffer();
+
+    const looksLikeMojibake = (value: string) => /Ã.|Â.|â[\u0080-\u00BF]|�/.test(value);
+
     let text: string;
 
     // Check if charset is specified in content-type
@@ -36,29 +40,29 @@ Deno.serve(async (req) => {
     const charset = charsetMatch ? charsetMatch[1].toLowerCase() : "";
 
     if (charset && charset !== "utf-8" && charset !== "utf8") {
-      const buffer = await response.arrayBuffer();
-      const decoder = new TextDecoder(charset, { fatal: false });
-      text = decoder.decode(buffer);
-    } else {
-      const buffer = await response.arrayBuffer();
-      // Check XML declaration for encoding
-      const tempText = new TextDecoder("utf-8", { fatal: false }).decode(buffer);
-      const xmlEncodingMatch = tempText.match(/<\?xml[^>]+encoding=["']([^"']+)["']/i);
-      const xmlEncoding = xmlEncodingMatch ? xmlEncodingMatch[1].toLowerCase() : "";
-      
-      if (xmlEncoding && xmlEncoding !== "utf-8" && xmlEncoding !== "utf8") {
-        const decoder = new TextDecoder(xmlEncoding, { fatal: false });
+      try {
+        const decoder = new TextDecoder(charset, { fatal: false });
         text = decoder.decode(buffer);
-      } else {
-        // Check for mojibake: common pattern when Latin-1 is decoded as UTF-8
-        // e.g. "Ã£" instead of "ã", "Ã§" instead of "ç"
-        const hasMojibake = /Ã[£¡¢¤¥©§«®°±²³´µ¶¹º»¼½¾¿]|Ã\u0083|Ã\u0082/.test(tempText);
-        if (hasMojibake) {
-          const decoder = new TextDecoder("iso-8859-1", { fatal: false });
+      } catch {
+        text = new TextDecoder("utf-8", { fatal: false }).decode(buffer);
+      }
+    } else {
+      const utf8Text = new TextDecoder("utf-8", { fatal: false }).decode(buffer);
+
+      // Check XML declaration for encoding
+      const xmlEncodingMatch = utf8Text.match(/<\?xml[^>]+encoding=["']([^"']+)["']/i);
+      const xmlEncoding = xmlEncodingMatch ? xmlEncodingMatch[1].toLowerCase() : "";
+
+      if (xmlEncoding && xmlEncoding !== "utf-8" && xmlEncoding !== "utf8") {
+        try {
+          const decoder = new TextDecoder(xmlEncoding, { fatal: false });
           text = decoder.decode(buffer);
-        } else {
-          text = tempText;
+        } catch {
+          text = utf8Text;
         }
+      } else {
+        const latin1Text = new TextDecoder("iso-8859-1", { fatal: false }).decode(buffer);
+        text = looksLikeMojibake(utf8Text) && !looksLikeMojibake(latin1Text) ? latin1Text : utf8Text;
       }
     }
 
