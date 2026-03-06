@@ -99,8 +99,9 @@
   }
 }
 
-@keyframes slideInFromLeft {
-  0% { opacity: 0; transform: translateX(-60px); }
+@keyframes slideOutFromBehind {
+  0% { opacity: 0; transform: translateX(80%); }
+  30% { opacity: 0.5; }
   100% { opacity: 1; transform: translateX(0); }
 }
 
