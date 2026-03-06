@@ -47,7 +47,8 @@ export default function AudioDualCard({
         <div
           className="absolute left-0 top-0 bottom-0 md:w-[50%] w-full rounded-3xl overflow-hidden shadow-xl"
           style={{
-            animation: "slideOutFromBehind 1.8s cubic-bezier(0.22, 1, 0.36, 1) forwards",
+            animation: "slideOutFromBehind 1.6s cubic-bezier(0.22, 1, 0.36, 1) 1.2s forwards",
+            opacity: 0,
             backgroundColor: "hsl(0 60% 22%)",
             backgroundImage: presenterPhoto ? `url(${presenterPhoto})` : undefined,
             backgroundSize: "cover",
