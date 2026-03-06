@@ -190,7 +190,7 @@ export default function PromocoesKiosk() {
     };
 
     const load = isPublicMode ? loadPublic : loadAuth;
-    load();
+    load().finally(() => setLoading(false));
     const interval = setInterval(load, 30000);
     return () => clearInterval(interval);
   }, [isPublicMode, userSlug]);
