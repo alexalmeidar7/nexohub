@@ -1,4 +1,4 @@
-import { Heart, Mic } from "lucide-react";
+import { Heart, Mic, Plus } from "lucide-react";
 import { lazy, Suspense, useEffect, useRef } from "react";
 
 const AudioSpectrum = lazy(() => import("@/components/AudioSpectrum"));
