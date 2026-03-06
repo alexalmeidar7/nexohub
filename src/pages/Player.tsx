@@ -310,47 +310,6 @@ export default function PlayerPage() {
   const [streamStalled, setStreamStalled] = useState(false);
   const stallTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Detect stream stall and auto-reconnect
-  useEffect(() => {
-    if (!playing || !canal || canal.type === "youtube") {
-      setStreamStalled(false);
-      if (stallTimerRef.current) clearTimeout(stallTimerRef.current);
-      return;
-    }
-    const mediaEl = (canal.type === "audio_live" || canal.type === "audio") ? audioRef.current : videoRef.current;
-    if (!mediaEl) return;
-
-    const onStall = () => {
-      if (stallTimerRef.current) clearTimeout(stallTimerRef.current);
-      stallTimerRef.current = setTimeout(() => {
-        if (mediaEl.paused || mediaEl.ended || mediaEl.readyState < 2) {
-          setStreamStalled(true);
-          // Auto-reconnect
-          if (canal) playStream(canal.url, canal.type);
-        }
-      }, 5000);
-    };
-    const onPlaying = () => {
-      setStreamStalled(false);
-      if (stallTimerRef.current) clearTimeout(stallTimerRef.current);
-    };
-
-    mediaEl.addEventListener("stalled", onStall);
-    mediaEl.addEventListener("pause", onStall);
-    mediaEl.addEventListener("ended", onStall);
-    mediaEl.addEventListener("playing", onPlaying);
-    mediaEl.addEventListener("timeupdate", onPlaying);
-
-    return () => {
-      mediaEl.removeEventListener("stalled", onStall);
-      mediaEl.removeEventListener("pause", onStall);
-      mediaEl.removeEventListener("ended", onStall);
-      mediaEl.removeEventListener("playing", onPlaying);
-      mediaEl.removeEventListener("timeupdate", onPlaying);
-      if (stallTimerRef.current) clearTimeout(stallTimerRef.current);
-    };
-  }, [playing, canal, playStream]);
-
   // SpeechRecognition-based CC: transcribes audio in real-time
   const startCCRecognition = useCallback(() => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
