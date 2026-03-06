@@ -1611,11 +1611,6 @@ export default function PlayerPage() {
                 ))}
               </div>
             )}
-            <button onClick={toggleCC}
-              className={`px-3 py-1.5 rounded text-[11px] font-bold transition-all flex items-center gap-1 border ${ccEnabled ? "bg-[#ed0808] text-white border-[#ed0808] shadow-[0_0_8px_rgba(237,8,8,0.5)]" : "bg-white/10 text-white/60 border-white/20 hover:bg-white/20 hover:text-white"}`}
-              title={ccEnabled ? "Desativar Closed Captions" : "Ativar Closed Captions"}>
-              {ccLoading ? <Loader2 size={14} className="animate-spin" /> : ccEnabled ? <CaptionsOff size={14} /> : <Captions size={14} />} CC
-            </button>
             {/* Karaoke toggle — only for audio channels with music */}
             {(isAudio || isVideo) && musicData?.titulo && musicData.titulo !== "Sem título" && (
               <button onClick={() => setKaraokeEnabled(!karaokeEnabled)}
