@@ -1506,16 +1506,20 @@ export default function PlayerPage() {
           </div>
 
           {/* Next / Schedule */}
-          <div className="pl-3 border-l border-white/10 flex-1 min-w-0">
-            <span className="text-[10px] font-bold uppercase" style={{ color: "#e60000" }}>A seguir:</span>
-            <div className="text-white text-sm truncate">
-              {isYoutube ? (nextYtVideo?.title || "Sem vídeo") : (nextProg?.nome || "Sem programação")}
-            </div>
-            {!isYoutube && (
-              <span className="text-[10px]" style={{ color: "#e60000" }}>
-                {nextProg ? `${nextProg.horario_inicio} - ${nextProg.horario_fim}` : "--:-- - --:--"}
-              </span>
+          <div className="pl-3 border-l border-white/10 flex-1 min-w-0 flex items-center gap-3">
+            {!isYoutube && nextPresenter?.foto && (
+              <img src={nextPresenter.foto} alt={nextPresenter.nome} className="w-10 h-10 rounded-full object-cover shrink-0 border border-white/20" />
             )}
+            <div className="min-w-0">
+              <span className="text-[10px] font-bold uppercase" style={{ color: "#e60000" }}>A seguir:</span>
+              <div className="text-white text-sm truncate">
+                {isYoutube ? (nextYtVideo?.title || "Sem vídeo") : (nextProg?.nome || "Sem programação")}
+              </div>
+              {!isYoutube && (
+                <span className="text-[10px]" style={{ color: "#e60000" }}>
+                  {nextProg ? `${nextProg.horario_inicio} - ${nextProg.horario_fim}` : "--:-- - --:--"}
+                </span>
+              )}
             <div className="mt-1">
               <button onClick={() => setGradeOpen(true)}
                 className="flex items-center gap-1 text-white text-[10px] font-bold uppercase px-3 py-1 rounded-full transition-all"
