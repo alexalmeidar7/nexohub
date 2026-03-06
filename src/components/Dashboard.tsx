@@ -400,6 +400,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               {currentPage === "logos" && <LogosPatrocinadoresPage />}
               {currentPage === "shopping" && <ShoppingPage />}
               {currentPage === "preroll" && <PreRollPage />}
+              {currentPage === "cortevideo" && <CortesVideoPage />}
             </Suspense>
           </div>
         </main>
