@@ -69,6 +69,11 @@ const sidebarMenu: MenuItem[] = [
       { icon: ShoppingCart, label: "Shopping", page: "shopping" },
     ]
   },
+  {
+    icon: Wrench, label: "ferramentas", children: [
+      { icon: Scissors, label: "Cortes de Vídeo", page: "cortevideo" },
+    ]
+  },
 ];
 
 // Map menu items to module keys for plan filtering
