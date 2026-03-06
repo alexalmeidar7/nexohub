@@ -91,6 +91,25 @@ export default function ClientCard({ client, clientEmail, modules, plans, saving
     if (res.error || res.data?.error) {
       toast({ title: "Erro ao salvar", description: res.data?.error || res.error?.message, variant: "destructive" });
     } else {
+      // Auto-disable modules not in the new plan
+      if (plano !== client.plano) {
+        const newPlan = plans.find((p) => p.value === plano);
+        const allowedModules = newPlan?.enabled_modules || [];
+        const modulesToDisable = modules
+          .filter((m) => !allowedModules.includes(m.key) && client.modules[m.key])
+          .map((m) => m.key);
+
+        if (modulesToDisable.length > 0) {
+          await Promise.all(
+            modulesToDisable.map((key) =>
+              supabase.from("client_modules").upsert(
+                { user_id: client.user_id, module_key: key, enabled: false },
+                { onConflict: "user_id,module_key" }
+              )
+            )
+          );
+        }
+      }
       toast({ title: "Dados atualizados!" });
       setPassword("");
       setEditing(false);
