@@ -16,7 +16,7 @@ export default function AudioSpectrum({ audioElement }: AudioSpectrumProps) {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const bufferLength = 32;
+    const bufferLength = 64;
     const barOffsets = Array.from({ length: bufferLength }, () => Math.random() * Math.PI * 2);
     const barSpeeds = Array.from({ length: bufferLength }, () => 0.7 + Math.random() * 1.8);
 
@@ -46,14 +46,14 @@ export default function AudioSpectrum({ audioElement }: AudioSpectrumProps) {
         const combined = w1 * 0.35 + w2 * 0.3 + w3 * 0.2 + spike * 0.15;
         const bassBoost = i < bufferLength * 0.3 ? 1.3 : i < bufferLength * 0.6 ? 1.0 : 0.7;
 
-        const intensity = active ? 0.85 : 0.08;
-        const barHeight = Math.min(1, combined * bassBoost * intensity) * h * 0.85;
+        const intensity = active ? 1.1 : 0.08;
+        const barHeight = Math.min(1, combined * bassBoost * intensity) * h * 0.95;
 
         // Peak logic
         if (barHeight > peaksRef.current[i]) {
           peaksRef.current[i] = barHeight;
         } else {
-          peaksRef.current[i] -= 1.2;
+          peaksRef.current[i] -= 2.5;
           if (peaksRef.current[i] < 0) peaksRef.current[i] = 0;
         }
 
