@@ -1357,7 +1357,14 @@ export default function PlayerPage() {
           <div className="flex items-center gap-3 pr-5 border-r border-white/10 shrink-0">
             <div className="flex flex-col items-center gap-1">
               <button onClick={() => navigateChannel(-1)} className="text-white/60 hover:text-white hover:bg-[#e60000] rounded px-2 py-2 transition-all" title="Canal anterior"><ChevronUp size={16} /></button>
-              <div className="text-white text-xs font-bold py-0.5">{canal?.numero_canal || "--"}</div>
+              <div className="text-white text-xs font-bold py-0.5">
+                {(() => {
+                  const num = canal?.numero_canal || "--";
+                  const dashIdx = num.indexOf("-");
+                  if (dashIdx < 0) return num;
+                  return <>{num.slice(0, dashIdx)}<sub className="text-[9px]" style={{ color: "#e60000" }}>{num.slice(dashIdx)}</sub></>;
+                })()}
+              </div>
               <button onClick={() => navigateChannel(1)} className="text-white/60 hover:text-white hover:bg-[#e60000] rounded px-2 py-2 transition-all" title="Próximo canal"><ChevronDown size={16} /></button>
             </div>
             {canal?.logo_url ? (
