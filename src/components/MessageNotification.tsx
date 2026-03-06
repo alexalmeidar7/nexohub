@@ -18,9 +18,13 @@ export default function MessageNotification() {
   const [messages, setMessages] = useState<AdminMessage[]>([]);
   const [hovering, setHovering] = useState(false);
   const [openMsgId, setOpenMsgId] = useState<string | null>(null);
+  const [tab, setTab] = useState<"novas" | "lidas">("novas");
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const unreadCount = messages.filter((m) => !m.is_read).length;
+  const filteredMessages = tab === "novas"
+    ? messages.filter((m) => !m.is_read)
+    : messages.filter((m) => m.is_read);
 
   useEffect(() => {
     if (!user) return;
@@ -60,20 +64,19 @@ export default function MessageNotification() {
     };
   }, [user]);
 
+  const markAsRead = (msgId: string) => {
+    supabase
+      .from("admin_messages")
+      .update({ is_read: true })
+      .eq("id", msgId)
+      .then(() => {
+        setMessages((prev) => prev.map((m) => m.id === msgId ? { ...m, is_read: true } : m));
+      });
+  };
+
   const handleMouseEnter = () => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     setHovering(true);
-    // Mark unread as read
-    if (user && unreadCount > 0) {
-      const unreadIds = messages.filter((m) => !m.is_read).map((m) => m.id);
-      supabase
-        .from("admin_messages")
-        .update({ is_read: true })
-        .in("id", unreadIds)
-        .then(() => {
-          setMessages((prev) => prev.map((m) => ({ ...m, is_read: true })));
-        });
-    }
   };
 
   const handleMouseLeave = () => {
@@ -109,18 +112,49 @@ export default function MessageNotification() {
           onMouseEnter={() => { if (timeoutRef.current) clearTimeout(timeoutRef.current); }}
           onMouseLeave={handleMouseLeave}
         >
-          <div className="px-4 py-2 border-b" style={{ borderColor: "rgba(13,4,70,0.1)", backgroundColor: "#0d0446" }}>
-            <p className="text-white text-xs font-bold">Mensagens</p>
+          {/* Header with tabs */}
+          <div className="flex items-center justify-between px-4 py-2 border-b" style={{ borderColor: "rgba(13,4,70,0.1)", backgroundColor: "#0d0446" }}>
+            <div className="flex gap-1">
+              <button
+                onClick={() => setTab("novas")}
+                className="text-[10px] font-bold px-3 py-1 rounded-full transition-colors"
+                style={{
+                  backgroundColor: tab === "novas" ? "#268ffa" : "transparent",
+                  color: "#ffffff",
+                  border: tab === "novas" ? "none" : "1px solid rgba(255,255,255,0.3)",
+                }}
+              >
+                Mensagens {unreadCount > 0 && `(${unreadCount})`}
+              </button>
+              <button
+                onClick={() => setTab("lidas")}
+                className="text-[10px] font-bold px-3 py-1 rounded-full transition-colors"
+                style={{
+                  backgroundColor: tab === "lidas" ? "#268ffa" : "transparent",
+                  color: "#ffffff",
+                  border: tab === "lidas" ? "none" : "1px solid rgba(255,255,255,0.3)",
+                }}
+              >
+                Lidas
+              </button>
+            </div>
           </div>
+
+          {/* Message list */}
           <div className="max-h-[280px] overflow-y-auto" style={{ scrollbarWidth: "thin", scrollbarColor: "#268ffa #f0f0f0" }}>
-            {messages.length === 0 ? (
-              <p className="text-[11px] px-4 py-6 text-center" style={{ color: "rgba(13,4,70,0.4)" }}>Nenhuma mensagem.</p>
+            {filteredMessages.length === 0 ? (
+              <p className="text-[11px] px-4 py-6 text-center" style={{ color: "rgba(13,4,70,0.4)" }}>
+                {tab === "novas" ? "Nenhuma mensagem nova." : "Nenhuma mensagem lida."}
+              </p>
             ) : (
-              messages.map((msg) => (
+              filteredMessages.map((msg) => (
                 <Collapsible
                   key={msg.id}
                   open={openMsgId === msg.id}
-                  onOpenChange={(open) => setOpenMsgId(open ? msg.id : null)}
+                  onOpenChange={(open) => {
+                    setOpenMsgId(open ? msg.id : null);
+                    if (open && !msg.is_read) markAsRead(msg.id);
+                  }}
                 >
                   <div className="px-4 py-3 border-b" style={{ borderColor: "rgba(13,4,70,0.06)" }}>
                     <p className="text-[11px] font-bold truncate" style={{ color: "#268ffa" }}>{msg.subject}</p>
