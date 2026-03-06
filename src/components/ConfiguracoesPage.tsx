@@ -114,9 +114,10 @@ export default function ConfiguracoesPage() {
 
   const uploadToStorage = async (file: File, folder: string): Promise<string | null> => {
     if (!user) return null;
-    const ext = file.name.split(".").pop() || "png";
+    const compressed = await compressImage(file);
+    const ext = compressed.name.split(".").pop() || "webp";
     const path = `${user.id}/${folder}-${Date.now()}.${ext}`;
-    const { error } = await supabase.storage.from("empresa-assets").upload(path, file, { upsert: true });
+    const { error } = await supabase.storage.from("empresa-assets").upload(path, compressed, { upsert: true });
     if (error) { toast.error("Erro no upload: " + error.message); return null; }
     const { data: urlData } = supabase.storage.from("empresa-assets").getPublicUrl(path);
     return urlData.publicUrl;
