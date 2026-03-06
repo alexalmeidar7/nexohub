@@ -29,8 +29,8 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
   return (
     <div className="min-h-screen flex" style={{ backgroundColor: "#ffffff", color: "#0d0446" }}>
       <aside className="w-16 flex flex-col items-center py-4 gap-3" style={{ backgroundColor: "#0d0446" }}>
-        <div className="mb-4">
-          <img src={logoMenu} alt="Admin" className="w-10 h-auto -rotate-90" />
+        <div className="mb-4 mt-4">
+          <img src={logoMenu} alt="Admin" className="w-14 h-auto -rotate-90" />
         </div>
 
         {navItems.map((item) => {
