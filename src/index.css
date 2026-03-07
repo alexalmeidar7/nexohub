@@ -111,7 +111,7 @@
 @keyframes presenterReveal {
   0%   { opacity: 0; left: 50%; transform: translateX(-50%); }
   30%  { opacity: 1; }
-  100% { opacity: 1; left: 0%; transform: translateX(0); }
+  100% { opacity: 1; left: -5%; transform: translateX(0); }
 }
 
 @keyframes shrinkBar {
