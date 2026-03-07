@@ -249,7 +249,9 @@ export default function PlayerPage() {
   const [programas, setProgramas] = useState<Programa[]>([]);
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(false);
+  const mutedRef = useRef(false);
   const [volume, setVolume] = useState(80);
+  const volumeRef = useRef(80);
   const [volumeHover, setVolumeHover] = useState(false);
   const volumeHideTimeout = useRef<ReturnType<typeof setTimeout>>();
   const [fullscreen, setFullscreen] = useState(false);
@@ -717,8 +719,8 @@ export default function PlayerPage() {
         if (videoRef.current) { videoRef.current.pause(); videoRef.current.src = ""; }
         const audio = audioRef.current;
         if (!audio) return;
-        audio.volume = volume / 100;
-        audio.muted = muted;
+        audio.volume = volumeRef.current / 100;
+        audio.muted = mutedRef.current;
         if (Hls && Hls.isSupported()) {
           const hls = new Hls({ enableWorker: true, lowLatencyMode: true });
           hlsRef.current = hls;
@@ -1079,6 +1081,7 @@ export default function PlayerPage() {
   const toggleMute = useCallback(() => {
     setMuted(prev => {
       const newMuted = !prev;
+      mutedRef.current = newMuted;
       if (videoRef.current) videoRef.current.muted = newMuted;
       if (audioRef.current) audioRef.current.muted = newMuted;
       return newMuted;
@@ -1087,11 +1090,20 @@ export default function PlayerPage() {
 
   const handleVolumeChange = useCallback((val: number) => {
     setVolume(val);
+    volumeRef.current = val;
     const v = val / 100;
     if (videoRef.current) { videoRef.current.volume = v; videoRef.current.muted = false; }
     if (audioRef.current) { audioRef.current.volume = v; audioRef.current.muted = false; }
-    setMuted(val === 0);
+    const newMuted = val === 0;
+    setMuted(newMuted);
+    mutedRef.current = newMuted;
   }, []);
+
+  // Keep media elements in sync with muted/volume state
+  useEffect(() => {
+    if (videoRef.current) { videoRef.current.muted = muted; videoRef.current.volume = volume / 100; }
+    if (audioRef.current) { audioRef.current.muted = muted; audioRef.current.volume = volume / 100; }
+  }, [muted, volume]);
 
   // Keyboard & TV Remote Control handler with spatial navigation (TV only for arrows)
   useEffect(() => {
