@@ -65,6 +65,18 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        player: {
+          DEFAULT: "hsl(var(--player-bg))",
+          foreground: "hsl(var(--player-foreground))",
+          accent: "hsl(var(--player-accent))",
+          "accent-hover": "hsl(var(--player-accent-hover))",
+          "accent-soft": "hsl(var(--player-accent-soft))",
+          muted: "hsl(var(--player-muted))",
+          "muted-foreground": "hsl(var(--player-muted-foreground))",
+          surface: "hsl(var(--player-surface))",
+          "surface-hover": "hsl(var(--player-surface-hover))",
+          border: "hsl(var(--player-border))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
