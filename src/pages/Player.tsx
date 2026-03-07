@@ -1643,8 +1643,11 @@ export default function PlayerPage() {
       >
         {[
           { icon: Home, label: "Home", action: () => {
-            if (userSlug) window.location.href = `/user/${userSlug}/nexohub/player`;
-            else window.location.href = "/user/nexohub/player";
+            setPageFadeOut(true);
+            setTimeout(() => {
+              if (userSlug) window.location.href = `/user/${userSlug}/nexohub/player`;
+              else window.location.href = "/user/nexohub/player";
+            }, 400);
           }},
           { icon: Radio, label: "Streaming", action: () => {} },
           { icon: Film, label: "Conteúdo", action: () => {} },
