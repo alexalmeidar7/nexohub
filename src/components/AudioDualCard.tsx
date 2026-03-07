@@ -320,19 +320,25 @@ export default function AudioDualCard({
           </div>
         </div>
 
-        {/* Music card: fade-in center → wait 2s → slide right; slides left when history opens */}
+        {/* Outer wrapper handles the initial entry animation */}
         <div
-          className="relative md:w-[55%] w-full rounded-3xl overflow-hidden shadow-2xl"
+          className="relative md:w-[55%] w-full"
           style={{
-            backgroundColor: isSemTitulo ? "#880000" : "hsl(0 0% 5%)",
-            minHeight: "420px",
             zIndex: 2,
             animation: "coverFadeAndSlide 3.5s cubic-bezier(0.22, 1, 0.36, 1) forwards",
             opacity: 0,
-            transform: historyOpen ? "translateX(-30%)" : undefined,
-            transition: "transform 0.5s cubic-bezier(0.22, 1, 0.36, 1)",
           }}
         >
+          {/* Inner wrapper handles the history slide */}
+          <div
+            className="relative w-full rounded-3xl overflow-hidden shadow-2xl"
+            style={{
+              backgroundColor: isSemTitulo ? "#880000" : "hsl(0 0% 5%)",
+              minHeight: "420px",
+              transform: historyOpen ? "translateX(-25%)" : "translateX(0%)",
+              transition: "transform 0.5s cubic-bezier(0.22, 1, 0.36, 1)",
+            }}
+          >
           {isSemTitulo ? (
             /* "Sem título" state: dark red bg + logo + audio spectrum */
             <div className="absolute inset-0 flex flex-col items-center justify-center rounded-3xl overflow-hidden">
@@ -440,6 +446,7 @@ export default function AudioDualCard({
               </div>
             </>
           )}
+        </div>
         </div>
       </div>
 
