@@ -18,26 +18,22 @@ export default function SplashScreen({ logoUrl, channelName, onFinish }: SplashS
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex flex-col items-center justify-center bg-black transition-opacity duration-600 ${fadeOut ? "opacity-0" : "opacity-100"}`}
-      style={{
-        background: "radial-gradient(ellipse at 50% 90%, rgba(180,20,20,0.25) 0%, #000 70%)",
-      }}
+      className={`fixed inset-0 z-50 flex flex-col items-center justify-center bg-player transition-opacity duration-600 ${fadeOut ? "opacity-0" : "opacity-100"}`}
+      style={{ background: "var(--player-glow)" }}
     >
-      {/* Logo */}
       <div className="mb-16">
         {logoUrl ? (
           <img src={logoUrl} alt={channelName || "Logo"} className="h-28 w-auto object-contain drop-shadow-lg" />
         ) : (
-          <div className="h-28 w-28 rounded-full bg-white/10 flex items-center justify-center">
-            <span className="text-white/40 text-4xl font-bold">P</span>
+          <div className="h-28 w-28 rounded-full bg-player-muted flex items-center justify-center">
+            <span className="text-player-muted-foreground text-4xl font-bold">P</span>
           </div>
         )}
       </div>
 
-      {/* Spinner + text */}
       <div className="flex flex-col items-center gap-3">
-        <Loader2 className="h-8 w-8 animate-spin text-red-600" />
-        <p className="text-white/60 text-sm font-normal tracking-wide">
+        <Loader2 className="h-8 w-8 animate-spin text-player-accent" />
+        <p className="text-player-muted-foreground text-sm font-normal tracking-wide">
           carregando {channelName || "Positiva Play"}
         </p>
       </div>
