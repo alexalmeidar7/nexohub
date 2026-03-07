@@ -105,8 +105,8 @@ export default function AudioDualCard({
               {/* Hover menu — 3 action buttons */}
               <div
                 className="relative inline-block mb-2"
-                onMouseEnter={() => setMenuOpen(true)}
-                onMouseLeave={() => setMenuOpen(false)}
+                onMouseEnter={handleEnter}
+                onMouseLeave={handleLeave}
               >
                 {/* Round + button */}
                 <button
