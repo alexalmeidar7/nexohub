@@ -26,6 +26,8 @@ import {
   Home,
   ShoppingCart,
   Settings2,
+  PictureInPicture,
+  Cast,
 } from "lucide-react";
 
 const PlayerChat = lazy(() => import("@/components/PlayerChat"));
