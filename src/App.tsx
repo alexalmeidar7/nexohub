@@ -10,6 +10,7 @@ import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 
 // Lazy-loaded heavy pages
+const PlayerHub = lazy(() => import("./pages/player/PlayerHub"));
 const PlayerPage = lazy(() => import("./pages/Player"));
 const PlayerApp = lazy(() => import("./pages/PlayerApp"));
 const PromocoesKiosk = lazy(() => import("./pages/Promocoes"));
@@ -48,8 +49,10 @@ const App = () => (
             <Route path="/user/nexohub/home" element={<MasterViewHome />} />
             <Route path="/user/nexohub/telapromo" element={<PromocoesKiosk />} />
             <Route path="/user/:userSlug/nexohub/telapromo" element={<PromocoesKiosk />} />
-            <Route path="/user/nexohub/player" element={<PlayerPage />} />
-            <Route path="/user/:userSlug/nexohub/player" element={<PlayerPage />} />
+            <Route path="/user/nexohub/player" element={<PlayerHub />} />
+            <Route path="/user/:userSlug/nexohub/player" element={<PlayerHub />} />
+            <Route path="/user/nexohub/player/watch" element={<PlayerPage />} />
+            <Route path="/user/:userSlug/nexohub/player/watch" element={<PlayerPage />} />
             <Route path="/user/nexohub/player/app" element={<PlayerApp />} />
             <Route path="/user/:userSlug/nexohub/player/app" element={<PlayerApp />} />
 
