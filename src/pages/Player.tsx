@@ -1150,19 +1150,44 @@ export default function PlayerPage() {
     return () => clearTimeout(hideTimeout.current);
   }, [isAudio, currentIndex]);
 
-  // Prevent tab switch from destroying the stream — keep playing in background
+  // Prevent tab discard and resume playback on tab return
   useEffect(() => {
+    // Web Lock API — prevents browser from discarding the tab while playing
+    let lockPromise: Promise<void> | null = null;
+    let releaseLock: (() => void) | null = null;
+
+    if (playing && "locks" in navigator) {
+      lockPromise = (navigator as any).locks.request(
+        "player-keep-alive",
+        { mode: "exclusive" },
+        () => new Promise<void>((resolve) => { releaseLock = resolve; })
+      );
+    }
+
     const handleVisibility = () => {
       if (document.visibilityState === "visible") {
-        // Resume playback if it was paused by the browser
         const media = isAudio ? audioRef.current : videoRef.current;
         if (media && media.paused && playing) {
           media.play().catch(() => {});
         }
       }
     };
+
+    // beforeunload also hints the browser to keep the page alive
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (playing) {
+        e.preventDefault();
+      }
+    };
+
     document.addEventListener("visibilitychange", handleVisibility);
-    return () => document.removeEventListener("visibilitychange", handleVisibility);
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibility);
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      if (releaseLock) releaseLock();
+    };
   }, [isAudio, playing]);
 
   // Cleanup on unmount
