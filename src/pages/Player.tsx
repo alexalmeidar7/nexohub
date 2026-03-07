@@ -292,6 +292,22 @@ export default function PlayerPage() {
   const [clock, setClock] = useState(0);
   const [apresentadores, setApresentadores] = useState<Apresentador[]>([]);
   const [whatsappPhone, setWhatsappPhone] = useState<string | null>(null);
+  const [profileName, setProfileName] = useState("");
+  const [profileAvatar, setProfileAvatar] = useState<string | null>(null);
+
+  // Fetch profile
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("profiles")
+      .select("nome, avatar_url")
+      .eq("user_id", user.id)
+      .single()
+      .then(({ data }) => {
+        if (data?.nome) setProfileName(data.nome);
+        if (data?.avatar_url) setProfileAvatar(data.avatar_url);
+      });
+  }, [user]);
 
   // YouTube video progress tracking
   const [ytCurrentTime, setYtCurrentTime] = useState(0);
