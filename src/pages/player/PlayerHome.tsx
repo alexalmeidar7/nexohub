@@ -177,6 +177,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
         if (data?.channels) setChannels(data.channels);
         if (data?.empresa?.logo) setLogoUrl(data.empresa.logo);
         if (data?.empresa?.nome) setChannelName(data.empresa.nome);
+        setDataLoaded(true);
         return;
       }
 
