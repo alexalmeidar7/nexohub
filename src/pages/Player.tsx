@@ -245,7 +245,7 @@ export default function PlayerPage() {
   const { userSlug } = useParams<{ userSlug?: string }>();
   const navigate = useNavigate();
   const isPublicMode = !!userSlug;
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, signOut } = useAuth();
   const userId = user?.id ?? null;
 
   // Diagnostic: log auth/user changes and tab visibility
