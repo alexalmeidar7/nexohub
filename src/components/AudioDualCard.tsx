@@ -100,56 +100,60 @@ export default function AudioDualCard({
                 onMouseEnter={() => setMenuOpen(true)}
                 onMouseLeave={() => setMenuOpen(false)}
               >
-                {/* Expanded buttons — shown on hover */}
+                {/* Round + button */}
+                <button
+                  className="w-8 h-8 rounded-full flex items-center justify-center transition-all hover:scale-110 active:scale-95"
+                  style={{ backgroundColor: "hsla(0, 0%, 100%, 0.2)" }}
+                  onClick={() => setMenuOpen(o => !o)}
+                >
+                  {menuOpen ? <X size={18} className="text-white" /> : <Plus size={18} className="text-white" />}
+                </button>
+
+                {/* Expanded menu */}
                 {menuOpen && (
-                  <div className="absolute bottom-full left-0 mb-2 flex flex-col gap-2 animate-fade-in" style={{ animationDuration: "0.2s" }}>
+                  <div
+                    className="absolute bottom-full left-0 mb-3 flex flex-col gap-1.5 animate-fade-in min-w-[200px]"
+                    style={{ animationDuration: "0.15s" }}
+                  >
+                    {/* Chat ao vivo */}
+                    {onOpenChat && (
+                      <button
+                        onClick={onOpenChat}
+                        className="flex items-center gap-2.5 px-3.5 py-2 rounded-lg transition-all hover:brightness-125 active:scale-95 text-left"
+                        style={{ backgroundColor: "hsl(0 80% 40%)" }}
+                      >
+                        <MessageCircle size={16} className="text-white shrink-0" />
+                        <span className="text-white text-xs font-semibold whitespace-nowrap">Chat ao Vivo</span>
+                      </button>
+                    )}
+                    {/* WhatsApp do estúdio */}
+                    {cleanPhone && (
+                      <a
+                        href={`https://wa.me/${cleanPhone}?text=Olá, ${presenterName || "Locutor"}!`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2.5 px-3.5 py-2 rounded-lg transition-all hover:brightness-125 active:scale-95"
+                        style={{ backgroundColor: "hsl(0 80% 40%)" }}
+                      >
+                        <span className="shrink-0 text-white"><WhatsAppIcon size={16} /></span>
+                        <span className="text-white text-xs font-semibold whitespace-nowrap">WhatsApp do Estúdio</span>
+                      </a>
+                    )}
                     {/* Instagram */}
                     {presenterInstagram && (
                       <a
                         href={`https://instagram.com/${presenterInstagram.replace(/^@/, "")}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="w-9 h-9 rounded-full flex items-center justify-center transition-all hover:scale-110 active:scale-95"
-                        style={{ backgroundColor: "hsla(0, 0%, 100%, 0.25)" }}
-                        title={`Instagram de ${presenterName || "Locutor"}`}
+                        className="flex items-center gap-2.5 px-3.5 py-2 rounded-lg transition-all hover:brightness-125 active:scale-95"
+                        style={{ backgroundColor: "hsl(0 80% 40%)" }}
                       >
-                        <Instagram size={17} className="text-white" />
+                        <Instagram size={16} className="text-white shrink-0" />
+                        <span className="text-white text-xs font-semibold whitespace-nowrap">Siga {presenterName || "Locutor"}</span>
                       </a>
-                    )}
-                    {/* WhatsApp */}
-                    {cleanPhone && (
-                      <a
-                        href={`https://wa.me/${cleanPhone}?text=Olá, ${presenterName || "Locutor"}!`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="w-9 h-9 rounded-full flex items-center justify-center transition-all hover:scale-110 active:scale-95"
-                        style={{ backgroundColor: "hsla(142, 70%, 40%, 0.85)" }}
-                        title={`Mande um Zap para ${presenterName || "Locutor"}`}
-                      >
-                        <WhatsAppIcon size={17} />
-                      </a>
-                    )}
-                    {/* Chat */}
-                    {onOpenChat && (
-                      <button
-                        onClick={onOpenChat}
-                        className="w-9 h-9 rounded-full flex items-center justify-center transition-all hover:scale-110 active:scale-95"
-                        style={{ backgroundColor: "hsla(0, 0%, 100%, 0.25)" }}
-                        title="Abrir Chat"
-                      >
-                        <MessageCircle size={17} className="text-white" />
-                      </button>
                     )}
                   </div>
                 )}
-
-                {/* Round + button */}
-                <button
-                  className="w-8 h-8 rounded-full flex items-center justify-center transition-all hover:scale-110 active:scale-95"
-                  style={{ backgroundColor: "hsla(0, 0%, 100%, 0.2)" }}
-                >
-                  {menuOpen ? <X size={18} className="text-white" /> : <Plus size={18} className="text-white" />}
-                </button>
               </div>
 
               <Mic size={16} className="mb-1" style={{ color: "hsl(0 80% 50%)" }} />
