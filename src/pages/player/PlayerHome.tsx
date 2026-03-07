@@ -132,17 +132,22 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
               {profileAvatar ? (
                 <img src={profileAvatar} alt={userName} className="w-full h-full object-cover" />
               ) : (
-                <UserCircle className="h-7 w-7 text-player-muted-foreground" />
+                <img src="/avatars/usr-default.png" alt="Visitante" className="w-full h-full object-cover" />
               )}
             </div>
             <div>
               <p className="text-sm">
                 Bem vindo, <span className="text-player-accent font-semibold">{userName}</span>
               </p>
-              {user && (
+              {user ? (
                 <button onClick={handleSignOut} className="text-player-accent text-xs hover:underline flex items-center gap-1">
                   <LogOut className="h-3 w-3" /> Sair
                 </button>
+              ) : onBackToAccess ? (
+                <button onClick={onBackToAccess} className="text-player-accent text-xs hover:underline">
+                  cadastre-se
+                </button>
+              ) : null}
               )}
             </div>
           </div>
