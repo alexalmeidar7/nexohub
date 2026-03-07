@@ -242,6 +242,7 @@ function MarqueeText({ text, className }: { text: string; className?: string }) 
 
 export default function PlayerPage() {
   const { userSlug } = useParams<{ userSlug?: string }>();
+  const navigate = useNavigate();
   const isPublicMode = !!userSlug;
   const { user, loading: authLoading } = useAuth();
   const userId = user?.id ?? null;
