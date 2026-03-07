@@ -447,6 +447,7 @@ export default function AudioDualCard({
             </>
           )}
         </div>
+        </div>
       </div>
 
     </div>
