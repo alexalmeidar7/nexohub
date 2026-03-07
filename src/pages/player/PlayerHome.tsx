@@ -125,7 +125,11 @@ export default function PlayerHome() {
         <header className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-player-surface flex items-center justify-center overflow-hidden">
-              <UserCircle className="h-7 w-7 text-player-muted-foreground" />
+              {profileAvatar ? (
+                <img src={profileAvatar} alt={userName} className="w-full h-full object-cover" />
+              ) : (
+                <UserCircle className="h-7 w-7 text-player-muted-foreground" />
+              )}
             </div>
             <div>
               <p className="text-sm">
