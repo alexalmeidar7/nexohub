@@ -181,7 +181,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
         return;
       }
 
-      if (!userId) return;
+      if (!userId) { setDataLoaded(true); return; }
 
       const [chRes, empRes, progRes] = await Promise.all([
         supabase.from("streaming_channels").select("id, name, cover_url, logo_url, type, url").eq("user_id", userId).eq("active", true).order("numero_canal", { ascending: true }),
