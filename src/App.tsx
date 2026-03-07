@@ -50,6 +50,8 @@ const App = () => (
             <Route path="/user/:userSlug/nexohub/telapromo" element={<PromocoesKiosk />} />
             <Route path="/user/nexohub/player" element={<PlayerPage />} />
             <Route path="/user/:userSlug/nexohub/player" element={<PlayerPage />} />
+            <Route path="/user/nexohub/player/app" element={<PlayerApp />} />
+            <Route path="/user/:userSlug/nexohub/player/app" element={<PlayerApp />} />
 
             {/* Legacy redirects */}
             <Route path="/masterview/home" element={<Navigate to="/user/nexohub/home" replace />} />
