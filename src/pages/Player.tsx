@@ -1173,7 +1173,7 @@ export default function PlayerPage() {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [navigateChannel, volume, handleVolumeChange, toggleMute, handlePlayCanal]);
+  }, [navigateChannel, volume, handleVolumeChangeWithOsd, toggleMuteWithOsd, handlePlayCanal]);
 
   const handleSelectVideo = useCallback((videoId: string) => {
     setSelectedVideoId(videoId);
