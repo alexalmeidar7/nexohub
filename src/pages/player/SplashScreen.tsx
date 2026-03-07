@@ -11,6 +11,15 @@ export default function SplashScreen({ logoUrl, channelName, onFinish }: SplashS
   const [fadeOut, setFadeOut] = useState(false);
   const [showLogo, setShowLogo] = useState(false);
 
+  // Cache logo in sessionStorage
+  useEffect(() => {
+    if (logoUrl) {
+      sessionStorage.setItem("player_logo_cache", logoUrl);
+    }
+  }, [logoUrl]);
+
+  const cachedLogo = logoUrl || sessionStorage.getItem("player_logo_cache");
+
   useEffect(() => {
     const logoTimer = setTimeout(() => setShowLogo(true), 200);
     const timer = setTimeout(() => setFadeOut(true), 2500);
