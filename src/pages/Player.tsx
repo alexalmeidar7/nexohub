@@ -115,6 +115,8 @@ const MUSIC_START_KEY = "masterview_music_start";
 const DAY_MAP_SHORT: Record<number, string> = { 0: "dom", 1: "seg", 2: "ter", 3: "qua", 4: "qui", 5: "sex", 6: "sab" };
 const DAY_MAP_FULL: Record<number, string> = { 0: "Domingo", 1: "Segunda", 2: "Terça", 3: "Quarta", 4: "Quinta", 5: "Sexta", 6: "Sábado" };
 
+const normalizeChannelNumber = (num?: string | null) => (num || "").replace(/\s+/g, "").toLowerCase();
+
 function getCurrentProgram(programas: Programa[]): Programa | null {
   const now = new Date();
   const todayShort = DAY_MAP_SHORT[now.getDay()];
@@ -293,6 +295,7 @@ export default function PlayerPage() {
   const isAudio = canal?.type === "audio_live" || canal?.type === "audio";
   const isYoutube = canal?.type === "youtube";
   const isVideo = canal?.type === "video";
+  const isAutoplayChannel = useCallback((c?: Canal | null) => normalizeChannelNumber(c?.numero_canal) === "991-1", []);
   const autoPlayedRef = useRef(false);
 
   // Shopping & Pre-Roll state
@@ -309,6 +312,9 @@ export default function PlayerPage() {
   const [prerollShowing, setPrerollShowing] = useState(false);
   const prerollVideoRef = useRef<HTMLVideoElement>(null);
   const prerollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const warmedPrerollChannelIdRef = useRef<string | null>(null);
+  const warmupAbortRef = useRef<AbortController | null>(null);
+  const isPrerollVisible = Boolean((prerollUrl || (prerollMediaType === "youtube" && prerollYoutubeUrl)) && (!prerollDone || prerollShowing));
 
   // Mid-roll state for YouTube
   const [midrollActive, setMidrollActive] = useState(false);
@@ -579,6 +585,41 @@ export default function PlayerPage() {
     fetchAll();
     return () => { cancelled = true; };
   }, [user, authLoading, isPublicMode, userSlug]);
+
+  // While pre-roll is visible, warm up channel 991-1 (or first audio channel) in background
+  useEffect(() => {
+    if (!isPrerollVisible || canais.length === 0) return;
+
+    const target =
+      canais.find((c) => isAutoplayChannel(c) && (c.type === "audio_live" || c.type === "audio")) ||
+      canais.find((c) => c.type === "audio_live" || c.type === "audio");
+
+    if (!target || warmedPrerollChannelIdRef.current === target.id) return;
+    warmedPrerollChannelIdRef.current = target.id;
+
+    warmupAbortRef.current?.abort();
+    const controller = new AbortController();
+    warmupAbortRef.current = controller;
+
+    (async () => {
+      try {
+        if (target.url.includes(".m3u8")) {
+          await getHls().catch(() => null);
+        }
+        const warmUrl = target.url.includes("?") ? `${target.url}&warmup=1` : `${target.url}?warmup=1`;
+        await fetch(warmUrl, {
+          method: "GET",
+          cache: "no-store",
+          mode: "no-cors",
+          signal: controller.signal,
+        }).catch(() => null);
+      } catch {
+        // warmup is best-effort only
+      }
+    })();
+
+    return () => controller.abort();
+  }, [canais, isAutoplayChannel, isPrerollVisible]);
 
   // Refresh shopping products periodically
   useEffect(() => {
@@ -909,12 +950,22 @@ export default function PlayerPage() {
     if (!prerollDone) return;
     if (autoPlayedRef.current || canais.length === 0 || playing) return;
     autoPlayedRef.current = true;
-    const first = canais[0];
+
+    const preferredIndex = canais.findIndex((c) => isAutoplayChannel(c));
+    const startIndex = preferredIndex >= 0 ? preferredIndex : 0;
+    const first = canais[startIndex];
     if (!first) return;
-    setCurrentIndex(0);
-    if (first.type === "youtube") { setPlaying(true); setBuffering(false); setSelectedVideoId(null); setSidebarOpen(false); }
-    else setTimeout(() => playStream(first.url, first.type), 200);
-  }, [canais, playing, playStream, prerollDone]);
+
+    setCurrentIndex(startIndex);
+    if (first.type === "youtube") {
+      setPlaying(true);
+      setBuffering(false);
+      setSelectedVideoId(null);
+      setSidebarOpen(false);
+    } else {
+      setTimeout(() => playStream(first.url, first.type), 120);
+    }
+  }, [canais, playing, playStream, prerollDone, isAutoplayChannel]);
 
   // Recurring pre-roll every 15 minutes
   const fetchAndShowPreroll = useCallback(async () => {
@@ -979,6 +1030,7 @@ export default function PlayerPage() {
     setCurrentIndex(next);
     const c = canais[next];
     if (!c) return;
+    const shouldAutoStart = playing || isAutoplayChannel(c);
     // Stop any playing audio/video when switching channels — full cleanup
     if (hlsRef.current) { hlsRef.current.destroy(); hlsRef.current = null; }
     if (audioRef.current) { audioRef.current.pause(); audioRef.current.removeAttribute("src"); audioRef.current.load(); }
@@ -990,10 +1042,10 @@ export default function PlayerPage() {
       setBuffering(false);
       setSelectedVideoId(null);
       setSidebarOpen(false);
-    } else if (playing) {
+    } else if (shouldAutoStart) {
       setTimeout(() => playStream(c.url, c.type), 100);
     }
-  }, [canais, currentIndex, playing, playStream]);
+  }, [canais, currentIndex, playing, playStream, isAutoplayChannel]);
 
   // Fullscreen
   useEffect(() => {
