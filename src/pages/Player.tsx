@@ -292,6 +292,22 @@ export default function PlayerPage() {
   const [clock, setClock] = useState(0);
   const [apresentadores, setApresentadores] = useState<Apresentador[]>([]);
   const [whatsappPhone, setWhatsappPhone] = useState<string | null>(null);
+  const [profileName, setProfileName] = useState("");
+  const [profileAvatar, setProfileAvatar] = useState<string | null>(null);
+
+  // Fetch profile
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("profiles")
+      .select("nome, avatar_url")
+      .eq("user_id", user.id)
+      .single()
+      .then(({ data }) => {
+        if (data?.nome) setProfileName(data.nome);
+        if (data?.avatar_url) setProfileAvatar(data.avatar_url);
+      });
+  }, [user]);
 
   // YouTube video progress tracking
   const [ytCurrentTime, setYtCurrentTime] = useState(0);
@@ -1608,6 +1624,17 @@ export default function PlayerPage() {
 
   return (
     <div ref={containerRef} className="relative h-screen w-screen bg-black overflow-hidden select-none cursor-default">
+      {/* User avatar - top left */}
+      <div className="fixed top-4 left-0 w-20 flex justify-center z-50">
+        <div className="w-10 h-10 rounded-full overflow-hidden bg-player-surface">
+          {profileAvatar ? (
+            <img src={profileAvatar} alt={profileName} className="w-full h-full object-cover" />
+          ) : (
+            <img src="/avatars/usr-default.png" alt="Visitante" className="w-full h-full object-cover" />
+          )}
+        </div>
+      </div>
+
       {/* Sidebar menu with gradient background */}
       <aside
         className="fixed left-0 top-0 bottom-0 w-20 flex flex-col items-center justify-center gap-3 z-40"
