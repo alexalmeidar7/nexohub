@@ -1502,6 +1502,7 @@ export default function PlayerPage() {
             audioElement={audioRef.current}
             whatsappPhone={whatsappPhone}
             onOpenChat={() => setChatOpen(true)}
+            userId={user?.id || publicUserId}
           />
         </Suspense>
       )}
