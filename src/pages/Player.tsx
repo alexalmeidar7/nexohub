@@ -26,6 +26,8 @@ import {
   Home,
   ShoppingCart,
   Settings2,
+  PictureInPicture,
+  Cast,
 } from "lucide-react";
 
 const PlayerChat = lazy(() => import("@/components/PlayerChat"));
@@ -1751,6 +1753,33 @@ export default function PlayerPage() {
             <button onClick={toggleFullscreen} className="text-white/70 hover:text-white transition-colors" title={fullscreen ? "Sair tela cheia" : "Tela cheia"}>
               {fullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
             </button>
+            {/* Picture-in-Picture */}
+            <button
+              onClick={() => {
+                const v = videoRef.current || audioRef.current;
+                if (document.pictureInPictureElement) {
+                  document.exitPictureInPicture().catch(() => {});
+                } else if (v && "requestPictureInPicture" in v) {
+                  (v as HTMLVideoElement).requestPictureInPicture().catch(() => {});
+                }
+              }}
+              className="text-white/70 hover:text-white transition-colors"
+              title="Picture-in-Picture"
+            >
+              <PictureInPicture size={16} />
+            </button>
+            {/* Cast / Transmitir aba */}
+            <button
+              onClick={() => {
+                if (navigator.mediaDevices && "getDisplayMedia" in navigator.mediaDevices) {
+                  navigator.mediaDevices.getDisplayMedia({ video: true }).catch(() => {});
+                }
+              }}
+              className="text-white/70 hover:text-white transition-colors"
+              title="Transmitir"
+            >
+              <Cast size={16} />
+            </button>
             <button onClick={() => setShopOpen(!shopOpen)}
               className="hover:bg-white/20 rounded-full w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center transition-all relative"
               style={shopOpen ? { backgroundColor: "#d30707", color: "#fff" } : { backgroundColor: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)" }}
@@ -1781,7 +1810,7 @@ export default function PlayerPage() {
           </div>
 
           {/* Next / Schedule — hidden on mobile */}
-          <div className="hidden md:flex pl-3 border-l border-white/10 flex-1 min-w-0 items-stretch gap-3">
+          <div className="hidden md:flex pl-3 border-l border-white/10 min-w-0 items-stretch gap-2" style={{ maxWidth: "220px" }}>
             <div className="min-w-0 flex-1">
               <span className="text-[10px] font-bold uppercase" style={{ color: "#e60000" }}>A seguir:</span>
               <div className="text-white text-sm truncate">
