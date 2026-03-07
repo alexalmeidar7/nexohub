@@ -142,40 +142,7 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
         background: "linear-gradient(to bottom right, hsl(0 100% 50%), hsl(0 0% 0%) 40%)",
       }}
     >
-      {/* User avatar - top left */}
-      <div className="fixed top-4 left-0 w-20 flex justify-center z-[102]">
-        <div className="w-10 h-10 rounded-full overflow-hidden bg-player-surface">
-          {profileAvatar ? (
-            <img src={profileAvatar} alt={profileName || ""} className="w-full h-full object-cover" />
-          ) : (
-            <img src="/avatars/usr-default.png" alt="Visitante" className="w-full h-full object-cover" />
-          )}
-        </div>
-      </div>
-
-      {/* Sidebar menu */}
-      <aside
-        className="fixed left-0 top-0 bottom-0 w-20 flex flex-col items-center justify-center gap-3 z-[101]"
-        style={{ background: "linear-gradient(to right, rgba(0,0,0,0.85), transparent)" }}
-      >
-        {[
-          { icon: Home, label: "Home" },
-          { icon: Radio, label: "Streaming" },
-          { icon: Film, label: "Conteúdo" },
-        ].map(item => (
-          <button
-            key={item.label}
-            className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${
-              item.label === "Streaming"
-                ? "bg-player-accent text-player-foreground"
-                : "bg-player-surface text-player-muted-foreground hover:bg-player-surface-hover hover:text-player-foreground"
-            }`}
-            title={item.label}
-          >
-            <item.icon className="h-5 w-5" />
-          </button>
-        ))}
-      </aside>
+      {/* Sidebar and avatar are rendered by Player.tsx persistently */}
       {/* Container principal — aspect-video */}
       <div
         className="relative w-full max-w-6xl shadow-2xl overflow-hidden"
