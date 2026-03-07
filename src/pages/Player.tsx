@@ -1199,7 +1199,7 @@ export default function PlayerPage() {
       artista: musicData.artista,
       musica: musicData.titulo,
     }).then(() => {});
-  }, [musicData?.titulo, musicData?.artista, user?.id, publicUserId, currentProg?.nome]);
+  }, [musicData?.titulo, musicData?.artista, user?.id, currentProg?.nome]);
 
   const nextProg = getNextProgram(programas, currentProg);
   const progress = getProgramProgress(currentProg);
