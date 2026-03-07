@@ -1639,6 +1639,21 @@ export default function PlayerPage() {
       <video ref={videoRef} className={`absolute inset-0 w-full h-full object-contain bg-black ${isAudio || isYoutube ? "hidden" : ""}`} muted={muted} playsInline autoPlay={false} />
       <audio ref={audioRef} muted={muted} />
 
+      {/* Volume OSD — centered overlay */}
+      {volumeOsd && (
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-40 pointer-events-none animate-in fade-in zoom-in-90 duration-200"
+          style={{ animation: volumeOsd ? "fadeInScale 0.2s ease-out" : "none" }}>
+          <div className="flex flex-col items-center gap-2 rounded-2xl px-6 py-5"
+            style={{ backgroundColor: "rgba(0,0,0,0.75)", backdropFilter: "blur(12px)", minWidth: "100px" }}>
+            {muted ? <VolumeX size={32} className="text-white/90" /> : <Volume2 size={32} className="text-white/90" />}
+            <div className="w-20 h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "rgba(255,255,255,0.15)" }}>
+              <div className="h-full rounded-full transition-all duration-200" style={{ width: `${muted ? 0 : volume}%`, backgroundColor: "#e60000" }} />
+            </div>
+            <span className="text-white/80 text-xs font-medium">{muted ? "Mudo" : `${volume}%`}</span>
+          </div>
+        </div>
+      )}
+
       {/* Buffering overlay */}
       {streamStalled && playing && (
         <div className="absolute inset-0 flex flex-col items-center justify-center z-20 bg-black/60 gap-4">
