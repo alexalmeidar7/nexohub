@@ -85,6 +85,21 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       });
   }, [user]);
 
+  const DAY_MAP: Record<string, string> = { "0": "dom", "1": "seg", "2": "ter", "3": "qua", "4": "qui", "5": "sex", "6": "sab" };
+
+  const getCurrentProgram = useCallback(() => {
+    const now = new Date();
+    const hhmm = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+    const today = DAY_MAP[String(now.getDay())];
+    return programas.find(p => {
+      const inTime = hhmm >= p.horario_inicio && hhmm < p.horario_fim;
+      const inDay = !p.dias_semana || p.dias_semana.length === 0 || p.dias_semana.some(d => d.toLowerCase().startsWith(today));
+      return inTime && inDay;
+    });
+  }, [programas]);
+
+  const currentProgram = getCurrentProgram();
+
   const goToPlayer = () => {
     if (userSlug) {
       navigate(`/user/${userSlug}/nexohub/player/watch`);
