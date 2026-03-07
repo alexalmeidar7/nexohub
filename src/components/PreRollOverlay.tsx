@@ -10,8 +10,6 @@ interface Props {
   prerollLinkUrl: string | null;
   prerollMediaType?: string;
   prerollYoutubeUrl?: string | null;
-  profileAvatar?: string | null;
-  profileName?: string;
   onSkip: () => void;
   onEnded: () => void;
 }
