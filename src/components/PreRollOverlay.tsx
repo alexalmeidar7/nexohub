@@ -1,4 +1,4 @@
-import { useEffect, useState, RefObject } from "react";
+import { useEffect, useState, useRef, RefObject } from "react";
 import { QRCodeSVG } from "qrcode.react";
 
 const SKIP_DELAY = 5;
@@ -22,6 +22,10 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
   const [countdown, setCountdown] = useState(SKIP_DELAY);
   const isYoutube = prerollMediaType === "youtube" && prerollYoutubeUrl;
   const ytId = isYoutube ? extractYoutubeId(prerollYoutubeUrl!) : null;
+  const ytPlayerRef = useRef<any>(null);
+  const pollRef = useRef<ReturnType<typeof setInterval>>();
+  const onEndedRef = useRef(onEnded);
+  onEndedRef.current = onEnded;
 
   useEffect(() => {
     if (countdown <= 0) return;
@@ -29,12 +33,58 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
     return () => clearInterval(t);
   }, [countdown]);
 
-  // For YouTube prerolls, auto-end after 30 seconds
+  // Load YouTube IFrame API and detect video end
   useEffect(() => {
-    if (!isYoutube) return;
-    const t = setTimeout(onEnded, 30000);
-    return () => clearTimeout(t);
-  }, [isYoutube, onEnded]);
+    if (!isYoutube || !ytId) return;
+
+    // Fallback timeout in case API doesn't fire
+    const fallback = setTimeout(() => onEndedRef.current(), 120000);
+
+    const initPlayer = () => {
+      ytPlayerRef.current = new (window as any).YT.Player("preroll-yt-player", {
+        videoId: ytId,
+        playerVars: {
+          autoplay: 1,
+          controls: 0,
+          showinfo: 0,
+          rel: 0,
+          modestbranding: 1,
+          disablekb: 1,
+          iv_load_policy: 3,
+          fs: 0,
+          cc_load_policy: 0,
+          playsinline: 1,
+        },
+        events: {
+          onStateChange: (event: any) => {
+            // YT.PlayerState.ENDED === 0
+            if (event.data === 0) {
+              onEndedRef.current();
+            }
+          },
+        },
+      });
+    };
+
+    if ((window as any).YT?.Player) {
+      initPlayer();
+    } else {
+      // Load API script if not present
+      if (!document.getElementById("yt-iframe-api")) {
+        const tag = document.createElement("script");
+        tag.id = "yt-iframe-api";
+        tag.src = "https://www.youtube.com/iframe_api";
+        document.head.appendChild(tag);
+      }
+      (window as any).onYouTubeIframeAPIReady = initPlayer;
+    }
+
+    return () => {
+      clearTimeout(fallback);
+      if (pollRef.current) clearInterval(pollRef.current);
+      try { ytPlayerRef.current?.destroy(); } catch {}
+    };
+  }, [isYoutube, ytId]);
 
   const canSkip = countdown <= 0;
 
@@ -57,13 +107,19 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
         {/* Vídeo / YouTube */}
         {isYoutube && ytId ? (
           <>
-            <iframe
-              className="absolute inset-0 w-full h-full"
-              src={`https://www.youtube.com/embed/${ytId}?autoplay=1&mute=0&controls=0&showinfo=0&rel=0&modestbranding=1&disablekb=1`}
-              allow="autoplay; encrypted-media"
-              style={{ border: "none" }}
-            />
-            {/* Block YouTube native controls */}
+            {/* YouTube player container — slightly oversized to crop YouTube UI */}
+            <div
+              className="absolute z-[1]"
+              style={{
+                top: "-60px",
+                left: "-10px",
+                right: "-10px",
+                bottom: "-60px",
+              }}
+            >
+              <div id="preroll-yt-player" className="w-full h-full" />
+            </div>
+            {/* Transparent overlay to block interaction with YouTube */}
             <div className="absolute inset-0 z-[2]" />
           </>
         ) : (
