@@ -993,15 +993,38 @@ export default function PlayerPage() {
     return () => document.removeEventListener("fullscreenchange", handler);
   }, []);
 
-  // Auto-fullscreen for TV browsers (Smart TV, Tizen, webOS, etc.)
+  // Auto-fullscreen and zoom fix for TV browsers
   useEffect(() => {
     const ua = navigator.userAgent.toLowerCase();
     const isTV = /smart-?tv|tizen|webos|netcast|hbbtv|viera|nettv|philipstv|roku|firetv|appletv|android.*tv|crkey/i.test(ua)
       || window.matchMedia("(display-mode: fullscreen)").matches
       || (screen.width >= 1280 && screen.height >= 720 && !("ontouchstart" in window) && window.innerWidth === screen.width);
-    if (isTV && containerRef.current && !document.fullscreenElement) {
-      containerRef.current.requestFullscreen?.().then(() => setFullscreen(true)).catch(() => {});
+
+    if (isTV) {
+      // Fix TV zoom: scale down if the page appears zoomed
+      const viewportWidth = window.innerWidth;
+      const screenWidth = screen.width;
+      if (viewportWidth < screenWidth * 0.95) {
+        // TV browser is zoomed in — adjust via viewport meta or CSS zoom
+        const scale = viewportWidth / screenWidth;
+        const existingMeta = document.querySelector('meta[name="viewport"]');
+        if (existingMeta) {
+          existingMeta.setAttribute("content", `width=device-width, initial-scale=${scale}, maximum-scale=${scale}, user-scalable=no`);
+        }
+        // Fallback: CSS zoom on root
+        document.documentElement.style.zoom = `${(viewportWidth / screenWidth) * 100}%`;
+      }
+
+      // Auto fullscreen
+      if (containerRef.current && !document.fullscreenElement) {
+        containerRef.current.requestFullscreen?.().then(() => setFullscreen(true)).catch(() => {});
+      }
     }
+
+    return () => {
+      // Cleanup zoom adjustments
+      document.documentElement.style.zoom = "";
+    };
   }, [loading]);
 
   const toggleFullscreen = () => {
