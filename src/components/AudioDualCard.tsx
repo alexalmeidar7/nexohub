@@ -26,6 +26,15 @@ interface AudioDualCardProps {
   audioElement?: HTMLAudioElement | null;
   whatsappPhone?: string | null;
   onOpenChat?: () => void;
+  userId?: string | null;
+}
+
+interface MusicaTocada {
+  id: string;
+  horario: string;
+  programa: string;
+  artista: string;
+  musica: string;
 }
 
 export default function AudioDualCard({
