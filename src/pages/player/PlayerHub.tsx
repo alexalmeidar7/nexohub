@@ -39,14 +39,21 @@ export default function PlayerHub() {
     fetchLogo();
   }, [user, userSlug]);
 
+  const [splashDone, setSplashDone] = useState(false);
+
   const onSplashFinish = useCallback(() => {
-    if (loading) return;
+    setSplashDone(true);
+  }, []);
+
+  // Advance step once splash animation is done AND auth is resolved
+  useEffect(() => {
+    if (!splashDone || loading) return;
     if (user) {
       setStep("welcome");
     } else {
       setStep("access");
     }
-  }, [user, loading]);
+  }, [splashDone, loading, user]);
 
   const onLoginSuccess = useCallback(() => {
     setStep("welcome");
