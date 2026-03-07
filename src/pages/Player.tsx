@@ -1105,6 +1105,19 @@ export default function PlayerPage() {
     if (audioRef.current) { audioRef.current.muted = muted; audioRef.current.volume = volume / 100; }
   }, [muted, volume]);
 
+  // OSD volume indicator — shows briefly on mute/volume change
+  const [volumeOsd, setVolumeOsd] = useState(false);
+  const volumeOsdTimeout = useRef<ReturnType<typeof setTimeout>>();
+  const showVolumeOsd = useCallback(() => {
+    setVolumeOsd(true);
+    clearTimeout(volumeOsdTimeout.current);
+    volumeOsdTimeout.current = setTimeout(() => setVolumeOsd(false), 1200);
+  }, []);
+
+  // Wrap toggleMute and handleVolumeChange to trigger OSD
+  const toggleMuteWithOsd = useCallback(() => { toggleMute(); showVolumeOsd(); }, [toggleMute, showVolumeOsd]);
+  const handleVolumeChangeWithOsd = useCallback((val: number) => { handleVolumeChange(val); showVolumeOsd(); }, [handleVolumeChange, showVolumeOsd]);
+
   // Keyboard & TV Remote Control handler with spatial navigation (TV only for arrows)
   useEffect(() => {
     const ua = navigator.userAgent.toLowerCase();
