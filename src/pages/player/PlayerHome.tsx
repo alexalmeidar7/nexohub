@@ -102,8 +102,8 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       {/* Red border */}
       <div className="absolute inset-0 border border-player-accent/20 rounded-2xl pointer-events-none z-30" />
 
-      {/* Sidebar */}
-      <aside className="w-20 flex flex-col items-center py-6 gap-3 z-20">
+      {/* Sidebar - centered vertically */}
+      <aside className="w-20 flex flex-col items-center justify-center gap-3 z-20 fixed left-0 top-0 bottom-0">
         {sidebarItems.map(item => (
           <button
             key={item.section}
@@ -124,7 +124,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 overflow-y-auto px-8 py-6 z-10">
+      <main className="flex-1 overflow-y-auto px-8 py-6 z-10 ml-20">
         {/* Header */}
         <header className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">
@@ -150,11 +150,11 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
               ) : null}
             </div>
           </div>
-          {logoUrl && <img src={logoUrl} alt={channelName} className="h-10 w-auto object-contain" />}
+          {logoUrl && <img src={logoUrl} alt={channelName} className="h-[3.125rem] w-auto object-contain" />}
         </header>
 
         {/* Streamings ao vivo */}
-        <section className="mb-10">
+        <section className="mb-10" style={{ marginTop: "calc(600px - 200px)" }}>
           <h2 className="text-lg font-bold mb-4">streamings ao vivo</h2>
           <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
             {channels.length === 0 && (
@@ -162,13 +162,11 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                 Nenhum canal disponível
               </div>
             )}
-            {channels.map((ch, i) => (
+            {channels.map((ch) => (
               <button
                 key={ch.id}
                 onClick={goToPlayer}
-                className={`flex-shrink-0 w-72 h-40 rounded-xl overflow-hidden relative transition-transform hover:scale-[1.02] ${
-                  i === 0 ? "border-2 border-player-foreground ring-1 ring-player-muted" : "border border-player-border"
-                }`}
+                className="flex-shrink-0 w-72 h-40 rounded-xl overflow-hidden relative transition-all hover:scale-[1.02] border-[5px] border-transparent hover:border-white"
               >
                 {ch.cover_url ? (
                   <img src={ch.cover_url} alt={ch.name} className="w-full h-full object-cover" />
@@ -196,7 +194,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
             <h2 className="text-lg font-bold mb-4">visto por último</h2>
             <div className="flex gap-4">
               {[1, 2, 3].map(i => (
-                <div key={i} className="w-48 h-28 rounded-xl bg-player-surface border border-player-border" />
+                <div key={i} className="w-48 h-28 rounded-xl bg-player-surface border-[5px] border-transparent hover:border-white transition-all" />
               ))}
             </div>
           </section>
