@@ -86,11 +86,11 @@ export default function AccessScreen({ logoUrl, onLoginSuccess, onGuest }: Acces
     >
       <h1 className="text-player-foreground text-2xl font-semibold mb-12">Quem vai acessar?</h1>
 
-      <div className="flex items-center gap-8">
+      <div className="flex items-start gap-8">
         {/* Login option */}
         <button onClick={() => setShowLogin(true)} className="flex flex-col items-center gap-4 group">
-          <div className="w-32 h-32 rounded-full bg-player-accent-soft flex items-center justify-center transition-transform group-hover:scale-105">
-            <UserIcon className="h-14 w-14 text-player-foreground/90" />
+          <div className="w-32 h-32 rounded-full bg-player-accent-soft flex items-center justify-center transition-transform group-hover:scale-105 overflow-hidden">
+            <img src="/avatars/usr-default.png" alt="Login" className="w-full h-full object-cover" />
           </div>
           <div className="text-center">
             <p className="text-player-foreground text-sm"><span className="font-bold">login</span> para</p>
@@ -100,13 +100,13 @@ export default function AccessScreen({ logoUrl, onLoginSuccess, onGuest }: Acces
         </button>
 
         {/* Divider */}
-        <div className="h-48 w-px bg-player-border" />
+        <div className="h-48 w-px bg-player-border mt-4" />
 
         {/* Guest option */}
         <button onClick={onGuest} className="flex flex-col items-center gap-4 group">
           <div className="w-32 h-32 rounded-full bg-player-accent-soft flex items-center justify-center transition-transform group-hover:scale-105 overflow-hidden">
             {logoUrl ? (
-              <img src={logoUrl} alt="Logo" className="h-16 w-auto object-contain" />
+              <img src={logoUrl} alt="Logo" className="h-20 w-auto object-contain" />
             ) : (
               <span className="text-player-foreground text-3xl font-bold">P</span>
             )}
