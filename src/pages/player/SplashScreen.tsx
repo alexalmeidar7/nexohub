@@ -11,6 +11,15 @@ export default function SplashScreen({ logoUrl, channelName, onFinish }: SplashS
   const [fadeOut, setFadeOut] = useState(false);
   const [showLogo, setShowLogo] = useState(false);
 
+  // Cache logo in sessionStorage
+  useEffect(() => {
+    if (logoUrl) {
+      sessionStorage.setItem("player_logo_cache", logoUrl);
+    }
+  }, [logoUrl]);
+
+  const cachedLogo = logoUrl || sessionStorage.getItem("player_logo_cache");
+
   useEffect(() => {
     const logoTimer = setTimeout(() => setShowLogo(true), 200);
     const timer = setTimeout(() => setFadeOut(true), 2500);
@@ -28,10 +37,10 @@ export default function SplashScreen({ logoUrl, channelName, onFinish }: SplashS
           showLogo ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"
         }`}
       >
-        {logoUrl ? (
-          <img src={logoUrl} alt={channelName || "Logo"} className="h-42 w-auto object-contain drop-shadow-lg" />
+        {cachedLogo ? (
+          <img src={cachedLogo} alt={channelName || "Logo"} className="h-[9.5rem] w-auto object-contain drop-shadow-lg" />
         ) : (
-          <div className="h-42 w-42 rounded-full bg-player-muted flex items-center justify-center">
+          <div className="h-[9.5rem] w-[9.5rem] rounded-full bg-player-muted flex items-center justify-center">
             <span className="text-player-muted-foreground text-5xl font-bold">P</span>
           </div>
         )}
