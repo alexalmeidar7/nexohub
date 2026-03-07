@@ -1608,22 +1608,33 @@ export default function PlayerPage() {
 
   return (
     <div ref={containerRef} className="relative h-screen w-screen bg-black overflow-hidden select-none cursor-default">
-      {/* Home button */}
-      <button
-        onClick={() => {
-          const slug = (document.querySelector('[data-user-slug]') as HTMLElement)?.dataset.userSlug;
-          const nav = window.history;
-          if (userSlug) {
-            window.location.href = `/user/${userSlug}/nexohub/player`;
-          } else {
-            window.location.href = "/user/nexohub/player";
-          }
-        }}
-        className="absolute top-4 left-4 z-40 w-10 h-10 rounded-full bg-red-600 hover:bg-red-700 flex items-center justify-center transition-colors shadow-lg"
-        title="Player Home"
+      {/* Sidebar menu with gradient background */}
+      <aside
+        className="fixed left-0 top-0 bottom-0 w-20 flex flex-col items-center justify-center gap-3 z-40"
+        style={{ background: "linear-gradient(to right, rgba(0,0,0,0.85), transparent)" }}
       >
-        <Home className="h-5 w-5 text-white" />
-      </button>
+        {[
+          { icon: Home, label: "Home", action: () => {
+            if (userSlug) window.location.href = `/user/${userSlug}/nexohub/player`;
+            else window.location.href = "/user/nexohub/player";
+          }},
+          { icon: Radio, label: "Streaming", action: () => {} },
+          { icon: Film, label: "Conteúdo", action: () => {} },
+        ].map(item => (
+          <button
+            key={item.label}
+            onClick={item.action}
+            className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${
+              item.label === "Streaming"
+                ? "bg-player-accent text-player-foreground"
+                : "bg-player-surface text-player-muted-foreground hover:bg-player-surface-hover hover:text-player-foreground"
+            }`}
+            title={item.label}
+          >
+            <item.icon className="h-5 w-5" />
+          </button>
+        ))}
+      </aside>
       {/* Pre-Roll Overlay */}
       {((prerollUrl || (prerollMediaType === "youtube" && prerollYoutubeUrl)) && (!prerollDone || prerollShowing)) && (
         <PreRollOverlay
