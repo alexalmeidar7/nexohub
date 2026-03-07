@@ -1,6 +1,5 @@
 import { useEffect, useState, useRef, RefObject } from "react";
 import { QRCodeSVG } from "qrcode.react";
-import { QRCodeSVG } from "qrcode.react";
 
 const SKIP_DELAY = 5;
 
