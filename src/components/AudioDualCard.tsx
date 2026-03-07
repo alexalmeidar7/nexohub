@@ -44,8 +44,12 @@ export default function AudioDualCard({
 }: AudioDualCardProps) {
   const isSemTitulo = !musicTitle || musicTitle === "Sem título";
   const [menuOpen, setMenuOpen] = useState(false);
+  const [focusIndex, setFocusIndex] = useState(-1);
   const closeTimer = useRef<ReturnType<typeof setTimeout>>();
   const isTouchDevice = useRef(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  const isTV = typeof navigator !== "undefined" && /smart.?tv|tizen|webos|hbbtv|netcast|viera|roku/i.test(navigator.userAgent);
 
   const handleEnter = () => {
     if (isTouchDevice.current) return;
@@ -58,8 +62,48 @@ export default function AudioDualCard({
   };
   const handleToggle = () => {
     isTouchDevice.current = "ontouchstart" in window;
-    setMenuOpen(o => !o);
+    setMenuOpen(o => {
+      if (!o) setFocusIndex(0);
+      return !o;
+    });
   };
+
+  // Build menu items list for keyboard nav
+  const menuItems = useCallback(() => {
+    const items: string[] = [];
+    if (onOpenChat) items.push("chat");
+    if (whatsappPhone?.replace(/\D/g, "")) items.push("whatsapp");
+    if (presenterInstagram) items.push("instagram");
+    return items;
+  }, [onOpenChat, whatsappPhone, presenterInstagram]);
+
+  // Keyboard navigation for TV remotes
+  useEffect(() => {
+    if (!menuOpen) return;
+    const items = menuItems();
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setFocusIndex(i => Math.max(0, i - 1));
+      } else if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setFocusIndex(i => Math.min(items.length - 1, i + 1));
+      } else if (e.key === "Escape" || e.key === "Backspace") {
+        e.preventDefault();
+        setMenuOpen(false);
+        setFocusIndex(-1);
+      }
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [menuOpen, menuItems]);
+
+  // Auto-focus menu buttons
+  useEffect(() => {
+    if (!menuOpen || focusIndex < 0 || !menuRef.current) return;
+    const btns = menuRef.current.querySelectorAll<HTMLElement>("[data-menu-item]");
+    btns[focusIndex]?.focus();
+  }, [focusIndex, menuOpen]);
   const cleanPhone = whatsappPhone?.replace(/\D/g, "") || "";
 
   return (
