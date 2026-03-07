@@ -22,6 +22,7 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
   const [countdown, setCountdown] = useState(SKIP_DELAY);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [ytFailed, setYtFailed] = useState(false);
   const isYoutube = prerollMediaType === "youtube" && prerollYoutubeUrl;
   const ytId = isYoutube ? extractYoutubeId(prerollYoutubeUrl!) : null;
   const ytPlayerRef = useRef<any>(null);
@@ -58,12 +59,20 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
     };
   }, [isYoutube, prerollVideoRef]);
 
-  // Track time for YouTube
+  // Track time for YouTube with stall/error detection
   useEffect(() => {
     if (!isYoutube || !ytId) return;
 
-    // Fallback timeout in case API doesn't fire
     const fallback = setTimeout(() => onEndedRef.current(), 120000);
+
+    // Detect YouTube stall (captcha, region block, etc.) — no progress after 8s = failed
+    let progressDetected = false;
+    const stallTimer = setTimeout(() => {
+      if (!progressDetected) {
+        setYtFailed(true);
+        setTimeout(() => onEndedRef.current(), 3000);
+      }
+    }, 8000);
 
     const initPlayer = () => {
       ytPlayerRef.current = new (window as any).YT.Player("preroll-yt-player", {
@@ -82,19 +91,22 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
         },
         events: {
           onReady: () => {
-            // Poll YouTube time
             pollRef.current = setInterval(() => {
               try {
                 const p = ytPlayerRef.current;
-                if (p?.getCurrentTime) setCurrentTime(p.getCurrentTime());
+                const t = p?.getCurrentTime?.() || 0;
+                if (t > 0.5) progressDetected = true;
+                setCurrentTime(t);
                 if (p?.getDuration) setDuration(p.getDuration());
               } catch {}
             }, 500);
           },
           onStateChange: (event: any) => {
-            if (event.data === 0) {
-              onEndedRef.current();
-            }
+            if (event.data === 0) onEndedRef.current();
+          },
+          onError: () => {
+            setYtFailed(true);
+            setTimeout(() => onEndedRef.current(), 2000);
           },
         },
       });
@@ -103,7 +115,6 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
     if ((window as any).YT?.Player) {
       initPlayer();
     } else {
-      // Load API script if not present
       if (!document.getElementById("yt-iframe-api")) {
         const tag = document.createElement("script");
         tag.id = "yt-iframe-api";
@@ -115,6 +126,7 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
 
     return () => {
       clearTimeout(fallback);
+      clearTimeout(stallTimer);
       if (pollRef.current) clearInterval(pollRef.current);
       try { ytPlayerRef.current?.destroy(); } catch {}
     };
@@ -149,12 +161,38 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
                 left: "-10px",
                 right: "-10px",
                 bottom: "-60px",
+                opacity: ytFailed ? 0 : 1,
+                transition: "opacity 0.5s ease",
               }}
             >
               <div id="preroll-yt-player" className="w-full h-full" />
             </div>
             {/* Transparent overlay to block interaction with YouTube */}
             <div className="absolute inset-0 z-[2]" />
+
+            {/* Fallback when YouTube is blocked/captcha */}
+            {ytFailed && (
+              <div className="absolute inset-0 z-[3] flex flex-col items-center justify-center gap-4 animate-fade-in">
+                <div
+                  className="w-16 h-16 rounded-full flex items-center justify-center"
+                  style={{ backgroundColor: "hsl(0 100% 40%)" }}
+                >
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polygon points="5 3 19 12 5 21 5 3" />
+                  </svg>
+                </div>
+                <p className="text-white/70 text-sm font-medium">Avançando automaticamente...</p>
+                <div className="w-32 h-1 rounded-full overflow-hidden" style={{ backgroundColor: "hsl(0 0% 20%)" }}>
+                  <div
+                    className="h-full rounded-full"
+                    style={{
+                      backgroundColor: "hsl(0 100% 50%)",
+                      animation: "preroll-progress 3s linear forwards",
+                    }}
+                  />
+                </div>
+              </div>
+            )}
           </>
         ) : (
           <video
@@ -169,7 +207,7 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
         {/* Botão Pular + Tempo — canto superior direito */}
         <div className="absolute top-6 right-6 z-10 flex items-center gap-3">
           {/* Tempo percorrido / total */}
-          {duration > 0 && (
+          {duration > 0 && !ytFailed && (
             <span
               className="text-xs font-mono px-3 py-1.5 rounded-full"
               style={{ backgroundColor: "hsla(0, 0%, 0%, 0.5)", color: "hsla(0, 0%, 100%, 0.8)" }}
@@ -216,6 +254,20 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
           </a>
         )}
       </div>
+
+      <style>{`
+        @keyframes preroll-progress {
+          from { width: 0%; }
+          to { width: 100%; }
+        }
+        .animate-fade-in {
+          animation: preroll-fade-in 0.4s ease-out;
+        }
+        @keyframes preroll-fade-in {
+          from { opacity: 0; transform: scale(0.95); }
+          to { opacity: 1; transform: scale(1); }
+        }
+      `}</style>
     </div>
   );
 }
