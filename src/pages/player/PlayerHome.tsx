@@ -91,7 +91,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
     { icon: Home, label: "Home", section: "home" },
     { icon: Radio, label: "Streaming", section: "streaming" },
     { icon: Film, label: "Conteúdo", section: "content" },
-    { icon: ShoppingBag, label: "Loja", section: "shop" },
+    ...(user ? [{ icon: ShoppingBag, label: "Loja", section: "shop" as Section }] : []),
   ];
 
   return (
