@@ -194,7 +194,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
             <h2 className="text-lg font-bold mb-4">visto por último</h2>
             <div className="flex gap-4">
               {[1, 2, 3].map(i => (
-                <div key={i} className="w-48 h-28 rounded-xl bg-player-surface border border-player-border" />
+                <div key={i} className="w-48 h-28 rounded-xl bg-player-surface border-[5px] border-transparent hover:border-white transition-all" />
               ))}
             </div>
           </section>
