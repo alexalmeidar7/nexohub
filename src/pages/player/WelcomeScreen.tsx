@@ -147,7 +147,7 @@ export default function WelcomeScreen({ userName, avatarUrl, onContinue }: Welco
         onMouseDown={() => setPressing(true)}
         onMouseUp={() => setPressing(false)}
         className={`w-40 h-40 rounded-full bg-player-accent-soft flex items-center justify-center overflow-hidden mb-4 cursor-pointer transition-all duration-700 ease-out hover:scale-105 ${
-          showAvatar ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"
+          showAvatar ? "opacity-100 translate-y-0 animate-[pulse_2s_cubic-bezier(0.4,0,0.6,1)_infinite]" : "opacity-0 translate-y-12"
         } ${pressing ? "scale-95" : ""}`}
       >
         <img src={displayAvatar} alt={displayName} className="w-full h-full object-cover" />
