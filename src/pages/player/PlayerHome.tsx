@@ -102,8 +102,8 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       {/* Red border */}
       <div className="absolute inset-0 border border-player-accent/20 rounded-2xl pointer-events-none z-30" />
 
-      {/* Sidebar */}
-      <aside className="w-20 flex flex-col items-center py-6 gap-3 z-20">
+      {/* Sidebar - centered vertically */}
+      <aside className="w-20 flex flex-col items-center justify-center gap-3 z-20 fixed left-0 top-0 bottom-0">
         {sidebarItems.map(item => (
           <button
             key={item.section}
