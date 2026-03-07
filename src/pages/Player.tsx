@@ -1624,7 +1624,7 @@ export default function PlayerPage() {
   }
 
   return (
-    <div ref={containerRef} className="relative h-screen w-screen bg-black overflow-hidden select-none cursor-default">
+    <div ref={containerRef} className="relative h-screen w-screen bg-black overflow-hidden select-none cursor-default animate-fade-in">
       {/* User avatar - top left */}
       <div className="fixed top-4 left-0 w-20 flex justify-center z-50">
         <div className="w-10 h-10 rounded-full overflow-hidden bg-player-surface">
