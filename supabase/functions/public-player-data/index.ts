@@ -23,22 +23,47 @@ Deno.serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-    // Find user by email prefix
-    const { data: users, error: userError } = await supabase.auth.admin.listUsers();
-    if (userError) throw userError;
+    // Find user by email prefix — use filtered API call instead of listing all users
+    const gotrue = `${supabaseUrl}/auth/v1/admin/users`;
+    const res = await fetch(gotrue, {
+      headers: {
+        Authorization: `Bearer ${serviceRoleKey}`,
+        apikey: serviceRoleKey,
+      },
+    });
+    if (!res.ok) throw new Error("Failed to list users");
+    const usersPayload = await res.json();
+    const allUsers: any[] = usersPayload.users || usersPayload;
 
-    const matchedUser = users.users.find((u: any) =>
+    const matchedUser = allUsers.find((u: any) =>
       u.email && u.email.split("@")[0].toLowerCase() === slug.toLowerCase()
     );
 
     if (!matchedUser) {
-      return new Response(JSON.stringify({ error: "User not found" }), {
-        status: 404,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      // Try paginated if first page didn't match
+      let page = 2;
+      let found: any = null;
+      const totalPages = Math.ceil((usersPayload.total || allUsers.length) / (usersPayload.per_page || 50));
+      while (!found && page <= totalPages) {
+        const pageRes = await fetch(`${gotrue}?page=${page}&per_page=50`, {
+          headers: { Authorization: `Bearer ${serviceRoleKey}`, apikey: serviceRoleKey },
+        });
+        if (!pageRes.ok) break;
+        const pageData = await pageRes.json();
+        const pageUsers: any[] = pageData.users || pageData;
+        found = pageUsers.find((u: any) => u.email && u.email.split("@")[0].toLowerCase() === slug.toLowerCase());
+        page++;
+      }
+      if (!found) {
+        return new Response(JSON.stringify({ error: "User not found" }), {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      var userId = found.id;
+    } else {
+      var userId = matchedUser.id;
     }
-
-    const userId = matchedUser.id;
 
     const now = new Date();
     const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
