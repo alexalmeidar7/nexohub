@@ -78,6 +78,13 @@ export default function AudioDualCard({
           <div className="absolute bottom-0 left-0 right-0 p-5">
             <div className="absolute inset-0" style={{ background: "linear-gradient(to top, hsla(0,0%,0%,0.7) 0%, transparent 100%)" }} />
             <div className="relative z-[2]">
+              {/* Round + button */}
+              <button
+                className="mb-2 w-8 h-8 rounded-full flex items-center justify-center transition-all hover:scale-110 active:scale-95"
+                style={{ backgroundColor: "hsla(0, 0%, 100%, 0.2)" }}
+              >
+                <Plus size={18} className="text-white" />
+              </button>
               <Mic size={16} className="mb-1" style={{ color: "hsl(0 80% 50%)" }} />
               <p className="text-white font-semibold text-sm md:text-base leading-tight drop-shadow-lg">
                 {presenterName || "Locutor"}
@@ -92,13 +99,6 @@ export default function AudioDualCard({
                   @{presenterInstagram.replace(/^@/, "")}
                 </a>
               )}
-              {/* Round + button */}
-              <button
-                className="mt-2 w-8 h-8 rounded-full flex items-center justify-center transition-all hover:scale-110 active:scale-95"
-                style={{ backgroundColor: "hsla(0, 0%, 100%, 0.2)" }}
-              >
-                <Plus size={18} className="text-white" />
-            </button>
             </div>
           </div>
         </div>
