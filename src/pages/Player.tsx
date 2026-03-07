@@ -613,7 +613,7 @@ export default function PlayerPage() {
 
     fetchAll();
     return () => { cancelled = true; };
-  }, [authLoading, isPublicMode, prerollDone, userId, userSlug]);
+  }, [authLoading, isPublicMode, userId, userSlug]);
 
   // While pre-roll is visible, warm up channel 991-1 (or first audio channel) in background
   useEffect(() => {
