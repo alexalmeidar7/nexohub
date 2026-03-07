@@ -31,6 +31,7 @@ import {
   Settings2,
   PictureInPicture,
   Cast,
+  LogOut,
 } from "lucide-react";
 
 const PlayerChat = lazy(() => import("@/components/PlayerChat"));
