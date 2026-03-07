@@ -123,10 +123,8 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
         ))}
       </aside>
 
-      {/* Main content */}
-      <main className="flex-1 overflow-y-auto px-8 py-6 z-10 ml-20">
-        {/* Header */}
-        <header className="flex items-center justify-between mb-8">
+      {/* Fixed Header */}
+      <header className="fixed top-0 left-20 right-0 z-20 flex items-center justify-between px-8 py-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-player-surface flex items-center justify-center overflow-hidden">
               {profileAvatar ? (
@@ -150,8 +148,11 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
               ) : null}
             </div>
           </div>
-          {logoUrl && <img src={logoUrl} alt={channelName} className="h-[3.125rem] w-auto object-contain" />}
-        </header>
+          {logoUrl && <img src={logoUrl} alt={channelName} className="h-[3.75rem] w-auto object-contain" />}
+      </header>
+
+      {/* Main content */}
+      <main className="flex-1 overflow-y-auto px-8 pt-24 pb-6 z-10 ml-20">
 
         {/* Streamings ao vivo */}
         <section className="mb-10" style={{ marginTop: "calc(600px - 200px)" }}>
