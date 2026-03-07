@@ -302,18 +302,20 @@ export default function AudioDualCard({
                       onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "hsl(0 80% 96%)"; }}
                       onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
                     >
-                      <span className="text-[9px] font-mono shrink-0 pt-0.5" style={{ color: "hsl(0 0% 55%)" }}>
-                        {song.horario?.slice(0, 5)}
-                      </span>
+                      <div className="flex items-center gap-1.5 shrink-0 pt-0.5">
+                        <span className="text-[9px] font-mono font-bold" style={{ color: "hsl(0 80% 45%)" }}>
+                          {song.horario?.slice(0, 5)}
+                        </span>
+                        {song.programa && (
+                          <span className="text-[9px] truncate" style={{ color: "hsl(0 0% 55%)", maxWidth: "80px" }}>
+                            {song.programa}
+                          </span>
+                        )}
+                      </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-[10px] font-semibold leading-tight truncate" style={{ color: "hsl(0 0% 20%)" }}>
                           {song.artista} — {song.musica}
                         </p>
-                        {song.programa && (
-                          <p className="text-[9px] leading-tight truncate" style={{ color: "hsl(0 0% 55%)" }}>
-                            {song.programa}
-                          </p>
-                        )}
                       </div>
                     </div>
                   ))}
