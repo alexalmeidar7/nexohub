@@ -54,9 +54,9 @@
     /* Player Hub tokens — Vermelho vibrante */
     --player-bg: 0 0% 0%;
     --player-foreground: 0 0% 100%;
-    --player-accent: 347 77% 50%;
-    --player-accent-hover: 347 77% 40%;
-    --player-accent-soft: 347 77% 50% / 0.75;
+    --player-accent: 0 95% 40%;
+    --player-accent-hover: 0 95% 33%;
+    --player-accent-soft: 0 95% 40%;
     --player-muted: 0 0% 100% / 0.08;
     --player-muted-foreground: 0 0% 100% / 0.55;
     --player-surface: 0 0% 100% / 0.08;
