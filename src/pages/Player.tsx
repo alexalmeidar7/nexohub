@@ -1480,6 +1480,8 @@ export default function PlayerPage() {
             liked={liked}
             onToggleLike={toggleLike}
             audioElement={audioRef.current}
+            whatsappPhone={whatsappPhone}
+            onOpenChat={() => setChatOpen(true)}
           />
         </Suspense>
       )}
