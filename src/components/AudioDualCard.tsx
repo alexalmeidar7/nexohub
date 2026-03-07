@@ -120,8 +120,10 @@ export default function AudioDualCard({
                 {/* Expanded menu */}
                 {menuOpen && (
                   <div
-                    className="absolute bottom-full left-0 mb-3 flex flex-col gap-1.5 animate-fade-in min-w-[200px]"
+                    className="absolute bottom-full left-0 mb-1 pb-2 flex flex-col gap-1.5 animate-fade-in min-w-[200px]"
                     style={{ animationDuration: "0.15s" }}
+                    onMouseEnter={handleEnter}
+                    onMouseLeave={handleLeave}
                   >
                     {/* Chat ao vivo */}
                     {onOpenChat && (
