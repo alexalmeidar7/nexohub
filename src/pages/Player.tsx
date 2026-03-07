@@ -276,6 +276,7 @@ export default function PlayerPage() {
   const [loading, setLoading] = useState(true);
   const [loadingStatus, setLoadingStatus] = useState("Iniciando...");
   const [barVisible, setBarVisible] = useState(true);
+  const [pageFadeOut, setPageFadeOut] = useState(false);
   const [musicData, setMusicData] = useState<MusicData | null>(() => {
     try {
       const stored = localStorage.getItem(MUSIC_DATA_KEY);
@@ -1623,7 +1624,7 @@ export default function PlayerPage() {
   }
 
   return (
-    <div ref={containerRef} className="relative h-screen w-screen bg-black overflow-hidden select-none cursor-default">
+    <div ref={containerRef} className="relative h-screen w-screen bg-black overflow-hidden select-none cursor-default animate-fade-in">
       {/* User avatar - top left */}
       <div className="fixed top-4 left-0 w-20 flex justify-center z-50">
         <div className="w-10 h-10 rounded-full overflow-hidden bg-player-surface">
@@ -1642,8 +1643,11 @@ export default function PlayerPage() {
       >
         {[
           { icon: Home, label: "Home", action: () => {
-            if (userSlug) window.location.href = `/user/${userSlug}/nexohub/player`;
-            else window.location.href = "/user/nexohub/player";
+            setPageFadeOut(true);
+            setTimeout(() => {
+              if (userSlug) window.location.href = `/user/${userSlug}/nexohub/player`;
+              else window.location.href = "/user/nexohub/player";
+            }, 400);
           }},
           { icon: Radio, label: "Streaming", action: () => {} },
           { icon: Film, label: "Conteúdo", action: () => {} },
@@ -1662,6 +1666,9 @@ export default function PlayerPage() {
           </button>
         ))}
       </aside>
+
+      {/* Content wrapper with fade transition */}
+      <div className={`transition-opacity duration-400 ease-in-out ${pageFadeOut ? "opacity-0" : "opacity-100"}`}>
       {/* Pre-Roll Overlay */}
       {((prerollUrl || (prerollMediaType === "youtube" && prerollYoutubeUrl)) && (!prerollDone || prerollShowing)) && (
         <PreRollOverlay
@@ -2214,6 +2221,7 @@ export default function PlayerPage() {
           animation: none;
         }
       `}</style>
+      </div>
     </div>
   );
 }

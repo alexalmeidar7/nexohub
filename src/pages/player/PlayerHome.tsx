@@ -154,6 +154,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   const { userSlug } = useParams();
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState<Section>("home");
+  const [fadeOut, setFadeOut] = useState(false);
   const [channels, setChannels] = useState<Channel[]>([]);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [channelName, setChannelName] = useState("");
@@ -224,11 +225,14 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   const currentProgram = getCurrentProgram();
 
   const goToPlayer = () => {
-    if (userSlug) {
-      navigate(`/user/${userSlug}/nexohub/player/watch`);
-    } else {
-      navigate("/user/nexohub/player/watch");
-    }
+    setFadeOut(true);
+    setTimeout(() => {
+      if (userSlug) {
+        navigate(`/user/${userSlug}/nexohub/player/watch`);
+      } else {
+        navigate("/user/nexohub/player/watch");
+      }
+    }, 400);
   };
 
   const handleSignOut = async () => {
@@ -245,14 +249,14 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
 
   return (
     <div
-      className="fixed inset-0 bg-player text-player-foreground flex"
+      className="fixed inset-0 bg-player text-player-foreground flex animate-fade-in"
       style={{ background: "var(--player-glow-corner)" }}
     >
       {/* Red border */}
       <div className="absolute inset-0 border border-player-accent/20 rounded-2xl pointer-events-none z-30" />
 
-      {/* Sidebar - centered vertically */}
-      <aside className="w-20 flex flex-col items-center justify-center gap-3 z-20 fixed left-0 top-0 bottom-0">
+      {/* Sidebar - always visible, not affected by fade */}
+      <aside className="w-20 flex flex-col items-center justify-center gap-3 z-40 fixed left-0 top-0 bottom-0">
         {sidebarItems.map(item => (
           <button
             key={item.section}
@@ -272,72 +276,74 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
         ))}
       </aside>
 
-      {/* Fixed Header */}
-      <header className="fixed top-0 left-0 right-0 z-20 flex items-center justify-between px-8 py-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-player-surface flex items-center justify-center overflow-hidden">
-              {profileAvatar ? (
-                <img src={profileAvatar} alt={userName} className="w-full h-full object-cover" />
-              ) : (
-                <img src="/avatars/usr-default.png" alt="Visitante" className="w-full h-full object-cover" />
-              )}
-            </div>
-            <div>
-              <p className="text-sm">Bem vindo,</p>
-              <p className="text-sm text-player-accent font-bold">{userName}</p>
-              {user ? (
-                <button onClick={handleSignOut} className="text-player-accent text-xs hover:underline flex items-center gap-1">
-                  <LogOut className="h-3 w-3" /> Sair
-                </button>
-              ) : onBackToAccess ? (
-                <button onClick={onBackToAccess} className="text-player-accent text-xs hover:underline">
-                  cadastre-se
-                </button>
-              ) : null}
-            </div>
-          </div>
-          {logoUrl && <img src={logoUrl} alt={channelName} className="h-[5rem] w-auto object-contain" />}
-      </header>
-
-      {/* Banner full-width behind content */}
-      <div className="absolute top-0 left-20 right-0 z-0">
-        <img src="/images/banner-home.png" alt="Banner" className="w-full h-auto object-cover" />
-      </div>
-
-      <main className="flex-1 overflow-y-auto px-8 pt-24 pb-6 z-10 ml-20">
-
-        {/* Streamings ao vivo */}
-        <section className="mb-10" style={{ marginTop: "calc(600px - 200px)" }}>
-          <h2 className="text-lg font-bold mb-4">streamings ao vivo</h2>
-          <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
-            {channels.length === 0 && (
-              <div className="w-72 h-40 rounded-xl bg-player-surface border border-player-border flex items-center justify-center text-player-muted-foreground text-sm">
-                Nenhum canal disponível
+      {/* Content wrapper with fade transition */}
+      <div className={`transition-opacity duration-400 ease-in-out ${fadeOut ? "opacity-0" : "opacity-100"}`}>
+        {/* Fixed Header */}
+        <header className="fixed top-0 left-0 right-0 z-20 flex items-center justify-between px-8 py-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-player-surface flex items-center justify-center overflow-hidden">
+                {profileAvatar ? (
+                  <img src={profileAvatar} alt={userName} className="w-full h-full object-cover" />
+                ) : (
+                  <img src="/avatars/usr-default.png" alt="Visitante" className="w-full h-full object-cover" />
+                )}
               </div>
-            )}
-            {channels.map((ch) => (
-              <StreamingCard
-                key={ch.id}
-                channel={ch}
-                currentProgram={currentProgram}
-                onClick={goToPlayer}
-              />
-            ))}
-          </div>
-        </section>
+              <div>
+                <p className="text-sm">Bem vindo,</p>
+                <p className="text-sm text-player-accent font-bold">{userName}</p>
+                {user ? (
+                  <button onClick={handleSignOut} className="text-player-accent text-xs hover:underline flex items-center gap-1">
+                    <LogOut className="h-3 w-3" /> Sair
+                  </button>
+                ) : onBackToAccess ? (
+                  <button onClick={onBackToAccess} className="text-player-accent text-xs hover:underline">
+                    cadastre-se
+                  </button>
+                ) : null}
+              </div>
+            </div>
+            {logoUrl && <img src={logoUrl} alt={channelName} className="h-[5rem] w-auto object-contain" />}
+        </header>
 
-        {/* Visto por último - only for logged in users */}
-        {user && (
-          <section>
-            <h2 className="text-lg font-bold mb-4">visto por último</h2>
-            <div className="flex gap-4">
-              {[1, 2, 3].map(i => (
-                <div key={i} className="w-48 h-28 rounded-xl bg-player-surface border-[5px] border-transparent hover:border-white transition-all" />
+        {/* Banner full-width behind content */}
+        <div className="absolute top-0 left-20 right-0 z-0">
+          <img src="/images/banner-home.png" alt="Banner" className="w-full h-auto object-cover" />
+        </div>
+
+        <main className="flex-1 overflow-y-auto px-8 pt-24 pb-6 z-10 ml-20">
+          {/* Streamings ao vivo */}
+          <section className="mb-10" style={{ marginTop: "calc(600px - 200px)" }}>
+            <h2 className="text-lg font-bold mb-4">streamings ao vivo</h2>
+            <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+              {channels.length === 0 && (
+                <div className="w-72 h-40 rounded-xl bg-player-surface border border-player-border flex items-center justify-center text-player-muted-foreground text-sm">
+                  Nenhum canal disponível
+                </div>
+              )}
+              {channels.map((ch) => (
+                <StreamingCard
+                  key={ch.id}
+                  channel={ch}
+                  currentProgram={currentProgram}
+                  onClick={goToPlayer}
+                />
               ))}
             </div>
           </section>
-        )}
-      </main>
+
+          {/* Visto por último - only for logged in users */}
+          {user && (
+            <section>
+              <h2 className="text-lg font-bold mb-4">visto por último</h2>
+              <div className="flex gap-4">
+                {[1, 2, 3].map(i => (
+                  <div key={i} className="w-48 h-28 rounded-xl bg-player-surface border-[5px] border-transparent hover:border-white transition-all" />
+                ))}
+              </div>
+            </section>
+          )}
+        </main>
+      </div>
     </div>
   );
 }
