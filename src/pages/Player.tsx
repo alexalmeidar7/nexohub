@@ -1670,6 +1670,8 @@ export default function PlayerPage() {
           prerollLinkUrl={prerollLinkUrl}
           prerollMediaType={prerollMediaType}
           prerollYoutubeUrl={prerollYoutubeUrl}
+          profileAvatar={profileAvatar}
+          profileName={profileName}
           onSkip={() => { setPrerollDone(true); setPrerollShowing(false); setPrerollUrl(null); setPrerollLinkUrl(null); setPrerollMediaType("video"); setPrerollYoutubeUrl(null); }}
           onEnded={() => { setPrerollDone(true); setPrerollShowing(false); setPrerollUrl(null); setPrerollMediaType("video"); setPrerollYoutubeUrl(null); }}
         />
@@ -1683,6 +1685,8 @@ export default function PlayerPage() {
           prerollLinkUrl={midrollPreroll.linkUrl}
           prerollMediaType={midrollPreroll.mediaType}
           prerollYoutubeUrl={midrollPreroll.youtubeUrl}
+          profileAvatar={profileAvatar}
+          profileName={profileName}
           onSkip={handleMidrollEnd}
           onEnded={handleMidrollEnd}
         />
