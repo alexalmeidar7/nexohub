@@ -92,7 +92,7 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
     <div
       className="absolute inset-0 z-[100] flex items-center justify-center p-8"
       style={{
-        background: "linear-gradient(to bottom right, hsl(0 70% 15%), hsl(0 0% 0%) 40%)",
+        background: "linear-gradient(to bottom right, hsl(0 100% 50%), hsl(0 0% 0%) 40%)",
       }}
     >
       {/* Container principal — aspect-video */}
