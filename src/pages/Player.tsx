@@ -1627,19 +1627,28 @@ export default function PlayerPage() {
 
   return (
     <div ref={containerRef} className="relative h-screen w-screen bg-black overflow-hidden select-none cursor-default animate-fade-in">
-      {/* User avatar + name - top left, always visible */}
-      <div className="fixed top-4 left-0 w-20 flex justify-center z-50">
-        <div className="flex flex-col items-center gap-1">
-          <div className="w-10 h-10 rounded-full overflow-hidden bg-player-surface">
-            {profileAvatar ? (
-              <img src={profileAvatar} alt={profileName} className="w-full h-full object-cover" />
-            ) : (
-              <img src="/avatars/usr-default.png" alt="Visitante" className="w-full h-full object-cover" />
-            )}
-          </div>
-          <span className="text-[10px] text-white/70 font-medium truncate max-w-[70px] text-center leading-tight">
+      {/* User avatar + info - top left, always visible */}
+      <div className="fixed top-4 left-20 flex items-center gap-3 z-50">
+        <div className="w-10 h-10 rounded-full overflow-hidden bg-player-surface flex-shrink-0">
+          {profileAvatar ? (
+            <img src={profileAvatar} alt={profileName} className="w-full h-full object-cover" />
+          ) : (
+            <img src="/avatars/usr-default.png" alt="Visitante" className="w-full h-full object-cover" />
+          )}
+        </div>
+        <div>
+          <p className="text-xs text-white/70">Bem vindo,</p>
+          <p className="text-sm text-player-accent font-bold leading-tight">
             {profileName || user?.email?.split("@")[0] || "Visitante"}
-          </span>
+          </p>
+          {user && (
+            <button
+              onClick={async () => { await signOut(); navigate("/user/nexohub/player"); }}
+              className="text-player-accent text-[10px] hover:underline flex items-center gap-1 mt-0.5"
+            >
+              <LogOut className="h-3 w-3" /> Sair
+            </button>
+          )}
         </div>
       </div>
 
