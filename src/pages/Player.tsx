@@ -876,14 +876,20 @@ export default function PlayerPage() {
     };
 
     // Health check: only reconnect if no timeupdate for 15+ seconds (real dead stream)
+    // Skip check while tab is hidden — browsers throttle events in background tabs
     const healthCheck = setInterval(() => {
       if (!playing || canal?.type === "youtube") return;
+      if (document.hidden) { lastTimeUpdate = Date.now(); return; }
       const elapsed = Date.now() - lastTimeUpdate;
       if (elapsed > 15000) {
         console.warn("Stream health check: no data for", Math.round(elapsed / 1000), "s — reconnecting");
         tryReconnect();
       }
     }, 10000);
+
+    // Reset timer when tab becomes visible so we don't false-trigger a reconnect
+    const onVisible = () => { if (document.visibilityState === "visible") lastTimeUpdate = Date.now(); };
+    document.addEventListener("visibilitychange", onVisible);
 
     mediaEl.addEventListener("timeupdate", onTimeUpdate);
     mediaEl.addEventListener("playing", onPlaying);
@@ -893,6 +899,7 @@ export default function PlayerPage() {
       mediaEl.removeEventListener("timeupdate", onTimeUpdate);
       mediaEl.removeEventListener("playing", onPlaying);
       mediaEl.removeEventListener("error", onError);
+      document.removeEventListener("visibilitychange", onVisible);
       if (stallTimerRef.current) clearTimeout(stallTimerRef.current);
       clearInterval(healthCheck);
     };
