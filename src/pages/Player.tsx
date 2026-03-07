@@ -295,7 +295,6 @@ export default function PlayerPage() {
   const isAudio = canal?.type === "audio_live" || canal?.type === "audio";
   const isYoutube = canal?.type === "youtube";
   const isVideo = canal?.type === "video";
-  const isPrerollVisible = Boolean((prerollUrl || (prerollMediaType === "youtube" && prerollYoutubeUrl)) && (!prerollDone || prerollShowing));
   const isAutoplayChannel = useCallback((c?: Canal | null) => normalizeChannelNumber(c?.numero_canal) === "991-1", []);
   const autoPlayedRef = useRef(false);
 
