@@ -10,6 +10,7 @@ import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 
 // Lazy-loaded heavy pages
+const PlayerHub = lazy(() => import("./pages/player/PlayerHub"));
 const PlayerPage = lazy(() => import("./pages/Player"));
 const PlayerApp = lazy(() => import("./pages/PlayerApp"));
 const PromocoesKiosk = lazy(() => import("./pages/Promocoes"));
