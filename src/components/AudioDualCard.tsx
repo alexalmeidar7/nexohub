@@ -279,7 +279,7 @@ export default function AudioDualCard({
             pointerEvents: historyOpen ? "auto" : "none",
           }}
         >
-          <div className="flex flex-col h-full" style={{ paddingLeft: "100px" }}>
+          <div className="flex flex-col h-full" style={{ paddingLeft: "110px" }}>
             <div className="px-4 pt-4 pb-2 flex items-center gap-2">
               <Music size={14} style={{ color: "hsl(0 80% 45%)" }} />
               <h3 className="font-bold text-xs" style={{ color: "hsl(0 80% 45%)" }}>Últimas Tocadas</h3>
