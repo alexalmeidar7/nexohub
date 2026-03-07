@@ -1648,15 +1648,16 @@ export default function PlayerPage() {
         style={{ background: "linear-gradient(to right, rgba(0,0,0,0.85), transparent)" }}
       >
         {[
-          { icon: Home, label: "Home", action: () => {
+          { icon: Home, label: "Home", active: false, action: () => {
             setPageFadeOut(true);
             setTimeout(() => {
               const basePath = userSlug ? `/user/${userSlug}/nexohub/player` : "/user/nexohub/player";
               navigate(basePath);
             }, 400);
           }},
-          { icon: Radio, label: "Streaming", action: () => {} },
-          { icon: Film, label: "Conteúdo", action: () => {} },
+          { icon: Radio, label: "Streaming", active: true, action: () => {} },
+          { icon: Film, label: "Conteúdo", active: false, action: () => {} },
+          ...(user ? [{ icon: ShoppingBag, label: "Loja", active: false, action: () => setShopOpen(o => !o) }] : []),
         ].map(item => (
           <button
             key={item.label}
