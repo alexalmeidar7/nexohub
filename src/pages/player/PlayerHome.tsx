@@ -190,27 +190,12 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
               </div>
             )}
             {channels.map((ch) => (
-              <button
+              <StreamingCard
                 key={ch.id}
+                channel={ch}
+                currentProgram={currentProgram}
                 onClick={goToPlayer}
-                className="flex-shrink-0 w-72 h-40 rounded-xl overflow-hidden relative transition-all hover:scale-[1.02] border-[5px] border-transparent hover:border-white"
-              >
-                {ch.cover_url ? (
-                  <img src={ch.cover_url} alt={ch.name} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-player-accent/30 to-player flex items-center justify-center">
-                    {ch.logo_url ? (
-                      <img src={ch.logo_url} alt={ch.name} className="h-12 w-auto object-contain" />
-                    ) : (
-                      <Radio className="h-10 w-10 text-player-muted-foreground" />
-                    )}
-                  </div>
-                )}
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-player/80 to-transparent p-3">
-                  <p className="text-sm font-medium truncate">{ch.name}</p>
-                  <span className="text-[10px] uppercase tracking-wider text-player-accent">● ao vivo</span>
-                </div>
-              </button>
+              />
             ))}
           </div>
         </section>
