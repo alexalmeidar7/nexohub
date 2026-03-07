@@ -11,6 +11,7 @@ import NotFound from "./pages/NotFound";
 
 // Lazy-loaded heavy pages
 const PlayerPage = lazy(() => import("./pages/Player"));
+const PlayerApp = lazy(() => import("./pages/PlayerApp"));
 const PromocoesKiosk = lazy(() => import("./pages/Promocoes"));
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
 const AdminUsers = lazy(() => import("./pages/admin/AdminUsers"));
@@ -49,6 +50,8 @@ const App = () => (
             <Route path="/user/:userSlug/nexohub/telapromo" element={<PromocoesKiosk />} />
             <Route path="/user/nexohub/player" element={<PlayerPage />} />
             <Route path="/user/:userSlug/nexohub/player" element={<PlayerPage />} />
+            <Route path="/user/nexohub/player/app" element={<PlayerApp />} />
+            <Route path="/user/:userSlug/nexohub/player/app" element={<PlayerApp />} />
 
             {/* Legacy redirects */}
             <Route path="/masterview/home" element={<Navigate to="/user/nexohub/home" replace />} />
