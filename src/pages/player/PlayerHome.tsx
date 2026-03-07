@@ -162,13 +162,11 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                 Nenhum canal disponível
               </div>
             )}
-            {channels.map((ch, i) => (
+            {channels.map((ch) => (
               <button
                 key={ch.id}
                 onClick={goToPlayer}
-                className={`flex-shrink-0 w-72 h-40 rounded-xl overflow-hidden relative transition-transform hover:scale-[1.02] ${
-                  i === 0 ? "border-2 border-player-foreground ring-1 ring-player-muted" : "border border-player-border"
-                }`}
+                className="flex-shrink-0 w-72 h-40 rounded-xl overflow-hidden relative transition-all hover:scale-[1.02] border-[5px] border-transparent hover:border-white"
               >
                 {ch.cover_url ? (
                   <img src={ch.cover_url} alt={ch.name} className="w-full h-full object-cover" />
