@@ -284,7 +284,7 @@ export default function AudioDualCard({
               <Music size={14} style={{ color: "hsl(0 80% 45%)" }} />
               <h3 className="font-bold text-xs" style={{ color: "hsl(0 80% 45%)" }}>Últimas Tocadas</h3>
             </div>
-            <div className="flex-1 overflow-y-auto px-3 pb-4">
+            <div className="flex-1 min-h-0 overflow-y-auto px-3 pb-4" style={{ scrollbarWidth: "thin", scrollbarColor: "hsl(0 80% 45%) transparent" }}>
               {recentSongs.length === 0 ? (
                 <p className="text-[10px] text-center mt-8" style={{ color: "hsl(0 0% 65%)" }}>Nenhuma música registrada</p>
               ) : (
