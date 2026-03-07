@@ -1181,6 +1181,26 @@ export default function PlayerPage() {
     }
   }, [currentProg?.id]);
 
+  // Record played songs to musicas_tocadas
+  const lastRecordedSongRef = useRef<string>("");
+  useEffect(() => {
+    if (!musicData?.titulo || !musicData?.artista || musicData.titulo === "Sem título") return;
+    const ownerId = user?.id;
+    if (!ownerId) return;
+    const songKey = `${musicData.artista}-${musicData.titulo}`;
+    if (songKey === lastRecordedSongRef.current) return;
+    lastRecordedSongRef.current = songKey;
+    const now = new Date();
+    supabase.from("musicas_tocadas").insert({
+      user_id: ownerId,
+      dia: now.toISOString().slice(0, 10),
+      horario: `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`,
+      programa: currentProg?.nome || "",
+      artista: musicData.artista,
+      musica: musicData.titulo,
+    }).then(() => {});
+  }, [musicData?.titulo, musicData?.artista, user?.id, currentProg?.nome]);
+
   const nextProg = getNextProgram(programas, currentProg);
   const progress = getProgramProgress(currentProg);
   const currentPresenter = useMemo(() => {
