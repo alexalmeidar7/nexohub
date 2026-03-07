@@ -441,13 +441,6 @@ export default function AudioDualCard({
         </div>
       </div>
 
-      {/* Keyframe for history slide */}
-      <style>{`
-        @keyframes historySlideOut {
-          from { transform: translateX(-30%); opacity: 0; }
-          to { transform: translateX(50%); opacity: 1; }
-        }
-      `}</style>
     </div>
   );
 }
