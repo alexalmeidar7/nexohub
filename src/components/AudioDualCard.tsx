@@ -46,13 +46,20 @@ export default function AudioDualCard({
   const isSemTitulo = !musicTitle || musicTitle === "Sem título";
   const [menuOpen, setMenuOpen] = useState(false);
   const closeTimer = useRef<ReturnType<typeof setTimeout>>();
+  const isTouchDevice = useRef(false);
 
   const handleEnter = () => {
+    if (isTouchDevice.current) return;
     clearTimeout(closeTimer.current);
     setMenuOpen(true);
   };
   const handleLeave = () => {
+    if (isTouchDevice.current) return;
     closeTimer.current = setTimeout(() => setMenuOpen(false), 600);
+  };
+  const handleToggle = () => {
+    isTouchDevice.current = "ontouchstart" in window;
+    setMenuOpen(o => !o);
   };
   const cleanPhone = whatsappPhone?.replace(/\D/g, "") || "";
 
@@ -112,7 +119,7 @@ export default function AudioDualCard({
                 <button
                   className="w-8 h-8 rounded-full flex items-center justify-center transition-all hover:scale-110 active:scale-95"
                   style={{ backgroundColor: "hsla(0, 0%, 100%, 0.2)" }}
-                  onClick={() => setMenuOpen(o => !o)}
+                  onClick={handleToggle}
                 >
                   {menuOpen ? <X size={18} className="text-white" /> : <Plus size={18} className="text-white" />}
                 </button>
