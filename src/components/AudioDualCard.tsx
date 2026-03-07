@@ -1,6 +1,5 @@
 import { Heart, Mic, Plus, Instagram, MessageCircle, X } from "lucide-react";
-import { lazy, Suspense, useState, useRef } from "react";
-
+import { lazy, Suspense, useState, useRef, useEffect, useCallback } from "react";
 const AudioSpectrum = lazy(() => import("@/components/AudioSpectrum"));
 
 // WhatsApp icon as inline SVG (lucide doesn't have it)
