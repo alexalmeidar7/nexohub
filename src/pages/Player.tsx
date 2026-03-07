@@ -115,6 +115,8 @@ const MUSIC_START_KEY = "masterview_music_start";
 const DAY_MAP_SHORT: Record<number, string> = { 0: "dom", 1: "seg", 2: "ter", 3: "qua", 4: "qui", 5: "sex", 6: "sab" };
 const DAY_MAP_FULL: Record<number, string> = { 0: "Domingo", 1: "Segunda", 2: "Terça", 3: "Quarta", 4: "Quinta", 5: "Sexta", 6: "Sábado" };
 
+const normalizeChannelNumber = (num?: string | null) => (num || "").replace(/\s+/g, "").toLowerCase();
+
 function getCurrentProgram(programas: Programa[]): Programa | null {
   const now = new Date();
   const todayShort = DAY_MAP_SHORT[now.getDay()];
