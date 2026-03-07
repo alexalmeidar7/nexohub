@@ -51,15 +51,32 @@ export default function AudioDualCard({
   audioElement,
   whatsappPhone,
   onOpenChat,
+  userId,
 }: AudioDualCardProps) {
   const isSemTitulo = !musicTitle || musicTitle === "Sem título";
   const [menuOpen, setMenuOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [recentSongs, setRecentSongs] = useState<MusicaTocada[]>([]);
   const [focusIndex, setFocusIndex] = useState(-1);
   const closeTimer = useRef<ReturnType<typeof setTimeout>>();
   const isTouchDevice = useRef(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   const isTV = typeof navigator !== "undefined" && /smart.?tv|tizen|webos|hbbtv|netcast|viera|roku/i.test(navigator.userAgent);
+
+  // Fetch recent songs when history opens
+  useEffect(() => {
+    if (!historyOpen || !userId) return;
+    supabase
+      .from("musicas_tocadas")
+      .select("id, horario, programa, artista, musica")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(20)
+      .then(({ data }) => {
+        if (data) setRecentSongs(data as MusicaTocada[]);
+      });
+  }, [historyOpen, userId]);
 
   const handleEnter = () => {
     if (isTouchDevice.current) return;
