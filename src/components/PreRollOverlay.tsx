@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, RefObject } from "react";
-import { Home, Radio, Film } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
 import { QRCodeSVG } from "qrcode.react";
 
 const SKIP_DELAY = 5;
