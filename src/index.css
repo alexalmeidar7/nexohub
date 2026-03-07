@@ -54,16 +54,16 @@
     /* Player Hub tokens — Vermelho vibrante */
     --player-bg: 0 0% 0%;
     --player-foreground: 0 0% 100%;
-    --player-accent: 347 77% 50%;
-    --player-accent-hover: 347 77% 40%;
-    --player-accent-soft: 347 77% 50% / 0.75;
+    --player-accent: 0 95% 40%;
+    --player-accent-hover: 0 95% 33%;
+    --player-accent-soft: 0 95% 40%;
     --player-muted: 0 0% 100% / 0.08;
     --player-muted-foreground: 0 0% 100% / 0.55;
     --player-surface: 0 0% 100% / 0.08;
     --player-surface-hover: 0 0% 100% / 0.15;
     --player-border: 0 0% 100% / 0.08;
-    --player-glow: radial-gradient(ellipse 60% 45% at 50% 100%, hsl(0 90% 50% / 0.55) 0%, hsl(0 80% 35% / 0.2) 40%, hsl(0 0% 0%) 80%);
-    --player-glow-corner: radial-gradient(ellipse 60% 45% at 50% 100%, hsl(0 90% 50% / 0.4) 0%, hsl(0 0% 0%) 70%);
+    --player-glow: radial-gradient(ellipse 60% 45% at 50% 100%, hsl(0 95% 40%) 0%, hsl(0 95% 30% / 0.3) 40%, hsl(0 0% 0%) 80%);
+    --player-glow-corner: radial-gradient(ellipse 60% 45% at 50% 100%, hsl(0 95% 40% / 0.5) 0%, hsl(0 0% 0%) 70%);
   }
 }
 
