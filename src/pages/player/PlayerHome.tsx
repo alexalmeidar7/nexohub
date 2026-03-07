@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,6 +10,14 @@ interface Channel {
   cover_url: string | null;
   logo_url: string | null;
   type: string;
+  url?: string;
+}
+
+interface Programa {
+  nome: string;
+  horario_inicio: string;
+  horario_fim: string;
+  dias_semana: string[] | null;
 }
 
 type Section = "home" | "streaming" | "content" | "shop";
