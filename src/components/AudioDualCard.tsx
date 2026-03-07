@@ -266,49 +266,59 @@ export default function AudioDualCard({
         </div>
 
         {/* History box — slides out from behind the music card */}
-        {historyOpen && (
-          <div
-            className="absolute top-0 bottom-0 md:w-[55%] w-full rounded-3xl overflow-hidden shadow-xl"
-            style={{
-              right: "0",
-              zIndex: 1,
-              backgroundColor: "white",
-              animation: "historySlideOut 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards",
-            }}
-          >
-            <div className="flex flex-col h-full">
-              <div className="px-4 pt-4 pb-2 flex items-center gap-2">
-                <Music size={16} style={{ color: "hsl(0 80% 45%)" }} />
-                <h3 className="font-bold text-sm" style={{ color: "hsl(0 80% 45%)" }}>Últimas Tocadas</h3>
-              </div>
-              <div className="flex-1 overflow-y-auto px-4 pb-4">
-                {recentSongs.length === 0 ? (
-                  <p className="text-gray-400 text-xs text-center mt-8">Nenhuma música registrada</p>
-                ) : (
-                  <div className="flex flex-col gap-1.5">
-                    {recentSongs.map(song => (
-                      <div key={song.id} className="flex items-start gap-2 py-1.5 border-b border-gray-100 last:border-0">
-                        <span className="text-[10px] font-mono shrink-0 pt-0.5" style={{ color: "hsl(0 0% 55%)" }}>
-                          {song.horario?.slice(0, 5)}
-                        </span>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs font-semibold text-gray-800 leading-tight truncate">
-                            {song.artista} — {song.musica}
+        <div
+          className="absolute top-0 bottom-0 md:w-[55%] w-full rounded-3xl overflow-hidden"
+          style={{
+            right: "0",
+            zIndex: 1,
+            backgroundColor: "white",
+            boxShadow: historyOpen ? "0 8px 30px hsla(0,0%,0%,0.25)" : "none",
+            transform: historyOpen ? "translateX(52%)" : "translateX(0%)",
+            opacity: historyOpen ? 1 : 0,
+            transition: "transform 0.5s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.3s ease, box-shadow 0.4s ease",
+            pointerEvents: historyOpen ? "auto" : "none",
+          }}
+        >
+          <div className="flex flex-col h-full">
+            <div className="px-4 pt-4 pb-2 flex items-center gap-2">
+              <Music size={16} style={{ color: "hsl(0 80% 45%)" }} />
+              <h3 className="font-bold text-sm" style={{ color: "hsl(0 80% 45%)" }}>Últimas Tocadas</h3>
+            </div>
+            <div className="flex-1 overflow-y-auto px-4 pb-4">
+              {recentSongs.length === 0 ? (
+                <p className="text-gray-400 text-xs text-center mt-8">Nenhuma música registrada</p>
+              ) : (
+                <div className="flex flex-col gap-1.5">
+                  {recentSongs.map((song, i) => (
+                    <div
+                      key={song.id}
+                      className="flex items-start gap-2 py-1.5 border-b border-gray-100 last:border-0"
+                      style={{
+                        opacity: historyOpen ? 1 : 0,
+                        transform: historyOpen ? "translateY(0)" : "translateY(8px)",
+                        transition: `opacity 0.3s ease ${i * 0.03}s, transform 0.3s ease ${i * 0.03}s`,
+                      }}
+                    >
+                      <span className="text-[10px] font-mono shrink-0 pt-0.5" style={{ color: "hsl(0 0% 55%)" }}>
+                        {song.horario?.slice(0, 5)}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold text-gray-800 leading-tight truncate">
+                          {song.artista} — {song.musica}
+                        </p>
+                        {song.programa && (
+                          <p className="text-[10px] leading-tight truncate" style={{ color: "hsl(0 0% 55%)" }}>
+                            {song.programa}
                           </p>
-                          {song.programa && (
-                            <p className="text-[10px] leading-tight truncate" style={{ color: "hsl(0 0% 55%)" }}>
-                              {song.programa}
-                            </p>
-                          )}
-                        </div>
+                        )}
                       </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
-        )}
+        </div>
 
         {/* Music card: fade-in center → wait 2s → slide right */}
         <div
