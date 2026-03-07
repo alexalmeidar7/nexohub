@@ -313,6 +313,8 @@ export default function PlayerPage() {
   const [prerollShowing, setPrerollShowing] = useState(false);
   const prerollVideoRef = useRef<HTMLVideoElement>(null);
   const prerollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const warmedPrerollChannelIdRef = useRef<string | null>(null);
+  const warmupAbortRef = useRef<AbortController | null>(null);
 
   // Mid-roll state for YouTube
   const [midrollActive, setMidrollActive] = useState(false);
