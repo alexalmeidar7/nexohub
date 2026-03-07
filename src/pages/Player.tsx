@@ -1093,39 +1093,54 @@ export default function PlayerPage() {
     setMuted(val === 0);
   }, []);
 
-  // Keyboard & TV Remote Control handler with spatial navigation
+  // Keyboard & TV Remote Control handler with spatial navigation (TV only for arrows)
   useEffect(() => {
+    const ua = navigator.userAgent.toLowerCase();
+    const forceTV = new URLSearchParams(window.location.search).get("tv") === "1";
+    const isTV = forceTV
+      || /smart-?tv|tizen|webos|netcast|hbbtv|viera|nettv|philipstv|roku|firetv|appletv|android.*tv|crkey/i.test(ua)
+      || window.matchMedia("(display-mode: fullscreen)").matches
+      || (screen.width >= 1280 && screen.height >= 720 && !("ontouchstart" in window) && window.innerWidth === screen.width);
+
     const getFocusables = (): HTMLElement[] => {
       return Array.from(document.querySelectorAll<HTMLElement>(
         'button:not([disabled]):not([tabindex="-1"]), a[href]:not([tabindex="-1"]), [tabindex="0"]'
-      )).filter(el => el.offsetParent !== null); // only visible
+      )).filter(el => el.offsetParent !== null);
     };
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      const focusables = getFocusables();
-      const currentIdx = focusables.indexOf(document.activeElement as HTMLElement);
-
-      if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
-        e.preventDefault();
-        if (focusables.length === 0) return;
-        const next = currentIdx <= 0 ? focusables.length - 1 : currentIdx - 1;
-        focusables[next]?.focus();
-      }
-      else if (e.key === "ArrowRight" || e.key === "ArrowDown") {
-        e.preventDefault();
-        if (focusables.length === 0) return;
-        const next = currentIdx >= focusables.length - 1 ? 0 : currentIdx + 1;
-        focusables[next]?.focus();
-      }
-      else if (e.key === "Enter" || e.key === "Select" || e.key === " ") {
-        // "OK" on remote — click the focused element
-        const active = document.activeElement as HTMLElement;
-        if (active && active !== document.body) {
+      // Spatial navigation with arrows — TV only
+      if (isTV) {
+        if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
           e.preventDefault();
-          active.click();
+          const focusables = getFocusables();
+          if (focusables.length === 0) return;
+          const currentIdx = focusables.indexOf(document.activeElement as HTMLElement);
+          const next = currentIdx <= 0 ? focusables.length - 1 : currentIdx - 1;
+          focusables[next]?.focus();
+          return;
+        }
+        if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+          e.preventDefault();
+          const focusables = getFocusables();
+          if (focusables.length === 0) return;
+          const currentIdx = focusables.indexOf(document.activeElement as HTMLElement);
+          const next = currentIdx >= focusables.length - 1 ? 0 : currentIdx + 1;
+          focusables[next]?.focus();
+          return;
+        }
+        if (e.key === "Enter" || e.key === "Select" || e.key === " ") {
+          const active = document.activeElement as HTMLElement;
+          if (active && active !== document.body) {
+            e.preventDefault();
+            active.click();
+          }
+          return;
         }
       }
-      else if (e.key === "ChannelUp") { e.preventDefault(); navigateChannel(-1); }
+
+      // Hardware keys — always active
+      if (e.key === "ChannelUp") { e.preventDefault(); navigateChannel(-1); }
       else if (e.key === "ChannelDown") { e.preventDefault(); navigateChannel(1); }
       else if (e.key === "VolumeUp") {
         e.preventDefault();
