@@ -996,7 +996,9 @@ export default function PlayerPage() {
   // Auto-fullscreen and zoom fix for TV browsers
   useEffect(() => {
     const ua = navigator.userAgent.toLowerCase();
-    const isTV = /smart-?tv|tizen|webos|netcast|hbbtv|viera|nettv|philipstv|roku|firetv|appletv|android.*tv|crkey/i.test(ua)
+    const forceTV = new URLSearchParams(window.location.search).get("tv") === "1";
+    const isTV = forceTV
+      || /smart-?tv|tizen|webos|netcast|hbbtv|viera|nettv|philipstv|roku|firetv|appletv|android.*tv|crkey/i.test(ua)
       || window.matchMedia("(display-mode: fullscreen)").matches
       || (screen.width >= 1280 && screen.height >= 720 && !("ontouchstart" in window) && window.innerWidth === screen.width);
 
