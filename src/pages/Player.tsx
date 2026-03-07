@@ -1969,16 +1969,17 @@ export default function PlayerPage() {
               <MessageSquare size={12} />
             </button>
             <div className="relative" onMouseEnter={showVolume} onMouseLeave={hideVolume}>
-              <button onClick={toggleMute} className="text-white/70 hover:text-white transition-colors" title={muted ? "Ativar som" : "Desativar som"}>
+              <button onClick={toggleMuteWithOsd} className="text-white/70 hover:text-white transition-colors" title={muted ? "Ativar som" : "Desativar som"}>
                 {muted ? <VolumeX size={16} /> : <Volume2 size={16} />}
               </button>
               {volumeHover && (
-                <div className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-black/95 rounded-lg px-3 py-4 flex flex-col items-center" style={{ height: "140px", width: "40px" }}>
-                  <input type="range" min={0} max={100} value={volume} onChange={(e) => handleVolumeChange(Number(e.target.value))}
+                <div className="absolute bottom-8 left-1/2 -translate-x-1/2 rounded-xl px-3 py-4 flex flex-col items-center"
+                  style={{ height: "140px", width: "44px", backgroundColor: "rgba(0,0,0,0.92)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                  <input type="range" min={0} max={100} value={volume} onChange={(e) => handleVolumeChangeWithOsd(Number(e.target.value))}
                     className="h-full appearance-none cursor-pointer"
                     style={{ writingMode: "vertical-lr", direction: "rtl", width: "6px", accentColor: "#e60000" }}
                     onClick={(e) => e.stopPropagation()} />
-                  <span className="text-white/60 text-[9px] mt-1">{volume}</span>
+                  <span className="text-white/70 text-[10px] font-medium mt-1.5">{volume}%</span>
                 </div>
               )}
             </div>
