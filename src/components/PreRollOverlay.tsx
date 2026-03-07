@@ -22,6 +22,7 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
   const [countdown, setCountdown] = useState(SKIP_DELAY);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [ytFailed, setYtFailed] = useState(false);
   const isYoutube = prerollMediaType === "youtube" && prerollYoutubeUrl;
   const ytId = isYoutube ? extractYoutubeId(prerollYoutubeUrl!) : null;
   const ytPlayerRef = useRef<any>(null);
