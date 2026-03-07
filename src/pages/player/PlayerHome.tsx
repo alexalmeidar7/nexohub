@@ -225,11 +225,14 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   const currentProgram = getCurrentProgram();
 
   const goToPlayer = () => {
-    if (userSlug) {
-      navigate(`/user/${userSlug}/nexohub/player/watch`);
-    } else {
-      navigate("/user/nexohub/player/watch");
-    }
+    setFadeOut(true);
+    setTimeout(() => {
+      if (userSlug) {
+        navigate(`/user/${userSlug}/nexohub/player/watch`);
+      } else {
+        navigate("/user/nexohub/player/watch");
+      }
+    }, 400);
   };
 
   const handleSignOut = async () => {
