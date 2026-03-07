@@ -242,6 +242,17 @@ export default function PlayerPage() {
   const isPublicMode = !!userSlug;
   const { user, loading: authLoading } = useAuth();
   const userId = user?.id ?? null;
+
+  // Diagnostic: log auth/user changes and tab visibility
+  useEffect(() => {
+    console.log("[PLAYER-DIAG] Auth/user state changed", { userId, authLoading, userEmail: user?.email });
+  }, [userId, authLoading, user]);
+
+  useEffect(() => {
+    const onVis = () => console.log("[PLAYER-DIAG] visibilitychange →", document.visibilityState, { userId, authLoading });
+    document.addEventListener("visibilitychange", onVis);
+    return () => document.removeEventListener("visibilitychange", onVis);
+  }, [userId, authLoading]);
   const [publicUserId, setPublicUserId] = useState<string | null>(null);
   const publicBootstrapRef = useRef<{ slug: string | null; loaded: boolean }>({ slug: null, loaded: false });
   const videoRef = useRef<HTMLVideoElement>(null);
