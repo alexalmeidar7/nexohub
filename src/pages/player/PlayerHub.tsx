@@ -77,7 +77,7 @@ export default function PlayerHub() {
 
   if (step === "welcome") {
     const userName = user?.email?.split("@")[0] || "Visitante";
-    return <WelcomeScreen userName={userName} onContinue={onWelcomeContinue} />;
+    return <WelcomeScreen userName={userName} avatarUrl={null} onContinue={onWelcomeContinue} />;
   }
 
   return <PlayerHome />;
