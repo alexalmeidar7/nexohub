@@ -1618,32 +1618,91 @@ export default function PlayerPage() {
   }, [shopProducts, currentProg]);
 
   const showShopIcon = currentShopProducts.length > 0;
+  const playerHomePath = userSlug ? `/user/${userSlug}/nexohub/player` : "/user/nexohub/player";
+  const userDisplayName = profileName || user?.email?.split("@")[0] || "Visitante";
 
   // Shopping popup is manual-only via icon click
 
   if (loading) {
-    return <PlayerSkeleton status={loadingStatus} />;
+    return (
+      <div className="relative h-screen w-screen bg-black overflow-hidden select-none cursor-default animate-fade-in">
+        {/* User avatar + info - top left, always visible */}
+        <div className="fixed top-4 left-0 z-50 flex items-start">
+          <div className="w-20 flex justify-center">
+            <div className="w-10 h-10 rounded-full overflow-hidden bg-player-surface flex-shrink-0">
+              {profileAvatar ? (
+                <img src={profileAvatar} alt={profileName} className="w-full h-full object-cover" />
+              ) : (
+                <img src="/avatars/usr-default.png" alt="Visitante" className="w-full h-full object-cover" />
+              )}
+            </div>
+          </div>
+          <div className="mt-0.5">
+            <p className="text-xs text-player-muted-foreground">Bem vindo,</p>
+            <p className="text-sm text-player-accent font-bold leading-tight">{userDisplayName}</p>
+            {user && (
+              <button
+                onClick={async () => { await signOut(); navigate(playerHomePath); }}
+                className="text-player-accent text-[10px] hover:underline flex items-center gap-1 mt-0.5"
+              >
+                <LogOut className="h-3 w-3" /> Sair
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Sidebar menu with gradient background - always visible */}
+        <aside
+          className="fixed left-0 top-0 bottom-0 w-20 flex flex-col items-center justify-center gap-3 z-40"
+          style={{ background: "linear-gradient(to right, rgba(0,0,0,0.85), transparent)" }}
+        >
+          {[
+            { icon: Home, label: "Home", active: false, action: () => navigate(playerHomePath) },
+            { icon: Radio, label: "Streaming", active: true, action: () => {} },
+            { icon: Film, label: "Conteúdo", active: false, action: () => {} },
+            ...(user ? [{ icon: ShoppingBag, label: "Loja", active: false, action: () => setShopOpen(o => !o) }] : []),
+          ].map(item => (
+            <button
+              key={item.label}
+              onClick={item.action}
+              className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${
+                item.active
+                  ? "bg-player-accent text-player-foreground"
+                  : "bg-player-surface text-player-muted-foreground hover:bg-player-surface-hover hover:text-player-foreground"
+              }`}
+              title={item.label}
+            >
+              <item.icon className="h-5 w-5" />
+            </button>
+          ))}
+        </aside>
+
+        <div className="absolute inset-y-0 right-0 left-0">
+          <PlayerSkeleton status={loadingStatus} />
+        </div>
+      </div>
+    );
   }
 
   return (
     <div ref={containerRef} className="relative h-screen w-screen bg-black overflow-hidden select-none cursor-default animate-fade-in">
       {/* User avatar + info - top left, always visible */}
-      <div className="fixed top-4 left-20 flex items-center gap-3 z-50">
-        <div className="w-10 h-10 rounded-full overflow-hidden bg-player-surface flex-shrink-0">
-          {profileAvatar ? (
-            <img src={profileAvatar} alt={profileName} className="w-full h-full object-cover" />
-          ) : (
-            <img src="/avatars/usr-default.png" alt="Visitante" className="w-full h-full object-cover" />
-          )}
+      <div className="fixed top-4 left-0 z-50 flex items-start">
+        <div className="w-20 flex justify-center">
+          <div className="w-10 h-10 rounded-full overflow-hidden bg-player-surface flex-shrink-0">
+            {profileAvatar ? (
+              <img src={profileAvatar} alt={profileName} className="w-full h-full object-cover" />
+            ) : (
+              <img src="/avatars/usr-default.png" alt="Visitante" className="w-full h-full object-cover" />
+            )}
+          </div>
         </div>
-        <div>
-          <p className="text-xs text-white/70">Bem vindo,</p>
-          <p className="text-sm text-player-accent font-bold leading-tight">
-            {profileName || user?.email?.split("@")[0] || "Visitante"}
-          </p>
+        <div className="mt-0.5">
+          <p className="text-xs text-player-muted-foreground">Bem vindo,</p>
+          <p className="text-sm text-player-accent font-bold leading-tight">{userDisplayName}</p>
           {user && (
             <button
-              onClick={async () => { await signOut(); navigate("/user/nexohub/player"); }}
+              onClick={async () => { await signOut(); navigate(playerHomePath); }}
               className="text-player-accent text-[10px] hover:underline flex items-center gap-1 mt-0.5"
             >
               <LogOut className="h-3 w-3" /> Sair
@@ -1661,8 +1720,7 @@ export default function PlayerPage() {
           { icon: Home, label: "Home", active: false, action: () => {
             setPageFadeOut(true);
             setTimeout(() => {
-              const basePath = userSlug ? `/user/${userSlug}/nexohub/player` : "/user/nexohub/player";
-              navigate(basePath);
+              navigate(playerHomePath);
             }, 400);
           }},
           { icon: Radio, label: "Streaming", active: true, action: () => {} },
