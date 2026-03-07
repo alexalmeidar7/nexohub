@@ -1002,30 +1002,71 @@ export default function PlayerPage() {
       || window.matchMedia("(display-mode: fullscreen)").matches
       || (screen.width >= 1280 && screen.height >= 720 && !("ontouchstart" in window) && window.innerWidth === screen.width);
 
-    if (isTV) {
-      // Fix TV zoom: scale down if the page appears zoomed
-      const viewportWidth = window.innerWidth;
-      const screenWidth = screen.width;
-      if (viewportWidth < screenWidth * 0.95) {
-        // TV browser is zoomed in — adjust via viewport meta or CSS zoom
-        const scale = viewportWidth / screenWidth;
-        const existingMeta = document.querySelector('meta[name="viewport"]');
-        if (existingMeta) {
-          existingMeta.setAttribute("content", `width=device-width, initial-scale=${scale}, maximum-scale=${scale}, user-scalable=no`);
-        }
-        // Fallback: CSS zoom on root
-        document.documentElement.style.zoom = `${(viewportWidth / screenWidth) * 100}%`;
+    if (!isTV) return;
+
+    // Force viewport to device width with scale 1
+    const existingMeta = document.querySelector('meta[name="viewport"]');
+    if (existingMeta) {
+      existingMeta.setAttribute("content", "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no");
+    }
+
+    // Reset any browser zoom by forcing the root element to fill exactly the screen
+    const root = document.documentElement;
+    const body = document.body;
+
+    // Detect effective browser zoom: if devicePixelRatio is unusually high relative
+    // to what we expect, or if outerWidth differs from innerWidth
+    const applyTVFit = () => {
+      const container = containerRef.current;
+      if (!container) return;
+
+      // Reset previous transforms
+      root.style.zoom = "";
+      container.style.transform = "";
+      container.style.transformOrigin = "";
+      container.style.width = "";
+      container.style.height = "";
+      container.style.overflow = "";
+
+      // Check if content is overflowing (sign of zoom)
+      const docWidth = root.scrollWidth;
+      const docHeight = root.scrollHeight;
+      const winWidth = window.innerWidth;
+      const winHeight = window.innerHeight;
+
+      if (docWidth > winWidth + 2 || docHeight > winHeight + 2) {
+        // Content overflows — scale it down to fit
+        const scaleX = winWidth / docWidth;
+        const scaleY = winHeight / docHeight;
+        const scale = Math.min(scaleX, scaleY);
+        root.style.zoom = `${scale * 100}%`;
       }
 
-      // Auto fullscreen
-      if (containerRef.current && !document.fullscreenElement) {
-        containerRef.current.requestFullscreen?.().then(() => setFullscreen(true)).catch(() => {});
-      }
+      // Also force the player container to be exactly viewport size
+      container.style.width = "100vw";
+      container.style.height = "100vh";
+      container.style.overflow = "hidden";
+    };
+
+    // Apply on load and on resize
+    applyTVFit();
+    window.addEventListener("resize", applyTVFit);
+
+    // Auto fullscreen
+    if (containerRef.current && !document.fullscreenElement) {
+      containerRef.current.requestFullscreen?.().then(() => setFullscreen(true)).catch(() => {});
     }
 
     return () => {
-      // Cleanup zoom adjustments
-      document.documentElement.style.zoom = "";
+      root.style.zoom = "";
+      if (containerRef.current) {
+        containerRef.current.style.transform = "";
+        containerRef.current.style.transformOrigin = "";
+        containerRef.current.style.width = "";
+        containerRef.current.style.height = "";
+        containerRef.current.style.overflow = "";
+      }
+      window.removeEventListener("resize", applyTVFit);
     };
   }, [loading]);
 
