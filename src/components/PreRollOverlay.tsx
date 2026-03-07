@@ -144,6 +144,17 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
         background: "linear-gradient(to bottom right, hsl(0 100% 50%), hsl(0 0% 0%) 40%)",
       }}
     >
+      {/* User avatar - top left */}
+      <div className="fixed top-4 left-0 w-20 flex justify-center z-[102]">
+        <div className="w-10 h-10 rounded-full overflow-hidden bg-player-surface">
+          {profileAvatar ? (
+            <img src={profileAvatar} alt={profileName || ""} className="w-full h-full object-cover" />
+          ) : (
+            <img src="/avatars/usr-default.png" alt="Visitante" className="w-full h-full object-cover" />
+          )}
+        </div>
+      </div>
+
       {/* Sidebar menu */}
       <aside
         className="fixed left-0 top-0 bottom-0 w-20 flex flex-col items-center justify-center gap-3 z-[101]"
