@@ -20,3 +20,6 @@ verify_jwt = false
 
 [functions.youtube-playlist]
 verify_jwt = false
+
+[functions.monitor-music]
+verify_jwt = false
