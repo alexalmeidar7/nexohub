@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useCallback, useMemo, lazy, Suspense } fro
 import type HlsType from "hls.js";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import {
   ChevronUp,
   ChevronDown,
@@ -1605,6 +1605,22 @@ export default function PlayerPage() {
 
   return (
     <div ref={containerRef} className="relative h-screen w-screen bg-black overflow-hidden select-none cursor-default">
+      {/* Home button */}
+      <button
+        onClick={() => {
+          const slug = (document.querySelector('[data-user-slug]') as HTMLElement)?.dataset.userSlug;
+          const nav = window.history;
+          if (userSlug) {
+            window.location.href = `/user/${userSlug}/nexohub/player`;
+          } else {
+            window.location.href = "/user/nexohub/player";
+          }
+        }}
+        className="absolute top-4 left-4 z-40 w-10 h-10 rounded-full bg-red-600 hover:bg-red-700 flex items-center justify-center transition-colors shadow-lg"
+        title="Player Home"
+      >
+        <Home className="h-5 w-5 text-white" />
+      </button>
       {/* Pre-Roll Overlay */}
       {((prerollUrl || (prerollMediaType === "youtube" && prerollYoutubeUrl)) && (!prerollDone || prerollShowing)) && (
         <PreRollOverlay
