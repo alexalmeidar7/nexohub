@@ -320,7 +320,7 @@ export default function AudioDualCard({
           </div>
         </div>
 
-        {/* Music card: fade-in center → wait 2s → slide right */}
+        {/* Music card: fade-in center → wait 2s → slide right; slides left when history opens */}
         <div
           className="relative md:w-[55%] w-full rounded-3xl overflow-hidden shadow-2xl"
           style={{
@@ -329,6 +329,8 @@ export default function AudioDualCard({
             zIndex: 2,
             animation: "coverFadeAndSlide 3.5s cubic-bezier(0.22, 1, 0.36, 1) forwards",
             opacity: 0,
+            transform: historyOpen ? "translateX(-30%)" : undefined,
+            transition: "transform 0.5s cubic-bezier(0.22, 1, 0.36, 1)",
           }}
         >
           {isSemTitulo ? (
