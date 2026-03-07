@@ -535,6 +535,51 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          cidade: string | null
+          created_at: string
+          email: string | null
+          estado: string | null
+          id: string
+          nome: string | null
+          pais: string | null
+          sexo: string | null
+          updated_at: string
+          user_id: string
+          whatsapp: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          cidade?: string | null
+          created_at?: string
+          email?: string | null
+          estado?: string | null
+          id?: string
+          nome?: string | null
+          pais?: string | null
+          sexo?: string | null
+          updated_at?: string
+          user_id: string
+          whatsapp?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          cidade?: string | null
+          created_at?: string
+          email?: string | null
+          estado?: string | null
+          id?: string
+          nome?: string | null
+          pais?: string | null
+          sexo?: string | null
+          updated_at?: string
+          user_id?: string
+          whatsapp?: string | null
+        }
+        Relationships: []
+      }
       programas: {
         Row: {
           apresentador_id: string | null
