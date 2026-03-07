@@ -242,6 +242,17 @@ export default function PlayerPage() {
   const isPublicMode = !!userSlug;
   const { user, loading: authLoading } = useAuth();
   const userId = user?.id ?? null;
+
+  // Diagnostic: log auth/user changes and tab visibility
+  useEffect(() => {
+    console.log("[PLAYER-DIAG] Auth/user state changed", { userId, authLoading, userEmail: user?.email });
+  }, [userId, authLoading, user]);
+
+  useEffect(() => {
+    const onVis = () => console.log("[PLAYER-DIAG] visibilitychange →", document.visibilityState, { userId, authLoading });
+    document.addEventListener("visibilitychange", onVis);
+    return () => document.removeEventListener("visibilitychange", onVis);
+  }, [userId, authLoading]);
   const [publicUserId, setPublicUserId] = useState<string | null>(null);
   const publicBootstrapRef = useRef<{ slug: string | null; loaded: boolean }>({ slug: null, loaded: false });
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -456,11 +467,16 @@ export default function PlayerPage() {
   useEffect(() => {
     let cancelled = false;
     const slug = userSlug ?? null;
+    console.log("[PLAYER-DIAG] Main useEffect fired", { isPublicMode, userId, authLoading, slug, bootstrapState: { ...publicBootstrapRef.current } });
 
     // PUBLIC MODE: fetch via edge function (bootstrap only once per slug)
     if (isPublicMode) {
       const alreadyBootstrapped = publicBootstrapRef.current.loaded && publicBootstrapRef.current.slug === slug;
-      if (alreadyBootstrapped) return () => { cancelled = true; };
+      if (alreadyBootstrapped) {
+        console.log("[PLAYER-DIAG] Public bootstrap SKIPPED (already loaded)");
+        return () => { cancelled = true; };
+      }
+      console.log("[PLAYER-DIAG] Public bootstrap STARTING for slug:", slug);
 
       if (!slug) {
         setCanais([]);
@@ -529,8 +545,9 @@ export default function PlayerPage() {
     publicBootstrapRef.current = { slug: null, loaded: false };
 
     // AUTHENTICATED MODE (original logic)
-    if (authLoading) { setLoadingStatus("Autenticando..."); return; }
-    if (!userId) { setCanais([]); setLoading(false); return; }
+    if (authLoading) { console.log("[PLAYER-DIAG] Auth still loading, waiting..."); setLoadingStatus("Autenticando..."); return; }
+    if (!userId) { console.log("[PLAYER-DIAG] No userId, clearing canais"); setCanais([]); setLoading(false); return; }
+    console.log("[PLAYER-DIAG] Authenticated fetch starting for userId:", userId);
 
     const fetchAll = async () => {
       setLoading(true);
