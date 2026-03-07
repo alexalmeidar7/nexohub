@@ -1099,6 +1099,12 @@ export default function PlayerPage() {
     mutedRef.current = newMuted;
   }, []);
 
+  // Keep media elements in sync with muted/volume state
+  useEffect(() => {
+    if (videoRef.current) { videoRef.current.muted = muted; videoRef.current.volume = volume / 100; }
+    if (audioRef.current) { audioRef.current.muted = muted; audioRef.current.volume = volume / 100; }
+  }, [muted, volume]);
+
   // Keyboard & TV Remote Control handler with spatial navigation (TV only for arrows)
   useEffect(() => {
     const ua = navigator.userAgent.toLowerCase();
