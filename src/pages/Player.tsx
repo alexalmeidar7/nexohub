@@ -719,8 +719,8 @@ export default function PlayerPage() {
         if (videoRef.current) { videoRef.current.pause(); videoRef.current.src = ""; }
         const audio = audioRef.current;
         if (!audio) return;
-        audio.volume = volume / 100;
-        audio.muted = muted;
+        audio.volume = volumeRef.current / 100;
+        audio.muted = mutedRef.current;
         if (Hls && Hls.isSupported()) {
           const hls = new Hls({ enableWorker: true, lowLatencyMode: true });
           hlsRef.current = hls;
