@@ -81,8 +81,17 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
           playsinline: 1,
         },
         events: {
+          onReady: () => {
+            // Poll YouTube time
+            pollRef.current = setInterval(() => {
+              try {
+                const p = ytPlayerRef.current;
+                if (p?.getCurrentTime) setCurrentTime(p.getCurrentTime());
+                if (p?.getDuration) setDuration(p.getDuration());
+              } catch {}
+            }, 500);
+          },
           onStateChange: (event: any) => {
-            // YT.PlayerState.ENDED === 0
             if (event.data === 0) {
               onEndedRef.current();
             }
