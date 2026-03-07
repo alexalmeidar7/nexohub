@@ -1663,7 +1663,7 @@ export default function PlayerPage() {
             key={item.label}
             onClick={item.action}
             className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${
-              item.label === "Streaming"
+              item.active
                 ? "bg-player-accent text-player-foreground"
                 : "bg-player-surface text-player-muted-foreground hover:bg-player-surface-hover hover:text-player-foreground"
             }`}
