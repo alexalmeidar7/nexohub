@@ -1050,22 +1050,47 @@ export default function PlayerPage() {
     setMuted(val === 0);
   }, []);
 
-  // Keyboard & TV Remote Control handler
+  // Keyboard & TV Remote Control handler with spatial navigation
   useEffect(() => {
+    const getFocusables = (): HTMLElement[] => {
+      return Array.from(document.querySelectorAll<HTMLElement>(
+        'button:not([disabled]):not([tabindex="-1"]), a[href]:not([tabindex="-1"]), [tabindex="0"]'
+      )).filter(el => el.offsetParent !== null); // only visible
+    };
+
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "ArrowUp" || e.key === "ChannelUp") { e.preventDefault(); navigateChannel(-1); }
-      else if (e.key === "ArrowDown" || e.key === "ChannelDown") { e.preventDefault(); navigateChannel(1); }
-      else if (e.key === "VolumeUp" || e.key === "ArrowRight") {
+      const focusables = getFocusables();
+      const currentIdx = focusables.indexOf(document.activeElement as HTMLElement);
+
+      if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+        e.preventDefault();
+        if (focusables.length === 0) return;
+        const next = currentIdx <= 0 ? focusables.length - 1 : currentIdx - 1;
+        focusables[next]?.focus();
+      }
+      else if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+        e.preventDefault();
+        if (focusables.length === 0) return;
+        const next = currentIdx >= focusables.length - 1 ? 0 : currentIdx + 1;
+        focusables[next]?.focus();
+      }
+      else if (e.key === "Enter" || e.key === "Select" || e.key === " ") {
+        // "OK" on remote — click the focused element
+        const active = document.activeElement as HTMLElement;
+        if (active && active !== document.body) {
+          e.preventDefault();
+          active.click();
+        }
+      }
+      else if (e.key === "ChannelUp") { e.preventDefault(); navigateChannel(-1); }
+      else if (e.key === "ChannelDown") { e.preventDefault(); navigateChannel(1); }
+      else if (e.key === "VolumeUp") {
         e.preventDefault();
         handleVolumeChange(Math.min(100, volume + 10));
       }
-      else if (e.key === "VolumeDown" || e.key === "ArrowLeft") {
+      else if (e.key === "VolumeDown") {
         e.preventDefault();
         handleVolumeChange(Math.max(0, volume - 10));
-      }
-      else if (e.key === "Enter" || e.key === "Select") {
-        e.preventDefault();
-        handlePlayCanal();
       }
       else if (e.key === "AudioVolumeMute") {
         e.preventDefault();
