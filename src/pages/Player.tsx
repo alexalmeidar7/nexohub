@@ -269,6 +269,7 @@ export default function PlayerPage() {
   const [chatOpen, setChatOpen] = useState(false);
   const [clock, setClock] = useState(0);
   const [apresentadores, setApresentadores] = useState<Apresentador[]>([]);
+  const [whatsappPhone, setWhatsappPhone] = useState<string | null>(null);
 
   // YouTube video progress tracking
   const [ytCurrentTime, setYtCurrentTime] = useState(0);
