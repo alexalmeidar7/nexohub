@@ -22,8 +22,10 @@ export default function PlayerHome() {
   const [channels, setChannels] = useState<Channel[]>([]);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [channelName, setChannelName] = useState("");
+  const [profileName, setProfileName] = useState("");
+  const [profileAvatar, setProfileAvatar] = useState<string | null>(null);
 
-  const userName = user?.email?.split("@")[0] || "Visitante";
+  const userName = profileName || user?.email?.split("@")[0] || "Visitante";
 
   useEffect(() => {
     const fetchData = async () => {
