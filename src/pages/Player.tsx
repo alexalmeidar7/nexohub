@@ -1685,6 +1685,8 @@ export default function PlayerPage() {
           prerollLinkUrl={midrollPreroll.linkUrl}
           prerollMediaType={midrollPreroll.mediaType}
           prerollYoutubeUrl={midrollPreroll.youtubeUrl}
+          profileAvatar={profileAvatar}
+          profileName={profileName}
           onSkip={handleMidrollEnd}
           onEnded={handleMidrollEnd}
         />
