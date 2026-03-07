@@ -20,6 +20,8 @@ function extractYoutubeId(url: string): string | null {
 
 export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLinkUrl, prerollMediaType, prerollYoutubeUrl, onSkip, onEnded }: Props) {
   const [countdown, setCountdown] = useState(SKIP_DELAY);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
   const isYoutube = prerollMediaType === "youtube" && prerollYoutubeUrl;
   const ytId = isYoutube ? extractYoutubeId(prerollYoutubeUrl!) : null;
   const ytPlayerRef = useRef<any>(null);
@@ -27,13 +29,36 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
   const onEndedRef = useRef(onEnded);
   onEndedRef.current = onEnded;
 
+  const formatTime = (s: number) => {
+    const m = Math.floor(s / 60);
+    const sec = Math.floor(s % 60);
+    return `${m}:${sec.toString().padStart(2, "0")}`;
+  };
+
   useEffect(() => {
     if (countdown <= 0) return;
     const t = setInterval(() => setCountdown(c => c - 1), 1000);
     return () => clearInterval(t);
   }, [countdown]);
 
-  // Load YouTube IFrame API and detect video end
+  // Track time for native video
+  useEffect(() => {
+    if (isYoutube) return;
+    const video = prerollVideoRef.current;
+    if (!video) return;
+    const onTime = () => setCurrentTime(video.currentTime);
+    const onDur = () => setDuration(video.duration || 0);
+    video.addEventListener("timeupdate", onTime);
+    video.addEventListener("loadedmetadata", onDur);
+    video.addEventListener("durationchange", onDur);
+    return () => {
+      video.removeEventListener("timeupdate", onTime);
+      video.removeEventListener("loadedmetadata", onDur);
+      video.removeEventListener("durationchange", onDur);
+    };
+  }, [isYoutube, prerollVideoRef]);
+
+  // Track time for YouTube
   useEffect(() => {
     if (!isYoutube || !ytId) return;
 
@@ -56,8 +81,17 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
           playsinline: 1,
         },
         events: {
+          onReady: () => {
+            // Poll YouTube time
+            pollRef.current = setInterval(() => {
+              try {
+                const p = ytPlayerRef.current;
+                if (p?.getCurrentTime) setCurrentTime(p.getCurrentTime());
+                if (p?.getDuration) setDuration(p.getDuration());
+              } catch {}
+            }, 500);
+          },
           onStateChange: (event: any) => {
-            // YT.PlayerState.ENDED === 0
             if (event.data === 0) {
               onEndedRef.current();
             }
@@ -132,8 +166,17 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
           />
         )}
 
-        {/* Botão Pular — canto superior direito */}
-        <div className="absolute top-6 right-6 z-10">
+        {/* Botão Pular + Tempo — canto superior direito */}
+        <div className="absolute top-6 right-6 z-10 flex items-center gap-3">
+          {/* Tempo percorrido / total */}
+          {duration > 0 && (
+            <span
+              className="text-xs font-mono px-3 py-1.5 rounded-full"
+              style={{ backgroundColor: "hsla(0, 0%, 0%, 0.5)", color: "hsla(0, 0%, 100%, 0.8)" }}
+            >
+              {formatTime(currentTime)} / {formatTime(duration)}
+            </span>
+          )}
           <button
             onClick={canSkip ? onSkip : undefined}
             className={`flex items-center gap-1 px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
