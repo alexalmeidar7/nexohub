@@ -1,6 +1,5 @@
 import { Heart, Mic, Plus, Instagram, MessageCircle, X } from "lucide-react";
-import { lazy, Suspense, useState, useRef } from "react";
-
+import { lazy, Suspense, useState, useRef, useEffect, useCallback } from "react";
 const AudioSpectrum = lazy(() => import("@/components/AudioSpectrum"));
 
 // WhatsApp icon as inline SVG (lucide doesn't have it)
@@ -45,8 +44,12 @@ export default function AudioDualCard({
 }: AudioDualCardProps) {
   const isSemTitulo = !musicTitle || musicTitle === "Sem título";
   const [menuOpen, setMenuOpen] = useState(false);
+  const [focusIndex, setFocusIndex] = useState(-1);
   const closeTimer = useRef<ReturnType<typeof setTimeout>>();
   const isTouchDevice = useRef(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  const isTV = typeof navigator !== "undefined" && /smart.?tv|tizen|webos|hbbtv|netcast|viera|roku/i.test(navigator.userAgent);
 
   const handleEnter = () => {
     if (isTouchDevice.current) return;
@@ -59,8 +62,48 @@ export default function AudioDualCard({
   };
   const handleToggle = () => {
     isTouchDevice.current = "ontouchstart" in window;
-    setMenuOpen(o => !o);
+    setMenuOpen(o => {
+      if (!o) setFocusIndex(0);
+      return !o;
+    });
   };
+
+  // Build menu items list for keyboard nav
+  const menuItems = useCallback(() => {
+    const items: string[] = [];
+    if (onOpenChat) items.push("chat");
+    if (whatsappPhone?.replace(/\D/g, "")) items.push("whatsapp");
+    if (presenterInstagram) items.push("instagram");
+    return items;
+  }, [onOpenChat, whatsappPhone, presenterInstagram]);
+
+  // Keyboard navigation for TV remotes
+  useEffect(() => {
+    if (!menuOpen) return;
+    const items = menuItems();
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setFocusIndex(i => Math.max(0, i - 1));
+      } else if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setFocusIndex(i => Math.min(items.length - 1, i + 1));
+      } else if (e.key === "Escape" || e.key === "Backspace") {
+        e.preventDefault();
+        setMenuOpen(false);
+        setFocusIndex(-1);
+      }
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [menuOpen, menuItems]);
+
+  // Auto-focus menu buttons
+  useEffect(() => {
+    if (!menuOpen || focusIndex < 0 || !menuRef.current) return;
+    const btns = menuRef.current.querySelectorAll<HTMLElement>("[data-menu-item]");
+    btns[focusIndex]?.focus();
+  }, [focusIndex, menuOpen]);
   const cleanPhone = whatsappPhone?.replace(/\D/g, "") || "";
 
   return (
@@ -79,7 +122,7 @@ export default function AudioDualCard({
         <div className="absolute inset-0" style={{ backgroundColor: "hsl(0 0% 0%)" }} />
       )}
       {/* Wrapper with relative positioning so presenter sits behind music card */}
-      <div className="relative w-[90vw] max-w-[800px] flex items-center justify-center" style={{ minHeight: "420px" }}>
+      <div className={`relative flex items-center justify-center ${isTV ? "w-[95vw] max-w-[1200px]" : "w-[90vw] max-w-[800px]"}`} style={{ minHeight: isTV ? "560px" : "420px" }}>
 
         {/* Left — Presenter (hidden behind cover, slides left at 3s) */}
         <div
@@ -117,17 +160,18 @@ export default function AudioDualCard({
               >
                 {/* Round + button */}
                 <button
-                  className="w-8 h-8 rounded-full flex items-center justify-center transition-all hover:scale-110 active:scale-95"
+                  className={`rounded-full flex items-center justify-center transition-all hover:scale-110 active:scale-95 focus:outline-none focus:ring-2 focus:ring-white/60 ${isTV ? "w-12 h-12" : "w-8 h-8"}`}
                   style={{ backgroundColor: "hsla(0, 0%, 100%, 0.2)" }}
                   onClick={handleToggle}
                 >
-                  {menuOpen ? <X size={18} className="text-white" /> : <Plus size={18} className="text-white" />}
+                  {menuOpen ? <X size={isTV ? 24 : 18} className="text-white" /> : <Plus size={isTV ? 24 : 18} className="text-white" />}
                 </button>
 
                 {/* Expanded menu */}
                 {menuOpen && (
                   <div
-                    className="absolute bottom-full left-0 mb-1 pb-2 flex flex-col gap-1.5 animate-fade-in min-w-[200px]"
+                    ref={menuRef}
+                    className={`absolute bottom-full left-0 mb-1 pb-2 flex flex-col gap-1.5 animate-fade-in ${isTV ? "min-w-[280px]" : "min-w-[200px]"}`}
                     style={{ animationDuration: "0.15s" }}
                     onMouseEnter={handleEnter}
                     onMouseLeave={handleLeave}
@@ -135,38 +179,41 @@ export default function AudioDualCard({
                     {/* Chat ao vivo */}
                     {onOpenChat && (
                       <button
+                        data-menu-item
                         onClick={onOpenChat}
-                        className="flex items-center gap-2.5 px-3.5 py-2 rounded-lg transition-all hover:brightness-125 active:scale-95 text-left"
+                        className={`flex items-center gap-2.5 rounded-lg transition-all hover:brightness-125 active:scale-95 text-left focus:outline-none focus:ring-2 focus:ring-white/70 ${isTV ? "px-5 py-3.5" : "px-3.5 py-2"}`}
                         style={{ backgroundColor: "hsl(0 80% 40%)" }}
                       >
-                        <MessageCircle size={16} className="text-white shrink-0" />
-                        <span className="text-white text-xs font-semibold whitespace-nowrap">Chat ao Vivo</span>
+                        <MessageCircle size={isTV ? 22 : 16} className="text-white shrink-0" />
+                        <span className={`text-white font-semibold whitespace-nowrap ${isTV ? "text-base" : "text-xs"}`}>Chat ao Vivo</span>
                       </button>
                     )}
                     {/* WhatsApp do estúdio */}
                     {cleanPhone && (
                       <a
+                        data-menu-item
                         href={`https://wa.me/${cleanPhone}?text=Olá, ${presenterName || "Locutor"}!`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-2.5 px-3.5 py-2 rounded-lg transition-all hover:brightness-125 active:scale-95"
+                        className={`flex items-center gap-2.5 rounded-lg transition-all hover:brightness-125 active:scale-95 focus:outline-none focus:ring-2 focus:ring-white/70 ${isTV ? "px-5 py-3.5" : "px-3.5 py-2"}`}
                         style={{ backgroundColor: "hsl(0 80% 40%)" }}
                       >
-                        <span className="shrink-0 text-white"><WhatsAppIcon size={16} /></span>
-                        <span className="text-white text-xs font-semibold whitespace-nowrap">WhatsApp do Estúdio</span>
+                        <span className="shrink-0 text-white"><WhatsAppIcon size={isTV ? 22 : 16} /></span>
+                        <span className={`text-white font-semibold whitespace-nowrap ${isTV ? "text-base" : "text-xs"}`}>WhatsApp do Estúdio</span>
                       </a>
                     )}
                     {/* Instagram */}
                     {presenterInstagram && (
                       <a
+                        data-menu-item
                         href={`https://instagram.com/${presenterInstagram.replace(/^@/, "")}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-2.5 px-3.5 py-2 rounded-lg transition-all hover:brightness-125 active:scale-95"
+                        className={`flex items-center gap-2.5 rounded-lg transition-all hover:brightness-125 active:scale-95 focus:outline-none focus:ring-2 focus:ring-white/70 ${isTV ? "px-5 py-3.5" : "px-3.5 py-2"}`}
                         style={{ backgroundColor: "hsl(0 80% 40%)" }}
                       >
-                        <Instagram size={16} className="text-white shrink-0" />
-                        <span className="text-white text-xs font-semibold whitespace-nowrap">Siga {presenterName || "Locutor"}</span>
+                        <Instagram size={isTV ? 22 : 16} className="text-white shrink-0" />
+                        <span className={`text-white font-semibold whitespace-nowrap ${isTV ? "text-base" : "text-xs"}`}>Siga {presenterName || "Locutor"}</span>
                       </a>
                     )}
                   </div>
