@@ -124,7 +124,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 overflow-y-auto px-8 py-6 z-10">
+      <main className="flex-1 overflow-y-auto px-8 py-6 z-10 ml-20">
         {/* Header */}
         <header className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">
