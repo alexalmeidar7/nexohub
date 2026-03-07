@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Home, Radio, Film, ShoppingBag, LogOut, UserCircle } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface Channel {
   id: string;
@@ -161,6 +162,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   const [profileName, setProfileName] = useState("");
   const [profileAvatar, setProfileAvatar] = useState<string | null>(null);
   const [programas, setProgramas] = useState<Programa[]>([]);
+  const [dataLoaded, setDataLoaded] = useState(false);
 
   const userName = profileName || user?.email?.split("@")[0] || "Visitante";
 
@@ -175,10 +177,11 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
         if (data?.channels) setChannels(data.channels);
         if (data?.empresa?.logo) setLogoUrl(data.empresa.logo);
         if (data?.empresa?.nome) setChannelName(data.empresa.nome);
+        setDataLoaded(true);
         return;
       }
 
-      if (!userId) return;
+      if (!userId) { setDataLoaded(true); return; }
 
       const [chRes, empRes, progRes] = await Promise.all([
         supabase.from("streaming_channels").select("id, name, cover_url, logo_url, type, url").eq("user_id", userId).eq("active", true).order("numero_canal", { ascending: true }),
@@ -191,6 +194,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
         setChannelName(empRes.data.nome || "");
       }
       if (progRes.data) setProgramas(progRes.data);
+      setDataLoaded(true);
     };
     fetchData();
   }, [user, userSlug]);
@@ -282,27 +286,42 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
         <header className="fixed top-0 left-0 right-0 z-20 flex items-center justify-between px-8 py-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-player-surface flex items-center justify-center overflow-hidden">
-                {profileAvatar ? (
+                {!dataLoaded ? (
+                  <Skeleton className="w-full h-full rounded-full bg-white/10" />
+                ) : profileAvatar ? (
                   <img src={profileAvatar} alt={userName} className="w-full h-full object-cover" />
                 ) : (
                   <img src="/avatars/usr-default.png" alt="Visitante" className="w-full h-full object-cover" />
                 )}
               </div>
               <div>
-                <p className="text-sm">Bem vindo,</p>
-                <p className="text-sm text-player-accent font-bold">{userName}</p>
-                {user ? (
-                  <button onClick={handleSignOut} className="text-player-accent text-xs hover:underline flex items-center gap-1">
-                    <LogOut className="h-3 w-3" /> Sair
-                  </button>
-                ) : onBackToAccess ? (
-                  <button onClick={onBackToAccess} className="text-player-accent text-xs hover:underline">
-                    cadastre-se
-                  </button>
-                ) : null}
+                {!dataLoaded ? (
+                  <>
+                    <Skeleton className="h-3 w-20 bg-white/10 mb-1" />
+                    <Skeleton className="h-4 w-28 bg-white/10" />
+                  </>
+                ) : (
+                  <>
+                    <p className="text-sm">Bem vindo,</p>
+                    <p className="text-sm text-player-accent font-bold">{userName}</p>
+                    {user ? (
+                      <button onClick={handleSignOut} className="text-player-accent text-xs hover:underline flex items-center gap-1">
+                        <LogOut className="h-3 w-3" /> Sair
+                      </button>
+                    ) : onBackToAccess ? (
+                      <button onClick={onBackToAccess} className="text-player-accent text-xs hover:underline">
+                        cadastre-se
+                      </button>
+                    ) : null}
+                  </>
+                )}
               </div>
             </div>
-            {logoUrl && <img src={logoUrl} alt={channelName} className="h-[5rem] w-auto object-contain" />}
+            {!dataLoaded ? (
+              <Skeleton className="h-[5rem] w-32 bg-white/10 rounded-lg" />
+            ) : logoUrl ? (
+              <img src={logoUrl} alt={channelName} className="h-[5rem] w-auto object-contain" />
+            ) : null}
         </header>
 
         {/* Banner full-width behind content */}
@@ -313,33 +332,59 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
         <main className="flex-1 overflow-y-auto px-8 pt-24 pb-6 z-10 ml-20">
           {/* Streamings ao vivo */}
           <section className="mb-10" style={{ marginTop: "calc(600px - 200px)" }}>
-            <h2 className="text-lg font-bold mb-4">streamings ao vivo</h2>
-            <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
-              {channels.length === 0 && (
-                <div className="w-72 h-40 rounded-xl bg-player-surface border border-player-border flex items-center justify-center text-player-muted-foreground text-sm">
-                  Nenhum canal disponível
+            {!dataLoaded ? (
+              <>
+                <Skeleton className="h-5 w-44 bg-white/10 mb-4" />
+                <div className="flex gap-4">
+                  {[1, 2, 3].map(i => (
+                    <Skeleton key={i} className="flex-shrink-0 w-72 h-40 rounded-xl bg-white/10" />
+                  ))}
                 </div>
-              )}
-              {channels.map((ch) => (
-                <StreamingCard
-                  key={ch.id}
-                  channel={ch}
-                  currentProgram={currentProgram}
-                  onClick={goToPlayer}
-                />
-              ))}
-            </div>
+              </>
+            ) : (
+              <>
+                <h2 className="text-lg font-bold mb-4">streamings ao vivo</h2>
+                <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+                  {channels.length === 0 && (
+                    <div className="w-72 h-40 rounded-xl bg-player-surface border border-player-border flex items-center justify-center text-player-muted-foreground text-sm">
+                      Nenhum canal disponível
+                    </div>
+                  )}
+                  {channels.map((ch) => (
+                    <StreamingCard
+                      key={ch.id}
+                      channel={ch}
+                      currentProgram={currentProgram}
+                      onClick={goToPlayer}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
           </section>
 
-          {/* Visto por último - only for logged in users */}
+          {/* Visto por último */}
           {user && (
             <section>
-              <h2 className="text-lg font-bold mb-4">visto por último</h2>
-              <div className="flex gap-4">
-                {[1, 2, 3].map(i => (
-                  <div key={i} className="w-48 h-28 rounded-xl bg-player-surface border-[5px] border-transparent hover:border-white transition-all" />
-                ))}
-              </div>
+              {!dataLoaded ? (
+                <>
+                  <Skeleton className="h-5 w-36 bg-white/10 mb-4" />
+                  <div className="flex gap-4">
+                    {[1, 2, 3].map(i => (
+                      <Skeleton key={i} className="w-48 h-28 rounded-xl bg-white/10" />
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <h2 className="text-lg font-bold mb-4">visto por último</h2>
+                  <div className="flex gap-4">
+                    {[1, 2, 3].map(i => (
+                      <div key={i} className="w-48 h-28 rounded-xl bg-player-surface border-[5px] border-transparent hover:border-white transition-all" />
+                    ))}
+                  </div>
+                </>
+              )}
             </section>
           )}
         </main>
