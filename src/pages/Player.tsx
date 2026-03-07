@@ -950,12 +950,22 @@ export default function PlayerPage() {
     if (!prerollDone) return;
     if (autoPlayedRef.current || canais.length === 0 || playing) return;
     autoPlayedRef.current = true;
-    const first = canais[0];
+
+    const preferredIndex = canais.findIndex((c) => isAutoplayChannel(c));
+    const startIndex = preferredIndex >= 0 ? preferredIndex : 0;
+    const first = canais[startIndex];
     if (!first) return;
-    setCurrentIndex(0);
-    if (first.type === "youtube") { setPlaying(true); setBuffering(false); setSelectedVideoId(null); setSidebarOpen(false); }
-    else setTimeout(() => playStream(first.url, first.type), 200);
-  }, [canais, playing, playStream, prerollDone]);
+
+    setCurrentIndex(startIndex);
+    if (first.type === "youtube") {
+      setPlaying(true);
+      setBuffering(false);
+      setSelectedVideoId(null);
+      setSidebarOpen(false);
+    } else {
+      setTimeout(() => playStream(first.url, first.type), 120);
+    }
+  }, [canais, playing, playStream, prerollDone, isAutoplayChannel]);
 
   // Recurring pre-roll every 15 minutes
   const fetchAndShowPreroll = useCallback(async () => {
