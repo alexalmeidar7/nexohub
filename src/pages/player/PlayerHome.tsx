@@ -194,6 +194,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
         setChannelName(empRes.data.nome || "");
       }
       if (progRes.data) setProgramas(progRes.data);
+      setDataLoaded(true);
     };
     fetchData();
   }, [user, userSlug]);
