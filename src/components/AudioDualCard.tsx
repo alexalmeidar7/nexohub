@@ -1,5 +1,5 @@
 import { Heart, Mic, Plus, Instagram, MessageCircle, X } from "lucide-react";
-import { lazy, Suspense, useState } from "react";
+import { lazy, Suspense, useState, useRef } from "react";
 
 const AudioSpectrum = lazy(() => import("@/components/AudioSpectrum"));
 
@@ -45,7 +45,15 @@ export default function AudioDualCard({
 }: AudioDualCardProps) {
   const isSemTitulo = !musicTitle || musicTitle === "Sem título";
   const [menuOpen, setMenuOpen] = useState(false);
+  const closeTimer = useRef<ReturnType<typeof setTimeout>>();
 
+  const handleEnter = () => {
+    clearTimeout(closeTimer.current);
+    setMenuOpen(true);
+  };
+  const handleLeave = () => {
+    closeTimer.current = setTimeout(() => setMenuOpen(false), 600);
+  };
   const cleanPhone = whatsappPhone?.replace(/\D/g, "") || "";
 
   return (
@@ -97,8 +105,8 @@ export default function AudioDualCard({
               {/* Hover menu — 3 action buttons */}
               <div
                 className="relative inline-block mb-2"
-                onMouseEnter={() => setMenuOpen(true)}
-                onMouseLeave={() => setMenuOpen(false)}
+                onMouseEnter={handleEnter}
+                onMouseLeave={handleLeave}
               >
                 {/* Round + button */}
                 <button
@@ -112,8 +120,10 @@ export default function AudioDualCard({
                 {/* Expanded menu */}
                 {menuOpen && (
                   <div
-                    className="absolute bottom-full left-0 mb-3 flex flex-col gap-1.5 animate-fade-in min-w-[200px]"
+                    className="absolute bottom-full left-0 mb-1 pb-2 flex flex-col gap-1.5 animate-fade-in min-w-[200px]"
                     style={{ animationDuration: "0.15s" }}
+                    onMouseEnter={handleEnter}
+                    onMouseLeave={handleLeave}
                   >
                     {/* Chat ao vivo */}
                     {onOpenChat && (
