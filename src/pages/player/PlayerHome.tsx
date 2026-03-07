@@ -148,7 +148,6 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                   cadastre-se
                 </button>
               ) : null}
-              )}
             </div>
           </div>
           {logoUrl && <img src={logoUrl} alt={channelName} className="h-10 w-auto object-contain" />}
