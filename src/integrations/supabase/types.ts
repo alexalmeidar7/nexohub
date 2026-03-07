@@ -445,6 +445,39 @@ export type Database = {
         }
         Relationships: []
       }
+      musicas_tocadas: {
+        Row: {
+          artista: string
+          created_at: string
+          dia: string
+          horario: string
+          id: string
+          musica: string
+          programa: string
+          user_id: string
+        }
+        Insert: {
+          artista?: string
+          created_at?: string
+          dia?: string
+          horario?: string
+          id?: string
+          musica?: string
+          programa?: string
+          user_id: string
+        }
+        Update: {
+          artista?: string
+          created_at?: string
+          dia?: string
+          horario?: string
+          id?: string
+          musica?: string
+          programa?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       planos: {
         Row: {
           created_at: string
@@ -841,6 +874,7 @@ export type Database = {
     }
     Functions: {
       cleanup_comercial: { Args: never; Returns: undefined }
+      cleanup_musicas_tocadas: { Args: never; Returns: undefined }
       cleanup_old_chat_messages: { Args: never; Returns: undefined }
       has_role: {
         Args: {
