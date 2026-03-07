@@ -49,6 +49,18 @@ export default function WelcomeScreen({ userName, avatarUrl, onContinue }: Welco
   const [saving, setSaving] = useState(false);
   const { user, signOut } = useAuth();
 
+  // Staggered animation states
+  const [showTitle, setShowTitle] = useState(false);
+  const [showAvatar, setShowAvatar] = useState(false);
+  const [showBottom, setShowBottom] = useState(false);
+
+  useEffect(() => {
+    const t1 = setTimeout(() => setShowTitle(true), 200);
+    const t2 = setTimeout(() => setShowAvatar(true), 900);
+    const t3 = setTimeout(() => setShowBottom(true), 1500);
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+  }, []);
+
   const [profile, setProfile] = useState<Profile>({
     nome: userName,
     email: user?.email || "",
