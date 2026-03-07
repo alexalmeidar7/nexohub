@@ -307,7 +307,7 @@ export default function AudioDualCard({
                           {song.horario?.slice(0, 5)}
                         </span>
                         {song.programa && (
-                          <span className="text-[9px] truncate" style={{ color: "hsl(0 0% 55%)", maxWidth: "80px" }}>
+                          <span className="text-[9px] truncate" style={{ color: "hsl(0 0% 55%)", maxWidth: "120px" }}>
                             {song.programa}
                           </span>
                         )}
