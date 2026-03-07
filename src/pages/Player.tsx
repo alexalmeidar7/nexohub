@@ -463,6 +463,7 @@ export default function PlayerPage() {
           setProgramas((data.programas || []) as Programa[]);
           setApresentadores((data.apresentadores || []) as Apresentador[]);
           setShopProducts(data.shopProducts || []);
+          if (data.empresa?.telefone_participacao) setWhatsappPhone(data.empresa.telefone_participacao);
 
           // Handle prerolls
           const now = new Date();
