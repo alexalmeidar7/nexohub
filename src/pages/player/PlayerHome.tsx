@@ -162,6 +162,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   const [profileName, setProfileName] = useState("");
   const [profileAvatar, setProfileAvatar] = useState<string | null>(null);
   const [programas, setProgramas] = useState<Programa[]>([]);
+  const [dataLoaded, setDataLoaded] = useState(false);
 
   const userName = profileName || user?.email?.split("@")[0] || "Visitante";
 
