@@ -586,6 +586,41 @@ export default function PlayerPage() {
     return () => { cancelled = true; };
   }, [user, authLoading, isPublicMode, userSlug]);
 
+  // While pre-roll is visible, warm up channel 991-1 (or first audio channel) in background
+  useEffect(() => {
+    if (!isPrerollVisible || canais.length === 0) return;
+
+    const target =
+      canais.find((c) => isAutoplayChannel(c) && (c.type === "audio_live" || c.type === "audio")) ||
+      canais.find((c) => c.type === "audio_live" || c.type === "audio");
+
+    if (!target || warmedPrerollChannelIdRef.current === target.id) return;
+    warmedPrerollChannelIdRef.current = target.id;
+
+    warmupAbortRef.current?.abort();
+    const controller = new AbortController();
+    warmupAbortRef.current = controller;
+
+    (async () => {
+      try {
+        if (target.url.includes(".m3u8")) {
+          await getHls().catch(() => null);
+        }
+        const warmUrl = target.url.includes("?") ? `${target.url}&warmup=1` : `${target.url}?warmup=1`;
+        await fetch(warmUrl, {
+          method: "GET",
+          cache: "no-store",
+          mode: "no-cors",
+          signal: controller.signal,
+        }).catch(() => null);
+      } catch {
+        // warmup is best-effort only
+      }
+    })();
+
+    return () => controller.abort();
+  }, [canais, isAutoplayChannel, isPrerollVisible]);
+
   // Refresh shopping products periodically
   useEffect(() => {
     const ownerId = isPublicMode ? publicUserId : user?.id;
