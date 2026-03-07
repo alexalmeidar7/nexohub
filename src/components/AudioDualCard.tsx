@@ -119,7 +119,7 @@ export default function AudioDualCard({
                 <button
                   className="w-8 h-8 rounded-full flex items-center justify-center transition-all hover:scale-110 active:scale-95"
                   style={{ backgroundColor: "hsla(0, 0%, 100%, 0.2)" }}
-                  onClick={() => setMenuOpen(o => !o)}
+                  onClick={handleToggle}
                 >
                   {menuOpen ? <X size={18} className="text-white" /> : <Plus size={18} className="text-white" />}
                 </button>
