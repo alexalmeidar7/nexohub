@@ -129,8 +129,9 @@ function StreamingCard({ channel, currentProgram, onClick }: { channel: Channel;
       )}
 
       {/* "ao vivo" badge - top left */}
-      <span className="absolute top-2 left-2 text-[10px] uppercase tracking-wider text-player-accent font-semibold bg-black/60 px-2 py-0.5 rounded">
-        ● ao vivo
+      <span className="absolute top-2 left-2 text-[10px] uppercase tracking-wider font-semibold bg-black/60 px-2 py-0.5 rounded flex items-center gap-1.5">
+        <span className="inline-block w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+        <span className="text-white">ao vivo</span>
       </span>
 
       {/* Info overlay - bottom left */}
