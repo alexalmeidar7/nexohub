@@ -15,13 +15,13 @@ export default function PlayerHub() {
   const [step, setStep] = useState<Step>("splash");
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [channelName, setChannelName] = useState("");
+  const [fadeOut, setFadeOut] = useState(false);
+  const [pendingStep, setPendingStep] = useState<Step | null>(null);
 
-  // Fetch logo for splash/access screens
   useEffect(() => {
     const fetchLogo = async () => {
       let userId = user?.id;
       if (userSlug) {
-        // Use edge function for slug-based access
         const { data } = await supabase.functions.invoke("public-player-data", {
           body: { slug: userSlug },
         });
@@ -45,7 +45,6 @@ export default function PlayerHub() {
     setSplashDone(true);
   }, []);
 
-  // Advance step once splash animation is done AND auth is resolved
   useEffect(() => {
     if (!splashDone || loading) return;
     if (user) {
@@ -55,30 +54,54 @@ export default function PlayerHub() {
     }
   }, [splashDone, loading, user]);
 
-  const onLoginSuccess = useCallback(() => {
-    setStep("welcome");
+  const transitionTo = useCallback((target: Step) => {
+    setFadeOut(true);
+    setPendingStep(target);
+    setTimeout(() => {
+      setStep(target);
+      setFadeOut(false);
+      setPendingStep(null);
+    }, 500);
   }, []);
+
+  const onLoginSuccess = useCallback(() => {
+    transitionTo("welcome");
+  }, [transitionTo]);
 
   const onGuest = useCallback(() => {
-    setStep("home");
-  }, []);
+    transitionTo("home");
+  }, [transitionTo]);
 
   const onWelcomeContinue = useCallback(() => {
-    setStep("home");
-  }, []);
+    transitionTo("home");
+  }, [transitionTo]);
+
+  const wrapperClass = `transition-opacity duration-500 ease-in-out ${fadeOut ? "opacity-0" : "opacity-100"}`;
 
   if (step === "splash") {
     return <SplashScreen logoUrl={logoUrl} channelName={channelName} onFinish={onSplashFinish} />;
   }
 
   if (step === "access") {
-    return <AccessScreen logoUrl={logoUrl} onLoginSuccess={onLoginSuccess} onGuest={onGuest} />;
+    return (
+      <div className={wrapperClass}>
+        <AccessScreen logoUrl={logoUrl} onLoginSuccess={onLoginSuccess} onGuest={onGuest} />
+      </div>
+    );
   }
 
   if (step === "welcome") {
     const userName = user?.email?.split("@")[0] || "Visitante";
-    return <WelcomeScreen userName={userName} avatarUrl={null} onContinue={onWelcomeContinue} />;
+    return (
+      <div className={wrapperClass}>
+        <WelcomeScreen userName={userName} avatarUrl={null} onContinue={onWelcomeContinue} />
+      </div>
+    );
   }
 
-  return <PlayerHome />;
+  return (
+    <div className={wrapperClass}>
+      <PlayerHome />
+    </div>
+  );
 }

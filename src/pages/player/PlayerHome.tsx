@@ -22,8 +22,10 @@ export default function PlayerHome() {
   const [channels, setChannels] = useState<Channel[]>([]);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [channelName, setChannelName] = useState("");
+  const [profileName, setProfileName] = useState("");
+  const [profileAvatar, setProfileAvatar] = useState<string | null>(null);
 
-  const userName = user?.email?.split("@")[0] || "Visitante";
+  const userName = profileName || user?.email?.split("@")[0] || "Visitante";
 
   useEffect(() => {
     const fetchData = async () => {
@@ -53,6 +55,20 @@ export default function PlayerHome() {
     };
     fetchData();
   }, [user, userSlug]);
+
+  // Fetch profile
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("profiles")
+      .select("nome, avatar_url")
+      .eq("user_id", user.id)
+      .single()
+      .then(({ data }) => {
+        if (data?.nome) setProfileName(data.nome);
+        if (data?.avatar_url) setProfileAvatar(data.avatar_url);
+      });
+  }, [user]);
 
   const goToPlayer = () => {
     if (userSlug) {
@@ -109,7 +125,11 @@ export default function PlayerHome() {
         <header className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-player-surface flex items-center justify-center overflow-hidden">
-              <UserCircle className="h-7 w-7 text-player-muted-foreground" />
+              {profileAvatar ? (
+                <img src={profileAvatar} alt={userName} className="w-full h-full object-cover" />
+              ) : (
+                <UserCircle className="h-7 w-7 text-player-muted-foreground" />
+              )}
             </div>
             <div>
               <p className="text-sm">
