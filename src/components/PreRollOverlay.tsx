@@ -19,7 +19,7 @@ function extractYoutubeId(url: string): string | null {
   return match ? match[1] : null;
 }
 
-export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLinkUrl, prerollMediaType, prerollYoutubeUrl, profileAvatar, profileName, onSkip, onEnded }: Props) {
+export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLinkUrl, prerollMediaType, prerollYoutubeUrl, onSkip, onEnded }: Props) {
   const [countdown, setCountdown] = useState(SKIP_DELAY);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
