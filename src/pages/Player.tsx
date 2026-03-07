@@ -249,7 +249,9 @@ export default function PlayerPage() {
   const [programas, setProgramas] = useState<Programa[]>([]);
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(false);
+  const mutedRef = useRef(false);
   const [volume, setVolume] = useState(80);
+  const volumeRef = useRef(80);
   const [volumeHover, setVolumeHover] = useState(false);
   const volumeHideTimeout = useRef<ReturnType<typeof setTimeout>>();
   const [fullscreen, setFullscreen] = useState(false);
