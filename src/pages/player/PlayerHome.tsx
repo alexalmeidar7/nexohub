@@ -150,7 +150,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
               ) : null}
             </div>
           </div>
-          {logoUrl && <img src={logoUrl} alt={channelName} className="h-10 w-auto object-contain" />}
+          {logoUrl && <img src={logoUrl} alt={channelName} className="h-[3.125rem] w-auto object-contain" />}
         </header>
 
         {/* Streamings ao vivo */}
