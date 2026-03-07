@@ -249,14 +249,14 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
 
   return (
     <div
-      className="fixed inset-0 bg-player text-player-foreground flex"
+      className="fixed inset-0 bg-player text-player-foreground flex animate-fade-in"
       style={{ background: "var(--player-glow-corner)" }}
     >
       {/* Red border */}
       <div className="absolute inset-0 border border-player-accent/20 rounded-2xl pointer-events-none z-30" />
 
-      {/* Sidebar - centered vertically */}
-      <aside className="w-20 flex flex-col items-center justify-center gap-3 z-20 fixed left-0 top-0 bottom-0">
+      {/* Sidebar - always visible, not affected by fade */}
+      <aside className="w-20 flex flex-col items-center justify-center gap-3 z-40 fixed left-0 top-0 bottom-0">
         {sidebarItems.map(item => (
           <button
             key={item.section}
