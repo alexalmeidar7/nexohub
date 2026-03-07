@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,9 +10,139 @@ interface Channel {
   cover_url: string | null;
   logo_url: string | null;
   type: string;
+  url?: string;
+}
+
+interface Programa {
+  nome: string;
+  horario_inicio: string;
+  horario_fim: string;
+  dias_semana: string[] | null;
 }
 
 type Section = "home" | "streaming" | "content" | "shop";
+
+function StreamingCard({ channel, currentProgram, onClick }: { channel: Channel; currentProgram?: Programa; onClick: () => void }) {
+  const [hovered, setHovered] = useState(false);
+  const [frames, setFrames] = useState<string[]>([]);
+  const [frameIdx, setFrameIdx] = useState(0);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const isVideo = channel.type === "video";
+
+  // Capture frames on hover for video channels
+  useEffect(() => {
+    if (!hovered || !isVideo || !channel.url) return;
+    if (frames.length > 0) return; // already captured
+
+    let hls: any = null;
+    const video = document.createElement("video");
+    video.crossOrigin = "anonymous";
+    video.muted = true;
+    video.playsInline = true;
+    videoRef.current = video;
+
+    const canvas = document.createElement("canvas");
+    canvas.width = 320;
+    canvas.height = 180;
+    canvasRef.current = canvas;
+
+    const captureFrames = () => {
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+      const captured: string[] = [];
+      let count = 0;
+      const grabFrame = () => {
+        if (count >= 5) {
+          setFrames(captured);
+          video.pause();
+          if (hls) hls.destroy();
+          return;
+        }
+        ctx.drawImage(video, 0, 0, 320, 180);
+        captured.push(canvas.toDataURL("image/jpeg", 0.7));
+        count++;
+        setTimeout(grabFrame, 300);
+      };
+      grabFrame();
+    };
+
+    const startCapture = async () => {
+      if (channel.url!.includes(".m3u8")) {
+        const Hls = (await import("hls.js")).default;
+        if (Hls.isSupported()) {
+          hls = new Hls({ maxBufferLength: 5 });
+          hls.loadSource(channel.url!);
+          hls.attachMedia(video);
+          hls.on(Hls.Events.MANIFEST_PARSED, () => {
+            video.play().then(() => setTimeout(captureFrames, 500)).catch(() => {});
+          });
+        }
+      } else {
+        video.src = channel.url!;
+        video.play().then(() => setTimeout(captureFrames, 500)).catch(() => {});
+      }
+    };
+
+    startCapture();
+
+    return () => {
+      video.pause();
+      if (hls) hls.destroy();
+    };
+  }, [hovered, isVideo, channel.url, frames.length]);
+
+  // Loop through frames while hovered
+  useEffect(() => {
+    if (hovered && frames.length > 0) {
+      intervalRef.current = setInterval(() => {
+        setFrameIdx(prev => (prev + 1) % frames.length);
+      }, 400);
+    }
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [hovered, frames.length]);
+
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => { setHovered(false); setFrameIdx(0); }}
+      className="flex-shrink-0 w-72 h-40 rounded-xl overflow-hidden relative transition-all hover:scale-[1.02] border-[5px] border-transparent hover:border-white"
+    >
+      {/* Background */}
+      {hovered && frames.length > 0 ? (
+        <img src={frames[frameIdx]} alt={channel.name} className="w-full h-full object-cover" />
+      ) : channel.cover_url ? (
+        <img src={channel.cover_url} alt={channel.name} className="w-full h-full object-cover" />
+      ) : (
+        <div className="w-full h-full bg-gradient-to-br from-player-accent/30 to-player flex items-center justify-center">
+          {channel.logo_url ? (
+            <img src={channel.logo_url} alt={channel.name} className="h-12 w-auto object-contain" />
+          ) : (
+            <Radio className="h-10 w-10 text-player-muted-foreground" />
+          )}
+        </div>
+      )}
+
+      {/* "ao vivo" badge - top left */}
+      <span className="absolute top-2 left-2 text-[10px] uppercase tracking-wider text-player-accent font-semibold bg-black/60 px-2 py-0.5 rounded">
+        ● ao vivo
+      </span>
+
+      {/* Info overlay - bottom left */}
+      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3">
+        <p className="text-sm font-medium truncate text-left">{channel.name}</p>
+        {currentProgram && (
+          <p className="text-[11px] text-player-muted-foreground truncate text-left">{currentProgram.nome}</p>
+        )}
+      </div>
+    </button>
+  );
+}
 
 interface PlayerHomeProps {
   onBackToAccess?: () => void;
@@ -28,6 +158,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   const [channelName, setChannelName] = useState("");
   const [profileName, setProfileName] = useState("");
   const [profileAvatar, setProfileAvatar] = useState<string | null>(null);
+  const [programas, setProgramas] = useState<Programa[]>([]);
 
   const userName = profileName || user?.email?.split("@")[0] || "Visitante";
 
@@ -47,15 +178,17 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
 
       if (!userId) return;
 
-      const [chRes, empRes] = await Promise.all([
-        supabase.from("streaming_channels").select("id, name, cover_url, logo_url, type").eq("user_id", userId).eq("active", true),
+      const [chRes, empRes, progRes] = await Promise.all([
+        supabase.from("streaming_channels").select("id, name, cover_url, logo_url, type, url").eq("user_id", userId).eq("active", true),
         supabase.from("empresa_config").select("logo, nome").eq("user_id", userId).single(),
+        supabase.from("programas").select("nome, horario_inicio, horario_fim, dias_semana").eq("user_id", userId).eq("ativo", true),
       ]);
       if (chRes.data) setChannels(chRes.data);
       if (empRes.data) {
         setLogoUrl(empRes.data.logo);
         setChannelName(empRes.data.nome || "");
       }
+      if (progRes.data) setProgramas(progRes.data);
     };
     fetchData();
   }, [user, userSlug]);
@@ -73,6 +206,21 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
         if (data?.avatar_url) setProfileAvatar(data.avatar_url);
       });
   }, [user]);
+
+  const DAY_MAP: Record<string, string> = { "0": "dom", "1": "seg", "2": "ter", "3": "qua", "4": "qui", "5": "sex", "6": "sab" };
+
+  const getCurrentProgram = useCallback(() => {
+    const now = new Date();
+    const hhmm = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+    const today = DAY_MAP[String(now.getDay())];
+    return programas.find(p => {
+      const inTime = hhmm >= p.horario_inicio && hhmm < p.horario_fim;
+      const inDay = !p.dias_semana || p.dias_semana.length === 0 || p.dias_semana.some(d => d.toLowerCase().startsWith(today));
+      return inTime && inDay;
+    });
+  }, [programas]);
+
+  const currentProgram = getCurrentProgram();
 
   const goToPlayer = () => {
     if (userSlug) {
@@ -148,7 +296,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
               ) : null}
             </div>
           </div>
-          {logoUrl && <img src={logoUrl} alt={channelName} className="h-[3.75rem] w-auto object-contain" />}
+          {logoUrl && <img src={logoUrl} alt={channelName} className="h-[5rem] w-auto object-contain" />}
       </header>
 
       {/* Main content */}
@@ -164,27 +312,12 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
               </div>
             )}
             {channels.map((ch) => (
-              <button
+              <StreamingCard
                 key={ch.id}
+                channel={ch}
+                currentProgram={currentProgram}
                 onClick={goToPlayer}
-                className="flex-shrink-0 w-72 h-40 rounded-xl overflow-hidden relative transition-all hover:scale-[1.02] border-[5px] border-transparent hover:border-white"
-              >
-                {ch.cover_url ? (
-                  <img src={ch.cover_url} alt={ch.name} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-player-accent/30 to-player flex items-center justify-center">
-                    {ch.logo_url ? (
-                      <img src={ch.logo_url} alt={ch.name} className="h-12 w-auto object-contain" />
-                    ) : (
-                      <Radio className="h-10 w-10 text-player-muted-foreground" />
-                    )}
-                  </div>
-                )}
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-player/80 to-transparent p-3">
-                  <p className="text-sm font-medium truncate">{ch.name}</p>
-                  <span className="text-[10px] uppercase tracking-wider text-player-accent">● ao vivo</span>
-                </div>
-              </button>
+              />
             ))}
           </div>
         </section>
