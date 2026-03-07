@@ -11,6 +11,7 @@ import NotFound from "./pages/NotFound";
 
 // Lazy-loaded heavy pages
 const PlayerPage = lazy(() => import("./pages/Player"));
+const PlayerApp = lazy(() => import("./pages/PlayerApp"));
 const PromocoesKiosk = lazy(() => import("./pages/Promocoes"));
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
 const AdminUsers = lazy(() => import("./pages/admin/AdminUsers"));
