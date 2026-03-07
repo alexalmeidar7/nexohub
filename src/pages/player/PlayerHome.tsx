@@ -56,6 +56,20 @@ export default function PlayerHome() {
     fetchData();
   }, [user, userSlug]);
 
+  // Fetch profile
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("profiles")
+      .select("nome, avatar_url")
+      .eq("user_id", user.id)
+      .single()
+      .then(({ data }) => {
+        if (data?.nome) setProfileName(data.nome);
+        if (data?.avatar_url) setProfileAvatar(data.avatar_url);
+      });
+  }, [user]);
+
   const goToPlayer = () => {
     if (userSlug) {
       navigate(`/user/${userSlug}/nexohub/player/watch`);
