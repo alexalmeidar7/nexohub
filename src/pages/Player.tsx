@@ -241,7 +241,9 @@ export default function PlayerPage() {
   const { userSlug } = useParams<{ userSlug?: string }>();
   const isPublicMode = !!userSlug;
   const { user, loading: authLoading } = useAuth();
+  const userId = user?.id ?? null;
   const [publicUserId, setPublicUserId] = useState<string | null>(null);
+  const publicBootstrapRef = useRef<{ slug: string | null; loaded: boolean }>({ slug: null, loaded: false });
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const hlsRef = useRef<HlsType | null>(null);
