@@ -41,7 +41,24 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
     return () => clearInterval(t);
   }, [countdown]);
 
-  // Load YouTube IFrame API and detect video end
+  // Track time for native video
+  useEffect(() => {
+    if (isYoutube) return;
+    const video = prerollVideoRef.current;
+    if (!video) return;
+    const onTime = () => setCurrentTime(video.currentTime);
+    const onDur = () => setDuration(video.duration || 0);
+    video.addEventListener("timeupdate", onTime);
+    video.addEventListener("loadedmetadata", onDur);
+    video.addEventListener("durationchange", onDur);
+    return () => {
+      video.removeEventListener("timeupdate", onTime);
+      video.removeEventListener("loadedmetadata", onDur);
+      video.removeEventListener("durationchange", onDur);
+    };
+  }, [isYoutube, prerollVideoRef]);
+
+  // Track time for YouTube
   useEffect(() => {
     if (!isYoutube || !ytId) return;
 
