@@ -91,7 +91,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
     { icon: Home, label: "Home", section: "home" },
     { icon: Radio, label: "Streaming", section: "streaming" },
     { icon: Film, label: "Conteúdo", section: "content" },
-    { icon: ShoppingBag, label: "Loja", section: "shop" },
+    ...(user ? [{ icon: ShoppingBag, label: "Loja", section: "shop" as Section }] : []),
   ];
 
   return (
@@ -190,15 +190,17 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
           </div>
         </section>
 
-        {/* Visto por último */}
-        <section>
-          <h2 className="text-lg font-bold mb-4">visto por último</h2>
-          <div className="flex gap-4">
-            {[1, 2, 3].map(i => (
-              <div key={i} className="w-48 h-28 rounded-xl bg-player-surface border border-player-border" />
-            ))}
-          </div>
-        </section>
+        {/* Visto por último - only for logged in users */}
+        {user && (
+          <section>
+            <h2 className="text-lg font-bold mb-4">visto por último</h2>
+            <div className="flex gap-4">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="w-48 h-28 rounded-xl bg-player-surface border border-player-border" />
+              ))}
+            </div>
+          </section>
+        )}
       </main>
     </div>
   );
