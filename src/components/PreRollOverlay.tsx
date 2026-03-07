@@ -20,12 +20,20 @@ function extractYoutubeId(url: string): string | null {
 
 export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLinkUrl, prerollMediaType, prerollYoutubeUrl, onSkip, onEnded }: Props) {
   const [countdown, setCountdown] = useState(SKIP_DELAY);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
   const isYoutube = prerollMediaType === "youtube" && prerollYoutubeUrl;
   const ytId = isYoutube ? extractYoutubeId(prerollYoutubeUrl!) : null;
   const ytPlayerRef = useRef<any>(null);
   const pollRef = useRef<ReturnType<typeof setInterval>>();
   const onEndedRef = useRef(onEnded);
   onEndedRef.current = onEnded;
+
+  const formatTime = (s: number) => {
+    const m = Math.floor(s / 60);
+    const sec = Math.floor(s % 60);
+    return `${m}:${sec.toString().padStart(2, "0")}`;
+  };
 
   useEffect(() => {
     if (countdown <= 0) return;
