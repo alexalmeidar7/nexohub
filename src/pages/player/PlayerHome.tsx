@@ -36,6 +36,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   const [channelName, setChannelName] = useState("");
   const [profileName, setProfileName] = useState("");
   const [profileAvatar, setProfileAvatar] = useState<string | null>(null);
+  const [programas, setProgramas] = useState<Programa[]>([]);
 
   const userName = profileName || user?.email?.split("@")[0] || "Visitante";
 
