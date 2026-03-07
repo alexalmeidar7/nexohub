@@ -1081,6 +1081,7 @@ export default function PlayerPage() {
   const toggleMute = useCallback(() => {
     setMuted(prev => {
       const newMuted = !prev;
+      mutedRef.current = newMuted;
       if (videoRef.current) videoRef.current.muted = newMuted;
       if (audioRef.current) audioRef.current.muted = newMuted;
       return newMuted;
@@ -1089,10 +1090,13 @@ export default function PlayerPage() {
 
   const handleVolumeChange = useCallback((val: number) => {
     setVolume(val);
+    volumeRef.current = val;
     const v = val / 100;
     if (videoRef.current) { videoRef.current.volume = v; videoRef.current.muted = false; }
     if (audioRef.current) { audioRef.current.volume = v; audioRef.current.muted = false; }
-    setMuted(val === 0);
+    const newMuted = val === 0;
+    setMuted(newMuted);
+    mutedRef.current = newMuted;
   }, []);
 
   // Keyboard & TV Remote Control handler with spatial navigation (TV only for arrows)
