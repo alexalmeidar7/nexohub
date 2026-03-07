@@ -176,7 +176,7 @@ export default function WelcomeScreen({ userName, avatarUrl, onContinue }: Welco
               <Input
                 value={profile.nome}
                 onChange={e => setProfile(p => ({ ...p, nome: e.target.value }))}
-                className="bg-player-card border-player-border text-player-foreground"
+                className="rounded-full bg-player-card border-player-border text-black text-[14px] focus:border-[#e10000] focus:ring-[#e10000]"
               />
             </div>
             <div>
@@ -184,7 +184,7 @@ export default function WelcomeScreen({ userName, avatarUrl, onContinue }: Welco
               <Input
                 value={profile.email}
                 onChange={e => setProfile(p => ({ ...p, email: e.target.value }))}
-                className="bg-player-card border-player-border text-player-foreground"
+                className="rounded-full bg-player-card border-player-border text-black text-[14px] focus:border-[#e10000] focus:ring-[#e10000]"
                 disabled
               />
             </div>
@@ -194,7 +194,7 @@ export default function WelcomeScreen({ userName, avatarUrl, onContinue }: Welco
                 <Input
                   value={profile.cidade}
                   onChange={e => setProfile(p => ({ ...p, cidade: e.target.value }))}
-                  className="bg-player-card border-player-border text-player-foreground"
+                  className="rounded-full bg-player-card border-player-border text-black text-[14px] focus:border-[#e10000] focus:ring-[#e10000]"
                 />
               </div>
               <div>
@@ -202,7 +202,7 @@ export default function WelcomeScreen({ userName, avatarUrl, onContinue }: Welco
                 <Input
                   value={profile.estado}
                   onChange={e => setProfile(p => ({ ...p, estado: e.target.value }))}
-                  className="bg-player-card border-player-border text-player-foreground"
+                  className="rounded-full bg-player-card border-player-border text-black text-[14px] focus:border-[#e10000] focus:ring-[#e10000]"
                 />
               </div>
             </div>
@@ -211,7 +211,7 @@ export default function WelcomeScreen({ userName, avatarUrl, onContinue }: Welco
               <Input
                 value={profile.pais}
                 onChange={e => setProfile(p => ({ ...p, pais: e.target.value }))}
-                className="bg-player-card border-player-border text-player-foreground"
+                className="rounded-full bg-player-card border-player-border text-black text-[14px] focus:border-[#e10000] focus:ring-[#e10000]"
               />
             </div>
             <div>
@@ -219,21 +219,21 @@ export default function WelcomeScreen({ userName, avatarUrl, onContinue }: Welco
               <Input
                 value={profile.whatsapp}
                 onChange={e => setProfile(p => ({ ...p, whatsapp: e.target.value }))}
-                className="bg-player-card border-player-border text-player-foreground"
+                className="rounded-full bg-player-card border-player-border text-black text-[14px] focus:border-[#e10000] focus:ring-[#e10000]"
                 placeholder="+55 11 99999-9999"
               />
             </div>
             <div>
               <Label className="text-player-muted-foreground text-xs">Sexo</Label>
               <Select value={profile.sexo} onValueChange={v => setProfile(p => ({ ...p, sexo: v }))}>
-                <SelectTrigger className="bg-player-card border-player-border text-player-foreground">
+                <SelectTrigger className="rounded-full bg-player-card border-player-border text-black text-[14px] focus:border-[#e10000] focus:ring-[#e10000]">
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
-                <SelectContent className="bg-player-card border-player-border text-player-foreground">
-                  <SelectItem value="masculino">Masculino</SelectItem>
-                  <SelectItem value="feminino">Feminino</SelectItem>
-                  <SelectItem value="outro">Outro</SelectItem>
-                  <SelectItem value="prefiro_nao_dizer">Prefiro não dizer</SelectItem>
+                <SelectContent className="bg-[#e10000] border-[#e10000] text-white text-[14px]">
+                  <SelectItem value="masculino" className="text-white text-[14px] focus:bg-white/20 focus:text-white">Masculino</SelectItem>
+                  <SelectItem value="feminino" className="text-white text-[14px] focus:bg-white/20 focus:text-white">Feminino</SelectItem>
+                  <SelectItem value="outro" className="text-white text-[14px] focus:bg-white/20 focus:text-white">Outro</SelectItem>
+                  <SelectItem value="prefiro_nao_dizer" className="text-white text-[14px] focus:bg-white/20 focus:text-white">Prefiro não dizer</SelectItem>
                 </SelectContent>
               </Select>
             </div>
