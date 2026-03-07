@@ -1810,7 +1810,7 @@ export default function PlayerPage() {
           </div>
 
           {/* Next / Schedule — hidden on mobile */}
-          <div className="hidden md:flex pl-3 border-l border-white/10 min-w-0 items-stretch gap-2" style={{ maxWidth: "220px" }}>
+          <div className="hidden md:flex pl-3 border-l border-white/10 min-w-0 items-stretch gap-2" style={{ maxWidth: "320px" }}>
             <div className="min-w-0 flex-1">
               <span className="text-[10px] font-bold uppercase" style={{ color: "#e60000" }}>A seguir:</span>
               <div className="text-white text-sm truncate">
