@@ -166,8 +166,17 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
           />
         )}
 
-        {/* Botão Pular — canto superior direito */}
-        <div className="absolute top-6 right-6 z-10">
+        {/* Botão Pular + Tempo — canto superior direito */}
+        <div className="absolute top-6 right-6 z-10 flex items-center gap-3">
+          {/* Tempo percorrido / total */}
+          {duration > 0 && (
+            <span
+              className="text-xs font-mono px-3 py-1.5 rounded-full"
+              style={{ backgroundColor: "hsla(0, 0%, 0%, 0.5)", color: "hsla(0, 0%, 100%, 0.8)" }}
+            >
+              {formatTime(currentTime)} / {formatTime(duration)}
+            </span>
+          )}
           <button
             onClick={canSkip ? onSkip : undefined}
             className={`flex items-center gap-1 px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
