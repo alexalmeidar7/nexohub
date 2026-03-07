@@ -1258,6 +1258,19 @@ export default function PlayerPage() {
   const showVolume = () => { clearTimeout(volumeHideTimeout.current); setVolumeHover(true); };
   const hideVolume = () => { volumeHideTimeout.current = setTimeout(() => setVolumeHover(false), 600); };
 
+  // OSD volume indicator — shows briefly on mute/volume change
+  const [volumeOsd, setVolumeOsd] = useState(false);
+  const volumeOsdTimeout = useRef<ReturnType<typeof setTimeout>>();
+  const showVolumeOsd = useCallback(() => {
+    setVolumeOsd(true);
+    clearTimeout(volumeOsdTimeout.current);
+    volumeOsdTimeout.current = setTimeout(() => setVolumeOsd(false), 1200);
+  }, []);
+
+  // Wrap toggleMute and handleVolumeChange to trigger OSD
+  const toggleMuteWithOsd = useCallback(() => { toggleMute(); showVolumeOsd(); }, [toggleMute, showVolumeOsd]);
+  const handleVolumeChangeWithOsd = useCallback((val: number) => { handleVolumeChange(val); showVolumeOsd(); }, [handleVolumeChange, showVolumeOsd]);
+
   const showBar = () => { clearTimeout(hideTimeout.current); setBarVisible(true); };
   const hideBar = () => {
     if (isAudio) return;
