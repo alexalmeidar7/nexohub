@@ -154,6 +154,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   const { userSlug } = useParams();
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState<Section>("home");
+  const [fadeOut, setFadeOut] = useState(false);
   const [channels, setChannels] = useState<Channel[]>([]);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [channelName, setChannelName] = useState("");
