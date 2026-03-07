@@ -1626,18 +1626,23 @@ export default function PlayerPage() {
 
   return (
     <div ref={containerRef} className="relative h-screen w-screen bg-black overflow-hidden select-none cursor-default animate-fade-in">
-      {/* User avatar - top left */}
+      {/* User avatar + name - top left, always visible */}
       <div className="fixed top-4 left-0 w-20 flex justify-center z-50">
-        <div className="w-10 h-10 rounded-full overflow-hidden bg-player-surface">
-          {profileAvatar ? (
-            <img src={profileAvatar} alt={profileName} className="w-full h-full object-cover" />
-          ) : (
-            <img src="/avatars/usr-default.png" alt="Visitante" className="w-full h-full object-cover" />
-          )}
+        <div className="flex flex-col items-center gap-1">
+          <div className="w-10 h-10 rounded-full overflow-hidden bg-player-surface">
+            {profileAvatar ? (
+              <img src={profileAvatar} alt={profileName} className="w-full h-full object-cover" />
+            ) : (
+              <img src="/avatars/usr-default.png" alt="Visitante" className="w-full h-full object-cover" />
+            )}
+          </div>
+          <span className="text-[10px] text-white/70 font-medium truncate max-w-[70px] text-center leading-tight">
+            {profileName || user?.email?.split("@")[0] || "Visitante"}
+          </span>
         </div>
       </div>
 
-      {/* Sidebar menu with gradient background */}
+      {/* Sidebar menu with gradient background - always visible */}
       <aside
         className="fixed left-0 top-0 bottom-0 w-20 flex flex-col items-center justify-center gap-3 z-40"
         style={{ background: "linear-gradient(to right, rgba(0,0,0,0.85), transparent)" }}
@@ -1646,8 +1651,8 @@ export default function PlayerPage() {
           { icon: Home, label: "Home", action: () => {
             setPageFadeOut(true);
             setTimeout(() => {
-              if (userSlug) window.location.href = `/user/${userSlug}/nexohub/player`;
-              else window.location.href = "/user/nexohub/player";
+              const basePath = userSlug ? `/user/${userSlug}/nexohub/player` : "/user/nexohub/player";
+              navigate(basePath);
             }, 400);
           }},
           { icon: Radio, label: "Streaming", action: () => {} },
