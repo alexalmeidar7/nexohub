@@ -49,6 +49,18 @@ export default function WelcomeScreen({ userName, avatarUrl, onContinue }: Welco
   const [saving, setSaving] = useState(false);
   const { user, signOut } = useAuth();
 
+  // Staggered animation states
+  const [showTitle, setShowTitle] = useState(false);
+  const [showAvatar, setShowAvatar] = useState(false);
+  const [showBottom, setShowBottom] = useState(false);
+
+  useEffect(() => {
+    const t1 = setTimeout(() => setShowTitle(true), 200);
+    const t2 = setTimeout(() => setShowAvatar(true), 900);
+    const t3 = setTimeout(() => setShowBottom(true), 1500);
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+  }, []);
+
   const [profile, setProfile] = useState<Profile>({
     nome: userName,
     email: user?.email || "",
@@ -122,7 +134,11 @@ export default function WelcomeScreen({ userName, avatarUrl, onContinue }: Welco
       className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-player"
       style={{ background: "var(--player-glow)" }}
     >
-      <h1 className="text-player-foreground text-2xl font-semibold mb-8">
+      <h1
+        className={`text-player-foreground text-2xl font-semibold mb-8 transition-all duration-700 ease-out ${
+          showTitle ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+        }`}
+      >
         Bem vindo de volta, <span className="text-player-accent">{displayName}</span>
       </h1>
 
@@ -130,14 +146,18 @@ export default function WelcomeScreen({ userName, avatarUrl, onContinue }: Welco
         onClick={onContinue}
         onMouseDown={() => setPressing(true)}
         onMouseUp={() => setPressing(false)}
-        className={`w-40 h-40 rounded-full bg-player-accent-soft flex items-center justify-center overflow-hidden mb-4 cursor-pointer transition-transform hover:scale-105 ${pressing ? "scale-95" : ""}`}
+        className={`w-40 h-40 rounded-full bg-player-accent-soft flex items-center justify-center overflow-hidden mb-4 cursor-pointer transition-all duration-700 ease-out hover:scale-105 ${
+          showAvatar ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"
+        } ${pressing ? "scale-95" : ""}`}
       >
         <img src={displayAvatar} alt={displayName} className="w-full h-full object-cover" />
       </button>
 
-      <p className="text-player-muted-foreground text-xs">clique para continuar</p>
+      <p className={`text-player-muted-foreground text-xs transition-all duration-500 ease-out ${showBottom ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}>
+        clique para continuar
+      </p>
 
-      <div className="flex items-center gap-1 mt-3">
+      <div className={`flex items-center gap-1 mt-3 transition-all duration-500 ease-out delay-100 ${showBottom ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}>
         <button
           onClick={() => setEditOpen(true)}
           className="text-player-accent text-sm hover:underline"
