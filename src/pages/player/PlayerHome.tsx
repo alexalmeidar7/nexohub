@@ -174,7 +174,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
               ) : null}
             </div>
           </div>
-          {logoUrl && <img src={logoUrl} alt={channelName} className="h-[3.75rem] w-auto object-contain" />}
+          {logoUrl && <img src={logoUrl} alt={channelName} className="h-[5rem] w-auto object-contain" />}
       </header>
 
       {/* Main content */}
