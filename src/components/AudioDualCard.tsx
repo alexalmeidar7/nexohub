@@ -45,7 +45,15 @@ export default function AudioDualCard({
 }: AudioDualCardProps) {
   const isSemTitulo = !musicTitle || musicTitle === "Sem título";
   const [menuOpen, setMenuOpen] = useState(false);
+  const closeTimer = useRef<ReturnType<typeof setTimeout>>();
 
+  const handleEnter = () => {
+    clearTimeout(closeTimer.current);
+    setMenuOpen(true);
+  };
+  const handleLeave = () => {
+    closeTimer.current = setTimeout(() => setMenuOpen(false), 600);
+  };
   const cleanPhone = whatsappPhone?.replace(/\D/g, "") || "";
 
   return (
