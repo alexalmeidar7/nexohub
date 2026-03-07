@@ -154,7 +154,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
         </header>
 
         {/* Streamings ao vivo */}
-        <section className="mb-10">
+        <section className="mb-10" style={{ marginTop: "calc(600px - 200px)" }}>
           <h2 className="text-lg font-bold mb-4">streamings ao vivo</h2>
           <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
             {channels.length === 0 && (
