@@ -332,33 +332,59 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
         <main className="flex-1 overflow-y-auto px-8 pt-24 pb-6 z-10 ml-20">
           {/* Streamings ao vivo */}
           <section className="mb-10" style={{ marginTop: "calc(600px - 200px)" }}>
-            <h2 className="text-lg font-bold mb-4">streamings ao vivo</h2>
-            <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
-              {channels.length === 0 && (
-                <div className="w-72 h-40 rounded-xl bg-player-surface border border-player-border flex items-center justify-center text-player-muted-foreground text-sm">
-                  Nenhum canal disponível
+            {!dataLoaded ? (
+              <>
+                <Skeleton className="h-5 w-44 bg-white/10 mb-4" />
+                <div className="flex gap-4">
+                  {[1, 2, 3].map(i => (
+                    <Skeleton key={i} className="flex-shrink-0 w-72 h-40 rounded-xl bg-white/10" />
+                  ))}
                 </div>
-              )}
-              {channels.map((ch) => (
-                <StreamingCard
-                  key={ch.id}
-                  channel={ch}
-                  currentProgram={currentProgram}
-                  onClick={goToPlayer}
-                />
-              ))}
-            </div>
+              </>
+            ) : (
+              <>
+                <h2 className="text-lg font-bold mb-4">streamings ao vivo</h2>
+                <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+                  {channels.length === 0 && (
+                    <div className="w-72 h-40 rounded-xl bg-player-surface border border-player-border flex items-center justify-center text-player-muted-foreground text-sm">
+                      Nenhum canal disponível
+                    </div>
+                  )}
+                  {channels.map((ch) => (
+                    <StreamingCard
+                      key={ch.id}
+                      channel={ch}
+                      currentProgram={currentProgram}
+                      onClick={goToPlayer}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
           </section>
 
-          {/* Visto por último - only for logged in users */}
+          {/* Visto por último */}
           {user && (
             <section>
-              <h2 className="text-lg font-bold mb-4">visto por último</h2>
-              <div className="flex gap-4">
-                {[1, 2, 3].map(i => (
-                  <div key={i} className="w-48 h-28 rounded-xl bg-player-surface border-[5px] border-transparent hover:border-white transition-all" />
-                ))}
-              </div>
+              {!dataLoaded ? (
+                <>
+                  <Skeleton className="h-5 w-36 bg-white/10 mb-4" />
+                  <div className="flex gap-4">
+                    {[1, 2, 3].map(i => (
+                      <Skeleton key={i} className="w-48 h-28 rounded-xl bg-white/10" />
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <h2 className="text-lg font-bold mb-4">visto por último</h2>
+                  <div className="flex gap-4">
+                    {[1, 2, 3].map(i => (
+                      <div key={i} className="w-48 h-28 rounded-xl bg-player-surface border-[5px] border-transparent hover:border-white transition-all" />
+                    ))}
+                  </div>
+                </>
+              )}
             </section>
           )}
         </main>
