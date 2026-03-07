@@ -276,6 +276,7 @@ export default function PlayerPage() {
   const [loading, setLoading] = useState(true);
   const [loadingStatus, setLoadingStatus] = useState("Iniciando...");
   const [barVisible, setBarVisible] = useState(true);
+  const [pageFadeOut, setPageFadeOut] = useState(false);
   const [musicData, setMusicData] = useState<MusicData | null>(() => {
     try {
       const stored = localStorage.getItem(MUSIC_DATA_KEY);
