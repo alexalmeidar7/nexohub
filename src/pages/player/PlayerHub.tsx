@@ -101,7 +101,7 @@ export default function PlayerHub() {
 
   return (
     <div className={wrapperClass}>
-      <PlayerHome />
+      <PlayerHome onBackToAccess={() => transitionTo("access")} />
     </div>
   );
 }

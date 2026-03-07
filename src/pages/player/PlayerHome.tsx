@@ -14,7 +14,11 @@ interface Channel {
 
 type Section = "home" | "streaming" | "content" | "shop";
 
-export default function PlayerHome() {
+interface PlayerHomeProps {
+  onBackToAccess?: () => void;
+}
+
+export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   const { user, signOut } = useAuth();
   const { userSlug } = useParams();
   const navigate = useNavigate();
