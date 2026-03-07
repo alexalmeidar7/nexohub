@@ -1666,6 +1666,9 @@ export default function PlayerPage() {
           </button>
         ))}
       </aside>
+
+      {/* Content wrapper with fade transition */}
+      <div className={`transition-opacity duration-400 ease-in-out ${pageFadeOut ? "opacity-0" : "opacity-100"}`}>
       {/* Pre-Roll Overlay */}
       {((prerollUrl || (prerollMediaType === "youtube" && prerollYoutubeUrl)) && (!prerollDone || prerollShowing)) && (
         <PreRollOverlay
