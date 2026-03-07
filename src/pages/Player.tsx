@@ -534,8 +534,9 @@ export default function PlayerPage() {
     publicBootstrapRef.current = { slug: null, loaded: false };
 
     // AUTHENTICATED MODE (original logic)
-    if (authLoading) { setLoadingStatus("Autenticando..."); return; }
-    if (!userId) { setCanais([]); setLoading(false); return; }
+    if (authLoading) { console.log("[PLAYER-DIAG] Auth still loading, waiting..."); setLoadingStatus("Autenticando..."); return; }
+    if (!userId) { console.log("[PLAYER-DIAG] No userId, clearing canais"); setCanais([]); setLoading(false); return; }
+    console.log("[PLAYER-DIAG] Authenticated fetch starting for userId:", userId);
 
     const fetchAll = async () => {
       setLoading(true);
