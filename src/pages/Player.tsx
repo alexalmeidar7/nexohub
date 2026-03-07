@@ -455,21 +455,36 @@ export default function PlayerPage() {
   // Fetch all initial data — 3 stages for fastest possible first paint
   useEffect(() => {
     let cancelled = false;
+    const slug = userSlug ?? null;
 
-    // PUBLIC MODE: fetch via edge function
+    // PUBLIC MODE: fetch via edge function (bootstrap only once per slug)
     if (isPublicMode) {
+      const alreadyBootstrapped = publicBootstrapRef.current.loaded && publicBootstrapRef.current.slug === slug;
+      if (alreadyBootstrapped) return () => { cancelled = true; };
+
+      if (!slug) {
+        setCanais([]);
+        setPrerollDone(true);
+        setLoading(false);
+        return () => { cancelled = true; };
+      }
+
+      publicBootstrapRef.current = { slug, loaded: false };
       setLoading(true);
       setLoadingStatus("Carregando canais...");
 
-      supabase.functions.invoke("public-player-data", { body: { slug: userSlug } })
+      supabase.functions.invoke("public-player-data", { body: { slug } })
         .then(({ data, error }) => {
           if (cancelled) return;
+          publicBootstrapRef.current = { slug, loaded: true };
+
           if (error || !data) {
             setCanais([]);
             setPrerollDone(true);
             setLoading(false);
             return;
           }
+
           setPublicUserId(data.userId);
           setCanais((data.channels || []) as Canal[]);
           setProgramas((data.programas || []) as Programa[]);
@@ -477,7 +492,6 @@ export default function PlayerPage() {
           setShopProducts(data.shopProducts || []);
           if (data.empresa?.telefone_participacao) setWhatsappPhone(data.empresa.telefone_participacao);
 
-          // Handle prerolls
           const now = new Date();
           const today = DAY_MAP_FULL[now.getDay()];
           const todayStr = now.toISOString().slice(0, 10);
@@ -487,6 +501,7 @@ export default function PlayerPage() {
             if (p.data_final && todayStr > p.data_final) return false;
             return true;
           });
+
           if (prerolls.length > 0 && !prerollDone) {
             const selected = prerolls[Math.floor(Math.random() * prerolls.length)];
             setPrerollUrl(selected.video_url);
@@ -496,14 +511,26 @@ export default function PlayerPage() {
           } else {
             setPrerollDone(true);
           }
+
+          setLoading(false);
+        })
+        .catch(() => {
+          if (cancelled) return;
+          publicBootstrapRef.current = { slug, loaded: true };
+          setCanais([]);
+          setPrerollDone(true);
           setLoading(false);
         });
+
       return () => { cancelled = true; };
     }
 
+    // leaving public mode resets bootstrap guard
+    publicBootstrapRef.current = { slug: null, loaded: false };
+
     // AUTHENTICATED MODE (original logic)
     if (authLoading) { setLoadingStatus("Autenticando..."); return; }
-    if (!user) { setCanais([]); setLoading(false); return; }
+    if (!userId) { setCanais([]); setLoading(false); return; }
 
     const fetchAll = async () => {
       setLoading(true);
@@ -516,9 +543,9 @@ export default function PlayerPage() {
       try {
         // STAGE 1 — Critical: only channels + preroll (show UI ASAP)
         const [channelsRes, prerollRes] = await Promise.all([
-          supabase.from("streaming_channels").select("*").eq("user_id", user.id).eq("active", true).order("numero_canal"),
+          supabase.from("streaming_channels").select("*").eq("user_id", userId).eq("active", true).order("numero_canal"),
           !prerollDone
-            ? supabase.from("comercial_preroll").select("*").eq("user_id", user.id).eq("active", true).lte("horario_inicio", currentTime).gte("horario_fim", currentTime).order("priority", { ascending: true })
+            ? supabase.from("comercial_preroll").select("*").eq("user_id", userId).eq("active", true).lte("horario_inicio", currentTime).gte("horario_fim", currentTime).order("priority", { ascending: true })
             : Promise.resolve({ data: null, error: null } as const),
         ]);
         if (cancelled) return;
@@ -555,9 +582,9 @@ export default function PlayerPage() {
 
         // STAGE 2 — Secondary: programas + apresentadores + empresa
         const [programasRes, apresentadoresRes, empresaRes] = await Promise.all([
-          supabase.from("programas").select("id, nome, horario_inicio, horario_fim, dias_semana, ativo, selo, estudio, variavel, data_variavel, capa, descricao, apresentador_id").eq("user_id", user.id).eq("ativo", true).order("horario_inicio"),
-          supabase.from("apresentadores").select("id, nome, foto, instagram").eq("user_id", user.id).eq("ativo", true),
-          supabase.from("empresa_config").select("telefone_participacao").eq("user_id", user.id).maybeSingle(),
+          supabase.from("programas").select("id, nome, horario_inicio, horario_fim, dias_semana, ativo, selo, estudio, variavel, data_variavel, capa, descricao, apresentador_id").eq("user_id", userId).eq("ativo", true).order("horario_inicio"),
+          supabase.from("apresentadores").select("id, nome, foto, instagram").eq("user_id", userId).eq("ativo", true),
+          supabase.from("empresa_config").select("telefone_participacao").eq("user_id", userId).maybeSingle(),
         ]);
         if (cancelled) return;
 
@@ -568,7 +595,7 @@ export default function PlayerPage() {
 
         // STAGE 3 — Deferred: shop products
         const currentProg = getCurrentProgram(fetchedProgramas);
-        let shopQuery = supabase.from("shopping_products").select("id, name, description, image_url, price, stock, program_id, payment_url").eq("user_id", user.id).eq("active", true).gt("stock", 0);
+        let shopQuery = supabase.from("shopping_products").select("id, name, description, image_url, price, stock, program_id, payment_url").eq("user_id", userId).eq("active", true).gt("stock", 0);
         if (currentProg) {
           shopQuery = shopQuery.or(`program_id.eq.${currentProg.id},program_id.is.null`);
         } else {
@@ -586,7 +613,7 @@ export default function PlayerPage() {
 
     fetchAll();
     return () => { cancelled = true; };
-  }, [user, authLoading, isPublicMode, userSlug]);
+  }, [authLoading, isPublicMode, prerollDone, userId, userSlug]);
 
   // While pre-roll is visible, warm up channel 991-1 (or first audio channel) in background
   useEffect(() => {
