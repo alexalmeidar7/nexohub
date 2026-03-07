@@ -331,12 +331,15 @@ export default function AudioDualCard({
         >
           {/* Inner wrapper handles the history slide */}
           <div
-            className="relative w-full rounded-3xl overflow-hidden shadow-2xl"
+            className="relative w-full rounded-3xl overflow-hidden"
             style={{
               backgroundColor: isSemTitulo ? "#880000" : "hsl(0 0% 5%)",
               minHeight: "420px",
-              transform: historyOpen ? "translateX(-25%)" : "translateX(0%)",
-              transition: "transform 0.5s cubic-bezier(0.22, 1, 0.36, 1)",
+              transform: historyOpen ? "translateX(-25%) scale(0.96)" : "translateX(0%) scale(1)",
+              boxShadow: historyOpen
+                ? "0 25px 60px hsla(0, 0%, 0%, 0.5), 0 0 0 1px hsla(0, 0%, 100%, 0.05)"
+                : "0 25px 50px hsla(0, 0%, 0%, 0.35)",
+              transition: "transform 0.5s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.5s ease",
             }}
           >
           {isSemTitulo ? (
