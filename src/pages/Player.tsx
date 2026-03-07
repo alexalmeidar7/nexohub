@@ -456,11 +456,16 @@ export default function PlayerPage() {
   useEffect(() => {
     let cancelled = false;
     const slug = userSlug ?? null;
+    console.log("[PLAYER-DIAG] Main useEffect fired", { isPublicMode, userId, authLoading, slug, bootstrapState: { ...publicBootstrapRef.current } });
 
     // PUBLIC MODE: fetch via edge function (bootstrap only once per slug)
     if (isPublicMode) {
       const alreadyBootstrapped = publicBootstrapRef.current.loaded && publicBootstrapRef.current.slug === slug;
-      if (alreadyBootstrapped) return () => { cancelled = true; };
+      if (alreadyBootstrapped) {
+        console.log("[PLAYER-DIAG] Public bootstrap SKIPPED (already loaded)");
+        return () => { cancelled = true; };
+      }
+      console.log("[PLAYER-DIAG] Public bootstrap STARTING for slug:", slug);
 
       if (!slug) {
         setCanais([]);
