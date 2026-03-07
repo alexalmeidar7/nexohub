@@ -273,7 +273,7 @@ export default function AudioDualCard({
             zIndex: 1,
             backgroundColor: "white",
             boxShadow: historyOpen ? "0 8px 30px hsla(0,0%,0%,0.25)" : "none",
-            transform: historyOpen ? "translateX(65%)" : "translateX(0%)",
+            transform: historyOpen ? "translateX(45%)" : "translateX(0%)",
             opacity: historyOpen ? 1 : 0,
             transition: "transform 0.5s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.3s ease, box-shadow 0.4s ease",
             pointerEvents: historyOpen ? "auto" : "none",
