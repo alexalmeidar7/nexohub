@@ -1226,7 +1226,7 @@ export default function PlayerPage() {
   // Keyboard & TV Remote Control handler with spatial navigation (TV only for arrows)
   useEffect(() => {
     const ua = navigator.userAgent.toLowerCase();
-    const forceTV = new URLSearchParams(window.location.search).get("tv") === "1";
+    const forceTV = new URLSearchParams(window.location.search).get("tv") === "1" || window.location.pathname.endsWith("/player/app");
     const isTV = forceTV
       || /smart-?tv|tizen|webos|netcast|hbbtv|viera|nettv|philipstv|roku|firetv|appletv|android.*tv|crkey/i.test(ua)
       || window.matchMedia("(display-mode: fullscreen)").matches
