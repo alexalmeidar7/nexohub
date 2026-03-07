@@ -1139,6 +1139,10 @@ export default function PlayerPage() {
         }
       }
 
+      // Desktop: arrow up/down change channels
+      if (e.key === "ArrowUp") { e.preventDefault(); navigateChannel(-1); return; }
+      if (e.key === "ArrowDown") { e.preventDefault(); navigateChannel(1); return; }
+
       // Hardware keys — always active
       if (e.key === "ChannelUp") { e.preventDefault(); navigateChannel(-1); }
       else if (e.key === "ChannelDown") { e.preventDefault(); navigateChannel(1); }
