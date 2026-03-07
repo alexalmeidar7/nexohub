@@ -269,6 +269,7 @@ export default function PlayerPage() {
   const [chatOpen, setChatOpen] = useState(false);
   const [clock, setClock] = useState(0);
   const [apresentadores, setApresentadores] = useState<Apresentador[]>([]);
+  const [whatsappPhone, setWhatsappPhone] = useState<string | null>(null);
 
   // YouTube video progress tracking
   const [ytCurrentTime, setYtCurrentTime] = useState(0);
@@ -462,6 +463,7 @@ export default function PlayerPage() {
           setProgramas((data.programas || []) as Programa[]);
           setApresentadores((data.apresentadores || []) as Apresentador[]);
           setShopProducts(data.shopProducts || []);
+          if (data.empresa?.telefone_participacao) setWhatsappPhone(data.empresa.telefone_participacao);
 
           // Handle prerolls
           const now = new Date();
@@ -539,16 +541,18 @@ export default function PlayerPage() {
         // UI is now visible — release loading gate
         setLoading(false);
 
-        // STAGE 2 — Secondary: programas + apresentadores
-        const [programasRes, apresentadoresRes] = await Promise.all([
+        // STAGE 2 — Secondary: programas + apresentadores + empresa
+        const [programasRes, apresentadoresRes, empresaRes] = await Promise.all([
           supabase.from("programas").select("id, nome, horario_inicio, horario_fim, dias_semana, ativo, selo, estudio, variavel, data_variavel, capa, descricao, apresentador_id").eq("user_id", user.id).eq("ativo", true).order("horario_inicio"),
           supabase.from("apresentadores").select("id, nome, foto, instagram").eq("user_id", user.id).eq("ativo", true),
+          supabase.from("empresa_config").select("telefone_participacao").eq("user_id", user.id).maybeSingle(),
         ]);
         if (cancelled) return;
 
         const fetchedProgramas = (!programasRes.error && programasRes.data) ? programasRes.data as Programa[] : [];
         setProgramas(fetchedProgramas);
         if (!apresentadoresRes.error && apresentadoresRes.data) setApresentadores(apresentadoresRes.data as Apresentador[]);
+        if (!empresaRes.error && empresaRes.data?.telefone_participacao) setWhatsappPhone(empresaRes.data.telefone_participacao);
 
         // STAGE 3 — Deferred: shop products
         const currentProg = getCurrentProgram(fetchedProgramas);
@@ -1476,6 +1480,8 @@ export default function PlayerPage() {
             liked={liked}
             onToggleLike={toggleLike}
             audioElement={audioRef.current}
+            whatsappPhone={whatsappPhone}
+            onOpenChat={() => setChatOpen(true)}
           />
         </Suspense>
       )}
