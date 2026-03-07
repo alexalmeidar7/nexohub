@@ -1160,15 +1160,15 @@ export default function PlayerPage() {
       else if (e.key === "ChannelDown") { e.preventDefault(); navigateChannel(1); }
       else if (e.key === "VolumeUp") {
         e.preventDefault();
-        handleVolumeChange(Math.min(100, volume + 10));
+        handleVolumeChangeWithOsd(Math.min(100, volume + 10));
       }
       else if (e.key === "VolumeDown") {
         e.preventDefault();
-        handleVolumeChange(Math.max(0, volume - 10));
+        handleVolumeChangeWithOsd(Math.max(0, volume - 10));
       }
       else if (e.key === "AudioVolumeMute") {
         e.preventDefault();
-        toggleMute();
+        toggleMuteWithOsd();
       }
     };
     window.addEventListener("keydown", handleKeyDown);
