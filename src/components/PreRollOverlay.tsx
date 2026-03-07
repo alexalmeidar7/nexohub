@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef, RefObject } from "react";
+import { Home, Radio, Film } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 
 const SKIP_DELAY = 5;
@@ -141,6 +142,29 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
         background: "linear-gradient(to bottom right, hsl(0 100% 50%), hsl(0 0% 0%) 40%)",
       }}
     >
+      {/* Sidebar menu */}
+      <aside
+        className="fixed left-0 top-0 bottom-0 w-20 flex flex-col items-center justify-center gap-3 z-[101]"
+        style={{ background: "linear-gradient(to right, rgba(0,0,0,0.85), transparent)" }}
+      >
+        {[
+          { icon: Home, label: "Home" },
+          { icon: Radio, label: "Streaming" },
+          { icon: Film, label: "Conteúdo" },
+        ].map(item => (
+          <button
+            key={item.label}
+            className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${
+              item.label === "Streaming"
+                ? "bg-player-accent text-player-foreground"
+                : "bg-player-surface text-player-muted-foreground hover:bg-player-surface-hover hover:text-player-foreground"
+            }`}
+            title={item.label}
+          >
+            <item.icon className="h-5 w-5" />
+          </button>
+        ))}
+      </aside>
       {/* Container principal — aspect-video */}
       <div
         className="relative w-full max-w-6xl shadow-2xl overflow-hidden"
