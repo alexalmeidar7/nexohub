@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Home, Radio, Film, ShoppingBag, LogOut, UserCircle } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface Channel {
   id: string;
