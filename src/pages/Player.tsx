@@ -1185,7 +1185,7 @@ export default function PlayerPage() {
   const lastRecordedSongRef = useRef<string>("");
   useEffect(() => {
     if (!musicData?.titulo || !musicData?.artista || musicData.titulo === "Sem título") return;
-    const ownerId = user?.id || publicUserId;
+    const ownerId = user?.id;
     if (!ownerId) return;
     const songKey = `${musicData.artista}-${musicData.titulo}`;
     if (songKey === lastRecordedSongRef.current) return;
