@@ -23,12 +23,21 @@ Deno.serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-    // Find user by email prefix
-    const { data: users, error: userError } = await supabase.auth.admin.listUsers();
-    if (userError) throw userError;
+    // Find user by email prefix using GoTrue admin API with large page size
+    const slugLower = slug.toLowerCase();
+    const gotrue = `${supabaseUrl}/auth/v1/admin/users?per_page=1000`;
+    const res = await fetch(gotrue, {
+      headers: {
+        Authorization: `Bearer ${serviceRoleKey}`,
+        apikey: serviceRoleKey,
+      },
+    });
+    if (!res.ok) throw new Error("Failed to fetch users");
+    const payload = await res.json();
+    const allUsers: any[] = payload.users || [];
 
-    const matchedUser = users.users.find((u: any) =>
-      u.email && u.email.split("@")[0].toLowerCase() === slug.toLowerCase()
+    const matchedUser = allUsers.find((u: any) =>
+      u.email && u.email.split("@")[0].toLowerCase() === slugLower
     );
 
     if (!matchedUser) {
