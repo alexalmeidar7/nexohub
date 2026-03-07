@@ -2221,6 +2221,7 @@ export default function PlayerPage() {
           animation: none;
         }
       `}</style>
+      </div>
     </div>
   );
 }
