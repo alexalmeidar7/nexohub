@@ -89,13 +89,26 @@ function formatDay(dateStr: string) {
 
 const STORAGE_KEY = "masterview_last_city";
 const FAVORITES_KEY = "masterview_favorite_cities";
+const PRIMARY_CITY_KEY = "masterview_primary_city";
 const REFRESH_INTERVAL = 5 * 60 * 1000;
+
+interface PrimaryCity {
+  name: string;
+  lat: number;
+  lon: number;
+}
 
 function getFavorites(): FavoriteCity[] {
   try { return JSON.parse(localStorage.getItem(FAVORITES_KEY) || "[]"); } catch { return []; }
 }
 function saveFavorites(list: FavoriteCity[]) {
   localStorage.setItem(FAVORITES_KEY, JSON.stringify(list));
+}
+function getPrimaryCity(): PrimaryCity | null {
+  try { return JSON.parse(localStorage.getItem(PRIMARY_CITY_KEY) || "null"); } catch { return null; }
+}
+function savePrimaryCity(city: PrimaryCity | null) {
+  localStorage.setItem(PRIMARY_CITY_KEY, city ? JSON.stringify(city) : "");
 }
 
 export default function PrevisaoTempo() {
@@ -105,6 +118,8 @@ export default function PrevisaoTempo() {
   const [error, setError] = useState("");
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [favorites, setFavorites] = useState<FavoriteCity[]>(getFavorites);
+
+  const [primaryCity, setPrimaryCity] = useState<PrimaryCity | null>(getPrimaryCity);
 
   const [suggestions, setSuggestions] = useState<GeoResult[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -180,10 +195,16 @@ export default function PrevisaoTempo() {
   const searchWeather = () => { setShowSuggestions(false); fetchWeather(city); };
 
   useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) fetchWeather(saved);
+    const primary = getPrimaryCity();
+    if (primary) {
+      setCity(primary.name);
+      fetchWeatherByCoords(primary.lat, primary.lon, primary.name);
+    } else {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) fetchWeather(saved);
+    }
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
-  }, [fetchWeather]);
+  }, [fetchWeather, fetchWeatherByCoords]);
 
   useEffect(() => {
     if (intervalRef.current) clearInterval(intervalRef.current);
@@ -217,6 +238,19 @@ export default function PrevisaoTempo() {
   };
 
   const isFavorited = weather ? favorites.some(f => f.name === weather.city) : false;
+  const isPrimary = weather ? primaryCity?.name === weather.city : false;
+
+  const togglePrimaryCity = () => {
+    if (!weather) return;
+    if (isPrimary) {
+      savePrimaryCity(null);
+      setPrimaryCity(null);
+    } else {
+      const pc = { name: weather.city, lat: weather.lat, lon: weather.lon };
+      savePrimaryCity(pc);
+      setPrimaryCity(pc);
+    }
+  };
 
   return (
     <div className="animate-fade-in space-y-8">
@@ -259,9 +293,11 @@ export default function PrevisaoTempo() {
         )}
       </div>
 
-      {/* Favorite cities */}
+      {/* Secondary cities (favorites) */}
       {favorites.length > 0 && (
-        <div className="flex flex-wrap gap-2">
+        <div>
+          <p className="text-xs font-semibold mb-2" style={{ color: "rgba(13,4,70,0.5)" }}>Cidades Secundárias</p>
+          <div className="flex flex-wrap gap-2">
           {favorites.map(f => (
             <div key={f.name} className="flex items-center gap-2 rounded-full px-3 py-1.5"
               style={{ backgroundColor: "#ffffff", border: "1px solid #0d0446" }}>
@@ -280,6 +316,7 @@ export default function PrevisaoTempo() {
               >✕</button>
             </div>
           ))}
+          </div>
         </div>
       )}
 
@@ -335,7 +372,17 @@ export default function PrevisaoTempo() {
                 <span className="text-6xl">{getWeatherIcon(weather.current.weatherCode)}</span>
               </div>
             </div>
-            <div className="text-5xl font-bold mb-6" style={{ color: "#2dbef3" }}>{weather.current.temp}°C</div>
+            <div className="flex items-center gap-4 mb-6">
+              <div className="text-5xl font-bold" style={{ color: "#2dbef3" }}>{weather.current.temp}°C</div>
+              <label className="flex items-center gap-2 cursor-pointer select-none rounded-full px-3 py-1.5"
+                style={{ backgroundColor: isPrimary ? "#0d0446" : "rgba(13,4,70,0.06)", border: "1px solid rgba(13,4,70,0.15)", transition: "all 0.2s" }}>
+                <input type="checkbox" checked={isPrimary} onChange={togglePrimaryCity}
+                  className="w-3.5 h-3.5" style={{ accentColor: "#2dbef3" }} />
+                <span className="text-xs font-semibold" style={{ color: isPrimary ? "#ffffff" : "#0d0446" }}>
+                  Cidade Principal
+                </span>
+              </label>
+            </div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <Stat icon={<Thermometer size={16} />} label="Mínima" value={`${weather.current.tempMin}°C`} />
               <Stat icon={<Thermometer size={16} />} label="Máxima" value={`${weather.current.tempMax}°C`} />
