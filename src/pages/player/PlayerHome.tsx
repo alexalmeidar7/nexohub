@@ -135,25 +135,46 @@ function StreamingCard({ channel, currentProgram, nowPlaying, onClick, onHoverCh
         </div>
       )}
 
-      {/* "ao vivo" badge - top left */}
-      <span className="absolute top-2 left-2 text-[10px] uppercase tracking-wider font-semibold bg-black/60 px-2 py-0.5 rounded flex items-center gap-1.5">
-        <span className="inline-block w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-        <span className="text-white">ao vivo</span>
-      </span>
-
-      {/* Info overlay - bottom left */}
-      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3">
-        <p className="text-sm font-medium truncate text-left">{channel.name}</p>
-        {nowPlaying?.musica ? (
-          <div className="flex items-center gap-1 mt-0.5">
-            <Music className="h-3 w-3 text-player-accent flex-shrink-0" />
-            <p className="text-[11px] text-player-muted-foreground truncate text-left">
-              {nowPlaying.musica} — {nowPlaying.artista}
-            </p>
-          </div>
-        ) : currentProgram ? (
-          <p className="text-[11px] text-player-muted-foreground truncate text-left">{currentProgram.nome}</p>
-        ) : null}
+      {/* Info overlay - bottom */}
+      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent px-3 pb-2 pt-6 flex flex-col gap-[3px]">
+        {/* AO VIVO */}
+        <span className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-semibold">
+          <span className="inline-block w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+          <span className="text-white">ao vivo</span>
+        </span>
+        {/* Nome do canal */}
+        <p className="text-xs font-medium truncate text-left text-white">{channel.name}</p>
+        {/* Horário + progress */}
+        {currentProgram && (() => {
+          const [hi, mi] = currentProgram.horario_inicio.split(":").map(Number);
+          const [hf, mf] = currentProgram.horario_fim.split(":").map(Number);
+          const now = new Date();
+          const startMin = hi * 60 + mi;
+          let endMin = hf * 60 + mf;
+          if (endMin <= startMin) endMin += 1440;
+          const curMin = now.getHours() * 60 + now.getMinutes();
+          const total = endMin - startMin;
+          const elapsed = Math.max(0, Math.min(total, curMin - startMin));
+          const pct = total > 0 ? (elapsed / total) * 100 : 0;
+          return (
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] text-white/70 whitespace-nowrap">{currentProgram.horario_inicio} - {currentProgram.horario_fim}</span>
+              <div className="flex-1 h-1 rounded-full bg-white/20 overflow-hidden">
+                <div className="h-full rounded-full bg-red-500 transition-all" style={{ width: `${pct}%` }} />
+              </div>
+            </div>
+          );
+        })()}
+        {/* Música */}
+        {nowPlaying?.musica && (
+          <>
+            <div className="flex items-center gap-1">
+              <Music className="h-2.5 w-2.5 text-white/60 flex-shrink-0" />
+              <p className="text-[10px] text-white/80 truncate text-left">{nowPlaying.musica}</p>
+            </div>
+            <p className="text-[10px] text-white/50 truncate text-left pl-3.5">{nowPlaying.artista}</p>
+          </>
+        )}
       </div>
     </button>
   );
