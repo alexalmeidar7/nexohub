@@ -85,6 +85,7 @@ interface Programa {
   descricao: string;
   dataVariavel: string | null;
   classificacaoEtaria: string;
+  tipoPrograma: string;
 }
 
 const DIAS_SEMANA = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
@@ -107,6 +108,7 @@ async function getProgramas(): Promise<Programa[]> {
     descricao: (p as any).descricao || "",
     dataVariavel: (p as any).data_variavel || null,
     classificacaoEtaria: (p as any).classificacao_etaria || "",
+    tipoPrograma: (p as any).tipo_programa || "",
   }));
 }
 
@@ -464,13 +466,13 @@ export default function ProgramaForm() {
         await supabase.from("programas").update({
           nome: nome.trim(), apresentador_id: apresentadorId || null, selo, capa, dias_semana: [dayOfWeek],
           horario_inicio: horarioInicio, horario_fim: horarioFim, estudio: estudio.trim(), ativo, descricao: descricao.trim(),
-           variavel: true, data_variavel: dataStr, classificacao_etaria: classificacaoEtaria || null,
+           variavel: true, data_variavel: dataStr, classificacao_etaria: classificacaoEtaria || null, tipo_programa: tipoPrograma || null,
         } as any).eq("id", editingId);
       } else {
         await supabase.from("programas").insert({
           user_id: user.id, nome: nome.trim(), apresentador_id: apresentadorId || null, selo, capa, dias_semana: [dayOfWeek],
           horario_inicio: horarioInicio, horario_fim: horarioFim, estudio: estudio.trim(), ativo, descricao: descricao.trim(),
-           variavel: true, data_variavel: dataStr, classificacao_etaria: classificacaoEtaria || null,
+           variavel: true, data_variavel: dataStr, classificacao_etaria: classificacaoEtaria || null, tipo_programa: tipoPrograma || null,
         } as any);
       }
       await load();
@@ -494,13 +496,13 @@ export default function ProgramaForm() {
       await supabase.from("programas").update({
         nome: nome.trim(), apresentador_id: apresentadorId || null, selo, capa, dias_semana: diasSemana,
         horario_inicio: horarioInicio, horario_fim: horarioFim, estudio: estudio.trim(), ativo, descricao: descricao.trim(),
-        variavel: false, data_variavel: null, classificacao_etaria: classificacaoEtaria || null,
+        variavel: false, data_variavel: null, classificacao_etaria: classificacaoEtaria || null, tipo_programa: tipoPrograma || null,
       } as any).eq("id", editingId);
     } else {
       await supabase.from("programas").insert({
         user_id: user.id, nome: nome.trim(), apresentador_id: apresentadorId || null, selo, capa, dias_semana: diasSemana,
         horario_inicio: horarioInicio, horario_fim: horarioFim, estudio: estudio.trim(), ativo, descricao: descricao.trim(),
-        variavel: false, data_variavel: null, classificacao_etaria: classificacaoEtaria || null,
+        variavel: false, data_variavel: null, classificacao_etaria: classificacaoEtaria || null, tipo_programa: tipoPrograma || null,
       } as any);
     }
     await load();
@@ -516,6 +518,7 @@ export default function ProgramaForm() {
     setEstudio(p.estudio); setAtivo(p.ativo); setVariavel(p.variavel); setDescricao(p.descricao);
     setDataVariavel(p.dataVariavel ? new Date(p.dataVariavel + "T12:00:00") : undefined);
     setClassificacaoEtaria(p.classificacaoEtaria || "");
+    setTipoPrograma(p.tipoPrograma || "");
     setConflictMsg("");
   };
 
