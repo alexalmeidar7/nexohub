@@ -65,70 +65,36 @@ Deno.serve(async (req) => {
 
     const videoId = match[1];
 
-    // Call RapidAPI YouTube downloader
-    const RAPIDAPI_KEY = Deno.env.get("RAPIDAPI_KEY");
-    if (!RAPIDAPI_KEY) {
-      return new Response(
-        JSON.stringify({ error: "Chave da API não configurada. Entre em contato com o suporte." }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const apiResponse = await fetch(
-      `https://youtube-search-download3.p.rapidapi.com/download?video=${videoId}`,
-      {
-        method: "GET",
-        headers: {
-          "x-rapidapi-key": RAPIDAPI_KEY,
-          "x-rapidapi-host": "youtube-search-download3.p.rapidapi.com",
-        },
-      }
-    );
-
-    if (!apiResponse.ok) {
-      const errText = await apiResponse.text();
-      console.error("RapidAPI error:", apiResponse.status, errText);
-      return new Response(
-        JSON.stringify({ error: "Falha ao buscar link de download do vídeo." }),
-        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const apiData = await apiResponse.json();
-
-    // Extract download links - try to find mp4 formats
+    // Try to get a direct download URL via cobalt.tools API
     let downloadUrl = "";
-    let quality = "";
+    try {
+      const cobaltRes = await fetch("https://api.cobalt.tools/", {
+        method: "POST",
+        headers: {
+          "Accept": "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          url: `https://www.youtube.com/watch?v=${videoId}`,
+          videoQuality: "720",
+          filenameStyle: "basic",
+        }),
+      });
 
-    // The API typically returns video formats in a links or similar structure
-    // Adapt based on actual API response
-    if (apiData?.video) {
-      // Try to get best quality mp4
-      const videos = Array.isArray(apiData.video) ? apiData.video : [];
-      const mp4 = videos.find((v: any) => v.mimeType?.includes("video/mp4") && v.quality === "720p")
-        || videos.find((v: any) => v.mimeType?.includes("video/mp4") && v.quality === "360p")
-        || videos.find((v: any) => v.mimeType?.includes("video/mp4"))
-        || videos[0];
-      if (mp4) {
-        downloadUrl = mp4.url || mp4.downloadUrl || "";
-        quality = mp4.quality || mp4.qualityLabel || "";
+      if (cobaltRes.ok) {
+        const cobaltData = await cobaltRes.json();
+        if (cobaltData.status === "stream" || cobaltData.status === "redirect") {
+          downloadUrl = cobaltData.url || "";
+        } else if (cobaltData.status === "picker" && Array.isArray(cobaltData.picker)) {
+          const mp4 = cobaltData.picker.find((p: any) => p.type === "video") || cobaltData.picker[0];
+          downloadUrl = mp4?.url || "";
+        }
+      } else {
+        const errText = await cobaltRes.text();
+        console.log("Cobalt API non-ok:", cobaltRes.status, errText);
       }
-    }
-
-    // Fallback: check other common response structures
-    if (!downloadUrl && apiData?.links) {
-      const links = Array.isArray(apiData.links) ? apiData.links : [];
-      const mp4Link = links.find((l: any) => l.mimeType?.includes("mp4") || l.extension === "mp4")
-        || links[0];
-      if (mp4Link) {
-        downloadUrl = mp4Link.url || mp4Link.link || "";
-        quality = mp4Link.quality || "";
-      }
-    }
-
-    // Another common pattern
-    if (!downloadUrl && apiData?.url) {
-      downloadUrl = apiData.url;
+    } catch (cobaltErr) {
+      console.log("Cobalt API error (non-fatal):", cobaltErr);
     }
 
     // Generate clip embed and share URLs
@@ -144,7 +110,6 @@ Deno.serve(async (req) => {
         share_url: shareUrl,
         thumbnail_url: thumbnailUrl,
         download_url: downloadUrl,
-        download_quality: quality,
         start_seconds,
         end_seconds,
         duration,
