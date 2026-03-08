@@ -316,6 +316,7 @@ export default function PrevisaoTempo() {
               >✕</button>
             </div>
           ))}
+          </div>
         </div>
       )}
 
