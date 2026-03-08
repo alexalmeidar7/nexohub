@@ -12,6 +12,7 @@ interface Channel {
   logo_url: string | null;
   type: string;
   url?: string;
+  catalog_name?: string;
 }
 
 interface Programa {
