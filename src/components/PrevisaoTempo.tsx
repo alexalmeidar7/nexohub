@@ -238,6 +238,19 @@ export default function PrevisaoTempo() {
   };
 
   const isFavorited = weather ? favorites.some(f => f.name === weather.city) : false;
+  const isPrimary = weather ? primaryCity?.name === weather.city : false;
+
+  const togglePrimaryCity = () => {
+    if (!weather) return;
+    if (isPrimary) {
+      savePrimaryCity(null);
+      setPrimaryCity(null);
+    } else {
+      const pc = { name: weather.city, lat: weather.lat, lon: weather.lon };
+      savePrimaryCity(pc);
+      setPrimaryCity(pc);
+    }
+  };
 
   return (
     <div className="animate-fade-in space-y-8">
