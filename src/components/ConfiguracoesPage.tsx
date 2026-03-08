@@ -557,7 +557,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
             </div>
           </div>
         )}
-      </CollapsibleBox>
+      </CollapsibleBox>}
     </div>
   );
 }
