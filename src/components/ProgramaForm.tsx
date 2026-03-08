@@ -85,6 +85,7 @@ interface Programa {
   descricao: string;
   dataVariavel: string | null;
   classificacaoEtaria: string;
+  tipoPrograma: string;
 }
 
 const DIAS_SEMANA = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
