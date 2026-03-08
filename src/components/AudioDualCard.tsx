@@ -267,7 +267,7 @@ export default function AudioDualCard({
 
         {/* History box — slides out from behind the music card */}
         <div
-          className="absolute top-0 bottom-0 md:w-[70%] w-[85%] rounded-3xl overflow-hidden"
+          className="absolute md:w-[70%] w-[85%] aspect-square rounded-3xl overflow-hidden"
           style={{
             right: "0",
             zIndex: 1,
