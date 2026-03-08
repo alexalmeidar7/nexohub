@@ -12,7 +12,9 @@ type Step = "splash" | "access" | "welcome" | "home";
 export default function PlayerHub() {
   const { user, loading } = useAuth();
   const { userSlug } = useParams();
-  const [step, setStep] = useState<Step>("splash");
+  const [searchParams] = useSearchParams();
+  const skipToHome = searchParams.get("step") === "home";
+  const [step, setStep] = useState<Step>(skipToHome ? "home" : "splash");
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [channelName, setChannelName] = useState("");
   const [fadeOut, setFadeOut] = useState(false);
