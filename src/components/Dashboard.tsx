@@ -76,6 +76,7 @@ const sidebarMenu: MenuItem[] = [
       { icon: Scissors, label: "Cortes de Vídeo", page: "cortevideo" },
     ]
   },
+  { icon: Settings, label: "configurações", page: "configuracoes" },
 ];
 
 // Map menu items to module keys for plan filtering
