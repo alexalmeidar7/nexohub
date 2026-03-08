@@ -578,6 +578,47 @@ export default function ProgramaForm() {
           onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
           onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
         />
+
+        <div>
+          <label className="block text-xs mb-1" style={{ color: "#0d0446", fontWeight: 600 }}>Tipo do Programa</label>
+          <div className="flex gap-2">
+            <Select value={tipoPrograma} onValueChange={setTipoPrograma}>
+              <SelectTrigger className="flex-1 h-8" style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "20px", border: "none" }}>
+                <SelectValue placeholder="Selecione o tipo" />
+              </SelectTrigger>
+              <SelectContent style={{ backgroundColor: "#0d0446", border: "1px solid #0d0446" }}>
+                {tiposPrograma.map(t => (
+                  <SelectItem key={t} value={t} className="text-white focus:bg-white/20 focus:text-white">{t}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Dialog open={tipoDialogOpen} onOpenChange={setTipoDialogOpen}>
+              <DialogTrigger asChild>
+                <button className="px-4 py-1 text-sm font-bold transition-all shrink-0"
+                  style={{ backgroundColor: "#0d0446", color: "#ffffff", border: "2px solid #0d0446", borderRadius: "20px" }}
+                  onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#ffffff"; e.currentTarget.style.color = "#0d0446"; }}
+                  onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#0d0446"; e.currentTarget.style.color = "#ffffff"; }}
+                >+ Novo</button>
+              </DialogTrigger>
+              <DialogContent className="max-w-sm">
+                <DialogHeader><DialogTitle style={{ color: "#0d0446" }}>Novo Tipo de Programa</DialogTitle></DialogHeader>
+                <div className="space-y-3">
+                  <input value={newTipo} onChange={(e) => setNewTipo(e.target.value)} placeholder="Nome do tipo"
+                    className="w-full px-4 py-1.5 outline-none transition-colors text-sm"
+                    style={{ backgroundColor: "#ffffff", border: "1px solid #0d0446", color: "#0d0446", borderRadius: "20px" }}
+                    onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
+                    onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
+                  />
+                  <button onClick={addTipo} className="w-full py-2 font-bold transition-all"
+                    style={{ backgroundColor: "#0d0446", color: "#ffffff", border: "2px solid #0d0446", borderRadius: "20px" }}
+                    onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#ffffff"; e.currentTarget.style.color = "#0d0446"; }}
+                    onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#0d0446"; e.currentTarget.style.color = "#ffffff"; }}
+                  >Adicionar</button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+        </div>
         <Textarea value={descricao} onChange={(e) => setDescricao(e.target.value)} placeholder="Descrição do Programa (opcional)"
           className="min-h-[60px] px-4 py-2 outline-none transition-colors text-sm"
           style={{ backgroundColor: "#ffffff", border: "1px solid #0d0446", color: "#0d0446", borderRadius: "16px" }}
