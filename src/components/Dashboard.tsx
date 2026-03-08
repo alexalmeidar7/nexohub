@@ -489,6 +489,18 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 </TooltipTrigger>
                 <TooltipContent side="bottom"><p className="text-xs">Tela Promoções</p></TooltipContent>
               </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={() => setCurrentPage("configuracoes")}
+                    className="w-9 h-9 rounded-full flex items-center justify-center transition-opacity hover:opacity-80"
+                    style={{ backgroundColor: "#0d0446" }}
+                  >
+                    <Settings size={16} className="text-white" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom"><p className="text-xs">Configurações</p></TooltipContent>
+              </Tooltip>
               <ServerClock />
             </div>
           </div>
