@@ -115,14 +115,14 @@ function StreamingCard({ channel, currentProgram, nowPlaying, onClick, onHoverCh
     };
   }, [isVideo, channel.url]);
 
-  // Loop through frames always
+  // Loop through frames only while hovered
   useEffect(() => {
-    if (frames.length === 0) return;
+    if (!hovered || frames.length === 0) return;
     intervalRef.current = setInterval(() => {
       setFrameIdx(prev => (prev + 1) % frames.length);
     }, 400);
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
-  }, [frames.length]);
+  }, [hovered, frames.length]);
 
   return (
     <button
@@ -142,8 +142,8 @@ function StreamingCard({ channel, currentProgram, nowPlaying, onClick, onHoverCh
         </div>
       )}
 
-      {/* Video preview - always showing when frames available */}
-      {isVideo && frames.length > 0 && (
+      {/* Video preview - only on hover */}
+      {hovered && isVideo && frames.length > 0 && (
         <img src={frames[frameIdx]} alt="preview" className="absolute inset-0 w-full h-full object-cover z-[1]" />
       )}
 
