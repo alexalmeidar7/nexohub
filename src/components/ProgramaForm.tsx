@@ -108,6 +108,7 @@ async function getProgramas(): Promise<Programa[]> {
     descricao: (p as any).descricao || "",
     dataVariavel: (p as any).data_variavel || null,
     classificacaoEtaria: (p as any).classificacao_etaria || "",
+    tipoPrograma: (p as any).tipo_programa || "",
   }));
 }
 
