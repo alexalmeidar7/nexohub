@@ -61,6 +61,7 @@ const App = () => (
             <Route path="/masterview/home" element={<Navigate to="/user/nexohub/home" replace />} />
             <Route path="/modulo-tela-estudio-promocao" element={<Navigate to="/user/nexohub/telapromo" replace />} />
             <Route path="/player" element={<Navigate to="/user/nexohub/player" replace />} />
+            <Route path="/jornal-export" element={<JornalExport />} />
 
             {/* Admin routes */}
             <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
