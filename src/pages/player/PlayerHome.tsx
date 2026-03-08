@@ -218,6 +218,22 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   const [hoveredThumb, setHoveredThumb] = useState<string | null>(null);
   const [playlistVideos, setPlaylistVideos] = useState<Record<string, PlaylistVideo[]>>({});
   const [nowPlaying, setNowPlaying] = useState<{ musica: string; artista: string } | null>(null);
+  const [bannerOpacity, setBannerOpacity] = useState(1);
+  const mainRef = useRef<HTMLElement | null>(null);
+
+  // Fade banner when scrolling past 650px
+  useEffect(() => {
+    const scrollEl = mainRef.current?.closest(".overflow-y-auto") as HTMLElement | null;
+    if (!scrollEl) return;
+    const handleScroll = () => {
+      const scrollY = scrollEl.scrollTop;
+      if (scrollY < 450) setBannerOpacity(1);
+      else if (scrollY > 650) setBannerOpacity(0);
+      else setBannerOpacity(1 - (scrollY - 450) / 200);
+    };
+    scrollEl.addEventListener("scroll", handleScroll, { passive: true });
+    return () => scrollEl.removeEventListener("scroll", handleScroll);
+  }, [dataLoaded]);
 
   // Poll for current music data - localStorage + DB fallback
   useEffect(() => {
@@ -491,7 +507,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
         </header>
 
         {/* Banner full-width behind content — crossfade between default and thumb on hover */}
-        <div className="fixed top-0 left-20 right-3 z-0 pointer-events-none h-[400px] overflow-hidden rounded-b-2xl">
+        <div className="fixed top-0 left-20 right-3 z-0 pointer-events-none h-[400px] overflow-hidden rounded-b-2xl transition-opacity duration-300" style={{ opacity: bannerOpacity }}>
           <img
             src="/images/banner-home.png"
             alt="Banner"
@@ -512,7 +528,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
           />
         </div>
 
-        <main className="px-8 pt-24 pb-6 z-10 ml-20 relative">
+        <main ref={mainRef} className="px-8 pt-24 pb-6 z-10 ml-20 relative">
           {activeSection === "streaming" ? (
             /* ── Página dedicada: Canais ao Vivo ── */
              <section style={{ marginTop: "220px" }}>
