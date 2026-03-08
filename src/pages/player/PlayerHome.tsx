@@ -22,6 +22,13 @@ interface Programa {
   dias_semana: string[] | null;
 }
 
+interface PlaylistVideo {
+  videoId: string;
+  title: string;
+  thumbnail: string;
+  published: string;
+}
+
 type Section = "home" | "streaming" | "content" | "shop";
 
 function StreamingCard({ channel, currentProgram, onClick, onHoverChange }: { channel: Channel; currentProgram?: Programa; onClick: () => void; onHoverChange?: (thumb: string | null) => void }) {
