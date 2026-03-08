@@ -149,7 +149,7 @@ export default function AudioDualCard({
         <div className="absolute inset-0" style={{ backgroundColor: "hsl(0 0% 0%)" }} />
       )}
       {/* Wrapper with relative positioning so presenter sits behind music card */}
-      <div className={`relative flex items-center justify-center ${isTV ? "w-[95vw] max-w-[1200px]" : "w-[90vw] max-w-[800px]"}`} style={{ minHeight: isTV ? "560px" : "420px" }}>
+      <div className={`relative flex items-center justify-center ${isTV ? "w-[95vw] max-w-[1200px]" : "w-[92vw] sm:w-[90vw] max-w-[800px]"}`} style={{ minHeight: isTV ? "560px" : undefined, height: isTV ? undefined : "min(420px, 55vh)" }}>
 
         {/* Left — Presenter (hidden behind cover, slides left at 3s) */}
         <div
