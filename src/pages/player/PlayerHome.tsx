@@ -328,16 +328,18 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
     fetchPlaylists();
   }, [dataLoaded, channels]);
 
-  const goToPlayer = () => {
+  const goToPlayer = (channelId?: string) => {
     setFadeOut(true);
+    const qs = channelId ? `?ch=${channelId}` : "";
     setTimeout(() => {
       if (userSlug) {
-        navigate(`/user/${userSlug}/nexohub/player/watch`);
+        navigate(`/user/${userSlug}/nexohub/player/watch${qs}`);
       } else {
-        navigate("/user/nexohub/player/watch");
+        navigate(`/user/nexohub/player/watch${qs}`);
       }
     }, 400);
   };
+  const goToPlayerDefault = () => goToPlayer();
 
   const handleSignOut = async () => {
     await signOut();
@@ -462,7 +464,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                       key={ch.id}
                       channel={ch}
                       currentProgram={currentProgram}
-                      onClick={goToPlayer}
+                      onClick={() => goToPlayer(ch.id)}
                       onHoverChange={setHoveredThumb}
                     />
                   ))}
@@ -496,7 +498,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                             return (
                               <button
                                 key={item.id}
-                                onClick={goToPlayer}
+                                onClick={() => goToPlayer(item.id)}
                                 className="flex-shrink-0 w-64 aspect-video rounded-xl overflow-hidden relative transition-all hover:scale-[1.02] border-[5px] border-transparent hover:border-white"
                               >
                                 {item.cover_url ? (
@@ -519,7 +521,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                             return (
                               <button
                                 key={video.videoId}
-                                onClick={goToPlayer}
+                                onClick={() => goToPlayer(item.id)}
                                 className="flex-shrink-0 w-64 aspect-video rounded-xl overflow-hidden relative transition-all hover:scale-[1.02] border-[5px] border-transparent hover:border-white"
                               >
                                 {/* Use program cover as background */}
@@ -576,7 +578,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                           key={ch.id}
                           channel={ch}
                           currentProgram={currentProgram}
-                          onClick={goToPlayer}
+                          onClick={() => goToPlayer(ch.id)}
                           onHoverChange={setHoveredThumb}
                         />
                       ))}
@@ -604,7 +606,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                         {watchHistory.map(item => (
                           <button
                             key={item.id}
-                            onClick={goToPlayer}
+                            onClick={() => goToPlayer(item.id)}
                             className="flex-shrink-0 w-48 h-28 rounded-xl overflow-hidden relative transition-all hover:scale-[1.02] border-[5px] border-transparent hover:border-white"
                           >
                             {item.channel_cover_url ? (
@@ -653,7 +655,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                           return (
                             <button
                               key={video.videoId}
-                              onClick={goToPlayer}
+                              onClick={() => goToPlayer(channel.id)}
                               className="flex-shrink-0 w-56 h-32 rounded-xl overflow-hidden relative transition-all hover:scale-[1.02] border-[5px] border-transparent hover:border-white"
                             >
                               <img src={video.thumbnail} alt={video.title} className="w-full h-full object-cover" />
@@ -672,7 +674,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                         items.map(item => (
                           <button
                             key={item.id}
-                            onClick={goToPlayer}
+                            onClick={() => goToPlayer(item.id)}
                             className="flex-shrink-0 w-56 h-32 rounded-xl overflow-hidden relative transition-all hover:scale-[1.02] border-[5px] border-transparent hover:border-white"
                           >
                             {item.cover_url ? (
