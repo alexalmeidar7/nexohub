@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Scissors, Download, Clock, Link2, Loader2, Play, Copy, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -42,6 +42,8 @@ export default function CortesVideoPage() {
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
   const [cutting, setCutting] = useState(false);
+  const [videoTitle, setVideoTitle] = useState("");
+  const [videoDurationText, setVideoDurationText] = useState("");
   const [result, setResult] = useState<{
     clip_embed_url: string;
     share_url: string;
@@ -58,6 +60,21 @@ export default function CortesVideoPage() {
   const duration = endSeconds - startSeconds;
 
   const canCut = videoId && duration > 0 && duration <= 600;
+
+  // Fetch video title via oEmbed
+  useEffect(() => {
+    if (!videoId) {
+      setVideoTitle("");
+      setVideoDurationText("");
+      return;
+    }
+    fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`)
+      .then((r) => r.json())
+      .then((data) => {
+        setVideoTitle(data.title || "");
+      })
+      .catch(() => setVideoTitle(""));
+  }, [videoId]);
 
   const handleCut = async () => {
     if (!canCut || !user) return;
@@ -103,7 +120,6 @@ export default function CortesVideoPage() {
 
   const handleDownload = () => {
     if (!result?.download_url) {
-      // Fallback to ssyoutube
       window.open(
         `https://www.ssyoutube.com/watch?v=${videoId}&t=${startSeconds}`,
         "_blank"
@@ -125,6 +141,9 @@ export default function CortesVideoPage() {
     navigator.clipboard.writeText(text);
     toast({ title: "Link copiado!", description: "O link foi copiado para a área de transferência." });
   };
+
+  const now = new Date();
+  const currentTimeStr = `${pad(now.getHours())}:${pad(now.getMinutes())} • ${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()}`;
 
   return (
     <div className="space-y-6">
@@ -149,9 +168,9 @@ export default function CortesVideoPage() {
         )}
       </div>
 
-      {/* Video preview - centered */}
+      {/* Video preview - centered with title and time */}
       {videoId && (
-        <div className="flex justify-center">
+        <div className="flex flex-col items-center gap-2">
           <div className="rounded-xl overflow-hidden w-full" style={{ maxWidth: 480 }}>
             <iframe
               src={`https://www.youtube.com/embed/${videoId}`}
@@ -161,17 +180,29 @@ export default function CortesVideoPage() {
               allowFullScreen
             />
           </div>
+          {videoTitle && (
+            <p className="text-sm font-bold text-center max-w-[480px] leading-snug" style={{ color: "#0d0446" }}>
+              {videoTitle}
+            </p>
+          )}
+          <p className="text-xs" style={{ color: "#94a3b8" }}>{currentTimeStr}</p>
         </div>
       )}
 
-      {/* Time inputs */}
-      <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-4 items-center">
-        {/* Start time */}
-        <div>
-          <label className="text-xs font-semibold uppercase tracking-wider mb-2 block" style={{ color: "#0d0446" }}>
-            Tempo Inicial
-          </label>
-          <div className="flex items-center gap-2">
+      {/* Time inputs inside a styled box */}
+      <div
+        className="rounded-2xl p-5"
+        style={{ backgroundColor: "#f8fafc", border: "1px solid #e2e8f0" }}
+      >
+        <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-4 items-center">
+          {/* Start time box */}
+          <div
+            className="rounded-xl p-4 flex flex-col items-center gap-2"
+            style={{ backgroundColor: "#fff", border: "1px solid #e2e8f0" }}
+          >
+            <label className="text-xs font-semibold uppercase tracking-wider" style={{ color: "#0d0446" }}>
+              Tempo Inicial
+            </label>
             <input
               type="text"
               value={startTime}
@@ -185,30 +216,38 @@ export default function CortesVideoPage() {
               <img
                 src={`https://img.youtube.com/vi/${videoId}/mqdefault.jpg`}
                 alt="Frame no tempo inicial"
-                className="w-24 h-14 rounded-lg object-cover border flex-shrink-0"
+                className="w-full max-w-[140px] h-auto rounded-lg object-cover border"
                 style={{ borderColor: "#e2e8f0" }}
               />
             )}
           </div>
-        </div>
 
-        {/* Duration badge - centered */}
-        <div className="flex flex-col items-center justify-center">
-          <div className="flex items-center gap-1.5 px-4 py-2 rounded-full" style={{ backgroundColor: duration > 0 ? "#268ffa" : "#e2e8f0", color: duration > 0 ? "#fff" : "#94a3b8" }}>
-            <Clock size={14} />
-            <span className="text-sm font-bold font-mono">{formatDuration(duration > 0 ? duration : 0)}</span>
+          {/* Duration badge - centered with scissors icon */}
+          <div className="flex flex-col items-center justify-center gap-1">
+            <Scissors size={20} style={{ color: duration > 0 ? "#268ffa" : "#94a3b8" }} />
+            <div
+              className="flex items-center gap-1.5 px-4 py-2 rounded-full"
+              style={{
+                backgroundColor: duration > 0 ? "#268ffa" : "#e2e8f0",
+                color: duration > 0 ? "#fff" : "#94a3b8",
+              }}
+            >
+              <Clock size={14} />
+              <span className="text-sm font-bold font-mono">{formatDuration(duration > 0 ? duration : 0)}</span>
+            </div>
+            {duration > 600 && (
+              <p className="text-xs mt-1 text-center" style={{ color: "#ef4444" }}>Máximo 10 min</p>
+            )}
           </div>
-          {duration > 600 && (
-            <p className="text-xs mt-1 text-center" style={{ color: "#ef4444" }}>Máximo 10 minutos</p>
-          )}
-        </div>
 
-        {/* End time */}
-        <div>
-          <label className="text-xs font-semibold uppercase tracking-wider mb-2 block" style={{ color: "#0d0446" }}>
-            Tempo Final
-          </label>
-          <div className="flex items-center gap-2">
+          {/* End time box */}
+          <div
+            className="rounded-xl p-4 flex flex-col items-center gap-2"
+            style={{ backgroundColor: "#fff", border: "1px solid #e2e8f0" }}
+          >
+            <label className="text-xs font-semibold uppercase tracking-wider" style={{ color: "#0d0446" }}>
+              Tempo Final
+            </label>
             <input
               type="text"
               value={endTime}
@@ -222,7 +261,7 @@ export default function CortesVideoPage() {
               <img
                 src={`https://img.youtube.com/vi/${videoId}/mqdefault.jpg`}
                 alt="Frame no tempo final"
-                className="w-24 h-14 rounded-lg object-cover border flex-shrink-0"
+                className="w-full max-w-[140px] h-auto rounded-lg object-cover border"
                 style={{ borderColor: "#e2e8f0" }}
               />
             )}
@@ -231,24 +270,26 @@ export default function CortesVideoPage() {
       </div>
 
       {/* Cut button */}
-      <button
-        onClick={handleCut}
-        disabled={!canCut || cutting}
-        className="flex items-center gap-2 px-8 py-3 rounded-xl text-sm font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90"
-        style={{ backgroundColor: "#268ffa", color: "#fff" }}
-      >
-        {cutting ? (
-          <>
-            <Loader2 size={16} className="animate-spin" />
-            Processando...
-          </>
-        ) : (
-          <>
-            <Scissors size={16} />
-            Gerar Corte
-          </>
-        )}
-      </button>
+      <div className="flex justify-center">
+        <button
+          onClick={handleCut}
+          disabled={!canCut || cutting}
+          className="flex items-center gap-2 px-8 py-3 rounded-xl text-sm font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90"
+          style={{ backgroundColor: "#268ffa", color: "#fff" }}
+        >
+          {cutting ? (
+            <>
+              <Loader2 size={16} className="animate-spin" />
+              Processando...
+            </>
+          ) : (
+            <>
+              <Scissors size={16} />
+              Gerar Corte
+            </>
+          )}
+        </button>
+      </div>
 
       {/* Result */}
       {result && (
