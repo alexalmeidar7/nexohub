@@ -10,6 +10,7 @@ interface Channel {
   name: string;
   cover_url: string | null;
   logo_url: string | null;
+  background_url: string | null;
   type: string;
   url?: string;
   catalog_name?: string;
