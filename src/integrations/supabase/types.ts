@@ -790,9 +790,12 @@ export type Database = {
           active: boolean
           background_url: string | null
           catalog_name: string | null
+          classificacao_etaria: string | null
           cover_url: string | null
           created_at: string
           id: string
+          is_hd: boolean | null
+          is_stereo: boolean | null
           logo_url: string | null
           name: string
           numero_canal: string | null
@@ -805,9 +808,12 @@ export type Database = {
           active?: boolean
           background_url?: string | null
           catalog_name?: string | null
+          classificacao_etaria?: string | null
           cover_url?: string | null
           created_at?: string
           id?: string
+          is_hd?: boolean | null
+          is_stereo?: boolean | null
           logo_url?: string | null
           name: string
           numero_canal?: string | null
@@ -820,9 +826,12 @@ export type Database = {
           active?: boolean
           background_url?: string | null
           catalog_name?: string | null
+          classificacao_etaria?: string | null
           cover_url?: string | null
           created_at?: string
           id?: string
+          is_hd?: boolean | null
+          is_stereo?: boolean | null
           logo_url?: string | null
           name?: string
           numero_canal?: string | null
