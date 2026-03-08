@@ -149,7 +149,7 @@ function StreamingCard({ channel, currentProgram, nowPlaying, onClick, onHoverCh
       </span>
 
       {/* Info overlay - bottom */}
-      <div className="absolute bottom-0 left-0 right-0 z-10 bg-gradient-to-t from-black/90 via-black/60 to-transparent px-3 pb-2 pt-8 flex flex-col gap-[3px]">
+      <div className="absolute bottom-0 left-0 right-0 z-10 px-3 pb-2 pt-8 flex flex-col gap-[3px]">
         {/* Nome do programa */}
         {currentProgram && (
           <p className="text-[11px] text-white/80 truncate text-left">{currentProgram.nome}</p>
