@@ -155,32 +155,41 @@ async function fetchNews(rssUrl: string): Promise<NewsItem[]> {
 
 async function fetchCotacoes(): Promise<CotacaoItem[]> {
   try {
-    const res = await fetch("https://economia.awesomeapi.com.br/last/USD-BRL,EUR-BRL,GBP-BRL,BTC-BRL,ETH-BRL,JPY-BRL,ARS-BRL,CNY-BRL");
+    // Moedas: Dólar Comercial, Euro, Libra, Peso Argentino, Peso Chileno
+    const res = await fetch("https://economia.awesomeapi.com.br/last/USD-BRL,EUR-BRL,GBP-BRL,ARS-BRL,CLP-BRL");
     const data = await res.json();
-    const moedas: CotacaoItem[] = Object.values(data).map((item: any) => {
+    const moedaLabels: Record<string, string> = {
+      "USDBRL": "Dólar Comercial",
+      "EURBRL": "Euro",
+      "GBPBRL": "Libra",
+      "ARSBRL": "Peso Argentino",
+      "CLPBRL": "Peso Chileno",
+    };
+    const moedas: CotacaoItem[] = Object.entries(data).map(([key, item]: [string, any]) => {
       const pctChange = parseFloat(item.pctChange);
       return {
-        name: `${item.code}/${item.codein}`,
+        name: moedaLabels[key] || `${item.code}/${item.codein}`,
         value: parseFloat(item.bid).toLocaleString("pt-BR", { style: "currency", currency: "BRL" }),
         change: `${pctChange >= 0 ? "+" : ""}${pctChange.toFixed(2)}%`,
         direction: pctChange > 0 ? "up" : pctChange < 0 ? "down" : "neutral",
       };
     });
 
+    // Bolsas: Ibovespa, S&P 500, Nasdaq, Dow Jones, Euro Stoxx, Nikkei 225
     const bolsas: CotacaoItem[] = [];
     const bolsaNames: Record<string, string> = {
-      "^BVSP": "IBOVESPA",
-      "IFIX.SA": "IFIX",
-      "SMAL11.SA": "Small Cap",
+      "^BVSP": "Ibovespa (B3)",
       "^GSPC": "S&P 500",
+      "^IXIC": "Nasdaq",
       "^DJI": "Dow Jones",
-      "^IXIC": "NASDAQ",
+      "^STOXX50E": "Euro Stoxx",
+      "^N225": "Nikkei 225",
     };
     try {
-      const symbols = Object.keys(bolsaNames);
-      for (const symbol of symbols) {
+      for (const [symbol, label] of Object.entries(bolsaNames)) {
         try {
           const bRes = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=1d&interval=1d`);
+          if (!bRes.ok) continue;
           const bData = await bRes.json();
           const result = bData?.chart?.result?.[0];
           if (result) {
@@ -189,7 +198,7 @@ async function fetchCotacoes(): Promise<CotacaoItem[]> {
             const prevClose = meta.previousClose || meta.chartPreviousClose || price;
             const change = prevClose ? ((price - prevClose) / prevClose) * 100 : 0;
             bolsas.push({
-              name: bolsaNames[symbol],
+              name: label,
               value: price.toLocaleString("pt-BR", { minimumFractionDigits: 2 }),
               change: `${change >= 0 ? "+" : ""}${change.toFixed(2)}%`,
               direction: change > 0 ? "up" : change < 0 ? "down" : "neutral",
