@@ -436,7 +436,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 </div>
               </div>
             </div>
-            </>}
+            </>
           </aside>
         </div>
 
