@@ -247,7 +247,28 @@ export default function PrevisaoTempo() {
     }
   };
 
-  return (
+  const fetchForecastDescription = async () => {
+    if (!weather) return;
+    setForecastLoading(true);
+    setForecastDescription("");
+    try {
+      const forecastData = weather.forecast.map(d => ({
+        date: d.date,
+        temp: d.temp,
+        tempMin: d.tempMin,
+        tempMax: d.tempMax,
+        humidity: d.humidity,
+        rainChance: d.rainChance,
+        condition: getWeatherLabel(d.weatherCode),
+      }));
+      const { data } = await supabase.functions.invoke("weather-description", {
+        body: { type: "forecast", city: weather.city, forecast: forecastData },
+      });
+      if (data?.description) setForecastDescription(data.description);
+    } catch { /* ignore */ }
+    setForecastLoading(false);
+  };
+
     <div className="animate-fade-in space-y-8">
       {/* Primary city box */}
       {primaryCity && (
