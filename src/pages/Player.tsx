@@ -2034,7 +2034,9 @@ export default function PlayerPage() {
           {/* Row 1 on mobile: Channel + Play + Volume */}
           <div className="flex items-center gap-2 sm:gap-3 sm:pr-5 sm:border-r border-white/10 shrink-0">
             <div className="flex flex-col items-center gap-0.5 sm:gap-1">
-              <button onClick={() => navigateChannel(-1)} className="text-white/60 hover:text-white hover:bg-[#e60000] rounded px-1.5 py-1 sm:px-2 sm:py-2 transition-all" title="Canal anterior"><ChevronUp size={14} /></button>
+              {canais.length > 1 && (
+                <button onClick={() => navigateChannel(-1)} className="text-white/60 hover:text-white hover:bg-[#e60000] rounded px-1.5 py-1 sm:px-2 sm:py-2 transition-all" title="Canal anterior"><ChevronUp size={14} /></button>
+              )}
               <div className="text-white text-[10px] sm:text-xs font-bold py-0.5">
                 {(() => {
                   const num = canal?.numero_canal || "--";
@@ -2043,7 +2045,9 @@ export default function PlayerPage() {
                   return <>{num.slice(0, dashIdx)} <sup className="text-[8px] sm:text-[9px]" style={{ color: "#e60000" }}>{num.slice(dashIdx + 1)}</sup></>;
                 })()}
               </div>
-              <button onClick={() => navigateChannel(1)} className="text-white/60 hover:text-white hover:bg-[#e60000] rounded px-1.5 py-1 sm:px-2 sm:py-2 transition-all" title="Próximo canal"><ChevronDown size={14} /></button>
+              {canais.length > 1 && (
+                <button onClick={() => navigateChannel(1)} className="text-white/60 hover:text-white hover:bg-[#e60000] rounded px-1.5 py-1 sm:px-2 sm:py-2 transition-all" title="Próximo canal"><ChevronDown size={14} /></button>
+              )}
             </div>
             {canal?.background_url ? (
               <img src={canal.background_url} alt="" className="w-12 h-12 sm:w-20 sm:h-20 rounded-lg object-contain" />
