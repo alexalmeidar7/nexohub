@@ -293,9 +293,11 @@ export default function PrevisaoTempo() {
         )}
       </div>
 
-      {/* Favorite cities */}
+      {/* Secondary cities (favorites) */}
       {favorites.length > 0 && (
-        <div className="flex flex-wrap gap-2">
+        <div>
+          <p className="text-xs font-semibold mb-2" style={{ color: "rgba(13,4,70,0.5)" }}>Cidades Secundárias</p>
+          <div className="flex flex-wrap gap-2">
           {favorites.map(f => (
             <div key={f.name} className="flex items-center gap-2 rounded-full px-3 py-1.5"
               style={{ backgroundColor: "#ffffff", border: "1px solid #0d0446" }}>
