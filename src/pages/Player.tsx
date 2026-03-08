@@ -1140,7 +1140,6 @@ export default function PlayerPage() {
     setCurrentIndex(next);
     const c = canais[next];
     if (!c) return;
-    const shouldAutoStart = playing || isAutoplayChannel(c);
     // Stop any playing audio/video when switching channels — full cleanup
     if (hlsRef.current) { hlsRef.current.destroy(); hlsRef.current = null; }
     if (audioRef.current) { audioRef.current.pause(); audioRef.current.removeAttribute("src"); audioRef.current.load(); }
@@ -1152,7 +1151,8 @@ export default function PlayerPage() {
       setBuffering(false);
       setSelectedVideoId(null);
       setSidebarOpen(false);
-    } else if (shouldAutoStart) {
+    } else {
+      // Always auto-start when user explicitly navigates channels
       setTimeout(() => playStream(c.url, c.type), 100);
     }
   }, [canais, currentIndex, playing, playStream, isAutoplayChannel]);
