@@ -789,6 +789,7 @@ export type Database = {
         Row: {
           active: boolean
           background_url: string | null
+          catalog_name: string | null
           cover_url: string | null
           created_at: string
           id: string
@@ -803,6 +804,7 @@ export type Database = {
         Insert: {
           active?: boolean
           background_url?: string | null
+          catalog_name?: string | null
           cover_url?: string | null
           created_at?: string
           id?: string
@@ -817,6 +819,7 @@ export type Database = {
         Update: {
           active?: boolean
           background_url?: string | null
+          catalog_name?: string | null
           cover_url?: string | null
           created_at?: string
           id?: string
