@@ -329,7 +329,7 @@ export default function PlayerPage() {
   const canal = canais[currentIndex] || null;
   const isAudio = canal?.type === "audio_live" || canal?.type === "audio";
   const isYoutube = canal?.type === "youtube";
-  const isVideo = canal?.type === "video";
+  const isVideo = canal?.type === "video" || canal?.type === "video_live";
   const isAutoplayChannel = useCallback((c?: Canal | null) => normalizeChannelNumber(c?.numero_canal) === "991-1", []);
   const autoPlayedRef = useRef(false);
 
