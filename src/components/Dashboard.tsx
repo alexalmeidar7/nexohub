@@ -433,7 +433,18 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           <div className="hidden lg:flex items-center justify-between mb-3" style={{ marginLeft: "25px" }}>
             <div>
               <h1 className="font-bold text-white" style={{ fontSize: "45px", lineHeight: 1.1 }}>{empresa.nome || "Dashboard"}</h1>
-              <p className="text-white/60 text-xs">{user?.email || ""}</p>
+              <div className="flex items-center gap-3 mt-1">
+                <p className="text-white/60 text-xs">{user?.email || ""}</p>
+                <button
+                  onClick={onLogout}
+                  className="flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold transition-all"
+                  style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "#ffffff" }}
+                  onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#dc2626"; }}
+                  onMouseLeave={e => { e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.15)"; }}
+                >
+                  <LogOut size={10} /> Sair
+                </button>
+              </div>
             </div>
             <div className="flex items-center gap-3" style={{ marginRight: "50px" }}>
               <Suspense fallback={<div className="w-9 h-9 rounded-full" style={{ backgroundColor: "#0d0446" }} />}>
