@@ -548,7 +548,7 @@ export default function PlayerPage() {
           }
 
           setPublicUserId(data.userId);
-          setCanais((data.channels || []) as Canal[]);
+          setCanais(((data.channels || []) as Canal[]).filter(c => c.type !== "catalog"));
           setProgramas((data.programas || []) as Programa[]);
           setApresentadores((data.apresentadores || []) as Apresentador[]);
           setShopProducts(data.shopProducts || []);
