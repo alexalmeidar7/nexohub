@@ -228,7 +228,7 @@ export default function JornalBlockBuilder({ config, selectedNews, onClose }: Pr
               onDragOver={e => e.preventDefault()}
               onDrop={(e) => handleDropOnBlock(blockNum, e)}
             >
-              <div className="flex items-center justify-between px-3 py-2 text-xs font-bold" style={{ backgroundColor: "#ffffff", color: "#0d0446", borderBottom: "1px solid rgba(46,193,247,0.2)" }}>
+              <div className="flex items-center justify-between px-3 py-2 text-xs font-bold" style={{ backgroundColor: "#a8e2f7", color: "#0d0446", borderBottom: "1px solid rgba(46,193,247,0.2)" }}>
                 <span>Bloco {blockNum}</span>
                 <span className="font-normal" style={{ color: "rgba(13,4,70,0.4)" }}>{config.tempoBlocoMin} min · {blockItems.length} notícia(s)</span>
               </div>
