@@ -325,8 +325,18 @@ export default function PrevisaoTempo() {
           <div className="rounded-2xl p-6" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)" }}>
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="text-2xl font-semibold" style={{ color: "#0d0446" }}>{weather.city}</h3>
-                <p className="text-sm" style={{ color: "rgba(13,4,70,0.5)" }}>{getWeatherLabel(weather.current.weatherCode)}</p>
+                <div className="flex items-center gap-3">
+                  <h3 className="text-2xl font-semibold" style={{ color: "#0d0446" }}>{weather.city}</h3>
+                  <label className="flex items-center gap-2 cursor-pointer select-none rounded-full px-3 py-1"
+                    style={{ backgroundColor: isPrimary ? "#0d0446" : "rgba(13,4,70,0.06)", border: "1px solid rgba(13,4,70,0.15)", transition: "all 0.2s" }}>
+                    <input type="checkbox" checked={isPrimary} onChange={togglePrimaryCity}
+                      className="w-3.5 h-3.5" style={{ accentColor: "#2dbef3" }} />
+                    <span className="text-xs font-semibold" style={{ color: isPrimary ? "#ffffff" : "#0d0446" }}>
+                      Cidade Principal
+                    </span>
+                  </label>
+                </div>
+                <p className="text-sm mt-1" style={{ color: "rgba(13,4,70,0.5)" }}>{getWeatherLabel(weather.current.weatherCode)}</p>
               </div>
               <div className="flex items-center gap-3">
                 {!isFavorited && (
@@ -342,17 +352,7 @@ export default function PrevisaoTempo() {
                 <WeatherIcon code={weather.current.weatherCode} size={64} />
               </div>
             </div>
-            <div className="flex items-center gap-4 mb-6">
-              <div className="text-5xl font-bold" style={{ color: "#2dbef3" }}>{weather.current.temp}°C</div>
-              <label className="flex items-center gap-2 cursor-pointer select-none rounded-full px-3 py-1.5"
-                style={{ backgroundColor: isPrimary ? "#0d0446" : "rgba(13,4,70,0.06)", border: "1px solid rgba(13,4,70,0.15)", transition: "all 0.2s" }}>
-                <input type="checkbox" checked={isPrimary} onChange={togglePrimaryCity}
-                  className="w-3.5 h-3.5" style={{ accentColor: "#2dbef3" }} />
-                <span className="text-xs font-semibold" style={{ color: isPrimary ? "#ffffff" : "#0d0446" }}>
-                  Cidade Principal
-                </span>
-              </label>
-            </div>
+            <div className="text-5xl font-bold mb-6" style={{ color: "#2dbef3" }}>{weather.current.temp}°C</div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <Stat icon={<Thermometer size={16} />} label="Mínima" value={`${weather.current.tempMin}°C`} />
               <Stat icon={<Thermometer size={16} />} label="Máxima" value={`${weather.current.tempMax}°C`} />
