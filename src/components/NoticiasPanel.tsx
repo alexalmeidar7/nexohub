@@ -718,11 +718,12 @@ export default function NoticiasPanel() {
             </div>
             {!collapsedBoxes['portais'] && (
               loading ? (
-                <div className="animate-pulse p-3 space-y-2">
-                  {Array.from({ length: 6 }).map((_, i) => (
-                    <div key={i} className="flex items-center gap-2 px-3 py-1.5">
-                      <div className="w-2.5 h-2.5 rounded bg-[#0d0446]/8 shrink-0" />
-                      <div className="h-2.5 rounded bg-[#0d0446]/8" style={{ width: `${50 + Math.random() * 40}%` }} />
+                <div className="p-2 space-y-1">
+                  {Array.from({ length: 8 }).map((_, i) => (
+                    <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ backgroundColor: i % 2 === 0 ? "#ffffff" : "#f8f8fc" }}>
+                      <Skeleton className="w-3 h-3 rounded-full bg-[#2ec1f7]/15 shrink-0" />
+                      <Skeleton className="h-3 rounded bg-[#0d0446]/10" style={{ width: `${35 + (i % 3) * 15}%` }} />
+                      <Skeleton className="h-4 w-8 rounded-full bg-[#2ec1f7]/10 ml-auto" />
                     </div>
                   ))}
                 </div>
