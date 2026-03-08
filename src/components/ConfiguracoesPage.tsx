@@ -377,7 +377,15 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
                 📡 Ao Vivo
               </button>
               <button
-                onClick={() => setCanalMode("catalog")}
+                onClick={() => {
+                  setCanalMode("catalog");
+                  const catalogCanais = canais.filter(c => c.type === "catalog");
+                  const maxNum = catalogCanais.reduce((max, c) => {
+                    const n = parseInt(c.numero_canal || "0", 10);
+                    return n > max ? n : max;
+                  }, 0);
+                  setCanalForm(p => ({ ...p, type: "catalog", numero_canal: String(maxNum + 1).padStart(2, "0") }));
+                }}
                 className="px-4 py-1.5 text-xs font-bold transition-all"
                 style={{ backgroundColor: canalMode === "catalog" ? "#0d0446" : "#ffffff", color: canalMode === "catalog" ? "#ffffff" : "#0d0446", borderLeft: "2px solid #0d0446" }}
               >
