@@ -283,7 +283,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
     <div className="animate-fade-in space-y-6 max-w-3xl">
 
       {/* Box 1: Configurações da Empresa */}
-      <CollapsibleBox title="Configurações da Empresa">
+      {(section === "all" || section === "empresa") && <CollapsibleBox title="Configurações da Empresa">
         <div className="space-y-4">
           {field("Nome da Empresa", "nome", "Nome da empresa")}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
