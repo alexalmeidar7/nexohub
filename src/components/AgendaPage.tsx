@@ -465,15 +465,23 @@ export default function AgendaPage() {
       </div>
 
       <Dialog open={dialogOpen} onOpenChange={(open) => { if (!open) resetForm(); setDialogOpen(open); }}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto" style={{ backgroundColor: "#ffffff", borderRadius: "20px", border: "1px solid #2ec1f7" }}>
+          <style>{`
+            .agenda-form-input:focus, .agenda-form-input:focus-visible, .agenda-form-input:active {
+              outline: none !important;
+              box-shadow: none !important;
+              ring: none !important;
+              border-color: #2ec1f7 !important;
+            }
+          `}</style>
           <DialogHeader>
-            <DialogTitle>{editingId ? "Editar Evento" : "Cadastrar Evento"}</DialogTitle>
+            <DialogTitle className="text-sm font-bold" style={{ color: "#0d0446" }}>{editingId ? "Editar Evento" : "Cadastrar Evento"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label>Programa</Label>
+              <Label className="text-xs font-semibold" style={{ color: "#0d0446" }}>Programa</Label>
               <Select value={formProgramaId} onValueChange={setFormProgramaId}>
-                <SelectTrigger>
+                <SelectTrigger className="agenda-form-input mt-1" style={{ borderColor: "#2ec1f7", borderRadius: "9999px", backgroundColor: "#ffffff", color: "#0d0446" }}>
                   <SelectValue placeholder="Selecione o programa" />
                 </SelectTrigger>
                 <SelectContent>
@@ -485,7 +493,7 @@ export default function AgendaPage() {
                 </SelectContent>
               </Select>
               {selectedPrograma && (
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-xs mt-1" style={{ color: "rgba(13,4,70,0.5)" }}>
                   Horário: {selectedPrograma.horario_inicio} às {selectedPrograma.horario_fim}
                   {selectedPrograma.estudio && ` • Estúdio: ${selectedPrograma.estudio}`}
                 </p>
@@ -493,25 +501,26 @@ export default function AgendaPage() {
             </div>
 
             <div>
-              <Label>Data do Evento</Label>
+              <Label className="text-xs font-semibold" style={{ color: "#0d0446" }}>Data do Evento</Label>
               <Calendar
                 mode="single"
                 selected={formData}
                 onSelect={setFormData}
-                className={cn("p-3 pointer-events-auto border border-border rounded-lg mt-1")}
+                className={cn("p-3 pointer-events-auto border rounded-lg mt-1")}
+                style={{ borderColor: "#2ec1f7" }}
                 locale={ptBR}
               />
               {formData && (
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-xs mt-1" style={{ color: "rgba(13,4,70,0.5)" }}>
                   {format(formData, "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
                 </p>
               )}
             </div>
 
             <div>
-              <Label>Recorrência</Label>
+              <Label className="text-xs font-semibold" style={{ color: "#0d0446" }}>Recorrência</Label>
               <Select value={formRecorrencia} onValueChange={setFormRecorrencia}>
-                <SelectTrigger>
+                <SelectTrigger className="agenda-form-input mt-1" style={{ borderColor: "#2ec1f7", borderRadius: "9999px", backgroundColor: "#ffffff", color: "#0d0446" }}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -524,9 +533,9 @@ export default function AgendaPage() {
             </div>
 
             <div>
-              <Label>Local</Label>
+              <Label className="text-xs font-semibold" style={{ color: "#0d0446" }}>Local</Label>
               <Select value={formLocal} onValueChange={setFormLocal}>
-                <SelectTrigger>
+                <SelectTrigger className="agenda-form-input mt-1" style={{ borderColor: "#2ec1f7", borderRadius: "9999px", backgroundColor: "#ffffff", color: "#0d0446" }}>
                   <SelectValue placeholder="Selecione o local" />
                 </SelectTrigger>
                 <SelectContent>
@@ -538,9 +547,9 @@ export default function AgendaPage() {
             </div>
 
             <div>
-              <Label>Prioridade</Label>
+              <Label className="text-xs font-semibold" style={{ color: "#0d0446" }}>Prioridade</Label>
               <Select value={formPrioridade} onValueChange={setFormPrioridade}>
-                <SelectTrigger>
+                <SelectTrigger className="agenda-form-input mt-1" style={{ borderColor: "#2ec1f7", borderRadius: "9999px", backgroundColor: "#ffffff", color: "#0d0446" }}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -553,20 +562,22 @@ export default function AgendaPage() {
             </div>
 
             <div>
-              <Label>Descrição</Label>
+              <Label className="text-xs font-semibold" style={{ color: "#0d0446" }}>Descrição</Label>
               <Input
                 value={formDescricao}
                 onChange={(e) => setFormDescricao(e.target.value)}
                 placeholder="Descrição do evento"
+                className="agenda-form-input mt-1"
+                style={{ borderColor: "#2ec1f7", borderRadius: "9999px", backgroundColor: "#ffffff", color: "#0d0446" }}
               />
             </div>
 
             <div>
               <div className="flex items-center justify-between mb-2">
-                <Label className="flex items-center gap-1">
+                <Label className="text-xs font-semibold flex items-center gap-1" style={{ color: "#0d0446" }}>
                   <Users size={14} /> Participantes
                 </Label>
-                <Button type="button" variant="ghost" size="sm" onClick={addParticipante}>
+                <Button type="button" variant="ghost" size="sm" onClick={addParticipante} style={{ color: "#2ec1f7" }}>
                   <Plus size={14} /> Adicionar
                 </Button>
               </div>
@@ -577,14 +588,17 @@ export default function AgendaPage() {
                       value={p.nome}
                       onChange={(e) => updateParticipante(i, "nome", e.target.value)}
                       placeholder="Nome"
-                      className="flex-1"
+                      className="agenda-form-input flex-1"
+                      style={{ borderColor: "#2ec1f7", borderRadius: "9999px", backgroundColor: "#ffffff", color: "#0d0446" }}
                     />
                     <div className="flex items-center gap-1 flex-1">
-                      <Instagram size={14} className="text-muted-foreground shrink-0" />
+                      <Instagram size={14} className="shrink-0" style={{ color: "rgba(13,4,70,0.4)" }} />
                       <Input
                         value={p.instagram}
                         onChange={(e) => updateParticipante(i, "instagram", e.target.value)}
                         placeholder="@instagram"
+                        className="agenda-form-input"
+                        style={{ borderColor: "#2ec1f7", borderRadius: "9999px", backgroundColor: "#ffffff", color: "#0d0446" }}
                       />
                     </div>
                     {formParticipantes.length > 1 && (
@@ -603,7 +617,7 @@ export default function AgendaPage() {
               </div>
             </div>
 
-            <Button onClick={handleSave} disabled={!formProgramaId || !formData} className="w-full">
+            <Button onClick={handleSave} disabled={!formProgramaId || !formData} className="w-full" style={{ backgroundColor: "#2ec1f7", color: "#0d0446", borderRadius: "9999px" }}>
               {editingId ? "Atualizar Evento" : "Salvar Evento"}
             </Button>
           </div>
