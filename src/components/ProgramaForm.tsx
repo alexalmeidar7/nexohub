@@ -463,7 +463,7 @@ export default function ProgramaForm() {
         await supabase.from("programas").update({
           nome: nome.trim(), apresentador_id: apresentadorId || null, selo, capa, dias_semana: [dayOfWeek],
           horario_inicio: horarioInicio, horario_fim: horarioFim, estudio: estudio.trim(), ativo, descricao: descricao.trim(),
-          variavel: true, data_variavel: dataStr,
+           variavel: true, data_variavel: dataStr, classificacao_etaria: classificacaoEtaria || null,
         } as any).eq("id", editingId);
       } else {
         await supabase.from("programas").insert({
