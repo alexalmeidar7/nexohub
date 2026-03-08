@@ -370,7 +370,7 @@ export default function PrevisaoTempo() {
                     <Star size={14} /> Favoritar cidade
                   </button>
                 )}
-                <span className="text-6xl">{getWeatherIcon(weather.current.weatherCode)}</span>
+                <WeatherIcon code={weather.current.weatherCode} size={64} />
               </div>
             </div>
             <div className="flex items-center gap-4 mb-6">
