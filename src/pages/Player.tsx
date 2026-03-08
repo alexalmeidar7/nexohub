@@ -2297,17 +2297,17 @@ export default function PlayerPage() {
           <div className="hidden md:flex pl-3 border-l border-white/10 min-w-0 items-stretch gap-2" style={{ maxWidth: "320px" }}>
             <div className="min-w-0 flex-1">
               <span className="text-[10px] font-bold uppercase" style={{ color: "#e60000" }}>A seguir:</span>
-              <div className="text-white text-sm truncate">
+              <div className="text-white text-sm font-medium leading-tight line-clamp-2">
                 {isYoutube ? (nextYtVideo?.title || "Sem vídeo") : (nextProg?.nome || "Sem programação")}
               </div>
               {!isYoutube && (
-                <span className="text-[10px]" style={{ color: "#e60000" }}>
-                  {nextProg ? `${nextProg.horario_inicio} - ${nextProg.horario_fim}` : "--:-- - --:--"}
+                <span className="text-[10px] whitespace-nowrap" style={{ color: "#e60000" }}>
+                  {nextProg ? `${nextProg.horario_inicio.slice(0, 5)} - ${nextProg.horario_fim.slice(0, 5)}` : "--:-- - --:--"}
                 </span>
               )}
-              <div className="mt-1">
+              <div className="mt-0.5">
                 <button onClick={() => setGradeOpen(true)}
-                  className="flex items-center gap-1 text-white text-[10px] font-bold uppercase px-3 py-1 rounded-full transition-all"
+                  className="flex items-center gap-1 text-white text-[8px] font-bold uppercase px-2 py-0.5 rounded-full transition-all"
                   style={{ backgroundColor: "#e60000", border: "1px solid transparent" }}
                   onMouseEnter={e => { e.currentTarget.style.borderColor = "#ed0808"; e.currentTarget.style.backgroundColor = "#000"; }}
                   onMouseLeave={e => { e.currentTarget.style.borderColor = "transparent"; e.currentTarget.style.backgroundColor = "#e60000"; }}
