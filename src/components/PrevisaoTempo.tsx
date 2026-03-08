@@ -413,6 +413,9 @@ export default function PrevisaoTempo() {
                       <Star size={14} /> Cidade Secundária
                     </button>
                   )}
+                  <span className="text-xs font-medium" style={{ color: "rgba(13,4,70,0.5)" }}>
+                    {new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+                  </span>
                 </div>
                 <p className="text-sm mt-1" style={{ color: "rgba(13,4,70,0.5)" }}>{getWeatherLabel(weather.current.weatherCode)}</p>
               </div>
