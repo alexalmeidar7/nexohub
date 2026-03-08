@@ -230,6 +230,15 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           {mobileMenuOpen ? <X size={20} className="text-white" /> : <Menu size={20} className="text-white" />}
         </button>
         <h1 className="text-white font-bold text-lg truncate flex-1 ml-3">{empresa.nome || "Dashboard"}</h1>
+        <button
+          onClick={onLogout}
+          className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold transition-all mr-2"
+          style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "#ffffff" }}
+          onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#dc2626"; }}
+          onMouseLeave={e => { e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.15)"; }}
+        >
+          <LogOut size={10} /> Sair
+        </button>
         <ServerClock />
       </div>
 
