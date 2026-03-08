@@ -261,6 +261,32 @@ export default function ProgramaForm() {
   const [estudios, setEstudios] = useState<string[]>([]);
   const [newEstudio, setNewEstudio] = useState("");
   const [estudioDialogOpen, setEstudioDialogOpen] = useState(false);
+
+  // Tipo do programa management
+  const DEFAULT_TIPOS = ["Musical", "Jornalístico", "Entrevista", "Show", "Evento"];
+  const TIPOS_STORAGE_KEY = "masterview_tipos_programa";
+  const [tiposPrograma, setTiposPrograma] = useState<string[]>(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(TIPOS_STORAGE_KEY) || "null");
+      if (Array.isArray(saved) && saved.length > 0) return saved;
+    } catch {}
+    return DEFAULT_TIPOS;
+  });
+  const [tipoPrograma, setTipoPrograma] = useState("");
+  const [newTipo, setNewTipo] = useState("");
+  const [tipoDialogOpen, setTipoDialogOpen] = useState(false);
+
+  const addTipo = () => {
+    const t = newTipo.trim();
+    if (!t || tiposPrograma.includes(t)) return;
+    const updated = [...tiposPrograma, t].sort((a, b) => a.localeCompare(b, "pt-BR"));
+    setTiposPrograma(updated);
+    localStorage.setItem(TIPOS_STORAGE_KEY, JSON.stringify(updated));
+    setTipoPrograma(t);
+    setNewTipo("");
+    setTipoDialogOpen(false);
+  };
+
   const [apresentadorComboOpen, setApresentadorComboOpen] = useState(false);
 
   // Grade filter
