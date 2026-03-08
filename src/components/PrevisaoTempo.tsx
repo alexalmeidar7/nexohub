@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Search, Droplets, CloudRain, Thermometer, Star } from "lucide-react";
+import { Search, Droplets, CloudRain, Thermometer, Star, Sparkles } from "lucide-react";
 import XmlLinkRow from "./XmlLinkRow";
 import { WeatherIcon } from "./WeatherIcons";
+import { supabase } from "@/integrations/supabase/client";
 
 interface WeatherData {
   city: string;
