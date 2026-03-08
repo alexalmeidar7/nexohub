@@ -458,9 +458,9 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
             <legend className="text-xs font-bold px-2 uppercase tracking-wider" style={{ color: "#0d0446" }}>{canalMode === "catalog" ? "Imagens do Catálogo" : "Imagens do Canal"}</legend>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {([
-                { key: "cover_url" as const, label: "Capa do Programa", hint: "1280 × 720", alt: "Capa" },
-                { key: "logo_url" as const, label: "Thumb do Programa", hint: "1920 × 1080", alt: "Thumb" },
-                { key: "background_url" as const, label: "Logo do Programa", hint: "Transparente (PNG)", alt: "Logo" },
+                { key: "cover_url" as const, label: canalMode === "catalog" ? "Capa do Catálogo" : "Capa do Canal", hint: "1280 × 720", alt: "Capa" },
+                { key: "logo_url" as const, label: canalMode === "catalog" ? "Thumb do Catálogo" : "Thumb do Canal", hint: "1920 × 1080", alt: "Thumb" },
+                { key: "background_url" as const, label: canalMode === "catalog" ? "Logo do Catálogo" : "Logo do Canal", hint: "Transparente (PNG)", alt: "Logo" },
               ] as const).map(img => (
                 <div key={img.key} className="flex flex-col items-center gap-2 p-3 rounded-lg" style={{ border: "1px dashed rgba(13,4,70,0.15)", backgroundColor: "#ffffff" }}>
                   {(canalForm as any)[img.key] ? (
