@@ -97,13 +97,30 @@ export default function ConfiguracoesPage() {
   const loadCanais = async () => {
     setLoadingCanais(true);
     const { data } = await supabase.from("streaming_channels").select("*").order("numero_canal", { ascending: true });
-    if (data) setCanais(data.map((d: any) => ({
-      id: d.id, numero_canal: d.numero_canal || "", name: d.name, logo_url: d.logo_url || "",
-      cover_url: d.cover_url || "", url: d.url, type: d.type, active: d.active,
-      catalog_name: d.catalog_name || "",
-      is_hd: d.is_hd || false, is_stereo: d.is_stereo || false,
-      classificacao_etaria: d.classificacao_etaria || "L",
-    })));
+    if (data) {
+      // Auto-deduplicate: keep first occurrence by name+url, delete extras
+      const seen = new Map<string, string>();
+      const dupeIds: string[] = [];
+      for (const d of data) {
+        const key = `${d.name}||${d.url}`;
+        if (seen.has(key)) {
+          dupeIds.push(d.id);
+        } else {
+          seen.set(key, d.id);
+        }
+      }
+      if (dupeIds.length > 0) {
+        await supabase.from("streaming_channels").delete().in("id", dupeIds);
+      }
+      const filtered = data.filter(d => !dupeIds.includes(d.id));
+      setCanais(filtered.map((d: any) => ({
+        id: d.id, numero_canal: d.numero_canal || "", name: d.name, logo_url: d.logo_url || "",
+        cover_url: d.cover_url || "", url: d.url, type: d.type, active: d.active,
+        catalog_name: d.catalog_name || "",
+        is_hd: d.is_hd || false, is_stereo: d.is_stereo || false,
+        classificacao_etaria: d.classificacao_etaria || "L",
+      })));
+    }
     setLoadingCanais(false);
   };
 
