@@ -152,8 +152,8 @@ export default function LogosPatrocinadoresPage() {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      <form onSubmit={handleSubmit} className="rounded-xl p-6 space-y-4" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)" }}>
-        <h3 className="text-lg font-bold" style={{ color: "#0d0446" }}>Nova Logo de Patrocinador</h3>
+      <form onSubmit={handleSubmit} className="rounded-xl p-4 sm:p-6 space-y-4" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)" }}>
+        <h3 className="text-base sm:text-lg font-bold" style={{ color: "#0d0446" }}>Nova Logo de Patrocinador</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-4">
             <div>
