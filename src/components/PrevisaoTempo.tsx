@@ -89,13 +89,26 @@ function formatDay(dateStr: string) {
 
 const STORAGE_KEY = "masterview_last_city";
 const FAVORITES_KEY = "masterview_favorite_cities";
+const PRIMARY_CITY_KEY = "masterview_primary_city";
 const REFRESH_INTERVAL = 5 * 60 * 1000;
+
+interface PrimaryCity {
+  name: string;
+  lat: number;
+  lon: number;
+}
 
 function getFavorites(): FavoriteCity[] {
   try { return JSON.parse(localStorage.getItem(FAVORITES_KEY) || "[]"); } catch { return []; }
 }
 function saveFavorites(list: FavoriteCity[]) {
   localStorage.setItem(FAVORITES_KEY, JSON.stringify(list));
+}
+function getPrimaryCity(): PrimaryCity | null {
+  try { return JSON.parse(localStorage.getItem(PRIMARY_CITY_KEY) || "null"); } catch { return null; }
+}
+function savePrimaryCity(city: PrimaryCity | null) {
+  localStorage.setItem(PRIMARY_CITY_KEY, city ? JSON.stringify(city) : "");
 }
 
 export default function PrevisaoTempo() {
