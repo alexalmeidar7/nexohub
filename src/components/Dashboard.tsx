@@ -494,6 +494,20 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           </div>
 
           {/* Content area */}
+          {currentPage !== "dashboard" && (
+            <div className="flex items-center gap-2 mb-2 ml-1">
+              <button
+                onClick={() => setCurrentPage("dashboard")}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all"
+                style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "#ffffff" }}
+                onMouseEnter={e => { e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.25)"; }}
+                onMouseLeave={e => { e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.15)"; }}
+              >
+                <ChevronUp size={14} className="rotate-[-90deg]" /> Voltar
+              </button>
+              <span className="text-white font-semibold text-sm">{pageTitle[currentPage]}</span>
+            </div>
+          )}
           <div className={`flex-1 overflow-y-auto overflow-x-hidden rounded-2xl ${currentPage !== "dashboard" ? "mv-content-area" : ""}`} style={currentPage === "dashboard" ? {} : { padding: "1rem" }}>
             <Suspense fallback={<ModulePageSkeleton />}>
               {currentPage === "previsao" && <PrevisaoTempo />}
