@@ -1139,27 +1139,36 @@ export default function PlayerPage() {
   }, [canal, playing, playStream]);
 
   const navigateChannel = useCallback((dir: 1 | -1) => {
-    if (canais.length === 0) return;
-    const next = (currentIndex + dir + canais.length) % canais.length;
-    setCurrentIndex(next);
-    const c = canais[next];
-    if (!c) return;
+    if (liveChannels.length === 0) return;
+
+    const currentLiveIndex = canal ? liveChannels.findIndex((c) => c.id === canal.id) : -1;
+    const baseIndex = currentLiveIndex >= 0 ? currentLiveIndex : 0;
+    const nextLiveIndex = (baseIndex + dir + liveChannels.length) % liveChannels.length;
+    const nextChannel = liveChannels[nextLiveIndex];
+    if (!nextChannel) return;
+
+    const nextIndex = canais.findIndex((c) => c.id === nextChannel.id);
+    if (nextIndex < 0) return;
+
+    setCurrentIndex(nextIndex);
+
     // Stop any playing audio/video when switching channels — full cleanup
     if (hlsRef.current) { hlsRef.current.destroy(); hlsRef.current = null; }
     if (audioRef.current) { audioRef.current.pause(); audioRef.current.removeAttribute("src"); audioRef.current.load(); }
     if (videoRef.current) { videoRef.current.pause(); videoRef.current.removeAttribute("src"); videoRef.current.load(); }
     setHlsLevels([]);
     setHlsCurrentLevel(-1);
-    if (c.type === "youtube") {
+
+    if (nextChannel.type === "youtube") {
       setPlaying(true);
       setBuffering(false);
       setSelectedVideoId(null);
       setSidebarOpen(false);
     } else {
       // Always auto-start when user explicitly navigates channels
-      setTimeout(() => playStream(c.url, c.type), 100);
+      setTimeout(() => playStream(nextChannel.url, nextChannel.type), 100);
     }
-  }, [canais, currentIndex, playing, playStream, isAutoplayChannel]);
+  }, [canal, canais, liveChannels, playStream]);
 
   // Fullscreen
   useEffect(() => {
