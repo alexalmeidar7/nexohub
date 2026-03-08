@@ -172,13 +172,36 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
     const fetchData = async () => {
       let userId = user?.id;
 
-      if (userSlug && !userId) {
+      // Always use public-player-data when viewing via userSlug to get the channel owner's data
+      if (userSlug) {
         const { data } = await supabase.functions.invoke("public-player-data", {
           body: { slug: userSlug },
         });
         if (data?.channels) setChannels(data.channels);
         if (data?.empresa?.logo) setLogoUrl(data.empresa.logo);
         if (data?.empresa?.nome) setChannelName(data.empresa.nome);
+        if (data?.programas) setProgramas(data.programas);
+
+        // Still fetch watch history for logged-in user
+        if (userId) {
+          const { data: historyData } = await supabase
+            .from("watch_history")
+            .select("id, channel_name, channel_cover_url, channel_logo_url, channel_type, watched_at, channel_id")
+            .eq("user_id", userId)
+            .order("watched_at", { ascending: false })
+            .limit(10);
+          if (historyData) {
+            const seen = new Set<string>();
+            const unique = historyData.filter(h => {
+              const key = h.channel_id || h.id;
+              if (seen.has(key)) return false;
+              seen.add(key);
+              return true;
+            });
+            setWatchHistory(unique);
+          }
+        }
+
         setDataLoaded(true);
         return;
       }
