@@ -454,6 +454,15 @@ export default function PrevisaoTempo() {
                 )}
                 {forecastDescription && (
                   <div className="rounded-lg p-3 mt-1" style={{ backgroundColor: "rgba(45,190,243,0.06)", border: "1px solid rgba(45,190,243,0.15)" }}>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-bold" style={{ color: "#0d0446" }}>Veja como fica o tempo nos próximos 5 dias</span>
+                      <button onClick={() => setForecastDescription("")}
+                        className="text-xs px-2 py-0.5 rounded-full transition-all"
+                        style={{ color: "rgba(13,4,70,0.5)", backgroundColor: "rgba(13,4,70,0.06)" }}
+                        onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#0d0446"; e.currentTarget.style.color = "#ffffff"; }}
+                        onMouseLeave={e => { e.currentTarget.style.backgroundColor = "rgba(13,4,70,0.06)"; e.currentTarget.style.color = "rgba(13,4,70,0.5)"; }}
+                      >✕</button>
+                    </div>
                     <div className="flex items-start gap-2">
                       <Sparkles size={14} className="mt-0.5 flex-shrink-0" style={{ color: "#2dbef3" }} />
                       <p className="text-sm leading-relaxed" style={{ color: "#0d0446" }}>{forecastDescription}</p>
