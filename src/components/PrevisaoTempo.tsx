@@ -395,7 +395,22 @@ export default function PrevisaoTempo() {
                 <WeatherIcon code={weather.current.weatherCode} size={64} />
               </div>
             </div>
-            <div className="text-5xl font-bold mb-6" style={{ color: "#2dbef3" }}>{weather.current.temp}°C</div>
+            <div className="flex items-center gap-5 mb-6">
+              <div className="text-5xl font-bold" style={{ color: "#2dbef3" }}>{weather.current.temp}°C</div>
+              <div className="flex-1">
+                {aiLoading ? (
+                  <div className="flex items-center gap-2" style={{ color: "rgba(13,4,70,0.4)" }}>
+                    <Sparkles size={14} className="animate-pulse" />
+                    <span className="text-xs italic">Gerando descrição...</span>
+                  </div>
+                ) : aiDescription ? (
+                  <div className="flex items-start gap-2">
+                    <Sparkles size={14} className="mt-0.5 flex-shrink-0" style={{ color: "#2dbef3" }} />
+                    <p className="text-sm leading-relaxed" style={{ color: "#0d0446" }}>{aiDescription}</p>
+                  </div>
+                ) : null}
+              </div>
+            </div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <Stat icon={<Thermometer size={16} />} label="Mínima" value={`${weather.current.tempMin}°C`} />
               <Stat icon={<Thermometer size={16} />} label="Máxima" value={`${weather.current.tempMax}°C`} />
