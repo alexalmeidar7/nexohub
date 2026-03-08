@@ -199,7 +199,8 @@ export default function ConfiguracoesPage() {
   };
 
   const resetCanalForm = () => {
-    setCanalForm({ numero_canal: "", name: "", logo_url: "", cover_url: "", url: "", type: "audio_live" });
+    setCanalForm({ numero_canal: "", name: "", logo_url: "", cover_url: "", url: "", type: "audio_live", catalog_name: "" });
+    setCanalMode("live");
     setEditingCanal(null);
   };
 
