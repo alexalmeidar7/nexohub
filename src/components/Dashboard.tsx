@@ -182,7 +182,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   };
 
   const handleMenuClick = (item: MenuItem) => {
-    if (item.label === "player") {
+    if (item.label === "player - módulo externo") {
       window.open("/user/nexohub/player", "_blank");
       return;
     }
