@@ -153,7 +153,7 @@ export default function AudioDualCard({
 
         {/* Left — Presenter (hidden behind cover, slides left at 3s) */}
         <div
-          className="absolute top-0 bottom-0 md:w-[50%] w-[70%] rounded-3xl overflow-hidden shadow-xl"
+          className="absolute md:w-[50%] w-[70%] aspect-square rounded-3xl overflow-hidden shadow-xl"
           style={{
             animation: "presenterReveal 1.6s cubic-bezier(0.22, 1, 0.36, 1) 3s forwards",
             opacity: 0,
