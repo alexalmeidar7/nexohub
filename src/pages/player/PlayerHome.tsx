@@ -302,7 +302,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       </aside>
 
       {/* Content wrapper with fade transition */}
-      <div className={`transition-opacity duration-400 ease-in-out ${fadeOut ? "opacity-0" : "opacity-100"}`}>
+      <div className={`flex-1 overflow-y-auto h-full transition-opacity duration-400 ease-in-out ${fadeOut ? "opacity-0" : "opacity-100"}`}>
         {/* Fixed Header */}
         <header className="fixed top-0 left-0 right-0 z-20 flex items-center justify-between px-8 py-4">
             <div className="flex items-center gap-3">
