@@ -130,7 +130,7 @@ function PlayerGradeDialog({ programas, onClose }: Props) {
             .grade-scroll::-webkit-scrollbar-thumb:hover { background: #ff1a1a; }
             .grade-cell:hover { outline: 2px solid #ed0808 !important; outline-offset: -1px; }
           `}</style>
-          <table className="w-full text-xs border-separate border-spacing-1">
+          <table data-no-row-hover className="w-full text-xs border-separate border-spacing-1">
             <thead className="sticky top-0 z-10" style={{ backgroundColor: "#111" }}>
               <tr>
                 <th className="px-2 py-2 text-left w-20 rounded-lg" style={{ color: "#d30707" }}>Horário</th>
