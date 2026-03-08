@@ -49,6 +49,7 @@ interface Canal {
   url: string;
   type: string;
   active: boolean;
+  catalog_name: string;
 }
 
 function CollapsibleBox({ title, defaultOpen = true, children }: { title: string; defaultOpen?: boolean; children: React.ReactNode }) {
