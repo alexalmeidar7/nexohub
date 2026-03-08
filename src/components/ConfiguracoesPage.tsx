@@ -394,7 +394,7 @@ export default function ConfiguracoesPage() {
           )}
 
           {/* Images - shared */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="space-y-1">
               <label className="text-xs font-semibold text-muted-foreground">Capa do Programa (1280x720)</label>
               <div className="flex items-center gap-2">
@@ -413,6 +413,15 @@ export default function ConfiguracoesPage() {
                 </button>
               </div>
             </div>
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-muted-foreground">Logo do Programa</label>
+              <div className="flex items-center gap-2">
+                {canalForm.background_url && <img src={canalForm.background_url} alt="Logo" className="w-16 h-9 rounded object-contain border border-border" />}
+                <button onClick={() => handleImageUpload("background_url")} className="bg-muted border border-border px-3 py-2 rounded-lg text-foreground hover:bg-muted/80 text-xs flex items-center gap-1">
+                  <Upload size={12} /> {canalForm.background_url ? "Trocar" : "Upload"}
+                </button>
+              </div>
+            </div>
           </div>
 
           {/* Especificações */}
@@ -427,18 +436,6 @@ export default function ConfiguracoesPage() {
                 className="accent-primary w-4 h-4" />
               <span className="text-sm font-medium text-foreground">Áudio Estéreo</span>
             </label>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold text-muted-foreground">Classificação Etária:</span>
-              <select value={canalForm.classificacao_etaria} onChange={(e) => setCanalForm(p => ({ ...p, classificacao_etaria: e.target.value }))}
-                className="bg-muted border border-border px-3 py-2 rounded-lg text-foreground text-sm outline-none focus:ring-1 focus:ring-primary">
-                <option value="L">L (Livre)</option>
-                <option value="A10">A10</option>
-                <option value="A12">A12</option>
-                <option value="A14">A14</option>
-                <option value="A16">A16</option>
-                <option value="A18">A18</option>
-              </select>
-            </div>
           </div>
 
           {/* Submit */}
