@@ -12,6 +12,7 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // Auth check
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -26,9 +27,8 @@ Deno.serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } }
     );
 
-    const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims) {
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -65,8 +65,74 @@ Deno.serve(async (req) => {
 
     const videoId = match[1];
 
-    // Generate clip URL and embed URL with start/end parameters
-    const clipUrl = `https://www.youtube.com/embed/${videoId}?start=${start_seconds}&end=${end_seconds}&autoplay=1`;
+    // Call RapidAPI YouTube downloader
+    const RAPIDAPI_KEY = Deno.env.get("RAPIDAPI_KEY");
+    if (!RAPIDAPI_KEY) {
+      return new Response(
+        JSON.stringify({ error: "Chave da API não configurada. Entre em contato com o suporte." }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const apiResponse = await fetch(
+      `https://youtube-search-download3.p.rapidapi.com/download?video=${videoId}`,
+      {
+        method: "GET",
+        headers: {
+          "x-rapidapi-key": RAPIDAPI_KEY,
+          "x-rapidapi-host": "youtube-search-download3.p.rapidapi.com",
+        },
+      }
+    );
+
+    if (!apiResponse.ok) {
+      const errText = await apiResponse.text();
+      console.error("RapidAPI error:", apiResponse.status, errText);
+      return new Response(
+        JSON.stringify({ error: "Falha ao buscar link de download do vídeo." }),
+        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const apiData = await apiResponse.json();
+
+    // Extract download links - try to find mp4 formats
+    let downloadUrl = "";
+    let quality = "";
+
+    // The API typically returns video formats in a links or similar structure
+    // Adapt based on actual API response
+    if (apiData?.video) {
+      // Try to get best quality mp4
+      const videos = Array.isArray(apiData.video) ? apiData.video : [];
+      const mp4 = videos.find((v: any) => v.mimeType?.includes("video/mp4") && v.quality === "720p")
+        || videos.find((v: any) => v.mimeType?.includes("video/mp4") && v.quality === "360p")
+        || videos.find((v: any) => v.mimeType?.includes("video/mp4"))
+        || videos[0];
+      if (mp4) {
+        downloadUrl = mp4.url || mp4.downloadUrl || "";
+        quality = mp4.quality || mp4.qualityLabel || "";
+      }
+    }
+
+    // Fallback: check other common response structures
+    if (!downloadUrl && apiData?.links) {
+      const links = Array.isArray(apiData.links) ? apiData.links : [];
+      const mp4Link = links.find((l: any) => l.mimeType?.includes("mp4") || l.extension === "mp4")
+        || links[0];
+      if (mp4Link) {
+        downloadUrl = mp4Link.url || mp4Link.link || "";
+        quality = mp4Link.quality || "";
+      }
+    }
+
+    // Another common pattern
+    if (!downloadUrl && apiData?.url) {
+      downloadUrl = apiData.url;
+    }
+
+    // Generate clip embed and share URLs
+    const clipEmbedUrl = `https://www.youtube.com/embed/${videoId}?start=${start_seconds}&end=${end_seconds}&autoplay=1`;
     const shareUrl = `https://youtu.be/${videoId}?t=${start_seconds}`;
     const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
 
@@ -74,9 +140,11 @@ Deno.serve(async (req) => {
       JSON.stringify({
         success: true,
         video_id: videoId,
-        clip_embed_url: clipUrl,
+        clip_embed_url: clipEmbedUrl,
         share_url: shareUrl,
         thumbnail_url: thumbnailUrl,
+        download_url: downloadUrl,
+        download_quality: quality,
         start_seconds,
         end_seconds,
         duration,
