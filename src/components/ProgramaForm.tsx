@@ -276,6 +276,9 @@ export default function ProgramaForm() {
   const [newTipo, setNewTipo] = useState("");
   const [tipoDialogOpen, setTipoDialogOpen] = useState(false);
 
+  // Classificação Etária
+  const [classificacaoEtaria, setClassificacaoEtaria] = useState("");
+
   const addTipo = () => {
     const t = newTipo.trim();
     if (!t || tiposPrograma.includes(t)) return;
