@@ -325,7 +325,7 @@ export default function AudioDualCard({
 
         {/* Outer wrapper handles the initial entry animation */}
         <div
-          className="relative md:w-[55%] w-full"
+          className="relative md:w-[55%] w-[75%]"
           style={{
             zIndex: 2,
             animation: "coverFadeAndSlide 3.5s cubic-bezier(0.22, 1, 0.36, 1) forwards",
