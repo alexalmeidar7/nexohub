@@ -328,13 +328,14 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
     fetchPlaylists();
   }, [dataLoaded, channels]);
 
-  const goToPlayer = () => {
+  const goToPlayer = (channelId?: string) => {
     setFadeOut(true);
+    const qs = channelId ? `?ch=${channelId}` : "";
     setTimeout(() => {
       if (userSlug) {
-        navigate(`/user/${userSlug}/nexohub/player/watch`);
+        navigate(`/user/${userSlug}/nexohub/player/watch${qs}`);
       } else {
-        navigate("/user/nexohub/player/watch");
+        navigate(`/user/nexohub/player/watch${qs}`);
       }
     }, 400);
   };
