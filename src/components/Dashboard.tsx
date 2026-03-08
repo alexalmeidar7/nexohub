@@ -61,6 +61,7 @@ const sidebarMenu: MenuItem[] = [
   { icon: Newspaper, label: "notícias", page: "noticias" },
   { icon: Music, label: "música no ar", page: "musica" },
   { icon: CalendarDays, label: "agenda", page: "agenda" },
+  { icon: MonitorPlay, label: "player - configurações", page: "playerconfig" },
   { icon: MonitorPlay, label: "player - módulo externo", page: undefined }, // opens new tab
   {
     icon: ShoppingBag, label: "comercial", children: [
