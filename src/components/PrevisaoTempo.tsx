@@ -45,12 +45,6 @@ const weatherLabels: Record<number, string> = {
   95: "Tempestade", 96: "Tempestade com granizo", 99: "Tempestade severa",
 };
 
-function getWeatherIcon(code: number, forceDay = false) {
-  const icons = (!forceDay && isNightTime()) ? weatherIconsNight : weatherIconsDay;
-  const closest = Object.keys(icons).map(Number)
-    .reduce((prev, curr) => (Math.abs(curr - code) < Math.abs(prev - code) ? curr : prev));
-  return icons[closest] || "🌡️";
-}
 
 function getWeatherLabel(code: number) {
   const closest = Object.keys(weatherLabels).map(Number)
