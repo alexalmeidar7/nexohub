@@ -1,0 +1,1 @@
+UPDATE streaming_channels SET url = 'https://radio.saopaulo01.com.br:10895/stream' WHERE id = '6184e1d8-7f9b-4d4a-ac1d-a84d2abdf2cc'
