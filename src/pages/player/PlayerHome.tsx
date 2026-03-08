@@ -274,7 +274,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
 
   return (
     <div
-      className="fixed inset-0 bg-player text-player-foreground flex animate-fade-in"
+      className="fixed inset-0 bg-player text-player-foreground flex animate-fade-in overflow-hidden"
       style={{ background: "var(--player-glow-corner)" }}
     >
       {/* Red border */}
