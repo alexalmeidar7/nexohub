@@ -464,7 +464,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                       key={ch.id}
                       channel={ch}
                       currentProgram={currentProgram}
-                      onClick={goToPlayer}
+                      onClick={() => goToPlayer(ch.id)}
                       onHoverChange={setHoveredThumb}
                     />
                   ))}
