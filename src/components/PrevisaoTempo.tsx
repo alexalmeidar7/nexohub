@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Search, Droplets, CloudRain, Thermometer, Star } from "lucide-react";
+import { Search, Droplets, CloudRain, Thermometer, Star, Sparkles } from "lucide-react";
 import XmlLinkRow from "./XmlLinkRow";
 import { WeatherIcon } from "./WeatherIcons";
+import { supabase } from "@/integrations/supabase/client";
 
 interface WeatherData {
   city: string;
@@ -90,6 +91,8 @@ export default function PrevisaoTempo() {
   const [favorites, setFavorites] = useState<FavoriteCity[]>(getFavorites);
 
   const [primaryCity, setPrimaryCity] = useState<PrimaryCity | null>(getPrimaryCity);
+  const [aiDescription, setAiDescription] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
 
   const [suggestions, setSuggestions] = useState<GeoResult[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -146,6 +149,26 @@ export default function PrevisaoTempo() {
       }));
       localStorage.setItem(STORAGE_KEY, name);
       setWeather({ city: name, lat, lon, current, forecast });
+      // Fetch AI description
+      if (!silent) {
+        setAiLoading(true);
+        setAiDescription("");
+        try {
+          const { data } = await supabase.functions.invoke("weather-description", {
+            body: {
+              city: name,
+              temp: current.temp,
+              tempMin: current.tempMin,
+              tempMax: current.tempMax,
+              humidity: current.humidity,
+              rainChance: current.rainChance,
+              condition: getWeatherLabel(current.weatherCode),
+            },
+          });
+          if (data?.description) setAiDescription(data.description);
+        } catch { /* ignore AI errors */ }
+        setAiLoading(false);
+      }
     } catch { if (!silent) setError("Erro ao buscar dados meteorológicos."); }
     finally { setLoading(false); }
   }, []);
@@ -372,7 +395,22 @@ export default function PrevisaoTempo() {
                 <WeatherIcon code={weather.current.weatherCode} size={64} />
               </div>
             </div>
-            <div className="text-5xl font-bold mb-6" style={{ color: "#2dbef3" }}>{weather.current.temp}°C</div>
+            <div className="flex items-center gap-5 mb-6">
+              <div className="text-5xl font-bold" style={{ color: "#2dbef3" }}>{weather.current.temp}°C</div>
+              <div className="flex-1">
+                {aiLoading ? (
+                  <div className="flex items-center gap-2" style={{ color: "rgba(13,4,70,0.4)" }}>
+                    <Sparkles size={14} className="animate-pulse" />
+                    <span className="text-xs italic">Gerando descrição...</span>
+                  </div>
+                ) : aiDescription ? (
+                  <div className="flex items-start gap-2">
+                    <Sparkles size={14} className="mt-0.5 flex-shrink-0" style={{ color: "#2dbef3" }} />
+                    <p className="text-sm leading-relaxed" style={{ color: "#0d0446" }}>{aiDescription}</p>
+                  </div>
+                ) : null}
+              </div>
+            </div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <Stat icon={<Thermometer size={16} />} label="Mínima" value={`${weather.current.tempMin}°C`} />
               <Stat icon={<Thermometer size={16} />} label="Máxima" value={`${weather.current.tempMax}°C`} />
