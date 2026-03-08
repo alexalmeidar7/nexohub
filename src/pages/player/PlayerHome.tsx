@@ -492,6 +492,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                           channel={ch}
                           currentProgram={currentProgram}
                           onClick={goToPlayer}
+                          onHoverChange={setHoveredThumb}
                         />
                       ))}
                     </div>
