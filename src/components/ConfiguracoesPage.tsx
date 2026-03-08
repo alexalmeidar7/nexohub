@@ -202,6 +202,7 @@ export default function ConfiguracoesPage() {
     if (!user || !canalForm.name || !canalForm.url) { toast.error("Preencha Nome e URL."); return; }
     const payload: any = {
       name: canalForm.name, logo_url: canalForm.logo_url, cover_url: canalForm.cover_url,
+      background_url: canalForm.background_url,
       url: canalForm.url, type: canalMode === "catalog" ? "catalog" : canalForm.type,
       catalog_name: canalMode === "catalog" ? canalForm.catalog_name : "",
       numero_canal: canalMode === "live" ? canalForm.numero_canal : "",
