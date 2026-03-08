@@ -272,20 +272,39 @@ export default function PrevisaoTempo() {
 
   return (
     <div className="animate-fade-in space-y-8">
-      {/* Primary city box */}
-      {primaryCity && (
-        <div className="flex items-center gap-3 rounded-xl px-4 py-3"
-          style={{ backgroundColor: "#0d0446", border: "2px solid #2dbef3" }}>
-          <Star size={16} style={{ color: "#2dbef3" }} />
-          <div className="flex-1">
-            <p className="text-xs" style={{ color: "rgba(255,255,255,0.6)" }}>Cidade Principal</p>
-            <button onClick={() => { setCity(primaryCity.name); fetchWeatherByCoords(primaryCity.lat, primaryCity.lon, primaryCity.name); }}
-              className="text-sm font-semibold transition-colors"
-              style={{ color: "#ffffff" }}
-              onMouseEnter={e => { e.currentTarget.style.color = "#2dbef3"; }}
-              onMouseLeave={e => { e.currentTarget.style.color = "#ffffff"; }}
-            >{primaryCity.name}</button>
-          </div>
+      {/* Primary + Secondary cities row */}
+      {(primaryCity || favorites.length > 0) && (
+        <div className="flex gap-2 flex-wrap items-center">
+          {primaryCity && (
+            <div className="flex items-center gap-2 rounded-full px-3 py-1.5"
+              style={{ backgroundColor: "#0d0446", border: "2px solid #2dbef3" }}>
+              <Star size={12} style={{ color: "#2dbef3" }} />
+              <button onClick={() => { setCity(primaryCity.name); fetchWeatherByCoords(primaryCity.lat, primaryCity.lon, primaryCity.name); }}
+                className="text-xs font-semibold transition-colors"
+                style={{ color: "#ffffff" }}
+                onMouseEnter={e => { e.currentTarget.style.color = "#2dbef3"; }}
+                onMouseLeave={e => { e.currentTarget.style.color = "#ffffff"; }}
+              >{primaryCity.name}</button>
+            </div>
+          )}
+          {favorites.map(f => (
+            <div key={f.name} className="flex items-center gap-2 rounded-full px-3 py-1.5"
+              style={{ backgroundColor: "#ffffff", border: "1px solid #0d0446" }}>
+              <input type="checkbox" checked={f.inXml} onChange={() => toggleFavoriteXml(f.name)}
+                className="w-3 h-3" style={{ accentColor: "#2dbef3" }} title="Incluir no XML" />
+              <button onClick={() => { setCity(f.name); fetchWeather(f.name); }}
+                className="text-xs transition-colors"
+                style={{ color: "#0d0446" }}
+                onMouseEnter={e => { e.currentTarget.style.color = "#2dbef3"; }}
+                onMouseLeave={e => { e.currentTarget.style.color = "#0d0446"; }}
+              >{f.name}</button>
+              <button onClick={() => removeFavorite(f.name)} className="text-xs"
+                style={{ color: "rgba(13,4,70,0.4)" }}
+                onMouseEnter={e => { e.currentTarget.style.color = "#dc2626"; }}
+                onMouseLeave={e => { e.currentTarget.style.color = "rgba(13,4,70,0.4)"; }}
+              >✕</button>
+            </div>
+          ))}
         </div>
       )}
 
@@ -327,33 +346,6 @@ export default function PrevisaoTempo() {
           </div>
         )}
       </div>
-
-      {/* Secondary cities (favorites) */}
-      {favorites.length > 0 && (
-        <div>
-          <p className="text-xs font-semibold mb-2" style={{ color: "rgba(13,4,70,0.5)" }}>Cidades Secundárias</p>
-          <div className="flex flex-wrap gap-2">
-          {favorites.map(f => (
-            <div key={f.name} className="flex items-center gap-2 rounded-full px-3 py-1.5"
-              style={{ backgroundColor: "#ffffff", border: "1px solid #0d0446" }}>
-              <input type="checkbox" checked={f.inXml} onChange={() => toggleFavoriteXml(f.name)}
-                className="w-3 h-3" style={{ accentColor: "#2dbef3" }} title="Incluir no XML" />
-              <button onClick={() => { setCity(f.name); fetchWeather(f.name); }}
-                className="text-xs transition-colors"
-                style={{ color: "#0d0446" }}
-                onMouseEnter={e => { e.currentTarget.style.color = "#2dbef3"; }}
-                onMouseLeave={e => { e.currentTarget.style.color = "#0d0446"; }}
-              >{f.name}</button>
-              <button onClick={() => removeFavorite(f.name)} className="text-xs"
-                style={{ color: "rgba(13,4,70,0.4)" }}
-                onMouseEnter={e => { e.currentTarget.style.color = "#dc2626"; }}
-                onMouseLeave={e => { e.currentTarget.style.color = "rgba(13,4,70,0.4)"; }}
-              >✕</button>
-            </div>
-          ))}
-          </div>
-        </div>
-      )}
 
       {error && <p style={{ color: "#dc2626" }}>{error}</p>}
       {loading && (
