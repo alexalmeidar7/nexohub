@@ -818,7 +818,7 @@ export default function ProgramaForm() {
             className="rounded-xl overflow-auto max-h-[300px] grade-scroll"
             style={{ border: "1px solid rgba(13,4,70,0.1)", backgroundColor: "#ffffff", scrollbarWidth: "thin", scrollbarColor: "#0d0446 transparent", position: "relative" }}
           >
-            <table className="w-full text-xs border-separate border-spacing-1">
+            <table data-no-row-hover className="w-full text-xs border-separate border-spacing-1">
               <thead className="sticky top-0 z-10" style={{ backgroundColor: "#ffffff" }}>
                 <tr>
                   <th className="px-2 py-2 text-left w-20 rounded-lg" style={{ color: "#0d0446" }}>Horário</th>
