@@ -965,7 +965,7 @@ export default function PlayerPage() {
                   hls.destroy();
                   hlsRef.current = null;
                   setTimeout(() => {
-                    if (canal) playStream(canal.url, canal.type);
+                    playStream(url, type);
                   }, 2000);
                 }
               } else {
