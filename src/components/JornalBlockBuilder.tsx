@@ -303,29 +303,37 @@ export default function JornalBlockBuilder({ config, selectedNews, onClose }: Pr
 
       {/* Edit Dialog */}
       <Dialog open={!!editingItem} onOpenChange={(open) => !open && setEditingItem(null)}>
-        <DialogContent className="max-w-lg" style={{ backgroundColor: "#ffffff" }}>
+        <DialogContent className="max-w-lg" style={{ backgroundColor: "#ffffff", borderRadius: "20px", border: "1px solid #2ec1f7" }}>
+          <style>{`
+            .edit-materia-input:focus, .edit-materia-input:focus-visible, .edit-materia-input:active {
+              outline: none !important;
+              box-shadow: none !important;
+              ring: none !important;
+              border-color: #2ec1f7 !important;
+            }
+          `}</style>
           <DialogHeader>
             <DialogTitle className="text-sm font-bold" style={{ color: "#0d0446" }}>Editar Matéria</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
             <div>
-              <Label className="text-xs" style={{ color: "#0d0446" }}>Título</Label>
-              <Input value={editTitle} onChange={e => setEditTitle(e.target.value)} className="text-xs mt-1" />
+              <Label className="text-xs font-semibold" style={{ color: "#0d0446" }}>Título</Label>
+              <Input value={editTitle} onChange={e => setEditTitle(e.target.value)} className="edit-materia-input text-xs mt-1" style={{ borderColor: "#2ec1f7", borderRadius: "9999px", backgroundColor: "#ffffff", color: "#0d0446" }} />
             </div>
             <div>
-              <Label className="text-xs" style={{ color: "#0d0446" }}>URL da Imagem</Label>
-              <Input value={editImageUrl} onChange={e => setEditImageUrl(e.target.value)} className="text-xs mt-1" placeholder="https://..." />
+              <Label className="text-xs font-semibold" style={{ color: "#0d0446" }}>URL da Imagem</Label>
+              <Input value={editImageUrl} onChange={e => setEditImageUrl(e.target.value)} className="edit-materia-input text-xs mt-1" placeholder="https://..." style={{ borderColor: "#2ec1f7", borderRadius: "9999px", backgroundColor: "#ffffff", color: "#0d0446" }} />
               {editImageUrl && (
                 <img src={editImageUrl} alt="" className="mt-1 w-full h-24 object-cover rounded" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
               )}
             </div>
             <div>
-              <Label className="text-xs" style={{ color: "#0d0446" }}>Texto da Matéria</Label>
-              <Textarea value={editBody} onChange={e => setEditBody(e.target.value)} className="text-xs mt-1 min-h-[120px]" />
+              <Label className="text-xs font-semibold" style={{ color: "#0d0446" }}>Texto da Matéria</Label>
+              <Textarea value={editBody} onChange={e => setEditBody(e.target.value)} className="edit-materia-input text-xs mt-1 min-h-[120px]" style={{ borderColor: "#2ec1f7", borderRadius: "20px", backgroundColor: "#ffffff", color: "#0d0446" }} />
             </div>
             <div className="flex justify-end gap-2">
-              <Button variant="outline" size="sm" onClick={() => setEditingItem(null)}>Cancelar</Button>
-              <Button size="sm" onClick={saveEdit} style={{ backgroundColor: "#0d0446" }}>Salvar</Button>
+              <Button variant="outline" size="sm" onClick={() => setEditingItem(null)} style={{ borderColor: "#2ec1f7", borderRadius: "9999px", color: "#0d0446" }}>Cancelar</Button>
+              <Button size="sm" onClick={saveEdit} style={{ backgroundColor: "#2ec1f7", color: "#0d0446", borderRadius: "9999px" }}>Salvar</Button>
             </div>
           </div>
         </DialogContent>
