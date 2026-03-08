@@ -152,8 +152,8 @@ export default function LogosPatrocinadoresPage() {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      <form onSubmit={handleSubmit} className="rounded-xl p-6 space-y-4" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)" }}>
-        <h3 className="text-lg font-bold" style={{ color: "#0d0446" }}>Nova Logo de Patrocinador</h3>
+      <form onSubmit={handleSubmit} className="rounded-xl p-4 sm:p-6 space-y-4" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)" }}>
+        <h3 className="text-base sm:text-lg font-bold" style={{ color: "#0d0446" }}>Nova Logo de Patrocinador</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-4">
             <div>
@@ -235,14 +235,14 @@ export default function LogosPatrocinadoresPage() {
                 <div className="px-4 py-2 font-semibold text-sm" style={{ backgroundColor: "#0d0446", color: "#ffffff" }}>
                   {programa.nome}
                 </div>
-                <div className="p-4 px-10" style={{ backgroundColor: "#ffffff" }}>
+                <div className="p-3 sm:p-4 px-4 sm:px-10" style={{ backgroundColor: "#ffffff" }}>
                   <Carousel opts={{ align: "start" }} className="w-full">
                     <CarouselContent>
                       {gLogos.map((logo) => {
                         const diasRestantes = Math.ceil((new Date(logo.data_final + "T23:59:59").getTime() - Date.now()) / 86400000);
                         const isEditing = editingLogoId === logo.id;
                         return (
-                          <CarouselItem key={logo.id} className="basis-1/3 md:basis-1/4 lg:basis-1/5">
+                          <CarouselItem key={logo.id} className="basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5">
                             <div className="space-y-2 text-center">
                               <div className="relative group">
                                 <img
@@ -281,8 +281,8 @@ export default function LogosPatrocinadoresPage() {
                         );
                       })}
                     </CarouselContent>
-                    <CarouselPrevious />
-                    <CarouselNext />
+                    <CarouselPrevious className="hidden sm:flex" />
+                    <CarouselNext className="hidden sm:flex" />
                   </Carousel>
                 </div>
               </div>
