@@ -1618,7 +1618,7 @@ export default function PlayerPage() {
   }, [shopProducts, currentProg]);
 
   const showShopIcon = currentShopProducts.length > 0;
-  const playerHomePath = userSlug ? `/user/${userSlug}/nexohub/player` : "/user/nexohub/player";
+  const playerHomePath = userSlug ? `/user/${userSlug}/nexohub/player?step=home` : "/user/nexohub/player?step=home";
   const userDisplayName = profileName || user?.email?.split("@")[0] || "Visitante";
 
   // Shopping popup is manual-only via icon click
