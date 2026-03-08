@@ -531,7 +531,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
           />
         </div>
 
-        <main className="px-8 pt-24 pb-6 z-10 ml-20 relative">
+        <main ref={mainRef} className="px-8 pt-24 pb-6 z-10 ml-20 relative">
           {activeSection === "streaming" ? (
             /* ── Página dedicada: Canais ao Vivo ── */
              <section style={{ marginTop: "220px" }}>
