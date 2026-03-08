@@ -919,10 +919,10 @@ export default function ProgramaForm() {
         </div>
       ) : programas.length > 0 && (
         <div>
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3 mb-4">
             <h4 className="text-lg font-medium" style={{ color: "#0d0446" }}>Grade de Programação</h4>
             <Select value={gradeEstudioFilter} onValueChange={setGradeEstudioFilter}>
-              <SelectTrigger className="w-[200px]" style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "20px", border: "none", fontSize: "14px", height: "28px", padding: "0 12px" }}>
+              <SelectTrigger className="w-[180px]" style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "20px", border: "none", fontSize: "11px", height: "26px", padding: "0 10px" }}>
                 <SelectValue placeholder="Filtrar por estúdio" />
               </SelectTrigger>
               <SelectContent>
