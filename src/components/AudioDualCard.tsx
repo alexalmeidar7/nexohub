@@ -384,7 +384,7 @@ export default function AudioDualCard({
                   key={musicCover}
                   src={musicCover}
                   alt={musicTitle || "Capa"}
-                  className="absolute inset-0 w-full h-full object-cover rounded-3xl animate-fade-in"
+                  className="absolute inset-0 w-full h-full object-cover object-top rounded-3xl animate-fade-in"
                   style={{ animationDuration: "0.7s" }}
                 />
               ) : channelLogo ? (
