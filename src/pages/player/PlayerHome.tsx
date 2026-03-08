@@ -123,10 +123,8 @@ function StreamingCard({ channel, currentProgram, onClick, onHoverChange }: { ch
       onMouseLeave={() => { setHovered(false); setFrameIdx(0); onHoverChange?.(null); }}
       className="flex-shrink-0 w-72 h-40 rounded-xl overflow-hidden relative transition-all hover:scale-[1.02] border-[5px] border-transparent hover:border-white"
     >
-      {/* Background */}
+      {/* Background: Capa do Programa (cover_url) */}
       {channel.cover_url ? (
-        <img src={channel.cover_url} alt={channel.name} className="w-full h-full object-cover" />
-      ) : channel.cover_url ? (
         <img src={channel.cover_url} alt={channel.name} className="w-full h-full object-cover" />
       ) : (
         <div className="w-full h-full bg-gradient-to-br from-player-accent/30 to-player flex items-center justify-center">
