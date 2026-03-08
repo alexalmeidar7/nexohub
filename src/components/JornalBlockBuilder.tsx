@@ -356,8 +356,10 @@ export default function JornalBlockBuilder({ config, selectedNews, onClose }: Pr
               <Input value={editTitle} onChange={e => setEditTitle(e.target.value)} className="edit-materia-input text-xs mt-1 font-bold" style={{ borderColor: "#2ec1f7", borderRadius: "9999px", backgroundColor: "#ffffff", color: "#0d0446" }} />
             </div>
             <div>
-              <Label className="text-xs font-semibold" style={{ color: "#0d0446" }}>URL da Imagem</Label>
-              <Input value={editImageUrl} onChange={e => setEditImageUrl(e.target.value)} className="edit-materia-input mt-1" placeholder="https://..." style={{ borderColor: "#2ec1f7", borderRadius: "9999px", backgroundColor: "#ffffff", color: "#0d0446", fontSize: "10px" }} />
+              <div className="flex items-center gap-2">
+                <Label className="text-xs font-semibold shrink-0" style={{ color: "#0d0446" }}>URL da Imagem</Label>
+                <Input value={editImageUrl} onChange={e => setEditImageUrl(e.target.value)} className="edit-materia-input flex-1" placeholder="https://..." style={{ borderColor: "#2ec1f7", borderRadius: "9999px", backgroundColor: "#ffffff", color: "#0d0446", fontSize: "10px", height: "28px", padding: "0 12px" }} />
+              </div>
               {editImageUrl && (
                 <img src={editImageUrl} alt="" className="mt-1 w-full h-24 object-cover rounded" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
               )}
