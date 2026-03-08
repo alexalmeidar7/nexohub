@@ -417,7 +417,7 @@ export default function ConfiguracoesPage() {
                 {c.logo_url ? <img src={c.logo_url} alt="" className="w-8 h-8 rounded object-contain" /> : <div className="w-8 h-8 rounded bg-muted flex items-center justify-center text-xs text-muted-foreground">{c.numero_canal}</div>}
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-foreground truncate">{c.name}</p>
-                  <p className="text-xs text-muted-foreground">{typeLabels[c.type] || c.type} • Canal {c.numero_canal}</p>
+                  <p className="text-xs text-muted-foreground">{typeLabels[c.type] || c.type}{c.type !== "catalog" && c.numero_canal ? ` • Canal ${c.numero_canal}` : ""}{c.catalog_name ? ` • ${c.catalog_name}` : ""}</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <button onClick={() => handleEditCanal(c)} className="text-primary hover:text-primary/80 transition-colors">
