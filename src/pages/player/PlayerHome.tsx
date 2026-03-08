@@ -179,17 +179,27 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
     const fetchData = async () => {
       let userId = user?.id;
 
-      // Determine the slug to use: from URL param, or derive from logged-in user email
-      const slug = userSlug || (user?.email ? user.email.split("@")[0] : null);
-
-      if (slug) {
+      // If logged in, fetch directly from DB (avoids edge function issues)
+      if (userId) {
+        const [channelsRes, empresaRes, programasRes] = await Promise.all([
+          supabase.from("streaming_channels").select("*").eq("user_id", userId).eq("active", true).order("numero_canal"),
+          supabase.from("empresa_config").select("*").eq("user_id", userId).maybeSingle(),
+          supabase.from("programas").select("id, nome, horario_inicio, horario_fim, dias_semana, ativo, selo, estudio, variavel, data_variavel, capa, descricao, apresentador_id").eq("user_id", userId).eq("ativo", true).order("horario_inicio"),
+        ]);
+        if (channelsRes.data) setChannels(channelsRes.data as any);
+        if (empresaRes.data?.logo) setLogoUrl(empresaRes.data.logo);
+        if (empresaRes.data?.nome) setChannelName(empresaRes.data.nome);
+        if (programasRes.data) setProgramas(programasRes.data as any);
+      } else if (userSlug && userSlug !== ":userSlug") {
+        // Public access via slug (unauthenticated visitors)
         const { data } = await supabase.functions.invoke("public-player-data", {
-          body: { slug },
+          body: { slug: userSlug },
         });
         if (data?.channels) setChannels(data.channels);
         if (data?.empresa?.logo) setLogoUrl(data.empresa.logo);
         if (data?.empresa?.nome) setChannelName(data.empresa.nome);
         if (data?.programas) setProgramas(data.programas);
+      }
 
         // Still fetch watch history for logged-in user
         if (userId) {
