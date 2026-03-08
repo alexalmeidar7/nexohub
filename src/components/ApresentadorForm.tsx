@@ -130,22 +130,30 @@ export default function ApresentadorForm() {
     ? apresentadores
     : apresentadores.filter(a => a.cargo === filterCategoria);
 
-  if (loadingList) {
-    return (
-      <div className="animate-fade-in space-y-6">
-        {/* Form skeleton */}
-        <div className="max-w-md space-y-4">
-          <Skeleton className="h-6 w-64 rounded bg-[#0d0446]/20" />
-          <Skeleton className="h-8 w-full rounded-full bg-[#0d0446]/10" />
-          <Skeleton className="h-8 w-full rounded-full bg-[#0d0446]/10" />
-          <Skeleton className="h-8 w-full rounded-full bg-[#0d0446]/10" />
-          <Skeleton className="h-8 w-32 rounded-full bg-[#0d0446]/15" />
-        </div>
-        {/* Table skeleton */}
-        <ModulePageSkeleton />
+  const listSkeleton = (
+    <div className="space-y-3 mt-6">
+      <div className="flex items-center justify-between mb-4">
+        <Skeleton className="h-5 w-28 rounded bg-[#0d0446]/15" />
+        <Skeleton className="h-7 w-[160px] rounded-full bg-[#0d0446]/10" />
       </div>
-    );
-  }
+      <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(13,4,70,0.1)" }}>
+        <div className="h-9 w-full" style={{ backgroundColor: "#0d0446" }} />
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="flex items-center gap-4 px-4 py-3" style={{ backgroundColor: i % 2 === 0 ? "#ffffff" : "#f8f8fc" }}>
+            <Skeleton className="h-3.5 w-20 rounded bg-[#0d0446]/10" />
+            <Skeleton className="h-3.5 w-32 rounded bg-[#0d0446]/10" />
+            <Skeleton className="h-3.5 w-24 rounded bg-[#0d0446]/10" />
+            <Skeleton className="h-4 w-4 rounded-full bg-[#0d0446]/10 ml-auto" />
+            <Skeleton className="h-5 w-14 rounded-full bg-[#0d0446]/10" />
+            <Skeleton className="h-4 w-4 rounded bg-[#0d0446]/10" />
+            <Skeleton className="h-5 w-10 rounded-full bg-[#0d0446]/10" />
+            <Skeleton className="h-4 w-4 rounded bg-[#0d0446]/10" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
 
   return (
     <div className="animate-fade-in space-y-6">
@@ -231,7 +239,7 @@ export default function ApresentadorForm() {
         </div>
       </div>
 
-      {apresentadores.length > 0 ? (
+      {loadingList ? listSkeleton : apresentadores.length > 0 ? (
         <div>
           <div className="flex items-center justify-between mb-4">
             <h4 className="text-lg font-medium" style={{ color: "#0d0446" }}>Cadastrados</h4>
