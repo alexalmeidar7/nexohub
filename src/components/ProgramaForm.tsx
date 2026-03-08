@@ -108,7 +108,6 @@ async function getProgramas(): Promise<Programa[]> {
     dataVariavel: (p as any).data_variavel || null,
     classificacaoEtaria: (p as any).classificacao_etaria || "",
   }));
-  }));
 }
 
 function checkConflict(programas: Programa[], diasSemana: string[], horarioInicio: string, horarioFim: string, estudio: string, excludeId?: string): Programa | null {
