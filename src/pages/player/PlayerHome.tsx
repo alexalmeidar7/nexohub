@@ -2,7 +2,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { Home, Radio, Film, ShoppingBag, LogOut, UserCircle, Clock } from "lucide-react";
+import { Home, Radio, Film, ShoppingBag, LogOut, UserCircle, Clock, Music } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface Channel {
@@ -33,7 +33,7 @@ interface PlaylistVideo {
 
 type Section = "home" | "streaming" | "content" | "shop";
 
-function StreamingCard({ channel, currentProgram, onClick, onHoverChange }: { channel: Channel; currentProgram?: Programa; onClick: () => void; onHoverChange?: (thumb: string | null) => void }) {
+function StreamingCard({ channel, currentProgram, nowPlaying, onClick, onHoverChange }: { channel: Channel; currentProgram?: Programa; nowPlaying?: { musica: string; artista: string } | null; onClick: () => void; onHoverChange?: (thumb: string | null) => void }) {
   const [hovered, setHovered] = useState(false);
   const [frames, setFrames] = useState<string[]>([]);
   const [frameIdx, setFrameIdx] = useState(0);
@@ -144,9 +144,16 @@ function StreamingCard({ channel, currentProgram, onClick, onHoverChange }: { ch
       {/* Info overlay - bottom left */}
       <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3">
         <p className="text-sm font-medium truncate text-left">{channel.name}</p>
-        {currentProgram && (
+        {nowPlaying?.musica ? (
+          <div className="flex items-center gap-1 mt-0.5">
+            <Music className="h-3 w-3 text-player-accent flex-shrink-0" />
+            <p className="text-[11px] text-player-muted-foreground truncate text-left">
+              {nowPlaying.musica} — {nowPlaying.artista}
+            </p>
+          </div>
+        ) : currentProgram ? (
           <p className="text-[11px] text-player-muted-foreground truncate text-left">{currentProgram.nome}</p>
-        )}
+        ) : null}
       </div>
     </button>
   );
@@ -172,6 +179,23 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   const [watchHistory, setWatchHistory] = useState<{ id: string; channel_name: string; channel_cover_url: string | null; channel_logo_url: string | null; channel_type: string; watched_at: string; channel_id: string | null }[]>([]);
   const [hoveredThumb, setHoveredThumb] = useState<string | null>(null);
   const [playlistVideos, setPlaylistVideos] = useState<Record<string, PlaylistVideo[]>>({});
+  const [nowPlaying, setNowPlaying] = useState<{ musica: string; artista: string } | null>(null);
+
+  // Poll localStorage for current music data
+  useEffect(() => {
+    const read = () => {
+      try {
+        const raw = localStorage.getItem("masterview_music_data");
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          setNowPlaying({ musica: parsed.titulo || "", artista: parsed.artista || "" });
+        }
+      } catch {}
+    };
+    read();
+    const interval = setInterval(read, 3000);
+    return () => clearInterval(interval);
+  }, []);
 
   const userName = profileName || user?.email?.split("@")[0] || "Visitante";
 
@@ -438,6 +462,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                       key={ch.id}
                       channel={ch}
                       currentProgram={currentProgram}
+                      nowPlaying={nowPlaying}
                       onClick={() => goToPlayer(ch.id)}
                       onHoverChange={setHoveredThumb}
                     />
@@ -552,6 +577,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                           key={ch.id}
                           channel={ch}
                           currentProgram={currentProgram}
+                          nowPlaying={nowPlaying}
                           onClick={() => goToPlayer(ch.id)}
                           onHoverChange={setHoveredThumb}
                         />
