@@ -537,7 +537,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               {currentPage === "musica" && <MusicaNoAr />}
               {currentPage === "agenda" && <AgendaPage />}
               {currentPage === "curtidas" && <MusicasCurtidasPage />}
-              {currentPage === "configuracoes" && <ConfiguracoesPage />}
+              {currentPage === "configuracoes" && <ConfiguracoesPage section="empresa" />}
+              {currentPage === "playerconfig" && <ConfiguracoesPage section="player" />}
               {currentPage === "testemunhais" && <TestemunhaisPage />}
               {currentPage === "promocoes" && <PromocoesPage />}
               {currentPage === "logos" && <LogosPatrocinadoresPage />}
