@@ -224,6 +224,23 @@ export default function PrevisaoTempo() {
 
   return (
     <div className="animate-fade-in space-y-8">
+      {/* Primary city box */}
+      {primaryCity && (
+        <div className="flex items-center gap-3 rounded-xl px-4 py-3"
+          style={{ backgroundColor: "#0d0446", border: "2px solid #2dbef3" }}>
+          <Star size={16} style={{ color: "#2dbef3" }} />
+          <div className="flex-1">
+            <p className="text-xs" style={{ color: "rgba(255,255,255,0.6)" }}>Cidade Principal</p>
+            <button onClick={() => { setCity(primaryCity.name); fetchWeatherByCoords(primaryCity.lat, primaryCity.lon, primaryCity.name); }}
+              className="text-sm font-semibold transition-colors"
+              style={{ color: "#ffffff" }}
+              onMouseEnter={e => { e.currentTarget.style.color = "#2dbef3"; }}
+              onMouseLeave={e => { e.currentTarget.style.color = "#ffffff"; }}
+            >{primaryCity.name}</button>
+          </div>
+        </div>
+      )}
+
       {/* Search with autocomplete */}
       <div className="relative" ref={suggestionsRef}>
         <div className="flex gap-3">
