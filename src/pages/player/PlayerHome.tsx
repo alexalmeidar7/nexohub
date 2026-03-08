@@ -33,7 +33,7 @@ interface PlaylistVideo {
 
 type Section = "home" | "streaming" | "content" | "shop";
 
-function StreamingCard({ channel, currentProgram, onClick, onHoverChange }: { channel: Channel; currentProgram?: Programa; onClick: () => void; onHoverChange?: (thumb: string | null) => void }) {
+function StreamingCard({ channel, currentProgram, nowPlaying, onClick, onHoverChange }: { channel: Channel; currentProgram?: Programa; nowPlaying?: { musica: string; artista: string } | null; onClick: () => void; onHoverChange?: (thumb: string | null) => void }) {
   const [hovered, setHovered] = useState(false);
   const [frames, setFrames] = useState<string[]>([]);
   const [frameIdx, setFrameIdx] = useState(0);
