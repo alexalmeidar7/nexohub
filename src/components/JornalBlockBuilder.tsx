@@ -338,7 +338,7 @@ export default function JornalBlockBuilder({ config, selectedNews, onClose }: Pr
 
       {/* Edit Dialog */}
       <Dialog open={!!editingItem} onOpenChange={(open) => !open && setEditingItem(null)}>
-        <DialogContent className="max-w-lg max-h-[90vh] flex flex-col" style={{ backgroundColor: "#ffffff", borderRadius: "20px", border: "1px solid #2ec1f7" }}>
+        <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col" style={{ backgroundColor: "#ffffff", borderRadius: "20px", border: "1px solid #2ec1f7" }}>
           <style>{`
             .edit-materia-input:focus, .edit-materia-input:focus-visible, .edit-materia-input:active {
               outline: none !important;
