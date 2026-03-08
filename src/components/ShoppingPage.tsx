@@ -137,7 +137,7 @@ export default function ShoppingPage() {
 
   return (
     <div className="space-y-8 max-w-4xl">
-      <form onSubmit={handleSubmit} className="rounded-xl p-6 space-y-4" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)" }}>
+      <form onSubmit={handleSubmit} className="rounded-xl p-4 sm:p-6 space-y-4" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)" }}>
         <h3 className="text-lg font-bold flex items-center gap-2" style={{ color: "#0d0446" }}>
           <Package size={20} />
           {editId ? "Editar Produto" : "Novo Produto"}
