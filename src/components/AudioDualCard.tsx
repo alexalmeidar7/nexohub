@@ -134,7 +134,7 @@ export default function AudioDualCard({
   const cleanPhone = whatsappPhone?.replace(/\D/g, "") || "";
 
   return (
-    <div className="absolute inset-0 z-10 flex items-center justify-center overflow-hidden" style={{ paddingBottom: "140px" }}>
+    <div className="absolute inset-0 z-10 flex items-center justify-center overflow-hidden" style={{ paddingBottom: "100px" }}>
       {/* Background — channel thumb, fixed and covering */}
       {channelThumb && (
         <img
@@ -149,11 +149,11 @@ export default function AudioDualCard({
         <div className="absolute inset-0" style={{ backgroundColor: "hsl(0 0% 0%)" }} />
       )}
       {/* Wrapper with relative positioning so presenter sits behind music card */}
-      <div className={`relative flex items-center justify-center ${isTV ? "w-[95vw] max-w-[1200px]" : "w-[90vw] max-w-[800px]"}`} style={{ minHeight: isTV ? "560px" : "420px" }}>
+      <div className={`relative flex items-center justify-center ${isTV ? "w-[95vw] max-w-[1200px]" : "w-[92vw] sm:w-[90vw] max-w-[800px]"}`} style={{ minHeight: isTV ? "560px" : undefined, height: isTV ? undefined : "min(420px, 55vh)" }}>
 
         {/* Left — Presenter (hidden behind cover, slides left at 3s) */}
         <div
-          className="absolute top-0 bottom-0 md:w-[50%] w-full rounded-3xl overflow-hidden shadow-xl"
+          className="absolute top-0 bottom-0 md:w-[50%] w-[70%] rounded-3xl overflow-hidden shadow-xl"
           style={{
             animation: "presenterReveal 1.6s cubic-bezier(0.22, 1, 0.36, 1) 3s forwards",
             opacity: 0,
@@ -267,7 +267,7 @@ export default function AudioDualCard({
 
         {/* History box — slides out from behind the music card */}
         <div
-          className="absolute top-0 bottom-0 md:w-[70%] w-full rounded-3xl overflow-hidden"
+          className="absolute top-0 bottom-0 md:w-[70%] w-[85%] rounded-3xl overflow-hidden"
           style={{
             right: "0",
             zIndex: 1,
@@ -279,7 +279,7 @@ export default function AudioDualCard({
             pointerEvents: historyOpen ? "auto" : "none",
           }}
         >
-          <div className="flex flex-col h-full" style={{ paddingLeft: "110px" }}>
+          <div className="flex flex-col h-full" style={{ paddingLeft: "80px" }}>
             <div className="px-4 pt-4 pb-2 flex items-center gap-2">
               <Music size={14} style={{ color: "hsl(0 80% 45%)" }} />
               <h3 className="font-bold text-xs" style={{ color: "hsl(0 80% 45%)" }}>Últimas Tocadas</h3>
@@ -325,7 +325,7 @@ export default function AudioDualCard({
 
         {/* Outer wrapper handles the initial entry animation */}
         <div
-          className="relative md:w-[55%] w-full"
+          className="relative md:w-[55%] w-[75%]"
           style={{
             zIndex: 2,
             animation: "coverFadeAndSlide 3.5s cubic-bezier(0.22, 1, 0.36, 1) forwards",
@@ -337,7 +337,7 @@ export default function AudioDualCard({
             className="relative w-full rounded-3xl overflow-hidden"
             style={{
               backgroundColor: isSemTitulo ? "#880000" : "hsl(0 0% 5%)",
-              minHeight: "420px",
+              minHeight: isTV ? "420px" : "min(420px, 55vh)",
               transform: historyOpen ? "translateX(-25%) scale(0.96)" : "translateX(0%) scale(1)",
               boxShadow: historyOpen
                 ? "0 25px 60px hsla(0, 0%, 0%, 0.5), 0 0 0 1px hsla(0, 0%, 100%, 0.05)"
