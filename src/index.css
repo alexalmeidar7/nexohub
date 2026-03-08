@@ -273,3 +273,13 @@
   background-color: #2dbff4 !important;
   color: #ffffff !important;
 }
+
+table tbody tr {
+  transition: outline 0.15s ease;
+  outline: 2px solid transparent;
+  outline-offset: -2px;
+}
+table tbody tr:hover {
+  outline: 2px solid #2dbef3;
+  border-radius: 4px;
+}
