@@ -614,7 +614,7 @@ export default function PlayerPage() {
         if (cancelled) return;
 
         if (!channelsRes.error && channelsRes.data) {
-          setCanais(channelsRes.data as Canal[]);
+          setCanais((channelsRes.data as Canal[]).filter(c => c.type !== "catalog"));
         } else {
           setCanais([]);
         }
