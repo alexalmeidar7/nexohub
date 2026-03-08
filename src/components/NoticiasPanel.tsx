@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { RefreshCw, ExternalLink, Plus, TrendingUp, TrendingDown, Minus, Trash2, ChevronDown, ChevronUp, ListPlus, GripVertical, BookOpen, Loader2, X, Image as ImageIcon, Link as LinkIcon, Newspaper } from "lucide-react";
+import { RefreshCw, ExternalLink, Plus, TrendingUp, TrendingDown, Minus, Trash2, ChevronDown, ChevronUp, ListPlus, GripVertical, BookOpen, Loader2, X, Image as ImageIcon, Link as LinkIcon, Newspaper, CloudSun, Droplets, Thermometer } from "lucide-react";
 import XmlLinkRow from "./XmlLinkRow";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -258,6 +258,43 @@ export default function NoticiasPanel() {
   const [readingPopup, setReadingPopup] = useState<NewsItem | null>(null);
   const [loadingReading, setLoadingReading] = useState(false);
   const [blocoEconomia, setBlocoEconomia] = useState<CotacaoItem[]>([]);
+  const [miniWeather, setMiniWeather] = useState<{ city: string; temp: number; humidity: number; code: number; min: number; max: number } | null>(null);
+  const [loadingWeather, setLoadingWeather] = useState(true);
+
+  const miniWeatherLabel = (code: number) => {
+    const labels: Record<number, string> = {
+      0: "Céu limpo", 1: "Parc. limpo", 2: "Parc. nublado", 3: "Nublado",
+      45: "Neblina", 48: "Neblina", 51: "Garoa leve", 53: "Garoa", 55: "Garoa forte",
+      61: "Chuva leve", 63: "Chuva moderada", 65: "Chuva forte",
+      80: "Pancadas", 81: "Pancadas", 82: "Pancadas fortes",
+      95: "Tempestade", 96: "Tempestade", 99: "Tempestade severa",
+    };
+    const closest = Object.keys(labels).map(Number).reduce((prev, curr) => Math.abs(curr - code) < Math.abs(prev - code) ? curr : prev);
+    return labels[closest] || "Desconhecido";
+  };
+
+  useEffect(() => {
+    const loadWeather = async () => {
+      setLoadingWeather(true);
+      try {
+        const raw = localStorage.getItem("masterview_primary_city");
+        const primary = raw ? JSON.parse(raw) : null;
+        if (!primary) { setLoadingWeather(false); return; }
+        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${primary.lat}&longitude=${primary.lon}&current=temperature_2m,relative_humidity_2m,weather_code&daily=temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=1`);
+        const data = await res.json();
+        setMiniWeather({
+          city: primary.name,
+          temp: Math.round(data.current.temperature_2m),
+          humidity: data.current.relative_humidity_2m,
+          code: data.current.weather_code,
+          min: Math.round(data.daily.temperature_2m_min[0]),
+          max: Math.round(data.daily.temperature_2m_max[0]),
+        });
+      } catch { /* ignore */ }
+      setLoadingWeather(false);
+    };
+    loadWeather();
+  }, []);
 
   const toggleBox = (key: string) => setCollapsedBoxes(prev => ({ ...prev, [key]: !prev[key] }));
 
@@ -668,6 +705,48 @@ export default function NoticiasPanel() {
                           </span>
                         </div>
                       ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Mini Previsão do Tempo */}
+          <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)", width: (jornalConfig || wizardOpen) ? "100%" : "50%" }}>
+            <div className="px-3 py-2 font-bold text-xs tracking-wide text-white rounded-t-xl flex items-center justify-between" style={{ backgroundColor: "#0d0446" }}>
+              <span className="flex items-center gap-1.5" style={{ color: "#ffffff" }}>
+                <CloudSun size={12} />
+                Previsão do Tempo
+              </span>
+              <button onClick={() => toggleBox('miniWeather')} className="p-0.5 rounded hover:bg-white/20 transition-colors">
+                {collapsedBoxes['miniWeather'] ? <ChevronDown size={12} /> : <ChevronUp size={12} />}
+              </button>
+            </div>
+            {!collapsedBoxes['miniWeather'] && (
+              <div className="p-3">
+                {loadingWeather ? (
+                  <div className="flex items-center gap-2">
+                    <Skeleton className="h-8 w-8 rounded-full" />
+                    <div className="space-y-1">
+                      <Skeleton className="h-3 w-24" />
+                      <Skeleton className="h-2 w-16" />
+                    </div>
+                  </div>
+                ) : !miniWeather ? (
+                  <p className="text-xs" style={{ color: "rgba(13,4,70,0.5)" }}>Nenhuma cidade principal cadastrada. Defina em Previsão do Tempo.</p>
+                ) : (
+                  <div className="flex items-center gap-4">
+                    <div className="text-center">
+                      <span className="text-2xl font-bold" style={{ color: "#2ec1f7" }}>{miniWeather.temp}°C</span>
+                    </div>
+                    <div className="flex-1 space-y-0.5">
+                      <p className="text-xs font-bold" style={{ color: "#0d0446" }}>{miniWeather.city}</p>
+                      <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.6)" }}>{miniWeatherLabel(miniWeather.code)}</p>
+                      <div className="flex items-center gap-3 text-[10px]" style={{ color: "rgba(13,4,70,0.5)" }}>
+                        <span className="flex items-center gap-0.5"><Thermometer size={9} /> Mín {miniWeather.min}° · Máx {miniWeather.max}°</span>
+                        <span className="flex items-center gap-0.5"><Droplets size={9} /> {miniWeather.humidity}%</span>
+                      </div>
                     </div>
                   </div>
                 )}
