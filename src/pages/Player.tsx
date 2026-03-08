@@ -367,7 +367,7 @@ export default function PlayerPage() {
   const [prerollLinkUrl, setPrerollLinkUrl] = useState<string | null>(null);
   const [prerollMediaType, setPrerollMediaType] = useState<string>("video");
   const [prerollYoutubeUrl, setPrerollYoutubeUrl] = useState<string | null>(null);
-  const [prerollDone, setPrerollDone] = useState(false);
+  const [prerollDone, setPrerollDone] = useState(true); // Pre-roll disabled for now
   const [prerollShowing, setPrerollShowing] = useState(false);
   const prerollVideoRef = useRef<HTMLVideoElement>(null);
   const prerollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
