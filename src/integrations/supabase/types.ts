@@ -585,6 +585,7 @@ export type Database = {
           apresentador_id: string | null
           ativo: boolean
           capa: string | null
+          classificacao_etaria: string | null
           created_at: string
           data_variavel: string | null
           descricao: string | null
@@ -602,6 +603,7 @@ export type Database = {
           apresentador_id?: string | null
           ativo?: boolean
           capa?: string | null
+          classificacao_etaria?: string | null
           created_at?: string
           data_variavel?: string | null
           descricao?: string | null
@@ -619,6 +621,7 @@ export type Database = {
           apresentador_id?: string | null
           ativo?: boolean
           capa?: string | null
+          classificacao_etaria?: string | null
           created_at?: string
           data_variavel?: string | null
           descricao?: string | null
