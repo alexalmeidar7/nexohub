@@ -195,10 +195,16 @@ export default function PrevisaoTempo() {
   const searchWeather = () => { setShowSuggestions(false); fetchWeather(city); };
 
   useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) fetchWeather(saved);
+    const primary = getPrimaryCity();
+    if (primary) {
+      setCity(primary.name);
+      fetchWeatherByCoords(primary.lat, primary.lon, primary.name);
+    } else {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) fetchWeather(saved);
+    }
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
-  }, [fetchWeather]);
+  }, [fetchWeather, fetchWeatherByCoords]);
 
   useEffect(() => {
     if (intervalRef.current) clearInterval(intervalRef.current);
