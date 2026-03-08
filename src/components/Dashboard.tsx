@@ -300,9 +300,18 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
       <div className="flex gap-[30px] pt-3 flex-1 min-h-0 px-4 lg:px-[50px]" style={{ paddingTop: "12px" }}>
         {/* === LEFT COLUMN: SIDEBAR === */}
-        <div className="hidden lg:flex flex-col gap-5 flex-shrink-0" style={{ width: "400px" }}>
+        <div className={`hidden lg:flex flex-col gap-5 flex-shrink-0 transition-all duration-300`} style={{ width: sidebarCollapsed ? "48px" : "400px" }}>
           {/* === SIDEBAR === */}
-          <aside className="flex flex-col rounded-[24px] overflow-hidden" style={{ backgroundColor: "rgba(0, 0, 0, 0.70)", height: "560px" }}>
+          <aside className="flex flex-col rounded-[24px] overflow-hidden relative" style={{ backgroundColor: "rgba(0, 0, 0, 0.70)", height: "560px" }}>
+            {/* Collapse toggle */}
+            <button
+              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+              className="absolute top-2 right-2 z-20 p-1 rounded-full transition-colors"
+              style={{ backgroundColor: "#268ffa" }}
+              title={sidebarCollapsed ? "Expandir menu" : "Recolher menu"}
+            >
+              {sidebarCollapsed ? <ChevronDown size={14} className="text-white rotate-[-90deg]" /> : <ChevronUp size={14} className="text-white rotate-[-90deg]" />}
+            </button>
             {/* Selo + Settings */}
             <div className="flex items-center justify-between px-4 pt-3 pb-2">
               <img src={seloNexohub} alt="NexoHUB" className="h-4" />
