@@ -518,6 +518,7 @@ export default function ProgramaForm() {
     setEstudio(p.estudio); setAtivo(p.ativo); setVariavel(p.variavel); setDescricao(p.descricao);
     setDataVariavel(p.dataVariavel ? new Date(p.dataVariavel + "T12:00:00") : undefined);
     setClassificacaoEtaria(p.classificacaoEtaria || "");
+    setTipoPrograma(p.tipoPrograma || "");
     setConflictMsg("");
   };
 
