@@ -171,7 +171,7 @@ export default function PromocoesPage() {
   return (
     <div className="space-y-8 animate-fade-in">
       {/* Form */}
-      <form onSubmit={handleSubmit} className="rounded-xl p-6 space-y-4" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)" }}>
+      <form onSubmit={handleSubmit} className="rounded-xl p-4 sm:p-6 space-y-4" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)" }}>
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-bold" style={{ color: "#0d0446" }}>
             {editingId ? "Editar Promoção" : "Nova Promoção"}
