@@ -344,14 +344,17 @@ export default function PrevisaoTempo() {
               <div>
                 <div className="flex items-center gap-3 flex-wrap">
                   <h3 className="text-2xl font-semibold" style={{ color: "#0d0446" }}>{weather.city}</h3>
-                  <label className="flex items-center gap-2 cursor-pointer select-none rounded-full px-3 py-1"
-                    style={{ backgroundColor: isPrimary ? "#0d0446" : "rgba(13,4,70,0.06)", border: "1px solid rgba(13,4,70,0.15)", transition: "all 0.2s" }}>
-                    <input type="checkbox" checked={isPrimary} onChange={togglePrimaryCity}
-                      className="w-3.5 h-3.5" style={{ accentColor: "#2dbef3" }} />
-                    <span className="text-xs font-semibold" style={{ color: isPrimary ? "#ffffff" : "#0d0446" }}>
-                      Cidade Principal
-                    </span>
-                  </label>
+                  {/* Show "Cidade Principal" only if no primary set yet, or this IS the primary city */}
+                  {(!primaryCity || isPrimary) && (
+                    <label className="flex items-center gap-2 cursor-pointer select-none rounded-full px-3 py-1"
+                      style={{ backgroundColor: isPrimary ? "#0d0446" : "rgba(13,4,70,0.06)", border: "1px solid rgba(13,4,70,0.15)", transition: "all 0.2s" }}>
+                      <input type="checkbox" checked={isPrimary} onChange={togglePrimaryCity}
+                        className="w-3.5 h-3.5" style={{ accentColor: "#2dbef3" }} />
+                      <span className="text-xs font-semibold" style={{ color: isPrimary ? "#ffffff" : "#0d0446" }}>
+                        Cidade Principal
+                      </span>
+                    </label>
+                  )}
                   {!isFavorited && (
                     <button onClick={addFavorite} disabled={isPrimary}
                       className="flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
