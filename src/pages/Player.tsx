@@ -492,12 +492,8 @@ export default function PlayerPage() {
       return;
     }
     const check = async () => {
-      const [{ data: myLike }, { count }] = await Promise.all([
-        supabase.from("music_likes").select("id").eq("user_id", user.id).eq("titulo", musicData.titulo).eq("artista", musicData.artista).limit(1),
-        supabase.from("music_likes").select("*", { count: "exact", head: true }).eq("titulo", musicData.titulo).eq("artista", musicData.artista),
-      ]);
+      const { data: myLike } = await supabase.from("music_likes").select("id").eq("user_id", user.id).eq("titulo", musicData.titulo).eq("artista", musicData.artista).limit(1);
       setLiked(!!(myLike && myLike.length > 0));
-      setLikeCount(count ?? 0);
     };
     check();
   }, [user, musicData?.titulo, musicData?.artista]);
