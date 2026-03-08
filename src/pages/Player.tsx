@@ -2035,14 +2035,14 @@ export default function PlayerPage() {
       </div>
 
       {/* Control bar hover zone */}
-      <div className="absolute left-0 right-0 bottom-0 z-30" style={{ height: "140px" }} onMouseEnter={showBar} onMouseLeave={hideBar}
+      <div className="absolute left-0 right-0 bottom-0 z-50" style={{ height: "140px" }} onMouseEnter={showBar} onMouseLeave={hideBar}
         onClick={() => setBarVisible(v => !v)}
       >
         <div className="absolute left-0 right-0 bottom-2 sm:bottom-5 mx-auto transition-all duration-400 ease-in-out"
           style={{ maxWidth: "1400px", width: "100%", paddingLeft: "8px", paddingRight: "8px", opacity: barVisible ? 1 : 0, transform: barVisible ? "translateY(0)" : "translateY(20px)", pointerEvents: barVisible ? "auto" : "none" }}
           onClick={(e) => e.stopPropagation()}
         >
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-0 rounded-2xl border border-white/10 px-3 sm:px-5 py-2 sm:py-3" style={{ backgroundColor: "rgba(0, 0, 0, 0.9)" }}>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-1 sm:gap-0 rounded-2xl border border-white/10 px-2 sm:px-5 py-2 sm:py-3" style={{ backgroundColor: "rgba(0, 0, 0, 0.9)" }}>
 
           {/* Row 1 on mobile: Channel + Play + Volume */}
           <div className="flex items-center gap-2 sm:gap-3 sm:pr-5 sm:border-r border-white/10 shrink-0">
