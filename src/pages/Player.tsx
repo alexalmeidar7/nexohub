@@ -2039,10 +2039,10 @@ export default function PlayerPage() {
         onClick={() => setBarVisible(v => !v)}
       >
         <div className="absolute left-0 right-0 bottom-2 sm:bottom-5 mx-auto transition-all duration-400 ease-in-out"
-          style={{ maxWidth: "1400px", width: "100%", paddingLeft: "8px", paddingRight: "8px", opacity: barVisible ? 1 : 0, transform: barVisible ? "translateY(0)" : "translateY(20px)", pointerEvents: barVisible ? "auto" : "none" }}
+          style={{ width: "80%", paddingLeft: "8px", paddingRight: "8px", opacity: barVisible ? 1 : 0, transform: barVisible ? "translateY(0)" : "translateY(20px)", pointerEvents: barVisible ? "auto" : "none" }}
           onClick={(e) => e.stopPropagation()}
         >
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-1 sm:gap-0 rounded-2xl border border-white/10 px-2 sm:px-5 py-2 sm:py-3" style={{ backgroundColor: "rgba(0, 0, 0, 0.9)" }}>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-1 sm:gap-0 rounded-2xl border border-white/10 px-2 sm:px-5 py-2 sm:py-3 overflow-hidden" style={{ backgroundColor: "rgba(0, 0, 0, 0.9)" }}>
 
           {/* Row 1 on mobile: Channel + Play + Volume */}
           <div className="flex items-center gap-2 sm:gap-3 sm:pr-5 sm:border-r border-white/10 shrink-0">
@@ -2317,8 +2317,8 @@ export default function PlayerPage() {
               </div>
             </div>
             {!isYoutube && nextPresenter?.foto && (
-              <div className="relative shrink-0 self-end group" style={{ width: "120px" }}>
-                <img src={nextPresenter.foto} alt={nextPresenter.nome} title={nextPresenter.nome} className="absolute object-contain object-bottom" style={{ right: "-130px", bottom: "-16px", height: "280px", width: "auto", maxWidth: "160px" }} />
+              <div className="relative shrink-0 self-end group overflow-hidden" style={{ width: "80px", height: "100%" }}>
+                <img src={nextPresenter.foto} alt={nextPresenter.nome} title={nextPresenter.nome} className="absolute object-contain object-bottom right-0 bottom-0" style={{ height: "200px", width: "auto", maxWidth: "100%" }} />
                 <span className="absolute left-1/2 -translate-x-1/2 bg-black/90 text-white text-[10px] font-bold px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" style={{ top: "-20px" }}>
                   {nextPresenter.nome}
                 </span>
