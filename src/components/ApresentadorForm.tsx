@@ -239,7 +239,7 @@ export default function ApresentadorForm() {
         </div>
       </div>
 
-      {apresentadores.length > 0 ? (
+      {loadingList ? listSkeleton : apresentadores.length > 0 ? (
         <div>
           <div className="flex items-center justify-between mb-4">
             <h4 className="text-lg font-medium" style={{ color: "#0d0446" }}>Cadastrados</h4>
