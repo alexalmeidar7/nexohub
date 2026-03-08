@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Save, Loader2, ChevronDown, ChevronUp, Plus, Trash2, Upload, Pencil } from "lucide-react";
+import { Save, Loader2, ChevronDown, ChevronUp, Plus, Trash2, Upload, Pencil, X, CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -55,18 +55,45 @@ interface Canal {
   classificacao_etaria: string;
 }
 
+/* ── Styled input helper ── */
+const inputStyle: React.CSSProperties = {
+  backgroundColor: "#ffffff",
+  border: "1px solid #0d0446",
+  color: "#0d0446",
+  borderRadius: "20px",
+};
+
+function StyledInput({ value, onChange, placeholder, type = "text", readOnly = false, className = "" }: {
+  value: string; onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void; placeholder?: string; type?: string; readOnly?: boolean; className?: string;
+}) {
+  return (
+    <input
+      type={type}
+      value={value}
+      onChange={onChange}
+      placeholder={placeholder}
+      readOnly={readOnly}
+      className={`w-full px-4 py-1.5 outline-none transition-colors text-sm ${readOnly ? "cursor-not-allowed opacity-60" : ""} ${className}`}
+      style={inputStyle}
+      onFocus={e => { if (!readOnly) e.currentTarget.style.borderColor = "#2dbef3"; }}
+      onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
+    />
+  );
+}
+
 function CollapsibleBox({ title, defaultOpen = true, children }: { title: string; defaultOpen?: boolean; children: React.ReactNode }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <div className="border border-border rounded-xl overflow-hidden">
+    <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(13,4,70,0.15)" }}>
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between px-5 py-3 bg-muted/60 hover:bg-muted transition-colors"
+        className="w-full flex items-center justify-between px-5 py-3 transition-colors"
+        style={{ backgroundColor: "#0d0446", color: "#ffffff" }}
       >
-        <h3 className="text-lg font-semibold text-primary">{title}</h3>
-        {open ? <ChevronUp size={18} className="text-muted-foreground" /> : <ChevronDown size={18} className="text-muted-foreground" />}
+        <h3 className="text-lg font-semibold">{title}</h3>
+        {open ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
       </button>
-      {open && <div className="p-5 space-y-4">{children}</div>}
+      {open && <div className="p-5 space-y-4" style={{ backgroundColor: "#ffffff" }}>{children}</div>}
     </div>
   );
 }
@@ -98,20 +125,13 @@ export default function ConfiguracoesPage() {
     setLoadingCanais(true);
     const { data } = await supabase.from("streaming_channels").select("*").order("numero_canal", { ascending: true });
     if (data) {
-      // Auto-deduplicate: keep first occurrence by name+url, delete extras
       const seen = new Map<string, string>();
       const dupeIds: string[] = [];
       for (const d of data) {
         const key = `${d.name}||${d.url}`;
-        if (seen.has(key)) {
-          dupeIds.push(d.id);
-        } else {
-          seen.set(key, d.id);
-        }
+        if (seen.has(key)) { dupeIds.push(d.id); } else { seen.set(key, d.id); }
       }
-      if (dupeIds.length > 0) {
-        await supabase.from("streaming_channels").delete().in("id", dupeIds);
-      }
+      if (dupeIds.length > 0) await supabase.from("streaming_channels").delete().in("id", dupeIds);
       const filtered = data.filter(d => !dupeIds.includes(d.id));
       setCanais(filtered.map((d: any) => ({
         id: d.id, numero_canal: d.numero_canal || "", name: d.name, logo_url: d.logo_url || "",
@@ -243,12 +263,11 @@ export default function ConfiguracoesPage() {
 
   const field = (label: string, key: keyof EmpresaConfig, placeholder: string) => (
     <div className="space-y-1">
-      <label className="text-xs font-semibold text-muted-foreground">{label}</label>
-      <input
+      <label className="block text-xs mb-1" style={{ color: "#0d0446", fontWeight: 600 }}>{label}</label>
+      <StyledInput
         value={(config[key] as string) || ""}
         onChange={(e) => saveConfig({ ...config, [key]: e.target.value })}
         placeholder={placeholder}
-        className="w-full bg-muted border border-border p-3 rounded-lg text-foreground placeholder:text-muted-foreground outline-none focus:ring-1 focus:ring-primary text-sm"
       />
     </div>
   );
@@ -256,6 +275,9 @@ export default function ConfiguracoesPage() {
   if (loading) return <ModulePageSkeleton />;
 
   const typeLabels: Record<string, string> = { audio_live: "Áudio ao vivo", video_live: "Vídeo ao vivo", video: "Vídeo ao vivo", youtube: "Vídeo do YouTube", catalog: "Catálogo" };
+
+  const btnPrimary: React.CSSProperties = { backgroundColor: "#0d0446", color: "#ffffff", border: "2px solid #0d0446", borderRadius: "20px" };
+  const btnSecondary: React.CSSProperties = { backgroundColor: "#ffffff", color: "#0d0446", border: "2px solid #0d0446", borderRadius: "20px" };
 
   return (
     <div className="animate-fade-in space-y-6 max-w-3xl">
@@ -266,19 +288,29 @@ export default function ConfiguracoesPage() {
           {field("Nome da Empresa", "nome", "Nome da empresa")}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-muted-foreground">Logo da Empresa</label>
+              <label className="block text-xs mb-1" style={{ color: "#0d0446", fontWeight: 600 }}>Logo da Empresa</label>
               <div className="flex items-center gap-4">
-                {config.logo && <img src={config.logo} alt="Logo" className="w-16 h-16 rounded-lg object-contain border border-border" />}
-                <button onClick={handleLogoUpload} className="bg-muted border border-border px-4 py-2 rounded-lg text-foreground hover:bg-muted/80 transition-all text-xs">
-                  {config.logo ? "Trocar Logo" : "Carregar Logo"}
+                {config.logo && <img src={config.logo} alt="Logo" className="w-16 h-16 rounded-lg object-contain" style={{ border: "1px solid #0d0446" }} />}
+                <button onClick={handleLogoUpload}
+                  className="px-4 py-1.5 font-bold transition-all text-xs flex items-center gap-1"
+                  style={btnSecondary}
+                  onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#0d0446"; e.currentTarget.style.color = "#ffffff"; }}
+                  onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#ffffff"; e.currentTarget.style.color = "#0d0446"; }}
+                >
+                  <Upload size={12} /> {config.logo ? "Trocar Logo" : "Carregar Logo"}
                 </button>
               </div>
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-muted-foreground">Imagem de Fundo do Painel</label>
+              <label className="block text-xs mb-1" style={{ color: "#0d0446", fontWeight: 600 }}>Imagem de Fundo do Painel</label>
               <div className="flex items-center gap-4">
-                {config.backgroundUrl && <img src={config.backgroundUrl} alt="Fundo" className="w-16 h-16 rounded-lg object-cover border border-border" />}
-                <button onClick={handleBackgroundUpload} className="bg-muted border border-border px-4 py-2 rounded-lg text-foreground hover:bg-muted/80 transition-all text-xs flex items-center gap-1">
+                {config.backgroundUrl && <img src={config.backgroundUrl} alt="Fundo" className="w-16 h-16 rounded-lg object-cover" style={{ border: "1px solid #0d0446" }} />}
+                <button onClick={handleBackgroundUpload}
+                  className="px-4 py-1.5 font-bold transition-all text-xs flex items-center gap-1"
+                  style={btnSecondary}
+                  onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#0d0446"; e.currentTarget.style.color = "#ffffff"; }}
+                  onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#ffffff"; e.currentTarget.style.color = "#0d0446"; }}
+                >
                   <Upload size={12} /> {config.backgroundUrl ? "Trocar Fundo" : "Carregar Fundo"}
                 </button>
               </div>
@@ -294,29 +326,35 @@ export default function ConfiguracoesPage() {
         </div>
 
         {/* Credenciais */}
-        <div className="border-t border-border pt-4 mt-4 space-y-3">
-          <h4 className="text-sm font-semibold text-muted-foreground">Gestão de Acesso</h4>
+        <div className="pt-4 mt-4 space-y-3" style={{ borderTop: "1px solid rgba(13,4,70,0.15)" }}>
+          <h4 className="text-sm font-semibold" style={{ color: "#0d0446" }}>Gestão de Acesso</h4>
           <div className="space-y-1">
-            <label className="text-xs font-semibold text-muted-foreground">E-mail de Login</label>
-            <input value={user?.email || ""} readOnly className="w-full bg-muted/50 border border-border p-3 rounded-lg text-foreground/70 text-sm cursor-not-allowed" />
+            <label className="block text-xs mb-1" style={{ color: "#0d0446", fontWeight: 600 }}>E-mail de Login</label>
+            <StyledInput value={user?.email || ""} readOnly />
           </div>
           <div className="space-y-1">
-            <label className="text-xs font-semibold text-muted-foreground">Alterar Senha</label>
+            <label className="block text-xs mb-1" style={{ color: "#0d0446", fontWeight: 600 }}>Alterar Senha</label>
             <div className="flex gap-2">
-              <input
-                type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)}
+              <StyledInput
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
                 placeholder="Nova senha (mín. 6 caracteres)"
-                className="flex-1 bg-muted border border-border p-3 rounded-lg text-foreground placeholder:text-muted-foreground outline-none focus:ring-1 focus:ring-primary text-sm"
+                className="flex-1"
               />
               <button onClick={handleChangePassword} disabled={savingPassword}
-                className="bg-primary text-primary-foreground px-4 py-2 rounded-lg text-xs font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50">
+                className="px-5 py-2 font-bold transition-all text-xs disabled:opacity-50 flex items-center gap-1"
+                style={btnPrimary}
+                onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#ffffff"; e.currentTarget.style.color = "#0d0446"; }}
+                onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#0d0446"; e.currentTarget.style.color = "#ffffff"; }}
+              >
                 {savingPassword ? <Loader2 size={14} className="animate-spin" /> : "Salvar"}
               </button>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 text-xs text-muted-foreground pt-2">
+        <div className="flex items-center gap-2 text-xs pt-2" style={{ color: "rgba(13,4,70,0.5)" }}>
           <Save size={12} />
           <span>As configurações são salvas automaticamente.</span>
         </div>
@@ -326,98 +364,105 @@ export default function ConfiguracoesPage() {
       <CollapsibleBox title="Configurações do Player" defaultOpen={false}>
         {/* Formulário */}
         <div className="space-y-4">
+          <h3 className="text-xl mb-2" style={{ color: "#0d0446" }}>
+            {editingCanal ? "Editar Canal" : "Novo Canal"}
+          </h3>
+
           {/* Mode selection */}
           <div className="flex gap-6">
-            <label className="flex items-center gap-2 cursor-pointer">
+            <label className="flex items-center gap-2 cursor-pointer" style={{ color: "#0d0446" }}>
               <input type="checkbox" checked={canalMode === "live"} onChange={() => { setCanalMode("live"); setCanalForm(p => ({ ...p, type: "audio_live" })); }}
-                className="accent-primary w-4 h-4" />
-              <span className="text-sm font-medium text-foreground">Ao vivo</span>
+                className="w-4 h-4" style={{ accentColor: "#0d0446" }} />
+              <span className="text-sm font-medium">Ao vivo</span>
             </label>
-            <label className="flex items-center gap-2 cursor-pointer">
+            <label className="flex items-center gap-2 cursor-pointer" style={{ color: "#0d0446" }}>
               <input type="checkbox" checked={canalMode === "catalog"} onChange={() => setCanalMode("catalog")}
-                className="accent-primary w-4 h-4" />
-              <span className="text-sm font-medium text-foreground">Catálogo</span>
+                className="w-4 h-4" style={{ accentColor: "#0d0446" }} />
+              <span className="text-sm font-medium">Catálogo</span>
             </label>
           </div>
 
           {canalMode === "live" ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {/* Live type */}
               <div className="space-y-1 sm:col-span-2">
-                <label className="text-xs font-semibold text-muted-foreground">Tipo de Transmissão</label>
+                <label className="block text-xs mb-1" style={{ color: "#0d0446", fontWeight: 600 }}>Tipo de Transmissão</label>
                 <select value={canalForm.type} onChange={(e) => setCanalForm(p => ({ ...p, type: e.target.value }))}
-                  className="w-full bg-muted border border-border p-3 rounded-lg text-foreground text-sm outline-none focus:ring-1 focus:ring-primary">
+                  className="w-full px-4 py-1.5 outline-none text-sm"
+                  style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "20px", border: "2px solid #0d0446" }}>
                   <option value="audio_live">Áudio ao vivo</option>
                   <option value="video_live">Vídeo ao vivo</option>
                 </select>
               </div>
-              {/* Channel number */}
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-muted-foreground">Número do Canal</label>
-                <input value={canalForm.numero_canal} onChange={(e) => setCanalForm(p => ({ ...p, numero_canal: e.target.value }))}
-                  className="w-full bg-muted border border-border p-3 rounded-lg text-foreground text-sm outline-none focus:ring-1 focus:ring-primary" />
+                <label className="block text-xs mb-1" style={{ color: "#0d0446", fontWeight: 600 }}>Número do Canal</label>
+                <StyledInput value={canalForm.numero_canal} onChange={(e) => setCanalForm(p => ({ ...p, numero_canal: e.target.value }))} />
               </div>
-              {/* Channel name */}
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-muted-foreground">Nome do Canal</label>
-                <input value={canalForm.name} onChange={(e) => setCanalForm(p => ({ ...p, name: e.target.value }))} placeholder="Ex: Rádio FM"
-                  className="w-full bg-muted border border-border p-3 rounded-lg text-foreground placeholder:text-muted-foreground text-sm outline-none focus:ring-1 focus:ring-primary" />
+                <label className="block text-xs mb-1" style={{ color: "#0d0446", fontWeight: 600 }}>Nome do Canal</label>
+                <StyledInput value={canalForm.name} onChange={(e) => setCanalForm(p => ({ ...p, name: e.target.value }))} placeholder="Ex: Rádio FM" />
               </div>
-              {/* URL */}
               <div className="space-y-1 sm:col-span-2">
-                <label className="text-xs font-semibold text-muted-foreground">URL do Streaming</label>
-                <input value={canalForm.url} onChange={(e) => setCanalForm(p => ({ ...p, url: e.target.value }))} placeholder="https://..."
-                  className="w-full bg-muted border border-border p-3 rounded-lg text-foreground placeholder:text-muted-foreground text-sm outline-none focus:ring-1 focus:ring-primary" />
+                <label className="block text-xs mb-1" style={{ color: "#0d0446", fontWeight: 600 }}>URL do Streaming</label>
+                <StyledInput value={canalForm.url} onChange={(e) => setCanalForm(p => ({ ...p, url: e.target.value }))} placeholder="https://..." />
               </div>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {/* Catalog name */}
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-muted-foreground">Nome do Catálogo</label>
-                <input value={canalForm.catalog_name} onChange={(e) => setCanalForm(p => ({ ...p, catalog_name: e.target.value }))} placeholder="Ex: Podcasts"
-                  className="w-full bg-muted border border-border p-3 rounded-lg text-foreground placeholder:text-muted-foreground text-sm outline-none focus:ring-1 focus:ring-primary" />
+                <label className="block text-xs mb-1" style={{ color: "#0d0446", fontWeight: 600 }}>Nome do Catálogo</label>
+                <StyledInput value={canalForm.catalog_name} onChange={(e) => setCanalForm(p => ({ ...p, catalog_name: e.target.value }))} placeholder="Ex: Podcasts" />
               </div>
-              {/* Program name */}
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-muted-foreground">Nome do Programa</label>
-                <input value={canalForm.name} onChange={(e) => setCanalForm(p => ({ ...p, name: e.target.value }))} placeholder="Ex: Podcast Semanal"
-                  className="w-full bg-muted border border-border p-3 rounded-lg text-foreground placeholder:text-muted-foreground text-sm outline-none focus:ring-1 focus:ring-primary" />
+                <label className="block text-xs mb-1" style={{ color: "#0d0446", fontWeight: 600 }}>Nome do Programa</label>
+                <StyledInput value={canalForm.name} onChange={(e) => setCanalForm(p => ({ ...p, name: e.target.value }))} placeholder="Ex: Podcast Semanal" />
               </div>
-              {/* YouTube playlist URL */}
               <div className="space-y-1 sm:col-span-2">
-                <label className="text-xs font-semibold text-muted-foreground">URL da Playlist do YouTube</label>
-                <input value={canalForm.url} onChange={(e) => setCanalForm(p => ({ ...p, url: e.target.value }))} placeholder="https://youtube.com/playlist?list=..."
-                  className="w-full bg-muted border border-border p-3 rounded-lg text-foreground placeholder:text-muted-foreground text-sm outline-none focus:ring-1 focus:ring-primary" />
+                <label className="block text-xs mb-1" style={{ color: "#0d0446", fontWeight: 600 }}>URL da Playlist do YouTube</label>
+                <StyledInput value={canalForm.url} onChange={(e) => setCanalForm(p => ({ ...p, url: e.target.value }))} placeholder="https://youtube.com/playlist?list=..." />
               </div>
             </div>
           )}
 
-          {/* Images - shared */}
+          {/* Images */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-muted-foreground">Capa do Programa (1280x720)</label>
+              <label className="block text-xs mb-1" style={{ color: "#0d0446", fontWeight: 600 }}>Capa do Programa (1280x720)</label>
               <div className="flex items-center gap-2">
-                {canalForm.cover_url && <img src={canalForm.cover_url} alt="Capa" className="w-16 h-9 rounded object-cover border border-border" />}
-                <button onClick={() => handleImageUpload("cover_url")} className="bg-muted border border-border px-3 py-2 rounded-lg text-foreground hover:bg-muted/80 text-xs flex items-center gap-1">
+                {canalForm.cover_url && <img src={canalForm.cover_url} alt="Capa" className="w-16 h-9 rounded object-cover" style={{ border: "1px solid #0d0446" }} />}
+                <button onClick={() => handleImageUpload("cover_url")}
+                  className="px-3 py-1.5 font-bold transition-all text-xs flex items-center gap-1"
+                  style={btnSecondary}
+                  onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#0d0446"; e.currentTarget.style.color = "#ffffff"; }}
+                  onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#ffffff"; e.currentTarget.style.color = "#0d0446"; }}
+                >
                   <Upload size={12} /> {canalForm.cover_url ? "Trocar" : "Upload"}
                 </button>
               </div>
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-muted-foreground">Thumb do Programa (1920x1080)</label>
+              <label className="block text-xs mb-1" style={{ color: "#0d0446", fontWeight: 600 }}>Thumb do Programa (1920x1080)</label>
               <div className="flex items-center gap-2">
-                {canalForm.logo_url && <img src={canalForm.logo_url} alt="Thumb" className="w-16 h-9 rounded object-cover border border-border" />}
-                <button onClick={() => handleImageUpload("logo_url")} className="bg-muted border border-border px-3 py-2 rounded-lg text-foreground hover:bg-muted/80 text-xs flex items-center gap-1">
+                {canalForm.logo_url && <img src={canalForm.logo_url} alt="Thumb" className="w-16 h-9 rounded object-cover" style={{ border: "1px solid #0d0446" }} />}
+                <button onClick={() => handleImageUpload("logo_url")}
+                  className="px-3 py-1.5 font-bold transition-all text-xs flex items-center gap-1"
+                  style={btnSecondary}
+                  onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#0d0446"; e.currentTarget.style.color = "#ffffff"; }}
+                  onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#ffffff"; e.currentTarget.style.color = "#0d0446"; }}
+                >
                   <Upload size={12} /> {canalForm.logo_url ? "Trocar" : "Upload"}
                 </button>
               </div>
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-muted-foreground">Logo do Programa</label>
+              <label className="block text-xs mb-1" style={{ color: "#0d0446", fontWeight: 600 }}>Logo do Programa</label>
               <div className="flex items-center gap-2">
-                {canalForm.background_url && <img src={canalForm.background_url} alt="Logo" className="w-16 h-9 rounded object-contain border border-border" />}
-                <button onClick={() => handleImageUpload("background_url")} className="bg-muted border border-border px-3 py-2 rounded-lg text-foreground hover:bg-muted/80 text-xs flex items-center gap-1">
+                {canalForm.background_url && <img src={canalForm.background_url} alt="Logo" className="w-16 h-9 rounded object-contain" style={{ border: "1px solid #0d0446" }} />}
+                <button onClick={() => handleImageUpload("background_url")}
+                  className="px-3 py-1.5 font-bold transition-all text-xs flex items-center gap-1"
+                  style={btnSecondary}
+                  onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#0d0446"; e.currentTarget.style.color = "#ffffff"; }}
+                  onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#ffffff"; e.currentTarget.style.color = "#0d0446"; }}
+                >
                   <Upload size={12} /> {canalForm.background_url ? "Trocar" : "Upload"}
                 </button>
               </div>
@@ -426,57 +471,90 @@ export default function ConfiguracoesPage() {
 
           {/* Especificações */}
           <div className="flex flex-wrap items-center gap-6">
-            <label className="flex items-center gap-2 cursor-pointer">
+            <label className="flex items-center gap-2 cursor-pointer" style={{ color: "#0d0446" }}>
               <input type="checkbox" checked={canalForm.is_hd} onChange={(e) => setCanalForm(p => ({ ...p, is_hd: e.target.checked }))}
-                className="accent-primary w-4 h-4" />
-              <span className="text-sm font-medium text-foreground">HD</span>
+                className="w-4 h-4" style={{ accentColor: "#0d0446" }} />
+              <span className="text-sm font-medium">HD</span>
             </label>
-            <label className="flex items-center gap-2 cursor-pointer">
+            <label className="flex items-center gap-2 cursor-pointer" style={{ color: "#0d0446" }}>
               <input type="checkbox" checked={canalForm.is_stereo} onChange={(e) => setCanalForm(p => ({ ...p, is_stereo: e.target.checked }))}
-                className="accent-primary w-4 h-4" />
-              <span className="text-sm font-medium text-foreground">Áudio Estéreo</span>
+                className="w-4 h-4" style={{ accentColor: "#0d0446" }} />
+              <span className="text-sm font-medium">Áudio Estéreo</span>
             </label>
           </div>
 
           {/* Submit */}
-          <div className="flex items-end gap-2">
+          <div className="flex items-center gap-2">
             <button onClick={handleAddCanal} disabled={savingCanal}
-              className="bg-primary text-primary-foreground px-5 py-3 rounded-lg text-sm font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center gap-2 flex-1 justify-center">
+              className="px-6 py-2 font-bold transition-all flex items-center gap-2 disabled:opacity-70"
+              style={btnPrimary}
+              onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#ffffff"; e.currentTarget.style.color = "#0d0446"; }}
+              onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#0d0446"; e.currentTarget.style.color = "#ffffff"; }}
+            >
               {savingCanal ? <Loader2 size={14} className="animate-spin" /> : <><Plus size={14} /> {editingCanal ? "Salvar Alterações" : "Adicionar"}</>}
             </button>
             {editingCanal && (
-              <button onClick={resetCanalForm} className="bg-muted border border-border px-5 py-3 rounded-lg text-sm font-semibold text-foreground hover:bg-muted/80 transition-colors">
-                Cancelar
+              <button onClick={resetCanalForm}
+                className="px-4 py-2 font-bold transition-all flex items-center gap-1"
+                style={btnSecondary}
+              >
+                <X size={14} /> Cancelar
               </button>
             )}
           </div>
         </div>
 
-        {/* Lista de canais */}
+        {/* Lista de canais — table style matching ApresentadorForm */}
         {loadingCanais ? (
-          <div className="flex items-center gap-2 text-muted-foreground text-sm"><Loader2 size={14} className="animate-spin" /> Carregando canais...</div>
+          <div className="flex items-center gap-2 text-sm mt-4" style={{ color: "rgba(13,4,70,0.5)" }}><Loader2 size={14} className="animate-spin" /> Carregando canais...</div>
         ) : canais.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Nenhum canal cadastrado.</p>
+          <p className="text-sm mt-4" style={{ color: "rgba(13,4,70,0.5)" }}>Nenhum canal cadastrado.</p>
         ) : (
-          <div className="space-y-2 mt-4">
-            <h4 className="text-sm font-semibold text-muted-foreground">Canais Cadastrados</h4>
-            {canais.map(c => (
-              <div key={c.id} className="flex items-center gap-3 bg-muted/40 border border-border rounded-lg p-3">
-                {c.logo_url ? <img src={c.logo_url} alt="" className="w-8 h-8 rounded object-contain" /> : <div className="w-8 h-8 rounded bg-muted flex items-center justify-center text-xs text-muted-foreground">{c.numero_canal}</div>}
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground truncate">{c.name}</p>
-                  <p className="text-xs text-muted-foreground">{typeLabels[c.type] || c.type}{c.type !== "catalog" && c.numero_canal ? ` • Canal ${c.numero_canal}` : ""}{c.catalog_name ? ` • ${c.catalog_name}` : ""}</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button onClick={() => handleEditCanal(c)} className="text-primary hover:text-primary/80 transition-colors">
-                    <Pencil size={14} />
-                  </button>
-                  <button onClick={() => handleRemoveCanal(c.id)} className="text-destructive hover:text-destructive/80 transition-colors">
-                    <Trash2 size={14} />
-                  </button>
-                </div>
-              </div>
-            ))}
+          <div className="mt-6">
+            <h4 className="text-lg font-medium mb-4" style={{ color: "#0d0446" }}>Canais Cadastrados</h4>
+            <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(13,4,70,0.1)" }}>
+              <table className="w-full text-sm" style={{ color: "#0d0446" }}>
+                <thead>
+                  <tr style={{ backgroundColor: "#0d0446", color: "#ffffff" }}>
+                    <th className="px-4 py-2 text-left font-semibold">Canal</th>
+                    <th className="px-4 py-2 text-left font-semibold">Nome</th>
+                    <th className="px-4 py-2 text-left font-semibold">Tipo</th>
+                    <th className="px-4 py-2 text-center font-semibold">Capa</th>
+                    <th className="px-4 py-2 text-center font-semibold">Thumb</th>
+                    <th className="px-4 py-2 text-center font-semibold">Editar</th>
+                    <th className="px-4 py-2 text-center font-semibold">Excluir</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {canais.map((c, i) => (
+                    <tr key={c.id} style={{ backgroundColor: i % 2 === 0 ? "#ffffff" : "#f8f8fc", borderTop: "1px solid rgba(13,4,70,0.08)" }}>
+                      <td className="px-4 py-2">{c.type === "catalog" ? "—" : c.numero_canal || "—"}</td>
+                      <td className="px-4 py-2 font-medium">
+                        {c.name}
+                        {c.catalog_name ? <span className="text-xs ml-1" style={{ color: "rgba(13,4,70,0.45)" }}>({c.catalog_name})</span> : null}
+                      </td>
+                      <td className="px-4 py-2">{typeLabels[c.type] || c.type}</td>
+                      <td className="px-4 py-2 text-center">
+                        {c.cover_url ? <CheckCircle size={16} className="inline" style={{ color: "#22c55e" }} /> : <span style={{ color: "rgba(13,4,70,0.25)" }}>—</span>}
+                      </td>
+                      <td className="px-4 py-2 text-center">
+                        {c.logo_url ? <CheckCircle size={16} className="inline" style={{ color: "#22c55e" }} /> : <span style={{ color: "rgba(13,4,70,0.25)" }}>—</span>}
+                      </td>
+                      <td className="px-4 py-2 text-center">
+                        <button onClick={() => handleEditCanal(c)} title="Editar" className="hover:opacity-70 transition-opacity">
+                          <Pencil size={14} style={{ color: "#0d0446" }} />
+                        </button>
+                      </td>
+                      <td className="px-4 py-2 text-center">
+                        <button onClick={() => handleRemoveCanal(c.id)} title="Remover" className="hover:opacity-70 transition-opacity">
+                          <Trash2 size={14} style={{ color: "#dc2626" }} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </CollapsibleBox>
