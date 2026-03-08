@@ -25,7 +25,7 @@ serve(async (req) => {
       ).join(". ");
       userPrompt = `Cidade: ${city}. Previsão: ${forecastLines}.`;
     } else {
-      systemPrompt = "Você é um apresentador de previsão do tempo de uma rádio brasileira. Use tom jornalístico porém amigável. Gere uma descrição curta e natural do clima atual em no máximo 2 frases (máximo 30 palavras). Dê uma dica prática. Responda apenas com o texto, sem formatação.";
+      systemPrompt = `Você é um apresentador de previsão do tempo de uma rádio brasileira. Use tom jornalístico porém amigável. Siga este formato de referência: "Agora em [cidade] [temperatura atual]°C, temos a máxima hoje de [máxima]°C e a mínima de [mínima]°C. A umidade está em [umidade]% e a chance de chuva é de [chance]%." Complete com uma dica prática curta. Máximo 3 frases (50 palavras). Responda apenas com o texto, sem formatação.`;
       userPrompt = `Cidade: ${city}. Temperatura: ${temp}°C (mín ${tempMin}°C, máx ${tempMax}°C). Umidade: ${humidity}%. Chance de chuva: ${rainChance}%. Condição: ${condition}.`;
     }
 
