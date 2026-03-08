@@ -448,7 +448,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
 
           {/* ── Seção 2: Imagens ── */}
           <fieldset className="rounded-xl p-4 space-y-3" style={{ border: "1px solid rgba(13,4,70,0.12)", backgroundColor: "rgba(13,4,70,0.02)" }}>
-            <legend className="text-xs font-bold px-2 uppercase tracking-wider" style={{ color: "#0d0446" }}>Imagens do Canal</legend>
+            <legend className="text-xs font-bold px-2 uppercase tracking-wider" style={{ color: "#0d0446" }}>{canalMode === "catalog" ? "Imagens do Catálogo" : "Imagens do Canal"}</legend>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {([
                 { key: "cover_url" as const, label: "Capa do Programa", hint: "1280 × 720", alt: "Capa" },
