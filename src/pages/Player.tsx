@@ -2154,7 +2154,7 @@ export default function PlayerPage() {
                   title={liked ? "Descurtir música" : "Curtiu essa música?"} style={{ transition: "transform 0.3s ease" }}>
                   <Heart size={16} fill={liked ? "#ed0808" : "none"} color={liked ? "#ed0808" : "rgba(255,255,255,0.6)"} className="transition-colors" />
                 </button>
-                {likeCount > 0 && <span className="text-[10px] sm:text-[11px] font-bold text-white/60">{likeCount}</span>}
+                
                 {floatingHearts.map((h) => (
                   <Heart key={h.id} size={12 + Math.random() * 6} fill="#ed0808" color="#ed0808" className="absolute pointer-events-none"
                     style={{ left: `calc(50% + ${h.x}px)`, bottom: "100%", opacity: 0, animation: `floatHeart 1.2s ease-out ${h.delay}s forwards` }} />
