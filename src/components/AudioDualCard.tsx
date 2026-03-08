@@ -162,7 +162,7 @@ export default function AudioDualCard({
             backgroundColor: "#a10a0b",
             backgroundImage: presenterPhoto ? `url(${presenterPhoto})` : undefined,
             backgroundSize: "cover",
-            backgroundPosition: "center",
+            backgroundPosition: "top center",
             zIndex: 1,
             transition: "margin-left 0.5s ease-out",
           }}
