@@ -614,7 +614,7 @@ function DashboardHome({ empresa, onNavigate }: { empresa: import("./Configuraco
   return (
     <div
       ref={scrollRef}
-      className="animate-fade-in flex gap-3 overflow-x-auto scrollbar-hide h-[225px]"
+      className="animate-fade-in flex gap-3 overflow-x-auto scrollbar-hide h-[180px] lg:h-[225px]"
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
     >
