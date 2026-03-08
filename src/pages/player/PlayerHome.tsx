@@ -142,8 +142,8 @@ function StreamingCard({ channel, currentProgram, nowPlaying, onClick, onHoverCh
         </div>
       )}
 
-      {/* Video preview - always showing when frames available */}
-      {isVideo && frames.length > 0 && (
+      {/* Video preview - only on hover */}
+      {hovered && isVideo && frames.length > 0 && (
         <img src={frames[frameIdx]} alt="preview" className="absolute inset-0 w-full h-full object-cover z-[1]" />
       )}
 
