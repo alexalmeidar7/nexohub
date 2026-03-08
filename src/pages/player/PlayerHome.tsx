@@ -115,14 +115,14 @@ function StreamingCard({ channel, currentProgram, nowPlaying, onClick, onHoverCh
     };
   }, [isVideo, channel.url]);
 
-  // Loop through frames always
+  // Loop through frames only while hovered
   useEffect(() => {
-    if (frames.length === 0) return;
+    if (!hovered || frames.length === 0) return;
     intervalRef.current = setInterval(() => {
       setFrameIdx(prev => (prev + 1) % frames.length);
     }, 400);
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
-  }, [frames.length]);
+  }, [hovered, frames.length]);
 
   return (
     <button
