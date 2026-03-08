@@ -389,6 +389,50 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                 </div>
               )}
             </section>
+          ) : activeSection === "content" ? (
+            /* ── Página dedicada: Catálogo ── */
+            <section style={{ marginTop: "calc(600px - 200px)" }}>
+              <h2 className="text-xl font-bold mb-6">Catálogo</h2>
+              {!dataLoaded ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
+                  {[1, 2, 3, 4].map(i => (
+                    <Skeleton key={i} className="w-full aspect-video rounded-xl bg-white/10" />
+                  ))}
+                </div>
+              ) : catalogChannels.length === 0 ? (
+                <div className="w-full h-40 rounded-xl bg-player-surface border border-player-border flex items-center justify-center text-player-muted-foreground text-sm">
+                  Nenhum conteúdo de catálogo disponível
+                </div>
+              ) : (
+                <>
+                  {Object.entries(catalogGroups).map(([groupName, items]) => (
+                    <div key={groupName} className="mb-8">
+                      <h3 className="text-lg font-semibold mb-4">{groupName}</h3>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
+                        {items.map(item => (
+                          <button
+                            key={item.id}
+                            onClick={goToPlayer}
+                            className="w-full aspect-video rounded-xl overflow-hidden relative transition-all hover:scale-[1.02] border-[5px] border-transparent hover:border-white"
+                          >
+                            {item.cover_url ? (
+                              <img src={item.cover_url} alt={item.name} className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full bg-gradient-to-br from-player-accent/30 to-player flex items-center justify-center">
+                                <Film className="h-8 w-8 text-player-muted-foreground" />
+                              </div>
+                            )}
+                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3">
+                              <p className="text-sm font-medium truncate text-left">{item.name}</p>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </>
+              )}
+            </section>
           ) : (
             /* ── Home padrão ── */
             <>
