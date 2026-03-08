@@ -482,7 +482,7 @@ export default function PlayerPage() {
   const [liked, setLiked] = useState(false);
   const [likeAnimating, setLikeAnimating] = useState(false);
   const [floatingHearts, setFloatingHearts] = useState<{ id: number; x: number; delay: number }[]>([]);
-  const [likeCount, setLikeCount] = useState(0);
+  
 
   useEffect(() => {
     // Reset immediately on music change
