@@ -1,0 +1,1 @@
+UPDATE public.streaming_channels SET type = 'video_live' WHERE id = '0937966c-1e20-4810-9f35-4251592811f4' AND type = 'video';
