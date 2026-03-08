@@ -21,6 +21,7 @@ interface Programa {
   horario_inicio: string;
   horario_fim: string;
   dias_semana: string[] | null;
+  capa: string | null;
 }
 
 interface PlaylistVideo {
@@ -119,15 +120,15 @@ function StreamingCard({ channel, currentProgram, onClick, onHoverChange }: { ch
   return (
     <button
       onClick={onClick}
-      onMouseEnter={() => { setHovered(true); onHoverChange?.(channel.cover_url || channel.logo_url || null); }}
+      onMouseEnter={() => { setHovered(true); onHoverChange?.(currentProgram?.capa || channel.cover_url || null); }}
       onMouseLeave={() => { setHovered(false); setFrameIdx(0); onHoverChange?.(null); }}
       className="flex-shrink-0 w-72 h-40 rounded-xl overflow-hidden relative transition-all hover:scale-[1.02] border-[5px] border-transparent hover:border-white"
     >
-      {/* Background: Thumb do canal (logo_url) */}
-      {channel.logo_url ? (
-        <img src={channel.logo_url} alt={channel.name} className="w-full h-full object-cover" />
-      ) : channel.cover_url ? (
+      {/* Background: cover_url do canal */}
+      {channel.cover_url ? (
         <img src={channel.cover_url} alt={channel.name} className="w-full h-full object-cover" />
+      ) : channel.logo_url ? (
+        <img src={channel.logo_url} alt={channel.name} className="w-full h-full object-cover" />
       ) : (
         <div className="w-full h-full bg-gradient-to-br from-player-accent/30 to-player flex items-center justify-center">
           <Radio className="h-10 w-10 text-player-muted-foreground" />
@@ -217,7 +218,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       const [chRes, empRes, progRes] = await Promise.all([
         supabase.from("streaming_channels").select("id, name, cover_url, logo_url, background_url, type, url, catalog_name").eq("active", true).order("numero_canal", { ascending: true }),
         supabase.from("empresa_config").select("logo, nome").eq("user_id", userId).single(),
-        supabase.from("programas").select("nome, horario_inicio, horario_fim, dias_semana").eq("user_id", userId).eq("ativo", true),
+        supabase.from("programas").select("nome, horario_inicio, horario_fim, dias_semana, capa").eq("user_id", userId).eq("ativo", true),
       ]);
       if (chRes.data) setChannels(chRes.data as any);
       if (empRes.data) {
