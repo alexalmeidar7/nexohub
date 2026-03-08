@@ -195,6 +195,26 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
         setChannelName(empRes.data.nome || "");
       }
       if (progRes.data) setProgramas(progRes.data);
+
+      // Fetch watch history
+      const { data: historyData } = await supabase
+        .from("watch_history")
+        .select("id, channel_name, channel_cover_url, channel_logo_url, channel_type, watched_at, channel_id")
+        .eq("user_id", userId)
+        .order("watched_at", { ascending: false })
+        .limit(10);
+      if (historyData) {
+        // Deduplicate by channel_id, keep most recent
+        const seen = new Set<string>();
+        const unique = historyData.filter(h => {
+          const key = h.channel_id || h.id;
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
+        setWatchHistory(unique);
+      }
+
       setDataLoaded(true);
     };
     fetchData();
