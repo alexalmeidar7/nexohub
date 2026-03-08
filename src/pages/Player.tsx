@@ -855,7 +855,13 @@ export default function PlayerPage() {
         audio.volume = volumeRef.current / 100;
         audio.muted = mutedRef.current;
         if (Hls && Hls.isSupported()) {
-          const hls = new Hls({ enableWorker: true, lowLatencyMode: true });
+          const hls = new Hls({
+            enableWorker: true,
+            lowLatencyMode: true,
+            xhrSetup: (xhr: XMLHttpRequest) => {
+              xhr.withCredentials = false;
+            },
+          });
           hlsRef.current = hls;
           hls.loadSource(freshUrl);
           hls.attachMedia(audio);
