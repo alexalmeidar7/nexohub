@@ -258,6 +258,43 @@ export default function NoticiasPanel() {
   const [readingPopup, setReadingPopup] = useState<NewsItem | null>(null);
   const [loadingReading, setLoadingReading] = useState(false);
   const [blocoEconomia, setBlocoEconomia] = useState<CotacaoItem[]>([]);
+  const [miniWeather, setMiniWeather] = useState<{ city: string; temp: number; humidity: number; code: number; min: number; max: number } | null>(null);
+  const [loadingWeather, setLoadingWeather] = useState(true);
+
+  const miniWeatherLabel = (code: number) => {
+    const labels: Record<number, string> = {
+      0: "Céu limpo", 1: "Parc. limpo", 2: "Parc. nublado", 3: "Nublado",
+      45: "Neblina", 48: "Neblina", 51: "Garoa leve", 53: "Garoa", 55: "Garoa forte",
+      61: "Chuva leve", 63: "Chuva moderada", 65: "Chuva forte",
+      80: "Pancadas", 81: "Pancadas", 82: "Pancadas fortes",
+      95: "Tempestade", 96: "Tempestade", 99: "Tempestade severa",
+    };
+    const closest = Object.keys(labels).map(Number).reduce((prev, curr) => Math.abs(curr - code) < Math.abs(prev - code) ? curr : prev);
+    return labels[closest] || "Desconhecido";
+  };
+
+  useEffect(() => {
+    const loadWeather = async () => {
+      setLoadingWeather(true);
+      try {
+        const raw = localStorage.getItem("masterview_primary_city");
+        const primary = raw ? JSON.parse(raw) : null;
+        if (!primary) { setLoadingWeather(false); return; }
+        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${primary.lat}&longitude=${primary.lon}&current=temperature_2m,relative_humidity_2m,weather_code&daily=temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=1`);
+        const data = await res.json();
+        setMiniWeather({
+          city: primary.name,
+          temp: Math.round(data.current.temperature_2m),
+          humidity: data.current.relative_humidity_2m,
+          code: data.current.weather_code,
+          min: Math.round(data.daily.temperature_2m_min[0]),
+          max: Math.round(data.daily.temperature_2m_max[0]),
+        });
+      } catch { /* ignore */ }
+      setLoadingWeather(false);
+    };
+    loadWeather();
+  }, []);
 
   const toggleBox = (key: string) => setCollapsedBoxes(prev => ({ ...prev, [key]: !prev[key] }));
 
