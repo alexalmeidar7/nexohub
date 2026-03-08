@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Search, Droplets, CloudRain, Thermometer, Star } from "lucide-react";
 import XmlLinkRow from "./XmlLinkRow";
+import { WeatherIcon } from "./WeatherIcons";
 
 interface WeatherData {
   city: string;
