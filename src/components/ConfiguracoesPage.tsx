@@ -377,7 +377,15 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
                 📡 Ao Vivo
               </button>
               <button
-                onClick={() => setCanalMode("catalog")}
+                onClick={() => {
+                  setCanalMode("catalog");
+                  const catalogCanais = canais.filter(c => c.type === "catalog");
+                  const maxNum = catalogCanais.reduce((max, c) => {
+                    const n = parseInt(c.numero_canal || "0", 10);
+                    return n > max ? n : max;
+                  }, 0);
+                  setCanalForm(p => ({ ...p, type: "catalog", numero_canal: String(maxNum + 1).padStart(2, "0") }));
+                }}
                 className="px-4 py-1.5 text-xs font-bold transition-all"
                 style={{ backgroundColor: canalMode === "catalog" ? "#0d0446" : "#ffffff", color: canalMode === "catalog" ? "#ffffff" : "#0d0446", borderLeft: "2px solid #0d0446" }}
               >
@@ -415,16 +423,22 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
                 </div>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="space-y-1">
+                  <label className="block text-xs font-semibold" style={{ color: "#0d0446" }}>Tipo de Transmissão</label>
+                  <div className="w-full px-4 py-1.5 text-sm" style={{ backgroundColor: "rgba(13,4,70,0.08)", color: "#0d0446", borderRadius: "20px", border: "2px solid rgba(13,4,70,0.2)" }}>
+                    Gravado
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <label className="block text-xs font-semibold" style={{ color: "#0d0446" }}>Nº do Canal</label>
+                  <StyledInput value={canalForm.numero_canal} onChange={(e) => setCanalForm(p => ({ ...p, numero_canal: e.target.value }))} placeholder="Ex: 01" />
+                </div>
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold" style={{ color: "#0d0446" }}>Nome do Catálogo</label>
                   <StyledInput value={canalForm.catalog_name} onChange={(e) => setCanalForm(p => ({ ...p, catalog_name: e.target.value }))} placeholder="Ex: Podcasts" />
                 </div>
-                <div className="space-y-1">
-                  <label className="block text-xs font-semibold" style={{ color: "#0d0446" }}>Nome do Programa</label>
-                  <StyledInput value={canalForm.name} onChange={(e) => setCanalForm(p => ({ ...p, name: e.target.value }))} placeholder="Ex: Podcast Semanal" />
-                </div>
-                <div className="space-y-1 sm:col-span-2">
+                <div className="space-y-1 sm:col-span-3">
                   <label className="block text-xs font-semibold" style={{ color: "#0d0446" }}>URL da Playlist do YouTube</label>
                   <StyledInput value={canalForm.url} onChange={(e) => setCanalForm(p => ({ ...p, url: e.target.value }))} placeholder="https://youtube.com/playlist?list=..." />
                 </div>
@@ -434,7 +448,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
 
           {/* ── Seção 2: Imagens ── */}
           <fieldset className="rounded-xl p-4 space-y-3" style={{ border: "1px solid rgba(13,4,70,0.12)", backgroundColor: "rgba(13,4,70,0.02)" }}>
-            <legend className="text-xs font-bold px-2 uppercase tracking-wider" style={{ color: "#0d0446" }}>Imagens do Canal</legend>
+            <legend className="text-xs font-bold px-2 uppercase tracking-wider" style={{ color: "#0d0446" }}>{canalMode === "catalog" ? "Imagens do Catálogo" : "Imagens do Canal"}</legend>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {([
                 { key: "cover_url" as const, label: "Capa do Programa", hint: "1280 × 720", alt: "Capa" },
