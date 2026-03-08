@@ -218,7 +218,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       const [chRes, empRes, progRes] = await Promise.all([
         supabase.from("streaming_channels").select("id, name, cover_url, logo_url, background_url, type, url, catalog_name").eq("active", true).order("numero_canal", { ascending: true }),
         supabase.from("empresa_config").select("logo, nome").eq("user_id", userId).single(),
-        supabase.from("programas").select("nome, horario_inicio, horario_fim, dias_semana").eq("user_id", userId).eq("ativo", true),
+        supabase.from("programas").select("nome, horario_inicio, horario_fim, dias_semana, capa").eq("user_id", userId).eq("ativo", true),
       ]);
       if (chRes.data) setChannels(chRes.data as any);
       if (empRes.data) {
