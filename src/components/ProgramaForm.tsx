@@ -624,7 +624,7 @@ export default function ProgramaForm() {
           <label className="block text-xs mb-1" style={{ color: "#0d0446", fontWeight: 600 }}>Tipo do Programa</label>
           <div className="flex gap-2">
             <Select value={tipoPrograma} onValueChange={setTipoPrograma}>
-              <SelectTrigger className="flex-1 h-8" style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "20px", border: "none" }}>
+              <SelectTrigger className="flex-1 h-8" style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "20px", border: "none", fontSize: "13px" }}>
                 <SelectValue placeholder="Selecione o tipo" />
               </SelectTrigger>
               <SelectContent style={{ backgroundColor: "#0d0446", border: "1px solid #0d0446" }}>
