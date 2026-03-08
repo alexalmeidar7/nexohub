@@ -299,7 +299,6 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
             key={item.section}
             onClick={() => {
               setActiveSection(item.section);
-              if (item.section === "streaming") goToPlayer();
             }}
             className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${
               activeSection === item.section
