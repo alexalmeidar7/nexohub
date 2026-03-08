@@ -10,6 +10,7 @@ interface Channel {
   name: string;
   cover_url: string | null;
   logo_url: string | null;
+  background_url: string | null;
   type: string;
   url?: string;
   catalog_name?: string;
@@ -118,7 +119,7 @@ function StreamingCard({ channel, currentProgram, onClick, onHoverChange }: { ch
   return (
     <button
       onClick={onClick}
-      onMouseEnter={() => { setHovered(true); onHoverChange?.(channel.logo_url || null); }}
+      onMouseEnter={() => { setHovered(true); onHoverChange?.(channel.background_url || null); }}
       onMouseLeave={() => { setHovered(false); setFrameIdx(0); onHoverChange?.(null); }}
       className="flex-shrink-0 w-72 h-40 rounded-xl overflow-hidden relative transition-all hover:scale-[1.02] border-[5px] border-transparent hover:border-white"
     >
@@ -218,7 +219,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       if (!userId) { setDataLoaded(true); return; }
 
       const [chRes, empRes, progRes] = await Promise.all([
-        supabase.from("streaming_channels").select("id, name, cover_url, logo_url, type, url, catalog_name").eq("active", true).order("numero_canal", { ascending: true }),
+        supabase.from("streaming_channels").select("id, name, cover_url, logo_url, background_url, type, url, catalog_name").eq("active", true).order("numero_canal", { ascending: true }),
         supabase.from("empresa_config").select("logo, nome").eq("user_id", userId).single(),
         supabase.from("programas").select("nome, horario_inicio, horario_fim, dias_semana").eq("user_id", userId).eq("ativo", true),
       ]);
