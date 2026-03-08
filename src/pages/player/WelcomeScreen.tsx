@@ -143,7 +143,27 @@ export default function WelcomeScreen({ userName, avatarUrl, onContinue }: Welco
       </h1>
 
       <button
-        onClick={onContinue}
+        onClick={() => {
+          // Play login chime immediately in user gesture context
+          try {
+            const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+            const now = ctx.currentTime;
+            const notes = [523.25, 659.25, 783.99, 1046.5]; // C5, E5, G5, C6
+            notes.forEach((freq, i) => {
+              const osc = ctx.createOscillator();
+              const gain = ctx.createGain();
+              osc.type = "sine";
+              osc.frequency.value = freq;
+              gain.gain.setValueAtTime(0, now + i * 0.12);
+              gain.gain.linearRampToValueAtTime(0.15, now + i * 0.12 + 0.04);
+              gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.12 + 0.35);
+              osc.connect(gain).connect(ctx.destination);
+              osc.start(now + i * 0.12);
+              osc.stop(now + i * 0.12 + 0.4);
+            });
+          } catch {}
+          onContinue();
+        }}
         onMouseDown={() => setPressing(true)}
         onMouseUp={() => setPressing(false)}
         className={`w-40 h-40 rounded-full bg-player-accent-soft flex items-center justify-center overflow-hidden mb-4 cursor-pointer transition-all duration-700 ease-out hover:scale-105 ${
