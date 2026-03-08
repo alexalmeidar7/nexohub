@@ -624,7 +624,10 @@ function DashboardHome({ empresa, onNavigate }: { empresa: import("./Configuraco
           className={`rounded-2xl p-4 flex-shrink-0 overflow-hidden relative ${
             draggedId === widget.id ? "opacity-50 scale-95" : ""
           } ${dragOverId === widget.id ? "ring-2 ring-[#268ffa]" : ""}`}
-          style={{ backgroundColor: widget.bg, width: "300px", height: "225px" }}
+          style={{ backgroundColor: widget.bg, width: "260px", height: "180px" }}
+          className={`rounded-2xl p-3 lg:p-4 flex-shrink-0 overflow-hidden relative lg:!w-[300px] lg:!h-[225px] ${
+            draggedId === widget.id ? "opacity-50 scale-95" : ""
+          } ${dragOverId === widget.id ? "ring-2 ring-[#268ffa]" : ""}`}
           onDragOver={(e) => handleDragOver(e, widget.id)}
           onDrop={(e) => handleDrop(e, widget.id)}
           onDragEnd={handleDragEnd}
