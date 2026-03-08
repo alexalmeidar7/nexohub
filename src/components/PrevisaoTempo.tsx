@@ -155,6 +155,7 @@ export default function PrevisaoTempo() {
       if (!silent) {
         setAiLoading(true);
         setAiDescription("");
+        setForecastDescription("");
         try {
           const { data } = await supabase.functions.invoke("weather-description", {
             body: {
