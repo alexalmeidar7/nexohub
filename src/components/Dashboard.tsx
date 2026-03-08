@@ -416,8 +416,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
         {/* === MAIN CONTENT === */}
         <main className="flex-1 flex flex-col min-w-0">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-3" style={{ marginLeft: "25px" }}>
+          {/* Header - desktop only */}
+          <div className="hidden lg:flex items-center justify-between mb-3" style={{ marginLeft: "25px" }}>
             <div>
               <h1 className="font-bold text-white" style={{ fontSize: "45px", lineHeight: 1.1 }}>{empresa.nome || "Dashboard"}</h1>
               <p className="text-white/60 text-xs">{user?.email || ""}</p>
