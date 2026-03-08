@@ -47,10 +47,8 @@ function maskHMS(raw: string): string {
 export default function CortesVideoPage() {
   const { user } = useAuth();
   const [youtubeUrl, setYoutubeUrl] = useState("");
-  const [startMin, setStartMin] = useState("");
-  const [startSec, setStartSec] = useState("");
-  const [endMin, setEndMin] = useState("");
-  const [endSec, setEndSec] = useState("");
+  const [startTime, setStartTime] = useState("");
+  const [endTime, setEndTime] = useState("");
   const [cutting, setCutting] = useState(false);
   const [result, setResult] = useState<{
     clip_embed_url: string;
@@ -61,8 +59,8 @@ export default function CortesVideoPage() {
 
   const videoId = useMemo(() => extractYoutubeId(youtubeUrl), [youtubeUrl]);
 
-  const startSeconds = parseTime(startMin, startSec);
-  const endSeconds = parseTime(endMin, endSec);
+  const startSeconds = parseHMS(startTime);
+  const endSeconds = parseHMS(endTime);
   const duration = endSeconds - startSeconds;
 
   const canCut = videoId && duration > 0 && duration <= 600;
