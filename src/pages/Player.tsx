@@ -548,7 +548,7 @@ export default function PlayerPage() {
           }
 
           setPublicUserId(data.userId);
-          setCanais((data.channels || []) as Canal[]);
+          setCanais(((data.channels || []) as Canal[]).filter(c => c.type !== "catalog"));
           setProgramas((data.programas || []) as Programa[]);
           setApresentadores((data.apresentadores || []) as Apresentador[]);
           setShopProducts(data.shopProducts || []);
@@ -614,7 +614,7 @@ export default function PlayerPage() {
         if (cancelled) return;
 
         if (!channelsRes.error && channelsRes.data) {
-          setCanais(channelsRes.data as Canal[]);
+          setCanais((channelsRes.data as Canal[]).filter(c => c.type !== "catalog"));
         } else {
           setCanais([]);
         }
