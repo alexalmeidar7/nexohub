@@ -484,9 +484,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
       {/* === NO AR + WIDGET LIST ROW === */}
       {currentPage === "dashboard" && (
-        <div className="flex gap-5" style={{ paddingLeft: "50px", paddingRight: "50px", paddingTop: "8px" }}>
+        <div className="flex flex-col lg:flex-row gap-3 lg:gap-5 px-4 lg:px-[50px] pt-2">
           {/* No Ar box */}
-          <div className="rounded-2xl p-4 overflow-hidden flex-shrink-0" style={{ backgroundColor: "#0c0441", width: "400px", height: "225px" }}>
+          <div className="rounded-2xl p-4 overflow-hidden flex-shrink-0 w-full lg:w-[400px] h-[180px] lg:h-[225px]" style={{ backgroundColor: "#0c0441" }}>
             <Suspense fallback={null}>
               <OnAirWidget />
             </Suspense>
@@ -501,9 +501,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       )}
 
       {/* === FOOTER === */}
-      <footer className="flex items-center gap-3" style={{ paddingLeft: "50px", paddingBottom: "10px", paddingTop: "15px" }}>
+      <footer className="flex items-center gap-3 px-4 lg:px-[50px] pb-2 pt-3">
         <img src={logoFooter} alt="Nexo" className="h-5 opacity-80" />
-        <span className="text-white/60 text-[11px]">Copyrighted 2026 - Todos os direitos reservados.</span>
+        <span className="text-white/60 text-[11px] hidden sm:inline">Copyrighted 2026 - Todos os direitos reservados.</span>
       </footer>
     </div>
   );
