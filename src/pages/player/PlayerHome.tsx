@@ -32,7 +32,7 @@ function StreamingCard({ channel, currentProgram, onClick }: { channel: Channel;
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const isVideo = channel.type === "video";
+  const isVideo = channel.type === "video" || channel.type === "video_live";
 
   // Capture frames on hover for video channels
   useEffect(() => {
