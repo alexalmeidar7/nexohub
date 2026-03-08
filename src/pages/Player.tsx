@@ -895,25 +895,23 @@ export default function PlayerPage() {
             capLevelToPlayerSize: false,
             startLevel: -1,
             autoStartLoad: true,
-            // Moderate buffer — too large causes bufferAppendError
             maxBufferLength: 20,
             maxMaxBufferLength: 40,
             maxBufferSize: 30 * 1000 * 1000,
             maxBufferHole: 0.5,
-            // ABR tuning
             abrEwmaDefaultEstimate: 3000000,
             abrBandWidthUpFactor: 0.7,
             abrBandWidthFactor: 0.95,
-            // Fragment loading retry
-            fragLoadingMaxRetry: 4,
-            fragLoadingMaxRetryTimeout: 8000,
+            fragLoadingMaxRetry: 6,
+            fragLoadingMaxRetryTimeout: 10000,
             fragLoadingRetryDelay: 1000,
-            manifestLoadingMaxRetry: 3,
-            levelLoadingMaxRetry: 3,
-            // Back buffer cleanup
+            manifestLoadingMaxRetry: 4,
+            levelLoadingMaxRetry: 4,
             backBufferLength: 15,
-            // Append error retry
             appendErrorMaxRetry: 5,
+            xhrSetup: (xhr: XMLHttpRequest) => {
+              xhr.withCredentials = false;
+            },
           });
           hlsRef.current = hls;
           hls.loadSource(freshUrl);
