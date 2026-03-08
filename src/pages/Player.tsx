@@ -338,14 +338,23 @@ export default function PlayerPage() {
   useEffect(() => {
     if (!canal || !userId || canal.id === watchHistoryRecordedRef.current) return;
     watchHistoryRecordedRef.current = canal.id;
-    supabase.from("watch_history").insert({
-      user_id: userId,
-      channel_id: canal.id,
-      channel_name: canal.name,
-      channel_cover_url: canal.cover_url || "",
-      channel_logo_url: canal.logo_url || "",
-      channel_type: canal.type,
-    }).then(() => {});
+    
+    const recordHistory = async () => {
+      const { error } = await supabase.from("watch_history").insert({
+        user_id: userId,
+        channel_id: canal.id,
+        channel_name: canal.name,
+        channel_cover_url: canal.cover_url || "",
+        channel_logo_url: canal.logo_url || "",
+        channel_type: canal.type,
+      });
+      if (error) {
+        console.error("[WATCH-HISTORY] Insert error:", error);
+      } else {
+        console.log("[WATCH-HISTORY] Recorded:", canal.name);
+      }
+    };
+    recordHistory();
   }, [canal?.id, userId]);
 
   // Shopping & Pre-Roll state
