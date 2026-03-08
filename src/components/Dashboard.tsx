@@ -621,10 +621,10 @@ function DashboardHome({ empresa, onNavigate }: { empresa: import("./Configuraco
       {orderedWidgets.map(widget => (
         <div
           key={widget.id}
-          className={`rounded-2xl p-3 lg:p-4 flex-shrink-0 overflow-hidden relative ${
+          className={`dashboard-widget-card rounded-2xl p-3 lg:p-4 flex-shrink-0 overflow-hidden relative ${
             draggedId === widget.id ? "opacity-50 scale-95" : ""
           } ${dragOverId === widget.id ? "ring-2 ring-[#268ffa]" : ""}`}
-          style={{ backgroundColor: widget.bg, width: "260px", height: "180px" }}
+          style={{ backgroundColor: widget.bg }}
           onDragOver={(e) => handleDragOver(e, widget.id)}
           onDrop={(e) => handleDrop(e, widget.id)}
           onDragEnd={handleDragEnd}
