@@ -269,6 +269,7 @@ export default function PrevisaoTempo() {
     setForecastLoading(false);
   };
 
+  return (
     <div className="animate-fade-in space-y-8">
       {/* Primary city box */}
       {primaryCity && (
