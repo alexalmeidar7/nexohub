@@ -260,6 +260,8 @@ export default function NoticiasPanel() {
   const [blocoEconomia, setBlocoEconomia] = useState<CotacaoItem[]>([]);
   const [miniWeather, setMiniWeather] = useState<{ city: string; temp: number; humidity: number; code: number; min: number; max: number } | null>(null);
   const [loadingWeather, setLoadingWeather] = useState(true);
+  const [weatherAiDesc, setWeatherAiDesc] = useState("");
+  const [loadingWeatherAi, setLoadingWeatherAi] = useState(false);
 
   const miniWeatherLabel = (code: number) => {
     const labels: Record<number, string> = {
@@ -280,16 +282,37 @@ export default function NoticiasPanel() {
         const raw = localStorage.getItem("masterview_primary_city");
         const primary = raw ? JSON.parse(raw) : null;
         if (!primary) { setLoadingWeather(false); return; }
-        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${primary.lat}&longitude=${primary.lon}&current=temperature_2m,relative_humidity_2m,weather_code&daily=temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=1`);
+        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${primary.lat}&longitude=${primary.lon}&current=temperature_2m,relative_humidity_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto&forecast_days=1`);
         const data = await res.json();
-        setMiniWeather({
+        const weatherData = {
           city: primary.name,
           temp: Math.round(data.current.temperature_2m),
           humidity: data.current.relative_humidity_2m,
           code: data.current.weather_code,
           min: Math.round(data.daily.temperature_2m_min[0]),
           max: Math.round(data.daily.temperature_2m_max[0]),
-        });
+        };
+        setMiniWeather(weatherData);
+
+        // Fetch AI description
+        setLoadingWeatherAi(true);
+        try {
+          const condLabel = miniWeatherLabel(data.current.weather_code);
+          const rainChance = data.daily.precipitation_probability_max?.[0] ?? 0;
+          const aiRes = await supabase.functions.invoke("weather-description", {
+            body: {
+              city: primary.name,
+              temp: weatherData.temp,
+              tempMin: weatherData.min,
+              tempMax: weatherData.max,
+              humidity: weatherData.humidity,
+              rainChance,
+              condition: condLabel,
+            },
+          });
+          if (aiRes.data?.description) setWeatherAiDesc(aiRes.data.description);
+        } catch { /* ignore AI error */ }
+        setLoadingWeatherAi(false);
       } catch { /* ignore */ }
       setLoadingWeather(false);
     };
