@@ -482,38 +482,32 @@ export default function PlayerPage() {
   const [liked, setLiked] = useState(false);
   const [likeAnimating, setLikeAnimating] = useState(false);
   const [floatingHearts, setFloatingHearts] = useState<{ id: number; x: number; delay: number }[]>([]);
-  const [likeCount, setLikeCount] = useState(0);
+  
 
   useEffect(() => {
     // Reset immediately on music change
     setLiked(false);
-    setLikeCount(0);
     
     if (!user || !musicData?.titulo || !musicData?.artista) {
       return;
     }
     const check = async () => {
-      const [{ data: myLike }, { count }] = await Promise.all([
-        supabase.from("music_likes").select("id").eq("user_id", user.id).eq("titulo", musicData.titulo).eq("artista", musicData.artista).limit(1),
-        supabase.from("music_likes").select("*", { count: "exact", head: true }).eq("titulo", musicData.titulo).eq("artista", musicData.artista),
-      ]);
+      const { data: myLike } = await supabase.from("music_likes").select("id").eq("user_id", user.id).eq("titulo", musicData.titulo).eq("artista", musicData.artista).limit(1);
       setLiked(!!(myLike && myLike.length > 0));
-      setLikeCount(count ?? 0);
     };
     check();
   }, [user, musicData?.titulo, musicData?.artista]);
 
   const toggleLike = useCallback(async () => {
-    if (!user || !musicData?.titulo || !musicData?.artista) return;
+    if (!user || !musicData?.titulo || !musicData?.artista || liked) return;
     await supabase.from("music_likes").insert({ user_id: user.id, titulo: musicData.titulo, artista: musicData.artista, capa: musicData.capa || "" });
     setLiked(true);
-    setLikeCount((c) => c + 1);
     setLikeAnimating(true);
     setTimeout(() => setLikeAnimating(false), 600);
     const hearts = Array.from({ length: 6 }, (_, i) => ({ id: Date.now() + i, x: Math.random() * 40 - 20, delay: Math.random() * 0.3 }));
     setFloatingHearts(hearts);
     setTimeout(() => setFloatingHearts([]), 1500);
-  }, [user, musicData]);
+  }, [user, musicData, liked]);
 
   // Fetch all initial data — 3 stages for fastest possible first paint
   useEffect(() => {
@@ -2155,7 +2149,7 @@ export default function PlayerPage() {
                   title={liked ? "Descurtir música" : "Curtiu essa música?"} style={{ transition: "transform 0.3s ease" }}>
                   <Heart size={16} fill={liked ? "#ed0808" : "none"} color={liked ? "#ed0808" : "rgba(255,255,255,0.6)"} className="transition-colors" />
                 </button>
-                {likeCount > 0 && <span className="text-[10px] sm:text-[11px] font-bold text-white/60">{likeCount}</span>}
+                
                 {floatingHearts.map((h) => (
                   <Heart key={h.id} size={12 + Math.random() * 6} fill="#ed0808" color="#ed0808" className="absolute pointer-events-none"
                     style={{ left: `calc(50% + ${h.x}px)`, bottom: "100%", opacity: 0, animation: `floatHeart 1.2s ease-out ${h.delay}s forwards` }} />
