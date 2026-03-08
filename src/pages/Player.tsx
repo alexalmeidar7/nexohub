@@ -504,16 +504,15 @@ export default function PlayerPage() {
   }, [user, musicData?.titulo, musicData?.artista]);
 
   const toggleLike = useCallback(async () => {
-    if (!user || !musicData?.titulo || !musicData?.artista) return;
+    if (!user || !musicData?.titulo || !musicData?.artista || liked) return;
     await supabase.from("music_likes").insert({ user_id: user.id, titulo: musicData.titulo, artista: musicData.artista, capa: musicData.capa || "" });
     setLiked(true);
-    setLikeCount((c) => c + 1);
     setLikeAnimating(true);
     setTimeout(() => setLikeAnimating(false), 600);
     const hearts = Array.from({ length: 6 }, (_, i) => ({ id: Date.now() + i, x: Math.random() * 40 - 20, delay: Math.random() * 0.3 }));
     setFloatingHearts(hearts);
     setTimeout(() => setFloatingHearts([]), 1500);
-  }, [user, musicData]);
+  }, [user, musicData, liked]);
 
   // Fetch all initial data — 3 stages for fastest possible first paint
   useEffect(() => {
