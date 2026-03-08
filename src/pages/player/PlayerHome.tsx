@@ -223,20 +223,17 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
 
   // Fade banner when scrolling past 650px
   useEffect(() => {
-    const el = mainRef.current?.closest(".overflow-y-auto, .overflow-auto") || document.querySelector("[class*='overflow-y']") || window;
+    const scrollEl = mainRef.current?.closest(".overflow-y-auto") as HTMLElement | null;
+    if (!scrollEl) return;
     const handleScroll = () => {
-      const scrollY = el === window ? window.scrollY : (el as HTMLElement).scrollTop;
-      if (scrollY < 450) {
-        setBannerOpacity(1);
-      } else if (scrollY > 650) {
-        setBannerOpacity(0);
-      } else {
-        setBannerOpacity(1 - (scrollY - 450) / 200);
-      }
+      const scrollY = scrollEl.scrollTop;
+      if (scrollY < 450) setBannerOpacity(1);
+      else if (scrollY > 650) setBannerOpacity(0);
+      else setBannerOpacity(1 - (scrollY - 450) / 200);
     };
-    (el as any).addEventListener("scroll", handleScroll, { passive: true });
-    return () => (el as any).removeEventListener("scroll", handleScroll);
-  }, []);
+    scrollEl.addEventListener("scroll", handleScroll, { passive: true });
+    return () => scrollEl.removeEventListener("scroll", handleScroll);
+  }, [dataLoaded]);
 
   // Poll for current music data - localStorage + DB fallback
   useEffect(() => {
