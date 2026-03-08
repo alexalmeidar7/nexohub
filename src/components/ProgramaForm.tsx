@@ -84,6 +84,7 @@ interface Programa {
   variavel: boolean;
   descricao: string;
   dataVariavel: string | null;
+  classificacaoEtaria: string;
 }
 
 const DIAS_SEMANA = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
@@ -105,6 +106,8 @@ async function getProgramas(): Promise<Programa[]> {
     variavel: (p as any).variavel ?? false,
     descricao: (p as any).descricao || "",
     dataVariavel: (p as any).data_variavel || null,
+    classificacaoEtaria: (p as any).classificacao_etaria || "",
+  }));
   }));
 }
 
