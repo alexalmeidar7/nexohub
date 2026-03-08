@@ -674,7 +674,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                         items.map(item => (
                           <button
                             key={item.id}
-                            onClick={goToPlayer}
+                            onClick={() => goToPlayer(item.id)}
                             className="flex-shrink-0 w-56 h-32 rounded-xl overflow-hidden relative transition-all hover:scale-[1.02] border-[5px] border-transparent hover:border-white"
                           >
                             {item.cover_url ? (
