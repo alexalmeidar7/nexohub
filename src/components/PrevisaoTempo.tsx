@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Search, Droplets, CloudRain, Thermometer, Star } from "lucide-react";
 import XmlLinkRow from "./XmlLinkRow";
+import { WeatherIcon } from "./WeatherIcons";
 
 interface WeatherData {
   city: string;
@@ -35,31 +36,6 @@ interface FavoriteCity {
   inXml: boolean;
 }
 
-const weatherIconsDay: Record<number, string> = {
-  0: "☀️", 1: "🌤️", 2: "⛅", 3: "☁️",
-  45: "🌫️", 48: "🌫️",
-  51: "🌦️", 53: "🌦️", 55: "🌧️",
-  61: "🌧️", 63: "🌧️", 65: "🌧️",
-  71: "🌨️", 73: "🌨️", 75: "🌨️",
-  80: "🌦️", 81: "🌧️", 82: "⛈️",
-  95: "⛈️", 96: "⛈️", 99: "⛈️",
-};
-
-const weatherIconsNight: Record<number, string> = {
-  0: "🌙", 1: "🌙", 2: "☁️", 3: "☁️",
-  45: "🌫️", 48: "🌫️",
-  51: "🌦️", 53: "🌦️", 55: "🌧️",
-  61: "🌧️", 63: "🌧️", 65: "🌧️",
-  71: "🌨️", 73: "🌨️", 75: "🌨️",
-  80: "🌦️", 81: "🌧️", 82: "⛈️",
-  95: "⛈️", 96: "⛈️", 99: "⛈️",
-};
-
-function isNightTime(): boolean {
-  const hour = new Date().getHours();
-  return hour >= 18 || hour < 6;
-}
-
 const weatherLabels: Record<number, string> = {
   0: "Céu limpo", 1: "Parcialmente limpo", 2: "Parcialmente nublado", 3: "Nublado",
   45: "Neblina", 48: "Neblina", 51: "Garoa leve", 53: "Garoa", 55: "Garoa forte",
@@ -69,12 +45,6 @@ const weatherLabels: Record<number, string> = {
   95: "Tempestade", 96: "Tempestade com granizo", 99: "Tempestade severa",
 };
 
-function getWeatherIcon(code: number, forceDay = false) {
-  const icons = (!forceDay && isNightTime()) ? weatherIconsNight : weatherIconsDay;
-  const closest = Object.keys(icons).map(Number)
-    .reduce((prev, curr) => (Math.abs(curr - code) < Math.abs(prev - code) ? curr : prev));
-  return icons[closest] || "🌡️";
-}
 
 function getWeatherLabel(code: number) {
   const closest = Object.keys(weatherLabels).map(Number)
@@ -369,7 +339,7 @@ export default function PrevisaoTempo() {
                     <Star size={14} /> Favoritar cidade
                   </button>
                 )}
-                <span className="text-6xl">{getWeatherIcon(weather.current.weatherCode)}</span>
+                <WeatherIcon code={weather.current.weatherCode} size={64} />
               </div>
             </div>
             <div className="flex items-center gap-4 mb-6">
@@ -400,7 +370,7 @@ export default function PrevisaoTempo() {
                    onMouseEnter={e => { e.currentTarget.style.borderColor = "#2ec1f7"; }}
                    onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(13,4,70,0.1)"; }}>
                    <p className="text-xs capitalize" style={{ color: "rgba(13,4,70,0.5)" }}>{formatDay(day.date)}</p>
-                   <span className="text-3xl block animate-bounce" style={{ animationDuration: "3s", animationIterationCount: "infinite" }}>{getWeatherIcon(day.weatherCode, true)}</span>
+                   <div className="flex justify-center"><WeatherIcon code={day.weatherCode} size={40} forceDay /></div>
                   <p className="text-sm" style={{ color: "rgba(13,4,70,0.5)" }}>{getWeatherLabel(day.weatherCode)}</p>
                   <p className="text-xl font-semibold" style={{ color: "#0d0446" }}>{day.temp}°C</p>
                   <div className="text-xs space-y-1" style={{ color: "rgba(13,4,70,0.5)" }}>
