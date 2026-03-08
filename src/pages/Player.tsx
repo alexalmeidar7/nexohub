@@ -2047,7 +2047,7 @@ export default function PlayerPage() {
           {/* Row 1 on mobile: Channel + Play + Volume */}
           <div className="flex items-center gap-2 sm:gap-3 sm:pr-5 sm:border-r border-white/10 shrink-0">
             <div className="flex flex-col items-center gap-0.5 sm:gap-1">
-              {canais.length > 1 && (
+              {liveChannels.length > 1 && (
                 <button onClick={() => navigateChannel(-1)} className="text-white/60 hover:text-white hover:bg-[#e60000] rounded px-1.5 py-1 sm:px-2 sm:py-2 transition-all" title="Canal anterior"><ChevronUp size={14} /></button>
               )}
               <div className="text-white text-[10px] sm:text-xs font-bold py-0.5">
