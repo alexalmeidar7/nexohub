@@ -144,9 +144,16 @@ function StreamingCard({ channel, currentProgram, nowPlaying, onClick, onHoverCh
       {/* Info overlay - bottom left */}
       <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3">
         <p className="text-sm font-medium truncate text-left">{channel.name}</p>
-        {currentProgram && (
+        {nowPlaying?.musica ? (
+          <div className="flex items-center gap-1 mt-0.5">
+            <Music className="h-3 w-3 text-player-accent flex-shrink-0" />
+            <p className="text-[11px] text-player-muted-foreground truncate text-left">
+              {nowPlaying.musica} — {nowPlaying.artista}
+            </p>
+          </div>
+        ) : currentProgram ? (
           <p className="text-[11px] text-player-muted-foreground truncate text-left">{currentProgram.nome}</p>
-        )}
+        ) : null}
       </div>
     </button>
   );
