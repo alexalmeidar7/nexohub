@@ -293,6 +293,38 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
     catalogGroups[groupName].push(ch);
   });
 
+  // Fetch playlist videos for catalog channels
+  useEffect(() => {
+    if (!dataLoaded || catalogChannels.length === 0) return;
+    
+    const fetchPlaylists = async () => {
+      const results: Record<string, PlaylistVideo[]> = {};
+      
+      for (const ch of catalogChannels) {
+        if (!ch.url) continue;
+        // Extract playlist ID from YouTube URL
+        const plMatch = ch.url.match(/[?&]list=([a-zA-Z0-9_-]+)/);
+        const playlistId = plMatch?.[1];
+        if (!playlistId) continue;
+        
+        try {
+          const { data } = await supabase.functions.invoke("youtube-playlist", {
+            body: { playlistId },
+          });
+          if (data?.videos) {
+            results[ch.id] = data.videos.slice(0, 20);
+          }
+        } catch {
+          // skip
+        }
+      }
+      
+      setPlaylistVideos(results);
+    };
+    
+    fetchPlaylists();
+  }, [dataLoaded, catalogChannels.length]);
+
   const goToPlayer = () => {
     setFadeOut(true);
     setTimeout(() => {
