@@ -21,14 +21,6 @@ function parseHMS(value: string): number {
   return h * 3600 + m * 60 + s;
 }
 
-function formatHMS(seconds: number): string {
-  if (seconds <= 0) return "00:00:00";
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = seconds % 60;
-  return `${pad(h)}:${pad(m)}:${pad(s)}`;
-}
-
 function formatDuration(seconds: number): string {
   if (seconds <= 0) return "00:00:00";
   const h = Math.floor(seconds / 3600);
@@ -117,15 +109,15 @@ export default function CortesVideoPage() {
         <label className="text-xs font-semibold uppercase tracking-wider mb-2 block" style={{ color: "#0d0446" }}>
           Link do Vídeo (YouTube)
         </label>
-        <div className="relative">
-          <Link2 size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#268ffa]" />
+        <div className="relative flex items-center">
+          <Link2 size={16} className="absolute left-3 text-[#268ffa] pointer-events-none flex-shrink-0" />
           <input
             type="url"
             value={youtubeUrl}
             onChange={(e) => { setYoutubeUrl(e.target.value); setResult(null); }}
             placeholder="https://www.youtube.com/watch?v=..."
             className="w-full pl-10 pr-4 py-3 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-[#268ffa]/30"
-            style={{ borderColor: "#e2e8f0", backgroundColor: "#fff", color: "#0d0446" }}
+            style={{ borderColor: "#e2e8f0", backgroundColor: "#fff", color: "#0d0446", textOverflow: "ellipsis" }}
           />
         </div>
         {youtubeUrl && !videoId && (
@@ -133,21 +125,23 @@ export default function CortesVideoPage() {
         )}
       </div>
 
-      {/* Video preview */}
+      {/* Video preview - centered */}
       {videoId && (
-        <div className="rounded-xl overflow-hidden" style={{ maxWidth: 480 }}>
-          <iframe
-            src={`https://www.youtube.com/embed/${videoId}`}
-            title="Preview"
-            className="w-full aspect-video"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-          />
+        <div className="flex justify-center">
+          <div className="rounded-xl overflow-hidden w-full" style={{ maxWidth: 480 }}>
+            <iframe
+              src={`https://www.youtube.com/embed/${videoId}`}
+              title="Preview"
+              className="w-full aspect-video"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          </div>
         </div>
       )}
 
       {/* Time inputs */}
-      <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-4 items-start">
+      <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-4 items-center">
         {/* Start time */}
         <div>
           <label className="text-xs font-semibold uppercase tracking-wider mb-2 block" style={{ color: "#0d0446" }}>
@@ -164,20 +158,18 @@ export default function CortesVideoPage() {
               style={{ borderColor: "#e2e8f0", color: "#0d0446" }}
             />
             {videoId && startSeconds > 0 && (
-              <div className="w-24 h-14 rounded-lg overflow-hidden border flex-shrink-0" style={{ borderColor: "#e2e8f0" }}>
-                <iframe
-                  src={`https://www.youtube.com/embed/${videoId}?start=${startSeconds}&autoplay=0&controls=0&showinfo=0&modestbranding=1`}
-                  title="Start preview"
-                  className="w-[200%] h-[200%] scale-50 origin-top-left pointer-events-none"
-                  style={{ border: "none" }}
-                />
-              </div>
+              <img
+                src={`https://img.youtube.com/vi/${videoId}/mqdefault.jpg`}
+                alt="Frame no tempo inicial"
+                className="w-24 h-14 rounded-lg object-cover border flex-shrink-0"
+                style={{ borderColor: "#e2e8f0" }}
+              />
             )}
           </div>
         </div>
 
-        {/* Duration badge */}
-        <div className="flex flex-col items-center justify-center pt-6">
+        {/* Duration badge - centered */}
+        <div className="flex flex-col items-center justify-center">
           <div className="flex items-center gap-1.5 px-4 py-2 rounded-full" style={{ backgroundColor: duration > 0 ? "#268ffa" : "#e2e8f0", color: duration > 0 ? "#fff" : "#94a3b8" }}>
             <Clock size={14} />
             <span className="text-sm font-bold font-mono">{formatDuration(duration > 0 ? duration : 0)}</span>
@@ -203,14 +195,12 @@ export default function CortesVideoPage() {
               style={{ borderColor: "#e2e8f0", color: "#0d0446" }}
             />
             {videoId && endSeconds > 0 && (
-              <div className="w-24 h-14 rounded-lg overflow-hidden border flex-shrink-0" style={{ borderColor: "#e2e8f0" }}>
-                <iframe
-                  src={`https://www.youtube.com/embed/${videoId}?start=${endSeconds}&autoplay=0&controls=0&showinfo=0&modestbranding=1`}
-                  title="End preview"
-                  className="w-[200%] h-[200%] scale-50 origin-top-left pointer-events-none"
-                  style={{ border: "none" }}
-                />
-              </div>
+              <img
+                src={`https://img.youtube.com/vi/${videoId}/mqdefault.jpg`}
+                alt="Frame no tempo final"
+                className="w-24 h-14 rounded-lg object-cover border flex-shrink-0"
+                style={{ borderColor: "#e2e8f0" }}
+              />
             )}
           </div>
         </div>
@@ -240,14 +230,16 @@ export default function CortesVideoPage() {
       {result && (
         <div className="space-y-4">
           {/* Clip preview */}
-          <div className="rounded-xl overflow-hidden" style={{ maxWidth: 640 }}>
-            <iframe
-              src={result.clip_embed_url}
-              title="Clip preview"
-              className="w-full aspect-video"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            />
+          <div className="flex justify-center">
+            <div className="rounded-xl overflow-hidden w-full" style={{ maxWidth: 640 }}>
+              <iframe
+                src={result.clip_embed_url}
+                title="Clip preview"
+                className="w-full aspect-video"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
           </div>
 
           {/* Actions */}
