@@ -929,7 +929,7 @@ export default function NoticiasPanel() {
 
       {/* XML abaixo */}
       {(selectedNews.length > 0 || selectedCotacoes.length > 0) && (
-        <XmlLinkRow label="XML NOTICIAS" xmlContent={(() => {
+        <XmlLinkRow label="XML NOTICIAS" dark xmlContent={(() => {
           const newsXml = selectedNews.map(sn =>
             `  <noticia>\n    <portal>${sn.portal}</portal>\n    <titulo>${sn.title.replace(/&/g, "&amp;").replace(/</g, "&lt;")}</titulo>\n    <imagem>${sn.imageUrl}</imagem>\n  </noticia>`
           ).join("\n");
