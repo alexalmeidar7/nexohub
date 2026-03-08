@@ -495,13 +495,13 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
           {/* Content area */}
           {currentPage !== "dashboard" && (
-            <div className="flex items-center gap-2 mb-2 ml-1">
+            <div className="flex items-center gap-3 mb-2 ml-1">
               <button
                 onClick={() => setCurrentPage("dashboard")}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all"
-                style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "#ffffff" }}
-                onMouseEnter={e => { e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.25)"; }}
-                onMouseLeave={e => { e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.15)"; }}
+                className="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold transition-all"
+                style={{ backgroundColor: "#268ffa", color: "#ffffff" }}
+                onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#0d0446"; }}
+                onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#268ffa"; }}
               >
                 <ChevronUp size={14} className="rotate-[-90deg]" /> Voltar
               </button>
