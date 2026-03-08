@@ -329,6 +329,10 @@ export default function PlayerPage() {
   const ccClearTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
   const canal = canais[currentIndex] || null;
+  const liveChannels = useMemo(
+    () => canais.filter((c) => c.type === "audio_live" || c.type === "video_live"),
+    [canais]
+  );
   const isAudio = canal?.type === "audio_live" || canal?.type === "audio";
   const isYoutube = canal?.type === "youtube";
   const isVideo = canal?.type === "video" || canal?.type === "video_live";
@@ -961,7 +965,7 @@ export default function PlayerPage() {
                   hls.destroy();
                   hlsRef.current = null;
                   setTimeout(() => {
-                    if (canal) playStream(canal.url, canal.type);
+                    playStream(url, type);
                   }, 2000);
                 }
               } else {
@@ -1135,27 +1139,36 @@ export default function PlayerPage() {
   }, [canal, playing, playStream]);
 
   const navigateChannel = useCallback((dir: 1 | -1) => {
-    if (canais.length === 0) return;
-    const next = (currentIndex + dir + canais.length) % canais.length;
-    setCurrentIndex(next);
-    const c = canais[next];
-    if (!c) return;
+    if (liveChannels.length === 0) return;
+
+    const currentLiveIndex = canal ? liveChannels.findIndex((c) => c.id === canal.id) : -1;
+    const baseIndex = currentLiveIndex >= 0 ? currentLiveIndex : 0;
+    const nextLiveIndex = (baseIndex + dir + liveChannels.length) % liveChannels.length;
+    const nextChannel = liveChannels[nextLiveIndex];
+    if (!nextChannel) return;
+
+    const nextIndex = canais.findIndex((c) => c.id === nextChannel.id);
+    if (nextIndex < 0) return;
+
+    setCurrentIndex(nextIndex);
+
     // Stop any playing audio/video when switching channels — full cleanup
     if (hlsRef.current) { hlsRef.current.destroy(); hlsRef.current = null; }
     if (audioRef.current) { audioRef.current.pause(); audioRef.current.removeAttribute("src"); audioRef.current.load(); }
     if (videoRef.current) { videoRef.current.pause(); videoRef.current.removeAttribute("src"); videoRef.current.load(); }
     setHlsLevels([]);
     setHlsCurrentLevel(-1);
-    if (c.type === "youtube") {
+
+    if (nextChannel.type === "youtube") {
       setPlaying(true);
       setBuffering(false);
       setSelectedVideoId(null);
       setSidebarOpen(false);
     } else {
       // Always auto-start when user explicitly navigates channels
-      setTimeout(() => playStream(c.url, c.type), 100);
+      setTimeout(() => playStream(nextChannel.url, nextChannel.type), 100);
     }
-  }, [canais, currentIndex, playing, playStream, isAutoplayChannel]);
+  }, [canal, canais, liveChannels, playStream]);
 
   // Fullscreen
   useEffect(() => {
@@ -2034,7 +2047,7 @@ export default function PlayerPage() {
           {/* Row 1 on mobile: Channel + Play + Volume */}
           <div className="flex items-center gap-2 sm:gap-3 sm:pr-5 sm:border-r border-white/10 shrink-0">
             <div className="flex flex-col items-center gap-0.5 sm:gap-1">
-              {canais.length > 1 && (
+              {liveChannels.length > 1 && (
                 <button onClick={() => navigateChannel(-1)} className="text-white/60 hover:text-white hover:bg-[#e60000] rounded px-1.5 py-1 sm:px-2 sm:py-2 transition-all" title="Canal anterior"><ChevronUp size={14} /></button>
               )}
               <div className="text-white text-[10px] sm:text-xs font-bold py-0.5">
@@ -2045,7 +2058,7 @@ export default function PlayerPage() {
                   return <>{num.slice(0, dashIdx)} <sup className="text-[8px] sm:text-[9px]" style={{ color: "#e60000" }}>{num.slice(dashIdx + 1)}</sup></>;
                 })()}
               </div>
-              {canais.length > 1 && (
+              {liveChannels.length > 1 && (
                 <button onClick={() => navigateChannel(1)} className="text-white/60 hover:text-white hover:bg-[#e60000] rounded px-1.5 py-1 sm:px-2 sm:py-2 transition-all" title="Próximo canal"><ChevronDown size={14} /></button>
               )}
             </div>
