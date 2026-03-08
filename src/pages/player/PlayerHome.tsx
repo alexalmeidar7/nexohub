@@ -380,9 +380,14 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
             ) : null}
         </header>
 
-        {/* Banner full-width behind content */}
-        <div className="absolute top-0 left-20 right-0 z-0">
-          <img src="/images/banner-home.png" alt="Banner" className="w-full h-auto object-cover" />
+        {/* Banner full-width behind content — swaps to channel thumb on hover */}
+        <div className="absolute top-0 left-20 right-0 z-0 transition-opacity duration-300">
+          <img
+            src={hoveredThumb || "/images/banner-home.png"}
+            alt="Banner"
+            className="w-full h-auto object-cover"
+            key={hoveredThumb || "default"}
+          />
         </div>
 
         <main className="px-8 pt-24 pb-6 z-10 ml-20">
