@@ -21,6 +21,7 @@ interface Programa {
   horario_inicio: string;
   horario_fim: string;
   dias_semana: string[] | null;
+  capa: string | null;
 }
 
 interface PlaylistVideo {
