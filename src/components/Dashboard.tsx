@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, lazy, Suspense } from "react";
 import { Calendar as CalendarUI } from "@/components/ui/calendar";
-import { Home, Sun, FileText, Mic2, PlaySquare, Music, CalendarDays, Settings, LogOut, Loader2, ShoppingBag, ChevronDown, ChevronUp, MessageSquareQuote, Tag, Image, ExternalLink, MonitorPlay, Heart, ShoppingCart, Film, Users, Newspaper, CloudSun, Wrench, Scissors } from "lucide-react";
+import { Home, Sun, FileText, Mic2, PlaySquare, Music, CalendarDays, Settings, LogOut, Loader2, ShoppingBag, ChevronDown, ChevronUp, MessageSquareQuote, Tag, Image, ExternalLink, MonitorPlay, Heart, ShoppingCart, Film, Users, Newspaper, CloudSun, Wrench, Scissors, Menu, X } from "lucide-react";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import seloNexohub from "@/assets/selo-nexohub.png";
@@ -116,6 +116,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const { user } = useAuth();
   const [currentPage, setCurrentPage] = useState<Page>("dashboard");
   const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set());
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [empresa, setEmpresa] = useState<import("./ConfiguracoesPage").EmpresaConfig>({} as any);
   const [enabledModules, setEnabledModules] = useState<Set<string> | null>(null);
   const [planModules, setPlanModules] = useState<Set<string> | null>(null);
@@ -186,6 +187,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       toggleMenu(item.label);
     } else if (item.page) {
       setCurrentPage(item.page);
+      setMobileMenuOpen(false);
     }
   };
 
@@ -211,7 +213,6 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   return (
     <div className="h-screen flex flex-col animate-fade-in overflow-hidden" style={{
       backgroundColor: "#268ffa",
-      paddingTop: "40px",
       ...(empresa.backgroundUrl ? {
         backgroundImage: `url(${empresa.backgroundUrl})`,
         backgroundSize: "cover",
@@ -221,9 +222,83 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         animation: "fade-in 1s ease-out",
       } : {}),
     }}>
-      <div className="flex gap-[30px]" style={{ paddingLeft: "50px", paddingRight: "50px", paddingTop: "12px", flex: "1 1 0", minHeight: 0 }}>
-        {/* === LEFT COLUMN: SIDEBAR + NO AR === */}
-        <div className="flex flex-col gap-5 flex-shrink-0" style={{ width: "400px" }}>
+      {/* Mobile top bar */}
+      <div className="lg:hidden flex items-center justify-between px-4 pt-3 pb-2">
+        <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="p-2 rounded-lg" style={{ backgroundColor: "rgba(0,0,0,0.4)" }}>
+          {mobileMenuOpen ? <X size={20} className="text-white" /> : <Menu size={20} className="text-white" />}
+        </button>
+        <h1 className="text-white font-bold text-lg truncate flex-1 ml-3">{empresa.nome || "Dashboard"}</h1>
+        <ServerClock />
+      </div>
+
+      {/* Mobile menu overlay */}
+      {mobileMenuOpen && (
+        <div className="lg:hidden fixed inset-0 z-50 flex">
+          <div className="w-[280px] flex flex-col h-full overflow-y-auto" style={{ backgroundColor: "rgba(0, 0, 0, 0.92)" }}>
+            <div className="flex items-center justify-between px-4 pt-3 pb-2">
+              <img src={seloNexohub} alt="NexoHUB" className="h-4" />
+              <button onClick={() => setMobileMenuOpen(false)} className="p-1.5 rounded-full" style={{ backgroundColor: "#268ffa" }}>
+                <X size={16} className="text-white" />
+              </button>
+            </div>
+            <nav className="flex-1 overflow-y-auto px-3 space-y-0.5 py-2">
+              {sidebarMenu.filter(item => {
+                if (item.label === "home" || item.label === "cadastros" || item.label === "ferramentas") return true;
+                const modKey = menuToModuleKey[item.label];
+                if (!modKey) return true;
+                if (planModules) return planModules.has(modKey);
+                if (enabledModules) return enabledModules.has(modKey);
+                return true;
+              }).map(item => {
+                const Icon = item.icon;
+                const active = isItemActive(item);
+                const expanded = expandedMenus.has(item.label);
+                return (
+                  <div key={item.label}>
+                    <button onClick={() => handleMenuClick(item)}
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${active ? "text-[#268ffa]" : "text-white hover:bg-white/5"}`}>
+                      <Icon size={16} className={active ? "text-[#268ffa]" : "text-white"} />
+                      <span className="flex-1 text-left">{item.label}</span>
+                      {item.children && (expanded ? <ChevronUp size={12} className="text-white/30" /> : <ChevronDown size={12} className="text-white/30" />)}
+                    </button>
+                    {item.children && expanded && (
+                      <div className="ml-6 space-y-0.5 mt-0.5">
+                        {item.children.map(child => {
+                          const ChildIcon = child.icon;
+                          const childActive = currentPage === child.page;
+                          return (
+                            <button key={child.page} onClick={() => { setCurrentPage(child.page); setMobileMenuOpen(false); }}
+                              className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition-colors ${childActive ? "text-[#268ffa]" : "text-white"}`}>
+                              <ChildIcon size={12} className={childActive ? "text-[#268ffa]" : "text-white"} />
+                              <span>{child.label}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </nav>
+            <div className="px-4 py-4 border-t border-white/10">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style={{ backgroundColor: "#268ffa" }}>
+                  {empresa.nome ? empresa.nome.charAt(0).toUpperCase() : "U"}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-white text-xs font-bold truncate">{empresa.nome || "Empresa"}</p>
+                  <button onClick={onLogout} className="text-[10px] underline hover:opacity-70 mt-0.5" style={{ color: "#268ffa" }}>sair</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="flex-1" onClick={() => setMobileMenuOpen(false)} />
+        </div>
+      )}
+
+      <div className="flex gap-[30px] pt-3 flex-1 min-h-0 px-4 lg:px-[50px]" style={{ paddingTop: "12px" }}>
+        {/* === LEFT COLUMN: SIDEBAR === */}
+        <div className="hidden lg:flex flex-col gap-5 flex-shrink-0" style={{ width: "400px" }}>
           {/* === SIDEBAR === */}
           <aside className="flex flex-col rounded-[24px] overflow-hidden" style={{ backgroundColor: "rgba(0, 0, 0, 0.70)", height: "560px" }}>
             {/* Selo + Settings */}
@@ -341,8 +416,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
         {/* === MAIN CONTENT === */}
         <main className="flex-1 flex flex-col min-w-0">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-3" style={{ marginLeft: "25px" }}>
+          {/* Header - desktop only */}
+          <div className="hidden lg:flex items-center justify-between mb-3" style={{ marginLeft: "25px" }}>
             <div>
               <h1 className="font-bold text-white" style={{ fontSize: "45px", lineHeight: 1.1 }}>{empresa.nome || "Dashboard"}</h1>
               <p className="text-white/60 text-xs">{user?.email || ""}</p>
@@ -386,7 +461,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           </div>
 
           {/* Content area */}
-          <div className={`flex-1 overflow-y-auto overflow-x-hidden rounded-2xl ${currentPage !== "dashboard" ? "mv-content-area" : ""}`} style={currentPage === "dashboard" ? {} : { padding: "2rem" }}>
+          <div className={`flex-1 overflow-y-auto overflow-x-hidden rounded-2xl ${currentPage !== "dashboard" ? "mv-content-area" : ""}`} style={currentPage === "dashboard" ? {} : { padding: "1rem" }}>
             <Suspense fallback={<ModulePageSkeleton />}>
               {currentPage === "previsao" && <PrevisaoTempo />}
               {currentPage === "noticias" && <NoticiasPanel />}
@@ -409,9 +484,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
       {/* === NO AR + WIDGET LIST ROW === */}
       {currentPage === "dashboard" && (
-        <div className="flex gap-5" style={{ paddingLeft: "50px", paddingRight: "50px", paddingTop: "8px" }}>
+        <div className="flex flex-col lg:flex-row gap-3 lg:gap-5 px-4 lg:px-[50px] pt-2">
           {/* No Ar box */}
-          <div className="rounded-2xl p-4 overflow-hidden flex-shrink-0" style={{ backgroundColor: "#0c0441", width: "400px", height: "225px" }}>
+          <div className="rounded-2xl p-4 overflow-hidden flex-shrink-0 w-full lg:w-[400px] h-[180px] lg:h-[225px]" style={{ backgroundColor: "#0c0441" }}>
             <Suspense fallback={null}>
               <OnAirWidget />
             </Suspense>
@@ -426,9 +501,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       )}
 
       {/* === FOOTER === */}
-      <footer className="flex items-center gap-3" style={{ paddingLeft: "50px", paddingBottom: "10px", paddingTop: "15px" }}>
+      <footer className="flex items-center gap-3 px-4 lg:px-[50px] pb-2 pt-3">
         <img src={logoFooter} alt="Nexo" className="h-5 opacity-80" />
-        <span className="text-white/60 text-[11px]">Copyrighted 2026 - Todos os direitos reservados.</span>
+        <span className="text-white/60 text-[11px] hidden sm:inline">Copyrighted 2026 - Todos os direitos reservados.</span>
       </footer>
     </div>
   );
@@ -539,17 +614,17 @@ function DashboardHome({ empresa, onNavigate }: { empresa: import("./Configuraco
   return (
     <div
       ref={scrollRef}
-      className="animate-fade-in flex gap-3 overflow-x-auto scrollbar-hide h-[225px]"
+      className="animate-fade-in flex gap-3 overflow-x-auto scrollbar-hide h-[180px] lg:h-[225px]"
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
     >
       {orderedWidgets.map(widget => (
         <div
           key={widget.id}
-          className={`rounded-2xl p-4 flex-shrink-0 overflow-hidden relative ${
+          className={`dashboard-widget-card rounded-2xl p-3 lg:p-4 flex-shrink-0 overflow-hidden relative ${
             draggedId === widget.id ? "opacity-50 scale-95" : ""
           } ${dragOverId === widget.id ? "ring-2 ring-[#268ffa]" : ""}`}
-          style={{ backgroundColor: widget.bg, width: "300px", height: "225px" }}
+          style={{ backgroundColor: widget.bg }}
           onDragOver={(e) => handleDragOver(e, widget.id)}
           onDrop={(e) => handleDrop(e, widget.id)}
           onDragEnd={handleDragEnd}
