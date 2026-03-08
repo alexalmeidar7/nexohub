@@ -149,11 +149,11 @@ export default function AudioDualCard({
         <div className="absolute inset-0" style={{ backgroundColor: "hsl(0 0% 0%)" }} />
       )}
       {/* Wrapper with relative positioning so presenter sits behind music card */}
-      <div className={`relative flex items-center justify-center ${isTV ? "w-[95vw] max-w-[1200px]" : "w-[92vw] sm:w-[90vw] max-w-[800px]"}`} style={{ minHeight: isTV ? "560px" : undefined, height: isTV ? undefined : "min(420px, 55vh)" }}>
+      <div className={`relative flex items-center justify-center ${isTV ? "w-[95vw] max-w-[1200px]" : "w-[92vw] sm:w-[90vw] max-w-[800px]"}`} style={{ height: isTV ? "560px" : "min(420px, 55vh)" }}>
 
         {/* Left — Presenter (hidden behind cover, slides left at 3s) */}
         <div
-          className="absolute top-0 bottom-0 md:w-[50%] w-[70%] rounded-3xl overflow-hidden shadow-xl"
+          className="absolute md:w-[50%] w-[70%] aspect-square rounded-3xl overflow-hidden shadow-xl"
           style={{
             animation: "presenterReveal 1.6s cubic-bezier(0.22, 1, 0.36, 1) 3s forwards",
             opacity: 0,
@@ -267,7 +267,7 @@ export default function AudioDualCard({
 
         {/* History box — slides out from behind the music card */}
         <div
-          className="absolute top-0 bottom-0 md:w-[70%] w-[85%] rounded-3xl overflow-hidden"
+          className="absolute md:w-[70%] w-[85%] aspect-square rounded-3xl overflow-hidden"
           style={{
             right: "0",
             zIndex: 1,
@@ -334,10 +334,9 @@ export default function AudioDualCard({
         >
           {/* Inner wrapper handles the history slide */}
           <div
-            className="relative w-full rounded-3xl overflow-hidden"
+            className="relative w-full aspect-square rounded-3xl overflow-hidden"
             style={{
               backgroundColor: isSemTitulo ? "#880000" : "hsl(0 0% 5%)",
-              minHeight: isTV ? "420px" : "min(420px, 55vh)",
               transform: historyOpen ? "translateX(-25%) scale(0.96)" : "translateX(0%) scale(1)",
               boxShadow: historyOpen
                 ? "0 25px 60px hsla(0, 0%, 0%, 0.5), 0 0 0 1px hsla(0, 0%, 100%, 0.05)"
