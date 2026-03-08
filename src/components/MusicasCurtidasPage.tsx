@@ -10,7 +10,7 @@ interface RankedSong {
   artista: string;
   capa: string;
   count: number;
-  ids: string[]; // all row IDs for this song
+  ids: string[];
 }
 
 export default function MusicasCurtidasPage() {
@@ -32,7 +32,6 @@ export default function MusicasCurtidasPage() {
       return;
     }
 
-    // Aggregate by titulo+artista
     const map = new Map<string, RankedSong>();
     for (const row of data) {
       const key = `${row.artista}||${row.titulo}`;
@@ -51,10 +50,8 @@ export default function MusicasCurtidasPage() {
       }
     }
 
-    // Sort by count desc
     const sorted = Array.from(map.values()).sort((a, b) => b.count - a.count);
 
-    // Keep top 100, delete the rest
     const top100 = sorted.slice(0, 100);
     const toDelete = sorted.slice(100);
 
@@ -86,69 +83,70 @@ export default function MusicasCurtidasPage() {
   }
 
   return (
-    <div className="space-y-4">
-      <p className="text-sm text-muted-foreground">
+    <div className="space-y-4 animate-fade-in">
+      <p className="text-sm" style={{ color: "rgba(13,4,70,0.5)" }}>
         Suas {songs.length} músicas mais curtidas, da mais curtida para a menos curtida.
         Músicas além da posição 100 são removidas automaticamente.
       </p>
 
       {songs.length === 0 ? (
-        <p className="text-muted-foreground text-sm py-10 text-center">
+        <p className="text-sm py-10 text-center" style={{ color: "rgba(13,4,70,0.5)" }}>
           Nenhuma música curtida ainda. Curta músicas no Player!
         </p>
       ) : (
-        <div className="space-y-1">
-          {songs.map((song, i) => (
-            <div
-              key={`${song.artista}-${song.titulo}`}
-              className="flex items-center gap-4 py-3 px-4 rounded-xl hover:bg-muted/50 transition-colors group"
-            >
-              {/* Rank */}
-              <span
-                className="w-8 h-8 flex items-center justify-center rounded-full text-xs font-bold text-white shrink-0"
-                style={{ backgroundColor: i < 3 ? "#ed0808" : i < 10 ? "#555" : "#999" }}
-              >
-                {i + 1}
-              </span>
-
-              {/* Cover */}
-              {song.capa ? (
-                <img
-                  src={song.capa}
-                  alt={song.titulo}
-                  className="w-12 h-12 rounded-lg object-cover shrink-0"
-                />
-              ) : (
-                <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                  <Music size={20} className="text-muted-foreground" />
-                </div>
-              )}
-
-              {/* Info */}
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold truncate">{song.titulo}</p>
-                <p className="text-xs text-muted-foreground truncate">{song.artista}</p>
-              </div>
-
-              {/* Like count */}
-              <div className="flex items-center gap-1 shrink-0">
-                <Heart size={14} className="text-red-500" fill="#ef4444" />
-                <span className="text-sm font-bold text-muted-foreground">{song.count}</span>
-              </div>
-
-              {/* Delete */}
-              <button
-                onClick={() => handleDelete(song)}
-                className="opacity-0 group-hover:opacity-100 transition-opacity p-2 rounded-full hover:bg-destructive/10"
-                title="Remover das curtidas"
-              >
-                <Trash2 size={16} className="text-destructive" />
-              </button>
-            </div>
-          ))}
+        <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(13,4,70,0.1)" }}>
+          <table className="w-full text-sm" style={{ color: "#0d0446" }}>
+            <thead>
+              <tr style={{ backgroundColor: "#0d0446", color: "#ffffff" }}>
+                <th className="px-4 py-2 text-center font-semibold w-12">#</th>
+                <th className="px-4 py-2 text-center font-semibold w-14">Capa</th>
+                <th className="px-4 py-2 text-left font-semibold">Música</th>
+                <th className="px-4 py-2 text-left font-semibold">Artista</th>
+                <th className="px-4 py-2 text-center font-semibold">Curtidas</th>
+                <th className="px-4 py-2 text-center font-semibold">Excluir</th>
+              </tr>
+            </thead>
+            <tbody>
+              {songs.map((song, i) => (
+                <tr key={`${song.artista}-${song.titulo}`}
+                  style={{ backgroundColor: i % 2 === 0 ? "#ffffff" : "#f8f8fc", borderTop: "1px solid rgba(13,4,70,0.08)" }}
+                >
+                  <td className="px-4 py-2 text-center">
+                    <span
+                      className="inline-flex items-center justify-center w-7 h-7 rounded-full text-[10px] font-bold text-white"
+                      style={{ backgroundColor: i < 3 ? "#ed0808" : i < 10 ? "#0d0446" : "rgba(13,4,70,0.3)" }}
+                    >
+                      {i + 1}
+                    </span>
+                  </td>
+                  <td className="px-4 py-2 text-center">
+                    {song.capa ? (
+                      <img src={song.capa} alt={song.titulo} className="w-10 h-10 rounded-lg object-cover mx-auto" style={{ border: "1px solid rgba(13,4,70,0.08)" }} />
+                    ) : (
+                      <div className="w-10 h-10 rounded-lg flex items-center justify-center mx-auto" style={{ backgroundColor: "rgba(13,4,70,0.04)" }}>
+                        <Music size={16} style={{ color: "rgba(13,4,70,0.3)" }} />
+                      </div>
+                    )}
+                  </td>
+                  <td className="px-4 py-2 font-medium truncate max-w-[200px]">{song.titulo}</td>
+                  <td className="px-4 py-2 truncate max-w-[150px]" style={{ color: "rgba(13,4,70,0.6)" }}>{song.artista}</td>
+                  <td className="px-4 py-2 text-center">
+                    <span className="inline-flex items-center gap-1">
+                      <Heart size={12} className="text-red-500" fill="#ef4444" />
+                      <span className="font-bold text-xs">{song.count}</span>
+                    </span>
+                  </td>
+                  <td className="px-4 py-2 text-center">
+                    <button onClick={() => handleDelete(song)} title="Remover das curtidas" className="hover:opacity-70 transition-opacity">
+                      <Trash2 size={14} style={{ color: "#dc2626" }} />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </div>
   );
 }
-

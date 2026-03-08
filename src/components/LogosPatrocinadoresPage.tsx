@@ -1,11 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Loader2, Trash2, Plus, Pencil, Check, X } from "lucide-react";
+import { Loader2, Trash2, Plus, Pencil, Check, X, CheckCircle, Upload } from "lucide-react";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import { useToast } from "@/hooks/use-toast";
 import { compressImage } from "@/lib/imageCompressor";
@@ -25,6 +21,12 @@ interface Programa {
   nome: string;
 }
 
+const inputStyle: React.CSSProperties = {
+  backgroundColor: "#ffffff", border: "1px solid #0d0446", color: "#0d0446", borderRadius: "20px",
+};
+const btnPrimary: React.CSSProperties = { backgroundColor: "#0d0446", color: "#ffffff", border: "2px solid #0d0446", borderRadius: "20px" };
+const btnSecondary: React.CSSProperties = { backgroundColor: "#ffffff", color: "#0d0446", border: "2px solid #0d0446", borderRadius: "20px" };
+
 export default function LogosPatrocinadoresPage() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -37,7 +39,6 @@ export default function LogosPatrocinadoresPage() {
   const [dataFinal, setDataFinal] = useState("");
   const [pendingFiles, setPendingFiles] = useState<{ file: File; preview: string }[]>([]);
 
-  // Inline date editing
   const [editingLogoId, setEditingLogoId] = useState<string | null>(null);
   const [editDate, setEditDate] = useState("");
 
@@ -138,7 +139,6 @@ export default function LogosPatrocinadoresPage() {
     await loadData();
   };
 
-  // Group logos by programa
   const grouped = programas
     .map((p) => ({
       programa: p,
@@ -151,69 +151,91 @@ export default function LogosPatrocinadoresPage() {
   }
 
   return (
-    <div className="space-y-8">
-      <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-4">
-          <div>
-            <label className="text-sm font-medium text-foreground mb-1 block">Programa *</label>
-            <Select value={programaId} onValueChange={setProgramaId}>
-              <SelectTrigger><SelectValue placeholder="Selecione um programa" /></SelectTrigger>
-              <SelectContent>
+    <div className="space-y-8 animate-fade-in">
+      <form onSubmit={handleSubmit} className="rounded-xl p-6 space-y-4" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)" }}>
+        <h3 className="text-lg font-bold" style={{ color: "#0d0446" }}>Nova Logo de Patrocinador</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-4">
+            <div>
+              <label className="block text-xs mb-1" style={{ color: "#0d0446", fontWeight: 600 }}>Programa *</label>
+              <select value={programaId} onChange={(e) => setProgramaId(e.target.value)}
+                className="w-full px-4 py-1.5 text-sm outline-none appearance-none"
+                style={{ ...inputStyle, backgroundColor: programaId ? "#ffffff" : "#ffffff" }}
+                onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
+                onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
+              >
+                <option value="">Selecione um programa</option>
                 {programas.map((p) => (
-                  <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>
+                  <option key={p.id} value={p.id}>{p.nome}</option>
                 ))}
-              </SelectContent>
-            </Select>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs mb-1" style={{ color: "#0d0446", fontWeight: 600 }}>Data de Expiração *</label>
+              <input type="date" value={dataFinal} onChange={(e) => setDataFinal(e.target.value)} required
+                className="w-full px-4 py-1.5 text-sm outline-none"
+                style={inputStyle}
+                onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
+                onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
+              />
+            </div>
+
+            <button type="submit" disabled={saving}
+              className="w-full px-6 py-2 font-bold text-sm transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+              style={btnPrimary}
+              onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#ffffff"; e.currentTarget.style.color = "#0d0446"; }}
+              onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#0d0446"; e.currentTarget.style.color = "#ffffff"; }}
+            >
+              {saving ? <><Loader2 className="animate-spin" size={14} /> Salvando...</> : `Salvar ${pendingFiles.length} logo(s)`}
+            </button>
           </div>
 
-          <div>
-            <label className="text-sm font-medium text-foreground mb-1 block">Data de Expiração *</label>
-            <Input type="date" value={dataFinal} onChange={(e) => setDataFinal(e.target.value)} required />
-          </div>
-
-          <Button type="submit" disabled={saving} className="w-full">
-            {saving ? <><Loader2 className="animate-spin mr-2" size={14} /> Salvando...</> : `Salvar ${pendingFiles.length} logo(s)`}
-          </Button>
-        </div>
-
-        <div className="space-y-3">
-          <label className="text-sm font-medium text-foreground mb-1 block">
-            Logos * <span className="text-xs text-muted-foreground font-normal">(1080×1080, fundo transparente)</span>
-          </label>
-
-          <div className="flex flex-wrap gap-3">
-            {pendingFiles.map((pf, idx) => (
-              <div key={idx} className="relative group">
-                <img src={pf.preview} alt="" className="w-20 h-20 rounded-lg object-contain border bg-[repeating-conic-gradient(#ddd_0%_25%,transparent_0%_50%)_0_0/20px_20px]" />
-                <button
-                  type="button"
-                  onClick={() => removePendingFile(idx)}
-                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  ×
-                </button>
-              </div>
-            ))}
-
-            <label className="w-20 h-20 rounded-lg border-2 border-dashed border-muted-foreground/30 flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 transition-colors">
-              <Plus size={18} className="text-muted-foreground" />
-              <span className="text-[10px] text-muted-foreground mt-1">Adicionar</span>
-              <input type="file" accept="image/png" className="hidden" onChange={handleAddFile} />
+          <div className="space-y-3">
+            <label className="block text-xs mb-1" style={{ color: "#0d0446", fontWeight: 600 }}>
+              Logos * <span className="font-normal" style={{ color: "rgba(13,4,70,0.5)" }}>(1080×1080, fundo transparente)</span>
             </label>
+
+            <div className="flex flex-wrap gap-3">
+              {pendingFiles.map((pf, idx) => (
+                <div key={idx} className="relative group">
+                  <img src={pf.preview} alt="" className="w-20 h-20 rounded-lg object-contain" style={{ border: "1px solid rgba(13,4,70,0.1)", backgroundColor: "repeating-conic-gradient(#ddd 0% 25%,transparent 0% 50%) 0 0/20px 20px" }} />
+                  <button
+                    type="button"
+                    onClick={() => removePendingFile(idx)}
+                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+
+              <label className="w-20 h-20 rounded-lg flex flex-col items-center justify-center cursor-pointer transition-colors"
+                style={{ border: "2px dashed rgba(13,4,70,0.2)" }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(13,4,70,0.2)"; }}
+              >
+                <Plus size={18} style={{ color: "rgba(13,4,70,0.4)" }} />
+                <span className="text-[10px] mt-1" style={{ color: "rgba(13,4,70,0.4)" }}>Adicionar</span>
+                <input type="file" accept="image/png" className="hidden" onChange={handleAddFile} />
+              </label>
+            </div>
           </div>
         </div>
       </form>
 
       <div>
-        <h3 className="text-lg font-semibold mb-4">Logos por Programa</h3>
+        <h3 className="text-lg font-bold mb-4" style={{ color: "#0d0446" }}>Logos por Programa</h3>
         {grouped.length === 0 ? (
-          <p className="text-muted-foreground text-sm">Nenhuma logo ativa cadastrada.</p>
+          <p className="text-sm" style={{ color: "rgba(13,4,70,0.5)" }}>Nenhuma logo ativa cadastrada.</p>
         ) : (
           <div className="space-y-6">
             {grouped.map(({ programa, logos: gLogos }) => (
-              <div key={programa.id} className="bg-card border border-border rounded-xl p-4">
-                <h4 className="font-semibold text-foreground mb-3">{programa.nome}</h4>
-                <div className="px-10">
+              <div key={programa.id} className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(13,4,70,0.1)" }}>
+                <div className="px-4 py-2 font-semibold text-sm" style={{ backgroundColor: "#0d0446", color: "#ffffff" }}>
+                  {programa.nome}
+                </div>
+                <div className="p-4 px-10" style={{ backgroundColor: "#ffffff" }}>
                   <Carousel opts={{ align: "start" }} className="w-full">
                     <CarouselContent>
                       {gLogos.map((logo) => {
@@ -226,7 +248,8 @@ export default function LogosPatrocinadoresPage() {
                                 <img
                                   src={logo.logo_url}
                                   alt=""
-                                  className="w-full aspect-square rounded-lg object-contain border bg-[repeating-conic-gradient(#ddd_0%_25%,transparent_0%_50%)_0_0/20px_20px]"
+                                  className="w-full aspect-square rounded-lg object-contain"
+                                  style={{ border: "1px solid rgba(13,4,70,0.08)", backgroundColor: "repeating-conic-gradient(#ddd 0% 25%,transparent 0% 50%) 0 0/20px 20px" }}
                                 />
                                 <button
                                   onClick={() => handleDelete(logo.id)}
@@ -235,17 +258,21 @@ export default function LogosPatrocinadoresPage() {
                                   <Trash2 size={12} />
                                 </button>
                               </div>
-                              <Badge variant={diasRestantes <= 7 ? "destructive" : "secondary"} className="text-[10px]">
+                              <span className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full ${diasRestantes <= 7 ? "bg-red-100 text-red-600" : "bg-green-100 text-green-700"}`}>
                                 {diasRestantes > 0 ? `${diasRestantes}d restantes` : "Expirando"}
-                              </Badge>
+                              </span>
                               {isEditing ? (
                                 <div className="flex items-center gap-1">
-                                  <Input type="date" value={editDate} onChange={(e) => setEditDate(e.target.value)} className="h-7 text-[10px] px-1" />
-                                  <button onClick={saveEditDate} className="text-green-500 hover:text-green-400"><Check size={14} /></button>
-                                  <button onClick={() => setEditingLogoId(null)} className="text-red-500 hover:text-red-400"><X size={14} /></button>
+                                  <input type="date" value={editDate} onChange={(e) => setEditDate(e.target.value)} className="h-7 text-[10px] px-1 rounded" style={{ border: "1px solid #0d0446", color: "#0d0446" }} />
+                                  <button onClick={saveEditDate} style={{ color: "#22c55e" }}><Check size={14} /></button>
+                                  <button onClick={() => setEditingLogoId(null)} style={{ color: "#dc2626" }}><X size={14} /></button>
                                 </div>
                               ) : (
-                                <button onClick={() => startEditDate(logo)} className="text-[10px] text-muted-foreground hover:text-primary flex items-center gap-1 mx-auto">
+                                <button onClick={() => startEditDate(logo)} className="text-[10px] flex items-center gap-1 mx-auto transition-colors"
+                                  style={{ color: "rgba(13,4,70,0.4)" }}
+                                  onMouseEnter={e => { e.currentTarget.style.color = "#2dbef3"; }}
+                                  onMouseLeave={e => { e.currentTarget.style.color = "rgba(13,4,70,0.4)"; }}
+                                >
                                   <Pencil size={10} /> Editar validade
                                 </button>
                               )}
