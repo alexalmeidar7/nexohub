@@ -129,6 +129,23 @@ export default function ApresentadorForm() {
     ? apresentadores
     : apresentadores.filter(a => a.cargo === filterCategoria);
 
+  if (loadingList) {
+    return (
+      <div className="animate-fade-in space-y-6">
+        {/* Form skeleton */}
+        <div className="max-w-md space-y-4">
+          <Skeleton className="h-6 w-64 rounded bg-[#0d0446]/20" />
+          <Skeleton className="h-8 w-full rounded-full bg-[#0d0446]/10" />
+          <Skeleton className="h-8 w-full rounded-full bg-[#0d0446]/10" />
+          <Skeleton className="h-8 w-full rounded-full bg-[#0d0446]/10" />
+          <Skeleton className="h-8 w-32 rounded-full bg-[#0d0446]/15" />
+        </div>
+        {/* Table skeleton */}
+        <ModulePageSkeleton />
+      </div>
+    );
+  }
+
   return (
     <div className="animate-fade-in space-y-6">
       <div className="max-w-md space-y-4">
