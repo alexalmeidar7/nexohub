@@ -672,6 +672,7 @@ export default function ProgramaForm() {
             </SelectContent>
           </Select>
         </div>
+        <Textarea value={descricao} onChange={(e) => setDescricao(e.target.value)} placeholder="Descrição do Programa (opcional)"
           className="min-h-[60px] px-4 py-2 outline-none transition-colors text-sm"
           style={{ backgroundColor: "#ffffff", border: "1px solid #0d0446", color: "#0d0446", borderRadius: "16px" }}
           onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
