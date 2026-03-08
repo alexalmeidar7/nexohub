@@ -46,6 +46,7 @@ interface Canal {
   name: string;
   logo_url: string;
   cover_url: string;
+  background_url: string;
   url: string;
   type: string;
   active: boolean;
