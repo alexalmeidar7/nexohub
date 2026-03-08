@@ -358,10 +358,10 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
           <Save size={12} />
           <span>As configurações são salvas automaticamente.</span>
         </div>
-      </CollapsibleBox>
+      </CollapsibleBox>}
 
       {/* Box 2: Configurações do Player */}
-      <CollapsibleBox title="Configurações do Player" defaultOpen={false}>
+      {(section === "all" || section === "player") && <CollapsibleBox title="Configurações do Player" defaultOpen={section === "player"}>
         {/* Formulário */}
         <div className="space-y-4">
           <h3 className="text-xl mb-2" style={{ color: "#0d0446" }}>
