@@ -1044,9 +1044,9 @@ export default function ProgramaForm() {
                         {p.nome}
                         {p.variavel && <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ backgroundColor: "rgba(13,4,70,0.1)", color: "#0d0446" }}>Variável</span>}
                       </div>
-                      {(p as any).classificacaoEtaria && (
+                      {p.classificacaoEtaria && (
                         <div className="mt-0.5">
-                          <ClassificacaoBadge value={(p as any).classificacaoEtaria} size={18} />
+                          <ClassificacaoBadge value={p.classificacaoEtaria} size={18} />
                         </div>
                       )}
                     </td>
