@@ -118,7 +118,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const [currentPage, setCurrentPage] = useState<Page>("dashboard");
   const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set());
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
   const [noArCollapsed, setNoArCollapsed] = useState(false);
   const [empresa, setEmpresa] = useState<import("./ConfiguracoesPage").EmpresaConfig>({} as any);
   const [enabledModules, setEnabledModules] = useState<Set<string> | null>(null);
@@ -308,21 +308,25 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         </div>
       )}
 
-      <div className="flex gap-[30px] pt-3 flex-1 min-h-0 px-4 lg:px-[50px]" style={{ paddingTop: "12px" }}>
-        {/* === LEFT COLUMN: SIDEBAR === */}
-        <div className={`hidden lg:flex flex-col gap-5 flex-shrink-0 transition-all duration-300`} style={{ width: sidebarCollapsed ? "48px" : "400px" }}>
-          {/* === SIDEBAR === */}
-          <aside className="flex flex-col rounded-[24px] overflow-hidden relative" style={{ backgroundColor: "rgba(0, 0, 0, 0.70)", height: "560px" }}>
-            {/* Collapse toggle */}
-            <button
-              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-              className="absolute top-2 right-2 z-20 p-1 rounded-full transition-colors"
-              style={{ backgroundColor: "#268ffa" }}
-              title={sidebarCollapsed ? "Expandir menu" : "Recolher menu"}
-            >
-              {sidebarCollapsed ? <ChevronDown size={14} className="text-white rotate-[-90deg]" /> : <ChevronUp size={14} className="text-white rotate-[-90deg]" />}
-            </button>
-            {!sidebarCollapsed && <>
+      {/* Floating hamburger button - desktop */}
+      <button
+        onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+        className="hidden lg:flex fixed top-5 left-5 z-[60] w-11 h-11 rounded-full items-center justify-center transition-all shadow-lg hover:scale-105"
+        style={{ backgroundColor: sidebarCollapsed ? "rgba(0,0,0,0.7)" : "#268ffa" }}
+        title={sidebarCollapsed ? "Abrir menu" : "Fechar menu"}
+      >
+        {sidebarCollapsed ? <Menu size={18} className="text-white" /> : <X size={18} className="text-white" />}
+      </button>
+
+      {/* Sidebar overlay backdrop - desktop */}
+      {!sidebarCollapsed && (
+        <div className="hidden lg:block fixed inset-0 z-[49] bg-black/30" onClick={() => setSidebarCollapsed(true)} />
+      )}
+
+      {/* Floating sidebar - desktop */}
+      <div className={`hidden lg:flex flex-col fixed top-5 left-[70px] z-[55] transition-all duration-300 ${sidebarCollapsed ? "opacity-0 pointer-events-none -translate-x-4" : "opacity-100 translate-x-0"}`} style={{ width: "360px" }}>
+        <aside className="flex flex-col rounded-[24px] overflow-hidden" style={{ backgroundColor: "rgba(0, 0, 0, 0.92)", height: "560px" }}>
+            <>
             {/* Selo + Settings */}
             <div className="flex items-center justify-between px-4 pt-3 pb-2">
               <img src={seloNexohub} alt="NexoHUB" className="h-4" />
@@ -432,10 +436,11 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 </div>
               </div>
             </div>
-            </>}
+            </>
           </aside>
-
         </div>
+
+      <div className="flex gap-[30px] pt-3 flex-1 min-h-0 px-4 lg:px-[50px]" style={{ paddingTop: "12px" }}>
 
         {/* === MAIN CONTENT === */}
         <main className="flex-1 flex flex-col min-w-0">
