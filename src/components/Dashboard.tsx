@@ -498,28 +498,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       {/* === NO AR + WIDGET LIST ROW === */}
       {currentPage === "dashboard" && (
         <div className="flex flex-col lg:flex-row gap-3 lg:gap-5 px-4 lg:px-[50px] pt-2">
-          {/* No Ar box - collapsible */}
-          <div className="flex-shrink-0 w-full lg:w-auto">
-            <button
-              onClick={() => setNoArCollapsed(!noArCollapsed)}
-              className="lg:hidden flex items-center gap-2 mb-1 px-3 py-1.5 rounded-lg text-xs font-bold text-white"
-              style={{ backgroundColor: "#0c0441" }}
-            >
-              {noArCollapsed ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
-              No Ar
-            </button>
-            <div
-              className={`rounded-2xl p-4 overflow-hidden transition-all duration-300 ${noArCollapsed ? "hidden lg:block" : "block"}`}
-              style={{ backgroundColor: "#0c0441", width: "100%", height: noArCollapsed ? 0 : undefined }}
-            >
-              <div className="w-full lg:w-[400px] h-[180px] lg:h-[225px]">
-                <Suspense fallback={null}>
-                  <OnAirWidget />
-                </Suspense>
-              </div>
-            </div>
-          </div>
-          {/* Widget list */}
+          {/* Widget list (includes No Ar) */}
           <div className="flex-1 min-w-0">
             <Suspense fallback={null}>
               <DashboardHome empresa={empresa} onNavigate={setCurrentPage} />
