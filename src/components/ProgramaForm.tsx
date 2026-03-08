@@ -664,7 +664,7 @@ export default function ProgramaForm() {
         <div>
           <label className="block text-xs mb-1" style={{ color: "#0d0446", fontWeight: 600 }}>Classificação Etária</label>
           <Select value={classificacaoEtaria} onValueChange={setClassificacaoEtaria}>
-            <SelectTrigger className="w-full h-8" style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "20px", border: "none" }}>
+            <SelectTrigger className="w-full h-8" style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "20px", border: "none", fontSize: "13px" }}>
               <SelectValue placeholder="Selecione a classificação" />
             </SelectTrigger>
             <SelectContent style={{ backgroundColor: "#0d0446", border: "1px solid #0d0446" }}>
