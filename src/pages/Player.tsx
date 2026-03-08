@@ -243,6 +243,8 @@ function MarqueeText({ text, className }: { text: string; className?: string }) 
 
 export default function PlayerPage() {
   const { userSlug } = useParams<{ userSlug?: string }>();
+  const [searchParams] = useSearchParams();
+  const requestedChannelId = searchParams.get("ch");
   const navigate = useNavigate();
   const isPublicMode = !!userSlug;
   const { user, loading: authLoading, signOut } = useAuth();
