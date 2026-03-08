@@ -412,10 +412,10 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-player" />
         </div>
 
-        <main className="px-8 pt-24 pb-6 z-10 ml-20">
+        <main className="px-8 pt-24 pb-6 z-10 ml-20 relative">
           {activeSection === "streaming" ? (
             /* ── Página dedicada: Canais ao Vivo ── */
-             <section style={{ marginTop: "260px" }}>
+             <section style={{ marginTop: "120px" }}>
               <h2 className="text-xl font-bold mb-6">Canais ao Vivo</h2>
               {!dataLoaded ? (
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
@@ -443,7 +443,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
             </section>
           ) : activeSection === "content" ? (
             /* ── Página dedicada: Catálogo ── */
-            <section style={{ marginTop: "260px" }}>
+            <section style={{ marginTop: "120px" }}>
               <h2 className="text-xl font-bold mb-6">Catálogo</h2>
               {!dataLoaded ? (
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
@@ -524,7 +524,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
             /* ── Home padrão ── */
             <>
               {/* Streamings ao vivo */}
-              <section className="mb-10" style={{ marginTop: "260px" }}>
+              <section className="mb-10" style={{ marginTop: "120px" }}>
                 {!dataLoaded ? (
                   <>
                     <Skeleton className="h-5 w-44 bg-white/10 mb-4" />
