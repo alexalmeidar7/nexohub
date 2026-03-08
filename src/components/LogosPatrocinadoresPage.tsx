@@ -249,7 +249,7 @@ export default function LogosPatrocinadoresPage() {
                                   src={logo.logo_url}
                                   alt=""
                                   className="w-full aspect-square rounded-lg object-contain"
-                                  style={{ border: "1px solid rgba(13,4,70,0.08)", backgroundColor: "#f0eef5" }}
+                                  style={{ border: "1px solid rgba(13,4,70,0.08)", backgroundColor: "#0d0446" }}
                                 />
                                 <button
                                   onClick={() => handleDelete(logo.id)}
