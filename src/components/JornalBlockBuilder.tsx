@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback } from "react";
-import { X, GripVertical, Clock, Trash2, Newspaper, Pencil, FileDown, Loader2 } from "lucide-react";
+import { X, GripVertical, Clock, Trash2, Newspaper, Pencil, FileDown, Loader2, Plus, Minus, Sparkles, Undo2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -39,6 +40,9 @@ export default function JornalBlockBuilder({ config, selectedNews, onClose }: Pr
   const [editTitle, setEditTitle] = useState("");
   const [editImageUrl, setEditImageUrl] = useState("");
   const [editBody, setEditBody] = useState("");
+  const [editFontSize, setEditFontSize] = useState(12);
+  const [aiImproving, setAiImproving] = useState(false);
+  const [originalBody, setOriginalBody] = useState<string | null>(null);
   const [showExport, setShowExport] = useState(false);
   const [fetchingBody, setFetchingBody] = useState<string | null>(null);
 
@@ -167,6 +171,8 @@ export default function JornalBlockBuilder({ config, selectedNews, onClose }: Pr
     setEditTitle(item.title);
     setEditImageUrl(item.imageUrl);
     setEditBody(item.body || "");
+    setEditFontSize(12);
+    setOriginalBody(null);
   };
 
   const saveEdit = () => {
@@ -178,6 +184,35 @@ export default function JornalBlockBuilder({ config, selectedNews, onClose }: Pr
       return { ...prev, [blockNum]: updated };
     });
     setEditingItem(null);
+  };
+
+  const handleImproveText = async () => {
+    if (!editBody.trim()) return;
+    setAiImproving(true);
+    setOriginalBody(editBody);
+    try {
+      const { data, error } = await supabase.functions.invoke("improve-text", {
+        body: { text: editBody, title: editTitle },
+      });
+      if (error) throw error;
+      if (data?.text) setEditBody(data.text);
+    } catch (e) {
+      console.error("Erro ao melhorar texto:", e);
+    }
+    setAiImproving(false);
+  };
+
+  const undoAiText = () => {
+    if (originalBody !== null) {
+      setEditBody(originalBody);
+      setOriginalBody(null);
+    }
+  };
+
+  const estimateReadingTime = (text: string) => {
+    const words = text.trim().split(/\s+/).length;
+    const minutes = Math.ceil(words / 150);
+    return minutes <= 1 ? "~1 min" : `~${minutes} min`;
   };
 
   const sequence: { type: "bloco" | "intervalo" | "testemunha"; num?: number }[] = [];
@@ -328,8 +363,43 @@ export default function JornalBlockBuilder({ config, selectedNews, onClose }: Pr
               )}
             </div>
             <div className="flex-1 flex flex-col min-h-0">
-              <Label className="text-xs font-semibold" style={{ color: "#0d0446" }}>Texto da Matéria</Label>
-              <Textarea value={editBody} onChange={e => setEditBody(e.target.value)} className="edit-materia-input text-xs mt-1 flex-1" style={{ borderColor: "#2ec1f7", borderRadius: "20px", backgroundColor: "#ffffff", color: "#0d0446", minHeight: "200px", maxHeight: "calc(90vh - 320px)", resize: "none" }} />
+              <div className="flex items-center gap-2 flex-wrap">
+                <Label className="text-xs font-semibold" style={{ color: "#0d0446" }}>Texto da Matéria</Label>
+                <div className="flex items-center gap-1">
+                  <button onClick={() => setEditFontSize(s => Math.max(8, s - 1))} className="rounded-full w-5 h-5 flex items-center justify-center hover:opacity-70" style={{ border: "1px solid #2ec1f7", color: "#0d0446" }} title="Diminuir fonte">
+                    <Minus size={10} />
+                  </button>
+                  <span className="text-[9px] min-w-[24px] text-center" style={{ color: "rgba(13,4,70,0.5)" }}>{editFontSize}px</span>
+                  <button onClick={() => setEditFontSize(s => Math.min(24, s + 1))} className="rounded-full w-5 h-5 flex items-center justify-center hover:opacity-70" style={{ border: "1px solid #2ec1f7", color: "#0d0446" }} title="Aumentar fonte">
+                    <Plus size={10} />
+                  </button>
+                </div>
+                <button
+                  onClick={handleImproveText}
+                  disabled={aiImproving || !editBody.trim()}
+                  className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold hover:opacity-80 transition-opacity disabled:opacity-40"
+                  style={{ backgroundColor: "#2ec1f7", color: "#0d0446" }}
+                >
+                  {aiImproving ? <Loader2 size={10} className="animate-spin" /> : <Sparkles size={10} />}
+                  Melhorar com IA
+                </button>
+                {originalBody !== null && (
+                  <button
+                    onClick={undoAiText}
+                    className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold hover:opacity-80 transition-opacity"
+                    style={{ backgroundColor: "rgba(13,4,70,0.08)", color: "#0d0446" }}
+                  >
+                    <Undo2 size={10} />
+                    Desfazer IA
+                  </button>
+                )}
+                {editBody.trim() && (
+                  <span className="text-[9px] ml-auto" style={{ color: "rgba(13,4,70,0.4)" }}>
+                    ⏱ Leitura: {estimateReadingTime(editBody)}
+                  </span>
+                )}
+              </div>
+              <Textarea value={editBody} onChange={e => setEditBody(e.target.value)} className="edit-materia-input mt-1 flex-1" style={{ borderColor: "#2ec1f7", borderRadius: "20px", backgroundColor: "#ffffff", color: "#0d0446", minHeight: "300px", maxHeight: "calc(90vh - 340px)", resize: "none", fontSize: `${editFontSize}px` }} />
             </div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" size="sm" onClick={() => setEditingItem(null)} style={{ borderColor: "#2ec1f7", borderRadius: "9999px", color: "#0d0446", backgroundColor: "#ffffff" }}>Cancelar</Button>
