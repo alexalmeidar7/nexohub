@@ -329,6 +329,10 @@ export default function PlayerPage() {
   const ccClearTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
   const canal = canais[currentIndex] || null;
+  const liveChannels = useMemo(
+    () => canais.filter((c) => c.type === "audio_live" || c.type === "video_live"),
+    [canais]
+  );
   const isAudio = canal?.type === "audio_live" || canal?.type === "audio";
   const isYoutube = canal?.type === "youtube";
   const isVideo = canal?.type === "video" || canal?.type === "video_live";
