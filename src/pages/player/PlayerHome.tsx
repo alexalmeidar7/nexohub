@@ -218,6 +218,25 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   const [hoveredThumb, setHoveredThumb] = useState<string | null>(null);
   const [playlistVideos, setPlaylistVideos] = useState<Record<string, PlaylistVideo[]>>({});
   const [nowPlaying, setNowPlaying] = useState<{ musica: string; artista: string } | null>(null);
+  const [bannerOpacity, setBannerOpacity] = useState(1);
+  const mainRef = useRef<HTMLElement | null>(null);
+
+  // Fade banner when scrolling past 650px
+  useEffect(() => {
+    const el = mainRef.current?.closest(".overflow-y-auto, .overflow-auto") || document.querySelector("[class*='overflow-y']") || window;
+    const handleScroll = () => {
+      const scrollY = el === window ? window.scrollY : (el as HTMLElement).scrollTop;
+      if (scrollY < 450) {
+        setBannerOpacity(1);
+      } else if (scrollY > 650) {
+        setBannerOpacity(0);
+      } else {
+        setBannerOpacity(1 - (scrollY - 450) / 200);
+      }
+    };
+    (el as any).addEventListener("scroll", handleScroll, { passive: true });
+    return () => (el as any).removeEventListener("scroll", handleScroll);
+  }, []);
 
   // Poll for current music data - localStorage + DB fallback
   useEffect(() => {
