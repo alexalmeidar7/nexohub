@@ -736,9 +736,21 @@ export default function NoticiasPanel() {
           </div>
 
           {/* Mini Previsão do Tempo */}
-          <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)", width: (jornalConfig || wizardOpen) ? "100%" : "50%" }}>
-            <div className="px-3 py-2 font-bold text-xs tracking-wide text-white rounded-t-xl flex items-center justify-between" style={{ backgroundColor: "#0d0446" }}>
+          <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)", width: (jornalConfig || wizardOpen) ? "100%" : "50%" }}
+            draggable={!!miniWeather}
+            onDragStart={(e) => {
+              if (!miniWeather) return;
+              const text = weatherAiDesc || `Previsão do tempo para ${miniWeather.city}: ${miniWeather.temp}°C, mín ${miniWeather.min}° máx ${miniWeather.max}°, umidade ${miniWeather.humidity}%. ${miniWeatherLabel(miniWeather.code)}.`;
+              e.dataTransfer.setData("text/plain", JSON.stringify({
+                type: "previsao_tempo",
+                city: miniWeather.city,
+                text,
+              }));
+            }}
+          >
+            <div className="px-3 py-2 font-bold text-xs tracking-wide text-white rounded-t-xl flex items-center justify-between cursor-grab" style={{ backgroundColor: "#0d0446" }}>
               <span className="flex items-center gap-1.5" style={{ color: "#ffffff" }}>
+                <GripVertical size={12} className="opacity-60" />
                 <CloudSun size={12} />
                 Previsão do Tempo
               </span>
@@ -759,18 +771,29 @@ export default function NoticiasPanel() {
                 ) : !miniWeather ? (
                   <p className="text-xs" style={{ color: "rgba(13,4,70,0.5)" }}>Nenhuma cidade principal cadastrada. Defina em Previsão do Tempo.</p>
                 ) : (
-                  <div className="flex items-center gap-4">
-                    <div className="text-center">
-                      <span className="text-2xl font-bold" style={{ color: "#2ec1f7" }}>{miniWeather.temp}°C</span>
-                    </div>
-                    <div className="flex-1 space-y-0.5">
-                      <p className="text-xs font-bold" style={{ color: "#0d0446" }}>{miniWeather.city}</p>
-                      <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.6)" }}>{miniWeatherLabel(miniWeather.code)}</p>
-                      <div className="flex items-center gap-3 text-[10px]" style={{ color: "rgba(13,4,70,0.5)" }}>
-                        <span className="flex items-center gap-0.5"><Thermometer size={9} /> Mín {miniWeather.min}° · Máx {miniWeather.max}°</span>
-                        <span className="flex items-center gap-0.5"><Droplets size={9} /> {miniWeather.humidity}%</span>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-4">
+                      <div className="text-center">
+                        <span className="text-2xl font-bold" style={{ color: "#2ec1f7" }}>{miniWeather.temp}°C</span>
+                      </div>
+                      <div className="flex-1 space-y-0.5">
+                        <p className="text-xs font-bold" style={{ color: "#0d0446" }}>{miniWeather.city}</p>
+                        <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.6)" }}>{miniWeatherLabel(miniWeather.code)}</p>
+                        <div className="flex items-center gap-3 text-[10px]" style={{ color: "rgba(13,4,70,0.5)" }}>
+                          <span className="flex items-center gap-0.5"><Thermometer size={9} /> Mín {miniWeather.min}° · Máx {miniWeather.max}°</span>
+                          <span className="flex items-center gap-0.5"><Droplets size={9} /> {miniWeather.humidity}%</span>
+                        </div>
                       </div>
                     </div>
+                    {loadingWeatherAi ? (
+                      <div className="flex items-center gap-1.5 text-[10px]" style={{ color: "rgba(13,4,70,0.4)" }}>
+                        <Loader2 size={10} className="animate-spin" /> Gerando descrição...
+                      </div>
+                    ) : weatherAiDesc && (
+                      <p className="text-[10px] leading-relaxed rounded-md px-2 py-1.5" style={{ color: "#0d0446", backgroundColor: "rgba(46,193,247,0.06)", border: "1px solid rgba(46,193,247,0.15)" }}>
+                        {weatherAiDesc}
+                      </p>
+                    )}
                   </div>
                 )}
               </div>

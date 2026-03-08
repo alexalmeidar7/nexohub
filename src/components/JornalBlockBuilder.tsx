@@ -88,6 +88,16 @@ export default function JornalBlockBuilder({ config, selectedNews, onClose }: Pr
       try {
         const parsed = JSON.parse(jsonData);
 
+        if (parsed.type === "previsao_tempo" && parsed.text) {
+          const weatherItem: JornalNewsItem = { portal: "Previsão do Tempo", title: `🌤️ Previsão — ${parsed.city}`, imageUrl: "", body: parsed.text };
+          const alreadyInBlock = blocks[blockNum]?.some(n => n.portal === "Previsão do Tempo");
+          if (!alreadyInBlock) {
+            setBlocks(prev => ({ ...prev, [blockNum]: [...(prev[blockNum] || []), weatherItem] }));
+          }
+          dragItem.current = null;
+          return;
+        }
+
         if (parsed.type === "bloco_economia" && Array.isArray(parsed.items)) {
           const moedas = parsed.items.filter((c: any) => c.name.includes("/"));
           const bolsas = parsed.items.filter((c: any) => !c.name.includes("/"));
