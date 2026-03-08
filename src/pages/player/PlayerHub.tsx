@@ -22,8 +22,18 @@ export default function PlayerHub() {
 
   useEffect(() => {
     const fetchLogo = async () => {
-      let userId = user?.id;
-      if (userSlug) {
+      const userId = user?.id;
+      // If logged in, always use direct DB query (faster, no edge function needed)
+      if (userId) {
+        const { data } = await supabase.from("empresa_config").select("logo, nome").eq("user_id", userId).single();
+        if (data) {
+          setLogoUrl(data.logo);
+          setChannelName(data.nome || "");
+        }
+        return;
+      }
+      // Public access via slug (unauthenticated visitors)
+      if (userSlug && userSlug !== ":userSlug") {
         try {
           const { data, error } = await supabase.functions.invoke("public-player-data", {
             body: { slug: userSlug },
@@ -37,13 +47,6 @@ export default function PlayerHub() {
         } catch (e) {
           console.warn("Failed to fetch player data:", e);
         }
-        return;
-      }
-      if (!userId) return;
-      const { data } = await supabase.from("empresa_config").select("logo, nome").eq("user_id", userId).single();
-      if (data) {
-        setLogoUrl(data.logo);
-        setChannelName(data.nome || "");
       }
     };
     fetchLogo();
