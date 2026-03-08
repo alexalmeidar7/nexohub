@@ -351,7 +351,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   const sidebarItems: { icon: typeof Home; label: string; section: Section }[] = [
     { icon: Home, label: "Home", section: "home" },
     { icon: Radio, label: "Streaming", section: "streaming" },
-    { icon: Film, label: "Conteúdo", section: "content" },
+    { icon: Film, label: "Catálogo", section: "content" },
     ...(user ? [{ icon: ShoppingBag, label: "Loja", section: "shop" as Section }] : []),
   ];
 
