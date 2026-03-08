@@ -2,7 +2,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { Home, Radio, Film, ShoppingBag, LogOut, UserCircle, Clock } from "lucide-react";
+import { Home, Radio, Film, ShoppingBag, LogOut, UserCircle, Clock, Music } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface Channel {
