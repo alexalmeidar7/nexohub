@@ -1913,8 +1913,8 @@ export default function PlayerPage() {
       )}
 
       {/* Video element */}
-      <video ref={videoRef} className={`absolute inset-0 w-full h-full object-contain bg-black ${isAudio || isYoutube ? "hidden" : ""}`} muted={muted} playsInline autoPlay={false} crossOrigin="anonymous" />
-      <audio ref={audioRef} muted={muted} crossOrigin="anonymous" />
+      <video ref={videoRef} className={`absolute inset-0 w-full h-full object-contain bg-black ${isAudio || isYoutube ? "hidden" : ""}`} muted={muted} playsInline autoPlay={false} />
+      <audio ref={audioRef} muted={muted} />
 
       {/* Volume OSD — centered overlay */}
       {volumeOsd && (
