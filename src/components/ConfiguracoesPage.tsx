@@ -90,7 +90,7 @@ function CollapsibleBox({ title, defaultOpen = true, children }: { title: string
         className="w-full flex items-center justify-between px-5 py-3 transition-colors"
         style={{ backgroundColor: "#0d0446", color: "#ffffff" }}
       >
-        <h3 className="text-lg font-semibold">{title}</h3>
+        <h3 className="text-lg font-semibold" style={{ color: "#ffffff" }}>{title}</h3>
         {open ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
       </button>
       {open && <div className="p-5 space-y-4" style={{ backgroundColor: "#ffffff" }}>{children}</div>}
