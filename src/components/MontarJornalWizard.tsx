@@ -3,7 +3,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { ChevronLeft, ChevronRight, Newspaper, Check, X as XIcon } from "lucide-react";
 
 interface Programa {
@@ -30,7 +29,7 @@ interface Props {
   onFinish: (config: JornalConfig) => void;
 }
 
-const TOTAL_STEPS = 7;
+const TOTAL_STEPS = 5;
 
 export default function MontarJornalWizard({ open, onOpenChange, programas, onFinish }: Props) {
   const [step, setStep] = useState(1);
@@ -39,9 +38,6 @@ export default function MontarJornalWizard({ open, onOpenChange, programas, onFi
   const [tempoBlocoMin, setTempoBlocoMin] = useState(15);
   const [intervalos, setIntervalos] = useState(2);
   const [tempoIntervaloMin, setTempoIntervaloMin] = useState(5);
-  const [temTestemunha, setTemTestemunha] = useState<string>("");
-  const [horarioTestemunha, setHorarioTestemunha] = useState("");
-  const [textoTestemunhal, setTextoTestemunhal] = useState("");
   const [mounting, setMounting] = useState(false);
 
   const reset = () => {
@@ -51,9 +47,6 @@ export default function MontarJornalWizard({ open, onOpenChange, programas, onFi
     setTempoBlocoMin(15);
     setIntervalos(2);
     setTempoIntervaloMin(5);
-    setTemTestemunha("");
-    setHorarioTestemunha("");
-    setTextoTestemunhal("");
     setMounting(false);
   };
 
@@ -66,17 +59,11 @@ export default function MontarJornalWizard({ open, onOpenChange, programas, onFi
       case 3: return tempoBlocoMin > 0;
       case 4: return intervalos >= 0;
       case 5: return tempoIntervaloMin >= 0;
-      case 6: return temTestemunha === "sim" || temTestemunha === "nao";
-      case 7: return true;
       default: return true;
     }
   };
 
-  const isLastStep = () => {
-    if (step === 6 && temTestemunha === "nao") return true;
-    if (step === 7) return true;
-    return false;
-  };
+  const isLastStep = () => step === TOTAL_STEPS;
 
   const handleNext = () => {
     if (isLastStep()) {
@@ -89,16 +76,14 @@ export default function MontarJornalWizard({ open, onOpenChange, programas, onFi
           tempoBlocoMin,
           intervalos,
           tempoIntervaloMin,
-          temTestemunha: temTestemunha === "sim",
-          horarioTestemunha,
-          textoTestemunhal,
+          temTestemunha: false,
+          horarioTestemunha: "",
+          textoTestemunhal: "",
         });
         reset();
       }, 1500);
       return;
     }
-    // Skip step 7 if no testemunha
-    if (step === 6 && temTestemunha === "nao") return;
     setStep(s => s + 1);
   };
 
@@ -106,17 +91,12 @@ export default function MontarJornalWizard({ open, onOpenChange, programas, onFi
     if (step > 1) setStep(s => s - 1);
   };
 
-  const activeStep = step;
-  const effectiveTotal = temTestemunha === "nao" ? 6 : TOTAL_STEPS;
-
   const stepLabels = [
     "Programa",
     "Blocos",
     "Tempo Bloco",
     "Intervalos",
     "Tempo Intervalo",
-    "Testemunha",
-    "Detalhes Testemunha",
   ];
 
   if (mounting) {
@@ -163,12 +143,12 @@ export default function MontarJornalWizard({ open, onOpenChange, programas, onFi
 
         {/* Progress bar */}
         <div className="flex gap-1 mb-2">
-          {Array.from({ length: effectiveTotal }).map((_, i) => (
-            <div key={i} className="flex-1 h-1 rounded-full transition-all" style={{ backgroundColor: i < activeStep ? "#2ec1f7" : "rgba(13,4,70,0.1)" }} />
+          {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
+            <div key={i} className="flex-1 h-1 rounded-full transition-all" style={{ backgroundColor: i < step ? "#2ec1f7" : "rgba(13,4,70,0.1)" }} />
           ))}
         </div>
         <p className="text-xs mb-4" style={{ color: "rgba(13,4,70,0.4)" }}>
-          Passo {activeStep} de {effectiveTotal} — {stepLabels[activeStep - 1]}
+          Passo {step} de {TOTAL_STEPS} — {stepLabels[step - 1]}
         </p>
 
         {/* Steps */}
@@ -218,45 +198,6 @@ export default function MontarJornalWizard({ open, onOpenChange, programas, onFi
               <label className="text-sm font-semibold" style={{ color: "#0d0446" }}>Tempo do Intervalo (minutos)</label>
               <Input type="number" min={0} max={60} value={tempoIntervaloMin} onChange={e => setTempoIntervaloMin(Number(e.target.value))} className="jornal-wizard-input" style={{ borderColor: "#2ec1f7", borderRadius: "9999px", backgroundColor: "#ffffff" }} />
               <p className="text-xs" style={{ color: "rgba(13,4,70,0.4)" }}>Duração de cada intervalo em minutos</p>
-            </div>
-          )}
-
-          {step === 6 && (
-            <div className="space-y-3">
-              <label className="text-sm font-semibold" style={{ color: "#0d0446" }}>Haverá Testemunha?</label>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setTemTestemunha("sim")}
-                  className="flex-1 py-3 rounded-full font-semibold text-sm transition-all"
-                  style={{
-                    backgroundColor: temTestemunha === "sim" ? "#2ec1f7" : "#ffffff",
-                    color: temTestemunha === "sim" ? "#ffffff" : "#0d0446",
-                    border: "2px solid #2ec1f7",
-                  }}
-                >
-                  Sim
-                </button>
-                <button
-                  onClick={() => setTemTestemunha("nao")}
-                  className="flex-1 py-3 rounded-full font-semibold text-sm transition-all"
-                  style={{
-                    backgroundColor: temTestemunha === "nao" ? "#2ec1f7" : "#ffffff",
-                    color: temTestemunha === "nao" ? "#ffffff" : "#0d0446",
-                    border: "2px solid #2ec1f7",
-                  }}
-                >
-                  Não
-                </button>
-              </div>
-            </div>
-          )}
-
-          {step === 7 && (
-            <div className="space-y-3">
-              <label className="text-sm font-semibold" style={{ color: "#0d0446" }}>Horário da Testemunha</label>
-              <Input type="time" value={horarioTestemunha} onChange={e => setHorarioTestemunha(e.target.value)} className="jornal-wizard-input" style={{ borderColor: "#2ec1f7", borderRadius: "9999px", backgroundColor: "#ffffff" }} />
-              <label className="text-sm font-semibold" style={{ color: "#0d0446" }}>Texto do Testemunhal</label>
-              <Textarea value={textoTestemunhal} onChange={e => setTextoTestemunhal(e.target.value)} placeholder="Digite o texto do testemunhal..." rows={3} className="jornal-wizard-input" style={{ borderColor: "#2ec1f7", borderRadius: "16px", backgroundColor: "#ffffff" }} />
             </div>
           )}
         </div>
