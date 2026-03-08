@@ -120,7 +120,7 @@ function StreamingCard({ channel, currentProgram, onClick, onHoverChange }: { ch
   return (
     <button
       onClick={onClick}
-      onMouseEnter={() => { setHovered(true); onHoverChange?.(currentProgram?.capa || channel.cover_url || null); }}
+      onMouseEnter={() => { setHovered(true); onHoverChange?.(channel.logo_url || channel.cover_url || null); }}
       onMouseLeave={() => { setHovered(false); setFrameIdx(0); onHoverChange?.(null); }}
       className="flex-shrink-0 w-72 h-40 rounded-xl overflow-hidden relative transition-all hover:scale-[1.02] border-[5px] border-transparent hover:border-white"
     >
@@ -415,7 +415,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
         <main className="px-8 pt-24 pb-6 z-10 ml-20">
           {activeSection === "streaming" ? (
             /* ── Página dedicada: Canais ao Vivo ── */
-            <section style={{ marginTop: "calc(600px - 200px)" }}>
+             <section style={{ marginTop: "260px" }}>
               <h2 className="text-xl font-bold mb-6">Canais ao Vivo</h2>
               {!dataLoaded ? (
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
@@ -443,7 +443,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
             </section>
           ) : activeSection === "content" ? (
             /* ── Página dedicada: Catálogo ── */
-            <section style={{ marginTop: "calc(600px - 200px)" }}>
+            <section style={{ marginTop: "260px" }}>
               <h2 className="text-xl font-bold mb-6">Catálogo</h2>
               {!dataLoaded ? (
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
@@ -524,7 +524,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
             /* ── Home padrão ── */
             <>
               {/* Streamings ao vivo */}
-              <section className="mb-10" style={{ marginTop: "calc(600px - 200px)" }}>
+              <section className="mb-10" style={{ marginTop: "260px" }}>
                 {!dataLoaded ? (
                   <>
                     <Skeleton className="h-5 w-44 bg-white/10 mb-4" />
