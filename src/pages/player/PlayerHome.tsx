@@ -24,7 +24,7 @@ interface Programa {
 
 type Section = "home" | "streaming" | "content" | "shop";
 
-function StreamingCard({ channel, currentProgram, onClick }: { channel: Channel; currentProgram?: Programa; onClick: () => void }) {
+function StreamingCard({ channel, currentProgram, onClick, onHoverChange }: { channel: Channel; currentProgram?: Programa; onClick: () => void; onHoverChange?: (thumb: string | null) => void }) {
   const [hovered, setHovered] = useState(false);
   const [frames, setFrames] = useState<string[]>([]);
   const [frameIdx, setFrameIdx] = useState(0);
@@ -111,8 +111,8 @@ function StreamingCard({ channel, currentProgram, onClick }: { channel: Channel;
   return (
     <button
       onClick={onClick}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => { setHovered(false); setFrameIdx(0); }}
+      onMouseEnter={() => { setHovered(true); onHoverChange?.(channel.logo_url || null); }}
+      onMouseLeave={() => { setHovered(false); setFrameIdx(0); onHoverChange?.(null); }}
       className="flex-shrink-0 w-72 h-40 rounded-xl overflow-hidden relative transition-all hover:scale-[1.02] border-[5px] border-transparent hover:border-white"
     >
       {/* Background */}
@@ -165,6 +165,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   const [programas, setProgramas] = useState<Programa[]>([]);
   const [dataLoaded, setDataLoaded] = useState(false);
   const [watchHistory, setWatchHistory] = useState<{ id: string; channel_name: string; channel_cover_url: string | null; channel_logo_url: string | null; channel_type: string; watched_at: string; channel_id: string | null }[]>([]);
+  const [hoveredThumb, setHoveredThumb] = useState<string | null>(null);
 
   const userName = profileName || user?.email?.split("@")[0] || "Visitante";
 
@@ -379,9 +380,14 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
             ) : null}
         </header>
 
-        {/* Banner full-width behind content */}
-        <div className="absolute top-0 left-20 right-0 z-0">
-          <img src="/images/banner-home.png" alt="Banner" className="w-full h-auto object-cover" />
+        {/* Banner full-width behind content — swaps to channel thumb on hover */}
+        <div className="absolute top-0 left-20 right-0 z-0 transition-opacity duration-300">
+          <img
+            src={hoveredThumb || "/images/banner-home.png"}
+            alt="Banner"
+            className="w-full h-auto object-cover"
+            key={hoveredThumb || "default"}
+          />
         </div>
 
         <main className="px-8 pt-24 pb-6 z-10 ml-20">
@@ -407,6 +413,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                       channel={ch}
                       currentProgram={currentProgram}
                       onClick={goToPlayer}
+                      onHoverChange={setHoveredThumb}
                     />
                   ))}
                 </div>
@@ -485,6 +492,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                           channel={ch}
                           currentProgram={currentProgram}
                           onClick={goToPlayer}
+                          onHoverChange={setHoveredThumb}
                         />
                       ))}
                     </div>
