@@ -187,6 +187,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       toggleMenu(item.label);
     } else if (item.page) {
       setCurrentPage(item.page);
+      setMobileMenuOpen(false);
     }
   };
 
