@@ -165,7 +165,7 @@ export default function TestemunhaisPage() {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      <form onSubmit={handleSubmit} className="rounded-xl p-6 space-y-4" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)" }}>
+      <form onSubmit={handleSubmit} className="rounded-xl p-4 sm:p-6 space-y-4" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)" }}>
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-bold" style={{ color: "#0d0446" }}>
             {editingId ? "Editar Testemunhal" : "Novo Testemunhal"}
@@ -264,59 +264,91 @@ export default function TestemunhaisPage() {
       </form>
 
       <div>
-        <h3 className="text-lg font-bold mb-3" style={{ color: "#0d0446" }}>Testemunhais Ativos</h3>
+        <h3 className="text-base sm:text-lg font-bold mb-3" style={{ color: "#0d0446" }}>Testemunhais Ativos</h3>
         {items.length === 0 ? (
           <p className="text-sm" style={{ color: "rgba(13,4,70,0.5)" }}>Nenhum testemunhal cadastrado.</p>
         ) : (
-          <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(13,4,70,0.1)" }}>
-            <table className="w-full text-sm" style={{ color: "#0d0446" }}>
-              <thead>
-                <tr style={{ backgroundColor: "#0d0446", color: "#ffffff" }}>
-                  <th className="px-4 py-2 text-left font-semibold">Imagem</th>
-                  <th className="px-4 py-2 text-left font-semibold">Texto</th>
-                  <th className="px-4 py-2 text-left font-semibold">Programa</th>
-                  <th className="px-4 py-2 text-center font-semibold">Validade</th>
-                  <th className="px-4 py-2 text-center font-semibold">Editar</th>
-                  <th className="px-4 py-2 text-center font-semibold">Excluir</th>
-                </tr>
-              </thead>
-              <tbody>
-                {items.map((item, i) => {
-                  const dias = diasRestantes(item.data_fim);
-                  return (
-                    <tr key={item.id} style={{ backgroundColor: i % 2 === 0 ? "#ffffff" : "#f8f8fc", borderTop: "1px solid rgba(13,4,70,0.08)" }}>
-                      <td className="px-4 py-2">
-                        {item.imagem_url ? (
-                          <img src={item.imagem_url} alt="" className="w-10 h-10 rounded-lg object-cover" style={{ border: "1px solid rgba(13,4,70,0.08)" }} />
-                        ) : (
-                          <span style={{ color: "rgba(13,4,70,0.25)" }}>—</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-2 max-w-[200px]">
-                        <p className="truncate text-xs">{item.texto}</p>
-                      </td>
-                      <td className="px-4 py-2 text-xs">{item.programa?.nome || "Sem programa"}</td>
-                      <td className="px-4 py-2 text-center">
-                        <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${dias <= 3 ? "bg-red-100 text-red-600" : "bg-green-100 text-green-700"}`}>
-                          {dias}d restante{dias !== 1 ? "s" : ""}
-                        </span>
-                      </td>
-                      <td className="px-4 py-2 text-center">
-                        <button onClick={() => startEdit(item)} title="Editar" className="hover:opacity-70 transition-opacity">
-                          <Pencil size={14} style={{ color: "#0d0446" }} />
-                        </button>
-                      </td>
-                      <td className="px-4 py-2 text-center">
-                        <button onClick={() => handleDelete(item.id)} title="Remover" className="hover:opacity-70 transition-opacity">
-                          <Trash2 size={14} style={{ color: "#dc2626" }} />
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+          <>
+            {/* Desktop table */}
+            <div className="hidden md:block rounded-xl overflow-hidden" style={{ border: "1px solid rgba(13,4,70,0.1)" }}>
+              <table className="w-full text-sm" style={{ color: "#0d0446" }}>
+                <thead>
+                  <tr style={{ backgroundColor: "#0d0446", color: "#ffffff" }}>
+                    <th className="px-4 py-2 text-left font-semibold">Imagem</th>
+                    <th className="px-4 py-2 text-left font-semibold">Texto</th>
+                    <th className="px-4 py-2 text-left font-semibold">Programa</th>
+                    <th className="px-4 py-2 text-center font-semibold">Validade</th>
+                    <th className="px-4 py-2 text-center font-semibold">Editar</th>
+                    <th className="px-4 py-2 text-center font-semibold">Excluir</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {items.map((item, i) => {
+                    const dias = diasRestantes(item.data_fim);
+                    return (
+                      <tr key={item.id} style={{ backgroundColor: i % 2 === 0 ? "#ffffff" : "#f8f8fc", borderTop: "1px solid rgba(13,4,70,0.08)" }}>
+                        <td className="px-4 py-2">
+                          {item.imagem_url ? (
+                            <img src={item.imagem_url} alt="" className="w-10 h-10 rounded-lg object-cover" style={{ border: "1px solid rgba(13,4,70,0.08)" }} />
+                          ) : (
+                            <span style={{ color: "rgba(13,4,70,0.25)" }}>—</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-2 max-w-[200px]">
+                          <p className="truncate text-xs">{item.texto}</p>
+                        </td>
+                        <td className="px-4 py-2 text-xs">{item.programa?.nome || "Sem programa"}</td>
+                        <td className="px-4 py-2 text-center">
+                          <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${dias <= 3 ? "bg-red-100 text-red-600" : "bg-green-100 text-green-700"}`}>
+                            {dias}d restante{dias !== 1 ? "s" : ""}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2 text-center">
+                          <button onClick={() => startEdit(item)} title="Editar" className="hover:opacity-70 transition-opacity">
+                            <Pencil size={14} style={{ color: "#0d0446" }} />
+                          </button>
+                        </td>
+                        <td className="px-4 py-2 text-center">
+                          <button onClick={() => handleDelete(item.id)} title="Remover" className="hover:opacity-70 transition-opacity">
+                            <Trash2 size={14} style={{ color: "#dc2626" }} />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile cards */}
+            <div className="md:hidden space-y-3">
+              {items.map((item) => {
+                const dias = diasRestantes(item.data_fim);
+                return (
+                  <div key={item.id} className="rounded-xl p-3 space-y-2" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)" }}>
+                    <div className="flex items-start gap-3">
+                      {item.imagem_url && (
+                        <img src={item.imagem_url} alt="" className="w-10 h-10 rounded-lg object-cover shrink-0" style={{ border: "1px solid rgba(13,4,70,0.08)" }} />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs line-clamp-2" style={{ color: "#0d0446" }}>{item.texto}</p>
+                        <p className="text-[10px] mt-0.5" style={{ color: "rgba(13,4,70,0.5)" }}>{item.programa?.nome || "Sem programa"}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${dias <= 3 ? "bg-red-100 text-red-600" : "bg-green-100 text-green-700"}`}>
+                        {dias}d restante{dias !== 1 ? "s" : ""}
+                      </span>
+                      <div className="flex items-center gap-3">
+                        <button onClick={() => startEdit(item)}><Pencil size={14} style={{ color: "#0d0446" }} /></button>
+                        <button onClick={() => handleDelete(item.id)}><Trash2 size={14} style={{ color: "#dc2626" }} /></button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </>
         )}
       </div>
     </div>
