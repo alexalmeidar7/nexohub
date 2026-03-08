@@ -142,14 +142,18 @@ function StreamingCard({ channel, currentProgram, nowPlaying, onClick, onHoverCh
 
       {/* "AO VIVO" badge - top left */}
       <span className="absolute top-2 left-2 z-10 text-[10px] uppercase tracking-wider font-semibold bg-black/80 px-2 py-0.5 rounded flex items-center gap-1.5">
-        <span className="inline-block w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+        <span className="inline-block w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: "#e60000" }} />
         <span className="text-white">ao vivo</span>
       </span>
 
       {/* Info overlay - bottom */}
-      <div className="absolute bottom-0 left-0 right-0 z-10 bg-gradient-to-t from-black/90 via-black/60 to-transparent px-3 pb-2 pt-6 flex flex-col gap-[3px]">
+      <div className="absolute bottom-0 left-0 right-0 z-10 bg-gradient-to-t from-black/90 via-black/60 to-transparent px-3 pb-2 pt-8 flex flex-col gap-[3px]">
         {/* Nome do canal */}
-        <p className="text-xs font-medium truncate text-left text-white">{channel.name}</p>
+        <p className="text-sm font-bold truncate text-left text-white">{channel.name}</p>
+        {/* Nome do programa */}
+        {currentProgram && (
+          <p className="text-[11px] text-white/80 truncate text-left">{currentProgram.nome}</p>
+        )}
         {/* Horário + progress */}
         {currentProgram && (() => {
           const [hi, mi] = currentProgram.horario_inicio.split(":").map(Number);
@@ -166,7 +170,7 @@ function StreamingCard({ channel, currentProgram, nowPlaying, onClick, onHoverCh
             <div className="flex items-center gap-2">
               <span className="text-[10px] text-white/70 whitespace-nowrap">{currentProgram.horario_inicio} - {currentProgram.horario_fim}</span>
               <div className="flex-1 h-1 rounded-full bg-white/20 overflow-hidden">
-                <div className="h-full rounded-full bg-red-500 transition-all" style={{ width: `${pct}%` }} />
+                <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: "#e60000" }} />
               </div>
             </div>
           );
