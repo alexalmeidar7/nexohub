@@ -260,6 +260,8 @@ export default function NoticiasPanel() {
   const [blocoEconomia, setBlocoEconomia] = useState<CotacaoItem[]>([]);
   const [miniWeather, setMiniWeather] = useState<{ city: string; temp: number; humidity: number; code: number; min: number; max: number } | null>(null);
   const [loadingWeather, setLoadingWeather] = useState(true);
+  const [weatherAiDesc, setWeatherAiDesc] = useState("");
+  const [loadingWeatherAi, setLoadingWeatherAi] = useState(false);
 
   const miniWeatherLabel = (code: number) => {
     const labels: Record<number, string> = {
@@ -280,16 +282,37 @@ export default function NoticiasPanel() {
         const raw = localStorage.getItem("masterview_primary_city");
         const primary = raw ? JSON.parse(raw) : null;
         if (!primary) { setLoadingWeather(false); return; }
-        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${primary.lat}&longitude=${primary.lon}&current=temperature_2m,relative_humidity_2m,weather_code&daily=temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=1`);
+        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${primary.lat}&longitude=${primary.lon}&current=temperature_2m,relative_humidity_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto&forecast_days=1`);
         const data = await res.json();
-        setMiniWeather({
+        const weatherData = {
           city: primary.name,
           temp: Math.round(data.current.temperature_2m),
           humidity: data.current.relative_humidity_2m,
           code: data.current.weather_code,
           min: Math.round(data.daily.temperature_2m_min[0]),
           max: Math.round(data.daily.temperature_2m_max[0]),
-        });
+        };
+        setMiniWeather(weatherData);
+
+        // Fetch AI description
+        setLoadingWeatherAi(true);
+        try {
+          const condLabel = miniWeatherLabel(data.current.weather_code);
+          const rainChance = data.daily.precipitation_probability_max?.[0] ?? 0;
+          const aiRes = await supabase.functions.invoke("weather-description", {
+            body: {
+              city: primary.name,
+              temp: weatherData.temp,
+              tempMin: weatherData.min,
+              tempMax: weatherData.max,
+              humidity: weatherData.humidity,
+              rainChance,
+              condition: condLabel,
+            },
+          });
+          if (aiRes.data?.description) setWeatherAiDesc(aiRes.data.description);
+        } catch { /* ignore AI error */ }
+        setLoadingWeatherAi(false);
       } catch { /* ignore */ }
       setLoadingWeather(false);
     };
@@ -713,9 +736,21 @@ export default function NoticiasPanel() {
           </div>
 
           {/* Mini Previsão do Tempo */}
-          <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)", width: (jornalConfig || wizardOpen) ? "100%" : "50%" }}>
-            <div className="px-3 py-2 font-bold text-xs tracking-wide text-white rounded-t-xl flex items-center justify-between" style={{ backgroundColor: "#0d0446" }}>
+          <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)", width: (jornalConfig || wizardOpen) ? "100%" : "50%" }}
+            draggable={!!miniWeather}
+            onDragStart={(e) => {
+              if (!miniWeather) return;
+              const text = weatherAiDesc || `Previsão do tempo para ${miniWeather.city}: ${miniWeather.temp}°C, mín ${miniWeather.min}° máx ${miniWeather.max}°, umidade ${miniWeather.humidity}%. ${miniWeatherLabel(miniWeather.code)}.`;
+              e.dataTransfer.setData("text/plain", JSON.stringify({
+                type: "previsao_tempo",
+                city: miniWeather.city,
+                text,
+              }));
+            }}
+          >
+            <div className="px-3 py-2 font-bold text-xs tracking-wide text-white rounded-t-xl flex items-center justify-between cursor-grab" style={{ backgroundColor: "#0d0446" }}>
               <span className="flex items-center gap-1.5" style={{ color: "#ffffff" }}>
+                <GripVertical size={12} className="opacity-60" />
                 <CloudSun size={12} />
                 Previsão do Tempo
               </span>
@@ -736,18 +771,29 @@ export default function NoticiasPanel() {
                 ) : !miniWeather ? (
                   <p className="text-xs" style={{ color: "rgba(13,4,70,0.5)" }}>Nenhuma cidade principal cadastrada. Defina em Previsão do Tempo.</p>
                 ) : (
-                  <div className="flex items-center gap-4">
-                    <div className="text-center">
-                      <span className="text-2xl font-bold" style={{ color: "#2ec1f7" }}>{miniWeather.temp}°C</span>
-                    </div>
-                    <div className="flex-1 space-y-0.5">
-                      <p className="text-xs font-bold" style={{ color: "#0d0446" }}>{miniWeather.city}</p>
-                      <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.6)" }}>{miniWeatherLabel(miniWeather.code)}</p>
-                      <div className="flex items-center gap-3 text-[10px]" style={{ color: "rgba(13,4,70,0.5)" }}>
-                        <span className="flex items-center gap-0.5"><Thermometer size={9} /> Mín {miniWeather.min}° · Máx {miniWeather.max}°</span>
-                        <span className="flex items-center gap-0.5"><Droplets size={9} /> {miniWeather.humidity}%</span>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-4">
+                      <div className="text-center">
+                        <span className="text-2xl font-bold" style={{ color: "#2ec1f7" }}>{miniWeather.temp}°C</span>
+                      </div>
+                      <div className="flex-1 space-y-0.5">
+                        <p className="text-xs font-bold" style={{ color: "#0d0446" }}>{miniWeather.city}</p>
+                        <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.6)" }}>{miniWeatherLabel(miniWeather.code)}</p>
+                        <div className="flex items-center gap-3 text-[10px]" style={{ color: "rgba(13,4,70,0.5)" }}>
+                          <span className="flex items-center gap-0.5"><Thermometer size={9} /> Mín {miniWeather.min}° · Máx {miniWeather.max}°</span>
+                          <span className="flex items-center gap-0.5"><Droplets size={9} /> {miniWeather.humidity}%</span>
+                        </div>
                       </div>
                     </div>
+                    {loadingWeatherAi ? (
+                      <div className="flex items-center gap-1.5 text-[10px]" style={{ color: "rgba(13,4,70,0.4)" }}>
+                        <Loader2 size={10} className="animate-spin" /> Gerando descrição...
+                      </div>
+                    ) : weatherAiDesc && (
+                      <p className="text-[10px] leading-relaxed rounded-md px-2 py-1.5" style={{ color: "#0d0446", backgroundColor: "rgba(46,193,247,0.06)", border: "1px solid rgba(46,193,247,0.15)" }}>
+                        {weatherAiDesc}
+                      </p>
+                    )}
                   </div>
                 )}
               </div>
