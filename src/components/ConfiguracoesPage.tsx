@@ -297,58 +297,104 @@ export default function ConfiguracoesPage() {
         </div>
       </CollapsibleBox>
 
-      {/* Box 2: Cadastro de Canais */}
-      <CollapsibleBox title="Cadastro de Canais" defaultOpen={false}>
+      {/* Box 2: Configurações do Player */}
+      <CollapsibleBox title="Configurações do Player" defaultOpen={false}>
         {/* Formulário */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-muted-foreground">Número do Canal</label>
-            <input value={canalForm.numero_canal} onChange={(e) => setCanalForm(p => ({ ...p, numero_canal: e.target.value as any }))}
-              className="w-full bg-muted border border-border p-3 rounded-lg text-foreground text-sm outline-none focus:ring-1 focus:ring-primary" />
-          </div>
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-muted-foreground">Nome do Canal</label>
-            <input value={canalForm.name} onChange={(e) => setCanalForm(p => ({ ...p, name: e.target.value }))} placeholder="Ex: Rádio FM"
-              className="w-full bg-muted border border-border p-3 rounded-lg text-foreground placeholder:text-muted-foreground text-sm outline-none focus:ring-1 focus:ring-primary" />
-          </div>
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-muted-foreground">Logo do Canal</label>
-            <div className="flex items-center gap-2">
-              {canalForm.logo_url && <img src={canalForm.logo_url} alt="Logo" className="w-10 h-10 rounded object-contain border border-border" />}
-              <button onClick={() => handleImageUpload("logo_url")} className="bg-muted border border-border px-3 py-2 rounded-lg text-foreground hover:bg-muted/80 text-xs flex items-center gap-1">
-                <Upload size={12} /> {canalForm.logo_url ? "Trocar" : "Upload"}
-              </button>
-            </div>
-          </div>
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-muted-foreground">Thumb do Canal</label>
-            <div className="flex items-center gap-2">
-              {canalForm.cover_url && <img src={canalForm.cover_url} alt="Thumb" className="w-10 h-10 rounded object-contain border border-border" />}
-              <button onClick={() => handleImageUpload("cover_url")} className="bg-muted border border-border px-3 py-2 rounded-lg text-foreground hover:bg-muted/80 text-xs flex items-center gap-1">
-                <Upload size={12} /> {canalForm.cover_url ? "Trocar" : "Upload"}
-              </button>
-            </div>
-          </div>
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-muted-foreground">Tipo de Transmissão</label>
-            <select value={canalForm.type} onChange={(e) => setCanalForm(p => ({ ...p, type: e.target.value }))}
-              className="w-full bg-muted border border-border p-3 rounded-lg text-foreground text-sm outline-none focus:ring-1 focus:ring-primary">
-              <option value="audio_live">Áudio ao vivo</option>
-              <option value="video">Vídeo ao vivo</option>
-              <option value="youtube">Vídeo do YouTube</option>
-            </select>
-          </div>
-          <div className="space-y-1 sm:col-span-2">
-            <label className="text-xs font-semibold text-muted-foreground">
-              {canalForm.type === "youtube" ? "URL da playlist do YouTube" : "URL do Streaming"}
+        <div className="space-y-4">
+          {/* Mode selection */}
+          <div className="flex gap-6">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" checked={canalMode === "live"} onChange={() => { setCanalMode("live"); setCanalForm(p => ({ ...p, type: "audio_live" })); }}
+                className="accent-primary w-4 h-4" />
+              <span className="text-sm font-medium text-foreground">Ao vivo</span>
             </label>
-            <input value={canalForm.url} onChange={(e) => setCanalForm(p => ({ ...p, url: e.target.value }))} placeholder={canalForm.type === "youtube" ? "https://youtube.com/playlist?list=..." : "https://..."}
-              className="w-full bg-muted border border-border p-3 rounded-lg text-foreground placeholder:text-muted-foreground text-sm outline-none focus:ring-1 focus:ring-primary" />
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" checked={canalMode === "catalog"} onChange={() => setCanalMode("catalog")}
+                className="accent-primary w-4 h-4" />
+              <span className="text-sm font-medium text-foreground">Catálogo</span>
+            </label>
           </div>
-          <div className="flex items-end gap-2 sm:col-span-2">
+
+          {canalMode === "live" ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* Live type */}
+              <div className="space-y-1 sm:col-span-2">
+                <label className="text-xs font-semibold text-muted-foreground">Tipo de Transmissão</label>
+                <select value={canalForm.type} onChange={(e) => setCanalForm(p => ({ ...p, type: e.target.value }))}
+                  className="w-full bg-muted border border-border p-3 rounded-lg text-foreground text-sm outline-none focus:ring-1 focus:ring-primary">
+                  <option value="audio_live">Áudio ao vivo</option>
+                  <option value="video_live">Vídeo ao vivo</option>
+                </select>
+              </div>
+              {/* Channel number */}
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-muted-foreground">Número do Canal</label>
+                <input value={canalForm.numero_canal} onChange={(e) => setCanalForm(p => ({ ...p, numero_canal: e.target.value }))}
+                  className="w-full bg-muted border border-border p-3 rounded-lg text-foreground text-sm outline-none focus:ring-1 focus:ring-primary" />
+              </div>
+              {/* Channel name */}
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-muted-foreground">Nome do Canal</label>
+                <input value={canalForm.name} onChange={(e) => setCanalForm(p => ({ ...p, name: e.target.value }))} placeholder="Ex: Rádio FM"
+                  className="w-full bg-muted border border-border p-3 rounded-lg text-foreground placeholder:text-muted-foreground text-sm outline-none focus:ring-1 focus:ring-primary" />
+              </div>
+              {/* URL */}
+              <div className="space-y-1 sm:col-span-2">
+                <label className="text-xs font-semibold text-muted-foreground">URL do Streaming</label>
+                <input value={canalForm.url} onChange={(e) => setCanalForm(p => ({ ...p, url: e.target.value }))} placeholder="https://..."
+                  className="w-full bg-muted border border-border p-3 rounded-lg text-foreground placeholder:text-muted-foreground text-sm outline-none focus:ring-1 focus:ring-primary" />
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* Catalog name */}
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-muted-foreground">Nome do Catálogo</label>
+                <input value={canalForm.catalog_name} onChange={(e) => setCanalForm(p => ({ ...p, catalog_name: e.target.value }))} placeholder="Ex: Podcasts"
+                  className="w-full bg-muted border border-border p-3 rounded-lg text-foreground placeholder:text-muted-foreground text-sm outline-none focus:ring-1 focus:ring-primary" />
+              </div>
+              {/* Program name */}
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-muted-foreground">Nome do Programa</label>
+                <input value={canalForm.name} onChange={(e) => setCanalForm(p => ({ ...p, name: e.target.value }))} placeholder="Ex: Podcast Semanal"
+                  className="w-full bg-muted border border-border p-3 rounded-lg text-foreground placeholder:text-muted-foreground text-sm outline-none focus:ring-1 focus:ring-primary" />
+              </div>
+              {/* YouTube playlist URL */}
+              <div className="space-y-1 sm:col-span-2">
+                <label className="text-xs font-semibold text-muted-foreground">URL da Playlist do YouTube</label>
+                <input value={canalForm.url} onChange={(e) => setCanalForm(p => ({ ...p, url: e.target.value }))} placeholder="https://youtube.com/playlist?list=..."
+                  className="w-full bg-muted border border-border p-3 rounded-lg text-foreground placeholder:text-muted-foreground text-sm outline-none focus:ring-1 focus:ring-primary" />
+              </div>
+            </div>
+          )}
+
+          {/* Images - shared */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-muted-foreground">Capa do Programa (1280x720)</label>
+              <div className="flex items-center gap-2">
+                {canalForm.cover_url && <img src={canalForm.cover_url} alt="Capa" className="w-16 h-9 rounded object-cover border border-border" />}
+                <button onClick={() => handleImageUpload("cover_url")} className="bg-muted border border-border px-3 py-2 rounded-lg text-foreground hover:bg-muted/80 text-xs flex items-center gap-1">
+                  <Upload size={12} /> {canalForm.cover_url ? "Trocar" : "Upload"}
+                </button>
+              </div>
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-muted-foreground">Thumb do Programa (1920x1080)</label>
+              <div className="flex items-center gap-2">
+                {canalForm.logo_url && <img src={canalForm.logo_url} alt="Thumb" className="w-16 h-9 rounded object-cover border border-border" />}
+                <button onClick={() => handleImageUpload("logo_url")} className="bg-muted border border-border px-3 py-2 rounded-lg text-foreground hover:bg-muted/80 text-xs flex items-center gap-1">
+                  <Upload size={12} /> {canalForm.logo_url ? "Trocar" : "Upload"}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Submit */}
+          <div className="flex items-end gap-2">
             <button onClick={handleAddCanal} disabled={savingCanal}
               className="bg-primary text-primary-foreground px-5 py-3 rounded-lg text-sm font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center gap-2 flex-1 justify-center">
-              {savingCanal ? <Loader2 size={14} className="animate-spin" /> : <><Plus size={14} /> {editingCanal ? "Salvar Alterações" : "Adicionar Canal"}</>}
+              {savingCanal ? <Loader2 size={14} className="animate-spin" /> : <><Plus size={14} /> {editingCanal ? "Salvar Alterações" : "Adicionar"}</>}
             </button>
             {editingCanal && (
               <button onClick={resetCanalForm} className="bg-muted border border-border px-5 py-3 rounded-lg text-sm font-semibold text-foreground hover:bg-muted/80 transition-colors">
