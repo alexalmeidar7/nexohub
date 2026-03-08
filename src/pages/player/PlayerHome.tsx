@@ -350,7 +350,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
           <img src="/images/banner-home.png" alt="Banner" className="w-full h-auto object-cover" />
         </div>
 
-        <main className="flex-1 overflow-y-auto px-8 pt-24 pb-6 z-10 ml-20">
+        <main className="px-8 pt-24 pb-6 z-10 ml-20">
           {/* Streamings ao vivo */}
           <section className="mb-10" style={{ marginTop: "calc(600px - 200px)" }}>
             {!dataLoaded ? (
