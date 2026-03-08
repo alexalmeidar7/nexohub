@@ -97,6 +97,7 @@ export default function ConfiguracoesPage() {
     if (data) setCanais(data.map((d: any) => ({
       id: d.id, numero_canal: d.numero_canal || "", name: d.name, logo_url: d.logo_url || "",
       cover_url: d.cover_url || "", url: d.url, type: d.type, active: d.active,
+      catalog_name: (d as any).catalog_name || "",
     })));
     setLoadingCanais(false);
   };
