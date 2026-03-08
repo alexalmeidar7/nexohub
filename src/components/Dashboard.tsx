@@ -157,7 +157,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   }, [user]);
 
   const isModuleEnabled = (page: Page): boolean => {
-    if (page === "dashboard" || page === "configuracoes" || page === "cortevideo") return true;
+    if (page === "dashboard" || page === "configuracoes" || page === "cortevideo" || page === "playerconfig") return true;
     if (!enabledModules) return true;
     if (page === "testemunhais" || page === "promocoes" || page === "logos" || page === "preroll" || page === "shopping") {
       return enabledModules.has("comercial");
