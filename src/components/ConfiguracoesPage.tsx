@@ -423,16 +423,22 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
                 </div>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="space-y-1">
+                  <label className="block text-xs font-semibold" style={{ color: "#0d0446" }}>Tipo de Transmissão</label>
+                  <div className="w-full px-4 py-1.5 text-sm" style={{ backgroundColor: "rgba(13,4,70,0.08)", color: "#0d0446", borderRadius: "20px", border: "2px solid rgba(13,4,70,0.2)" }}>
+                    Gravado
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <label className="block text-xs font-semibold" style={{ color: "#0d0446" }}>Nº do Canal</label>
+                  <StyledInput value={canalForm.numero_canal} onChange={(e) => setCanalForm(p => ({ ...p, numero_canal: e.target.value }))} placeholder="Ex: 01" />
+                </div>
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold" style={{ color: "#0d0446" }}>Nome do Catálogo</label>
                   <StyledInput value={canalForm.catalog_name} onChange={(e) => setCanalForm(p => ({ ...p, catalog_name: e.target.value }))} placeholder="Ex: Podcasts" />
                 </div>
-                <div className="space-y-1">
-                  <label className="block text-xs font-semibold" style={{ color: "#0d0446" }}>Nome do Programa</label>
-                  <StyledInput value={canalForm.name} onChange={(e) => setCanalForm(p => ({ ...p, name: e.target.value }))} placeholder="Ex: Podcast Semanal" />
-                </div>
-                <div className="space-y-1 sm:col-span-2">
+                <div className="space-y-1 sm:col-span-3">
                   <label className="block text-xs font-semibold" style={{ color: "#0d0446" }}>URL da Playlist do YouTube</label>
                   <StyledInput value={canalForm.url} onChange={(e) => setCanalForm(p => ({ ...p, url: e.target.value }))} placeholder="https://youtube.com/playlist?list=..." />
                 </div>
