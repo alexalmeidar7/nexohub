@@ -226,7 +226,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
       background_url: canalForm.background_url,
       url: canalForm.url, type: canalMode === "catalog" ? "catalog" : canalForm.type,
       catalog_name: canalMode === "catalog" ? canalForm.catalog_name : "",
-      numero_canal: canalMode === "live" ? canalForm.numero_canal : "",
+      numero_canal: canalForm.numero_canal,
       is_hd: canalForm.is_hd, is_stereo: canalForm.is_stereo,
       classificacao_etaria: canalForm.classificacao_etaria,
     };
