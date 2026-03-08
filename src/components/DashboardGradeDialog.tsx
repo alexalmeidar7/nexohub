@@ -179,7 +179,7 @@ function DashboardGradeDialog({ open, onOpenChange }: Props) {
               .grade-scroll-dashboard::-webkit-scrollbar-thumb { background: #0d0446; border-radius: 4px; }
               .grade-scroll-dashboard::-webkit-scrollbar-thumb:hover { background: #2dbef3; }
             `}</style>
-            <table className="w-full text-xs border-separate border-spacing-1">
+            <table data-no-row-hover className="w-full text-xs border-separate border-spacing-1">
               <thead className="sticky top-0 z-10" style={{ backgroundColor: "#ffffff" }}>
                 <tr>
                   <th className="px-2 py-2 text-left w-20 rounded-lg" style={{ color: "#0d0446" }}>Horário</th>
