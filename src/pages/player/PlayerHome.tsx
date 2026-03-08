@@ -165,6 +165,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   const [programas, setProgramas] = useState<Programa[]>([]);
   const [dataLoaded, setDataLoaded] = useState(false);
   const [watchHistory, setWatchHistory] = useState<{ id: string; channel_name: string; channel_cover_url: string | null; channel_logo_url: string | null; channel_type: string; watched_at: string; channel_id: string | null }[]>([]);
+  const [hoveredThumb, setHoveredThumb] = useState<string | null>(null);
 
   const userName = profileName || user?.email?.split("@")[0] || "Visitante";
 
