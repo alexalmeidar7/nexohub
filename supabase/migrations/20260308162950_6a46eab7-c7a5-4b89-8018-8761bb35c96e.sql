@@ -1,0 +1,1 @@
+ALTER TABLE public.programas ADD COLUMN IF NOT EXISTS tipo_programa TEXT DEFAULT NULL;
