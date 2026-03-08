@@ -39,7 +39,7 @@ const MessageNotification = lazy(() => import("./MessageNotification"));
 import DashboardSkeleton from "./skeletons/DashboardSkeleton";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import { normalizeMusicText } from "@/lib/textEncoding";
-type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll" | "cortevideo";
+type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll" | "cortevideo" | "playerconfig";
 
 // Sidebar structured menu
 interface MenuItem {
@@ -61,6 +61,7 @@ const sidebarMenu: MenuItem[] = [
   { icon: Newspaper, label: "notícias", page: "noticias" },
   { icon: Music, label: "música no ar", page: "musica" },
   { icon: CalendarDays, label: "agenda", page: "agenda" },
+  { icon: MonitorPlay, label: "player - configurações", page: "playerconfig" },
   { icon: MonitorPlay, label: "player - módulo externo", page: undefined }, // opens new tab
   {
     icon: ShoppingBag, label: "comercial", children: [
@@ -107,6 +108,7 @@ const pageTitle: Record<Page, string> = {
   shopping: "Comercial — Shopping",
   preroll: "Comercial — Pré-Roll",
   cortevideo: "Ferramentas — Cortes de Vídeo",
+  playerconfig: "Player — Configurações",
 };
 
 interface DashboardProps {
@@ -155,7 +157,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   }, [user]);
 
   const isModuleEnabled = (page: Page): boolean => {
-    if (page === "dashboard" || page === "configuracoes" || page === "cortevideo") return true;
+    if (page === "dashboard" || page === "configuracoes" || page === "cortevideo" || page === "playerconfig") return true;
     if (!enabledModules) return true;
     if (page === "testemunhais" || page === "promocoes" || page === "logos" || page === "preroll" || page === "shopping") {
       return enabledModules.has("comercial");
@@ -164,7 +166,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   };
 
   useEffect(() => {
-    if (enabledModules !== null && currentPage !== "dashboard" && currentPage !== "configuracoes" && !isModuleEnabled(currentPage)) {
+    if (enabledModules !== null && currentPage !== "dashboard" && currentPage !== "configuracoes" && currentPage !== "playerconfig" && !isModuleEnabled(currentPage)) {
       setCurrentPage("dashboard");
     }
   }, [currentPage, enabledModules]);
@@ -535,7 +537,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               {currentPage === "musica" && <MusicaNoAr />}
               {currentPage === "agenda" && <AgendaPage />}
               {currentPage === "curtidas" && <MusicasCurtidasPage />}
-              {currentPage === "configuracoes" && <ConfiguracoesPage />}
+              {currentPage === "configuracoes" && <ConfiguracoesPage section="empresa" />}
+              {currentPage === "playerconfig" && <ConfiguracoesPage section="player" />}
               {currentPage === "testemunhais" && <TestemunhaisPage />}
               {currentPage === "promocoes" && <PromocoesPage />}
               {currentPage === "logos" && <LogosPatrocinadoresPage />}

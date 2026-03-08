@@ -98,7 +98,7 @@ function CollapsibleBox({ title, defaultOpen = true, children }: { title: string
   );
 }
 
-export default function ConfiguracoesPage() {
+export default function ConfiguracoesPage({ section = "all" }: { section?: "all" | "empresa" | "player" }) {
   const { user } = useAuth();
   const [config, setConfig] = useState<EmpresaConfig>({} as EmpresaConfig);
   const [loading, setLoading] = useState(true);
@@ -283,7 +283,7 @@ export default function ConfiguracoesPage() {
     <div className="animate-fade-in space-y-6 max-w-3xl">
 
       {/* Box 1: Configurações da Empresa */}
-      <CollapsibleBox title="Configurações da Empresa">
+      {(section === "all" || section === "empresa") && <CollapsibleBox title="Configurações da Empresa">
         <div className="space-y-4">
           {field("Nome da Empresa", "nome", "Nome da empresa")}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -358,10 +358,10 @@ export default function ConfiguracoesPage() {
           <Save size={12} />
           <span>As configurações são salvas automaticamente.</span>
         </div>
-      </CollapsibleBox>
+      </CollapsibleBox>}
 
       {/* Box 2: Configurações do Player */}
-      <CollapsibleBox title="Configurações do Player" defaultOpen={false}>
+      {(section === "all" || section === "player") && <CollapsibleBox title="Configurações do Player" defaultOpen={section === "player"}>
         {/* Formulário */}
         <div className="space-y-4">
           <h3 className="text-xl mb-2" style={{ color: "#0d0446" }}>
@@ -557,7 +557,7 @@ export default function ConfiguracoesPage() {
             </div>
           </div>
         )}
-      </CollapsibleBox>
+      </CollapsibleBox>}
     </div>
   );
 }
