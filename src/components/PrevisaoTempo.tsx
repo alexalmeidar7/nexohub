@@ -93,6 +93,8 @@ export default function PrevisaoTempo() {
   const [primaryCity, setPrimaryCity] = useState<PrimaryCity | null>(getPrimaryCity);
   const [aiDescription, setAiDescription] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
+  const [forecastDescription, setForecastDescription] = useState("");
+  const [forecastLoading, setForecastLoading] = useState(false);
 
   const [suggestions, setSuggestions] = useState<GeoResult[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -153,6 +155,7 @@ export default function PrevisaoTempo() {
       if (!silent) {
         setAiLoading(true);
         setAiDescription("");
+        setForecastDescription("");
         try {
           const { data } = await supabase.functions.invoke("weather-description", {
             body: {
@@ -243,6 +246,28 @@ export default function PrevisaoTempo() {
       savePrimaryCity(pc);
       setPrimaryCity(pc);
     }
+  };
+
+  const fetchForecastDescription = async () => {
+    if (!weather) return;
+    setForecastLoading(true);
+    setForecastDescription("");
+    try {
+      const forecastData = weather.forecast.map(d => ({
+        date: d.date,
+        temp: d.temp,
+        tempMin: d.tempMin,
+        tempMax: d.tempMax,
+        humidity: d.humidity,
+        rainChance: d.rainChance,
+        condition: getWeatherLabel(d.weatherCode),
+      }));
+      const { data } = await supabase.functions.invoke("weather-description", {
+        body: { type: "forecast", city: weather.city, forecast: forecastData },
+      });
+      if (data?.description) setForecastDescription(data.description);
+    } catch { /* ignore */ }
+    setForecastLoading(false);
   };
 
   return (
@@ -395,9 +420,9 @@ export default function PrevisaoTempo() {
                 <WeatherIcon code={weather.current.weatherCode} size={64} />
               </div>
             </div>
-            <div className="flex items-center gap-5 mb-6">
-              <div className="text-5xl font-bold" style={{ color: "#2dbef3" }}>{weather.current.temp}°C</div>
-              <div className="flex-1">
+            <div className="flex items-start gap-5 mb-6">
+              <div className="text-5xl font-bold flex-shrink-0" style={{ color: "#2dbef3" }}>{weather.current.temp}°C</div>
+              <div className="flex-1 space-y-2">
                 {aiLoading ? (
                   <div className="flex items-center gap-2" style={{ color: "rgba(13,4,70,0.4)" }}>
                     <Sparkles size={14} className="animate-pulse" />
@@ -409,6 +434,32 @@ export default function PrevisaoTempo() {
                     <p className="text-sm leading-relaxed" style={{ color: "#0d0446" }}>{aiDescription}</p>
                   </div>
                 ) : null}
+
+                {/* Forecast description */}
+                {!forecastDescription && !forecastLoading && aiDescription && (
+                  <button onClick={fetchForecastDescription}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all"
+                    style={{ backgroundColor: "rgba(45,190,243,0.1)", color: "#0d0446", border: "1px solid rgba(45,190,243,0.3)" }}
+                    onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#2dbef3"; e.currentTarget.style.color = "#ffffff"; }}
+                    onMouseLeave={e => { e.currentTarget.style.backgroundColor = "rgba(45,190,243,0.1)"; e.currentTarget.style.color = "#0d0446"; }}
+                  >
+                    <Sparkles size={12} /> Quer que eu te fale como será os próximos 5 dias?
+                  </button>
+                )}
+                {forecastLoading && (
+                  <div className="flex items-center gap-2" style={{ color: "rgba(13,4,70,0.4)" }}>
+                    <Sparkles size={14} className="animate-pulse" />
+                    <span className="text-xs italic">Analisando os próximos dias...</span>
+                  </div>
+                )}
+                {forecastDescription && (
+                  <div className="rounded-lg p-3 mt-1" style={{ backgroundColor: "rgba(45,190,243,0.06)", border: "1px solid rgba(45,190,243,0.15)" }}>
+                    <div className="flex items-start gap-2">
+                      <Sparkles size={14} className="mt-0.5 flex-shrink-0" style={{ color: "#2dbef3" }} />
+                      <p className="text-sm leading-relaxed" style={{ color: "#0d0446" }}>{forecastDescription}</p>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
