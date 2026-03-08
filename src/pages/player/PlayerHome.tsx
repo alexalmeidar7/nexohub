@@ -12,6 +12,7 @@ interface Channel {
   logo_url: string | null;
   type: string;
   url?: string;
+  catalog_name?: string;
 }
 
 interface Programa {
@@ -31,7 +32,7 @@ function StreamingCard({ channel, currentProgram, onClick }: { channel: Channel;
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const isVideo = channel.type === "video";
+  const isVideo = channel.type === "video" || channel.type === "video_live";
 
   // Capture frames on hover for video channels
   useEffect(() => {
@@ -185,11 +186,11 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       if (!userId) { setDataLoaded(true); return; }
 
       const [chRes, empRes, progRes] = await Promise.all([
-        supabase.from("streaming_channels").select("id, name, cover_url, logo_url, type, url").eq("user_id", userId).eq("active", true).order("numero_canal", { ascending: true }),
+        supabase.from("streaming_channels").select("id, name, cover_url, logo_url, type, url, catalog_name").eq("user_id", userId).eq("active", true).order("numero_canal", { ascending: true }),
         supabase.from("empresa_config").select("logo, nome").eq("user_id", userId).single(),
         supabase.from("programas").select("nome, horario_inicio, horario_fim, dias_semana").eq("user_id", userId).eq("ativo", true),
       ]);
-      if (chRes.data) setChannels(chRes.data);
+      if (chRes.data) setChannels(chRes.data as any);
       if (empRes.data) {
         setLogoUrl(empRes.data.logo);
         setChannelName(empRes.data.nome || "");
@@ -248,6 +249,17 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   }, [programas]);
 
   const currentProgram = getCurrentProgram();
+
+  // Separate streaming channels from catalog entries
+  const streamingChannels = channels.filter(ch => ch.type !== "catalog");
+  const catalogChannels = channels.filter(ch => ch.type === "catalog");
+  // Group catalog by catalog_name
+  const catalogGroups: Record<string, Channel[]> = {};
+  catalogChannels.forEach(ch => {
+    const groupName = ch.catalog_name || "Catálogo";
+    if (!catalogGroups[groupName]) catalogGroups[groupName] = [];
+    catalogGroups[groupName].push(ch);
+  });
 
   const goToPlayer = () => {
     setFadeOut(true);
@@ -366,12 +378,12 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
               <>
                 <h2 className="text-lg font-bold mb-4">streamings ao vivo</h2>
                 <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
-                  {channels.length === 0 && (
+                    {streamingChannels.length === 0 && (
                     <div className="w-72 h-40 rounded-xl bg-player-surface border border-player-border flex items-center justify-center text-player-muted-foreground text-sm">
                       Nenhum canal disponível
                     </div>
                   )}
-                  {channels.map((ch) => (
+                  {streamingChannels.map((ch) => (
                     <StreamingCard
                       key={ch.id}
                       channel={ch}
@@ -431,6 +443,33 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
               ) : null}
             </section>
           )}
+
+          {/* Catalog categories */}
+          {Object.entries(catalogGroups).map(([groupName, items]) => (
+            <section key={groupName} className="mb-10">
+              <h2 className="text-lg font-bold mb-4">{groupName}</h2>
+              <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+                {items.map(item => (
+                  <button
+                    key={item.id}
+                    onClick={goToPlayer}
+                    className="flex-shrink-0 w-56 h-32 rounded-xl overflow-hidden relative transition-all hover:scale-[1.02] border-[5px] border-transparent hover:border-white"
+                  >
+                    {item.cover_url ? (
+                      <img src={item.cover_url} alt={item.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-player-accent/30 to-player flex items-center justify-center">
+                        <Film className="h-8 w-8 text-player-muted-foreground" />
+                      </div>
+                    )}
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2">
+                      <p className="text-xs font-medium truncate text-left">{item.name}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </section>
+          ))}
         </main>
       </div>
     </div>
