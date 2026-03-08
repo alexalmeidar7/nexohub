@@ -250,6 +250,17 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
 
   const currentProgram = getCurrentProgram();
 
+  // Separate streaming channels from catalog entries
+  const streamingChannels = channels.filter(ch => ch.type !== "catalog");
+  const catalogChannels = channels.filter(ch => ch.type === "catalog");
+  // Group catalog by catalog_name
+  const catalogGroups: Record<string, Channel[]> = {};
+  catalogChannels.forEach(ch => {
+    const groupName = ch.catalog_name || "Catálogo";
+    if (!catalogGroups[groupName]) catalogGroups[groupName] = [];
+    catalogGroups[groupName].push(ch);
+  });
+
   const goToPlayer = () => {
     setFadeOut(true);
     setTimeout(() => {
