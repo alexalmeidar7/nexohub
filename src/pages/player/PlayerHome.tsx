@@ -179,10 +179,12 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
     const fetchData = async () => {
       let userId = user?.id;
 
-      // Always use public-player-data when viewing via userSlug to get the channel owner's data
-      if (userSlug) {
+      // Determine the slug to use: from URL param, or derive from logged-in user email
+      const slug = userSlug || (user?.email ? user.email.split("@")[0] : null);
+
+      if (slug) {
         const { data } = await supabase.functions.invoke("public-player-data", {
-          body: { slug: userSlug },
+          body: { slug },
         });
         if (data?.channels) setChannels(data.channels);
         if (data?.empresa?.logo) setLogoUrl(data.empresa.logo);
@@ -215,6 +217,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
 
       if (!userId) { setDataLoaded(true); return; }
 
+      // Fallback: direct query (shouldn't normally reach here)
       const [chRes, empRes, progRes] = await Promise.all([
         supabase.from("streaming_channels").select("id, name, cover_url, logo_url, background_url, type, url, catalog_name, user_id").eq("active", true).order("numero_canal", { ascending: true }),
         supabase.from("empresa_config").select("logo, nome").eq("user_id", userId).single(),
@@ -235,7 +238,6 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
         .order("watched_at", { ascending: false })
         .limit(10);
       if (historyData) {
-        // Deduplicate by channel_id, keep most recent
         const seen = new Set<string>();
         const unique = historyData.filter(h => {
           const key = h.channel_id || h.id;
