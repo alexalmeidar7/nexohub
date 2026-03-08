@@ -250,8 +250,8 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
 
   const currentProgram = getCurrentProgram();
 
-  // Separate streaming channels (only "Ao vivo" types) from catalog entries
-  const streamingChannels = channels.filter(ch => ch.type === "audio_live" || ch.type === "video_live");
+  // Separate streaming channels (only "Ao vivo" types + legacy types) from catalog entries
+  const streamingChannels = channels.filter(ch => ch.type !== "catalog");
   const catalogChannels = channels.filter(ch => ch.type === "catalog");
   // Group catalog by catalog_name
   const catalogGroups: Record<string, Channel[]> = {};
