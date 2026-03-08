@@ -39,24 +39,49 @@ function getLabel(code: number) {
   return weatherLabels[closest] || "Desconhecido";
 }
 
-const STORAGE_KEY = "masterview_last_city";
+const PRIMARY_CITY_KEY = "masterview_primary_city";
+const FALLBACK_KEY = "masterview_last_city";
 
 export default function WeatherWidget({ onNavigate }: { onNavigate?: (page: any) => void } = {}) {
   const [weather, setWeather] = useState<WidgetWeather | null>(null);
 
   useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (!saved) return;
+    let cityName: string | null = null;
+    let lat: number | null = null;
+    let lon: number | null = null;
+
+    try {
+      const primary = JSON.parse(localStorage.getItem(PRIMARY_CITY_KEY) || "null");
+      if (primary?.name && primary?.lat && primary?.lon) {
+        cityName = primary.name;
+        lat = primary.lat;
+        lon = primary.lon;
+      }
+    } catch { /* ignore */ }
+
+    if (!cityName) {
+      const fallback = localStorage.getItem(FALLBACK_KEY);
+      if (!fallback) return;
+      cityName = fallback;
+    }
 
     const fetchData = async () => {
       try {
-        const geoRes = await fetch(
-          `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(saved)}&count=1&language=pt`
-        );
-        const geoData = await geoRes.json();
-        if (!geoData.results?.length) return;
+        let latitude = lat;
+        let longitude = lon;
+        let name = cityName!;
 
-        const { latitude, longitude, name } = geoData.results[0];
+        if (!latitude || !longitude) {
+          const geoRes = await fetch(
+            `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(name)}&count=1&language=pt`
+          );
+          const geoData = await geoRes.json();
+          if (!geoData.results?.length) return;
+          latitude = geoData.results[0].latitude;
+          longitude = geoData.results[0].longitude;
+          name = geoData.results[0].name;
+        }
+
         const wxRes = await fetch(
           `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto&forecast_days=1`
         );
