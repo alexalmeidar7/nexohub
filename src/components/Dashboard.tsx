@@ -61,7 +61,7 @@ const sidebarMenu: MenuItem[] = [
   { icon: Newspaper, label: "notícias", page: "noticias" },
   { icon: Music, label: "música no ar", page: "musica" },
   { icon: CalendarDays, label: "agenda", page: "agenda" },
-  { icon: MonitorPlay, label: "player", page: undefined }, // opens new tab
+  { icon: MonitorPlay, label: "player - módulo externo", page: undefined }, // opens new tab
   {
     icon: ShoppingBag, label: "comercial", children: [
       { icon: MessageSquareQuote, label: "Testemunhais", page: "testemunhais" },
@@ -182,7 +182,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   };
 
   const handleMenuClick = (item: MenuItem) => {
-    if (item.label === "player") {
+    if (item.label === "player - módulo externo") {
       window.open("/user/nexohub/player", "_blank");
       return;
     }
