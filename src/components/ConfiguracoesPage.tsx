@@ -98,7 +98,7 @@ function CollapsibleBox({ title, defaultOpen = true, children }: { title: string
   );
 }
 
-export default function ConfiguracoesPage() {
+export default function ConfiguracoesPage({ section = "all" }: { section?: "all" | "empresa" | "player" }) {
   const { user } = useAuth();
   const [config, setConfig] = useState<EmpresaConfig>({} as EmpresaConfig);
   const [loading, setLoading] = useState(true);
