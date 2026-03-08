@@ -230,7 +230,7 @@ export default function ConfiguracoesPage() {
 
   if (loading) return <ModulePageSkeleton />;
 
-  const typeLabels: Record<string, string> = { audio_live: "Áudio ao vivo", video: "Vídeo ao vivo", youtube: "Vídeo do YouTube" };
+  const typeLabels: Record<string, string> = { audio_live: "Áudio ao vivo", video_live: "Vídeo ao vivo", video: "Vídeo ao vivo", youtube: "Vídeo do YouTube", catalog: "Catálogo" };
 
   return (
     <div className="animate-fade-in space-y-6 max-w-3xl">
