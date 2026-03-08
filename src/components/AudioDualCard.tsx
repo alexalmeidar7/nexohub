@@ -134,7 +134,7 @@ export default function AudioDualCard({
   const cleanPhone = whatsappPhone?.replace(/\D/g, "") || "";
 
   return (
-    <div className="absolute inset-0 z-10 flex items-center justify-center overflow-hidden" style={{ paddingBottom: "140px" }}>
+    <div className="absolute inset-0 z-10 flex items-center justify-center overflow-hidden" style={{ paddingBottom: "100px" }}>
       {/* Background — channel thumb, fixed and covering */}
       {channelThumb && (
         <img
