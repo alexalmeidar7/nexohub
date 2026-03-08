@@ -81,7 +81,8 @@ export default function ConfiguracoesPage() {
   // Canais
   const [canais, setCanais] = useState<Canal[]>([]);
   const [loadingCanais, setLoadingCanais] = useState(true);
-  const [canalForm, setCanalForm] = useState({ numero_canal: "", name: "", logo_url: "", cover_url: "", url: "", type: "audio_live" });
+  const [canalMode, setCanalMode] = useState<"live" | "catalog">("live");
+  const [canalForm, setCanalForm] = useState({ numero_canal: "", name: "", logo_url: "", cover_url: "", url: "", type: "audio_live", catalog_name: "" });
   const [savingCanal, setSavingCanal] = useState(false);
   const [editingCanal, setEditingCanal] = useState<string | null>(null);
 
