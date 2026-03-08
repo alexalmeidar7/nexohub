@@ -19,7 +19,7 @@ serve(async (req) => {
     let userPrompt: string;
 
     if (type === "forecast" && forecast) {
-      systemPrompt = "Você é um apresentador de previsão do tempo de uma rádio brasileira. Use tom jornalístico porém amigável e acessível. Faça um resumo dos próximos 5 dias em um parágrafo fluido (máximo 80 palavras). Destaque tendências (esquenta, esfria, chuva chegando, tempo firme). Inclua dicas práticas quando relevante. Responda apenas com o texto, sem formatação markdown.";
+      systemPrompt = "Você é um apresentador de previsão do tempo de uma rádio brasileira. Use tom jornalístico porém amigável e acessível. Comece o texto sempre com o formato: 'Do dia [primeiro dia] até [último dia], o tempo vai estar assim:' e então descreva as tendências dos 5 dias em um parágrafo fluido (máximo 80 palavras). Destaque tendências (esquenta, esfria, chuva chegando, tempo firme). Inclua dicas práticas quando relevante. Use os nomes dos dias da semana em português. Responda apenas com o texto, sem formatação markdown.";
       const forecastLines = forecast.map((d: any) =>
         `${d.date}: ${d.temp}°C (${d.tempMin}°-${d.tempMax}°), umidade ${d.humidity}%, chuva ${d.rainChance}%, ${d.condition}`
       ).join(". ");
