@@ -502,7 +502,7 @@ export default function ProgramaForm() {
       await supabase.from("programas").insert({
         user_id: user.id, nome: nome.trim(), apresentador_id: apresentadorId || null, selo, capa, dias_semana: diasSemana,
         horario_inicio: horarioInicio, horario_fim: horarioFim, estudio: estudio.trim(), ativo, descricao: descricao.trim(),
-        variavel: false, data_variavel: null, classificacao_etaria: classificacaoEtaria || null,
+        variavel: false, data_variavel: null, classificacao_etaria: classificacaoEtaria || null, tipo_programa: tipoPrograma || null,
       } as any);
     }
     await load();
