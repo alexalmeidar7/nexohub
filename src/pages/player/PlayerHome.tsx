@@ -177,19 +177,32 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
 
   useEffect(() => {
     const fetchData = async () => {
-      let userId = user?.id;
+      const userId = user?.id;
 
-      // If logged in, fetch directly from DB (avoids edge function issues)
       if (userId) {
-        const [channelsRes, empresaRes, programasRes] = await Promise.all([
+        // Logged-in user: fetch directly from DB
+        const [chRes, empRes, progRes, histRes] = await Promise.all([
           supabase.from("streaming_channels").select("*").eq("user_id", userId).eq("active", true).order("numero_canal"),
-          supabase.from("empresa_config").select("*").eq("user_id", userId).maybeSingle(),
+          supabase.from("empresa_config").select("logo, nome").eq("user_id", userId).single(),
           supabase.from("programas").select("id, nome, horario_inicio, horario_fim, dias_semana, ativo, selo, estudio, variavel, data_variavel, capa, descricao, apresentador_id").eq("user_id", userId).eq("ativo", true).order("horario_inicio"),
+          supabase.from("watch_history").select("id, channel_name, channel_cover_url, channel_logo_url, channel_type, watched_at, channel_id").eq("user_id", userId).order("watched_at", { ascending: false }).limit(10),
         ]);
-        if (channelsRes.data) setChannels(channelsRes.data as any);
-        if (empresaRes.data?.logo) setLogoUrl(empresaRes.data.logo);
-        if (empresaRes.data?.nome) setChannelName(empresaRes.data.nome);
-        if (programasRes.data) setProgramas(programasRes.data as any);
+        if (chRes.data) setChannels(chRes.data as any);
+        if (empRes.data) {
+          setLogoUrl(empRes.data.logo);
+          setChannelName(empRes.data.nome || "");
+        }
+        if (progRes.data) setProgramas(progRes.data as any);
+        if (histRes.data) {
+          const seen = new Set<string>();
+          const unique = histRes.data.filter(h => {
+            const key = h.channel_id || h.id;
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+          });
+          setWatchHistory(unique);
+        }
       } else if (userSlug && userSlug !== ":userSlug") {
         // Public access via slug (unauthenticated visitors)
         const { data } = await supabase.functions.invoke("public-player-data", {
@@ -199,63 +212,6 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
         if (data?.empresa?.logo) setLogoUrl(data.empresa.logo);
         if (data?.empresa?.nome) setChannelName(data.empresa.nome);
         if (data?.programas) setProgramas(data.programas);
-      }
-
-        // Still fetch watch history for logged-in user
-        if (userId) {
-          const { data: historyData } = await supabase
-            .from("watch_history")
-            .select("id, channel_name, channel_cover_url, channel_logo_url, channel_type, watched_at, channel_id")
-            .eq("user_id", userId)
-            .order("watched_at", { ascending: false })
-            .limit(10);
-          if (historyData) {
-            const seen = new Set<string>();
-            const unique = historyData.filter(h => {
-              const key = h.channel_id || h.id;
-              if (seen.has(key)) return false;
-              seen.add(key);
-              return true;
-            });
-            setWatchHistory(unique);
-          }
-        }
-
-        setDataLoaded(true);
-        return;
-      }
-
-      if (!userId) { setDataLoaded(true); return; }
-
-      // Fallback: direct query (shouldn't normally reach here)
-      const [chRes, empRes, progRes] = await Promise.all([
-        supabase.from("streaming_channels").select("id, name, cover_url, logo_url, background_url, type, url, catalog_name, user_id").eq("active", true).order("numero_canal", { ascending: true }),
-        supabase.from("empresa_config").select("logo, nome").eq("user_id", userId).single(),
-        supabase.from("programas").select("nome, horario_inicio, horario_fim, dias_semana, capa").eq("user_id", userId).eq("ativo", true),
-      ]);
-      if (chRes.data) setChannels(chRes.data as any);
-      if (empRes.data) {
-        setLogoUrl(empRes.data.logo);
-        setChannelName(empRes.data.nome || "");
-      }
-      if (progRes.data) setProgramas(progRes.data);
-
-      // Fetch watch history
-      const { data: historyData } = await supabase
-        .from("watch_history")
-        .select("id, channel_name, channel_cover_url, channel_logo_url, channel_type, watched_at, channel_id")
-        .eq("user_id", userId)
-        .order("watched_at", { ascending: false })
-        .limit(10);
-      if (historyData) {
-        const seen = new Set<string>();
-        const unique = historyData.filter(h => {
-          const key = h.channel_id || h.id;
-          if (seen.has(key)) return false;
-          seen.add(key);
-          return true;
-        });
-        setWatchHistory(unique);
       }
 
       setDataLoaded(true);
