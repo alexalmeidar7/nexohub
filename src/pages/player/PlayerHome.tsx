@@ -376,16 +376,39 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                     ))}
                   </div>
                 </>
-              ) : (
+              ) : watchHistory.length > 0 ? (
                 <>
                   <h2 className="text-lg font-bold mb-4">visto por último</h2>
-                  <div className="flex gap-4">
-                    {[1, 2, 3].map(i => (
-                      <div key={i} className="w-48 h-28 rounded-xl bg-player-surface border-[5px] border-transparent hover:border-white transition-all" />
+                  <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+                    {watchHistory.map(item => (
+                      <button
+                        key={item.id}
+                        onClick={goToPlayer}
+                        className="flex-shrink-0 w-48 h-28 rounded-xl overflow-hidden relative transition-all hover:scale-[1.02] border-[5px] border-transparent hover:border-white"
+                      >
+                        {item.channel_cover_url ? (
+                          <img src={item.channel_cover_url} alt={item.channel_name} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-br from-player-accent/30 to-player flex items-center justify-center">
+                            {item.channel_logo_url ? (
+                              <img src={item.channel_logo_url} alt={item.channel_name} className="h-10 w-auto object-contain" />
+                            ) : (
+                              <Radio className="h-8 w-8 text-player-muted-foreground" />
+                            )}
+                          </div>
+                        )}
+                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2">
+                          <p className="text-xs font-medium truncate text-left">{item.channel_name}</p>
+                          <p className="text-[10px] text-player-muted-foreground flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            {new Date(item.watched_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                          </p>
+                        </div>
+                      </button>
                     ))}
                   </div>
                 </>
-              )}
+              ) : null}
             </section>
           )}
         </main>
