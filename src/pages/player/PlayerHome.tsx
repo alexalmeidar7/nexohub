@@ -606,7 +606,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                         {watchHistory.map(item => (
                           <button
                             key={item.id}
-                            onClick={goToPlayer}
+                            onClick={() => goToPlayer(item.id)}
                             className="flex-shrink-0 w-48 h-28 rounded-xl overflow-hidden relative transition-all hover:scale-[1.02] border-[5px] border-transparent hover:border-white"
                           >
                             {item.channel_cover_url ? (
