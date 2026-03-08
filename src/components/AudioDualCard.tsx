@@ -162,7 +162,7 @@ export default function AudioDualCard({
             backgroundColor: "#a10a0b",
             backgroundImage: presenterPhoto ? `url(${presenterPhoto})` : undefined,
             backgroundSize: "cover",
-            backgroundPosition: "center",
+            backgroundPosition: "top center",
             zIndex: 1,
             transition: "margin-left 0.5s ease-out",
           }}
@@ -384,7 +384,7 @@ export default function AudioDualCard({
                   key={musicCover}
                   src={musicCover}
                   alt={musicTitle || "Capa"}
-                  className="absolute inset-0 w-full h-full object-cover rounded-3xl animate-fade-in"
+                  className="absolute inset-0 w-full h-full object-cover object-top rounded-3xl animate-fade-in"
                   style={{ animationDuration: "0.7s" }}
                 />
               ) : channelLogo ? (
