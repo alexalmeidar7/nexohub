@@ -119,6 +119,8 @@ export default function PrevisaoTempo() {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [favorites, setFavorites] = useState<FavoriteCity[]>(getFavorites);
 
+  const [primaryCity, setPrimaryCity] = useState<PrimaryCity | null>(getPrimaryCity);
+
   const [suggestions, setSuggestions] = useState<GeoResult[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
