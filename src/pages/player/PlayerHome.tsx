@@ -409,15 +409,10 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
               className="w-full h-full object-cover object-top absolute inset-0 animate-fade-in"
             />
           )}
-          {/* Smooth gradient fade at the bottom — 40px strip from transparent to solid player bg */}
+          {/* Fade to transparent at bottom */}
           <div
-            className="absolute bottom-0 left-0 right-0 h-[40px]"
+            className="absolute bottom-0 left-0 right-0 h-[160px]"
             style={{ background: "linear-gradient(to bottom, transparent 0%, hsl(var(--player)) 100%)" }}
-          />
-          {/* Wider soft gradient above the strip for smoother blending */}
-          <div
-            className="absolute bottom-[40px] left-0 right-0 h-[120px]"
-            style={{ background: "linear-gradient(to bottom, transparent 0%, hsl(var(--player) / 0.6) 100%)" }}
           />
         </div>
 
