@@ -296,12 +296,14 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
 
   // Fetch playlist videos for catalog channels
   useEffect(() => {
-    if (!dataLoaded || catalogChannels.length === 0) return;
+    if (!dataLoaded) return;
+    const cats = channels.filter(ch => ch.type === "catalog");
+    if (cats.length === 0) return;
     
     const fetchPlaylists = async () => {
       const results: Record<string, PlaylistVideo[]> = {};
       
-      for (const ch of catalogChannels) {
+      for (const ch of cats) {
         if (!ch.url) continue;
         // Extract playlist ID from YouTube URL
         const plMatch = ch.url.match(/[?&]list=([a-zA-Z0-9_-]+)/);
@@ -309,14 +311,18 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
         if (!playlistId) continue;
         
         try {
-          const { data } = await supabase.functions.invoke("youtube-playlist", {
+          const { data, error } = await supabase.functions.invoke("youtube-playlist", {
             body: { playlistId },
           });
+          if (error) {
+            console.error("[PLAYLIST] Error fetching playlist for", ch.name, error);
+            continue;
+          }
           if (data?.videos) {
             results[ch.id] = data.videos.slice(0, 20);
           }
-        } catch {
-          // skip
+        } catch (err) {
+          console.error("[PLAYLIST] Exception for", ch.name, err);
         }
       }
       
@@ -324,7 +330,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
     };
     
     fetchPlaylists();
-  }, [dataLoaded, catalogChannels.length]);
+  }, [dataLoaded, channels]);
 
   const goToPlayer = () => {
     setFadeOut(true);
