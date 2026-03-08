@@ -39,6 +39,37 @@ import {
 } from "@/components/ui/command";
 import { Button } from "@/components/ui/button";
 
+const CLASSIFICACOES_ETARIAS = [
+  { value: "AL", label: "AL — Livre para todos os públicos", color: "#14A44D", textColor: "#fff" },
+  { value: "10", label: "10 — Não recomendado para menores de 10 anos", color: "#2563EB", textColor: "#fff" },
+  { value: "12", label: "12 — Não recomendado para menores de 12 anos", color: "#EAB308", textColor: "#fff" },
+  { value: "14", label: "14 — Não recomendado para menores de 14 anos", color: "#F97316", textColor: "#fff" },
+  { value: "16", label: "16 — Não recomendado para menores de 16 anos", color: "#DC2626", textColor: "#fff" },
+  { value: "18", label: "18 — Não recomendado para menores de 18 anos", color: "#1C1C1C", textColor: "#fff" },
+];
+
+function ClassificacaoBadge({ value, size = 20 }: { value: string; size?: number }) {
+  const item = CLASSIFICACOES_ETARIAS.find(c => c.value === value);
+  if (!item) return null;
+  return (
+    <span
+      className="inline-flex items-center justify-center font-bold shrink-0"
+      style={{
+        width: size,
+        height: size,
+        borderRadius: size * 0.22,
+        backgroundColor: item.color,
+        color: item.textColor,
+        fontSize: size * 0.48,
+        lineHeight: 1,
+      }}
+      title={item.label}
+    >
+      {item.value}
+    </span>
+  );
+}
+
 interface Programa {
   id: string;
   nome: string;
