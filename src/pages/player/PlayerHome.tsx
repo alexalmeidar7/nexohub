@@ -415,7 +415,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
         <main className="px-8 pt-24 pb-6 z-10 ml-20">
           {activeSection === "streaming" ? (
             /* ── Página dedicada: Canais ao Vivo ── */
-            <section style={{ marginTop: "calc(600px - 200px)" }}>
+             <section style={{ marginTop: "260px" }}>
               <h2 className="text-xl font-bold mb-6">Canais ao Vivo</h2>
               {!dataLoaded ? (
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
