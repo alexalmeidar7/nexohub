@@ -675,6 +675,48 @@ export default function NoticiasPanel() {
             )}
           </div>
 
+          {/* Mini Previsão do Tempo */}
+          <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)", width: (jornalConfig || wizardOpen) ? "100%" : "50%" }}>
+            <div className="px-3 py-2 font-bold text-xs tracking-wide text-white rounded-t-xl flex items-center justify-between" style={{ backgroundColor: "#0d0446" }}>
+              <span className="flex items-center gap-1.5" style={{ color: "#ffffff" }}>
+                <CloudSun size={12} />
+                Previsão do Tempo
+              </span>
+              <button onClick={() => toggleBox('miniWeather')} className="p-0.5 rounded hover:bg-white/20 transition-colors">
+                {collapsedBoxes['miniWeather'] ? <ChevronDown size={12} /> : <ChevronUp size={12} />}
+              </button>
+            </div>
+            {!collapsedBoxes['miniWeather'] && (
+              <div className="p-3">
+                {loadingWeather ? (
+                  <div className="flex items-center gap-2">
+                    <Skeleton className="h-8 w-8 rounded-full" />
+                    <div className="space-y-1">
+                      <Skeleton className="h-3 w-24" />
+                      <Skeleton className="h-2 w-16" />
+                    </div>
+                  </div>
+                ) : !miniWeather ? (
+                  <p className="text-xs" style={{ color: "rgba(13,4,70,0.5)" }}>Nenhuma cidade principal cadastrada. Defina em Previsão do Tempo.</p>
+                ) : (
+                  <div className="flex items-center gap-4">
+                    <div className="text-center">
+                      <span className="text-2xl font-bold" style={{ color: "#2ec1f7" }}>{miniWeather.temp}°C</span>
+                    </div>
+                    <div className="flex-1 space-y-0.5">
+                      <p className="text-xs font-bold" style={{ color: "#0d0446" }}>{miniWeather.city}</p>
+                      <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.6)" }}>{miniWeatherLabel(miniWeather.code)}</p>
+                      <div className="flex items-center gap-3 text-[10px]" style={{ color: "rgba(13,4,70,0.5)" }}>
+                        <span className="flex items-center gap-0.5"><Thermometer size={9} /> Mín {miniWeather.min}° · Máx {miniWeather.max}°</span>
+                        <span className="flex items-center gap-0.5"><Droplets size={9} /> {miniWeather.humidity}%</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
           {/* Bloco de Economia */}
           {blocoEconomia.length > 0 && (
             <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)", width: (jornalConfig || wizardOpen) ? "100%" : "50%" }}
