@@ -337,7 +337,7 @@ export default function AudioDualCard({
             className="relative w-full rounded-3xl overflow-hidden"
             style={{
               backgroundColor: isSemTitulo ? "#880000" : "hsl(0 0% 5%)",
-              minHeight: "420px",
+              minHeight: isTV ? "420px" : "min(420px, 55vh)",
               transform: historyOpen ? "translateX(-25%) scale(0.96)" : "translateX(0%) scale(1)",
               boxShadow: historyOpen
                 ? "0 25px 60px hsla(0, 0%, 0%, 0.5), 0 0 0 1px hsla(0, 0%, 100%, 0.05)"
