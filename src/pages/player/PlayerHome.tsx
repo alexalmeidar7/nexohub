@@ -395,7 +395,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
         </header>
 
         {/* Banner full-width behind content — crossfade between default and thumb on hover */}
-        <div className="absolute top-0 left-20 right-3 z-0 pointer-events-none h-[400px] overflow-hidden">
+        <div className="absolute top-0 left-20 right-3 z-0 pointer-events-none h-[400px] overflow-hidden rounded-b-2xl">
           <img
             src="/images/banner-home.png"
             alt="Banner"
@@ -409,7 +409,16 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
               className="w-full h-full object-cover object-top absolute inset-0 animate-fade-in"
             />
           )}
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-player" />
+          {/* Smooth gradient fade at the bottom — 40px strip from transparent to solid player bg */}
+          <div
+            className="absolute bottom-0 left-0 right-0 h-[40px]"
+            style={{ background: "linear-gradient(to bottom, transparent 0%, hsl(var(--player)) 100%)" }}
+          />
+          {/* Wider soft gradient above the strip for smoother blending */}
+          <div
+            className="absolute bottom-[40px] left-0 right-0 h-[120px]"
+            style={{ background: "linear-gradient(to bottom, transparent 0%, hsl(var(--player) / 0.6) 100%)" }}
+          />
         </div>
 
         <main className="px-8 pt-24 pb-6 z-10 ml-20 relative">
