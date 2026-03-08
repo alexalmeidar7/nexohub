@@ -401,7 +401,7 @@ export default function PrevisaoTempo() {
                    onMouseEnter={e => { e.currentTarget.style.borderColor = "#2ec1f7"; }}
                    onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(13,4,70,0.1)"; }}>
                    <p className="text-xs capitalize" style={{ color: "rgba(13,4,70,0.5)" }}>{formatDay(day.date)}</p>
-                   <span className="text-3xl block animate-bounce" style={{ animationDuration: "3s", animationIterationCount: "infinite" }}>{getWeatherIcon(day.weatherCode, true)}</span>
+                   <div className="flex justify-center"><WeatherIcon code={day.weatherCode} size={40} forceDay /></div>
                   <p className="text-sm" style={{ color: "rgba(13,4,70,0.5)" }}>{getWeatherLabel(day.weatherCode)}</p>
                   <p className="text-xl font-semibold" style={{ color: "#0d0446" }}>{day.temp}°C</p>
                   <div className="text-xs space-y-1" style={{ color: "rgba(13,4,70,0.5)" }}>
