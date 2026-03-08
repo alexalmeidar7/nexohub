@@ -13,24 +13,42 @@ function pad(n: number) {
   return String(n).padStart(2, "0");
 }
 
-function parseTime(min: string, sec: string): number {
-  return (parseInt(min || "0", 10) * 60) + parseInt(sec || "0", 10);
+function parseHMS(value: string): number {
+  const parts = value.split(":").map((p) => parseInt(p || "0", 10));
+  const h = parts[0] || 0;
+  const m = parts[1] || 0;
+  const s = parts[2] || 0;
+  return h * 3600 + m * 60 + s;
+}
+
+function formatHMS(seconds: number): string {
+  if (seconds <= 0) return "00:00:00";
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  return `${pad(h)}:${pad(m)}:${pad(s)}`;
 }
 
 function formatDuration(seconds: number): string {
-  if (seconds <= 0) return "00:00";
-  const m = Math.floor(seconds / 60);
+  if (seconds <= 0) return "00:00:00";
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
   const s = seconds % 60;
-  return `${pad(m)}:${pad(s)}`;
+  return `${pad(h)}:${pad(m)}:${pad(s)}`;
+}
+
+function maskHMS(raw: string): string {
+  const digits = raw.replace(/\D/g, "").slice(0, 6);
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 4) return digits.slice(0, 2) + ":" + digits.slice(2);
+  return digits.slice(0, 2) + ":" + digits.slice(2, 4) + ":" + digits.slice(4);
 }
 
 export default function CortesVideoPage() {
   const { user } = useAuth();
   const [youtubeUrl, setYoutubeUrl] = useState("");
-  const [startMin, setStartMin] = useState("");
-  const [startSec, setStartSec] = useState("");
-  const [endMin, setEndMin] = useState("");
-  const [endSec, setEndSec] = useState("");
+  const [startTime, setStartTime] = useState("");
+  const [endTime, setEndTime] = useState("");
   const [cutting, setCutting] = useState(false);
   const [result, setResult] = useState<{
     clip_embed_url: string;
@@ -41,8 +59,8 @@ export default function CortesVideoPage() {
 
   const videoId = useMemo(() => extractYoutubeId(youtubeUrl), [youtubeUrl]);
 
-  const startSeconds = parseTime(startMin, startSec);
-  const endSeconds = parseTime(endMin, endSec);
+  const startSeconds = parseHMS(startTime);
+  const endSeconds = parseHMS(endTime);
   const duration = endSeconds - startSeconds;
 
   const canCut = videoId && duration > 0 && duration <= 600;
@@ -136,30 +154,15 @@ export default function CortesVideoPage() {
             Tempo Inicial
           </label>
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1">
-              <input
-                type="number"
-                min={0}
-                value={startMin}
-                onChange={(e) => setStartMin(e.target.value)}
-                placeholder="00"
-                className="w-16 text-center py-2.5 rounded-lg border text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#268ffa]/30"
-                style={{ borderColor: "#e2e8f0", color: "#0d0446" }}
-              />
-              <span className="text-xs" style={{ color: "#64748b" }}>min</span>
-              <span className="text-lg font-bold" style={{ color: "#0d0446" }}>:</span>
-              <input
-                type="number"
-                min={0}
-                max={59}
-                value={startSec}
-                onChange={(e) => setStartSec(e.target.value)}
-                placeholder="00"
-                className="w-16 text-center py-2.5 rounded-lg border text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#268ffa]/30"
-                style={{ borderColor: "#e2e8f0", color: "#0d0446" }}
-              />
-              <span className="text-xs" style={{ color: "#64748b" }}>seg</span>
-            </div>
+            <input
+              type="text"
+              value={startTime}
+              onChange={(e) => setStartTime(maskHMS(e.target.value))}
+              placeholder="HH:MM:SS"
+              maxLength={8}
+              className="w-28 text-center py-2.5 rounded-lg border text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#268ffa]/30"
+              style={{ borderColor: "#e2e8f0", color: "#0d0446" }}
+            />
             {videoId && startSeconds > 0 && (
               <div className="w-24 h-14 rounded-lg overflow-hidden border flex-shrink-0" style={{ borderColor: "#e2e8f0" }}>
                 <iframe
@@ -190,30 +193,15 @@ export default function CortesVideoPage() {
             Tempo Final
           </label>
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1">
-              <input
-                type="number"
-                min={0}
-                value={endMin}
-                onChange={(e) => setEndMin(e.target.value)}
-                placeholder="00"
-                className="w-16 text-center py-2.5 rounded-lg border text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#268ffa]/30"
-                style={{ borderColor: "#e2e8f0", color: "#0d0446" }}
-              />
-              <span className="text-xs" style={{ color: "#64748b" }}>min</span>
-              <span className="text-lg font-bold" style={{ color: "#0d0446" }}>:</span>
-              <input
-                type="number"
-                min={0}
-                max={59}
-                value={endSec}
-                onChange={(e) => setEndSec(e.target.value)}
-                placeholder="00"
-                className="w-16 text-center py-2.5 rounded-lg border text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#268ffa]/30"
-                style={{ borderColor: "#e2e8f0", color: "#0d0446" }}
-              />
-              <span className="text-xs" style={{ color: "#64748b" }}>seg</span>
-            </div>
+            <input
+              type="text"
+              value={endTime}
+              onChange={(e) => setEndTime(maskHMS(e.target.value))}
+              placeholder="HH:MM:SS"
+              maxLength={8}
+              className="w-28 text-center py-2.5 rounded-lg border text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#268ffa]/30"
+              style={{ borderColor: "#e2e8f0", color: "#0d0446" }}
+            />
             {videoId && endSeconds > 0 && (
               <div className="w-24 h-14 rounded-lg overflow-hidden border flex-shrink-0" style={{ borderColor: "#e2e8f0" }}>
                 <iframe
