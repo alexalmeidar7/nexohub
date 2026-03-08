@@ -177,21 +177,21 @@ export default function ConfiguracoesPage() {
   };
 
   const handleAddCanal = async () => {
-    if (!user || !canalForm.name || !canalForm.url) { toast.error("Preencha Nome e URL do canal."); return; }
+    if (!user || !canalForm.name || !canalForm.url) { toast.error("Preencha Nome e URL."); return; }
+    const payload: any = {
+      name: canalForm.name, logo_url: canalForm.logo_url, cover_url: canalForm.cover_url,
+      url: canalForm.url, type: canalMode === "catalog" ? "catalog" : canalForm.type,
+      catalog_name: canalMode === "catalog" ? canalForm.catalog_name : "",
+      numero_canal: canalMode === "live" ? canalForm.numero_canal : "",
+    };
     setSavingCanal(true);
     if (editingCanal) {
-      const { error } = await supabase.from("streaming_channels").update({
-        numero_canal: canalForm.numero_canal, name: canalForm.name,
-        logo_url: canalForm.logo_url, cover_url: canalForm.cover_url, url: canalForm.url, type: canalForm.type,
-      }).eq("id", editingCanal);
+      const { error } = await supabase.from("streaming_channels").update(payload).eq("id", editingCanal);
       setSavingCanal(false);
-      if (error) { toast.error("Erro ao atualizar canal."); }
-      else { toast.success("Canal atualizado!"); resetCanalForm(); loadCanais(); }
+      if (error) { toast.error("Erro ao atualizar."); }
+      else { toast.success("Atualizado!"); resetCanalForm(); loadCanais(); }
     } else {
-      const { error } = await supabase.from("streaming_channels").insert([{
-        user_id: user.id, numero_canal: canalForm.numero_canal, name: canalForm.name,
-        logo_url: canalForm.logo_url, cover_url: canalForm.cover_url, url: canalForm.url, type: canalForm.type,
-      }]);
+      const { error } = await supabase.from("streaming_channels").insert([{ ...payload, user_id: user.id }]);
       setSavingCanal(false);
       if (error) { toast.error("Erro ao salvar canal."); }
       else { toast.success("Canal adicionado!"); resetCanalForm(); loadCanais(); }
