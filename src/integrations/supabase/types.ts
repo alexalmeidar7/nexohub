@@ -913,6 +913,47 @@ export type Database = {
         }
         Relationships: []
       }
+      watch_history: {
+        Row: {
+          channel_cover_url: string | null
+          channel_id: string | null
+          channel_logo_url: string | null
+          channel_name: string
+          channel_type: string
+          id: string
+          user_id: string
+          watched_at: string
+        }
+        Insert: {
+          channel_cover_url?: string | null
+          channel_id?: string | null
+          channel_logo_url?: string | null
+          channel_name?: string
+          channel_type?: string
+          id?: string
+          user_id: string
+          watched_at?: string
+        }
+        Update: {
+          channel_cover_url?: string | null
+          channel_id?: string | null
+          channel_logo_url?: string | null
+          channel_name?: string
+          channel_type?: string
+          id?: string
+          user_id?: string
+          watched_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "watch_history_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "streaming_channels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
