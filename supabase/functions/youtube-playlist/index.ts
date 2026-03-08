@@ -32,19 +32,21 @@ serve(async (req) => {
     const xml = await res.text();
 
     // Parse entries from XML
-    const entries: { videoId: string; title: string; thumbnail: string }[] = [];
+    const entries: { videoId: string; title: string; thumbnail: string; published: string }[] = [];
     const entryRegex = /<entry>([\s\S]*?)<\/entry>/g;
     let match;
     while ((match = entryRegex.exec(xml)) !== null) {
       const entry = match[1];
       const videoIdMatch = entry.match(/<yt:videoId>(.*?)<\/yt:videoId>/);
       const titleMatch = entry.match(/<title>(.*?)<\/title>/);
+      const publishedMatch = entry.match(/<published>(.*?)<\/published>/);
       if (videoIdMatch && titleMatch) {
         const videoId = videoIdMatch[1];
         entries.push({
           videoId,
           title: titleMatch[1].replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&#39;/g, "'").replace(/&quot;/g, '"'),
           thumbnail: `https://i.ytimg.com/vi/${videoId}/mqdefault.jpg`,
+          published: publishedMatch?.[1] || "",
         });
       }
     }

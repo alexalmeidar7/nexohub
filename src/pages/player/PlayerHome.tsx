@@ -22,6 +22,13 @@ interface Programa {
   dias_semana: string[] | null;
 }
 
+interface PlaylistVideo {
+  videoId: string;
+  title: string;
+  thumbnail: string;
+  published: string;
+}
+
 type Section = "home" | "streaming" | "content" | "shop";
 
 function StreamingCard({ channel, currentProgram, onClick, onHoverChange }: { channel: Channel; currentProgram?: Programa; onClick: () => void; onHoverChange?: (thumb: string | null) => void }) {
@@ -166,6 +173,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   const [dataLoaded, setDataLoaded] = useState(false);
   const [watchHistory, setWatchHistory] = useState<{ id: string; channel_name: string; channel_cover_url: string | null; channel_logo_url: string | null; channel_type: string; watched_at: string; channel_id: string | null }[]>([]);
   const [hoveredThumb, setHoveredThumb] = useState<string | null>(null);
+  const [playlistVideos, setPlaylistVideos] = useState<Record<string, PlaylistVideo[]>>({});
 
   const userName = profileName || user?.email?.split("@")[0] || "Visitante";
 
@@ -284,6 +292,38 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
     if (!catalogGroups[groupName]) catalogGroups[groupName] = [];
     catalogGroups[groupName].push(ch);
   });
+
+  // Fetch playlist videos for catalog channels
+  useEffect(() => {
+    if (!dataLoaded || catalogChannels.length === 0) return;
+    
+    const fetchPlaylists = async () => {
+      const results: Record<string, PlaylistVideo[]> = {};
+      
+      for (const ch of catalogChannels) {
+        if (!ch.url) continue;
+        // Extract playlist ID from YouTube URL
+        const plMatch = ch.url.match(/[?&]list=([a-zA-Z0-9_-]+)/);
+        const playlistId = plMatch?.[1];
+        if (!playlistId) continue;
+        
+        try {
+          const { data } = await supabase.functions.invoke("youtube-playlist", {
+            body: { playlistId },
+          });
+          if (data?.videos) {
+            results[ch.id] = data.videos.slice(0, 20);
+          }
+        } catch {
+          // skip
+        }
+      }
+      
+      setPlaylistVideos(results);
+    };
+    
+    fetchPlaylists();
+  }, [dataLoaded, catalogChannels.length]);
 
   const goToPlayer = () => {
     setFadeOut(true);
@@ -436,27 +476,62 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
               ) : (
                 <>
                   {Object.entries(catalogGroups).map(([groupName, items]) => (
-                    <div key={groupName} className="mb-8">
+                    <div key={groupName} className="mb-10">
                       <h3 className="text-lg font-semibold mb-4">{groupName}</h3>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
-                        {items.map(item => (
-                          <button
-                            key={item.id}
-                            onClick={goToPlayer}
-                            className="w-full aspect-video rounded-xl overflow-hidden relative transition-all hover:scale-[1.02] border-[5px] border-transparent hover:border-white"
-                          >
-                            {item.cover_url ? (
-                              <img src={item.cover_url} alt={item.name} className="w-full h-full object-cover" />
-                            ) : (
-                              <div className="w-full h-full bg-gradient-to-br from-player-accent/30 to-player flex items-center justify-center">
-                                <Film className="h-8 w-8 text-player-muted-foreground" />
-                              </div>
-                            )}
-                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3">
-                              <p className="text-sm font-medium truncate text-left">{item.name}</p>
-                            </div>
-                          </button>
-                        ))}
+                      <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+                        {/* Playlist videos for this group */}
+                        {items.map(item => {
+                          const videos = playlistVideos[item.id] || [];
+                          if (videos.length === 0) {
+                            return (
+                              <button
+                                key={item.id}
+                                onClick={goToPlayer}
+                                className="flex-shrink-0 w-64 aspect-video rounded-xl overflow-hidden relative transition-all hover:scale-[1.02] border-[5px] border-transparent hover:border-white"
+                              >
+                                {item.cover_url ? (
+                                  <img src={item.cover_url} alt={item.name} className="w-full h-full object-cover" />
+                                ) : (
+                                  <div className="w-full h-full bg-gradient-to-br from-player-accent/30 to-player flex items-center justify-center">
+                                    <Film className="h-8 w-8 text-player-muted-foreground" />
+                                  </div>
+                                )}
+                                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3">
+                                  <p className="text-sm font-medium truncate text-left">{item.name}</p>
+                                </div>
+                              </button>
+                            );
+                          }
+                          return videos.map(video => {
+                            const dateStr = video.published
+                              ? new Date(video.published).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" })
+                              : "";
+                            return (
+                              <button
+                                key={video.videoId}
+                                onClick={goToPlayer}
+                                className="flex-shrink-0 w-64 aspect-video rounded-xl overflow-hidden relative transition-all hover:scale-[1.02] border-[5px] border-transparent hover:border-white"
+                              >
+                                {/* Use program cover as background */}
+                                {item.cover_url ? (
+                                  <img src={item.cover_url} alt={video.title} className="w-full h-full object-cover" />
+                                ) : (
+                                  <img src={video.thumbnail} alt={video.title} className="w-full h-full object-cover" />
+                                )}
+                                {/* Date badge top-left */}
+                                {dateStr && (
+                                  <span className="absolute top-2 left-2 text-[10px] font-semibold bg-black/70 px-2 py-0.5 rounded text-white">
+                                    {dateStr}
+                                  </span>
+                                )}
+                                {/* Title overlay bottom */}
+                                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3">
+                                  <p className="text-xs font-medium line-clamp-2 text-left text-white">{video.title}</p>
+                                </div>
+                              </button>
+                            );
+                          });
+                        })}
                       </div>
                     </div>
                   ))}
