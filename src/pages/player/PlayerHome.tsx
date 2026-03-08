@@ -43,85 +43,92 @@ function StreamingCard({ channel, currentProgram, nowPlaying, onClick, onHoverCh
 
   const isVideo = channel.type === "video" || channel.type === "video_live";
 
-  // Capture frames on hover for video channels
+  // Capture 10 frames from video stream on mount and refresh every 30s
   useEffect(() => {
-    if (!hovered || !isVideo || !channel.url) return;
-    if (frames.length > 0) return; // already captured
-
+    if (!isVideo || !channel.url) return;
+    let cancelled = false;
     let hls: any = null;
-    const video = document.createElement("video");
-    video.crossOrigin = "anonymous";
-    video.muted = true;
-    video.playsInline = true;
-    videoRef.current = video;
+    let refreshTimer: ReturnType<typeof setInterval> | null = null;
 
-    const canvas = document.createElement("canvas");
-    canvas.width = 320;
-    canvas.height = 180;
-    canvasRef.current = canvas;
+    const capture = async () => {
+      const video = document.createElement("video");
+      video.crossOrigin = "anonymous";
+      video.muted = true;
+      video.playsInline = true;
 
-    const captureFrames = () => {
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return;
-      const captured: string[] = [];
-      let count = 0;
-      const grabFrame = () => {
-        if (count >= 5) {
-          setFrames(captured);
-          video.pause();
-          if (hls) hls.destroy();
-          return;
+      const canvas = document.createElement("canvas");
+      canvas.width = 320;
+      canvas.height = 180;
+
+      const doCapture = () => new Promise<string[]>((resolve) => {
+        const ctx = canvas.getContext("2d");
+        if (!ctx) { resolve([]); return; }
+        const captured: string[] = [];
+        let count = 0;
+        const grab = () => {
+          if (cancelled || count >= 10) { resolve(captured); return; }
+          ctx.drawImage(video, 0, 0, 320, 180);
+          captured.push(canvas.toDataURL("image/jpeg", 0.7));
+          count++;
+          setTimeout(grab, 300);
+        };
+        grab();
+      });
+
+      try {
+        if (channel.url!.includes(".m3u8")) {
+          const Hls = (await import("hls.js")).default;
+          if (Hls.isSupported()) {
+            hls = new Hls({ maxBufferLength: 5 });
+            hls.loadSource(channel.url!);
+            hls.attachMedia(video);
+            await new Promise<void>((res) => {
+              hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                video.play().then(() => setTimeout(() => res(), 600)).catch(() => res());
+              });
+            });
+          }
+        } else {
+          video.src = channel.url!;
+          await video.play().catch(() => {});
+          await new Promise(r => setTimeout(r, 600));
         }
-        ctx.drawImage(video, 0, 0, 320, 180);
-        captured.push(canvas.toDataURL("image/jpeg", 0.7));
-        count++;
-        setTimeout(grabFrame, 300);
-      };
-      grabFrame();
-    };
 
-    const startCapture = async () => {
-      if (channel.url!.includes(".m3u8")) {
-        const Hls = (await import("hls.js")).default;
-        if (Hls.isSupported()) {
-          hls = new Hls({ maxBufferLength: 5 });
-          hls.loadSource(channel.url!);
-          hls.attachMedia(video);
-          hls.on(Hls.Events.MANIFEST_PARSED, () => {
-            video.play().then(() => setTimeout(captureFrames, 500)).catch(() => {});
-          });
+        if (!cancelled) {
+          const newFrames = await doCapture();
+          if (!cancelled && newFrames.length > 0) setFrames(newFrames);
         }
-      } else {
-        video.src = channel.url!;
-        video.play().then(() => setTimeout(captureFrames, 500)).catch(() => {});
+      } catch {} finally {
+        video.pause();
+        video.src = "";
+        if (hls) { hls.destroy(); hls = null; }
       }
     };
 
-    startCapture();
+    capture();
+    refreshTimer = setInterval(capture, 30000);
 
     return () => {
-      video.pause();
+      cancelled = true;
       if (hls) hls.destroy();
+      if (refreshTimer) clearInterval(refreshTimer);
     };
-  }, [hovered, isVideo, channel.url, frames.length]);
+  }, [isVideo, channel.url]);
 
-  // Loop through frames while hovered
+  // Loop through frames always
   useEffect(() => {
-    if (hovered && frames.length > 0) {
-      intervalRef.current = setInterval(() => {
-        setFrameIdx(prev => (prev + 1) % frames.length);
-      }, 400);
-    }
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-  }, [hovered, frames.length]);
+    if (frames.length === 0) return;
+    intervalRef.current = setInterval(() => {
+      setFrameIdx(prev => (prev + 1) % frames.length);
+    }, 400);
+    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
+  }, [frames.length]);
 
   return (
     <button
       onClick={onClick}
       onMouseEnter={() => { setHovered(true); onHoverChange?.(channel.logo_url || channel.cover_url || null); }}
-      onMouseLeave={() => { setHovered(false); setFrameIdx(0); onHoverChange?.(null); }}
+      onMouseLeave={() => { setHovered(false); onHoverChange?.(null); }}
       className="flex-shrink-0 w-72 h-40 rounded-xl overflow-hidden relative transition-all hover:scale-[1.02] border-[5px] border-transparent hover:border-white"
     >
       {/* Background: cover_url do canal */}
@@ -135,8 +142,8 @@ function StreamingCard({ channel, currentProgram, nowPlaying, onClick, onHoverCh
         </div>
       )}
 
-      {/* Video preview on hover */}
-      {hovered && isVideo && frames.length > 0 && (
+      {/* Video preview - always showing when frames available */}
+      {isVideo && frames.length > 0 && (
         <img src={frames[frameIdx]} alt="preview" className="absolute inset-0 w-full h-full object-cover z-[1]" />
       )}
 
