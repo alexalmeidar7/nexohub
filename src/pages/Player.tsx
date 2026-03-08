@@ -2246,7 +2246,7 @@ export default function PlayerPage() {
                   (v as HTMLVideoElement).requestPictureInPicture().catch(() => {});
                 }
               }}
-              className="text-white/70 hover:text-white transition-colors"
+              className="hidden sm:inline-flex text-white/70 hover:text-white transition-colors"
               title="Picture-in-Picture"
             >
               <PictureInPicture size={16} />
@@ -2258,7 +2258,7 @@ export default function PlayerPage() {
                   navigator.mediaDevices.getDisplayMedia({ video: true }).catch(() => {});
                 }
               }}
-              className="text-white/70 hover:text-white transition-colors"
+              className="hidden sm:inline-flex text-white/70 hover:text-white transition-colors"
               title="Transmitir"
             >
               <Cast size={16} />
