@@ -378,12 +378,12 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
               <>
                 <h2 className="text-lg font-bold mb-4">streamings ao vivo</h2>
                 <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
-                  {channels.length === 0 && (
+                    {streamingChannels.length === 0 && (
                     <div className="w-72 h-40 rounded-xl bg-player-surface border border-player-border flex items-center justify-center text-player-muted-foreground text-sm">
                       Nenhum canal disponível
                     </div>
                   )}
-                  {channels.map((ch) => (
+                  {streamingChannels.map((ch) => (
                     <StreamingCard
                       key={ch.id}
                       channel={ch}
