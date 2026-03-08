@@ -120,7 +120,7 @@ function StreamingCard({ channel, currentProgram, onClick, onHoverChange }: { ch
   return (
     <button
       onClick={onClick}
-      onMouseEnter={() => { setHovered(true); onHoverChange?.(currentProgram?.capa || channel.cover_url || null); }}
+      onMouseEnter={() => { setHovered(true); onHoverChange?.(channel.logo_url || channel.cover_url || null); }}
       onMouseLeave={() => { setHovered(false); setFrameIdx(0); onHoverChange?.(null); }}
       className="flex-shrink-0 w-72 h-40 rounded-xl overflow-hidden relative transition-all hover:scale-[1.02] border-[5px] border-transparent hover:border-white"
     >
