@@ -1,0 +1,1 @@
+ALTER TABLE public.programas ADD COLUMN IF NOT EXISTS classificacao_etaria TEXT DEFAULT NULL;

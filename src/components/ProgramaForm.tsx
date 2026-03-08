@@ -39,6 +39,37 @@ import {
 } from "@/components/ui/command";
 import { Button } from "@/components/ui/button";
 
+const CLASSIFICACOES_ETARIAS = [
+  { value: "AL", label: "AL — Livre para todos os públicos", color: "#14A44D", textColor: "#fff" },
+  { value: "10", label: "10 — Não recomendado para menores de 10 anos", color: "#2563EB", textColor: "#fff" },
+  { value: "12", label: "12 — Não recomendado para menores de 12 anos", color: "#EAB308", textColor: "#fff" },
+  { value: "14", label: "14 — Não recomendado para menores de 14 anos", color: "#F97316", textColor: "#fff" },
+  { value: "16", label: "16 — Não recomendado para menores de 16 anos", color: "#DC2626", textColor: "#fff" },
+  { value: "18", label: "18 — Não recomendado para menores de 18 anos", color: "#1C1C1C", textColor: "#fff" },
+];
+
+function ClassificacaoBadge({ value, size = 20 }: { value: string; size?: number }) {
+  const item = CLASSIFICACOES_ETARIAS.find(c => c.value === value);
+  if (!item) return null;
+  return (
+    <span
+      className="inline-flex items-center justify-center font-bold shrink-0"
+      style={{
+        width: size,
+        height: size,
+        borderRadius: size * 0.22,
+        backgroundColor: item.color,
+        color: item.textColor,
+        fontSize: size * 0.48,
+        lineHeight: 1,
+      }}
+      title={item.label}
+    >
+      {item.value}
+    </span>
+  );
+}
+
 interface Programa {
   id: string;
   nome: string;
@@ -53,6 +84,7 @@ interface Programa {
   variavel: boolean;
   descricao: string;
   dataVariavel: string | null;
+  classificacaoEtaria: string;
 }
 
 const DIAS_SEMANA = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
@@ -74,6 +106,7 @@ async function getProgramas(): Promise<Programa[]> {
     variavel: (p as any).variavel ?? false,
     descricao: (p as any).descricao || "",
     dataVariavel: (p as any).data_variavel || null,
+    classificacaoEtaria: (p as any).classificacao_etaria || "",
   }));
 }
 
@@ -276,6 +309,9 @@ export default function ProgramaForm() {
   const [newTipo, setNewTipo] = useState("");
   const [tipoDialogOpen, setTipoDialogOpen] = useState(false);
 
+  // Classificação Etária
+  const [classificacaoEtaria, setClassificacaoEtaria] = useState("");
+
   const addTipo = () => {
     const t = newTipo.trim();
     if (!t || tiposPrograma.includes(t)) return;
@@ -406,7 +442,7 @@ export default function ProgramaForm() {
   };
 
   const resetForm = () => {
-    setNome(""); setApresentadorId(""); setSelo(""); setCapa(""); setDiasSemana([]); setHorarioInicio(""); setHorarioFim(""); setEstudio(""); setAtivo(true); setVariavel(false); setDataVariavel(undefined); setDescricao(""); setConflictMsg(""); setEditingId(null); setTipoPrograma("");
+    setNome(""); setApresentadorId(""); setSelo(""); setCapa(""); setDiasSemana([]); setHorarioInicio(""); setHorarioFim(""); setEstudio(""); setAtivo(true); setVariavel(false); setDataVariavel(undefined); setDescricao(""); setConflictMsg(""); setEditingId(null); setTipoPrograma(""); setClassificacaoEtaria("");
   };
 
   const handleAdd = async () => {
@@ -427,13 +463,13 @@ export default function ProgramaForm() {
         await supabase.from("programas").update({
           nome: nome.trim(), apresentador_id: apresentadorId || null, selo, capa, dias_semana: [dayOfWeek],
           horario_inicio: horarioInicio, horario_fim: horarioFim, estudio: estudio.trim(), ativo, descricao: descricao.trim(),
-          variavel: true, data_variavel: dataStr,
+           variavel: true, data_variavel: dataStr, classificacao_etaria: classificacaoEtaria || null,
         } as any).eq("id", editingId);
       } else {
         await supabase.from("programas").insert({
           user_id: user.id, nome: nome.trim(), apresentador_id: apresentadorId || null, selo, capa, dias_semana: [dayOfWeek],
           horario_inicio: horarioInicio, horario_fim: horarioFim, estudio: estudio.trim(), ativo, descricao: descricao.trim(),
-          variavel: true, data_variavel: dataStr,
+           variavel: true, data_variavel: dataStr, classificacao_etaria: classificacaoEtaria || null,
         } as any);
       }
       await load();
@@ -457,13 +493,13 @@ export default function ProgramaForm() {
       await supabase.from("programas").update({
         nome: nome.trim(), apresentador_id: apresentadorId || null, selo, capa, dias_semana: diasSemana,
         horario_inicio: horarioInicio, horario_fim: horarioFim, estudio: estudio.trim(), ativo, descricao: descricao.trim(),
-        variavel: false, data_variavel: null,
+        variavel: false, data_variavel: null, classificacao_etaria: classificacaoEtaria || null,
       } as any).eq("id", editingId);
     } else {
       await supabase.from("programas").insert({
         user_id: user.id, nome: nome.trim(), apresentador_id: apresentadorId || null, selo, capa, dias_semana: diasSemana,
         horario_inicio: horarioInicio, horario_fim: horarioFim, estudio: estudio.trim(), ativo, descricao: descricao.trim(),
-        variavel: false, data_variavel: null,
+        variavel: false, data_variavel: null, classificacao_etaria: classificacaoEtaria || null,
       } as any);
     }
     await load();
@@ -478,6 +514,7 @@ export default function ProgramaForm() {
     setDiasSemana(p.diasSemana); setHorarioInicio(p.horarioInicio); setHorarioFim(p.horarioFim);
     setEstudio(p.estudio); setAtivo(p.ativo); setVariavel(p.variavel); setDescricao(p.descricao);
     setDataVariavel(p.dataVariavel ? new Date(p.dataVariavel + "T12:00:00") : undefined);
+    setClassificacaoEtaria(p.classificacaoEtaria || "");
     setConflictMsg("");
   };
 
@@ -618,6 +655,25 @@ export default function ProgramaForm() {
               </DialogContent>
             </Dialog>
           </div>
+        </div>
+
+        <div>
+          <label className="block text-xs mb-1" style={{ color: "#0d0446", fontWeight: 600 }}>Classificação Etária</label>
+          <Select value={classificacaoEtaria} onValueChange={setClassificacaoEtaria}>
+            <SelectTrigger className="w-full h-8" style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "20px", border: "none" }}>
+              <SelectValue placeholder="Selecione a classificação" />
+            </SelectTrigger>
+            <SelectContent style={{ backgroundColor: "#0d0446", border: "1px solid #0d0446" }}>
+              {CLASSIFICACOES_ETARIAS.map(c => (
+                <SelectItem key={c.value} value={c.value} className="text-white focus:bg-white/20 focus:text-white">
+                  <span className="flex items-center gap-2">
+                    <ClassificacaoBadge value={c.value} size={18} />
+                    {c.label}
+                  </span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <Textarea value={descricao} onChange={(e) => setDescricao(e.target.value)} placeholder="Descrição do Programa (opcional)"
           className="min-h-[60px] px-4 py-2 outline-none transition-colors text-sm"
@@ -988,6 +1044,11 @@ export default function ProgramaForm() {
                         {p.nome}
                         {p.variavel && <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ backgroundColor: "rgba(13,4,70,0.1)", color: "#0d0446" }}>Variável</span>}
                       </div>
+                      {p.classificacaoEtaria && (
+                        <div className="mt-0.5">
+                          <ClassificacaoBadge value={p.classificacaoEtaria} size={18} />
+                        </div>
+                      )}
                     </td>
                     <td className="px-4 py-3" style={{ color: "rgba(13,4,70,0.6)" }}>
                       {p.variavel && p.dataVariavel
