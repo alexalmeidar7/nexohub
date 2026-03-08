@@ -412,7 +412,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-player" />
         </div>
 
-        <main className="px-8 pt-24 pb-6 z-10 ml-20">
+        <main className="px-8 pt-24 pb-6 z-10 ml-20 relative">
           {activeSection === "streaming" ? (
             /* ── Página dedicada: Canais ao Vivo ── */
              <section style={{ marginTop: "260px" }}>
