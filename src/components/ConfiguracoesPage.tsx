@@ -100,7 +100,9 @@ export default function ConfiguracoesPage() {
     if (data) setCanais(data.map((d: any) => ({
       id: d.id, numero_canal: d.numero_canal || "", name: d.name, logo_url: d.logo_url || "",
       cover_url: d.cover_url || "", url: d.url, type: d.type, active: d.active,
-      catalog_name: (d as any).catalog_name || "",
+      catalog_name: d.catalog_name || "",
+      is_hd: d.is_hd || false, is_stereo: d.is_stereo || false,
+      classificacao_etaria: d.classificacao_etaria || "L",
     })));
     setLoadingCanais(false);
   };
