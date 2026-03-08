@@ -2,7 +2,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { Home, Radio, Film, ShoppingBag, LogOut, UserCircle } from "lucide-react";
+import { Home, Radio, Film, ShoppingBag, LogOut, UserCircle, Clock } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface Channel {
@@ -163,6 +163,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   const [profileAvatar, setProfileAvatar] = useState<string | null>(null);
   const [programas, setProgramas] = useState<Programa[]>([]);
   const [dataLoaded, setDataLoaded] = useState(false);
+  const [watchHistory, setWatchHistory] = useState<{ id: string; channel_name: string; channel_cover_url: string | null; channel_logo_url: string | null; channel_type: string; watched_at: string; channel_id: string | null }[]>([]);
 
   const userName = profileName || user?.email?.split("@")[0] || "Visitante";
 
@@ -194,6 +195,26 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
         setChannelName(empRes.data.nome || "");
       }
       if (progRes.data) setProgramas(progRes.data);
+
+      // Fetch watch history
+      const { data: historyData } = await supabase
+        .from("watch_history")
+        .select("id, channel_name, channel_cover_url, channel_logo_url, channel_type, watched_at, channel_id")
+        .eq("user_id", userId)
+        .order("watched_at", { ascending: false })
+        .limit(10);
+      if (historyData) {
+        // Deduplicate by channel_id, keep most recent
+        const seen = new Set<string>();
+        const unique = historyData.filter(h => {
+          const key = h.channel_id || h.id;
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
+        setWatchHistory(unique);
+      }
+
       setDataLoaded(true);
     };
     fetchData();
@@ -375,16 +396,39 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                     ))}
                   </div>
                 </>
-              ) : (
+              ) : watchHistory.length > 0 ? (
                 <>
                   <h2 className="text-lg font-bold mb-4">visto por último</h2>
-                  <div className="flex gap-4">
-                    {[1, 2, 3].map(i => (
-                      <div key={i} className="w-48 h-28 rounded-xl bg-player-surface border-[5px] border-transparent hover:border-white transition-all" />
+                  <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+                    {watchHistory.map(item => (
+                      <button
+                        key={item.id}
+                        onClick={goToPlayer}
+                        className="flex-shrink-0 w-48 h-28 rounded-xl overflow-hidden relative transition-all hover:scale-[1.02] border-[5px] border-transparent hover:border-white"
+                      >
+                        {item.channel_cover_url ? (
+                          <img src={item.channel_cover_url} alt={item.channel_name} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-br from-player-accent/30 to-player flex items-center justify-center">
+                            {item.channel_logo_url ? (
+                              <img src={item.channel_logo_url} alt={item.channel_name} className="h-10 w-auto object-contain" />
+                            ) : (
+                              <Radio className="h-8 w-8 text-player-muted-foreground" />
+                            )}
+                          </div>
+                        )}
+                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2">
+                          <p className="text-xs font-medium truncate text-left">{item.channel_name}</p>
+                          <p className="text-[10px] text-player-muted-foreground flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            {new Date(item.watched_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                          </p>
+                        </div>
+                      </button>
                     ))}
                   </div>
                 </>
-              )}
+              ) : null}
             </section>
           )}
         </main>

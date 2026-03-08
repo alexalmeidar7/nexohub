@@ -333,6 +333,21 @@ export default function PlayerPage() {
   const isAutoplayChannel = useCallback((c?: Canal | null) => normalizeChannelNumber(c?.numero_canal) === "991-1", []);
   const autoPlayedRef = useRef(false);
 
+  // Record watch history when channel changes
+  const watchHistoryRecordedRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!canal || !userId || canal.id === watchHistoryRecordedRef.current) return;
+    watchHistoryRecordedRef.current = canal.id;
+    supabase.from("watch_history").insert({
+      user_id: userId,
+      channel_id: canal.id,
+      channel_name: canal.name,
+      channel_cover_url: canal.cover_url || "",
+      channel_logo_url: canal.logo_url || "",
+      channel_type: canal.type,
+    }).then(() => {});
+  }, [canal?.id, userId]);
+
   // Shopping & Pre-Roll state
   const [shopProducts, setShopProducts] = useState<ShopProduct[]>([]);
   const [shopOpen, setShopOpen] = useState(false);
