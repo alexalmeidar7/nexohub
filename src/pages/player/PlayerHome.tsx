@@ -299,7 +299,6 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
             key={item.section}
             onClick={() => {
               setActiveSection(item.section);
-              if (item.section === "streaming") goToPlayer();
             }}
             className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${
               activeSection === item.section
@@ -363,26 +362,22 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
         </div>
 
         <main className="px-8 pt-24 pb-6 z-10 ml-20">
-          {/* Streamings ao vivo */}
-          <section className="mb-10" style={{ marginTop: "calc(600px - 200px)" }}>
-            {!dataLoaded ? (
-              <>
-                <Skeleton className="h-5 w-44 bg-white/10 mb-4" />
-                <div className="flex gap-4">
-                  {[1, 2, 3].map(i => (
-                    <Skeleton key={i} className="flex-shrink-0 w-72 h-40 rounded-xl bg-white/10" />
+          {activeSection === "streaming" ? (
+            /* ── Página dedicada: Canais ao Vivo ── */
+            <section style={{ marginTop: "calc(600px - 200px)" }}>
+              <h2 className="text-xl font-bold mb-6">Canais ao Vivo</h2>
+              {!dataLoaded ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
+                  {[1, 2, 3, 4].map(i => (
+                    <Skeleton key={i} className="w-full aspect-video rounded-xl bg-white/10" />
                   ))}
                 </div>
-              </>
-            ) : (
-              <>
-                <h2 className="text-lg font-bold mb-4">streamings ao vivo</h2>
-                <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
-                    {streamingChannels.length === 0 && (
-                    <div className="w-72 h-40 rounded-xl bg-player-surface border border-player-border flex items-center justify-center text-player-muted-foreground text-sm">
-                      Nenhum canal disponível
-                    </div>
-                  )}
+              ) : streamingChannels.length === 0 ? (
+                <div className="w-full h-40 rounded-xl bg-player-surface border border-player-border flex items-center justify-center text-player-muted-foreground text-sm">
+                  Nenhum canal ao vivo disponível
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
                   {streamingChannels.map((ch) => (
                     <StreamingCard
                       key={ch.id}
@@ -392,84 +387,120 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                     />
                   ))}
                 </div>
-              </>
-            )}
-          </section>
+              )}
+            </section>
+          ) : (
+            /* ── Home padrão ── */
+            <>
+              {/* Streamings ao vivo */}
+              <section className="mb-10" style={{ marginTop: "calc(600px - 200px)" }}>
+                {!dataLoaded ? (
+                  <>
+                    <Skeleton className="h-5 w-44 bg-white/10 mb-4" />
+                    <div className="flex gap-4">
+                      {[1, 2, 3].map(i => (
+                        <Skeleton key={i} className="flex-shrink-0 w-72 h-40 rounded-xl bg-white/10" />
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <h2 className="text-lg font-bold mb-4">streamings ao vivo</h2>
+                    <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+                      {streamingChannels.length === 0 && (
+                        <div className="w-72 h-40 rounded-xl bg-player-surface border border-player-border flex items-center justify-center text-player-muted-foreground text-sm">
+                          Nenhum canal disponível
+                        </div>
+                      )}
+                      {streamingChannels.map((ch) => (
+                        <StreamingCard
+                          key={ch.id}
+                          channel={ch}
+                          currentProgram={currentProgram}
+                          onClick={goToPlayer}
+                        />
+                      ))}
+                    </div>
+                  </>
+                )}
+              </section>
 
-          {/* Visto por último */}
-          {user && (
-            <section>
-              {!dataLoaded ? (
-                <>
-                  <Skeleton className="h-5 w-36 bg-white/10 mb-4" />
-                  <div className="flex gap-4">
-                    {[1, 2, 3].map(i => (
-                      <Skeleton key={i} className="w-48 h-28 rounded-xl bg-white/10" />
-                    ))}
-                  </div>
-                </>
-              ) : watchHistory.length > 0 ? (
-                <>
-                  <h2 className="text-lg font-bold mb-4">visto por último</h2>
+              {/* Visto por último */}
+              {user && (
+                <section>
+                  {!dataLoaded ? (
+                    <>
+                      <Skeleton className="h-5 w-36 bg-white/10 mb-4" />
+                      <div className="flex gap-4">
+                        {[1, 2, 3].map(i => (
+                          <Skeleton key={i} className="w-48 h-28 rounded-xl bg-white/10" />
+                        ))}
+                      </div>
+                    </>
+                  ) : watchHistory.length > 0 ? (
+                    <>
+                      <h2 className="text-lg font-bold mb-4">visto por último</h2>
+                      <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+                        {watchHistory.map(item => (
+                          <button
+                            key={item.id}
+                            onClick={goToPlayer}
+                            className="flex-shrink-0 w-48 h-28 rounded-xl overflow-hidden relative transition-all hover:scale-[1.02] border-[5px] border-transparent hover:border-white"
+                          >
+                            {item.channel_cover_url ? (
+                              <img src={item.channel_cover_url} alt={item.channel_name} className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full bg-gradient-to-br from-player-accent/30 to-player flex items-center justify-center">
+                                {item.channel_logo_url ? (
+                                  <img src={item.channel_logo_url} alt={item.channel_name} className="h-10 w-auto object-contain" />
+                                ) : (
+                                  <Radio className="h-8 w-8 text-player-muted-foreground" />
+                                )}
+                              </div>
+                            )}
+                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2">
+                              <p className="text-xs font-medium truncate text-left">{item.channel_name}</p>
+                              <p className="text-[10px] text-player-muted-foreground flex items-center gap-1">
+                                <Clock className="h-3 w-3" />
+                                {new Date(item.watched_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                              </p>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  ) : null}
+                </section>
+              )}
+
+              {/* Catalog categories */}
+              {Object.entries(catalogGroups).map(([groupName, items]) => (
+                <section key={groupName} className="mb-10">
+                  <h2 className="text-lg font-bold mb-4">{groupName}</h2>
                   <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
-                    {watchHistory.map(item => (
+                    {items.map(item => (
                       <button
                         key={item.id}
                         onClick={goToPlayer}
-                        className="flex-shrink-0 w-48 h-28 rounded-xl overflow-hidden relative transition-all hover:scale-[1.02] border-[5px] border-transparent hover:border-white"
+                        className="flex-shrink-0 w-56 h-32 rounded-xl overflow-hidden relative transition-all hover:scale-[1.02] border-[5px] border-transparent hover:border-white"
                       >
-                        {item.channel_cover_url ? (
-                          <img src={item.channel_cover_url} alt={item.channel_name} className="w-full h-full object-cover" />
+                        {item.cover_url ? (
+                          <img src={item.cover_url} alt={item.name} className="w-full h-full object-cover" />
                         ) : (
                           <div className="w-full h-full bg-gradient-to-br from-player-accent/30 to-player flex items-center justify-center">
-                            {item.channel_logo_url ? (
-                              <img src={item.channel_logo_url} alt={item.channel_name} className="h-10 w-auto object-contain" />
-                            ) : (
-                              <Radio className="h-8 w-8 text-player-muted-foreground" />
-                            )}
+                            <Film className="h-8 w-8 text-player-muted-foreground" />
                           </div>
                         )}
                         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2">
-                          <p className="text-xs font-medium truncate text-left">{item.channel_name}</p>
-                          <p className="text-[10px] text-player-muted-foreground flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            {new Date(item.watched_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
-                          </p>
+                          <p className="text-xs font-medium truncate text-left">{item.name}</p>
                         </div>
                       </button>
                     ))}
                   </div>
-                </>
-              ) : null}
-            </section>
+                </section>
+              ))}
+            </>
           )}
-
-          {/* Catalog categories */}
-          {Object.entries(catalogGroups).map(([groupName, items]) => (
-            <section key={groupName} className="mb-10">
-              <h2 className="text-lg font-bold mb-4">{groupName}</h2>
-              <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
-                {items.map(item => (
-                  <button
-                    key={item.id}
-                    onClick={goToPlayer}
-                    className="flex-shrink-0 w-56 h-32 rounded-xl overflow-hidden relative transition-all hover:scale-[1.02] border-[5px] border-transparent hover:border-white"
-                  >
-                    {item.cover_url ? (
-                      <img src={item.cover_url} alt={item.name} className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-player-accent/30 to-player flex items-center justify-center">
-                        <Film className="h-8 w-8 text-player-muted-foreground" />
-                      </div>
-                    )}
-                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2">
-                      <p className="text-xs font-medium truncate text-left">{item.name}</p>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </section>
-          ))}
         </main>
       </div>
     </div>
