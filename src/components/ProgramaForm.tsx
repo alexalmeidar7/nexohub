@@ -514,6 +514,7 @@ export default function ProgramaForm() {
     setDiasSemana(p.diasSemana); setHorarioInicio(p.horarioInicio); setHorarioFim(p.horarioFim);
     setEstudio(p.estudio); setAtivo(p.ativo); setVariavel(p.variavel); setDescricao(p.descricao);
     setDataVariavel(p.dataVariavel ? new Date(p.dataVariavel + "T12:00:00") : undefined);
+    setClassificacaoEtaria(p.classificacaoEtaria || "");
     setConflictMsg("");
   };
 
