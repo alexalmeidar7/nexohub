@@ -205,7 +205,9 @@ export default function ConfiguracoesPage() {
   };
 
   const handleEditCanal = (c: Canal) => {
-    setCanalForm({ numero_canal: String(c.numero_canal), name: c.name, logo_url: c.logo_url, cover_url: c.cover_url, url: c.url, type: c.type });
+    const isCatalog = c.type === "catalog";
+    setCanalMode(isCatalog ? "catalog" : "live");
+    setCanalForm({ numero_canal: String(c.numero_canal), name: c.name, logo_url: c.logo_url, cover_url: c.cover_url, url: c.url, type: isCatalog ? "audio_live" : c.type, catalog_name: c.catalog_name || "" });
     setEditingCanal(c.id);
   };
 
