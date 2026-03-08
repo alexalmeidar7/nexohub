@@ -212,21 +212,55 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   const [playlistVideos, setPlaylistVideos] = useState<Record<string, PlaylistVideo[]>>({});
   const [nowPlaying, setNowPlaying] = useState<{ musica: string; artista: string } | null>(null);
 
-  // Poll localStorage for current music data
+  // Poll for current music data - localStorage + DB fallback
   useEffect(() => {
-    const read = () => {
+    const userId = user?.id;
+
+    const readLocal = () => {
       try {
         const raw = localStorage.getItem("masterview_music_data");
         if (raw) {
           const parsed = JSON.parse(raw);
-          setNowPlaying({ musica: parsed.titulo || "", artista: parsed.artista || "" });
+          if (parsed.titulo) {
+            setNowPlaying({ musica: parsed.titulo, artista: parsed.artista || "" });
+            return true;
+          }
+        }
+      } catch {}
+      return false;
+    };
+
+    const fetchFromDb = async () => {
+      // Try localStorage first
+      if (readLocal()) return;
+
+      // Fallback: fetch latest from musicas_tocadas
+      const targetId = userId || undefined;
+      if (!targetId && (!userSlug || userSlug === ":userSlug")) return;
+
+      try {
+        if (targetId) {
+          const { data } = await supabase
+            .from("musicas_tocadas")
+            .select("musica, artista")
+            .eq("user_id", targetId)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          if (data) setNowPlaying({ musica: data.musica, artista: data.artista });
+        } else if (userSlug) {
+          const { data } = await supabase.functions.invoke("public-player-data", {
+            body: { slug: userSlug, section: "now_playing" },
+          });
+          if (data?.musica) setNowPlaying({ musica: data.musica, artista: data.artista || "" });
         }
       } catch {}
     };
-    read();
-    const interval = setInterval(read, 3000);
+
+    fetchFromDb();
+    const interval = setInterval(fetchFromDb, 2000);
     return () => clearInterval(interval);
-  }, []);
+  }, [user, userSlug]);
 
   const userName = profileName || user?.email?.split("@")[0] || "Visitante";
 
