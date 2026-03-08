@@ -234,24 +234,26 @@ export default function ShoppingPage() {
         {products.map((p) => {
           const prog = programas.find((pr) => pr.id === p.program_id);
           return (
-            <div key={p.id} className="flex items-center gap-4 rounded-xl p-4" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)" }}>
-              {p.image_url ? (
-                <img src={p.image_url} alt={p.name} className="w-16 h-16 object-cover rounded-lg" />
-              ) : (
-                <div className="w-16 h-16 rounded-lg flex items-center justify-center" style={{ backgroundColor: "rgba(13,4,70,0.04)" }}>
-                  <Package size={24} style={{ color: "rgba(13,4,70,0.2)" }} />
+            <div key={p.id} className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 rounded-xl p-3 sm:p-4" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)" }}>
+              <div className="flex items-center gap-3 flex-1 min-w-0">
+                {p.image_url ? (
+                  <img src={p.image_url} alt={p.name} className="w-14 h-14 sm:w-16 sm:h-16 object-cover rounded-lg shrink-0" />
+                ) : (
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: "rgba(13,4,70,0.04)" }}>
+                    <Package size={24} style={{ color: "rgba(13,4,70,0.2)" }} />
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <div className="font-bold truncate text-sm" style={{ color: "#0d0446" }}>{p.name}</div>
+                  <div className="text-xs sm:text-sm" style={{ color: "rgba(13,4,70,0.5)" }}>
+                    R$ {Number(p.price).toFixed(2)} • Estoque: {p.stock}
+                    {prog && <span className="hidden sm:inline"> • {prog.nome}</span>}
+                  </div>
+                  {p.description && <div className="text-xs truncate mt-0.5" style={{ color: "rgba(13,4,70,0.4)" }}>{p.description}</div>}
+                  {p.payment_url && <div className="text-xs mt-0.5" style={{ color: "#2dbef3" }}>💳 Link configurado</div>}
                 </div>
-              )}
-              <div className="flex-1 min-w-0">
-                <div className="font-bold truncate" style={{ color: "#0d0446" }}>{p.name}</div>
-                <div className="text-sm" style={{ color: "rgba(13,4,70,0.5)" }}>
-                  R$ {Number(p.price).toFixed(2)} • Estoque: {p.stock}
-                  {prog && <span> • {prog.nome}</span>}
-                </div>
-                {p.description && <div className="text-xs truncate mt-0.5" style={{ color: "rgba(13,4,70,0.4)" }}>{p.description}</div>}
-                {p.payment_url && <div className="text-xs mt-0.5" style={{ color: "#2dbef3" }}>💳 Link de pagamento configurado</div>}
               </div>
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
                 <button onClick={() => toggleActive(p.id, p.active)}
                   className="text-xs px-3 py-1 rounded-full font-bold"
                   style={p.active
