@@ -24,11 +24,19 @@ export default function PlayerHub() {
     const fetchLogo = async () => {
       let userId = user?.id;
       if (userSlug) {
-        const { data } = await supabase.functions.invoke("public-player-data", {
-          body: { slug: userSlug },
-        });
-        if (data?.empresa?.logo) setLogoUrl(data.empresa.logo);
-        if (data?.empresa?.nome) setChannelName(data.empresa.nome);
+        try {
+          const { data, error } = await supabase.functions.invoke("public-player-data", {
+            body: { slug: userSlug },
+          });
+          if (!error && data && !data.error) {
+            if (data.empresa?.logo) setLogoUrl(data.empresa.logo);
+            if (data.empresa?.nome) setChannelName(data.empresa.nome);
+          } else {
+            console.warn("public-player-data error:", error || data?.error);
+          }
+        } catch (e) {
+          console.warn("Failed to fetch player data:", e);
+        }
         return;
       }
       if (!userId) return;
