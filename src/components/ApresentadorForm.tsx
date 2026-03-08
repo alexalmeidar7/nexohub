@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Instagram, UserCheck, UserX, Trash2, Pencil, X, Loader2, CheckCircle } from "lucide-react";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import { supabase } from "@/integrations/supabase/client";
@@ -129,6 +130,23 @@ export default function ApresentadorForm() {
     ? apresentadores
     : apresentadores.filter(a => a.cargo === filterCategoria);
 
+  if (loadingList) {
+    return (
+      <div className="animate-fade-in space-y-6">
+        {/* Form skeleton */}
+        <div className="max-w-md space-y-4">
+          <Skeleton className="h-6 w-64 rounded bg-[#0d0446]/20" />
+          <Skeleton className="h-8 w-full rounded-full bg-[#0d0446]/10" />
+          <Skeleton className="h-8 w-full rounded-full bg-[#0d0446]/10" />
+          <Skeleton className="h-8 w-full rounded-full bg-[#0d0446]/10" />
+          <Skeleton className="h-8 w-32 rounded-full bg-[#0d0446]/15" />
+        </div>
+        {/* Table skeleton */}
+        <ModulePageSkeleton />
+      </div>
+    );
+  }
+
   return (
     <div className="animate-fade-in space-y-6">
       <div className="max-w-md space-y-4">
@@ -213,9 +231,7 @@ export default function ApresentadorForm() {
         </div>
       </div>
 
-      {loadingList ? (
-        <ModulePageSkeleton />
-      ) : apresentadores.length > 0 ? (
+      {apresentadores.length > 0 ? (
         <div>
           <div className="flex items-center justify-between mb-4">
             <h4 className="text-lg font-medium" style={{ color: "#0d0446" }}>Cadastrados</h4>
