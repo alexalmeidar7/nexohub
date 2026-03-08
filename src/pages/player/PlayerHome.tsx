@@ -443,7 +443,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
             </section>
           ) : activeSection === "content" ? (
             /* ── Página dedicada: Catálogo ── */
-            <section style={{ marginTop: "120px" }}>
+            <section style={{ marginTop: "220px" }}>
               <h2 className="text-xl font-bold mb-6">Catálogo</h2>
               {!dataLoaded ? (
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
