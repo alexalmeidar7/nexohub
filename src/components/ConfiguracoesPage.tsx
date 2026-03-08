@@ -50,6 +50,9 @@ interface Canal {
   type: string;
   active: boolean;
   catalog_name: string;
+  is_hd: boolean;
+  is_stereo: boolean;
+  classificacao_etaria: string;
 }
 
 function CollapsibleBox({ title, defaultOpen = true, children }: { title: string; defaultOpen?: boolean; children: React.ReactNode }) {
