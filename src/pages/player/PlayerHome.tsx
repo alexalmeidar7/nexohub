@@ -426,7 +426,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
         </header>
 
         {/* Banner full-width behind content — crossfade between default and thumb on hover */}
-        <div className="absolute top-0 left-20 right-0 z-0">
+        <div className="absolute top-0 left-20 right-0 z-0 pointer-events-none">
           <img
             src="/images/banner-home.png"
             alt="Banner"
