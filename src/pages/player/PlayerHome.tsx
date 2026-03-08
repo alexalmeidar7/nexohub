@@ -179,6 +179,23 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   const [watchHistory, setWatchHistory] = useState<{ id: string; channel_name: string; channel_cover_url: string | null; channel_logo_url: string | null; channel_type: string; watched_at: string; channel_id: string | null }[]>([]);
   const [hoveredThumb, setHoveredThumb] = useState<string | null>(null);
   const [playlistVideos, setPlaylistVideos] = useState<Record<string, PlaylistVideo[]>>({});
+  const [nowPlaying, setNowPlaying] = useState<{ musica: string; artista: string } | null>(null);
+
+  // Poll localStorage for current music data
+  useEffect(() => {
+    const read = () => {
+      try {
+        const raw = localStorage.getItem("masterview_music_data");
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          setNowPlaying({ musica: parsed.titulo || "", artista: parsed.artista || "" });
+        }
+      } catch {}
+    };
+    read();
+    const interval = setInterval(read, 3000);
+    return () => clearInterval(interval);
+  }, []);
 
   const userName = profileName || user?.email?.split("@")[0] || "Visitante";
 
