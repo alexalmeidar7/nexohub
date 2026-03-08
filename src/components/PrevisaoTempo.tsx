@@ -342,7 +342,7 @@ export default function PrevisaoTempo() {
           <div className="rounded-2xl p-6" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)" }}>
             <div className="flex items-center justify-between mb-4">
               <div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 flex-wrap">
                   <h3 className="text-2xl font-semibold" style={{ color: "#0d0446" }}>{weather.city}</h3>
                   <label className="flex items-center gap-2 cursor-pointer select-none rounded-full px-3 py-1"
                     style={{ backgroundColor: isPrimary ? "#0d0446" : "rgba(13,4,70,0.06)", border: "1px solid rgba(13,4,70,0.15)", transition: "all 0.2s" }}>
@@ -352,20 +352,20 @@ export default function PrevisaoTempo() {
                       Cidade Principal
                     </span>
                   </label>
+                  {!isFavorited && (
+                    <button onClick={addFavorite} disabled={isPrimary}
+                      className="flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                      style={{ backgroundColor: "rgba(13,4,70,0.08)", color: "#0d0446", border: "1px solid rgba(13,4,70,0.15)" }}
+                      onMouseEnter={e => { if (!isPrimary) { e.currentTarget.style.backgroundColor = "#2dbef3"; e.currentTarget.style.color = "#ffffff"; } }}
+                      onMouseLeave={e => { e.currentTarget.style.backgroundColor = "rgba(13,4,70,0.08)"; e.currentTarget.style.color = "#0d0446"; }}
+                    >
+                      <Star size={14} /> Cidade Secundária
+                    </button>
+                  )}
                 </div>
                 <p className="text-sm mt-1" style={{ color: "rgba(13,4,70,0.5)" }}>{getWeatherLabel(weather.current.weatherCode)}</p>
               </div>
-              <div className="flex items-center gap-3">
-                {!isFavorited && (
-                  <button onClick={addFavorite}
-                    className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold transition-all"
-                    style={{ backgroundColor: "rgba(13,4,70,0.08)", color: "#0d0446", border: "1px solid rgba(13,4,70,0.15)" }}
-                    onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#2dbef3"; e.currentTarget.style.color = "#ffffff"; }}
-                    onMouseLeave={e => { e.currentTarget.style.backgroundColor = "rgba(13,4,70,0.08)"; e.currentTarget.style.color = "#0d0446"; }}
-                  >
-                    <Star size={14} /> Favoritar cidade
-                  </button>
-                )}
+              <div className="flex items-center">
                 <WeatherIcon code={weather.current.weatherCode} size={64} />
               </div>
             </div>
