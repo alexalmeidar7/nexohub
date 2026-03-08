@@ -487,7 +487,6 @@ export default function PlayerPage() {
   useEffect(() => {
     // Reset immediately on music change
     setLiked(false);
-    setLikeCount(0);
     
     if (!user || !musicData?.titulo || !musicData?.artista) {
       return;
