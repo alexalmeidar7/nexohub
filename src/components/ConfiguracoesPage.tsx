@@ -46,6 +46,7 @@ interface Canal {
   name: string;
   logo_url: string;
   cover_url: string;
+  background_url: string;
   url: string;
   type: string;
   active: boolean;
@@ -135,7 +136,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
       const filtered = data.filter(d => !dupeIds.includes(d.id));
       setCanais(filtered.map((d: any) => ({
         id: d.id, numero_canal: d.numero_canal || "", name: d.name, logo_url: d.logo_url || "",
-        cover_url: d.cover_url || "", url: d.url, type: d.type, active: d.active,
+        cover_url: d.cover_url || "", background_url: d.background_url || "", url: d.url, type: d.type, active: d.active,
         catalog_name: d.catalog_name || "",
         is_hd: d.is_hd || false, is_stereo: d.is_stereo || false,
         classificacao_etaria: d.classificacao_etaria || "L",
@@ -225,7 +226,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
       background_url: canalForm.background_url,
       url: canalForm.url, type: canalMode === "catalog" ? "catalog" : canalForm.type,
       catalog_name: canalMode === "catalog" ? canalForm.catalog_name : "",
-      numero_canal: canalMode === "live" ? canalForm.numero_canal : "",
+      numero_canal: canalForm.numero_canal,
       is_hd: canalForm.is_hd, is_stereo: canalForm.is_stereo,
       classificacao_etaria: canalForm.classificacao_etaria,
     };
@@ -252,7 +253,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
   const handleEditCanal = (c: Canal) => {
     const isCatalog = c.type === "catalog";
     setCanalMode(isCatalog ? "catalog" : "live");
-    setCanalForm({ numero_canal: String(c.numero_canal), name: c.name, logo_url: c.logo_url, cover_url: c.cover_url, background_url: (c as any).background_url || "", url: c.url, type: isCatalog ? "audio_live" : c.type, catalog_name: c.catalog_name || "", is_hd: c.is_hd, is_stereo: c.is_stereo, classificacao_etaria: c.classificacao_etaria || "L" });
+    setCanalForm({ numero_canal: String(c.numero_canal), name: c.name, logo_url: c.logo_url, cover_url: c.cover_url, background_url: c.background_url || "", url: c.url, type: isCatalog ? "audio_live" : c.type, catalog_name: c.catalog_name || "", is_hd: c.is_hd, is_stereo: c.is_stereo, classificacao_etaria: c.classificacao_etaria || "L" });
     setEditingCanal(c.id);
   };
 
