@@ -312,6 +312,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             >
               {sidebarCollapsed ? <ChevronDown size={14} className="text-white rotate-[-90deg]" /> : <ChevronUp size={14} className="text-white rotate-[-90deg]" />}
             </button>
+            {!sidebarCollapsed && <>
             {/* Selo + Settings */}
             <div className="flex items-center justify-between px-4 pt-3 pb-2">
               <img src={seloNexohub} alt="NexoHUB" className="h-4" />
