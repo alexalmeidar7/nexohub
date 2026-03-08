@@ -46,6 +46,8 @@ export default function CortesVideoPage() {
     clip_embed_url: string;
     share_url: string;
     thumbnail_url: string;
+    download_url: string;
+    download_quality: string;
     duration: number;
   } | null>(null);
 
@@ -79,6 +81,8 @@ export default function CortesVideoPage() {
         clip_embed_url: data.clip_embed_url,
         share_url: data.share_url,
         thumbnail_url: data.thumbnail_url,
+        download_url: data.download_url || "",
+        download_quality: data.download_quality || "",
         duration: data.duration,
       });
 
@@ -95,6 +99,26 @@ export default function CortesVideoPage() {
     } finally {
       setCutting(false);
     }
+  };
+
+  const handleDownload = () => {
+    if (!result?.download_url) {
+      // Fallback to ssyoutube
+      window.open(
+        `https://www.ssyoutube.com/watch?v=${videoId}&t=${startSeconds}`,
+        "_blank"
+      );
+      return;
+    }
+
+    const a = document.createElement("a");
+    a.href = result.download_url;
+    a.download = `corte_${startTime.replace(/:/g, "-")}_${endTime.replace(/:/g, "-")}.mp4`;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
   };
 
   const copyToClipboard = (text: string) => {
@@ -250,11 +274,20 @@ export default function CortesVideoPage() {
                 <p className="text-sm font-bold" style={{ color: "#166534" }}>Trecho gerado com sucesso!</p>
                 <p className="text-xs" style={{ color: "#15803d" }}>
                   Duração: {formatDuration(result.duration)}
+                  {result.download_quality && ` • Qualidade: ${result.download_quality}`}
                 </p>
               </div>
             </div>
 
             <div className="flex flex-wrap gap-2">
+              <button
+                onClick={handleDownload}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold transition-opacity hover:opacity-80"
+                style={{ backgroundColor: "#dc2626", color: "#fff" }}
+              >
+                <Download size={12} />
+                Baixar Vídeo (.mp4)
+              </button>
               <button
                 onClick={() => copyToClipboard(result.share_url)}
                 className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold transition-opacity hover:opacity-80"
@@ -280,16 +313,6 @@ export default function CortesVideoPage() {
               >
                 <ExternalLink size={12} />
                 Abrir no YouTube
-              </a>
-              <a
-                href={`https://www.ssyoutube.com/watch?v=${videoId}&t=${result.duration > 0 ? startSeconds : 0}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold transition-opacity hover:opacity-80"
-                style={{ backgroundColor: "#dc2626", color: "#fff" }}
-              >
-                <Download size={12} />
-                Baixar Vídeo
               </a>
             </div>
           </div>
