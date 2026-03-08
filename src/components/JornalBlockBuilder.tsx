@@ -171,6 +171,8 @@ export default function JornalBlockBuilder({ config, selectedNews, onClose }: Pr
     setEditTitle(item.title);
     setEditImageUrl(item.imageUrl);
     setEditBody(item.body || "");
+    setEditFontSize(12);
+    setOriginalBody(null);
   };
 
   const saveEdit = () => {
@@ -182,6 +184,35 @@ export default function JornalBlockBuilder({ config, selectedNews, onClose }: Pr
       return { ...prev, [blockNum]: updated };
     });
     setEditingItem(null);
+  };
+
+  const handleImproveText = async () => {
+    if (!editBody.trim()) return;
+    setAiImproving(true);
+    setOriginalBody(editBody);
+    try {
+      const { data, error } = await supabase.functions.invoke("improve-text", {
+        body: { text: editBody, title: editTitle },
+      });
+      if (error) throw error;
+      if (data?.text) setEditBody(data.text);
+    } catch (e) {
+      console.error("Erro ao melhorar texto:", e);
+    }
+    setAiImproving(false);
+  };
+
+  const undoAiText = () => {
+    if (originalBody !== null) {
+      setEditBody(originalBody);
+      setOriginalBody(null);
+    }
+  };
+
+  const estimateReadingTime = (text: string) => {
+    const words = text.trim().split(/\s+/).length;
+    const minutes = Math.ceil(words / 150);
+    return minutes <= 1 ? "~1 min" : `~${minutes} min`;
   };
 
   const sequence: { type: "bloco" | "intervalo" | "testemunha"; num?: number }[] = [];
