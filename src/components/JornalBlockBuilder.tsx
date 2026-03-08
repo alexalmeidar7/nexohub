@@ -327,7 +327,12 @@ export default function JornalBlockBuilder({ config, selectedNews, onClose }: Pr
       {/* Export Button */}
       <div className="px-3 py-2" style={{ borderTop: "1px solid rgba(13,4,70,0.1)" }}>
         <button
-          onClick={() => setShowExport(true)}
+          onClick={() => {
+            // Store data in sessionStorage and open in new tab
+            const exportData = JSON.stringify({ config, blocks });
+            sessionStorage.setItem("jornal_export_data", exportData);
+            window.open(`${window.location.origin}/jornal-export`, "_blank");
+          }}
           className="w-full flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold transition-colors"
           style={{ backgroundColor: "#0d0446", color: "#ffffff" }}
         >

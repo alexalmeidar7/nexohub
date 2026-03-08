@@ -21,6 +21,7 @@ const AdminPlans = lazy(() => import("./pages/admin/AdminPlans"));
 const AdminMessages = lazy(() => import("./pages/admin/AdminMessages"));
 const MasterViewHome = lazy(() => import("./pages/masterview/MasterViewHome"));
 const AdminLogin = lazy(() => import("./pages/admin/AdminLogin"));
+const JornalExport = lazy(() => import("./pages/JornalExport"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -60,6 +61,7 @@ const App = () => (
             <Route path="/masterview/home" element={<Navigate to="/user/nexohub/home" replace />} />
             <Route path="/modulo-tela-estudio-promocao" element={<Navigate to="/user/nexohub/telapromo" replace />} />
             <Route path="/player" element={<Navigate to="/user/nexohub/player" replace />} />
+            <Route path="/jornal-export" element={<JornalExport />} />
 
             {/* Admin routes */}
             <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
