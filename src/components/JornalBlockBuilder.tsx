@@ -186,9 +186,9 @@ export default function JornalBlockBuilder({ config, selectedNews, onClose }: Pr
   }
 
   return (
-    <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(13,4,70,0.1)", backgroundColor: "#ffffff" }}>
+    <div className="rounded-xl overflow-hidden" style={{ border: "1px solid #2ec1f7", backgroundColor: "#ffffff" }}>
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2 font-bold text-xs" style={{ backgroundColor: "#ffffff", color: "#0d0446", borderBottom: "1px solid rgba(13,4,70,0.1)" }}>
+      <div className="flex items-center justify-between px-4 py-2 font-bold text-xs" style={{ backgroundColor: "#2ec1f7", color: "#0d0446", borderBottom: "1px solid #2ec1f7" }}>
         <span className="flex items-center gap-2">
           <Newspaper size={14} />
           Jornal: {config.programaNome}
