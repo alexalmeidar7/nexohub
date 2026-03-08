@@ -154,30 +154,15 @@ export default function CortesVideoPage() {
             Tempo Inicial
           </label>
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1">
-              <input
-                type="number"
-                min={0}
-                value={startMin}
-                onChange={(e) => setStartMin(e.target.value)}
-                placeholder="00"
-                className="w-16 text-center py-2.5 rounded-lg border text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#268ffa]/30"
-                style={{ borderColor: "#e2e8f0", color: "#0d0446" }}
-              />
-              <span className="text-xs" style={{ color: "#64748b" }}>min</span>
-              <span className="text-lg font-bold" style={{ color: "#0d0446" }}>:</span>
-              <input
-                type="number"
-                min={0}
-                max={59}
-                value={startSec}
-                onChange={(e) => setStartSec(e.target.value)}
-                placeholder="00"
-                className="w-16 text-center py-2.5 rounded-lg border text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#268ffa]/30"
-                style={{ borderColor: "#e2e8f0", color: "#0d0446" }}
-              />
-              <span className="text-xs" style={{ color: "#64748b" }}>seg</span>
-            </div>
+            <input
+              type="text"
+              value={startTime}
+              onChange={(e) => setStartTime(maskHMS(e.target.value))}
+              placeholder="HH:MM:SS"
+              maxLength={8}
+              className="w-28 text-center py-2.5 rounded-lg border text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#268ffa]/30"
+              style={{ borderColor: "#e2e8f0", color: "#0d0446" }}
+            />
             {videoId && startSeconds > 0 && (
               <div className="w-24 h-14 rounded-lg overflow-hidden border flex-shrink-0" style={{ borderColor: "#e2e8f0" }}>
                 <iframe
@@ -208,30 +193,15 @@ export default function CortesVideoPage() {
             Tempo Final
           </label>
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1">
-              <input
-                type="number"
-                min={0}
-                value={endMin}
-                onChange={(e) => setEndMin(e.target.value)}
-                placeholder="00"
-                className="w-16 text-center py-2.5 rounded-lg border text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#268ffa]/30"
-                style={{ borderColor: "#e2e8f0", color: "#0d0446" }}
-              />
-              <span className="text-xs" style={{ color: "#64748b" }}>min</span>
-              <span className="text-lg font-bold" style={{ color: "#0d0446" }}>:</span>
-              <input
-                type="number"
-                min={0}
-                max={59}
-                value={endSec}
-                onChange={(e) => setEndSec(e.target.value)}
-                placeholder="00"
-                className="w-16 text-center py-2.5 rounded-lg border text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#268ffa]/30"
-                style={{ borderColor: "#e2e8f0", color: "#0d0446" }}
-              />
-              <span className="text-xs" style={{ color: "#64748b" }}>seg</span>
-            </div>
+            <input
+              type="text"
+              value={endTime}
+              onChange={(e) => setEndTime(maskHMS(e.target.value))}
+              placeholder="HH:MM:SS"
+              maxLength={8}
+              className="w-28 text-center py-2.5 rounded-lg border text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#268ffa]/30"
+              style={{ borderColor: "#e2e8f0", color: "#0d0446" }}
+            />
             {videoId && endSeconds > 0 && (
               <div className="w-24 h-14 rounded-lg overflow-hidden border flex-shrink-0" style={{ borderColor: "#e2e8f0" }}>
                 <iframe
