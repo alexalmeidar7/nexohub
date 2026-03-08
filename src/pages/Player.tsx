@@ -843,12 +843,22 @@ export default function PlayerPage() {
       if (hlsRef.current) { hlsRef.current.destroy(); hlsRef.current = null; }
       setBuffering(true);
 
+      // Unlock audio/video element synchronously (preserves user gesture context)
+      const isAudioType = type === "audio_live" || type === "audio";
+      if (isAudioType && audioRef.current) {
+        audioRef.current.volume = volumeRef.current / 100;
+        audioRef.current.muted = mutedRef.current;
+        audioRef.current.play().catch(() => {});
+      } else if (videoRef.current) {
+        videoRef.current.play().catch(() => {});
+      }
+
       const freshUrl = url.includes("?") ? `${url}&_t=${Date.now()}` : `${url}?_t=${Date.now()}`;
       const useHls = url.includes(".m3u8");
       let Hls: typeof HlsType | null = null;
       if (useHls) Hls = await getHls();
 
-      if (type === "audio_live" || type === "audio") {
+      if (isAudioType) {
         if (videoRef.current) { videoRef.current.pause(); videoRef.current.src = ""; }
         const audio = audioRef.current;
         if (!audio) return;
