@@ -93,6 +93,8 @@ export default function PrevisaoTempo() {
   const [primaryCity, setPrimaryCity] = useState<PrimaryCity | null>(getPrimaryCity);
   const [aiDescription, setAiDescription] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
+  const [forecastDescription, setForecastDescription] = useState("");
+  const [forecastLoading, setForecastLoading] = useState(false);
 
   const [suggestions, setSuggestions] = useState<GeoResult[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
