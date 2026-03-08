@@ -40,6 +40,9 @@ export default function JornalBlockBuilder({ config, selectedNews, onClose }: Pr
   const [editTitle, setEditTitle] = useState("");
   const [editImageUrl, setEditImageUrl] = useState("");
   const [editBody, setEditBody] = useState("");
+  const [editFontSize, setEditFontSize] = useState(12);
+  const [aiImproving, setAiImproving] = useState(false);
+  const [originalBody, setOriginalBody] = useState<string | null>(null);
   const [showExport, setShowExport] = useState(false);
   const [fetchingBody, setFetchingBody] = useState<string | null>(null);
 
