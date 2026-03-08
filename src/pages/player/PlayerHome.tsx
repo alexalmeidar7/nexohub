@@ -190,7 +190,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
         supabase.from("empresa_config").select("logo, nome").eq("user_id", userId).single(),
         supabase.from("programas").select("nome, horario_inicio, horario_fim, dias_semana").eq("user_id", userId).eq("ativo", true),
       ]);
-      if (chRes.data) setChannels(chRes.data);
+      if (chRes.data) setChannels(chRes.data as any);
       if (empRes.data) {
         setLogoUrl(empRes.data.logo);
         setChannelName(empRes.data.nome || "");
