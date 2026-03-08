@@ -51,7 +51,7 @@ export default function LoginScreen() {
   return (
     <div
       className="min-h-screen flex flex-col items-center justify-center p-4"
-      style={{ background: "linear-gradient(135deg, #004dc0 0%, #0c0440 100%)" }}
+      style={{ background: "var(--player-glow)" }}
     >
       <div className="relative w-full max-w-md">
         {/* Main Login Box */}
