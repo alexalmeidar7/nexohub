@@ -443,6 +443,33 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
               ) : null}
             </section>
           )}
+
+          {/* Catalog categories */}
+          {Object.entries(catalogGroups).map(([groupName, items]) => (
+            <section key={groupName} className="mb-10">
+              <h2 className="text-lg font-bold mb-4">{groupName}</h2>
+              <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+                {items.map(item => (
+                  <button
+                    key={item.id}
+                    onClick={goToPlayer}
+                    className="flex-shrink-0 w-56 h-32 rounded-xl overflow-hidden relative transition-all hover:scale-[1.02] border-[5px] border-transparent hover:border-white"
+                  >
+                    {item.cover_url ? (
+                      <img src={item.cover_url} alt={item.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-player-accent/30 to-player flex items-center justify-center">
+                        <Film className="h-8 w-8 text-player-muted-foreground" />
+                      </div>
+                    )}
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2">
+                      <p className="text-xs font-medium truncate text-left">{item.name}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </section>
+          ))}
         </main>
       </div>
     </div>
