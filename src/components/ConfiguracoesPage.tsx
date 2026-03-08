@@ -185,7 +185,7 @@ export default function ConfiguracoesPage() {
     else { toast.success("Senha alterada com sucesso!"); setNewPassword(""); }
   };
 
-  const handleImageUpload = (field: "logo_url" | "cover_url") => {
+  const handleImageUpload = (field: "logo_url" | "cover_url" | "background_url") => {
     const input = document.createElement("input");
     input.type = "file"; input.accept = "image/*";
     input.onchange = async (e) => {
