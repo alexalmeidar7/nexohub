@@ -397,6 +397,32 @@ export default function ConfiguracoesPage() {
             </div>
           </div>
 
+          {/* Especificações */}
+          <div className="flex flex-wrap items-center gap-6">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" checked={canalForm.is_hd} onChange={(e) => setCanalForm(p => ({ ...p, is_hd: e.target.checked }))}
+                className="accent-primary w-4 h-4" />
+              <span className="text-sm font-medium text-foreground">HD</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" checked={canalForm.is_stereo} onChange={(e) => setCanalForm(p => ({ ...p, is_stereo: e.target.checked }))}
+                className="accent-primary w-4 h-4" />
+              <span className="text-sm font-medium text-foreground">Áudio Estéreo</span>
+            </label>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold text-muted-foreground">Classificação Etária:</span>
+              <select value={canalForm.classificacao_etaria} onChange={(e) => setCanalForm(p => ({ ...p, classificacao_etaria: e.target.value }))}
+                className="bg-muted border border-border px-3 py-2 rounded-lg text-foreground text-sm outline-none focus:ring-1 focus:ring-primary">
+                <option value="L">L (Livre)</option>
+                <option value="A10">A10</option>
+                <option value="A12">A12</option>
+                <option value="A14">A14</option>
+                <option value="A16">A16</option>
+                <option value="A18">A18</option>
+              </select>
+            </div>
+          </div>
+
           {/* Submit */}
           <div className="flex items-end gap-2">
             <button onClick={handleAddCanal} disabled={savingCanal}
