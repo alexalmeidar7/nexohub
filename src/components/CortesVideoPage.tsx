@@ -13,15 +13,35 @@ function pad(n: number) {
   return String(n).padStart(2, "0");
 }
 
-function parseTime(min: string, sec: string): number {
-  return (parseInt(min || "0", 10) * 60) + parseInt(sec || "0", 10);
+function parseHMS(value: string): number {
+  const parts = value.split(":").map((p) => parseInt(p || "0", 10));
+  const h = parts[0] || 0;
+  const m = parts[1] || 0;
+  const s = parts[2] || 0;
+  return h * 3600 + m * 60 + s;
+}
+
+function formatHMS(seconds: number): string {
+  if (seconds <= 0) return "00:00:00";
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  return `${pad(h)}:${pad(m)}:${pad(s)}`;
 }
 
 function formatDuration(seconds: number): string {
-  if (seconds <= 0) return "00:00";
-  const m = Math.floor(seconds / 60);
+  if (seconds <= 0) return "00:00:00";
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
   const s = seconds % 60;
-  return `${pad(m)}:${pad(s)}`;
+  return `${pad(h)}:${pad(m)}:${pad(s)}`;
+}
+
+function maskHMS(raw: string): string {
+  const digits = raw.replace(/\D/g, "").slice(0, 6);
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 4) return digits.slice(0, 2) + ":" + digits.slice(2);
+  return digits.slice(0, 2) + ":" + digits.slice(2, 4) + ":" + digits.slice(4);
 }
 
 export default function CortesVideoPage() {
