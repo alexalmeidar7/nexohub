@@ -339,6 +339,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       }
     }, 400);
   };
+  const goToPlayerDefault = () => goToPlayer();
 
   const handleSignOut = async () => {
     await signOut();
