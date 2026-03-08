@@ -135,13 +135,19 @@ function StreamingCard({ channel, currentProgram, nowPlaying, onClick, onHoverCh
         </div>
       )}
 
+      {/* Video preview on hover */}
+      {hovered && isVideo && frames.length > 0 && (
+        <img src={frames[frameIdx]} alt="preview" className="absolute inset-0 w-full h-full object-cover z-[1]" />
+      )}
+
+      {/* "AO VIVO" badge - top left */}
+      <span className="absolute top-2 left-2 z-10 text-[10px] uppercase tracking-wider font-semibold bg-black/80 px-2 py-0.5 rounded flex items-center gap-1.5">
+        <span className="inline-block w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+        <span className="text-white">ao vivo</span>
+      </span>
+
       {/* Info overlay - bottom */}
-      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent px-3 pb-2 pt-6 flex flex-col gap-[3px]">
-        {/* AO VIVO */}
-        <span className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-semibold">
-          <span className="inline-block w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-          <span className="text-white">ao vivo</span>
-        </span>
+      <div className="absolute bottom-0 left-0 right-0 z-10 bg-gradient-to-t from-black/90 via-black/60 to-transparent px-3 pb-2 pt-6 flex flex-col gap-[3px]">
         {/* Nome do canal */}
         <p className="text-xs font-medium truncate text-left text-white">{channel.name}</p>
         {/* Horário + progress */}
