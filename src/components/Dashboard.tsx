@@ -319,7 +319,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       {/* Floating hamburger button - desktop */}
       <button
         onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-        className="hidden lg:flex fixed top-5 left-[50px]50px] z-[60] w-11 h-11 rounded-full items-center justify-center transition-all shadow-lg hover:scale-105"
+        className="hidden lg:flex fixed top-5 left-[50px]0] w-11 h-11 rounded-full items-center justify-center transition-all shadow-lg hover:scale-105"
         style={{ backgroundColor: sidebarCollapsed ? "rgba(0,0,0,0.7)" : "#268ffa" }}
         title={sidebarCollapsed ? "Abrir menu" : "Fechar menu"}
       >
@@ -332,7 +332,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       )}
 
       {/* Floating sidebar - desktop */}
-      <div className={`hidden lg:flex flex-col fixed top-5 l11ft-[70px] z-[55] transition-all duration-300 ${sidebarCollapsed ? "opacity-0 pointer-events-none -translate-x-4" : "opacity-100 translate-x-0"}`} style={{ width: "360px" }}>
+      <div className={`hidden lg:flex flex-col fixed top-5 l11ft-eft-[11z-[55] transition-all duration-300 ${sidebarCollapsed ? "opacity-0 pointer-events-none -translate-x-4" : "opacity-100 translate-x-0"}`} style={{ width: "360px" }}>
         <aside className="flex flex-col rounded-[24px] overflow-hidden" style={{ background: "rgba(0, 0, 0, 0.45)", backdropFilter: "blur(32px) saturate(1.5)", WebkitBackdropFilter: "blur(32px) saturate(1.5)", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 12px 40px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.08)", height: "560px" }}>
             <>
             {/* Selo + Settings */}
