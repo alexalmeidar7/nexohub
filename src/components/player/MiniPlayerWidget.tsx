@@ -73,6 +73,7 @@ export default function MiniPlayerWidget({ data, onClose }: { data: MiniPlayerDa
   const hlsRef = useRef<HlsType | null>(null);
   const [muted, setMuted] = useState(false);
   const [playing, setPlaying] = useState(false);
+  const [needsUnlock, setNeedsUnlock] = useState(false);
   const navigate = useNavigate();
   const { userSlug } = useParams();
 
