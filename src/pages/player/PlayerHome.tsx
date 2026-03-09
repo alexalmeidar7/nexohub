@@ -342,7 +342,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
 
   // Fade banner when content scrolls over it
   useEffect(() => {
-    const scrollEl = document.querySelector(".overflow-y-auto") as HTMLElement | null ?? mainRef.current?.closest(".overflow-y-auto") as HTMLElement | null;
+    const scrollEl = scrollContainerRef.current;
     if (!scrollEl) return;
     const handleScroll = () => {
       const scrollY = scrollEl.scrollTop;
