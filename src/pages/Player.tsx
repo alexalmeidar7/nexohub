@@ -1859,7 +1859,8 @@ export default function PlayerPage() {
       {/* YouTube: Thumbnail placeholder when no video selected */}
       {isYoutube && !selectedVideoId && (
         <div className="absolute inset-0 bg-cover bg-center transition-all duration-700"
-          style={{ backgroundImage: `url(${canal?.cover_url || canal?.background_url || (youtubeVideos.length > 0 ? youtubeVideos[0].thumbnail.replace('default.jpg','maxresdefault.jpg') : '')})`, backgroundColor: '#111' }}
+          style={{ backgroundImage: `url(${canal?.cover_url || (youtubeVideos.length > 0 ? youtubeVideos[0].thumbnail.replace('default.jpg','maxresdefault.jpg') : '')})`, backgroundColor: '#111' }}
+        />
         />
       )}
 
