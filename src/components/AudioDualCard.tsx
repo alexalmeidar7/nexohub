@@ -282,10 +282,16 @@ export default function AudioDualCard({
               <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: "hsla(0,80%,45%,0.2)" }}>
                 <Music size={14} style={{ color: "#a10a0b" }} />
               </div>
-              <div>
+              <div className="flex-1">
                 <h3 className="font-bold text-sm text-white">Últimas Tocadas</h3>
                 <p className="text-[10px] text-white/40">Histórico de músicas</p>
               </div>
+              <button
+                onClick={() => setHistoryOpen(false)}
+                className="w-7 h-7 rounded-full flex items-center justify-center transition-all hover:bg-white/10 active:scale-95"
+              >
+                <X size={14} className="text-white/60" />
+              </button>
             </div>
             
             {/* Song list */}
@@ -309,7 +315,7 @@ export default function AudioDualCard({
                     >
                       {/* Time badge */}
                       <div className="shrink-0 px-2 py-1 rounded-md" style={{ backgroundColor: "hsla(0,80%,45%,0.2)" }}>
-                        <span className="text-[10px] font-mono font-bold" style={{ color: "#a10a0b" }}>
+                        <span className="text-[10px] font-mono font-bold text-white">
                           {song.horario?.slice(0, 5)}
                         </span>
                       </div>
