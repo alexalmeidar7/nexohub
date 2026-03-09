@@ -42,15 +42,15 @@ function Confetti({ active }: { active: boolean }) {
 
   useEffect(() => {
     if (active) {
-      const newParticles = Array.from({ length: 50 }, (_, i) => ({
+      const newParticles = Array.from({ length: 60 }, (_, i) => ({
         id: i,
         x: Math.random() * 100,
         delay: Math.random() * 0.5,
-        size: 8 + Math.random() * 8,
+        size: 6 + Math.random() * 10,
         rotation: Math.random() * 360,
       }));
       setParticles(newParticles);
-      const timer = setTimeout(() => setParticles([]), 3000);
+      const timer = setTimeout(() => setParticles([]), 3500);
       return () => clearTimeout(timer);
     }
   }, [active]);
@@ -59,27 +59,32 @@ function Confetti({ active }: { active: boolean }) {
 
   return (
     <div className="fixed inset-0 pointer-events-none z-[100] overflow-hidden">
-      {particles.map((p) => (
-        <div
-          key={p.id}
-          className="absolute"
-          style={{
-            left: `${p.x}%`,
-            top: "-20px",
-            width: p.size,
-            height: p.size,
-            backgroundColor: "#a10a0b",
-            borderRadius: Math.random() > 0.5 ? "50%" : "2px",
-            animation: `confettiFall 2.5s ease-out ${p.delay}s forwards`,
-            transform: `rotate(${p.rotation}deg)`,
-            boxShadow: "0 0 10px rgba(161,10,11,0.5)",
-          }}
-        />
-      ))}
+      {particles.map((p) => {
+        const isCircle = Math.random() > 0.5;
+        const shade = Math.random() > 0.3 ? "#a10a0b" : Math.random() > 0.5 ? "#ff2d2d" : "#ff6b6b";
+        return (
+          <div
+            key={p.id}
+            className="absolute"
+            style={{
+              left: `${p.x}%`,
+              top: "-20px",
+              width: p.size,
+              height: p.size,
+              backgroundColor: shade,
+              borderRadius: isCircle ? "50%" : "2px",
+              animation: `confettiFall 3s ease-out ${p.delay}s forwards`,
+              transform: `rotate(${p.rotation}deg)`,
+              boxShadow: `0 0 10px ${shade}80`,
+            }}
+          />
+        );
+      })}
       <style>{`
         @keyframes confettiFall {
-          0% { transform: translateY(0) rotate(0deg); opacity: 1; }
-          100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+          0% { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
+          70% { opacity: 1; }
+          100% { transform: translateY(100vh) rotate(720deg) scale(0.5); opacity: 0; }
         }
       `}</style>
     </div>
@@ -101,13 +106,13 @@ export default function KaraokeOverlay({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [exitAnim, setExitAnim] = useState(false); // animate-out for "not found"
   const [speedOffset, setSpeedOffset] = useState(() => {
     const saved = localStorage.getItem(SPEED_OFFSET_KEY);
     return saved ? parseFloat(saved) : 0;
   });
   const animRef = useRef<number>(0);
   const lastFetchRef = useRef("");
-  const notFoundTimerRef = useRef<ReturnType<typeof setTimeout>>();
 
   // Persist speed offset
   useEffect(() => {
@@ -122,11 +127,9 @@ export default function KaraokeOverlay({
     setLines([]);
     setCurrentLineIdx(-1);
     setError(false);
+    setExitAnim(false);
     setLoading(true);
     setShowConfetti(false);
-
-    // Clear any pending not-found timer
-    if (notFoundTimerRef.current) clearTimeout(notFoundTimerRef.current);
 
     supabase.functions.invoke("fetch-lyrics", {
       body: { artist, title, duration: duration ? Math.round(duration) : undefined },
@@ -134,18 +137,16 @@ export default function KaraokeOverlay({
       setLoading(false);
       if (err || !data?.success || !data?.syncedLyrics) {
         setError(true);
-        // Auto-hide after 2 seconds when lyrics not found
-        notFoundTimerRef.current = setTimeout(() => {
-          onLyricsNotFound?.();
-        }, 2000);
+        // Animate out after showing "not found" briefly
+        setTimeout(() => setExitAnim(true), 1500);
+        onLyricsNotFound?.();
         return;
       }
       const parsed = parseLrc(data.syncedLyrics);
       if (parsed.length === 0) {
         setError(true);
-        notFoundTimerRef.current = setTimeout(() => {
-          onLyricsNotFound?.();
-        }, 2000);
+        setTimeout(() => setExitAnim(true), 1500);
+        onLyricsNotFound?.();
         return;
       }
       setLines(parsed);
@@ -153,10 +154,6 @@ export default function KaraokeOverlay({
       setShowConfetti(true);
       onLyricsFound?.();
     });
-
-    return () => {
-      if (notFoundTimerRef.current) clearTimeout(notFoundTimerRef.current);
-    };
   }, [artist, title, duration, onLyricsNotFound, onLyricsFound]);
 
   // Animation loop: read elapsed from MUSIC_START_KEY (real song start time)
@@ -204,8 +201,13 @@ export default function KaraokeOverlay({
     setSpeedOffset(prev => Math.max(-5, Math.min(5, prev + delta)));
   };
 
-  // Don't render the overlay UI if error (will auto-close)
+  // Error state: "Letra não encontrada" with exit animation
   if (error && !loading) {
+    // Once exit animation finishes, don't render the overlay at all (but karaoke stays enabled)
+    if (exitAnim) {
+      return <Confetti active={showConfetti} />;
+    }
+
     return (
       <>
         <Confetti active={showConfetti} />
@@ -219,10 +221,10 @@ export default function KaraokeOverlay({
             <span className="text-white font-bold text-[11px] tracking-wider uppercase">Karaoke</span>
           </div>
           <div 
-            className="px-6 py-4 rounded-2xl backdrop-blur-xl"
+            className="px-6 py-4 rounded-2xl backdrop-blur-xl transition-all duration-700"
             style={{ 
               backgroundColor: "rgba(0,0,0,0.5)",
-              border: "1px solid rgba(255,255,255,0.1)"
+              border: "1px solid rgba(255,255,255,0.1)",
             }}
           >
             <span className="text-white/30 text-xs">Letra não encontrada</span>
