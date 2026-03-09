@@ -690,12 +690,18 @@ function DashboardHome({ empresa, onNavigate }: { empresa: import("./Configuraco
       onMouseLeave={handleMouseLeave}
     >
       {orderedWidgets.map(widget => (
-        <div
+         <div
           key={widget.id}
           className={`dashboard-widget-card rounded-2xl p-3 lg:p-4 flex-shrink-0 overflow-hidden relative ${
             draggedId === widget.id ? "opacity-50 scale-95" : ""
           } ${dragOverId === widget.id ? "ring-2 ring-[#268ffa]" : ""}`}
-          style={{ backgroundColor: widget.bg }}
+          style={widget.bg === "#ffffff" ? {
+            background: "rgba(255, 255, 255, 0.12)",
+            backdropFilter: "blur(24px) saturate(1.4)",
+            WebkitBackdropFilter: "blur(24px) saturate(1.4)",
+            boxShadow: "0 8px 32px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.15)",
+            border: "1px solid rgba(255,255,255,0.15)",
+          } : { backgroundColor: widget.bg }}
           onDragOver={(e) => handleDragOver(e, widget.id)}
           onDrop={(e) => handleDrop(e, widget.id)}
           onDragEnd={handleDragEnd}
@@ -946,24 +952,24 @@ function ComercialWidgets() {
   }, [user]);
 
   if (loading) return (
-    <div className="animate-pulse" style={{ color: "#0d0446" }}>
+    <div className="animate-pulse">
       <div className="flex items-center gap-1.5 mb-2">
         <div className="w-3.5 h-3.5 rounded bg-[#268ffa]/20" />
-        <div className="w-28 h-3 rounded bg-[#268ffa]/20" />
+        <div className="w-28 h-3 rounded bg-white/10" />
       </div>
-      <div className="w-12 h-8 rounded bg-[#0d0446]/10 mb-1" />
-      <div className="w-36 h-2.5 rounded bg-[#0d0446]/5" />
+      <div className="w-12 h-8 rounded bg-white/10 mb-1" />
+      <div className="w-36 h-2.5 rounded bg-white/5" />
     </div>
   );
 
   return (
-    <div style={{ color: "#0d0446" }}>
+    <div>
       <div className="flex items-center justify-between mb-2">
         <p className="text-xs font-bold" style={{ color: "#268ffa" }}>🏆 Patrocinadores Ativos</p>
-        <span className="text-[10px] font-semibold" style={{ color: "#0d0446" }}>no ar</span>
+        <span className="text-[10px] font-semibold text-white/70">no ar</span>
       </div>
-      <p className="text-3xl font-bold" style={{ color: "#0d0446" }}>{totalLogos}</p>
-      <p className="text-[10px] mt-1" style={{ color: "#0d0446", opacity: 0.5 }}>logos vinculadas a programas</p>
+      <p className="text-3xl font-bold text-white">{totalLogos}</p>
+      <p className="text-[10px] mt-1 text-white/50">logos vinculadas a programas</p>
     </div>
   );
 }
@@ -1038,12 +1044,12 @@ function DashboardAgenda() {
     return (
       <div className="flex flex-col h-full animate-pulse">
         <div className="flex items-center gap-1.5 mb-1">
-          <div className="w-3.5 h-3.5 rounded bg-[#268ffa]/20" />
-          <div className="w-14 h-3 rounded bg-[#268ffa]/20" />
+          <div className="w-3.5 h-3.5 rounded bg-white/10" />
+          <div className="w-14 h-3 rounded bg-white/10" />
         </div>
         <div className="grid grid-cols-7 gap-0.5 mb-1">
           {Array.from({ length: 35 }).map((_, i) => (
-            <div key={i} className="w-full aspect-square rounded bg-[#0d0446]/5" />
+            <div key={i} className="w-full aspect-square rounded bg-white/5" />
           ))}
         </div>
         <div className="mt-1 space-y-1">
@@ -1133,8 +1139,8 @@ function DashboardCalendar({ selected, onSelect, eventDates, month, onMonthChang
         hasEvent: { backgroundColor: "#268ffa", fontWeight: "bold", color: "#fff", borderRadius: "50%" },
       }}
       styles={{
-        day: { color: "#0d0446", fontSize: "14px" },
-        head_cell: { color: "#0d0446", opacity: 0.4, fontSize: "10px", padding: 0 },
+        day: { color: "#ffffff", fontSize: "14px" },
+        head_cell: { color: "rgba(255,255,255,0.5)", fontSize: "10px", padding: 0 },
       }}
     />
   );
