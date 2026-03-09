@@ -377,35 +377,35 @@ export default function PrevisaoTempo() {
       {weather && (
         <>
           {/* Current weather — hero card */}
-          <div className="rounded-2xl overflow-hidden" style={{ background: "linear-gradient(135deg, #0d0446 0%, #1a0a6e 100%)", boxShadow: "0 8px 32px rgba(13,4,70,0.25)" }}>
+          <div className="rounded-2xl overflow-hidden" style={{ background: "#bfdcfa", boxShadow: "0 8px 32px rgba(13,4,70,0.15)" }}>
             <div className="p-6">
               <div className="flex items-start justify-between mb-5">
                 <div className="space-y-2">
                   <div className="flex items-center gap-3 flex-wrap">
-                    <h3 className="text-2xl font-bold text-white">{weather.city}</h3>
+                    <h3 className="text-2xl font-bold" style={{ color: "#0d0446" }}>{weather.city}</h3>
                     {(!primaryCity || isPrimary) && (
                       <label className="flex items-center gap-2 cursor-pointer select-none rounded-full px-3 py-1 transition-all"
-                        style={{ backgroundColor: isPrimary ? "rgba(45,190,243,0.2)" : "rgba(255,255,255,0.08)", border: `1px solid ${isPrimary ? "#2dbef3" : "rgba(255,255,255,0.15)"}` }}>
+                        style={{ backgroundColor: isPrimary ? "#0d0446" : "rgba(13,4,70,0.08)", border: `1px solid ${isPrimary ? "#0d0446" : "rgba(13,4,70,0.15)"}` }}>
                         <input type="checkbox" checked={isPrimary} onChange={togglePrimaryCity}
                           className="w-3.5 h-3.5" style={{ accentColor: "#2dbef3" }} />
-                        <span className="text-[11px] font-semibold text-white">Cidade Principal</span>
+                        <span className="text-[11px] font-semibold" style={{ color: isPrimary ? "#ffffff" : "#0d0446" }}>Cidade Principal</span>
                       </label>
                     )}
                     {!isFavorited && (
                       <button onClick={addFavorite} disabled={isPrimary}
-                        className="flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-semibold transition-all disabled:opacity-40 hover:bg-white/15"
-                        style={{ backgroundColor: "rgba(255,255,255,0.08)", color: "#ffffff", border: "1px solid rgba(255,255,255,0.15)" }}
+                        className="flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-semibold transition-all disabled:opacity-40"
+                        style={{ backgroundColor: "rgba(13,4,70,0.08)", color: "#0d0446", border: "1px solid rgba(13,4,70,0.15)" }}
                       >
                         <Star size={12} /> Secundária
                       </button>
                     )}
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-white/50">
+                    <span className="text-xs" style={{ color: "rgba(13,4,70,0.5)" }}>
                       {new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
                     </span>
                   </div>
-                  <p className="text-sm text-white/70">{getWeatherLabel(weather.current.weatherCode)}</p>
+                  <p className="text-sm" style={{ color: "rgba(13,4,70,0.6)" }}>{getWeatherLabel(weather.current.weatherCode)}</p>
                 </div>
                 <div className="flex items-center">
                   <WeatherIcon code={weather.current.weatherCode} size={72} />
@@ -413,45 +413,46 @@ export default function PrevisaoTempo() {
               </div>
 
               <div className="flex items-start gap-6 mb-6">
-                <div className="text-6xl font-bold flex-shrink-0" style={{ color: "#2dbef3" }}>{weather.current.temp}°C</div>
+                <div className="text-6xl font-bold flex-shrink-0" style={{ color: "#0d0446" }}>{weather.current.temp}°C</div>
                 <div className="flex-1 space-y-3 pt-2">
                   {aiLoading ? (
-                    <div className="flex items-center gap-2 text-white/40">
+                    <div className="flex items-center gap-2" style={{ color: "rgba(13,4,70,0.4)" }}>
                       <Sparkles size={14} className="animate-pulse" />
                       <span className="text-xs italic">Gerando descrição...</span>
                     </div>
                   ) : aiDescription ? (
                     <div className="flex items-start gap-2">
-                      <Sparkles size={14} className="mt-0.5 flex-shrink-0" style={{ color: "#2dbef3" }} />
-                      <p className="text-sm leading-relaxed text-white/80">{aiDescription}</p>
+                      <Sparkles size={14} className="mt-0.5 flex-shrink-0" style={{ color: "#268ffa" }} />
+                      <p className="text-sm leading-relaxed" style={{ color: "#0d0446" }}>{aiDescription}</p>
                     </div>
                   ) : null}
 
                   {!forecastDescription && !forecastLoading && aiDescription && (
                     <button onClick={fetchForecastDescription}
                       className="flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold transition-all hover:scale-105"
-                      style={{ background: "rgba(45,190,243,0.15)", color: "#2dbef3", border: "1px solid rgba(45,190,243,0.3)" }}
+                      style={{ background: "rgba(13,4,70,0.08)", color: "#0d0446", border: "1px solid rgba(13,4,70,0.15)" }}
                     >
                       <Sparkles size={12} /> Quer que eu te fale como será os próximos 5 dias?
                     </button>
                   )}
                   {forecastLoading && (
-                    <div className="flex items-center gap-2 text-white/40">
+                    <div className="flex items-center gap-2" style={{ color: "rgba(13,4,70,0.4)" }}>
                       <Sparkles size={14} className="animate-pulse" />
                       <span className="text-xs italic">Analisando os próximos dias...</span>
                     </div>
                   )}
                   {forecastDescription && (
-                    <div className="rounded-xl p-4" style={{ backgroundColor: "rgba(45,190,243,0.08)", border: "1px solid rgba(45,190,243,0.15)" }}>
+                    <div className="rounded-xl p-4" style={{ backgroundColor: "rgba(13,4,70,0.06)", border: "1px solid rgba(13,4,70,0.1)" }}>
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs font-bold text-white">Veja como fica o tempo nos próximos 5 dias</span>
+                        <span className="text-xs font-bold" style={{ color: "#0d0446" }}>Veja como fica o tempo nos próximos 5 dias</span>
                         <button onClick={() => setForecastDescription("")}
-                          className="text-xs px-2 py-0.5 rounded-full transition-all text-white/40 hover:text-white hover:bg-white/10"
+                          className="text-xs px-2 py-0.5 rounded-full transition-all hover:bg-[#0d0446]/10"
+                          style={{ color: "rgba(13,4,70,0.5)" }}
                         >✕</button>
                       </div>
                       <div className="flex items-start gap-2">
-                        <Sparkles size={14} className="mt-0.5 flex-shrink-0" style={{ color: "#2dbef3" }} />
-                        <p className="text-sm leading-relaxed text-white/80">{forecastDescription}</p>
+                        <Sparkles size={14} className="mt-0.5 flex-shrink-0" style={{ color: "#268ffa" }} />
+                        <p className="text-sm leading-relaxed" style={{ color: "#0d0446" }}>{forecastDescription}</p>
                       </div>
                     </div>
                   )}
@@ -517,13 +518,13 @@ export default function PrevisaoTempo() {
 
 function StatCard({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: string; color: string }) {
   return (
-    <div className="rounded-xl p-3.5 text-center transition-all hover:bg-white/10"
-      style={{ backgroundColor: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)" }}>
+    <div className="rounded-xl p-3.5 text-center transition-all hover:shadow-md"
+      style={{ backgroundColor: "rgba(255,255,255,0.5)", border: "1px solid rgba(13,4,70,0.08)" }}>
       <div className="flex items-center justify-center gap-1.5 mb-1.5" style={{ color }}>
         {icon}
-        <span className="text-[11px] font-medium text-white/50">{label}</span>
+        <span className="text-[11px] font-medium" style={{ color: "rgba(13,4,70,0.5)" }}>{label}</span>
       </div>
-      <p className="text-lg font-bold text-white">{value}</p>
+      <p className="text-lg font-bold" style={{ color: "#0d0446" }}>{value}</p>
     </div>
   );
 }
