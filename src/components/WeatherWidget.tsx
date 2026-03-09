@@ -113,7 +113,7 @@ export default function WeatherWidget({ onNavigate }: { onNavigate?: (page: any)
       <div className="flex flex-col h-full items-start justify-between">
         <div className="flex items-center gap-1.5 mb-2">
           <Sun size={14} style={{ color: "#268ffa", animationDuration: "8s" }} className="animate-spin" />
-          <span className="font-bold text-xs" style={{ color: "#268ffa" }}>TEMPO</span>
+          <span className="font-bold text-xs text-white">TEMPO</span>
         </div>
         <p className="text-xs flex-1 text-white/50">Nenhuma cidade configurada.</p>
         <button
@@ -156,7 +156,7 @@ export default function WeatherWidget({ onNavigate }: { onNavigate?: (page: any)
     <div className="rounded-xl flex flex-col h-full">
       <div className="flex items-center gap-1.5 mb-1">
         <Sun size={14} className="animate-spin" style={{ color: "#268ffa", animationDuration: "8s" }} />
-        <span className="font-bold text-xs" style={{ color: "#268ffa" }}>TEMPO</span>
+        <span className="font-bold text-xs text-white">TEMPO</span>
       </div>
 
       <div className="flex items-center gap-2 mb-1">

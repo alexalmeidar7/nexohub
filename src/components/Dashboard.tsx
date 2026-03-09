@@ -601,11 +601,11 @@ interface WidgetCard {
 }
 
 const defaultWidgets: WidgetCard[] = [
-  { id: "noar", bg: "#0c0441", render: () => <OnAirWidget /> },
-  { id: "weather", bg: "#ffffff", render: (nav) => <WeatherWidget onNavigate={nav} /> },
-  { id: "top10", bg: "#ffffff", render: () => <TopLikedSongs /> },
-  { id: "agenda", bg: "#ffffff", render: () => <DashboardAgenda /> },
-  { id: "comercial", bg: "#ffffff", render: () => <ComercialWidgets /> },
+  { id: "noar", bg: "glass-dark", render: () => <OnAirWidget /> },
+  { id: "weather", bg: "glass", render: (nav) => <WeatherWidget onNavigate={nav} /> },
+  { id: "top10", bg: "glass", render: () => <TopLikedSongs /> },
+  { id: "agenda", bg: "glass", render: () => <DashboardAgenda /> },
+  { id: "comercial", bg: "glass", render: () => <ComercialWidgets /> },
 ];
 
 function DashboardHome({ empresa, onNavigate }: { empresa: import("./ConfiguracoesPage").EmpresaConfig; onNavigate: (page: Page) => void }) {
@@ -707,13 +707,19 @@ function DashboardHome({ empresa, onNavigate }: { empresa: import("./Configuraco
           className={`dashboard-widget-card rounded-2xl p-3 lg:p-4 flex-shrink-0 overflow-hidden relative ${
             draggedId === widget.id ? "opacity-50 scale-95" : ""
           } ${dragOverId === widget.id ? "ring-2 ring-[#268ffa]" : ""}`}
-          style={widget.bg === "#ffffff" ? {
+          style={widget.bg === "glass-dark" ? {
+            background: "rgba(12, 4, 65, 0.6)",
+            backdropFilter: "blur(24px) saturate(1.4)",
+            WebkitBackdropFilter: "blur(24px) saturate(1.4)",
+            boxShadow: "0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1)",
+            border: "1px solid rgba(255,255,255,0.12)",
+          } : {
             background: "rgba(255, 255, 255, 0.12)",
             backdropFilter: "blur(24px) saturate(1.4)",
             WebkitBackdropFilter: "blur(24px) saturate(1.4)",
             boxShadow: "0 8px 32px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.15)",
             border: "1px solid rgba(255,255,255,0.15)",
-          } : { backgroundColor: widget.bg }}
+          }}
           onDragOver={(e) => handleDragOver(e, widget.id)}
           onDrop={(e) => handleDrop(e, widget.id)}
           onDragEnd={handleDragEnd}
@@ -977,7 +983,7 @@ function ComercialWidgets() {
   return (
     <div>
       <div className="flex items-center justify-between mb-2">
-        <p className="text-xs font-bold" style={{ color: "#268ffa" }}>🏆 Patrocinadores Ativos</p>
+        <p className="text-xs font-bold text-white">🏆 Patrocinadores Ativos</p>
         <span className="text-[10px] font-semibold text-white/70">no ar</span>
       </div>
       <p className="text-3xl font-bold text-white">{totalLogos}</p>
@@ -1083,7 +1089,7 @@ function DashboardAgenda() {
       {/* Header: icon + AGENDA + month nav */}
       <div className="flex items-center gap-1.5 mb-1">
         <CalendarDays size={14} style={{ color: "#268ffa" }} />
-        <span className="font-bold text-xs uppercase tracking-wide" style={{ color: "#268ffa" }}>Agenda</span>
+        <span className="font-bold text-xs uppercase tracking-wide text-white">Agenda</span>
         <div className="flex items-center gap-1 ml-auto">
           <button onClick={prevMonth} className="w-4 h-4 flex items-center justify-center rounded hover:opacity-70">
             <ChevronDown size={10} className="rotate-90" style={{ color: "#268ffa" }} />
