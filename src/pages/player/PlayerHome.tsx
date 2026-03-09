@@ -258,12 +258,12 @@ function CatalogRow({ groupName, groupVideos, items, onPlay, onHoverChange }: {
               const dateStr = video.published
                 ? new Date(video.published).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" })
                 : "";
-              const thumb = video.thumbnail || channel.cover_url;
+              const bannerThumb = channel.cover_url || video.thumbnail;
               return (
                 <button
                   key={video.videoId}
                   onClick={() => onPlay(channel.id)}
-                  onMouseEnter={() => onHoverChange(thumb)}
+                  onMouseEnter={() => onHoverChange(bannerThumb)}
                   onMouseLeave={() => onHoverChange(null)}
                   className="flex-shrink-0 w-56 h-32 rounded-xl overflow-hidden relative transition-all hover:scale-[1.02] border-[5px] border-transparent hover:border-white"
                 >
