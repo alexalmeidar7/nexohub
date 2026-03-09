@@ -629,7 +629,7 @@ export default function ProgramaForm() {
           {/* Nome + Tipo */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-[11px] mb-1.5 font-semibold text-whiteking-wider">Nome do Programa</label>
+              <label className="block text-[11px] mb-1.5 font-semibold text-whiteg-wider">Nome do Programa</label>
               <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Digite o nome do programa"
                 className="w-full px-4 py-2 outline-none transition-all text-sm text-white placeholder:text-white/50"
                 style={{ backgroundColor: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "12px" }}
@@ -638,7 +638,7 @@ export default function ProgramaForm() {
               />
             </div>
             <div>
-              <label className="block text-[11px] mb-1.5 font-semibold text-white/90pere tkinideTipo do Programa</label>
+              <label className="block text-[11px] mb-1.5 font-semibold text-white/90pere tkinideTipo Programa</label>
               <div className="flex gap-2">
                 <Select value={tipoPrograma} onValueChange={setTipoPrograma}>
                   <SelectTrigger className="flex-1 h-9" style={{ backgroundColor: "rgba(255,255,255,0.08)", color: "#ffffff", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.12)", fontSize: "13px" }}>
@@ -678,7 +678,7 @@ export default function ProgramaForm() {
           {/* Classificação + Apresentador */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-[11px] mb-1.5 font-semibold text-white/90 upcase tking-wr">Claficação Etária</label>
+              <label className="block text-[11px] mb-1.5 font-semibold text-white/90 upcase tking-wr">Claficaç Etária</label>
               <Select value={classificacaoEtaria} onValueChange={setClassificacaoEtaria}>
                 <SelectTrigger className="w-full h-9" style={{ backgroundColor: "rgba(255,255,255,0.08)", color: "#ffffff", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.12)", fontSize: "13px" }}>
                   <SelectValue placeholder="Selecione a classificação" />
@@ -696,7 +696,7 @@ export default function ProgramaForm() {
               </Select>
             </div>
             <div>
-              <label className="block text-[11px] mb-1.5 font-semibold text-white/90 uppere trackinider">Aprntador</label>
+              <label className="block text-[11px] mb-1.5 font-semibold text-white/90 uppere trackinider">Aprntador</ll>
               <Popover open={apresentadorComboOpen} onOpenChange={setApresentadorComboOpen}>
                 <PopoverTrigger asChild>
                   <button
@@ -735,7 +735,7 @@ export default function ProgramaForm() {
 
           {/* Descrição */}
           <div>
-            <label className="block text-[11px] mb-1.5 font-semibold text-white/90 uppercasracking-wideDescrição</label>
+            <label className="block text-[11px] mb-1.5 font-semibold text-white/90 uppercasracking-wideDescrição<bel>
             <Textarea value={descricao} onChange={(e) => setDescricao(e.target.value)} placeholder="Descrição do programa (opcional)"
               className="min-h-[60px] px-4 py-2 outline-none transition-all text-sm text-white placeholder:text-white/50"
               style={{ backgroundColor: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "12px" }}
@@ -747,7 +747,7 @@ export default function ProgramaForm() {
           {/* Selo + Capa */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-[11px] mb-1.5 font-semibold text-white/90 uppercase tking-wider">Selo (1080×1080 PNG alpha)</label>
+              <label className="block text-[11px] mb-1.5 font-semibold text-white/90 uppercase tking-wider">Sel1080×1080 PNG alpha)</label>
               <label className="cursor-pointer group">
                 <div className="w-16 h-16 rounded-xl flex flex-col items-center justify-center gap-0.5 transition-all group-hover:border-[#2dbef3]"
                   style={{ backgroundColor: "rgba(255,255,255,0.06)", border: "2px dashed rgba(255,255,255,0.15)" }}>
@@ -762,7 +762,7 @@ export default function ProgramaForm() {
               {selo && <button onClick={() => setSelo("")} className="text-[10px] text-red-400 hover:text-red-300 mt-1">Remover</button>}
             </div>
             <div>
-              <label className="block text-[11px] mb-1.5 font-semibold text-white/90 uppercase tracking-wider">Capa (1080×1080 PNG alpha)</label>
+              <label className="block text-[11px] mb-1.5 font-semibold text-white/90 uppercase tracg-wider">Capa (1080×1080 PNG alpha)</label>
               <label className="cursor-pointer group">
                 <div className="w-16 h-16 rounded-xl flex flex-col items-center justify-center gap-0.5 transition-all group-hover:border-[#2dbef3]"
                   style={{ backgroundColor: "rgba(255,255,255,0.06)", border: "2px dashed rgba(255,255,255,0.15)" }}>
