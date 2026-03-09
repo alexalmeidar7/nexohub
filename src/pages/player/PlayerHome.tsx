@@ -449,7 +449,12 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       {/* Sidebar - always visible, not affected by fade */}
       <aside
         className="w-20 flex flex-col items-center justify-center gap-3 z-40 fixed left-0 top-0 bottom-0"
-        style={{ background: "linear-gradient(to right, rgba(0,0,0,0.85), transparent)" }}
+        style={{
+          background: "rgba(0,0,0,0.35)",
+          backdropFilter: "blur(24px) saturate(1.4)",
+          WebkitBackdropFilter: "blur(24px) saturate(1.4)",
+          borderRight: "1px solid rgba(255,255,255,0.08)",
+        }}
       >
         {sidebarItems.map(item => (
           <button
@@ -472,7 +477,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       {/* Content wrapper with fade transition */}
       <div className={`relative flex-1 overflow-y-auto h-full transition-opacity duration-400 ease-in-out ${fadeOut ? "opacity-0" : "opacity-100"}`}>
         {/* Fixed Header */}
-        <header className="fixed top-0 left-0 right-0 z-20 flex items-center justify-between px-8 py-4">
+        <header className="fixed top-0 left-0 right-0 z-20 flex items-center justify-between px-8 py-4" style={{ background: "rgba(0,0,0,0.3)", backdropFilter: "blur(20px) saturate(1.3)", WebkitBackdropFilter: "blur(20px) saturate(1.3)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-player-surface flex items-center justify-center overflow-hidden">
                 {!dataLoaded ? (
@@ -538,8 +543,8 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
         <main ref={mainRef} className="px-8 pt-24 pb-6 z-10 ml-20 relative">
           {activeSection === "streaming" ? (
             /* ── Página dedicada: Canais ao Vivo ── */
-             <section style={{ marginTop: "220px" }}>
-              <h2 className="text-xl font-bold mb-6">Canais ao Vivo</h2>
+             <section className="rounded-2xl p-5" style={{ marginTop: "220px", background: "rgba(0,0,0,0.25)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", border: "1px solid rgba(255,255,255,0.06)" }}>
+              <h2 className="text-xl font-bold mb-6 tracking-wide uppercase text-player-foreground/90">Canais ao Vivo</h2>
               {!dataLoaded ? (
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
                   {[1, 2, 3, 4].map(i => (
@@ -567,8 +572,8 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
             </section>
           ) : activeSection === "content" ? (
             /* ── Página dedicada: Catálogo ── */
-            <section style={{ marginTop: "220px" }}>
-              <h2 className="text-xl font-bold mb-6">Catálogo</h2>
+            <section className="rounded-2xl p-5" style={{ marginTop: "220px", background: "rgba(0,0,0,0.25)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", border: "1px solid rgba(255,255,255,0.06)" }}>
+              <h2 className="text-xl font-bold mb-6 tracking-wide uppercase text-player-foreground/90">Catálogo</h2>
               {!dataLoaded ? (
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
                   {[1, 2, 3, 4].map(i => (
@@ -648,7 +653,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
             /* ── Home padrão ── */
             <>
               {/* Streamings ao vivo */}
-              <section className="mb-10" style={{ marginTop: "220px" }}>
+               <section className="mb-10 rounded-2xl p-5" style={{ marginTop: "220px", background: "rgba(0,0,0,0.25)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", border: "1px solid rgba(255,255,255,0.06)" }}>
                 {!dataLoaded ? (
                   <>
                     <Skeleton className="h-5 w-44 bg-white/10 mb-4" />
@@ -660,7 +665,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                   </>
                 ) : (
                   <>
-                    <h2 className="text-lg font-bold mb-4">streamings ao vivo</h2>
+                    <h2 className="text-lg font-bold mb-4 tracking-wide uppercase text-player-foreground/90">streamings ao vivo</h2>
                     <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
                       {streamingChannels.length === 0 && (
                         <div className="w-72 h-40 rounded-xl bg-player-surface border border-player-border flex items-center justify-center text-player-muted-foreground text-sm">
@@ -684,7 +689,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
 
               {/* Visto por último */}
               {user && (
-                <section>
+                <section className="mb-10 rounded-2xl p-5" style={{ background: "rgba(0,0,0,0.25)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", border: "1px solid rgba(255,255,255,0.06)" }}>
                   {!dataLoaded ? (
                     <>
                       <Skeleton className="h-5 w-36 bg-white/10 mb-4" />
@@ -696,7 +701,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                     </>
                   ) : watchHistory.length > 0 ? (
                     <>
-                      <h2 className="text-lg font-bold mb-4">visto por último</h2>
+                      <h2 className="text-lg font-bold mb-4 tracking-wide uppercase text-player-foreground/90">visto por último</h2>
                       <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
                         {watchHistory.map(item => (
                           <button
@@ -739,8 +744,8 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                 });
 
                 return (
-                  <section key={groupName} className="mb-10">
-                    <h2 className="text-lg font-bold mb-4">{groupName}</h2>
+                  <section key={groupName} className="mb-10 rounded-2xl p-5" style={{ background: "rgba(0,0,0,0.25)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                    <h2 className="text-lg font-bold mb-4 tracking-wide uppercase text-player-foreground/90">{groupName}</h2>
                     <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
                       {groupVideos.length > 0 ? (
                         groupVideos.map(({ channel, ...video }) => {
