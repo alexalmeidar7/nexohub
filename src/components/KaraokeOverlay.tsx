@@ -239,7 +239,7 @@ export default function KaraokeOverlay({
       <Confetti active={showConfetti} />
       <div
         className="absolute left-0 right-0 z-[25] flex flex-col items-center pointer-events-none animate-fade-in"
-        style={{ bottom: "145px" }}
+        style={{ bottom: "150px" }}
       >
         {/* Karaoke ON badge with speed controls */}
         <div className="flex items-center gap-2 mb-3 pointer-events-auto">
