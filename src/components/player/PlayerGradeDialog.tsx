@@ -215,20 +215,20 @@ function PlayerGradeDialog({ programas, onClose }: Props) {
                         <td
                           key={dia}
                           rowSpan={rowSpan}
-                          className="px-2 py-1.5 text-center rounded-xl grade-cell relative cursor-pointer group"
+                          className="px-1.5 py-1 text-left rounded-xl grade-cell relative cursor-pointer group"
                           style={{
                             background: isOnAir
                               ? "linear-gradient(135deg, #e60000, #b30000)"
                               : "rgba(255,255,255,0.04)",
                             color: isOnAir ? "#fff" : "rgba(255,255,255,0.7)",
                             fontWeight: isOnAir ? 700 : 400,
-                            verticalAlign: "middle",
+                            verticalAlign: "top",
                             boxShadow: isOnAir ? "0 4px 16px rgba(230,0,0,0.3)" : "none",
                             border: isOnAir ? "none" : "1px solid rgba(255,255,255,0.05)",
                           }}
                           onClick={() => setDetailProg(prog)}
                         >
-                          <div className="flex items-center justify-center gap-1">
+                          <div className="flex items-start gap-0.5">
                             <span className="text-[10px] truncate leading-tight">{prog.nome}</span>
                             <Plus size={9} className="shrink-0 opacity-0 group-hover:opacity-60 transition-opacity" />
                           </div>
