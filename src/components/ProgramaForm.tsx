@@ -638,7 +638,7 @@ export default function ProgramaForm() {
               />
             </div>
             <div>
-              <label className="block text-[11px] mb-1.5 font-semibold text-white uppercase tracking-wider">Tipo d   <div className="flex gap-2">
+              <label className="block text-[11px] mb-1.5 font-semibold text-white uppercase tracking-wider">Tipo d>
                 <Select value={tipoPrograma} onValueChange={setTipoPrograma}>
                   <SelectTrigger className="flex-1 h-9" style={{ backgroundColor: "rgba(255,255,255,0.08)", color: "#ffffff", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.12)", fontSize: "13px" }}>
                     <SelectValue placeholder="Selecione o tipo" />
@@ -695,7 +695,7 @@ export default function ProgramaForm() {
               </Select>
             </div>
             <div>
-              <label className="block text-[11px] m uppercase tracking-wider">Aprb-1.5 font-semibold text-white uppercase tracking-wider">Apresentador</labe={apresentadorComboOpen} onOpenChange={setApresentadorComboOpen}>
+              <label className="block text-[11px] m uppercase tracking-wider">Aprb-1.5 font-semibold text-whiteb-1.5 font-semibold text-white uppercase tracking-wider">Apresentador</labesetApresentadorComboOpen}>
                 <PopoverTrigger asChild>
                   <button
                     className="w-full h-9 flex items-center justify-between px-4 text-sm rounded-xl"
@@ -733,8 +733,7 @@ export default function ProgramaForm() {
 
           {/* Descrição */}
           <div>
-            <label className="block text-[11px] mb-1.5  uppercase tracking-wider">Descrição</laracking-wideDescrição<bel>
-            <Textarea value={descricao} onChange={(e) => setDescricao(e.target.value)} placeholder="Descrição do programa (opcional)"
+            <label className="block text-[11px] mb-1.5  uppercase tracking-wider">Descrição<font-semibold text-white uppercase tracking-wider">Descrição</laicao} onChange={(e) => setDescricao(e.target.value)} placeholder="Descrição do programa (opcional)"
               className="min-h-[60px] px-4 py-2 outline-none transition-all text-sm text-white placeholder:text-white/50"
               style={{ backgroundColor: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "12px" }}
               onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
