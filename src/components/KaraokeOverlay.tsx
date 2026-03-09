@@ -195,7 +195,7 @@ export default function KaraokeOverlay({
   const line2 = lines[line2Idx];
 
   const adjustSpeed = (delta: number) => {
-    setSpeedOffset(prev => Math.max(-5, Math.min(5, prev + delta)));
+    setSpeedOffset(prev => Math.max(-30, Math.min(30, prev + delta)));
   };
 
   // Error state: "Letra não encontrada" with exit animation
