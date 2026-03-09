@@ -1098,48 +1098,49 @@ export default function ProgramaForm() {
                 </tr>
               </thead>
               <tbody>
-                {sortedProgramas.map((p) => (
-                  <tr key={p.id} className="border-b" style={{ backgroundColor: "#ffffff", borderColor: "rgba(13,4,70,0.08)", opacity: p.ativo ? 1 : 0.6 }}>
-                    <td className="px-4 py-3 font-medium" style={{ color: "#0d0446" }}>
+                {sortedProgramas.map((p, i) => (
+                  <tr key={p.id} className="group transition-colors hover:bg-[#f0f4ff]" style={{ backgroundColor: i % 2 === 0 ? "#ffffff" : "#fafaff", borderTop: "1px solid rgba(13,4,70,0.05)" }} data-no-row-hover>
+                    <td className="px-4 py-2.5 font-semibold">
                       <div className="flex items-center gap-2">
                         {p.nome}
-                        {p.variavel && <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ backgroundColor: "rgba(13,4,70,0.1)", color: "#0d0446" }}>Variável</span>}
+                        {p.variavel && <span className="text-[9px] px-1.5 py-0.5 rounded-lg font-semibold" style={{ backgroundColor: "rgba(245,158,11,0.1)", color: "#d97706" }}>Variável</span>}
                       </div>
-                      {p.classificacaoEtaria && (
-                        <div className="mt-0.5">
-                          <ClassificacaoBadge value={p.classificacaoEtaria} size={18} />
-                        </div>
-                      )}
+                      {p.classificacaoEtaria && <div className="mt-0.5"><ClassificacaoBadge value={p.classificacaoEtaria} size={16} /></div>}
                     </td>
-                    <td className="px-4 py-3" style={{ color: "rgba(13,4,70,0.6)" }}>
+                    <td className="px-4 py-2.5 text-[11px]" style={{ color: "rgba(13,4,70,0.6)" }}>
                       {p.variavel && p.dataVariavel
                         ? format(new Date(p.dataVariavel + "T12:00:00"), "dd/MM/yyyy (EEEE)", { locale: ptBR })
-                        : p.diasSemana.join(", ")}
+                        : p.diasSemana.map(d => d.slice(0, 3)).join(", ")}
                     </td>
-                    <td className="px-4 py-3" style={{ color: "rgba(13,4,70,0.6)" }}>
+                    <td className="px-4 py-2.5 text-[11px]" style={{ color: "rgba(13,4,70,0.6)" }}>
                       {p.horarioInicio.slice(0, 5)} — {p.horarioFim.slice(0, 5)}
                     </td>
-                    <td className="px-4 py-3" style={{ color: "rgba(13,4,70,0.6)" }}>
+                    <td className="px-4 py-2.5 text-[11px]" style={{ color: "rgba(13,4,70,0.6)" }}>
                       {getApresentadorNome(p.apresentadorId)}
                     </td>
-                    <td className="px-4 py-3 text-center">
-                      <button onClick={() => startEdit(p)} title="Editar" className="hover:opacity-70 transition-opacity" style={{ color: "#0d0446" }}>
-                        <Pencil size={16} />
-                      </button>
+                    <td className="px-4 py-2.5 text-center">
+                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-semibold ${
+                        p.ativo ? "bg-green-50 text-green-600" : "bg-red-50 text-red-500"
+                      }`}>
+                        <div className={`w-1.5 h-1.5 rounded-full ${p.ativo ? "bg-green-500" : "bg-red-500"}`} />
+                        {p.ativo ? "Ativo" : "Inativo"}
+                      </span>
                     </td>
-                    <td className="px-4 py-3 text-center">
-                      <button onClick={() => toggleAtivo(p.id, p.ativo)} title={p.ativo ? "Desativar" : "Ativar"}>
-                        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold cursor-pointer ${
-                          p.ativo ? "bg-green-100 text-green-700" : "bg-red-100 text-red-600"
-                        }`}>
-                          {p.ativo ? "Ativo" : "Inativo"}
-                        </span>
-                      </button>
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <button onClick={() => removePrograma(p.id)} title="Remover" className="hover:opacity-70 transition-opacity" style={{ color: "#dc2626" }}>
-                        <Trash2 size={16} />
-                      </button>
+                    <td className="px-4 py-2.5 text-center">
+                      <div className="flex items-center justify-center gap-1">
+                        <button onClick={() => startEdit(p)} title="Editar"
+                          className="w-7 h-7 rounded-lg flex items-center justify-center transition-all hover:bg-[#268ffa]/10">
+                          <Pencil size={13} style={{ color: "#268ffa" }} />
+                        </button>
+                        <button onClick={() => toggleAtivo(p.id, p.ativo)} title={p.ativo ? "Desativar" : "Ativar"}
+                          className="w-7 h-7 rounded-lg flex items-center justify-center transition-all hover:bg-green-50">
+                          <Power size={13} style={{ color: p.ativo ? "#22c55e" : "#dc2626" }} />
+                        </button>
+                        <button onClick={() => removePrograma(p.id)} title="Remover"
+                          className="w-7 h-7 rounded-lg flex items-center justify-center transition-all hover:bg-red-50">
+                          <Trash2 size={13} style={{ color: "#dc2626" }} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
