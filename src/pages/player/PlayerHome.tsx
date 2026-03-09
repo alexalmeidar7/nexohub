@@ -676,9 +676,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
 
       {/* Banner fixo no topo — sempre visível */}
       <div
-        className="fixed top-0 left-[72px] right-0 z-[5] h-[400px] overflow-hidden rounded-b-2xl"
-        onMouseEnter={() => setBannerHovered(true)}
-        onMouseLeave={() => setBannerHovered(false)}
+        className="fixed top-0 left-[72px] right-0 z-0 h-[400px] overflow-hidden rounded-b-2xl pointer-events-none"
       >
         <img
           src="/images/banner-home.png"
