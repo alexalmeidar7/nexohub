@@ -258,7 +258,7 @@ function CatalogRow({ groupName, groupVideos, items, onPlay, onHoverChange }: {
               const dateStr = video.published
                 ? new Date(video.published).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" })
                 : "";
-              const thumb = channel.cover_url || video.thumbnail;
+              const thumb = video.thumbnail || channel.cover_url;
               return (
                 <button
                   key={video.videoId}
