@@ -317,7 +317,11 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   const { userSlug } = useParams();
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState<Section>("home");
+  const [visibleSection, setVisibleSection] = useState<Section>("home");
+  const [sectionFading, setSectionFading] = useState(false);
   const [fadeOut, setFadeOut] = useState(false);
+  const navRef = useRef<HTMLElement | null>(null);
+  const btnRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const [channels, setChannels] = useState<Channel[]>([]);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [channelName, setChannelName] = useState("");
@@ -535,6 +539,16 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   };
   const goToPlayerDefault = () => goToPlayer();
 
+  const handleSectionChange = useCallback((section: Section) => {
+    if (section === activeSection) return;
+    setActiveSection(section);
+    setSectionFading(true);
+    setTimeout(() => {
+      setVisibleSection(section);
+      setSectionFading(false);
+    }, 200);
+  }, [activeSection]);
+
   const handleSignOut = async () => {
     await signOut();
     navigate("/user/nexohub/player");
@@ -566,41 +580,38 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
         }}
       >
         {/* Nav items — centered vertically with sliding highlight */}
-        <nav className="flex flex-col items-center gap-1.5 flex-1 justify-center relative">
-          {/* Sliding background pill */}
+        <nav ref={navRef} className="flex flex-col items-center gap-1.5 flex-1 justify-center relative">
+          {/* Sliding background pill — uses refs for exact positioning */}
           {(() => {
-            const idx = sidebarItems.findIndex(i => i.section === activeSection);
-            // Each button is ~60px tall (py-3 + icon 36px + gap + label ≈ 60px), gap 6px
-            const itemH = 60;
-            const gap = 6;
-            const offset = idx * (itemH + gap);
+            const activeBtn = btnRefs.current[activeSection];
+            const nav = navRef.current;
+            if (!activeBtn || !nav) return null;
+            const navRect = nav.getBoundingClientRect();
+            const btnRect = activeBtn.getBoundingClientRect();
+            const top = btnRect.top - navRect.top;
+            const height = btnRect.height;
             return (
-              <div
-                className="absolute left-1/2 -translate-x-1/2 w-[52px] h-[60px] rounded-xl pointer-events-none"
-                style={{
-                  top: offset,
-                  transition: "top 0.35s cubic-bezier(0.4, 0, 0.2, 1)",
-                  background: "linear-gradient(135deg, hsl(var(--player-accent)), hsl(var(--player-accent-hover)))",
-                  boxShadow: "0 4px 20px hsla(var(--player-accent) / 0.4)",
-                }}
-              />
-            );
-          })()}
-          {/* Sliding indicator bar */}
-          {(() => {
-            const idx = sidebarItems.findIndex(i => i.section === activeSection);
-            const itemH = 60;
-            const gap = 6;
-            const offset = idx * (itemH + gap) + (itemH / 2) - 14; // center the 28px bar
-            return (
-              <span
-                className="absolute -left-[1px] w-[3px] h-7 rounded-r-full pointer-events-none"
-                style={{
-                  top: offset,
-                  transition: "top 0.35s cubic-bezier(0.4, 0, 0.2, 1)",
-                  backgroundColor: "hsl(var(--player-accent))",
-                }}
-              />
+              <>
+                <div
+                  className="absolute left-1/2 -translate-x-1/2 rounded-xl pointer-events-none z-0"
+                  style={{
+                    top,
+                    height,
+                    width: 52,
+                    transition: "top 0.35s cubic-bezier(0.4, 0, 0.2, 1), height 0.35s cubic-bezier(0.4, 0, 0.2, 1)",
+                    background: "linear-gradient(135deg, hsl(var(--player-accent)), hsl(var(--player-accent-hover)))",
+                    boxShadow: "0 4px 20px hsla(var(--player-accent) / 0.4)",
+                  }}
+                />
+                <span
+                  className="absolute -left-[1px] w-[3px] h-7 rounded-r-full pointer-events-none z-0"
+                  style={{
+                    top: top + height / 2 - 14,
+                    transition: "top 0.35s cubic-bezier(0.4, 0, 0.2, 1)",
+                    backgroundColor: "hsl(var(--player-accent))",
+                  }}
+                />
+              </>
             );
           })()}
           {sidebarItems.map(item => {
@@ -608,17 +619,13 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
             return (
               <button
                 key={item.section}
-                onMouseEnter={() => setActiveSection(item.section)}
+                ref={el => { btnRefs.current[item.section] = el; }}
+                onMouseEnter={() => handleSectionChange(item.section)}
                 className="group relative w-[52px] rounded-xl px-2 py-3 flex flex-col items-center justify-center gap-1 transition-all duration-300 focus-visible:outline-none z-[1]"
                 title={item.label}
                 aria-label={item.label}
               >
-                <div
-                  className={`w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-300 ${
-                    isActive ? "" : "group-hover:scale-110"
-                  }`}
-                  style={{ background: "transparent" }}
-                >
+                <div className="w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-300">
                   <item.icon className={`h-[18px] w-[18px] transition-colors duration-200 ${isActive ? "text-white" : "text-white/50 group-hover:text-white/80"}`} />
                 </div>
                 <span className={`text-[8px] font-medium leading-none tracking-wide transition-colors duration-200 ${isActive ? "text-white" : "text-white/40 group-hover:text-white/70"}`}>
@@ -708,7 +715,8 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
         </div>
 
         <main ref={mainRef} className="px-8 pt-24 pb-6 ml-[72px] relative z-[10]">
-          {activeSection === "streaming" ? (
+          <div className="transition-opacity duration-200 ease-in-out" style={{ opacity: sectionFading ? 0 : 1 }}>
+          {visibleSection === "streaming" ? (
             /* ── Página dedicada: Canais ao Vivo ── */
              <section className="rounded-2xl p-5" style={{ marginTop: "320px", background: "rgba(0,0,0,0.25)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", border: "1px solid rgba(255,255,255,0.06)" }}>
               <h2 className="text-xl font-bold mb-6 tracking-wide uppercase text-player-foreground/90">Canais ao Vivo</h2>
@@ -737,7 +745,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                 </div>
               )}
             </section>
-          ) : activeSection === "content" ? (
+          ) : visibleSection === "content" ? (
             /* ── Página dedicada: Catálogo ── */
             <section className="rounded-2xl p-5" style={{ marginTop: "320px", background: "rgba(0,0,0,0.25)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", border: "1px solid rgba(255,255,255,0.06)" }}>
               <h2 className="text-xl font-bold mb-6 tracking-wide uppercase text-player-foreground/90">Catálogo</h2>
@@ -922,6 +930,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
               })}
             </>
           )}
+          </div>
         </main>
       </div>
       {miniPlayerData && (
