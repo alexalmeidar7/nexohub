@@ -287,7 +287,18 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
   const btnSecondary: React.CSSProperties = { backgroundColor: "#ffffff", color: "#0d0446", border: "2px solid #0d0446", borderRadius: "20px" };
 
   return (
-    <div className="animate-fade-in space-y-6 max-w-3xl">
+    <div className="animate-fade-in">
+      <div className="rounded-2xl max-w-3xl" style={{ background: "#d9e9fa", boxShadow: "0 8px 32px rgba(13,4,70,0.12)", padding: "20px" }}>
+        <div className="flex items-center gap-3 mb-5">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(13,4,70,0.08)" }}>
+            <Save size={20} style={{ color: "#0d0446" }} />
+          </div>
+          <div>
+            <h3 className="text-base font-bold" style={{ color: "#0d0446" }}>Configurações</h3>
+            <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.5)" }}>Gerencie os dados da empresa e canais do player</p>
+          </div>
+        </div>
+        <div className="space-y-5">
 
       {/* Box 1: Configurações da Empresa */}
       {(section === "all" || section === "empresa") && <CollapsibleBox title="Configurações da Empresa">
