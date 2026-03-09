@@ -334,6 +334,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   const [playlistVideos, setPlaylistVideos] = useState<Record<string, PlaylistVideo[]>>({});
   const [nowPlaying, setNowPlaying] = useState<{ musica: string; artista: string } | null>(null);
   const [bannerOpacity, setBannerOpacity] = useState(1);
+  const [bannerHovered, setBannerHovered] = useState(false);
   const mainRef = useRef<HTMLElement | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const [shopProducts, setShopProducts] = useState<{ id: string; name: string; description: string | null; price: number; image_url: string | null; payment_url: string | null; stock: number }[]>([]);
@@ -673,8 +674,12 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
         </nav>
       </aside>
 
-      {/* Banner fixo no topo — fora do scroll container */}
-      <div className="fixed top-0 left-[72px] right-0 z-0 pointer-events-none h-[400px] overflow-hidden rounded-b-2xl transition-opacity duration-500 ease-in-out" style={{ opacity: bannerOpacity }}>
+      {/* Banner fixo no topo — sempre visível */}
+      <div
+        className="fixed top-0 left-[72px] right-0 z-[5] h-[400px] overflow-hidden rounded-b-2xl"
+        onMouseEnter={() => setBannerHovered(true)}
+        onMouseLeave={() => setBannerHovered(false)}
+      >
         <img
           src="/images/banner-home.png"
           alt="Banner"
@@ -689,14 +694,14 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
           />
         )}
         <div
-          className="absolute bottom-0 left-0 right-0 h-[160px]"
+          className="absolute bottom-0 left-0 right-0 h-[160px] pointer-events-none"
           style={{ background: "linear-gradient(to bottom, transparent 0%, hsl(var(--player)) 100%)" }}
         />
       </div>
 
       <div ref={scrollContainerRef} className={`relative flex-1 overflow-y-auto h-full transition-opacity duration-400 ease-in-out ${fadeOut ? "opacity-0" : "opacity-100"}`}>
 
-        <main ref={mainRef} className="px-8 pt-24 pb-6 ml-[72px] relative z-[10]">
+        <main ref={mainRef} className="px-8 pt-24 pb-6 ml-[72px] relative z-[10] transition-opacity duration-500 ease-in-out" style={{ opacity: bannerHovered ? 0.15 : 1 }}>
           <div className="transition-opacity duration-200 ease-in-out" style={{ opacity: sectionFading ? 0 : 1 }}>
           {visibleSection === "streaming" ? (
             /* ── Página dedicada: Canais ao Vivo ── */
