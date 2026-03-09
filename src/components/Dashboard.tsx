@@ -270,7 +270,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 return (
                   <div key={item.label}>
                     <button onClick={() => handleMenuClick(item)}
-                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${active ? "text-[#268ffa]" : "text-white hover:bg-white/5"}`}>
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${active ? "text-primary bg-sidebar-accent font-semibold shadow-sm" : "text-sidebar-foreground hover:text-foreground hover:bg-sidebar-accent/50"}`}
+                      aria-label={item.label}
+                      role="menuitem"
+                    >
                       <Icon size={16} className={active ? "text-[#268ffa]" : "text-white"} />
                       <span className="flex-1 text-left">{item.label}</span>
                       {item.children && (expanded ? <ChevronUp size={12} className="text-white/30" /> : <ChevronDown size={12} className="text-white/30" />)}
@@ -282,7 +285,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                           const childActive = currentPage === child.page;
                           return (
                             <button key={child.page} onClick={() => { setCurrentPage(child.page); setMobileMenuOpen(false); }}
-                              className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition-colors ${childActive ? "text-[#268ffa]" : "text-white"}`}>
+                              className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${childActive ? "text-primary bg-sidebar-accent/70 font-semibold" : "text-sidebar-foreground hover:text-foreground hover:bg-sidebar-accent/30"}`}
+                              aria-label={child.label}
+                              role="menuitem"
+                            >
                               <ChildIcon size={12} className={childActive ? "text-[#268ffa]" : "text-white"} />
                               <span>{child.label}</span>
                             </button>
@@ -370,16 +376,18 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   <div key={item.label}>
                     <button
                       onClick={() => handleMenuClick(item)}
-                      className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs transition-colors ${
-                        active ? "text-[#268ffa]" : "text-white hover:bg-white/5"
+                      className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                        active ? "text-primary bg-sidebar-accent font-semibold shadow-sm" : "text-sidebar-foreground hover:text-foreground hover:bg-sidebar-accent/50"
                       }`}
-                      onMouseEnter={e => { if (!active) { e.currentTarget.style.color = "#268ffa"; } }}
-                      onMouseLeave={e => { if (!active) { e.currentTarget.style.color = ""; } }}
+                      aria-label={item.label}
+                      role="menuitem"
                     >
-                      <Icon size={14} className={active ? "text-[#268ffa]" : "text-white"} />
+                      <Icon size={14} className={active ? "text-primary" : "text-sidebar-foreground"} />
                       <span className="flex-1 text-left">{item.label}</span>
                       {item.children && (
-                        expanded ? <ChevronUp size={12} className="text-white/30" /> : <ChevronDown size={12} className="text-white/30" />
+                        <div className="text-muted-foreground">
+                          {expanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                        </div>
                       )}
                     </button>
                     {item.children && expanded && (
@@ -391,13 +399,13 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                             <button
                               key={child.page}
                               onClick={() => setCurrentPage(child.page)}
-                              className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-[11px] transition-colors ${
-                                childActive ? "text-[#268ffa]" : "text-white"
+                              className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-[11px] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                                childActive ? "text-primary bg-sidebar-accent/70 font-semibold" : "text-sidebar-foreground hover:text-foreground hover:bg-sidebar-accent/30"
                               }`}
-                              onMouseEnter={e => { if (!childActive) { e.currentTarget.style.color = "#268ffa"; } }}
-                              onMouseLeave={e => { if (!childActive) { e.currentTarget.style.color = ""; } }}
+                              aria-label={child.label}
+                              role="menuitem"
                             >
-                              <ChildIcon size={12} className={childActive ? "text-[#268ffa]" : "text-white"} />
+                              <ChildIcon size={12} className={childActive ? "text-primary" : "text-sidebar-foreground"} />
                               <span>{child.label}</span>
                             </button>
                           );
