@@ -301,6 +301,7 @@ export default function PlayerPage() {
   const [clock, setClock] = useState(0);
   const [apresentadores, setApresentadores] = useState<Apresentador[]>([]);
   const [whatsappPhone, setWhatsappPhone] = useState<string | null>(null);
+  const [empresaLogo, setEmpresaLogo] = useState<string | null>(null);
   const [profileName, setProfileName] = useState("");
   const [profileAvatar, setProfileAvatar] = useState<string | null>(null);
 
@@ -592,6 +593,7 @@ export default function PlayerPage() {
           setApresentadores((data.apresentadores || []) as Apresentador[]);
           setShopProducts(data.shopProducts || []);
           if (data.empresa?.telefone_participacao) setWhatsappPhone(data.empresa.telefone_participacao);
+          if (data.empresa?.logo) setEmpresaLogo(data.empresa.logo);
 
           const now = new Date();
           const today = DAY_MAP_FULL[now.getDay()];
@@ -686,7 +688,7 @@ export default function PlayerPage() {
         const [programasRes, apresentadoresRes, empresaRes] = await Promise.all([
           supabase.from("programas").select("id, nome, horario_inicio, horario_fim, dias_semana, ativo, selo, estudio, variavel, data_variavel, capa, descricao, apresentador_id").eq("user_id", userId).eq("ativo", true).order("horario_inicio"),
           supabase.from("apresentadores").select("id, nome, foto, instagram").eq("user_id", userId).eq("ativo", true),
-          supabase.from("empresa_config").select("telefone_participacao").eq("user_id", userId).maybeSingle(),
+          supabase.from("empresa_config").select("telefone_participacao, logo").eq("user_id", userId).maybeSingle(),
         ]);
         if (cancelled) return;
 
@@ -694,6 +696,7 @@ export default function PlayerPage() {
         setProgramas(fetchedProgramas);
         if (!apresentadoresRes.error && apresentadoresRes.data) setApresentadores(apresentadoresRes.data as Apresentador[]);
         if (!empresaRes.error && empresaRes.data?.telefone_participacao) setWhatsappPhone(empresaRes.data.telefone_participacao);
+        if (!empresaRes.error && empresaRes.data?.logo) setEmpresaLogo(empresaRes.data.logo);
 
         // STAGE 3 — Deferred: shop products
         const currentProg = getCurrentProgram(fetchedProgramas);
@@ -1917,6 +1920,16 @@ export default function PlayerPage() {
             <span className="text-white/80 text-xs font-medium">{muted ? "Mudo" : `${volume}%`}</span>
           </div>
         </div>
+      )}
+
+      {/* Empresa logo on 991-1 */}
+      {is991Channel && empresaLogo && playing && (
+        <img
+          src={empresaLogo}
+          alt="Logo"
+          className="absolute top-4 right-4 z-30 object-contain rounded-lg"
+          style={{ width: 100, height: 100 }}
+        />
       )}
 
       {/* Buffering overlay */}
