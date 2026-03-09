@@ -638,7 +638,7 @@ export default function ProgramaForm() {
               />
             </div>
             <div>
-              <label className="block text-[11px] mb-1.5 font-semibold text-white uppercase tracking-wider">Tipo dg-wider">Tipo do Programa</label>
+              <label className="block text-[11px] mb-1.5 font-semibold text-white uppercase tracking-wider">Tipo dg-wider">Tipo dg-wider">Tipo do Programa</label>
               <div className="flex gap-2">
                 <Select value={tipoPrograma} onValueChange={setTipoPrograma}>
                   <SelectTrigger className="flex-1 h-9" style={{ backgroundColor: "rgba(255,255,255,0.08)", color: "#ffffff", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.12)", fontSize: "13px" }}>
@@ -696,7 +696,7 @@ export default function ProgramaForm() {
               </Select>
             </div>
             <div>
-              <label className="block text-[11px] mb-1.5 font-semi uppercase tracking-wider">Apresentador</laber">Aprntador</ll>
+              <label className="block text-[11px] m uppercase tracking-wider">Apresentador</labeider">Apresentador</laber">Aprntador</ll>
               <Popover open={apresentadorComboOpen} onOpenChange={setApresentadorComboOpen}>
                 <PopoverTrigger asChild>
                   <button
@@ -735,7 +735,7 @@ export default function ProgramaForm() {
 
           {/* Descrição */}
           <div>
-            <label className="block text-[11px] mb-1.5 font-semibold text-white/90 uppercasracking-wideDescrição<bel>
+            <label className="block text-[11px] mb-1.5  uppercase tracking-wider">Descrição</laracking-wideDescrição<bel>
             <Textarea value={descricao} onChange={(e) => setDescricao(e.target.value)} placeholder="Descrição do programa (opcional)"
               className="min-h-[60px] px-4 py-2 outline-none transition-all text-sm text-white placeholder:text-white/50"
               style={{ backgroundColor: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "12px" }}
