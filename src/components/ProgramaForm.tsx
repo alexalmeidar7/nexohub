@@ -629,7 +629,7 @@ export default function ProgramaForm() {
           {/* Nome + Tipo */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-[11px] mb-1.5 font-semibold text-whiteg-wider">Nome do Programa</label>
+              <label className="block text-[11px] mb-1.5 font-semibold text-white uppercase tracking-wider">Nome do Programa</label>
               <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Digite o nome do programa"
                 className="w-full px-4 py-2 outline-none transition-all text-sm text-white placeholder:text-white/50"
                 style={{ backgroundColor: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "12px" }}
