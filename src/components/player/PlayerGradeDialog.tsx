@@ -229,10 +229,10 @@ function PlayerGradeDialog({ programas, onClose }: Props) {
                           onClick={() => setDetailProg(prog)}
                         >
                           <div className="flex items-start gap-0.5">
-                            <span className="text-[10px] truncate leading-tight">{prog.nome}</span>
-                            <Plus size={9} className="shrink-0 opacity-0 group-hover:opacity-60 transition-opacity" />
+                            <span className="text-[10px] truncate leading-tight text-left">{prog.nome}</span>
+                            <Plus size={9} className="shrink-0 opacity-0 group-hover:opacity-60 transition-opacity mt-0.5" />
                           </div>
-                          <div className="text-[8px] opacity-40 mt-0.5">
+                          <div className="text-[8px] opacity-40 mt-0.5 text-left">
                             {prog.horario_inicio.slice(0, 5)} – {prog.horario_fim.slice(0, 5)}
                           </div>
                           {isOnAir && (
