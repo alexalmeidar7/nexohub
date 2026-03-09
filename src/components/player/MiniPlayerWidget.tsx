@@ -207,6 +207,16 @@ export default function MiniPlayerWidget({ data, onClose }: { data: MiniPlayerDa
     navigate(path);
   }, [data.channelId, userSlug, navigate]);
 
+  const handleManualPlay = useCallback(() => {
+    if (globalAudio) {
+      globalAudio.muted = false;
+      globalAudio.play().then(() => {
+        setPlaying(true);
+        setNeedsUnlock(false);
+      }).catch(() => {});
+    }
+  }, []);
+
   const glassStyle = {
     backgroundColor: "rgba(0, 0, 0, 0.7)",
     backdropFilter: "blur(24px)",
