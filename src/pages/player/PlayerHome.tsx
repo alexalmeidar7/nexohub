@@ -345,7 +345,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       .single()
       .then(({ data }) => {
         if (data?.nome) setProfileName(data.nome);
-        if (data?.avatar_url) setProfileAvatar(data.avatar_url);
+        setProfileAvatar(data?.avatar_url && data.avatar_url.trim() !== '' ? data.avatar_url : '/avatars/usr-default.png');
       });
   }, [user]);
 
