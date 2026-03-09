@@ -146,219 +146,178 @@ export default function CortesVideoPage() {
   const currentTimeStr = `${pad(now.getHours())}:${pad(now.getMinutes())} • ${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()}`;
 
   return (
-    <div className="space-y-6">
-      {/* YouTube URL */}
-      <div>
-        <label className="text-xs font-semibold uppercase tracking-wider mb-2 block" style={{ color: "#0d0446" }}>
-          Link do Vídeo (YouTube)
-        </label>
-        <div className="relative flex items-center">
-          <Link2 size={16} className="absolute left-3 text-[#268ffa] pointer-events-none flex-shrink-0" />
-          <input
-            type="url"
-            value={youtubeUrl}
-            onChange={(e) => { setYoutubeUrl(e.target.value); setResult(null); }}
-            placeholder="https://www.youtube.com/watch?v=..."
-            className="w-full pl-10 pr-4 py-3 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-[#268ffa]/30"
-            style={{ borderColor: "#e2e8f0", backgroundColor: "#fff", color: "#0d0446", textOverflow: "ellipsis" }}
-          />
+    <div className="animate-fade-in">
+      <div className="rounded-2xl" style={{ background: "#d9e9fa", boxShadow: "0 8px 32px rgba(13,4,70,0.12)", padding: "20px" }}>
+        {/* Header */}
+        <div className="flex items-center gap-3 mb-5">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(13,4,70,0.08)" }}>
+            <Scissors size={20} style={{ color: "#0d0446" }} />
+          </div>
+          <div>
+            <h3 className="text-base font-bold" style={{ color: "#0d0446" }}>Cortes de Vídeo</h3>
+            <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.5)" }}>Crie clipes de vídeos do YouTube com até 10 minutos</p>
+          </div>
         </div>
-        {youtubeUrl && !videoId && (
-          <p className="text-xs mt-1" style={{ color: "#ef4444" }}>URL inválida. Cole um link válido do YouTube.</p>
+
+        {/* URL Input */}
+        <div className="rounded-xl overflow-hidden mb-5" style={{ backgroundColor: "#ffffff", boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}>
+          <div className="px-4 py-2.5" style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)" }}>
+            <h3 className="text-sm font-bold" style={{ color: "#ffffff" }}>🔗 Link do Vídeo</h3>
+          </div>
+          <div className="p-5">
+            <div className="relative flex items-center">
+              <Link2 size={16} className="absolute left-3 pointer-events-none flex-shrink-0" style={{ color: "#268ffa" }} />
+              <input
+                type="url"
+                value={youtubeUrl}
+                onChange={(e) => { setYoutubeUrl(e.target.value); setResult(null); }}
+                placeholder="https://www.youtube.com/watch?v=..."
+                className="w-full pl-10 pr-4 py-2.5 text-sm outline-none transition-colors"
+                style={{ backgroundColor: "#ffffff", border: "1px solid #0d0446", color: "#0d0446", borderRadius: "20px" }}
+                onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
+                onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
+              />
+            </div>
+            {youtubeUrl && !videoId && (
+              <p className="text-[10px] mt-1" style={{ color: "#ef4444" }}>URL inválida. Cole um link válido do YouTube.</p>
+            )}
+          </div>
+        </div>
+
+        {/* Video preview */}
+        {videoId && (
+          <div className="rounded-xl overflow-hidden mb-5" style={{ backgroundColor: "#ffffff", boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}>
+            <div className="p-4 flex flex-col items-center gap-2">
+              <div className="rounded-xl overflow-hidden w-full" style={{ maxWidth: 480 }}>
+                <iframe
+                  src={`https://www.youtube.com/embed/${videoId}`}
+                  title="Preview"
+                  className="w-full aspect-video"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              </div>
+              {videoTitle && (
+                <p className="text-xs font-bold text-center max-w-[480px] leading-snug" style={{ color: "#0d0446" }}>
+                  {videoTitle}
+                </p>
+              )}
+              <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.4)" }}>{currentTimeStr}</p>
+            </div>
+          </div>
         )}
-      </div>
 
-      {/* Video preview - centered with title and time */}
-      {videoId && (
-        <div className="flex flex-col items-center gap-2">
-          <div className="rounded-xl overflow-hidden w-full" style={{ maxWidth: 480 }}>
-            <iframe
-              src={`https://www.youtube.com/embed/${videoId}`}
-              title="Preview"
-              className="w-full aspect-video"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            />
+        {/* Time inputs */}
+        <div className="rounded-xl overflow-hidden mb-5" style={{ backgroundColor: "#ffffff", boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}>
+          <div className="px-4 py-2.5" style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)" }}>
+            <h3 className="text-sm font-bold" style={{ color: "#ffffff" }}>⏱️ Definir Trecho</h3>
           </div>
-          {videoTitle && (
-            <p className="text-sm font-bold text-center max-w-[480px] leading-snug" style={{ color: "#0d0446" }}>
-              {videoTitle}
-            </p>
-          )}
-          <p className="text-xs" style={{ color: "#94a3b8" }}>{currentTimeStr}</p>
-        </div>
-      )}
+          <div className="p-5">
+            <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-4 items-center">
+              <div className="rounded-xl p-4 flex flex-col items-center gap-2" style={{ backgroundColor: "rgba(13,4,70,0.02)", border: "1px solid rgba(13,4,70,0.08)" }}>
+                <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#0d0446" }}>Tempo Inicial</label>
+                <input
+                  type="text" value={startTime} onChange={(e) => setStartTime(maskHMS(e.target.value))}
+                  placeholder="HH:MM:SS" maxLength={8}
+                  className="w-28 text-center py-2 rounded-lg text-sm font-mono outline-none transition-colors"
+                  style={{ border: "1px solid #0d0446", color: "#0d0446", backgroundColor: "#ffffff" }}
+                  onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
+                  onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
+                />
+                {videoId && startSeconds > 0 && (
+                  <img src={`https://img.youtube.com/vi/${videoId}/mqdefault.jpg`} alt="Frame" className="w-full max-w-[140px] h-auto rounded-lg object-cover" style={{ border: "1px solid rgba(13,4,70,0.08)" }} />
+                )}
+              </div>
 
-      {/* Time inputs inside a styled box */}
-      <div
-        className="rounded-2xl p-5"
-        style={{ backgroundColor: "#f8fafc", border: "1px solid #e2e8f0" }}
-      >
-        <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-4 items-center">
-          {/* Start time box */}
-          <div
-            className="rounded-xl p-4 flex flex-col items-center gap-2"
-            style={{ backgroundColor: "#fff", border: "1px solid #e2e8f0" }}
-          >
-            <label className="text-xs font-semibold uppercase tracking-wider" style={{ color: "#0d0446" }}>
-              Tempo Inicial
-            </label>
-            <input
-              type="text"
-              value={startTime}
-              onChange={(e) => setStartTime(maskHMS(e.target.value))}
-              placeholder="HH:MM:SS"
-              maxLength={8}
-              className="w-28 text-center py-2.5 rounded-lg border text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#268ffa]/30"
-              style={{ borderColor: "#e2e8f0", color: "#0d0446" }}
-            />
-            {videoId && startSeconds > 0 && (
-              <img
-                src={`https://img.youtube.com/vi/${videoId}/mqdefault.jpg`}
-                alt="Frame no tempo inicial"
-                className="w-full max-w-[140px] h-auto rounded-lg object-cover border"
-                style={{ borderColor: "#e2e8f0" }}
-              />
-            )}
-          </div>
+              <div className="flex flex-col items-center justify-center gap-1">
+                <Scissors size={20} style={{ color: duration > 0 ? "#268ffa" : "rgba(13,4,70,0.3)" }} />
+                <div className="flex items-center gap-1.5 px-4 py-2 rounded-full"
+                  style={{ backgroundColor: duration > 0 ? "#268ffa" : "rgba(13,4,70,0.08)", color: duration > 0 ? "#fff" : "rgba(13,4,70,0.4)" }}>
+                  <Clock size={14} />
+                  <span className="text-sm font-bold font-mono">{formatDuration(duration > 0 ? duration : 0)}</span>
+                </div>
+                {duration > 600 && <p className="text-[10px] mt-1 text-center" style={{ color: "#ef4444" }}>Máximo 10 min</p>}
+              </div>
 
-          {/* Duration badge - centered with scissors icon */}
-          <div className="flex flex-col items-center justify-center gap-1">
-            <Scissors size={20} style={{ color: duration > 0 ? "#268ffa" : "#94a3b8" }} />
-            <div
-              className="flex items-center gap-1.5 px-4 py-2 rounded-full"
-              style={{
-                backgroundColor: duration > 0 ? "#268ffa" : "#e2e8f0",
-                color: duration > 0 ? "#fff" : "#94a3b8",
-              }}
-            >
-              <Clock size={14} />
-              <span className="text-sm font-bold font-mono">{formatDuration(duration > 0 ? duration : 0)}</span>
-            </div>
-            {duration > 600 && (
-              <p className="text-xs mt-1 text-center" style={{ color: "#ef4444" }}>Máximo 10 min</p>
-            )}
-          </div>
-
-          {/* End time box */}
-          <div
-            className="rounded-xl p-4 flex flex-col items-center gap-2"
-            style={{ backgroundColor: "#fff", border: "1px solid #e2e8f0" }}
-          >
-            <label className="text-xs font-semibold uppercase tracking-wider" style={{ color: "#0d0446" }}>
-              Tempo Final
-            </label>
-            <input
-              type="text"
-              value={endTime}
-              onChange={(e) => setEndTime(maskHMS(e.target.value))}
-              placeholder="HH:MM:SS"
-              maxLength={8}
-              className="w-28 text-center py-2.5 rounded-lg border text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#268ffa]/30"
-              style={{ borderColor: "#e2e8f0", color: "#0d0446" }}
-            />
-            {videoId && endSeconds > 0 && (
-              <img
-                src={`https://img.youtube.com/vi/${videoId}/mqdefault.jpg`}
-                alt="Frame no tempo final"
-                className="w-full max-w-[140px] h-auto rounded-lg object-cover border"
-                style={{ borderColor: "#e2e8f0" }}
-              />
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Cut button */}
-      <div className="flex justify-center">
-        <button
-          onClick={handleCut}
-          disabled={!canCut || cutting}
-          className="flex items-center gap-2 px-8 py-3 rounded-xl text-sm font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90"
-          style={{ backgroundColor: "#268ffa", color: "#fff" }}
-        >
-          {cutting ? (
-            <>
-              <Loader2 size={16} className="animate-spin" />
-              Processando...
-            </>
-          ) : (
-            <>
-              <Scissors size={16} />
-              Gerar Corte
-            </>
-          )}
-        </button>
-      </div>
-
-      {/* Result */}
-      {result && (
-        <div className="space-y-4">
-          {/* Clip preview */}
-          <div className="flex justify-center">
-            <div className="rounded-xl overflow-hidden w-full" style={{ maxWidth: 640 }}>
-              <iframe
-                src={result.clip_embed_url}
-                title="Clip preview"
-                className="w-full aspect-video"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              />
+              <div className="rounded-xl p-4 flex flex-col items-center gap-2" style={{ backgroundColor: "rgba(13,4,70,0.02)", border: "1px solid rgba(13,4,70,0.08)" }}>
+                <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#0d0446" }}>Tempo Final</label>
+                <input
+                  type="text" value={endTime} onChange={(e) => setEndTime(maskHMS(e.target.value))}
+                  placeholder="HH:MM:SS" maxLength={8}
+                  className="w-28 text-center py-2 rounded-lg text-sm font-mono outline-none transition-colors"
+                  style={{ border: "1px solid #0d0446", color: "#0d0446", backgroundColor: "#ffffff" }}
+                  onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
+                  onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
+                />
+                {videoId && endSeconds > 0 && (
+                  <img src={`https://img.youtube.com/vi/${videoId}/mqdefault.jpg`} alt="Frame" className="w-full max-w-[140px] h-auto rounded-lg object-cover" style={{ border: "1px solid rgba(13,4,70,0.08)" }} />
+                )}
+              </div>
             </div>
           </div>
+        </div>
 
-          {/* Actions */}
-          <div className="rounded-xl p-4 space-y-3" style={{ backgroundColor: "#f0fdf4", border: "1px solid #bbf7d0" }}>
-            <div className="flex items-center gap-3">
-              <Play size={20} style={{ color: "#16a34a" }} />
-              <div className="flex-1">
-                <p className="text-sm font-bold" style={{ color: "#166534" }}>Trecho gerado com sucesso!</p>
-                <p className="text-xs" style={{ color: "#15803d" }}>
+        {/* Cut button */}
+        <div className="flex justify-center mb-5">
+          <button onClick={handleCut} disabled={!canCut || cutting}
+            className="flex items-center gap-2 px-8 py-2.5 rounded-full text-sm font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+            style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#fff", border: "none" }}
+            onMouseEnter={e => { if (canCut && !cutting) e.currentTarget.style.boxShadow = "0 4px 15px rgba(38,143,250,0.4)"; }}
+            onMouseLeave={e => { e.currentTarget.style.boxShadow = "none"; }}
+          >
+            {cutting ? <><Loader2 size={16} className="animate-spin" /> Processando...</> : <><Scissors size={16} /> Gerar Corte</>}
+          </button>
+        </div>
+
+        {/* Result */}
+        {result && (
+          <div className="space-y-4">
+            <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}>
+              <div className="p-4 flex justify-center">
+                <div className="rounded-xl overflow-hidden w-full" style={{ maxWidth: 640 }}>
+                  <iframe src={result.clip_embed_url} title="Clip preview" className="w-full aspect-video"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}>
+              <div className="px-4 py-2.5" style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)" }}>
+                <div className="flex items-center gap-2">
+                  <Play size={14} className="text-white" />
+                  <span className="text-sm font-bold text-white">Trecho gerado com sucesso!</span>
+                </div>
+                <p className="text-[10px] mt-0.5" style={{ color: "rgba(255,255,255,0.7)" }}>
                   Duração: {formatDuration(result.duration)}
                   {result.download_quality && ` • Qualidade: ${result.download_quality}`}
                 </p>
               </div>
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              <button
-                onClick={handleDownload}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold transition-opacity hover:opacity-80"
-                style={{ backgroundColor: "#dc2626", color: "#fff" }}
-              >
-                <Download size={12} />
-                Baixar Vídeo (.mp4)
-              </button>
-              <button
-                onClick={() => copyToClipboard(result.share_url)}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold transition-opacity hover:opacity-80"
-                style={{ backgroundColor: "#268ffa", color: "#fff" }}
-              >
-                <Copy size={12} />
-                Copiar Link com Tempo
-              </button>
-              <button
-                onClick={() => copyToClipboard(result.clip_embed_url)}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold transition-opacity hover:opacity-80"
-                style={{ backgroundColor: "#0d0446", color: "#fff" }}
-              >
-                <Copy size={12} />
-                Copiar Embed
-              </button>
-              <a
-                href={result.share_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold transition-opacity hover:opacity-80"
-                style={{ backgroundColor: "#16a34a", color: "#fff" }}
-              >
-                <ExternalLink size={12} />
-                Abrir no YouTube
-              </a>
+              <div className="p-4 flex flex-wrap gap-2">
+                <button onClick={handleDownload}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-full text-[10px] font-bold transition-opacity hover:opacity-80"
+                  style={{ backgroundColor: "#dc2626", color: "#fff" }}>
+                  <Download size={12} /> Baixar Vídeo (.mp4)
+                </button>
+                <button onClick={() => copyToClipboard(result.share_url)}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-full text-[10px] font-bold transition-opacity hover:opacity-80"
+                  style={{ backgroundColor: "#268ffa", color: "#fff" }}>
+                  <Copy size={12} /> Copiar Link com Tempo
+                </button>
+                <button onClick={() => copyToClipboard(result.clip_embed_url)}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-full text-[10px] font-bold transition-opacity hover:opacity-80"
+                  style={{ backgroundColor: "#0d0446", color: "#fff" }}>
+                  <Copy size={12} /> Copiar Embed
+                </button>
+                <a href={result.share_url} target="_blank" rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-full text-[10px] font-bold transition-opacity hover:opacity-80"
+                  style={{ backgroundColor: "#16a34a", color: "#fff" }}>
+                  <ExternalLink size={12} /> Abrir no YouTube
+                </a>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
