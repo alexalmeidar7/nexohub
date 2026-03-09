@@ -163,17 +163,17 @@ export default function ApresentadorForm() {
   return (
     <div className="animate-fade-in space-y-6">
       {/* Form Card */}
-      <div className="rounded-2xl overflow-hidden" style={{ background: "linear-gradient(135deg, #0d0446 0%, #1a0a6e 100%)", boxShadow: "0 8px 32px rgba(13,4,70,0.25)" }}>
+      <div className="rounded-2xl overflow-hidden" style={{ background: "#d9e9fa", boxShadow: "0 8px 32px rgba(13,4,70,0.15)" }}>
         {/* Form Header */}
-        <div className="flex items-center gap-3 px-6 py-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(45,191,244,0.15)" }}>
-            <UserPlus size={20} style={{ color: "#2dbff4" }} />
+        <div className="flex items-center gap-3 px-6 py-4" style={{ borderBottom: "1px solid rgba(13,4,70,0.08)" }}>
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(38,143,250,0.15)" }}>
+            <UserPlus size={20} style={{ color: "#268ffa" }} />
           </div>
           <div>
-            <h3 className="text-base font-bold text-white">
+            <h3 className="text-base font-bold" style={{ color: "#0d0446" }}>
               {editingId ? "Editar Apresentador/Participante" : "Novo Apresentador/Participante"}
             </h3>
-            <p className="text-[11px] text-white/40">Preencha os dados abaixo para cadastrar</p>
+            <p className="text-[11px]" style={{ color: "rgba(13,4,70,0.5)" }}>Preencha os dados abaixo para cadastrar</p>
           </div>
         </div>
 
