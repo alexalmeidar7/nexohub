@@ -596,7 +596,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
         <main ref={mainRef} className="px-8 pt-24 pb-6 z-10 ml-[72px] relative">
           {activeSection === "streaming" ? (
             /* ── Página dedicada: Canais ao Vivo ── */
-             <section className="rounded-2xl p-5" style={{ marginTop: "220px", background: "rgba(0,0,0,0.25)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", border: "1px solid rgba(255,255,255,0.06)" }}>
+             <section className="rounded-2xl p-5" style={{ marginTop: "320px", background: "rgba(0,0,0,0.25)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", border: "1px solid rgba(255,255,255,0.06)" }}>
               <h2 className="text-xl font-bold mb-6 tracking-wide uppercase text-player-foreground/90">Canais ao Vivo</h2>
               {!dataLoaded ? (
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
