@@ -135,19 +135,8 @@ export default function AudioDualCard({
 
   return (
     <div className="absolute inset-0 z-10 flex items-center justify-center overflow-hidden" style={{ paddingBottom: "100px" }}>
-      {/* Background — channel thumb, fixed and covering */}
-      {channelThumb && (
-        <img
-          src={channelThumb}
-          alt=""
-          className="absolute inset-0 w-full h-full object-cover"
-          style={{ transform: "scale(1.05)" }}
-        />
-      )}
-      {/* Fallback solid black when no thumb */}
-      {!channelThumb && (
-        <div className="absolute inset-0" style={{ backgroundColor: "hsl(0 0% 0%)" }} />
-      )}
+      {/* Background — solid black */}
+      <div className="absolute inset-0" style={{ backgroundColor: "hsl(0 0% 0%)" }} />
       {/* Wrapper with relative positioning so presenter sits behind music card */}
       <div className={`relative flex items-center justify-center ${isTV ? "max-w-[1200px]" : "max-w-[800px]"}`} style={{ width: isTV ? "80vw" : "80vw", height: isTV ? "80vh" : "min(80vh, 420px)" }}>
 
