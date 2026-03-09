@@ -377,7 +377,7 @@ export default function PrevisaoTempo() {
       {weather && (
         <>
           {/* Current weather — hero card */}
-          <div className="rounded-2xl overflow-hidden" style={{ background: "#bfdcfa", boxShadow: "0 8px 32px rgba(13,4,70,0.15)" }}>
+          <div className="rounded-2xl overflow-hidden" style={{ background: "#d9e9fa", boxShadow: "0 8px 32px rgba(13,4,70,0.15)" }}>
             <div className="p-6">
               <div className="flex items-start justify-between mb-5">
                 <div className="space-y-2">
