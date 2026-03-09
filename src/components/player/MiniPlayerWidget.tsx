@@ -62,11 +62,25 @@ export default function MiniPlayerWidget({ data, onClose }: { data: MiniPlayerDa
         hls.loadSource(data.url);
         hls.attachMedia(mediaEl);
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
-          mediaEl.play().catch(() => {});
+          // Try unmuted first, fall back to muted autoplay
+          mediaEl.muted = false;
+          mediaEl.play().catch(() => {
+            mediaEl.muted = true;
+            mediaEl.play().then(() => {
+              // Auto-unmute after a short delay (user gesture context still valid)
+              setTimeout(() => { mediaEl.muted = false; }, 100);
+            }).catch(() => {});
+          });
         });
       } else if (mediaEl.canPlayType("application/vnd.apple.mpegurl")) {
         mediaEl.src = data.url;
-        mediaEl.addEventListener("loadedmetadata", () => mediaEl.play().catch(() => {}));
+        mediaEl.addEventListener("loadedmetadata", () => {
+          mediaEl.muted = false;
+          mediaEl.play().catch(() => {
+            mediaEl.muted = true;
+            mediaEl.play().catch(() => {});
+          });
+        });
       }
     })();
 
