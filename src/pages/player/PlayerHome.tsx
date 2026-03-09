@@ -745,7 +745,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                 </div>
               )}
             </section>
-          ) : activeSection === "content" ? (
+          ) : visibleSection === "content" ? (
             /* ── Página dedicada: Catálogo ── */
             <section className="rounded-2xl p-5" style={{ marginTop: "320px", background: "rgba(0,0,0,0.25)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", border: "1px solid rgba(255,255,255,0.06)" }}>
               <h2 className="text-xl font-bold mb-6 tracking-wide uppercase text-player-foreground/90">Catálogo</h2>
