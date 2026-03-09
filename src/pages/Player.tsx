@@ -593,6 +593,7 @@ export default function PlayerPage() {
           setApresentadores((data.apresentadores || []) as Apresentador[]);
           setShopProducts(data.shopProducts || []);
           if (data.empresa?.telefone_participacao) setWhatsappPhone(data.empresa.telefone_participacao);
+          if (data.empresa?.logo) setEmpresaLogo(data.empresa.logo);
 
           const now = new Date();
           const today = DAY_MAP_FULL[now.getDay()];
