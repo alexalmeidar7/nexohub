@@ -602,37 +602,51 @@ export default function NoticiasPanel() {
   return (
     <TooltipProvider delayDuration={300}>
     <div className="animate-fade-in space-y-4">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <h3 className="text-xl font-bold" style={{ color: "#0d0446" }}>Notícias do momento</h3>
-          <button
-            onClick={() => setWizardOpen(true)}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-full text-white font-semibold text-[10px] transition-all hover:opacity-90"
-            style={{ backgroundColor: "#2ec1f7" }}
-          >
-            <Newspaper size={10} /> Montar Jornal
-          </button>
-           <button
-            onClick={() => { setShowAddSiteInput(prev => !prev); setShowNoticiaAvulsaInput(false); }}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-full font-semibold text-[10px] transition-all"
-            style={{ backgroundColor: "#0d0446", color: "#ffffff" }}
-          >
-            <Plus size={10} /> Adicionar Site
-          </button>
-          <button
-            onClick={() => { setShowNoticiaAvulsaInput(prev => !prev); setShowAddSiteInput(false); }}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-full font-semibold text-[10px] transition-all"
-            style={{ backgroundColor: "#0d0446", color: "#ffffff" }}
-          >
-            <LinkIcon size={10} /> Notícia Avulsa
-          </button>
+      {/* Main Card */}
+      <div className="rounded-2xl overflow-hidden" style={{ background: "#d9e9fa", boxShadow: "0 8px 32px rgba(13,4,70,0.12)", padding: "20px" }}>
+        {/* Header */}
+        <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(13,4,70,0.08)" }}>
+              <Newspaper size={20} style={{ color: "#0d0446" }} />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold" style={{ color: "#0d0446" }}>Notícias do momento</h3>
+              <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.5)" }}>Portais, cotações e ferramentas de jornal</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setWizardOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-bold text-[10px] transition-all hover:shadow-md"
+              style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#ffffff" }}
+            >
+              <Newspaper size={11} /> Montar Jornal
+            </button>
+            <button
+              onClick={() => { setShowAddSiteInput(prev => !prev); setShowNoticiaAvulsaInput(false); }}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-full font-bold text-[10px] transition-all"
+              style={{ backgroundColor: "#0d0446", color: "#ffffff" }}
+            >
+              <Plus size={10} /> Adicionar Site
+            </button>
+            <button
+              onClick={() => { setShowNoticiaAvulsaInput(prev => !prev); setShowAddSiteInput(false); }}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-full font-bold text-[10px] transition-all"
+              style={{ backgroundColor: "#0d0446", color: "#ffffff" }}
+            >
+              <LinkIcon size={10} /> Notícia Avulsa
+            </button>
+            <button onClick={() => { loadAll(); loadCotacoes(); }} disabled={loading}
+              className="w-8 h-8 rounded-full flex items-center justify-center transition-all disabled:opacity-50"
+              style={{ backgroundColor: "rgba(13,4,70,0.06)" }}
+              onMouseEnter={e => { e.currentTarget.style.backgroundColor = "rgba(13,4,70,0.12)"; }}
+              onMouseLeave={e => { e.currentTarget.style.backgroundColor = "rgba(13,4,70,0.06)"; }}
+            >
+              <RefreshCw size={14} className={loading ? "animate-spin" : ""} style={{ color: "#0d0446" }} />
+            </button>
+          </div>
         </div>
-        <button onClick={() => { loadAll(); loadCotacoes(); }} disabled={loading}
-          className="text-muted-foreground hover:text-primary transition-colors disabled:opacity-50">
-          <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
-        </button>
-      </div>
 
       {showAddSiteInput && (
         <div className="flex gap-2 animate-fade-in">
@@ -685,8 +699,8 @@ export default function NoticiasPanel() {
         {/* LEFT COLUMN */}
         <div className="space-y-4" style={{ width: (jornalConfig || wizardOpen) ? "50%" : "100%" }}>
           {/* Cotações marquee */}
-          <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)", width: (jornalConfig || wizardOpen) ? "100%" : "50%" }}>
-            <div className="px-3 py-2 font-bold text-xs tracking-wide text-white rounded-t-xl flex items-center justify-between" style={{ backgroundColor: "#0d0446" }}>
+          <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.06)", width: (jornalConfig || wizardOpen) ? "100%" : "50%", boxShadow: "0 2px 10px rgba(13,4,70,0.05)" }}>
+            <div className="px-3 py-2.5 font-bold text-xs tracking-wide text-white flex items-center justify-between" style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)" }}>
               <span style={{ color: "#ffffff" }}>💹 Cotações - Bolsas e Moedas</span>
               <button onClick={() => toggleBox('cotacoes')} className="p-0.5 rounded hover:bg-white/20 transition-colors">
                 {collapsedBoxes['cotacoes'] ? <ChevronDown size={12} /> : <ChevronUp size={12} />}
@@ -736,7 +750,7 @@ export default function NoticiasPanel() {
           </div>
 
           {/* Mini Previsão do Tempo */}
-          <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)", width: (jornalConfig || wizardOpen) ? "100%" : "50%" }}
+          <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.06)", width: (jornalConfig || wizardOpen) ? "100%" : "50%", boxShadow: "0 2px 10px rgba(13,4,70,0.05)" }}
             draggable={!!miniWeather}
             onDragStart={(e) => {
               if (!miniWeather) return;
@@ -748,7 +762,7 @@ export default function NoticiasPanel() {
               }));
             }}
           >
-            <div className="px-3 py-2 font-bold text-xs tracking-wide text-white rounded-t-xl flex items-center justify-between cursor-grab" style={{ backgroundColor: "#0d0446" }}>
+            <div className="px-3 py-2.5 font-bold text-xs tracking-wide text-white flex items-center justify-between cursor-grab" style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)" }}>
               <span className="flex items-center gap-1.5" style={{ color: "#ffffff" }}>
                 <GripVertical size={12} className="opacity-60" />
                 <CloudSun size={12} />
@@ -802,7 +816,7 @@ export default function NoticiasPanel() {
 
           {/* Bloco de Economia */}
           {blocoEconomia.length > 0 && (
-            <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)", width: (jornalConfig || wizardOpen) ? "100%" : "50%" }}
+            <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.06)", width: (jornalConfig || wizardOpen) ? "100%" : "50%", boxShadow: "0 2px 10px rgba(13,4,70,0.05)" }}
               draggable
               onDragStart={(e) => {
                 e.dataTransfer.setData("text/plain", JSON.stringify({
@@ -811,7 +825,7 @@ export default function NoticiasPanel() {
                 }));
               }}
             >
-              <div className="px-3 py-2 font-bold text-xs tracking-wide text-white rounded-t-xl flex items-center justify-between cursor-grab" style={{ backgroundColor: "#0d0446" }}>
+              <div className="px-3 py-2.5 font-bold text-xs tracking-wide text-white flex items-center justify-between cursor-grab" style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)" }}>
                 <span className="flex items-center gap-1.5">
                   <GripVertical size={12} className="opacity-60" />
                   <span style={{ color: "#ffffff" }}>📊 Bloco de Economia</span>
@@ -843,8 +857,8 @@ export default function NoticiasPanel() {
           )}
 
           {/* News Portals Accordion */}
-          <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)", width: (jornalConfig || wizardOpen) ? "100%" : "50%" }}>
-            <div className="px-3 py-2 font-bold text-xs tracking-wide text-white rounded-t-xl flex items-center justify-between" style={{ backgroundColor: "#0d0446" }}>
+          <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.06)", width: (jornalConfig || wizardOpen) ? "100%" : "50%", boxShadow: "0 2px 10px rgba(13,4,70,0.05)" }}>
+            <div className="px-3 py-2.5 font-bold text-xs tracking-wide text-white flex items-center justify-between" style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)" }}>
               <span style={{ color: "#ffffff" }}>📰 Portais de Notícias</span>
               <button onClick={() => toggleBox('portais')} className="p-0.5 rounded hover:bg-white/20 transition-colors">
                 {collapsedBoxes['portais'] ? <ChevronDown size={12} /> : <ChevronUp size={12} />}
@@ -917,8 +931,8 @@ export default function NoticiasPanel() {
 
           {/* Sites Adicionados Box */}
           {customSites.length > 0 && (
-            <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)", width: (jornalConfig || wizardOpen) ? "100%" : "50%" }}>
-              <div className="px-3 py-2 font-bold text-xs tracking-wide text-white rounded-t-xl flex items-center justify-between" style={{ backgroundColor: "#0d0446" }}>
+            <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.06)", width: (jornalConfig || wizardOpen) ? "100%" : "50%", boxShadow: "0 2px 10px rgba(13,4,70,0.05)" }}>
+              <div className="px-3 py-2.5 font-bold text-xs tracking-wide text-white flex items-center justify-between" style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)" }}>
                 <span style={{ color: "#ffffff" }}>🌐 Sites Adicionados</span>
                 <button onClick={() => toggleBox('sitesAdicionados')} className="p-0.5 rounded hover:bg-white/20 transition-colors">
                   {collapsedBoxes['sitesAdicionados'] ? <ChevronDown size={12} /> : <ChevronUp size={12} />}
@@ -991,8 +1005,8 @@ export default function NoticiasPanel() {
 
           {/* Notícia Avulsa Box */}
           {noticiasAvulsas.length > 0 && (
-            <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)", width: (jornalConfig || wizardOpen) ? "100%" : "50%" }}>
-              <div className="px-3 py-2 font-bold text-xs tracking-wide text-white rounded-t-xl flex items-center justify-between" style={{ backgroundColor: "#0d0446" }}>
+            <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.06)", width: (jornalConfig || wizardOpen) ? "100%" : "50%", boxShadow: "0 2px 10px rgba(13,4,70,0.05)" }}>
+              <div className="px-3 py-2.5 font-bold text-xs tracking-wide text-white flex items-center justify-between" style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)" }}>
                 <span style={{ color: "#ffffff" }}>📌 Notícia Avulsa</span>
                 <button onClick={() => toggleBox('noticiaAvulsa')} className="p-0.5 rounded hover:bg-white/20 transition-colors">
                   {collapsedBoxes['noticiaAvulsa'] ? <ChevronDown size={12} /> : <ChevronUp size={12} />}
@@ -1073,8 +1087,8 @@ export default function NoticiasPanel() {
           return `<?xml version="1.0" encoding="UTF-8"?>\n<noticias>\n${newsXml}\n${cotXml}\n</noticias>`;
         })()} />
       )}
+      </div>{/* End main card */}
 
-      {/* Image hover preview */}
       {hoveredImage && (
         <div
           className="fixed z-[9999] pointer-events-none rounded-lg overflow-hidden shadow-xl border"
