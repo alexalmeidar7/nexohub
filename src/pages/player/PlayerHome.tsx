@@ -689,7 +689,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
 
               {/* Visto por último */}
               {user && (
-                <section>
+                <section className="mb-10 rounded-2xl p-5" style={{ background: "rgba(0,0,0,0.25)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", border: "1px solid rgba(255,255,255,0.06)" }}>
                   {!dataLoaded ? (
                     <>
                       <Skeleton className="h-5 w-36 bg-white/10 mb-4" />
