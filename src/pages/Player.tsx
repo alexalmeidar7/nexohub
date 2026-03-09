@@ -695,6 +695,7 @@ export default function PlayerPage() {
         setProgramas(fetchedProgramas);
         if (!apresentadoresRes.error && apresentadoresRes.data) setApresentadores(apresentadoresRes.data as Apresentador[]);
         if (!empresaRes.error && empresaRes.data?.telefone_participacao) setWhatsappPhone(empresaRes.data.telefone_participacao);
+        if (!empresaRes.error && empresaRes.data?.logo) setEmpresaLogo(empresaRes.data.logo);
 
         // STAGE 3 — Deferred: shop products
         const currentProg = getCurrentProgram(fetchedProgramas);
