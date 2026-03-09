@@ -316,15 +316,18 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         </div>
       )}
 
-      {/* Floating hamburger button - desktop */}
-      <button
-        onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-        className="hidden lg:flex fixed top-5 left-[40px] z-[60] w-11 h-11 rounded-full items-center justify-center transition-all shadow-lg hover:scale-105"
-        style={{ backgroundColor: sidebarCollapsed ? "rgba(0,0,0,0.7)" : "#268ffa" }}
-        title={sidebarCollapsed ? "Abrir menu" : "Fechar menu"}
-      >
-        <Menu size={18} className="text-white" />
-      </button>
+      {/* Floating hamburger button + company name - desktop */}
+      <div className="hidden lg:flex fixed top-5 left-[40px] z-[60] items-center gap-3">
+        <button
+          onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+          className="w-11 h-11 rounded-full flex items-center justify-center transition-all shadow-lg hover:scale-105"
+          style={{ backgroundColor: sidebarCollapsed ? "rgba(0,0,0,0.7)" : "#268ffa" }}
+          title={sidebarCollapsed ? "Abrir menu" : "Fechar menu"}
+        >
+          <Menu size={18} className="text-white" />
+        </button>
+        <h1 className="font-bold text-white" style={{ fontSize: "45px", lineHeight: 1.1 }}>{empresa.nome || "Dashboard"}</h1>
+      </div>
 
       {/* Sidebar overlay backdrop - desktop */}
       {!sidebarCollapsed && (
@@ -469,7 +472,6 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           {/* Header - desktop only */}
           <div className="hidden lg:flex items-center justify-between mb-3" style={{ marginLeft: "25px" }}>
             <div>
-              <h1 className="font-bold text-white" style={{ fontSize: "45px", lineHeight: 1.1 }}>{empresa.nome || "Dashboard"}</h1>
               <div className="flex items-center gap-3 mt-1">
                 <p className="text-white/60 text-xs">{user?.email || ""}</p>
                 <button
