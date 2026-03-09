@@ -676,7 +676,8 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
 
       {/* Banner fixo no topo — sempre visível */}
       <div
-        className="fixed top-0 left-[72px] right-0 z-0 h-[400px] overflow-hidden rounded-b-2xl pointer-events-none"
+        className="fixed top-0 left-[72px] right-0 z-0 h-[400px] overflow-hidden rounded-b-2xl pointer-events-none mx-auto"
+        style={{ width: "95%", left: "72px", right: "0", marginLeft: "auto", marginRight: "auto" }}
       >
         <img
           src="/images/banner-home.png"
