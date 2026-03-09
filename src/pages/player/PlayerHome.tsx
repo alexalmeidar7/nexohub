@@ -565,20 +565,11 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
           borderRight: "1px solid rgba(255,255,255,0.07)",
         }}
       >
-        {/* Logo / brand area */}
-        <div className="mb-4 mt-1 w-10 h-10 rounded-full flex items-center justify-center overflow-hidden" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}>
-          {logoUrl ? (
-            <img src={logoUrl} alt="" className="w-7 h-7 object-contain" />
-          ) : (
-            <Radio className="h-4 w-4 text-player-accent" />
-          )}
-        </div>
-
         {/* Separator */}
         <div className="w-8 h-px mb-2" style={{ background: "rgba(255,255,255,0.1)" }} />
 
-        {/* Nav items */}
-        <nav className="flex flex-col items-center gap-1.5 flex-1">
+        {/* Nav items — centered vertically */}
+        <nav className="flex flex-col items-center gap-1.5 flex-1 justify-center">
           {sidebarItems.map(item => {
             const isActive = activeSection === item.section;
             return (
