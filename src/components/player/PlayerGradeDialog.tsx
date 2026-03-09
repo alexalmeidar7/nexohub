@@ -145,7 +145,7 @@ function PlayerGradeDialog({ programas, onClose }: Props) {
         {/* Table */}
         <div
           ref={gradeScrollRef}
-          className="overflow-auto max-h-[75vh] px-4 pb-4 pt-2 grade-scroll"
+          className="overflow-y-auto overflow-x-hidden max-h-[75vh] px-4 pb-4 pt-2 grade-scroll"
           style={{ scrollbarWidth: "thin", scrollbarColor: "rgba(230,0,0,0.4) transparent" }}
         >
           <style>{`
@@ -156,14 +156,14 @@ function PlayerGradeDialog({ programas, onClose }: Props) {
             .grade-cell { transition: all 0.2s ease; }
             .grade-cell:hover { transform: scale(1.02); z-index: 5; }
           `}</style>
-          <table data-no-row-hover className="w-full text-xs border-separate" style={{ borderSpacing: "3px" }}>
+          <table data-no-row-hover className="w-full text-xs border-separate table-fixed" style={{ borderSpacing: "3px" }}>
             <thead className="sticky top-0 z-10">
               <tr>
                 <th
-                  className="px-2 py-2.5 text-left w-16 rounded-xl text-[10px] uppercase tracking-wider font-semibold"
-                  style={{ backgroundColor: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.4)" }}
+                  className="px-1.5 py-2.5 text-left rounded-xl text-[10px] uppercase tracking-wider font-semibold"
+                  style={{ backgroundColor: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.4)", width: "48px" }}
                 >
-                  <Clock size={10} className="inline mr-1 opacity-60" />
+                  <Clock size={10} className="inline mr-0.5 opacity-60" />
                   Hora
                 </th>
                 {DIAS_SEMANA.map(dia => {
@@ -215,24 +215,24 @@ function PlayerGradeDialog({ programas, onClose }: Props) {
                         <td
                           key={dia}
                           rowSpan={rowSpan}
-                          className="px-2 py-1.5 text-center rounded-xl grade-cell relative cursor-pointer group"
+                          className="px-1.5 py-1 text-left rounded-xl grade-cell relative cursor-pointer group"
                           style={{
                             background: isOnAir
                               ? "linear-gradient(135deg, #e60000, #b30000)"
                               : "rgba(255,255,255,0.04)",
                             color: isOnAir ? "#fff" : "rgba(255,255,255,0.7)",
                             fontWeight: isOnAir ? 700 : 400,
-                            verticalAlign: "middle",
+                            verticalAlign: "top",
                             boxShadow: isOnAir ? "0 4px 16px rgba(230,0,0,0.3)" : "none",
                             border: isOnAir ? "none" : "1px solid rgba(255,255,255,0.05)",
                           }}
                           onClick={() => setDetailProg(prog)}
                         >
-                          <div className="flex items-center justify-center gap-1">
-                            <span className="text-[10px] truncate leading-tight">{prog.nome}</span>
-                            <Plus size={9} className="shrink-0 opacity-0 group-hover:opacity-60 transition-opacity" />
+                          <div className="flex items-start gap-0.5">
+                            <span className="text-[10px] truncate leading-tight text-left">{prog.nome}</span>
+                            <Plus size={9} className="shrink-0 opacity-0 group-hover:opacity-60 transition-opacity mt-0.5" />
                           </div>
-                          <div className="text-[8px] opacity-40 mt-0.5">
+                          <div className="text-[8px] opacity-40 mt-0.5 text-left">
                             {prog.horario_inicio.slice(0, 5)} – {prog.horario_fim.slice(0, 5)}
                           </div>
                           {isOnAir && (
