@@ -288,7 +288,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
 
   return (
     <div className="animate-fade-in">
-      <div className="rounded-2xl max-w-3xl" style={{ background: "#d9e9fa", boxShadow: "0 8px 32px rgba(13,4,70,0.12)", padding: "20px" }}>
+      <div className="rounded-2xl" style={{ background: "#d9e9fa", boxShadow: "0 8px 32px rgba(13,4,70,0.12)", padding: "20px" }}>
         <div className="flex items-center gap-3 mb-5">
           <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(13,4,70,0.08)" }}>
             <Save size={20} style={{ color: "#0d0446" }} />
@@ -335,12 +335,16 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
             </div>
           </div>
           {field("Endereço", "endereco", "Endereço completo")}
-          {field("Telefone Comercial", "telefoneComercial", "(00) 0000-0000")}
-          {field("Telefone Participação", "telefoneParticipacao", "(00) 0000-0000")}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {field("Telefone Comercial", "telefoneComercial", "(00) 0000-0000")}
+            {field("Telefone Participação", "telefoneParticipacao", "(00) 0000-0000")}
+          </div>
           {field("Site", "site", "https://www.exemplo.com")}
-          {field("Instagram", "instagram", "https://instagram.com/empresa")}
-          {field("Facebook", "facebook", "https://facebook.com/empresa")}
-          {field("YouTube", "youtube", "https://youtube.com/empresa")}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {field("Instagram", "instagram", "https://instagram.com/empresa")}
+            {field("Facebook", "facebook", "https://facebook.com/empresa")}
+            {field("YouTube", "youtube", "https://youtube.com/empresa")}
+          </div>
         </div>
 
         {/* Credenciais */}
