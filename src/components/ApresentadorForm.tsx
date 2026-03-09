@@ -238,19 +238,19 @@ export default function ApresentadorForm() {
           {/* Foto */}
           {showFoto && (
             <div>
-              <label className="block text-[11px] mb-1.5 font-semibold text-white/60 uppercase tracking-wider">
+              <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "#0d0446" }}>
                 Foto (1080 × 1080 px — PNG com fundo transparente)
               </label>
               <div className="flex items-start gap-4">
                 <label className="cursor-pointer group">
-                  <div className="w-20 h-20 rounded-2xl flex flex-col items-center justify-center gap-1 transition-all group-hover:border-[#2dbef3]"
-                    style={{ backgroundColor: "rgba(255,255,255,0.06)", border: "2px dashed rgba(255,255,255,0.15)" }}>
+                  <div className="w-20 h-20 rounded-2xl flex flex-col items-center justify-center gap-1 transition-all group-hover:border-[#268ffa]"
+                    style={{ backgroundColor: "rgba(255,255,255,0.5)", border: "2px dashed rgba(13,4,70,0.2)" }}>
                     {foto ? (
                       <img src={foto} alt="Preview" className="w-full h-full object-cover rounded-2xl" />
                     ) : (
                       <>
-                        <Camera size={20} className="text-white/30 group-hover:text-[#2dbef3] transition-colors" />
-                        <span className="text-[9px] text-white/30 group-hover:text-white/50">Upload</span>
+                        <Camera size={20} style={{ color: "rgba(13,4,70,0.3)" }} className="group-hover:text-[#268ffa] transition-colors" />
+                        <span className="text-[9px] group-hover:text-[#268ffa]" style={{ color: "rgba(13,4,70,0.4)" }}>Upload</span>
                       </>
                     )}
                   </div>
