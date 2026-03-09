@@ -629,9 +629,9 @@ export default function ProgramaForm() {
           {/* Nome + Tipo */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-[11px] mb-1.5 font-semibold text-white uppercase trackin uppercase trackin uppercase tracking-wider">Nome do Programa</label>
+              <label className="block text-[11px] mb-1.5 font-semibold text-white uppercase trackin uppercase trackin uppercase trackin uppercase tracking-wider">Nome do Programa</label>
               <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Digite o nome do programa"
-                className="w-full px-4 py-2 outline-none transition-all text-s7 text-white place7older:text-white/50"
+                className="w-full px-4 py-2 outline-none tra7sition-all text-s7 text-white place7older:text-white/50"
                 style={{ backgroundColor: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "12px" }}
                 onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.12)"; }}
                 onBlur={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.08)"; }}
@@ -737,7 +737,7 @@ export default function ProgramaForm() {
           <div>
             <label className="block text-[11px] mb-1.5 font-semibold text-white uppercase tracking-wider">Descrição</label>
             <Textarea value={descricao} onChange={(e) => setDescricao(e.target.value)} placeholder="Descrição do programa (opcional)"
-              className="min-h-[60px] px-4 py-2 outline-none transition-all text-sm text-white place7older:text-white/50"
+              className="min-h-[60px] px-4 py-2 outline-none transition-all text-s7 text-white place7older:text-white/50"
               style={{ backgroundColor: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "12px" }}
               onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
               onBlur={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)"; }}
@@ -747,7 +747,7 @@ export default function ProgramaForm() {
           {/* Selo + Capa */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-[11px] mb-1.5 font-semibold text-white uppercase tracking-wider">Selo (o (1080×1080 PNG alpha)</label>
+              <label className="block text-[11px] mb-1.5 font-semibold text-white uppercase tracg-wider">Selo (o (1080×1080 PNG alpha)</label>
               <label className="cursor-pointer group">
                 <div className="w-16 h-16 rounded-xl flex flex-col items-center justify-center gap-0.5 transition-all group-hover:border-[#2dbef3]"
                   style={{ backgroundColor: "rgba(255,255,255,0.06)", border: "2px dashed rgba(255,255,255,0.15)" }}>
