@@ -676,9 +676,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
 
       {/* Banner fixo no topo — sempre visível */}
       <div
-        className="fixed top-0 left-[72px] right-0 z-[5] h-[400px] overflow-hidden rounded-b-2xl"
-        onMouseEnter={() => setBannerHovered(true)}
-        onMouseLeave={() => setBannerHovered(false)}
+        className="fixed top-0 left-[72px] right-0 z-0 h-[400px] overflow-hidden rounded-b-2xl pointer-events-none"
       >
         <img
           src="/images/banner-home.png"
@@ -708,7 +706,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
         }}
       >
 
-        <main ref={mainRef} className="px-8 pt-24 pb-6 ml-[72px] relative z-[10] transition-opacity duration-500 ease-in-out" style={{ opacity: bannerHovered ? 0.15 : 1 }}>
+        <main ref={mainRef} className="px-8 pt-24 pb-6 ml-[72px] relative z-[10]">
           <div className="transition-opacity duration-200 ease-in-out" style={{ opacity: sectionFading ? 0 : 1 }}>
           {visibleSection === "streaming" ? (
             /* ── Página dedicada: Canais ao Vivo ── */
