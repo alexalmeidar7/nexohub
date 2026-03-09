@@ -335,12 +335,16 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
             </div>
           </div>
           {field("Endereço", "endereco", "Endereço completo")}
-          {field("Telefone Comercial", "telefoneComercial", "(00) 0000-0000")}
-          {field("Telefone Participação", "telefoneParticipacao", "(00) 0000-0000")}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {field("Telefone Comercial", "telefoneComercial", "(00) 0000-0000")}
+            {field("Telefone Participação", "telefoneParticipacao", "(00) 0000-0000")}
+          </div>
           {field("Site", "site", "https://www.exemplo.com")}
-          {field("Instagram", "instagram", "https://instagram.com/empresa")}
-          {field("Facebook", "facebook", "https://facebook.com/empresa")}
-          {field("YouTube", "youtube", "https://youtube.com/empresa")}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {field("Instagram", "instagram", "https://instagram.com/empresa")}
+            {field("Facebook", "facebook", "https://facebook.com/empresa")}
+            {field("YouTube", "youtube", "https://youtube.com/empresa")}
+          </div>
         </div>
 
         {/* Credenciais */}
