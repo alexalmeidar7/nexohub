@@ -1921,6 +1921,16 @@ export default function PlayerPage() {
         </div>
       )}
 
+      {/* Empresa logo on 991-1 */}
+      {is991Channel && empresaLogo && playing && (
+        <img
+          src={empresaLogo}
+          alt="Logo"
+          className="absolute top-4 right-4 z-30 object-contain rounded-lg"
+          style={{ width: 100, height: 100 }}
+        />
+      )}
+
       {/* Buffering overlay */}
       {streamStalled && playing && (
         <div className="absolute inset-0 flex flex-col items-center justify-center z-20 bg-black/60 gap-4">
