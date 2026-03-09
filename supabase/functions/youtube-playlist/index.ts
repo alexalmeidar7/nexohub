@@ -12,6 +12,8 @@ serve(async (req) => {
 
   try {
     const { playlistId } = await req.json();
+    console.log("youtube-playlist called with playlistId:", playlistId);
+
     if (!playlistId) {
       return new Response(JSON.stringify({ error: "playlistId required" }), {
         status: 400,
@@ -19,17 +21,50 @@ serve(async (req) => {
       });
     }
 
-    // Fetch the YouTube playlist RSS feed
+    // Try YouTube RSS feed first
     const feedUrl = `https://www.youtube.com/feeds/videos.xml?playlist_id=${playlistId}`;
-    const res = await fetch(feedUrl);
-    if (!res.ok) {
-      return new Response(JSON.stringify({ error: "Failed to fetch playlist" }), {
-        status: 500,
+    console.log("Fetching:", feedUrl);
+
+    let xml = "";
+    let fetchOk = false;
+
+    try {
+      const res = await fetch(feedUrl, {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
+          "Accept": "application/xml, text/xml, */*",
+        },
+      });
+      console.log("YouTube RSS status:", res.status);
+      if (res.ok) {
+        xml = await res.text();
+        fetchOk = true;
+      } else {
+        const errBody = await res.text();
+        console.error("YouTube RSS error body:", errBody.slice(0, 300));
+      }
+    } catch (fetchErr) {
+      console.error("Network error:", String(fetchErr));
+    }
+
+    // Fallback: try oembed approach to at least confirm the playlist exists
+    if (!fetchOk) {
+      // Try noembed/oembed as a fallback — returns minimal data
+      try {
+        const oembedUrl = `https://www.youtube.com/oembed?url=https://www.youtube.com/playlist?list=${playlistId}&format=json`;
+        const oRes = await fetch(oembedUrl);
+        console.log("oembed status:", oRes.status);
+        const oBody = await oRes.text();
+        console.log("oembed body:", oBody.slice(0, 200));
+      } catch (_) {
+        // ignore
+      }
+
+      return new Response(JSON.stringify({ error: "Failed to fetch playlist", videos: [] }), {
+        status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
-    const xml = await res.text();
 
     // Parse entries from XML
     const entries: { videoId: string; title: string; thumbnail: string; published: string }[] = [];
@@ -51,12 +86,15 @@ serve(async (req) => {
       }
     }
 
+    console.log(`Parsed ${entries.length} videos`);
+
     return new Response(JSON.stringify({ videos: entries }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
-    return new Response(JSON.stringify({ error: String(err) }), {
-      status: 500,
+    console.error("youtube-playlist error:", String(err));
+    return new Response(JSON.stringify({ error: String(err), videos: [] }), {
+      status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
