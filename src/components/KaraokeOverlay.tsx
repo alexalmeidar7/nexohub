@@ -195,7 +195,7 @@ export default function KaraokeOverlay({
   const line2 = lines[line2Idx];
 
   const adjustSpeed = (delta: number) => {
-    setSpeedOffset(prev => Math.max(-5, Math.min(5, prev + delta)));
+    setSpeedOffset(prev => Math.max(-30, Math.min(30, prev + delta)));
   };
 
   // Error state: "Letra não encontrada" with exit animation
@@ -250,7 +250,7 @@ export default function KaraokeOverlay({
           <div className="flex items-center gap-1 px-2 py-1 rounded-full backdrop-blur-md"
             style={{ backgroundColor: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.2)" }}>
             <button
-              onClick={() => adjustSpeed(-0.5)}
+              onClick={() => adjustSpeed(-10)}
               className="w-6 h-6 rounded-full flex items-center justify-center transition-all hover:bg-white/20 active:scale-95"
               title="Atrasar letra"
             >
@@ -260,7 +260,7 @@ export default function KaraokeOverlay({
               {speedOffset > 0 ? "+" : ""}{speedOffset.toFixed(1)}s
             </span>
             <button
-              onClick={() => adjustSpeed(0.5)}
+              onClick={() => adjustSpeed(10)}
               className="w-6 h-6 rounded-full flex items-center justify-center transition-all hover:bg-white/20 active:scale-95"
               title="Adiantar letra"
             >
