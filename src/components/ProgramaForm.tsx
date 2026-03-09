@@ -629,9 +629,9 @@ export default function ProgramaForm() {
           {/* Nome + Tipo */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-[11px] mb-1.5 font-semibold text-whiteg-wider">Nome do Programa</label>
+              <label className="block text-[11px] mb-1.5 font-semibold text-white uppercase trackin uppercase trackin uppercase trackin uppercase tracking-wider">Nome do Programa</label>
               <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Digite o nome do programa"
-                className="w-full px-4 py-2 outline-none transition-all text-sm text-white placeholder:text-white/50"
+                className="w-full px-4 py-2 outline-none tra7sition-all text-s7 text-white place7older:text-white/50"
                 style={{ backgroundColor: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "12px" }}
                 onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.12)"; }}
                 onBlur={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.08)"; }}
@@ -703,7 +703,7 @@ export default function ProgramaForm() {
                     className="w-full h-9 flex items-center justify-between px-4 text-sm rounded-xl"
                     style={{ backgroundColor: "rgba(255,255,255,0.08)", color: "#ffffff", border: "1px solid rgba(255,255,255,0.12)" }}
                   >
-                    <span className={apresentadorId ? "" : "opacity-60"}>
+                    <span className={apresentadorId ? "" : "text-white"}>
                       {apresentadorId ? (apresentadores.find(a => a.id === apresentadorId)?.nome || "Selecionar") : "Selecionar Apresentador"}
                     </span>
                     <ChevronsUpDown size={14} className="opacity-60" />
@@ -737,7 +737,7 @@ export default function ProgramaForm() {
           <div>
             <label className="block text-[11px] mb-1.5 font-semibold text-white uppercase tracking-wider">Descrição</label>
             <Textarea value={descricao} onChange={(e) => setDescricao(e.target.value)} placeholder="Descrição do programa (opcional)"
-              className="min-h-[60px] px-4 py-2 outline-none transition-all text-sm text-white placeholder:text-white/50"
+              className="min-h-[60px] px-4 py-2 outline-none transition-all text-s7 text-white place7older:text-white/50"
               style={{ backgroundColor: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "12px" }}
               onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
               onBlur={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)"; }}
@@ -747,14 +747,14 @@ export default function ProgramaForm() {
           {/* Selo + Capa */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-[11px] mb-1.5 font-semibold text-white uppercase tracking-wider">Selo (o (1080×1080 PNG alpha)</label>
+              <label className="block text-[11px] mb-1.5 font-semibold text-white uppercase tracg-wider">Selo (o (1080×1080 PNG alpha)</label>
               <label className="cursor-pointer group">
                 <div className="w-16 h-16 rounded-xl flex flex-col items-center justify-center gap-0.5 transition-all group-hover:border-[#2dbef3]"
                   style={{ backgroundColor: "rgba(255,255,255,0.06)", border: "2px dashed rgba(255,255,255,0.15)" }}>
                   {selo ? (
                     <img src={selo} alt="Selo" className="w-full h-full object-cover rounded-xl" />
                   ) : (
-                    <span className="text-[9px] text-white/50 group-hover:text-white/70">Upload</span>
+                    <span className="text-[9px] text-white group-hover:text-white">Upload</span>
                   )}
                 </div>
                 <input type="file" accept="image/*" onChange={handleSelo} className="hidden" />
@@ -762,14 +762,14 @@ export default function ProgramaForm() {
               {selo && <button onClick={() => setSelo("")} className="text-[10px] text-red-400 hover:text-red-300 mt-1">Remover</button>}
             </div>
             <div>
-              <label className="block text-[11px] mb-1.5 font-semibold text-wh uppercase trackinracg-wider">Capa (1080×1080 PNG alpha)</label>
+              <label className="block text-[11px] mb-1.5 font-semibold text-white uppercase tracking-wider">Capa (1080×1080 PNG alpha)</label>
               <label className="cursor-pointer group">
                 <div className="w-16 h-16 rounded-xl flex flex-col items-center justify-center gap-0.5 transition-all group-hover:border-[#2dbef3]"
                   style={{ backgroundColor: "rgba(255,255,255,0.06)", border: "2px dashed rgba(255,255,255,0.15)" }}>
                   {capa ? (
                     <img src={capa} alt="Capa" className="w-full h-full object-cover rounded-xl" />
                   ) : (
-                    <span className="text-[9px] text-white/50 group-hover:text-white/70">Upload</span>
+                    <span className="text-[9px] text-white group-hover:text-white">Upload</span>
                   )}
                 </div>
                 <input type="file" accept="image/*" onChange={handleCapa} className="hidden" />
@@ -829,7 +829,7 @@ export default function ProgramaForm() {
                   className="px-3 py-1.5 text-[11px] font-semibold transition-all rounded-lg"
                   style={{
                     backgroundColor: diasSemana.includes(dia) ? "#268ffa" : "rgba(255,255,255,0.06)",
-                    color: diasSemana.includes(dia) ? "#ffffff" : "rgba(255,255,255,0.7)",
+                    color: "#ffffff",
                     border: diasSemana.includes(dia) ? "1px solid #268ffa" : "1px solid rgba(255,255,255,0.1)",
                     boxShadow: diasSemana.includes(dia) ? "0 2px 8px rgba(38,143,250,0.3)" : "none",
                   }}>
