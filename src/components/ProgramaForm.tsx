@@ -1084,18 +1084,17 @@ export default function ProgramaForm() {
         </div>
       ) : programas.length > 0 && (
         <div>
-          <h4 className="text-lg font-medium mb-4" style={{ color: "#0d0446" }}>Programas Cadastrados</h4>
-          <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(13,4,70,0.1)" }}>
-            <table className="w-full" style={{ fontSize: "12px" }}>
+          <h4 className="text-sm font-bold mb-3" style={{ color: "#0d0446" }}>Programas Cadastrados</h4>
+          <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(13,4,70,0.08)", boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}>
+            <table className="w-full text-xs" style={{ color: "#0d0446" }}>
               <thead>
-                <tr style={{ backgroundColor: "#0d0446", color: "#ffffff" }}>
-                  <th className="px-4 py-3 text-left font-semibold">Nome do Programa</th>
-                  <th className="px-4 py-3 text-left font-semibold">Dia de Exibição</th>
-                  <th className="px-4 py-3 text-left font-semibold">Horário</th>
-                  <th className="px-4 py-3 text-left font-semibold">Apresentador</th>
-                  <th className="px-4 py-3 text-center font-semibold">Editar</th>
-                  <th className="px-4 py-3 text-center font-semibold">Status</th>
-                  <th className="px-4 py-3 text-center font-semibold">Excluir</th>
+                <tr style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)", color: "#ffffff" }}>
+                  <th className="px-4 py-2.5 text-left font-semibold text-[11px] uppercase tracking-wider">Programa</th>
+                  <th className="px-4 py-2.5 text-left font-semibold text-[11px] uppercase tracking-wider">Exibição</th>
+                  <th className="px-4 py-2.5 text-left font-semibold text-[11px] uppercase tracking-wider">Horário</th>
+                  <th className="px-4 py-2.5 text-left font-semibold text-[11px] uppercase tracking-wider">Apresentador</th>
+                  <th className="px-4 py-2.5 text-center font-semibold text-[11px] uppercase tracking-wider">Status</th>
+                  <th className="px-4 py-2.5 text-center font-semibold text-[11px] uppercase tracking-wider">Ações</th>
                 </tr>
               </thead>
               <tbody>
