@@ -44,6 +44,7 @@ const FALLBACK_KEY = "masterview_last_city";
 
 export default function WeatherWidget({ onNavigate }: { onNavigate?: (page: any) => void } = {}) {
   const [weather, setWeather] = useState<WidgetWeather | null>(null);
+  const [noCity, setNoCity] = useState(false);
 
   useEffect(() => {
     let cityName: string | null = null;
@@ -61,7 +62,10 @@ export default function WeatherWidget({ onNavigate }: { onNavigate?: (page: any)
 
     if (!cityName) {
       const fallback = localStorage.getItem(FALLBACK_KEY);
-      if (!fallback) return;
+      if (!fallback) {
+        setNoCity(true);
+        return;
+      }
       cityName = fallback;
     }
 
