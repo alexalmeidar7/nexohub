@@ -448,30 +448,82 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
 
       {/* Sidebar - always visible, not affected by fade */}
       <aside
-        className="w-20 flex flex-col items-center justify-center gap-3 z-40 fixed left-0 top-0 bottom-0"
+        className="w-[72px] flex flex-col items-center py-6 gap-2 z-40 fixed left-0 top-0 bottom-0"
         style={{
-          background: "rgba(0,0,0,0.35)",
-          backdropFilter: "blur(24px) saturate(1.4)",
-          WebkitBackdropFilter: "blur(24px) saturate(1.4)",
-          borderRight: "1px solid rgba(255,255,255,0.08)",
+          background: "linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.55) 100%)",
+          backdropFilter: "blur(32px) saturate(1.6)",
+          WebkitBackdropFilter: "blur(32px) saturate(1.6)",
+          borderRight: "1px solid rgba(255,255,255,0.07)",
         }}
       >
-        {sidebarItems.map(item => (
+        {/* Logo / brand area */}
+        <div className="mb-4 mt-1 w-10 h-10 rounded-full flex items-center justify-center overflow-hidden" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}>
+          {logoUrl ? (
+            <img src={logoUrl} alt="" className="w-7 h-7 object-contain" />
+          ) : (
+            <Radio className="h-4 w-4 text-player-accent" />
+          )}
+        </div>
+
+        {/* Separator */}
+        <div className="w-8 h-px mb-2" style={{ background: "rgba(255,255,255,0.1)" }} />
+
+        {/* Nav items */}
+        <nav className="flex flex-col items-center gap-1.5 flex-1">
+          {sidebarItems.map(item => {
+            const isActive = activeSection === item.section;
+            return (
+              <button
+                key={item.section}
+                onClick={() => setActiveSection(item.section)}
+                className="group relative w-[52px] rounded-xl px-2 py-3 flex flex-col items-center justify-center gap-1 transition-all duration-300 focus-visible:outline-none"
+                title={item.label}
+                aria-label={item.label}
+              >
+                {/* Active indicator bar */}
+                {isActive && (
+                  <span
+                    className="absolute -left-[1px] top-1/2 -translate-y-1/2 w-[3px] h-7 rounded-r-full transition-all"
+                    style={{ backgroundColor: "hsl(var(--player-accent))" }}
+                  />
+                )}
+                <div
+                  className={`w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-300 ${
+                    isActive
+                      ? "shadow-lg"
+                      : "group-hover:scale-110"
+                  }`}
+                  style={isActive ? {
+                    background: "linear-gradient(135deg, hsl(var(--player-accent)), hsl(var(--player-accent-hover)))",
+                    boxShadow: "0 4px 20px hsla(var(--player-accent) / 0.4)",
+                  } : {
+                    background: "rgba(255,255,255,0.05)",
+                  }}
+                >
+                  <item.icon className={`h-[18px] w-[18px] transition-colors duration-200 ${isActive ? "text-white" : "text-white/50 group-hover:text-white/80"}`} />
+                </div>
+                <span className={`text-[8px] font-medium leading-none tracking-wide transition-colors duration-200 ${isActive ? "text-white" : "text-white/40 group-hover:text-white/70"}`}>
+                  {item.label}
+                </span>
+              </button>
+            );
+          })}
+        </nav>
+
+        {/* Separator */}
+        <div className="w-8 h-px mt-auto" style={{ background: "rgba(255,255,255,0.1)" }} />
+
+        {/* Sign out */}
+        {user && (
           <button
-            key={item.section}
-            onClick={() => setActiveSection(item.section)}
-            className={`w-14 rounded-2xl px-2 py-2.5 flex flex-col items-center justify-center gap-1.5 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-player-accent focus-visible:ring-offset-2 focus-visible:ring-offset-player-bg ${
-              activeSection === item.section
-                ? "bg-player-accent text-player-foreground shadow-lg shadow-player-accent/25"
-                : "bg-player-surface text-player-muted-foreground hover:bg-player-surface-hover hover:text-player-foreground"
-            }`}
-            title={item.label}
-            aria-label={item.label}
+            onClick={handleSignOut}
+            className="group w-9 h-9 rounded-lg flex items-center justify-center mt-2 mb-1 transition-all hover:scale-110"
+            style={{ background: "rgba(255,255,255,0.05)" }}
+            title="Sair"
           >
-            <item.icon className="h-5 w-5" />
-            <span className="text-[9px] font-semibold leading-none">{item.label}</span>
+            <LogOut className="h-4 w-4 text-white/40 group-hover:text-player-accent transition-colors" />
           </button>
-        ))}
+        )}
       </aside>
 
       {/* Content wrapper with fade transition */}
@@ -519,7 +571,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
         </header>
 
         {/* Banner full-width behind content — crossfade between default and thumb on hover */}
-        <div className="fixed top-0 left-20 right-3 z-0 pointer-events-none h-[400px] overflow-hidden rounded-b-2xl transition-opacity duration-300" style={{ opacity: bannerOpacity }}>
+        <div className="fixed top-0 left-[72px] right-3 z-0 pointer-events-none h-[400px] overflow-hidden rounded-b-2xl transition-opacity duration-300" style={{ opacity: bannerOpacity }}>
           <img
             src="/images/banner-home.png"
             alt="Banner"
@@ -540,7 +592,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
           />
         </div>
 
-        <main ref={mainRef} className="px-8 pt-24 pb-6 z-10 ml-20 relative">
+        <main ref={mainRef} className="px-8 pt-24 pb-6 z-10 ml-[72px] relative">
           {activeSection === "streaming" ? (
             /* ── Página dedicada: Canais ao Vivo ── */
              <section className="rounded-2xl p-5" style={{ marginTop: "220px", background: "rgba(0,0,0,0.25)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", border: "1px solid rgba(255,255,255,0.06)" }}>
