@@ -44,6 +44,7 @@ const FALLBACK_KEY = "masterview_last_city";
 
 export default function WeatherWidget({ onNavigate }: { onNavigate?: (page: any) => void } = {}) {
   const [weather, setWeather] = useState<WidgetWeather | null>(null);
+  const [noCity, setNoCity] = useState(false);
 
   useEffect(() => {
     let cityName: string | null = null;
@@ -61,7 +62,10 @@ export default function WeatherWidget({ onNavigate }: { onNavigate?: (page: any)
 
     if (!cityName) {
       const fallback = localStorage.getItem(FALLBACK_KEY);
-      if (!fallback) return;
+      if (!fallback) {
+        setNoCity(true);
+        return;
+      }
       cityName = fallback;
     }
 
@@ -103,6 +107,25 @@ export default function WeatherWidget({ onNavigate }: { onNavigate?: (page: any)
     const interval = setInterval(fetchData, 5 * 60 * 1000);
     return () => clearInterval(interval);
   }, []);
+
+  if (noCity) {
+    return (
+      <div className="flex flex-col h-full items-start justify-between">
+        <div className="flex items-center gap-1.5 mb-2">
+          <Sun size={14} style={{ color: "#268ffa", animationDuration: "8s" }} className="animate-spin" />
+          <span className="font-bold text-xs" style={{ color: "#268ffa" }}>TEMPO</span>
+        </div>
+        <p className="text-xs flex-1" style={{ color: "#0d0446", opacity: 0.5 }}>Nenhuma cidade configurada.</p>
+        <button
+          onClick={() => onNavigate?.("previsao")}
+          className="mt-auto flex items-center gap-1.5 text-[10px] font-semibold rounded-lg px-2 py-1 hover:opacity-80 transition-opacity"
+          style={{ color: "#268ffa", backgroundColor: "rgba(38,143,250,0.1)" }}
+        >
+          <Settings size={10} /> Configurar
+        </button>
+      </div>
+    );
+  }
 
   if (!weather) {
     return (
