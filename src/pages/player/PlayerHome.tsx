@@ -935,7 +935,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                 {!dataLoaded ? (
                   <>
                     <Skeleton className="h-5 w-44 bg-white/10 mb-4" />
-                    <div className="flex gap-4">
+                    <div className="flex gap-3">
                       {[1, 2, 3].map(i => (
                         <Skeleton key={i} className="flex-shrink-0 w-72 h-40 rounded-xl bg-white/10" />
                       ))}
