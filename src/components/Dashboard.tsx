@@ -323,7 +323,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         style={{ backgroundColor: sidebarCollapsed ? "rgba(0,0,0,0.7)" : "#268ffa" }}
         title={sidebarCollapsed ? "Abrir menu" : "Fechar menu"}
       >
-        {sidebarCollapsed ? <Menu size={18} className="text-white" /> : <X size={18} className="text-white" />}
+        <Menu size={18} className="text-white" />
       </button>
 
       {/* Sidebar overlay backdrop - desktop */}
@@ -338,15 +338,27 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             {/* Selo + Settings */}
             <div className="flex items-center justify-between px-4 pt-3 pb-2">
               <img src={seloNexohub} alt="NexoHUB" className="h-4" />
-              <button
-                onClick={() => setCurrentPage("configuracoes")}
-                className="p-1.5 rounded-full transition-colors"
-                style={{ backgroundColor: "#268ffa" }}
-                onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#0d0446"; }}
-                onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#268ffa"; }}
-              >
-                <Settings size={16} className="text-white" />
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setCurrentPage("configuracoes")}
+                  className="p-1.5 rounded-full transition-colors"
+                  style={{ backgroundColor: "#268ffa" }}
+                  onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#0d0446"; }}
+                  onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#268ffa"; }}
+                >
+                  <Settings size={16} className="text-white" />
+                </button>
+                <button
+                  onClick={() => setSidebarCollapsed(true)}
+                  className="p-1.5 rounded-full transition-colors"
+                  style={{ backgroundColor: "rgba(255,255,255,0.15)" }}
+                  onMouseEnter={e => { e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.3)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.15)"; }}
+                  title="Fechar menu"
+                >
+                  <X size={16} className="text-white" />
+                </button>
+              </div>
             </div>
 
             {/* Module header */}
@@ -377,15 +389,15 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                     <button
                       onClick={() => handleMenuClick(item)}
                       className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
-                        active ? "text-primary bg-sidebar-accent font-semibold shadow-sm" : "text-sidebar-foreground hover:text-foreground hover:bg-sidebar-accent/50"
+                        active ? "text-[#268ffa] bg-white/10 font-semibold shadow-sm" : "text-white hover:text-white hover:bg-white/5"
                       }`}
                       aria-label={item.label}
                       role="menuitem"
                     >
-                      <Icon size={14} className={active ? "text-primary" : "text-sidebar-foreground"} />
+                      <Icon size={14} className={active ? "text-[#268ffa]" : "text-white/70"} />
                       <span className="flex-1 text-left">{item.label}</span>
                       {item.children && (
-                        <div className="text-muted-foreground">
+                        <div className="text-white/40">
                           {expanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
                         </div>
                       )}
@@ -400,12 +412,12 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                               key={child.page}
                               onClick={() => setCurrentPage(child.page)}
                               className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-[11px] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
-                                childActive ? "text-primary bg-sidebar-accent/70 font-semibold" : "text-sidebar-foreground hover:text-foreground hover:bg-sidebar-accent/30"
+                                childActive ? "text-[#268ffa] bg-white/10 font-semibold" : "text-white/80 hover:text-white hover:bg-white/5"
                               }`}
                               aria-label={child.label}
                               role="menuitem"
                             >
-                              <ChildIcon size={12} className={childActive ? "text-primary" : "text-sidebar-foreground"} />
+                              <ChildIcon size={12} className={childActive ? "text-[#268ffa]" : "text-white/60"} />
                               <span>{child.label}</span>
                             </button>
                           );
