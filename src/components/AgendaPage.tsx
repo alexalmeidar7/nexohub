@@ -329,16 +329,16 @@ export default function AgendaPage() {
     >
       <div className="flex items-start justify-between">
         <div>
-          <h5 className="font-semibold text-foreground">
+          <h5 className="font-semibold" style={{ color: "#0d0446" }}>
             {evt.programa?.nome || "Programa removido"}
           </h5>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs" style={{ color: "rgba(13,4,70,0.5)" }}>
             <CalendarIcon size={12} className="inline mr-1" />
             {format(new Date(evt.data + "T12:00:00"), "dd/MM/yyyy")}
             {evt.programa && ` • ${evt.programa.horario_inicio} - ${evt.programa.horario_fim}`}
           </p>
           {evt.recorrencia !== "unico" && (
-            <span className="inline-block bg-primary/15 text-primary text-[10px] font-semibold px-2 py-0.5 rounded mt-0.5">
+            <span className="inline-block text-[10px] font-semibold px-2 py-0.5 rounded mt-0.5" style={{ backgroundColor: "rgba(38,143,250,0.15)", color: "#268ffa" }}>
               🔁 {recorrenciaLabels[evt.recorrencia]}
             </span>
           )}
@@ -347,19 +347,19 @@ export default function AgendaPage() {
             {prioridadeLabels[evt.prioridade] || "Normal"}
           </span>
           {evt.local && (
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs" style={{ color: "rgba(13,4,70,0.5)" }}>
               <MapPin size={12} className="inline mr-1" />
               {evt.local}
             </p>
           )}
           {evt.descricao && (
-            <p className="text-sm text-foreground mt-1">{evt.descricao}</p>
+            <p className="text-sm mt-1" style={{ color: "#0d0446" }}>{evt.descricao}</p>
           )}
         </div>
         {!inactive && (
           <div className="flex items-center gap-1">
             <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => startEdit(evt)}>
-              <Pencil size={14} className="text-muted-foreground" />
+              <Pencil size={14} style={{ color: "rgba(13,4,70,0.4)" }} />
             </Button>
             <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => handleDelete(evt.id)}>
               <Trash2 size={14} className="text-destructive" />
@@ -369,19 +369,20 @@ export default function AgendaPage() {
       </div>
 
       {evt.participantes && evt.participantes.length > 0 && (
-        <div className="border-t border-border pt-2">
-          <p className="text-xs font-medium text-muted-foreground mb-1 flex items-center gap-1">
+        <div className="border-t pt-2" style={{ borderColor: "rgba(13,4,70,0.08)" }}>
+          <p className="text-xs font-medium mb-1 flex items-center gap-1" style={{ color: "rgba(13,4,70,0.5)" }}>
             <Users size={12} /> Participantes
           </p>
           <div className="flex flex-wrap gap-2">
             {evt.participantes.map((p, i) => (
               <span
                 key={i}
-                className="bg-background/50 border border-border rounded-lg px-2 py-1 text-xs text-foreground"
+                className="rounded-lg px-2 py-1 text-xs"
+                style={{ backgroundColor: "rgba(13,4,70,0.05)", border: "1px solid rgba(13,4,70,0.08)", color: "#0d0446" }}
               >
                 {p.nome}
                 {p.instagram && (
-                  <span className="text-muted-foreground ml-1">
+                  <span className="ml-1" style={{ color: "rgba(13,4,70,0.4)" }}>
                     <Instagram size={10} className="inline mr-0.5" />
                     {p.instagram}
                   </span>
