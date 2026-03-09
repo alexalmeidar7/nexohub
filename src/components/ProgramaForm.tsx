@@ -706,7 +706,7 @@ export default function ProgramaForm() {
                     <span className={apresentadorId ? "" : "opacity-60"}>
                       {apresentadorId ? (apresentadores.find(a => a.id === apresentadorId)?.nome || "Selecionar") : "Selecionar Apresentador"}
                     </span>
-                    <ChevronsUpDown size={14} className="opacity-40" />
+                    <ChevronsUpDown size={14} className="opacity-60" />
                   </button>
                 </PopoverTrigger>
                 <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start" style={{ backgroundColor: "#0d0446", border: "1px solid rgba(255,255,255,0.15)" }}>
