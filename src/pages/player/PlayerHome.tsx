@@ -664,11 +664,6 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                 )}
               </div>
             </div>
-            {!dataLoaded ? (
-              <Skeleton className="h-[5rem] w-32 bg-white/10 rounded-lg" />
-            ) : logoUrl ? (
-              <img src={logoUrl} alt={channelName} className="h-[5rem] w-auto object-contain" />
-            ) : null}
         </header>
 
         {/* Banner full-width behind content — crossfade between default and thumb on hover */}
