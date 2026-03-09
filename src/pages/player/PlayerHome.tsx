@@ -714,7 +714,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
              <section className="rounded-2xl p-5" style={{ marginTop: "380px" }}>
               <h2 className="text-xl font-bold mb-6 tracking-wide uppercase text-player-foreground/90">Canais ao Vivo</h2>
               {!dataLoaded ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                   {[1, 2, 3, 4].map(i => (
                     <Skeleton key={i} className="w-full aspect-video rounded-xl bg-white/10" />
                   ))}
@@ -724,7 +724,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                   Nenhum canal ao vivo disponível
                 </div>
               ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                   {streamingChannels.map((ch) => (
                     <StreamingCard
                       key={ch.id}
@@ -743,7 +743,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
             <section className="rounded-2xl p-5" style={{ marginTop: "380px" }}>
               <h2 className="text-xl font-bold mb-6 tracking-wide uppercase text-player-foreground/90">Catálogo</h2>
               {!dataLoaded ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                   {[1, 2, 3, 4].map(i => (
                     <Skeleton key={i} className="w-full aspect-video rounded-xl bg-white/10" />
                   ))}
@@ -844,7 +844,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
             <section className="rounded-2xl p-5" style={{ marginTop: "380px" }}>
               <h2 className="text-xl font-bold mb-6 tracking-wide uppercase text-player-foreground/90">Loja</h2>
               {!dataLoaded ? (
-                <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
                   {[1, 2, 3, 4, 5, 6].map(i => (
                     <Skeleton key={i} className="w-full aspect-[3/4] rounded-xl bg-white/10" />
                   ))}
@@ -854,7 +854,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                   Nenhum produto disponível
                 </div>
               ) : (
-                <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
                   {shopProducts.map(product => (
                     <div
                       key={product.id}
@@ -935,7 +935,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                 {!dataLoaded ? (
                   <>
                     <Skeleton className="h-5 w-44 bg-white/10 mb-4" />
-                    <div className="flex gap-4">
+                    <div className="flex gap-3">
                       {[1, 2, 3].map(i => (
                         <Skeleton key={i} className="flex-shrink-0 w-72 h-40 rounded-xl bg-white/10" />
                       ))}
@@ -944,7 +944,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                 ) : (
                   <>
                     <h2 className="text-lg font-bold mb-4 tracking-wide uppercase text-player-foreground/90">streamings ao vivo</h2>
-                    <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+                    <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
                       {streamingChannels.length === 0 && (
                         <div className="w-72 h-40 rounded-xl bg-player-surface border border-player-border flex items-center justify-center text-player-muted-foreground text-sm">
                           Nenhum canal disponível
