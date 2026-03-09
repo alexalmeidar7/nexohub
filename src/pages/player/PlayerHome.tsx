@@ -843,9 +843,9 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
             <section className="rounded-2xl p-5" style={{ marginTop: "380px" }}>
               <h2 className="text-xl font-bold mb-6 tracking-wide uppercase text-player-foreground/90">Loja</h2>
               {!dataLoaded ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
-                  {[1, 2, 3, 4].map(i => (
-                    <Skeleton key={i} className="w-full aspect-[3/4] rounded-2xl bg-white/10" />
+                <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                  {[1, 2, 3, 4, 5, 6].map(i => (
+                    <Skeleton key={i} className="w-full aspect-[3/4] rounded-xl bg-white/10" />
                   ))}
                 </div>
               ) : shopProducts.length === 0 ? (
@@ -853,11 +853,11 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                   Nenhum produto disponível
                 </div>
               ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
+                <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
                   {shopProducts.map(product => (
                     <div
                       key={product.id}
-                      className="group rounded-2xl overflow-hidden transition-all duration-300 hover:scale-[1.03] hover:shadow-2xl"
+                      className="group rounded-xl overflow-hidden transition-all duration-300 hover:scale-[1.03] hover:shadow-xl"
                       style={{
                         background: "linear-gradient(160deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%)",
                         border: "1px solid rgba(255,255,255,0.08)",
@@ -873,12 +873,12 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center" style={{ background: "linear-gradient(135deg, hsl(var(--player-accent) / 0.15), hsl(var(--player) / 0.8))" }}>
-                            <ShoppingBag className="h-12 w-12 text-white/20" />
+                            <ShoppingBag className="h-8 w-8 text-white/20" />
                           </div>
                         )}
                         {/* Price badge */}
                         <div
-                          className="absolute bottom-3 right-3 px-3 py-1.5 rounded-full text-sm font-bold text-white"
+                          className="absolute bottom-2 right-2 px-2 py-1 rounded-full text-xs font-bold text-white"
                           style={{
                             background: "hsl(var(--player-accent))",
                             boxShadow: "0 4px 16px hsla(var(--player-accent) / 0.5)",
@@ -888,7 +888,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                         </div>
                         {/* Stock indicator */}
                         {product.stock <= 3 && (
-                          <span className="absolute top-3 left-3 text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-full bg-yellow-500/90 text-black">
+                          <span className="absolute top-2 left-2 text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-yellow-500/90 text-black">
                             {product.stock === 1 ? "Último!" : `Restam ${product.stock}`}
                           </span>
                         )}
@@ -896,19 +896,19 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                         <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                       </div>
                       {/* Info */}
-                      <div className="p-4 flex flex-col gap-2">
-                        <p className="text-sm font-bold text-white truncate group-hover:text-player-accent transition-colors duration-200">
+                      <div className="p-3 flex flex-col gap-1.5">
+                        <p className="text-xs font-bold text-white truncate group-hover:text-player-accent transition-colors duration-200">
                           {product.name}
                         </p>
                         {product.description && (
-                          <p className="text-xs text-white/40 line-clamp-2 leading-relaxed">{product.description}</p>
+                          <p className="text-[10px] text-white/40 line-clamp-2 leading-relaxed">{product.description}</p>
                         )}
                         {product.payment_url && (
                           <a
                             href={product.payment_url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="mt-2 w-full text-center text-xs font-bold py-2.5 rounded-xl transition-all duration-300 uppercase tracking-wider"
+                            className="mt-1 w-full text-center text-[10px] font-bold py-2 rounded-lg transition-all duration-300 uppercase tracking-wider"
                             style={{
                               background: "linear-gradient(135deg, hsl(var(--player-accent)), hsl(var(--player-accent-hover)))",
                               color: "white",
