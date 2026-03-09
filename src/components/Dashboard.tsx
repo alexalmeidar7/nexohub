@@ -394,7 +394,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                       aria-label={item.label}
                       role="menuitem"
                     >
-                      <Icon size={14} className={active ? "text-primary" : "text-sidebar-foreground"} />
+                      <Icon size={14} className={active ? "text-[#268ffa]" : "text-white/70"} />
                       <span className="flex-1 text-left">{item.label}</span>
                       {item.children && (
                         <div className="text-muted-foreground">
