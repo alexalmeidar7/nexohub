@@ -629,12 +629,12 @@ export default function ProgramaForm() {
           {/* Nome + Tipo */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-[11px] mb-1.5 font-semibold text-white uppercase trackin uppercase trackin uppercase trackin uppercase tracking-wider">Nome do Programa</label>
+              <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "#0d0446" }}>Nome do Programa</label>
               <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Digite o nome do programa"
-                className="w-full px-4 py-2 outline-none tra7sition-all text-s7 text-white place7older:text-white/50"
-                style={{ backgroundColor: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "12px" }}
-                onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.12)"; }}
-                onBlur={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.08)"; }}
+                className="w-full px-4 py-2 outline-none transition-all text-sm placeholder:text-[#0d0446]/40"
+                style={{ backgroundColor: "rgba(255,255,255,0.6)", border: "1px solid rgba(13,4,70,0.15)", borderRadius: "12px", color: "#0d0446" }}
+                onFocus={e => { e.currentTarget.style.borderColor = "#268ffa"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.8)"; }}
+                onBlur={e => { e.currentTarget.style.borderColor = "rgba(13,4,70,0.15)"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.6)"; }}
               />
             </div>
             <div>
