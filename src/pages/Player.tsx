@@ -42,7 +42,7 @@ const PlayerGradeDialog = lazy(() => import("@/components/player/PlayerGradeDial
 const KaraokeOverlay = lazy(() => import("@/components/KaraokeOverlay"));
 import PlayerShopProduct from "@/components/player/PlayerShopProduct";
 import PreRollOverlay from "@/components/PreRollOverlay";
-import { saveMiniPlayerData, clearMiniPlayerData } from "@/components/player/MiniPlayerWidget";
+import { saveMiniPlayerData, clearMiniPlayerData, unlockAndPrepareMiniAudio } from "@/components/player/MiniPlayerWidget";
 import PlayerSkeleton from "@/components/skeletons/PlayerSkeleton";
 import { normalizeMusicText } from "@/lib/textEncoding";
 
