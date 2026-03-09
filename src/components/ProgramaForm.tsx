@@ -923,9 +923,9 @@ export default function ProgramaForm() {
             {editingId && (
               <button onClick={resetForm}
                 className="px-4 py-2 text-xs font-bold transition-all flex items-center gap-1.5 rounded-xl"
-                style={{ backgroundColor: "rgba(255,255,255,0.08)", color: "#ffffff", border: "1px solid rgba(255,255,255,0.15)" }}
-                onMouseEnter={e => { e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.15)"; }}
-                onMouseLeave={e => { e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.08)"; }}
+                style={{ backgroundColor: "rgba(255,255,255,0.5)", color: "#0d0446", border: "1px solid rgba(13,4,70,0.15)" }}
+                onMouseEnter={e => { e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.7)"; }}
+                onMouseLeave={e => { e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.5)"; }}
               >
                 <X size={13} /> Cancelar
               </button>
