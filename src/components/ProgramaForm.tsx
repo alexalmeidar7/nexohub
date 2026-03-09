@@ -678,14 +678,14 @@ export default function ProgramaForm() {
           {/* Classificação + Apresentador */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-[11px] mb-1.5 font-semibold text-white uppercase tracking-wider">Classificação Etária</label>
+              <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "#0d0446" }}>Classificação Etária</label>
               <Select value={classificacaoEtaria} onValueChange={setClassificacaoEtaria}>
-                <SelectTrigger className="w-full h-9" style={{ backgroundColor: "rgba(255,255,255,0.08)", color: "#ffffff", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.12)", fontSize: "13px" }}>
+                <SelectTrigger className="w-full h-9" style={{ backgroundColor: "rgba(255,255,255,0.6)", color: "#0d0446", borderRadius: "12px", border: "1px solid rgba(13,4,70,0.15)", fontSize: "13px" }}>
                   <SelectValue placeholder="Selecione a classificação" />
                 </SelectTrigger>
-                <SelectContent style={{ backgroundColor: "#0d0446", border: "1px solid rgba(255,255,255,0.15)" }}>
+                <SelectContent>
                   {CLASSIFICACOES_ETARIAS.map(c => (
-                    <SelectItem key={c.value} value={c.value} className="text-white focus:bg-white/20 focus:text-white">
+                    <SelectItem key={c.value} value={c.value}>
                       <span className="flex items-center gap-2">
                         <ClassificacaoBadge value={c.value} size={18} />
                         {c.label}
