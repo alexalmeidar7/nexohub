@@ -676,7 +676,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
 
       {/* Banner fixo no topo — sempre visível */}
       <div
-        className="fixed top-0 z-0 h-[420px] overflow-hidden rounded-b-2xl pointer-events-none"
+        className="fixed top-0 z-0 h-[200px] sm:h-[300px] lg:h-[420px] overflow-hidden rounded-b-2xl pointer-events-none"
         style={{ width: "calc(95% - 72px)", left: "calc(72px + 2.5%)", right: "2.5%" }}
       >
         <img
@@ -693,7 +693,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
           />
         )}
         <div
-          className="absolute bottom-0 left-0 right-0 h-[160px] pointer-events-none"
+          className="absolute bottom-0 left-0 right-0 h-[80px] sm:h-[120px] lg:h-[160px] pointer-events-none"
           style={{ background: "linear-gradient(to bottom, transparent 0%, hsl(var(--player)) 100%)" }}
         />
       </div>
@@ -702,16 +702,16 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
         ref={scrollContainerRef}
         className={`relative flex-1 overflow-y-auto h-full transition-opacity duration-400 ease-in-out ${fadeOut ? "opacity-0" : "opacity-100"}`}
         style={{
-          maskImage: "linear-gradient(to bottom, transparent 0px, transparent 415px, black 515px)",
-          WebkitMaskImage: "linear-gradient(to bottom, transparent 0px, transparent 415px, black 515px)",
+          maskImage: "linear-gradient(to bottom, transparent 0px, transparent clamp(195px, 30vw, 415px), black clamp(280px, 40vw, 515px))",
+          WebkitMaskImage: "linear-gradient(to bottom, transparent 0px, transparent clamp(195px, 30vw, 415px), black clamp(280px, 40vw, 515px))",
         }}
       >
 
-        <main ref={mainRef} className="px-8 pt-24 pb-6 ml-[72px] relative z-[10]">
+        <main ref={mainRef} className="px-4 sm:px-8 pt-24 pb-6 ml-[72px] relative z-[10]">
           <div className="transition-opacity duration-200 ease-in-out" style={{ opacity: sectionFading ? 0 : 1 }}>
           {visibleSection === "streaming" ? (
             /* ── Página dedicada: Canais ao Vivo ── */
-             <section className="rounded-2xl p-5" style={{ marginTop: "380px" }}>
+             <section className="rounded-2xl p-5" style={{ marginTop: "clamp(160px, 28vw, 380px)" }}>
               <h2 className="text-xl font-bold mb-6 tracking-wide uppercase text-player-foreground/90">Canais ao Vivo</h2>
               {!dataLoaded ? (
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
@@ -740,7 +740,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
             </section>
           ) : visibleSection === "content" ? (
             /* ── Página dedicada: Catálogo ── */
-            <section className="rounded-2xl p-5" style={{ marginTop: "380px" }}>
+            <section className="rounded-2xl p-5" style={{ marginTop: "clamp(160px, 28vw, 380px)" }}>
               <h2 className="text-xl font-bold mb-6 tracking-wide uppercase text-player-foreground/90">Catálogo</h2>
               {!dataLoaded ? (
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
@@ -841,7 +841,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
             </section>
           ) : visibleSection === "shop" ? (
             /* ── Página dedicada: Loja ── */
-            <section className="rounded-2xl p-5" style={{ marginTop: "380px" }}>
+            <section className="rounded-2xl p-5" style={{ marginTop: "clamp(160px, 28vw, 380px)" }}>
               <h2 className="text-xl font-bold mb-6 tracking-wide uppercase text-player-foreground/90">Loja</h2>
               {!dataLoaded ? (
                 <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
@@ -931,7 +931,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
             /* ── Home padrão ── */
             <>
               {/* Streamings ao vivo */}
-               <section className="mb-10 rounded-2xl p-5" style={{ marginTop: "380px" }}>
+               <section className="mb-10 rounded-2xl p-5" style={{ marginTop: "clamp(160px, 28vw, 380px)" }}>
                 {!dataLoaded ? (
                   <>
                     <Skeleton className="h-5 w-44 bg-white/10 mb-4" />
