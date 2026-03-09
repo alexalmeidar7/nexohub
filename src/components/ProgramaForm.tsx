@@ -754,7 +754,7 @@ export default function ProgramaForm() {
                   {selo ? (
                     <img src={selo} alt="Selo" className="w-full h-full object-cover rounded-xl" />
                   ) : (
-                    <span className="text-[9px] text-white/30 group-hover:text-white/50">Upload</span>
+                    <span className="text-[9px] text-white/50 group-hover:text-white/70">Upload</span>
                   )}
                 </div>
                 <input type="file" accept="image/*" onChange={handleSelo} className="hidden" />
