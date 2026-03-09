@@ -2141,146 +2141,204 @@ export default function PlayerPage() {
           </div>
 
           {/* Controls */}
-          <div className="flex items-center gap-1 sm:gap-2.5 px-1 sm:px-3 sm:border-l border-white/10 shrink-0 flex-wrap justify-center sm:justify-start">
-            {(isAudio || isVideo) && musicData?.titulo && (
-              <div className="relative flex items-center gap-1">
-                <button onClick={toggleLike} className={`p-1 sm:p-1.5 rounded transition-all ${likeAnimating ? "scale-125" : "scale-100"}`}
-                  title={liked ? "Descurtir música" : "Curtiu essa música?"} style={{ transition: "transform 0.3s ease" }}>
-                  <Heart size={16} fill={liked ? "#ed0808" : "none"} color={liked ? "#ed0808" : "rgba(255,255,255,0.6)"} className="transition-colors" />
-                </button>
-                
-                {floatingHearts.map((h) => (
-                  <Heart key={h.id} size={12 + Math.random() * 6} fill="#ed0808" color="#ed0808" className="absolute pointer-events-none"
-                    style={{ left: `calc(50% + ${h.x}px)`, bottom: "100%", opacity: 0, animation: `floatHeart 1.2s ease-out ${h.delay}s forwards` }} />
-                ))}
-              </div>
-            )}
-            {/* Karaoke toggle — only for audio channels with music */}
-            {(isAudio || isVideo) && musicData?.titulo && musicData.titulo !== "Sem título" && (
-              <button onClick={() => setKaraokeEnabled(!karaokeEnabled)}
-                className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded text-[10px] sm:text-[11px] font-bold transition-all flex items-center gap-1 border ${karaokeEnabled ? "bg-[#a10a0b] text-white border-[#a10a0b] shadow-[0_0_8px_rgba(161,10,11,0.5)]" : "bg-white/10 text-white/60 border-white/20 hover:bg-white/20 hover:text-white"}`}
-                title={karaokeEnabled ? "Desativar Karaoke" : "Ativar Karaoke"}>
-                <MicVocal size={12} /> <span className="hidden sm:inline">Karaoke</span>
-              </button>
-            )}
-            {/* Quality Selector — only for HLS video streams */}
-            {isVideo && hlsLevels.length > 1 && (
-              <div className="relative">
+          <div className="flex items-center gap-2 px-1 sm:px-3 sm:border-l border-white/10 shrink-0 flex-wrap justify-center sm:justify-start">
+            <div className="flex items-center gap-1 rounded-xl border border-player-border bg-player-surface/70 px-1.5 py-1">
+              {(isAudio || isVideo) && musicData?.titulo && (
+                <div className="relative flex items-center gap-1">
+                  <button
+                    onClick={toggleLike}
+                    className={`p-1.5 rounded-md transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-player-accent ${likeAnimating ? "scale-125" : "scale-100"}`}
+                    title={liked ? "Descurtir música" : "Curtiu essa música?"}
+                    aria-label={liked ? "Descurtir música" : "Curtir música"}
+                    style={{ transition: "transform 0.3s ease" }}
+                  >
+                    <Heart
+                      size={16}
+                      className="transition-colors"
+                      style={{
+                        color: liked ? "hsl(var(--player-accent))" : "hsl(var(--player-muted-foreground))",
+                        fill: liked ? "hsl(var(--player-accent))" : "none",
+                      }}
+                    />
+                  </button>
+
+                  {floatingHearts.map((h) => (
+                    <Heart
+                      key={h.id}
+                      size={12 + Math.random() * 6}
+                      fill="hsl(var(--player-accent))"
+                      color="hsl(var(--player-accent))"
+                      className="absolute pointer-events-none"
+                      style={{ left: `calc(50% + ${h.x}px)`, bottom: "100%", opacity: 0, animation: `floatHeart 1.2s ease-out ${h.delay}s forwards` }}
+                    />
+                  ))}
+                </div>
+              )}
+
+              {(isAudio || isVideo) && musicData?.titulo && musicData.titulo !== "Sem título" && (
                 <button
-                  onClick={() => setQualityMenuOpen(!qualityMenuOpen)}
-                  className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded text-[10px] sm:text-[11px] font-bold transition-all flex items-center gap-1 border ${qualityMenuOpen ? "bg-[#ed0808] text-white border-[#ed0808]" : "bg-white/10 text-white/60 border-white/20 hover:bg-white/20 hover:text-white"}`}
-                  title="Qualidade do vídeo"
+                  onClick={() => setKaraokeEnabled(!karaokeEnabled)}
+                  className={`px-2.5 sm:px-3 py-1.5 rounded-md text-[10px] sm:text-[11px] font-bold transition-all flex items-center gap-1 border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-player-accent ${karaokeEnabled ? "bg-player-accent text-player-foreground border-player-accent shadow-lg shadow-player-accent/25" : "bg-player-surface text-player-muted-foreground border-player-border hover:bg-player-surface-hover hover:text-player-foreground"}`}
+                  title={karaokeEnabled ? "Desativar Karaoke" : "Ativar Karaoke"}
+                  aria-label={karaokeEnabled ? "Desativar Karaoke" : "Ativar Karaoke"}
                 >
-                  <Settings2 size={12} />
-                  {hlsCurrentLevel === -1 ? "Auto" : `${hlsLevels.find(l => l.index === hlsCurrentLevel)?.height || "?"}p`}
+                  <MicVocal size={12} /> <span className="hidden sm:inline">Karaoke</span>
                 </button>
-                {qualityMenuOpen && (
-                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 rounded-lg overflow-hidden shadow-xl" style={{ backgroundColor: "rgba(0,0,0,0.95)", border: "1px solid rgba(255,255,255,0.15)", minWidth: "120px" }}>
-                    <button
-                      onClick={() => handleQualityChange(-1)}
-                      className={`w-full text-left px-4 py-2 text-xs font-semibold transition-colors ${hlsCurrentLevel === -1 ? "text-white" : "text-white/60 hover:text-white hover:bg-white/10"}`}
-                      style={hlsCurrentLevel === -1 ? { backgroundColor: "#e60000" } : {}}
-                    >
-                      Auto
-                    </button>
-                    {[...hlsLevels].sort((a, b) => b.height - a.height).map((level) => (
+              )}
+
+              {isVideo && hlsLevels.length > 1 && (
+                <div className="relative">
+                  <button
+                    onClick={() => setQualityMenuOpen(!qualityMenuOpen)}
+                    className={`px-2.5 sm:px-3 py-1.5 rounded-md text-[10px] sm:text-[11px] font-bold transition-all flex items-center gap-1 border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-player-accent ${qualityMenuOpen ? "bg-player-accent text-player-foreground border-player-accent" : "bg-player-surface text-player-muted-foreground border-player-border hover:bg-player-surface-hover hover:text-player-foreground"}`}
+                    title="Qualidade do vídeo"
+                    aria-label="Qualidade do vídeo"
+                  >
+                    <Settings2 size={12} />
+                    {hlsCurrentLevel === -1 ? "Auto" : `${hlsLevels.find(l => l.index === hlsCurrentLevel)?.height || "?"}p`}
+                  </button>
+                  {qualityMenuOpen && (
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 rounded-lg overflow-hidden shadow-xl bg-player-bg/95 border border-player-border min-w-[120px]">
                       <button
-                        key={level.index}
-                        onClick={() => handleQualityChange(level.index)}
-                        className={`w-full text-left px-4 py-2 text-xs font-semibold transition-colors ${hlsCurrentLevel === level.index ? "text-white" : "text-white/60 hover:text-white hover:bg-white/10"}`}
-                        style={hlsCurrentLevel === level.index ? { backgroundColor: "#e60000" } : {}}
+                        onClick={() => handleQualityChange(-1)}
+                        className={`w-full text-left px-4 py-2 text-xs font-semibold transition-colors ${hlsCurrentLevel === -1 ? "text-player-foreground bg-player-accent" : "text-player-muted-foreground hover:text-player-foreground hover:bg-player-surface"}`}
                       >
-                        {level.height}p {level.bitrate ? `(${(level.bitrate / 1000000).toFixed(1)}Mbps)` : ""}
+                        Auto
                       </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-            {isYoutube && (
-              <button onClick={handleYtHome}
-                className="hover:bg-white/20 rounded-full w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center transition-all"
-                style={!selectedVideoId ? { backgroundColor: "#d30707", color: "#fff" } : { backgroundColor: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)" }}
-                title="Início do canal">
-                <Home size={12} />
+                      {[...hlsLevels].sort((a, b) => b.height - a.height).map((level) => (
+                        <button
+                          key={level.index}
+                          onClick={() => handleQualityChange(level.index)}
+                          className={`w-full text-left px-4 py-2 text-xs font-semibold transition-colors ${hlsCurrentLevel === level.index ? "text-player-foreground bg-player-accent" : "text-player-muted-foreground hover:text-player-foreground hover:bg-player-surface"}`}
+                        >
+                          {level.height}p {level.bitrate ? `(${(level.bitrate / 1000000).toFixed(1)}Mbps)` : ""}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center gap-1 rounded-xl border border-player-border bg-player-surface/70 px-1.5 py-1">
+              {isYoutube && (
+                <button
+                  onClick={handleYtHome}
+                  className="rounded-md w-8 h-8 flex items-center justify-center transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-player-accent"
+                  style={!selectedVideoId ? { backgroundColor: "hsl(var(--player-accent))", color: "hsl(var(--player-foreground))" } : { backgroundColor: "hsl(var(--player-surface))", color: "hsl(var(--player-muted-foreground))" }}
+                  title="Início do canal"
+                  aria-label="Início do canal"
+                >
+                  <Home size={12} />
+                </button>
+              )}
+
+              {isYoutube && selectedVideoId && (
+                <>
+                  <button onClick={ytPrevVideo} className="text-player-muted-foreground hover:text-player-foreground transition-colors rounded-md p-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-player-accent" title="Vídeo anterior" aria-label="Vídeo anterior">
+                    <SkipBack size={14} />
+                  </button>
+                  <button onClick={ytTogglePlay} className="text-player-muted-foreground hover:text-player-foreground transition-colors rounded-md p-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-player-accent" title={ytPlaying ? "Pausar" : "Reproduzir"} aria-label={ytPlaying ? "Pausar" : "Reproduzir"}>
+                    {ytPlaying ? <Pause size={14} /> : <Play size={14} fill="currentColor" />}
+                  </button>
+                  <button onClick={ytNextVideo} className="text-player-muted-foreground hover:text-player-foreground transition-colors rounded-md p-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-player-accent" title="Próximo vídeo" aria-label="Próximo vídeo">
+                    <SkipForward size={14} />
+                  </button>
+                </>
+              )}
+
+              {isYoutube && (
+                <button
+                  onClick={() => setSidebarOpen(!sidebarOpen)}
+                  className="rounded-md w-8 h-8 flex items-center justify-center transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-player-accent"
+                  style={sidebarOpen ? { backgroundColor: "hsl(var(--player-accent))", color: "hsl(var(--player-foreground))" } : { backgroundColor: "hsl(var(--player-surface))", color: "hsl(var(--player-muted-foreground))" }}
+                  title={sidebarOpen ? "Fechar Playlist" : "Abrir Playlist"}
+                  aria-label={sidebarOpen ? "Fechar playlist" : "Abrir playlist"}
+                >
+                  <List size={12} />
+                </button>
+              )}
+
+              <button onClick={toggleFullscreen} className="text-player-muted-foreground hover:text-player-foreground transition-colors rounded-md p-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-player-accent" title={fullscreen ? "Sair tela cheia" : "Tela cheia"} aria-label={fullscreen ? "Sair de tela cheia" : "Tela cheia"}>
+                {fullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
               </button>
-            )}
-            {isYoutube && selectedVideoId && (
-              <>
-                <button onClick={ytPrevVideo} className="text-white/70 hover:text-white transition-colors" title="Vídeo anterior">
-                  <SkipBack size={14} />
-                </button>
-                <button onClick={ytTogglePlay} className="text-white/70 hover:text-white transition-colors" title={ytPlaying ? "Pausar" : "Reproduzir"}>
-                  {ytPlaying ? <Pause size={14} /> : <Play size={14} fill="white" />}
-                </button>
-                <button onClick={ytNextVideo} className="text-white/70 hover:text-white transition-colors" title="Próximo vídeo">
-                  <SkipForward size={14} />
-                </button>
-              </>
-            )}
-            {isYoutube && (
-              <button onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="hover:bg-white/20 rounded-full w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center transition-all"
-                style={sidebarOpen ? { backgroundColor: "#d30707", color: "#fff" } : { backgroundColor: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)" }}
-                title={sidebarOpen ? "Fechar Playlist" : "Abrir Playlist"}>
-                <List size={12} />
+
+              <button
+                onClick={() => {
+                  const v = videoRef.current || audioRef.current;
+                  if (document.pictureInPictureElement) {
+                    document.exitPictureInPicture().catch(() => {});
+                  } else if (v && "requestPictureInPicture" in v) {
+                    (v as HTMLVideoElement).requestPictureInPicture().catch(() => {});
+                  }
+                }}
+                className="hidden sm:inline-flex text-player-muted-foreground hover:text-player-foreground transition-colors rounded-md p-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-player-accent"
+                title="Picture-in-Picture"
+                aria-label="Picture-in-Picture"
+              >
+                <PictureInPicture size={16} />
               </button>
-            )}
-            <button onClick={toggleFullscreen} className="text-white/70 hover:text-white transition-colors" title={fullscreen ? "Sair tela cheia" : "Tela cheia"}>
-              {fullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
-            </button>
-            {/* Picture-in-Picture */}
-            <button
-              onClick={() => {
-                const v = videoRef.current || audioRef.current;
-                if (document.pictureInPictureElement) {
-                  document.exitPictureInPicture().catch(() => {});
-                } else if (v && "requestPictureInPicture" in v) {
-                  (v as HTMLVideoElement).requestPictureInPicture().catch(() => {});
-                }
-              }}
-              className="hidden sm:inline-flex text-white/70 hover:text-white transition-colors"
-              title="Picture-in-Picture"
-            >
-              <PictureInPicture size={16} />
-            </button>
-            {/* Cast / Transmitir aba */}
-            <button
-              onClick={() => {
-                if (navigator.mediaDevices && "getDisplayMedia" in navigator.mediaDevices) {
-                  navigator.mediaDevices.getDisplayMedia({ video: true }).catch(() => {});
-                }
-              }}
-              className="hidden sm:inline-flex text-white/70 hover:text-white transition-colors"
-              title="Transmitir"
-            >
-              <Cast size={16} />
-            </button>
-            <button onClick={() => setShopOpen(!shopOpen)}
-              className="hover:bg-white/20 rounded-full w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center transition-all relative"
-              style={shopOpen ? { backgroundColor: "#d30707", color: "#fff" } : { backgroundColor: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)" }}
-              title="Shopping ao Vivo">
-              <ShoppingCart size={12} />
-              {showShopIcon && <span className="absolute -top-1 -right-1 w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full animate-pulse" style={{ backgroundColor: "#e60000" }} />}
-            </button>
-            <button onClick={() => setChatOpen(!chatOpen)}
-              className="hover:bg-white/20 rounded-full w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center transition-all"
-              style={chatOpen ? { backgroundColor: "#d30707", color: "#fff" } : { backgroundColor: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)" }}
-              title="Chat ao Vivo">
-              <MessageSquare size={12} />
-            </button>
+
+              <button
+                onClick={() => {
+                  if (navigator.mediaDevices && "getDisplayMedia" in navigator.mediaDevices) {
+                    navigator.mediaDevices.getDisplayMedia({ video: true }).catch(() => {});
+                  }
+                }}
+                className="hidden sm:inline-flex text-player-muted-foreground hover:text-player-foreground transition-colors rounded-md p-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-player-accent"
+                title="Transmitir"
+                aria-label="Transmitir"
+              >
+                <Cast size={16} />
+              </button>
+
+              <button
+                onClick={() => setShopOpen(!shopOpen)}
+                className="rounded-md w-8 h-8 flex items-center justify-center transition-all relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-player-accent"
+                style={shopOpen ? { backgroundColor: "hsl(var(--player-accent))", color: "hsl(var(--player-foreground))" } : { backgroundColor: "hsl(var(--player-surface))", color: "hsl(var(--player-muted-foreground))" }}
+                title="Shopping ao Vivo"
+                aria-label="Shopping ao vivo"
+              >
+                <ShoppingCart size={12} />
+                {showShopIcon && <span className="absolute -top-1 -right-1 w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full animate-pulse bg-player-accent" />}
+              </button>
+
+              <button
+                onClick={() => setChatOpen(!chatOpen)}
+                className="rounded-md w-8 h-8 flex items-center justify-center transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-player-accent"
+                style={chatOpen ? { backgroundColor: "hsl(var(--player-accent))", color: "hsl(var(--player-foreground))" } : { backgroundColor: "hsl(var(--player-surface))", color: "hsl(var(--player-muted-foreground))" }}
+                title="Chat ao Vivo"
+                aria-label="Chat ao vivo"
+              >
+                <MessageSquare size={12} />
+              </button>
+            </div>
+
             <div className="relative" onMouseEnter={showVolume} onMouseLeave={hideVolume}>
-              <button onClick={toggleMuteWithOsd} className="text-white/70 hover:text-white transition-colors" title={muted ? "Ativar som" : "Desativar som"}>
+              <button
+                onClick={toggleMuteWithOsd}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-player-border bg-player-surface px-3 py-2 text-player-muted-foreground hover:text-player-foreground hover:bg-player-surface-hover transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-player-accent"
+                title={muted ? "Ativar som" : "Desativar som"}
+                aria-label={muted ? "Ativar som" : "Desativar som"}
+              >
                 {muted ? <VolumeX size={16} /> : <Volume2 size={16} />}
+                <span className="text-[11px] font-semibold min-w-8 text-left">{muted ? "0%" : `${volume}%`}</span>
               </button>
+
               {volumeHover && (
-                <div className="absolute bottom-8 left-1/2 -translate-x-1/2 rounded-xl px-3 py-4 flex flex-col items-center"
-                  style={{ height: "140px", width: "44px", backgroundColor: "rgba(0,0,0,0.92)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.08)" }}>
-                  <input type="range" min={0} max={100} value={volume} onChange={(e) => handleVolumeChangeWithOsd(Number(e.target.value))}
-                    className="h-full appearance-none cursor-pointer"
-                    style={{ writingMode: "vertical-lr", direction: "rtl", width: "6px", accentColor: "#e60000" }}
-                    onClick={(e) => e.stopPropagation()} />
-                  <span className="text-white/70 text-[10px] font-medium mt-1.5">{volume}%</span>
+                <div className="absolute bottom-11 left-1/2 -translate-x-1/2 rounded-xl px-3 py-3 flex flex-col items-center bg-player-bg/95 border border-player-border shadow-2xl">
+                  <span className="text-[10px] text-player-muted-foreground mb-1">Volume</span>
+                  <input
+                    type="range"
+                    min={0}
+                    max={100}
+                    value={volume}
+                    onChange={(e) => handleVolumeChangeWithOsd(Number(e.target.value))}
+                    className="h-[110px] appearance-none cursor-pointer"
+                    style={{ writingMode: "vertical-lr", direction: "rtl", width: "8px", accentColor: "hsl(var(--player-accent))" }}
+                    onClick={(e) => e.stopPropagation()}
+                    aria-label="Controle de volume"
+                  />
                 </div>
               )}
             </div>
