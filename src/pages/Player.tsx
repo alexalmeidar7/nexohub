@@ -1741,54 +1741,14 @@ export default function PlayerPage() {
 
   return (
     <div ref={containerRef} className="relative h-screen w-screen bg-black overflow-hidden select-none cursor-default animate-fade-in">
-      {/* User avatar + info - top left, always visible */}
-      <div className="fixed top-4 left-0 z-50 flex items-start">
-        <div className="w-20 flex justify-center">
-          <div className="w-10 h-10 rounded-full overflow-hidden bg-player-surface flex-shrink-0">
-            {profileAvatar ? (
-              <img src={profileAvatar} alt={profileName} className="w-full h-full object-cover" />
-            ) : (
-              <img src="/avatars/usr-default.png" alt="Visitante" className="w-full h-full object-cover" />
-            )}
-          </div>
-        </div>
-        <div className="mt-0.5">
-          <p className="text-xs text-player-muted-foreground">Bem vindo,</p>
-          <p className="text-sm text-player-accent font-bold leading-tight">{userDisplayName}</p>
-          {user && (
-            <button
-              onClick={async () => { await signOut(); navigate(playerHomePath); }}
-              className="text-player-accent text-[10px] hover:underline flex items-center gap-1 mt-0.5"
-            >
-              <LogOut className="h-3 w-3" /> Sair
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Sidebar menu with gradient background - always visible */}
-      <aside
-        className="fixed left-0 top-0 bottom-0 w-20 flex flex-col items-center justify-center gap-3 z-40"
-        style={{ background: "linear-gradient(to right, rgba(0,0,0,0.85), transparent)" }}
-      >
-        {[
-          { icon: Home, label: "Home", active: false, action: handleHomeClick },
-          { icon: Radio, label: "Streaming", active: true, action: () => {} },
-          { icon: Film, label: "Conteúdo", active: false, action: () => {} },
-          ...(user ? [{ icon: ShoppingBag, label: "Loja", active: false, action: () => setShopOpen(o => !o) }] : []),
-        ].map(item => (
-          <button
-            key={item.label}
-            onClick={item.action}
-            aria-label={item.label}
-            className={`${menuButtonBase} ${item.active ? menuButtonActive : menuButtonInactive}`}
-            title={item.label}
-          >
-            <item.icon className="h-5 w-5" />
-            <span className="text-[9px] font-semibold leading-none">{item.label}</span>
-          </button>
-        ))}
-      </aside>
+      <PlayerSidebarComponent
+        items={sidebarItems}
+        activeKey="streaming"
+        avatarUrl={profileAvatar}
+        userName={userDisplayName}
+        showLogout={!!user}
+        onLogout={async () => { await signOut(); navigate(playerHomePath); }}
+      />
 
       {/* Content wrapper with fade transition */}
       <div className={`transition-opacity duration-400 ease-in-out ${pageFadeOut ? "opacity-0" : "opacity-100"}`}>
