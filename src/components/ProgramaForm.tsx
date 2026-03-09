@@ -703,7 +703,7 @@ export default function ProgramaForm() {
                     className="w-full h-9 flex items-center justify-between px-4 text-sm rounded-xl"
                     style={{ backgroundColor: "rgba(255,255,255,0.08)", color: "#ffffff", border: "1px solid rgba(255,255,255,0.12)" }}
                   >
-                    <span className={apresentadorId ? "" : "opacity-40"}>
+                    <span className={apresentadorId ? "" : "opacity-60"}>
                       {apresentadorId ? (apresentadores.find(a => a.id === apresentadorId)?.nome || "Selecionar") : "Selecionar Apresentador"}
                     </span>
                     <ChevronsUpDown size={14} className="opacity-40" />
