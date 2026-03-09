@@ -1708,9 +1708,6 @@ export default function PlayerPage() {
   const showShopIcon = currentShopProducts.length > 0;
   // playerHomePath is now defined earlier in the component
   const userDisplayName = profileName || user?.email?.split("@")[0] || "Visitante";
-  const menuButtonBase = "w-14 rounded-2xl px-2 py-2.5 flex flex-col items-center justify-center gap-1.5 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-player-accent focus-visible:ring-offset-2 focus-visible:ring-offset-player-bg";
-  const menuButtonActive = "bg-player-accent text-player-foreground shadow-lg shadow-player-accent/25";
-  const menuButtonInactive = "bg-player-surface text-player-muted-foreground hover:bg-player-surface-hover hover:text-player-foreground";
 
   // Shopping popup is manual-only via icon click
 
