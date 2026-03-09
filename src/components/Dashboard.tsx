@@ -405,7 +405,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                               aria-label={child.label}
                               role="menuitem"
                             >
-                              <ChildIcon size={12} className={childActive ? "text-[#268ffa]" : "text-white"} />
+                              <ChildIcon size={12} className={childActive ? "text-primary" : "text-sidebar-foreground"} />
                               <span>{child.label}</span>
                             </button>
                           );
