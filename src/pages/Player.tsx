@@ -12,6 +12,7 @@ import {
   SkipForward,
   Maximize,
   Minimize,
+  Volume1,
   Volume2,
   VolumeX,
   MessageSquare,
