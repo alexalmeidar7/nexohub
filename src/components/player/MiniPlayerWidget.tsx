@@ -227,7 +227,7 @@ export default function MiniPlayerWidget({ data, onClose }: { data: MiniPlayerDa
 
   return (
     <div
-      className="fixed bottom-5 left-24 z-[100] rounded-2xl overflow-hidden animate-fade-in"
+      className="fixed bottom-5 right-8 z-[100] rounded-2xl overflow-hidden animate-fade-in"
       style={{ ...glassStyle, width: isVideo ? 320 : 280 }}
     >
       {/* Video area */}
