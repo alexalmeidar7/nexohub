@@ -436,22 +436,23 @@ export default function PrevisaoTempo() {
                     </button>
                   )}
                   {forecastLoading && (
-                    <div className="flex items-center gap-2 text-white/40">
+                    <div className="flex items-center gap-2" style={{ color: "rgba(13,4,70,0.4)" }}>
                       <Sparkles size={14} className="animate-pulse" />
                       <span className="text-xs italic">Analisando os próximos dias...</span>
                     </div>
                   )}
                   {forecastDescription && (
-                    <div className="rounded-xl p-4" style={{ backgroundColor: "rgba(45,190,243,0.08)", border: "1px solid rgba(45,190,243,0.15)" }}>
+                    <div className="rounded-xl p-4" style={{ backgroundColor: "rgba(13,4,70,0.06)", border: "1px solid rgba(13,4,70,0.1)" }}>
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs font-bold text-white">Veja como fica o tempo nos próximos 5 dias</span>
+                        <span className="text-xs font-bold" style={{ color: "#0d0446" }}>Veja como fica o tempo nos próximos 5 dias</span>
                         <button onClick={() => setForecastDescription("")}
-                          className="text-xs px-2 py-0.5 rounded-full transition-all text-white/40 hover:text-white hover:bg-white/10"
+                          className="text-xs px-2 py-0.5 rounded-full transition-all hover:bg-[#0d0446]/10"
+                          style={{ color: "rgba(13,4,70,0.5)" }}
                         >✕</button>
                       </div>
                       <div className="flex items-start gap-2">
-                        <Sparkles size={14} className="mt-0.5 flex-shrink-0" style={{ color: "#2dbef3" }} />
-                        <p className="text-sm leading-relaxed text-white/80">{forecastDescription}</p>
+                        <Sparkles size={14} className="mt-0.5 flex-shrink-0" style={{ color: "#268ffa" }} />
+                        <p className="text-sm leading-relaxed" style={{ color: "#0d0446" }}>{forecastDescription}</p>
                       </div>
                     </div>
                   )}
