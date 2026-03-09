@@ -565,9 +565,6 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
           borderRight: "1px solid rgba(255,255,255,0.07)",
         }}
       >
-        {/* Separator */}
-        <div className="w-8 h-px mb-2" style={{ background: "rgba(255,255,255,0.1)" }} />
-
         {/* Nav items — centered vertically */}
         <nav className="flex flex-col items-center gap-1.5 flex-1 justify-center">
           {sidebarItems.map(item => {
