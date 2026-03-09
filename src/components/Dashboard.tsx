@@ -412,7 +412,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                               key={child.page}
                               onClick={() => setCurrentPage(child.page)}
                               className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-[11px] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
-                                childActive ? "text-primary bg-sidebar-accent/70 font-semibold" : "text-sidebar-foreground hover:text-foreground hover:bg-sidebar-accent/30"
+                                childActive ? "text-[#268ffa] bg-white/10 font-semibold" : "text-white/80 hover:text-white hover:bg-white/5"
                               }`}
                               aria-label={child.label}
                               role="menuitem"
