@@ -2157,7 +2157,7 @@ export default function PlayerPage() {
               </button>
 
               {volumeHover && (
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 rounded-xl px-3 py-3 flex flex-col items-center gap-1.5 bg-player-bg/95 border border-player-border shadow-2xl backdrop-blur-sm">
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-[100] rounded-xl px-3 py-3 flex flex-col items-center gap-1.5 bg-player-bg/95 border border-player-border shadow-2xl backdrop-blur-sm">
                   <span className="text-[9px] font-semibold uppercase tracking-wider text-player-muted-foreground">Vol</span>
                   <input
                     type="range"
