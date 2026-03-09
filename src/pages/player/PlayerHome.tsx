@@ -701,16 +701,15 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       <div
         ref={scrollContainerRef}
         className={`relative flex-1 overflow-y-auto h-full transition-opacity duration-400 ease-in-out ${fadeOut ? "opacity-0" : "opacity-100"}`}
+        style={{
+          maskImage: "linear-gradient(to bottom, transparent 0px, transparent clamp(195px, 30vw, 415px), black clamp(280px, 40vw, 515px)), linear-gradient(to left, black 12px, transparent 12px)",
+          WebkitMaskImage: "linear-gradient(to bottom, transparent 0px, transparent clamp(195px, 30vw, 415px), black clamp(280px, 40vw, 515px)), linear-gradient(to left, black 12px, transparent 12px)",
+          maskComposite: "add",
+          WebkitMaskComposite: "source-over",
+        }}
       >
 
-        <main
-          ref={mainRef}
-          className="px-4 sm:px-8 pt-24 pb-6 ml-[72px] relative z-[10]"
-          style={{
-            maskImage: "linear-gradient(to bottom, transparent 0px, transparent clamp(195px, 30vw, 415px), black clamp(280px, 40vw, 515px))",
-            WebkitMaskImage: "linear-gradient(to bottom, transparent 0px, transparent clamp(195px, 30vw, 415px), black clamp(280px, 40vw, 515px))",
-          }}
-        >
+        <main ref={mainRef} className="px-4 sm:px-8 pt-24 pb-6 ml-[72px] relative z-[10]">
           <div className="transition-opacity duration-200 ease-in-out" style={{ opacity: sectionFading ? 0 : 1 }}>
           {visibleSection === "streaming" ? (
             /* ── Página dedicada: Canais ao Vivo ── */
