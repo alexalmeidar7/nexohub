@@ -762,7 +762,7 @@ export default function NoticiasPanel() {
               }));
             }}
           >
-            <div className="px-3 py-2 font-bold text-xs tracking-wide text-white rounded-t-xl flex items-center justify-between cursor-grab" style={{ backgroundColor: "#0d0446" }}>
+            <div className="px-3 py-2.5 font-bold text-xs tracking-wide text-white flex items-center justify-between cursor-grab" style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)" }}>
               <span className="flex items-center gap-1.5" style={{ color: "#ffffff" }}>
                 <GripVertical size={12} className="opacity-60" />
                 <CloudSun size={12} />
