@@ -339,15 +339,15 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
 
   const [miniPlayerData, setMiniPlayerData] = useState<MiniPlayerData | null>(() => loadMiniPlayerData());
 
-  // Fade banner when scrolling past 650px
+  // Fade banner when content scrolls over it
   useEffect(() => {
-    const scrollEl = mainRef.current?.closest(".overflow-y-auto") as HTMLElement | null;
+    const scrollEl = document.querySelector(".overflow-y-auto") as HTMLElement | null ?? mainRef.current?.closest(".overflow-y-auto") as HTMLElement | null;
     if (!scrollEl) return;
     const handleScroll = () => {
       const scrollY = scrollEl.scrollTop;
-      if (scrollY < 450) setBannerOpacity(1);
-      else if (scrollY > 650) setBannerOpacity(0);
-      else setBannerOpacity(1 - (scrollY - 450) / 200);
+      if (scrollY < 200) setBannerOpacity(1);
+      else if (scrollY > 450) setBannerOpacity(0);
+      else setBannerOpacity(1 - (scrollY - 200) / 250);
     };
     scrollEl.addEventListener("scroll", handleScroll, { passive: true });
     return () => scrollEl.removeEventListener("scroll", handleScroll);
@@ -674,8 +674,8 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
 
       <div className={`relative flex-1 overflow-y-auto h-full transition-opacity duration-400 ease-in-out ${fadeOut ? "opacity-0" : "opacity-100"}`}>
 
-        {/* Banner full-width behind content — crossfade between default and thumb on hover */}
-        <div className="absolute top-0 left-[72px] right-0 z-0 pointer-events-none h-[400px] overflow-hidden rounded-b-2xl transition-opacity duration-300" style={{ opacity: bannerOpacity }}>
+        {/* Banner fixo no topo — conteúdo rola por cima */}
+        <div className="fixed top-0 left-[72px] right-0 z-0 pointer-events-none h-[400px] overflow-hidden rounded-b-2xl transition-opacity duration-500 ease-in-out" style={{ opacity: bannerOpacity }}>
           <img
             src="/images/banner-home.png"
             alt="Banner"
@@ -689,7 +689,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
               className="w-full h-full object-cover object-top absolute inset-0 animate-fade-in"
             />
           )}
-          {/* Fade to transparent at bottom */}
+          {/* Fade gradiente inferior */}
           <div
             className="absolute bottom-0 left-0 right-0 h-[160px]"
             style={{ background: "linear-gradient(to bottom, transparent 0%, hsl(var(--player)) 100%)" }}
