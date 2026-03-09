@@ -620,7 +620,7 @@ export default function ProgramaForm() {
             <h3 className="text-base font-bold text-white">
               {editingId ? "Editar Programa" : "Cadastro de Programa"}
             </h3>
-            <p className="text-[11px] text-white/40">Preencha os dados para cadastrar o programa</p>
+            <p className="text-[11px] text-white/70">Preencha os dados para cadastrar o programa</p>
           </div>
         </div>
 
