@@ -437,265 +437,294 @@ export default function AgendaPage() {
   }
 
   return (
-    <div className="animate-fade-in space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <h3 className="text-lg font-semibold text-foreground">Calendário de Eventos</h3>
-          {locais.length > 0 && (
-            <Select value={filterLocal} onValueChange={setFilterLocal}>
-              <SelectTrigger className="w-[160px] h-7 text-xs [&>span]:text-white" style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "20px", border: "none" }}>
-                <MapPin size={14} className="mr-1 text-white" />
-                <SelectValue placeholder="Filtrar por local" />
-              </SelectTrigger>
-              <SelectContent style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "12px" }}>
-                <SelectItem value="todos" className="text-white focus:bg-[#2dbef3] focus:text-white">Todos os locais</SelectItem>
-                {locais.map((l) => (
-                  <SelectItem key={l} value={l} className="text-white focus:bg-[#2dbef3] focus:text-white">{l}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-        </div>
-
-        <button type="button" onClick={openNewDialog}
-          className="flex items-center gap-1 px-3 py-1 text-xs font-bold transition-all"
-          style={{ backgroundColor: "#2ec0f6", color: "#ffffff", borderRadius: "20px", border: "2px solid #2ec0f6" }}
-          onMouseEnter={e => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = "#2ec0f6"; }}
-          onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#2ec0f6"; e.currentTarget.style.color = "#ffffff"; }}
-        >
-          <Plus size={16} /> Novo Evento
-        </button>
-      </div>
-
-      <Dialog open={dialogOpen} onOpenChange={(open) => { if (!open) resetForm(); setDialogOpen(open); }}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto" style={{ backgroundColor: "#ffffff", borderRadius: "20px", border: "1px solid #2ec1f7" }}>
-          <style>{`
-            .agenda-form-input:focus, .agenda-form-input:focus-visible, .agenda-form-input:active {
-              outline: none !important;
-              box-shadow: none !important;
-              ring: none !important;
-              border-color: #2ec1f7 !important;
-            }
-          `}</style>
-          <DialogHeader>
-            <DialogTitle className="text-sm font-bold" style={{ color: "#0d0446" }}>{editingId ? "Editar Evento" : "Cadastrar Evento"}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
+    <div className="animate-fade-in">
+      <div className="rounded-2xl" style={{ background: "#d9e9fa", boxShadow: "0 8px 32px rgba(13,4,70,0.12)", padding: "20px" }}>
+        {/* Header */}
+        <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(13,4,70,0.08)" }}>
+              <CalendarIcon size={20} style={{ color: "#0d0446" }} />
+            </div>
             <div>
-              <Label className="text-xs font-semibold" style={{ color: "#0d0446" }}>Programa</Label>
-              <Select value={formProgramaId} onValueChange={setFormProgramaId}>
-                <SelectTrigger className="agenda-form-input mt-1" style={{ borderColor: "#2ec1f7", borderRadius: "9999px", backgroundColor: "#ffffff", color: "#0d0446" }}>
-                  <SelectValue placeholder="Selecione o programa" />
+              <h3 className="text-base font-bold" style={{ color: "#0d0446" }}>Calendário de Eventos</h3>
+              <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.5)" }}>Gerencie a agenda de programas e participantes</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {locais.length > 0 && (
+              <Select value={filterLocal} onValueChange={setFilterLocal}>
+                <SelectTrigger className="w-[160px] h-8 text-xs [&>span]:text-white" style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "20px", border: "none" }}>
+                  <MapPin size={12} className="mr-1 text-white" />
+                  <SelectValue placeholder="Filtrar por local" />
                 </SelectTrigger>
-                <SelectContent>
-                  {programas.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>
-                      {p.nome} ({p.horario_inicio} - {p.horario_fim})
-                    </SelectItem>
+                <SelectContent style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "12px" }}>
+                  <SelectItem value="todos" className="text-white focus:bg-[#268ffa] focus:text-white">Todos os locais</SelectItem>
+                  {locais.map((l) => (
+                    <SelectItem key={l} value={l} className="text-white focus:bg-[#268ffa] focus:text-white">{l}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              {selectedPrograma && (
-                <p className="text-xs mt-1" style={{ color: "rgba(13,4,70,0.5)" }}>
-                  Horário: {selectedPrograma.horario_inicio} às {selectedPrograma.horario_fim}
-                  {selectedPrograma.estudio && ` • Estúdio: ${selectedPrograma.estudio}`}
-                </p>
-              )}
-            </div>
+            )}
+            <button type="button" onClick={openNewDialog}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold transition-all rounded-full"
+              style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#ffffff", border: "none" }}
+              onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 4px 15px rgba(38,143,250,0.4)"; }}
+              onMouseLeave={e => { e.currentTarget.style.boxShadow = "none"; }}
+            >
+              <Plus size={14} /> Novo Evento
+            </button>
+          </div>
+        </div>
 
-            <div>
-              <Label className="text-xs font-semibold" style={{ color: "#0d0446" }}>Data do Evento</Label>
+        <Dialog open={dialogOpen} onOpenChange={(open) => { if (!open) resetForm(); setDialogOpen(open); }}>
+          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto" style={{ backgroundColor: "#ffffff", borderRadius: "20px", border: "1px solid rgba(38,143,250,0.3)" }}>
+            <style>{`
+              .agenda-form-input:focus, .agenda-form-input:focus-visible, .agenda-form-input:active {
+                outline: none !important;
+                box-shadow: none !important;
+                ring: none !important;
+                border-color: #268ffa !important;
+              }
+            `}</style>
+            <DialogHeader>
+              <DialogTitle className="text-sm font-bold" style={{ color: "#0d0446" }}>{editingId ? "Editar Evento" : "Cadastrar Evento"}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label className="text-xs font-semibold" style={{ color: "#0d0446" }}>Programa</Label>
+                <Select value={formProgramaId} onValueChange={setFormProgramaId}>
+                  <SelectTrigger className="agenda-form-input mt-1" style={{ borderColor: "rgba(38,143,250,0.3)", borderRadius: "12px", backgroundColor: "#ffffff", color: "#0d0446" }}>
+                    <SelectValue placeholder="Selecione o programa" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {programas.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.nome} ({p.horario_inicio} - {p.horario_fim})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {selectedPrograma && (
+                  <p className="text-xs mt-1" style={{ color: "rgba(13,4,70,0.5)" }}>
+                    Horário: {selectedPrograma.horario_inicio} às {selectedPrograma.horario_fim}
+                    {selectedPrograma.estudio && ` • Estúdio: ${selectedPrograma.estudio}`}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <Label className="text-xs font-semibold" style={{ color: "#0d0446" }}>Data do Evento</Label>
+                <Calendar
+                  mode="single"
+                  selected={formData}
+                  onSelect={setFormData}
+                  className={cn("p-3 pointer-events-auto border rounded-lg mt-1")}
+                  style={{ borderColor: "rgba(38,143,250,0.3)" }}
+                  locale={ptBR}
+                />
+                {formData && (
+                  <p className="text-xs mt-1" style={{ color: "rgba(13,4,70,0.5)" }}>
+                    {format(formData, "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <Label className="text-xs font-semibold" style={{ color: "#0d0446" }}>Recorrência</Label>
+                <Select value={formRecorrencia} onValueChange={setFormRecorrencia}>
+                  <SelectTrigger className="agenda-form-input mt-1" style={{ borderColor: "rgba(38,143,250,0.3)", borderRadius: "12px", backgroundColor: "#ffffff", color: "#0d0446" }}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="unico">Somente este dia</SelectItem>
+                    <SelectItem value="semanal">Toda semana neste dia</SelectItem>
+                    <SelectItem value="mensal">Todo mês neste dia</SelectItem>
+                    <SelectItem value="programa_semanal">Programa semanal</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label className="text-xs font-semibold" style={{ color: "#0d0446" }}>Local</Label>
+                <Select value={formLocal} onValueChange={setFormLocal}>
+                  <SelectTrigger className="agenda-form-input mt-1" style={{ borderColor: "rgba(38,143,250,0.3)", borderRadius: "12px", backgroundColor: "#ffffff", color: "#0d0446" }}>
+                    <SelectValue placeholder="Selecione o local" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {estudios.map((e) => (
+                      <SelectItem key={e} value={e}>{e}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label className="text-xs font-semibold" style={{ color: "#0d0446" }}>Prioridade</Label>
+                <Select value={formPrioridade} onValueChange={setFormPrioridade}>
+                  <SelectTrigger className="agenda-form-input mt-1" style={{ borderColor: "rgba(38,143,250,0.3)", borderRadius: "12px", backgroundColor: "#ffffff", color: "#0d0446" }}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="baixa">Baixa</SelectItem>
+                    <SelectItem value="normal">Normal</SelectItem>
+                    <SelectItem value="alta">Alta</SelectItem>
+                    <SelectItem value="urgente">Urgente</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label className="text-xs font-semibold" style={{ color: "#0d0446" }}>Descrição</Label>
+                <Input
+                  value={formDescricao}
+                  onChange={(e) => setFormDescricao(e.target.value)}
+                  placeholder="Descrição do evento"
+                  className="agenda-form-input mt-1"
+                  style={{ borderColor: "rgba(38,143,250,0.3)", borderRadius: "12px", backgroundColor: "#ffffff", color: "#0d0446" }}
+                />
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <Label className="text-xs font-semibold flex items-center gap-1" style={{ color: "#0d0446" }}>
+                    <Users size={14} /> Participantes
+                  </Label>
+                  <Button type="button" variant="ghost" size="sm" onClick={addParticipante} style={{ color: "#268ffa" }}>
+                    <Plus size={14} /> Adicionar
+                  </Button>
+                </div>
+                <div className="space-y-2">
+                  {formParticipantes.map((p, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <Input
+                        value={p.nome}
+                        onChange={(e) => updateParticipante(i, "nome", e.target.value)}
+                        placeholder="Nome"
+                        className="agenda-form-input flex-1"
+                        style={{ borderColor: "rgba(38,143,250,0.3)", borderRadius: "12px", backgroundColor: "#ffffff", color: "#0d0446" }}
+                      />
+                      <div className="flex items-center gap-1 flex-1">
+                        <Instagram size={14} className="shrink-0" style={{ color: "rgba(13,4,70,0.4)" }} />
+                        <Input
+                          value={p.instagram}
+                          onChange={(e) => updateParticipante(i, "instagram", e.target.value)}
+                          placeholder="@instagram"
+                          className="agenda-form-input"
+                          style={{ borderColor: "rgba(38,143,250,0.3)", borderRadius: "12px", backgroundColor: "#ffffff", color: "#0d0446" }}
+                        />
+                      </div>
+                      {formParticipantes.length > 1 && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 shrink-0"
+                          onClick={() => removeParticipante(i)}
+                        >
+                          <Trash2 size={14} className="text-destructive" />
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <Button onClick={handleSave} disabled={!formProgramaId || !formData} className="w-full font-bold" style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#ffffff", borderRadius: "12px", border: "none" }}>
+                {editingId ? "Atualizar Evento" : "Salvar Evento"}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Calendar + Events Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+          {/* Calendar */}
+          <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}>
+            <div className="px-4 py-2.5 font-bold text-xs tracking-wide text-white" style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)" }}>
+              📅 Calendário
+            </div>
+            <div className="p-3">
+              <style>{`
+                .agenda-calendar .rdp-day:hover { background-color: rgba(38,143,250,0.15) !important; color: #268ffa !important; }
+                .agenda-calendar .rdp-day_selected { background-color: #268ffa !important; color: #fff !important; }
+                .agenda-calendar .rdp-day_selected:hover { background-color: #268ffa !important; }
+                .agenda-calendar .rdp-day_today { background-color: #0d0446 !important; color: #ffffff !important; font-weight: 700 !important; }
+                .agenda-calendar .rdp-day_today:hover { background-color: #0d0446 !important; color: #ffffff !important; }
+                .agenda-calendar [class*="day_today"] { background-color: #0d0446 !important; color: #ffffff !important; font-weight: 700 !important; }
+                .agenda-calendar .has-event-day { background-color: rgba(38,143,250,0.15) !important; color: #268ffa !important; font-weight: bold; }
+              `}</style>
               <Calendar
                 mode="single"
-                selected={formData}
-                onSelect={setFormData}
-                className={cn("p-3 pointer-events-auto border rounded-lg mt-1")}
-                style={{ borderColor: "#2ec1f7" }}
+                selected={selectedDate}
+                onSelect={setSelectedDate}
+                className={cn("p-2 pointer-events-auto agenda-calendar")}
                 locale={ptBR}
+                modifiers={{ hasEvent: eventDates }}
+                modifiersClassNames={{ hasEvent: "has-event-day" }}
               />
-              {formData && (
-                <p className="text-xs mt-1" style={{ color: "rgba(13,4,70,0.5)" }}>
-                  {format(formData, "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+            </div>
+          </div>
+
+          {/* Events */}
+          <div className="lg:col-span-2 space-y-3">
+            <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}>
+              <div className="px-4 py-2.5 font-bold text-xs tracking-wide text-white flex items-center justify-between" style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)" }}>
+                <span>
+                  {selectedDate
+                    ? `📋 Eventos em ${format(selectedDate, "dd/MM/yyyy")}`
+                    : "📋 Todos os eventos"}
+                  {filterLocal !== "todos" && ` • ${filterLocal}`}
+                </span>
+                <span className="text-[9px] font-normal px-2 py-0.5 rounded-full" style={{ backgroundColor: "rgba(255,255,255,0.15)" }}>
+                  {filteredEventos.length} evento{filteredEventos.length !== 1 ? "s" : ""}
+                </span>
+              </div>
+              <div className="p-3 space-y-2">
+                {filteredEventos.length === 0 ? (
+                  <p className="text-sm py-8 text-center" style={{ color: "rgba(13,4,70,0.4)" }}>
+                    Nenhum evento encontrado para esta data.
+                  </p>
+                ) : (
+                  filteredEventos.map((evt) => renderEventCard(evt))
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Past events history */}
+        <div className="mt-5">
+          <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}>
+            <div className="px-4 py-2.5 font-bold text-xs tracking-wide text-white flex items-center justify-between" style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)" }}>
+              <span className="flex items-center gap-1.5">
+                <History size={12} /> Histórico de Eventos Passados
+              </span>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="date"
+                  value={historyDateFilter ? format(historyDateFilter, "yyyy-MM-dd") : ""}
+                  onChange={(e) => setHistoryDateFilter(e.target.value ? new Date(e.target.value + "T12:00:00") : undefined)}
+                  className="w-[150px] h-6 text-[10px] rounded-md"
+                  style={{ backgroundColor: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.2)", color: "#ffffff", colorScheme: "dark" }}
+                />
+                {historyDateFilter && (
+                  <button onClick={() => setHistoryDateFilter(undefined)} className="p-0.5 rounded hover:bg-white/20 transition-colors">
+                    <X size={12} className="text-white" />
+                  </button>
+                )}
+              </div>
+            </div>
+            <div className="p-3 space-y-2">
+              {pastEventos.length === 0 ? (
+                <p className="text-sm py-4 text-center" style={{ color: "rgba(13,4,70,0.4)" }}>
+                  Nenhum evento passado encontrado.
                 </p>
+              ) : (
+                pastEventos.map((evt) => renderEventCard(evt, true))
               )}
             </div>
-
-            <div>
-              <Label className="text-xs font-semibold" style={{ color: "#0d0446" }}>Recorrência</Label>
-              <Select value={formRecorrencia} onValueChange={setFormRecorrencia}>
-                <SelectTrigger className="agenda-form-input mt-1" style={{ borderColor: "#2ec1f7", borderRadius: "9999px", backgroundColor: "#ffffff", color: "#0d0446" }}>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="unico">Somente este dia</SelectItem>
-                  <SelectItem value="semanal">Toda semana neste dia</SelectItem>
-                  <SelectItem value="mensal">Todo mês neste dia</SelectItem>
-                  <SelectItem value="programa_semanal">Programa semanal</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label className="text-xs font-semibold" style={{ color: "#0d0446" }}>Local</Label>
-              <Select value={formLocal} onValueChange={setFormLocal}>
-                <SelectTrigger className="agenda-form-input mt-1" style={{ borderColor: "#2ec1f7", borderRadius: "9999px", backgroundColor: "#ffffff", color: "#0d0446" }}>
-                  <SelectValue placeholder="Selecione o local" />
-                </SelectTrigger>
-                <SelectContent>
-                  {estudios.map((e) => (
-                    <SelectItem key={e} value={e}>{e}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label className="text-xs font-semibold" style={{ color: "#0d0446" }}>Prioridade</Label>
-              <Select value={formPrioridade} onValueChange={setFormPrioridade}>
-                <SelectTrigger className="agenda-form-input mt-1" style={{ borderColor: "#2ec1f7", borderRadius: "9999px", backgroundColor: "#ffffff", color: "#0d0446" }}>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="baixa">Baixa</SelectItem>
-                  <SelectItem value="normal">Normal</SelectItem>
-                  <SelectItem value="alta">Alta</SelectItem>
-                  <SelectItem value="urgente">Urgente</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label className="text-xs font-semibold" style={{ color: "#0d0446" }}>Descrição</Label>
-              <Input
-                value={formDescricao}
-                onChange={(e) => setFormDescricao(e.target.value)}
-                placeholder="Descrição do evento"
-                className="agenda-form-input mt-1"
-                style={{ borderColor: "#2ec1f7", borderRadius: "9999px", backgroundColor: "#ffffff", color: "#0d0446" }}
-              />
-            </div>
-
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <Label className="text-xs font-semibold flex items-center gap-1" style={{ color: "#0d0446" }}>
-                  <Users size={14} /> Participantes
-                </Label>
-                <Button type="button" variant="ghost" size="sm" onClick={addParticipante} style={{ color: "#2ec1f7" }}>
-                  <Plus size={14} /> Adicionar
-                </Button>
-              </div>
-              <div className="space-y-2">
-                {formParticipantes.map((p, i) => (
-                  <div key={i} className="flex items-center gap-2">
-                    <Input
-                      value={p.nome}
-                      onChange={(e) => updateParticipante(i, "nome", e.target.value)}
-                      placeholder="Nome"
-                      className="agenda-form-input flex-1"
-                      style={{ borderColor: "#2ec1f7", borderRadius: "9999px", backgroundColor: "#ffffff", color: "#0d0446" }}
-                    />
-                    <div className="flex items-center gap-1 flex-1">
-                      <Instagram size={14} className="shrink-0" style={{ color: "rgba(13,4,70,0.4)" }} />
-                      <Input
-                        value={p.instagram}
-                        onChange={(e) => updateParticipante(i, "instagram", e.target.value)}
-                        placeholder="@instagram"
-                        className="agenda-form-input"
-                        style={{ borderColor: "#2ec1f7", borderRadius: "9999px", backgroundColor: "#ffffff", color: "#0d0446" }}
-                      />
-                    </div>
-                    {formParticipantes.length > 1 && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 shrink-0"
-                        onClick={() => removeParticipante(i)}
-                      >
-                        <Trash2 size={14} className="text-destructive" />
-                      </Button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <Button onClick={handleSave} disabled={!formProgramaId || !formData} className="w-full" style={{ backgroundColor: "#2ec1f7", color: "#0d0446", borderRadius: "9999px" }}>
-              {editingId ? "Atualizar Evento" : "Salvar Evento"}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="rounded-xl p-4" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)" }}>
-          <style>{`
-            .agenda-calendar .rdp-day:hover { background-color: rgba(46,192,246,0.15) !important; color: #2ec0f6 !important; }
-            .agenda-calendar .rdp-day_selected { background-color: #2ec0f6 !important; color: #fff !important; }
-            .agenda-calendar .rdp-day_selected:hover { background-color: #2ec0f6 !important; }
-            .agenda-calendar .rdp-day_today { background-color: #0d0446 !important; color: #ffffff !important; font-weight: 700 !important; }
-            .agenda-calendar .rdp-day_today:hover { background-color: #0d0446 !important; color: #ffffff !important; }
-            .agenda-calendar [class*="day_today"] { background-color: #0d0446 !important; color: #ffffff !important; font-weight: 700 !important; }
-            .agenda-calendar .has-event-day { background-color: rgba(46,192,246,0.15) !important; color: #2ec0f6 !important; font-weight: bold; }
-          `}</style>
-          <Calendar
-            mode="single"
-            selected={selectedDate}
-            onSelect={setSelectedDate}
-            className={cn("p-3 pointer-events-auto agenda-calendar")}
-            locale={ptBR}
-            modifiers={{ hasEvent: eventDates }}
-            modifiersClassNames={{ hasEvent: "has-event-day" }}
-          />
-        </div>
-
-        <div className="lg:col-span-2 space-y-3">
-          <h4 className="text-sm font-medium text-muted-foreground">
-            {selectedDate
-              ? `Eventos em ${format(selectedDate, "dd/MM/yyyy")}`
-              : "Todos os eventos"}
-            {filterLocal !== "todos" && ` • ${filterLocal}`}
-          </h4>
-
-          {filteredEventos.length === 0 ? (
-            <p className="text-muted-foreground text-sm py-8 text-center">
-              Nenhum evento encontrado para esta data.
-            </p>
-          ) : (
-            filteredEventos.map((evt) => renderEventCard(evt))
-          )}
-        </div>
-      </div>
-
-      {/* Past events history */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h4 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-            <History size={14} /> Histórico de Eventos Passados
-          </h4>
-          <div className="flex items-center gap-2">
-            <Input
-              type="date"
-              value={historyDateFilter ? format(historyDateFilter, "yyyy-MM-dd") : ""}
-              onChange={(e) => setHistoryDateFilter(e.target.value ? new Date(e.target.value + "T12:00:00") : undefined)}
-              className="w-[180px] h-8 text-sm"
-              placeholder="Filtrar por data"
-            />
-            {historyDateFilter && (
-              <Button variant="ghost" size="sm" onClick={() => setHistoryDateFilter(undefined)}>
-                <X size={14} /> Limpar
-              </Button>
-            )}
           </div>
         </div>
-
-        {pastEventos.length === 0 ? (
-          <p className="text-muted-foreground text-sm py-4 text-center">
-            Nenhum evento passado encontrado.
-          </p>
-        ) : (
-          pastEventos.map((evt) => renderEventCard(evt, true))
-        )}
       </div>
     </div>
   );
