@@ -640,17 +640,18 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
         {/* Separator */}
         <div className="w-8 h-px" style={{ background: "rgba(255,255,255,0.1)" }} />
 
-        {/* Sign out */}
-        {user && (
-          <button
-            onClick={handleSignOut}
-            className="group w-9 h-9 rounded-lg flex items-center justify-center mt-2 mb-1 transition-all hover:scale-110"
-            style={{ background: "rgba(255,255,255,0.05)" }}
-            title="Sair"
-          >
-            <LogOut className="h-4 w-4 text-white/40 group-hover:text-player-accent transition-colors" />
-          </button>
-        )}
+        {/* Avatar in sidebar */}
+        <div className="flex flex-col items-center mb-2 mt-2">
+          <div className="w-10 h-10 rounded-full bg-player-surface flex items-center justify-center overflow-hidden">
+            {!dataLoaded ? (
+              <Skeleton className="w-full h-full rounded-full bg-white/10" />
+            ) : profileAvatar ? (
+              <img src={profileAvatar} alt={userName} className="w-full h-full object-cover" />
+            ) : (
+              <img src="/avatars/usr-default.png" alt="Visitante" className="w-full h-full object-cover" />
+            )}
+          </div>
+        </div>
       </aside>
 
       {/* Content wrapper with fade transition */}
