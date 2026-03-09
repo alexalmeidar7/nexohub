@@ -689,19 +689,19 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
 
               {/* Visto por último */}
               {user && (
-                <section className="mb-10 rounded-2xl p-5" style={{ background: "rgba(0,0,0,0.25)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", border: "1px solid rgba(255,255,255,0.06)" }} className="mb-10 rounded-2xl p-5" style={{ background: "rgba(0,0,0,0.25)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                <section className="mb-10 rounded-2xl p-5" style={{ background: "rgba(0,0,0,0.25)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", border: "1px solid rgba(255,255,255,0.06)" }}>
                   {!dataLoaded ? (
                     <>
                       <Skeleton className="h-5 w-36 bg-white/10 mb-4" />
                       <div className="flex gap-4">
                         {[1, 2, 3].map(i => (
                           <Skeleton key={i} className="w-48 h-28 rounded-xl bg-white/10" />
-                        )) tracking-wide uppercase text-player-foreground/90}
+                        ))}
                       </div>
                     </>
                   ) : watchHistory.length > 0 ? (
                     <>
-                      <h2 className="text-lg font-bold mb-4">visto por último</h2>
+                      <h2 className="text-lg font-bold mb-4 tracking-wide uppercase text-player-foreground/90">visto por último</h2>
                       <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
                         {watchHistory.map(item => (
                           <button
