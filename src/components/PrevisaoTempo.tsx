@@ -518,13 +518,13 @@ export default function PrevisaoTempo() {
 
 function StatCard({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: string; color: string }) {
   return (
-    <div className="rounded-xl p-3.5 text-center transition-all hover:bg-white/10"
-      style={{ backgroundColor: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)" }}>
+    <div className="rounded-xl p-3.5 text-center transition-all hover:shadow-md"
+      style={{ backgroundColor: "rgba(255,255,255,0.5)", border: "1px solid rgba(13,4,70,0.08)" }}>
       <div className="flex items-center justify-center gap-1.5 mb-1.5" style={{ color }}>
         {icon}
-        <span className="text-[11px] font-medium text-white/50">{label}</span>
+        <span className="text-[11px] font-medium" style={{ color: "rgba(13,4,70,0.5)" }}>{label}</span>
       </div>
-      <p className="text-lg font-bold text-white">{value}</p>
+      <p className="text-lg font-bold" style={{ color: "#0d0446" }}>{value}</p>
     </div>
   );
 }
