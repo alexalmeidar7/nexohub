@@ -585,6 +585,8 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
           </div>
         )}
       </CollapsibleBox>}
+        </div>
+      </div>
     </div>
   );
 }
