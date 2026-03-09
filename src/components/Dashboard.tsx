@@ -397,7 +397,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                       <Icon size={14} className={active ? "text-[#268ffa]" : "text-white/70"} />
                       <span className="flex-1 text-left">{item.label}</span>
                       {item.children && (
-                        <div className="text-muted-foreground">
+                        <div className="text-white/40">
                           {expanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
                         </div>
                       )}
