@@ -710,7 +710,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
           <div className="transition-opacity duration-200 ease-in-out" style={{ opacity: sectionFading ? 0 : 1 }}>
           {visibleSection === "streaming" ? (
             /* ── Página dedicada: Canais ao Vivo ── */
-             <section className="rounded-2xl p-5" style={{ marginTop: "420px" }}>
+             <section className="rounded-2xl p-5" style={{ marginTop: "380px" }}>
               <h2 className="text-xl font-bold mb-6 tracking-wide uppercase text-player-foreground/90">Canais ao Vivo</h2>
               {!dataLoaded ? (
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
