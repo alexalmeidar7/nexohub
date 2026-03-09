@@ -220,7 +220,7 @@ function PlayerGradeDialog({ programas, onClose }: Props) {
                         <td
                           key={dia}
                           rowSpan={rowSpan}
-                          className="px-1.5 py-1 text-left rounded-xl grade-cell relative cursor-pointer group"
+                          className={`px-1.5 py-1 text-left rounded-xl grade-cell relative cursor-pointer group ${isOnAir ? "grade-on-air" : ""}`}
                           style={{
                             background: isOnAir
                               ? "linear-gradient(135deg, #e60000, #b30000)"
