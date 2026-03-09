@@ -335,6 +335,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   const [nowPlaying, setNowPlaying] = useState<{ musica: string; artista: string } | null>(null);
   const [bannerOpacity, setBannerOpacity] = useState(1);
   const mainRef = useRef<HTMLElement | null>(null);
+  const [shopProducts, setShopProducts] = useState<{ id: string; name: string; description: string | null; price: number; image_url: string | null; payment_url: string | null; stock: number }[]>([]);
 
   const [miniPlayerData, setMiniPlayerData] = useState<MiniPlayerData | null>(() => loadMiniPlayerData());
 
@@ -410,11 +411,12 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
 
       if (userId) {
         // Logged-in user: fetch directly from DB
-        const [chRes, empRes, progRes, histRes] = await Promise.all([
+        const [chRes, empRes, progRes, histRes, shopRes] = await Promise.all([
           supabase.from("streaming_channels").select("*").eq("user_id", userId).eq("active", true).order("numero_canal"),
           supabase.from("empresa_config").select("logo, nome").eq("user_id", userId).single(),
           supabase.from("programas").select("id, nome, horario_inicio, horario_fim, dias_semana, ativo, selo, estudio, variavel, data_variavel, capa, descricao, apresentador_id").eq("user_id", userId).eq("ativo", true).order("horario_inicio"),
           supabase.from("watch_history").select("id, channel_name, channel_cover_url, channel_logo_url, channel_type, watched_at, channel_id").eq("user_id", userId).order("watched_at", { ascending: false }).limit(10),
+          supabase.from("shopping_products").select("id, name, description, price, image_url, payment_url, stock").eq("user_id", userId).eq("active", true),
         ]);
         if (chRes.data) setChannels(chRes.data as any);
         if (empRes.data) {
@@ -432,6 +434,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
           });
           setWatchHistory(unique);
         }
+        if (shopRes.data) setShopProducts(shopRes.data as any);
       } else if (userSlug && userSlug !== ":userSlug") {
         // Public access via slug (unauthenticated visitors)
         const { data } = await supabase.functions.invoke("public-player-data", {
@@ -823,6 +826,58 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                     </div>
                   ))}
                 </>
+              )}
+            </section>
+          ) : visibleSection === "shop" ? (
+            /* ── Página dedicada: Loja ── */
+            <section className="rounded-2xl p-5" style={{ marginTop: "320px" }}>
+              <h2 className="text-xl font-bold mb-6 tracking-wide uppercase text-player-foreground/90">Loja</h2>
+              {!dataLoaded ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
+                  {[1, 2, 3, 4].map(i => (
+                    <Skeleton key={i} className="w-full aspect-square rounded-xl bg-white/10" />
+                  ))}
+                </div>
+              ) : shopProducts.length === 0 ? (
+                <div className="w-full h-40 rounded-xl bg-player-surface border border-player-border flex items-center justify-center text-player-muted-foreground text-sm">
+                  Nenhum produto disponível
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
+                  {shopProducts.map(product => (
+                    <div key={product.id} className="rounded-xl overflow-hidden relative group transition-all hover:scale-[1.02] border border-white/10 hover:border-white/30" style={{ background: "rgba(0,0,0,0.3)" }}>
+                      <div className="aspect-square overflow-hidden">
+                        {product.image_url ? (
+                          <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-br from-player-accent/20 to-player flex items-center justify-center">
+                            <ShoppingBag className="h-10 w-10 text-player-muted-foreground" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="p-3 flex flex-col gap-1">
+                        <p className="text-sm font-semibold text-white truncate">{product.name}</p>
+                        {product.description && (
+                          <p className="text-xs text-white/50 line-clamp-2">{product.description}</p>
+                        )}
+                        <p className="text-base font-bold text-player-accent mt-1">
+                          R$ {product.price.toFixed(2).replace(".", ",")}
+                        </p>
+                        {product.payment_url && (
+                          <a
+                            href={product.payment_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-2 w-full text-center text-xs font-semibold py-2 rounded-lg transition-colors"
+                            style={{ background: "hsl(var(--player-accent))", color: "white" }}
+                          >
+                            Comprar
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               )}
             </section>
           ) : (
