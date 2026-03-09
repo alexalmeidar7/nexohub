@@ -366,16 +366,10 @@ export default function PlayerPage() {
         musicArtist: musicData?.artista || undefined,
       });
     }
-    // Stop current playback before leaving
-    if (hlsRef.current) {
-      hlsRef.current.destroy();
-      hlsRef.current = null;
-    }
-    if (videoRef.current) { videoRef.current.pause(); videoRef.current.src = ""; }
-    if (audioRef.current) { audioRef.current.pause(); audioRef.current.src = ""; }
+    // Don't stop playback — MiniPlayer on Home will take over seamlessly
     setPageFadeOut(true);
     setTimeout(() => navigate(playerHomePath), 400);
-  }, [canal, playerHomePath, navigate]);
+  }, [canal, musicData, playerHomePath, navigate]);
 
   const handleHomeConfirmNo = useCallback(() => {
     setShowHomeConfirm(false);
