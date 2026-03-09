@@ -1986,6 +1986,8 @@ export default function PlayerPage() {
             audioElement={audioRef.current}
             visible={karaokeEnabled}
             duration={musicData?.duracao}
+            onLyricsNotFound={() => setKaraokeVisible(false)}
+            onLyricsFound={() => setKaraokeVisible(true)}
           />
         </Suspense>
       )}
