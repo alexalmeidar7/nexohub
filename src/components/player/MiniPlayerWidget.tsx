@@ -306,14 +306,69 @@ export default function MiniPlayerWidget({ data, onClose }: { data: MiniPlayerDa
           }
         `}</style>
 
-        {/* Buttons */}
+        {/* Play/Pause */}
         <button
-          onClick={() => setMuted(!muted)}
+          onClick={() => {
+            if (isVideo && videoRef.current) {
+              if (playing) { videoRef.current.pause(); setPlaying(false); }
+              else { videoRef.current.play().then(() => setPlaying(true)).catch(() => {}); }
+            } else if (globalAudio) {
+              if (playing) { globalAudio.pause(); setPlaying(false); }
+              else { globalAudio.play().then(() => setPlaying(true)).catch(() => {}); }
+            }
+          }}
           className="text-white/50 hover:text-white hover:bg-white/10 rounded-lg p-1.5 transition-all"
-          title={muted ? "Ativar som" : "Mudo"}
+          title={playing ? "Pausar" : "Reproduzir"}
         >
-          {muted ? <VolumeX size={14} /> : <Volume2 size={14} />}
+          {playing ? <Pause size={14} /> : <Play size={14} fill="currentColor" />}
         </button>
+
+        {/* Volume with slider */}
+        <div className="relative group/vol">
+          <button
+            onClick={() => setMuted(!muted)}
+            className="text-white/50 hover:text-white hover:bg-white/10 rounded-lg p-1.5 transition-all"
+            title={muted ? "Ativar som" : "Mudo"}
+          >
+            {muted ? <VolumeX size={14} /> : <Volume2 size={14} />}
+          </button>
+          {/* Volume slider popup — appears above on hover */}
+          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 pointer-events-none group-hover/vol:opacity-100 group-hover/vol:pointer-events-auto transition-all duration-200 z-50">
+            <div
+              className="rounded-xl px-2 py-3 flex flex-col items-center"
+              style={{
+                background: "rgba(0,0,0,0.85)",
+                backdropFilter: "blur(16px)",
+                border: "1px solid rgba(255,255,255,0.1)",
+              }}
+            >
+              <input
+                type="range"
+                min={0}
+                max={100}
+                value={muted ? 0 : volume}
+                onChange={(e) => {
+                  const v = Number(e.target.value);
+                  setVolume(v);
+                  if (v > 0) setMuted(false);
+                  else setMuted(true);
+                  if (!isVideo && globalAudio) globalAudio.volume = v / 100;
+                  if (isVideo && videoRef.current) videoRef.current.volume = v / 100;
+                }}
+                className="h-24 appearance-none cursor-pointer"
+                orient="vertical"
+                style={{
+                  writingMode: "vertical-lr" as any,
+                  direction: "rtl",
+                  width: "4px",
+                  accentColor: "hsl(0 80% 50%)",
+                }}
+              />
+              <span className="text-white/60 text-[9px] mt-1">{muted ? 0 : volume}%</span>
+            </div>
+          </div>
+        </div>
+
         <button
           onClick={handleExpand}
           className="text-white/50 hover:text-white hover:bg-white/10 rounded-lg p-1.5 transition-all"
