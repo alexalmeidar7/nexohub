@@ -565,37 +565,59 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
           borderRight: "1px solid rgba(255,255,255,0.07)",
         }}
       >
-        {/* Nav items — centered vertically */}
-        <nav className="flex flex-col items-center gap-1.5 flex-1 justify-center">
+        {/* Nav items — centered vertically with sliding highlight */}
+        <nav className="flex flex-col items-center gap-1.5 flex-1 justify-center relative">
+          {/* Sliding background pill */}
+          {(() => {
+            const idx = sidebarItems.findIndex(i => i.section === activeSection);
+            // Each button is ~60px tall (py-3 + icon 36px + gap + label ≈ 60px), gap 6px
+            const itemH = 60;
+            const gap = 6;
+            const offset = idx * (itemH + gap);
+            return (
+              <div
+                className="absolute left-1/2 -translate-x-1/2 w-[52px] h-[60px] rounded-xl pointer-events-none"
+                style={{
+                  top: offset,
+                  transition: "top 0.35s cubic-bezier(0.4, 0, 0.2, 1)",
+                  background: "linear-gradient(135deg, hsl(var(--player-accent)), hsl(var(--player-accent-hover)))",
+                  boxShadow: "0 4px 20px hsla(var(--player-accent) / 0.4)",
+                }}
+              />
+            );
+          })()}
+          {/* Sliding indicator bar */}
+          {(() => {
+            const idx = sidebarItems.findIndex(i => i.section === activeSection);
+            const itemH = 60;
+            const gap = 6;
+            const offset = idx * (itemH + gap) + (itemH / 2) - 14; // center the 28px bar
+            return (
+              <span
+                className="absolute -left-[1px] w-[3px] h-7 rounded-r-full pointer-events-none"
+                style={{
+                  top: offset,
+                  transition: "top 0.35s cubic-bezier(0.4, 0, 0.2, 1)",
+                  backgroundColor: "hsl(var(--player-accent))",
+                }}
+              />
+            );
+          })()}
           {sidebarItems.map(item => {
             const isActive = activeSection === item.section;
             return (
               <button
                 key={item.section}
-                onClick={() => setActiveSection(item.section)}
-                className="group relative w-[52px] rounded-xl px-2 py-3 flex flex-col items-center justify-center gap-1 transition-all duration-300 focus-visible:outline-none"
+                onMouseEnter={() => setActiveSection(item.section)}
+                className="group relative w-[52px] rounded-xl px-2 py-3 flex flex-col items-center justify-center gap-1 transition-all duration-300 focus-visible:outline-none z-[1]"
                 title={item.label}
                 aria-label={item.label}
               >
-                {/* Active indicator bar */}
-                {isActive && (
-                  <span
-                    className="absolute -left-[1px] top-1/2 -translate-y-1/2 w-[3px] h-7 rounded-r-full transition-all"
-                    style={{ backgroundColor: "hsl(var(--player-accent))" }}
-                  />
-                )}
                 <div
                   className={`w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-300 ${
-                    isActive
-                      ? "shadow-lg"
-                      : "group-hover:scale-110"
+                    isActive ? "" : "group-hover:scale-110"
                   }`}
-                  style={isActive ? {
-                    background: "linear-gradient(135deg, hsl(var(--player-accent)), hsl(var(--player-accent-hover)))",
-                    boxShadow: "0 4px 20px hsla(var(--player-accent) / 0.4)",
-                  } : {
-                    background: "rgba(255,255,255,0.05)",
-                  }}
+                  style={{ background: "transparent" }}
                 >
                   <item.icon className={`h-[18px] w-[18px] transition-colors duration-200 ${isActive ? "text-white" : "text-white/50 group-hover:text-white/80"}`} />
                 </div>
