@@ -389,7 +389,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                     <button
                       onClick={() => handleMenuClick(item)}
                       className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
-                        active ? "text-primary bg-sidebar-accent font-semibold shadow-sm" : "text-sidebar-foreground hover:text-foreground hover:bg-sidebar-accent/50"
+                        active ? "text-[#268ffa] bg-white/10 font-semibold shadow-sm" : "text-white hover:text-white hover:bg-white/5"
                       }`}
                       aria-label={item.label}
                       role="menuitem"
