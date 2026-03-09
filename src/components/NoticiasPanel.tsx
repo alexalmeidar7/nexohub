@@ -1087,8 +1087,8 @@ export default function NoticiasPanel() {
           return `<?xml version="1.0" encoding="UTF-8"?>\n<noticias>\n${newsXml}\n${cotXml}\n</noticias>`;
         })()} />
       )}
+      </div>{/* End main card */}
 
-      {/* Image hover preview */}
       {hoveredImage && (
         <div
           className="fixed z-[9999] pointer-events-none rounded-lg overflow-hidden shadow-xl border"
