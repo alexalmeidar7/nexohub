@@ -42,7 +42,7 @@ const PlayerGradeDialog = lazy(() => import("@/components/player/PlayerGradeDial
 const KaraokeOverlay = lazy(() => import("@/components/KaraokeOverlay"));
 import PlayerShopProduct from "@/components/player/PlayerShopProduct";
 import PreRollOverlay from "@/components/PreRollOverlay";
-import { saveMiniPlayerData, clearMiniPlayerData } from "@/components/player/MiniPlayerWidget";
+import { saveMiniPlayerData, clearMiniPlayerData, unlockAndPrepareMiniAudio } from "@/components/player/MiniPlayerWidget";
 import PlayerSkeleton from "@/components/skeletons/PlayerSkeleton";
 import { normalizeMusicText } from "@/lib/textEncoding";
 
@@ -356,6 +356,8 @@ export default function PlayerPage() {
   const handleHomeConfirmYes = useCallback(() => {
     setShowHomeConfirm(false);
     if (canal) {
+      // IMPORTANT: unlock audio element synchronously in user gesture context
+      unlockAndPrepareMiniAudio(canal.url);
       saveMiniPlayerData({
         url: canal.url,
         name: canal.name,
@@ -366,7 +368,6 @@ export default function PlayerPage() {
         musicArtist: musicData?.artista || undefined,
       });
     }
-    // Don't stop playback — MiniPlayer on Home will take over seamlessly
     setPageFadeOut(true);
     setTimeout(() => navigate(playerHomePath), 400);
   }, [canal, musicData, playerHomePath, navigate]);
