@@ -780,7 +780,7 @@ export default function ProgramaForm() {
 
           {/* Estúdio */}
           <div>
-            <label className="block text-[11px] mb-1.5 font-semibold text-white/60 uppercase tracking-wider flex items-center gap-1">
+            <label className="block text-[11px] mb-1.5 font-semibold text-white/90 uppercase tracking-wider flex items-center gap-1">
               <Building2 size={13} /> Estúdio
             </label>
             <div className="flex gap-2">
