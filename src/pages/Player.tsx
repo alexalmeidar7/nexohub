@@ -301,6 +301,7 @@ export default function PlayerPage() {
   const [clock, setClock] = useState(0);
   const [apresentadores, setApresentadores] = useState<Apresentador[]>([]);
   const [whatsappPhone, setWhatsappPhone] = useState<string | null>(null);
+  const [empresaLogo, setEmpresaLogo] = useState<string | null>(null);
   const [profileName, setProfileName] = useState("");
   const [profileAvatar, setProfileAvatar] = useState<string | null>(null);
 
