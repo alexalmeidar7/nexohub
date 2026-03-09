@@ -744,8 +744,8 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                 });
 
                 return (
-                  <section key={groupName} className="mb-10">
-                    <h2 className="text-lg font-bold mb-4">{groupName}</h2>
+                  <section key={groupName} className="mb-10 rounded-2xl p-5" style={{ background: "rgba(0,0,0,0.25)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                    <h2 className="text-lg font-bold mb-4 tracking-wide uppercase text-player-foreground/90">{groupName}</h2>
                     <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
                       {groupVideos.length > 0 ? (
                         groupVideos.map(({ channel, ...video }) => {
