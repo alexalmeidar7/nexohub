@@ -638,15 +638,15 @@ export default function ProgramaForm() {
               />
             </div>
             <div>
-              <label className="block text-[11px] mb-1.5 font-semibold text-white uppercase tracking-wider">Tipo do Programa</label>
+              <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "#0d0446" }}>Tipo do Programa</label>
               <div className="flex gap-2">
                 <Select value={tipoPrograma} onValueChange={setTipoPrograma}>
-                  <SelectTrigger className="flex-1 h-9" style={{ backgroundColor: "rgba(255,255,255,0.08)", color: "#ffffff", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.12)", fontSize: "13px" }}>
+                  <SelectTrigger className="flex-1 h-9" style={{ backgroundColor: "rgba(255,255,255,0.6)", color: "#0d0446", borderRadius: "12px", border: "1px solid rgba(13,4,70,0.15)", fontSize: "13px" }}>
                     <SelectValue placeholder="Selecione o tipo" />
                   </SelectTrigger>
-                  <SelectContent style={{ backgroundColor: "#0d0446", border: "1px solid rgba(255,255,255,0.15)" }}>
+                  <SelectContent>
                     {tiposPrograma.map(t => (
-                      <SelectItem key={t} value={t} className="text-white focus:bg-white/20 focus:text-white">{t}</SelectItem>
+                      <SelectItem key={t} value={t}>{t}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
