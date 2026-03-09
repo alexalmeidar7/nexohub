@@ -339,15 +339,15 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
 
   const [miniPlayerData, setMiniPlayerData] = useState<MiniPlayerData | null>(() => loadMiniPlayerData());
 
-  // Fade banner when scrolling past 650px
+  // Fade banner when content scrolls over it
   useEffect(() => {
-    const scrollEl = mainRef.current?.closest(".overflow-y-auto") as HTMLElement | null;
+    const scrollEl = document.querySelector(".overflow-y-auto") as HTMLElement | null ?? mainRef.current?.closest(".overflow-y-auto") as HTMLElement | null;
     if (!scrollEl) return;
     const handleScroll = () => {
       const scrollY = scrollEl.scrollTop;
-      if (scrollY < 450) setBannerOpacity(1);
-      else if (scrollY > 650) setBannerOpacity(0);
-      else setBannerOpacity(1 - (scrollY - 450) / 200);
+      if (scrollY < 200) setBannerOpacity(1);
+      else if (scrollY > 450) setBannerOpacity(0);
+      else setBannerOpacity(1 - (scrollY - 200) / 250);
     };
     scrollEl.addEventListener("scroll", handleScroll, { passive: true });
     return () => scrollEl.removeEventListener("scroll", handleScroll);
