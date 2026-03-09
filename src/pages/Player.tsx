@@ -249,7 +249,7 @@ export default function PlayerPage() {
   const requestedChannelId = searchParams.get("ch");
   const navigate = useNavigate();
   const isPublicMode = !!userSlug;
-  const playerHomePath = userSlug ? `/user/${userSlug}/nexohub/player?step=home` : "/user/nexohub/player?step=home";
+  const playerHomePath = useMemo(() => userSlug ? `/user/${userSlug}/nexohub/player?step=home` : "/user/nexohub/player?step=home", [userSlug]);
   const { user, loading: authLoading, signOut } = useAuth();
   const userId = user?.id ?? null;
 
