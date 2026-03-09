@@ -16,6 +16,8 @@ interface KaraokeOverlayProps {
   audioElement: HTMLAudioElement | null | undefined;
   visible: boolean;
   duration?: number;
+  onLyricsNotFound?: () => void;
+  onLyricsFound?: () => void;
 }
 
 function parseLrc(lrc: string): LrcLine[] {
@@ -34,18 +36,78 @@ function parseLrc(lrc: string): LrcLine[] {
   return lines;
 }
 
-export default function KaraokeOverlay({ artist, title, audioElement, visible, duration }: KaraokeOverlayProps) {
+// Confetti component
+function Confetti({ active }: { active: boolean }) {
+  const [particles, setParticles] = useState<Array<{ id: number; x: number; delay: number; size: number; rotation: number }>>([]);
+
+  useEffect(() => {
+    if (active) {
+      const newParticles = Array.from({ length: 50 }, (_, i) => ({
+        id: i,
+        x: Math.random() * 100,
+        delay: Math.random() * 0.5,
+        size: 8 + Math.random() * 8,
+        rotation: Math.random() * 360,
+      }));
+      setParticles(newParticles);
+      const timer = setTimeout(() => setParticles([]), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [active]);
+
+  if (particles.length === 0) return null;
+
+  return (
+    <div className="fixed inset-0 pointer-events-none z-[100] overflow-hidden">
+      {particles.map((p) => (
+        <div
+          key={p.id}
+          className="absolute"
+          style={{
+            left: `${p.x}%`,
+            top: "-20px",
+            width: p.size,
+            height: p.size,
+            backgroundColor: "#a10a0b",
+            borderRadius: Math.random() > 0.5 ? "50%" : "2px",
+            animation: `confettiFall 2.5s ease-out ${p.delay}s forwards`,
+            transform: `rotate(${p.rotation}deg)`,
+            boxShadow: "0 0 10px rgba(161,10,11,0.5)",
+          }}
+        />
+      ))}
+      <style>{`
+        @keyframes confettiFall {
+          0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+          100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+export default function KaraokeOverlay({ 
+  artist, 
+  title, 
+  audioElement, 
+  visible, 
+  duration,
+  onLyricsNotFound,
+  onLyricsFound,
+}: KaraokeOverlayProps) {
   const [lines, setLines] = useState<LrcLine[]>([]);
   const [currentLineIdx, setCurrentLineIdx] = useState(-1);
   const [progress, setProgress] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
   const [speedOffset, setSpeedOffset] = useState(() => {
     const saved = localStorage.getItem(SPEED_OFFSET_KEY);
     return saved ? parseFloat(saved) : 0;
   });
   const animRef = useRef<number>(0);
   const lastFetchRef = useRef("");
+  const notFoundTimerRef = useRef<ReturnType<typeof setTimeout>>();
 
   // Persist speed offset
   useEffect(() => {
@@ -61,6 +123,10 @@ export default function KaraokeOverlay({ artist, title, audioElement, visible, d
     setCurrentLineIdx(-1);
     setError(false);
     setLoading(true);
+    setShowConfetti(false);
+
+    // Clear any pending not-found timer
+    if (notFoundTimerRef.current) clearTimeout(notFoundTimerRef.current);
 
     supabase.functions.invoke("fetch-lyrics", {
       body: { artist, title, duration: duration ? Math.round(duration) : undefined },
@@ -68,16 +134,30 @@ export default function KaraokeOverlay({ artist, title, audioElement, visible, d
       setLoading(false);
       if (err || !data?.success || !data?.syncedLyrics) {
         setError(true);
+        // Auto-hide after 2 seconds when lyrics not found
+        notFoundTimerRef.current = setTimeout(() => {
+          onLyricsNotFound?.();
+        }, 2000);
         return;
       }
       const parsed = parseLrc(data.syncedLyrics);
       if (parsed.length === 0) {
         setError(true);
+        notFoundTimerRef.current = setTimeout(() => {
+          onLyricsNotFound?.();
+        }, 2000);
         return;
       }
       setLines(parsed);
+      // Trigger confetti and callback when lyrics found
+      setShowConfetti(true);
+      onLyricsFound?.();
     });
-  }, [artist, title, duration]);
+
+    return () => {
+      if (notFoundTimerRef.current) clearTimeout(notFoundTimerRef.current);
+    };
+  }, [artist, title, duration, onLyricsNotFound, onLyricsFound]);
 
   // Animation loop: read elapsed from MUSIC_START_KEY (real song start time)
   useEffect(() => {
@@ -124,69 +204,97 @@ export default function KaraokeOverlay({ artist, title, audioElement, visible, d
     setSpeedOffset(prev => Math.max(-5, Math.min(5, prev + delta)));
   };
 
-  return (
-    <div
-      className="absolute left-0 right-0 z-[25] flex flex-col items-center pointer-events-none animate-fade-in"
-      style={{ bottom: "220px" }}
-    >
-      {/* Karaoke ON badge with speed controls */}
-      <div className="flex items-center gap-2 mb-3 pointer-events-auto">
-        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full"
-          style={{ backgroundColor: "#a10a0b" }}>
-          <Mic size={14} className="text-white" />
-          <span className="text-white font-bold text-[11px] tracking-wider uppercase">Karaoke</span>
-        </div>
-        
-        {/* Speed adjustment buttons */}
-        <div className="flex items-center gap-1 px-2 py-1 rounded-full backdrop-blur-md"
-          style={{ backgroundColor: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.2)" }}>
-          <button
-            onClick={() => adjustSpeed(-0.5)}
-            className="w-6 h-6 rounded-full flex items-center justify-center transition-all hover:bg-white/20 active:scale-95"
-            title="Atrasar letra"
+  // Don't render the overlay UI if error (will auto-close)
+  if (error && !loading) {
+    return (
+      <>
+        <Confetti active={showConfetti} />
+        <div
+          className="absolute left-0 right-0 z-[25] flex flex-col items-center pointer-events-none animate-fade-in"
+          style={{ bottom: "220px" }}
+        >
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full mb-3"
+            style={{ backgroundColor: "#a10a0b" }}>
+            <Mic size={14} className="text-white" />
+            <span className="text-white font-bold text-[11px] tracking-wider uppercase">Karaoke</span>
+          </div>
+          <div 
+            className="px-6 py-4 rounded-2xl backdrop-blur-xl"
+            style={{ 
+              backgroundColor: "rgba(0,0,0,0.5)",
+              border: "1px solid rgba(255,255,255,0.1)"
+            }}
           >
-            <Minus size={12} className="text-white" />
-          </button>
-          <span className="text-white text-[10px] font-bold min-w-[32px] text-center tabular-nums">
-            {speedOffset > 0 ? "+" : ""}{speedOffset.toFixed(1)}s
-          </span>
-          <button
-            onClick={() => adjustSpeed(0.5)}
-            className="w-6 h-6 rounded-full flex items-center justify-center transition-all hover:bg-white/20 active:scale-95"
-            title="Adiantar letra"
-          >
-            <Plus size={12} className="text-white" />
-          </button>
+            <span className="text-white/30 text-xs">Letra não encontrada</span>
+          </div>
         </div>
-      </div>
+      </>
+    );
+  }
 
-      {/* Lyrics container with glass effect */}
-      <div 
-        className="w-[90vw] max-w-[700px] flex flex-col items-center gap-0.5 px-6 py-4 rounded-2xl backdrop-blur-xl"
-        style={{ 
-          backgroundColor: "rgba(0,0,0,0.5)",
-          boxShadow: "0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1)",
-          border: "1px solid rgba(255,255,255,0.1)"
-        }}
+  return (
+    <>
+      <Confetti active={showConfetti} />
+      <div
+        className="absolute left-0 right-0 z-[25] flex flex-col items-center pointer-events-none animate-fade-in"
+        style={{ bottom: "220px" }}
       >
-        {loading && (
-          <span className="text-white/50 text-xs animate-pulse">Buscando letra...</span>
-        )}
-        {error && !loading && (
-          <span className="text-white/30 text-xs">Letra não encontrada</span>
-        )}
-        {lines.length > 0 && (
-          <>
-            {line1 && (
-              <KaraokeLine text={line1.text} progress={progress} active />
-            )}
-            {line2 && (
-              <KaraokeLine text={line2.text} progress={0} active={false} />
-            )}
-          </>
-        )}
+        {/* Karaoke ON badge with speed controls */}
+        <div className="flex items-center gap-2 mb-3 pointer-events-auto">
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full"
+            style={{ backgroundColor: "#a10a0b" }}>
+            <Mic size={14} className="text-white" />
+            <span className="text-white font-bold text-[11px] tracking-wider uppercase">Karaoke</span>
+          </div>
+          
+          {/* Speed adjustment buttons */}
+          <div className="flex items-center gap-1 px-2 py-1 rounded-full backdrop-blur-md"
+            style={{ backgroundColor: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.2)" }}>
+            <button
+              onClick={() => adjustSpeed(-0.5)}
+              className="w-6 h-6 rounded-full flex items-center justify-center transition-all hover:bg-white/20 active:scale-95"
+              title="Atrasar letra"
+            >
+              <Minus size={12} className="text-white" />
+            </button>
+            <span className="text-white text-[10px] font-bold min-w-[32px] text-center tabular-nums">
+              {speedOffset > 0 ? "+" : ""}{speedOffset.toFixed(1)}s
+            </span>
+            <button
+              onClick={() => adjustSpeed(0.5)}
+              className="w-6 h-6 rounded-full flex items-center justify-center transition-all hover:bg-white/20 active:scale-95"
+              title="Adiantar letra"
+            >
+              <Plus size={12} className="text-white" />
+            </button>
+          </div>
+        </div>
+
+        {/* Lyrics container with glass effect */}
+        <div 
+          className="w-[90vw] max-w-[700px] flex flex-col items-center gap-0.5 px-6 py-4 rounded-2xl backdrop-blur-xl"
+          style={{ 
+            backgroundColor: "rgba(0,0,0,0.5)",
+            boxShadow: "0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1)",
+            border: "1px solid rgba(255,255,255,0.1)"
+          }}
+        >
+          {loading && (
+            <span className="text-white/50 text-xs animate-pulse">Buscando letra...</span>
+          )}
+          {lines.length > 0 && (
+            <>
+              {line1 && (
+                <KaraokeLine text={line1.text} progress={progress} active />
+              )}
+              {line2 && (
+                <KaraokeLine text={line2.text} progress={0} active={false} />
+              )}
+            </>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 
