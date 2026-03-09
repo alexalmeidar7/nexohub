@@ -976,11 +976,19 @@ export default function ProgramaForm() {
           </div>
         </div>
       ) : programas.length > 0 && (
-        <div>
-          <div className="flex items-center gap-3 mb-4">
-            <h4 className="text-lg font-medium" style={{ color: "#0d0446" }}>Grade de Programação</h4>
+        <div className="rounded-2xl overflow-hidden" style={{ background: "#d9e9fa", boxShadow: "0 8px 32px rgba(13,4,70,0.12)", padding: "20px" }}>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "rgba(13,4,70,0.08)" }}>
+                <Calendar size={18} style={{ color: "#0d0446" }} />
+              </div>
+              <div>
+                <h4 className="text-base font-bold" style={{ color: "#0d0446" }}>Grade de Programação</h4>
+                <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.5)" }}>Visualização semanal dos programas</p>
+              </div>
+            </div>
             <Select value={gradeEstudioFilter} onValueChange={setGradeEstudioFilter}>
-              <SelectTrigger className="w-[180px]" style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "20px", border: "none", fontSize: "11px", height: "26px", padding: "0 10px" }}>
+              <SelectTrigger className="w-[180px]" style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "20px", border: "none", fontSize: "11px", height: "30px", padding: "0 12px" }}>
                 <SelectValue placeholder="Filtrar por estúdio" />
               </SelectTrigger>
               <SelectContent>
@@ -995,22 +1003,22 @@ export default function ProgramaForm() {
             .grade-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
             .grade-scroll::-webkit-scrollbar-track { background: transparent; }
             .grade-scroll::-webkit-scrollbar-thumb { background: #0d0446; border-radius: 3px; }
-            .grade-scroll::-webkit-scrollbar-thumb:hover { background: #2dbef3; }
+            .grade-scroll::-webkit-scrollbar-thumb:hover { background: #268ffa; }
             .grade-scroll::-webkit-scrollbar-button { display: none; }
           `}</style>
           <div
             ref={gradeRef}
-            className="rounded-xl overflow-auto max-h-[300px] grade-scroll"
-            style={{ border: "1px solid rgba(13,4,70,0.1)", backgroundColor: "#ffffff", scrollbarWidth: "thin", scrollbarColor: "#0d0446 transparent", position: "relative" }}
+            className="rounded-xl overflow-auto max-h-[340px] grade-scroll"
+            style={{ border: "1px solid rgba(13,4,70,0.08)", backgroundColor: "#ffffff", scrollbarWidth: "thin", scrollbarColor: "#0d0446 transparent", position: "relative", boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}
           >
             <table data-no-row-hover className="w-full text-xs border-separate border-spacing-1">
-              <thead className="sticky top-0 z-10" style={{ backgroundColor: "#ffffff" }}>
-                <tr>
-                  <th className="px-2 py-2 text-left w-20 rounded-lg" style={{ color: "#0d0446" }}>Horário</th>
+              <thead className="sticky top-0 z-10">
+                <tr style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)" }}>
+                  <th className="px-3 py-2.5 text-left w-20 rounded-lg text-[11px] font-semibold uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.7)" }}>Horário</th>
                   {DIAS_SEMANA.map(dia => (
-                    <th key={dia} className={`px-2 py-2 text-center rounded-lg ${dia === diaAtual ? "font-bold" : ""}`} style={{ color: dia === diaAtual ? "#2dbef3" : "#0d0446" }}>
+                    <th key={dia} className={`px-2 py-2.5 text-center rounded-lg text-[11px] font-semibold uppercase tracking-wider ${dia === diaAtual ? "font-bold" : ""}`} style={{ color: dia === diaAtual ? "#2dbef3" : "rgba(255,255,255,0.85)" }}>
                       <div>{dia.slice(0, 3)}</div>
-                      <div className="text-[9px] font-normal opacity-70">{weekDates[dia]}</div>
+                      <div className="text-[9px] font-normal" style={{ color: dia === diaAtual ? "rgba(45,190,243,0.7)" : "rgba(255,255,255,0.4)" }}>{weekDates[dia]}</div>
                     </th>
                   ))}
                 </tr>
@@ -1029,32 +1037,35 @@ export default function ProgramaForm() {
               position: "absolute",
               left: 0,
               right: 0,
-              height: "1px",
-              backgroundColor: "#0d0446",
+              height: "2px",
+              background: "linear-gradient(90deg, #dc2626, #ef4444)",
               zIndex: 15,
               pointerEvents: "none",
               display: "none",
+              boxShadow: "0 0 6px rgba(220,38,38,0.4)",
             }}>
               <div style={{
                 position: "absolute",
                 left: -4,
-                top: -3,
-                width: 8,
-                height: 8,
+                top: -4,
+                width: 10,
+                height: 10,
                 borderRadius: "50%",
-                backgroundColor: "#0d0446",
+                backgroundColor: "#dc2626",
+                boxShadow: "0 0 6px rgba(220,38,38,0.5)",
               }} />
               <div style={{
                 position: "absolute",
-                left: 10,
-                top: -8,
+                left: 12,
+                top: -9,
                 fontSize: "9px",
                 fontWeight: 700,
-                color: "#0d0446",
-                backgroundColor: "#ffffff",
-                padding: "1px 4px",
-                borderRadius: "3px",
+                color: "#ffffff",
+                backgroundColor: "#dc2626",
+                padding: "2px 6px",
+                borderRadius: "4px",
                 whiteSpace: "nowrap",
+                boxShadow: "0 2px 6px rgba(220,38,38,0.3)",
               }}>
                 {currentTimeStr.slice(0, 5)}
               </div>
