@@ -316,30 +316,30 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         </div>
       )}
 
-      {/* Floating hamburger button + company name - desktop */}
-      <div className="hidden lg:flex fixed top-5 left-[40px] z-[58] items-start gap-3">
-        <button
-          onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-          className="w-11 h-11 rounded-full flex items-center justify-center transition-all shadow-lg hover:scale-105 shrink-0 mt-1"
-          style={{ backgroundColor: sidebarCollapsed ? "rgba(0,0,0,0.7)" : "#268ffa" }}
-          title={sidebarCollapsed ? "Abrir menu" : "Fechar menu"}
-        >
-          <Menu size={18} className="text-white" />
-        </button>
-        <div>
-          <h1 className="font-bold text-white" style={{ fontSize: "45px", lineHeight: 1.1 }}>{empresa.nome || "Dashboard"}</h1>
-          <div className="flex items-center gap-3 mt-1">
-            <p className="text-white/60 text-xs">{user?.email || ""}</p>
-            <button
-              onClick={onLogout}
-              className="flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold transition-all"
-              style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "#ffffff" }}
-              onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#dc2626"; }}
-              onMouseLeave={e => { e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.15)"; }}
-            >
-              <LogOut size={10} /> Sair
-            </button>
-          </div>
+      {/* Floating hamburger button - desktop */}
+      <button
+        onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+        className="hidden lg:flex fixed top-5 left-[40px] z-[60] w-11 h-11 rounded-full items-center justify-center transition-all shadow-lg hover:scale-105 mt-1"
+        style={{ backgroundColor: sidebarCollapsed ? "rgba(0,0,0,0.7)" : "#268ffa" }}
+        title={sidebarCollapsed ? "Abrir menu" : "Fechar menu"}
+      >
+        <Menu size={18} className="text-white" />
+      </button>
+
+      {/* Company name + user info - desktop */}
+      <div className="hidden lg:flex fixed top-5 left-[100px] z-[48] flex-col">
+        <h1 className="font-bold text-white" style={{ fontSize: "45px", lineHeight: 1.1 }}>{empresa.nome || "Dashboard"}</h1>
+        <div className="flex items-center gap-3 mt-1">
+          <p className="text-white/60 text-xs">{user?.email || ""}</p>
+          <button
+            onClick={onLogout}
+            className="flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold transition-all"
+            style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "#ffffff" }}
+            onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#dc2626"; }}
+            onMouseLeave={e => { e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.15)"; }}
+          >
+            <LogOut size={10} /> Sair
+          </button>
         </div>
       </div>
 
