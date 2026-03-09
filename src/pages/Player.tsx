@@ -487,18 +487,9 @@ export default function PlayerPage() {
   
 
   useEffect(() => {
-    // Reset immediately on music change
+    // Reset like state on every music change
     setLiked(false);
-    
-    if (!user || !musicData?.titulo || !musicData?.artista) {
-      return;
-    }
-    const check = async () => {
-      const { data: myLike } = await supabase.from("music_likes").select("id").eq("user_id", user.id).eq("titulo", musicData.titulo).eq("artista", musicData.artista).limit(1);
-      setLiked(!!(myLike && myLike.length > 0));
-    };
-    check();
-  }, [user, musicData?.titulo, musicData?.artista]);
+  }, [musicData?.titulo, musicData?.artista]);
 
   const toggleLike = useCallback(async () => {
     if (!user || !musicData?.titulo || !musicData?.artista || liked) return;
