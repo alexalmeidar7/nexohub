@@ -1,8 +1,9 @@
 import { useEffect, useState, useRef } from "react";
-import { Mic } from "lucide-react";
+import { Mic, Minus, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 const MUSIC_START_KEY = "masterview_music_start";
+const SPEED_OFFSET_KEY = "karaoke_speed_offset";
 
 interface LrcLine {
   time: number; // seconds
@@ -39,8 +40,17 @@ export default function KaraokeOverlay({ artist, title, audioElement, visible, d
   const [progress, setProgress] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
+  const [speedOffset, setSpeedOffset] = useState(() => {
+    const saved = localStorage.getItem(SPEED_OFFSET_KEY);
+    return saved ? parseFloat(saved) : 0;
+  });
   const animRef = useRef<number>(0);
   const lastFetchRef = useRef("");
+
+  // Persist speed offset
+  useEffect(() => {
+    localStorage.setItem(SPEED_OFFSET_KEY, String(speedOffset));
+  }, [speedOffset]);
 
   // Fetch lyrics when song changes
   useEffect(() => {
@@ -76,7 +86,8 @@ export default function KaraokeOverlay({ artist, title, audioElement, visible, d
     const tick = () => {
       const startStr = localStorage.getItem(MUSIC_START_KEY);
       if (startStr) {
-        const elapsed = (Date.now() - parseInt(startStr, 10)) / 1000 + 3;
+        // Base offset is 3s, plus user adjustment
+        const elapsed = (Date.now() - parseInt(startStr, 10)) / 1000 + 3 + speedOffset;
         
         // Find current line
         let idx = -1;
@@ -100,7 +111,7 @@ export default function KaraokeOverlay({ artist, title, audioElement, visible, d
     };
     animRef.current = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(animRef.current);
-  }, [visible, lines]);
+  }, [visible, lines, speedOffset]);
 
   if (!visible) return null;
 
@@ -109,20 +120,55 @@ export default function KaraokeOverlay({ artist, title, audioElement, visible, d
   const line1 = lines[line1Idx];
   const line2 = lines[line2Idx];
 
+  const adjustSpeed = (delta: number) => {
+    setSpeedOffset(prev => Math.max(-5, Math.min(5, prev + delta)));
+  };
+
   return (
     <div
       className="absolute left-0 right-0 z-[25] flex flex-col items-center pointer-events-none animate-fade-in"
-      style={{ bottom: "155px" }}
+      style={{ bottom: "220px" }}
     >
-      {/* Karaoke ON badge */}
-      <div className="flex items-center gap-1.5 mb-3 px-3 py-1.5 rounded-full pointer-events-auto"
-        style={{ backgroundColor: "#a10a0b" }}>
-        <Mic size={14} className="text-white" />
-        <span className="text-white font-bold text-[11px] tracking-wider uppercase">Karaoke</span>
+      {/* Karaoke ON badge with speed controls */}
+      <div className="flex items-center gap-2 mb-3 pointer-events-auto">
+        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full"
+          style={{ backgroundColor: "#a10a0b" }}>
+          <Mic size={14} className="text-white" />
+          <span className="text-white font-bold text-[11px] tracking-wider uppercase">Karaoke</span>
+        </div>
+        
+        {/* Speed adjustment buttons */}
+        <div className="flex items-center gap-1 px-2 py-1 rounded-full backdrop-blur-md"
+          style={{ backgroundColor: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.2)" }}>
+          <button
+            onClick={() => adjustSpeed(-0.5)}
+            className="w-6 h-6 rounded-full flex items-center justify-center transition-all hover:bg-white/20 active:scale-95"
+            title="Atrasar letra"
+          >
+            <Minus size={12} className="text-white" />
+          </button>
+          <span className="text-white text-[10px] font-bold min-w-[32px] text-center tabular-nums">
+            {speedOffset > 0 ? "+" : ""}{speedOffset.toFixed(1)}s
+          </span>
+          <button
+            onClick={() => adjustSpeed(0.5)}
+            className="w-6 h-6 rounded-full flex items-center justify-center transition-all hover:bg-white/20 active:scale-95"
+            title="Adiantar letra"
+          >
+            <Plus size={12} className="text-white" />
+          </button>
+        </div>
       </div>
 
-      {/* Lyrics container */}
-      <div className="w-[90vw] max-w-[700px] flex flex-col items-center gap-0.5">
+      {/* Lyrics container with glass effect */}
+      <div 
+        className="w-[90vw] max-w-[700px] flex flex-col items-center gap-0.5 px-6 py-4 rounded-2xl backdrop-blur-xl"
+        style={{ 
+          backgroundColor: "rgba(0,0,0,0.5)",
+          boxShadow: "0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1)",
+          border: "1px solid rgba(255,255,255,0.1)"
+        }}
+      >
         {loading && (
           <span className="text-white/50 text-xs animate-pulse">Buscando letra...</span>
         )}
