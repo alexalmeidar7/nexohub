@@ -154,7 +154,12 @@ function PlayerGradeDialog({ programas, onClose }: Props) {
             .grade-scroll::-webkit-scrollbar-thumb { background: rgba(230,0,0,0.3); border-radius: 3px; }
             .grade-scroll::-webkit-scrollbar-thumb:hover { background: rgba(230,0,0,0.5); }
             .grade-cell { transition: all 0.2s ease; }
-            .grade-cell:hover { transform: scale(1.02); z-index: 5; }
+            .grade-cell:hover { outline: 2px solid #e60000 !important; outline-offset: -1px; z-index: 5; }
+            @keyframes pulseOnAir {
+              0%, 100% { box-shadow: 0 0 0 2px rgba(255,255,255,0.9), 0 4px 16px rgba(230,0,0,0.3); }
+              50% { box-shadow: 0 0 0 2px rgba(255,255,255,0.3), 0 4px 16px rgba(230,0,0,0.3); }
+            }
+            .grade-on-air { animation: pulseOnAir 1.5s ease-in-out infinite; }
           `}</style>
           <table data-no-row-hover className="w-full text-xs border-separate table-fixed" style={{ borderSpacing: "3px" }}>
             <thead className="sticky top-0 z-10">
