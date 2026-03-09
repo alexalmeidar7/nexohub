@@ -105,8 +105,8 @@ export default function MiniPlayerWidget({ data, onClose }: { data: MiniPlayerDa
   const handleExpand = () => {
     clearMiniPlayerData();
     const path = userSlug
-      ? `/user/${userSlug}/nexohub/player/play?ch=${data.channelId}`
-      : `/user/nexohub/player/play?ch=${data.channelId}`;
+      ? `/user/${userSlug}/nexohub/player/watch?ch=${data.channelId}`
+      : `/user/nexohub/player/watch?ch=${data.channelId}`;
     navigate(path);
   };
 
