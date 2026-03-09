@@ -862,22 +862,22 @@ export default function ProgramaForm() {
           </div>
 
           {/* Toggles */}
-          <div className="flex items-center gap-6" style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: "12px" }}>
+          <div className="flex items-center gap-6" style={{ borderTop: "1px solid rgba(13,4,70,0.1)", paddingTop: "12px" }}>
             <label className="flex items-center gap-2.5 cursor-pointer select-none">
               <div className="relative">
                 <input type="checkbox" checked={ativo} onChange={(e) => setAtivo(e.target.checked)} className="sr-only peer" />
-                <div className="w-9 h-5 rounded-full transition-colors peer-checked:bg-[#2dbef3]" style={{ backgroundColor: "rgba(255,255,255,0.15)" }} />
+                <div className="w-9 h-5 rounded-full transition-colors peer-checked:bg-[#268ffa]" style={{ backgroundColor: "rgba(13,4,70,0.15)" }} />
                 <div className="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-4 shadow-sm" />
               </div>
-              <span className="text-xs font-medium text-white">Ativo</span>
+              <span className="text-xs font-medium" style={{ color: "#0d0446" }}>Ativo</span>
             </label>
             <label className="flex items-center gap-2.5 cursor-pointer select-none">
               <div className="relative">
                 <input type="checkbox" checked={variavel} onChange={(e) => { setVariavel(e.target.checked); if (!e.target.checked) setDataVariavel(undefined); }} className="sr-only peer" />
-                <div className="w-9 h-5 rounded-full transition-colors peer-checked:bg-[#f59e0b]" style={{ backgroundColor: "rgba(255,255,255,0.15)" }} />
+                <div className="w-9 h-5 rounded-full transition-colors peer-checked:bg-[#f59e0b]" style={{ backgroundColor: "rgba(13,4,70,0.15)" }} />
                 <div className="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-4 shadow-sm" />
               </div>
-              <span className="text-xs font-medium text-white">Variável</span>
+              <span className="text-xs font-medium" style={{ color: "#0d0446" }}>Variável</span>
             </label>
           </div>
 
