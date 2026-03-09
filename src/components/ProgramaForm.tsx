@@ -678,7 +678,7 @@ export default function ProgramaForm() {
           {/* Classificação + Apresentador */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-[11px] mb-1.5 font-semibold text-white/60 uppercase tracking-wider">Classificação Etária</label>
+              <label className="block text-[11px] mb-1.5 font-semibold text-white/90 uppercase tracking-wider">Classificação Etária</label>
               <Select value={classificacaoEtaria} onValueChange={setClassificacaoEtaria}>
                 <SelectTrigger className="w-full h-9" style={{ backgroundColor: "rgba(255,255,255,0.08)", color: "#ffffff", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.12)", fontSize: "13px" }}>
                   <SelectValue placeholder="Selecione a classificação" />
