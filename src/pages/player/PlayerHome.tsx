@@ -734,10 +734,13 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
             /* ── Home padrão ── */
             <>
               {/* Streamings ao vivo */}
-               <section className="mb-10 rounded-2xl p-5" style={{ marginTop: "220px", background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.06)" }}>
-            ssName="h-5 w-44 bg-white/10 mb-4" />
+               <section className="mb-10 rounded-2xl p-5" style={{ marginTop: "220px" }}>
+                {!dataLoaded ? (
+                  <>
+                    <Skeleton className="h-5 w-44 bg-white/10 mb-4" />
                     <div className="flex gap-4">
-     y={i} className="flex-shrink-0 w-72 h-40 rounded-xl bg-white/10" />
+                      {[1, 2, 3].map(i => (
+                        <Skeleton key={i} className="flex-shrink-0 w-72 h-40 rounded-xl bg-white/10" />
                       ))}
                     </div>
                   </>
