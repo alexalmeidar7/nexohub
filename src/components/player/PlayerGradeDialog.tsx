@@ -156,7 +156,7 @@ function PlayerGradeDialog({ programas, onClose }: Props) {
             .grade-cell { transition: all 0.2s ease; }
             .grade-cell:hover { transform: scale(1.02); z-index: 5; }
           `}</style>
-          <table data-no-row-hover className="w-full text-xs border-separate" style={{ borderSpacing: "3px" }}>
+          <table data-no-row-hover className="w-full text-xs border-separate table-fixed" style={{ borderSpacing: "3px" }}>
             <thead className="sticky top-0 z-10">
               <tr>
                 <th
