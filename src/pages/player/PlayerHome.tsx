@@ -706,7 +706,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
             /* ── Home padrão ── */
             <>
               {/* Streamings ao vivo */}
-               <section className="mb-10 rounded-2xl p-5" style={{ marginTop: "220px" }}>
+               <section className="mb-10 rounded-2xl p-5" style={{ marginTop: "320px" }}>
                 {!dataLoaded ? (
                   <>
                     <Skeleton className="h-5 w-44 bg-white/10 mb-4" />
