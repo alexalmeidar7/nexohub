@@ -434,6 +434,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
           });
           setWatchHistory(unique);
         }
+        if (shopRes.data) setShopProducts(shopRes.data as any);
       } else if (userSlug && userSlug !== ":userSlug") {
         // Public access via slug (unauthenticated visitors)
         const { data } = await supabase.functions.invoke("public-player-data", {
