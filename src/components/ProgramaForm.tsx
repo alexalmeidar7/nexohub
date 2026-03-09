@@ -735,12 +735,12 @@ export default function ProgramaForm() {
 
           {/* Descrição */}
           <div>
-            <label className="block text-[11px] mb-1.5 font-semibold text-white uppercase tracking-wider">Descrição</label>
+            <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "#0d0446" }}>Descrição</label>
             <Textarea value={descricao} onChange={(e) => setDescricao(e.target.value)} placeholder="Descrição do programa (opcional)"
-              className="min-h-[60px] px-4 py-2 outline-none transition-all text-s7 text-white place7older:text-white/50"
-              style={{ backgroundColor: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "12px" }}
-              onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
-              onBlur={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)"; }}
+              className="min-h-[60px] px-4 py-2 outline-none transition-all text-sm placeholder:text-[#0d0446]/40"
+              style={{ backgroundColor: "rgba(255,255,255,0.6)", border: "1px solid rgba(13,4,70,0.15)", borderRadius: "12px", color: "#0d0446" }}
+              onFocus={e => { e.currentTarget.style.borderColor = "#268ffa"; }}
+              onBlur={e => { e.currentTarget.style.borderColor = "rgba(13,4,70,0.15)"; }}
             />
           </div>
 
