@@ -85,14 +85,14 @@ function StyledInput({ value, onChange, placeholder, type = "text", readOnly = f
 function CollapsibleBox({ title, defaultOpen = true, children }: { title: string; defaultOpen?: boolean; children: React.ReactNode }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(13,4,70,0.15)" }}>
+    <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}>
       <button
         onClick={() => setOpen(!open)}
         className="w-full flex items-center justify-between px-5 py-3 transition-colors"
-        style={{ backgroundColor: "#0d0446", color: "#ffffff" }}
+        style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)", color: "#ffffff" }}
       >
-        <h3 className="text-lg font-semibold" style={{ color: "#ffffff" }}>{title}</h3>
-        {open ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+        <h3 className="text-sm font-bold text-white">{title}</h3>
+        {open ? <ChevronUp size={18} className="text-white" /> : <ChevronDown size={18} className="text-white" />}
       </button>
       {open && <div className="p-5 space-y-4" style={{ backgroundColor: "#ffffff" }}>{children}</div>}
     </div>
