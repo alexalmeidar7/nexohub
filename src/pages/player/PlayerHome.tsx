@@ -674,8 +674,12 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
         </nav>
       </aside>
 
-      {/* Banner fixo no topo — fora do scroll container */}
-      <div className="fixed top-0 left-[72px] right-0 z-0 pointer-events-none h-[400px] overflow-hidden rounded-b-2xl transition-opacity duration-500 ease-in-out" style={{ opacity: bannerOpacity }}>
+      {/* Banner fixo no topo — sempre visível */}
+      <div
+        className="fixed top-0 left-[72px] right-0 z-[5] h-[400px] overflow-hidden rounded-b-2xl"
+        onMouseEnter={() => setBannerHovered(true)}
+        onMouseLeave={() => setBannerHovered(false)}
+      >
         <img
           src="/images/banner-home.png"
           alt="Banner"
@@ -690,7 +694,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
           />
         )}
         <div
-          className="absolute bottom-0 left-0 right-0 h-[160px]"
+          className="absolute bottom-0 left-0 right-0 h-[160px] pointer-events-none"
           style={{ background: "linear-gradient(to bottom, transparent 0%, hsl(var(--player)) 100%)" }}
         />
       </div>
