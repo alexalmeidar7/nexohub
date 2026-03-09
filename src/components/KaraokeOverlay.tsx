@@ -107,10 +107,7 @@ export default function KaraokeOverlay({
   const [error, setError] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
   const [exitAnim, setExitAnim] = useState(false); // animate-out for "not found"
-  const [speedOffset, setSpeedOffset] = useState(() => {
-    const saved = localStorage.getItem(SPEED_OFFSET_KEY);
-    return saved ? parseFloat(saved) : 0;
-  });
+  const [speedOffset, setSpeedOffset] = useState(0);
   const animRef = useRef<number>(0);
   const lastFetchRef = useRef("");
 
