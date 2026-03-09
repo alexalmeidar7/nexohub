@@ -160,10 +160,10 @@ function PlayerGradeDialog({ programas, onClose }: Props) {
             <thead className="sticky top-0 z-10">
               <tr>
                 <th
-                  className="px-2 py-2.5 text-left w-16 rounded-xl text-[10px] uppercase tracking-wider font-semibold"
-                  style={{ backgroundColor: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.4)" }}
+                  className="px-1.5 py-2.5 text-left rounded-xl text-[10px] uppercase tracking-wider font-semibold"
+                  style={{ backgroundColor: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.4)", width: "48px" }}
                 >
-                  <Clock size={10} className="inline mr-1 opacity-60" />
+                  <Clock size={10} className="inline mr-0.5 opacity-60" />
                   Hora
                 </th>
                 {DIAS_SEMANA.map(dia => {
