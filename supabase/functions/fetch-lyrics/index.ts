@@ -14,14 +14,94 @@ function slugify(text: string): string {
     .replace(/^-|-$/g, "");
 }
 
-// Convert plain lyrics + duration into pseudo-synced LRC format
+// Use AI to generate intelligent timestamps for lyrics
+async function aiSyncLyrics(plainLyrics: string, artist: string, title: string, durationSec: number): Promise<string | null> {
+  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+  if (!LOVABLE_API_KEY) {
+    console.log("LOVABLE_API_KEY not available, falling back to simple sync");
+    return null;
+  }
+
+  try {
+    const systemPrompt = `You are a music lyrics timing expert. Your task is to generate LRC (synced lyrics) timestamps for song lyrics.
+
+RULES:
+1. Output ONLY valid LRC format lines, one per line
+2. Format: [mm:ss.xx] Lyric text
+3. Consider natural song structure: intro, verse, chorus, bridge, outro
+4. Account for instrumental sections and pauses between verses
+5. Vocals typically start 5-15 seconds into a song
+6. Choruses are usually faster-paced than verses
+7. Leave appropriate gaps for instrumental breaks
+8. Each line should have realistic timing based on how long it takes to sing
+
+IMPORTANT: Return ONLY the LRC formatted lyrics, nothing else. No explanations, no markdown.`;
+
+    const userPrompt = `Generate synced LRC lyrics for this song:
+
+Artist: ${artist}
+Title: ${title}
+Total Duration: ${durationSec} seconds
+
+Plain Lyrics:
+${plainLyrics}
+
+Generate LRC timestamps that sync naturally with how this song would be performed. Consider the tempo and style typical for this artist/genre.`;
+
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${LOVABLE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-3-flash-preview",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+        temperature: 0.3,
+        max_tokens: 4000,
+      }),
+    });
+
+    if (!response.ok) {
+      console.error(`AI gateway error: ${response.status}`);
+      return null;
+    }
+
+    const data = await response.json();
+    const lrcOutput = data.choices?.[0]?.message?.content?.trim();
+
+    if (!lrcOutput) {
+      console.log("AI returned empty response");
+      return null;
+    }
+
+    // Validate LRC format - check if it has valid timestamps
+    const hasValidLrc = /\[\d{2}:\d{2}\.\d{2,3}\]/.test(lrcOutput);
+    if (!hasValidLrc) {
+      console.log("AI output is not valid LRC format");
+      return null;
+    }
+
+    console.log(`AI generated ${lrcOutput.split('\n').length} synced lines`);
+    return lrcOutput;
+  } catch (err) {
+    console.error("AI sync error:", err);
+    return null;
+  }
+}
+
+// Simple fallback: distribute lyrics evenly
 function plainToLrc(plain: string, durationSec: number): string {
   const lines = plain.split("\n").filter((l) => l.trim().length > 0);
   if (lines.length === 0) return "";
 
-  // Reserve 5s intro, distribute rest evenly
-  const introSec = 5;
-  const usable = Math.max(durationSec - introSec, lines.length * 2);
+  // Reserve 8s intro, distribute rest evenly with some variance
+  const introSec = 8;
+  const outroSec = 5;
+  const usable = Math.max(durationSec - introSec - outroSec, lines.length * 2);
   const perLine = usable / lines.length;
 
   return lines
@@ -58,9 +138,6 @@ async function fetchFromLetras(artist: string, title: string): Promise<string | 
 
     const html = await resp.text();
 
-    // Extract lyrics from the page
-    // letras.mus.br puts lyrics inside <div class="lyric-original"> or similar
-    // Try multiple patterns
     let lyrics = "";
 
     // Pattern 1: lyric-original div
@@ -145,6 +222,7 @@ Deno.serve(async (req) => {
 
     let syncedLyrics: string | null = null;
     let plainLyrics: string | null = null;
+    let usedAiSync = false;
 
     // Try GET (exact match)
     const getResp = await fetch(`https://lrclib.net/api/get?${params.toString()}`, {
@@ -182,18 +260,25 @@ Deno.serve(async (req) => {
       const letrasText = await fetchFromLetras(artist, title);
       if (letrasText) {
         plainLyrics = letrasText;
-        // Generate pseudo-synced lyrics from plain text + duration
-        const dur = duration || 180; // default 3 min
-        syncedLyrics = plainToLrc(letrasText, dur);
-        console.log("Generated pseudo-synced lyrics from letras.mus.br");
       }
     }
 
-    // If we have plain lyrics from lrclib but no synced, also try to generate pseudo-sync
+    // If we have plain lyrics but no synced, use AI to generate intelligent timestamps
     if (!syncedLyrics && plainLyrics) {
       const dur = duration || 180;
-      syncedLyrics = plainToLrc(plainLyrics, dur);
-      console.log("Generated pseudo-synced lyrics from plain text");
+      console.log("Using AI to generate synced lyrics...");
+      
+      // Try AI sync first
+      const aiSynced = await aiSyncLyrics(plainLyrics, artist, title, dur);
+      if (aiSynced) {
+        syncedLyrics = aiSynced;
+        usedAiSync = true;
+        console.log("Successfully generated AI-synced lyrics");
+      } else {
+        // Fallback to simple distribution
+        syncedLyrics = plainToLrc(plainLyrics, dur);
+        console.log("Used simple distribution for lyrics sync");
+      }
     }
 
     if (!syncedLyrics && !plainLyrics) {
@@ -203,10 +288,10 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log(`Found lyrics: synced=${!!syncedLyrics}, plain=${!!plainLyrics}`);
+    console.log(`Found lyrics: synced=${!!syncedLyrics}, plain=${!!plainLyrics}, aiSync=${usedAiSync}`);
 
     return new Response(
-      JSON.stringify({ success: true, syncedLyrics, plainLyrics }),
+      JSON.stringify({ success: true, syncedLyrics, plainLyrics, aiSync: usedAiSync }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
