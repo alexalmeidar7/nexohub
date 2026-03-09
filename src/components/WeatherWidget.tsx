@@ -108,6 +108,25 @@ export default function WeatherWidget({ onNavigate }: { onNavigate?: (page: any)
     return () => clearInterval(interval);
   }, []);
 
+  if (noCity) {
+    return (
+      <div className="flex flex-col h-full items-start justify-between">
+        <div className="flex items-center gap-1.5 mb-2">
+          <Sun size={14} style={{ color: "#268ffa", animationDuration: "8s" }} className="animate-spin" />
+          <span className="font-bold text-xs" style={{ color: "#268ffa" }}>TEMPO</span>
+        </div>
+        <p className="text-xs flex-1" style={{ color: "#0d0446", opacity: 0.5 }}>Nenhuma cidade configurada.</p>
+        <button
+          onClick={() => onNavigate?.("previsao")}
+          className="mt-auto flex items-center gap-1.5 text-[10px] font-semibold rounded-lg px-2 py-1 hover:opacity-80 transition-opacity"
+          style={{ color: "#268ffa", backgroundColor: "rgba(38,143,250,0.1)" }}
+        >
+          <Settings size={10} /> Configurar
+        </button>
+      </div>
+    );
+  }
+
   if (!weather) {
     return (
       <div className="flex flex-col h-full animate-pulse">
