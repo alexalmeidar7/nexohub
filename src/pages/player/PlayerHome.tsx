@@ -565,20 +565,8 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
           borderRight: "1px solid rgba(255,255,255,0.07)",
         }}
       >
-        {/* Logo / brand area */}
-        <div className="mb-4 mt-1 w-10 h-10 rounded-full flex items-center justify-center overflow-hidden" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}>
-          {logoUrl ? (
-            <img src={logoUrl} alt="" className="w-7 h-7 object-contain" />
-          ) : (
-            <Radio className="h-4 w-4 text-player-accent" />
-          )}
-        </div>
-
-        {/* Separator */}
-        <div className="w-8 h-px mb-2" style={{ background: "rgba(255,255,255,0.1)" }} />
-
-        {/* Nav items */}
-        <nav className="flex flex-col items-center gap-1.5 flex-1">
+        {/* Nav items — centered vertically */}
+        <nav className="flex flex-col items-center gap-1.5 flex-1 justify-center">
           {sidebarItems.map(item => {
             const isActive = activeSection === item.section;
             return (
@@ -673,15 +661,10 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                 )}
               </div>
             </div>
-            {!dataLoaded ? (
-              <Skeleton className="h-[5rem] w-32 bg-white/10 rounded-lg" />
-            ) : logoUrl ? (
-              <img src={logoUrl} alt={channelName} className="h-[5rem] w-auto object-contain" />
-            ) : null}
         </header>
 
         {/* Banner full-width behind content — crossfade between default and thumb on hover */}
-        <div className="fixed top-0 left-[72px] right-0 z-[5inter-events-none h-[400px] overflow-hidden rounded-b-2xl transition-opacity duration-300" style={{ opacity: bannerOpacity }}>
+        <div className="fixed top-0 left-[72px] right-0 z-[5] pointer-events-none h-[400px] overflow-hidden rounded-b-2xl transition-opacity duration-300" style={{ opacity: bannerOpacity }}>
           <img
             src="/images/banner-home.png"
             alt="Banner"
