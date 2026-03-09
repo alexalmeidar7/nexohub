@@ -726,7 +726,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
             </section>
           ) : visibleSection === "content" ? (
             /* ── Página dedicada: Catálogo ── */
-            <section className="rounded-2xl p-5" style={{ marginTop: "320px", background: "rgba(0,0,0,0.25)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", border: "1px solid rgba(255,255,255,0.06)" }}>
+            <section className="rounded-2xl p-5" style={{ marginTop: "320px" }}>
               <h2 className="text-xl font-bold mb-6 tracking-wide uppercase text-player-foreground/90">Catálogo</h2>
               {!dataLoaded ? (
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
@@ -743,60 +743,82 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                   {Object.entries(catalogGroups).map(([groupName, items]) => (
                     <div key={groupName} className="mb-10">
                       <h3 className="text-lg font-semibold mb-4">{groupName}</h3>
-                      <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
-                        {/* Playlist videos for this group */}
-                        {items.map(item => {
-                          const videos = playlistVideos[item.id] || [];
-                          if (videos.length === 0) {
-                            return (
-                              <button
-                                key={item.id}
-                                onClick={() => goToPlayer(item.id)}
-                                className="flex-shrink-0 w-64 aspect-video rounded-xl overflow-hidden relative transition-all hover:scale-[1.02] border-[5px] border-transparent hover:border-white"
-                              >
-                                {item.cover_url ? (
-                                  <img src={item.cover_url} alt={item.name} className="w-full h-full object-cover" />
-                                ) : (
-                                  <div className="w-full h-full bg-gradient-to-br from-player-accent/30 to-player flex items-center justify-center">
-                                    <Film className="h-8 w-8 text-player-muted-foreground" />
+                      <div className="relative group/scroll">
+                        {/* Left edge scroll zone */}
+                        <div
+                          className="absolute left-0 top-0 bottom-0 w-16 z-10 cursor-pointer opacity-0 group-hover/scroll:opacity-100 transition-opacity"
+                          style={{ background: "linear-gradient(to right, rgba(0,0,0,0.5), transparent)" }}
+                          onMouseEnter={(e) => {
+                            const container = e.currentTarget.nextElementSibling?.nextElementSibling as HTMLElement;
+                            if (!container) return;
+                            const id = setInterval(() => container.scrollBy({ left: -4 }), 16);
+                            (e.currentTarget as any)._scrollId = id;
+                          }}
+                          onMouseLeave={(e) => { clearInterval((e.currentTarget as any)._scrollId); }}
+                        />
+                        {/* Right edge scroll zone */}
+                        <div
+                          className="absolute right-0 top-0 bottom-0 w-16 z-10 cursor-pointer opacity-0 group-hover/scroll:opacity-100 transition-opacity"
+                          style={{ background: "linear-gradient(to left, rgba(0,0,0,0.5), transparent)" }}
+                          onMouseEnter={(e) => {
+                            const container = e.currentTarget.nextElementSibling as HTMLElement;
+                            if (!container) return;
+                            const id = setInterval(() => container.scrollBy({ left: 4 }), 16);
+                            (e.currentTarget as any)._scrollId = id;
+                          }}
+                          onMouseLeave={(e) => { clearInterval((e.currentTarget as any)._scrollId); }}
+                        />
+                        <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide scroll-smooth">
+                          {items.map(item => {
+                            const videos = playlistVideos[item.id] || [];
+                            if (videos.length === 0) {
+                              return (
+                                <button
+                                  key={item.id}
+                                  onClick={() => goToPlayer(item.id)}
+                                  className="flex-shrink-0 w-64 aspect-video rounded-xl overflow-hidden relative transition-all hover:scale-[1.02] border-[5px] border-transparent hover:border-white"
+                                >
+                                  {item.cover_url ? (
+                                    <img src={item.cover_url} alt={item.name} className="w-full h-full object-cover" />
+                                  ) : (
+                                    <div className="w-full h-full bg-gradient-to-br from-player-accent/30 to-player flex items-center justify-center">
+                                      <Film className="h-8 w-8 text-player-muted-foreground" />
+                                    </div>
+                                  )}
+                                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3">
+                                    <p className="text-sm font-medium truncate text-left">{item.name}</p>
                                   </div>
-                                )}
-                                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3">
-                                  <p className="text-sm font-medium truncate text-left">{item.name}</p>
-                                </div>
-                              </button>
-                            );
-                          }
-                          return videos.map(video => {
-                            const dateStr = video.published
-                              ? new Date(video.published).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" })
-                              : "";
-                            return (
-                              <button
-                                key={video.videoId}
-                                onClick={() => goToPlayer(item.id)}
-                                className="flex-shrink-0 w-64 aspect-video rounded-xl overflow-hidden relative transition-all hover:scale-[1.02] border-[5px] border-transparent hover:border-white"
-                              >
-                                {/* Use program cover as background */}
-                                {item.cover_url ? (
-                                  <img src={item.cover_url} alt={video.title} className="w-full h-full object-cover" />
-                                ) : (
-                                  <img src={video.thumbnail} alt={video.title} className="w-full h-full object-cover" />
-                                )}
-                                {/* Date badge top-left */}
-                                {dateStr && (
-                                  <span className="absolute top-2 left-2 text-[10px] font-semibold bg-black/70 px-2 py-0.5 rounded text-white">
-                                    {dateStr}
-                                  </span>
-                                )}
-                                {/* Title overlay bottom */}
-                                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3">
-                                  <p className="text-xs font-medium line-clamp-2 text-left text-white">{video.title}</p>
-                                </div>
-                              </button>
-                            );
-                          });
-                        })}
+                                </button>
+                              );
+                            }
+                            return videos.map(video => {
+                              const dateStr = video.published
+                                ? new Date(video.published).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" })
+                                : "";
+                              return (
+                                <button
+                                  key={video.videoId}
+                                  onClick={() => goToPlayer(item.id)}
+                                  className="flex-shrink-0 w-64 aspect-video rounded-xl overflow-hidden relative transition-all hover:scale-[1.02] border-[5px] border-transparent hover:border-white"
+                                >
+                                  {item.cover_url ? (
+                                    <img src={item.cover_url} alt={video.title} className="w-full h-full object-cover" />
+                                  ) : (
+                                    <img src={video.thumbnail} alt={video.title} className="w-full h-full object-cover" />
+                                  )}
+                                  {dateStr && (
+                                    <span className="absolute top-2 left-2 text-[10px] font-semibold bg-black/70 px-2 py-0.5 rounded text-white">
+                                      {dateStr}
+                                    </span>
+                                  )}
+                                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3">
+                                    <p className="text-xs font-medium line-clamp-2 text-left text-white">{video.title}</p>
+                                  </div>
+                                </button>
+                              );
+                            });
+                          })}
+                        </div>
                       </div>
                     </div>
                   ))}
