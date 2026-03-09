@@ -392,8 +392,26 @@ export default function AudioDualCard({
             </div>
           ) : (
             <>
-              {/* Cover image fills the card with rounded corners */}
-              {musicCover ? (
+              {/* Cover image or spectrum fallback */}
+              {isCoverMissing ? (
+                <div className="absolute inset-0 flex flex-col items-center justify-center" style={{ backgroundColor: "hsl(0 0% 0%)" }}>
+                  {channelLogo && (
+                    <img
+                      src={channelLogo}
+                      alt="Logo"
+                      className="w-28 h-28 object-contain opacity-20 z-[1] animate-fade-in"
+                      style={{ animationDuration: "1s" }}
+                    />
+                  )}
+                  <Suspense fallback={null}>
+                    <div className="absolute inset-x-0 bottom-0 z-[2]" style={{ height: "60%" }}>
+                      <div className="relative w-full h-full">
+                        <AudioSpectrum audioElement={audioElement ?? null} barColor="#a10a0b" />
+                      </div>
+                    </div>
+                  </Suspense>
+                </div>
+              ) : musicCover ? (
                 <img
                   key={musicCover}
                   src={musicCover}
@@ -402,17 +420,30 @@ export default function AudioDualCard({
                   style={{ animationDuration: "0.7s" }}
                 />
               ) : channelLogo ? (
-                <div className="absolute inset-0 flex items-center justify-center">
+                <div className="absolute inset-0 flex items-center justify-center" style={{ backgroundColor: "hsl(0 0% 0%)" }}>
+                  <Suspense fallback={null}>
+                    <div className="absolute inset-x-0 bottom-0 z-[2]" style={{ height: "60%" }}>
+                      <div className="relative w-full h-full">
+                        <AudioSpectrum audioElement={audioElement ?? null} barColor="#a10a0b" />
+                      </div>
+                    </div>
+                  </Suspense>
                   <img
                     src={channelLogo}
                     alt="Logo"
-                    className="w-36 h-36 object-contain opacity-40 animate-fade-in"
+                    className="w-36 h-36 object-contain opacity-20 z-[1] animate-fade-in"
                     style={{ animationDuration: "0.7s" }}
                   />
                 </div>
               ) : (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-white/20 text-sm font-medium tracking-wide">imagem capa música</span>
+                <div className="absolute inset-0 flex items-center justify-center" style={{ backgroundColor: "hsl(0 0% 0%)" }}>
+                  <Suspense fallback={null}>
+                    <div className="absolute inset-x-0 bottom-0 z-[2]" style={{ height: "60%" }}>
+                      <div className="relative w-full h-full">
+                        <AudioSpectrum audioElement={audioElement ?? null} barColor="#a10a0b" />
+                      </div>
+                    </div>
+                  </Suspense>
                 </div>
               )}
 
