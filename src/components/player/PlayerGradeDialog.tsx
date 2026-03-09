@@ -145,7 +145,7 @@ function PlayerGradeDialog({ programas, onClose }: Props) {
         {/* Table */}
         <div
           ref={gradeScrollRef}
-          className="overflow-auto max-h-[75vh] px-4 pb-4 pt-2 grade-scroll"
+          className="overflow-y-auto overflow-x-hidden max-h-[75vh] px-4 pb-4 pt-2 grade-scroll"
           style={{ scrollbarWidth: "thin", scrollbarColor: "rgba(230,0,0,0.4) transparent" }}
         >
           <style>{`
