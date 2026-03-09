@@ -396,15 +396,19 @@ export default function AgendaPage() {
 
   if (loadingData) {
     return (
-      <div className="animate-pulse space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="h-5 w-52 rounded bg-[#0d0446]/10" />
-          <div className="h-8 w-32 rounded-full bg-[#0d0446]/10" />
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] gap-6">
-          {/* Calendar skeleton */}
-          <div className="space-y-2">
-            <div className="rounded-xl p-4" style={{ backgroundColor: "rgba(13,4,70,0.04)", border: "1px solid rgba(13,4,70,0.08)" }}>
+      <div className="animate-pulse">
+        <div className="rounded-2xl" style={{ background: "#d9e9fa", boxShadow: "0 8px 32px rgba(13,4,70,0.12)", padding: "20px" }}>
+          <div className="flex items-center gap-3 mb-5">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(13,4,70,0.08)" }}>
+              <CalendarIcon size={20} style={{ color: "#0d0446" }} />
+            </div>
+            <div>
+              <div className="h-5 w-40 rounded bg-[#0d0446]/10 mb-1" />
+              <div className="h-3 w-56 rounded bg-[#0d0446]/5" />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] gap-6">
+            <div className="rounded-xl p-4" style={{ backgroundColor: "#ffffff", boxShadow: "0 2px 10px rgba(13,4,70,0.05)" }}>
               <div className="h-4 w-24 mx-auto rounded bg-[#0d0446]/10 mb-3" />
               <div className="grid grid-cols-7 gap-1">
                 {Array.from({ length: 7 }).map((_, i) => (
@@ -415,18 +419,17 @@ export default function AgendaPage() {
                 ))}
               </div>
             </div>
-          </div>
-          {/* Events skeleton */}
-          <div className="space-y-3">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="rounded-xl p-4" style={{ backgroundColor: "rgba(13,4,70,0.04)", border: "1px solid rgba(13,4,70,0.08)" }}>
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="h-4 w-32 rounded bg-[#0d0446]/10" />
-                  <div className="h-3 w-20 rounded-full bg-[#0d0446]/5" />
+            <div className="space-y-3">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="rounded-xl p-4" style={{ backgroundColor: "#ffffff", boxShadow: "0 2px 10px rgba(13,4,70,0.05)" }}>
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="h-4 w-32 rounded bg-[#0d0446]/10" />
+                    <div className="h-3 w-20 rounded-full bg-[#0d0446]/5" />
+                  </div>
+                  <div className="h-3 w-48 rounded bg-[#0d0446]/5" />
                 </div>
-                <div className="h-3 w-48 rounded bg-[#0d0446]/5" />
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </div>
