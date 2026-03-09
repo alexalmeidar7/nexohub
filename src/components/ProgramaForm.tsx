@@ -747,7 +747,7 @@ export default function ProgramaForm() {
           {/* Selo + Capa */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-[11px] mb-1.5 font-semibold text-white uppercase tracking-wider">Selo (1080×1080 PNG alpha)</label>
+              <label className="block text-[11px] mb-1.5 font-semibold text-white uppercase tracking-wider">Selo (o (1080×1080 PNG alpha)</label>
               <label className="cursor-pointer group">
                 <div className="w-16 h-16 rounded-xl flex flex-col items-center justify-center gap-0.5 transition-all group-hover:border-[#2dbef3]"
                   style={{ backgroundColor: "rgba(255,255,255,0.06)", border: "2px dashed rgba(255,255,255,0.15)" }}>
@@ -762,7 +762,7 @@ export default function ProgramaForm() {
               {selo && <button onClick={() => setSelo("")} className="text-[10px] text-red-400 hover:text-red-300 mt-1">Remover</button>}
             </div>
             <div>
-              <label className="block text-[11px] mb-1.5 font-semibold text-white/90 uppercase tracg-wider">Capa (1080×1080 PNG alpha)</label>
+              <label className="block text-[11px] mb-1.5 font-semibold text-wh uppercase trackinracg-wider">Capa (1080×1080 PNG alpha)</label>
               <label className="cursor-pointer group">
                 <div className="w-16 h-16 rounded-xl flex flex-col items-center justify-center gap-0.5 transition-all group-hover:border-[#2dbef3]"
                   style={{ backgroundColor: "rgba(255,255,255,0.06)", border: "2px dashed rgba(255,255,255,0.15)" }}>
