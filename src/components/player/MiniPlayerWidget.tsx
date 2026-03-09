@@ -109,15 +109,18 @@ export default function MiniPlayerWidget({ data, onClose }: { data: MiniPlayerDa
           audio.muted = false;
           audio.play().then(() => {
             setPlaying(true);
+            setNeedsUnlock(false);
           }).catch(() => {
-            // Fallback: try muted
+            // Fallback: try muted autoplay
             audio.muted = true;
             audio.play().then(() => {
               setPlaying(true);
-              // Try to unmute
+              setNeedsUnlock(false);
               setTimeout(() => { audio.muted = false; }, 200);
-            }).catch((e) => {
-              console.error("[MiniPlayer] Audio play failed:", e);
+            }).catch(() => {
+              // Both failed — show play button for user tap
+              console.warn("[MiniPlayer] Autoplay blocked, needs user gesture");
+              setNeedsUnlock(true);
             });
           });
         });
