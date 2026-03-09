@@ -323,7 +323,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         style={{ backgroundColor: sidebarCollapsed ? "rgba(0,0,0,0.7)" : "#268ffa" }}
         title={sidebarCollapsed ? "Abrir menu" : "Fechar menu"}
       >
-        {sidebarCollapsed ? <Menu size={18} className="text-white" /> : <X size={18} className="text-white" />}
+        <Menu size={18} className="text-white" />
       </button>
 
       {/* Sidebar overlay backdrop - desktop */}
