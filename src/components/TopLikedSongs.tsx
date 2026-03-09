@@ -61,7 +61,7 @@ export default function TopLikedSongs() {
     <div className="flex flex-col h-full">
       <div className="flex items-center gap-1.5 mb-2">
         <Heart size={14} fill="#268ffa" style={{ color: "#268ffa" }} className="animate-pulse" />
-        <span className="font-bold text-xs uppercase tracking-wide" style={{ color: "#268ffa" }}>Músicas Curtidas</span>
+        <span className="font-bold text-xs uppercase tracking-wide text-white">Músicas Curtidas</span>
       </div>
 
       {loading ? (

@@ -983,7 +983,7 @@ function ComercialWidgets() {
   return (
     <div>
       <div className="flex items-center justify-between mb-2">
-        <p className="text-xs font-bold" style={{ color: "#268ffa" }}>🏆 Patrocinadores Ativos</p>
+        <p className="text-xs font-bold text-white">🏆 Patrocinadores Ativos</p>
         <span className="text-[10px] font-semibold text-white/70">no ar</span>
       </div>
       <p className="text-3xl font-bold text-white">{totalLogos}</p>
@@ -1089,8 +1089,7 @@ function DashboardAgenda() {
       {/* Header: icon + AGENDA + month nav */}
       <div className="flex items-center gap-1.5 mb-1">
         <CalendarDays size={14} style={{ color: "#268ffa" }} />
-        <span className="font-bold text-xs uppercase tracking-wide text-white">Agenda</span>
-        <div className="flex items-center gap-1 ml-auto">
+        <span className="font-bold text-xs uppercase tracking-wide text-white"     <div className="flex items-center gap-1 ml-auto">
           <button onClick={prevMonth} className="w-4 h-4 flex items-center justify-center rounded hover:opacity-70">
             <ChevronDown size={10} className="rotate-90" style={{ color: "#268ffa" }} />
           </button>
