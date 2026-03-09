@@ -2300,6 +2300,7 @@ export default function PlayerPage() {
                 {fullscreen ? <Minimize size={15} /> : <Maximize size={15} />}
               </button>
 
+              {canal?.type !== "audio_live" && (
               <button
                 onClick={() => {
                   const v = videoRef.current || audioRef.current;
@@ -2315,6 +2316,7 @@ export default function PlayerPage() {
               >
                 <PictureInPicture size={15} />
               </button>
+              )}
 
               <button
                 onClick={() => {
