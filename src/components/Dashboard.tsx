@@ -479,7 +479,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           </aside>
         </div>
 
-      <div className="flex gap-[30px] pt-3 flex-1 min-h-0 px-4 lg:px-[50px]" style={{ paddingTop: "12px" }}>
+      <div className="flex gap-[30px] pt-3 flex-1 min-h-0 px-4 lg:px-[50px] lg:pt-[80px]">
 
         {/* === MAIN CONTENT === */}
         <main className="flex-1 flex flex-col min-w-0">
