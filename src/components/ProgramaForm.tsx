@@ -617,10 +617,10 @@ export default function ProgramaForm() {
             <PlaySquare size={20} style={{ color: "#2dbff4" }} />
           </div>
           <div>
-            <h3 className="text-base font-bold text-white">
+            <h3 className="text-base font-bold" style={{ color: "#0d0446" }}>
               {editingId ? "Editar Programa" : "Cadastro de Programa"}
             </h3>
-            <p className="text-[11px] text-white">Preencha os dados para cadastrar o programa</p>
+            <p className="text-[11px]" style={{ color: "rgba(13,4,70,0.7)" }}>Preencha os dados para cadastrar o programa</p>
           </div>
         </div>
 
