@@ -769,7 +769,7 @@ export default function ProgramaForm() {
                   {capa ? (
                     <img src={capa} alt="Capa" className="w-full h-full object-cover rounded-xl" />
                   ) : (
-                    <span className="text-[9px] text-white/50 group-hover:text-white/70">Upload</span>
+                    <span className="text-[9px] text-white group-hover:text-white">Upload</span>
                   )}
                 </div>
                 <input type="file" accept="image/*" onChange={handleCapa} className="hidden" />
