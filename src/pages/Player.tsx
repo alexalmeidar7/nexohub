@@ -1808,12 +1808,7 @@ export default function PlayerPage() {
         style={{ background: "linear-gradient(to right, rgba(0,0,0,0.85), transparent)" }}
       >
         {[
-          { icon: Home, label: "Home", active: false, action: () => {
-            setPageFadeOut(true);
-            setTimeout(() => {
-              navigate(playerHomePath);
-            }, 400);
-          }},
+          { icon: Home, label: "Home", active: false, action: handleHomeClick },
           { icon: Radio, label: "Streaming", active: true, action: () => {} },
           { icon: Film, label: "Conteúdo", active: false, action: () => {} },
           ...(user ? [{ icon: ShoppingBag, label: "Loja", active: false, action: () => setShopOpen(o => !o) }] : []),
