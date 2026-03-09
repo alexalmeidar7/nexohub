@@ -1711,12 +1711,17 @@ export default function PlayerPage() {
 
   // Shopping popup is manual-only via icon click
 
-  const sidebarItems = useMemo(() => [
-    { icon: Home, label: "Home", key: "home", action: handleHomeClick },
-    { icon: Radio, label: "Streaming", key: "streaming", action: () => {} },
-    { icon: Film, label: "Conteúdo", key: "content", action: () => {} },
-    ...(user ? [{ icon: ShoppingBag, label: "Loja", key: "shop", action: () => setShopOpen((o: boolean) => !o) }] : []),
-  ], [handleHomeClick, user]);
+  const sidebarItems = useMemo(() => {
+    if (is991Channel) {
+      return [{ icon: Home, label: "Home", key: "home", action: handleHomeClick }];
+    }
+    return [
+      { icon: Home, label: "Home", key: "home", action: handleHomeClick },
+      { icon: Radio, label: "Streaming", key: "streaming", action: () => {} },
+      { icon: Film, label: "Conteúdo", key: "content", action: () => {} },
+      ...(user ? [{ icon: ShoppingBag, label: "Loja", key: "shop", action: () => setShopOpen((o: boolean) => !o) }] : []),
+    ];
+  }, [handleHomeClick, user, is991Channel]);
 
   if (loading) {
     return (
