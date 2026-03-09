@@ -1094,62 +1094,94 @@ export default function ProgramaForm() {
           </div>
         </div>
       ) : programas.length > 0 && (
-        <div>
-          <h4 className="text-sm font-bold mb-3" style={{ color: "#0d0446" }}>Programas Cadastrados</h4>
-          <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(13,4,70,0.08)", boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}>
+        <div className="rounded-2xl overflow-hidden" style={{ background: "#d9e9fa", boxShadow: "0 8px 32px rgba(13,4,70,0.12)", padding: "20px" }}>
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "rgba(13,4,70,0.08)" }}>
+              <PlaySquare size={18} style={{ color: "#0d0446" }} />
+            </div>
+            <div>
+              <h4 className="text-base font-bold" style={{ color: "#0d0446" }}>Programas Cadastrados</h4>
+              <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.5)" }}>{sortedProgramas.length} programa{sortedProgramas.length !== 1 ? "s" : ""} registrado{sortedProgramas.length !== 1 ? "s" : ""}</p>
+            </div>
+          </div>
+          <div className="rounded-xl overflow-hidden" style={{ boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}>
             <table className="w-full text-xs" style={{ color: "#0d0446" }}>
               <thead>
                 <tr style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)", color: "#ffffff" }}>
-                  <th className="px-4 py-2.5 text-left font-semibold text-[11px] uppercase tracking-wider">Programa</th>
-                  <th className="px-4 py-2.5 text-left font-semibold text-[11px] uppercase tracking-wider">Exibição</th>
-                  <th className="px-4 py-2.5 text-left font-semibold text-[11px] uppercase tracking-wider">Horário</th>
-                  <th className="px-4 py-2.5 text-left font-semibold text-[11px] uppercase tracking-wider">Apresentador</th>
-                  <th className="px-4 py-2.5 text-center font-semibold text-[11px] uppercase tracking-wider">Status</th>
-                  <th className="px-4 py-2.5 text-center font-semibold text-[11px] uppercase tracking-wider">Ações</th>
+                  <th className="px-4 py-3 text-left font-semibold text-[11px] uppercase tracking-wider">Programa</th>
+                  <th className="px-4 py-3 text-left font-semibold text-[11px] uppercase tracking-wider">Exibição</th>
+                  <th className="px-4 py-3 text-left font-semibold text-[11px] uppercase tracking-wider">Horário</th>
+                  <th className="px-4 py-3 text-left font-semibold text-[11px] uppercase tracking-wider">Apresentador</th>
+                  <th className="px-4 py-3 text-center font-semibold text-[11px] uppercase tracking-wider">Status</th>
+                  <th className="px-4 py-3 text-center font-semibold text-[11px] uppercase tracking-wider">Ações</th>
                 </tr>
               </thead>
               <tbody>
                 {sortedProgramas.map((p, i) => (
-                  <tr key={p.id} className="group transition-colors hover:bg-[#f0f4ff]" style={{ backgroundColor: i % 2 === 0 ? "#ffffff" : "#fafaff", borderTop: "1px solid rgba(13,4,70,0.05)" }} data-no-row-hover>
-                    <td className="px-4 py-2.5 font-semibold">
+                  <tr key={p.id} className="group transition-all duration-200" style={{ backgroundColor: i % 2 === 0 ? "#ffffff" : "#f4f8ff", borderBottom: "1px solid rgba(13,4,70,0.04)" }} data-no-row-hover
+                    onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#e8f0ff"; e.currentTarget.style.transform = "scale(1.002)"; }}
+                    onMouseLeave={e => { e.currentTarget.style.backgroundColor = i % 2 === 0 ? "#ffffff" : "#f4f8ff"; e.currentTarget.style.transform = "scale(1)"; }}
+                  >
+                    <td className="px-4 py-3 font-semibold">
                       <div className="flex items-center gap-2">
-                        {p.nome}
-                        {p.variavel && <span className="text-[9px] px-1.5 py-0.5 rounded-lg font-semibold" style={{ backgroundColor: "rgba(245,158,11,0.1)", color: "#d97706" }}>Variável</span>}
+                        {p.capa && <img src={p.capa} alt="" className="w-8 h-8 rounded-lg object-cover shrink-0" style={{ border: "1px solid rgba(13,4,70,0.08)" }} />}
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            {p.nome}
+                            {p.variavel && <span className="text-[8px] px-1.5 py-0.5 rounded-full font-bold" style={{ backgroundColor: "rgba(245,158,11,0.12)", color: "#d97706" }}>VAR</span>}
+                          </div>
+                          {p.classificacaoEtaria && <div className="mt-0.5"><ClassificacaoBadge value={p.classificacaoEtaria} size={14} /></div>}
+                        </div>
                       </div>
-                      {p.classificacaoEtaria && <div className="mt-0.5"><ClassificacaoBadge value={p.classificacaoEtaria} size={16} /></div>}
                     </td>
-                    <td className="px-4 py-2.5 text-[11px]" style={{ color: "rgba(13,4,70,0.6)" }}>
+                    <td className="px-4 py-3 text-[11px]" style={{ color: "rgba(13,4,70,0.6)" }}>
                       {p.variavel && p.dataVariavel
                         ? format(new Date(p.dataVariavel + "T12:00:00"), "dd/MM/yyyy (EEEE)", { locale: ptBR })
-                        : p.diasSemana.map(d => d.slice(0, 3)).join(", ")}
+                        : <div className="flex flex-wrap gap-0.5">{p.diasSemana.map(d => <span key={d} className="px-1.5 py-0.5 rounded text-[9px] font-medium" style={{ backgroundColor: "rgba(13,4,70,0.06)", color: "#0d0446" }}>{d.slice(0, 3)}</span>)}</div>}
                     </td>
-                    <td className="px-4 py-2.5 text-[11px]" style={{ color: "rgba(13,4,70,0.6)" }}>
-                      {p.horarioInicio.slice(0, 5)} — {p.horarioFim.slice(0, 5)}
+                    <td className="px-4 py-3">
+                      <span className="inline-flex items-center gap-1 text-[11px] font-medium" style={{ color: "rgba(13,4,70,0.7)" }}>
+                        <Clock size={11} style={{ color: "rgba(13,4,70,0.35)" }} />
+                        {p.horarioInicio.slice(0, 5)} — {p.horarioFim.slice(0, 5)}
+                      </span>
                     </td>
-                    <td className="px-4 py-2.5 text-[11px]" style={{ color: "rgba(13,4,70,0.6)" }}>
-                      {getApresentadorNome(p.apresentadorId)}
+                    <td className="px-4 py-3 text-[11px] font-medium" style={{ color: "rgba(13,4,70,0.7)" }}>
+                      {getApresentadorNome(p.apresentadorId) || <span style={{ color: "rgba(13,4,70,0.3)" }}>—</span>}
                     </td>
-                    <td className="px-4 py-2.5 text-center">
-                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-semibold ${
-                        p.ativo ? "bg-green-50 text-green-600" : "bg-red-50 text-red-500"
-                      }`}>
-                        <div className={`w-1.5 h-1.5 rounded-full ${p.ativo ? "bg-green-500" : "bg-red-500"}`} />
+                    <td className="px-4 py-3 text-center">
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold" style={{
+                        backgroundColor: p.ativo ? "rgba(34,197,94,0.1)" : "rgba(220,38,38,0.08)",
+                        color: p.ativo ? "#16a34a" : "#dc2626",
+                      }}>
+                        <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: p.ativo ? "#22c55e" : "#dc2626" }} />
                         {p.ativo ? "Ativo" : "Inativo"}
                       </span>
                     </td>
-                    <td className="px-4 py-2.5 text-center">
-                      <div className="flex items-center justify-center gap-1">
+                    <td className="px-4 py-3 text-center">
+                      <div className="flex items-center justify-center gap-0.5">
                         <button onClick={() => startEdit(p)} title="Editar"
-                          className="w-7 h-7 rounded-lg flex items-center justify-center transition-all hover:bg-[#268ffa]/10">
-                          <Pencil size={13} style={{ color: "#268ffa" }} />
+                          className="w-8 h-8 rounded-lg flex items-center justify-center transition-all"
+                          style={{ backgroundColor: "transparent" }}
+                          onMouseEnter={e => { e.currentTarget.style.backgroundColor = "rgba(38,143,250,0.1)"; }}
+                          onMouseLeave={e => { e.currentTarget.style.backgroundColor = "transparent"; }}
+                        >
+                          <Pencil size={14} style={{ color: "#268ffa" }} />
                         </button>
                         <button onClick={() => toggleAtivo(p.id, p.ativo)} title={p.ativo ? "Desativar" : "Ativar"}
-                          className="w-7 h-7 rounded-lg flex items-center justify-center transition-all hover:bg-green-50">
-                          <Power size={13} style={{ color: p.ativo ? "#22c55e" : "#dc2626" }} />
+                          className="w-8 h-8 rounded-lg flex items-center justify-center transition-all"
+                          style={{ backgroundColor: "transparent" }}
+                          onMouseEnter={e => { e.currentTarget.style.backgroundColor = p.ativo ? "rgba(34,197,94,0.1)" : "rgba(220,38,38,0.08)"; }}
+                          onMouseLeave={e => { e.currentTarget.style.backgroundColor = "transparent"; }}
+                        >
+                          <Power size={14} style={{ color: p.ativo ? "#22c55e" : "#dc2626" }} />
                         </button>
                         <button onClick={() => removePrograma(p.id)} title="Remover"
-                          className="w-7 h-7 rounded-lg flex items-center justify-center transition-all hover:bg-red-50">
-                          <Trash2 size={13} style={{ color: "#dc2626" }} />
+                          className="w-8 h-8 rounded-lg flex items-center justify-center transition-all"
+                          style={{ backgroundColor: "transparent" }}
+                          onMouseEnter={e => { e.currentTarget.style.backgroundColor = "rgba(220,38,38,0.08)"; }}
+                          onMouseLeave={e => { e.currentTarget.style.backgroundColor = "transparent"; }}
+                        >
+                          <Trash2 size={14} style={{ color: "#dc2626" }} />
                         </button>
                       </div>
                     </td>
