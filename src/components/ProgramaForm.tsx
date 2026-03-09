@@ -851,7 +851,7 @@ export default function ProgramaForm() {
               />
             </div>
             <div>
-              <label className="block text-[11px] mb-1.5 font-semibold text-white/90 uppercase tracking-wider flex items-center gap-1"><Clock size={12} /> Fim</label>
+              <label className="block text-[11px] mb-1.5 font-semibold text-white uppercase tracking-wider flex items-center gap-1"><Clock size={12} /> Fim</label>
               <input type="time" step="1" value={horarioFim} onChange={(e) => setHorarioFim(e.target.value)}
                 className="w-full px-4 py-2 outline-none transition-all text-sm text-white"
                 style={{ backgroundColor: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "12px", colorScheme: "dark" }}
