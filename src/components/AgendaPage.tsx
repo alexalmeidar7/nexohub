@@ -697,7 +697,7 @@ export default function AgendaPage() {
         <div className="mt-5">
           <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}>
             <div className="px-4 py-2.5 font-bold text-xs tracking-wide text-white flex items-center justify-between" style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)" }}>
-              <span className="flex items-center gap-1.5">
+              <span className="flex items-center gap-1.5" style={{ color: "#ffffff" }}>
                 <History size={12} /> Histórico de Eventos Passados
               </span>
               <div className="flex items-center gap-2">
