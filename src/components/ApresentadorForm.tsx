@@ -182,7 +182,7 @@ export default function ApresentadorForm() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Categoria */}
             <div>
-              <label className="block text-[11px] mb-1.5 font-semibold text-white/60 uppercase tracking-wider">Categoria</label>
+              <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "#0d0446" }}>Categoria</label>
               <Select value={categoria} onValueChange={setCategoria} open={catOpen} onOpenChange={setCatOpen}>
                 <SelectTrigger className="w-full h-9" style={{ backgroundColor: "rgba(255,255,255,0.08)", color: "#ffffff", borderRadius: "12px", border: catOpen ? "1px solid #2dbef3" : "1px solid rgba(255,255,255,0.12)", transition: "border-color 0.3s" }}>
                   <SelectValue placeholder="Selecione a categoria" />
