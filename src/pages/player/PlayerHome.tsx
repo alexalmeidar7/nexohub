@@ -653,7 +653,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
             /* ── Home padrão ── */
             <>
               {/* Streamings ao vivo */}
-              <section className="mb-10" style={{ marginTop: "220px" }}>
+               <section className="mb-10 rounded-2xl p-5" style={{ marginTop: "220px", background: "rgba(0,0,0,0.25)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", border: "1px solid rgba(255,255,255,0.06)" }}>
                 {!dataLoaded ? (
                   <>
                     <Skeleton className="h-5 w-44 bg-white/10 mb-4" />
@@ -665,7 +665,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                   </>
                 ) : (
                   <>
-                    <h2 className="text-lg font-bold mb-4">streamings ao vivo</h2>
+                    <h2 className="text-lg font-bold mb-4 tracking-wide uppercase text-player-foreground/90">streamings ao vivo</h2>
                     <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
                       {streamingChannels.length === 0 && (
                         <div className="w-72 h-40 rounded-xl bg-player-surface border border-player-border flex items-center justify-center text-player-muted-foreground text-sm">
