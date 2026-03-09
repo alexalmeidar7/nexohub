@@ -603,10 +603,10 @@ interface WidgetCard {
 }
 
 const defaultWidgets: WidgetCard[] = [
-  { id: "noar", bg: "glass-dark", render: () => <OnAirWidget /> },
   { id: "weather", bg: "glass", render: (nav) => <WeatherWidget onNavigate={nav} /> },
   { id: "top10", bg: "glass", render: () => <TopLikedSongs /> },
   { id: "agenda", bg: "glass", render: () => <DashboardAgenda /> },
+  { id: "noar", bg: "glass-dark", render: () => <OnAirWidget /> },
   { id: "comercial", bg: "glass", render: () => <ComercialWidgets /> },
 ];
 
