@@ -97,6 +97,7 @@ export default function MiniPlayerWidget({ data, onClose }: { data: MiniPlayerDa
       // Use global audio element (already unlocked during user gesture)
       if (!globalAudio) {
         globalAudio = new Audio();
+        console.warn("[MiniPlayer] Created new globalAudio (not pre-unlocked)");
       }
       const audio = globalAudio;
 
@@ -105,33 +106,40 @@ export default function MiniPlayerWidget({ data, onClose }: { data: MiniPlayerDa
         globalHls = null;
       }
 
+      console.log("[MiniPlayer] Loading HLS source:", data.url);
+
       if (Hls.isSupported()) {
         const hls = new Hls({ enableWorker: true, lowLatencyMode: true });
         globalHls = hls;
         hls.loadSource(data.url);
         hls.attachMedia(audio);
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          console.log("[MiniPlayer] Manifest parsed, attempting play...");
+          audio.volume = 1;
           audio.muted = false;
           audio.play().then(() => {
+            console.log("[MiniPlayer] Playing successfully");
             setPlaying(true);
             setNeedsUnlock(false);
-          }).catch(() => {
+          }).catch((e) => {
+            console.warn("[MiniPlayer] Unmuted play failed:", e);
             // Fallback: try muted autoplay
             audio.muted = true;
             audio.play().then(() => {
+              console.log("[MiniPlayer] Playing muted, will unmute shortly");
               setPlaying(true);
               setNeedsUnlock(false);
               setTimeout(() => { audio.muted = false; }, 200);
-            }).catch(() => {
+            }).catch((e2) => {
               // Both failed — show play button for user tap
-              console.warn("[MiniPlayer] Autoplay blocked, needs user gesture");
+              console.warn("[MiniPlayer] Autoplay blocked, needs user gesture:", e2);
               setNeedsUnlock(true);
             });
           });
         });
         hls.on(Hls.Events.ERROR, (_event: any, errData: any) => {
+          console.error("[MiniPlayer] HLS error:", errData.type, errData.details, errData.fatal);
           if (errData.fatal) {
-            console.error("[MiniPlayer] HLS fatal error:", errData);
             hls.destroy();
           }
         });
