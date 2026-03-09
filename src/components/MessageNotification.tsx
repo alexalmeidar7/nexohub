@@ -102,7 +102,7 @@ export default function MessageNotification() {
     >
       <div
         className="w-9 h-9 rounded-full flex items-center justify-center cursor-pointer"
-        style={{ backgroundColor: "#0d0446" }}
+        style={{ background: "rgba(255,255,255,0.12)", backdropFilter: "blur(24px) saturate(1.4)", WebkitBackdropFilter: "blur(24px) saturate(1.4)", border: "1px solid rgba(255,255,255,0.15)" }}
       >
         <Mail size={16} className="text-white" />
       </div>
