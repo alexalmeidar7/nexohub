@@ -115,11 +115,11 @@ export default function WeatherWidget({ onNavigate }: { onNavigate?: (page: any)
           <Sun size={14} style={{ color: "#268ffa", animationDuration: "8s" }} className="animate-spin" />
           <span className="font-bold text-xs" style={{ color: "#268ffa" }}>TEMPO</span>
         </div>
-        <p className="text-xs flex-1" style={{ color: "#0d0446", opacity: 0.5 }}>Nenhuma cidade configurada.</p>
+        <p className="text-xs flex-1 text-white/50">Nenhuma cidade configurada.</p>
         <button
           onClick={() => onNavigate?.("previsao")}
           className="mt-auto flex items-center gap-1.5 text-[10px] font-semibold rounded-lg px-2 py-1 hover:opacity-80 transition-opacity"
-          style={{ color: "#268ffa", backgroundColor: "rgba(38,143,250,0.1)" }}
+          style={{ color: "#268ffa", backgroundColor: "rgba(38,143,250,0.15)" }}
         >
           <Settings size={10} /> Configurar
         </button>
@@ -131,21 +131,21 @@ export default function WeatherWidget({ onNavigate }: { onNavigate?: (page: any)
     return (
       <div className="flex flex-col h-full animate-pulse">
         <div className="flex items-center gap-1.5 mb-1">
-          <div className="w-3.5 h-3.5 rounded-full bg-[#268ffa]/20" />
-          <div className="w-12 h-3 rounded bg-[#268ffa]/20" />
+          <div className="w-3.5 h-3.5 rounded-full bg-white/10" />
+          <div className="w-12 h-3 rounded bg-white/10" />
         </div>
         <div className="flex items-center gap-2 mb-1">
-          <div className="w-8 h-8 rounded bg-[#0d0446]/10" />
+          <div className="w-8 h-8 rounded bg-white/10" />
           <div className="space-y-1">
-            <div className="w-20 h-3.5 rounded bg-[#0d0446]/10" />
-            <div className="w-16 h-2.5 rounded bg-[#0d0446]/5" />
+            <div className="w-20 h-3.5 rounded bg-white/10" />
+            <div className="w-16 h-2.5 rounded bg-white/5" />
           </div>
         </div>
         <div className="w-24 h-10 rounded bg-[#268ffa]/15 mb-1" />
         <div className="flex gap-3">
-          <div className="w-16 h-2.5 rounded bg-[#0d0446]/5" />
-          <div className="w-10 h-2.5 rounded bg-[#0d0446]/5" />
-          <div className="w-10 h-2.5 rounded bg-[#0d0446]/5" />
+          <div className="w-16 h-2.5 rounded bg-white/5" />
+          <div className="w-10 h-2.5 rounded bg-white/5" />
+          <div className="w-10 h-2.5 rounded bg-white/5" />
         </div>
         <div className="mt-auto w-24 h-6 rounded-lg bg-[#268ffa]/10" />
       </div>
@@ -153,27 +153,23 @@ export default function WeatherWidget({ onNavigate }: { onNavigate?: (page: any)
   }
 
   return (
-    <div className="rounded-xl p-4 flex flex-col h-full" style={{ backgroundColor: "#ffffff" }}>
-      {/* Header: icon + "Tempo" - no extra top margin, aligned like "NO AR" */}
+    <div className="rounded-xl flex flex-col h-full">
       <div className="flex items-center gap-1.5 mb-1">
         <Sun size={14} className="animate-spin" style={{ color: "#268ffa", animationDuration: "8s" }} />
         <span className="font-bold text-xs" style={{ color: "#268ffa" }}>TEMPO</span>
       </div>
 
-      {/* City + condition + icon */}
       <div className="flex items-center gap-2 mb-1">
         <span className="text-3xl leading-none">{getIcon(weather.weatherCode)}</span>
         <div>
-          <p className="font-semibold text-sm" style={{ color: "#0d0446" }}>{weather.city}</p>
-          <p className="text-[10px]" style={{ color: "#0d0446", opacity: 0.6 }}>{getLabel(weather.weatherCode)}</p>
+          <p className="font-semibold text-sm text-white">{weather.city}</p>
+          <p className="text-[10px] text-white/60">{getLabel(weather.weatherCode)}</p>
         </div>
       </div>
 
-      {/* Temperature */}
       <p className="text-4xl font-bold mb-1" style={{ color: "#268ffa" }}>{weather.temp}°C</p>
 
-      {/* Bottom stats */}
-      <div className="flex items-center gap-3 text-[10px] flex-wrap" style={{ color: "#0d0446", opacity: 0.6 }}>
+      <div className="flex items-center gap-3 text-[10px] flex-wrap text-white/60">
         <div className="flex items-center gap-1">
           <Thermometer size={10} /> ↓{weather.tempMin}° / ↑{weather.tempMax}°
         </div>
@@ -185,11 +181,10 @@ export default function WeatherWidget({ onNavigate }: { onNavigate?: (page: any)
         </div>
       </div>
 
-      {/* Config button - pushed to bottom */}
       <button
         onClick={() => onNavigate?.("previsao")}
         className="mt-auto flex items-center gap-1.5 text-[10px] font-semibold rounded-lg px-2 py-1 self-start hover:opacity-80 transition-opacity"
-        style={{ color: "#268ffa", backgroundColor: "rgba(38,143,250,0.1)" }}
+        style={{ color: "#268ffa", backgroundColor: "rgba(38,143,250,0.15)" }}
       >
         <Settings size={10} /> Configuração
       </button>
