@@ -558,8 +558,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       {/* Content wrapper with fade transition */}
       <div className={`relative flex-1 overflow-y-auto h-full transition-opacity duration-400 ease-in-out ${fadeOut ? "opacity-0" : "opacity-100"}`}>
         {/* Fixed Header */}
-        <header className="fixed top-0 left-0 right-0 z-20 flex items-center justify-between px-8 py-4" style={{ background: "rgba(0,0,0,0.4s-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-player-surface flex items-center justify-center overflow-hidden">
+        <header className="fixed top-0 left-0 right-0 z-20 flex items-center justify-between px-8 py-4" style={{ background: "rgba(0,0,0,0.4tems-center justify-center overflow-hidden">
                 {!dataLoaded ? (
                   <Skeleton className="w-full h-full rounded-full bg-white/10" />
                 ) : profileAvatar ? (
@@ -735,8 +734,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
               {/* Streamings ao vivo */}
                <section className="mb-10 rounded-2xl p-5" style={{ marginTop: "220px", background: "rgba(0,0,0,0.25)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", border: "1px solid rgb3        <>
                     <Skeleton className="h-5 w-44 bg-white/10 mb-4" />
-                    <div className="flex gap-4">
-                      {[1, 2, 3].map(i => (
+           33].map(i => (
                         <Skeleton key={i} className="flex-shrink-0 w-72 h-40 rounded-xl bg-white/10" />
                       ))}
                     </div>
@@ -769,8 +767,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
               {user && (
                 <section className="mb-10 rounded-2xl p-5" style={{ background: "rgba(0,0,0,0.25)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", border: "1px solid rgba(255,255,255,0.06)" }}>
                   {!dataLoaded ? (
-                    <>
-                      <Skeleton className="h-5 w-36 bg-white/10 mb-4" />
+       3bg-white/10 mb-4" />
                       <div className="flex gap-4">
                         {[1, 2, 3].map(i => (
                           <Skeleton key={i} className="w-48 h-28 rounded-xl bg-white/10" />
