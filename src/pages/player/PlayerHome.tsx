@@ -726,7 +726,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                   Nenhum canal ao vivo disponível
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                <div className="flex flex-wrap gap-3">
                   {streamingChannels.map((ch) => (
                     <StreamingCard
                       key={ch.id}
