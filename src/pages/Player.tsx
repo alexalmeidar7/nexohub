@@ -1836,10 +1836,6 @@ export default function PlayerPage() {
         </div>
       )}
 
-      {/* Background image for audio channels */}
-      {isAudio && canal?.cover_url && (
-        <div className="absolute inset-0 bg-cover bg-center transition-all duration-700" style={{ backgroundImage: `url(${canal.cover_url})` }} />
-      )}
 
       {/* YouTube: Fullscreen background video iframe — proper aspect ratio */}
       {isYoutube && selectedVideoId && (
