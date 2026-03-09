@@ -716,7 +716,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
              <section className="rounded-2xl p-5" style={{ marginTop: "clamp(160px, 28vw, 380px)" }}>
               <h2 className="text-xl font-bold mb-6 tracking-wide uppercase text-player-foreground/90">Canais ao Vivo</h2>
               {!dataLoaded ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   {[1, 2, 3, 4].map(i => (
                     <Skeleton key={i} className="w-full aspect-video rounded-xl bg-white/10" />
                   ))}
@@ -726,7 +726,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                   Nenhum canal ao vivo disponível
                 </div>
               ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   {streamingChannels.map((ch) => (
                     <StreamingCard
                       key={ch.id}
