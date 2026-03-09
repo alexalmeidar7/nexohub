@@ -308,6 +308,7 @@ function CatalogRow({ groupName, groupVideos, items, onPlay, onHoverChange }: {
 }
 
 
+interface PlayerHomeProps {
   onBackToAccess?: () => void;
 }
 
