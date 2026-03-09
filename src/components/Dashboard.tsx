@@ -327,7 +327,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       </button>
 
       {/* Company name + user info - desktop */}
-      <div className="hidden lg:flex fixed top-5 left-[100px] z-[48] flex-col">
+      <div className="hidden lg:flex fixed top-5 left-[100px] z-[1] flex-col">
         <h1 className="font-bold text-white" style={{ fontSize: "45px", lineHeight: 1.1 }}>{empresa.nome || "Dashboard"}</h1>
         <div className="flex items-center gap-3 mt-1">
           <p className="text-white/60 text-xs">{user?.email || ""}</p>
