@@ -930,6 +930,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
               })}
             </>
           )}
+          </div>
         </main>
       </div>
       {miniPlayerData && (
