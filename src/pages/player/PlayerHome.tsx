@@ -443,21 +443,24 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       <div className="absolute inset-0 border border-player-accent/20 rounded-2xl pointer-events-none z-30" />
 
       {/* Sidebar - always visible, not affected by fade */}
-      <aside className="w-20 flex flex-col items-center justify-center gap-3 z-40 fixed left-0 top-0 bottom-0">
+      <aside
+        className="w-20 flex flex-col items-center justify-center gap-3 z-40 fixed left-0 top-0 bottom-0"
+        style={{ background: "linear-gradient(to right, rgba(0,0,0,0.85), transparent)" }}
+      >
         {sidebarItems.map(item => (
           <button
             key={item.section}
-            onClick={() => {
-              setActiveSection(item.section);
-            }}
-            className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${
+            onClick={() => setActiveSection(item.section)}
+            className={`w-14 rounded-2xl px-2 py-2.5 flex flex-col items-center justify-center gap-1.5 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-player-accent focus-visible:ring-offset-2 focus-visible:ring-offset-player-bg ${
               activeSection === item.section
-                ? "bg-player-accent text-player-foreground"
+                ? "bg-player-accent text-player-foreground shadow-lg shadow-player-accent/25"
                 : "bg-player-surface text-player-muted-foreground hover:bg-player-surface-hover hover:text-player-foreground"
             }`}
             title={item.label}
+            aria-label={item.label}
           >
             <item.icon className="h-5 w-5" />
+            <span className="text-[9px] font-semibold leading-none">{item.label}</span>
           </button>
         ))}
       </aside>
