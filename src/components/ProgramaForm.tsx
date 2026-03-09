@@ -905,7 +905,7 @@ export default function ProgramaForm() {
                   />
                 </PopoverContent>
               </Popover>
-              <p className="text-[10px] text-amber-200/60 leading-relaxed">
+              <p className="text-[10px] text-amber-200/80 leading-relaxed">
                 ⚠️ Este programa substituirá o programa fixo neste horário apenas na data selecionada.
               </p>
             </div>
