@@ -701,7 +701,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
 
       <div ref={scrollContainerRef} className={`relative flex-1 overflow-y-auto h-full transition-opacity duration-400 ease-in-out ${fadeOut ? "opacity-0" : "opacity-100"}`}>
 
-        <main ref={mainRef} className="px-8 pt-24 pb-6 ml-[72px] relative z-[10]">
+        <main ref={mainRef} className="px-8 pt-24 pb-6 ml-[72px] relative z-[10] transition-opacity duration-500 ease-in-out" style={{ opacity: bannerHovered ? 0.15 : 1 }}>
           <div className="transition-opacity duration-200 ease-in-out" style={{ opacity: sectionFading ? 0 : 1 }}>
           {visibleSection === "streaming" ? (
             /* ── Página dedicada: Canais ao Vivo ── */
