@@ -17,6 +17,8 @@ export interface MiniPlayerData {
   channelId: string;
   type: string; // "audio_live" | "video_live" | "video"
   logoUrl?: string;
+  musicTitle?: string;
+  musicArtist?: string;
 }
 
 export function saveMiniPlayerData(data: MiniPlayerData) {
