@@ -656,40 +656,29 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
 
       {/* Content wrapper with fade transition */}
       <div className={`relative flex-1 overflow-y-auto h-full transition-opacity duration-400 ease-in-out ${fadeOut ? "opacity-0" : "opacity-100"}`}>
-        {/* Fixed Header */}
-        <header className="fixed top-0 left-[72px] right-0 z-20 flex items-center justify-between px-8 py-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-player-surface flex items-center justify-center overflow-hidden">
-                {!dataLoaded ? (
-                  <Skeleton className="w-full h-full rounded-full bg-white/10" />
-                ) : profileAvatar ? (
-                  <img src={profileAvatar} alt={userName} className="w-full h-full object-cover" />
-                ) : (
-                  <img src="/avatars/usr-default.png" alt="Visitante" className="w-full h-full object-cover" />
-                )}
-              </div>
-              <div>
-                {!dataLoaded ? (
-                  <>
-                    <Skeleton className="h-3 w-20 bg-white/10 mb-1" />
-                    <Skeleton className="h-4 w-28 bg-white/10" />
-                  </>
-                ) : (
-                  <>
-                    <p className="text-sm">Bem vindo,</p>
-                    <p className="text-sm text-player-accent font-bold">{userName}</p>
-                    {user ? (
-                      <button onClick={handleSignOut} className="text-white/50 text-xs hover:text-white hover:underline flex items-center gap-1 transition-colors">
-                        <LogOut className="h-3 w-3" /> Sair
-                      </button>
-                    ) : onBackToAccess ? (
-                      <button onClick={onBackToAccess} className="text-player-accent text-xs hover:underline">
-                        cadastre-se
-                      </button>
-                    ) : null}
-                  </>
-                )}
-              </div>
+        {/* Fixed Header — text info beside the sidebar avatar */}
+        <header className="fixed top-0 left-[72px] right-0 z-20 flex items-center px-4 py-4" style={{ bottom: "auto", height: "auto" }}>
+            <div className="flex flex-col">
+              {!dataLoaded ? (
+                <>
+                  <Skeleton className="h-3 w-20 bg-white/10 mb-1" />
+                  <Skeleton className="h-4 w-28 bg-white/10" />
+                </>
+              ) : (
+                <>
+                  <p className="text-sm text-white/70">Bem vindo,</p>
+                  <p className="text-sm text-player-accent font-bold">{userName}</p>
+                  {user ? (
+                    <button onClick={handleSignOut} className="text-white/50 text-xs hover:text-white hover:underline flex items-center gap-1 transition-colors mt-0.5">
+                      <LogOut className="h-3 w-3" /> Sair
+                    </button>
+                  ) : onBackToAccess ? (
+                    <button onClick={onBackToAccess} className="text-player-accent text-xs hover:underline mt-0.5">
+                      cadastre-se
+                    </button>
+                  ) : null}
+                </>
+              )}
             </div>
         </header>
 
