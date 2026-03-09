@@ -362,6 +362,8 @@ export default function PlayerPage() {
         channelId: canal.id,
         type: canal.type,
         logoUrl: canal.logo_url || undefined,
+        musicTitle: musicData?.titulo || undefined,
+        musicArtist: musicData?.artista || undefined,
       });
     }
     // Stop current playback before leaving
