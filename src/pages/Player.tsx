@@ -1728,11 +1728,13 @@ export default function PlayerPage() {
       <div className="relative h-screen w-screen bg-black overflow-hidden select-none cursor-default animate-fade-in">
         <PlayerSidebarComponent
           items={sidebarItems}
-          activeKey="streaming"
+          activeKey={is991Channel ? "home" : "streaming"}
           avatarUrl={profileAvatar}
           userName={userDisplayName}
           showLogout={!!user}
           onLogout={async () => { await signOut(); navigate(playerHomePath); }}
+          autoHide={is991Channel}
+          visible={is991Channel ? barVisible : true}
           loading
         />
         <div className="absolute inset-y-0 right-0 left-0">
