@@ -676,7 +676,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
 
       {/* Banner fixo no topo — sempre visível */}
       <div
-        className="fixed top-0 z-0 h-[420px] overflow-hidden rounded-b-2xl pointer-events-none"
+        className="fixed top-0 z-0 h-[200px] sm:h-[300px] lg:h-[420px] overflow-hidden rounded-b-2xl pointer-events-none"
         style={{ width: "calc(95% - 72px)", left: "calc(72px + 2.5%)", right: "2.5%" }}
       >
         <img
@@ -693,7 +693,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
           />
         )}
         <div
-          className="absolute bottom-0 left-0 right-0 h-[160px] pointer-events-none"
+          className="absolute bottom-0 left-0 right-0 h-[80px] sm:h-[120px] lg:h-[160px] pointer-events-none"
           style={{ background: "linear-gradient(to bottom, transparent 0%, hsl(var(--player)) 100%)" }}
         />
       </div>
