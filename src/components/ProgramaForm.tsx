@@ -747,14 +747,14 @@ export default function ProgramaForm() {
           {/* Selo + Capa */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-[11px] mb-1.5 font-semibold text-white uppercase tracg-wider">Selo (o (1080×1080 PNG alpha)</label>
+              <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "#0d0446" }}>Selo (1080×1080 PNG alpha)</label>
               <label className="cursor-pointer group">
-                <div className="w-16 h-16 rounded-xl flex flex-col items-center justify-center gap-0.5 transition-all group-hover:border-[#2dbef3]"
-                  style={{ backgroundColor: "rgba(255,255,255,0.06)", border: "2px dashed rgba(255,255,255,0.15)" }}>
+                <div className="w-16 h-16 rounded-xl flex flex-col items-center justify-center gap-0.5 transition-all group-hover:border-[#268ffa]"
+                  style={{ backgroundColor: "rgba(255,255,255,0.5)", border: "2px dashed rgba(13,4,70,0.2)" }}>
                   {selo ? (
                     <img src={selo} alt="Selo" className="w-full h-full object-cover rounded-xl" />
                   ) : (
-                    <span className="text-[9px] text-white group-hover:text-white">Upload</span>
+                    <span className="text-[9px]" style={{ color: "#0d0446" }}>Upload</span>
                   )}
                 </div>
                 <input type="file" accept="image/*" onChange={handleSelo} className="hidden" />
