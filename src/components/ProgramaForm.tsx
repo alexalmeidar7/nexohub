@@ -696,31 +696,31 @@ export default function ProgramaForm() {
               </Select>
             </div>
             <div>
-              <label className="block text-[11px] mb-1.5 font-semibold text-white uppercase tracking-wider">Apresentador</label>
+              <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "#0d0446" }}>Apresentador</label>
               <Popover open={apresentadorComboOpen} onOpenChange={setApresentadorComboOpen}>
                 <PopoverTrigger asChild>
                   <button
                     className="w-full h-9 flex items-center justify-between px-4 text-sm rounded-xl"
-                    style={{ backgroundColor: "rgba(255,255,255,0.08)", color: "#ffffff", border: "1px solid rgba(255,255,255,0.12)" }}
+                    style={{ backgroundColor: "rgba(255,255,255,0.6)", color: "#0d0446", border: "1px solid rgba(13,4,70,0.15)" }}
                   >
-                    <span className={apresentadorId ? "" : "text-white"}>
+                    <span style={{ color: "#0d0446" }}>
                       {apresentadorId ? (apresentadores.find(a => a.id === apresentadorId)?.nome || "Selecionar") : "Selecionar Apresentador"}
                     </span>
                     <ChevronsUpDown size={14} className="opacity-60" />
                   </button>
                 </PopoverTrigger>
-                <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start" style={{ backgroundColor: "#0d0446", border: "1px solid rgba(255,255,255,0.15)" }}>
-                  <Command style={{ backgroundColor: "#0d0446" }}>
-                    <CommandInput placeholder="Buscar apresentador..." className="text-white" style={{ color: "#ffffff" }} />
+                <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                  <Command>
+                    <CommandInput placeholder="Buscar apresentador..." />
                     <CommandList>
-                      <CommandEmpty className="text-white/60 py-4 text-center text-sm">Nenhum encontrado.</CommandEmpty>
+                      <CommandEmpty className="py-4 text-center text-sm">Nenhum encontrado.</CommandEmpty>
                       <CommandGroup>
-                        <CommandItem value="__none__" onSelect={() => { setApresentadorId(""); setApresentadorComboOpen(false); }} className="text-white data-[selected=true]:bg-white/20 data-[selected=true]:text-white">
+                        <CommandItem value="__none__" onSelect={() => { setApresentadorId(""); setApresentadorComboOpen(false); }}>
                           <Check size={14} className={cn("mr-2", !apresentadorId ? "opacity-100" : "opacity-0")} />
                           Nenhum
                         </CommandItem>
                         {apresentadores.filter(a => a.ativo && a.cargo?.toLowerCase() !== "convidado").map(a => (
-                          <CommandItem key={a.id} value={a.nome} onSelect={() => { setApresentadorId(a.id); setApresentadorComboOpen(false); }} className="text-white data-[selected=true]:bg-white/20 data-[selected=true]:text-white">
+                          <CommandItem key={a.id} value={a.nome} onSelect={() => { setApresentadorId(a.id); setApresentadorComboOpen(false); }}>
                             <Check size={14} className={cn("mr-2", apresentadorId === a.id ? "opacity-100" : "opacity-0")} />
                             {a.nome}
                           </CommandItem>
