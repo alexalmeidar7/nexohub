@@ -797,7 +797,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                 });
 
                 return (
-                  <section key={groupName} className="mb-10 rounded-2xl p }}>
+                  <section key={groupName} className="mb-10 rounded-2xl p-5">
                     <h2 className="text-lg font-bold mb-4 tracking-wide uppercase text-player-foreground/90">{groupName}</h2>
                     <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
                       {groupVideos.length > 0 ? (
