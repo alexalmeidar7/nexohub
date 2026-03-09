@@ -17,6 +17,8 @@ export interface MiniPlayerData {
   channelId: string;
   type: string; // "audio_live" | "video_live" | "video"
   logoUrl?: string;
+  musicTitle?: string;
+  musicArtist?: string;
 }
 
 export function saveMiniPlayerData(data: MiniPlayerData) {
@@ -137,13 +139,17 @@ export default function MiniPlayerWidget({ data, onClose }: { data: MiniPlayerDa
           </div>
         )}
 
-        {/* Name */}
+        {/* Name + Music info */}
         <div className="flex-1 min-w-0">
           <p className="text-white text-xs font-bold truncate">{data.name}</p>
-          <div className="flex items-center gap-1">
-            <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-            <span className="text-white/40 text-[10px]">Ao vivo</span>
-          </div>
+          {data.musicTitle && data.musicTitle !== "Sem título" ? (
+            <p className="text-white/50 text-[10px] truncate">♫ {data.musicTitle} — {data.musicArtist || ""}</p>
+          ) : (
+            <div className="flex items-center gap-1">
+              <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+              <span className="text-white/40 text-[10px]">Ao vivo</span>
+            </div>
+          )}
         </div>
 
         {/* Buttons */}
