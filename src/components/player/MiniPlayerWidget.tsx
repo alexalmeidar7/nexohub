@@ -242,10 +242,14 @@ export default function MiniPlayerWidget({ data, onClose }: { data: MiniPlayerDa
         )}
 
         {/* Name + Music info */}
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 overflow-hidden">
           <p className="text-white text-xs font-bold truncate">{data.name}</p>
           {data.musicTitle && data.musicTitle !== "Sem título" ? (
-            <p className="text-white/50 text-[10px] truncate">♫ {data.musicTitle} — {data.musicArtist || ""}</p>
+            <div className="overflow-hidden">
+              <p className="text-white/50 text-[10px] whitespace-nowrap mini-marquee">
+                ♫ {data.musicTitle} — {data.musicArtist || ""}
+              </p>
+            </div>
           ) : (
             <div className="flex items-center gap-1">
               <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: "hsl(0 80% 50%)" }} />
@@ -253,6 +257,18 @@ export default function MiniPlayerWidget({ data, onClose }: { data: MiniPlayerDa
             </div>
           )}
         </div>
+        <style>{`
+          .mini-marquee {
+            display: inline-block;
+            animation: miniMarquee 8s linear infinite;
+          }
+          @keyframes miniMarquee {
+            0% { transform: translateX(0); }
+            20% { transform: translateX(0); }
+            80% { transform: translateX(calc(-100% + 150px)); }
+            100% { transform: translateX(calc(-100% + 150px)); }
+          }
+        `}</style>
 
         {/* Buttons */}
         <button
