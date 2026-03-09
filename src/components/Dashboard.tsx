@@ -399,11 +399,11 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                             <button
                               key={child.page}
                               onClick={() => setCurrentPage(child.page)}
-                              className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-[11px] transition-colors ${
-                                childActive ? "text-[#268ffa]" : "text-white"
+                              className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-[11px] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                                childActive ? "text-primary bg-sidebar-accent/70 font-semibold" : "text-sidebar-foreground hover:text-foreground hover:bg-sidebar-accent/30"
                               }`}
-                              onMouseEnter={e => { if (!childActive) { e.currentTarget.style.color = "#268ffa"; } }}
-                              onMouseLeave={e => { if (!childActive) { e.currentTarget.style.color = ""; } }}
+                              aria-label={child.label}
+                              role="menuitem"
                             >
                               <ChildIcon size={12} className={childActive ? "text-[#268ffa]" : "text-white"} />
                               <span>{child.label}</span>
