@@ -790,61 +790,20 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
 
               {/* Catalog categories with playlist videos */}
               {Object.entries(catalogGroups).map(([groupName, items]) => {
-                // Collect all playlist videos for this group
                 const groupVideos = items.flatMap(item => {
                   const videos = playlistVideos[item.id] || [];
                   return videos.map(v => ({ ...v, channel: item }));
                 });
 
                 return (
-                  <section key={groupName} className="mb-10 rounded-2xl p-5">
-                    <h2 className="text-lg font-bold mb-4 tracking-wide uppercase text-player-foreground/90">{groupName}</h2>
-                    <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
-                      {groupVideos.length > 0 ? (
-                        groupVideos.map(({ channel, ...video }) => {
-                          const dateStr = video.published
-                            ? new Date(video.published).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" })
-                            : "";
-                          return (
-                            <button
-                              key={video.videoId}
-                              onClick={() => goToPlayer(channel.id)}
-                              className="flex-shrink-0 w-56 h-32 rounded-xl overflow-hidden relative transition-all hover:scale-[1.02] border-[5px] border-transparent hover:border-white"
-                            >
-                              <img src={video.thumbnail} alt={video.title} className="w-full h-full object-cover" />
-                              {dateStr && (
-                                <span className="absolute top-2 left-2 text-[10px] font-semibold bg-black/70 px-2 py-0.5 rounded text-white">
-                                  {dateStr}
-                                </span>
-                              )}
-                              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2">
-                                <p className="text-xs font-medium line-clamp-2 text-left text-white">{video.title}</p>
-                              </div>
-                            </button>
-                          );
-                        })
-                      ) : (
-                        items.map(item => (
-                          <button
-                            key={item.id}
-                            onClick={() => goToPlayer(item.id)}
-                            className="flex-shrink-0 w-56 h-32 rounded-xl overflow-hidden relative transition-all hover:scale-[1.02] border-[5px] border-transparent hover:border-white"
-                          >
-                            {item.cover_url ? (
-                              <img src={item.cover_url} alt={item.name} className="w-full h-full object-cover" />
-                            ) : (
-                              <div className="w-full h-full bg-gradient-to-br from-player-accent/30 to-player flex items-center justify-center">
-                                <Film className="h-8 w-8 text-player-muted-foreground" />
-                              </div>
-                            )}
-                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2">
-                              <p className="text-xs font-medium truncate text-left">{item.name}</p>
-                            </div>
-                          </button>
-                        ))
-                      )}
-                    </div>
-                  </section>
+                  <CatalogRow
+                    key={groupName}
+                    groupName={groupName}
+                    groupVideos={groupVideos}
+                    items={items}
+                    onPlay={goToPlayer}
+                    onHoverChange={setHoveredThumb}
+                  />
                 );
               })}
             </>
