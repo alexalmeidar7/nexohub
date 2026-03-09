@@ -793,6 +793,11 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
           )}
         </main>
       </div>
+      {miniPlayerData && (
+        <Suspense fallback={null}>
+          <MiniPlayerWidget data={miniPlayerData} onClose={() => { clearMiniPlayerData(); setMiniPlayerData(null); }} />
+        </Suspense>
+      )}
     </div>
   );
 }
