@@ -747,7 +747,7 @@ export default function ProgramaForm() {
           {/* Selo + Capa */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-[11px] mb-1.5 font-semibold text-white/60 uppercase tracking-wider">Selo (1080×1080 PNG alpha)</label>
+              <label className="block text-[11px] mb-1.5 font-semibold text-white/90 uppercase tracking-wider">Selo (1080×1080 PNG alpha)</label>
               <label className="cursor-pointer group">
                 <div className="w-16 h-16 rounded-xl flex flex-col items-center justify-center gap-0.5 transition-all group-hover:border-[#2dbef3]"
                   style={{ backgroundColor: "rgba(255,255,255,0.06)", border: "2px dashed rgba(255,255,255,0.15)" }}>
