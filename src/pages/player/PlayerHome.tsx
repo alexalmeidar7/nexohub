@@ -477,7 +477,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       {/* Content wrapper with fade transition */}
       <div className={`relative flex-1 overflow-y-auto h-full transition-opacity duration-400 ease-in-out ${fadeOut ? "opacity-0" : "opacity-100"}`}>
         {/* Fixed Header */}
-        <header className="fixed top-0 left-0 right-0 z-20 flex items-center justify-between px-8 py-4">
+        <header className="fixed top-0 left-0 right-0 z-20 flex items-center justify-between px-8 py-4" style={{ background: "rgba(0,0,0,0.3)", backdropFilter: "blur(20px) saturate(1.3)", WebkitBackdropFilter: "blur(20px) saturate(1.3)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-player-surface flex items-center justify-center overflow-hidden">
                 {!dataLoaded ? (
