@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
-import { AlertCircle, Trash2, Clock, Calendar, Building2, Pencil, X, Power, Loader2, Info, CalendarDays, CheckCircle, ChevronsUpDown, Check } from "lucide-react";
+import { AlertCircle, Trash2, Clock, Calendar, Building2, Pencil, X, Power, Loader2, Info, CalendarDays, CheckCircle, ChevronsUpDown, Check, PlaySquare } from "lucide-react";
 import { format, addDays, startOfWeek } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Calendar as CalendarUI } from "@/components/ui/calendar";
@@ -609,279 +609,337 @@ export default function ProgramaForm() {
 
   return (
     <div className="animate-fade-in space-y-6">
-      <div className="max-w-lg space-y-4">
-        <h3 className="text-xl mb-4" style={{ color: "#0d0446" }}>
-          {editingId ? "Editar Programa" : "Cadastro de Programa"}
-        </h3>
-        <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Nome do Programa"
-          className="w-full px-4 py-1.5 outline-none transition-colors text-sm"
-          style={{ backgroundColor: "#ffffff", border: "1px solid #0d0446", color: "#0d0446", borderRadius: "20px" }}
-          onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
-          onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
-        />
-
-        <div>
-          <label className="block text-xs mb-1" style={{ color: "#0d0446", fontWeight: 600 }}>Tipo do Programa</label>
-          <div className="flex gap-2">
-            <Select value={tipoPrograma} onValueChange={setTipoPrograma}>
-              <SelectTrigger className="flex-1 h-8" style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "20px", border: "none", fontSize: "13px" }}>
-                <SelectValue placeholder="Selecione o tipo" />
-              </SelectTrigger>
-              <SelectContent style={{ backgroundColor: "#0d0446", border: "1px solid #0d0446" }}>
-                {tiposPrograma.map(t => (
-                  <SelectItem key={t} value={t} className="text-white focus:bg-white/20 focus:text-white">{t}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Dialog open={tipoDialogOpen} onOpenChange={setTipoDialogOpen}>
-              <DialogTrigger asChild>
-                <button className="px-4 py-1 text-sm font-bold transition-all shrink-0"
-                  style={{ backgroundColor: "#0d0446", color: "#ffffff", border: "2px solid #0d0446", borderRadius: "20px" }}
-                  onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#ffffff"; e.currentTarget.style.color = "#0d0446"; }}
-                  onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#0d0446"; e.currentTarget.style.color = "#ffffff"; }}
-                >+ Novo</button>
-              </DialogTrigger>
-              <DialogContent className="max-w-sm">
-                <DialogHeader><DialogTitle style={{ color: "#0d0446" }}>Novo Tipo de Programa</DialogTitle></DialogHeader>
-                <div className="space-y-3">
-                  <input value={newTipo} onChange={(e) => setNewTipo(e.target.value)} placeholder="Nome do tipo"
-                    className="w-full px-4 py-1.5 outline-none transition-colors text-sm"
-                    style={{ backgroundColor: "#ffffff", border: "1px solid #0d0446", color: "#0d0446", borderRadius: "20px" }}
-                    onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
-                    onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
-                  />
-                  <button onClick={addTipo} className="w-full py-2 font-bold transition-all"
-                    style={{ backgroundColor: "#0d0446", color: "#ffffff", border: "2px solid #0d0446", borderRadius: "20px" }}
-                    onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#ffffff"; e.currentTarget.style.color = "#0d0446"; }}
-                    onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#0d0446"; e.currentTarget.style.color = "#ffffff"; }}
-                  >Adicionar</button>
-                </div>
-              </DialogContent>
-            </Dialog>
+      {/* Form Card */}
+      <div className="rounded-2xl overflow-hidden" style={{ background: "linear-gradient(135deg, #0d0446 0%, #1a0a6e 100%)", boxShadow: "0 8px 32px rgba(13,4,70,0.25)" }}>
+        {/* Form Header */}
+        <div className="flex items-center gap-3 px-6 py-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(45,191,244,0.15)" }}>
+            <PlaySquare size={20} style={{ color: "#2dbff4" }} />
+          </div>
+          <div>
+            <h3 className="text-base font-bold text-white">
+              {editingId ? "Editar Programa" : "Cadastro de Programa"}
+            </h3>
+            <p className="text-[11px] text-white/40">Preencha os dados para cadastrar o programa</p>
           </div>
         </div>
 
-        <div>
-          <label className="block text-xs mb-1" style={{ color: "#0d0446", fontWeight: 600 }}>Classificação Etária</label>
-          <Select value={classificacaoEtaria} onValueChange={setClassificacaoEtaria}>
-            <SelectTrigger className="w-full h-8" style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "20px", border: "none", fontSize: "13px" }}>
-              <SelectValue placeholder="Selecione a classificação" />
-            </SelectTrigger>
-            <SelectContent style={{ backgroundColor: "#0d0446", border: "1px solid #0d0446" }}>
-              {CLASSIFICACOES_ETARIAS.map(c => (
-                <SelectItem key={c.value} value={c.value} className="text-white focus:bg-white/20 focus:text-white">
-                  <span className="flex items-center gap-2">
-                    <ClassificacaoBadge value={c.value} size={18} />
-                    {c.label}
-                  </span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <Textarea value={descricao} onChange={(e) => setDescricao(e.target.value)} placeholder="Descrição do Programa (opcional)"
-          className="min-h-[60px] px-4 py-2 outline-none transition-colors text-sm"
-          style={{ backgroundColor: "#ffffff", border: "1px solid #0d0446", color: "#0d0446", borderRadius: "16px" }}
-          onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
-          onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
-        />
-
-        <div>
-          <label className="block text-xs mb-1" style={{ color: "#0d0446", fontWeight: 600 }}>Apresentador Responsável</label>
-          <Popover open={apresentadorComboOpen} onOpenChange={setApresentadorComboOpen}>
-            <PopoverTrigger asChild>
-              <button
-                className="w-full h-8 flex items-center justify-between px-4 text-sm"
-                style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "20px", border: "none" }}
-              >
-                <span className={apresentadorId ? "" : "opacity-60"}>
-                  {apresentadorId ? (apresentadores.find(a => a.id === apresentadorId)?.nome || "Selecionar") : "Selecionar Apresentador"}
-                </span>
-                <ChevronsUpDown size={14} className="opacity-60" />
-              </button>
-            </PopoverTrigger>
-            <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start" style={{ backgroundColor: "#0d0446", border: "1px solid #0d0446" }}>
-              <Command style={{ backgroundColor: "#0d0446" }}>
-                <CommandInput placeholder="Buscar apresentador..." className="text-white" style={{ color: "#ffffff" }} />
-                <CommandList>
-                  <CommandEmpty className="text-white/60 py-4 text-center text-sm">Nenhum encontrado.</CommandEmpty>
-                  <CommandGroup>
-                    <CommandItem value="__none__" onSelect={() => { setApresentadorId(""); setApresentadorComboOpen(false); }} className="text-white data-[selected=true]:bg-white/20 data-[selected=true]:text-white">
-                      <Check size={14} className={cn("mr-2", !apresentadorId ? "opacity-100" : "opacity-0")} />
-                      Nenhum
-                    </CommandItem>
-                    {apresentadores.filter(a => a.ativo && a.cargo?.toLowerCase() !== "convidado").map(a => (
-                      <CommandItem key={a.id} value={a.nome} onSelect={() => { setApresentadorId(a.id); setApresentadorComboOpen(false); }} className="text-white data-[selected=true]:bg-white/20 data-[selected=true]:text-white">
-                        <Check size={14} className={cn("mr-2", apresentadorId === a.id ? "opacity-100" : "opacity-0")} />
-                        {a.nome}
-                      </CommandItem>
+        {/* Form Body */}
+        <div className="px-6 py-5 space-y-4">
+          {/* Nome + Tipo */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-[11px] mb-1.5 font-semibold text-white/60 uppercase tracking-wider">Nome do Programa</label>
+              <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Digite o nome do programa"
+                className="w-full px-4 py-2 outline-none transition-all text-sm text-white placeholder:text-white/30"
+                style={{ backgroundColor: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "12px" }}
+                onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.12)"; }}
+                onBlur={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.08)"; }}
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] mb-1.5 font-semibold text-white/60 uppercase tracking-wider">Tipo do Programa</label>
+              <div className="flex gap-2">
+                <Select value={tipoPrograma} onValueChange={setTipoPrograma}>
+                  <SelectTrigger className="flex-1 h-9" style={{ backgroundColor: "rgba(255,255,255,0.08)", color: "#ffffff", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.12)", fontSize: "13px" }}>
+                    <SelectValue placeholder="Selecione o tipo" />
+                  </SelectTrigger>
+                  <SelectContent style={{ backgroundColor: "#0d0446", border: "1px solid rgba(255,255,255,0.15)" }}>
+                    {tiposPrograma.map(t => (
+                      <SelectItem key={t} value={t} className="text-white focus:bg-white/20 focus:text-white">{t}</SelectItem>
                     ))}
-                  </CommandGroup>
-                </CommandList>
-              </Command>
-            </PopoverContent>
-          </Popover>
-        </div>
+                  </SelectContent>
+                </Select>
+                <Dialog open={tipoDialogOpen} onOpenChange={setTipoDialogOpen}>
+                  <DialogTrigger asChild>
+                    <button className="px-3 py-1 text-xs font-bold transition-all shrink-0 rounded-xl"
+                      style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#ffffff" }}
+                    >+ Novo</button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-sm">
+                    <DialogHeader><DialogTitle style={{ color: "#0d0446" }}>Novo Tipo de Programa</DialogTitle></DialogHeader>
+                    <div className="space-y-3">
+                      <input value={newTipo} onChange={(e) => setNewTipo(e.target.value)} placeholder="Nome do tipo"
+                        className="w-full px-4 py-1.5 outline-none transition-colors text-sm"
+                        style={{ backgroundColor: "#ffffff", border: "1px solid #0d0446", color: "#0d0446", borderRadius: "12px" }}
+                        onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
+                        onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
+                      />
+                      <button onClick={addTipo} className="w-full py-2 font-bold transition-all rounded-xl"
+                        style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#ffffff" }}
+                      >Adicionar</button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
+            </div>
+          </div>
 
-        <div>
-          <label className="block text-xs mb-2" style={{ color: "#0d0446", fontWeight: 600 }}>Selo do Programa (1080 x 1080 px - PNG com fundo alpha)</label>
-          <input type="file" accept="image/*" onChange={handleSelo}
-            className="w-full p-2 text-sm file:mr-3 file:rounded-full file:border-0 file:px-3 file:py-1 file:font-bold file:text-xs"
-            style={{ backgroundColor: "#ffffff", border: "1px solid #0d0446", color: "#0d0446", borderRadius: "20px" }}
-          />
-          {selo && <img src={selo} alt="Selo" className="mt-2 h-16 rounded" style={{ border: "1px solid #0d0446" }} />}
-        </div>
-        <div>
-          <label className="block text-xs mb-2" style={{ color: "#0d0446", fontWeight: 600 }}>Capa do Programa (1080 x 1080 px - PNG com fundo alpha)</label>
-          <input type="file" accept="image/*" onChange={handleCapa}
-            className="w-full p-2 text-sm file:mr-3 file:rounded-full file:border-0 file:px-3 file:py-1 file:font-bold file:text-xs"
-            style={{ backgroundColor: "#ffffff", border: "1px solid #0d0446", color: "#0d0446", borderRadius: "20px" }}
-          />
-          {capa && <img src={capa} alt="Capa" className="mt-2 h-16 rounded" style={{ border: "1px solid #0d0446" }} />}
-        </div>
+          {/* Classificação + Apresentador */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-[11px] mb-1.5 font-semibold text-white/60 uppercase tracking-wider">Classificação Etária</label>
+              <Select value={classificacaoEtaria} onValueChange={setClassificacaoEtaria}>
+                <SelectTrigger className="w-full h-9" style={{ backgroundColor: "rgba(255,255,255,0.08)", color: "#ffffff", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.12)", fontSize: "13px" }}>
+                  <SelectValue placeholder="Selecione a classificação" />
+                </SelectTrigger>
+                <SelectContent style={{ backgroundColor: "#0d0446", border: "1px solid rgba(255,255,255,0.15)" }}>
+                  {CLASSIFICACOES_ETARIAS.map(c => (
+                    <SelectItem key={c.value} value={c.value} className="text-white focus:bg-white/20 focus:text-white">
+                      <span className="flex items-center gap-2">
+                        <ClassificacaoBadge value={c.value} size={18} />
+                        {c.label}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="block text-[11px] mb-1.5 font-semibold text-white/60 uppercase tracking-wider">Apresentador</label>
+              <Popover open={apresentadorComboOpen} onOpenChange={setApresentadorComboOpen}>
+                <PopoverTrigger asChild>
+                  <button
+                    className="w-full h-9 flex items-center justify-between px-4 text-sm rounded-xl"
+                    style={{ backgroundColor: "rgba(255,255,255,0.08)", color: "#ffffff", border: "1px solid rgba(255,255,255,0.12)" }}
+                  >
+                    <span className={apresentadorId ? "" : "opacity-40"}>
+                      {apresentadorId ? (apresentadores.find(a => a.id === apresentadorId)?.nome || "Selecionar") : "Selecionar Apresentador"}
+                    </span>
+                    <ChevronsUpDown size={14} className="opacity-40" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start" style={{ backgroundColor: "#0d0446", border: "1px solid rgba(255,255,255,0.15)" }}>
+                  <Command style={{ backgroundColor: "#0d0446" }}>
+                    <CommandInput placeholder="Buscar apresentador..." className="text-white" style={{ color: "#ffffff" }} />
+                    <CommandList>
+                      <CommandEmpty className="text-white/60 py-4 text-center text-sm">Nenhum encontrado.</CommandEmpty>
+                      <CommandGroup>
+                        <CommandItem value="__none__" onSelect={() => { setApresentadorId(""); setApresentadorComboOpen(false); }} className="text-white data-[selected=true]:bg-white/20 data-[selected=true]:text-white">
+                          <Check size={14} className={cn("mr-2", !apresentadorId ? "opacity-100" : "opacity-0")} />
+                          Nenhum
+                        </CommandItem>
+                        {apresentadores.filter(a => a.ativo && a.cargo?.toLowerCase() !== "convidado").map(a => (
+                          <CommandItem key={a.id} value={a.nome} onSelect={() => { setApresentadorId(a.id); setApresentadorComboOpen(false); }} className="text-white data-[selected=true]:bg-white/20 data-[selected=true]:text-white">
+                            <Check size={14} className={cn("mr-2", apresentadorId === a.id ? "opacity-100" : "opacity-0")} />
+                            {a.nome}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+            </div>
+          </div>
 
-        <div>
-          <label className="block text-xs mb-1 flex items-center gap-1" style={{ color: "#0d0446", fontWeight: 600 }}>
-            <Building2 size={14} /> Estúdio
-          </label>
-          <div className="flex gap-2">
-            <Select value={estudio} onValueChange={setEstudio}>
-              <SelectTrigger className="flex-1 h-8" style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "20px", border: "none", fontSize: "13px" }}>
-                <SelectValue placeholder="Selecione o estúdio" />
-              </SelectTrigger>
-              <SelectContent style={{ backgroundColor: "#0d0446", border: "1px solid #0d0446" }}>
-                {estudios.map(e => (
-                  <SelectItem key={e} value={e} className="text-white focus:bg-white/20 focus:text-white">{e}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Dialog open={estudioDialogOpen} onOpenChange={setEstudioDialogOpen}>
-              <DialogTrigger asChild>
-                <button className="px-4 py-1 text-sm font-bold transition-all shrink-0"
-                  style={{ backgroundColor: "#0d0446", color: "#ffffff", border: "2px solid #0d0446", borderRadius: "20px" }}
-                  onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#ffffff"; e.currentTarget.style.color = "#0d0446"; }}
-                  onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#0d0446"; e.currentTarget.style.color = "#ffffff"; }}
-                >+ Novo</button>
-              </DialogTrigger>
-              <DialogContent className="max-w-sm">
-                <DialogHeader><DialogTitle style={{ color: "#0d0446" }}>Cadastrar Estúdio</DialogTitle></DialogHeader>
-                <div className="space-y-3">
-                  <input value={newEstudio} onChange={(e) => setNewEstudio(e.target.value)} placeholder="Nome do estúdio"
-                    className="w-full px-4 py-1.5 outline-none transition-colors text-sm"
-                    style={{ backgroundColor: "#ffffff", border: "1px solid #0d0446", color: "#0d0446", borderRadius: "20px" }}
-                    onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
-                    onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
-                  />
-                  <button onClick={addEstudio} className="w-full py-2 font-bold transition-all"
-                    style={{ backgroundColor: "#0d0446", color: "#ffffff", border: "2px solid #0d0446", borderRadius: "20px" }}
-                    onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#ffffff"; e.currentTarget.style.color = "#0d0446"; }}
-                    onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#0d0446"; e.currentTarget.style.color = "#ffffff"; }}
-                  >Adicionar</button>
+          {/* Descrição */}
+          <div>
+            <label className="block text-[11px] mb-1.5 font-semibold text-white/60 uppercase tracking-wider">Descrição</label>
+            <Textarea value={descricao} onChange={(e) => setDescricao(e.target.value)} placeholder="Descrição do programa (opcional)"
+              className="min-h-[60px] px-4 py-2 outline-none transition-all text-sm text-white placeholder:text-white/30"
+              style={{ backgroundColor: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "12px" }}
+              onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
+              onBlur={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)"; }}
+            />
+          </div>
+
+          {/* Selo + Capa */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-[11px] mb-1.5 font-semibold text-white/60 uppercase tracking-wider">Selo (1080×1080 PNG alpha)</label>
+              <label className="cursor-pointer group">
+                <div className="w-16 h-16 rounded-xl flex flex-col items-center justify-center gap-0.5 transition-all group-hover:border-[#2dbef3]"
+                  style={{ backgroundColor: "rgba(255,255,255,0.06)", border: "2px dashed rgba(255,255,255,0.15)" }}>
+                  {selo ? (
+                    <img src={selo} alt="Selo" className="w-full h-full object-cover rounded-xl" />
+                  ) : (
+                    <span className="text-[9px] text-white/30 group-hover:text-white/50">Upload</span>
+                  )}
                 </div>
-              </DialogContent>
-            </Dialog>
+                <input type="file" accept="image/*" onChange={handleSelo} className="hidden" />
+              </label>
+              {selo && <button onClick={() => setSelo("")} className="text-[10px] text-red-400 hover:text-red-300 mt-1">Remover</button>}
+            </div>
+            <div>
+              <label className="block text-[11px] mb-1.5 font-semibold text-white/60 uppercase tracking-wider">Capa (1080×1080 PNG alpha)</label>
+              <label className="cursor-pointer group">
+                <div className="w-16 h-16 rounded-xl flex flex-col items-center justify-center gap-0.5 transition-all group-hover:border-[#2dbef3]"
+                  style={{ backgroundColor: "rgba(255,255,255,0.06)", border: "2px dashed rgba(255,255,255,0.15)" }}>
+                  {capa ? (
+                    <img src={capa} alt="Capa" className="w-full h-full object-cover rounded-xl" />
+                  ) : (
+                    <span className="text-[9px] text-white/30 group-hover:text-white/50">Upload</span>
+                  )}
+                </div>
+                <input type="file" accept="image/*" onChange={handleCapa} className="hidden" />
+              </label>
+              {capa && <button onClick={() => setCapa("")} className="text-[10px] text-red-400 hover:text-red-300 mt-1">Remover</button>}
+            </div>
           </div>
-        </div>
 
-        <div>
-          <label className="block text-xs mb-2 flex items-center gap-1" style={{ color: "#0d0446", fontWeight: 600 }}>
-            <Calendar size={14} /> Dias da Semana
-          </label>
-          <div className="flex flex-wrap gap-2">
-            {DIAS_SEMANA.map(dia => (
-              <button key={dia} onClick={() => toggleDia(dia)}
-                className="px-3 py-1 text-xs font-semibold transition-all"
-                style={{
-                  backgroundColor: diasSemana.includes(dia) ? "#0d0446" : "#ffffff",
-                  color: diasSemana.includes(dia) ? "#ffffff" : "#0d0446",
-                  border: `1px solid #0d0446`,
-                  borderRadius: "20px",
-                }}>
-                {dia}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-3">
+          {/* Estúdio */}
           <div>
-            <label className="block text-xs mb-1 flex items-center gap-1" style={{ color: "#0d0446", fontWeight: 600 }}><Clock size={12} /> Início</label>
-            <input type="time" step="1" value={horarioInicio} onChange={(e) => setHorarioInicio(e.target.value)}
-              className="w-full px-4 py-1.5 outline-none transition-colors text-sm"
-              style={{ backgroundColor: "#ffffff", border: "1px solid #0d0446", color: "#0d0446", borderRadius: "20px" }}
-              onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
-              onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
-            />
-          </div>
-          <div>
-            <label className="block text-xs mb-1 flex items-center gap-1" style={{ color: "#0d0446", fontWeight: 600 }}><Clock size={12} /> Fim</label>
-            <input type="time" step="1" value={horarioFim} onChange={(e) => setHorarioFim(e.target.value)}
-              className="w-full px-4 py-1.5 outline-none transition-colors text-sm"
-              style={{ backgroundColor: "#ffffff", border: "1px solid #0d0446", color: "#0d0446", borderRadius: "20px" }}
-              onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
-              onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
-            />
-          </div>
-        </div>
-
-        <div className="flex gap-4">
-          <label className="flex items-center gap-2 cursor-pointer" style={{ color: "#0d0446" }}>
-            <input type="checkbox" checked={ativo} onChange={(e) => setAtivo(e.target.checked)} className="w-4 h-4" style={{ accentColor: "#0d0446" }} />
-            Programa Ativo
-          </label>
-          <label className="flex items-center gap-2 cursor-pointer" style={{ color: "#0d0446" }}>
-            <input type="checkbox" checked={variavel} onChange={(e) => { setVariavel(e.target.checked); if (!e.target.checked) setDataVariavel(undefined); }} className="w-4 h-4" style={{ accentColor: "#0d0446" }} />
-            Programa Variável
-          </label>
-        </div>
-
-        {variavel && (
-          <div className="space-y-2">
-            <label className="block text-xs flex items-center gap-1" style={{ color: "#0d0446", fontWeight: 600 }}>
-              <CalendarDays size={14} /> Data do Programa Variável
+            <label className="block text-[11px] mb-1.5 font-semibold text-white/60 uppercase tracking-wider flex items-center gap-1">
+              <Building2 size={13} /> Estúdio
             </label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <button className={cn("w-full justify-start text-left font-normal flex items-center gap-2 px-4 py-1.5 text-sm")}
-                  style={{ backgroundColor: "#ffffff", border: "1px solid #0d0446", color: "#0d0446", borderRadius: "20px" }}>
-                  <CalendarDays className="h-4 w-4" />
-                  {dataVariavel ? format(dataVariavel, "dd/MM/yyyy (EEEE)", { locale: ptBR }) : "Selecione a data"}
-                </button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <CalendarUI
-                  mode="single"
-                  selected={dataVariavel}
-                  onSelect={setDataVariavel}
-                  initialFocus
-                  className={cn("p-3 pointer-events-auto")}
-                />
-              </PopoverContent>
-            </Popover>
-            <p className="text-xs px-3 py-2 rounded-lg" style={{ color: "#0d0446", backgroundColor: "rgba(13,4,70,0.05)", border: "1px solid rgba(13,4,70,0.1)" }}>
-              ⚠️ Este programa substituirá o programa fixo neste horário apenas na data selecionada. O programa anterior voltará automaticamente após essa data.
-            </p>
+            <div className="flex gap-2">
+              <Select value={estudio} onValueChange={setEstudio}>
+                <SelectTrigger className="flex-1 h-9" style={{ backgroundColor: "rgba(255,255,255,0.08)", color: "#ffffff", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.12)", fontSize: "13px" }}>
+                  <SelectValue placeholder="Selecione o estúdio" />
+                </SelectTrigger>
+                <SelectContent style={{ backgroundColor: "#0d0446", border: "1px solid rgba(255,255,255,0.15)" }}>
+                  {estudios.map(e => (
+                    <SelectItem key={e} value={e} className="text-white focus:bg-white/20 focus:text-white">{e}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Dialog open={estudioDialogOpen} onOpenChange={setEstudioDialogOpen}>
+                <DialogTrigger asChild>
+                  <button className="px-3 py-1 text-xs font-bold transition-all shrink-0 rounded-xl"
+                    style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#ffffff" }}
+                  >+ Novo</button>
+                </DialogTrigger>
+                <DialogContent className="max-w-sm">
+                  <DialogHeader><DialogTitle style={{ color: "#0d0446" }}>Cadastrar Estúdio</DialogTitle></DialogHeader>
+                  <div className="space-y-3">
+                    <input value={newEstudio} onChange={(e) => setNewEstudio(e.target.value)} placeholder="Nome do estúdio"
+                      className="w-full px-4 py-1.5 outline-none transition-colors text-sm"
+                      style={{ backgroundColor: "#ffffff", border: "1px solid #0d0446", color: "#0d0446", borderRadius: "12px" }}
+                      onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
+                      onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
+                    />
+                    <button onClick={addEstudio} className="w-full py-2 font-bold transition-all rounded-xl"
+                      style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#ffffff" }}
+                    >Adicionar</button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
           </div>
-        )}
 
-        {conflictMsg && <p className="text-sm flex items-center gap-1" style={{ color: "#dc2626" }}><AlertCircle size={14} /> {conflictMsg}</p>}
-        <div className="flex gap-2 items-center">
-          <button onClick={handleAdd} disabled={saving}
-            className="px-6 py-2 font-bold transition-all flex items-center gap-2 disabled:opacity-70"
-            style={{ backgroundColor: "#0d0446", color: "#ffffff", border: "2px solid #0d0446", borderRadius: "20px" }}
-            onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#ffffff"; e.currentTarget.style.color = "#0d0446"; }}
-            onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#0d0446"; e.currentTarget.style.color = "#ffffff"; }}
-          >
-            {saving && <Loader2 size={14} className="animate-spin" />}
-            {saving ? "Salvando..." : editingId ? "Atualizar Programa" : "Adicionar Programa"}
-          </button>
-          {editingId && (
-            <button onClick={resetForm}
-              className="px-4 py-2 font-bold transition-all flex items-center gap-1"
-              style={{ backgroundColor: "#ffffff", color: "#0d0446", border: "2px solid #0d0446", borderRadius: "20px" }}
-            >
-              <X size={14} /> Cancelar
-            </button>
+          {/* Dias da Semana */}
+          <div>
+            <label className="block text-[11px] mb-1.5 font-semibold text-white/60 uppercase tracking-wider flex items-center gap-1">
+              <Calendar size={13} /> Dias da Semana
+            </label>
+            <div className="flex flex-wrap gap-1.5">
+              {DIAS_SEMANA.map(dia => (
+                <button key={dia} onClick={() => toggleDia(dia)}
+                  className="px-3 py-1.5 text-[11px] font-semibold transition-all rounded-lg"
+                  style={{
+                    backgroundColor: diasSemana.includes(dia) ? "#268ffa" : "rgba(255,255,255,0.06)",
+                    color: diasSemana.includes(dia) ? "#ffffff" : "rgba(255,255,255,0.5)",
+                    border: diasSemana.includes(dia) ? "1px solid #268ffa" : "1px solid rgba(255,255,255,0.1)",
+                    boxShadow: diasSemana.includes(dia) ? "0 2px 8px rgba(38,143,250,0.3)" : "none",
+                  }}>
+                  {dia.slice(0, 3)}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Horários */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-[11px] mb-1.5 font-semibold text-white/60 uppercase tracking-wider flex items-center gap-1"><Clock size={12} /> Início</label>
+              <input type="time" step="1" value={horarioInicio} onChange={(e) => setHorarioInicio(e.target.value)}
+                className="w-full px-4 py-2 outline-none transition-all text-sm text-white"
+                style={{ backgroundColor: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "12px", colorScheme: "dark" }}
+                onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
+                onBlur={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)"; }}
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] mb-1.5 font-semibold text-white/60 uppercase tracking-wider flex items-center gap-1"><Clock size={12} /> Fim</label>
+              <input type="time" step="1" value={horarioFim} onChange={(e) => setHorarioFim(e.target.value)}
+                className="w-full px-4 py-2 outline-none transition-all text-sm text-white"
+                style={{ backgroundColor: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "12px", colorScheme: "dark" }}
+                onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
+                onBlur={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)"; }}
+              />
+            </div>
+          </div>
+
+          {/* Toggles */}
+          <div className="flex items-center gap-6" style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: "12px" }}>
+            <label className="flex items-center gap-2.5 cursor-pointer select-none">
+              <div className="relative">
+                <input type="checkbox" checked={ativo} onChange={(e) => setAtivo(e.target.checked)} className="sr-only peer" />
+                <div className="w-9 h-5 rounded-full transition-colors peer-checked:bg-[#2dbef3]" style={{ backgroundColor: "rgba(255,255,255,0.15)" }} />
+                <div className="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-4 shadow-sm" />
+              </div>
+              <span className="text-xs font-medium text-white/70">Ativo</span>
+            </label>
+            <label className="flex items-center gap-2.5 cursor-pointer select-none">
+              <div className="relative">
+                <input type="checkbox" checked={variavel} onChange={(e) => { setVariavel(e.target.checked); if (!e.target.checked) setDataVariavel(undefined); }} className="sr-only peer" />
+                <div className="w-9 h-5 rounded-full transition-colors peer-checked:bg-[#f59e0b]" style={{ backgroundColor: "rgba(255,255,255,0.15)" }} />
+                <div className="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-4 shadow-sm" />
+              </div>
+              <span className="text-xs font-medium text-white/70">Variável</span>
+            </label>
+          </div>
+
+          {/* Data Variável */}
+          {variavel && (
+            <div className="space-y-2 rounded-xl p-3" style={{ backgroundColor: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)" }}>
+              <label className="block text-[11px] font-semibold text-amber-300/80 uppercase tracking-wider flex items-center gap-1">
+                <CalendarDays size={13} /> Data do Programa Variável
+              </label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button className={cn("w-full justify-start text-left font-normal flex items-center gap-2 px-4 py-2 text-sm rounded-xl")}
+                    style={{ backgroundColor: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", color: "#ffffff" }}>
+                    <CalendarDays className="h-4 w-4 text-amber-400" />
+                    {dataVariavel ? format(dataVariavel, "dd/MM/yyyy (EEEE)", { locale: ptBR }) : "Selecione a data"}
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <CalendarUI
+                    mode="single"
+                    selected={dataVariavel}
+                    onSelect={setDataVariavel}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+              <p className="text-[10px] text-amber-200/60 leading-relaxed">
+                ⚠️ Este programa substituirá o programa fixo neste horário apenas na data selecionada.
+              </p>
+            </div>
           )}
+
+          {/* Conflict + Actions */}
+          {conflictMsg && (
+            <div className="flex items-center gap-2 px-3 py-2 rounded-xl" style={{ backgroundColor: "rgba(220,38,38,0.1)", border: "1px solid rgba(220,38,38,0.2)" }}>
+              <AlertCircle size={14} className="text-red-400 shrink-0" />
+              <p className="text-xs text-red-300">{conflictMsg}</p>
+            </div>
+          )}
+
+          <div className="flex justify-end gap-2">
+            {editingId && (
+              <button onClick={resetForm}
+                className="px-4 py-2 text-xs font-bold transition-all flex items-center gap-1.5 rounded-xl"
+                style={{ backgroundColor: "rgba(255,255,255,0.08)", color: "#ffffff", border: "1px solid rgba(255,255,255,0.15)" }}
+                onMouseEnter={e => { e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.15)"; }}
+                onMouseLeave={e => { e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.08)"; }}
+              >
+                <X size={13} /> Cancelar
+              </button>
+            )}
+            <button onClick={handleAdd} disabled={saving}
+              className="px-6 py-2 text-xs font-bold transition-all flex items-center gap-2 disabled:opacity-50 rounded-xl"
+              style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#ffffff", boxShadow: "0 4px 15px rgba(38,143,250,0.3)" }}
+              onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 6px 20px rgba(38,143,250,0.5)"; e.currentTarget.style.transform = "translateY(-1px)"; }}
+              onMouseLeave={e => { e.currentTarget.style.boxShadow = "0 4px 15px rgba(38,143,250,0.3)"; e.currentTarget.style.transform = "translateY(0)"; }}
+            >
+              {saving && <Loader2 size={13} className="animate-spin" />}
+              {saving ? "Salvando..." : editingId ? "Atualizar" : "Adicionar Programa"}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -1026,63 +1084,63 @@ export default function ProgramaForm() {
         </div>
       ) : programas.length > 0 && (
         <div>
-          <h4 className="text-lg font-medium mb-4" style={{ color: "#0d0446" }}>Programas Cadastrados</h4>
-          <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(13,4,70,0.1)" }}>
-            <table className="w-full" style={{ fontSize: "12px" }}>
+          <h4 className="text-sm font-bold mb-3" style={{ color: "#0d0446" }}>Programas Cadastrados</h4>
+          <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(13,4,70,0.08)", boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}>
+            <table className="w-full text-xs" style={{ color: "#0d0446" }}>
               <thead>
-                <tr style={{ backgroundColor: "#0d0446", color: "#ffffff" }}>
-                  <th className="px-4 py-3 text-left font-semibold">Nome do Programa</th>
-                  <th className="px-4 py-3 text-left font-semibold">Dia de Exibição</th>
-                  <th className="px-4 py-3 text-left font-semibold">Horário</th>
-                  <th className="px-4 py-3 text-left font-semibold">Apresentador</th>
-                  <th className="px-4 py-3 text-center font-semibold">Editar</th>
-                  <th className="px-4 py-3 text-center font-semibold">Status</th>
-                  <th className="px-4 py-3 text-center font-semibold">Excluir</th>
+                <tr style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)", color: "#ffffff" }}>
+                  <th className="px-4 py-2.5 text-left font-semibold text-[11px] uppercase tracking-wider">Programa</th>
+                  <th className="px-4 py-2.5 text-left font-semibold text-[11px] uppercase tracking-wider">Exibição</th>
+                  <th className="px-4 py-2.5 text-left font-semibold text-[11px] uppercase tracking-wider">Horário</th>
+                  <th className="px-4 py-2.5 text-left font-semibold text-[11px] uppercase tracking-wider">Apresentador</th>
+                  <th className="px-4 py-2.5 text-center font-semibold text-[11px] uppercase tracking-wider">Status</th>
+                  <th className="px-4 py-2.5 text-center font-semibold text-[11px] uppercase tracking-wider">Ações</th>
                 </tr>
               </thead>
               <tbody>
-                {sortedProgramas.map((p) => (
-                  <tr key={p.id} className="border-b" style={{ backgroundColor: "#ffffff", borderColor: "rgba(13,4,70,0.08)", opacity: p.ativo ? 1 : 0.6 }}>
-                    <td className="px-4 py-3 font-medium" style={{ color: "#0d0446" }}>
+                {sortedProgramas.map((p, i) => (
+                  <tr key={p.id} className="group transition-colors hover:bg-[#f0f4ff]" style={{ backgroundColor: i % 2 === 0 ? "#ffffff" : "#fafaff", borderTop: "1px solid rgba(13,4,70,0.05)" }} data-no-row-hover>
+                    <td className="px-4 py-2.5 font-semibold">
                       <div className="flex items-center gap-2">
                         {p.nome}
-                        {p.variavel && <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ backgroundColor: "rgba(13,4,70,0.1)", color: "#0d0446" }}>Variável</span>}
+                        {p.variavel && <span className="text-[9px] px-1.5 py-0.5 rounded-lg font-semibold" style={{ backgroundColor: "rgba(245,158,11,0.1)", color: "#d97706" }}>Variável</span>}
                       </div>
-                      {p.classificacaoEtaria && (
-                        <div className="mt-0.5">
-                          <ClassificacaoBadge value={p.classificacaoEtaria} size={18} />
-                        </div>
-                      )}
+                      {p.classificacaoEtaria && <div className="mt-0.5"><ClassificacaoBadge value={p.classificacaoEtaria} size={16} /></div>}
                     </td>
-                    <td className="px-4 py-3" style={{ color: "rgba(13,4,70,0.6)" }}>
+                    <td className="px-4 py-2.5 text-[11px]" style={{ color: "rgba(13,4,70,0.6)" }}>
                       {p.variavel && p.dataVariavel
                         ? format(new Date(p.dataVariavel + "T12:00:00"), "dd/MM/yyyy (EEEE)", { locale: ptBR })
-                        : p.diasSemana.join(", ")}
+                        : p.diasSemana.map(d => d.slice(0, 3)).join(", ")}
                     </td>
-                    <td className="px-4 py-3" style={{ color: "rgba(13,4,70,0.6)" }}>
+                    <td className="px-4 py-2.5 text-[11px]" style={{ color: "rgba(13,4,70,0.6)" }}>
                       {p.horarioInicio.slice(0, 5)} — {p.horarioFim.slice(0, 5)}
                     </td>
-                    <td className="px-4 py-3" style={{ color: "rgba(13,4,70,0.6)" }}>
+                    <td className="px-4 py-2.5 text-[11px]" style={{ color: "rgba(13,4,70,0.6)" }}>
                       {getApresentadorNome(p.apresentadorId)}
                     </td>
-                    <td className="px-4 py-3 text-center">
-                      <button onClick={() => startEdit(p)} title="Editar" className="hover:opacity-70 transition-opacity" style={{ color: "#0d0446" }}>
-                        <Pencil size={16} />
-                      </button>
+                    <td className="px-4 py-2.5 text-center">
+                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-semibold ${
+                        p.ativo ? "bg-green-50 text-green-600" : "bg-red-50 text-red-500"
+                      }`}>
+                        <div className={`w-1.5 h-1.5 rounded-full ${p.ativo ? "bg-green-500" : "bg-red-500"}`} />
+                        {p.ativo ? "Ativo" : "Inativo"}
+                      </span>
                     </td>
-                    <td className="px-4 py-3 text-center">
-                      <button onClick={() => toggleAtivo(p.id, p.ativo)} title={p.ativo ? "Desativar" : "Ativar"}>
-                        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold cursor-pointer ${
-                          p.ativo ? "bg-green-100 text-green-700" : "bg-red-100 text-red-600"
-                        }`}>
-                          {p.ativo ? "Ativo" : "Inativo"}
-                        </span>
-                      </button>
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <button onClick={() => removePrograma(p.id)} title="Remover" className="hover:opacity-70 transition-opacity" style={{ color: "#dc2626" }}>
-                        <Trash2 size={16} />
-                      </button>
+                    <td className="px-4 py-2.5 text-center">
+                      <div className="flex items-center justify-center gap-1">
+                        <button onClick={() => startEdit(p)} title="Editar"
+                          className="w-7 h-7 rounded-lg flex items-center justify-center transition-all hover:bg-[#268ffa]/10">
+                          <Pencil size={13} style={{ color: "#268ffa" }} />
+                        </button>
+                        <button onClick={() => toggleAtivo(p.id, p.ativo)} title={p.ativo ? "Desativar" : "Ativar"}
+                          className="w-7 h-7 rounded-lg flex items-center justify-center transition-all hover:bg-green-50">
+                          <Power size={13} style={{ color: p.ativo ? "#22c55e" : "#dc2626" }} />
+                        </button>
+                        <button onClick={() => removePrograma(p.id)} title="Remover"
+                          className="w-7 h-7 rounded-lg flex items-center justify-center transition-all hover:bg-red-50">
+                          <Trash2 size={13} style={{ color: "#dc2626" }} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -1095,12 +1153,12 @@ export default function ProgramaForm() {
       {showSuccess && (
         <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: "rgba(0,0,0,0.3)" }}>
           <div className="flex flex-col items-center justify-center animate-fade-in overflow-hidden"
-            style={{ width: "450px", height: "165px", backgroundColor: "rgba(13, 4, 70, 0.92)", borderRadius: "16px" }}>
+            style={{ width: "450px", height: "165px", background: "linear-gradient(135deg, #0d0446, #1a0a6e)", borderRadius: "20px", boxShadow: "0 20px 60px rgba(13,4,70,0.4)" }}>
             <div className="flex items-center gap-3 flex-1 justify-center" style={{ fontSize: "14px", color: "#ffffff", fontWeight: 600 }}>
-              <CheckCircle size={22} /> Salvo com sucesso!
+              <CheckCircle size={22} style={{ color: "#2dbef3" }} /> Salvo com sucesso!
             </div>
-            <div className="w-full" style={{ height: "4px", backgroundColor: "rgba(255,255,255,0.15)" }}>
-              <div style={{ height: "100%", backgroundColor: "#2dbff4", animation: "shrinkBar 2s linear forwards" }} />
+            <div className="w-full" style={{ height: "4px", backgroundColor: "rgba(255,255,255,0.1)" }}>
+              <div style={{ height: "100%", background: "linear-gradient(90deg, #268ffa, #2dbef3)", animation: "shrinkBar 2s linear forwards" }} />
             </div>
           </div>
         </div>
