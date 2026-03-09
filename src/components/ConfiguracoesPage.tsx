@@ -288,7 +288,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
 
   return (
     <div className="animate-fade-in">
-      <div className="rounded-2xl max-w-3xl" style={{ background: "#d9e9fa", boxShadow: "0 8px 32px rgba(13,4,70,0.12)", padding: "20px" }}>
+      <div className="rounded-2xl" style={{ background: "#d9e9fa", boxShadow: "0 8px 32px rgba(13,4,70,0.12)", padding: "20px" }}>
         <div className="flex items-center gap-3 mb-5">
           <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(13,4,70,0.08)" }}>
             <Save size={20} style={{ color: "#0d0446" }} />
