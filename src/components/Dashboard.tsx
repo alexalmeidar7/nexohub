@@ -317,7 +317,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       )}
 
       {/* Floating hamburger button + company name - desktop */}
-      <div className="hidden lg:flex fixed top-5 left-[40px] z-[60] items-start gap-3">
+      <div className="hidden lg:flex fixed top-5 left-[40px] z-[58] items-start gap-3">
         <button
           onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
           className="w-11 h-11 rounded-full flex items-center justify-center transition-all shadow-lg hover:scale-105 shrink-0 mt-1"
