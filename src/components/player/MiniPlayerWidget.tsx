@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import type HlsType from "hls.js";
-import { X, Volume2, VolumeX, Maximize2 } from "lucide-react";
+import { X, Volume2, VolumeX, Maximize2, Play } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 
 const MINI_PLAYER_KEY = "mini_player_data";
@@ -73,6 +73,7 @@ export default function MiniPlayerWidget({ data, onClose }: { data: MiniPlayerDa
   const hlsRef = useRef<HlsType | null>(null);
   const [muted, setMuted] = useState(false);
   const [playing, setPlaying] = useState(false);
+  const [needsUnlock, setNeedsUnlock] = useState(false);
   const navigate = useNavigate();
   const { userSlug } = useParams();
 
@@ -108,15 +109,18 @@ export default function MiniPlayerWidget({ data, onClose }: { data: MiniPlayerDa
           audio.muted = false;
           audio.play().then(() => {
             setPlaying(true);
+            setNeedsUnlock(false);
           }).catch(() => {
-            // Fallback: try muted
+            // Fallback: try muted autoplay
             audio.muted = true;
             audio.play().then(() => {
               setPlaying(true);
-              // Try to unmute
+              setNeedsUnlock(false);
               setTimeout(() => { audio.muted = false; }, 200);
-            }).catch((e) => {
-              console.error("[MiniPlayer] Audio play failed:", e);
+            }).catch(() => {
+              // Both failed — show play button for user tap
+              console.warn("[MiniPlayer] Autoplay blocked, needs user gesture");
+              setNeedsUnlock(true);
             });
           });
         });
@@ -203,6 +207,16 @@ export default function MiniPlayerWidget({ data, onClose }: { data: MiniPlayerDa
     navigate(path);
   }, [data.channelId, userSlug, navigate]);
 
+  const handleManualPlay = useCallback(() => {
+    if (globalAudio) {
+      globalAudio.muted = false;
+      globalAudio.play().then(() => {
+        setPlaying(true);
+        setNeedsUnlock(false);
+      }).catch(() => {});
+    }
+  }, []);
+
   const glassStyle = {
     backgroundColor: "rgba(0, 0, 0, 0.7)",
     backdropFilter: "blur(24px)",
@@ -232,8 +246,17 @@ export default function MiniPlayerWidget({ data, onClose }: { data: MiniPlayerDa
 
       {/* Controls */}
       <div className="flex items-center gap-2 px-3 py-2.5">
-        {/* Logo/icon */}
-        {data.logoUrl ? (
+        {/* Logo/icon or Play button */}
+        {needsUnlock ? (
+          <button
+            onClick={handleManualPlay}
+            className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-all hover:scale-110 active:scale-95 animate-pulse"
+            style={{ backgroundColor: "hsl(0 80% 45%)" }}
+            title="Tocar"
+          >
+            <Play size={14} className="text-white" fill="white" />
+          </button>
+        ) : data.logoUrl ? (
           <img src={data.logoUrl} alt="" className="w-8 h-8 rounded-lg object-contain flex-shrink-0" />
         ) : (
           <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "rgba(230,0,0,0.2)" }}>
