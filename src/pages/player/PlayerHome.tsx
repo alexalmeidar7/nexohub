@@ -558,7 +558,10 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       {/* Content wrapper with fade transition */}
       <div className={`relative flex-1 overflow-y-auto h-full transition-opacity duration-400 ease-in-out ${fadeOut ? "opacity-0" : "opacity-100"}`}>
         {/* Fixed Header */}
-        <header className="fixed top-0 left-0 right-0 z-20 flex items-center justify-between px-8 py-4"          {!dataLoaded ? (
+        <header className="fixed top-0 left-0 right-0 z-20 flex items-center justify-between px-8 py-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-player-surface flex items-center justify-center overflow-hidden">
+                {!dataLoaded ? (
                   <Skeleton className="w-full h-full rounded-full bg-white/10" />
                 ) : profileAvatar ? (
                   <img src={profileAvatar} alt={userName} className="w-full h-full object-cover" />
