@@ -601,11 +601,11 @@ interface WidgetCard {
 }
 
 const defaultWidgets: WidgetCard[] = [
-  { id: "noar", bg: "#0c0441", render: () => <OnAirWidget /> },
-  { id: "weather", bg: "#ffffff", render: (nav) => <WeatherWidget onNavigate={nav} /> },
-  { id: "top10", bg: "#ffffff", render: () => <TopLikedSongs /> },
-  { id: "agenda", bg: "#ffffff", render: () => <DashboardAgenda /> },
-  { id: "comercial", bg: "#ffffff", render: () => <ComercialWidgets /> },
+  { id: "noar", bg: "glass-dark", render: () => <OnAirWidget /> },
+  { id: "weather", bg: "glass", render: (nav) => <WeatherWidget onNavigate={nav} /> },
+  { id: "top10", bg: "glass", render: () => <TopLikedSongs /> },
+  { id: "agenda", bg: "glass", render: () => <DashboardAgenda /> },
+  { id: "comercial", bg: "glass", render: () => <ComercialWidgets /> },
 ];
 
 function DashboardHome({ empresa, onNavigate }: { empresa: import("./ConfiguracoesPage").EmpresaConfig; onNavigate: (page: Page) => void }) {
