@@ -1098,8 +1098,15 @@ export default function PlayerPage() {
     if (autoPlayedRef.current || canais.length === 0 || playing) return;
     autoPlayedRef.current = true;
 
-    const preferredIndex = canais.findIndex((c) => isAutoplayChannel(c));
-    const startIndex = preferredIndex >= 0 ? preferredIndex : 0;
+    // If a specific channel was requested via ?ch= query param, use it
+    let startIndex = -1;
+    if (requestedChannelId) {
+      startIndex = canais.findIndex((c) => c.id === requestedChannelId);
+    }
+    if (startIndex < 0) {
+      const preferredIndex = canais.findIndex((c) => isAutoplayChannel(c));
+      startIndex = preferredIndex >= 0 ? preferredIndex : 0;
+    }
     const first = canais[startIndex];
     if (!first) return;
 
@@ -1112,7 +1119,7 @@ export default function PlayerPage() {
     } else {
       setTimeout(() => playStream(first.url, first.type), 120);
     }
-  }, [canais, playing, playStream, prerollDone, isAutoplayChannel]);
+  }, [canais, playing, playStream, prerollDone, isAutoplayChannel, requestedChannelId]);
 
   // Recurring pre-roll every 15 minutes
   const fetchAndShowPreroll = useCallback(async () => {
