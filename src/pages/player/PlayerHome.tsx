@@ -857,7 +857,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                   {shopProducts.map(product => (
                     <div
                       key={product.id}
-                      className="group rounded-xl overflow-hidden transition-all duration-300 hover:scale-[1.03] hover:shadow-xl"
+                      className="group rounded-xl overflow-hidden transition-all duration-300 hover:border-white/80"
                       style={{
                         background: "linear-gradient(160deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%)",
                         border: "1px solid rgba(255,255,255,0.08)",
