@@ -696,7 +696,7 @@ export default function ProgramaForm() {
               </Select>
             </div>
             <div>
-              <label className="block text-[11px] mb-1.5 font-semibold text-white/60 uppercase tracking-wider">Apresentador</label>
+              <label className="block text-[11px] mb-1.5 font-semibold text-white/90 uppercase tracking-wider">Apresentador</label>
               <Popover open={apresentadorComboOpen} onOpenChange={setApresentadorComboOpen}>
                 <PopoverTrigger asChild>
                   <button
