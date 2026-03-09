@@ -382,30 +382,30 @@ export default function PrevisaoTempo() {
               <div className="flex items-start justify-between mb-5">
                 <div className="space-y-2">
                   <div className="flex items-center gap-3 flex-wrap">
-                    <h3 className="text-2xl font-bold text-white">{weather.city}</h3>
+                    <h3 className="text-2xl font-bold" style={{ color: "#0d0446" }}>{weather.city}</h3>
                     {(!primaryCity || isPrimary) && (
                       <label className="flex items-center gap-2 cursor-pointer select-none rounded-full px-3 py-1 transition-all"
-                        style={{ backgroundColor: isPrimary ? "rgba(45,190,243,0.2)" : "rgba(255,255,255,0.08)", border: `1px solid ${isPrimary ? "#2dbef3" : "rgba(255,255,255,0.15)"}` }}>
+                        style={{ backgroundColor: isPrimary ? "#0d0446" : "rgba(13,4,70,0.08)", border: `1px solid ${isPrimary ? "#0d0446" : "rgba(13,4,70,0.15)"}` }}>
                         <input type="checkbox" checked={isPrimary} onChange={togglePrimaryCity}
                           className="w-3.5 h-3.5" style={{ accentColor: "#2dbef3" }} />
-                        <span className="text-[11px] font-semibold text-white">Cidade Principal</span>
+                        <span className="text-[11px] font-semibold" style={{ color: isPrimary ? "#ffffff" : "#0d0446" }}>Cidade Principal</span>
                       </label>
                     )}
                     {!isFavorited && (
                       <button onClick={addFavorite} disabled={isPrimary}
-                        className="flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-semibold transition-all disabled:opacity-40 hover:bg-white/15"
-                        style={{ backgroundColor: "rgba(255,255,255,0.08)", color: "#ffffff", border: "1px solid rgba(255,255,255,0.15)" }}
+                        className="flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-semibold transition-all disabled:opacity-40"
+                        style={{ backgroundColor: "rgba(13,4,70,0.08)", color: "#0d0446", border: "1px solid rgba(13,4,70,0.15)" }}
                       >
                         <Star size={12} /> Secundária
                       </button>
                     )}
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-white/50">
+                    <span className="text-xs" style={{ color: "rgba(13,4,70,0.5)" }}>
                       {new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
                     </span>
                   </div>
-                  <p className="text-sm text-white/70">{getWeatherLabel(weather.current.weatherCode)}</p>
+                  <p className="text-sm" style={{ color: "rgba(13,4,70,0.6)" }}>{getWeatherLabel(weather.current.weatherCode)}</p>
                 </div>
                 <div className="flex items-center">
                   <WeatherIcon code={weather.current.weatherCode} size={72} />
