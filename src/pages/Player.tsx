@@ -42,6 +42,7 @@ const PlayerGradeDialog = lazy(() => import("@/components/player/PlayerGradeDial
 const KaraokeOverlay = lazy(() => import("@/components/KaraokeOverlay"));
 import PlayerShopProduct from "@/components/player/PlayerShopProduct";
 import PreRollOverlay from "@/components/PreRollOverlay";
+import { saveMiniPlayerData, clearMiniPlayerData } from "@/components/player/MiniPlayerWidget";
 import PlayerSkeleton from "@/components/skeletons/PlayerSkeleton";
 import { normalizeMusicText } from "@/lib/textEncoding";
 
@@ -248,6 +249,7 @@ export default function PlayerPage() {
   const requestedChannelId = searchParams.get("ch");
   const navigate = useNavigate();
   const isPublicMode = !!userSlug;
+  const playerHomePath = userSlug ? `/user/${userSlug}/nexohub/player?step=home` : "/user/nexohub/player?step=home";
   const { user, loading: authLoading, signOut } = useAuth();
   const userId = user?.id ?? null;
 
@@ -339,6 +341,52 @@ export default function PlayerPage() {
   const isVideo = canal?.type === "video" || canal?.type === "video_live";
   const isAutoplayChannel = useCallback((c?: Canal | null) => normalizeChannelNumber(c?.numero_canal) === "991-1", []);
   const autoPlayedRef = useRef(false);
+  const [showHomeConfirm, setShowHomeConfirm] = useState(false);
+  const is991Channel = normalizeChannelNumber(canal?.numero_canal) === "991-1" || normalizeChannelNumber(canal?.numero_canal) === "991-2";
+
+  const handleHomeClick = useCallback(() => {
+    if (is991Channel && playing) {
+      setShowHomeConfirm(true);
+    } else {
+      setPageFadeOut(true);
+      setTimeout(() => navigate(playerHomePath), 400);
+    }
+  }, [is991Channel, playing, playerHomePath, navigate]);
+
+  const handleHomeConfirmYes = useCallback(() => {
+    setShowHomeConfirm(false);
+    if (canal) {
+      saveMiniPlayerData({
+        url: canal.url,
+        name: canal.name,
+        channelId: canal.id,
+        type: canal.type,
+        logoUrl: canal.logo_url || undefined,
+      });
+    }
+    // Stop current playback before leaving
+    if (hlsRef.current) {
+      hlsRef.current.destroy();
+      hlsRef.current = null;
+    }
+    if (videoRef.current) { videoRef.current.pause(); videoRef.current.src = ""; }
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current.src = ""; }
+    setPageFadeOut(true);
+    setTimeout(() => navigate(playerHomePath), 400);
+  }, [canal, playerHomePath, navigate]);
+
+  const handleHomeConfirmNo = useCallback(() => {
+    setShowHomeConfirm(false);
+    clearMiniPlayerData();
+    if (hlsRef.current) {
+      hlsRef.current.destroy();
+      hlsRef.current = null;
+    }
+    if (videoRef.current) { videoRef.current.pause(); videoRef.current.src = ""; }
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current.src = ""; }
+    setPageFadeOut(true);
+    setTimeout(() => navigate(playerHomePath), 400);
+  }, [playerHomePath, navigate]);
 
   // Record watch history when channel changes
   const watchHistoryRecordedRef = useRef<string | null>(null);
@@ -1660,7 +1708,7 @@ export default function PlayerPage() {
   }, [shopProducts, currentProg]);
 
   const showShopIcon = currentShopProducts.length > 0;
-  const playerHomePath = userSlug ? `/user/${userSlug}/nexohub/player?step=home` : "/user/nexohub/player?step=home";
+  // playerHomePath is now defined earlier in the component
   const userDisplayName = profileName || user?.email?.split("@")[0] || "Visitante";
   const menuButtonBase = "w-14 rounded-2xl px-2 py-2.5 flex flex-col items-center justify-center gap-1.5 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-player-accent focus-visible:ring-offset-2 focus-visible:ring-offset-player-bg";
   const menuButtonActive = "bg-player-accent text-player-foreground shadow-lg shadow-player-accent/25";
@@ -1702,7 +1750,7 @@ export default function PlayerPage() {
           style={{ background: "linear-gradient(to right, rgba(0,0,0,0.85), transparent)" }}
         >
           {[
-            { icon: Home, label: "Home", active: false, action: () => navigate(playerHomePath) },
+            { icon: Home, label: "Home", active: false, action: handleHomeClick },
             { icon: Radio, label: "Streaming", active: true, action: () => {} },
             { icon: Film, label: "Conteúdo", active: false, action: () => {} },
             ...(user ? [{ icon: ShoppingBag, label: "Loja", active: false, action: () => setShopOpen(o => !o) }] : []),
@@ -1760,12 +1808,7 @@ export default function PlayerPage() {
         style={{ background: "linear-gradient(to right, rgba(0,0,0,0.85), transparent)" }}
       >
         {[
-          { icon: Home, label: "Home", active: false, action: () => {
-            setPageFadeOut(true);
-            setTimeout(() => {
-              navigate(playerHomePath);
-            }, 400);
-          }},
+          { icon: Home, label: "Home", active: false, action: handleHomeClick },
           { icon: Radio, label: "Streaming", active: true, action: () => {} },
           { icon: Film, label: "Conteúdo", active: false, action: () => {} },
           ...(user ? [{ icon: ShoppingBag, label: "Loja", active: false, action: () => setShopOpen(o => !o) }] : []),
@@ -2410,6 +2453,47 @@ export default function PlayerPage() {
         }
       `}</style>
       </div>
+
+      {/* Home confirmation dialog for 991 channels */}
+      {showHomeConfirm && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70 animate-fade-in">
+          <div
+            className="rounded-2xl p-6 w-[340px] flex flex-col gap-4 text-center"
+            style={{
+              backgroundColor: "rgba(0, 0, 0, 0.6)",
+              backdropFilter: "blur(24px)",
+              WebkitBackdropFilter: "blur(24px)",
+              boxShadow: "0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.08)",
+              border: "1px solid rgba(255,255,255,0.12)",
+            }}
+          >
+            <div className="flex items-center justify-center">
+              <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: "linear-gradient(135deg, rgba(230,0,0,0.2), rgba(230,0,0,0.1))" }}>
+                <Radio className="h-6 w-6" style={{ color: "#e60000" }} />
+              </div>
+            </div>
+            <p className="text-white text-sm font-bold leading-relaxed">
+              Quer continuar curtindo a {canal?.name || "Positiva FM"} no modo minimizado?
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={handleHomeConfirmNo}
+                className="flex-1 py-2.5 rounded-xl text-white/70 text-sm font-semibold transition-all hover:bg-white/10 active:scale-[0.98]"
+                style={{ backgroundColor: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.1)" }}
+              >
+                Não
+              </button>
+              <button
+                onClick={handleHomeConfirmYes}
+                className="flex-1 py-2.5 rounded-xl text-white text-sm font-bold transition-all hover:brightness-110 active:scale-[0.98]"
+                style={{ background: "linear-gradient(135deg, #e60000, #b30000)" }}
+              >
+                Sim
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

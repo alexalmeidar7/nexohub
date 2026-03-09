@@ -1,9 +1,11 @@
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback, lazy, Suspense } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Home, Radio, Film, ShoppingBag, LogOut, UserCircle, Clock, Music } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { loadMiniPlayerData, clearMiniPlayerData, type MiniPlayerData } from "@/components/player/MiniPlayerWidget";
+const MiniPlayerWidget = lazy(() => import("@/components/player/MiniPlayerWidget"));
 
 interface Channel {
   id: string;
@@ -220,6 +222,8 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   const [nowPlaying, setNowPlaying] = useState<{ musica: string; artista: string } | null>(null);
   const [bannerOpacity, setBannerOpacity] = useState(1);
   const mainRef = useRef<HTMLElement | null>(null);
+
+  const [miniPlayerData, setMiniPlayerData] = useState<MiniPlayerData | null>(() => loadMiniPlayerData());
 
   // Fade banner when scrolling past 650px
   useEffect(() => {
@@ -789,6 +793,11 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
           )}
         </main>
       </div>
+      {miniPlayerData && (
+        <Suspense fallback={null}>
+          <MiniPlayerWidget data={miniPlayerData} onClose={() => { clearMiniPlayerData(); setMiniPlayerData(null); }} />
+        </Suspense>
+      )}
     </div>
   );
 }
