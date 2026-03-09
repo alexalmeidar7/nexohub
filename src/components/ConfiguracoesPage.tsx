@@ -85,14 +85,14 @@ function StyledInput({ value, onChange, placeholder, type = "text", readOnly = f
 function CollapsibleBox({ title, defaultOpen = true, children }: { title: string; defaultOpen?: boolean; children: React.ReactNode }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(13,4,70,0.15)" }}>
+    <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}>
       <button
         onClick={() => setOpen(!open)}
         className="w-full flex items-center justify-between px-5 py-3 transition-colors"
-        style={{ backgroundColor: "#0d0446", color: "#ffffff" }}
+        style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)", color: "#ffffff" }}
       >
-        <h3 className="text-lg font-semibold" style={{ color: "#ffffff" }}>{title}</h3>
-        {open ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+        <h3 className="text-sm font-bold text-white">{title}</h3>
+        {open ? <ChevronUp size={18} className="text-white" /> : <ChevronDown size={18} className="text-white" />}
       </button>
       {open && <div className="p-5 space-y-4" style={{ backgroundColor: "#ffffff" }}>{children}</div>}
     </div>
@@ -287,7 +287,18 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
   const btnSecondary: React.CSSProperties = { backgroundColor: "#ffffff", color: "#0d0446", border: "2px solid #0d0446", borderRadius: "20px" };
 
   return (
-    <div className="animate-fade-in space-y-6 max-w-3xl">
+    <div className="animate-fade-in">
+      <div className="rounded-2xl max-w-3xl" style={{ background: "#d9e9fa", boxShadow: "0 8px 32px rgba(13,4,70,0.12)", padding: "20px" }}>
+        <div className="flex items-center gap-3 mb-5">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(13,4,70,0.08)" }}>
+            <Save size={20} style={{ color: "#0d0446" }} />
+          </div>
+          <div>
+            <h3 className="text-base font-bold" style={{ color: "#0d0446" }}>Configurações</h3>
+            <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.5)" }}>Gerencie os dados da empresa e canais do player</p>
+          </div>
+        </div>
+        <div className="space-y-5">
 
       {/* Box 1: Configurações da Empresa */}
       {(section === "all" || section === "empresa") && <CollapsibleBox title="Configurações da Empresa">
@@ -574,6 +585,8 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
           </div>
         )}
       </CollapsibleBox>}
+        </div>
+      </div>
     </div>
   );
 }
