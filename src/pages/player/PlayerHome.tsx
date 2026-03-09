@@ -572,7 +572,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
         </header>
 
         {/* Banner full-width behind content — crossfade between default and thumb on hover */}
-        <div className="fixed top-0 left-[72px] right-3 z-[-1] pointer-events-none h-[400px] overflow-hidden rounded-b-2xl transition-opacity duration-300" style={{ opacity: bannerOpacity }}>
+        <div className="fixed top-0 left-[72px] right-3 z-[-1]-1] pointer-events-none h-[400px] overflow-hidden rounded-b-2xl transition-opacity duration-300" style={{ opacity: bannerOpacity }}>
           <img
             src="/images/banner-home.png"
             alt="Banner"
@@ -797,7 +797,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                 });
 
                 return (
-                  <section key={groupName} className="mb-10 rounded-2xl p-5" style={{ background: "rgba(0,0,0,0.25)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                  <section key={groupName} className="mb-10 rounded-2xl p }}>
                     <h2 className="text-lg font-bold mb-4 tracking-wide uppercase text-player-foreground/90">{groupName}</h2>
                     <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
                       {groupVideos.length > 0 ? (
