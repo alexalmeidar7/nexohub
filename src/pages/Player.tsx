@@ -1711,23 +1711,30 @@ export default function PlayerPage() {
 
   // Shopping popup is manual-only via icon click
 
-  const sidebarItems = useMemo(() => [
-    { icon: Home, label: "Home", key: "home", action: handleHomeClick },
-    { icon: Radio, label: "Streaming", key: "streaming", action: () => {} },
-    { icon: Film, label: "Conteúdo", key: "content", action: () => {} },
-    ...(user ? [{ icon: ShoppingBag, label: "Loja", key: "shop", action: () => setShopOpen((o: boolean) => !o) }] : []),
-  ], [handleHomeClick, user]);
+  const sidebarItems = useMemo(() => {
+    if (is991Channel) {
+      return [{ icon: Home, label: "Home", key: "home", action: handleHomeClick }];
+    }
+    return [
+      { icon: Home, label: "Home", key: "home", action: handleHomeClick },
+      { icon: Radio, label: "Streaming", key: "streaming", action: () => {} },
+      { icon: Film, label: "Conteúdo", key: "content", action: () => {} },
+      ...(user ? [{ icon: ShoppingBag, label: "Loja", key: "shop", action: () => setShopOpen((o: boolean) => !o) }] : []),
+    ];
+  }, [handleHomeClick, user, is991Channel]);
 
   if (loading) {
     return (
       <div className="relative h-screen w-screen bg-black overflow-hidden select-none cursor-default animate-fade-in">
         <PlayerSidebarComponent
           items={sidebarItems}
-          activeKey="streaming"
+          activeKey={is991Channel ? "home" : "streaming"}
           avatarUrl={profileAvatar}
           userName={userDisplayName}
           showLogout={!!user}
           onLogout={async () => { await signOut(); navigate(playerHomePath); }}
+          autoHide={is991Channel}
+          visible={is991Channel ? barVisible : true}
           loading
         />
         <div className="absolute inset-y-0 right-0 left-0">
@@ -1741,11 +1748,13 @@ export default function PlayerPage() {
     <div ref={containerRef} className="relative h-screen w-screen bg-black overflow-hidden select-none cursor-default animate-fade-in">
       <PlayerSidebarComponent
         items={sidebarItems}
-        activeKey="streaming"
+        activeKey={is991Channel ? "home" : "streaming"}
         avatarUrl={profileAvatar}
         userName={userDisplayName}
         showLogout={!!user}
         onLogout={async () => { await signOut(); navigate(playerHomePath); }}
+        autoHide={is991Channel}
+        visible={is991Channel ? barVisible : true}
       />
 
       {/* Content wrapper with fade transition */}
