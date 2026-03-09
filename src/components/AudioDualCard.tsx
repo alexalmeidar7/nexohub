@@ -54,6 +54,7 @@ export default function AudioDualCard({
   userId,
 }: AudioDualCardProps) {
   const isSemTitulo = !musicTitle || musicTitle === "Sem título";
+  const isCoverMissing = !musicCover || musicCover.toLowerCase().includes("não encontrada") || musicCover.toLowerCase().includes("nao encontrada");
   const [menuOpen, setMenuOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [recentSongs, setRecentSongs] = useState<MusicaTocada[]>([]);
