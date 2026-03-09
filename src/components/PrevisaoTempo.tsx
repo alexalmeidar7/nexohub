@@ -413,7 +413,7 @@ export default function PrevisaoTempo() {
               </div>
 
               <div className="flex items-start gap-6 mb-6">
-                <div className="text-6xl font-bold flex-shrink-0" style={{ color: "#2dbef3" }}>{weather.current.temp}°C</div>
+                <div className="text-6xl font-bold flex-shrink-0" style={{ color: "#0d0446" }}>{weather.current.temp}°C</div>
                 <div className="flex-1 space-y-3 pt-2">
                   {aiLoading ? (
                     <div className="flex items-center gap-2 text-white/40">
