@@ -338,15 +338,27 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             {/* Selo + Settings */}
             <div className="flex items-center justify-between px-4 pt-3 pb-2">
               <img src={seloNexohub} alt="NexoHUB" className="h-4" />
-              <button
-                onClick={() => setCurrentPage("configuracoes")}
-                className="p-1.5 rounded-full transition-colors"
-                style={{ backgroundColor: "#268ffa" }}
-                onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#0d0446"; }}
-                onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#268ffa"; }}
-              >
-                <Settings size={16} className="text-white" />
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setCurrentPage("configuracoes")}
+                  className="p-1.5 rounded-full transition-colors"
+                  style={{ backgroundColor: "#268ffa" }}
+                  onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#0d0446"; }}
+                  onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#268ffa"; }}
+                >
+                  <Settings size={16} className="text-white" />
+                </button>
+                <button
+                  onClick={() => setSidebarCollapsed(true)}
+                  className="p-1.5 rounded-full transition-colors"
+                  style={{ backgroundColor: "rgba(255,255,255,0.15)" }}
+                  onMouseEnter={e => { e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.3)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.15)"; }}
+                  title="Fechar menu"
+                >
+                  <X size={16} className="text-white" />
+                </button>
+              </div>
             </div>
 
             {/* Module header */}
