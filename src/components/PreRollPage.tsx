@@ -155,227 +155,246 @@ export default function PreRollPage() {
   };
 
   return (
-    <div className="space-y-8 max-w-4xl">
-      <form onSubmit={handleSubmit} className="rounded-xl p-6 space-y-4" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)" }}>
-        <h3 className="text-lg font-bold flex items-center gap-2" style={{ color: "#0d0446" }}>
-          <Film size={20} />
-          {editId ? "Editar Pré-Roll" : "Novo Pré-Roll"}
-        </h3>
-
-        <div>
-          <label className="text-sm font-medium block mb-2" style={{ color: "#0d0446" }}>Tipo de Mídia</label>
-          <div className="flex gap-4">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input type="radio" checked={mediaType === "video"} onChange={() => setMediaType("video")} style={{ accentColor: "#0d0446" }} />
-              <span className="text-sm" style={{ color: "#0d0446" }}>Upload de vídeo (até 5MB)</span>
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input type="radio" checked={mediaType === "youtube"} onChange={() => setMediaType("youtube")} style={{ accentColor: "#0d0446" }} />
-              <span className="text-sm" style={{ color: "#0d0446" }}>Link do YouTube</span>
-            </label>
+    <div className="animate-fade-in">
+      <div className="rounded-2xl" style={{ background: "#d9e9fa", boxShadow: "0 8px 32px rgba(13,4,70,0.12)", padding: "20px" }}>
+        {/* Header */}
+        <div className="flex items-center gap-3 mb-5">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(13,4,70,0.08)" }}>
+            <Film size={20} style={{ color: "#0d0446" }} />
+          </div>
+          <div>
+            <h3 className="text-base font-bold" style={{ color: "#0d0446" }}>Pré-Roll</h3>
+            <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.5)" }}>Gerencie anúncios exibidos antes do conteúdo ao vivo</p>
           </div>
         </div>
 
-        {mediaType === "video" && (
-          <div>
-            <label className="text-sm font-medium block mb-1" style={{ color: "#0d0446" }}>Vídeo (.mp4, máx 5MB)</label>
-            <input type="file" accept="video/mp4" onChange={(e) => {
-              const f = e.target.files?.[0];
-              if (f) {
-                if (f.size > 5 * 1024 * 1024) { toast({ title: "O vídeo deve ter no máximo 5MB", variant: "destructive" }); return; }
-                setVideoFile(f); setVideoPreview(URL.createObjectURL(f));
-              }
-            }} className="text-sm" style={{ color: "#0d0446" }} />
-            {videoPreview && <video src={videoPreview} controls className="mt-2 w-64 rounded-lg" style={{ border: "1px solid rgba(13,4,70,0.1)" }} />}
-          </div>
-        )}
-
-        {mediaType === "youtube" && (
-          <div>
-            <label className="text-sm font-medium block mb-1" style={{ color: "#0d0446" }}>Link do YouTube</label>
-            <input type="url" placeholder="https://www.youtube.com/watch?v=..." value={youtubeUrl} onChange={(e) => setYoutubeUrl(e.target.value)}
-              className="w-full px-4 py-1.5 text-sm outline-none transition-colors" style={inputStyle}
-              onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
-              onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
-            />
-            {youtubeUrl && extractYoutubeId(youtubeUrl) && (
-              <img src={`https://img.youtube.com/vi/${extractYoutubeId(youtubeUrl)}/hqdefault.jpg`} alt="Thumbnail" className="mt-2 w-64 rounded-lg" style={{ border: "1px solid rgba(13,4,70,0.1)" }} />
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="rounded-xl overflow-hidden mb-5" style={{ backgroundColor: "#ffffff", boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}>
+          <div className="px-4 py-2.5 flex items-center justify-between" style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)" }}>
+            <h3 className="text-sm font-bold" style={{ color: "#ffffff" }}>
+              {editId ? "✏️ Editar Pré-Roll" : "➕ Novo Pré-Roll"}
+            </h3>
+            {editId && (
+              <button type="button" onClick={resetForm}
+                className="flex items-center gap-1 px-3 py-1 text-[10px] font-bold rounded-full transition-all"
+                style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "#ffffff", border: "1px solid rgba(255,255,255,0.3)" }}
+              >
+                Cancelar
+              </button>
             )}
           </div>
-        )}
 
-        <div>
-          <label className="text-sm font-medium block mb-2" style={{ color: "#0d0446" }}>Dias da Semana</label>
-          <div className="flex flex-wrap gap-2">
-            {DIAS.map((dia) => (
-              <button key={dia} type="button" onClick={() => toggleDia(dia)}
-                className="px-3 py-1 rounded-full text-xs font-bold transition-all"
-                style={diasSemana.includes(dia)
-                  ? { backgroundColor: "#0d0446", color: "#ffffff" }
-                  : { backgroundColor: "rgba(13,4,70,0.06)", color: "rgba(13,4,70,0.5)" }
-                }
-                onMouseEnter={e => { if (!diasSemana.includes(dia)) e.currentTarget.style.backgroundColor = "rgba(13,4,70,0.12)"; }}
-                onMouseLeave={e => { if (!diasSemana.includes(dia)) e.currentTarget.style.backgroundColor = "rgba(13,4,70,0.06)"; }}
-              >
-                {dia.slice(0, 3)}
-              </button>
-            ))}
-          </div>
-          {diasSemana.length === 0 && <p className="text-xs mt-1" style={{ color: "rgba(13,4,70,0.4)" }}>Todos os dias se nenhum selecionado.</p>}
-        </div>
-
-        <div>
-          <label className="text-sm font-medium block mb-1" style={{ color: "#0d0446" }}>Link do Anúncio (opcional)</label>
-          <input type="url" placeholder="https://exemplo.com/oferta" value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)}
-            className="w-full px-4 py-1.5 text-sm outline-none transition-colors" style={inputStyle}
-            onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
-            onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
-          />
-          <p className="text-xs mt-1" style={{ color: "rgba(13,4,70,0.4)" }}>Exibirá botão "Clique Aqui" durante o pré-roll.</p>
-        </div>
-
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div>
-            <label className="text-sm font-medium block mb-1" style={{ color: "#0d0446" }}>Horário Início</label>
-            <input type="time" value={horarioInicio} onChange={(e) => setHorarioInicio(e.target.value)}
-              className="w-full px-4 py-1.5 text-sm outline-none transition-colors" style={inputStyle}
-              onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
-              onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
-            />
-          </div>
-          <div>
-            <label className="text-sm font-medium block mb-1" style={{ color: "#0d0446" }}>Horário Fim</label>
-            <input type="time" value={horarioFim} onChange={(e) => setHorarioFim(e.target.value)}
-              className="w-full px-4 py-1.5 text-sm outline-none transition-colors" style={inputStyle}
-              onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
-              onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
-            />
-          </div>
-          <div>
-            <label className="text-sm font-medium block mb-1" style={{ color: "#0d0446" }}>Data Inicial</label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className={cn("w-full justify-start text-left text-sm font-normal", !dataInicial && "text-muted-foreground")}
-                  style={{ ...inputStyle, display: "flex" }}>
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {dataInicial ? format(dataInicial, "dd/MM/yyyy") : "Selecionar"}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar mode="single" selected={dataInicial} onSelect={setDataInicial} initialFocus className="p-3 pointer-events-auto" />
-              </PopoverContent>
-            </Popover>
-          </div>
-          <div>
-            <label className="text-sm font-medium block mb-1" style={{ color: "#0d0446" }}>Data Final</label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className={cn("w-full justify-start text-left text-sm font-normal", !dataFinal && "text-muted-foreground")}
-                  style={{ ...inputStyle, display: "flex" }}>
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {dataFinal ? format(dataFinal, "dd/MM/yyyy") : "Selecionar"}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar mode="single" selected={dataFinal} onSelect={setDataFinal} initialFocus className="p-3 pointer-events-auto" />
-              </PopoverContent>
-            </Popover>
-          </div>
-        </div>
-
-        <div>
-          <label className="text-sm font-medium block mb-1" style={{ color: "#0d0446" }}>Prioridade</label>
-          <input type="number" min="1" value={priority} onChange={(e) => setPriority(e.target.value)}
-            className="w-32 px-4 py-1.5 text-sm outline-none transition-colors" style={inputStyle}
-            onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
-            onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
-          />
-        </div>
-
-        <div className="flex gap-2">
-          <button type="submit" disabled={saving}
-            className="px-6 py-2 font-bold text-sm transition-all flex items-center gap-2 disabled:opacity-50"
-            style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "20px", border: "2px solid #0d0446" }}
-            onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#ffffff"; e.currentTarget.style.color = "#0d0446"; }}
-            onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#0d0446"; e.currentTarget.style.color = "#ffffff"; }}
-          >
-            {saving ? <Loader2 className="animate-spin" size={16} /> : <Plus size={16} />}
-            {editId ? "Salvar Alterações" : "Cadastrar Pré-Roll"}
-          </button>
-          {editId && (
-            <button type="button" onClick={resetForm}
-              className="px-4 py-2 text-sm transition-colors"
-              style={{ borderRadius: "20px", border: "1px solid #0d0446", color: "#0d0446" }}
-              onMouseEnter={e => { e.currentTarget.style.backgroundColor = "rgba(13,4,70,0.05)"; }}
-              onMouseLeave={e => { e.currentTarget.style.backgroundColor = "transparent"; }}
-            >
-              Cancelar
-            </button>
-          )}
-        </div>
-      </form>
-
-      <div className="space-y-3">
-        <h3 className="text-lg font-bold" style={{ color: "#0d0446" }}>Pré-Rolls Cadastrados ({prerolls.length})</h3>
-        {prerolls.length === 0 && <p className="text-sm" style={{ color: "rgba(13,4,70,0.5)" }}>Nenhum pré-roll cadastrado.</p>}
-        {prerolls.map((p) => {
-          const status = getStatus(p);
-          return (
-            <div key={p.id} className="flex items-center gap-4 rounded-xl p-4" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)" }}>
-              {p.media_type === "youtube" && p.youtube_url ? (
-                <img src={`https://img.youtube.com/vi/${extractYoutubeId(p.youtube_url) || ""}/mqdefault.jpg`} alt="YT" className="w-28 h-16 object-cover rounded-lg" />
-              ) : (
-                <video src={p.video_url} className="w-28 h-16 object-cover rounded-lg" muted />
-              )}
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-bold" style={{ color: "#0d0446" }}>
-                  {p.horario_inicio} - {p.horario_fim}
-                  <span className="ml-2 text-xs font-normal" style={{ color: "rgba(13,4,70,0.4)" }}>
-                    {p.media_type === "youtube" ? "YouTube" : "Vídeo"}
-                  </span>
-                </div>
-                <div className="text-xs" style={{ color: "rgba(13,4,70,0.5)" }}>
-                  {(p.dias_semana && p.dias_semana.length > 0) ? p.dias_semana.map(d => d.slice(0, 3)).join(", ") : "Todos os dias"}
-                  {" • "}Prioridade: {p.priority}
-                </div>
-                {(p.data_inicial || p.data_final) && (
-                  <div className="text-xs" style={{ color: "rgba(13,4,70,0.4)" }}>
-                    {p.data_inicial && format(new Date(p.data_inicial + "T00:00:00"), "dd/MM/yyyy")}
-                    {p.data_inicial && p.data_final && " → "}
-                    {p.data_final && format(new Date(p.data_final + "T00:00:00"), "dd/MM/yyyy")}
-                  </div>
-                )}
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <span className="text-xs px-3 py-1 rounded-full font-bold" style={status.color}>
-                  {status.label}
-                </span>
-                <button onClick={() => toggleActive(p.id, p.active)}
-                  className="text-xs px-2 py-1 rounded-full transition-colors"
-                  style={{ backgroundColor: "rgba(13,4,70,0.06)", color: "#0d0446" }}
-                  onMouseEnter={e => { e.currentTarget.style.backgroundColor = "rgba(13,4,70,0.12)"; }}
-                  onMouseLeave={e => { e.currentTarget.style.backgroundColor = "rgba(13,4,70,0.06)"; }}
-                >
-                  {p.active ? "Desativar" : "Ativar"}
-                </button>
-                <button onClick={() => startEdit(p)} className="p-2 rounded-lg transition-colors"
-                  style={{ color: "rgba(13,4,70,0.4)" }}
-                  onMouseEnter={e => { e.currentTarget.style.color = "#2dbef3"; }}
-                  onMouseLeave={e => { e.currentTarget.style.color = "rgba(13,4,70,0.4)"; }}
-                >
-                  <Pencil size={14} />
-                </button>
-                <button onClick={() => handleDelete(p.id)} className="p-2 rounded-lg transition-colors"
-                  style={{ color: "rgba(13,4,70,0.4)" }}
-                  onMouseEnter={e => { e.currentTarget.style.color = "#dc2626"; }}
-                  onMouseLeave={e => { e.currentTarget.style.color = "rgba(13,4,70,0.4)"; }}
-                >
-                  <Trash2 size={14} />
-                </button>
+          <div className="p-5 space-y-4">
+            {/* Media type */}
+            <div>
+              <label className="text-xs font-semibold block mb-2" style={{ color: "#0d0446" }}>Tipo de Mídia</label>
+              <div className="flex gap-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="radio" checked={mediaType === "video"} onChange={() => setMediaType("video")} style={{ accentColor: "#0d0446" }} />
+                  <span className="text-xs" style={{ color: "#0d0446" }}>Upload de vídeo (até 5MB)</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="radio" checked={mediaType === "youtube"} onChange={() => setMediaType("youtube")} style={{ accentColor: "#0d0446" }} />
+                  <span className="text-xs" style={{ color: "#0d0446" }}>Link do YouTube</span>
+                </label>
               </div>
             </div>
-          );
-        })}
+
+            {mediaType === "video" && (
+              <div>
+                <label className="text-xs font-semibold block mb-1" style={{ color: "#0d0446" }}>Vídeo (.mp4, máx 5MB)</label>
+                <input type="file" accept="video/mp4" onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) {
+                    if (f.size > 5 * 1024 * 1024) { toast({ title: "O vídeo deve ter no máximo 5MB", variant: "destructive" }); return; }
+                    setVideoFile(f); setVideoPreview(URL.createObjectURL(f));
+                  }
+                }} className="text-xs" style={{ color: "#0d0446" }} />
+                {videoPreview && <video src={videoPreview} controls className="mt-2 w-64 rounded-lg" style={{ border: "1px solid rgba(13,4,70,0.1)" }} />}
+              </div>
+            )}
+
+            {mediaType === "youtube" && (
+              <div>
+                <label className="text-xs font-semibold block mb-1" style={{ color: "#0d0446" }}>Link do YouTube</label>
+                <input type="url" placeholder="https://www.youtube.com/watch?v=..." value={youtubeUrl} onChange={(e) => setYoutubeUrl(e.target.value)}
+                  className="w-full px-4 py-1.5 text-sm outline-none transition-colors" style={inputStyle}
+                  onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
+                  onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
+                />
+                {youtubeUrl && extractYoutubeId(youtubeUrl) && (
+                  <img src={`https://img.youtube.com/vi/${extractYoutubeId(youtubeUrl)}/hqdefault.jpg`} alt="Thumbnail" className="mt-2 w-64 rounded-lg" style={{ border: "1px solid rgba(13,4,70,0.1)" }} />
+                )}
+              </div>
+            )}
+
+            {/* Days */}
+            <div>
+              <label className="text-xs font-semibold block mb-2" style={{ color: "#0d0446" }}>Dias da Semana</label>
+              <div className="flex flex-wrap gap-2">
+                {DIAS.map((dia) => (
+                  <button key={dia} type="button" onClick={() => toggleDia(dia)}
+                    className="px-3 py-1 rounded-full text-[10px] font-bold transition-all"
+                    style={diasSemana.includes(dia)
+                      ? { backgroundColor: "#0d0446", color: "#ffffff" }
+                      : { backgroundColor: "rgba(13,4,70,0.06)", color: "rgba(13,4,70,0.5)" }
+                    }
+                  >
+                    {dia.slice(0, 3)}
+                  </button>
+                ))}
+              </div>
+              {diasSemana.length === 0 && <p className="text-[10px] mt-1" style={{ color: "rgba(13,4,70,0.4)" }}>Todos os dias se nenhum selecionado.</p>}
+            </div>
+
+            {/* Link */}
+            <div>
+              <label className="text-xs font-semibold block mb-1" style={{ color: "#0d0446" }}>Link do Anúncio (opcional)</label>
+              <input type="url" placeholder="https://exemplo.com/oferta" value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)}
+                className="w-full px-4 py-1.5 text-sm outline-none transition-colors" style={inputStyle}
+                onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
+                onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
+              />
+              <p className="text-[10px] mt-1" style={{ color: "rgba(13,4,70,0.4)" }}>Exibirá botão "Clique Aqui" durante o pré-roll.</p>
+            </div>
+
+            {/* Schedule grid */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div>
+                <label className="text-xs font-semibold block mb-1" style={{ color: "#0d0446" }}>Horário Início</label>
+                <input type="time" value={horarioInicio} onChange={(e) => setHorarioInicio(e.target.value)}
+                  className="w-full px-4 py-1.5 text-sm outline-none transition-colors" style={inputStyle}
+                  onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
+                  onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
+                />
+              </div>
+              <div>
+                <label className="text-xs font-semibold block mb-1" style={{ color: "#0d0446" }}>Horário Fim</label>
+                <input type="time" value={horarioFim} onChange={(e) => setHorarioFim(e.target.value)}
+                  className="w-full px-4 py-1.5 text-sm outline-none transition-colors" style={inputStyle}
+                  onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
+                  onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
+                />
+              </div>
+              <div>
+                <label className="text-xs font-semibold block mb-1" style={{ color: "#0d0446" }}>Data Inicial</label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className={cn("w-full justify-start text-left text-sm font-normal", !dataInicial && "text-muted-foreground")}
+                      style={{ ...inputStyle, display: "flex" }}>
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {dataInicial ? format(dataInicial, "dd/MM/yyyy") : "Selecionar"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar mode="single" selected={dataInicial} onSelect={setDataInicial} initialFocus className="p-3 pointer-events-auto" />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <div>
+                <label className="text-xs font-semibold block mb-1" style={{ color: "#0d0446" }}>Data Final</label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className={cn("w-full justify-start text-left text-sm font-normal", !dataFinal && "text-muted-foreground")}
+                      style={{ ...inputStyle, display: "flex" }}>
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {dataFinal ? format(dataFinal, "dd/MM/yyyy") : "Selecionar"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar mode="single" selected={dataFinal} onSelect={setDataFinal} initialFocus className="p-3 pointer-events-auto" />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+
+            {/* Priority */}
+            <div>
+              <label className="text-xs font-semibold block mb-1" style={{ color: "#0d0446" }}>Prioridade</label>
+              <input type="number" min="1" value={priority} onChange={(e) => setPriority(e.target.value)}
+                className="w-32 px-4 py-1.5 text-sm outline-none transition-colors" style={inputStyle}
+                onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
+                onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
+              />
+            </div>
+
+            {/* Submit */}
+            <button type="submit" disabled={saving}
+              className="px-6 py-2 font-bold text-sm transition-all flex items-center gap-2 disabled:opacity-50 rounded-full"
+              style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#ffffff", border: "none" }}
+              onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 4px 15px rgba(38,143,250,0.4)"; }}
+              onMouseLeave={e => { e.currentTarget.style.boxShadow = "none"; }}
+            >
+              {saving ? <Loader2 className="animate-spin" size={16} /> : <Plus size={16} />}
+              {editId ? "Salvar Alterações" : "Cadastrar Pré-Roll"}
+            </button>
+          </div>
+        </form>
+
+        {/* List */}
+        <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}>
+          <div className="px-4 py-2.5 flex items-center justify-between" style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)" }}>
+            <h3 className="text-sm font-bold" style={{ color: "#ffffff" }}>📋 Pré-Rolls Cadastrados</h3>
+            <span className="text-[9px] font-normal px-2 py-0.5 rounded-full" style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "#ffffff" }}>
+              {prerolls.length} item{prerolls.length !== 1 ? "s" : ""}
+            </span>
+          </div>
+
+          {prerolls.length === 0 ? (
+            <p className="text-sm py-8 text-center" style={{ color: "rgba(13,4,70,0.4)" }}>Nenhum pré-roll cadastrado.</p>
+          ) : (
+            <div className="p-3 space-y-2">
+              {prerolls.map((p) => {
+                const status = getStatus(p);
+                return (
+                  <div key={p.id} className="flex items-center gap-4 rounded-xl p-3" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.06)" }}>
+                    {p.media_type === "youtube" && p.youtube_url ? (
+                      <img src={`https://img.youtube.com/vi/${extractYoutubeId(p.youtube_url) || ""}/mqdefault.jpg`} alt="YT" className="w-28 h-16 object-cover rounded-lg" />
+                    ) : (
+                      <video src={p.video_url} className="w-28 h-16 object-cover rounded-lg" muted />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs font-bold" style={{ color: "#0d0446" }}>
+                        {p.horario_inicio} - {p.horario_fim}
+                        <span className="ml-2 text-[10px] font-normal" style={{ color: "rgba(13,4,70,0.4)" }}>
+                          {p.media_type === "youtube" ? "YouTube" : "Vídeo"}
+                        </span>
+                      </div>
+                      <div className="text-[10px]" style={{ color: "rgba(13,4,70,0.5)" }}>
+                        {(p.dias_semana && p.dias_semana.length > 0) ? p.dias_semana.map(d => d.slice(0, 3)).join(", ") : "Todos os dias"}
+                        {" • "}Prioridade: {p.priority}
+                      </div>
+                      {(p.data_inicial || p.data_final) && (
+                        <div className="text-[10px]" style={{ color: "rgba(13,4,70,0.4)" }}>
+                          {p.data_inicial && format(new Date(p.data_inicial + "T00:00:00"), "dd/MM/yyyy")}
+                          {p.data_inicial && p.data_final && " → "}
+                          {p.data_final && format(new Date(p.data_final + "T00:00:00"), "dd/MM/yyyy")}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="text-[10px] px-3 py-1 rounded-full font-bold" style={status.color}>
+                        {status.label}
+                      </span>
+                      <button onClick={() => toggleActive(p.id, p.active)}
+                        className="text-[10px] px-2 py-1 rounded-full transition-colors"
+                        style={{ backgroundColor: "rgba(13,4,70,0.06)", color: "#0d0446" }}
+                      >
+                        {p.active ? "Desativar" : "Ativar"}
+                      </button>
+                      <button onClick={() => startEdit(p)} className="p-1.5 rounded-lg transition-colors" style={{ color: "rgba(13,4,70,0.4)" }}>
+                        <Pencil size={14} />
+                      </button>
+                      <button onClick={() => handleDelete(p.id)} className="p-1.5 rounded-lg transition-colors" style={{ color: "rgba(13,4,70,0.4)" }}>
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
