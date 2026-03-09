@@ -510,34 +510,6 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
           })}
         </nav>
 
-        {/* NO AR box */}
-        <div className="w-[60px] mt-auto mb-2 rounded-lg px-1.5 py-2 flex flex-col items-center gap-1" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)" }}>
-          <span className="text-[7px] font-bold uppercase tracking-widest text-player-accent flex items-center gap-0.5">
-            <span className="inline-block w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: "hsl(var(--player-accent))" }} />
-            no ar
-          </span>
-          {currentProgram ? (
-            <>
-              {currentProgram.capa && (
-                <img src={currentProgram.capa} alt="" className="w-10 h-10 rounded-md object-cover" />
-              )}
-              <p className="text-[7px] text-white/80 text-center leading-tight line-clamp-2 font-medium">{currentProgram.nome}</p>
-              <p className="text-[6px] text-white/40 text-center">{currentProgram.horario_inicio} - {currentProgram.horario_fim}</p>
-            </>
-          ) : (
-            <p className="text-[7px] text-white/40 text-center italic">—</p>
-          )}
-          {nowPlaying?.musica && (
-            <>
-              <div className="w-full h-px" style={{ background: "rgba(255,255,255,0.08)" }} />
-              <div className="flex items-center gap-0.5">
-                <Music className="h-2 w-2 text-player-accent flex-shrink-0" />
-                <p className="text-[6px] text-white/70 truncate max-w-[48px]">{nowPlaying.musica}</p>
-              </div>
-              <p className="text-[6px] text-white/40 truncate max-w-[48px]">{nowPlaying.artista}</p>
-            </>
-          )}
-        </div>
 
         {/* Separator */}
         <div className="w-8 h-px" style={{ background: "rgba(255,255,255,0.1)" }} />
