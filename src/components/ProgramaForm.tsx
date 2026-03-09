@@ -829,7 +829,7 @@ export default function ProgramaForm() {
                   className="px-3 py-1.5 text-[11px] font-semibold transition-all rounded-lg"
                   style={{
                     backgroundColor: diasSemana.includes(dia) ? "#268ffa" : "rgba(255,255,255,0.06)",
-                    color: diasSemana.includes(dia) ? "#ffffff" : "rgba(255,255,255,0.5)",
+                    color: diasSemana.includes(dia) ? "#ffffff" : "rgba(255,255,255,0.7)",
                     border: diasSemana.includes(dia) ? "1px solid #268ffa" : "1px solid rgba(255,255,255,0.1)",
                     boxShadow: diasSemana.includes(dia) ? "0 2px 8px rgba(38,143,250,0.3)" : "none",
                   }}>
