@@ -833,9 +833,9 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
             <section className="rounded-2xl p-5" style={{ marginTop: "320px" }}>
               <h2 className="text-xl font-bold mb-6 tracking-wide uppercase text-player-foreground/90">Loja</h2>
               {!dataLoaded ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
                   {[1, 2, 3, 4].map(i => (
-                    <Skeleton key={i} className="w-full aspect-square rounded-xl bg-white/10" />
+                    <Skeleton key={i} className="w-full aspect-[3/4] rounded-2xl bg-white/10" />
                   ))}
                 </div>
               ) : shopProducts.length === 0 ? (
@@ -843,33 +843,69 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                   Nenhum produto disponível
                 </div>
               ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
                   {shopProducts.map(product => (
-                    <div key={product.id} className="rounded-xl overflow-hidden relative group transition-all hover:scale-[1.02] border border-white/10 hover:border-white/30" style={{ background: "rgba(0,0,0,0.3)" }}>
-                      <div className="aspect-square overflow-hidden">
+                    <div
+                      key={product.id}
+                      className="group rounded-2xl overflow-hidden transition-all duration-300 hover:scale-[1.03] hover:shadow-2xl"
+                      style={{
+                        background: "linear-gradient(160deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%)",
+                        border: "1px solid rgba(255,255,255,0.08)",
+                      }}
+                    >
+                      {/* Image */}
+                      <div className="aspect-square overflow-hidden relative">
                         {product.image_url ? (
-                          <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
+                          <img
+                            src={product.image_url}
+                            alt={product.name}
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                          />
                         ) : (
-                          <div className="w-full h-full bg-gradient-to-br from-player-accent/20 to-player flex items-center justify-center">
-                            <ShoppingBag className="h-10 w-10 text-player-muted-foreground" />
+                          <div className="w-full h-full flex items-center justify-center" style={{ background: "linear-gradient(135deg, hsl(var(--player-accent) / 0.15), hsl(var(--player) / 0.8))" }}>
+                            <ShoppingBag className="h-12 w-12 text-white/20" />
                           </div>
                         )}
-                      </div>
-                      <div className="p-3 flex flex-col gap-1">
-                        <p className="text-sm font-semibold text-white truncate">{product.name}</p>
-                        {product.description && (
-                          <p className="text-xs text-white/50 line-clamp-2">{product.description}</p>
-                        )}
-                        <p className="text-base font-bold text-player-accent mt-1">
+                        {/* Price badge */}
+                        <div
+                          className="absolute bottom-3 right-3 px-3 py-1.5 rounded-full text-sm font-bold text-white"
+                          style={{
+                            background: "hsl(var(--player-accent))",
+                            boxShadow: "0 4px 16px hsla(var(--player-accent) / 0.5)",
+                          }}
+                        >
                           R$ {product.price.toFixed(2).replace(".", ",")}
+                        </div>
+                        {/* Stock indicator */}
+                        {product.stock <= 3 && (
+                          <span className="absolute top-3 left-3 text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-full bg-yellow-500/90 text-black">
+                            {product.stock === 1 ? "Último!" : `Restam ${product.stock}`}
+                          </span>
+                        )}
+                        {/* Gradient overlay */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                      </div>
+                      {/* Info */}
+                      <div className="p-4 flex flex-col gap-2">
+                        <p className="text-sm font-bold text-white truncate group-hover:text-player-accent transition-colors duration-200">
+                          {product.name}
                         </p>
+                        {product.description && (
+                          <p className="text-xs text-white/40 line-clamp-2 leading-relaxed">{product.description}</p>
+                        )}
                         {product.payment_url && (
                           <a
                             href={product.payment_url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="mt-2 w-full text-center text-xs font-semibold py-2 rounded-lg transition-colors"
-                            style={{ background: "hsl(var(--player-accent))", color: "white" }}
+                            className="mt-2 w-full text-center text-xs font-bold py-2.5 rounded-xl transition-all duration-300 uppercase tracking-wider"
+                            style={{
+                              background: "linear-gradient(135deg, hsl(var(--player-accent)), hsl(var(--player-accent-hover)))",
+                              color: "white",
+                              boxShadow: "0 2px 12px hsla(var(--player-accent) / 0.3)",
+                            }}
+                            onMouseEnter={e => { (e.target as HTMLElement).style.transform = "translateY(-1px)"; (e.target as HTMLElement).style.boxShadow = "0 6px 20px hsla(var(--player-accent) / 0.5)"; }}
+                            onMouseLeave={e => { (e.target as HTMLElement).style.transform = ""; (e.target as HTMLElement).style.boxShadow = "0 2px 12px hsla(var(--player-accent) / 0.3)"; }}
                           >
                             Comprar
                           </a>
