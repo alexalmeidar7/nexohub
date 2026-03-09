@@ -740,7 +740,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
             </section>
           ) : visibleSection === "content" ? (
             /* ── Página dedicada: Catálogo ── */
-            <section className="rounded-2xl p-5" style={{ marginTop: "380px" }}>
+            <section className="rounded-2xl p-5" style={{ marginTop: "clamp(160px, 28vw, 380px)" }}>
               <h2 className="text-xl font-bold mb-6 tracking-wide uppercase text-player-foreground/90">Catálogo</h2>
               {!dataLoaded ? (
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
