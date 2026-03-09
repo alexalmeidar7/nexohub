@@ -260,22 +260,33 @@ export default function MiniPlayerWidget({ data, onClose }: { data: MiniPlayerDa
 
       {/* Controls */}
       <div className="flex items-center gap-2 px-3 py-2.5">
-        {/* Logo/icon or Play button */}
+        {/* Play/Pause button (replaces logo area) */}
         {needsUnlock ? (
           <button
             onClick={handleManualPlay}
-            className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-all hover:scale-110 active:scale-95 animate-pulse"
-            style={{ backgroundColor: "hsl(0 80% 45%)" }}
+            className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-all hover:scale-110 active:scale-95 animate-pulse"
+            style={{ backgroundColor: "#e60000" }}
             title="Tocar"
           >
             <Play size={14} className="text-white" fill="white" />
           </button>
-        ) : data.logoUrl ? (
-          <img src={data.logoUrl} alt="" className="w-8 h-8 rounded-lg object-contain flex-shrink-0" />
         ) : (
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "rgba(230,0,0,0.2)" }}>
-            <Volume2 size={14} style={{ color: "#e60000" }} />
-          </div>
+          <button
+            onClick={() => {
+              if (isVideo && videoRef.current) {
+                if (playing) { videoRef.current.pause(); setPlaying(false); }
+                else { videoRef.current.play().then(() => setPlaying(true)).catch(() => {}); }
+              } else if (globalAudio) {
+                if (playing) { globalAudio.pause(); setPlaying(false); }
+                else { globalAudio.play().then(() => setPlaying(true)).catch(() => {}); }
+              }
+            }}
+            className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-all hover:scale-110 active:scale-95"
+            style={{ backgroundColor: "#e60000" }}
+            title={playing ? "Pausar" : "Reproduzir"}
+          >
+            {playing ? <Pause size={13} className="text-white" /> : <Play size={13} className="text-white" fill="white" />}
+          </button>
         )}
 
         {/* Name + Music info */}
@@ -307,24 +318,6 @@ export default function MiniPlayerWidget({ data, onClose }: { data: MiniPlayerDa
           }
         `}</style>
 
-        {/* Play/Pause */}
-        <button
-          onClick={() => {
-            if (isVideo && videoRef.current) {
-              if (playing) { videoRef.current.pause(); setPlaying(false); }
-              else { videoRef.current.play().then(() => setPlaying(true)).catch(() => {}); }
-            } else if (globalAudio) {
-              if (playing) { globalAudio.pause(); setPlaying(false); }
-              else { globalAudio.play().then(() => setPlaying(true)).catch(() => {}); }
-            }
-          }}
-          className="text-white/50 hover:text-white hover:bg-white/10 rounded-lg p-1.5 transition-all"
-          title={playing ? "Pausar" : "Reproduzir"}
-        >
-          {playing ? <Pause size={14} /> : <Play size={14} fill="currentColor" />}
-        </button>
-
-        {/* Volume with slider */}
         <div className="relative group/vol">
           <button
             onClick={() => setMuted(!muted)}
