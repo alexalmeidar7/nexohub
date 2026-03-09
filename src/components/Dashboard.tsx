@@ -248,7 +248,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       {/* Mobile menu overlay */}
       {mobileMenuOpen && (
         <div className="lg:hidden fixed inset-0 z-50 flex">
-          <div className="w-[280px] flex flex-col h-full overflow-y-auto" style={{ backgroundColor: "rgba(0, 0, 0, 0.92)" }}>
+          <div className="w-[280px] flex flex-col h-full overflow-y-auto" style={{ background: "rgba(0, 0, 0, 0.45)", backdropFilter: "blur(32px) saturate(1.5)", WebkitBackdropFilter: "blur(32px) saturate(1.5)", borderRight: "1px solid rgba(255,255,255,0.1)" }}>
             <div className="flex items-center justify-between px-4 pt-3 pb-2">
               <img src={seloNexohub} alt="NexoHUB" className="h-4" />
               <button onClick={() => setMobileMenuOpen(false)} className="p-1.5 rounded-full" style={{ backgroundColor: "#268ffa" }}>
@@ -333,7 +333,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
       {/* Floating sidebar - desktop */}
       <div className={`hidden lg:flex flex-col fixed top-5 left-[70px] z-[55] transition-all duration-300 ${sidebarCollapsed ? "opacity-0 pointer-events-none -translate-x-4" : "opacity-100 translate-x-0"}`} style={{ width: "360px" }}>
-        <aside className="flex flex-col rounded-[24px] overflow-hidden" style={{ backgroundColor: "rgba(0, 0, 0, 0.92)", height: "560px" }}>
+        <aside className="flex flex-col rounded-[24px] overflow-hidden" style={{ background: "rgba(0, 0, 0, 0.45)", backdropFilter: "blur(32px) saturate(1.5)", WebkitBackdropFilter: "blur(32px) saturate(1.5)", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 12px 40px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.08)", height: "560px" }}>
             <>
             {/* Selo + Settings */}
             <div className="flex items-center justify-between px-4 pt-3 pb-2">
