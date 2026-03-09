@@ -678,7 +678,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                     <p className="text-sm">Bem vindo,</p>
                     <p className="text-sm text-player-accent font-bold">{userName}</p>
                     {user ? (
-                      <button onClick={handleSignOut} className="text-player-accent text-xs hover:underline flex items-center gap-1">
+                      <button onClick={handleSignOut} className="text-white/50 text-xs hover:text-white hover:underline flex items-center gap-1 transition-colors">
                         <LogOut className="h-3 w-3" /> Sair
                       </button>
                     ) : onBackToAccess ? (
