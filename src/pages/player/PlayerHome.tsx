@@ -701,8 +701,8 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
         ref={scrollContainerRef}
         className={`relative flex-1 overflow-y-auto h-full transition-opacity duration-400 ease-in-out ${fadeOut ? "opacity-0" : "opacity-100"}`}
         style={{
-          maskImage: "linear-gradient(to bottom, transparent 0%, black 200px)",
-          WebkitMaskImage: "linear-gradient(to bottom, transparent 0%, black 200px)",
+          maskImage: "linear-gradient(to bottom, transparent 0%, black 650px)",
+          WebkitMaskImage: "linear-gradient(to bottom, transparent 0%, black 650px)",
         }}
       >
 
