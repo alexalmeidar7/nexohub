@@ -193,37 +193,38 @@ function GradeBody({ gradeSlots, diasSemana, diaAtual, currentTimeStr, getProgra
                 const key = `${dia}-${slot}`;
                 if (skipMap[key]) return null;
                 const cellData = spanMap[key];
-                if (!cellData) return <td key={dia} className="px-1 py-1 rounded-lg" />;
+                if (!cellData) return <td key={dia} className="px-1 py-1 rounded-lg" style={{ backgroundColor: "rgba(13,4,70,0.015)" }} />;
                 const { prog, rowSpan } = cellData;
                 const isOnAir = prog && dia === diaAtual && currentTimeStr >= prog.horarioInicio && currentTimeStr < prog.horarioFim;
                 const presenterName = getPresenterName(prog.apresentadorId);
                 return (
                   <td key={dia} rowSpan={rowSpan}
-                    className="rounded-lg transition-all relative hover:!border-[#2dbef3] hover:border-2"
+                    className="rounded-lg transition-all relative group"
                     style={{
-                      backgroundColor: isOnAir ? "#2dbef3" : "#ffffff",
+                      background: isOnAir ? "linear-gradient(135deg, #268ffa, #2dbef3)" : "#ffffff",
                       color: isOnAir ? "#ffffff" : "#0d0446",
                       fontWeight: isOnAir ? "bold" : undefined,
-                      border: isOnAir ? "2px solid #2dbef3" : "1px solid #ccc",
+                      border: isOnAir ? "2px solid #268ffa" : "1px solid rgba(13,4,70,0.08)",
                       verticalAlign: "top",
                       padding: "8px 10px",
+                      boxShadow: isOnAir ? "0 2px 12px rgba(38,143,250,0.3)" : "none",
                     }}>
                     <div className="text-[10px] font-bold leading-tight" style={{ wordBreak: "break-word", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{prog.nome}</div>
                     {prog.classificacaoEtaria && <div className="mt-0.5"><ClassificacaoBadge value={prog.classificacaoEtaria} size={14} /></div>}
-                    <div className="text-[9px] mt-0.5" style={{ color: isOnAir ? "rgba(255,255,255,0.8)" : "rgba(13,4,70,0.5)" }}>
+                    <div className="text-[9px] mt-0.5" style={{ color: isOnAir ? "rgba(255,255,255,0.8)" : "rgba(13,4,70,0.4)" }}>
                       {prog.horarioInicio.slice(0, 5)} - {prog.horarioFim.slice(0, 5)}
                     </div>
                     {presenterName && (
-                      <div className="text-[9px] font-semibold mt-0.5" style={{ color: isOnAir ? "rgba(255,255,255,0.9)" : "#0d0446" }}>
+                      <div className="text-[9px] font-semibold mt-0.5" style={{ color: isOnAir ? "rgba(255,255,255,0.9)" : "rgba(13,4,70,0.6)" }}>
                         {presenterName}
                       </div>
                     )}
                     <button
                       onClick={(e) => { e.stopPropagation(); setDetailProg(prog); }}
-                      className="mt-1 px-2 py-0.5 rounded text-[8px] font-bold flex items-center gap-1 transition-colors"
-                      style={{ backgroundColor: "#0d0446", color: "#ffffff" }}
-                      onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#2dbef3"; }}
-                      onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#0d0446"; }}
+                      className="mt-1.5 px-2.5 py-0.5 rounded-md text-[8px] font-bold flex items-center gap-1 transition-all opacity-70 group-hover:opacity-100"
+                      style={{ backgroundColor: isOnAir ? "rgba(255,255,255,0.2)" : "#0d0446", color: "#ffffff" }}
+                      onMouseEnter={e => { e.currentTarget.style.backgroundColor = isOnAir ? "rgba(255,255,255,0.3)" : "#268ffa"; }}
+                      onMouseLeave={e => { e.currentTarget.style.backgroundColor = isOnAir ? "rgba(255,255,255,0.2)" : "#0d0446"; }}
                     >
                       + informações
                     </button>
@@ -976,11 +977,19 @@ export default function ProgramaForm() {
           </div>
         </div>
       ) : programas.length > 0 && (
-        <div>
-          <div className="flex items-center gap-3 mb-4">
-            <h4 className="text-lg font-medium" style={{ color: "#0d0446" }}>Grade de Programação</h4>
+        <div className="rounded-2xl overflow-hidden" style={{ background: "#d9e9fa", boxShadow: "0 8px 32px rgba(13,4,70,0.12)", padding: "20px" }}>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "rgba(13,4,70,0.08)" }}>
+                <Calendar size={18} style={{ color: "#0d0446" }} />
+              </div>
+              <div>
+                <h4 className="text-base font-bold" style={{ color: "#0d0446" }}>Grade de Programação</h4>
+                <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.5)" }}>Visualização semanal dos programas</p>
+              </div>
+            </div>
             <Select value={gradeEstudioFilter} onValueChange={setGradeEstudioFilter}>
-              <SelectTrigger className="w-[180px]" style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "20px", border: "none", fontSize: "11px", height: "26px", padding: "0 10px" }}>
+              <SelectTrigger className="w-[180px]" style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "20px", border: "none", fontSize: "11px", height: "30px", padding: "0 12px" }}>
                 <SelectValue placeholder="Filtrar por estúdio" />
               </SelectTrigger>
               <SelectContent>
@@ -995,22 +1004,22 @@ export default function ProgramaForm() {
             .grade-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
             .grade-scroll::-webkit-scrollbar-track { background: transparent; }
             .grade-scroll::-webkit-scrollbar-thumb { background: #0d0446; border-radius: 3px; }
-            .grade-scroll::-webkit-scrollbar-thumb:hover { background: #2dbef3; }
+            .grade-scroll::-webkit-scrollbar-thumb:hover { background: #268ffa; }
             .grade-scroll::-webkit-scrollbar-button { display: none; }
           `}</style>
           <div
             ref={gradeRef}
-            className="rounded-xl overflow-auto max-h-[300px] grade-scroll"
-            style={{ border: "1px solid rgba(13,4,70,0.1)", backgroundColor: "#ffffff", scrollbarWidth: "thin", scrollbarColor: "#0d0446 transparent", position: "relative" }}
+            className="rounded-xl overflow-auto max-h-[340px] grade-scroll"
+            style={{ border: "1px solid rgba(13,4,70,0.08)", backgroundColor: "#ffffff", scrollbarWidth: "thin", scrollbarColor: "#0d0446 transparent", position: "relative", boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}
           >
             <table data-no-row-hover className="w-full text-xs border-separate border-spacing-1">
-              <thead className="sticky top-0 z-10" style={{ backgroundColor: "#ffffff" }}>
-                <tr>
-                  <th className="px-2 py-2 text-left w-20 rounded-lg" style={{ color: "#0d0446" }}>Horário</th>
+              <thead className="sticky top-0 z-10">
+                <tr style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)" }}>
+                  <th className="px-3 py-2.5 text-left w-20 rounded-lg text-[11px] font-semibold uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.7)" }}>Horário</th>
                   {DIAS_SEMANA.map(dia => (
-                    <th key={dia} className={`px-2 py-2 text-center rounded-lg ${dia === diaAtual ? "font-bold" : ""}`} style={{ color: dia === diaAtual ? "#2dbef3" : "#0d0446" }}>
+                    <th key={dia} className={`px-2 py-2.5 text-center rounded-lg text-[11px] font-semibold uppercase tracking-wider ${dia === diaAtual ? "font-bold" : ""}`} style={{ color: dia === diaAtual ? "#2dbef3" : "rgba(255,255,255,0.85)" }}>
                       <div>{dia.slice(0, 3)}</div>
-                      <div className="text-[9px] font-normal opacity-70">{weekDates[dia]}</div>
+                      <div className="text-[9px] font-normal" style={{ color: dia === diaAtual ? "rgba(45,190,243,0.7)" : "rgba(255,255,255,0.4)" }}>{weekDates[dia]}</div>
                     </th>
                   ))}
                 </tr>
@@ -1029,32 +1038,35 @@ export default function ProgramaForm() {
               position: "absolute",
               left: 0,
               right: 0,
-              height: "1px",
-              backgroundColor: "#0d0446",
+              height: "2px",
+              background: "linear-gradient(90deg, #dc2626, #ef4444)",
               zIndex: 15,
               pointerEvents: "none",
               display: "none",
+              boxShadow: "0 0 6px rgba(220,38,38,0.4)",
             }}>
               <div style={{
                 position: "absolute",
                 left: -4,
-                top: -3,
-                width: 8,
-                height: 8,
+                top: -4,
+                width: 10,
+                height: 10,
                 borderRadius: "50%",
-                backgroundColor: "#0d0446",
+                backgroundColor: "#dc2626",
+                boxShadow: "0 0 6px rgba(220,38,38,0.5)",
               }} />
               <div style={{
                 position: "absolute",
-                left: 10,
-                top: -8,
+                left: 12,
+                top: -9,
                 fontSize: "9px",
                 fontWeight: 700,
-                color: "#0d0446",
-                backgroundColor: "#ffffff",
-                padding: "1px 4px",
-                borderRadius: "3px",
+                color: "#ffffff",
+                backgroundColor: "#dc2626",
+                padding: "2px 6px",
+                borderRadius: "4px",
                 whiteSpace: "nowrap",
+                boxShadow: "0 2px 6px rgba(220,38,38,0.3)",
               }}>
                 {currentTimeStr.slice(0, 5)}
               </div>
@@ -1083,62 +1095,94 @@ export default function ProgramaForm() {
           </div>
         </div>
       ) : programas.length > 0 && (
-        <div>
-          <h4 className="text-sm font-bold mb-3" style={{ color: "#0d0446" }}>Programas Cadastrados</h4>
-          <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(13,4,70,0.08)", boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}>
+        <div className="rounded-2xl overflow-hidden" style={{ background: "#d9e9fa", boxShadow: "0 8px 32px rgba(13,4,70,0.12)", padding: "20px" }}>
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "rgba(13,4,70,0.08)" }}>
+              <PlaySquare size={18} style={{ color: "#0d0446" }} />
+            </div>
+            <div>
+              <h4 className="text-base font-bold" style={{ color: "#0d0446" }}>Programas Cadastrados</h4>
+              <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.5)" }}>{sortedProgramas.length} programa{sortedProgramas.length !== 1 ? "s" : ""} registrado{sortedProgramas.length !== 1 ? "s" : ""}</p>
+            </div>
+          </div>
+          <div className="rounded-xl overflow-hidden" style={{ boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}>
             <table className="w-full text-xs" style={{ color: "#0d0446" }}>
               <thead>
                 <tr style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)", color: "#ffffff" }}>
-                  <th className="px-4 py-2.5 text-left font-semibold text-[11px] uppercase tracking-wider">Programa</th>
-                  <th className="px-4 py-2.5 text-left font-semibold text-[11px] uppercase tracking-wider">Exibição</th>
-                  <th className="px-4 py-2.5 text-left font-semibold text-[11px] uppercase tracking-wider">Horário</th>
-                  <th className="px-4 py-2.5 text-left font-semibold text-[11px] uppercase tracking-wider">Apresentador</th>
-                  <th className="px-4 py-2.5 text-center font-semibold text-[11px] uppercase tracking-wider">Status</th>
-                  <th className="px-4 py-2.5 text-center font-semibold text-[11px] uppercase tracking-wider">Ações</th>
+                  <th className="px-4 py-3 text-left font-semibold text-[11px] uppercase tracking-wider">Programa</th>
+                  <th className="px-4 py-3 text-left font-semibold text-[11px] uppercase tracking-wider">Exibição</th>
+                  <th className="px-4 py-3 text-left font-semibold text-[11px] uppercase tracking-wider">Horário</th>
+                  <th className="px-4 py-3 text-left font-semibold text-[11px] uppercase tracking-wider">Apresentador</th>
+                  <th className="px-4 py-3 text-center font-semibold text-[11px] uppercase tracking-wider">Status</th>
+                  <th className="px-4 py-3 text-center font-semibold text-[11px] uppercase tracking-wider">Ações</th>
                 </tr>
               </thead>
               <tbody>
                 {sortedProgramas.map((p, i) => (
-                  <tr key={p.id} className="group transition-colors hover:bg-[#f0f4ff]" style={{ backgroundColor: i % 2 === 0 ? "#ffffff" : "#fafaff", borderTop: "1px solid rgba(13,4,70,0.05)" }} data-no-row-hover>
-                    <td className="px-4 py-2.5 font-semibold">
+                  <tr key={p.id} className="group transition-all duration-200" style={{ backgroundColor: i % 2 === 0 ? "#ffffff" : "#f4f8ff", borderBottom: "1px solid rgba(13,4,70,0.04)" }} data-no-row-hover
+                    onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#e8f0ff"; e.currentTarget.style.transform = "scale(1.002)"; }}
+                    onMouseLeave={e => { e.currentTarget.style.backgroundColor = i % 2 === 0 ? "#ffffff" : "#f4f8ff"; e.currentTarget.style.transform = "scale(1)"; }}
+                  >
+                    <td className="px-4 py-3 font-semibold">
                       <div className="flex items-center gap-2">
-                        {p.nome}
-                        {p.variavel && <span className="text-[9px] px-1.5 py-0.5 rounded-lg font-semibold" style={{ backgroundColor: "rgba(245,158,11,0.1)", color: "#d97706" }}>Variável</span>}
+                        {p.capa && <img src={p.capa} alt="" className="w-8 h-8 rounded-lg object-cover shrink-0" style={{ border: "1px solid rgba(13,4,70,0.08)" }} />}
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            {p.nome}
+                            {p.variavel && <span className="text-[8px] px-1.5 py-0.5 rounded-full font-bold" style={{ backgroundColor: "rgba(245,158,11,0.12)", color: "#d97706" }}>VAR</span>}
+                          </div>
+                          {p.classificacaoEtaria && <div className="mt-0.5"><ClassificacaoBadge value={p.classificacaoEtaria} size={14} /></div>}
+                        </div>
                       </div>
-                      {p.classificacaoEtaria && <div className="mt-0.5"><ClassificacaoBadge value={p.classificacaoEtaria} size={16} /></div>}
                     </td>
-                    <td className="px-4 py-2.5 text-[11px]" style={{ color: "rgba(13,4,70,0.6)" }}>
+                    <td className="px-4 py-3 text-[11px]" style={{ color: "rgba(13,4,70,0.6)" }}>
                       {p.variavel && p.dataVariavel
                         ? format(new Date(p.dataVariavel + "T12:00:00"), "dd/MM/yyyy (EEEE)", { locale: ptBR })
-                        : p.diasSemana.map(d => d.slice(0, 3)).join(", ")}
+                        : <div className="flex flex-wrap gap-0.5">{p.diasSemana.map(d => <span key={d} className="px-1.5 py-0.5 rounded text-[9px] font-medium" style={{ backgroundColor: "rgba(13,4,70,0.06)", color: "#0d0446" }}>{d.slice(0, 3)}</span>)}</div>}
                     </td>
-                    <td className="px-4 py-2.5 text-[11px]" style={{ color: "rgba(13,4,70,0.6)" }}>
-                      {p.horarioInicio.slice(0, 5)} — {p.horarioFim.slice(0, 5)}
+                    <td className="px-4 py-3">
+                      <span className="inline-flex items-center gap-1 text-[11px] font-medium" style={{ color: "rgba(13,4,70,0.7)" }}>
+                        <Clock size={11} style={{ color: "rgba(13,4,70,0.35)" }} />
+                        {p.horarioInicio.slice(0, 5)} — {p.horarioFim.slice(0, 5)}
+                      </span>
                     </td>
-                    <td className="px-4 py-2.5 text-[11px]" style={{ color: "rgba(13,4,70,0.6)" }}>
-                      {getApresentadorNome(p.apresentadorId)}
+                    <td className="px-4 py-3 text-[11px] font-medium" style={{ color: "rgba(13,4,70,0.7)" }}>
+                      {getApresentadorNome(p.apresentadorId) || <span style={{ color: "rgba(13,4,70,0.3)" }}>—</span>}
                     </td>
-                    <td className="px-4 py-2.5 text-center">
-                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-semibold ${
-                        p.ativo ? "bg-green-50 text-green-600" : "bg-red-50 text-red-500"
-                      }`}>
-                        <div className={`w-1.5 h-1.5 rounded-full ${p.ativo ? "bg-green-500" : "bg-red-500"}`} />
+                    <td className="px-4 py-3 text-center">
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold" style={{
+                        backgroundColor: p.ativo ? "rgba(34,197,94,0.1)" : "rgba(220,38,38,0.08)",
+                        color: p.ativo ? "#16a34a" : "#dc2626",
+                      }}>
+                        <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: p.ativo ? "#22c55e" : "#dc2626" }} />
                         {p.ativo ? "Ativo" : "Inativo"}
                       </span>
                     </td>
-                    <td className="px-4 py-2.5 text-center">
-                      <div className="flex items-center justify-center gap-1">
+                    <td className="px-4 py-3 text-center">
+                      <div className="flex items-center justify-center gap-0.5">
                         <button onClick={() => startEdit(p)} title="Editar"
-                          className="w-7 h-7 rounded-lg flex items-center justify-center transition-all hover:bg-[#268ffa]/10">
-                          <Pencil size={13} style={{ color: "#268ffa" }} />
+                          className="w-8 h-8 rounded-lg flex items-center justify-center transition-all"
+                          style={{ backgroundColor: "transparent" }}
+                          onMouseEnter={e => { e.currentTarget.style.backgroundColor = "rgba(38,143,250,0.1)"; }}
+                          onMouseLeave={e => { e.currentTarget.style.backgroundColor = "transparent"; }}
+                        >
+                          <Pencil size={14} style={{ color: "#268ffa" }} />
                         </button>
                         <button onClick={() => toggleAtivo(p.id, p.ativo)} title={p.ativo ? "Desativar" : "Ativar"}
-                          className="w-7 h-7 rounded-lg flex items-center justify-center transition-all hover:bg-green-50">
-                          <Power size={13} style={{ color: p.ativo ? "#22c55e" : "#dc2626" }} />
+                          className="w-8 h-8 rounded-lg flex items-center justify-center transition-all"
+                          style={{ backgroundColor: "transparent" }}
+                          onMouseEnter={e => { e.currentTarget.style.backgroundColor = p.ativo ? "rgba(34,197,94,0.1)" : "rgba(220,38,38,0.08)"; }}
+                          onMouseLeave={e => { e.currentTarget.style.backgroundColor = "transparent"; }}
+                        >
+                          <Power size={14} style={{ color: p.ativo ? "#22c55e" : "#dc2626" }} />
                         </button>
                         <button onClick={() => removePrograma(p.id)} title="Remover"
-                          className="w-7 h-7 rounded-lg flex items-center justify-center transition-all hover:bg-red-50">
-                          <Trash2 size={13} style={{ color: "#dc2626" }} />
+                          className="w-8 h-8 rounded-lg flex items-center justify-center transition-all"
+                          style={{ backgroundColor: "transparent" }}
+                          onMouseEnter={e => { e.currentTarget.style.backgroundColor = "rgba(220,38,38,0.08)"; }}
+                          onMouseLeave={e => { e.currentTarget.style.backgroundColor = "transparent"; }}
+                        >
+                          <Trash2 size={14} style={{ color: "#dc2626" }} />
                         </button>
                       </div>
                     </td>
