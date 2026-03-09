@@ -602,37 +602,51 @@ export default function NoticiasPanel() {
   return (
     <TooltipProvider delayDuration={300}>
     <div className="animate-fade-in space-y-4">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <h3 className="text-xl font-bold" style={{ color: "#0d0446" }}>Notícias do momento</h3>
-          <button
-            onClick={() => setWizardOpen(true)}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-full text-white font-semibold text-[10px] transition-all hover:opacity-90"
-            style={{ backgroundColor: "#2ec1f7" }}
-          >
-            <Newspaper size={10} /> Montar Jornal
-          </button>
-           <button
-            onClick={() => { setShowAddSiteInput(prev => !prev); setShowNoticiaAvulsaInput(false); }}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-full font-semibold text-[10px] transition-all"
-            style={{ backgroundColor: "#0d0446", color: "#ffffff" }}
-          >
-            <Plus size={10} /> Adicionar Site
-          </button>
-          <button
-            onClick={() => { setShowNoticiaAvulsaInput(prev => !prev); setShowAddSiteInput(false); }}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-full font-semibold text-[10px] transition-all"
-            style={{ backgroundColor: "#0d0446", color: "#ffffff" }}
-          >
-            <LinkIcon size={10} /> Notícia Avulsa
-          </button>
+      {/* Main Card */}
+      <div className="rounded-2xl overflow-hidden" style={{ background: "#d9e9fa", boxShadow: "0 8px 32px rgba(13,4,70,0.12)", padding: "20px" }}>
+        {/* Header */}
+        <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(13,4,70,0.08)" }}>
+              <Newspaper size={20} style={{ color: "#0d0446" }} />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold" style={{ color: "#0d0446" }}>Notícias do momento</h3>
+              <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.5)" }}>Portais, cotações e ferramentas de jornal</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setWizardOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-bold text-[10px] transition-all hover:shadow-md"
+              style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#ffffff" }}
+            >
+              <Newspaper size={11} /> Montar Jornal
+            </button>
+            <button
+              onClick={() => { setShowAddSiteInput(prev => !prev); setShowNoticiaAvulsaInput(false); }}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-full font-bold text-[10px] transition-all"
+              style={{ backgroundColor: "#0d0446", color: "#ffffff" }}
+            >
+              <Plus size={10} /> Adicionar Site
+            </button>
+            <button
+              onClick={() => { setShowNoticiaAvulsaInput(prev => !prev); setShowAddSiteInput(false); }}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-full font-bold text-[10px] transition-all"
+              style={{ backgroundColor: "#0d0446", color: "#ffffff" }}
+            >
+              <LinkIcon size={10} /> Notícia Avulsa
+            </button>
+            <button onClick={() => { loadAll(); loadCotacoes(); }} disabled={loading}
+              className="w-8 h-8 rounded-full flex items-center justify-center transition-all disabled:opacity-50"
+              style={{ backgroundColor: "rgba(13,4,70,0.06)" }}
+              onMouseEnter={e => { e.currentTarget.style.backgroundColor = "rgba(13,4,70,0.12)"; }}
+              onMouseLeave={e => { e.currentTarget.style.backgroundColor = "rgba(13,4,70,0.06)"; }}
+            >
+              <RefreshCw size={14} className={loading ? "animate-spin" : ""} style={{ color: "#0d0446" }} />
+            </button>
+          </div>
         </div>
-        <button onClick={() => { loadAll(); loadCotacoes(); }} disabled={loading}
-          className="text-muted-foreground hover:text-primary transition-colors disabled:opacity-50">
-          <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
-        </button>
-      </div>
 
       {showAddSiteInput && (
         <div className="flex gap-2 animate-fade-in">
