@@ -77,6 +77,7 @@ export default function MiniPlayerWidget({ data, onClose }: { data: MiniPlayerDa
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<HlsType | null>(null);
   const [muted, setMuted] = useState(false);
+  const [volume, setVolume] = useState(80);
   const [playing, setPlaying] = useState(false);
   const [needsUnlock, setNeedsUnlock] = useState(false);
   const navigate = useNavigate();
