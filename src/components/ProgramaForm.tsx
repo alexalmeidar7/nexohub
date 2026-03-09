@@ -877,7 +877,7 @@ export default function ProgramaForm() {
                 <div className="w-9 h-5 rounded-full transition-colors peer-checked:bg-[#f59e0b]" style={{ backgroundColor: "rgba(255,255,255,0.15)" }} />
                 <div className="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-4 shadow-sm" />
               </div>
-              <span className="text-xs font-medium text-white/70">Variável</span>
+              <span className="text-xs font-medium text-white/90">Variável</span>
             </label>
           </div>
 
