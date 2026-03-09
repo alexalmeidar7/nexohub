@@ -1861,7 +1861,6 @@ export default function PlayerPage() {
         <div className="absolute inset-0 bg-cover bg-center transition-all duration-700"
           style={{ backgroundImage: `url(${canal?.cover_url || (youtubeVideos.length > 0 ? youtubeVideos[0].thumbnail.replace('default.jpg','maxresdefault.jpg') : '')})`, backgroundColor: '#111' }}
         />
-        />
       )}
 
       {/* YouTube: Subtle bottom gradient only for control bar readability */}
