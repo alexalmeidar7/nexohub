@@ -260,7 +260,7 @@ export default function KaraokeOverlay({
               {speedOffset > 0 ? "+" : ""}{speedOffset.toFixed(1)}s
             </span>
             <button
-              onClick={() => adjustSpeed(0.5)}
+              onClick={() => adjustSpeed(10)}
               className="w-6 h-6 rounded-full flex items-center justify-center transition-all hover:bg-white/20 active:scale-95"
               title="Adiantar letra"
             >
