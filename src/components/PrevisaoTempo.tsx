@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Search, Droplets, CloudRain, Thermometer, Star, Sparkles } from "lucide-react";
+import { Search, Droplets, CloudRain, Thermometer, Star, Sparkles, MapPin, Wind } from "lucide-react";
 import XmlLinkRow from "./XmlLinkRow";
 import { WeatherIcon } from "./WeatherIcons";
 import { supabase } from "@/integrations/supabase/client";
@@ -45,7 +45,6 @@ const weatherLabels: Record<number, string> = {
   80: "Pancadas leves", 81: "Pancadas", 82: "Pancadas fortes",
   95: "Tempestade", 96: "Tempestade com granizo", 99: "Tempestade severa",
 };
-
 
 function getWeatherLabel(code: number) {
   const closest = Object.keys(weatherLabels).map(Number)
@@ -151,7 +150,6 @@ export default function PrevisaoTempo() {
       }));
       localStorage.setItem(STORAGE_KEY, name);
       setWeather({ city: name, lat, lon, current, forecast });
-      // Fetch AI description
       if (!silent) {
         setAiLoading(true);
         setAiDescription("");
@@ -271,37 +269,32 @@ export default function PrevisaoTempo() {
   };
 
   return (
-    <div className="animate-fade-in space-y-8">
-      {/* Primary + Secondary cities row */}
+    <div className="animate-fade-in space-y-6">
+      {/* Favorite cities chips */}
       {(primaryCity || favorites.length > 0) && (
         <div className="flex gap-2 flex-wrap items-center">
           {primaryCity && (
-            <div className="flex items-center gap-2 rounded-full px-3 py-1.5"
-              style={{ backgroundColor: "#0d0446", border: "2px solid #2dbef3" }}>
+            <button
+              onClick={() => { setCity(primaryCity.name); fetchWeatherByCoords(primaryCity.lat, primaryCity.lon, primaryCity.name); }}
+              className="flex items-center gap-2 rounded-full px-4 py-2 text-xs font-bold transition-all hover:scale-105"
+              style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)", color: "#ffffff", boxShadow: "0 4px 15px rgba(13,4,70,0.3)" }}
+            >
               <Star size={12} style={{ color: "#2dbef3" }} />
-              <button onClick={() => { setCity(primaryCity.name); fetchWeatherByCoords(primaryCity.lat, primaryCity.lon, primaryCity.name); }}
-                className="text-xs font-semibold transition-colors"
-                style={{ color: "#ffffff" }}
-                onMouseEnter={e => { e.currentTarget.style.color = "#2dbef3"; }}
-                onMouseLeave={e => { e.currentTarget.style.color = "#ffffff"; }}
-              >{primaryCity.name}</button>
-            </div>
+              {primaryCity.name}
+            </button>
           )}
           {favorites.map(f => (
-            <div key={f.name} className="flex items-center gap-2 rounded-full px-3 py-1.5"
-              style={{ backgroundColor: "#ffffff", border: "1px solid #0d0446" }}>
+            <div key={f.name} className="flex items-center gap-2 rounded-full px-3 py-1.5 transition-all hover:shadow-md"
+              style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.15)" }}>
               <input type="checkbox" checked={f.inXml} onChange={() => toggleFavoriteXml(f.name)}
                 className="w-3 h-3" style={{ accentColor: "#2dbef3" }} title="Incluir no XML" />
               <button onClick={() => { setCity(f.name); fetchWeather(f.name); }}
-                className="text-xs transition-colors"
+                className="text-xs font-medium transition-colors hover:text-[#2dbef3]"
                 style={{ color: "#0d0446" }}
-                onMouseEnter={e => { e.currentTarget.style.color = "#2dbef3"; }}
-                onMouseLeave={e => { e.currentTarget.style.color = "#0d0446"; }}
               >{f.name}</button>
-              <button onClick={() => removeFavorite(f.name)} className="text-xs"
-                style={{ color: "rgba(13,4,70,0.4)" }}
-                onMouseEnter={e => { e.currentTarget.style.color = "#dc2626"; }}
-                onMouseLeave={e => { e.currentTarget.style.color = "rgba(13,4,70,0.4)"; }}
+              <button onClick={() => removeFavorite(f.name)}
+                className="text-xs transition-colors hover:text-red-500"
+                style={{ color: "rgba(13,4,70,0.3)" }}
               >✕</button>
             </div>
           ))}
@@ -311,66 +304,70 @@ export default function PrevisaoTempo() {
       {/* Search with autocomplete */}
       <div className="relative" ref={suggestionsRef}>
         <div className="flex gap-3">
-          <input value={city} onChange={(e) => handleCityChange(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && searchWeather()}
-            onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
-            placeholder="Buscar cidade..."
-            className="flex-1 px-4 py-1.5 outline-none transition-colors text-sm"
-            style={{ backgroundColor: "#ffffff", border: "1px solid #0d0446", color: "#0d0446", borderRadius: "20px" }}
-            onFocusCapture={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
-            onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
-          />
+          <div className="relative flex-1">
+            <MapPin size={16} className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: "rgba(13,4,70,0.4)" }} />
+            <input value={city} onChange={(e) => handleCityChange(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && searchWeather()}
+              onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+              placeholder="Buscar cidade..."
+              className="w-full pl-10 pr-4 py-2.5 outline-none transition-all text-sm"
+              style={{ backgroundColor: "#ffffff", border: "2px solid rgba(13,4,70,0.1)", color: "#0d0446", borderRadius: "16px" }}
+              onFocusCapture={e => { e.currentTarget.style.borderColor = "#2dbef3"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(45,190,243,0.1)"; }}
+              onBlur={e => { e.currentTarget.style.borderColor = "rgba(13,4,70,0.1)"; e.currentTarget.style.boxShadow = "none"; }}
+            />
+          </div>
           <button onClick={searchWeather} disabled={loading}
-            className="px-5 py-1.5 font-bold transition-all flex items-center gap-2 disabled:opacity-50"
-            style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "20px", border: "2px solid #0d0446" }}
-            onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#ffffff"; e.currentTarget.style.color = "#0d0446"; }}
-            onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#0d0446"; e.currentTarget.style.color = "#ffffff"; }}
+            className="px-6 py-2.5 font-bold transition-all flex items-center gap-2 disabled:opacity-50 hover:scale-105"
+            style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)", color: "#ffffff", borderRadius: "16px", boxShadow: "0 4px 15px rgba(13,4,70,0.25)" }}
           >
             <Search size={16} /> Buscar
           </button>
         </div>
         {showSuggestions && suggestions.length > 0 && (
-           <div className="absolute z-50 top-full left-0 right-0 mt-1 rounded-lg overflow-hidden shadow-lg"
-             style={{ backgroundColor: "#0d0446", marginRight: "90px" }}>
+          <div className="absolute z-50 top-full left-0 right-0 mt-2 rounded-xl overflow-hidden"
+            style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)", marginRight: "110px", boxShadow: "0 10px 40px rgba(13,4,70,0.3)" }}>
             {suggestions.map((s, i) => (
               <button key={i} onClick={() => selectSuggestion(s)}
-                className="w-full text-left px-4 py-2 transition-colors flex items-center justify-between text-xs"
+                className="w-full text-left px-4 py-3 transition-all flex items-center justify-between text-xs border-b border-white/5 last:border-0 hover:bg-white/10"
                 style={{ color: "#ffffff" }}
-                onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#2dbef3"; }}
-                onMouseLeave={e => { e.currentTarget.style.backgroundColor = "transparent"; }}
               >
-                <span style={{ color: "#ffffff" }}>{s.name}{s.admin1 ? `, ${s.admin1}` : ""}</span>
-                <span style={{ color: "rgba(255,255,255,0.6)", fontSize: "10px" }}>{s.country}</span>
+                <span className="flex items-center gap-2">
+                  <MapPin size={12} style={{ color: "#2dbef3" }} />
+                  {s.name}{s.admin1 ? `, ${s.admin1}` : ""}
+                </span>
+                <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "10px" }}>{s.country}</span>
               </button>
             ))}
           </div>
         )}
       </div>
 
-      {error && <p style={{ color: "#dc2626" }}>{error}</p>}
+      {error && <p className="text-sm font-medium" style={{ color: "#dc2626" }}>{error}</p>}
+
+      {/* Loading skeleton */}
       {loading && (
         <div className="animate-pulse space-y-6">
-          <div className="rounded-2xl p-6" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)" }}>
-            <div className="flex items-center justify-between mb-4">
-              <div className="space-y-2">
-                <div className="h-6 w-36 rounded bg-[#0d0446]/10" />
-                <div className="h-3 w-24 rounded bg-[#0d0446]/5" />
+          <div className="rounded-2xl p-6" style={{ background: "linear-gradient(135deg, #0d0446 0%, #1a0a6e 100%)" }}>
+            <div className="flex items-center justify-between mb-6">
+              <div className="space-y-3">
+                <div className="h-6 w-36 rounded-lg bg-white/10" />
+                <div className="h-3 w-24 rounded bg-white/5" />
               </div>
-              <div className="h-14 w-14 rounded-full bg-[#0d0446]/5" />
+              <div className="h-16 w-16 rounded-full bg-white/10" />
             </div>
-            <div className="h-12 w-28 rounded bg-[#2dbef3]/20 mb-6" />
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="h-14 w-32 rounded-lg bg-white/15 mb-6" />
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="h-12 rounded-lg bg-[#0d0446]/5" />
+                <div key={i} className="h-16 rounded-xl bg-white/8" />
               ))}
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
             {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="rounded-xl p-4 space-y-2" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.08)" }}>
-                <div className="h-3 w-12 mx-auto rounded bg-[#0d0446]/8" />
-                <div className="h-8 w-8 mx-auto rounded-full bg-[#0d0446]/5" />
-                <div className="h-3 w-16 mx-auto rounded bg-[#0d0446]/5" />
+              <div key={i} className="rounded-xl p-5 space-y-3" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.06)" }}>
+                <div className="h-3 w-14 mx-auto rounded bg-[#0d0446]/8" />
+                <div className="h-10 w-10 mx-auto rounded-full bg-[#0d0446]/5" />
+                <div className="h-4 w-16 mx-auto rounded bg-[#0d0446]/5" />
               </div>
             ))}
           </div>
@@ -379,117 +376,127 @@ export default function PrevisaoTempo() {
 
       {weather && (
         <>
-          <div className="rounded-2xl p-6" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)" }}>
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <div className="flex items-center gap-3 flex-wrap">
-                  <h3 className="text-2xl font-semibold" style={{ color: "#0d0446" }}>{weather.city}</h3>
-                  {/* Show "Cidade Principal" only if no primary set yet, or this IS the primary city */}
-                  {(!primaryCity || isPrimary) && (
-                    <label className="flex items-center gap-2 cursor-pointer select-none rounded-full px-3 py-1"
-                      style={{ backgroundColor: isPrimary ? "#0d0446" : "rgba(13,4,70,0.06)", border: "1px solid rgba(13,4,70,0.15)", transition: "all 0.2s" }}>
-                      <input type="checkbox" checked={isPrimary} onChange={togglePrimaryCity}
-                        className="w-3.5 h-3.5" style={{ accentColor: "#2dbef3" }} />
-                      <span className="text-xs font-semibold" style={{ color: isPrimary ? "#ffffff" : "#0d0446" }}>
-                        Cidade Principal
-                      </span>
-                    </label>
-                  )}
-                  {!isFavorited && (
-                    <button onClick={addFavorite} disabled={isPrimary}
-                      className="flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                      style={{ backgroundColor: "rgba(13,4,70,0.08)", color: "#0d0446", border: "1px solid rgba(13,4,70,0.15)" }}
-                      onMouseEnter={e => { if (!isPrimary) { e.currentTarget.style.backgroundColor = "#2dbef3"; e.currentTarget.style.color = "#ffffff"; } }}
-                      onMouseLeave={e => { e.currentTarget.style.backgroundColor = "rgba(13,4,70,0.08)"; e.currentTarget.style.color = "#0d0446"; }}
-                    >
-                      <Star size={14} /> Cidade Secundária
-                    </button>
-                  )}
-                  <span className="text-xs font-medium" style={{ color: "rgba(13,4,70,0.5)" }}>
-                    {new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
-                  </span>
+          {/* Current weather — hero card */}
+          <div className="rounded-2xl overflow-hidden" style={{ background: "linear-gradient(135deg, #0d0446 0%, #1a0a6e 100%)", boxShadow: "0 8px 32px rgba(13,4,70,0.25)" }}>
+            <div className="p-6">
+              <div className="flex items-start justify-between mb-5">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <h3 className="text-2xl font-bold text-white">{weather.city}</h3>
+                    {(!primaryCity || isPrimary) && (
+                      <label className="flex items-center gap-2 cursor-pointer select-none rounded-full px-3 py-1 transition-all"
+                        style={{ backgroundColor: isPrimary ? "rgba(45,190,243,0.2)" : "rgba(255,255,255,0.08)", border: `1px solid ${isPrimary ? "#2dbef3" : "rgba(255,255,255,0.15)"}` }}>
+                        <input type="checkbox" checked={isPrimary} onChange={togglePrimaryCity}
+                          className="w-3.5 h-3.5" style={{ accentColor: "#2dbef3" }} />
+                        <span className="text-[11px] font-semibold text-white">Cidade Principal</span>
+                      </label>
+                    )}
+                    {!isFavorited && (
+                      <button onClick={addFavorite} disabled={isPrimary}
+                        className="flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-semibold transition-all disabled:opacity-40 hover:bg-white/15"
+                        style={{ backgroundColor: "rgba(255,255,255,0.08)", color: "#ffffff", border: "1px solid rgba(255,255,255,0.15)" }}
+                      >
+                        <Star size={12} /> Secundária
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-white/50">
+                      {new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+                    </span>
+                  </div>
+                  <p className="text-sm text-white/70">{getWeatherLabel(weather.current.weatherCode)}</p>
                 </div>
-                <p className="text-sm mt-1" style={{ color: "rgba(13,4,70,0.5)" }}>{getWeatherLabel(weather.current.weatherCode)}</p>
+                <div className="flex items-center">
+                  <WeatherIcon code={weather.current.weatherCode} size={72} />
+                </div>
               </div>
-              <div className="flex items-center">
-                <WeatherIcon code={weather.current.weatherCode} size={64} />
-              </div>
-            </div>
-            <div className="flex items-start gap-5 mb-6">
-              <div className="text-5xl font-bold flex-shrink-0" style={{ color: "#2dbef3" }}>{weather.current.temp}°C</div>
-              <div className="flex-1 space-y-2">
-                {aiLoading ? (
-                  <div className="flex items-center gap-2" style={{ color: "rgba(13,4,70,0.4)" }}>
-                    <Sparkles size={14} className="animate-pulse" />
-                    <span className="text-xs italic">Gerando descrição...</span>
-                  </div>
-                ) : aiDescription ? (
-                  <div className="flex items-start gap-2">
-                    <Sparkles size={14} className="mt-0.5 flex-shrink-0" style={{ color: "#2dbef3" }} />
-                    <p className="text-sm leading-relaxed" style={{ color: "#0d0446" }}>{aiDescription}</p>
-                  </div>
-                ) : null}
 
-                {/* Forecast description */}
-                {!forecastDescription && !forecastLoading && aiDescription && (
-                  <button onClick={fetchForecastDescription}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all"
-                    style={{ backgroundColor: "rgba(45,190,243,0.1)", color: "#0d0446", border: "1px solid rgba(45,190,243,0.3)" }}
-                    onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#2dbef3"; e.currentTarget.style.color = "#ffffff"; }}
-                    onMouseLeave={e => { e.currentTarget.style.backgroundColor = "rgba(45,190,243,0.1)"; e.currentTarget.style.color = "#0d0446"; }}
-                  >
-                    <Sparkles size={12} /> Quer que eu te fale como será os próximos 5 dias?
-                  </button>
-                )}
-                {forecastLoading && (
-                  <div className="flex items-center gap-2" style={{ color: "rgba(13,4,70,0.4)" }}>
-                    <Sparkles size={14} className="animate-pulse" />
-                    <span className="text-xs italic">Analisando os próximos dias...</span>
-                  </div>
-                )}
-                {forecastDescription && (
-                  <div className="rounded-lg p-3 mt-1" style={{ backgroundColor: "rgba(45,190,243,0.06)", border: "1px solid rgba(45,190,243,0.15)" }}>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs font-bold" style={{ color: "#0d0446" }}>Veja como fica o tempo nos próximos 5 dias</span>
-                      <button onClick={() => setForecastDescription("")}
-                        className="text-xs px-2 py-0.5 rounded-full transition-all"
-                        style={{ color: "rgba(13,4,70,0.5)", backgroundColor: "rgba(13,4,70,0.06)" }}
-                        onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#0d0446"; e.currentTarget.style.color = "#ffffff"; }}
-                        onMouseLeave={e => { e.currentTarget.style.backgroundColor = "rgba(13,4,70,0.06)"; e.currentTarget.style.color = "rgba(13,4,70,0.5)"; }}
-                      >✕</button>
+              <div className="flex items-start gap-6 mb-6">
+                <div className="text-6xl font-bold flex-shrink-0" style={{ color: "#2dbef3" }}>{weather.current.temp}°C</div>
+                <div className="flex-1 space-y-3 pt-2">
+                  {aiLoading ? (
+                    <div className="flex items-center gap-2 text-white/40">
+                      <Sparkles size={14} className="animate-pulse" />
+                      <span className="text-xs italic">Gerando descrição...</span>
                     </div>
+                  ) : aiDescription ? (
                     <div className="flex items-start gap-2">
                       <Sparkles size={14} className="mt-0.5 flex-shrink-0" style={{ color: "#2dbef3" }} />
-                      <p className="text-sm leading-relaxed" style={{ color: "#0d0446" }}>{forecastDescription}</p>
+                      <p className="text-sm leading-relaxed text-white/80">{aiDescription}</p>
                     </div>
-                  </div>
-                )}
+                  ) : null}
+
+                  {!forecastDescription && !forecastLoading && aiDescription && (
+                    <button onClick={fetchForecastDescription}
+                      className="flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold transition-all hover:scale-105"
+                      style={{ background: "rgba(45,190,243,0.15)", color: "#2dbef3", border: "1px solid rgba(45,190,243,0.3)" }}
+                    >
+                      <Sparkles size={12} /> Quer que eu te fale como será os próximos 5 dias?
+                    </button>
+                  )}
+                  {forecastLoading && (
+                    <div className="flex items-center gap-2 text-white/40">
+                      <Sparkles size={14} className="animate-pulse" />
+                      <span className="text-xs italic">Analisando os próximos dias...</span>
+                    </div>
+                  )}
+                  {forecastDescription && (
+                    <div className="rounded-xl p-4" style={{ backgroundColor: "rgba(45,190,243,0.08)", border: "1px solid rgba(45,190,243,0.15)" }}>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-bold text-white">Veja como fica o tempo nos próximos 5 dias</span>
+                        <button onClick={() => setForecastDescription("")}
+                          className="text-xs px-2 py-0.5 rounded-full transition-all text-white/40 hover:text-white hover:bg-white/10"
+                        >✕</button>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <Sparkles size={14} className="mt-0.5 flex-shrink-0" style={{ color: "#2dbef3" }} />
+                        <p className="text-sm leading-relaxed text-white/80">{forecastDescription}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <Stat icon={<Thermometer size={16} />} label="Mínima" value={`${weather.current.tempMin}°C`} />
-              <Stat icon={<Thermometer size={16} />} label="Máxima" value={`${weather.current.tempMax}°C`} />
-              <Stat icon={<Droplets size={16} />} label="Humidade" value={`${weather.current.humidity}%`} />
-              <Stat icon={<CloudRain size={16} />} label="Chance de chuva" value={`${weather.current.rainChance}%`} />
+
+              {/* Stats grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <StatCard icon={<Thermometer size={18} />} label="Mínima" value={`${weather.current.tempMin}°C`} color="#60a5fa" />
+                <StatCard icon={<Thermometer size={18} />} label="Máxima" value={`${weather.current.tempMax}°C`} color="#f97316" />
+                <StatCard icon={<Droplets size={18} />} label="Humidade" value={`${weather.current.humidity}%`} color="#2dbef3" />
+                <StatCard icon={<CloudRain size={18} />} label="Chuva" value={`${weather.current.rainChance}%`} color="#a78bfa" />
+              </div>
             </div>
           </div>
 
+          {/* Forecast 5 days */}
           <div>
             <h4 className="text-lg font-bold mb-4" style={{ color: "#0d0446" }}>Próximos 5 dias</h4>
             <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
               {weather.forecast.map((day) => (
-                <div key={day.date} className="rounded-xl p-4 text-center space-y-2 transition-colors"
-                   style={{ backgroundColor: "#ffffff", border: "2px solid rgba(13,4,70,0.1)" }}
-                   onMouseEnter={e => { e.currentTarget.style.borderColor = "#2ec1f7"; }}
-                   onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(13,4,70,0.1)"; }}>
-                   <p className="text-xs capitalize" style={{ color: "rgba(13,4,70,0.5)" }}>{formatDay(day.date)}</p>
-                   <div className="flex justify-center"><WeatherIcon code={day.weatherCode} size={40} forceDay /></div>
-                  <p className="text-sm" style={{ color: "rgba(13,4,70,0.5)" }}>{getWeatherLabel(day.weatherCode)}</p>
-                  <p className="text-xl font-semibold" style={{ color: "#0d0446" }}>{day.temp}°C</p>
-                  <div className="text-xs space-y-1" style={{ color: "rgba(13,4,70,0.5)" }}>
-                    <p>↓ {day.tempMin}° / ↑ {day.tempMax}°</p>
-                    <p><Droplets size={12} className="inline mr-1" />{day.humidity}%</p>
-                    <p><CloudRain size={12} className="inline mr-1" />{day.rainChance}%</p>
+                <div key={day.date}
+                  className="rounded-xl p-5 text-center space-y-2 transition-all hover:shadow-lg hover:-translate-y-1 group"
+                  style={{ backgroundColor: "#ffffff", border: "2px solid rgba(13,4,70,0.06)" }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = "#2dbef3"; e.currentTarget.style.boxShadow = "0 8px 25px rgba(45,190,243,0.15)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(13,4,70,0.06)"; e.currentTarget.style.boxShadow = "none"; }}
+                >
+                  <p className="text-[11px] font-semibold uppercase tracking-wider capitalize" style={{ color: "rgba(13,4,70,0.45)" }}>{formatDay(day.date)}</p>
+                  <div className="flex justify-center py-1">
+                    <WeatherIcon code={day.weatherCode} size={44} forceDay />
+                  </div>
+                  <p className="text-[11px] font-medium" style={{ color: "rgba(13,4,70,0.5)" }}>{getWeatherLabel(day.weatherCode)}</p>
+                  <p className="text-2xl font-bold" style={{ color: "#0d0446" }}>{day.temp}°C</p>
+                  <div className="text-[11px] space-y-1.5 pt-1" style={{ color: "rgba(13,4,70,0.5)" }}>
+                    <p className="flex items-center justify-center gap-1">
+                      <span style={{ color: "#60a5fa" }}>↓{day.tempMin}°</span>
+                      <span className="mx-1">/</span>
+                      <span style={{ color: "#f97316" }}>↑{day.tempMax}°</span>
+                    </p>
+                    <p className="flex items-center justify-center gap-1">
+                      <Droplets size={11} style={{ color: "#2dbef3" }} />{day.humidity}%
+                    </p>
+                    <p className="flex items-center justify-center gap-1">
+                      <CloudRain size={11} style={{ color: "#a78bfa" }} />{day.rainChance}%
+                    </p>
                   </div>
                 </div>
               ))}
@@ -508,14 +515,15 @@ export default function PrevisaoTempo() {
   );
 }
 
-function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+function StatCard({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: string; color: string }) {
   return (
-    <div className="rounded-lg p-3 text-center" style={{ backgroundColor: "rgba(13,4,70,0.04)" }}>
-      <div className="flex items-center justify-center gap-1 mb-1" style={{ color: "rgba(13,4,70,0.5)" }}>
+    <div className="rounded-xl p-3.5 text-center transition-all hover:bg-white/10"
+      style={{ backgroundColor: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)" }}>
+      <div className="flex items-center justify-center gap-1.5 mb-1.5" style={{ color }}>
         {icon}
-        <span className="text-xs">{label}</span>
+        <span className="text-[11px] font-medium text-white/50">{label}</span>
       </div>
-      <p className="text-lg font-semibold" style={{ color: "#0d0446" }}>{value}</p>
+      <p className="text-lg font-bold text-white">{value}</p>
     </div>
   );
 }
