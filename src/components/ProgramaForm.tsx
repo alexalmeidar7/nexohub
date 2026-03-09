@@ -842,21 +842,21 @@ export default function ProgramaForm() {
           {/* Horários */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-[11px] mb-1.5 font-semibold text-white uppercase tracking-wider flex items-center gap-1"><Clock size={12} /> Início</label>
+              <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider flex items-center gap-1" style={{ color: "#0d0446" }}><Clock size={12} /> Início</label>
               <input type="time" step="1" value={horarioInicio} onChange={(e) => setHorarioInicio(e.target.value)}
-                className="w-full px-4 py-2 outline-none transition-all text-sm text-white"
-                style={{ backgroundColor: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "12px", colorScheme: "dark" }}
-                onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
-                onBlur={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)"; }}
+                className="w-full px-4 py-2 outline-none transition-all text-sm"
+                style={{ backgroundColor: "rgba(255,255,255,0.6)", border: "1px solid rgba(13,4,70,0.15)", borderRadius: "12px", color: "#0d0446" }}
+                onFocus={e => { e.currentTarget.style.borderColor = "#268ffa"; }}
+                onBlur={e => { e.currentTarget.style.borderColor = "rgba(13,4,70,0.15)"; }}
               />
             </div>
             <div>
-              <label className="block text-[11px] mb-1.5 font-semibold text-white uppercase tracking-wider flex items-center gap-1"><Clock size={12} /> Fim</label>
+              <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider flex items-center gap-1" style={{ color: "#0d0446" }}><Clock size={12} /> Fim</label>
               <input type="time" step="1" value={horarioFim} onChange={(e) => setHorarioFim(e.target.value)}
-                className="w-full px-4 py-2 outline-none transition-all text-sm text-white"
-                style={{ backgroundColor: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "12px", colorScheme: "dark" }}
-                onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
-                onBlur={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)"; }}
+                className="w-full px-4 py-2 outline-none transition-all text-sm"
+                style={{ backgroundColor: "rgba(255,255,255,0.6)", border: "1px solid rgba(13,4,70,0.15)", borderRadius: "12px", color: "#0d0446" }}
+                onFocus={e => { e.currentTarget.style.borderColor = "#268ffa"; }}
+                onBlur={e => { e.currentTarget.style.borderColor = "rgba(13,4,70,0.15)"; }}
               />
             </div>
           </div>
