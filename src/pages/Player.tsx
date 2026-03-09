@@ -356,6 +356,8 @@ export default function PlayerPage() {
   const handleHomeConfirmYes = useCallback(() => {
     setShowHomeConfirm(false);
     if (canal) {
+      // IMPORTANT: unlock audio element synchronously in user gesture context
+      unlockAndPrepareMiniAudio(canal.url);
       saveMiniPlayerData({
         url: canal.url,
         name: canal.name,
@@ -366,7 +368,6 @@ export default function PlayerPage() {
         musicArtist: musicData?.artista || undefined,
       });
     }
-    // Don't stop playback — MiniPlayer on Home will take over seamlessly
     setPageFadeOut(true);
     setTimeout(() => navigate(playerHomePath), 400);
   }, [canal, musicData, playerHomePath, navigate]);
