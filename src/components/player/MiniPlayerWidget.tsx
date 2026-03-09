@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import type HlsType from "hls.js";
-import { X, Volume2, VolumeX, Maximize2, Play } from "lucide-react";
+import { X, Volume2, VolumeX, Maximize2, Play, Pause } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 
 const MINI_PLAYER_KEY = "mini_player_data";
