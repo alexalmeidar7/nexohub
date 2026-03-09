@@ -1859,7 +1859,7 @@ export default function PlayerPage() {
       {/* YouTube: Thumbnail placeholder when no video selected */}
       {isYoutube && !selectedVideoId && (
         <div className="absolute inset-0 bg-cover bg-center transition-all duration-700"
-          style={{ backgroundImage: `url(${canal?.cover_url || canal?.background_url || (youtubeVideos.length > 0 ? youtubeVideos[0].thumbnail.replace('default.jpg','maxresdefault.jpg') : '')})`, backgroundColor: '#111' }}
+          style={{ backgroundImage: `url(${canal?.cover_url || (youtubeVideos.length > 0 ? youtubeVideos[0].thumbnail.replace('default.jpg','maxresdefault.jpg') : '')})`, backgroundColor: '#111' }}
         />
       )}
 
@@ -2056,9 +2056,7 @@ export default function PlayerPage() {
                 <button onClick={() => navigateChannel(1)} className="text-white/60 hover:text-white hover:bg-[#e60000] rounded px-1.5 py-1 sm:px-2 sm:py-2 transition-all" title="Próximo canal"><ChevronDown size={14} /></button>
               )}
             </div>
-            {canal?.background_url ? (
-              <img src={canal.background_url} alt="" className="w-12 h-12 sm:w-20 sm:h-20 rounded-lg object-contain" />
-            ) : canal?.logo_url ? (
+            {canal?.logo_url ? (
               <img src={canal.logo_url} alt="" className="w-12 h-12 sm:w-20 sm:h-20 rounded-lg object-contain" />
             ) : (
               <div className="w-12 h-12 sm:w-20 sm:h-20 rounded-lg bg-white/10 flex items-center justify-center text-white text-sm sm:text-lg font-bold">{canal?.numero_canal || "?"}</div>
