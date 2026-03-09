@@ -44,6 +44,7 @@ import PlayerShopProduct from "@/components/player/PlayerShopProduct";
 import PreRollOverlay from "@/components/PreRollOverlay";
 import { saveMiniPlayerData, clearMiniPlayerData, unlockAndPrepareMiniAudio } from "@/components/player/MiniPlayerWidget";
 import PlayerSkeleton from "@/components/skeletons/PlayerSkeleton";
+import PlayerSidebarComponent from "@/components/player/PlayerSidebar";
 import { normalizeMusicText } from "@/lib/textEncoding";
 
 // Dynamic HLS loader — cached after first import
@@ -1707,64 +1708,28 @@ export default function PlayerPage() {
   const showShopIcon = currentShopProducts.length > 0;
   // playerHomePath is now defined earlier in the component
   const userDisplayName = profileName || user?.email?.split("@")[0] || "Visitante";
-  const menuButtonBase = "w-14 rounded-2xl px-2 py-2.5 flex flex-col items-center justify-center gap-1.5 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-player-accent focus-visible:ring-offset-2 focus-visible:ring-offset-player-bg";
-  const menuButtonActive = "bg-player-accent text-player-foreground shadow-lg shadow-player-accent/25";
-  const menuButtonInactive = "bg-player-surface text-player-muted-foreground hover:bg-player-surface-hover hover:text-player-foreground";
 
   // Shopping popup is manual-only via icon click
+
+  const sidebarItems = useMemo(() => [
+    { icon: Home, label: "Home", key: "home", action: handleHomeClick },
+    { icon: Radio, label: "Streaming", key: "streaming", action: () => {} },
+    { icon: Film, label: "Conteúdo", key: "content", action: () => {} },
+    ...(user ? [{ icon: ShoppingBag, label: "Loja", key: "shop", action: () => setShopOpen((o: boolean) => !o) }] : []),
+  ], [handleHomeClick, user]);
 
   if (loading) {
     return (
       <div className="relative h-screen w-screen bg-black overflow-hidden select-none cursor-default animate-fade-in">
-        {/* User avatar + info - top left, always visible */}
-        <div className="fixed top-4 left-0 z-50 flex items-start">
-          <div className="w-20 flex justify-center">
-            <div className="w-10 h-10 rounded-full overflow-hidden bg-player-surface flex-shrink-0">
-              {profileAvatar ? (
-                <img src={profileAvatar} alt={profileName} className="w-full h-full object-cover" />
-              ) : (
-                <img src="/avatars/usr-default.png" alt="Visitante" className="w-full h-full object-cover" />
-              )}
-            </div>
-          </div>
-          <div className="mt-0.5">
-            <p className="text-xs text-player-muted-foreground">Bem vindo,</p>
-            <p className="text-sm text-player-accent font-bold leading-tight">{userDisplayName}</p>
-            {user && (
-              <button
-                onClick={async () => { await signOut(); navigate(playerHomePath); }}
-                className="text-player-accent text-[10px] hover:underline flex items-center gap-1 mt-0.5"
-              >
-                <LogOut className="h-3 w-3" /> Sair
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Sidebar menu with gradient background - always visible */}
-        <aside
-          className="fixed left-0 top-0 bottom-0 w-20 flex flex-col items-center justify-center gap-3 z-40"
-          style={{ background: "linear-gradient(to right, rgba(0,0,0,0.85), transparent)" }}
-        >
-          {[
-            { icon: Home, label: "Home", active: false, action: handleHomeClick },
-            { icon: Radio, label: "Streaming", active: true, action: () => {} },
-            { icon: Film, label: "Conteúdo", active: false, action: () => {} },
-            ...(user ? [{ icon: ShoppingBag, label: "Loja", active: false, action: () => setShopOpen(o => !o) }] : []),
-          ].map(item => (
-            <button
-              key={item.label}
-              onClick={item.action}
-              aria-label={item.label}
-              className={`${menuButtonBase} ${item.active ? menuButtonActive : menuButtonInactive}`}
-              title={item.label}
-            >
-              <item.icon className="h-5 w-5" />
-              <span className="text-[9px] font-semibold leading-none">{item.label}</span>
-            </button>
-          ))}
-        </aside>
-
+        <PlayerSidebarComponent
+          items={sidebarItems}
+          activeKey="streaming"
+          avatarUrl={profileAvatar}
+          userName={userDisplayName}
+          showLogout={!!user}
+          onLogout={async () => { await signOut(); navigate(playerHomePath); }}
+          loading
+        />
         <div className="absolute inset-y-0 right-0 left-0">
           <PlayerSkeleton status={loadingStatus} />
         </div>
@@ -1774,54 +1739,14 @@ export default function PlayerPage() {
 
   return (
     <div ref={containerRef} className="relative h-screen w-screen bg-black overflow-hidden select-none cursor-default animate-fade-in">
-      {/* User avatar + info - top left, always visible */}
-      <div className="fixed top-4 left-0 z-50 flex items-start">
-        <div className="w-20 flex justify-center">
-          <div className="w-10 h-10 rounded-full overflow-hidden bg-player-surface flex-shrink-0">
-            {profileAvatar ? (
-              <img src={profileAvatar} alt={profileName} className="w-full h-full object-cover" />
-            ) : (
-              <img src="/avatars/usr-default.png" alt="Visitante" className="w-full h-full object-cover" />
-            )}
-          </div>
-        </div>
-        <div className="mt-0.5">
-          <p className="text-xs text-player-muted-foreground">Bem vindo,</p>
-          <p className="text-sm text-player-accent font-bold leading-tight">{userDisplayName}</p>
-          {user && (
-            <button
-              onClick={async () => { await signOut(); navigate(playerHomePath); }}
-              className="text-player-accent text-[10px] hover:underline flex items-center gap-1 mt-0.5"
-            >
-              <LogOut className="h-3 w-3" /> Sair
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Sidebar menu with gradient background - always visible */}
-      <aside
-        className="fixed left-0 top-0 bottom-0 w-20 flex flex-col items-center justify-center gap-3 z-40"
-        style={{ background: "linear-gradient(to right, rgba(0,0,0,0.85), transparent)" }}
-      >
-        {[
-          { icon: Home, label: "Home", active: false, action: handleHomeClick },
-          { icon: Radio, label: "Streaming", active: true, action: () => {} },
-          { icon: Film, label: "Conteúdo", active: false, action: () => {} },
-          ...(user ? [{ icon: ShoppingBag, label: "Loja", active: false, action: () => setShopOpen(o => !o) }] : []),
-        ].map(item => (
-          <button
-            key={item.label}
-            onClick={item.action}
-            aria-label={item.label}
-            className={`${menuButtonBase} ${item.active ? menuButtonActive : menuButtonInactive}`}
-            title={item.label}
-          >
-            <item.icon className="h-5 w-5" />
-            <span className="text-[9px] font-semibold leading-none">{item.label}</span>
-          </button>
-        ))}
-      </aside>
+      <PlayerSidebarComponent
+        items={sidebarItems}
+        activeKey="streaming"
+        avatarUrl={profileAvatar}
+        userName={userDisplayName}
+        showLogout={!!user}
+        onLogout={async () => { await signOut(); navigate(playerHomePath); }}
+      />
 
       {/* Content wrapper with fade transition */}
       <div className={`transition-opacity duration-400 ease-in-out ${pageFadeOut ? "opacity-0" : "opacity-100"}`}>
