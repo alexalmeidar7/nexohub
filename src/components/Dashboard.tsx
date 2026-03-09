@@ -707,13 +707,19 @@ function DashboardHome({ empresa, onNavigate }: { empresa: import("./Configuraco
           className={`dashboard-widget-card rounded-2xl p-3 lg:p-4 flex-shrink-0 overflow-hidden relative ${
             draggedId === widget.id ? "opacity-50 scale-95" : ""
           } ${dragOverId === widget.id ? "ring-2 ring-[#268ffa]" : ""}`}
-          style={widget.bg === "#ffffff" ? {
+          style={widget.bg === "glass-dark" ? {
+            background: "rgba(12, 4, 65, 0.6)",
+            backdropFilter: "blur(24px) saturate(1.4)",
+            WebkitBackdropFilter: "blur(24px) saturate(1.4)",
+            boxShadow: "0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1)",
+            border: "1px solid rgba(255,255,255,0.12)",
+          } : {
             background: "rgba(255, 255, 255, 0.12)",
             backdropFilter: "blur(24px) saturate(1.4)",
             WebkitBackdropFilter: "blur(24px) saturate(1.4)",
             boxShadow: "0 8px 32px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.15)",
             border: "1px solid rgba(255,255,255,0.15)",
-          } : { backgroundColor: widget.bg }}
+          }}
           onDragOver={(e) => handleDragOver(e, widget.id)}
           onDrop={(e) => handleDrop(e, widget.id)}
           onDragEnd={handleDragEnd}
