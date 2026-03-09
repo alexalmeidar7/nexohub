@@ -257,54 +257,70 @@ export default function AudioDualCard({
           </div>
         </div>
 
-        {/* History box — slides out from behind the music card */}
+        {/* History box — slides out to the right of the music card */}
         <div
-          className="absolute md:w-[70%] w-[85%] aspect-square rounded-3xl overflow-hidden"
+          className="absolute md:w-[55%] w-[70%] rounded-3xl overflow-hidden backdrop-blur-xl"
           style={{
-            right: "0",
-            zIndex: 1,
-            backgroundColor: "white",
-            boxShadow: historyOpen ? "0 8px 30px hsla(0,0%,0%,0.25)" : "none",
-            transform: historyOpen ? "translateX(45%)" : "translateX(0%)",
+            right: historyOpen ? "-5%" : "10%",
+            top: "50%",
+            transform: "translateY(-50%)",
+            zIndex: 3,
+            height: "85%",
+            background: "linear-gradient(135deg, rgba(20,20,20,0.95) 0%, rgba(40,10,10,0.95) 100%)",
+            boxShadow: historyOpen 
+              ? "0 25px 60px hsla(0,0%,0%,0.6), 0 0 0 1px hsla(0,80%,45%,0.3), inset 0 1px 0 hsla(0,0%,100%,0.1)" 
+              : "none",
             opacity: historyOpen ? 1 : 0,
-            transition: "transform 0.5s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.3s ease, box-shadow 0.4s ease",
+            transition: "all 0.5s cubic-bezier(0.22, 1, 0.36, 1)",
             pointerEvents: historyOpen ? "auto" : "none",
+            border: "1px solid hsla(0,80%,45%,0.2)",
           }}
         >
-          <div className="flex flex-col h-full" style={{ paddingLeft: "80px" }}>
-            <div className="px-4 pt-4 pb-2 flex items-center gap-2">
-              <Music size={14} style={{ color: "hsl(0 80% 45%)" }} />
-              <h3 className="font-bold text-xs" style={{ color: "hsl(0 80% 45%)" }}>Últimas Tocadas</h3>
+          <div className="flex flex-col h-full p-4">
+            {/* Header */}
+            <div className="flex items-center gap-2 mb-3 pb-3" style={{ borderBottom: "1px solid hsla(0,80%,45%,0.2)" }}>
+              <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: "hsla(0,80%,45%,0.2)" }}>
+                <Music size={14} style={{ color: "#a10a0b" }} />
+              </div>
+              <div>
+                <h3 className="font-bold text-sm text-white">Últimas Tocadas</h3>
+                <p className="text-[10px] text-white/40">Histórico de músicas</p>
+              </div>
             </div>
-            <div className="flex-1 min-h-0 overflow-y-auto px-3 pb-4" style={{ scrollbarWidth: "thin", scrollbarColor: "hsl(0 80% 45%) transparent" }}>
+            
+            {/* Song list */}
+            <div className="flex-1 min-h-0 overflow-y-auto pr-1" style={{ scrollbarWidth: "thin", scrollbarColor: "#a10a0b transparent" }}>
               {recentSongs.length === 0 ? (
-                <p className="text-[10px] text-center mt-8" style={{ color: "hsl(0 0% 65%)" }}>Nenhuma música registrada</p>
+                <p className="text-xs text-center mt-8 text-white/30">Nenhuma música registrada</p>
               ) : (
-                <div className="flex flex-col gap-0.5">
+                <div className="flex flex-col gap-1">
                   {recentSongs.map((song, i) => (
                     <div
                       key={song.id}
-                      className="flex items-start gap-2 py-1.5 px-2 rounded-lg border-b last:border-0 cursor-default"
+                      className="flex items-center gap-3 py-2.5 px-3 rounded-xl cursor-default transition-all"
                       style={{
-                        borderColor: "hsla(0, 0%, 0%, 0.05)",
+                        backgroundColor: "hsla(0,0%,100%,0.03)",
                         opacity: historyOpen ? 1 : 0,
-                        transform: historyOpen ? "translateY(0)" : "translateY(8px)",
-                        transition: `opacity 0.3s ease ${i * 0.03}s, transform 0.3s ease ${i * 0.03}s, background-color 0.2s ease`,
+                        transform: historyOpen ? "translateX(0)" : "translateX(20px)",
+                        transition: `all 0.3s ease ${i * 0.04}s`,
                       }}
-                      onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "hsl(0 80% 96%)"; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
+                      onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "hsla(0,80%,45%,0.15)"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "hsla(0,0%,100%,0.03)"; }}
                     >
-                      <div className="flex items-center gap-1.5 shrink-0 pt-0.5">
-                        <span className="text-[9px] font-mono font-bold" style={{ color: "hsl(0 80% 45%)" }}>
+                      {/* Time badge */}
+                      <div className="shrink-0 px-2 py-1 rounded-md" style={{ backgroundColor: "hsla(0,80%,45%,0.2)" }}>
+                        <span className="text-[10px] font-mono font-bold" style={{ color: "#a10a0b" }}>
                           {song.horario?.slice(0, 5)}
                         </span>
-                        <span className="text-[9px] truncate" style={{ color: "hsl(0 0% 55%)", maxWidth: "120px" }}>
-                          {song.programa || "—"}
-                        </span>
                       </div>
+                      
+                      {/* Song info */}
                       <div className="flex-1 min-w-0">
-                        <p className="text-[10px] font-semibold leading-tight truncate" style={{ color: "hsl(0 0% 20%)" }}>
-                          {song.artista} — {song.musica}
+                        <p className="text-xs font-semibold text-white truncate">
+                          {song.musica}
+                        </p>
+                        <p className="text-[10px] text-white/50 truncate">
+                          {song.artista} • {song.programa || "—"}
                         </p>
                       </div>
                     </div>
