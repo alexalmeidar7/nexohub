@@ -317,16 +317,30 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       )}
 
       {/* Floating hamburger button + company name - desktop */}
-      <div className="hidden lg:flex fixed top-5 left-[40px] z-[60] items-center gap-3">
+      <div className="hidden lg:flex fixed top-5 left-[40px] z-[60] items-start gap-3">
         <button
           onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-          className="w-11 h-11 rounded-full flex items-center justify-center transition-all shadow-lg hover:scale-105"
+          className="w-11 h-11 rounded-full flex items-center justify-center transition-all shadow-lg hover:scale-105 shrink-0 mt-1"
           style={{ backgroundColor: sidebarCollapsed ? "rgba(0,0,0,0.7)" : "#268ffa" }}
           title={sidebarCollapsed ? "Abrir menu" : "Fechar menu"}
         >
           <Menu size={18} className="text-white" />
         </button>
-        <h1 className="font-bold text-white" style={{ fontSize: "45px", lineHeight: 1.1 }}>{empresa.nome || "Dashboard"}</h1>
+        <div>
+          <h1 className="font-bold text-white" style={{ fontSize: "45px", lineHeight: 1.1 }}>{empresa.nome || "Dashboard"}</h1>
+          <div className="flex items-center gap-3 mt-1">
+            <p className="text-white/60 text-xs">{user?.email || ""}</p>
+            <button
+              onClick={onLogout}
+              className="flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold transition-all"
+              style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "#ffffff" }}
+              onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#dc2626"; }}
+              onMouseLeave={e => { e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.15)"; }}
+            >
+              <LogOut size={10} /> Sair
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Sidebar overlay backdrop - desktop */}
@@ -470,21 +484,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         {/* === MAIN CONTENT === */}
         <main className="flex-1 flex flex-col min-w-0">
           {/* Header - desktop only */}
-          <div className="hidden lg:flex items-center justify-between mb-3" style={{ marginLeft: "25px" }}>
-            <div>
-              <div className="flex items-center gap-3 mt-1">
-                <p className="text-white/60 text-xs">{user?.email || ""}</p>
-                <button
-                  onClick={onLogout}
-                  className="flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold transition-all"
-                  style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "#ffffff" }}
-                  onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#dc2626"; }}
-                  onMouseLeave={e => { e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.15)"; }}
-                >
-                  <LogOut size={10} /> Sair
-                </button>
-              </div>
-            </div>
+          <div className="hidden lg:flex items-center justify-end mb-3">
             <div className="flex items-center gap-3" style={{ marginRight: "50px" }}>
               <Suspense fallback={<div className="w-9 h-9 rounded-full" style={{ backgroundColor: "#0d0446" }} />}>
                 <MessageNotification />
