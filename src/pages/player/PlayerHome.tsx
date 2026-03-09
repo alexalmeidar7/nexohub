@@ -1,8 +1,8 @@
-import { useEffect, useState, useRef, useCallback, lazy, Suspense, useMemo } from "react";
+import { useEffect, useState, useRef, useCallback, lazy, Suspense, useMemo, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { Home, Radio, Film, ShoppingBag, LogOut, UserCircle, Clock, Music } from "lucide-react";
+import { Home, Radio, Film, ShoppingBag, LogOut, UserCircle, Clo, ChevronLeft, ChevronRightck, Music } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { loadMiniPlayerData, clearMiniPlayerData, type MiniPlayerData } from "@/components/player/MiniPlayerWidget";
 const MiniPlayerWidget = lazy(() => import("@/components/player/MiniPlayerWidget"));
