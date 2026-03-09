@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Mail, Trash2 } from "lucide-react";
+import { Mail, Trash2, Bell, ChevronRight, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -94,6 +94,21 @@ export default function MessageNotification() {
     timeoutRef.current = setTimeout(() => setHovering(false), 300);
   };
 
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMin = Math.floor(diffMs / 60000);
+    const diffHrs = Math.floor(diffMin / 60);
+    const diffDays = Math.floor(diffHrs / 24);
+
+    if (diffMin < 1) return "agora";
+    if (diffMin < 60) return `${diffMin}min`;
+    if (diffHrs < 24) return `${diffHrs}h`;
+    if (diffDays < 7) return `${diffDays}d`;
+    return date.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+  };
+
   return (
     <div
       className="relative"
@@ -102,15 +117,20 @@ export default function MessageNotification() {
     >
       <div
         className="w-9 h-9 rounded-full flex items-center justify-center cursor-pointer"
-        style={{ background: "rgba(255,255,255,0.12)", backdropFilter: "blur(24px) saturate(1.4)", WebkitBackdropFilter: "blur(24px) saturate(1.4)", border: "1px solid rgba(255,255,255,0.15)" }}
+        style={{
+          background: "rgba(255,255,255,0.12)",
+          backdropFilter: "blur(24px) saturate(1.4)",
+          WebkitBackdropFilter: "blur(24px) saturate(1.4)",
+          border: "1px solid rgba(255,255,255,0.15)",
+        }}
       >
         <Mail size={16} className="text-white" />
       </div>
 
       {unreadCount > 0 && (
         <span
-          className="absolute -top-1 -right-1 w-4 h-4 rounded-full text-[9px] font-bold flex items-center justify-center animate-scale-in"
-          style={{ backgroundColor: "#ef4444", color: "#ffffff" }}
+          className="absolute -top-1 -right-1 w-[18px] h-[18px] rounded-full text-[9px] font-bold flex items-center justify-center animate-scale-in ring-2 ring-white/20"
+          style={{ background: "linear-gradient(135deg, #ef4444, #dc2626)", color: "#ffffff" }}
         >
           {unreadCount > 9 ? "9+" : unreadCount}
         </span>
@@ -118,47 +138,70 @@ export default function MessageNotification() {
 
       {hovering && (
         <div
-          className="absolute right-0 top-full mt-2 w-80 rounded-xl shadow-2xl overflow-hidden animate-fade-in z-50"
-          style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.12)" }}
+          className="absolute right-0 top-full mt-2 w-[340px] rounded-2xl overflow-hidden animate-fade-in z-50"
+          style={{
+            background: "rgba(10, 5, 50, 0.75)",
+            backdropFilter: "blur(40px) saturate(1.6)",
+            WebkitBackdropFilter: "blur(40px) saturate(1.6)",
+            border: "1px solid rgba(255,255,255,0.12)",
+            boxShadow: "0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05) inset",
+          }}
           onMouseEnter={() => { if (timeoutRef.current) clearTimeout(timeoutRef.current); }}
           onMouseLeave={handleMouseLeave}
         >
-          {/* Header with tabs */}
-          <div className="flex items-center justify-between px-4 py-2 border-b" style={{ borderColor: "rgba(13,4,70,0.1)", backgroundColor: "#0d0446" }}>
-            <div className="flex gap-1">
-              <button
-                onClick={() => setTab("novas")}
-                className="text-[10px] font-bold px-3 py-1 rounded-full transition-colors"
-                style={{
-                  backgroundColor: tab === "novas" ? "#268ffa" : "transparent",
-                  color: "#ffffff",
-                  border: tab === "novas" ? "none" : "1px solid rgba(255,255,255,0.3)",
-                }}
-              >
-                Mensagens {unreadCount > 0 && `(${unreadCount})`}
-              </button>
-              <button
-                onClick={() => setTab("lidas")}
-                className="text-[10px] font-bold px-3 py-1 rounded-full transition-colors"
-                style={{
-                  backgroundColor: tab === "lidas" ? "#268ffa" : "transparent",
-                  color: "#ffffff",
-                  border: tab === "lidas" ? "none" : "1px solid rgba(255,255,255,0.3)",
-                }}
-              >
-                Lidas
-              </button>
+          {/* Header */}
+          <div className="flex items-center justify-between px-5 py-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+            <div className="flex items-center gap-2">
+              <Bell size={13} className="text-white/60" />
+              <span className="text-[11px] font-semibold text-white/90 tracking-wide uppercase">Notificações</span>
             </div>
+            {unreadCount > 0 && (
+              <span
+                className="text-[9px] font-bold px-2 py-0.5 rounded-full"
+                style={{ background: "rgba(38,143,250,0.25)", color: "#268ffa" }}
+              >
+                {unreadCount} nova{unreadCount > 1 ? "s" : ""}
+              </span>
+            )}
+          </div>
+
+          {/* Tabs */}
+          <div className="flex gap-1 px-4 py-2" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+            <button
+              onClick={() => setTab("novas")}
+              className="text-[10px] font-semibold px-4 py-1.5 rounded-full transition-all duration-200"
+              style={{
+                background: tab === "novas" ? "linear-gradient(135deg, #268ffa, #1a6fcc)" : "rgba(255,255,255,0.06)",
+                color: tab === "novas" ? "#ffffff" : "rgba(255,255,255,0.5)",
+                boxShadow: tab === "novas" ? "0 2px 12px rgba(38,143,250,0.3)" : "none",
+              }}
+            >
+              Novas {unreadCount > 0 && `(${unreadCount})`}
+            </button>
+            <button
+              onClick={() => setTab("lidas")}
+              className="text-[10px] font-semibold px-4 py-1.5 rounded-full transition-all duration-200"
+              style={{
+                background: tab === "lidas" ? "linear-gradient(135deg, #268ffa, #1a6fcc)" : "rgba(255,255,255,0.06)",
+                color: tab === "lidas" ? "#ffffff" : "rgba(255,255,255,0.5)",
+                boxShadow: tab === "lidas" ? "0 2px 12px rgba(38,143,250,0.3)" : "none",
+              }}
+            >
+              Lidas
+            </button>
           </div>
 
           {/* Message list */}
-          <div className="max-h-[280px] overflow-y-auto" style={{ scrollbarWidth: "thin", scrollbarColor: "#268ffa #f0f0f0" }}>
+          <div className="max-h-[300px] overflow-y-auto" style={{ scrollbarWidth: "thin", scrollbarColor: "rgba(255,255,255,0.15) transparent" }}>
             {filteredMessages.length === 0 ? (
-              <p className="text-[11px] px-4 py-6 text-center" style={{ color: "rgba(13,4,70,0.4)" }}>
-                {tab === "novas" ? "Nenhuma mensagem nova." : "Nenhuma mensagem lida."}
-              </p>
+              <div className="flex flex-col items-center justify-center py-10 gap-2">
+                <Mail size={28} className="text-white/15" />
+                <p className="text-[11px] text-white/30">
+                  {tab === "novas" ? "Nenhuma mensagem nova" : "Nenhuma mensagem lida"}
+                </p>
+              </div>
             ) : (
-              filteredMessages.map((msg) => (
+              filteredMessages.map((msg, idx) => (
                 <Collapsible
                   key={msg.id}
                   open={openMsgId === msg.id}
@@ -166,7 +209,6 @@ export default function MessageNotification() {
                     if (open) {
                       setOpenMsgId(msg.id);
                     } else {
-                      // Mark as read only when closing the message
                       if (!msg.is_read) {
                         markAsRead(msg.id);
                       } else {
@@ -175,34 +217,72 @@ export default function MessageNotification() {
                     }
                   }}
                 >
-                  <div className="px-4 py-3 border-b" style={{ borderColor: "rgba(13,4,70,0.06)" }}>
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[11px] font-bold truncate" style={{ color: "#268ffa" }}>{msg.subject}</p>
-                        <p className="text-[9px] mt-0.5" style={{ color: "rgba(13,4,70,0.5)" }}>
-                          {new Date(msg.created_at).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
-                        </p>
+                  <div
+                    className="px-4 py-3 transition-colors"
+                    style={{
+                      borderBottom: idx < filteredMessages.length - 1 ? "1px solid rgba(255,255,255,0.05)" : "none",
+                      background: openMsgId === msg.id ? "rgba(38,143,250,0.08)" : "transparent",
+                    }}
+                  >
+                    <div className="flex items-start gap-3">
+                      {/* Indicator dot */}
+                      <div className="mt-1.5 shrink-0">
+                        <div
+                          className="w-2 h-2 rounded-full"
+                          style={{
+                            background: !msg.is_read ? "#268ffa" : "rgba(255,255,255,0.15)",
+                            boxShadow: !msg.is_read ? "0 0 8px rgba(38,143,250,0.5)" : "none",
+                          }}
+                        />
                       </div>
-                      {tab === "lidas" && (
-                        <button
-                          onClick={(e) => { e.stopPropagation(); deleteMessage(msg.id); }}
-                          className="ml-2 p-1 rounded-full hover:bg-red-50 transition-colors"
-                          title="Excluir mensagem"
-                        >
-                          <Trash2 size={12} color="#ef4444" />
-                        </button>
-                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-[11px] font-semibold truncate text-white/90">{msg.subject}</p>
+                          <div className="flex items-center gap-1 shrink-0">
+                            <Clock size={9} className="text-white/30" />
+                            <span className="text-[9px] text-white/35">{formatDate(msg.created_at)}</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 mt-1.5">
+                          <CollapsibleTrigger asChild>
+                            <button
+                              className="text-[9px] font-semibold px-3 py-1 rounded-full transition-all duration-200 flex items-center gap-1"
+                              style={{
+                                background: openMsgId === msg.id ? "rgba(255,255,255,0.12)" : "rgba(38,143,250,0.15)",
+                                color: openMsgId === msg.id ? "#ffffff" : "#268ffa",
+                              }}
+                            >
+                              {openMsgId === msg.id ? "Fechar" : "Ler"}
+                              <ChevronRight
+                                size={10}
+                                className="transition-transform duration-200"
+                                style={{ transform: openMsgId === msg.id ? "rotate(90deg)" : "rotate(0deg)" }}
+                              />
+                            </button>
+                          </CollapsibleTrigger>
+                          {tab === "lidas" && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); deleteMessage(msg.id); }}
+                              className="p-1 rounded-full transition-all duration-200 hover:bg-red-500/20"
+                              title="Excluir mensagem"
+                            >
+                              <Trash2 size={11} className="text-red-400/60 hover:text-red-400" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                    <CollapsibleTrigger asChild>
-                      <button
-                        className="mt-1.5 text-[10px] font-semibold px-3 py-1 rounded-full transition-colors"
-                        style={{ backgroundColor: "#0d0446", color: "#ffffff" }}
+                    <CollapsibleContent className="mt-2.5 ml-5">
+                      <div
+                        className="text-[11px] leading-relaxed rounded-xl px-3.5 py-2.5"
+                        style={{
+                          color: "rgba(255,255,255,0.8)",
+                          background: "rgba(255,255,255,0.04)",
+                          border: "1px solid rgba(255,255,255,0.06)",
+                        }}
                       >
-                        {openMsgId === msg.id ? "Fechar" : "Abrir mensagem"}
-                      </button>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent className="mt-2">
-                      <p className="text-[11px] leading-relaxed" style={{ color: "#0d0446" }}>{msg.message}</p>
+                        {msg.message}
+                      </div>
                     </CollapsibleContent>
                   </div>
                 </Collapsible>
