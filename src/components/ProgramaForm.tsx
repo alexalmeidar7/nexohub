@@ -780,17 +780,17 @@ export default function ProgramaForm() {
 
           {/* Estúdio */}
           <div>
-            <label className="block text-[11px] mb-1.5 font-semibold text-white uppercase tracking-wider flex items-center gap-1">
+            <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider flex items-center gap-1" style={{ color: "#0d0446" }}>
               <Building2 size={13} /> Estúdio
             </label>
             <div className="flex gap-2">
               <Select value={estudio} onValueChange={setEstudio}>
-                <SelectTrigger className="flex-1 h-9" style={{ backgroundColor: "rgba(255,255,255,0.08)", color: "#ffffff", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.12)", fontSize: "13px" }}>
+                <SelectTrigger className="flex-1 h-9" style={{ backgroundColor: "rgba(255,255,255,0.6)", color: "#0d0446", borderRadius: "12px", border: "1px solid rgba(13,4,70,0.15)", fontSize: "13px" }}>
                   <SelectValue placeholder="Selecione o estúdio" />
                 </SelectTrigger>
-                <SelectContent style={{ backgroundColor: "#0d0446", border: "1px solid rgba(255,255,255,0.15)" }}>
+                <SelectContent>
                   {estudios.map(e => (
-                    <SelectItem key={e} value={e} className="text-white focus:bg-white/20 focus:text-white">{e}</SelectItem>
+                    <SelectItem key={e} value={e}>{e}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
