@@ -400,6 +400,7 @@ export default function PlayerPage() {
 
   // Karaoke state
   const [karaokeEnabled, setKaraokeEnabled] = useState(false);
+  const [karaokeVisible, setKaraokeVisible] = useState(false);
 
   // SpeechRecognition-based CC: transcribes audio in real-time
   const startCCRecognition = useCallback(() => {
@@ -1985,6 +1986,8 @@ export default function PlayerPage() {
             audioElement={audioRef.current}
             visible={karaokeEnabled}
             duration={musicData?.duracao}
+            onLyricsNotFound={() => setKaraokeVisible(false)}
+            onLyricsFound={() => setKaraokeVisible(true)}
           />
         </Suspense>
       )}
