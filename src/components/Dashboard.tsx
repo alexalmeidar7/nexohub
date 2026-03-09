@@ -1139,8 +1139,8 @@ function DashboardCalendar({ selected, onSelect, eventDates, month, onMonthChang
         hasEvent: { backgroundColor: "#268ffa", fontWeight: "bold", color: "#fff", borderRadius: "50%" },
       }}
       styles={{
-        day: { color: "#0d0446", fontSize: "14px" },
-        head_cell: { color: "#0d0446", opacity: 0.4, fontSize: "10px", padding: 0 },
+        day: { color: "#ffffff", fontSize: "14px" },
+        head_cell: { color: "rgba(255,255,255,0.5)", fontSize: "10px", padding: 0 },
       }}
     />
   );
