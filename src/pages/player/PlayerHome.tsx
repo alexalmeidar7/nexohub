@@ -4,6 +4,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Home, Radio, Film, ShoppingBag, LogOut, UserCircle, Clock, Music } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { loadMiniPlayerData, clearMiniPlayerData, type MiniPlayerData } from "@/components/player/MiniPlayerWidget";
+const MiniPlayerWidget = lazy(() => import("@/components/player/MiniPlayerWidget"));
 
 interface Channel {
   id: string;
