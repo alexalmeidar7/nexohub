@@ -1780,14 +1780,12 @@ export default function PlayerPage() {
           <button
             key={item.label}
             onClick={item.action}
-            className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${
-              item.active
-                ? "bg-player-accent text-player-foreground"
-                : "bg-player-surface text-player-muted-foreground hover:bg-player-surface-hover hover:text-player-foreground"
-            }`}
+            aria-label={item.label}
+            className={`${menuButtonBase} ${item.active ? menuButtonActive : menuButtonInactive}`}
             title={item.label}
           >
             <item.icon className="h-5 w-5" />
+            <span className="text-[9px] font-semibold leading-none">{item.label}</span>
           </button>
         ))}
       </aside>
