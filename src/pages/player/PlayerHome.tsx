@@ -579,9 +579,9 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
           borderRight: "1px solid rgba(255,255,255,0.07)",
         }}
       >
-        {/* Avatar at top of sidebar */}
-        <div className="flex flex-col items-center mb-2">
-          <div className="w-10 h-10 rounded-full bg-player-surface flex items-center justify-center overflow-hidden">
+        {/* Avatar at top of sidebar — hover to show user info */}
+        <div className="group/avatar relative flex flex-col items-center mb-2">
+          <div className="w-10 h-10 rounded-full bg-player-surface flex items-center justify-center overflow-hidden cursor-pointer">
             {!dataLoaded ? (
               <Skeleton className="w-full h-full rounded-full bg-white/10" />
             ) : profileAvatar ? (
@@ -589,6 +589,22 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
             ) : (
               <img src="/avatars/usr-default.png" alt="Visitante" className="w-full h-full object-cover" />
             )}
+          </div>
+          {/* Popup on hover */}
+          <div className="absolute left-[56px] top-0 opacity-0 pointer-events-none group-hover/avatar:opacity-100 group-hover/avatar:pointer-events-auto transition-all duration-200 z-50">
+            <div className="rounded-xl px-4 py-3 flex flex-col gap-0.5 whitespace-nowrap" style={{ background: "rgba(0,0,0,0.85)", backdropFilter: "blur(16px)", border: "1px solid rgba(255,255,255,0.1)" }}>
+              <p className="text-sm text-white/70">Bem vindo,</p>
+              <p className="text-sm text-player-accent font-bold">{userName}</p>
+              {user ? (
+                <button onClick={handleSignOut} className="text-white/50 text-xs hover:text-white hover:underline flex items-center gap-1 transition-colors mt-0.5">
+                  <LogOut className="h-3 w-3" /> Sair
+                </button>
+              ) : onBackToAccess ? (
+                <button onClick={onBackToAccess} className="text-player-accent text-xs hover:underline mt-0.5">
+                  cadastre-se
+                </button>
+              ) : null}
+            </div>
           </div>
         </div>
 
@@ -653,33 +669,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
         </nav>
       </aside>
 
-      {/* Content wrapper with fade transition */}
       <div className={`relative flex-1 overflow-y-auto h-full transition-opacity duration-400 ease-in-out ${fadeOut ? "opacity-0" : "opacity-100"}`}>
-        {/* Fixed Header — text info beside the sidebar avatar */}
-        <header className="fixed top-0 left-[72px] right-0 z-20 flex items-center px-4 py-4" style={{ bottom: "auto", height: "auto" }}>
-            <div className="flex flex-col">
-              {!dataLoaded ? (
-                <>
-                  <Skeleton className="h-3 w-20 bg-white/10 mb-1" />
-                  <Skeleton className="h-4 w-28 bg-white/10" />
-                </>
-              ) : (
-                <>
-                  <p className="text-sm text-white/70">Bem vindo,</p>
-                  <p className="text-sm text-player-accent font-bold">{userName}</p>
-                  {user ? (
-                    <button onClick={handleSignOut} className="text-white/50 text-xs hover:text-white hover:underline flex items-center gap-1 transition-colors mt-0.5">
-                      <LogOut className="h-3 w-3" /> Sair
-                    </button>
-                  ) : onBackToAccess ? (
-                    <button onClick={onBackToAccess} className="text-player-accent text-xs hover:underline mt-0.5">
-                      cadastre-se
-                    </button>
-                  ) : null}
-                </>
-              )}
-            </div>
-        </header>
 
         {/* Banner full-width behind content — crossfade between default and thumb on hover */}
         <div className="absolute top-0 left-[72px] right-0 z-0 pointer-events-none h-[400px] overflow-hidden rounded-b-2xl transition-opacity duration-300" style={{ opacity: bannerOpacity }}>
