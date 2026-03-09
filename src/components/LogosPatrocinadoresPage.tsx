@@ -151,144 +151,152 @@ export default function LogosPatrocinadoresPage() {
   }
 
   return (
-    <div className="space-y-8 animate-fade-in">
-      <form onSubmit={handleSubmit} className="rounded-xl p-4 sm:p-6 space-y-4" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)" }}>
-        <h3 className="text-base sm:text-lg font-bold" style={{ color: "#0d0446" }}>Nova Logo de Patrocinador</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-4">
-            <div>
-              <label className="block text-xs mb-1" style={{ color: "#0d0446", fontWeight: 600 }}>Programa *</label>
-              <select value={programaId} onChange={(e) => setProgramaId(e.target.value)}
-                className="w-full px-4 py-1.5 text-sm outline-none appearance-none"
-                style={{ ...inputStyle, backgroundColor: programaId ? "#ffffff" : "#ffffff" }}
-                onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
-                onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
-              >
-                <option value="">Selecione um programa</option>
-                {programas.map((p) => (
-                  <option key={p.id} value={p.id}>{p.nome}</option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-xs mb-1" style={{ color: "#0d0446", fontWeight: 600 }}>Data de Expiração *</label>
-              <input type="date" value={dataFinal} onChange={(e) => setDataFinal(e.target.value)} required
-                className="w-full px-4 py-1.5 text-sm outline-none"
-                style={inputStyle}
-                onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
-                onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
-              />
-            </div>
-
-            <button type="submit" disabled={saving}
-              className="w-full px-6 py-2 font-bold text-sm transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-              style={btnPrimary}
-              onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#ffffff"; e.currentTarget.style.color = "#0d0446"; }}
-              onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#0d0446"; e.currentTarget.style.color = "#ffffff"; }}
-            >
-              {saving ? <><Loader2 className="animate-spin" size={14} /> Salvando...</> : `Salvar ${pendingFiles.length} logo(s)`}
-            </button>
+    <div className="animate-fade-in">
+      <div className="rounded-2xl" style={{ background: "#d9e9fa", boxShadow: "0 8px 32px rgba(13,4,70,0.12)", padding: "20px" }}>
+        {/* Header */}
+        <div className="flex items-center gap-3 mb-5">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(13,4,70,0.08)" }}>
+            <Upload size={20} style={{ color: "#0d0446" }} />
           </div>
-
-          <div className="space-y-3">
-            <label className="block text-xs mb-1" style={{ color: "#0d0446", fontWeight: 600 }}>
-              Logos * <span className="font-normal" style={{ color: "rgba(13,4,70,0.5)" }}>(1080×1080, fundo transparente)</span>
-            </label>
-
-            <div className="flex flex-wrap gap-3">
-              {pendingFiles.map((pf, idx) => (
-                <div key={idx} className="relative group">
-                  <img src={pf.preview} alt="" className="w-20 h-20 rounded-lg object-contain" style={{ border: "1px solid rgba(13,4,70,0.1)", backgroundColor: "repeating-conic-gradient(#ddd 0% 25%,transparent 0% 50%) 0 0/20px 20px" }} />
-                  <button
-                    type="button"
-                    onClick={() => removePendingFile(idx)}
-                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    ×
-                  </button>
-                </div>
-              ))}
-
-              <label className="w-20 h-20 rounded-lg flex flex-col items-center justify-center cursor-pointer transition-colors"
-                style={{ border: "2px dashed rgba(13,4,70,0.2)" }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(13,4,70,0.2)"; }}
-              >
-                <Plus size={18} style={{ color: "rgba(13,4,70,0.4)" }} />
-                <span className="text-[10px] mt-1" style={{ color: "rgba(13,4,70,0.4)" }}>Adicionar</span>
-                <input type="file" accept="image/png" className="hidden" onChange={handleAddFile} />
-              </label>
-            </div>
+          <div>
+            <h3 className="text-base font-bold" style={{ color: "#0d0446" }}>Logos de Patrocinadores</h3>
+            <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.5)" }}>Gerencie as logos vinculadas aos programas</p>
           </div>
         </div>
-      </form>
 
-      <div>
-        <h3 className="text-lg font-bold mb-4" style={{ color: "#0d0446" }}>Logos por Programa</h3>
-        {grouped.length === 0 ? (
-          <p className="text-sm" style={{ color: "rgba(13,4,70,0.5)" }}>Nenhuma logo ativa cadastrada.</p>
-        ) : (
-          <div className="space-y-6">
-            {grouped.map(({ programa, logos: gLogos }) => (
-              <div key={programa.id} className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(13,4,70,0.1)" }}>
-                <div className="px-4 py-2 font-semibold text-sm" style={{ backgroundColor: "#0d0446", color: "#ffffff" }}>
-                  {programa.nome}
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="rounded-xl overflow-hidden mb-5" style={{ backgroundColor: "#ffffff", boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}>
+          <div className="px-4 py-2.5" style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)" }}>
+            <h3 className="text-sm font-bold" style={{ color: "#ffffff" }}>➕ Nova Logo de Patrocinador</h3>
+          </div>
+          <div className="p-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs mb-1" style={{ color: "#0d0446", fontWeight: 600 }}>Programa *</label>
+                  <select value={programaId} onChange={(e) => setProgramaId(e.target.value)}
+                    className="w-full px-4 py-1.5 text-sm outline-none appearance-none"
+                    style={inputStyle}
+                    onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
+                    onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
+                  >
+                    <option value="">Selecione um programa</option>
+                    {programas.map((p) => (
+                      <option key={p.id} value={p.id}>{p.nome}</option>
+                    ))}
+                  </select>
                 </div>
-                <div className="p-3 sm:p-4 px-4 sm:px-10" style={{ backgroundColor: "#ffffff" }}>
-                  <Carousel opts={{ align: "start" }} className="w-full">
-                    <CarouselContent>
-                      {gLogos.map((logo) => {
-                        const diasRestantes = Math.ceil((new Date(logo.data_final + "T23:59:59").getTime() - Date.now()) / 86400000);
-                        const isEditing = editingLogoId === logo.id;
-                        return (
-                          <CarouselItem key={logo.id} className="basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5">
-                            <div className="space-y-2 text-center">
-                              <div className="relative group">
-                                <img
-                                  src={logo.logo_url}
-                                  alt=""
-                                  className="w-full aspect-square rounded-lg object-contain"
-                                  style={{ border: "1px solid rgba(13,4,70,0.08)", backgroundColor: "#0d0446" }}
-                                />
-                                <button
-                                  onClick={() => handleDelete(logo.id)}
-                                  className="absolute top-1 right-1 bg-red-500/80 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
-                                >
-                                  <Trash2 size={12} />
-                                </button>
-                              </div>
-                              <span className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full ${diasRestantes <= 7 ? "bg-red-100 text-red-600" : "bg-green-100 text-green-700"}`}>
-                                {diasRestantes > 0 ? `${diasRestantes}d restantes` : "Expirando"}
-                              </span>
-                              {isEditing ? (
-                                <div className="flex items-center gap-1">
-                                  <input type="date" value={editDate} onChange={(e) => setEditDate(e.target.value)} className="h-7 text-[10px] px-1 rounded" style={{ border: "1px solid #0d0446", color: "#0d0446" }} />
-                                  <button onClick={saveEditDate} style={{ color: "#22c55e" }}><Check size={14} /></button>
-                                  <button onClick={() => setEditingLogoId(null)} style={{ color: "#dc2626" }}><X size={14} /></button>
-                                </div>
-                              ) : (
-                                <button onClick={() => startEditDate(logo)} className="text-[10px] flex items-center gap-1 mx-auto transition-colors"
-                                  style={{ color: "rgba(13,4,70,0.4)" }}
-                                  onMouseEnter={e => { e.currentTarget.style.color = "#2dbef3"; }}
-                                  onMouseLeave={e => { e.currentTarget.style.color = "rgba(13,4,70,0.4)"; }}
-                                >
-                                  <Pencil size={10} /> Editar validade
-                                </button>
-                              )}
-                            </div>
-                          </CarouselItem>
-                        );
-                      })}
-                    </CarouselContent>
-                    <CarouselPrevious className="hidden sm:flex" />
-                    <CarouselNext className="hidden sm:flex" />
-                  </Carousel>
+
+                <div>
+                  <label className="block text-xs mb-1" style={{ color: "#0d0446", fontWeight: 600 }}>Data de Expiração *</label>
+                  <input type="date" value={dataFinal} onChange={(e) => setDataFinal(e.target.value)} required
+                    className="w-full px-4 py-1.5 text-sm outline-none"
+                    style={inputStyle}
+                    onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
+                    onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
+                  />
+                </div>
+
+                <button type="submit" disabled={saving}
+                  className="w-full px-6 py-2 font-bold text-sm transition-all flex items-center justify-center gap-2 disabled:opacity-50 rounded-full"
+                  style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#ffffff", border: "none" }}
+                  onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 4px 15px rgba(38,143,250,0.4)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.boxShadow = "none"; }}
+                >
+                  {saving ? <><Loader2 className="animate-spin" size={14} /> Salvando...</> : `Salvar ${pendingFiles.length} logo(s)`}
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                <label className="block text-xs mb-1" style={{ color: "#0d0446", fontWeight: 600 }}>
+                  Logos * <span className="font-normal" style={{ color: "rgba(13,4,70,0.5)" }}>(1080×1080, fundo transparente)</span>
+                </label>
+                <div className="flex flex-wrap gap-3">
+                  {pendingFiles.map((pf, idx) => (
+                    <div key={idx} className="relative group">
+                      <img src={pf.preview} alt="" className="w-20 h-20 rounded-lg object-contain" style={{ border: "1px solid rgba(13,4,70,0.1)", backgroundColor: "repeating-conic-gradient(#ddd 0% 25%,transparent 0% 50%) 0 0/20px 20px" }} />
+                      <button type="button" onClick={() => removePendingFile(idx)}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity">×</button>
+                    </div>
+                  ))}
+                  <label className="w-20 h-20 rounded-lg flex flex-col items-center justify-center cursor-pointer transition-colors"
+                    style={{ border: "2px dashed rgba(13,4,70,0.2)" }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(13,4,70,0.2)"; }}
+                  >
+                    <Plus size={18} style={{ color: "rgba(13,4,70,0.4)" }} />
+                    <span className="text-[10px] mt-1" style={{ color: "rgba(13,4,70,0.4)" }}>Adicionar</span>
+                    <input type="file" accept="image/png" className="hidden" onChange={handleAddFile} />
+                  </label>
                 </div>
               </div>
-            ))}
+            </div>
           </div>
-        )}
+        </form>
+
+        {/* List */}
+        <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}>
+          <div className="px-4 py-2.5" style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)" }}>
+            <h3 className="text-sm font-bold" style={{ color: "#ffffff" }}>📋 Logos por Programa</h3>
+          </div>
+
+          {grouped.length === 0 ? (
+            <p className="text-sm py-8 text-center" style={{ color: "rgba(13,4,70,0.4)" }}>Nenhuma logo ativa cadastrada.</p>
+          ) : (
+            <div className="p-4 space-y-5">
+              {grouped.map(({ programa, logos: gLogos }) => (
+                <div key={programa.id} className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(13,4,70,0.08)" }}>
+                  <div className="px-4 py-2 font-semibold text-xs" style={{ backgroundColor: "rgba(13,4,70,0.04)", color: "#0d0446" }}>
+                    {programa.nome}
+                  </div>
+                  <div className="p-3 sm:p-4 px-4 sm:px-10" style={{ backgroundColor: "#ffffff" }}>
+                    <Carousel opts={{ align: "start" }} className="w-full">
+                      <CarouselContent>
+                        {gLogos.map((logo) => {
+                          const diasRestantes = Math.ceil((new Date(logo.data_final + "T23:59:59").getTime() - Date.now()) / 86400000);
+                          const isEditing = editingLogoId === logo.id;
+                          return (
+                            <CarouselItem key={logo.id} className="basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5">
+                              <div className="space-y-2 text-center">
+                                <div className="relative group">
+                                  <img src={logo.logo_url} alt="" className="w-full aspect-square rounded-lg object-contain" style={{ border: "1px solid rgba(13,4,70,0.08)", backgroundColor: "#0d0446" }} />
+                                  <button onClick={() => handleDelete(logo.id)}
+                                    className="absolute top-1 right-1 bg-red-500/80 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <Trash2 size={12} />
+                                  </button>
+                                </div>
+                                <span className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full ${diasRestantes <= 7 ? "bg-red-100 text-red-600" : "bg-green-100 text-green-700"}`}>
+                                  {diasRestantes > 0 ? `${diasRestantes}d restantes` : "Expirando"}
+                                </span>
+                                {isEditing ? (
+                                  <div className="flex items-center gap-1">
+                                    <input type="date" value={editDate} onChange={(e) => setEditDate(e.target.value)} className="h-7 text-[10px] px-1 rounded" style={{ border: "1px solid #0d0446", color: "#0d0446" }} />
+                                    <button onClick={saveEditDate} style={{ color: "#22c55e" }}><Check size={14} /></button>
+                                    <button onClick={() => setEditingLogoId(null)} style={{ color: "#dc2626" }}><X size={14} /></button>
+                                  </div>
+                                ) : (
+                                  <button onClick={() => startEditDate(logo)} className="text-[10px] flex items-center gap-1 mx-auto transition-colors"
+                                    style={{ color: "rgba(13,4,70,0.4)" }}
+                                    onMouseEnter={e => { e.currentTarget.style.color = "#2dbef3"; }}
+                                    onMouseLeave={e => { e.currentTarget.style.color = "rgba(13,4,70,0.4)"; }}
+                                  >
+                                    <Pencil size={10} /> Editar validade
+                                  </button>
+                                )}
+                              </div>
+                            </CarouselItem>
+                          );
+                        })}
+                      </CarouselContent>
+                      <CarouselPrevious className="hidden sm:flex" />
+                      <CarouselNext className="hidden sm:flex" />
+                    </Carousel>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
