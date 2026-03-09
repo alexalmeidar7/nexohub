@@ -270,7 +270,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 return (
                   <div key={item.label}>
                     <button onClick={() => handleMenuClick(item)}
-                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${active ? "text-[#268ffa]" : "text-white hover:bg-white/5"}`}>
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${active ? "text-primary bg-sidebar-accent font-semibold shadow-sm" : "text-sidebar-foreground hover:text-foreground hover:bg-sidebar-accent/50"}`}
+                      aria-label={item.label}
+                      role="menuitem"
+                    >
                       <Icon size={16} className={active ? "text-[#268ffa]" : "text-white"} />
                       <span className="flex-1 text-left">{item.label}</span>
                       {item.children && (expanded ? <ChevronUp size={12} className="text-white/30" /> : <ChevronDown size={12} className="text-white/30" />)}
