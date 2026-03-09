@@ -246,8 +246,17 @@ export default function MiniPlayerWidget({ data, onClose }: { data: MiniPlayerDa
 
       {/* Controls */}
       <div className="flex items-center gap-2 px-3 py-2.5">
-        {/* Logo/icon */}
-        {data.logoUrl ? (
+        {/* Logo/icon or Play button */}
+        {needsUnlock ? (
+          <button
+            onClick={handleManualPlay}
+            className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-all hover:scale-110 active:scale-95 animate-pulse"
+            style={{ backgroundColor: "hsl(0 80% 45%)" }}
+            title="Tocar"
+          >
+            <Play size={14} className="text-white" fill="white" />
+          </button>
+        ) : data.logoUrl ? (
           <img src={data.logoUrl} alt="" className="w-8 h-8 rounded-lg object-contain flex-shrink-0" />
         ) : (
           <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "rgba(230,0,0,0.2)" }}>
