@@ -198,8 +198,116 @@ function StreamingCard({ channel, currentProgram, nowPlaying, onClick, onHoverCh
     </button>
   );
 }
+function CatalogRow({ groupName, groupVideos, items, onPlay, onHoverChange }: {
+  groupName: string;
+  groupVideos: (PlaylistVideo & { channel: Channel })[];
+  items: Channel[];
+  onPlay: (id: string) => void;
+  onHoverChange: (thumb: string | null) => void;
+}) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
 
-interface PlayerHomeProps {
+  const checkScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 4);
+    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
+  }, []);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    checkScroll();
+    el.addEventListener("scroll", checkScroll, { passive: true });
+    const ro = new ResizeObserver(checkScroll);
+    ro.observe(el);
+    return () => { el.removeEventListener("scroll", checkScroll); ro.disconnect(); };
+  }, [checkScroll, groupVideos.length, items.length]);
+
+  const scroll = (dir: "left" | "right") => {
+    const el = scrollRef.current;
+    if (!el) return;
+    el.scrollBy({ left: dir === "left" ? -300 : 300, behavior: "smooth" });
+  };
+
+  return (
+    <section className="mb-10 rounded-2xl p-5 relative group/catalog">
+      <h2 className="text-lg font-bold mb-4 tracking-wide uppercase text-player-foreground/90">{groupName}</h2>
+      <div className="relative">
+        {canScrollLeft && (
+          <button
+            onClick={() => scroll("left")}
+            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-black/60 backdrop-blur flex items-center justify-center text-white hover:bg-black/80 transition-opacity opacity-0 group-hover/catalog:opacity-100"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+        )}
+        {canScrollRight && (
+          <button
+            onClick={() => scroll("right")}
+            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-black/60 backdrop-blur flex items-center justify-center text-white hover:bg-black/80 transition-opacity opacity-0 group-hover/catalog:opacity-100"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </button>
+        )}
+        <div ref={scrollRef} className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide scroll-smooth">
+          {groupVideos.length > 0 ? (
+            groupVideos.map(({ channel, ...video }) => {
+              const dateStr = video.published
+                ? new Date(video.published).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" })
+                : "";
+              const thumb = channel.cover_url || video.thumbnail;
+              return (
+                <button
+                  key={video.videoId}
+                  onClick={() => onPlay(channel.id)}
+                  onMouseEnter={() => onHoverChange(thumb)}
+                  onMouseLeave={() => onHoverChange(null)}
+                  className="flex-shrink-0 w-56 h-32 rounded-xl overflow-hidden relative transition-all hover:scale-[1.02] border-[5px] border-transparent hover:border-white"
+                >
+                  <img src={video.thumbnail} alt={video.title} className="w-full h-full object-cover" />
+                  {dateStr && (
+                    <span className="absolute top-2 left-2 text-[10px] font-semibold bg-black/70 px-2 py-0.5 rounded text-white">
+                      {dateStr}
+                    </span>
+                  )}
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2">
+                    <p className="text-xs font-medium line-clamp-2 text-left text-white">{video.title}</p>
+                  </div>
+                </button>
+              );
+            })
+          ) : (
+            items.map(item => (
+              <button
+                key={item.id}
+                onClick={() => onPlay(item.id)}
+                onMouseEnter={() => onHoverChange(item.cover_url || null)}
+                onMouseLeave={() => onHoverChange(null)}
+                className="flex-shrink-0 w-56 h-32 rounded-xl overflow-hidden relative transition-all hover:scale-[1.02] border-[5px] border-transparent hover:border-white"
+              >
+                {item.cover_url ? (
+                  <img src={item.cover_url} alt={item.name} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-player-accent/30 to-player flex items-center justify-center">
+                    <Film className="h-8 w-8 text-player-muted-foreground" />
+                  </div>
+                )}
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2">
+                  <p className="text-xs font-medium truncate text-left">{item.name}</p>
+                </div>
+              </button>
+            ))
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+
   onBackToAccess?: () => void;
 }
 
