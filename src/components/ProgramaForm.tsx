@@ -820,7 +820,7 @@ export default function ProgramaForm() {
 
           {/* Dias da Semana */}
           <div>
-            <label className="block text-[11px] mb-1.5 font-semibold text-white uppercase tracking-wider flex items-center gap-1">
+            <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider flex items-center gap-1" style={{ color: "#0d0446" }}>
               <Calendar size={13} /> Dias da Semana
             </label>
             <div className="flex flex-wrap gap-1.5">
@@ -828,9 +828,9 @@ export default function ProgramaForm() {
                 <button key={dia} onClick={() => toggleDia(dia)}
                   className="px-3 py-1.5 text-[11px] font-semibold transition-all rounded-lg"
                   style={{
-                    backgroundColor: diasSemana.includes(dia) ? "#268ffa" : "rgba(255,255,255,0.06)",
-                    color: "#ffffff",
-                    border: diasSemana.includes(dia) ? "1px solid #268ffa" : "1px solid rgba(255,255,255,0.1)",
+                    backgroundColor: diasSemana.includes(dia) ? "#268ffa" : "rgba(255,255,255,0.5)",
+                    color: diasSemana.includes(dia) ? "#ffffff" : "#0d0446",
+                    border: diasSemana.includes(dia) ? "1px solid #268ffa" : "1px solid rgba(13,4,70,0.15)",
                     boxShadow: diasSemana.includes(dia) ? "0 2px 8px rgba(38,143,250,0.3)" : "none",
                   }}>
                   {dia.slice(0, 3)}
