@@ -411,11 +411,12 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
 
       if (userId) {
         // Logged-in user: fetch directly from DB
-        const [chRes, empRes, progRes, histRes] = await Promise.all([
+        const [chRes, empRes, progRes, histRes, shopRes] = await Promise.all([
           supabase.from("streaming_channels").select("*").eq("user_id", userId).eq("active", true).order("numero_canal"),
           supabase.from("empresa_config").select("logo, nome").eq("user_id", userId).single(),
           supabase.from("programas").select("id, nome, horario_inicio, horario_fim, dias_semana, ativo, selo, estudio, variavel, data_variavel, capa, descricao, apresentador_id").eq("user_id", userId).eq("ativo", true).order("horario_inicio"),
           supabase.from("watch_history").select("id, channel_name, channel_cover_url, channel_logo_url, channel_type, watched_at, channel_id").eq("user_id", userId).order("watched_at", { ascending: false }).limit(10),
+          supabase.from("shopping_products").select("id, name, description, price, image_url, payment_url, stock").eq("user_id", userId).eq("active", true),
         ]);
         if (chRes.data) setChannels(chRes.data as any);
         if (empRes.data) {
