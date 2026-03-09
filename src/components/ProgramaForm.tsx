@@ -610,17 +610,17 @@ export default function ProgramaForm() {
   return (
     <div className="animate-fade-in space-y-6">
       {/* Form Card */}
-      <div className="rounded-2xl overflow-hidden" style={{ background: "linear-gradient(135deg, #0d0446 0%, #1a0a6e 100%)", boxShadow: "0 8px 32px rgba(13,4,70,0.25)" }}>
+      <div className="rounded-2xl overflow-hidden" style={{ background: "#d9e9fa", boxShadow: "0 8px 32px rgba(13,4,70,0.15)" }}>
         {/* Form Header */}
-        <div className="flex items-center gap-3 px-6 py-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+        <div className="flex items-center gap-3 px-6 py-4" style={{ borderBottom: "1px solid rgba(13,4,70,0.1)" }}>
           <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(45,191,244,0.15)" }}>
             <PlaySquare size={20} style={{ color: "#2dbff4" }} />
           </div>
           <div>
-            <h3 className="text-base font-bold text-white">
+            <h3 className="text-base font-bold" style={{ color: "#0d0446" }}>
               {editingId ? "Editar Programa" : "Cadastro de Programa"}
             </h3>
-            <p className="text-[11px] text-white">Preencha os dados para cadastrar o programa</p>
+            <p className="text-[11px]" style={{ color: "rgba(13,4,70,0.7)" }}>Preencha os dados para cadastrar o programa</p>
           </div>
         </div>
 
@@ -629,24 +629,24 @@ export default function ProgramaForm() {
           {/* Nome + Tipo */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-[11px] mb-1.5 font-semibold text-white uppercase trackin uppercase trackin uppercase trackin uppercase tracking-wider">Nome do Programa</label>
+              <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "#0d0446" }}>Nome do Programa</label>
               <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Digite o nome do programa"
-                className="w-full px-4 py-2 outline-none tra7sition-all text-s7 text-white place7older:text-white/50"
-                style={{ backgroundColor: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "12px" }}
-                onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.12)"; }}
-                onBlur={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.08)"; }}
+                className="w-full px-4 py-2 outline-none transition-all text-sm placeholder:text-[#0d0446]/40"
+                style={{ backgroundColor: "rgba(255,255,255,0.6)", border: "1px solid rgba(13,4,70,0.15)", borderRadius: "12px", color: "#0d0446" }}
+                onFocus={e => { e.currentTarget.style.borderColor = "#268ffa"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.8)"; }}
+                onBlur={e => { e.currentTarget.style.borderColor = "rgba(13,4,70,0.15)"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.6)"; }}
               />
             </div>
             <div>
-              <label className="block text-[11px] mb-1.5 font-semibold text-white uppercase tracking-wider">Tipo do Programa</label>
+              <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "#0d0446" }}>Tipo do Programa</label>
               <div className="flex gap-2">
                 <Select value={tipoPrograma} onValueChange={setTipoPrograma}>
-                  <SelectTrigger className="flex-1 h-9" style={{ backgroundColor: "rgba(255,255,255,0.08)", color: "#ffffff", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.12)", fontSize: "13px" }}>
+                  <SelectTrigger className="flex-1 h-9" style={{ backgroundColor: "rgba(255,255,255,0.6)", color: "#0d0446", borderRadius: "12px", border: "1px solid rgba(13,4,70,0.15)", fontSize: "13px" }}>
                     <SelectValue placeholder="Selecione o tipo" />
                   </SelectTrigger>
-                  <SelectContent style={{ backgroundColor: "#0d0446", border: "1px solid rgba(255,255,255,0.15)" }}>
+                  <SelectContent>
                     {tiposPrograma.map(t => (
-                      <SelectItem key={t} value={t} className="text-white focus:bg-white/20 focus:text-white">{t}</SelectItem>
+                      <SelectItem key={t} value={t}>{t}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -678,14 +678,14 @@ export default function ProgramaForm() {
           {/* Classificação + Apresentador */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-[11px] mb-1.5 font-semibold text-white uppercase tracking-wider">Classificação Etária</label>
+              <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "#0d0446" }}>Classificação Etária</label>
               <Select value={classificacaoEtaria} onValueChange={setClassificacaoEtaria}>
-                <SelectTrigger className="w-full h-9" style={{ backgroundColor: "rgba(255,255,255,0.08)", color: "#ffffff", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.12)", fontSize: "13px" }}>
+                <SelectTrigger className="w-full h-9" style={{ backgroundColor: "rgba(255,255,255,0.6)", color: "#0d0446", borderRadius: "12px", border: "1px solid rgba(13,4,70,0.15)", fontSize: "13px" }}>
                   <SelectValue placeholder="Selecione a classificação" />
                 </SelectTrigger>
-                <SelectContent style={{ backgroundColor: "#0d0446", border: "1px solid rgba(255,255,255,0.15)" }}>
+                <SelectContent>
                   {CLASSIFICACOES_ETARIAS.map(c => (
-                    <SelectItem key={c.value} value={c.value} className="text-white focus:bg-white/20 focus:text-white">
+                    <SelectItem key={c.value} value={c.value}>
                       <span className="flex items-center gap-2">
                         <ClassificacaoBadge value={c.value} size={18} />
                         {c.label}
@@ -696,31 +696,31 @@ export default function ProgramaForm() {
               </Select>
             </div>
             <div>
-              <label className="block text-[11px] mb-1.5 font-semibold text-white uppercase tracking-wider">Apresentador</label>
+              <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "#0d0446" }}>Apresentador</label>
               <Popover open={apresentadorComboOpen} onOpenChange={setApresentadorComboOpen}>
                 <PopoverTrigger asChild>
                   <button
                     className="w-full h-9 flex items-center justify-between px-4 text-sm rounded-xl"
-                    style={{ backgroundColor: "rgba(255,255,255,0.08)", color: "#ffffff", border: "1px solid rgba(255,255,255,0.12)" }}
+                    style={{ backgroundColor: "rgba(255,255,255,0.6)", color: "#0d0446", border: "1px solid rgba(13,4,70,0.15)" }}
                   >
-                    <span className={apresentadorId ? "" : "text-white"}>
+                    <span style={{ color: "#0d0446" }}>
                       {apresentadorId ? (apresentadores.find(a => a.id === apresentadorId)?.nome || "Selecionar") : "Selecionar Apresentador"}
                     </span>
                     <ChevronsUpDown size={14} className="opacity-60" />
                   </button>
                 </PopoverTrigger>
-                <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start" style={{ backgroundColor: "#0d0446", border: "1px solid rgba(255,255,255,0.15)" }}>
-                  <Command style={{ backgroundColor: "#0d0446" }}>
-                    <CommandInput placeholder="Buscar apresentador..." className="text-white" style={{ color: "#ffffff" }} />
+                <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                  <Command>
+                    <CommandInput placeholder="Buscar apresentador..." />
                     <CommandList>
-                      <CommandEmpty className="text-white/60 py-4 text-center text-sm">Nenhum encontrado.</CommandEmpty>
+                      <CommandEmpty className="py-4 text-center text-sm">Nenhum encontrado.</CommandEmpty>
                       <CommandGroup>
-                        <CommandItem value="__none__" onSelect={() => { setApresentadorId(""); setApresentadorComboOpen(false); }} className="text-white data-[selected=true]:bg-white/20 data-[selected=true]:text-white">
+                        <CommandItem value="__none__" onSelect={() => { setApresentadorId(""); setApresentadorComboOpen(false); }}>
                           <Check size={14} className={cn("mr-2", !apresentadorId ? "opacity-100" : "opacity-0")} />
                           Nenhum
                         </CommandItem>
                         {apresentadores.filter(a => a.ativo && a.cargo?.toLowerCase() !== "convidado").map(a => (
-                          <CommandItem key={a.id} value={a.nome} onSelect={() => { setApresentadorId(a.id); setApresentadorComboOpen(false); }} className="text-white data-[selected=true]:bg-white/20 data-[selected=true]:text-white">
+                          <CommandItem key={a.id} value={a.nome} onSelect={() => { setApresentadorId(a.id); setApresentadorComboOpen(false); }}>
                             <Check size={14} className={cn("mr-2", apresentadorId === a.id ? "opacity-100" : "opacity-0")} />
                             {a.nome}
                           </CommandItem>
@@ -735,26 +735,26 @@ export default function ProgramaForm() {
 
           {/* Descrição */}
           <div>
-            <label className="block text-[11px] mb-1.5 font-semibold text-white uppercase tracking-wider">Descrição</label>
+            <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "#0d0446" }}>Descrição</label>
             <Textarea value={descricao} onChange={(e) => setDescricao(e.target.value)} placeholder="Descrição do programa (opcional)"
-              className="min-h-[60px] px-4 py-2 outline-none transition-all text-s7 text-white place7older:text-white/50"
-              style={{ backgroundColor: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "12px" }}
-              onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
-              onBlur={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)"; }}
+              className="min-h-[60px] px-4 py-2 outline-none transition-all text-sm placeholder:text-[#0d0446]/40"
+              style={{ backgroundColor: "rgba(255,255,255,0.6)", border: "1px solid rgba(13,4,70,0.15)", borderRadius: "12px", color: "#0d0446" }}
+              onFocus={e => { e.currentTarget.style.borderColor = "#268ffa"; }}
+              onBlur={e => { e.currentTarget.style.borderColor = "rgba(13,4,70,0.15)"; }}
             />
           </div>
 
           {/* Selo + Capa */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-[11px] mb-1.5 font-semibold text-white uppercase tracg-wider">Selo (o (1080×1080 PNG alpha)</label>
+              <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "#0d0446" }}>Selo (1080×1080 PNG alpha)</label>
               <label className="cursor-pointer group">
-                <div className="w-16 h-16 rounded-xl flex flex-col items-center justify-center gap-0.5 transition-all group-hover:border-[#2dbef3]"
-                  style={{ backgroundColor: "rgba(255,255,255,0.06)", border: "2px dashed rgba(255,255,255,0.15)" }}>
+                <div className="w-16 h-16 rounded-xl flex flex-col items-center justify-center gap-0.5 transition-all group-hover:border-[#268ffa]"
+                  style={{ backgroundColor: "rgba(255,255,255,0.5)", border: "2px dashed rgba(13,4,70,0.2)" }}>
                   {selo ? (
                     <img src={selo} alt="Selo" className="w-full h-full object-cover rounded-xl" />
                   ) : (
-                    <span className="text-[9px] text-white group-hover:text-white">Upload</span>
+                    <span className="text-[9px]" style={{ color: "#0d0446" }}>Upload</span>
                   )}
                 </div>
                 <input type="file" accept="image/*" onChange={handleSelo} className="hidden" />
@@ -762,14 +762,14 @@ export default function ProgramaForm() {
               {selo && <button onClick={() => setSelo("")} className="text-[10px] text-red-400 hover:text-red-300 mt-1">Remover</button>}
             </div>
             <div>
-              <label className="block text-[11px] mb-1.5 font-semibold text-white uppercase tracking-wider">Capa (1080×1080 PNG alpha)</label>
+              <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "#0d0446" }}>Capa (1080×1080 PNG alpha)</label>
               <label className="cursor-pointer group">
-                <div className="w-16 h-16 rounded-xl flex flex-col items-center justify-center gap-0.5 transition-all group-hover:border-[#2dbef3]"
-                  style={{ backgroundColor: "rgba(255,255,255,0.06)", border: "2px dashed rgba(255,255,255,0.15)" }}>
+                <div className="w-16 h-16 rounded-xl flex flex-col items-center justify-center gap-0.5 transition-all group-hover:border-[#268ffa]"
+                  style={{ backgroundColor: "rgba(255,255,255,0.5)", border: "2px dashed rgba(13,4,70,0.2)" }}>
                   {capa ? (
                     <img src={capa} alt="Capa" className="w-full h-full object-cover rounded-xl" />
                   ) : (
-                    <span className="text-[9px] text-white group-hover:text-white">Upload</span>
+                    <span className="text-[9px]" style={{ color: "#0d0446" }}>Upload</span>
                   )}
                 </div>
                 <input type="file" accept="image/*" onChange={handleCapa} className="hidden" />
@@ -780,17 +780,17 @@ export default function ProgramaForm() {
 
           {/* Estúdio */}
           <div>
-            <label className="block text-[11px] mb-1.5 font-semibold text-white uppercase tracking-wider flex items-center gap-1">
+            <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider flex items-center gap-1" style={{ color: "#0d0446" }}>
               <Building2 size={13} /> Estúdio
             </label>
             <div className="flex gap-2">
               <Select value={estudio} onValueChange={setEstudio}>
-                <SelectTrigger className="flex-1 h-9" style={{ backgroundColor: "rgba(255,255,255,0.08)", color: "#ffffff", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.12)", fontSize: "13px" }}>
+                <SelectTrigger className="flex-1 h-9" style={{ backgroundColor: "rgba(255,255,255,0.6)", color: "#0d0446", borderRadius: "12px", border: "1px solid rgba(13,4,70,0.15)", fontSize: "13px" }}>
                   <SelectValue placeholder="Selecione o estúdio" />
                 </SelectTrigger>
-                <SelectContent style={{ backgroundColor: "#0d0446", border: "1px solid rgba(255,255,255,0.15)" }}>
+                <SelectContent>
                   {estudios.map(e => (
-                    <SelectItem key={e} value={e} className="text-white focus:bg-white/20 focus:text-white">{e}</SelectItem>
+                    <SelectItem key={e} value={e}>{e}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -820,7 +820,7 @@ export default function ProgramaForm() {
 
           {/* Dias da Semana */}
           <div>
-            <label className="block text-[11px] mb-1.5 font-semibold text-white uppercase tracking-wider flex items-center gap-1">
+            <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider flex items-center gap-1" style={{ color: "#0d0446" }}>
               <Calendar size={13} /> Dias da Semana
             </label>
             <div className="flex flex-wrap gap-1.5">
@@ -828,9 +828,9 @@ export default function ProgramaForm() {
                 <button key={dia} onClick={() => toggleDia(dia)}
                   className="px-3 py-1.5 text-[11px] font-semibold transition-all rounded-lg"
                   style={{
-                    backgroundColor: diasSemana.includes(dia) ? "#268ffa" : "rgba(255,255,255,0.06)",
-                    color: "#ffffff",
-                    border: diasSemana.includes(dia) ? "1px solid #268ffa" : "1px solid rgba(255,255,255,0.1)",
+                    backgroundColor: diasSemana.includes(dia) ? "#268ffa" : "rgba(255,255,255,0.5)",
+                    color: diasSemana.includes(dia) ? "#ffffff" : "#0d0446",
+                    border: diasSemana.includes(dia) ? "1px solid #268ffa" : "1px solid rgba(13,4,70,0.15)",
                     boxShadow: diasSemana.includes(dia) ? "0 2px 8px rgba(38,143,250,0.3)" : "none",
                   }}>
                   {dia.slice(0, 3)}
@@ -842,42 +842,42 @@ export default function ProgramaForm() {
           {/* Horários */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-[11px] mb-1.5 font-semibold text-white uppercase tracking-wider flex items-center gap-1"><Clock size={12} /> Início</label>
+              <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider flex items-center gap-1" style={{ color: "#0d0446" }}><Clock size={12} /> Início</label>
               <input type="time" step="1" value={horarioInicio} onChange={(e) => setHorarioInicio(e.target.value)}
-                className="w-full px-4 py-2 outline-none transition-all text-sm text-white"
-                style={{ backgroundColor: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "12px", colorScheme: "dark" }}
-                onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
-                onBlur={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)"; }}
+                className="w-full px-4 py-2 outline-none transition-all text-sm"
+                style={{ backgroundColor: "rgba(255,255,255,0.6)", border: "1px solid rgba(13,4,70,0.15)", borderRadius: "12px", color: "#0d0446" }}
+                onFocus={e => { e.currentTarget.style.borderColor = "#268ffa"; }}
+                onBlur={e => { e.currentTarget.style.borderColor = "rgba(13,4,70,0.15)"; }}
               />
             </div>
             <div>
-              <label className="block text-[11px] mb-1.5 font-semibold text-white uppercase tracking-wider flex items-center gap-1"><Clock size={12} /> Fim</label>
+              <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider flex items-center gap-1" style={{ color: "#0d0446" }}><Clock size={12} /> Fim</label>
               <input type="time" step="1" value={horarioFim} onChange={(e) => setHorarioFim(e.target.value)}
-                className="w-full px-4 py-2 outline-none transition-all text-sm text-white"
-                style={{ backgroundColor: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "12px", colorScheme: "dark" }}
-                onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
-                onBlur={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)"; }}
+                className="w-full px-4 py-2 outline-none transition-all text-sm"
+                style={{ backgroundColor: "rgba(255,255,255,0.6)", border: "1px solid rgba(13,4,70,0.15)", borderRadius: "12px", color: "#0d0446" }}
+                onFocus={e => { e.currentTarget.style.borderColor = "#268ffa"; }}
+                onBlur={e => { e.currentTarget.style.borderColor = "rgba(13,4,70,0.15)"; }}
               />
             </div>
           </div>
 
           {/* Toggles */}
-          <div className="flex items-center gap-6" style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: "12px" }}>
+          <div className="flex items-center gap-6" style={{ borderTop: "1px solid rgba(13,4,70,0.1)", paddingTop: "12px" }}>
             <label className="flex items-center gap-2.5 cursor-pointer select-none">
               <div className="relative">
                 <input type="checkbox" checked={ativo} onChange={(e) => setAtivo(e.target.checked)} className="sr-only peer" />
-                <div className="w-9 h-5 rounded-full transition-colors peer-checked:bg-[#2dbef3]" style={{ backgroundColor: "rgba(255,255,255,0.15)" }} />
+                <div className="w-9 h-5 rounded-full transition-colors peer-checked:bg-[#268ffa]" style={{ backgroundColor: "rgba(13,4,70,0.15)" }} />
                 <div className="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-4 shadow-sm" />
               </div>
-              <span className="text-xs font-medium text-white">Ativo</span>
+              <span className="text-xs font-medium" style={{ color: "#0d0446" }}>Ativo</span>
             </label>
             <label className="flex items-center gap-2.5 cursor-pointer select-none">
               <div className="relative">
                 <input type="checkbox" checked={variavel} onChange={(e) => { setVariavel(e.target.checked); if (!e.target.checked) setDataVariavel(undefined); }} className="sr-only peer" />
-                <div className="w-9 h-5 rounded-full transition-colors peer-checked:bg-[#f59e0b]" style={{ backgroundColor: "rgba(255,255,255,0.15)" }} />
+                <div className="w-9 h-5 rounded-full transition-colors peer-checked:bg-[#f59e0b]" style={{ backgroundColor: "rgba(13,4,70,0.15)" }} />
                 <div className="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-4 shadow-sm" />
               </div>
-              <span className="text-xs font-medium text-white">Variável</span>
+              <span className="text-xs font-medium" style={{ color: "#0d0446" }}>Variável</span>
             </label>
           </div>
 
@@ -923,9 +923,9 @@ export default function ProgramaForm() {
             {editingId && (
               <button onClick={resetForm}
                 className="px-4 py-2 text-xs font-bold transition-all flex items-center gap-1.5 rounded-xl"
-                style={{ backgroundColor: "rgba(255,255,255,0.08)", color: "#ffffff", border: "1px solid rgba(255,255,255,0.15)" }}
-                onMouseEnter={e => { e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.15)"; }}
-                onMouseLeave={e => { e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.08)"; }}
+                style={{ backgroundColor: "rgba(255,255,255,0.5)", color: "#0d0446", border: "1px solid rgba(13,4,70,0.15)" }}
+                onMouseEnter={e => { e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.7)"; }}
+                onMouseLeave={e => { e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.5)"; }}
               >
                 <X size={13} /> Cancelar
               </button>
