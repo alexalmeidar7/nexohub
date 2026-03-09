@@ -50,9 +50,14 @@ export function unlockAndPrepareMiniAudio(url: string) {
   if (!globalAudio) {
     globalAudio = new Audio();
   }
-  // Play empty to unlock in user gesture context
-  globalAudio.src = "";
-  globalAudio.play().catch(() => {});
+  // Create a short silent audio context to unlock the element in user gesture
+  globalAudio.src = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=";
+  globalAudio.volume = 0;
+  globalAudio.play().then(() => {
+    console.log("[MiniPlayer] Audio element unlocked successfully");
+  }).catch((e) => {
+    console.warn("[MiniPlayer] Audio unlock failed:", e);
+  });
   // Store URL for later use
   globalAudio.dataset.pendingUrl = url;
 }
