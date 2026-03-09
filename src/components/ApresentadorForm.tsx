@@ -163,17 +163,17 @@ export default function ApresentadorForm() {
   return (
     <div className="animate-fade-in space-y-6">
       {/* Form Card */}
-      <div className="rounded-2xl overflow-hidden" style={{ background: "linear-gradient(135deg, #0d0446 0%, #1a0a6e 100%)", boxShadow: "0 8px 32px rgba(13,4,70,0.25)" }}>
+      <div className="rounded-2xl overflow-hidden" style={{ background: "#d9e9fa", boxShadow: "0 8px 32px rgba(13,4,70,0.15)" }}>
         {/* Form Header */}
-        <div className="flex items-center gap-3 px-6 py-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(45,191,244,0.15)" }}>
-            <UserPlus size={20} style={{ color: "#2dbff4" }} />
+        <div className="flex items-center gap-3 px-6 py-4" style={{ borderBottom: "1px solid rgba(13,4,70,0.08)" }}>
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(38,143,250,0.15)" }}>
+            <UserPlus size={20} style={{ color: "#268ffa" }} />
           </div>
           <div>
-            <h3 className="text-base font-bold text-white">
+            <h3 className="text-base font-bold" style={{ color: "#0d0446" }}>
               {editingId ? "Editar Apresentador/Participante" : "Novo Apresentador/Participante"}
             </h3>
-            <p className="text-[11px] text-white/40">Preencha os dados abaixo para cadastrar</p>
+            <p className="text-[11px]" style={{ color: "rgba(13,4,70,0.5)" }}>Preencha os dados abaixo para cadastrar</p>
           </div>
         </div>
 
@@ -182,9 +182,9 @@ export default function ApresentadorForm() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Categoria */}
             <div>
-              <label className="block text-[11px] mb-1.5 font-semibold text-white/60 uppercase tracking-wider">Categoria</label>
+              <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "#0d0446" }}>Categoria</label>
               <Select value={categoria} onValueChange={setCategoria} open={catOpen} onOpenChange={setCatOpen}>
-                <SelectTrigger className="w-full h-9" style={{ backgroundColor: "rgba(255,255,255,0.08)", color: "#ffffff", borderRadius: "12px", border: catOpen ? "1px solid #2dbef3" : "1px solid rgba(255,255,255,0.12)", transition: "border-color 0.3s" }}>
+                <SelectTrigger className="w-full h-9" style={{ backgroundColor: "rgba(255,255,255,0.6)", color: "#0d0446", borderRadius: "12px", border: catOpen ? "1px solid #268ffa" : "1px solid rgba(13,4,70,0.15)", transition: "border-color 0.3s" }}>
                   <SelectValue placeholder="Selecione a categoria" />
                 </SelectTrigger>
                 <SelectContent>
@@ -197,40 +197,40 @@ export default function ApresentadorForm() {
 
             {/* Nome */}
             <div>
-              <label className="block text-[11px] mb-1.5 font-semibold text-white/60 uppercase tracking-wider">Nome Completo</label>
+              <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "#0d0446" }}>Nome Completo</label>
               <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Digite o nome completo"
-                className="w-full px-4 py-2 outline-none transition-all text-sm text-white placeholder:text-white/30"
-                style={{ backgroundColor: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "12px" }}
-                onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.12)"; }}
-                onBlur={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.08)"; }}
+                className="w-full px-4 py-2 outline-none transition-all text-sm placeholder:text-[#0d0446]/40"
+                style={{ backgroundColor: "rgba(255,255,255,0.6)", border: "1px solid rgba(13,4,70,0.15)", borderRadius: "12px", color: "#0d0446" }}
+                onFocus={e => { e.currentTarget.style.borderColor = "#268ffa"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.8)"; }}
+                onBlur={e => { e.currentTarget.style.borderColor = "rgba(13,4,70,0.15)"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.6)"; }}
               />
             </div>
           </div>
 
           {categoria === "Convidado" && (
             <div>
-              <label className="block text-[11px] mb-1.5 font-semibold text-white/60 uppercase tracking-wider">Cargo</label>
+              <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "#0d0446" }}>Cargo</label>
               <input value={cargoConvidado} onChange={(e) => setCargoConvidado(e.target.value)} placeholder="Ex: Médico, Advogado..."
-                className="w-full px-4 py-2 outline-none transition-all text-sm text-white placeholder:text-white/30"
-                style={{ backgroundColor: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "12px" }}
-                onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.12)"; }}
-                onBlur={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.08)"; }}
+                className="w-full px-4 py-2 outline-none transition-all text-sm placeholder:text-[#0d0446]/40"
+                style={{ backgroundColor: "rgba(255,255,255,0.6)", border: "1px solid rgba(13,4,70,0.15)", borderRadius: "12px", color: "#0d0446" }}
+                onFocus={e => { e.currentTarget.style.borderColor = "#268ffa"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.8)"; }}
+                onBlur={e => { e.currentTarget.style.borderColor = "rgba(13,4,70,0.15)"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.6)"; }}
               />
             </div>
           )}
 
           {/* Instagram */}
           <div>
-            <label className="block text-[11px] mb-1.5 font-semibold text-white/60 uppercase tracking-wider">Instagram</label>
+            <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "#0d0446" }}>Instagram</label>
             <div className="flex items-center gap-2">
               <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)" }}>
                 <Instagram size={16} className="text-white" />
               </div>
               <input value={instagram} onChange={(e) => setInstagram(e.target.value)} placeholder="@usuario_instagram"
-                className="flex-1 px-4 py-2 outline-none transition-all text-sm text-white placeholder:text-white/30"
-                style={{ backgroundColor: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "12px" }}
-                onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.12)"; }}
-                onBlur={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.08)"; }}
+                className="flex-1 px-4 py-2 outline-none transition-all text-sm placeholder:text-[#0d0446]/40"
+                style={{ backgroundColor: "rgba(255,255,255,0.6)", border: "1px solid rgba(13,4,70,0.15)", borderRadius: "12px", color: "#0d0446" }}
+                onFocus={e => { e.currentTarget.style.borderColor = "#268ffa"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.8)"; }}
+                onBlur={e => { e.currentTarget.style.borderColor = "rgba(13,4,70,0.15)"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.6)"; }}
               />
             </div>
           </div>
@@ -238,19 +238,19 @@ export default function ApresentadorForm() {
           {/* Foto */}
           {showFoto && (
             <div>
-              <label className="block text-[11px] mb-1.5 font-semibold text-white/60 uppercase tracking-wider">
+              <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "#0d0446" }}>
                 Foto (1080 × 1080 px — PNG com fundo transparente)
               </label>
               <div className="flex items-start gap-4">
                 <label className="cursor-pointer group">
-                  <div className="w-20 h-20 rounded-2xl flex flex-col items-center justify-center gap-1 transition-all group-hover:border-[#2dbef3]"
-                    style={{ backgroundColor: "rgba(255,255,255,0.06)", border: "2px dashed rgba(255,255,255,0.15)" }}>
+                  <div className="w-20 h-20 rounded-2xl flex flex-col items-center justify-center gap-1 transition-all group-hover:border-[#268ffa]"
+                    style={{ backgroundColor: "rgba(255,255,255,0.5)", border: "2px dashed rgba(13,4,70,0.2)" }}>
                     {foto ? (
                       <img src={foto} alt="Preview" className="w-full h-full object-cover rounded-2xl" />
                     ) : (
                       <>
-                        <Camera size={20} className="text-white/30 group-hover:text-[#2dbef3] transition-colors" />
-                        <span className="text-[9px] text-white/30 group-hover:text-white/50">Upload</span>
+                        <Camera size={20} style={{ color: "rgba(13,4,70,0.3)" }} className="group-hover:text-[#268ffa] transition-colors" />
+                        <span className="text-[9px] group-hover:text-[#268ffa]" style={{ color: "rgba(13,4,70,0.4)" }}>Upload</span>
                       </>
                     )}
                   </div>
@@ -266,23 +266,23 @@ export default function ApresentadorForm() {
           )}
 
           {/* Status + Actions */}
-          <div className="flex items-center justify-between pt-2" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+          <div className="flex items-center justify-between pt-2" style={{ borderTop: "1px solid rgba(13,4,70,0.08)" }}>
             <label className="flex items-center gap-2.5 cursor-pointer select-none">
               <div className="relative">
                 <input type="checkbox" checked={ativo} onChange={(e) => setAtivo(e.target.checked)} className="sr-only peer" />
-                <div className="w-9 h-5 rounded-full transition-colors peer-checked:bg-[#2dbef3]" style={{ backgroundColor: "rgba(255,255,255,0.15)" }} />
+                <div className="w-9 h-5 rounded-full transition-colors peer-checked:bg-[#268ffa]" style={{ backgroundColor: "rgba(13,4,70,0.15)" }} />
                 <div className="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-4 shadow-sm" />
               </div>
-              <span className="text-xs font-medium text-white/70">{ativo ? "Ativo" : "Inativo"}</span>
+              <span className="text-xs font-medium" style={{ color: "#0d0446" }}>{ativo ? "Ativo" : "Inativo"}</span>
             </label>
 
             <div className="flex gap-2">
               {editingId && (
                 <button onClick={resetForm}
                   className="px-4 py-2 text-xs font-bold transition-all flex items-center gap-1.5 rounded-xl"
-                  style={{ backgroundColor: "rgba(255,255,255,0.08)", color: "#ffffff", border: "1px solid rgba(255,255,255,0.15)" }}
-                  onMouseEnter={e => { e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.15)"; }}
-                  onMouseLeave={e => { e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.08)"; }}
+                  style={{ backgroundColor: "rgba(13,4,70,0.08)", color: "#0d0446", border: "1px solid rgba(13,4,70,0.15)" }}
+                  onMouseEnter={e => { e.currentTarget.style.backgroundColor = "rgba(13,4,70,0.15)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.backgroundColor = "rgba(13,4,70,0.08)"; }}
                 >
                   <X size={13} /> Cancelar
                 </button>
