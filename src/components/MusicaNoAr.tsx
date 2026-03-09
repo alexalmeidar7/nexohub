@@ -253,22 +253,31 @@ export default function MusicaNoAr() {
 
   if (!music && !presenterFallback) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[500px] animate-pulse">
-        <div className="p-8 rounded-2xl shadow-lg w-full max-w-md" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)" }}>
-          <div className="mb-4 space-y-1.5">
-            <div className="h-2.5 w-20 rounded bg-[#0d0446]/8" />
-            <div className="h-7 w-full rounded-full bg-[#0d0446]/5" />
+      <div className="animate-pulse">
+        <div className="rounded-2xl overflow-hidden" style={{ background: "#d9e9fa", boxShadow: "0 8px 32px rgba(13,4,70,0.12)", padding: "20px" }}>
+          <div className="flex items-center gap-3 mb-5">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(13,4,70,0.08)" }}>
+              <Music size={20} style={{ color: "#0d0446" }} />
+            </div>
+            <div>
+              <div className="h-5 w-32 rounded bg-[#0d0446]/10 mb-1" />
+              <div className="h-3 w-48 rounded bg-[#0d0446]/5" />
+            </div>
           </div>
-          <div className="aspect-square mb-8 rounded-2xl bg-[#0d0446]/5" />
-          <div className="space-y-3 flex flex-col items-center mb-4">
-            <div className="h-6 w-48 rounded bg-[#0d0446]/10" />
-            <div className="h-4 w-32 rounded bg-[#2dbef3]/20" />
-          </div>
-          <div className="space-y-2 mb-6">
-            <div className="h-1.5 w-full rounded-full bg-[#0d0446]/5" />
-            <div className="flex justify-between">
-              <div className="h-2.5 w-10 rounded bg-[#0d0446]/5" />
-              <div className="h-2.5 w-10 rounded bg-[#0d0446]/5" />
+          <div className="max-w-md mx-auto rounded-2xl overflow-hidden" style={{ backgroundColor: "#ffffff", boxShadow: "0 4px 20px rgba(13,4,70,0.08)" }}>
+            <div className="p-6">
+              <div className="h-3 w-16 rounded bg-[#0d0446]/8 mb-2" />
+              <div className="h-8 w-full rounded-full bg-[#0d0446]/5 mb-6" />
+              <div className="aspect-square rounded-2xl bg-[#0d0446]/5 mb-6" />
+              <div className="space-y-3 flex flex-col items-center mb-4">
+                <div className="h-6 w-48 rounded bg-[#0d0446]/10" />
+                <div className="h-4 w-32 rounded bg-[#268ffa]/15" />
+              </div>
+              <div className="h-2 w-full rounded-full bg-[#0d0446]/5 mb-2" />
+              <div className="flex justify-between">
+                <div className="h-2.5 w-10 rounded bg-[#0d0446]/5" />
+                <div className="h-2.5 w-10 rounded bg-[#0d0446]/5" />
+              </div>
             </div>
           </div>
         </div>
@@ -277,100 +286,126 @@ export default function MusicaNoAr() {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[500px] animate-fade-in">
-      <div className="p-8 rounded-2xl shadow-lg w-full max-w-md" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)" }}>
-        <div className="mb-4">
-          <p className="text-xs mb-1" style={{ color: "rgba(13,4,70,0.5)" }}>URL do XML:</p>
-          {editingUrl ? (
-            <div className="flex gap-2">
-              <input
-                value={tempUrl}
-                onChange={(e) => setTempUrl(e.target.value)}
-                className="flex-1 text-xs px-3 py-1.5 outline-none transition-colors"
-                style={{ backgroundColor: "#ffffff", border: "1px solid #0d0446", color: "#0d0446", borderRadius: "20px" }}
-                onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
-                onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
-                placeholder="URL do XML"
-              />
-              <button
-                onClick={() => { saveUrl(tempUrl); setEditingUrl(false); }}
-                className="px-3 py-1.5 font-bold transition-all"
-                style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "20px" }}
-                onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#2dbef3"; }}
-                onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#0d0446"; }}
-              >
-                <Check size={14} />
-              </button>
+    <div className="animate-fade-in">
+      <div className="rounded-2xl overflow-hidden" style={{ background: "#d9e9fa", boxShadow: "0 8px 32px rgba(13,4,70,0.12)", padding: "20px" }}>
+        {/* Header */}
+        <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(13,4,70,0.08)" }}>
+              <Music size={20} style={{ color: "#0d0446" }} />
             </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              <p className="text-xs truncate px-3 py-1.5 flex-1" style={{ backgroundColor: "rgba(13,4,70,0.04)", color: "#0d0446", borderRadius: "20px", border: "1px solid rgba(13,4,70,0.1)" }}>{xmlUrl}</p>
-              <button
-                onClick={() => { setTempUrl(xmlUrl); setEditingUrl(true); }}
-                className="transition-colors"
-                style={{ color: "rgba(13,4,70,0.4)" }}
-                onMouseEnter={e => { e.currentTarget.style.color = "#2dbef3"; }}
-                onMouseLeave={e => { e.currentTarget.style.color = "rgba(13,4,70,0.4)"; }}
-              >
-                <Pencil size={14} />
-              </button>
-            </div>
-          )}
-        </div>
-
-        <div className="relative aspect-square mb-8 overflow-hidden rounded-2xl shadow-lg group" style={{ backgroundColor: "rgba(13,4,70,0.04)" }}>
-          {loadingCover && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/40 z-10 backdrop-blur-sm">
-              <Loader2 className="animate-spin" size={48} style={{ color: "#2dbef3" }} />
-            </div>
-          )}
-          {displayCover ? (
-            <img src={displayCover} alt="Capa do Álbum" className="object-cover w-full h-full transition-transform duration-700 group-hover:scale-105" />
-          ) : (
-            <div className="w-full h-full flex flex-col items-center justify-center gap-3" style={{ color: "rgba(13,4,70,0.3)" }}>
-              <Music size={48} />
-              <span className="italic text-sm">{music ? "Nenhuma capa encontrada" : "Aguardando leitura..."}</span>
-            </div>
-          )}
-        </div>
-
-        <div className="space-y-2 text-center mb-4">
-          <h1 className="text-2xl font-bold tracking-tight truncate px-2" style={{ color: "#0d0446" }}>{displayTitulo}</h1>
-          <p className="font-semibold flex items-center justify-center gap-2 text-lg" style={{ color: "#2dbef3" }}>
-            <User size={20} />
-            {displayArtista}
-          </p>
-        </div>
-
-        {music && music.duracao > 0 && (
-          <div className="mb-6">
-            <div className="w-full h-1.5 rounded-full overflow-hidden mb-2" style={{ backgroundColor: "rgba(13,4,70,0.1)" }}>
-              <div className="h-full rounded-full transition-all duration-300" style={{ width: `${progress}%`, backgroundColor: "#2dbef3" }} />
-            </div>
-            <div className="flex justify-between text-xs font-mono" style={{ color: "rgba(13,4,70,0.4)" }}>
-              <span>{formatTime(elapsed)}</span>
-              <span>{formatTime(music.duracao)}</span>
+            <div>
+              <h3 className="text-base font-bold" style={{ color: "#0d0446" }}>Música no Ar</h3>
+              <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.5)" }}>Monitoramento em tempo real do XML de música</p>
             </div>
           </div>
-        )}
-
-        {music && (
-          <XmlLinkRow label="XML MUSICA AGORA" xmlContent={`<?xml version="1.0" encoding="UTF-8"?>\n<musica_agora>\n  <titulo>${music.titulo}</titulo>\n  <interprete>${music.artista}</interprete>\n  <capa>${music.capa || ""}</capa>\n</musica_agora>`} dark />
-        )}
-
-        <div className="mt-8 flex justify-center">
-          <span className="inline-flex items-center gap-2 px-3 py-1 text-[10px] uppercase tracking-widest font-bold rounded-full" style={{ backgroundColor: "rgba(45,190,243,0.1)", color: "#2dbef3", border: "1px solid rgba(45,190,243,0.2)" }}>
+          <span className="inline-flex items-center gap-2 px-3 py-1.5 text-[9px] uppercase tracking-widest font-bold rounded-full" style={{ backgroundColor: "rgba(38,143,250,0.1)", color: "#268ffa", border: "1px solid rgba(38,143,250,0.2)" }}>
             <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: "#2dbef3" }}></span>
-              <span className="relative inline-flex rounded-full h-2 w-2" style={{ backgroundColor: "#2dbef3" }}></span>
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: "#268ffa" }}></span>
+              <span className="relative inline-flex rounded-full h-2 w-2" style={{ backgroundColor: "#268ffa" }}></span>
             </span>
-            Monitorando a cada 2s
+            AO VIVO
           </span>
         </div>
 
-        <div className="mt-6 rounded-xl p-4" style={{ backgroundColor: "rgba(13,4,70,0.04)" }}>
-          <p className="text-xs mb-2 font-semibold" style={{ color: "rgba(13,4,70,0.5)" }}>Estrutura esperada do XML:</p>
-          <pre className="text-[10px] font-mono leading-relaxed" style={{ color: "rgba(13,4,70,0.4)" }}>{`<musica>\n  <nome_musica>Nome da Música</nome_musica>\n  <nome_interprete>Artista</nome_interprete>\n  <duracao>03:45</duracao>\n  <capa>https://url.jpg</capa> <!-- opcional -->\n</musica>`}</pre>
+        {/* Inner Card */}
+        <div className="max-w-md mx-auto rounded-2xl overflow-hidden" style={{ backgroundColor: "#ffffff", boxShadow: "0 4px 20px rgba(13,4,70,0.08)" }}>
+          <div className="p-6">
+            {/* XML URL */}
+            <div className="mb-5">
+              <p className="text-[10px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "rgba(13,4,70,0.4)" }}>URL do XML</p>
+              {editingUrl ? (
+                <div className="flex gap-2">
+                  <input
+                    value={tempUrl}
+                    onChange={(e) => setTempUrl(e.target.value)}
+                    className="flex-1 text-xs px-3 py-1.5 outline-none transition-colors"
+                    style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "1px solid rgba(13,4,70,0.15)", color: "#0d0446", borderRadius: "12px" }}
+                    onFocus={e => { e.currentTarget.style.borderColor = "#268ffa"; }}
+                    onBlur={e => { e.currentTarget.style.borderColor = "rgba(13,4,70,0.15)"; }}
+                    placeholder="URL do XML"
+                  />
+                  <button
+                    onClick={() => { saveUrl(tempUrl); setEditingUrl(false); }}
+                    className="w-8 h-8 rounded-lg flex items-center justify-center font-bold transition-all"
+                    style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#ffffff" }}
+                  >
+                    <Check size={14} />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <p className="text-[11px] truncate px-3 py-1.5 flex-1 rounded-lg" style={{ backgroundColor: "rgba(13,4,70,0.03)", color: "rgba(13,4,70,0.6)", border: "1px solid rgba(13,4,70,0.06)" }}>{xmlUrl}</p>
+                  <button
+                    onClick={() => { setTempUrl(xmlUrl); setEditingUrl(true); }}
+                    className="w-7 h-7 rounded-lg flex items-center justify-center transition-all"
+                    style={{ backgroundColor: "rgba(13,4,70,0.04)" }}
+                    onMouseEnter={e => { e.currentTarget.style.backgroundColor = "rgba(38,143,250,0.1)"; }}
+                    onMouseLeave={e => { e.currentTarget.style.backgroundColor = "rgba(13,4,70,0.04)"; }}
+                  >
+                    <Pencil size={12} style={{ color: "#268ffa" }} />
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Cover Art */}
+            <div className="relative aspect-square mb-6 overflow-hidden rounded-2xl group" style={{ backgroundColor: "rgba(13,4,70,0.03)", boxShadow: "0 4px 20px rgba(13,4,70,0.1)" }}>
+              {loadingCover && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/40 z-10 backdrop-blur-sm rounded-2xl">
+                  <Loader2 className="animate-spin" size={48} style={{ color: "#268ffa" }} />
+                </div>
+              )}
+              {displayCover ? (
+                <img src={displayCover} alt="Capa do Álbum" className="object-cover w-full h-full transition-transform duration-700 group-hover:scale-105" />
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center gap-3" style={{ color: "rgba(13,4,70,0.2)" }}>
+                  <Music size={48} />
+                  <span className="italic text-sm">{music ? "Nenhuma capa encontrada" : "Aguardando leitura..."}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Title & Artist */}
+            <div className="space-y-1.5 text-center mb-5">
+              <h1 className="text-xl font-bold tracking-tight truncate px-2" style={{ color: "#0d0446" }}>{displayTitulo}</h1>
+              <p className="font-semibold flex items-center justify-center gap-1.5 text-sm" style={{ color: "#268ffa" }}>
+                <User size={16} />
+                {displayArtista}
+              </p>
+            </div>
+
+            {/* Progress Bar */}
+            {music && music.duracao > 0 && (
+              <div className="mb-5">
+                <div className="w-full h-2 rounded-full overflow-hidden" style={{ backgroundColor: "rgba(13,4,70,0.06)" }}>
+                  <div className="h-full rounded-full transition-all duration-300" style={{ width: `${progress}%`, background: "linear-gradient(90deg, #268ffa, #2dbef3)" }} />
+                </div>
+                <div className="flex justify-between text-[10px] font-mono mt-1.5" style={{ color: "rgba(13,4,70,0.35)" }}>
+                  <span>{formatTime(elapsed)}</span>
+                  <span>{formatTime(music.duracao)}</span>
+                </div>
+              </div>
+            )}
+
+            {/* XML Link */}
+            {music && (
+              <XmlLinkRow label="XML MUSICA AGORA" xmlContent={`<?xml version="1.0" encoding="UTF-8"?>\n<musica_agora>\n  <titulo>${music.titulo}</titulo>\n  <interprete>${music.artista}</interprete>\n  <capa>${music.capa || ""}</capa>\n</musica_agora>`} dark />
+            )}
+          </div>
+
+          {/* XML Structure Reference */}
+          <div className="px-6 py-4" style={{ backgroundColor: "rgba(13,4,70,0.02)", borderTop: "1px solid rgba(13,4,70,0.06)" }}>
+            <p className="text-[10px] mb-1.5 font-bold uppercase tracking-wider" style={{ color: "rgba(13,4,70,0.35)" }}>Estrutura esperada do XML</p>
+            <pre className="text-[10px] font-mono leading-relaxed" style={{ color: "rgba(13,4,70,0.3)" }}>{`<musica>\n  <nome_musica>Nome da Música</nome_musica>\n  <nome_interprete>Artista</nome_interprete>\n  <duracao>03:45</duracao>\n  <capa>https://url.jpg</capa>\n</musica>`}</pre>
+          </div>
+        </div>
+
+        {/* Monitoring indicator */}
+        <div className="mt-4 flex justify-center">
+          <span className="inline-flex items-center gap-2 px-3 py-1 text-[9px] uppercase tracking-widest font-semibold" style={{ color: "rgba(13,4,70,0.35)" }}>
+            Monitorando XML a cada 2 segundos
+          </span>
         </div>
       </div>
     </div>
