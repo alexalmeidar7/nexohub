@@ -209,12 +209,12 @@ export default function ApresentadorForm() {
 
           {categoria === "Convidado" && (
             <div>
-              <label className="block text-[11px] mb-1.5 font-semibold text-white/60 uppercase tracking-wider">Cargo</label>
+              <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "#0d0446" }}>Cargo</label>
               <input value={cargoConvidado} onChange={(e) => setCargoConvidado(e.target.value)} placeholder="Ex: Médico, Advogado..."
-                className="w-full px-4 py-2 outline-none transition-all text-sm text-white placeholder:text-white/30"
-                style={{ backgroundColor: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "12px" }}
-                onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.12)"; }}
-                onBlur={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.08)"; }}
+                className="w-full px-4 py-2 outline-none transition-all text-sm placeholder:text-[#0d0446]/40"
+                style={{ backgroundColor: "rgba(255,255,255,0.6)", border: "1px solid rgba(13,4,70,0.15)", borderRadius: "12px", color: "#0d0446" }}
+                onFocus={e => { e.currentTarget.style.borderColor = "#268ffa"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.8)"; }}
+                onBlur={e => { e.currentTarget.style.borderColor = "rgba(13,4,70,0.15)"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.6)"; }}
               />
             </div>
           )}
