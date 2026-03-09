@@ -449,7 +449,12 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       {/* Sidebar - always visible, not affected by fade */}
       <aside
         className="w-20 flex flex-col items-center justify-center gap-3 z-40 fixed left-0 top-0 bottom-0"
-        style={{ background: "linear-gradient(to right, rgba(0,0,0,0.85), transparent)" }}
+        style={{
+          background: "rgba(0,0,0,0.35)",
+          backdropFilter: "blur(24px) saturate(1.4)",
+          WebkitBackdropFilter: "blur(24px) saturate(1.4)",
+          borderRight: "1px solid rgba(255,255,255,0.08)",
+        }}
       >
         {sidebarItems.map(item => (
           <button
