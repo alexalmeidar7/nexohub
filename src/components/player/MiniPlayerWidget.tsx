@@ -357,7 +357,8 @@ export default function MiniPlayerWidget({ data, onClose }: { data: MiniPlayerDa
                   if (isVideo && videoRef.current) videoRef.current.volume = v / 100;
                 }}
                 className="h-24 appearance-none cursor-pointer"
-                orient="vertical"
+                // @ts-ignore - orient is a valid HTML attribute for Firefox
+                {...{ orient: "vertical" } as any}
                 style={{
                   writingMode: "vertical-lr" as any,
                   direction: "rtl",
