@@ -714,7 +714,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
              <section className="rounded-2xl p-5" style={{ marginTop: "380px" }}>
               <h2 className="text-xl font-bold mb-6 tracking-wide uppercase text-player-foreground/90">Canais ao Vivo</h2>
               {!dataLoaded ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                   {[1, 2, 3, 4].map(i => (
                     <Skeleton key={i} className="w-full aspect-video rounded-xl bg-white/10" />
                   ))}
