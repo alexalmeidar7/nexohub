@@ -430,7 +430,7 @@ export default function PrevisaoTempo() {
                   {!forecastDescription && !forecastLoading && aiDescription && (
                     <button onClick={fetchForecastDescription}
                       className="flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold transition-all hover:scale-105"
-                      style={{ background: "rgba(45,190,243,0.15)", color: "#2dbef3", border: "1px solid rgba(45,190,243,0.3)" }}
+                      style={{ background: "rgba(13,4,70,0.08)", color: "#0d0446", border: "1px solid rgba(13,4,70,0.15)" }}
                     >
                       <Sparkles size={12} /> Quer que eu te fale como será os próximos 5 dias?
                     </button>
