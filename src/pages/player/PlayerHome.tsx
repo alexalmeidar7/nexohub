@@ -664,7 +664,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
         </header>
 
         {/* Banner full-width behind content — crossfade between default and thumb on hover */}
-        <div className="fixed top-0 left-[72px] right-0 z-[5] pointer-events-none h-[400px] overflow-hidden rounded-b-2xl transition-opacity duration-300" style={{ opacity: bannerOpacity }}>
+        <div className="fixed top-0 left-[72px] right-0 z-[1] pointer-events-none h-[400px] overflow-hidden rounded-b-2xl transition-opacity duration-300" style={{ opacity: bannerOpacity }}>
           <img
             src="/images/banner-home.png"
             alt="Banner"
