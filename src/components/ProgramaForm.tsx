@@ -620,7 +620,7 @@ export default function ProgramaForm() {
             <h3 className="text-base font-bold text-white">
               {editingId ? "Editar Programa" : "Cadastro de Programa"}
             </h3>
-            <p className="text-[11px] text-white/40">Preencha os dados para cadastrar o programa</p>
+            <p className="text-[11px] text-white/70">Preencha os dados para cadastrar o programa</p>
           </div>
         </div>
 
@@ -629,16 +629,16 @@ export default function ProgramaForm() {
           {/* Nome + Tipo */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-[11px] mb-1.5 font-semibold text-white/60 uppercase tracking-wider">Nome do Programa</label>
+              <label className="block text-[11px] mb-1.5 font-semibold text-white/90 uppercase tracking-wider">Nome do Programa</label>
               <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Digite o nome do programa"
-                className="w-full px-4 py-2 outline-none transition-all text-sm text-white placeholder:text-white/30"
+                className="w-full px-4 py-2 outline-none transition-all text-sm text-white placeholder:text-white/50"
                 style={{ backgroundColor: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "12px" }}
                 onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.12)"; }}
                 onBlur={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.08)"; }}
               />
             </div>
             <div>
-              <label className="block text-[11px] mb-1.5 font-semibold text-white/60 uppercase tracking-wider">Tipo do Programa</label>
+              <label className="block text-[11px] mb-1.5 font-semibold text-white/90 uppercase tracking-wider">Tipo do Programa</label>
               <div className="flex gap-2">
                 <Select value={tipoPrograma} onValueChange={setTipoPrograma}>
                   <SelectTrigger className="flex-1 h-9" style={{ backgroundColor: "rgba(255,255,255,0.08)", color: "#ffffff", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.12)", fontSize: "13px" }}>
@@ -678,7 +678,7 @@ export default function ProgramaForm() {
           {/* Classificação + Apresentador */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-[11px] mb-1.5 font-semibold text-white/60 uppercase tracking-wider">Classificação Etária</label>
+              <label className="block text-[11px] mb-1.5 font-semibold text-white/90 uppercase tracking-wider">Classificação Etária</label>
               <Select value={classificacaoEtaria} onValueChange={setClassificacaoEtaria}>
                 <SelectTrigger className="w-full h-9" style={{ backgroundColor: "rgba(255,255,255,0.08)", color: "#ffffff", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.12)", fontSize: "13px" }}>
                   <SelectValue placeholder="Selecione a classificação" />
@@ -696,17 +696,17 @@ export default function ProgramaForm() {
               </Select>
             </div>
             <div>
-              <label className="block text-[11px] mb-1.5 font-semibold text-white/60 uppercase tracking-wider">Apresentador</label>
+              <label className="block text-[11px] mb-1.5 font-semibold text-white/90 uppercase tracking-wider">Apresentador</label>
               <Popover open={apresentadorComboOpen} onOpenChange={setApresentadorComboOpen}>
                 <PopoverTrigger asChild>
                   <button
                     className="w-full h-9 flex items-center justify-between px-4 text-sm rounded-xl"
                     style={{ backgroundColor: "rgba(255,255,255,0.08)", color: "#ffffff", border: "1px solid rgba(255,255,255,0.12)" }}
                   >
-                    <span className={apresentadorId ? "" : "opacity-40"}>
+                    <span className={apresentadorId ? "" : "opacity-60"}>
                       {apresentadorId ? (apresentadores.find(a => a.id === apresentadorId)?.nome || "Selecionar") : "Selecionar Apresentador"}
                     </span>
-                    <ChevronsUpDown size={14} className="opacity-40" />
+                    <ChevronsUpDown size={14} className="opacity-60" />
                   </button>
                 </PopoverTrigger>
                 <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start" style={{ backgroundColor: "#0d0446", border: "1px solid rgba(255,255,255,0.15)" }}>
@@ -735,9 +735,9 @@ export default function ProgramaForm() {
 
           {/* Descrição */}
           <div>
-            <label className="block text-[11px] mb-1.5 font-semibold text-white/60 uppercase tracking-wider">Descrição</label>
+            <label className="block text-[11px] mb-1.5 font-semibold text-white/90 uppercase tracking-wider">Descrição</label>
             <Textarea value={descricao} onChange={(e) => setDescricao(e.target.value)} placeholder="Descrição do programa (opcional)"
-              className="min-h-[60px] px-4 py-2 outline-none transition-all text-sm text-white placeholder:text-white/30"
+              className="min-h-[60px] px-4 py-2 outline-none transition-all text-sm text-white placeholder:text-white/50"
               style={{ backgroundColor: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "12px" }}
               onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
               onBlur={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)"; }}
@@ -747,14 +747,14 @@ export default function ProgramaForm() {
           {/* Selo + Capa */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-[11px] mb-1.5 font-semibold text-white/60 uppercase tracking-wider">Selo (1080×1080 PNG alpha)</label>
+              <label className="block text-[11px] mb-1.5 font-semibold text-white/90 uppercase tracking-wider">Selo (1080×1080 PNG alpha)</label>
               <label className="cursor-pointer group">
                 <div className="w-16 h-16 rounded-xl flex flex-col items-center justify-center gap-0.5 transition-all group-hover:border-[#2dbef3]"
                   style={{ backgroundColor: "rgba(255,255,255,0.06)", border: "2px dashed rgba(255,255,255,0.15)" }}>
                   {selo ? (
                     <img src={selo} alt="Selo" className="w-full h-full object-cover rounded-xl" />
                   ) : (
-                    <span className="text-[9px] text-white/30 group-hover:text-white/50">Upload</span>
+                    <span className="text-[9px] text-white/50 group-hover:text-white/70">Upload</span>
                   )}
                 </div>
                 <input type="file" accept="image/*" onChange={handleSelo} className="hidden" />
@@ -762,14 +762,14 @@ export default function ProgramaForm() {
               {selo && <button onClick={() => setSelo("")} className="text-[10px] text-red-400 hover:text-red-300 mt-1">Remover</button>}
             </div>
             <div>
-              <label className="block text-[11px] mb-1.5 font-semibold text-white/60 uppercase tracking-wider">Capa (1080×1080 PNG alpha)</label>
+              <label className="block text-[11px] mb-1.5 font-semibold text-white/90 uppercase tracking-wider">Capa (1080×1080 PNG alpha)</label>
               <label className="cursor-pointer group">
                 <div className="w-16 h-16 rounded-xl flex flex-col items-center justify-center gap-0.5 transition-all group-hover:border-[#2dbef3]"
                   style={{ backgroundColor: "rgba(255,255,255,0.06)", border: "2px dashed rgba(255,255,255,0.15)" }}>
                   {capa ? (
                     <img src={capa} alt="Capa" className="w-full h-full object-cover rounded-xl" />
                   ) : (
-                    <span className="text-[9px] text-white/30 group-hover:text-white/50">Upload</span>
+                    <span className="text-[9px] text-white/50 group-hover:text-white/70">Upload</span>
                   )}
                 </div>
                 <input type="file" accept="image/*" onChange={handleCapa} className="hidden" />
@@ -780,7 +780,7 @@ export default function ProgramaForm() {
 
           {/* Estúdio */}
           <div>
-            <label className="block text-[11px] mb-1.5 font-semibold text-white/60 uppercase tracking-wider flex items-center gap-1">
+            <label className="block text-[11px] mb-1.5 font-semibold text-white/90 uppercase tracking-wider flex items-center gap-1">
               <Building2 size={13} /> Estúdio
             </label>
             <div className="flex gap-2">
@@ -820,7 +820,7 @@ export default function ProgramaForm() {
 
           {/* Dias da Semana */}
           <div>
-            <label className="block text-[11px] mb-1.5 font-semibold text-white/60 uppercase tracking-wider flex items-center gap-1">
+            <label className="block text-[11px] mb-1.5 font-semibold text-white/90 uppercase tracking-wider flex items-center gap-1">
               <Calendar size={13} /> Dias da Semana
             </label>
             <div className="flex flex-wrap gap-1.5">
@@ -829,7 +829,7 @@ export default function ProgramaForm() {
                   className="px-3 py-1.5 text-[11px] font-semibold transition-all rounded-lg"
                   style={{
                     backgroundColor: diasSemana.includes(dia) ? "#268ffa" : "rgba(255,255,255,0.06)",
-                    color: diasSemana.includes(dia) ? "#ffffff" : "rgba(255,255,255,0.5)",
+                    color: diasSemana.includes(dia) ? "#ffffff" : "rgba(255,255,255,0.7)",
                     border: diasSemana.includes(dia) ? "1px solid #268ffa" : "1px solid rgba(255,255,255,0.1)",
                     boxShadow: diasSemana.includes(dia) ? "0 2px 8px rgba(38,143,250,0.3)" : "none",
                   }}>
@@ -842,7 +842,7 @@ export default function ProgramaForm() {
           {/* Horários */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-[11px] mb-1.5 font-semibold text-white/60 uppercase tracking-wider flex items-center gap-1"><Clock size={12} /> Início</label>
+              <label className="block text-[11px] mb-1.5 font-semibold text-white/90 uppercase tracking-wider flex items-center gap-1"><Clock size={12} /> Início</label>
               <input type="time" step="1" value={horarioInicio} onChange={(e) => setHorarioInicio(e.target.value)}
                 className="w-full px-4 py-2 outline-none transition-all text-sm text-white"
                 style={{ backgroundColor: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "12px", colorScheme: "dark" }}
@@ -851,7 +851,7 @@ export default function ProgramaForm() {
               />
             </div>
             <div>
-              <label className="block text-[11px] mb-1.5 font-semibold text-white/60 uppercase tracking-wider flex items-center gap-1"><Clock size={12} /> Fim</label>
+              <label className="block text-[11px] mb-1.5 font-semibold text-white/90 uppercase tracking-wider flex items-center gap-1"><Clock size={12} /> Fim</label>
               <input type="time" step="1" value={horarioFim} onChange={(e) => setHorarioFim(e.target.value)}
                 className="w-full px-4 py-2 outline-none transition-all text-sm text-white"
                 style={{ backgroundColor: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "12px", colorScheme: "dark" }}
@@ -869,7 +869,7 @@ export default function ProgramaForm() {
                 <div className="w-9 h-5 rounded-full transition-colors peer-checked:bg-[#2dbef3]" style={{ backgroundColor: "rgba(255,255,255,0.15)" }} />
                 <div className="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-4 shadow-sm" />
               </div>
-              <span className="text-xs font-medium text-white/70">Ativo</span>
+              <span className="text-xs font-medium text-white/90">Ativo</span>
             </label>
             <label className="flex items-center gap-2.5 cursor-pointer select-none">
               <div className="relative">
@@ -877,7 +877,7 @@ export default function ProgramaForm() {
                 <div className="w-9 h-5 rounded-full transition-colors peer-checked:bg-[#f59e0b]" style={{ backgroundColor: "rgba(255,255,255,0.15)" }} />
                 <div className="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-4 shadow-sm" />
               </div>
-              <span className="text-xs font-medium text-white/70">Variável</span>
+              <span className="text-xs font-medium text-white/90">Variável</span>
             </label>
           </div>
 
@@ -905,7 +905,7 @@ export default function ProgramaForm() {
                   />
                 </PopoverContent>
               </Popover>
-              <p className="text-[10px] text-amber-200/60 leading-relaxed">
+              <p className="text-[10px] text-amber-200/80 leading-relaxed">
                 ⚠️ Este programa substituirá o programa fixo neste horário apenas na data selecionada.
               </p>
             </div>
