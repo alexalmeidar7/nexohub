@@ -335,13 +335,14 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   const [nowPlaying, setNowPlaying] = useState<{ musica: string; artista: string } | null>(null);
   const [bannerOpacity, setBannerOpacity] = useState(1);
   const mainRef = useRef<HTMLElement | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const [shopProducts, setShopProducts] = useState<{ id: string; name: string; description: string | null; price: number; image_url: string | null; payment_url: string | null; stock: number }[]>([]);
 
   const [miniPlayerData, setMiniPlayerData] = useState<MiniPlayerData | null>(() => loadMiniPlayerData());
 
   // Fade banner when content scrolls over it
   useEffect(() => {
-    const scrollEl = document.querySelector(".overflow-y-auto") as HTMLElement | null ?? mainRef.current?.closest(".overflow-y-auto") as HTMLElement | null;
+    const scrollEl = scrollContainerRef.current;
     if (!scrollEl) return;
     const handleScroll = () => {
       const scrollY = scrollEl.scrollTop;
@@ -672,29 +673,28 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
         </nav>
       </aside>
 
-      <div className={`relative flex-1 overflow-y-auto h-full transition-opacity duration-400 ease-in-out ${fadeOut ? "opacity-0" : "opacity-100"}`}>
-
-        {/* Banner fixo no topo — conteúdo rola por cima */}
-        <div className="fixed top-0 left-[72px] right-0 z-0 pointer-events-none h-[400px] overflow-hidden rounded-b-2xl transition-opacity duration-500 ease-in-out" style={{ opacity: bannerOpacity }}>
+      {/* Banner fixo no topo — fora do scroll container */}
+      <div className="fixed top-0 left-[72px] right-0 z-0 pointer-events-none h-[400px] overflow-hidden rounded-b-2xl transition-opacity duration-500 ease-in-out" style={{ opacity: bannerOpacity }}>
+        <img
+          src="/images/banner-home.png"
+          alt="Banner"
+          className="w-full h-full object-cover object-top transition-opacity duration-500 ease-in-out"
+          style={{ opacity: hoveredThumb ? 0 : 1 }}
+        />
+        {hoveredThumb && (
           <img
-            src="/images/banner-home.png"
-            alt="Banner"
-            className="w-full h-full object-cover object-top transition-opacity duration-500 ease-in-out"
-            style={{ opacity: hoveredThumb ? 0 : 1 }}
+            src={hoveredThumb}
+            alt="Thumb"
+            className="w-full h-full object-cover object-top absolute inset-0 animate-fade-in"
           />
-          {hoveredThumb && (
-            <img
-              src={hoveredThumb}
-              alt="Thumb"
-              className="w-full h-full object-cover object-top absolute inset-0 animate-fade-in"
-            />
-          )}
-          {/* Fade gradiente inferior */}
-          <div
-            className="absolute bottom-0 left-0 right-0 h-[160px]"
-            style={{ background: "linear-gradient(to bottom, transparent 0%, hsl(var(--player)) 100%)" }}
-          />
-        </div>
+        )}
+        <div
+          className="absolute bottom-0 left-0 right-0 h-[160px]"
+          style={{ background: "linear-gradient(to bottom, transparent 0%, hsl(var(--player)) 100%)" }}
+        />
+      </div>
+
+      <div ref={scrollContainerRef} className={`relative flex-1 overflow-y-auto h-full transition-opacity duration-400 ease-in-out ${fadeOut ? "opacity-0" : "opacity-100"}`}>
 
         <main ref={mainRef} className="px-8 pt-24 pb-6 ml-[72px] relative z-[10]">
           <div className="transition-opacity duration-200 ease-in-out" style={{ opacity: sectionFading ? 0 : 1 }}>
