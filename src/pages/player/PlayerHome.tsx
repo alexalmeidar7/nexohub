@@ -843,9 +843,9 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
             <section className="rounded-2xl p-5" style={{ marginTop: "380px" }}>
               <h2 className="text-xl font-bold mb-6 tracking-wide uppercase text-player-foreground/90">Loja</h2>
               {!dataLoaded ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
-                  {[1, 2, 3, 4].map(i => (
-                    <Skeleton key={i} className="w-full aspect-[3/4] rounded-2xl bg-white/10" />
+                <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                  {[1, 2, 3, 4, 5, 6].map(i => (
+                    <Skeleton key={i} className="w-full aspect-[3/4] rounded-xl bg-white/10" />
                   ))}
                 </div>
               ) : shopProducts.length === 0 ? (
