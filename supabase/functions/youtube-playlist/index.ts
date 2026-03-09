@@ -21,9 +21,28 @@ serve(async (req) => {
 
     // Fetch the YouTube playlist RSS feed
     const feedUrl = `https://www.youtube.com/feeds/videos.xml?playlist_id=${playlistId}`;
-    const res = await fetch(feedUrl);
+    console.log(`Fetching playlist: ${feedUrl}`);
+    
+    let res: Response;
+    try {
+      res = await fetch(feedUrl, {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (compatible; Bot/1.0)",
+          "Accept": "application/xml, text/xml, */*",
+        },
+      });
+    } catch (fetchErr) {
+      console.error("Network error fetching playlist:", fetchErr);
+      return new Response(JSON.stringify({ error: "Network error fetching playlist", details: String(fetchErr) }), {
+        status: 502,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    
     if (!res.ok) {
-      return new Response(JSON.stringify({ error: "Failed to fetch playlist" }), {
+      const body = await res.text();
+      console.error(`YouTube RSS returned ${res.status}: ${body.slice(0, 500)}`);
+      return new Response(JSON.stringify({ error: "Failed to fetch playlist", status: res.status }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
