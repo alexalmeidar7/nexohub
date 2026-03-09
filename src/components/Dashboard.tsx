@@ -319,7 +319,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       {/* Floating hamburger button - desktop */}
       <button
         onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-        className="hidden lg:flex fixed top-5 left-[20px] z-[6 z-[60] w-11 h-11 rounded-full items-center justify-center transition-all shadow-lg hover:scale-105"
+        className="hidden lg:flex fixed top-5 left-[40px] z-[60] w-11 h-11 rounded-full items-center justify-center transition-all shadow-lg hover:scale-105"
         style={{ backgroundColor: sidebarCollapsed ? "rgba(0,0,0,0.7)" : "#268ffa" }}
         title={sidebarCollapsed ? "Abrir menu" : "Fechar menu"}
       >
