@@ -414,18 +414,12 @@ export default function AudioDualCard({
               ) : channelLogo ? (
                 <div className="absolute inset-0 flex items-center justify-center" style={{ backgroundColor: "hsl(0 0% 0%)" }}>
                   <Suspense fallback={null}>
-                    <div className="absolute inset-x-0 bottom-0 z-[2]" style={{ height: "60%" }}>
+                    <div className="absolute inset-0 z-[2]">
                       <div className="relative w-full h-full">
                         <AudioSpectrum audioElement={audioElement ?? null} barColor="#a10a0b" />
                       </div>
                     </div>
                   </Suspense>
-                  <img
-                    src={channelLogo}
-                    alt="Logo"
-                    className="w-36 h-36 object-contain opacity-20 z-[1] animate-fade-in"
-                    style={{ animationDuration: "0.7s" }}
-                  />
                 </div>
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center" style={{ backgroundColor: "hsl(0 0% 0%)" }}>
