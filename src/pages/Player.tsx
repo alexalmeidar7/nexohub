@@ -2453,6 +2453,47 @@ export default function PlayerPage() {
         }
       `}</style>
       </div>
+
+      {/* Home confirmation dialog for 991 channels */}
+      {showHomeConfirm && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70 animate-fade-in">
+          <div
+            className="rounded-2xl p-6 w-[340px] flex flex-col gap-4 text-center"
+            style={{
+              backgroundColor: "rgba(0, 0, 0, 0.6)",
+              backdropFilter: "blur(24px)",
+              WebkitBackdropFilter: "blur(24px)",
+              boxShadow: "0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.08)",
+              border: "1px solid rgba(255,255,255,0.12)",
+            }}
+          >
+            <div className="flex items-center justify-center">
+              <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: "linear-gradient(135deg, rgba(230,0,0,0.2), rgba(230,0,0,0.1))" }}>
+                <Radio className="h-6 w-6" style={{ color: "#e60000" }} />
+              </div>
+            </div>
+            <p className="text-white text-sm font-bold leading-relaxed">
+              Quer continuar curtindo a {canal?.name || "Positiva FM"} no modo minimizado?
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={handleHomeConfirmNo}
+                className="flex-1 py-2.5 rounded-xl text-white/70 text-sm font-semibold transition-all hover:bg-white/10 active:scale-[0.98]"
+                style={{ backgroundColor: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.1)" }}
+              >
+                Não
+              </button>
+              <button
+                onClick={handleHomeConfirmYes}
+                className="flex-1 py-2.5 rounded-xl text-white text-sm font-bold transition-all hover:brightness-110 active:scale-[0.98]"
+                style={{ background: "linear-gradient(135deg, #e60000, #b30000)" }}
+              >
+                Sim
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
