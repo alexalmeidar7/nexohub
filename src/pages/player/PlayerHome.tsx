@@ -579,6 +579,22 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
           borderRight: "1px solid rgba(255,255,255,0.07)",
         }}
       >
+        {/* Avatar at top of sidebar */}
+        <div className="flex flex-col items-center mb-2">
+          <div className="w-10 h-10 rounded-full bg-player-surface flex items-center justify-center overflow-hidden">
+            {!dataLoaded ? (
+              <Skeleton className="w-full h-full rounded-full bg-white/10" />
+            ) : profileAvatar ? (
+              <img src={profileAvatar} alt={userName} className="w-full h-full object-cover" />
+            ) : (
+              <img src="/avatars/usr-default.png" alt="Visitante" className="w-full h-full object-cover" />
+            )}
+          </div>
+        </div>
+
+        {/* Separator */}
+        <div className="w-8 h-px" style={{ background: "rgba(255,255,255,0.1)" }} />
+
         {/* Nav items — centered vertically with sliding highlight */}
         <nav ref={navRef} className="flex flex-col items-center gap-1.5 flex-1 justify-center relative">
           {/* Sliding background pill — uses refs for exact positioning */}
@@ -635,23 +651,6 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
             );
           })}
         </nav>
-
-
-        {/* Separator */}
-        <div className="w-8 h-px" style={{ background: "rgba(255,255,255,0.1)" }} />
-
-        {/* Avatar in sidebar */}
-        <div className="flex flex-col items-center mb-2 mt-2">
-          <div className="w-10 h-10 rounded-full bg-player-surface flex items-center justify-center overflow-hidden">
-            {!dataLoaded ? (
-              <Skeleton className="w-full h-full rounded-full bg-white/10" />
-            ) : profileAvatar ? (
-              <img src={profileAvatar} alt={userName} className="w-full h-full object-cover" />
-            ) : (
-              <img src="/avatars/usr-default.png" alt="Visitante" className="w-full h-full object-cover" />
-            )}
-          </div>
-        </div>
       </aside>
 
       {/* Content wrapper with fade transition */}
