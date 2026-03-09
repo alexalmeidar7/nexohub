@@ -820,7 +820,7 @@ export default function ProgramaForm() {
 
           {/* Dias da Semana */}
           <div>
-            <label className="block text-[11px] mb-1.5 font-semibold text-white/60 uppercase tracking-wider flex items-center gap-1">
+            <label className="block text-[11px] mb-1.5 font-semibold text-white/90 uppercase tracking-wider flex items-center gap-1">
               <Calendar size={13} /> Dias da Semana
             </label>
             <div className="flex flex-wrap gap-1.5">
