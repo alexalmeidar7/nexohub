@@ -223,6 +223,8 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   const [bannerOpacity, setBannerOpacity] = useState(1);
   const mainRef = useRef<HTMLElement | null>(null);
 
+  const [miniPlayerData, setMiniPlayerData] = useState<MiniPlayerData | null>(() => loadMiniPlayerData());
+
   // Fade banner when scrolling past 650px
   useEffect(() => {
     const scrollEl = mainRef.current?.closest(".overflow-y-auto") as HTMLElement | null;
