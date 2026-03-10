@@ -152,7 +152,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
       {/* Section: Atalhos */}
       {items.filter(i => i.type === "link").length > 0 && (
         <div className="mb-6">
-          <p className="text-white/30 text-[10px] font-bold uppercase tracking-[0.15em] mb-3">Atalhos rápidos</p>
+          <p className="text-white/30 text-[10px] font-bold uppercase tracking-[0.15em] mb-3 animate-fade-in">Atalhos rápidos</p>
           <div className="flex flex-wrap gap-3">
             {items.filter(i => i.type === "link").map(item => {
               const Icon = getIcon(item.linkIcon || "Link2");
@@ -161,7 +161,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
               return (
                 <div
                   key={item.id}
-                  className={`relative group cursor-pointer ${isDragging ? "opacity-40 scale-95" : ""}`}
+                  className={`relative group cursor-pointer animate-scale-in ${isDragging ? "opacity-40 scale-95" : ""}`}
                   draggable
                   onDragStart={() => handleDragStart(item.id)}
                   onDragOver={(e) => handleDragOver(e, item.id)}
@@ -228,7 +228,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
       {/* Section: Widgets */}
       {items.filter(i => i.type === "widget").length > 0 && (
         <div className="mb-4">
-          <p className="text-white/30 text-[10px] font-bold uppercase tracking-[0.15em] mb-3">Widgets</p>
+          <p className="text-white/30 text-[10px] font-bold uppercase tracking-[0.15em] mb-3 animate-fade-in">Widgets</p>
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
             {items.filter(i => i.type === "widget").map(item => {
               const isDragging = draggedId === item.id;
@@ -236,7 +236,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
               return (
                 <div
                   key={item.id}
-                  className={`relative group rounded-2xl overflow-hidden ${isDragging ? "opacity-40 scale-95" : ""}`}
+                  className={`relative group rounded-2xl overflow-hidden animate-fade-in ${isDragging ? "opacity-40 scale-95" : ""}`}
                   style={{
                     background: "linear-gradient(160deg, rgba(13,4,70,0.6), rgba(26,10,110,0.4))",
                     backdropFilter: "blur(24px) saturate(1.4)",
@@ -302,7 +302,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
 
       {/* Empty state */}
       {items.length === 0 && (
-        <div className="flex-1 flex flex-col items-center justify-center text-center py-20">
+        <div className="flex-1 flex flex-col items-center justify-center text-center py-20 animate-fade-in">
           <div className="w-20 h-20 rounded-2xl flex items-center justify-center mb-5" style={{ background: "linear-gradient(145deg, #0d0446, #150a5c)", boxShadow: "0 8px 32px rgba(0,0,0,0.3)" }}>
             <Plus size={28} className="text-[#268ffa]/50" />
           </div>
