@@ -499,7 +499,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
               ] as const).map(img => (
                 <div key={img.key} className="flex flex-col items-center gap-2.5 p-4 rounded-xl transition-all hover:shadow-md" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.08)" }}>
                   {(canalForm as any)[img.key] ? (
-                    <img src={(canalForm as any)[img.key]} alt={img.alt} className="w-full h-24 rounded-xl object-cover" style={{ border: "1px solid rgba(13,4,70,0.08)" }} />
+                    <img src={(canalForm as any)[img.key]} alt={img.alt} className="w-full h-24 rounded-xl object-contain" style={{ border: "1px solid rgba(13,4,70,0.08)", backgroundColor: img.key === "background_url" ? "#1a1a2e" : "transparent" }} />
                   ) : (
                     <div className="w-full h-24 rounded-xl flex flex-col items-center justify-center gap-1" style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "2px dashed rgba(13,4,70,0.12)" }}>
                       <Upload size={20} style={{ color: "rgba(13,4,70,0.2)" }} />
