@@ -257,7 +257,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                   <button
                     onClick={() => removeItem(item.id)}
                     className="w-6 h-6 rounded-full flex items-center justify-center"
-                    style={{ backgroundColor: "#dc2626" }}
+                    style={{ backgroundColor: "rgba(255,255,255,0.25)" }}
                     title="Remover"
                   >
                     <X size={12} className="text-white" />
