@@ -1,0 +1,1 @@
+ALTER TABLE public.user_settings ADD COLUMN dashboard_items jsonb DEFAULT '[]'::jsonb;
