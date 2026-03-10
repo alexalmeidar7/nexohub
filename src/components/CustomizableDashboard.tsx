@@ -161,13 +161,6 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
             </button>
           )}
         </div>
-        <button
-          onClick={() => { setShowAddDialog(true); setAddStep("choose"); }}
-          className="flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold transition-all"
-          style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#fff" }}
-        >
-          <Plus size={14} /> Adicionar
-        </button>
       </div>
 
       {/* Link buttons grid */}
