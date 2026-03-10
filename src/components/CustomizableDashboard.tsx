@@ -580,10 +580,10 @@ function NoticiasPreview() {
   return news.length > 0 ? (
     <div className="space-y-1">
       {news.map((n, i) => (
-        <p key={i} className="text-white/40 text-[10px] truncate leading-tight">• {n.title}</p>
+        <p key={i} className="text-[#0d0446]/50 text-[10px] truncate leading-tight">• {n.title}</p>
       ))}
     </div>
-  ) : <p className="text-white/25 text-[10px]">Sem notícias salvas</p>;
+  ) : <p className="text-[#0d0446]/30 text-[10px]">Sem notícias salvas</p>;
 }
 
 function ApresentadoresPreview() {
@@ -594,7 +594,7 @@ function ApresentadoresPreview() {
     supabase.from("apresentadores").select("id", { count: "exact", head: true }).eq("user_id", user.id)
       .then(({ count: c }) => setCount(c || 0));
   }, [user]);
-  return <p className="text-white/40 text-[10px]">{count} apresentador{count !== 1 ? "es" : ""} cadastrado{count !== 1 ? "s" : ""}</p>;
+  return <p className="text-[#0d0446]/50 text-[10px]">{count} apresentador{count !== 1 ? "es" : ""} cadastrado{count !== 1 ? "s" : ""}</p>;
 }
 
 function ProgramasPreview() {
@@ -605,7 +605,7 @@ function ProgramasPreview() {
     supabase.from("programas").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("ativo", true)
       .then(({ count: c }) => setCount(c || 0));
   }, [user]);
-  return <p className="text-white/40 text-[10px]">{count} programa{count !== 1 ? "s" : ""} ativo{count !== 1 ? "s" : ""}</p>;
+  return <p className="text-[#0d0446]/50 text-[10px]">{count} programa{count !== 1 ? "s" : ""} ativo{count !== 1 ? "s" : ""}</p>;
 }
 
 function PromosPreview() {
@@ -617,7 +617,7 @@ function PromosPreview() {
     supabase.from("promocoes").select("id", { count: "exact", head: true }).eq("user_id", user.id).gte("data_fim", today)
       .then(({ count: c }) => setCount(c || 0));
   }, [user]);
-  return <p className="text-white/40 text-[10px]">{count} promoção{count !== 1 ? "ões" : ""} ativa{count !== 1 ? "s" : ""}</p>;
+  return <p className="text-[#0d0446]/50 text-[10px]">{count} promoção{count !== 1 ? "ões" : ""} ativa{count !== 1 ? "s" : ""}</p>;
 }
 
 function PrerollPreview() {
@@ -628,7 +628,7 @@ function PrerollPreview() {
     supabase.from("comercial_preroll").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("active", true)
       .then(({ count: c }) => setCount(c || 0));
   }, [user]);
-  return <p className="text-white/40 text-[10px]">{count} pre-roll{count !== 1 ? "s" : ""} ativo{count !== 1 ? "s" : ""}</p>;
+  return <p className="text-[#0d0446]/50 text-[10px]">{count} pre-roll{count !== 1 ? "s" : ""} ativo{count !== 1 ? "s" : ""}</p>;
 }
 
 function ShoppingPreview() {
@@ -639,7 +639,7 @@ function ShoppingPreview() {
     supabase.from("shopping_products").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("active", true)
       .then(({ count: c }) => setCount(c || 0));
   }, [user]);
-  return <p className="text-white/40 text-[10px]">{count} produto{count !== 1 ? "s" : ""} ativo{count !== 1 ? "s" : ""}</p>;
+  return <p className="text-[#0d0446]/50 text-[10px]">{count} produto{count !== 1 ? "s" : ""} ativo{count !== 1 ? "s" : ""}</p>;
 }
 
 /* ========== WIDGET: Agenda ========== */
