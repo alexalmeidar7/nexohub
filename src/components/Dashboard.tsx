@@ -494,7 +494,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       )}
 
       {/* === FOOTER === */}
-      <footer className="flex items-center gap-3 px-4 lg:px-[50px] pb-2 pt-3">
+      <footer className="flex items-center gap-3 px-4 lg:px-8 pb-2 pt-3">
         <img src={logoFooter} alt="Nexo" className="h-5 opacity-80" />
         <span className="text-white/60 text-[11px] hidden sm:inline">Copyrighted 2026 - Todos os direitos reservados.</span>
       </footer>
