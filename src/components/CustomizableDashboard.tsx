@@ -166,15 +166,14 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
         </div>
       </div>
 
-      {/* Unified grid — all items draggable */}
-      {items.length > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 mb-4">
-          {items.map(item => {
-            const isDragging = draggedId === item.id;
-            const isDragOver = dragOverId === item.id && draggedId !== item.id;
-
-            if (item.type === "link") {
+      {/* Buttons row */}
+      {items.filter(i => i.type === "link").length > 0 && (
+        <div className="mb-5">
+          <div className="flex flex-wrap gap-3">
+            {items.filter(i => i.type === "link").map(item => {
               const Icon = getIcon(item.linkIcon || "Link2");
+              const isDragging = draggedId === item.id;
+              const isDragOver = dragOverId === item.id && draggedId !== item.id;
               return (
                 <div
                   key={item.id}
@@ -187,76 +186,102 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                   onClick={() => handleLinkClick(item)}
                 >
                   <div
-                    className="rounded-2xl overflow-hidden transition-all hover:scale-[1.02] flex flex-col items-center justify-center min-h-[110px] py-5 px-3"
+                    className="w-[100px] h-[100px] rounded-xl flex flex-col items-center justify-center transition-all hover:scale-[1.04]"
                     style={{
-                      background: "rgba(255,255,255,0.08)",
-                      backdropFilter: "blur(16px)",
-                      border: isDragOver ? "2px solid #268ffa" : "1px solid rgba(255,255,255,0.12)",
+                      background: isDragOver ? "#268ffa" : "#0d0446",
+                      border: isDragOver ? "2px solid #268ffa" : "1px solid rgba(255,255,255,0.1)",
                     }}
-                    onMouseEnter={e => { e.currentTarget.style.background = "rgba(38,143,250,0.2)"; e.currentTarget.style.borderColor = "rgba(38,143,250,0.5)"; }}
-                    onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.08)"; e.currentTarget.style.borderColor = isDragOver ? "#268ffa" : "rgba(255,255,255,0.12)"; }}
+                    onMouseEnter={e => { e.currentTarget.style.background = "#1a0a6e"; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = isDragOver ? "#268ffa" : "#0d0446"; }}
                   >
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-2" style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)" }}>
-                      <Icon size={20} className="text-white" />
-                    </div>
-                    <span className="text-white text-xs font-bold text-center leading-tight">{item.linkLabel}</span>
-                    {item.linkExternal && <ExternalLink size={9} className="text-white/30 mt-1" />}
+                    <Icon size={22} className="text-white mb-1.5" />
+                    <span className="text-white text-[10px] font-bold text-center leading-tight px-1">{item.linkLabel}</span>
+                    {item.linkExternal && <ExternalLink size={8} className="text-white/40 mt-0.5" />}
                   </div>
                   <button
                     onClick={(e) => { e.stopPropagation(); removeItem(item.id); }}
-                    className="absolute top-2 right-2 w-5 h-5 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10"
-                    style={{ backgroundColor: "rgba(255,255,255,0.25)" }}
+                    className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                    style={{ backgroundColor: "rgba(255,255,255,0.3)" }}
                   >
                     <X size={10} className="text-white" />
                   </button>
                 </div>
               );
-            }
+            })}
+            {/* Add button inline */}
+            <div
+              onClick={() => { setShowAddDialog(true); setAddStep("choose"); }}
+              className="w-[100px] h-[100px] rounded-xl flex flex-col items-center justify-center cursor-pointer transition-all hover:scale-[1.04]"
+              style={{
+                background: "rgba(38,143,250,0.08)",
+                border: "2px dashed rgba(38,143,250,0.3)",
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = "rgba(38,143,250,0.18)"; e.currentTarget.style.borderColor = "rgba(38,143,250,0.6)"; }}
+              onMouseLeave={e => { e.currentTarget.style.background = "rgba(38,143,250,0.08)"; e.currentTarget.style.borderColor = "rgba(38,143,250,0.3)"; }}
+            >
+              <Plus size={20} className="text-white/50 mb-1" />
+              <span className="text-white/50 text-[10px] font-semibold">Adicionar</span>
+            </div>
+          </div>
+        </div>
+      )}
 
-            // Widget
-            return (
-              <div
-                key={item.id}
-                className={`relative group rounded-2xl overflow-hidden col-span-2 ${isDragging ? "opacity-40 scale-95" : ""}`}
-                style={{
-                  background: "rgba(255,255,255,0.08)",
-                  backdropFilter: "blur(24px) saturate(1.4)",
-                  border: isDragOver ? "2px solid #268ffa" : "1px solid rgba(255,255,255,0.12)",
-                  minHeight: item.widgetType === "agenda" ? "280px" : "180px",
-                }}
-                draggable
-                onDragStart={() => handleDragStart(item.id)}
-                onDragOver={(e) => handleDragOver(e, item.id)}
-                onDrop={() => handleDrop(item.id)}
-                onDragEnd={handleDragEnd}
-              >
-                <div className="flex items-center gap-1 px-3 py-2 cursor-grab active:cursor-grabbing" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-                  <GripVertical size={10} className="text-white/25" />
-                  <span className="text-white/40 text-[10px] font-bold uppercase tracking-widest">Widget</span>
+      {/* Widgets below */}
+      {items.filter(i => i.type === "widget").length > 0 && (
+        <div className="mb-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-3">
+            {items.filter(i => i.type === "widget").map(item => {
+              const isDragging = draggedId === item.id;
+              const isDragOver = dragOverId === item.id && draggedId !== item.id;
+              return (
+                <div
+                  key={item.id}
+                  className={`relative group rounded-2xl overflow-hidden ${isDragging ? "opacity-40 scale-95" : ""}`}
+                  style={{
+                    background: "rgba(255,255,255,0.08)",
+                    backdropFilter: "blur(24px) saturate(1.4)",
+                    border: isDragOver ? "2px solid #268ffa" : "1px solid rgba(255,255,255,0.12)",
+                    minHeight: item.widgetType === "agenda" ? "280px" : "180px",
+                  }}
+                  draggable
+                  onDragStart={() => handleDragStart(item.id)}
+                  onDragOver={(e) => handleDragOver(e, item.id)}
+                  onDrop={() => handleDrop(item.id)}
+                  onDragEnd={handleDragEnd}
+                >
+                  <div className="flex items-center gap-1 px-3 py-2 cursor-grab active:cursor-grabbing" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+                    <GripVertical size={10} className="text-white/25" />
+                    <span className="text-white/40 text-[10px] font-bold uppercase tracking-widest">Widget</span>
+                  </div>
+                  <div className="absolute top-2 right-2 z-10 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={() => removeItem(item.id)}
+                      className="w-6 h-6 rounded-full flex items-center justify-center"
+                      style={{ backgroundColor: "rgba(255,255,255,0.25)" }}
+                    >
+                      <X size={12} className="text-white" />
+                    </button>
+                  </div>
+                  <div className="p-4 h-full">
+                    <Suspense fallback={<Loader2 className="animate-spin text-white/40" size={20} />}>
+                      {item.widgetType === "agenda" && <DashboardAgendaWidget />}
+                      {item.widgetType === "musica" && <MusicProgramWidget />}
+                      {item.widgetType === "stats" && <StatsWidget />}
+                    </Suspense>
+                  </div>
                 </div>
-                <div className="absolute top-2 right-2 z-10 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button
-                    onClick={() => removeItem(item.id)}
-                    className="w-6 h-6 rounded-full flex items-center justify-center"
-                    style={{ backgroundColor: "rgba(255,255,255,0.25)" }}
-                  >
-                    <X size={12} className="text-white" />
-                  </button>
-                </div>
-                <div className="p-4 h-full">
-                  <Suspense fallback={<Loader2 className="animate-spin text-white/40" size={20} />}>
-                    {item.widgetType === "agenda" && <DashboardAgendaWidget />}
-                    {item.widgetType === "musica" && <MusicProgramWidget />}
-                    {item.widgetType === "stats" && <StatsWidget />}
-                  </Suspense>
-                </div>
-              </div>
-            );
-          })}
-          {/* Inline + button */}
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Show add button when no links exist yet */}
+      {items.filter(i => i.type === "link").length === 0 && items.length > 0 && (
+        <div className="mb-5">
           <div
             onClick={() => { setShowAddDialog(true); setAddStep("choose"); }}
-            className="rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all hover:scale-[1.02] min-h-[110px]"
+            className="w-[100px] h-[100px] rounded-xl flex flex-col items-center justify-center cursor-pointer transition-all hover:scale-[1.04]"
             style={{
               background: "rgba(38,143,250,0.08)",
               border: "2px dashed rgba(38,143,250,0.3)",
@@ -264,10 +289,8 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
             onMouseEnter={e => { e.currentTarget.style.background = "rgba(38,143,250,0.18)"; e.currentTarget.style.borderColor = "rgba(38,143,250,0.6)"; }}
             onMouseLeave={e => { e.currentTarget.style.background = "rgba(38,143,250,0.08)"; e.currentTarget.style.borderColor = "rgba(38,143,250,0.3)"; }}
           >
-            <div className="w-10 h-10 rounded-full flex items-center justify-center mb-1.5" style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)" }}>
-              <Plus size={20} className="text-white" />
-            </div>
-            <span className="text-white/60 text-xs font-semibold">Adicionar</span>
+            <Plus size={20} className="text-white/50 mb-1" />
+            <span className="text-white/50 text-[10px] font-semibold">Adicionar</span>
           </div>
         </div>
       )}
