@@ -667,7 +667,7 @@ function MusicProgramWidget() {
         const raw = localStorage.getItem("masterview_music_data");
         if (raw) {
           const d = JSON.parse(raw);
-          if (d.music) setMusic(d.music);
+          if (d.titulo) setMusic(d);
           if (d.programa) setPrograma(d.programa);
         }
       } catch {}
