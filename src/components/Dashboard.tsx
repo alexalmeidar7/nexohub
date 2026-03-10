@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, lazy, Suspense } from "react";
 import { Calendar as CalendarUI } from "@/components/ui/calendar";
-import { Home, Sun, FileText, Mic2, PlaySquare, Music, CalendarDays, Settings, LogOut, Loader2, ShoppingBag, ChevronDown, ChevronUp, MessageSquareQuote, Tag, Image, ExternalLink, MonitorPlay, Heart, ShoppingCart, Film, Users, Newspaper, CloudSun, Wrench, Scissors, Menu, X } from "lucide-react";
+import { Home, Sun, FileText, Mic2, PlaySquare, Music, CalendarDays, Settings, LogOut, Loader2, ShoppingBag, ChevronDown, ChevronUp, MessageSquareQuote, Tag, Image, ExternalLink, MonitorPlay, Heart, ShoppingCart, Film, Users, Newspaper, CloudSun, Wrench, Scissors, Menu, X, Monitor } from "lucide-react";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import seloNexohub from "@/assets/selo-nexohub.png";
@@ -36,11 +36,12 @@ const MusicasCurtidasPage = lazy(() => import("./MusicasCurtidasPage"));
 const ShoppingPage = lazy(() => import("./ShoppingPage"));
 const PreRollPage = lazy(() => import("./PreRollPage"));
 const CortesVideoPage = lazy(() => import("./CortesVideoPage"));
+const VmixPage = lazy(() => import("./VmixPage"));
 const MessageNotification = lazy(() => import("./MessageNotification"));
 import DashboardSkeleton from "./skeletons/DashboardSkeleton";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import { normalizeMusicText } from "@/lib/textEncoding";
-type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll" | "cortevideo" | "playerconfig";
+type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll" | "cortevideo" | "playerconfig" | "vmix";
 
 // Sidebar structured menu
 interface MenuItem {
@@ -76,6 +77,7 @@ const sidebarMenu: MenuItem[] = [
       { icon: ShoppingCart, label: "shopping", page: "shopping" },
     ]
   },
+  { icon: Monitor, label: "vmix", page: "vmix" },
   {
     icon: Wrench, label: "ferramentas", children: [
       { icon: Tag, label: "tela promo", page: undefined as unknown as Page },
@@ -93,6 +95,7 @@ const menuToModuleKey: Record<string, string> = {
   "agenda": "agenda",
   "player": "player",
   "comercial": "comercial",
+  "vmix": "vmix",
   "ferramentas": "ferramentas",
 };
 
@@ -113,6 +116,7 @@ const pageTitle: Record<Page, string> = {
   preroll: "Comercial — Pré-Roll",
   cortevideo: "Ferramentas — Cortes de Vídeo",
   playerconfig: "Player — Configurações",
+  vmix: "vMix — Controle de Transmissão",
 };
 
 interface DashboardProps {
@@ -488,6 +492,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               {currentPage === "shopping" && <ShoppingPage />}
               {currentPage === "preroll" && <PreRollPage />}
               {currentPage === "cortevideo" && <CortesVideoPage />}
+              {currentPage === "vmix" && <VmixPage />}
             </Suspense>
           </div>
         </main>
