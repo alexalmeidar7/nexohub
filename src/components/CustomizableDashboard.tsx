@@ -236,7 +236,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
               return (
                 <div
                   key={item.id}
-                  className={`relative group rounded-2xl overflow-hidden ${isDragging ? "opacity-40 scale-95" : ""}`}
+                  className={`relative group rounded-2xl overflow-hidden animate-fade-in ${isDragging ? "opacity-40 scale-95" : ""}`}
                   style={{
                     background: "linear-gradient(160deg, rgba(13,4,70,0.6), rgba(26,10,110,0.4))",
                     backdropFilter: "blur(24px) saturate(1.4)",
