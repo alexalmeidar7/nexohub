@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, lazy, Suspense } from "react";
-import { Plus, X, Link2, BarChart3, CalendarDays, Music, Eye, Users, Mic2, PlaySquare, Newspaper, Settings, ShoppingBag, Tag, Image, Film, ShoppingCart, Monitor, Wrench, Scissors, MonitorPlay, ExternalLink, GripVertical, Loader2, Trash2, MessageSquareQuote, Radio, Clock, Tv, FileText } from "lucide-react";
+import { Plus, X, Link2, BarChart3, CalendarDays, Music, Eye, Users, Mic2, PlaySquare, Newspaper, Settings, ShoppingBag, Tag, Image, Film, ShoppingCart, Monitor, Wrench, Scissors, MonitorPlay, ExternalLink, GripVertical, Loader2, Trash2, MessageSquareQuote, Radio, Clock, Tv, FileText, CloudSun } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
@@ -19,7 +19,7 @@ interface DashboardItem {
   linkLabel?: string;
   linkIcon?: string;
   /** For widgets: which widget type */
-  widgetType?: "agenda" | "musica" | "stats";
+  widgetType?: "agenda" | "musica" | "stats" | "weather";
 }
 
 const STORAGE_KEY = "nexohub_dashboard_items";
@@ -43,10 +43,11 @@ const linkOptions: { label: string; page?: Page; external?: string; icon: string
   { label: "Configurações", page: "configuracoes", icon: "Settings" },
 ];
 
-const widgetOptions: { label: string; type: "agenda" | "musica" | "stats"; description: string }[] = [
+const widgetOptions: { label: string; type: "agenda" | "musica" | "stats" | "weather"; description: string }[] = [
   { label: "Agenda de Eventos", type: "agenda", description: "Exibe os próximos eventos do calendário" },
   { label: "Música no Ar + Programa", type: "musica", description: "Mostra a música e programa em exibição" },
   { label: "Dados Estatísticos", type: "stats", description: "Visualizações do pre-roll e audiência do player" },
+  { label: "Previsão do Tempo", type: "weather", description: "Temperatura e previsão para os próximos dias" },
 ];
 
 const iconMap: Record<string, React.ComponentType<any>> = {
@@ -253,7 +254,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                   <div className="flex items-center gap-1.5 px-4 py-2.5 cursor-grab active:cursor-grabbing" style={{ borderBottom: "1px solid rgba(13,4,70,0.06)" }}>
                     <GripVertical size={10} className="text-[#0d0446]/20" />
                     <span className="text-[#0d0446]/40 text-[9px] font-bold uppercase tracking-[0.15em]">
-                      {item.widgetType === "agenda" ? "Agenda" : item.widgetType === "musica" ? "No Ar" : "Estatísticas"}
+                      {item.widgetType === "agenda" ? "Agenda" : item.widgetType === "musica" ? "No Ar" : item.widgetType === "weather" ? "Tempo" : "Estatísticas"}
                     </span>
                   </div>
                   <div className="absolute top-2.5 right-2.5 z-10 opacity-0 group-hover:opacity-100 transition-all">
@@ -272,6 +273,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                       {item.widgetType === "agenda" && <DashboardAgendaWidget />}
                       {item.widgetType === "musica" && <MusicProgramWidget />}
                       {item.widgetType === "stats" && <StatsWidget />}
+                      {item.widgetType === "weather" && <DashboardWeatherWidget />}
                     </Suspense>
                   </div>
                 </div>
@@ -431,6 +433,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                         {opt.type === "agenda" && <CalendarDays size={14} className="text-white" />}
                         {opt.type === "musica" && <Music size={14} className="text-white" />}
                         {opt.type === "stats" && <BarChart3 size={14} className="text-white" />}
+                        {opt.type === "weather" && <CloudSun size={14} className="text-white" />}
                       </div>
                       <div>
                         <p className="font-semibold">{opt.label}</p>
@@ -762,6 +765,88 @@ function StatsWidget() {
           <p className="text-[#0d0446]/40 text-[10px] mt-0.5">Canais Ativos</p>
         </div>
       </div>
+    </div>
+  );
+}
+
+/* ========== WIDGET: Weather ========== */
+function DashboardWeatherWidget() {
+  const { user } = useAuth();
+  const [weather, setWeather] = useState<any>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    // Try to get cached weather from localStorage
+    try {
+      const cached = localStorage.getItem(`weather_data_${user.id}`);
+      if (cached) {
+        const data = JSON.parse(cached);
+        setWeather(data);
+      }
+    } catch {}
+
+    // Fetch from edge function
+    const fetchWeather = async () => {
+      try {
+        const { data: settings } = await supabase
+          .from("user_settings")
+          .select("*")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        const { data: config } = await supabase
+          .from("empresa_config")
+          .select("nome")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        // Use city from config or default
+        const city = config?.nome || "São Paulo";
+
+        const res = await supabase.functions.invoke("weather-description", {
+          body: { city },
+        });
+
+        if (res.data) {
+          setWeather(res.data);
+          localStorage.setItem(`weather_data_${user.id}`, JSON.stringify(res.data));
+        }
+      } catch {}
+    };
+
+    fetchWeather();
+  }, [user]);
+
+  return (
+    <div>
+      <div className="flex items-center gap-2 mb-3">
+        <CloudSun size={14} className="text-[#268ffa]" />
+        <p className="text-[#0d0446] font-bold text-sm">Previsão do Tempo</p>
+      </div>
+      {weather ? (
+        <div>
+          <div className="flex items-center gap-3 mb-2">
+            <p className="text-3xl font-bold text-[#268ffa]">{weather.temperature || weather.temp || "--"}°</p>
+            <div>
+              <p className="text-[#0d0446] text-xs font-semibold">{weather.city || weather.location || ""}</p>
+              <p className="text-[#0d0446]/50 text-[10px]">{weather.description || weather.condition || ""}</p>
+            </div>
+          </div>
+          {weather.forecast && Array.isArray(weather.forecast) && weather.forecast.length > 0 && (
+            <div className="flex gap-2 mt-2">
+              {weather.forecast.slice(0, 3).map((day: any, i: number) => (
+                <div key={i} className="flex-1 px-2 py-1.5 rounded-lg text-center" style={{ background: "rgba(38,143,250,0.06)" }}>
+                  <p className="text-[#0d0446]/40 text-[8px] font-bold uppercase">{day.day || day.name}</p>
+                  <p className="text-[#0d0446] text-xs font-bold">{day.max || day.temp_max}°</p>
+                  <p className="text-[#0d0446]/40 text-[9px]">{day.min || day.temp_min}°</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      ) : (
+        <p className="text-[#0d0446]/30 text-xs">Carregando previsão...</p>
+      )}
     </div>
   );
 }
