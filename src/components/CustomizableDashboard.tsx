@@ -1,0 +1,543 @@
+import { useState, useEffect, useCallback, lazy, Suspense } from "react";
+import { Plus, X, Link2, BarChart3, CalendarDays, Music, Eye, Users, Mic2, PlaySquare, Newspaper, Settings, ShoppingBag, Tag, Image, Film, ShoppingCart, Monitor, Wrench, Scissors, MonitorPlay, ExternalLink, GripVertical, Loader2, Trash2, MessageSquareQuote, Radio } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+
+const AgendaPage = lazy(() => import("./AgendaPage"));
+const OnAirWidget = lazy(() => import("./OnAirWidget"));
+
+type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll" | "cortevideo" | "playerconfig" | "vmix";
+
+interface DashboardItem {
+  id: string;
+  type: "link" | "widget";
+  /** For links: which page or external URL */
+  linkPage?: Page;
+  linkExternal?: string;
+  linkLabel?: string;
+  linkIcon?: string;
+  /** For widgets: which widget type */
+  widgetType?: "agenda" | "musica" | "stats";
+}
+
+const STORAGE_KEY = "nexohub_dashboard_items";
+
+const linkOptions: { label: string; page?: Page; external?: string; icon: string }[] = [
+  { label: "Apresentadores", page: "apresentadores", icon: "Mic2" },
+  { label: "Programas", page: "programas", icon: "PlaySquare" },
+  { label: "Notícias", page: "noticias", icon: "Newspaper" },
+  { label: "Música no Ar", page: "musica", icon: "Music" },
+  { label: "Agenda", page: "agenda", icon: "CalendarDays" },
+  { label: "Player Config", page: "playerconfig", icon: "Settings" },
+  { label: "Player Externo", external: "player", icon: "MonitorPlay" },
+  { label: "Testemunhais", page: "testemunhais", icon: "MessageSquareQuote" },
+  { label: "Promoções", page: "promocoes", icon: "Tag" },
+  { label: "Logos", page: "logos", icon: "Image" },
+  { label: "Pre Roll", page: "preroll", icon: "Film" },
+  { label: "Shopping", page: "shopping", icon: "ShoppingCart" },
+  { label: "vMix", page: "vmix", icon: "Monitor" },
+  { label: "Corte de Vídeo", page: "cortevideo", icon: "Scissors" },
+  { label: "Tela Promo", external: "telapromo", icon: "Tag" },
+  { label: "Configurações", page: "configuracoes", icon: "Settings" },
+];
+
+const widgetOptions: { label: string; type: "agenda" | "musica" | "stats"; description: string }[] = [
+  { label: "Agenda de Eventos", type: "agenda", description: "Exibe os próximos eventos do calendário" },
+  { label: "Música no Ar + Programa", type: "musica", description: "Mostra a música e programa em exibição" },
+  { label: "Dados Estatísticos", type: "stats", description: "Visualizações do pre-roll e audiência do player" },
+];
+
+const iconMap: Record<string, React.ComponentType<any>> = {
+  Mic2, PlaySquare, Newspaper, Music, CalendarDays, Settings, MonitorPlay, MessageSquareQuote,
+  Tag, Image, Film, ShoppingCart, Monitor, Scissors, ExternalLink, ShoppingBag, Wrench, Users,
+};
+
+function getIcon(name: string) {
+  return iconMap[name] || Link2;
+}
+
+interface Props {
+  onNavigate: (page: Page) => void;
+}
+
+export default function CustomizableDashboard({ onNavigate }: Props) {
+  const { user } = useAuth();
+  const [items, setItems] = useState<DashboardItem[]>([]);
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [addStep, setAddStep] = useState<"choose" | "link" | "widget">("choose");
+  const [editMode, setEditMode] = useState(false);
+  const [draggedId, setDraggedId] = useState<string | null>(null);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) setItems(JSON.parse(saved));
+    } catch {}
+  }, []);
+
+  const saveItems = useCallback((newItems: DashboardItem[]) => {
+    setItems(newItems);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(newItems));
+  }, []);
+
+  const addLink = (opt: typeof linkOptions[0]) => {
+    const newItem: DashboardItem = {
+      id: `link-${Date.now()}`,
+      type: "link",
+      linkPage: opt.page,
+      linkExternal: opt.external,
+      linkLabel: opt.label,
+      linkIcon: opt.icon,
+    };
+    saveItems([...items, newItem]);
+    setShowAddDialog(false);
+    setAddStep("choose");
+  };
+
+  const addWidget = (opt: typeof widgetOptions[0]) => {
+    // Prevent duplicates
+    if (items.some(i => i.type === "widget" && i.widgetType === opt.type)) return;
+    const newItem: DashboardItem = {
+      id: `widget-${Date.now()}`,
+      type: "widget",
+      widgetType: opt.type,
+    };
+    saveItems([...items, newItem]);
+    setShowAddDialog(false);
+    setAddStep("choose");
+  };
+
+  const removeItem = (id: string) => {
+    saveItems(items.filter(i => i.id !== id));
+  };
+
+  const handleLinkClick = (item: DashboardItem) => {
+    if (editMode) return;
+    if (item.linkExternal === "player") {
+      const slug = user?.email?.split("@")[0] || "";
+      window.open(`/user/${slug}/nexohub/player`, "_blank");
+    } else if (item.linkExternal === "telapromo") {
+      const slug = user?.email?.split("@")[0] || "";
+      window.open(`/user/${slug}/nexohub/telapromo`, "_blank");
+    } else if (item.linkPage) {
+      onNavigate(item.linkPage);
+    }
+  };
+
+  // Drag and drop
+  const handleDragStart = (id: string) => setDraggedId(id);
+  const handleDragOver = (e: React.DragEvent, targetId: string) => {
+    e.preventDefault();
+    if (!draggedId || draggedId === targetId) return;
+    const newItems = [...items];
+    const fromIdx = newItems.findIndex(i => i.id === draggedId);
+    const toIdx = newItems.findIndex(i => i.id === targetId);
+    const [moved] = newItems.splice(fromIdx, 1);
+    newItems.splice(toIdx, 0, moved);
+    saveItems(newItems);
+  };
+  const handleDragEnd = () => setDraggedId(null);
+
+  const linkItems = items.filter(i => i.type === "link");
+  const widgetItems = items.filter(i => i.type === "widget");
+
+  return (
+    <div className="flex flex-col h-full overflow-y-auto" style={{ scrollBehavior: "smooth" }}>
+      {/* Top actions */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          {items.length > 0 && (
+            <button
+              onClick={() => setEditMode(!editMode)}
+              className="px-3 py-1.5 rounded-full text-[11px] font-bold transition-all"
+              style={{
+                backgroundColor: editMode ? "#dc2626" : "rgba(255,255,255,0.15)",
+                color: "#fff",
+              }}
+            >
+              {editMode ? "Concluir edição" : "Editar"}
+            </button>
+          )}
+        </div>
+        <button
+          onClick={() => { setShowAddDialog(true); setAddStep("choose"); }}
+          className="flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold transition-all"
+          style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#fff" }}
+        >
+          <Plus size={14} /> Adicionar
+        </button>
+      </div>
+
+      {/* Link buttons grid */}
+      {linkItems.length > 0 && (
+        <div className="mb-4">
+          <p className="text-white/40 text-[10px] font-bold uppercase tracking-widest mb-2">Atalhos</p>
+          <div className="flex flex-wrap gap-2">
+            {linkItems.map(item => {
+              const Icon = getIcon(item.linkIcon || "Link2");
+              return (
+                <div
+                  key={item.id}
+                  className={`relative group ${draggedId === item.id ? "opacity-50" : ""}`}
+                  draggable={editMode}
+                  onDragStart={() => handleDragStart(item.id)}
+                  onDragOver={(e) => handleDragOver(e, item.id)}
+                  onDragEnd={handleDragEnd}
+                >
+                  <button
+                    onClick={() => handleLinkClick(item)}
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all"
+                    style={{
+                      background: "rgba(255,255,255,0.1)",
+                      backdropFilter: "blur(16px)",
+                      border: "1px solid rgba(255,255,255,0.12)",
+                      color: "#fff",
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.background = "rgba(38,143,250,0.3)"; e.currentTarget.style.borderColor = "rgba(38,143,250,0.5)"; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.1)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)"; }}
+                  >
+                    {editMode && <GripVertical size={12} className="text-white/40 cursor-grab" />}
+                    <Icon size={14} />
+                    <span>{item.linkLabel}</span>
+                    {item.linkExternal && <ExternalLink size={10} className="text-white/40" />}
+                  </button>
+                  {editMode && (
+                    <button
+                      onClick={() => removeItem(item.id)}
+                      className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full flex items-center justify-center"
+                      style={{ backgroundColor: "#dc2626" }}
+                    >
+                      <X size={10} className="text-white" />
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Widgets */}
+      {widgetItems.length > 0 && (
+        <div>
+          <p className="text-white/40 text-[10px] font-bold uppercase tracking-widest mb-2">Widgets</p>
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-3">
+            {widgetItems.map(item => (
+              <div
+                key={item.id}
+                className={`relative rounded-2xl overflow-hidden ${draggedId === item.id ? "opacity-50" : ""}`}
+                style={{
+                  background: "rgba(255,255,255,0.08)",
+                  backdropFilter: "blur(24px) saturate(1.4)",
+                  WebkitBackdropFilter: "blur(24px) saturate(1.4)",
+                  border: "1px solid rgba(255,255,255,0.12)",
+                  minHeight: item.widgetType === "agenda" ? "320px" : "200px",
+                }}
+                draggable={editMode}
+                onDragStart={() => handleDragStart(item.id)}
+                onDragOver={(e) => handleDragOver(e, item.id)}
+                onDragEnd={handleDragEnd}
+              >
+                {editMode && (
+                  <div className="absolute top-2 right-2 z-10 flex gap-1">
+                    <button
+                      onClick={() => removeItem(item.id)}
+                      className="w-6 h-6 rounded-full flex items-center justify-center"
+                      style={{ backgroundColor: "#dc2626" }}
+                    >
+                      <X size={12} className="text-white" />
+                    </button>
+                  </div>
+                )}
+                <div className="p-4 h-full">
+                  <Suspense fallback={<Loader2 className="animate-spin text-white/40" size={20} />}>
+                    {item.widgetType === "agenda" && <DashboardAgendaWidget />}
+                    {item.widgetType === "musica" && <MusicProgramWidget />}
+                    {item.widgetType === "stats" && <StatsWidget />}
+                  </Suspense>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Empty state */}
+      {items.length === 0 && (
+        <div className="flex-1 flex flex-col items-center justify-center text-center py-16">
+          <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ background: "rgba(255,255,255,0.08)" }}>
+            <Plus size={24} className="text-white/40" />
+          </div>
+          <p className="text-white/60 text-sm font-semibold mb-1">Personalize sua área de trabalho</p>
+          <p className="text-white/30 text-xs mb-4 max-w-sm">Adicione atalhos para módulos e widgets para acompanhar dados em tempo real</p>
+          <button
+            onClick={() => { setShowAddDialog(true); setAddStep("choose"); }}
+            className="px-5 py-2.5 rounded-full text-sm font-bold transition-all"
+            style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#fff" }}
+          >
+            <Plus size={14} className="inline mr-1" /> Adicionar primeiro item
+          </button>
+        </div>
+      )}
+
+      {/* Add Dialog */}
+      {showAddDialog && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center" onClick={() => { setShowAddDialog(false); setAddStep("choose"); }}>
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+          <div
+            className="relative rounded-2xl p-6 max-w-md w-full mx-4 max-h-[80vh] overflow-y-auto"
+            style={{
+              background: "rgba(13, 4, 70, 0.95)",
+              backdropFilter: "blur(24px)",
+              border: "1px solid rgba(255,255,255,0.15)",
+              boxShadow: "0 20px 60px rgba(0,0,0,0.5)",
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-white font-bold text-base">
+                {addStep === "choose" ? "O que deseja adicionar?" : addStep === "link" ? "Escolha um atalho" : "Escolha um widget"}
+              </h3>
+              <button onClick={() => { setShowAddDialog(false); setAddStep("choose"); }} className="text-white/40 hover:text-white">
+                <X size={18} />
+              </button>
+            </div>
+
+            {addStep === "choose" && (
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => setAddStep("link")}
+                  className="flex flex-col items-center gap-3 p-5 rounded-xl transition-all"
+                  style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}
+                  onMouseEnter={e => { e.currentTarget.style.background = "rgba(38,143,250,0.15)"; e.currentTarget.style.borderColor = "rgba(38,143,250,0.4)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"; }}
+                >
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)" }}>
+                    <Link2 size={20} className="text-white" />
+                  </div>
+                  <div className="text-center">
+                    <p className="text-white font-semibold text-sm">Botão com Link</p>
+                    <p className="text-white/40 text-[10px] mt-0.5">Atalho para um módulo</p>
+                  </div>
+                </button>
+                <button
+                  onClick={() => setAddStep("widget")}
+                  className="flex flex-col items-center gap-3 p-5 rounded-xl transition-all"
+                  style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}
+                  onMouseEnter={e => { e.currentTarget.style.background = "rgba(38,143,250,0.15)"; e.currentTarget.style.borderColor = "rgba(38,143,250,0.4)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"; }}
+                >
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)" }}>
+                    <BarChart3 size={20} className="text-white" />
+                  </div>
+                  <div className="text-center">
+                    <p className="text-white font-semibold text-sm">Widget</p>
+                    <p className="text-white/40 text-[10px] mt-0.5">Dados em tempo real</p>
+                  </div>
+                </button>
+              </div>
+            )}
+
+            {addStep === "link" && (
+              <div className="space-y-1.5 max-h-[50vh] overflow-y-auto pr-1">
+                {linkOptions.map(opt => {
+                  const Icon = getIcon(opt.icon);
+                  const exists = items.some(i => i.type === "link" && (i.linkPage === opt.page || i.linkExternal === opt.external));
+                  return (
+                    <button
+                      key={opt.label}
+                      onClick={() => !exists && addLink(opt)}
+                      disabled={exists}
+                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-all text-left"
+                      style={{
+                        background: exists ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.06)",
+                        border: "1px solid rgba(255,255,255,0.08)",
+                        opacity: exists ? 0.4 : 1,
+                        color: "#fff",
+                      }}
+                      onMouseEnter={e => { if (!exists) { e.currentTarget.style.background = "rgba(38,143,250,0.15)"; } }}
+                      onMouseLeave={e => { e.currentTarget.style.background = exists ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.06)"; }}
+                    >
+                      <Icon size={16} />
+                      <span className="font-semibold">{opt.label}</span>
+                      {opt.external && <ExternalLink size={10} className="text-white/30 ml-auto" />}
+                      {exists && <span className="text-[10px] text-white/30 ml-auto">Já adicionado</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {addStep === "widget" && (
+              <div className="space-y-2">
+                {widgetOptions.map(opt => {
+                  const exists = items.some(i => i.type === "widget" && i.widgetType === opt.type);
+                  return (
+                    <button
+                      key={opt.type}
+                      onClick={() => !exists && addWidget(opt)}
+                      disabled={exists}
+                      className="w-full flex items-start gap-3 px-4 py-4 rounded-xl text-sm transition-all text-left"
+                      style={{
+                        background: exists ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.06)",
+                        border: "1px solid rgba(255,255,255,0.08)",
+                        opacity: exists ? 0.4 : 1,
+                        color: "#fff",
+                      }}
+                      onMouseEnter={e => { if (!exists) { e.currentTarget.style.background = "rgba(38,143,250,0.15)"; } }}
+                      onMouseLeave={e => { e.currentTarget.style.background = exists ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.06)"; }}
+                    >
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)" }}>
+                        {opt.type === "agenda" && <CalendarDays size={14} className="text-white" />}
+                        {opt.type === "musica" && <Music size={14} className="text-white" />}
+                        {opt.type === "stats" && <BarChart3 size={14} className="text-white" />}
+                      </div>
+                      <div>
+                        <p className="font-semibold">{opt.label}</p>
+                        <p className="text-white/40 text-[11px] mt-0.5">{opt.description}</p>
+                        {exists && <p className="text-[10px] text-white/30 mt-1">Já adicionado</p>}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {addStep !== "choose" && (
+              <button
+                onClick={() => setAddStep("choose")}
+                className="mt-3 text-xs text-white/40 hover:text-white/70 transition-colors"
+              >
+                ← Voltar
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ========== WIDGET: Agenda ========== */
+function DashboardAgendaWidget() {
+  const { user } = useAuth();
+  const [events, setEvents] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!user) return;
+    const today = new Date().toISOString().split("T")[0];
+    supabase
+      .from("agenda_eventos")
+      .select("*")
+      .eq("user_id", user.id)
+      .gte("data", today)
+      .order("data", { ascending: true })
+      .limit(5)
+      .then(({ data }) => { if (data) setEvents(data); });
+  }, [user]);
+
+  return (
+    <div>
+      <div className="flex items-center gap-2 mb-3">
+        <CalendarDays size={14} className="text-[#268ffa]" />
+        <p className="text-white font-bold text-sm">Agenda de Eventos</p>
+      </div>
+      {events.length === 0 ? (
+        <p className="text-white/30 text-xs">Nenhum evento próximo</p>
+      ) : (
+        <div className="space-y-2">
+          {events.map(ev => (
+            <div key={ev.id} className="px-3 py-2 rounded-lg" style={{ background: "rgba(255,255,255,0.06)" }}>
+              <p className="text-white text-xs font-semibold truncate">{ev.descricao || "Evento"}</p>
+              <p className="text-white/40 text-[10px]">
+                {new Date(ev.data + "T12:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })} — {ev.local}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ========== WIDGET: Music + Program ========== */
+function MusicProgramWidget() {
+  const [music, setMusic] = useState<{ titulo: string; artista: string; capa: string } | null>(null);
+  const [programa, setPrograma] = useState<string>("");
+
+  useEffect(() => {
+    const update = () => {
+      try {
+        const raw = localStorage.getItem("nexo_music_data");
+        if (raw) {
+          const d = JSON.parse(raw);
+          if (d.music) setMusic(d.music);
+          if (d.programa) setPrograma(d.programa);
+        }
+      } catch {}
+    };
+    update();
+    const interval = setInterval(update, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div>
+      <div className="flex items-center gap-2 mb-3">
+        <Music size={14} className="text-[#268ffa]" />
+        <p className="text-white font-bold text-sm">Música no Ar</p>
+      </div>
+      {music ? (
+        <div className="flex items-center gap-3">
+          {music.capa && (
+            <img src={music.capa} alt="" className="w-12 h-12 rounded-lg object-cover flex-shrink-0" />
+          )}
+          <div className="min-w-0">
+            <p className="text-white text-sm font-semibold truncate">{music.titulo}</p>
+            <p className="text-white/50 text-xs truncate">{music.artista}</p>
+            {programa && <p className="text-[#268ffa] text-[10px] mt-0.5 truncate">🔴 {programa}</p>}
+          </div>
+        </div>
+      ) : (
+        <p className="text-white/30 text-xs">Sem música no momento</p>
+      )}
+    </div>
+  );
+}
+
+/* ========== WIDGET: Stats ========== */
+function StatsWidget() {
+  const { user } = useAuth();
+  const [prerollCount, setPrerollCount] = useState(0);
+  const [channelCount, setChannelCount] = useState(0);
+
+  useEffect(() => {
+    if (!user) return;
+    Promise.all([
+      supabase.from("comercial_preroll").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("active", true),
+      supabase.from("streaming_channels").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("active", true),
+    ]).then(([pr, ch]) => {
+      setPrerollCount(pr.count || 0);
+      setChannelCount(ch.count || 0);
+    });
+  }, [user]);
+
+  return (
+    <div>
+      <div className="flex items-center gap-2 mb-3">
+        <BarChart3 size={14} className="text-[#268ffa]" />
+        <p className="text-white font-bold text-sm">Dados Estatísticos</p>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="px-3 py-3 rounded-xl text-center" style={{ background: "rgba(255,255,255,0.06)" }}>
+          <p className="text-2xl font-bold text-white">{prerollCount}</p>
+          <p className="text-white/40 text-[10px] mt-0.5">Pre-rolls Ativos</p>
+        </div>
+        <div className="px-3 py-3 rounded-xl text-center" style={{ background: "rgba(255,255,255,0.06)" }}>
+          <p className="text-2xl font-bold text-white">{channelCount}</p>
+          <p className="text-white/40 text-[10px] mt-0.5">Canais Ativos</p>
+        </div>
+      </div>
+    </div>
+  );
+}

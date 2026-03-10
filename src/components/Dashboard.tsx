@@ -37,6 +37,7 @@ const ShoppingPage = lazy(() => import("./ShoppingPage"));
 const PreRollPage = lazy(() => import("./PreRollPage"));
 const CortesVideoPage = lazy(() => import("./CortesVideoPage"));
 const VmixPage = lazy(() => import("./VmixPage"));
+const CustomizableDashboard = lazy(() => import("./CustomizableDashboard"));
 const MessageNotification = lazy(() => import("./MessageNotification"));
 import DashboardSkeleton from "./skeletons/DashboardSkeleton";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
@@ -477,6 +478,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           )}
           <div className={`flex-1 overflow-y-auto overflow-x-hidden rounded-2xl ${currentPage !== "dashboard" ? "mv-content-area" : ""}`} style={currentPage === "dashboard" ? {} : { padding: "1rem" }}>
             <Suspense fallback={<ModulePageSkeleton />}>
+              {currentPage === "dashboard" && <CustomizableDashboard onNavigate={setCurrentPage} />}
               {currentPage === "previsao" && <PrevisaoTempo />}
               {currentPage === "noticias" && <NoticiasPanel />}
               {currentPage === "apresentadores" && <ApresentadorForm />}
