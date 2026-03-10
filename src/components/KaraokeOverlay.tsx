@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { Mic, Minus, Plus } from "lucide-react";
+import { Mic, Minus, Plus, Settings } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 const MUSIC_START_KEY = "masterview_music_start";
@@ -106,10 +106,12 @@ export default function KaraokeOverlay({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
-  const [exitAnim, setExitAnim] = useState(false); // animate-out for "not found"
+  const [exitAnim, setExitAnim] = useState(false);
   const [speedOffset, setSpeedOffset] = useState(0);
+  const [syncMode, setSyncMode] = useState(false);
   const animRef = useRef<number>(0);
   const lastFetchRef = useRef("");
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   // Persist speed offset
   useEffect(() => {
@@ -127,6 +129,7 @@ export default function KaraokeOverlay({
     setExitAnim(false);
     setLoading(true);
     setShowConfetti(false);
+    setSyncMode(false);
 
     supabase.functions.invoke("fetch-lyrics", {
       body: { artist, title, duration: duration ? Math.round(duration) : undefined },
@@ -134,7 +137,6 @@ export default function KaraokeOverlay({
       setLoading(false);
       if (err || !data?.success || !data?.syncedLyrics) {
         setError(true);
-        // Animate out after showing "not found" briefly
         setTimeout(() => setExitAnim(true), 1500);
         onLyricsNotFound?.();
         return;
@@ -147,23 +149,20 @@ export default function KaraokeOverlay({
         return;
       }
       setLines(parsed);
-      // Trigger confetti and callback when lyrics found
       setShowConfetti(true);
       onLyricsFound?.();
     });
   }, [artist, title, duration, onLyricsNotFound, onLyricsFound]);
 
-  // Animation loop: read elapsed from MUSIC_START_KEY (real song start time)
+  // Animation loop
   useEffect(() => {
     if (!visible || lines.length === 0) return;
 
     const tick = () => {
       const startStr = localStorage.getItem(MUSIC_START_KEY);
       if (startStr) {
-        // Base offset is 3s, plus user adjustment
         const elapsed = (Date.now() - parseInt(startStr, 10)) / 1000 + 3 + speedOffset;
         
-        // Find current line
         let idx = -1;
         for (let i = lines.length - 1; i >= 0; i--) {
           if (elapsed >= lines[i].time) {
@@ -173,7 +172,6 @@ export default function KaraokeOverlay({
         }
         setCurrentLineIdx(idx);
 
-        // Progress within current line
         if (idx >= 0) {
           const lineStart = lines[idx].time;
           const lineEnd = idx + 1 < lines.length ? lines[idx + 1].time : lineStart + 4;
@@ -187,6 +185,14 @@ export default function KaraokeOverlay({
     return () => cancelAnimationFrame(animRef.current);
   }, [visible, lines, speedOffset]);
 
+  // Scroll to current line in sync mode
+  useEffect(() => {
+    if (syncMode && scrollRef.current && currentLineIdx >= 0) {
+      const el = scrollRef.current.querySelector(`[data-line-idx="${currentLineIdx}"]`);
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [syncMode, currentLineIdx]);
+
   if (!visible) return null;
 
   const line1Idx = currentLineIdx >= 0 ? currentLineIdx : 0;
@@ -198,9 +204,20 @@ export default function KaraokeOverlay({
     setSpeedOffset(prev => Math.max(-30, Math.min(30, prev + delta)));
   };
 
-  // Error state: "Letra não encontrada" with exit animation
+  const handleSyncLineClick = (idx: number) => {
+    // Calculate the time difference and adjust offset
+    const startStr = localStorage.getItem(MUSIC_START_KEY);
+    if (startStr && lines[idx]) {
+      const elapsed = (Date.now() - parseInt(startStr, 10)) / 1000 + 3;
+      const targetTime = lines[idx].time;
+      const newOffset = targetTime - elapsed;
+      setSpeedOffset(Math.round(newOffset));
+    }
+    setSyncMode(false);
+  };
+
+  // Error state
   if (error && !loading) {
-    // Once exit animation finishes, don't render the overlay at all (but karaoke stays enabled)
     if (exitAnim) {
       return <Confetti active={showConfetti} />;
     }
@@ -231,6 +248,105 @@ export default function KaraokeOverlay({
     );
   }
 
+  // Sync/expanded mode
+  if (syncMode && lines.length > 0) {
+    return (
+      <>
+        <Confetti active={showConfetti} />
+        <div
+          className="absolute left-0 right-0 z-[25] flex flex-col items-center pointer-events-auto animate-fade-in"
+          style={{ bottom: "155px" }}
+        >
+          {/* Header */}
+          <div className="flex items-center gap-2 mb-3">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full"
+              style={{ backgroundColor: "#a10a0b" }}>
+              <Mic size={14} className="text-white" />
+              <span className="text-white font-bold text-[11px] tracking-wider uppercase">Sincronizar</span>
+            </div>
+            {/* Speed controls */}
+            <div className="flex items-center gap-1 px-2 py-1 rounded-full backdrop-blur-md"
+              style={{ backgroundColor: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.2)" }}>
+              <button onClick={() => adjustSpeed(-5)}
+                className="w-6 h-6 rounded-full flex items-center justify-center transition-all hover:bg-white/20 active:scale-95"
+                title="Atrasar 5s">
+                <Minus size={12} className="text-white" />
+              </button>
+              <span className="text-white text-[10px] font-bold min-w-[32px] text-center tabular-nums">
+                {speedOffset > 0 ? "+" : ""}{speedOffset}s
+              </span>
+              <button onClick={() => adjustSpeed(5)}
+                className="w-6 h-6 rounded-full flex items-center justify-center transition-all hover:bg-white/20 active:scale-95"
+                title="Adiantar 5s">
+                <Plus size={12} className="text-white" />
+              </button>
+            </div>
+            {/* Close */}
+            <button onClick={() => setSyncMode(false)}
+              className="w-7 h-7 rounded-full flex items-center justify-center backdrop-blur-md transition-all hover:bg-white/20 active:scale-95"
+              style={{ backgroundColor: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.2)" }}
+              title="Fechar">
+              <span className="text-white text-xs font-bold">✕</span>
+            </button>
+          </div>
+
+          {/* Expanded lyrics panel */}
+          <div 
+            ref={scrollRef}
+            className="w-[92vw] max-w-[720px] rounded-2xl backdrop-blur-xl overflow-y-auto"
+            style={{ 
+              maxHeight: "45vh",
+              backgroundColor: "rgba(0,0,0,0.65)",
+              boxShadow: "0 12px 48px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1)",
+              border: "1px solid rgba(255,255,255,0.12)"
+            }}
+          >
+            {/* Instruction banner */}
+            <div className="sticky top-0 z-10 px-4 py-2.5 text-center backdrop-blur-md"
+              style={{ 
+                backgroundColor: "rgba(161,10,11,0.25)",
+                borderBottom: "1px solid rgba(161,10,11,0.3)"
+              }}>
+              <span className="text-white/80 text-xs font-medium">
+                🎵 Clique na frase que está tocando no momento
+              </span>
+            </div>
+
+            <div className="px-4 py-3 flex flex-col gap-0.5">
+              {lines.map((line, idx) => {
+                const isCurrent = idx === currentLineIdx;
+                return (
+                  <button
+                    key={idx}
+                    data-line-idx={idx}
+                    onClick={() => handleSyncLineClick(idx)}
+                    className="text-left px-3 py-2 rounded-xl transition-all duration-200 hover:bg-white/10 active:scale-[0.98]"
+                    style={{
+                      backgroundColor: isCurrent ? "rgba(161,10,11,0.3)" : "transparent",
+                      border: isCurrent ? "1px solid rgba(161,10,11,0.4)" : "1px solid transparent",
+                    }}
+                  >
+                    <span
+                      className="text-sm leading-relaxed transition-all duration-200"
+                      style={{
+                        color: isCurrent ? "#ffffff" : "rgba(255,255,255,0.45)",
+                        fontWeight: isCurrent ? 700 : 400,
+                        textShadow: isCurrent ? "0 0 15px rgba(161,10,11,0.6)" : "none",
+                      }}
+                    >
+                      {line.text}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  // Normal karaoke view
   return (
     <>
       <Confetti active={showConfetti} />
@@ -238,7 +354,7 @@ export default function KaraokeOverlay({
         className="absolute left-0 right-0 z-[25] flex flex-col items-center pointer-events-none animate-fade-in"
         style={{ bottom: "220px" }}
       >
-        {/* Karaoke ON badge with speed controls */}
+        {/* Badge + speed + config button */}
         <div className="flex items-center gap-2 mb-3 pointer-events-auto">
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full"
             style={{ backgroundColor: "#a10a0b" }}>
@@ -246,30 +362,38 @@ export default function KaraokeOverlay({
             <span className="text-white font-bold text-[11px] tracking-wider uppercase">Karaoke</span>
           </div>
           
-          {/* Speed adjustment buttons */}
+          {/* Speed adjustment */}
           <div className="flex items-center gap-1 px-2 py-1 rounded-full backdrop-blur-md"
             style={{ backgroundColor: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.2)" }}>
-            <button
-              onClick={() => adjustSpeed(-10)}
+            <button onClick={() => adjustSpeed(-5)}
               className="w-6 h-6 rounded-full flex items-center justify-center transition-all hover:bg-white/20 active:scale-95"
-              title="Atrasar letra"
-            >
+              title="Atrasar 5s">
               <Minus size={12} className="text-white" />
             </button>
             <span className="text-white text-[10px] font-bold min-w-[32px] text-center tabular-nums">
-              {speedOffset > 0 ? "+" : ""}{speedOffset.toFixed(1)}s
+              {speedOffset > 0 ? "+" : ""}{speedOffset}s
             </span>
-            <button
-              onClick={() => adjustSpeed(10)}
+            <button onClick={() => adjustSpeed(5)}
               className="w-6 h-6 rounded-full flex items-center justify-center transition-all hover:bg-white/20 active:scale-95"
-              title="Adiantar letra"
-            >
+              title="Adiantar 5s">
               <Plus size={12} className="text-white" />
             </button>
           </div>
+
+          {/* Config/sync button */}
+          {lines.length > 0 && (
+            <button
+              onClick={() => setSyncMode(true)}
+              className="w-7 h-7 rounded-full flex items-center justify-center backdrop-blur-md transition-all hover:bg-white/20 active:scale-95"
+              style={{ backgroundColor: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.2)" }}
+              title="Sincronizar letra"
+            >
+              <Settings size={13} className="text-white" />
+            </button>
+          )}
         </div>
 
-        {/* Lyrics container with glass effect */}
+        {/* Lyrics container */}
         <div 
           className="w-[90vw] max-w-[700px] flex flex-col items-center gap-0.5 px-6 py-4 rounded-2xl backdrop-blur-xl"
           style={{ 
@@ -283,12 +407,8 @@ export default function KaraokeOverlay({
           )}
           {lines.length > 0 && (
             <>
-              {line1 && (
-                <KaraokeLine text={line1.text} progress={progress} active />
-              )}
-              {line2 && (
-                <KaraokeLine text={line2.text} progress={0} active={false} />
-              )}
+              {line1 && <KaraokeLine text={line1.text} progress={progress} active />}
+              {line2 && <KaraokeLine text={line2.text} progress={0} active={false} />}
             </>
           )}
         </div>
