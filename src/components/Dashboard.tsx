@@ -311,7 +311,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                           const childActive = currentPage === child.page;
                           return (
                             <button key={child.page} onClick={() => { setCurrentPage(child.page); setMobileMenuOpen(false); }}
-                              className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${childActive ? "text-primary bg-sidebar-accent/70 font-semibold" : "text-sidebar-foreground hover:text-foreground hover:bg-sidebar-accent/30"}`}
+                              className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-[10px] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${childActive ? "text-primary bg-sidebar-accent/70 font-semibold" : "text-sidebar-foreground hover:text-foreground hover:bg-sidebar-accent/30"}`}
                               aria-label={child.label}
                               role="menuitem"
                             >
