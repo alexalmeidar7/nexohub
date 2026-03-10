@@ -750,19 +750,26 @@ function DashboardAgendaWidget({ onNavigate }: { onNavigate: (page: Page) => voi
 function MusicProgramWidget() {
   const { user } = useAuth();
   const [music, setMusic] = useState<{ titulo: string; artista: string; capa: string } | null>(null);
+  const [musicKey, setMusicKey] = useState(0);
   const [programa, setPrograma] = useState<string>("");
   const [currentProgram, setCurrentProgram] = useState<any>(null);
+  const [programKey, setProgramKey] = useState(0);
   const [elapsed, setElapsed] = useState(0);
   const [total, setTotal] = useState(0);
 
   // Fetch music data from localStorage
   useEffect(() => {
+    let prevTitle = "";
     const update = () => {
       try {
         const raw = localStorage.getItem("masterview_music_data");
         if (raw) {
           const d = JSON.parse(raw);
-          if (d.titulo) setMusic(d);
+          if (d.titulo && d.titulo !== prevTitle) {
+            prevTitle = d.titulo;
+            setMusic(d);
+            setMusicKey(k => k + 1);
+          }
           if (d.programa) setPrograma(d.programa);
         }
       } catch {}
@@ -775,6 +782,7 @@ function MusicProgramWidget() {
   // Fetch current program from DB
   useEffect(() => {
     if (!user) return;
+    let prevProgramId = "";
     const fetchProgram = async () => {
       const now = new Date();
       const dayMap: Record<number, string> = { 0: "Domingo", 1: "Segunda", 2: "Terça", 3: "Quarta", 4: "Quinta", 5: "Sexta", 6: "Sábado" };
@@ -793,8 +801,11 @@ function MusicProgramWidget() {
         .maybeSingle();
 
       if (data) {
+        if (data.id !== prevProgramId) {
+          prevProgramId = data.id;
+          setProgramKey(k => k + 1);
+        }
         setCurrentProgram(data);
-        // Calculate elapsed/total
         const [startH, startM] = data.horario_inicio.split(":").map(Number);
         const [endH, endM] = data.horario_fim.split(":").map(Number);
         const startMin = startH * 60 + startM;
@@ -834,7 +845,7 @@ function MusicProgramWidget() {
 
       {/* Current Program */}
       {currentProgram && (
-        <div className="flex items-center gap-3 mb-3 px-3 py-2.5 rounded-xl" style={{ background: "rgba(38,143,250,0.06)" }}>
+        <div key={`prog-${programKey}`} className="flex items-center gap-3 mb-3 px-3 py-2.5 rounded-xl animate-fade-in" style={{ background: "rgba(38,143,250,0.06)" }}>
           {apresentador?.foto ? (
             <img src={apresentador.foto} alt="" className="w-10 h-10 rounded-full object-cover flex-shrink-0 border-2 border-[#268ffa]/30" />
           ) : (
@@ -867,7 +878,7 @@ function MusicProgramWidget() {
 
       {/* Music */}
       {music ? (
-        <div className="flex items-center gap-3">
+        <div key={`music-${musicKey}`} className="flex items-center gap-3 animate-fade-in">
           {music.capa && (
             <img src={music.capa} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
           )}
