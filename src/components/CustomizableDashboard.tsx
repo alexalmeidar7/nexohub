@@ -161,7 +161,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
               return (
                 <div
                   key={item.id}
-                  className={`relative group cursor-pointer ${isDragging ? "opacity-40 scale-95" : ""}`}
+                  className={`relative group cursor-pointer animate-scale-in ${isDragging ? "opacity-40 scale-95" : ""}`}
                   draggable
                   onDragStart={() => handleDragStart(item.id)}
                   onDragOver={(e) => handleDragOver(e, item.id)}
