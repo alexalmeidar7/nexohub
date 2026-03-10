@@ -709,7 +709,7 @@ function MusicProgramWidget() {
     <div>
       <div className="flex items-center gap-2 mb-3">
         <Music size={14} className="text-[#268ffa]" />
-        <p className="text-white font-bold text-sm">Música no Ar</p>
+        <p className="text-[#0d0446] font-bold text-sm">Música no Ar</p>
       </div>
       {music ? (
         <div className="flex items-center gap-3">
@@ -717,13 +717,13 @@ function MusicProgramWidget() {
             <img src={music.capa} alt="" className="w-12 h-12 rounded-lg object-cover flex-shrink-0" />
           )}
           <div className="min-w-0">
-            <p className="text-white text-sm font-semibold truncate">{music.titulo}</p>
-            <p className="text-white/50 text-xs truncate">{music.artista}</p>
+            <p className="text-[#0d0446] text-sm font-semibold truncate">{music.titulo}</p>
+            <p className="text-[#0d0446]/50 text-xs truncate">{music.artista}</p>
             {programa && <p className="text-[#268ffa] text-[10px] mt-0.5 truncate">🔴 {programa}</p>}
           </div>
         </div>
       ) : (
-        <p className="text-white/30 text-xs">Sem música no momento</p>
+        <p className="text-[#0d0446]/30 text-xs">Sem música no momento</p>
       )}
     </div>
   );
