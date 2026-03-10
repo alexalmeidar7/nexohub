@@ -174,7 +174,7 @@
 
 /* ====== Scrollbar styling for masterview content area ====== */
 .mv-content-area::-webkit-scrollbar {
-  width: 6px;
+  width: 10px;
 }
 .mv-content-area::-webkit-scrollbar-track {
   background: transparent;
@@ -183,7 +183,7 @@
 .mv-content-area::-webkit-scrollbar-thumb {
   background: linear-gradient(180deg, #268ffa, #2dbef3);
   border-radius: 10px;
-  transition: background 0.2s;
+  border: 2px solid #ffffff;
 }
 .mv-content-area::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(180deg, #1a7ae0, #268ffa);
@@ -194,6 +194,7 @@
 .mv-content-area {
   scrollbar-width: thin;
   scrollbar-color: #268ffa transparent;
+  padding-right: 6px;
 }
 
 /* ====== Form styling for masterview content area ====== */
