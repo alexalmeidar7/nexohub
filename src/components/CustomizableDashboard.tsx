@@ -506,16 +506,16 @@ function AgendaPreview() {
   return (
     <div>
       <div className="flex items-center gap-1.5 mb-1.5">
-        <p className="text-white/50 text-[10px] font-bold">{format(today, "dd MMM", { locale: ptBR }).toUpperCase()}</p>
+        <p className="text-[#0d0446]/50 text-[10px] font-bold">{format(today, "dd MMM", { locale: ptBR }).toUpperCase()}</p>
       </div>
       {events.length === 0 ? (
-        <p className="text-white/25 text-[10px]">Sem eventos próximos</p>
+        <p className="text-[#0d0446]/30 text-[10px]">Sem eventos próximos</p>
       ) : (
         <div className="space-y-1">
           {events.map((ev, i) => (
             <div key={i} className="flex items-center gap-1.5">
               <div className="w-1 h-1 rounded-full flex-shrink-0" style={{ backgroundColor: "#268ffa" }} />
-              <p className="text-white/50 text-[10px] truncate">{ev.descricao || format(new Date(ev.data + "T12:00:00"), "dd/MM")}</p>
+              <p className="text-[#0d0446]/50 text-[10px] truncate">{ev.descricao || format(new Date(ev.data + "T12:00:00"), "dd/MM")}</p>
             </div>
           ))}
         </div>
