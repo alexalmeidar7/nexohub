@@ -183,10 +183,10 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                   </div>
                   <button
                     onClick={(e) => { e.stopPropagation(); removeItem(item.id); }}
-                    className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10"
-                    style={{ backgroundColor: "rgba(255,255,255,0.3)" }}
+                    className="absolute top-1 right-1 w-4 h-4 rounded flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10 hover:border hover:border-white/40"
+                    style={{ backgroundColor: "transparent" }}
                   >
-                    <X size={10} className="text-white" />
+                    <X size={8} className="text-white/40" />
                   </button>
                 </div>
               );
