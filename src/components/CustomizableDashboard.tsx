@@ -358,12 +358,14 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
               <div className="space-y-1.5 max-h-[50vh] overflow-y-auto pr-1">
                 {linkOptions.map(opt => {
                   const Icon = getIcon(opt.icon);
-                  const exists = items.some(i => i.type === "link" && (i.linkPage === opt.page || i.linkExternal === opt.external));
+                  const exists = items.some(i => i.type === "link" && (
+                    (opt.page && i.linkPage === opt.page) ||
+                    (opt.external && i.linkExternal === opt.external)
+                  ));
                   return (
                     <button
                       key={opt.label}
-                      onClick={() => !exists && addLink(opt)}
-                      disabled={exists}
+                      onClick={() => addLink(opt)}
                       className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-all text-left"
                       style={{
                         background: exists ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.06)",
