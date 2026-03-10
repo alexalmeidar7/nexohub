@@ -1885,7 +1885,7 @@ export default function PlayerPage() {
       )}
 
       {/* Empresa logo on 991-1 */}
-      {is991Channel && empresaLogo && playing && (
+      {normalizeChannelNumber(canal?.numero_canal) === "991-1" && empresaLogo && playing && (
         <img
           src={empresaLogo}
           alt="Logo"
