@@ -71,17 +71,49 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
   const [editMode, setEditMode] = useState(false);
   const [draggedId, setDraggedId] = useState<string | null>(null);
 
+  // Load dashboard items from DB (fallback to localStorage for migration)
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) setItems(JSON.parse(saved));
-    } catch {}
-  }, []);
+    if (!user) return;
+    const loadItems = async () => {
+      // Try DB first
+      const { data } = await supabase
+        .from("user_settings")
+        .select("dashboard_items")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (data?.dashboard_items && (data.dashboard_items as any[]).length > 0) {
+        setItems(data.dashboard_items as DashboardItem[]);
+      } else {
+        // Migrate from localStorage if exists
+        try {
+          const saved = localStorage.getItem(STORAGE_KEY);
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            setItems(parsed);
+            // Save to DB immediately
+            await supabase
+              .from("user_settings")
+              .upsert({ user_id: user.id, dashboard_items: parsed }, { onConflict: "user_id" });
+          }
+        } catch {}
+      }
+    };
+    loadItems();
+  }, [user]);
 
   const saveItems = useCallback((newItems: DashboardItem[]) => {
     setItems(newItems);
+    // Save to DB
+    if (user) {
+      supabase
+        .from("user_settings")
+        .upsert({ user_id: user.id, dashboard_items: newItems as any }, { onConflict: "user_id" })
+        .then();
+    }
+    // Keep localStorage as fallback
     localStorage.setItem(STORAGE_KEY, JSON.stringify(newItems));
-  }, []);
+  }, [user]);
 
   const addLink = (opt: typeof linkOptions[0]) => {
     const newItem: DashboardItem = {
