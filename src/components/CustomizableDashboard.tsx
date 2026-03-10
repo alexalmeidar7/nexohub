@@ -228,7 +228,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
       {/* Section: Widgets */}
       {items.filter(i => i.type === "widget").length > 0 && (
         <div className="mb-4">
-          <p className="text-white/30 text-[10px] font-bold uppercase tracking-[0.15em] mb-3">Widgets</p>
+          <p className="text-white/30 text-[10px] font-bold uppercase tracking-[0.15em] mb-3 animate-fade-in">Widgets</p>
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
             {items.filter(i => i.type === "widget").map(item => {
               const isDragging = draggedId === item.id;
