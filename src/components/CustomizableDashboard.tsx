@@ -476,15 +476,33 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
         </div>
       )}
 
-      {/* Scroll down hint */}
+      {/* Scroll down hint — visible on hover, auto-scrolls */}
       {showScrollHint && (
         <div
-          className="sticky bottom-0 left-0 right-0 flex justify-center py-2 pointer-events-none animate-fade-in"
-          style={{ background: "linear-gradient(0deg, rgba(255,255,255,0.9) 0%, transparent 100%)" }}
+          className="sticky bottom-0 left-0 right-0 flex justify-center py-2 opacity-0 hover:opacity-100 transition-opacity duration-300 cursor-pointer"
+          style={{ background: "linear-gradient(0deg, rgba(0,0,0,0.25) 0%, transparent 100%)" }}
+          onMouseEnter={() => {
+            const el = scrollRef.current;
+            if (el) {
+              const scrollInterval = setInterval(() => {
+                if (!el || el.scrollTop + el.clientHeight >= el.scrollHeight - 5) {
+                  clearInterval(scrollInterval);
+                  return;
+                }
+                el.scrollTop += 3;
+              }, 16);
+              (el as any).__scrollInterval = scrollInterval;
+            }
+          }}
+          onMouseLeave={() => {
+            const el = scrollRef.current;
+            if (el && (el as any).__scrollInterval) {
+              clearInterval((el as any).__scrollInterval);
+              delete (el as any).__scrollInterval;
+            }
+          }}
         >
-          <div className="animate-bounce">
-            <ChevronDown size={18} className="text-[#268ffa]/40" />
-          </div>
+          <ChevronDown size={18} className="text-white/50 animate-bounce" />
         </div>
       )}
     </div>
