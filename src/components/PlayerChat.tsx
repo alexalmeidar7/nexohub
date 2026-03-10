@@ -233,17 +233,27 @@ export default function PlayerChat({ channelId, onClose, shopOpen = false }: Pla
             {messages.map((msg) => {
               const isMe = msg.nome === nome && msg.cidade === cidade;
               return (
-                <div key={msg.id} className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}>
-                  <span className="text-[10px] text-white/40 mb-0.5">
-                    <span className="font-bold text-white/60">{msg.nome}</span> • {msg.cidade}
-                    <span className="ml-1.5 text-white/30">{formatMsgTime(msg.created_at)}</span>
-                  </span>
-                  <div
-                    className={`rounded-xl px-3 py-1.5 text-sm max-w-[85%] break-words ${
-                      isMe ? "bg-[#e60000] text-white" : "bg-white/10 text-white/90"
-                    }`}
-                  >
-                    {msg.message}
+                <div key={msg.id} className={`flex gap-2 ${isMe ? "flex-row-reverse" : "flex-row"}`}>
+                  {/* Avatar */}
+                  {isMe && avatarUrl ? (
+                    <img src={avatarUrl} alt="" className="w-6 h-6 rounded-full object-cover flex-shrink-0 mt-3" />
+                  ) : (
+                    <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0 mt-3">
+                      <span className="text-[9px] text-white/50 font-bold">{msg.nome.charAt(0).toUpperCase()}</span>
+                    </div>
+                  )}
+                  <div className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}>
+                    <span className="text-[10px] text-white/40 mb-0.5">
+                      <span className="font-bold text-white/60">{msg.nome}</span> • {msg.cidade}
+                      <span className="ml-1.5 text-white/30">{formatMsgTime(msg.created_at)}</span>
+                    </span>
+                    <div
+                      className={`rounded-xl px-3 py-1.5 text-sm max-w-[85%] break-words ${
+                        isMe ? "bg-[#e60000] text-white" : "bg-white/10 text-white/90"
+                      }`}
+                    >
+                      {msg.message}
+                    </div>
                   </div>
                 </div>
               );
