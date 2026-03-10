@@ -718,7 +718,7 @@ function MusicProgramWidget() {
     if (!user) return;
     const fetchProgram = async () => {
       const now = new Date();
-      const dayMap: Record<number, string> = { 0: "domingo", 1: "segunda", 2: "terca", 3: "quarta", 4: "quinta", 5: "sexta", 6: "sabado" };
+      const dayMap: Record<number, string> = { 0: "Domingo", 1: "Segunda", 2: "Terça", 3: "Quarta", 4: "Quinta", 5: "Sexta", 6: "Sábado" };
       const todayKey = dayMap[now.getDay()];
       const currentTime = now.toTimeString().slice(0, 5);
 
