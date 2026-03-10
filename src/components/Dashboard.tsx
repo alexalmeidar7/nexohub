@@ -189,15 +189,31 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   };
 
   const handleMenuClick = (item: MenuItem) => {
-    if (item.label === "player - módulo externo") {
-      window.open("/user/nexohub/player", "_blank");
-      return;
-    }
     if (item.children) {
       toggleMenu(item.label);
     } else if (item.page) {
       setCurrentPage(item.page);
       setMobileMenuOpen(false);
+      setHoveredMenu(null);
+    }
+  };
+
+  const handleChildClick = (child: { label: string; page?: Page }, parentLabel: string) => {
+    if (parentLabel === "player" && child.label === "módulo externo") {
+      window.open("/user/nexohub/player", "_blank");
+      setHoveredMenu(null);
+      return;
+    }
+    if (parentLabel === "ferramentas" && child.label === "tela promo") {
+      const slug = user?.email?.split("@")[0] || "";
+      window.open(`/user/${slug}/nexohub/telapromo`, "_blank");
+      setHoveredMenu(null);
+      return;
+    }
+    if (child.page) {
+      setCurrentPage(child.page);
+      setMobileMenuOpen(false);
+      setHoveredMenu(null);
     }
   };
 
