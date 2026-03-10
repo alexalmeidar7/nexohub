@@ -116,6 +116,7 @@ const pageTitle: Record<Page, string> = {
   preroll: "Comercial — Pré-Roll",
   cortevideo: "Ferramentas — Cortes de Vídeo",
   playerconfig: "Player — Configurações",
+  vmix: "vMix — Controle de Transmissão",
 };
 
 interface DashboardProps {
