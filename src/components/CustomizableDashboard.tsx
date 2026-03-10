@@ -288,11 +288,11 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
             onClick={() => { setShowAddDialog(true); setAddStep("choose"); }}
             className="w-[90px] h-[90px] rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all hover:scale-[1.06]"
             style={{
-              background: "rgba(38,143,250,0.06)",
+              background: "rgba(38,143,250,0.04)",
               border: "1.5px dashed rgba(38,143,250,0.25)",
             }}
-            onMouseEnter={e => { e.currentTarget.style.background = "rgba(38,143,250,0.12)"; e.currentTarget.style.borderColor = "rgba(38,143,250,0.5)"; }}
-            onMouseLeave={e => { e.currentTarget.style.background = "rgba(38,143,250,0.06)"; e.currentTarget.style.borderColor = "rgba(38,143,250,0.25)"; }}
+            onMouseEnter={e => { e.currentTarget.style.background = "rgba(38,143,250,0.08)"; e.currentTarget.style.borderColor = "rgba(38,143,250,0.5)"; }}
+            onMouseLeave={e => { e.currentTarget.style.background = "rgba(38,143,250,0.04)"; e.currentTarget.style.borderColor = "rgba(38,143,250,0.25)"; }}
           >
             <Plus size={16} className="text-[#268ffa]/40 mb-1" />
             <span className="text-[#268ffa]/40 text-[9px] font-semibold">Adicionar</span>
@@ -303,15 +303,15 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
       {/* Empty state */}
       {items.length === 0 && (
         <div className="flex-1 flex flex-col items-center justify-center text-center py-20 animate-fade-in">
-          <div className="w-20 h-20 rounded-2xl flex items-center justify-center mb-5" style={{ background: "linear-gradient(145deg, #0d0446, #150a5c)", boxShadow: "0 8px 32px rgba(0,0,0,0.3)" }}>
-            <Plus size={28} className="text-[#268ffa]/50" />
+          <div className="w-20 h-20 rounded-2xl flex items-center justify-center mb-5" style={{ background: "#ffffff", border: "1px solid rgba(13,4,70,0.08)", boxShadow: "0 4px 20px rgba(13,4,70,0.08)" }}>
+            <Plus size={28} className="text-[#268ffa]/60" />
           </div>
-          <p className="text-white/50 text-sm font-bold mb-1">Área de trabalho vazia</p>
-          <p className="text-white/25 text-xs mb-5 max-w-xs">Adicione atalhos e widgets para personalizar seu painel</p>
+          <p className="text-[#0d0446]/60 text-sm font-bold mb-1">Área de trabalho vazia</p>
+          <p className="text-[#0d0446]/30 text-xs mb-5 max-w-xs">Adicione atalhos e widgets para personalizar seu painel</p>
           <button
             onClick={() => { setShowAddDialog(true); setAddStep("choose"); }}
             className="px-6 py-2.5 rounded-xl text-xs font-bold transition-all hover:scale-[1.03]"
-            style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#fff", boxShadow: "0 4px 16px rgba(38,143,250,0.3)" }}
+            style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#fff", boxShadow: "0 4px 16px rgba(38,143,250,0.25)" }}
           >
             <Plus size={12} className="inline mr-1.5" /> Começar a personalizar
           </button>
