@@ -152,7 +152,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
       {/* Section: Atalhos */}
       {items.filter(i => i.type === "link").length > 0 && (
         <div className="mb-6">
-          <p className="text-white/30 text-[10px] font-bold uppercase tracking-[0.15em] mb-3 animate-fade-in">Atalhos rápidos</p>
+          <p className="text-[#0d0446]/50 text-[10px] font-bold uppercase tracking-[0.15em] mb-3 animate-fade-in">Atalhos rápidos</p>
           <div className="flex flex-wrap gap-3">
             {items.filter(i => i.type === "link").map(item => {
               const Icon = getIcon(item.linkIcon || "Link2");
@@ -174,35 +174,36 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                     style={{
                       background: isDragOver
                         ? "linear-gradient(145deg, #268ffa, #2dbef3)"
-                        : "linear-gradient(145deg, #0d0446, #150a5c)",
-                      border: isDragOver ? "2px solid #268ffa" : "1px solid rgba(255,255,255,0.08)",
-                      boxShadow: "0 4px 16px rgba(0,0,0,0.25)",
+                        : "#ffffff",
+                      border: isDragOver ? "2px solid #268ffa" : "1px solid rgba(13,4,70,0.08)",
+                      boxShadow: "0 2px 8px rgba(13,4,70,0.06)",
                     }}
                     onMouseEnter={e => {
-                      e.currentTarget.style.background = "linear-gradient(145deg, #150a5c, #1e0f7a)";
-                      e.currentTarget.style.boxShadow = "0 6px 24px rgba(38,143,250,0.2)";
+                      e.currentTarget.style.boxShadow = "0 6px 20px rgba(38,143,250,0.15)";
+                      e.currentTarget.style.borderColor = "rgba(38,143,250,0.3)";
                     }}
                     onMouseLeave={e => {
                       e.currentTarget.style.background = isDragOver
                         ? "linear-gradient(145deg, #268ffa, #2dbef3)"
-                        : "linear-gradient(145deg, #0d0446, #150a5c)";
-                      e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.25)";
+                        : "#ffffff";
+                      e.currentTarget.style.boxShadow = "0 2px 8px rgba(13,4,70,0.06)";
+                      e.currentTarget.style.borderColor = isDragOver ? "#268ffa" : "rgba(13,4,70,0.08)";
                     }}
                   >
-                    <div className="w-9 h-9 rounded-xl flex items-center justify-center mb-1.5" style={{ background: "rgba(38,143,250,0.2)" }}>
-                      <Icon size={18} className="text-[#5bb5fc]" />
+                    <div className="w-9 h-9 rounded-xl flex items-center justify-center mb-1.5" style={{ background: "rgba(38,143,250,0.1)" }}>
+                      <Icon size={18} className="text-[#268ffa]" />
                     </div>
-                    <span className="text-white text-[9px] font-semibold text-center leading-tight px-1.5 max-w-full truncate">{item.linkLabel}</span>
-                    {item.linkExternal && <ExternalLink size={7} className="text-white/25 mt-0.5" />}
+                    <span className="text-[#0d0446] text-[9px] font-semibold text-center leading-tight px-1.5 max-w-full truncate">{item.linkLabel}</span>
+                    {item.linkExternal && <ExternalLink size={7} className="text-[#0d0446]/25 mt-0.5" />}
                   </div>
                   <button
                     onClick={(e) => { e.stopPropagation(); removeItem(item.id); }}
                     className="absolute top-1.5 right-1.5 w-4 h-4 rounded-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all z-10"
-                    style={{ border: "1px solid rgba(255,255,255,0.2)" }}
-                    onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.5)"; }}
-                    onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)"; }}
+                    style={{ border: "1px solid rgba(13,4,70,0.15)" }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(13,4,70,0.4)"; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(13,4,70,0.15)"; }}
                   >
-                    <X size={7} className="text-white/50" />
+                    <X size={7} className="text-[#0d0446]/40" />
                   </button>
                 </div>
               );
@@ -212,11 +213,11 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
               onClick={() => { setShowAddDialog(true); setAddStep("choose"); }}
               className="w-[90px] h-[90px] rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all hover:scale-[1.06]"
               style={{
-                background: "rgba(38,143,250,0.06)",
+                background: "rgba(38,143,250,0.04)",
                 border: "1.5px dashed rgba(38,143,250,0.25)",
               }}
-              onMouseEnter={e => { e.currentTarget.style.background = "rgba(38,143,250,0.12)"; e.currentTarget.style.borderColor = "rgba(38,143,250,0.5)"; }}
-              onMouseLeave={e => { e.currentTarget.style.background = "rgba(38,143,250,0.06)"; e.currentTarget.style.borderColor = "rgba(38,143,250,0.25)"; }}
+              onMouseEnter={e => { e.currentTarget.style.background = "rgba(38,143,250,0.08)"; e.currentTarget.style.borderColor = "rgba(38,143,250,0.5)"; }}
+              onMouseLeave={e => { e.currentTarget.style.background = "rgba(38,143,250,0.04)"; e.currentTarget.style.borderColor = "rgba(38,143,250,0.25)"; }}
             >
               <Plus size={16} className="text-[#268ffa]/40 mb-1" />
               <span className="text-[#268ffa]/40 text-[9px] font-semibold">Adicionar</span>
@@ -228,7 +229,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
       {/* Section: Widgets */}
       {items.filter(i => i.type === "widget").length > 0 && (
         <div className="mb-4">
-          <p className="text-white/30 text-[10px] font-bold uppercase tracking-[0.15em] mb-3 animate-fade-in">Widgets</p>
+          <p className="text-[#0d0446]/50 text-[10px] font-bold uppercase tracking-[0.15em] mb-3 animate-fade-in">Widgets</p>
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
             {items.filter(i => i.type === "widget").map(item => {
               const isDragging = draggedId === item.id;
@@ -238,10 +239,9 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                   key={item.id}
                   className={`relative group rounded-2xl overflow-hidden animate-fade-in ${isDragging ? "opacity-40 scale-95" : ""}`}
                   style={{
-                    background: "linear-gradient(160deg, rgba(13,4,70,0.6), rgba(26,10,110,0.4))",
-                    backdropFilter: "blur(24px) saturate(1.4)",
-                    border: isDragOver ? "2px solid #268ffa" : "1px solid rgba(255,255,255,0.08)",
-                    boxShadow: "0 4px 20px rgba(0,0,0,0.2)",
+                    background: "#ffffff",
+                    border: isDragOver ? "2px solid #268ffa" : "1px solid rgba(13,4,70,0.08)",
+                    boxShadow: "0 2px 12px rgba(13,4,70,0.06)",
                     minHeight: item.widgetType === "agenda" ? "280px" : "180px",
                   }}
                   draggable
@@ -250,9 +250,9 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                   onDrop={() => handleDrop(item.id)}
                   onDragEnd={handleDragEnd}
                 >
-                  <div className="flex items-center gap-1.5 px-4 py-2.5 cursor-grab active:cursor-grabbing" style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-                    <GripVertical size={10} className="text-white/20" />
-                    <span className="text-white/30 text-[9px] font-bold uppercase tracking-[0.15em]">
+                  <div className="flex items-center gap-1.5 px-4 py-2.5 cursor-grab active:cursor-grabbing" style={{ borderBottom: "1px solid rgba(13,4,70,0.06)" }}>
+                    <GripVertical size={10} className="text-[#0d0446]/20" />
+                    <span className="text-[#0d0446]/40 text-[9px] font-bold uppercase tracking-[0.15em]">
                       {item.widgetType === "agenda" ? "Agenda" : item.widgetType === "musica" ? "No Ar" : "Estatísticas"}
                     </span>
                   </div>
@@ -260,15 +260,15 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                     <button
                       onClick={() => removeItem(item.id)}
                       className="w-5 h-5 rounded-md flex items-center justify-center"
-                      style={{ border: "1px solid rgba(255,255,255,0.2)" }}
-                      onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.5)"; }}
-                      onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)"; }}
+                      style={{ border: "1px solid rgba(13,4,70,0.15)" }}
+                      onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(13,4,70,0.4)"; }}
+                      onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(13,4,70,0.15)"; }}
                     >
-                      <X size={9} className="text-white/50" />
+                      <X size={9} className="text-[#0d0446]/40" />
                     </button>
                   </div>
                   <div className="p-4 h-full">
-                    <Suspense fallback={<Loader2 className="animate-spin text-white/30" size={18} />}>
+                    <Suspense fallback={<Loader2 className="animate-spin text-[#268ffa]/40" size={18} />}>
                       {item.widgetType === "agenda" && <DashboardAgendaWidget />}
                       {item.widgetType === "musica" && <MusicProgramWidget />}
                       {item.widgetType === "stats" && <StatsWidget />}
@@ -288,11 +288,11 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
             onClick={() => { setShowAddDialog(true); setAddStep("choose"); }}
             className="w-[90px] h-[90px] rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all hover:scale-[1.06]"
             style={{
-              background: "rgba(38,143,250,0.06)",
+              background: "rgba(38,143,250,0.04)",
               border: "1.5px dashed rgba(38,143,250,0.25)",
             }}
-            onMouseEnter={e => { e.currentTarget.style.background = "rgba(38,143,250,0.12)"; e.currentTarget.style.borderColor = "rgba(38,143,250,0.5)"; }}
-            onMouseLeave={e => { e.currentTarget.style.background = "rgba(38,143,250,0.06)"; e.currentTarget.style.borderColor = "rgba(38,143,250,0.25)"; }}
+            onMouseEnter={e => { e.currentTarget.style.background = "rgba(38,143,250,0.08)"; e.currentTarget.style.borderColor = "rgba(38,143,250,0.5)"; }}
+            onMouseLeave={e => { e.currentTarget.style.background = "rgba(38,143,250,0.04)"; e.currentTarget.style.borderColor = "rgba(38,143,250,0.25)"; }}
           >
             <Plus size={16} className="text-[#268ffa]/40 mb-1" />
             <span className="text-[#268ffa]/40 text-[9px] font-semibold">Adicionar</span>
@@ -303,15 +303,15 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
       {/* Empty state */}
       {items.length === 0 && (
         <div className="flex-1 flex flex-col items-center justify-center text-center py-20 animate-fade-in">
-          <div className="w-20 h-20 rounded-2xl flex items-center justify-center mb-5" style={{ background: "linear-gradient(145deg, #0d0446, #150a5c)", boxShadow: "0 8px 32px rgba(0,0,0,0.3)" }}>
-            <Plus size={28} className="text-[#268ffa]/50" />
+          <div className="w-20 h-20 rounded-2xl flex items-center justify-center mb-5" style={{ background: "#ffffff", border: "1px solid rgba(13,4,70,0.08)", boxShadow: "0 4px 20px rgba(13,4,70,0.08)" }}>
+            <Plus size={28} className="text-[#268ffa]/60" />
           </div>
-          <p className="text-white/50 text-sm font-bold mb-1">Área de trabalho vazia</p>
-          <p className="text-white/25 text-xs mb-5 max-w-xs">Adicione atalhos e widgets para personalizar seu painel</p>
+          <p className="text-[#0d0446]/60 text-sm font-bold mb-1">Área de trabalho vazia</p>
+          <p className="text-[#0d0446]/30 text-xs mb-5 max-w-xs">Adicione atalhos e widgets para personalizar seu painel</p>
           <button
             onClick={() => { setShowAddDialog(true); setAddStep("choose"); }}
             className="px-6 py-2.5 rounded-xl text-xs font-bold transition-all hover:scale-[1.03]"
-            style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#fff", boxShadow: "0 4px 16px rgba(38,143,250,0.3)" }}
+            style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#fff", boxShadow: "0 4px 16px rgba(38,143,250,0.25)" }}
           >
             <Plus size={12} className="inline mr-1.5" /> Começar a personalizar
           </button>
@@ -486,8 +486,8 @@ function LinkPreview({ page, external }: { page?: Page; external?: string }) {
 function GenericPreview({ icon: Icon, text }: { icon: React.ComponentType<any>; text: string }) {
   return (
     <div className="flex items-center gap-2">
-      <Icon size={12} className="text-white/20" />
-      <p className="text-white/30 text-[10px]">{text}</p>
+      <Icon size={12} className="text-[#0d0446]/20" />
+      <p className="text-[#0d0446]/40 text-[10px]">{text}</p>
     </div>
   );
 }
@@ -506,16 +506,16 @@ function AgendaPreview() {
   return (
     <div>
       <div className="flex items-center gap-1.5 mb-1.5">
-        <p className="text-white/50 text-[10px] font-bold">{format(today, "dd MMM", { locale: ptBR }).toUpperCase()}</p>
+        <p className="text-[#0d0446]/50 text-[10px] font-bold">{format(today, "dd MMM", { locale: ptBR }).toUpperCase()}</p>
       </div>
       {events.length === 0 ? (
-        <p className="text-white/25 text-[10px]">Sem eventos próximos</p>
+        <p className="text-[#0d0446]/30 text-[10px]">Sem eventos próximos</p>
       ) : (
         <div className="space-y-1">
           {events.map((ev, i) => (
             <div key={i} className="flex items-center gap-1.5">
               <div className="w-1 h-1 rounded-full flex-shrink-0" style={{ backgroundColor: "#268ffa" }} />
-              <p className="text-white/50 text-[10px] truncate">{ev.descricao || format(new Date(ev.data + "T12:00:00"), "dd/MM")}</p>
+              <p className="text-[#0d0446]/50 text-[10px] truncate">{ev.descricao || format(new Date(ev.data + "T12:00:00"), "dd/MM")}</p>
             </div>
           ))}
         </div>
@@ -547,13 +547,13 @@ function MusicaPreview() {
       {music.capa ? (
         <img src={music.capa} alt="" className="w-12 h-12 rounded-lg object-cover flex-shrink-0 shadow-md" />
       ) : (
-        <div className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "rgba(38,143,250,0.15)" }}>
+        <div className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "rgba(38,143,250,0.1)" }}>
           <Music size={16} className="text-[#268ffa]" />
         </div>
       )}
       <div className="min-w-0 flex-1">
-        <p className="text-white text-[11px] font-bold truncate leading-tight">{music.titulo}</p>
-        <p className="text-white/50 text-[10px] truncate">{music.artista}</p>
+        <p className="text-[#0d0446] text-[11px] font-bold truncate leading-tight">{music.titulo}</p>
+        <p className="text-[#0d0446]/50 text-[10px] truncate">{music.artista}</p>
         {programa && (
           <p className="text-[9px] mt-0.5 truncate" style={{ color: "#268ffa" }}>🔴 {programa}</p>
         )}
@@ -561,10 +561,10 @@ function MusicaPreview() {
     </div>
   ) : (
     <div className="flex items-center gap-2">
-      <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: "rgba(255,255,255,0.06)" }}>
-        <Music size={14} className="text-white/20" />
+      <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: "rgba(38,143,250,0.06)" }}>
+        <Music size={14} className="text-[#0d0446]/20" />
       </div>
-      <p className="text-white/25 text-[10px]">Sem música no ar</p>
+      <p className="text-[#0d0446]/30 text-[10px]">Sem música no ar</p>
     </div>
   );
 }
@@ -580,10 +580,10 @@ function NoticiasPreview() {
   return news.length > 0 ? (
     <div className="space-y-1">
       {news.map((n, i) => (
-        <p key={i} className="text-white/40 text-[10px] truncate leading-tight">• {n.title}</p>
+        <p key={i} className="text-[#0d0446]/50 text-[10px] truncate leading-tight">• {n.title}</p>
       ))}
     </div>
-  ) : <p className="text-white/25 text-[10px]">Sem notícias salvas</p>;
+  ) : <p className="text-[#0d0446]/30 text-[10px]">Sem notícias salvas</p>;
 }
 
 function ApresentadoresPreview() {
@@ -594,7 +594,7 @@ function ApresentadoresPreview() {
     supabase.from("apresentadores").select("id", { count: "exact", head: true }).eq("user_id", user.id)
       .then(({ count: c }) => setCount(c || 0));
   }, [user]);
-  return <p className="text-white/40 text-[10px]">{count} apresentador{count !== 1 ? "es" : ""} cadastrado{count !== 1 ? "s" : ""}</p>;
+  return <p className="text-[#0d0446]/50 text-[10px]">{count} apresentador{count !== 1 ? "es" : ""} cadastrado{count !== 1 ? "s" : ""}</p>;
 }
 
 function ProgramasPreview() {
@@ -605,7 +605,7 @@ function ProgramasPreview() {
     supabase.from("programas").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("ativo", true)
       .then(({ count: c }) => setCount(c || 0));
   }, [user]);
-  return <p className="text-white/40 text-[10px]">{count} programa{count !== 1 ? "s" : ""} ativo{count !== 1 ? "s" : ""}</p>;
+  return <p className="text-[#0d0446]/50 text-[10px]">{count} programa{count !== 1 ? "s" : ""} ativo{count !== 1 ? "s" : ""}</p>;
 }
 
 function PromosPreview() {
@@ -617,7 +617,7 @@ function PromosPreview() {
     supabase.from("promocoes").select("id", { count: "exact", head: true }).eq("user_id", user.id).gte("data_fim", today)
       .then(({ count: c }) => setCount(c || 0));
   }, [user]);
-  return <p className="text-white/40 text-[10px]">{count} promoção{count !== 1 ? "ões" : ""} ativa{count !== 1 ? "s" : ""}</p>;
+  return <p className="text-[#0d0446]/50 text-[10px]">{count} promoção{count !== 1 ? "ões" : ""} ativa{count !== 1 ? "s" : ""}</p>;
 }
 
 function PrerollPreview() {
@@ -628,7 +628,7 @@ function PrerollPreview() {
     supabase.from("comercial_preroll").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("active", true)
       .then(({ count: c }) => setCount(c || 0));
   }, [user]);
-  return <p className="text-white/40 text-[10px]">{count} pre-roll{count !== 1 ? "s" : ""} ativo{count !== 1 ? "s" : ""}</p>;
+  return <p className="text-[#0d0446]/50 text-[10px]">{count} pre-roll{count !== 1 ? "s" : ""} ativo{count !== 1 ? "s" : ""}</p>;
 }
 
 function ShoppingPreview() {
@@ -639,7 +639,7 @@ function ShoppingPreview() {
     supabase.from("shopping_products").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("active", true)
       .then(({ count: c }) => setCount(c || 0));
   }, [user]);
-  return <p className="text-white/40 text-[10px]">{count} produto{count !== 1 ? "s" : ""} ativo{count !== 1 ? "s" : ""}</p>;
+  return <p className="text-[#0d0446]/50 text-[10px]">{count} produto{count !== 1 ? "s" : ""} ativo{count !== 1 ? "s" : ""}</p>;
 }
 
 /* ========== WIDGET: Agenda ========== */
@@ -664,16 +664,16 @@ function DashboardAgendaWidget() {
     <div>
       <div className="flex items-center gap-2 mb-3">
         <CalendarDays size={14} className="text-[#268ffa]" />
-        <p className="text-white font-bold text-sm">Agenda de Eventos</p>
+        <p className="text-[#0d0446] font-bold text-sm">Agenda de Eventos</p>
       </div>
       {events.length === 0 ? (
-        <p className="text-white/30 text-xs">Nenhum evento próximo</p>
+        <p className="text-[#0d0446]/30 text-xs">Nenhum evento próximo</p>
       ) : (
         <div className="space-y-2">
           {events.map(ev => (
-            <div key={ev.id} className="px-3 py-2 rounded-lg" style={{ background: "rgba(255,255,255,0.06)" }}>
-              <p className="text-white text-xs font-semibold truncate">{ev.descricao || "Evento"}</p>
-              <p className="text-white/40 text-[10px]">
+            <div key={ev.id} className="px-3 py-2 rounded-lg" style={{ background: "rgba(38,143,250,0.06)" }}>
+              <p className="text-[#0d0446] text-xs font-semibold truncate">{ev.descricao || "Evento"}</p>
+              <p className="text-[#0d0446]/40 text-[10px]">
                 {new Date(ev.data + "T12:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })} — {ev.local}
               </p>
             </div>
@@ -709,7 +709,7 @@ function MusicProgramWidget() {
     <div>
       <div className="flex items-center gap-2 mb-3">
         <Music size={14} className="text-[#268ffa]" />
-        <p className="text-white font-bold text-sm">Música no Ar</p>
+        <p className="text-[#0d0446] font-bold text-sm">Música no Ar</p>
       </div>
       {music ? (
         <div className="flex items-center gap-3">
@@ -717,13 +717,13 @@ function MusicProgramWidget() {
             <img src={music.capa} alt="" className="w-12 h-12 rounded-lg object-cover flex-shrink-0" />
           )}
           <div className="min-w-0">
-            <p className="text-white text-sm font-semibold truncate">{music.titulo}</p>
-            <p className="text-white/50 text-xs truncate">{music.artista}</p>
+            <p className="text-[#0d0446] text-sm font-semibold truncate">{music.titulo}</p>
+            <p className="text-[#0d0446]/50 text-xs truncate">{music.artista}</p>
             {programa && <p className="text-[#268ffa] text-[10px] mt-0.5 truncate">🔴 {programa}</p>}
           </div>
         </div>
       ) : (
-        <p className="text-white/30 text-xs">Sem música no momento</p>
+        <p className="text-[#0d0446]/30 text-xs">Sem música no momento</p>
       )}
     </div>
   );
@@ -750,16 +750,16 @@ function StatsWidget() {
     <div>
       <div className="flex items-center gap-2 mb-3">
         <BarChart3 size={14} className="text-[#268ffa]" />
-        <p className="text-white font-bold text-sm">Dados Estatísticos</p>
+        <p className="text-[#0d0446] font-bold text-sm">Dados Estatísticos</p>
       </div>
       <div className="grid grid-cols-2 gap-3">
-        <div className="px-3 py-3 rounded-xl text-center" style={{ background: "rgba(255,255,255,0.06)" }}>
-          <p className="text-2xl font-bold text-white">{prerollCount}</p>
-          <p className="text-white/40 text-[10px] mt-0.5">Pre-rolls Ativos</p>
+        <div className="px-3 py-3 rounded-xl text-center" style={{ background: "rgba(38,143,250,0.06)" }}>
+          <p className="text-2xl font-bold text-[#0d0446]">{prerollCount}</p>
+          <p className="text-[#0d0446]/40 text-[10px] mt-0.5">Pre-rolls Ativos</p>
         </div>
-        <div className="px-3 py-3 rounded-xl text-center" style={{ background: "rgba(255,255,255,0.06)" }}>
-          <p className="text-2xl font-bold text-white">{channelCount}</p>
-          <p className="text-white/40 text-[10px] mt-0.5">Canais Ativos</p>
+        <div className="px-3 py-3 rounded-xl text-center" style={{ background: "rgba(38,143,250,0.06)" }}>
+          <p className="text-2xl font-bold text-[#0d0446]">{channelCount}</p>
+          <p className="text-[#0d0446]/40 text-[10px] mt-0.5">Canais Ativos</p>
         </div>
       </div>
     </div>
