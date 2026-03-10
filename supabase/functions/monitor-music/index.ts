@@ -20,7 +20,7 @@ function getCurrentProgram(
   programas: { nome: string; horario_inicio: string; horario_fim: string; dias_semana: string[] | null; variavel: boolean; data_variavel: string | null; ativo: boolean }[]
 ): string {
   const now = new Date();
-  const dias = ["dom", "seg", "ter", "qua", "qui", "sex", "sab"];
+  const dias = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
   const diaAtual = dias[now.getDay()];
   const horaAtual = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
   const todayStr = now.toISOString().slice(0, 10);
@@ -115,14 +115,14 @@ Deno.serve(async (req) => {
         const programa = getCurrentProgram(programas || []);
 
         const now = new Date();
-        await supabase.from("musicas_tocadas").insert({
+        const { error: insertErr } = await supabase.from("musicas_tocadas").upsert({
           user_id: setting.user_id,
           dia: now.toISOString().slice(0, 10),
           horario: `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`,
           programa,
           artista,
           musica: titulo,
-        });
+        }, { onConflict: "user_id,musica,artista,dia", ignoreDuplicates: true });
 
         inserted++;
       } catch {
