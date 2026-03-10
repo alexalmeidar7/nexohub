@@ -4,6 +4,7 @@ import { Home, Sun, FileText, Mic2, PlaySquare, Music, CalendarDays, Settings, L
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import seloNexohub from "@/assets/selo-nexohub.png";
+import logoMenu from "@/assets/logo-menu.png";
 import logoFooter from "@/assets/logo-footer.png";
 import {
   Tooltip,
