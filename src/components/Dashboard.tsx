@@ -4,7 +4,7 @@ import { Home, Sun, FileText, Mic2, PlaySquare, Music, CalendarDays, Settings, L
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import seloNexohub from "@/assets/selo-nexohub.png";
-import logoMenu from "@/assets/logo-menu.png";
+import logoMenu from "@/assets/logo-nexohub-menu.png";
 import logoFooter from "@/assets/logo-footer.png";
 import {
   Tooltip,
@@ -340,9 +340,15 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       {/* Horizontal Navigation Bar - desktop */}
       <nav
         className="hidden lg:flex items-center px-8 relative z-[60]"
-        style={{ backgroundColor: "#0d0446", minHeight: "52px" }}
+        style={{
+          background: "rgba(13, 4, 70, 0.65)",
+          backdropFilter: "blur(24px) saturate(1.4)",
+          WebkitBackdropFilter: "blur(24px) saturate(1.4)",
+          borderBottom: "1px solid rgba(255,255,255,0.08)",
+          minHeight: "52px",
+        }}
       >
-        <img src={logoMenu} alt="NexoHUB" className="h-7 mr-6 flex-shrink-0" />
+        <img src={logoMenu} alt="NexoHUB" className="h-5 mr-4 flex-shrink-0" />
 
         {sidebarMenu.filter(item => {
           if (item.label === "home" || item.label === "cadastros" || item.label === "ferramentas") return true;
@@ -369,9 +375,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                     setCurrentPage(item.page);
                   }
                 }}
-                className={`text-sm font-semibold py-2 transition-colors whitespace-nowrap ${
-                  active ? "text-white" : "text-white/60 hover:text-white"
-                }`}
+                className="text-sm font-semibold py-2 transition-colors whitespace-nowrap"
+                style={{ color: active ? "#268ffa" : "#ffffff" }}
+                onMouseEnter={e => { if (!active) e.currentTarget.style.color = "#268ffa"; }}
+                onMouseLeave={e => { if (!active) e.currentTarget.style.color = "#ffffff"; }}
               >
                 {item.label}
               </button>
@@ -381,17 +388,22 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 <div className="absolute top-full left-0 pt-1 z-[70]">
                   <div
                     className="rounded-lg py-2 min-w-[180px]"
-                    style={{ backgroundColor: "#0d0446", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 8px 24px rgba(0,0,0,0.4)" }}
+                    style={{
+                      background: "rgba(13, 4, 70, 0.8)",
+                      backdropFilter: "blur(24px) saturate(1.4)",
+                      WebkitBackdropFilter: "blur(24px) saturate(1.4)",
+                      border: "1px solid rgba(255,255,255,0.1)",
+                      boxShadow: "0 8px 24px rgba(0,0,0,0.4)",
+                    }}
                   >
                     {item.children.map(child => (
                       <button
                         key={child.label}
                         onClick={() => handleChildClick(child, item.label)}
-                        className={`w-full text-left px-4 py-2 text-sm transition-colors ${
-                          child.page && currentPage === child.page
-                            ? "text-[#268ffa] font-semibold"
-                            : "text-white/70 hover:text-white hover:bg-white/5"
-                        }`}
+                        className="w-full text-left px-4 py-2 text-sm transition-colors"
+                        style={{ color: child.page && currentPage === child.page ? "#268ffa" : "#ffffff" }}
+                        onMouseEnter={e => { if (!(child.page && currentPage === child.page)) { e.currentTarget.style.color = "#268ffa"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.05)"; } }}
+                        onMouseLeave={e => { if (!(child.page && currentPage === child.page)) { e.currentTarget.style.color = "#ffffff"; e.currentTarget.style.backgroundColor = "transparent"; } }}
                       >
                         {child.label}
                       </button>
