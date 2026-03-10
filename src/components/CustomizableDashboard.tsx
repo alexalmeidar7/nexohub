@@ -251,17 +251,17 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                 onDragOver={(e) => handleDragOver(e, item.id)}
                 onDragEnd={handleDragEnd}
               >
-                {editMode && (
-                  <div className="absolute top-2 right-2 z-10 flex gap-1">
-                    <button
-                      onClick={() => removeItem(item.id)}
-                      className="w-6 h-6 rounded-full flex items-center justify-center"
-                      style={{ backgroundColor: "#dc2626" }}
-                    >
-                      <X size={12} className="text-white" />
-                    </button>
-                  </div>
-                )}
+                {/* Always visible on hover */}
+                <div className="absolute top-2 right-2 z-10 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button
+                    onClick={() => removeItem(item.id)}
+                    className="w-6 h-6 rounded-full flex items-center justify-center"
+                    style={{ backgroundColor: "#dc2626" }}
+                    title="Remover"
+                  >
+                    <X size={12} className="text-white" />
+                  </button>
+                </div>
                 <div className="p-4 h-full">
                   <Suspense fallback={<Loader2 className="animate-spin text-white/40" size={20} />}>
                     {item.widgetType === "agenda" && <DashboardAgendaWidget />}
