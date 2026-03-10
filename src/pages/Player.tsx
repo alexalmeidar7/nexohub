@@ -44,7 +44,7 @@ import PlayerShopProduct from "@/components/player/PlayerShopProduct";
 import PreRollOverlay from "@/components/PreRollOverlay";
 import { saveMiniPlayerData, clearMiniPlayerData, unlockAndPrepareMiniAudio } from "@/components/player/MiniPlayerWidget";
 import PlayerSkeleton from "@/components/skeletons/PlayerSkeleton";
-import PlayerSidebarComponent from "@/components/player/PlayerSidebar";
+
 import { normalizeMusicText } from "@/lib/textEncoding";
 
 // Dynamic HLS loader — cached after first import
