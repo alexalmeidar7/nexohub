@@ -1031,7 +1031,7 @@ function DashboardWeatherWidget() {
       {weather ? (
         <div>
           {/* Current */}
-          <div className="flex items-center gap-3 mb-3">
+          <div key={`wx-${weatherKey}`} className="flex items-center gap-3 mb-3 animate-fade-in">
             <div className="flex-shrink-0">
               {WeatherIconComp && <WeatherIconComp code={weather.current.weatherCode} size={48} />}
             </div>
