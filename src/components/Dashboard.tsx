@@ -492,6 +492,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               {currentPage === "shopping" && <ShoppingPage />}
               {currentPage === "preroll" && <PreRollPage />}
               {currentPage === "cortevideo" && <CortesVideoPage />}
+              {currentPage === "vmix" && <VmixPage />}
             </Suspense>
           </div>
         </main>
