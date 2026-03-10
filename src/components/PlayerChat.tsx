@@ -263,12 +263,18 @@ export default function PlayerChat({ channelId, onClose, shopOpen = false }: Pla
           {/* Emoji picker */}
           {showEmoji && (
             <div className="absolute bottom-14 left-0 right-0 z-10 flex justify-center px-2">
-              <div className="rounded-xl overflow-hidden border border-white/10 shadow-2xl" style={{ backgroundColor: "rgba(15,15,15,0.98)" }}>
+              <div className="rounded-xl overflow-hidden border border-white/10 shadow-2xl backdrop-blur-xl" style={{ backgroundColor: "rgba(10,10,10,0.6)" }}>
+                <div className="flex items-center justify-between px-3 py-2 border-b border-white/10">
+                  <span className="text-white/60 text-xs font-medium">Emojis</span>
+                  <button onClick={() => setShowEmoji(false)} className="text-white/40 hover:text-white transition-colors">
+                    <X size={14} />
+                  </button>
+                </div>
                 <EmojiPicker
                   onEmojiClick={onEmojiClick}
                   theme={Theme.DARK}
                   width={310}
-                  height={340}
+                  height={300}
                   searchPlaceholder="Buscar emoji..."
                   skinTonesDisabled
                   previewConfig={{ showPreview: false }}
