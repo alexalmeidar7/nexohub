@@ -273,6 +273,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                       {item.widgetType === "agenda" && <DashboardAgendaWidget />}
                       {item.widgetType === "musica" && <MusicProgramWidget />}
                       {item.widgetType === "stats" && <StatsWidget />}
+                      {item.widgetType === "weather" && <DashboardWeatherWidget />}
                     </Suspense>
                   </div>
                 </div>
