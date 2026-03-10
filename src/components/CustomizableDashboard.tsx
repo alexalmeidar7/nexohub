@@ -201,18 +201,31 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                     <span>{item.linkLabel}</span>
                     {item.linkExternal && <ExternalLink size={10} className="text-white/40" />}
                   </button>
-                  {editMode && (
-                    <button
-                      onClick={() => removeItem(item.id)}
-                      className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full flex items-center justify-center"
-                      style={{ backgroundColor: "#dc2626" }}
-                    >
-                      <X size={10} className="text-white" />
-                    </button>
-                  )}
+                  {/* Always visible on hover */}
+                  <button
+                    onClick={() => removeItem(item.id)}
+                    className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    style={{ backgroundColor: "#dc2626" }}
+                  >
+                    <X size={10} className="text-white" />
+                  </button>
                 </div>
               );
             })}
+            {/* Inline + button after links */}
+            <button
+              onClick={() => { setShowAddDialog(true); setAddStep("choose"); }}
+              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all"
+              style={{
+                background: "rgba(255,255,255,0.06)",
+                border: "1px dashed rgba(255,255,255,0.2)",
+                color: "rgba(255,255,255,0.5)",
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = "rgba(38,143,250,0.15)"; e.currentTarget.style.borderColor = "rgba(38,143,250,0.4)"; e.currentTarget.style.color = "#fff"; }}
+              onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)"; e.currentTarget.style.color = "rgba(255,255,255,0.5)"; }}
+            >
+              <Plus size={14} /> Adicionar
+            </button>
           </div>
         </div>
       )}
