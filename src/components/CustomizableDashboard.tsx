@@ -498,23 +498,47 @@ function AgendaPreview() {
 
 function MusicaPreview() {
   const [music, setMusic] = useState<any>(null);
+  const [programa, setPrograma] = useState("");
   useEffect(() => {
     const update = () => {
-      try { const raw = localStorage.getItem("nexo_music_data"); if (raw) { const d = JSON.parse(raw); if (d.music) setMusic(d.music); } } catch {}
+      try {
+        const raw = localStorage.getItem("nexo_music_data");
+        if (raw) {
+          const d = JSON.parse(raw);
+          if (d.music) setMusic(d.music);
+          if (d.programa) setPrograma(d.programa);
+        }
+      } catch {}
     };
     update();
-    const iv = setInterval(update, 5000);
+    const iv = setInterval(update, 3000);
     return () => clearInterval(iv);
   }, []);
   return music ? (
-    <div className="flex items-center gap-2">
-      {music.capa && <img src={music.capa} alt="" className="w-8 h-8 rounded object-cover flex-shrink-0" />}
-      <div className="min-w-0">
-        <p className="text-white/60 text-[10px] font-semibold truncate">{music.titulo}</p>
-        <p className="text-white/30 text-[9px] truncate">{music.artista}</p>
+    <div className="flex items-center gap-2.5">
+      {music.capa ? (
+        <img src={music.capa} alt="" className="w-12 h-12 rounded-lg object-cover flex-shrink-0 shadow-md" />
+      ) : (
+        <div className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "rgba(38,143,250,0.15)" }}>
+          <Music size={16} className="text-[#268ffa]" />
+        </div>
+      )}
+      <div className="min-w-0 flex-1">
+        <p className="text-white text-[11px] font-bold truncate leading-tight">{music.titulo}</p>
+        <p className="text-white/50 text-[10px] truncate">{music.artista}</p>
+        {programa && (
+          <p className="text-[9px] mt-0.5 truncate" style={{ color: "#268ffa" }}>🔴 {programa}</p>
+        )}
       </div>
     </div>
-  ) : <p className="text-white/25 text-[10px]">Sem música no ar</p>;
+  ) : (
+    <div className="flex items-center gap-2">
+      <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: "rgba(255,255,255,0.06)" }}>
+        <Music size={14} className="text-white/20" />
+      </div>
+      <p className="text-white/25 text-[10px]">Sem música no ar</p>
+    </div>
+  );
 }
 
 function NoticiasPreview() {
