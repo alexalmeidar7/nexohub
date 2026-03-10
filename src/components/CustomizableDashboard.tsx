@@ -934,6 +934,7 @@ function StatsWidget() {
 /* ========== WIDGET: Weather ========== */
 function DashboardWeatherWidget() {
   const [weather, setWeather] = useState<any>(null);
+  const [weatherKey, setWeatherKey] = useState(0);
 
   useEffect(() => {
     const fetchWeather = async () => {
