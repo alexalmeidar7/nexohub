@@ -1,0 +1,1 @@
+UPDATE planos SET enabled_modules = array_append(enabled_modules, 'vmix') WHERE name = 'Nexo Max' AND NOT ('vmix' = ANY(enabled_modules));
