@@ -161,13 +161,6 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
             </button>
           )}
         </div>
-        <button
-          onClick={() => { setShowAddDialog(true); setAddStep("choose"); }}
-          className="flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold transition-all"
-          style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#fff" }}
-        >
-          <Plus size={14} /> Adicionar
-        </button>
       </div>
 
       {/* Link buttons grid */}
@@ -212,8 +205,8 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                   {/* Close button on hover */}
                   <button
                     onClick={(e) => { e.stopPropagation(); removeItem(item.id); }}
-                    className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10"
-                    style={{ backgroundColor: "#dc2626" }}
+                    className="absolute top-2 right-2 w-5 h-5 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                    style={{ backgroundColor: "rgba(255,255,255,0.25)" }}
                   >
                     <X size={10} className="text-white" />
                   </button>
@@ -264,7 +257,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                   <button
                     onClick={() => removeItem(item.id)}
                     className="w-6 h-6 rounded-full flex items-center justify-center"
-                    style={{ backgroundColor: "#dc2626" }}
+                    style={{ backgroundColor: "rgba(255,255,255,0.25)" }}
                     title="Remover"
                   >
                     <X size={12} className="text-white" />
