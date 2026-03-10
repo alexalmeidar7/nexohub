@@ -439,6 +439,166 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
   );
 }
 
+/* ========== LINK PREVIEW COMPONENT ========== */
+function LinkPreview({ page, external }: { page?: Page; external?: string }) {
+  switch (page) {
+    case "agenda": return <AgendaPreview />;
+    case "musica": return <MusicaPreview />;
+    case "noticias": return <NoticiasPreview />;
+    case "apresentadores": return <ApresentadoresPreview />;
+    case "programas": return <ProgramasPreview />;
+    case "promocoes": return <PromosPreview />;
+    case "preroll": return <PrerollPreview />;
+    case "shopping": return <ShoppingPreview />;
+    case "testemunhais": return <GenericPreview icon={MessageSquareQuote} text="Testemunhais ativos" />;
+    case "logos": return <GenericPreview icon={Image} text="Logos de patrocinadores" />;
+    case "configuracoes": return <GenericPreview icon={Settings} text="Configurações gerais" />;
+    case "playerconfig": return <GenericPreview icon={Settings} text="Config. do Player" />;
+    case "vmix": return <GenericPreview icon={Monitor} text="Controle de transmissão" />;
+    case "cortevideo": return <GenericPreview icon={Scissors} text="Cortes de vídeo" />;
+    case "curtidas": return <GenericPreview icon={Music} text="Músicas curtidas" />;
+    default:
+      if (external === "player") return <GenericPreview icon={MonitorPlay} text="Player ao vivo" />;
+      if (external === "telapromo") return <GenericPreview icon={Tag} text="Tela de promoções" />;
+      return <GenericPreview icon={Link2} text="Atalho rápido" />;
+  }
+}
+
+function GenericPreview({ icon: Icon, text }: { icon: React.ComponentType<any>; text: string }) {
+  return (
+    <div className="flex items-center gap-2">
+      <Icon size={12} className="text-white/20" />
+      <p className="text-white/30 text-[10px]">{text}</p>
+    </div>
+  );
+}
+
+function AgendaPreview() {
+  const { user } = useAuth();
+  const [events, setEvents] = useState<any[]>([]);
+  useEffect(() => {
+    if (!user) return;
+    const today = new Date().toISOString().split("T")[0];
+    supabase.from("agenda_eventos").select("data, descricao").eq("user_id", user.id).gte("data", today).order("data").limit(3)
+      .then(({ data }) => { if (data) setEvents(data); });
+  }, [user]);
+
+  const today = new Date();
+  return (
+    <div>
+      <div className="flex items-center gap-1.5 mb-1.5">
+        <p className="text-white/50 text-[10px] font-bold">{format(today, "dd MMM", { locale: ptBR }).toUpperCase()}</p>
+      </div>
+      {events.length === 0 ? (
+        <p className="text-white/25 text-[10px]">Sem eventos próximos</p>
+      ) : (
+        <div className="space-y-1">
+          {events.map((ev, i) => (
+            <div key={i} className="flex items-center gap-1.5">
+              <div className="w-1 h-1 rounded-full flex-shrink-0" style={{ backgroundColor: "#268ffa" }} />
+              <p className="text-white/50 text-[10px] truncate">{ev.descricao || format(new Date(ev.data + "T12:00:00"), "dd/MM")}</p>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MusicaPreview() {
+  const [music, setMusic] = useState<any>(null);
+  useEffect(() => {
+    const update = () => {
+      try { const raw = localStorage.getItem("nexo_music_data"); if (raw) { const d = JSON.parse(raw); if (d.music) setMusic(d.music); } } catch {}
+    };
+    update();
+    const iv = setInterval(update, 5000);
+    return () => clearInterval(iv);
+  }, []);
+  return music ? (
+    <div className="flex items-center gap-2">
+      {music.capa && <img src={music.capa} alt="" className="w-8 h-8 rounded object-cover flex-shrink-0" />}
+      <div className="min-w-0">
+        <p className="text-white/60 text-[10px] font-semibold truncate">{music.titulo}</p>
+        <p className="text-white/30 text-[9px] truncate">{music.artista}</p>
+      </div>
+    </div>
+  ) : <p className="text-white/25 text-[10px]">Sem música no ar</p>;
+}
+
+function NoticiasPreview() {
+  const { user } = useAuth();
+  const [news, setNews] = useState<any[]>([]);
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("selected_news").select("title").eq("user_id", user.id).order("created_at", { ascending: false }).limit(2)
+      .then(({ data }) => { if (data) setNews(data); });
+  }, [user]);
+  return news.length > 0 ? (
+    <div className="space-y-1">
+      {news.map((n, i) => (
+        <p key={i} className="text-white/40 text-[10px] truncate leading-tight">• {n.title}</p>
+      ))}
+    </div>
+  ) : <p className="text-white/25 text-[10px]">Sem notícias salvas</p>;
+}
+
+function ApresentadoresPreview() {
+  const { user } = useAuth();
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("apresentadores").select("id", { count: "exact", head: true }).eq("user_id", user.id)
+      .then(({ count: c }) => setCount(c || 0));
+  }, [user]);
+  return <p className="text-white/40 text-[10px]">{count} apresentador{count !== 1 ? "es" : ""} cadastrado{count !== 1 ? "s" : ""}</p>;
+}
+
+function ProgramasPreview() {
+  const { user } = useAuth();
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("programas").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("ativo", true)
+      .then(({ count: c }) => setCount(c || 0));
+  }, [user]);
+  return <p className="text-white/40 text-[10px]">{count} programa{count !== 1 ? "s" : ""} ativo{count !== 1 ? "s" : ""}</p>;
+}
+
+function PromosPreview() {
+  const { user } = useAuth();
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    if (!user) return;
+    const today = new Date().toISOString().split("T")[0];
+    supabase.from("promocoes").select("id", { count: "exact", head: true }).eq("user_id", user.id).gte("data_fim", today)
+      .then(({ count: c }) => setCount(c || 0));
+  }, [user]);
+  return <p className="text-white/40 text-[10px]">{count} promoção{count !== 1 ? "ões" : ""} ativa{count !== 1 ? "s" : ""}</p>;
+}
+
+function PrerollPreview() {
+  const { user } = useAuth();
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("comercial_preroll").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("active", true)
+      .then(({ count: c }) => setCount(c || 0));
+  }, [user]);
+  return <p className="text-white/40 text-[10px]">{count} pre-roll{count !== 1 ? "s" : ""} ativo{count !== 1 ? "s" : ""}</p>;
+}
+
+function ShoppingPreview() {
+  const { user } = useAuth();
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("shopping_products").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("active", true)
+      .then(({ count: c }) => setCount(c || 0));
+  }, [user]);
+  return <p className="text-white/40 text-[10px]">{count} produto{count !== 1 ? "s" : ""} ativo{count !== 1 ? "s" : ""}</p>;
+}
+
 /* ========== WIDGET: Agenda ========== */
 function DashboardAgendaWidget() {
   const { user } = useAuth();
