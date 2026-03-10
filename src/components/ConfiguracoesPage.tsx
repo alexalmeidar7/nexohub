@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Save, Loader2, ChevronDown, ChevronUp, Plus, Trash2, Upload, Pencil, X, CheckCircle } from "lucide-react";
+import { Save, Loader2, ChevronDown, ChevronUp, Plus, Trash2, Upload, Pencil, X, CheckCircle, Settings, Tv, ImageIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -386,14 +386,24 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
       {(section === "all" || section === "player") && <CollapsibleBox title="Configurações do Player" defaultOpen={section === "player"}>
         <div className="space-y-6">
           {/* ── Header + Mode ── */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <h3 className="text-lg font-bold" style={{ color: "#0d0446" }}>
-              {editingCanal ? "✏️ Editar Canal" : "➕ Novo Canal"}
-            </h3>
-            <div className="flex rounded-full overflow-hidden" style={{ border: "2px solid #0d0446" }}>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4" style={{ borderBottom: "1px solid rgba(13,4,70,0.08)" }}>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)" }}>
+                {editingCanal ? <Pencil size={18} className="text-white" /> : <Plus size={18} className="text-white" />}
+              </div>
+              <div>
+                <h3 className="text-base font-bold" style={{ color: "#0d0446" }}>
+                  {editingCanal ? "Editar Canal" : "Novo Canal"}
+                </h3>
+                <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.4)" }}>
+                  {editingCanal ? "Atualize as informações do canal selecionado" : "Cadastre um novo canal de streaming"}
+                </p>
+              </div>
+            </div>
+            <div className="flex rounded-full overflow-hidden shadow-sm" style={{ border: "2px solid #0d0446" }}>
               <button
                 onClick={() => { setCanalMode("live"); setCanalForm(p => ({ ...p, type: "audio_live" })); }}
-                className="px-4 py-1.5 text-xs font-bold transition-all"
+                className="px-5 py-2 text-xs font-bold transition-all flex items-center gap-1.5"
                 style={{ backgroundColor: canalMode === "live" ? "#0d0446" : "#ffffff", color: canalMode === "live" ? "#ffffff" : "#0d0446" }}
               >
                 📡 Ao Vivo
@@ -408,7 +418,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
                   }, 0);
                   setCanalForm(p => ({ ...p, type: "catalog", numero_canal: String(maxNum + 1).padStart(2, "0") }));
                 }}
-                className="px-4 py-1.5 text-xs font-bold transition-all"
+                className="px-5 py-2 text-xs font-bold transition-all flex items-center gap-1.5"
                 style={{ backgroundColor: canalMode === "catalog" ? "#0d0446" : "#ffffff", color: canalMode === "catalog" ? "#ffffff" : "#0d0446", borderLeft: "2px solid #0d0446" }}
               >
                 📁 Catálogo
@@ -417,78 +427,89 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
           </div>
 
           {/* ── Seção 1: Informações do Canal ── */}
-          <fieldset className="rounded-xl p-4 space-y-3" style={{ border: "1px solid rgba(13,4,70,0.12)", backgroundColor: "rgba(13,4,70,0.02)" }}>
-            <legend className="text-xs font-bold px-2 uppercase tracking-wider" style={{ color: "#0d0446" }}>Informações do Canal</legend>
+          <div className="rounded-2xl p-5 space-y-4" style={{ backgroundColor: "#d9e9fa", boxShadow: "0 2px 8px rgba(13,4,70,0.06)" }}>
+            <div className="flex items-center gap-2 mb-1">
+              <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)" }}>
+                <Settings size={12} className="text-white" />
+              </div>
+              <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#0d0446" }}>Informações do Canal</span>
+            </div>
 
             {canalMode === "live" ? (
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="space-y-1">
-                  <label className="block text-xs font-semibold" style={{ color: "#0d0446" }}>Tipo de Transmissão</label>
+                <div className="space-y-1.5">
+                  <label className="block text-[11px] font-semibold" style={{ color: "#0d0446" }}>Tipo de Transmissão</label>
                   <select value={canalForm.type} onChange={(e) => setCanalForm(p => ({ ...p, type: e.target.value }))}
-                    className="w-full px-4 py-1.5 outline-none text-sm"
+                    className="w-full px-4 py-2 outline-none text-sm font-medium cursor-pointer"
                     style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "20px", border: "2px solid #0d0446" }}>
                     <option value="audio_live">Áudio ao vivo</option>
                     <option value="video_live">Vídeo ao vivo</option>
                   </select>
                 </div>
-                <div className="space-y-1">
-                  <label className="block text-xs font-semibold" style={{ color: "#0d0446" }}>Nº do Canal</label>
+                <div className="space-y-1.5">
+                  <label className="block text-[11px] font-semibold" style={{ color: "#0d0446" }}>Nº do Canal</label>
                   <StyledInput value={canalForm.numero_canal} onChange={(e) => setCanalForm(p => ({ ...p, numero_canal: e.target.value }))} placeholder="Ex: 01" />
                 </div>
-                <div className="space-y-1">
-                  <label className="block text-xs font-semibold" style={{ color: "#0d0446" }}>Nome do Canal</label>
+                <div className="space-y-1.5">
+                  <label className="block text-[11px] font-semibold" style={{ color: "#0d0446" }}>Nome do Canal</label>
                   <StyledInput value={canalForm.name} onChange={(e) => setCanalForm(p => ({ ...p, name: e.target.value }))} placeholder="Ex: Rádio FM" />
                 </div>
-                <div className="space-y-1 sm:col-span-3">
-                  <label className="block text-xs font-semibold" style={{ color: "#0d0446" }}>URL do Streaming</label>
+                <div className="space-y-1.5 sm:col-span-3">
+                  <label className="block text-[11px] font-semibold" style={{ color: "#0d0446" }}>URL do Streaming</label>
                   <StyledInput value={canalForm.url} onChange={(e) => setCanalForm(p => ({ ...p, url: e.target.value }))} placeholder="https://..." />
                 </div>
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="space-y-1">
-                  <label className="block text-xs font-semibold" style={{ color: "#0d0446" }}>Tipo de Transmissão</label>
-                  <div className="w-full px-4 py-1.5 text-sm" style={{ backgroundColor: "rgba(13,4,70,0.08)", color: "#0d0446", borderRadius: "20px", border: "2px solid rgba(13,4,70,0.2)" }}>
+                <div className="space-y-1.5">
+                  <label className="block text-[11px] font-semibold" style={{ color: "#0d0446" }}>Tipo de Transmissão</label>
+                  <div className="w-full px-4 py-2 text-sm font-medium" style={{ backgroundColor: "rgba(13,4,70,0.08)", color: "#0d0446", borderRadius: "20px", border: "2px solid rgba(13,4,70,0.2)" }}>
                     Gravado
                   </div>
                 </div>
-                <div className="space-y-1">
-                  <label className="block text-xs font-semibold" style={{ color: "#0d0446" }}>Nº do Canal</label>
+                <div className="space-y-1.5">
+                  <label className="block text-[11px] font-semibold" style={{ color: "#0d0446" }}>Nº do Canal</label>
                   <StyledInput value={canalForm.numero_canal} onChange={(e) => setCanalForm(p => ({ ...p, numero_canal: e.target.value }))} placeholder="Ex: 01" />
                 </div>
-                <div className="space-y-1">
-                  <label className="block text-xs font-semibold" style={{ color: "#0d0446" }}>Nome do Catálogo</label>
+                <div className="space-y-1.5">
+                  <label className="block text-[11px] font-semibold" style={{ color: "#0d0446" }}>Nome do Catálogo</label>
                   <StyledInput value={canalForm.catalog_name} onChange={(e) => setCanalForm(p => ({ ...p, catalog_name: e.target.value }))} placeholder="Ex: Podcasts" />
                 </div>
-                <div className="space-y-1 sm:col-span-3">
-                  <label className="block text-xs font-semibold" style={{ color: "#0d0446" }}>URL da Playlist do YouTube</label>
+                <div className="space-y-1.5 sm:col-span-3">
+                  <label className="block text-[11px] font-semibold" style={{ color: "#0d0446" }}>URL da Playlist do YouTube</label>
                   <StyledInput value={canalForm.url} onChange={(e) => setCanalForm(p => ({ ...p, url: e.target.value }))} placeholder="https://youtube.com/playlist?list=..." />
                 </div>
               </div>
             )}
-          </fieldset>
+          </div>
 
           {/* ── Seção 2: Imagens ── */}
-          <fieldset className="rounded-xl p-4 space-y-3" style={{ border: "1px solid rgba(13,4,70,0.12)", backgroundColor: "rgba(13,4,70,0.02)" }}>
-            <legend className="text-xs font-bold px-2 uppercase tracking-wider" style={{ color: "#0d0446" }}>{canalMode === "catalog" ? "Imagens do Catálogo" : "Imagens do Canal"}</legend>
+          <div className="rounded-2xl p-5 space-y-4" style={{ backgroundColor: "#d9e9fa", boxShadow: "0 2px 8px rgba(13,4,70,0.06)" }}>
+            <div className="flex items-center gap-2 mb-1">
+              <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)" }}>
+                <ImageIcon size={12} className="text-white" />
+              </div>
+              <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#0d0446" }}>{canalMode === "catalog" ? "Imagens do Catálogo" : "Imagens do Canal"}</span>
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {([
                 { key: "cover_url" as const, label: canalMode === "catalog" ? "Capa do Catálogo" : "Capa do Canal", hint: "1280 × 720", alt: "Capa" },
                 { key: "logo_url" as const, label: canalMode === "catalog" ? "Thumb do Catálogo" : "Thumb do Canal", hint: "1920 × 1080", alt: "Thumb" },
                 { key: "background_url" as const, label: canalMode === "catalog" ? "Logo do Catálogo" : "Logo do Canal", hint: "Transparente (PNG)", alt: "Logo" },
               ] as const).map(img => (
-                <div key={img.key} className="flex flex-col items-center gap-2 p-3 rounded-lg" style={{ border: "1px dashed rgba(13,4,70,0.15)", backgroundColor: "#ffffff" }}>
+                <div key={img.key} className="flex flex-col items-center gap-2.5 p-4 rounded-xl transition-all hover:shadow-md" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.08)" }}>
                   {(canalForm as any)[img.key] ? (
-                    <img src={(canalForm as any)[img.key]} alt={img.alt} className="w-full h-20 rounded-lg object-cover" style={{ border: "1px solid rgba(13,4,70,0.1)" }} />
+                    <img src={(canalForm as any)[img.key]} alt={img.alt} className="w-full h-24 rounded-xl object-cover" style={{ border: "1px solid rgba(13,4,70,0.08)" }} />
                   ) : (
-                    <div className="w-full h-20 rounded-lg flex items-center justify-center" style={{ backgroundColor: "rgba(13,4,70,0.04)" }}>
+                    <div className="w-full h-24 rounded-xl flex flex-col items-center justify-center gap-1" style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "2px dashed rgba(13,4,70,0.12)" }}>
                       <Upload size={20} style={{ color: "rgba(13,4,70,0.2)" }} />
+                      <span className="text-[9px]" style={{ color: "rgba(13,4,70,0.3)" }}>Arraste ou clique</span>
                     </div>
                   )}
-                  <span className="text-xs font-semibold text-center" style={{ color: "#0d0446" }}>{img.label}</span>
-                  <span className="text-[10px]" style={{ color: "rgba(13,4,70,0.4)" }}>{img.hint}</span>
+                  <span className="text-xs font-bold text-center" style={{ color: "#0d0446" }}>{img.label}</span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ color: "rgba(13,4,70,0.5)", backgroundColor: "rgba(13,4,70,0.05)" }}>{img.hint}</span>
                   <button onClick={() => handleImageUpload(img.key)}
-                    className="px-3 py-1 font-bold transition-all text-xs flex items-center gap-1 rounded-full"
+                    className="w-full px-3 py-1.5 font-bold transition-all text-xs flex items-center justify-center gap-1 rounded-full"
                     style={btnSecondary}
                     onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#0d0446"; e.currentTarget.style.color = "#ffffff"; }}
                     onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#ffffff"; e.currentTarget.style.color = "#0d0446"; }}
@@ -498,36 +519,36 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
                 </div>
               ))}
             </div>
-          </fieldset>
+          </div>
 
           {/* ── Seção 3: Especificações + Ação ── */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex flex-wrap items-center gap-5">
-              <label className="flex items-center gap-2 cursor-pointer" style={{ color: "#0d0446" }}>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-2">
+            <div className="flex flex-wrap items-center gap-6">
+              <label className="flex items-center gap-2.5 cursor-pointer group" style={{ color: "#0d0446" }}>
                 <input type="checkbox" checked={canalForm.is_hd} onChange={(e) => setCanalForm(p => ({ ...p, is_hd: e.target.checked }))}
-                  className="w-4 h-4" style={{ accentColor: "#0d0446" }} />
-                <span className="text-sm font-medium">HD</span>
+                  className="w-4 h-4 rounded" style={{ accentColor: "#268ffa" }} />
+                <span className="text-sm font-semibold group-hover:opacity-80 transition-opacity">HD</span>
               </label>
-              <label className="flex items-center gap-2 cursor-pointer" style={{ color: "#0d0446" }}>
+              <label className="flex items-center gap-2.5 cursor-pointer group" style={{ color: "#0d0446" }}>
                 <input type="checkbox" checked={canalForm.is_stereo} onChange={(e) => setCanalForm(p => ({ ...p, is_stereo: e.target.checked }))}
-                  className="w-4 h-4" style={{ accentColor: "#0d0446" }} />
-                <span className="text-sm font-medium">Áudio Estéreo</span>
+                  className="w-4 h-4 rounded" style={{ accentColor: "#268ffa" }} />
+                <span className="text-sm font-semibold group-hover:opacity-80 transition-opacity">Áudio Estéreo</span>
               </label>
             </div>
             <div className="flex items-center gap-2">
               {editingCanal && (
                 <button onClick={resetCanalForm}
-                  className="px-4 py-2 font-bold transition-all flex items-center gap-1 rounded-full"
+                  className="px-5 py-2.5 font-bold transition-all flex items-center gap-1.5 rounded-full text-sm"
                   style={btnSecondary}
                 >
                   <X size={14} /> Cancelar
                 </button>
               )}
               <button onClick={handleAddCanal} disabled={savingCanal}
-                className="px-6 py-2 font-bold transition-all flex items-center gap-2 disabled:opacity-70 rounded-full"
-                style={btnPrimary}
-                onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#ffffff"; e.currentTarget.style.color = "#0d0446"; }}
-                onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#0d0446"; e.currentTarget.style.color = "#ffffff"; }}
+                className="px-6 py-2.5 font-bold transition-all flex items-center gap-2 disabled:opacity-70 rounded-full text-sm shadow-md"
+                style={{ ...btnPrimary, background: "linear-gradient(135deg, #268ffa, #2dbef3)", border: "none", color: "#ffffff" }}
+                onMouseEnter={e => { e.currentTarget.style.opacity = "0.9"; e.currentTarget.style.transform = "translateY(-1px)"; }}
+                onMouseLeave={e => { e.currentTarget.style.opacity = "1"; e.currentTarget.style.transform = "translateY(0)"; }}
               >
                 {savingCanal ? <Loader2 size={14} className="animate-spin" /> : <><Plus size={14} /> {editingCanal ? "Salvar Alterações" : "Adicionar Canal"}</>}
               </button>
@@ -535,51 +556,72 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
           </div>
         </div>
 
-        {/* Lista de canais — table style matching ApresentadorForm */}
+        {/* Lista de canais */}
         {loadingCanais ? (
-          <div className="flex items-center gap-2 text-sm mt-4" style={{ color: "rgba(13,4,70,0.5)" }}><Loader2 size={14} className="animate-spin" /> Carregando canais...</div>
+          <div className="flex items-center gap-2 text-sm mt-6 justify-center py-8" style={{ color: "rgba(13,4,70,0.5)" }}><Loader2 size={16} className="animate-spin" /> Carregando canais...</div>
         ) : canais.length === 0 ? (
-          <p className="text-sm mt-4" style={{ color: "rgba(13,4,70,0.5)" }}>Nenhum canal cadastrado.</p>
+          <div className="mt-6 text-center py-8 rounded-2xl" style={{ backgroundColor: "rgba(13,4,70,0.02)", border: "2px dashed rgba(13,4,70,0.1)" }}>
+            <Tv size={32} className="mx-auto mb-2" style={{ color: "rgba(13,4,70,0.15)" }} />
+            <p className="text-sm font-medium" style={{ color: "rgba(13,4,70,0.4)" }}>Nenhum canal cadastrado ainda</p>
+            <p className="text-[11px] mt-0.5" style={{ color: "rgba(13,4,70,0.25)" }}>Use o formulário acima para adicionar seu primeiro canal</p>
+          </div>
         ) : (
           <div className="mt-6">
-            <h4 className="text-lg font-medium mb-4" style={{ color: "#0d0446" }}>Canais Cadastrados</h4>
-            <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(13,4,70,0.1)" }}>
+            <div className="flex items-center gap-2 mb-4">
+              <Tv size={16} style={{ color: "#268ffa" }} />
+              <h4 className="text-base font-bold" style={{ color: "#0d0446" }}>Canais Cadastrados</h4>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: "rgba(38,143,250,0.1)", color: "#268ffa" }}>{canais.length}</span>
+            </div>
+            <div className="rounded-2xl overflow-hidden shadow-sm" style={{ border: "1px solid rgba(13,4,70,0.08)" }}>
               <table className="w-full text-sm" style={{ color: "#0d0446" }}>
                 <thead>
-                  <tr style={{ backgroundColor: "#0d0446", color: "#ffffff" }}>
-                    <th className="px-4 py-2 text-left font-semibold">Canal</th>
-                    <th className="px-4 py-2 text-left font-semibold">Nome</th>
-                    <th className="px-4 py-2 text-left font-semibold">Tipo</th>
-                    <th className="px-4 py-2 text-center font-semibold">Capa</th>
-                    <th className="px-4 py-2 text-center font-semibold">Thumb</th>
-                    <th className="px-4 py-2 text-center font-semibold">Editar</th>
-                    <th className="px-4 py-2 text-center font-semibold">Excluir</th>
+                  <tr style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)", color: "#ffffff" }}>
+                    <th className="px-4 py-3 text-left font-semibold text-xs uppercase tracking-wider">Canal</th>
+                    <th className="px-4 py-3 text-left font-semibold text-xs uppercase tracking-wider">Nome</th>
+                    <th className="px-4 py-3 text-left font-semibold text-xs uppercase tracking-wider">Tipo</th>
+                    <th className="px-4 py-3 text-center font-semibold text-xs uppercase tracking-wider">Capa</th>
+                    <th className="px-4 py-3 text-center font-semibold text-xs uppercase tracking-wider">Thumb</th>
+                    <th className="px-4 py-3 text-center font-semibold text-xs uppercase tracking-wider">Ações</th>
                   </tr>
                 </thead>
                 <tbody>
                   {canais.map((c, i) => (
-                    <tr key={c.id} style={{ backgroundColor: i % 2 === 0 ? "#ffffff" : "#f8f8fc", borderTop: "1px solid rgba(13,4,70,0.08)" }}>
-                      <td className="px-4 py-2">{c.type === "catalog" ? "—" : c.numero_canal || "—"}</td>
-                      <td className="px-4 py-2 font-medium">
-                        {c.name}
-                        {c.catalog_name ? <span className="text-xs ml-1" style={{ color: "rgba(13,4,70,0.45)" }}>({c.catalog_name})</span> : null}
+                    <tr key={c.id} className="transition-colors hover:bg-blue-50/50" style={{ backgroundColor: i % 2 === 0 ? "#ffffff" : "#f8f9fe", borderTop: "1px solid rgba(13,4,70,0.05)" }}>
+                      <td className="px-4 py-3">
+                        <span className="inline-flex items-center justify-center w-7 h-7 rounded-lg text-xs font-bold" style={{ backgroundColor: "rgba(38,143,250,0.1)", color: "#268ffa" }}>
+                          {c.type === "catalog" ? "—" : c.numero_canal || "—"}
+                        </span>
                       </td>
-                      <td className="px-4 py-2">{typeLabels[c.type] || c.type}</td>
-                      <td className="px-4 py-2 text-center">
-                        {c.cover_url ? <CheckCircle size={16} className="inline" style={{ color: "#22c55e" }} /> : <span style={{ color: "rgba(13,4,70,0.25)" }}>—</span>}
+                      <td className="px-4 py-3">
+                        <span className="font-semibold">{c.name}</span>
+                        {c.catalog_name ? <span className="text-[10px] ml-1.5 px-1.5 py-0.5 rounded-full" style={{ color: "rgba(13,4,70,0.5)", backgroundColor: "rgba(13,4,70,0.05)" }}>({c.catalog_name})</span> : null}
                       </td>
-                      <td className="px-4 py-2 text-center">
-                        {c.logo_url ? <CheckCircle size={16} className="inline" style={{ color: "#22c55e" }} /> : <span style={{ color: "rgba(13,4,70,0.25)" }}>—</span>}
+                      <td className="px-4 py-3">
+                        <span className="text-[11px] font-medium px-2.5 py-1 rounded-full" style={{ backgroundColor: c.type === "catalog" ? "rgba(139,92,246,0.1)" : "rgba(38,143,250,0.1)", color: c.type === "catalog" ? "#8b5cf6" : "#268ffa" }}>
+                          {typeLabels[c.type] || c.type}
+                        </span>
                       </td>
-                      <td className="px-4 py-2 text-center">
-                        <button onClick={() => handleEditCanal(c)} title="Editar" className="hover:opacity-70 transition-opacity">
-                          <Pencil size={14} style={{ color: "#0d0446" }} />
-                        </button>
+                      <td className="px-4 py-3 text-center">
+                        {c.cover_url ? <CheckCircle size={16} className="inline" style={{ color: "#22c55e" }} /> : <span className="text-[10px]" style={{ color: "rgba(13,4,70,0.2)" }}>—</span>}
                       </td>
-                      <td className="px-4 py-2 text-center">
-                        <button onClick={() => handleRemoveCanal(c.id)} title="Remover" className="hover:opacity-70 transition-opacity">
-                          <Trash2 size={14} style={{ color: "#dc2626" }} />
-                        </button>
+                      <td className="px-4 py-3 text-center">
+                        {c.logo_url ? <CheckCircle size={16} className="inline" style={{ color: "#22c55e" }} /> : <span className="text-[10px]" style={{ color: "rgba(13,4,70,0.2)" }}>—</span>}
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          <button onClick={() => handleEditCanal(c)} title="Editar" className="w-8 h-8 rounded-lg flex items-center justify-center transition-all hover:shadow-sm" style={{ backgroundColor: "rgba(38,143,250,0.1)" }}
+                            onMouseEnter={e => { e.currentTarget.style.backgroundColor = "rgba(38,143,250,0.2)"; }}
+                            onMouseLeave={e => { e.currentTarget.style.backgroundColor = "rgba(38,143,250,0.1)"; }}
+                          >
+                            <Pencil size={13} style={{ color: "#268ffa" }} />
+                          </button>
+                          <button onClick={() => handleRemoveCanal(c.id)} title="Remover" className="w-8 h-8 rounded-lg flex items-center justify-center transition-all hover:shadow-sm" style={{ backgroundColor: "rgba(220,38,38,0.08)" }}
+                            onMouseEnter={e => { e.currentTarget.style.backgroundColor = "rgba(220,38,38,0.15)"; }}
+                            onMouseLeave={e => { e.currentTarget.style.backgroundColor = "rgba(220,38,38,0.08)"; }}
+                          >
+                            <Trash2 size={13} style={{ color: "#dc2626" }} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
