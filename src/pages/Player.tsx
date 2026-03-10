@@ -1939,8 +1939,8 @@ export default function PlayerPage() {
         </Suspense>
       )}
 
-      {/* Idle state */}
-      {!playing && (
+      {/* Idle state — only show if never played (no stream loaded) */}
+      {!playing && !audioRef.current?.src && !videoRef.current?.src && !isYoutube && (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#1a1a1a] z-10 px-4">
           {canal?.logo_url && <img src={canal.logo_url} alt={canal.name} className="w-20 h-20 sm:w-32 sm:h-32 object-contain mb-4 sm:mb-6 rounded-xl" />}
           <h1 className="text-white text-xl sm:text-3xl font-bold mb-2 text-center">{canal?.name || "Nenhum canal"}</h1>
