@@ -439,9 +439,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           <button
             onClick={onLogout}
             className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold transition-all"
-            style={{ backgroundColor: "rgba(255,255,255,0.1)", color: "#ffffff" }}
-            onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#dc2626"; }}
-            onMouseLeave={e => { e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.1)"; }}
+            style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#ffffff" }}
+            onMouseEnter={e => { e.currentTarget.style.background = "linear-gradient(135deg, #1a7ae0, #268ffa)"; }}
+            onMouseLeave={e => { e.currentTarget.style.background = "linear-gradient(135deg, #268ffa, #2dbef3)"; }}
           >
             <LogOut size={10} /> Sair
           </button>
