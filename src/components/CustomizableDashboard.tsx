@@ -130,15 +130,19 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
   const handleDragStart = (id: string) => setDraggedId(id);
   const handleDragOver = (e: React.DragEvent, targetId: string) => {
     e.preventDefault();
-    if (!draggedId || draggedId === targetId) return;
+    setDragOverId(targetId);
+  };
+  const handleDrop = (targetId: string) => {
+    if (!draggedId || draggedId === targetId) { setDragOverId(null); return; }
     const newItems = [...items];
     const fromIdx = newItems.findIndex(i => i.id === draggedId);
     const toIdx = newItems.findIndex(i => i.id === targetId);
     const [moved] = newItems.splice(fromIdx, 1);
     newItems.splice(toIdx, 0, moved);
     saveItems(newItems);
+    setDragOverId(null);
   };
-  const handleDragEnd = () => setDraggedId(null);
+  const handleDragEnd = () => { setDraggedId(null); setDragOverId(null); };
 
   const [dragOverId, setDragOverId] = useState<string | null>(null);
 
