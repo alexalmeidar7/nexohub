@@ -1759,9 +1759,9 @@ export default function PlayerPage() {
 
       {/* Shopping Panel — above control bar, right-aligned */}
       {shopOpen && (
-        <div className="absolute left-0 right-0 z-40 mx-auto" style={{ bottom: "155px", maxWidth: "1400px", paddingLeft: "20px", paddingRight: "20px" }}>
-          <div className="ml-auto" style={{ maxWidth: "340px" }}>
-            <div className="bg-black/90 backdrop-blur-md border border-white/15 rounded-2xl p-5 shadow-2xl">
+        <div className="absolute left-0 right-0 z-40 mx-auto" style={{ bottom: "170px", width: "80%", paddingLeft: "8px", paddingRight: "8px" }}>
+          <div className="ml-auto" style={{ maxWidth: "360px" }}>
+            <div className="backdrop-blur-xl rounded-2xl p-5 shadow-2xl" style={{ backgroundColor: "rgba(10,10,10,0.6)", boxShadow: "0 12px 48px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.12)" }}>
               <PlayerShopProduct
                 products={currentShopProducts}
                 productIndex={shopProductIndex}
