@@ -483,7 +483,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
       {/* === NO AR + WIDGET LIST ROW === */}
       {currentPage === "dashboard" && (
-        <div className="flex flex-col lg:flex-row gap-3 lg:gap-5 px-4 lg:px-[50px] pt-2">
+        <div className="flex flex-col lg:flex-row gap-3 lg:gap-5 px-4 lg:px-8 pt-2">
           {/* Widget list (includes No Ar) */}
           <div className="flex-1 min-w-0">
             <Suspense fallback={null}>
