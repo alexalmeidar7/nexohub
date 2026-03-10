@@ -270,7 +270,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                   </div>
                   <div className="p-4 h-full">
                     <Suspense fallback={<Loader2 className="animate-spin text-[#268ffa]/40" size={18} />}>
-                      {item.widgetType === "agenda" && <DashboardAgendaWidget />}
+                      {item.widgetType === "agenda" && <DashboardAgendaWidget onNavigate={onNavigate} />}
                       {item.widgetType === "musica" && <MusicProgramWidget />}
                       {item.widgetType === "stats" && <StatsWidget />}
                       {item.widgetType === "weather" && <DashboardWeatherWidget />}
