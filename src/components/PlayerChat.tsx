@@ -34,12 +34,36 @@ export default function PlayerChat({ channelId, onClose, shopOpen = false }: Pla
   const [joined, setJoined] = useState(false);
   const [nome, setNome] = useState("");
   const [cidade, setCidade] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [minimized, setMinimized] = useState(false);
   const [showEmoji, setShowEmoji] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Check if user is logged in and load profile
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("nome, cidade, avatar_url")
+          .eq("user_id", session.user.id)
+          .maybeSingle();
+        if (profile?.nome) {
+          setNome(profile.nome);
+          setCidade(profile.cidade || "");
+          setAvatarUrl(profile.avatar_url || null);
+          setIsLoggedIn(true);
+          setJoined(true);
+        }
+      }
+    };
+    checkAuth();
+  }, []);
 
   // Load messages
   useEffect(() => {
@@ -209,17 +233,27 @@ export default function PlayerChat({ channelId, onClose, shopOpen = false }: Pla
             {messages.map((msg) => {
               const isMe = msg.nome === nome && msg.cidade === cidade;
               return (
-                <div key={msg.id} className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}>
-                  <span className="text-[10px] text-white/40 mb-0.5">
-                    <span className="font-bold text-white/60">{msg.nome}</span> • {msg.cidade}
-                    <span className="ml-1.5 text-white/30">{formatMsgTime(msg.created_at)}</span>
-                  </span>
-                  <div
-                    className={`rounded-xl px-3 py-1.5 text-sm max-w-[85%] break-words ${
-                      isMe ? "bg-[#e60000] text-white" : "bg-white/10 text-white/90"
-                    }`}
-                  >
-                    {msg.message}
+                <div key={msg.id} className={`flex gap-2 ${isMe ? "flex-row-reverse" : "flex-row"}`}>
+                  {/* Avatar */}
+                  {isMe && avatarUrl ? (
+                    <img src={avatarUrl} alt="" className="w-6 h-6 rounded-full object-cover flex-shrink-0 mt-3" />
+                  ) : (
+                    <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0 mt-3">
+                      <span className="text-[9px] text-white/50 font-bold">{msg.nome.charAt(0).toUpperCase()}</span>
+                    </div>
+                  )}
+                  <div className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}>
+                    <span className="text-[10px] text-white/40 mb-0.5">
+                      <span className="font-bold text-white/60">{msg.nome}</span> • {msg.cidade}
+                      <span className="ml-1.5 text-white/30">{formatMsgTime(msg.created_at)}</span>
+                    </span>
+                    <div
+                      className={`rounded-xl px-3 py-1.5 text-sm max-w-[85%] break-words ${
+                        isMe ? "bg-[#e60000] text-white" : "bg-white/10 text-white/90"
+                      }`}
+                    >
+                      {msg.message}
+                    </div>
                   </div>
                 </div>
               );
