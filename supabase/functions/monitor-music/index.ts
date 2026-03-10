@@ -115,14 +115,14 @@ Deno.serve(async (req) => {
         const programa = getCurrentProgram(programas || []);
 
         const now = new Date();
-        await supabase.from("musicas_tocadas").insert({
+        const { error: insertErr } = await supabase.from("musicas_tocadas").upsert({
           user_id: setting.user_id,
           dia: now.toISOString().slice(0, 10),
           horario: `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`,
           programa,
           artista,
           musica: titulo,
-        });
+        }, { onConflict: "user_id,musica,artista,dia", ignoreDuplicates: true });
 
         inserted++;
       } catch {
