@@ -125,6 +125,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set());
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
+  const [hoveredMenu, setHoveredMenu] = useState<string | null>(null);
   const [noArCollapsed, setNoArCollapsed] = useState(false);
   const [empresa, setEmpresa] = useState<import("./ConfiguracoesPage").EmpresaConfig>({} as any);
   const [enabledModules, setEnabledModules] = useState<Set<string> | null>(null);
