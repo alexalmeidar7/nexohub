@@ -262,14 +262,16 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
             onClick={() => { setShowAddDialog(true); setAddStep("choose"); }}
             className="rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all hover:scale-[1.02] min-h-[110px]"
             style={{
-              background: "rgba(255,255,255,0.04)",
-              border: "1px dashed rgba(255,255,255,0.15)",
+              background: "rgba(38,143,250,0.08)",
+              border: "2px dashed rgba(38,143,250,0.3)",
             }}
-            onMouseEnter={e => { e.currentTarget.style.background = "rgba(38,143,250,0.1)"; e.currentTarget.style.borderColor = "rgba(38,143,250,0.4)"; }}
-            onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.04)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)"; }}
+            onMouseEnter={e => { e.currentTarget.style.background = "rgba(38,143,250,0.18)"; e.currentTarget.style.borderColor = "rgba(38,143,250,0.6)"; }}
+            onMouseLeave={e => { e.currentTarget.style.background = "rgba(38,143,250,0.08)"; e.currentTarget.style.borderColor = "rgba(38,143,250,0.3)"; }}
           >
-            <Plus size={18} className="text-white/30 mb-1" />
-            <span className="text-white/40 text-[10px] font-semibold">Adicionar</span>
+            <div className="w-10 h-10 rounded-full flex items-center justify-center mb-1.5" style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)" }}>
+              <Plus size={20} className="text-white" />
+            </div>
+            <span className="text-white/60 text-xs font-semibold">Adicionar</span>
           </div>
         </div>
       )}
