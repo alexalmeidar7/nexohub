@@ -1728,16 +1728,6 @@ export default function PlayerPage() {
 
   return (
     <div ref={containerRef} className="relative h-screen w-screen bg-black overflow-hidden select-none cursor-default animate-fade-in">
-      <PlayerSidebarComponent
-        items={sidebarItems}
-        activeKey={is991Channel ? "home" : "streaming"}
-        avatarUrl={profileAvatar}
-        userName={userDisplayName}
-        showLogout={!!user}
-        onLogout={async () => { await signOut(); navigate(playerHomePath); }}
-        autoHide={is991Channel}
-        visible={is991Channel ? barVisible : true}
-      />
 
       {/* Content wrapper with fade transition */}
       <div className={`transition-opacity duration-400 ease-in-out ${pageFadeOut ? "opacity-0" : "opacity-100"}`}>
