@@ -83,7 +83,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
         .maybeSingle();
 
       if (data?.dashboard_items && (data.dashboard_items as any[]).length > 0) {
-        setItems(data.dashboard_items as DashboardItem[]);
+        setItems(data.dashboard_items as unknown as DashboardItem[]);
       } else {
         // Migrate from localStorage if exists
         try {
