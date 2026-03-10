@@ -34,12 +34,36 @@ export default function PlayerChat({ channelId, onClose, shopOpen = false }: Pla
   const [joined, setJoined] = useState(false);
   const [nome, setNome] = useState("");
   const [cidade, setCidade] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [minimized, setMinimized] = useState(false);
   const [showEmoji, setShowEmoji] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Check if user is logged in and load profile
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("nome, cidade, avatar_url")
+          .eq("user_id", session.user.id)
+          .maybeSingle();
+        if (profile?.nome) {
+          setNome(profile.nome);
+          setCidade(profile.cidade || "");
+          setAvatarUrl(profile.avatar_url || null);
+          setIsLoggedIn(true);
+          setJoined(true);
+        }
+      }
+    };
+    checkAuth();
+  }, []);
 
   // Load messages
   useEffect(() => {
