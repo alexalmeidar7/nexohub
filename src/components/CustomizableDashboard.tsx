@@ -433,6 +433,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                         {opt.type === "agenda" && <CalendarDays size={14} className="text-white" />}
                         {opt.type === "musica" && <Music size={14} className="text-white" />}
                         {opt.type === "stats" && <BarChart3 size={14} className="text-white" />}
+                        {opt.type === "weather" && <CloudSun size={14} className="text-white" />}
                       </div>
                       <div>
                         <p className="font-semibold">{opt.label}</p>
