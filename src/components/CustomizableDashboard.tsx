@@ -152,7 +152,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
       {/* Section: Atalhos */}
       {items.filter(i => i.type === "link").length > 0 && (
         <div className="mb-6">
-          <p className="text-white/30 text-[10px] font-bold uppercase tracking-[0.15em] mb-3 animate-fade-in">Atalhos rápidos</p>
+          <p className="text-[#0d0446]/50 text-[10px] font-bold uppercase tracking-[0.15em] mb-3 animate-fade-in">Atalhos rápidos</p>
           <div className="flex flex-wrap gap-3">
             {items.filter(i => i.type === "link").map(item => {
               const Icon = getIcon(item.linkIcon || "Link2");
@@ -174,35 +174,36 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                     style={{
                       background: isDragOver
                         ? "linear-gradient(145deg, #268ffa, #2dbef3)"
-                        : "linear-gradient(145deg, #0d0446, #150a5c)",
-                      border: isDragOver ? "2px solid #268ffa" : "1px solid rgba(255,255,255,0.08)",
-                      boxShadow: "0 4px 16px rgba(0,0,0,0.25)",
+                        : "#ffffff",
+                      border: isDragOver ? "2px solid #268ffa" : "1px solid rgba(13,4,70,0.08)",
+                      boxShadow: "0 2px 8px rgba(13,4,70,0.06)",
                     }}
                     onMouseEnter={e => {
-                      e.currentTarget.style.background = "linear-gradient(145deg, #150a5c, #1e0f7a)";
-                      e.currentTarget.style.boxShadow = "0 6px 24px rgba(38,143,250,0.2)";
+                      e.currentTarget.style.boxShadow = "0 6px 20px rgba(38,143,250,0.15)";
+                      e.currentTarget.style.borderColor = "rgba(38,143,250,0.3)";
                     }}
                     onMouseLeave={e => {
                       e.currentTarget.style.background = isDragOver
                         ? "linear-gradient(145deg, #268ffa, #2dbef3)"
-                        : "linear-gradient(145deg, #0d0446, #150a5c)";
-                      e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.25)";
+                        : "#ffffff";
+                      e.currentTarget.style.boxShadow = "0 2px 8px rgba(13,4,70,0.06)";
+                      e.currentTarget.style.borderColor = isDragOver ? "#268ffa" : "rgba(13,4,70,0.08)";
                     }}
                   >
-                    <div className="w-9 h-9 rounded-xl flex items-center justify-center mb-1.5" style={{ background: "rgba(38,143,250,0.2)" }}>
-                      <Icon size={18} className="text-[#5bb5fc]" />
+                    <div className="w-9 h-9 rounded-xl flex items-center justify-center mb-1.5" style={{ background: "rgba(38,143,250,0.1)" }}>
+                      <Icon size={18} className="text-[#268ffa]" />
                     </div>
-                    <span className="text-white text-[9px] font-semibold text-center leading-tight px-1.5 max-w-full truncate">{item.linkLabel}</span>
-                    {item.linkExternal && <ExternalLink size={7} className="text-white/25 mt-0.5" />}
+                    <span className="text-[#0d0446] text-[9px] font-semibold text-center leading-tight px-1.5 max-w-full truncate">{item.linkLabel}</span>
+                    {item.linkExternal && <ExternalLink size={7} className="text-[#0d0446]/25 mt-0.5" />}
                   </div>
                   <button
                     onClick={(e) => { e.stopPropagation(); removeItem(item.id); }}
                     className="absolute top-1.5 right-1.5 w-4 h-4 rounded-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all z-10"
-                    style={{ border: "1px solid rgba(255,255,255,0.2)" }}
-                    onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.5)"; }}
-                    onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)"; }}
+                    style={{ border: "1px solid rgba(13,4,70,0.15)" }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(13,4,70,0.4)"; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(13,4,70,0.15)"; }}
                   >
-                    <X size={7} className="text-white/50" />
+                    <X size={7} className="text-[#0d0446]/40" />
                   </button>
                 </div>
               );
@@ -212,11 +213,11 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
               onClick={() => { setShowAddDialog(true); setAddStep("choose"); }}
               className="w-[90px] h-[90px] rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all hover:scale-[1.06]"
               style={{
-                background: "rgba(38,143,250,0.06)",
+                background: "rgba(38,143,250,0.04)",
                 border: "1.5px dashed rgba(38,143,250,0.25)",
               }}
-              onMouseEnter={e => { e.currentTarget.style.background = "rgba(38,143,250,0.12)"; e.currentTarget.style.borderColor = "rgba(38,143,250,0.5)"; }}
-              onMouseLeave={e => { e.currentTarget.style.background = "rgba(38,143,250,0.06)"; e.currentTarget.style.borderColor = "rgba(38,143,250,0.25)"; }}
+              onMouseEnter={e => { e.currentTarget.style.background = "rgba(38,143,250,0.08)"; e.currentTarget.style.borderColor = "rgba(38,143,250,0.5)"; }}
+              onMouseLeave={e => { e.currentTarget.style.background = "rgba(38,143,250,0.04)"; e.currentTarget.style.borderColor = "rgba(38,143,250,0.25)"; }}
             >
               <Plus size={16} className="text-[#268ffa]/40 mb-1" />
               <span className="text-[#268ffa]/40 text-[9px] font-semibold">Adicionar</span>
