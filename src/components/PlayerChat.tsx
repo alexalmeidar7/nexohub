@@ -122,6 +122,15 @@ export default function PlayerChat({ channelId, onClose, shopOpen = false }: Pla
     const msg = input.trim();
     setInput("");
     setShowEmoji(false);
+    // Optimistic update — show message instantly
+    const optimisticMsg: ChatMessage = {
+      id: "optimistic-" + Date.now(),
+      nome,
+      cidade,
+      message: msg,
+      created_at: new Date().toISOString(),
+    };
+    setMessages(prev => [...prev, optimisticMsg].slice(-100));
     await supabase.from("player_chat_messages").insert({
       channel_id: channelId,
       nome,
