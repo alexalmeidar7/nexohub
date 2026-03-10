@@ -912,18 +912,21 @@ export type Database = {
       }
       user_settings: {
         Row: {
+          dashboard_items: Json | null
           id: string
           music_xml_url: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          dashboard_items?: Json | null
           id?: string
           music_xml_url?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          dashboard_items?: Json | null
           id?: string
           music_xml_url?: string | null
           updated_at?: string
