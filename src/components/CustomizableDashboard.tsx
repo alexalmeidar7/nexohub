@@ -148,23 +148,6 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
 
   return (
     <div className="flex flex-col h-full overflow-y-auto overflow-x-hidden" style={{ scrollBehavior: "smooth" }}>
-      {/* Top actions */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          {items.length > 0 && (
-            <button
-              onClick={() => setEditMode(!editMode)}
-              className="px-3 py-1.5 rounded-full text-[11px] font-bold transition-all"
-              style={{
-                backgroundColor: editMode ? "#dc2626" : "rgba(255,255,255,0.15)",
-                color: "#fff",
-              }}
-            >
-              {editMode ? "Concluir edição" : "Editar"}
-            </button>
-          )}
-        </div>
-      </div>
 
       {/* Buttons row */}
       {items.filter(i => i.type === "link").length > 0 && (
