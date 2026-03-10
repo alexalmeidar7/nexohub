@@ -65,7 +65,7 @@ export default function PlayerChat({ channelId, onClose, shopOpen = false }: Pla
     checkAuth();
   }, []);
 
-  // Load messages
+  // Load messages + realtime + polling fallback
   useEffect(() => {
     if (!joined) return;
 
@@ -79,26 +79,29 @@ export default function PlayerChat({ channelId, onClose, shopOpen = false }: Pla
     };
     fetchMessages();
 
+    // Realtime
     const channel = supabase
       .channel("player-chat-" + channelId)
       .on(
         "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "player_chat_messages",
-        },
+        { event: "INSERT", schema: "public", table: "player_chat_messages" },
         (payload) => {
           setMessages((prev) => {
-            const updated = [...prev, payload.new as ChatMessage];
+            // Remove optimistic message if it matches, then add real one
+            const filtered = prev.filter(m => !m.id.startsWith("optimistic-"));
+            const updated = [...filtered, payload.new as ChatMessage];
             return updated.slice(-100);
           });
         }
       )
       .subscribe();
 
+    // Polling fallback every 5s
+    const pollTimer = setInterval(fetchMessages, 5000);
+
     return () => {
       supabase.removeChannel(channel);
+      clearInterval(pollTimer);
     };
   }, [joined, channelId]);
 
@@ -119,6 +122,15 @@ export default function PlayerChat({ channelId, onClose, shopOpen = false }: Pla
     const msg = input.trim();
     setInput("");
     setShowEmoji(false);
+    // Optimistic update — show message instantly
+    const optimisticMsg: ChatMessage = {
+      id: "optimistic-" + Date.now(),
+      nome,
+      cidade,
+      message: msg,
+      created_at: new Date().toISOString(),
+    };
+    setMessages(prev => [...prev, optimisticMsg].slice(-100));
     await supabase.from("player_chat_messages").insert({
       channel_id: channelId,
       nome,
