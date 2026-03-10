@@ -502,7 +502,7 @@ function MusicaPreview() {
   useEffect(() => {
     const update = () => {
       try {
-        const raw = localStorage.getItem("nexo_music_data");
+        const raw = localStorage.getItem("masterview_music_data");
         if (raw) {
           const d = JSON.parse(raw);
           if (d.music) setMusic(d.music);
