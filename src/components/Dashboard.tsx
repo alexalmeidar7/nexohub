@@ -77,6 +77,7 @@ const sidebarMenu: MenuItem[] = [
       { icon: ShoppingCart, label: "shopping", page: "shopping" },
     ]
   },
+  { icon: Monitor, label: "vmix", page: "vmix" },
   {
     icon: Wrench, label: "ferramentas", children: [
       { icon: Tag, label: "tela promo", page: undefined as unknown as Page },
