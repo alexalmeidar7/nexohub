@@ -475,6 +475,18 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
           </div>
         </div>
       )}
+
+      {/* Scroll down hint */}
+      {showScrollHint && (
+        <div
+          className="sticky bottom-0 left-0 right-0 flex justify-center py-2 pointer-events-none animate-fade-in"
+          style={{ background: "linear-gradient(0deg, rgba(255,255,255,0.9) 0%, transparent 100%)" }}
+        >
+          <div className="animate-bounce">
+            <ChevronDown size={18} className="text-[#268ffa]/40" />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
