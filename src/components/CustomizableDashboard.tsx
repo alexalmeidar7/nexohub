@@ -140,8 +140,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
   };
   const handleDragEnd = () => setDraggedId(null);
 
-  const linkItems = items.filter(i => i.type === "link");
-  const widgetItems = items.filter(i => i.type === "widget");
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
 
   return (
     <div className="flex flex-col h-full overflow-y-auto" style={{ scrollBehavior: "smooth" }}>
