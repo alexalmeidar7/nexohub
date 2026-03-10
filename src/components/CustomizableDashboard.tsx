@@ -238,7 +238,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
             {widgetItems.map(item => (
               <div
                 key={item.id}
-                className={`relative rounded-2xl overflow-hidden ${draggedId === item.id ? "opacity-50" : ""}`}
+                className={`relative group rounded-2xl overflow-hidden ${draggedId === item.id ? "opacity-50" : ""}`}
                 style={{
                   background: "rgba(255,255,255,0.08)",
                   backdropFilter: "blur(24px) saturate(1.4)",
