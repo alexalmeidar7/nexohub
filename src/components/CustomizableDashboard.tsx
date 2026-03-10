@@ -302,7 +302,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
 
       {/* Empty state */}
       {items.length === 0 && (
-        <div className="flex-1 flex flex-col items-center justify-center text-center py-20">
+        <div className="flex-1 flex flex-col items-center justify-center text-center py-20 animate-fade-in">
           <div className="w-20 h-20 rounded-2xl flex items-center justify-center mb-5" style={{ background: "linear-gradient(145deg, #0d0446, #150a5c)", boxShadow: "0 8px 32px rgba(0,0,0,0.3)" }}>
             <Plus size={28} className="text-[#268ffa]/50" />
           </div>
