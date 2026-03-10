@@ -44,7 +44,7 @@ import PlayerShopProduct from "@/components/player/PlayerShopProduct";
 import PreRollOverlay from "@/components/PreRollOverlay";
 import { saveMiniPlayerData, clearMiniPlayerData, unlockAndPrepareMiniAudio } from "@/components/player/MiniPlayerWidget";
 import PlayerSkeleton from "@/components/skeletons/PlayerSkeleton";
-import PlayerSidebarComponent from "@/components/player/PlayerSidebar";
+
 import { normalizeMusicText } from "@/lib/textEncoding";
 
 // Dynamic HLS loader — cached after first import
@@ -1719,17 +1719,6 @@ export default function PlayerPage() {
   if (loading) {
     return (
       <div className="relative h-screen w-screen bg-black overflow-hidden select-none cursor-default animate-fade-in">
-        <PlayerSidebarComponent
-          items={sidebarItems}
-          activeKey={is991Channel ? "home" : "streaming"}
-          avatarUrl={profileAvatar}
-          userName={userDisplayName}
-          showLogout={!!user}
-          onLogout={async () => { await signOut(); navigate(playerHomePath); }}
-          autoHide={is991Channel}
-          visible={is991Channel ? barVisible : true}
-          loading
-        />
         <div className="absolute inset-y-0 right-0 left-0">
           <PlayerSkeleton status={loadingStatus} />
         </div>
@@ -1739,16 +1728,6 @@ export default function PlayerPage() {
 
   return (
     <div ref={containerRef} className="relative h-screen w-screen bg-black overflow-hidden select-none cursor-default animate-fade-in">
-      <PlayerSidebarComponent
-        items={sidebarItems}
-        activeKey={is991Channel ? "home" : "streaming"}
-        avatarUrl={profileAvatar}
-        userName={userDisplayName}
-        showLogout={!!user}
-        onLogout={async () => { await signOut(); navigate(playerHomePath); }}
-        autoHide={is991Channel}
-        visible={is991Channel ? barVisible : true}
-      />
 
       {/* Content wrapper with fade transition */}
       <div className={`transition-opacity duration-400 ease-in-out ${pageFadeOut ? "opacity-0" : "opacity-100"}`}>
@@ -2111,7 +2090,17 @@ export default function PlayerPage() {
           {/* Controls */}
           <div className="flex items-center gap-1.5 px-1 sm:px-3 sm:border-l border-player-border shrink-0 flex-wrap justify-center sm:justify-start">
 
-            {/* Volume — first element */}
+            {/* Home button */}
+            <button
+              onClick={handleHomeClick}
+              className="rounded-lg border border-player-border bg-player-surface/80 p-1.5 text-player-muted-foreground hover:text-player-foreground hover:bg-player-surface-hover transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-player-accent"
+              title="Voltar ao Hub"
+              aria-label="Voltar ao Hub"
+            >
+              <Home size={15} />
+            </button>
+
+            {/* Volume */}
             <div className="relative flex items-center" onMouseEnter={showVolume} onMouseLeave={hideVolume}>
               <button
                 onClick={toggleMuteWithOsd}
