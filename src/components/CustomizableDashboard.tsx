@@ -174,39 +174,45 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
       {linkItems.length > 0 && (
         <div className="mb-4">
           <p className="text-white/40 text-[10px] font-bold uppercase tracking-widest mb-2">Atalhos</p>
-          <div className="flex flex-wrap gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
             {linkItems.map(item => {
               const Icon = getIcon(item.linkIcon || "Link2");
               return (
                 <div
                   key={item.id}
-                  className={`relative group ${draggedId === item.id ? "opacity-50" : ""}`}
+                  className={`relative group cursor-pointer ${draggedId === item.id ? "opacity-50" : ""}`}
                   draggable={editMode}
                   onDragStart={() => handleDragStart(item.id)}
                   onDragOver={(e) => handleDragOver(e, item.id)}
                   onDragEnd={handleDragEnd}
+                  onClick={() => handleLinkClick(item)}
                 >
-                  <button
-                    onClick={() => handleLinkClick(item)}
-                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all"
+                  <div
+                    className="rounded-2xl overflow-hidden transition-all hover:scale-[1.02]"
                     style={{
-                      background: "rgba(255,255,255,0.1)",
+                      background: "rgba(255,255,255,0.08)",
                       backdropFilter: "blur(16px)",
                       border: "1px solid rgba(255,255,255,0.12)",
-                      color: "#fff",
                     }}
-                    onMouseEnter={e => { e.currentTarget.style.background = "rgba(38,143,250,0.3)"; e.currentTarget.style.borderColor = "rgba(38,143,250,0.5)"; }}
-                    onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.1)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)"; }}
                   >
-                    {editMode && <GripVertical size={12} className="text-white/40 cursor-grab" />}
-                    <Icon size={14} />
-                    <span>{item.linkLabel}</span>
-                    {item.linkExternal && <ExternalLink size={10} className="text-white/40" />}
-                  </button>
-                  {/* Always visible on hover */}
+                    {/* Header */}
+                    <div className="flex items-center gap-2 px-3 py-2.5" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+                      {editMode && <GripVertical size={12} className="text-white/40 cursor-grab" />}
+                      <div className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)" }}>
+                        <Icon size={12} className="text-white" />
+                      </div>
+                      <span className="text-white text-xs font-semibold truncate flex-1">{item.linkLabel}</span>
+                      {item.linkExternal && <ExternalLink size={10} className="text-white/30" />}
+                    </div>
+                    {/* Preview area */}
+                    <div className="px-3 py-2.5 min-h-[70px]">
+                      <LinkPreview page={item.linkPage} external={item.linkExternal} />
+                    </div>
+                  </div>
+                  {/* Close button on hover */}
                   <button
-                    onClick={() => removeItem(item.id)}
-                    className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={(e) => { e.stopPropagation(); removeItem(item.id); }}
+                    className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10"
                     style={{ backgroundColor: "#dc2626" }}
                   >
                     <X size={10} className="text-white" />
@@ -214,20 +220,20 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                 </div>
               );
             })}
-            {/* Inline + button after links */}
-            <button
+            {/* Inline + button */}
+            <div
               onClick={() => { setShowAddDialog(true); setAddStep("choose"); }}
-              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all"
+              className="rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all hover:scale-[1.02] min-h-[110px]"
               style={{
-                background: "rgba(255,255,255,0.06)",
-                border: "1px dashed rgba(255,255,255,0.2)",
-                color: "rgba(255,255,255,0.5)",
+                background: "rgba(255,255,255,0.04)",
+                border: "1px dashed rgba(255,255,255,0.15)",
               }}
-              onMouseEnter={e => { e.currentTarget.style.background = "rgba(38,143,250,0.15)"; e.currentTarget.style.borderColor = "rgba(38,143,250,0.4)"; e.currentTarget.style.color = "#fff"; }}
-              onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)"; e.currentTarget.style.color = "rgba(255,255,255,0.5)"; }}
+              onMouseEnter={e => { e.currentTarget.style.background = "rgba(38,143,250,0.1)"; e.currentTarget.style.borderColor = "rgba(38,143,250,0.4)"; }}
+              onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.04)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)"; }}
             >
-              <Plus size={14} /> Adicionar
-            </button>
+              <Plus size={18} className="text-white/30 mb-1" />
+              <span className="text-white/40 text-[10px] font-semibold">Adicionar</span>
+            </div>
           </div>
         </div>
       )}
