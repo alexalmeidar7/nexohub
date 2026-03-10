@@ -254,7 +254,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                   <div className="flex items-center gap-1.5 px-4 py-2.5 cursor-grab active:cursor-grabbing" style={{ borderBottom: "1px solid rgba(13,4,70,0.06)" }}>
                     <GripVertical size={10} className="text-[#0d0446]/20" />
                     <span className="text-[#0d0446]/40 text-[9px] font-bold uppercase tracking-[0.15em]">
-                      {item.widgetType === "agenda" ? "Agenda" : item.widgetType === "musica" ? "No Ar" : "Estatísticas"}
+                      {item.widgetType === "agenda" ? "Agenda" : item.widgetType === "musica" ? "No Ar" : item.widgetType === "weather" ? "Tempo" : "Estatísticas"}
                     </span>
                   </div>
                   <div className="absolute top-2.5 right-2.5 z-10 opacity-0 group-hover:opacity-100 transition-all">
