@@ -380,7 +380,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                     setCurrentPage(item.page);
                   }
                 }}
-                className="text-sm font-semibold py-2 transition-colors whitespace-nowrap"
+                className="text-xs font-semibold py-2 transition-colors whitespace-nowrap"
                 style={{ color: active ? "#268ffa" : "#ffffff" }}
                 onMouseEnter={e => { if (!active) e.currentTarget.style.color = "#268ffa"; }}
                 onMouseLeave={e => { if (!active) e.currentTarget.style.color = "#ffffff"; }}
