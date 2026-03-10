@@ -664,16 +664,16 @@ function DashboardAgendaWidget() {
     <div>
       <div className="flex items-center gap-2 mb-3">
         <CalendarDays size={14} className="text-[#268ffa]" />
-        <p className="text-white font-bold text-sm">Agenda de Eventos</p>
+        <p className="text-[#0d0446] font-bold text-sm">Agenda de Eventos</p>
       </div>
       {events.length === 0 ? (
-        <p className="text-white/30 text-xs">Nenhum evento próximo</p>
+        <p className="text-[#0d0446]/30 text-xs">Nenhum evento próximo</p>
       ) : (
         <div className="space-y-2">
           {events.map(ev => (
-            <div key={ev.id} className="px-3 py-2 rounded-lg" style={{ background: "rgba(255,255,255,0.06)" }}>
-              <p className="text-white text-xs font-semibold truncate">{ev.descricao || "Evento"}</p>
-              <p className="text-white/40 text-[10px]">
+            <div key={ev.id} className="px-3 py-2 rounded-lg" style={{ background: "rgba(38,143,250,0.06)" }}>
+              <p className="text-[#0d0446] text-xs font-semibold truncate">{ev.descricao || "Evento"}</p>
+              <p className="text-[#0d0446]/40 text-[10px]">
                 {new Date(ev.data + "T12:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })} — {ev.local}
               </p>
             </div>
