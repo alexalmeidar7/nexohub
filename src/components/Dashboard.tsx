@@ -4,6 +4,7 @@ import { Home, Sun, FileText, Mic2, PlaySquare, Music, CalendarDays, Settings, L
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import seloNexohub from "@/assets/selo-nexohub.png";
+import logoMenu from "@/assets/logo-menu.png";
 import logoFooter from "@/assets/logo-footer.png";
 import {
   Tooltip,
@@ -57,27 +58,30 @@ const sidebarMenu: MenuItem[] = [
       { icon: PlaySquare, label: "Programas", page: "programas" },
     ]
   },
-  { icon: CloudSun, label: "previsão do tempo", page: "previsao" },
   { icon: Newspaper, label: "notícias", page: "noticias" },
   { icon: Music, label: "música no ar", page: "musica" },
   { icon: CalendarDays, label: "agenda", page: "agenda" },
-  { icon: MonitorPlay, label: "player - configurações", page: "playerconfig" },
-  { icon: MonitorPlay, label: "player - módulo externo", page: undefined }, // opens new tab
+  {
+    icon: MonitorPlay, label: "player", children: [
+      { icon: Settings, label: "configurações", page: "playerconfig" },
+      { icon: ExternalLink, label: "módulo externo", page: undefined as unknown as Page },
+    ]
+  },
   {
     icon: ShoppingBag, label: "comercial", children: [
-      { icon: MessageSquareQuote, label: "Testemunhais", page: "testemunhais" },
-      { icon: Tag, label: "Promoções", page: "promocoes" },
-      { icon: Image, label: "Logos", page: "logos" },
-      { icon: Film, label: "Pre Roll", page: "preroll" },
-      { icon: ShoppingCart, label: "Shopping", page: "shopping" },
+      { icon: MessageSquareQuote, label: "testemunhais", page: "testemunhais" },
+      { icon: Tag, label: "promoções", page: "promocoes" },
+      { icon: Image, label: "logos", page: "logos" },
+      { icon: Film, label: "pre roll", page: "preroll" },
+      { icon: ShoppingCart, label: "shopping", page: "shopping" },
     ]
   },
   {
     icon: Wrench, label: "ferramentas", children: [
-      { icon: Scissors, label: "Cortes de Vídeo", page: "cortevideo" },
+      { icon: Tag, label: "tela promo", page: undefined as unknown as Page },
+      { icon: Scissors, label: "corte de vídeo", page: "cortevideo" },
     ]
   },
-  { icon: Settings, label: "configurações", page: "configuracoes" },
 ];
 
 // Map menu items to module keys for plan filtering
@@ -121,6 +125,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set());
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
+  const [hoveredMenu, setHoveredMenu] = useState<string | null>(null);
   const [noArCollapsed, setNoArCollapsed] = useState(false);
   const [empresa, setEmpresa] = useState<import("./ConfiguracoesPage").EmpresaConfig>({} as any);
   const [enabledModules, setEnabledModules] = useState<Set<string> | null>(null);
@@ -184,15 +189,31 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   };
 
   const handleMenuClick = (item: MenuItem) => {
-    if (item.label === "player - módulo externo") {
-      window.open("/user/nexohub/player", "_blank");
-      return;
-    }
     if (item.children) {
       toggleMenu(item.label);
     } else if (item.page) {
       setCurrentPage(item.page);
       setMobileMenuOpen(false);
+      setHoveredMenu(null);
+    }
+  };
+
+  const handleChildClick = (child: { label: string; page?: Page }, parentLabel: string) => {
+    if (parentLabel === "player" && child.label === "módulo externo") {
+      window.open("/user/nexohub/player", "_blank");
+      setHoveredMenu(null);
+      return;
+    }
+    if (parentLabel === "ferramentas" && child.label === "tela promo") {
+      const slug = user?.email?.split("@")[0] || "";
+      window.open(`/user/${slug}/nexohub/telapromo`, "_blank");
+      setHoveredMenu(null);
+      return;
+    }
+    if (child.page) {
+      setCurrentPage(child.page);
+      setMobileMenuOpen(false);
+      setHoveredMenu(null);
     }
   };
 
@@ -316,224 +337,112 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         </div>
       )}
 
-      {/* Floating hamburger button - desktop */}
-      <button
-        onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-        className="hidden lg:flex fixed top-5 left-[40px] z-[60] w-11 h-11 rounded-full items-center justify-center transition-all shadow-lg hover:scale-105 mt-1"
-        style={{ backgroundColor: sidebarCollapsed ? "rgba(0,0,0,0.7)" : "#268ffa" }}
-        title={sidebarCollapsed ? "Abrir menu" : "Fechar menu"}
+      {/* Horizontal Navigation Bar - desktop */}
+      <nav
+        className="hidden lg:flex items-center px-8 relative z-[60]"
+        style={{ backgroundColor: "#0d0446", minHeight: "52px" }}
       >
-        <Menu size={18} className="text-white" />
-      </button>
+        <img src={logoMenu} alt="NexoHUB" className="h-7 mr-6 flex-shrink-0" />
 
-      {/* Company name + user info - desktop */}
-      <div className="hidden lg:flex fixed top-5 left-[100px] z-[1] flex-col">
-        <h1 className="font-bold text-white" style={{ fontSize: "45px", lineHeight: 1.1 }}>{empresa.nome || "Dashboard"}</h1>
-        <div className="flex items-center gap-3 mt-1">
-          <p className="text-white/60 text-xs">{user?.email || ""}</p>
+        {sidebarMenu.filter(item => {
+          if (item.label === "home" || item.label === "cadastros" || item.label === "ferramentas") return true;
+          const modKey = menuToModuleKey[item.label];
+          if (!modKey) return true;
+          if (planModules) return planModules.has(modKey);
+          if (enabledModules) return enabledModules.has(modKey);
+          return true;
+        }).map((item, idx) => {
+          const active = isItemActive(item);
+          const isOpen = hoveredMenu === item.label;
+
+          return (
+            <div
+              key={item.label}
+              className="relative flex items-center"
+              onMouseEnter={() => item.children && setHoveredMenu(item.label)}
+              onMouseLeave={() => setHoveredMenu(null)}
+            >
+              {idx > 0 && <span className="text-white/20 mx-3 text-sm select-none">|</span>}
+              <button
+                onClick={() => {
+                  if (!item.children && item.page) {
+                    setCurrentPage(item.page);
+                  }
+                }}
+                className={`text-sm font-semibold py-2 transition-colors whitespace-nowrap ${
+                  active ? "text-white" : "text-white/60 hover:text-white"
+                }`}
+              >
+                {item.label}
+              </button>
+
+              {/* Dropdown */}
+              {item.children && isOpen && (
+                <div className="absolute top-full left-0 pt-1 z-[70]">
+                  <div
+                    className="rounded-lg py-2 min-w-[180px]"
+                    style={{ backgroundColor: "#0d0446", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 8px 24px rgba(0,0,0,0.4)" }}
+                  >
+                    {item.children.map(child => (
+                      <button
+                        key={child.label}
+                        onClick={() => handleChildClick(child, item.label)}
+                        className={`w-full text-left px-4 py-2 text-sm transition-colors ${
+                          child.page && currentPage === child.page
+                            ? "text-[#268ffa] font-semibold"
+                            : "text-white/70 hover:text-white hover:bg-white/5"
+                        }`}
+                      >
+                        {child.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+
+        {/* Right side: icons */}
+        <div className="ml-auto flex items-center gap-3">
+          <Suspense fallback={<div className="w-8 h-8 rounded-full" style={{ backgroundColor: "#0d0446" }} />}>
+            <MessageNotification />
+          </Suspense>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={() => setCurrentPage("configuracoes")}
+                className="w-8 h-8 rounded-full flex items-center justify-center transition-opacity hover:opacity-80"
+                style={{ backgroundColor: "rgba(255,255,255,0.1)" }}
+              >
+                <Settings size={14} className="text-white/70" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom"><p className="text-xs">Configurações</p></TooltipContent>
+          </Tooltip>
           <button
             onClick={onLogout}
-            className="flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold transition-all"
-            style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "#ffffff" }}
+            className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold transition-all"
+            style={{ backgroundColor: "rgba(255,255,255,0.1)", color: "#ffffff" }}
             onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#dc2626"; }}
-            onMouseLeave={e => { e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.15)"; }}
+            onMouseLeave={e => { e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.1)"; }}
           >
             <LogOut size={10} /> Sair
           </button>
+          <ServerClock />
         </div>
+      </nav>
+
+      {/* Company name + user info - below nav */}
+      <div className="hidden lg:flex px-8 pt-4 pb-1 flex-col">
+        <h1 className="font-bold text-white" style={{ fontSize: "28px", lineHeight: 1.2 }}>{empresa.nome || "Dashboard"}</h1>
+        <p className="text-xs mt-0.5" style={{ color: "#268ffa" }}>{user?.email || ""}</p>
       </div>
 
-      {/* Sidebar overlay backdrop - desktop */}
-      {!sidebarCollapsed && (
-        <div className="hidden lg:block fixed inset-0 z-[49] bg-black/30" onClick={() => setSidebarCollapsed(true)} />
-      )}
-
-      {/* Floating sidebar - desktop */}
-      <div className={`hidden lg:flex flex-col fixed top-5 left-[92px] z-[55] transition-all duration-300 ${sidebarCollapsed ? "opacity-0 pointer-events-none -translate-x-4" : "opacity-100 translate-x-0"}`} style={{ width: "360px" }}>
-        <aside className="flex flex-col rounded-[24px] overflow-hidden" style={{ background: "rgba(0, 0, 0, 0.45)", backdropFilter: "blur(32px) saturate(1.5)", WebkitBackdropFilter: "blur(32px) saturate(1.5)", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 12px 40px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.08)", height: "560px" }}>
-            <>
-            {/* Selo + Settings */}
-            <div className="flex items-center justify-between px-4 pt-3 pb-2">
-              <img src={seloNexohub} alt="NexoHUB" className="h-4" />
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setCurrentPage("configuracoes")}
-                  className="p-1.5 rounded-full transition-colors"
-                  style={{ backgroundColor: "#268ffa" }}
-                  onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#0d0446"; }}
-                  onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#268ffa"; }}
-                >
-                  <Settings size={16} className="text-white" />
-                </button>
-                <button
-                  onClick={() => setSidebarCollapsed(true)}
-                  className="p-1.5 rounded-full transition-colors"
-                  style={{ backgroundColor: "rgba(255,255,255,0.15)" }}
-                  onMouseEnter={e => { e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.3)"; }}
-                  onMouseLeave={e => { e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.15)"; }}
-                  title="Fechar menu"
-                >
-                  <X size={16} className="text-white" />
-                </button>
-              </div>
-            </div>
-
-            {/* Module header */}
-            <div className="mx-3 mb-2 px-3 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest text-white/70 flex items-center justify-between" style={{ backgroundColor: "#0d0446" }}>
-              <span>módulos ativos</span>
-              <span className="bg-white/20 text-white rounded-full px-2 py-0.5 text-[9px] font-bold normal-case tracking-normal">
-                {planModules ? planModules.size : (enabledModules ? enabledModules.size : "—")}
-              </span>
-            </div>
-
-            {/* Menu items with scroll */}
-            <nav className="flex-1 overflow-y-auto px-3 space-y-0.5 sidebar-scroll">
-              {sidebarMenu.filter(item => {
-                // Home and cadastros always show
-                if (item.label === "home" || item.label === "cadastros" || item.label === "ferramentas") return true;
-                const modKey = menuToModuleKey[item.label];
-                if (!modKey) return true;
-                if (planModules) return planModules.has(modKey);
-                if (enabledModules) return enabledModules.has(modKey);
-                return true;
-              }).map(item => {
-                const Icon = item.icon;
-                const active = isItemActive(item);
-                const expanded = expandedMenus.has(item.label);
-
-                return (
-                  <div key={item.label}>
-                    <button
-                      onClick={() => handleMenuClick(item)}
-                      className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
-                        active ? "text-[#268ffa] bg-white/10 font-semibold shadow-sm" : "text-white hover:text-white hover:bg-white/5"
-                      }`}
-                      aria-label={item.label}
-                      role="menuitem"
-                    >
-                      <Icon size={14} className={active ? "text-[#268ffa]" : "text-white/70"} />
-                      <span className="flex-1 text-left">{item.label}</span>
-                      {item.children && (
-                        <div className="text-white/40">
-                          {expanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-                        </div>
-                      )}
-                    </button>
-                    {item.children && expanded && (
-                      <div className="ml-6 space-y-0.5 mt-0.5">
-                        {item.children.map(child => {
-                          const ChildIcon = child.icon;
-                          const childActive = currentPage === child.page;
-                          return (
-                            <button
-                              key={child.page}
-                              onClick={() => setCurrentPage(child.page)}
-                              className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-[11px] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
-                                childActive ? "text-[#268ffa] bg-white/10 font-semibold" : "text-white/80 hover:text-white hover:bg-white/5"
-                              }`}
-                              aria-label={child.label}
-                              role="menuitem"
-                            >
-                              <ChildIcon size={12} className={childActive ? "text-[#268ffa]" : "text-white/60"} />
-                              <span>{child.label}</span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </nav>
-
-            {/* XML Master */}
-            <div className="px-3 py-2 border-t border-white/10">
-              <Suspense fallback={null}>
-                <UnifiedXmlField />
-              </Suspense>
-            </div>
-
-            {/* User profile at bottom */}
-            <div className="px-4 py-4 border-t border-white/10">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style={{ backgroundColor: "#268ffa" }}>
-                  {empresa.nome ? empresa.nome.charAt(0).toUpperCase() : "U"}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <p className="text-white text-xs font-bold truncate">{empresa.nome || "Empresa"}</p>
-                    {empresa.plano && (
-                      <span className="px-2 py-0.5 rounded-full text-[9px] font-semibold flex-shrink-0" style={{ backgroundColor: "#268ffa", color: "#fff" }}>
-                        {empresa.plano}
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-white/50 text-[10px] truncate">{user?.email || ""}</p>
-                  <button onClick={onLogout} className="text-[10px] underline hover:opacity-70 transition-colors mt-0.5" style={{ color: "#268ffa" }}>
-                    sair
-                  </button>
-                </div>
-              </div>
-            </div>
-            </>
-          </aside>
-        </div>
-
-      <div className="flex gap-[30px] pt-3 flex-1 min-h-0 px-4 lg:px-[50px] lg:pt-[80px]">
+      <div className="flex gap-[30px] pt-3 flex-1 min-h-0 px-4 lg:px-8">
 
         {/* === MAIN CONTENT === */}
         <main className="flex-1 flex flex-col min-w-0">
-          {/* Header - desktop only */}
-          <div className="hidden lg:flex items-center justify-end mb-3">
-            <div className="flex items-center gap-3" style={{ marginRight: "50px" }}>
-              <Suspense fallback={<div className="w-9 h-9 rounded-full" style={{ backgroundColor: "#0d0446" }} />}>
-                <MessageNotification />
-              </Suspense>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={() => {
-                      const slug = user?.email?.split("@")[0] || "";
-                      window.open(`/user/${slug}/nexohub/player`, "_blank");
-                    }}
-                    className="w-9 h-9 rounded-full flex items-center justify-center transition-opacity hover:opacity-80"
-                    style={{ background: "rgba(255,255,255,0.12)", backdropFilter: "blur(24px) saturate(1.4)", WebkitBackdropFilter: "blur(24px) saturate(1.4)", border: "1px solid rgba(255,255,255,0.15)" }}
-                  >
-                    <MonitorPlay size={16} className="text-white" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom"><p className="text-xs">Player Externo</p></TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={() => {
-                      const slug = user?.email?.split("@")[0] || "";
-                      window.open(`/user/${slug}/nexohub/telapromo`, "_blank");
-                    }}
-                    className="w-9 h-9 rounded-full flex items-center justify-center transition-opacity hover:opacity-80"
-                    style={{ background: "rgba(255,255,255,0.12)", backdropFilter: "blur(24px) saturate(1.4)", WebkitBackdropFilter: "blur(24px) saturate(1.4)", border: "1px solid rgba(255,255,255,0.15)" }}
-                  >
-                    <Tag size={16} className="text-white" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom"><p className="text-xs">Tela Promoções</p></TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={() => setCurrentPage("configuracoes")}
-                    className="w-9 h-9 rounded-full flex items-center justify-center transition-opacity hover:opacity-80"
-                    style={{ background: "rgba(255,255,255,0.12)", backdropFilter: "blur(24px) saturate(1.4)", WebkitBackdropFilter: "blur(24px) saturate(1.4)", border: "1px solid rgba(255,255,255,0.15)" }}
-                  >
-                    <Settings size={16} className="text-white" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom"><p className="text-xs">Configurações</p></TooltipContent>
-              </Tooltip>
-              <ServerClock />
-            </div>
-          </div>
 
           {/* Content area */}
           {currentPage !== "dashboard" && (
@@ -574,7 +483,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
       {/* === NO AR + WIDGET LIST ROW === */}
       {currentPage === "dashboard" && (
-        <div className="flex flex-col lg:flex-row gap-3 lg:gap-5 px-4 lg:px-[50px] pt-2">
+        <div className="flex flex-col lg:flex-row gap-3 lg:gap-5 px-4 lg:px-8 pt-2">
           {/* Widget list (includes No Ar) */}
           <div className="flex-1 min-w-0">
             <Suspense fallback={null}>
@@ -585,7 +494,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       )}
 
       {/* === FOOTER === */}
-      <footer className="flex items-center gap-3 px-4 lg:px-[50px] pb-2 pt-3">
+      <footer className="flex items-center gap-3 px-4 lg:px-8 pb-2 pt-3">
         <img src={logoFooter} alt="Nexo" className="h-5 opacity-80" />
         <span className="text-white/60 text-[11px] hidden sm:inline">Copyrighted 2026 - Todos os direitos reservados.</span>
       </footer>
