@@ -58,27 +58,30 @@ const sidebarMenu: MenuItem[] = [
       { icon: PlaySquare, label: "Programas", page: "programas" },
     ]
   },
-  { icon: CloudSun, label: "previsão do tempo", page: "previsao" },
   { icon: Newspaper, label: "notícias", page: "noticias" },
   { icon: Music, label: "música no ar", page: "musica" },
   { icon: CalendarDays, label: "agenda", page: "agenda" },
-  { icon: MonitorPlay, label: "player - configurações", page: "playerconfig" },
-  { icon: MonitorPlay, label: "player - módulo externo", page: undefined }, // opens new tab
+  {
+    icon: MonitorPlay, label: "player", children: [
+      { icon: Settings, label: "configurações", page: "playerconfig" },
+      { icon: ExternalLink, label: "módulo externo", page: undefined as unknown as Page },
+    ]
+  },
   {
     icon: ShoppingBag, label: "comercial", children: [
-      { icon: MessageSquareQuote, label: "Testemunhais", page: "testemunhais" },
-      { icon: Tag, label: "Promoções", page: "promocoes" },
-      { icon: Image, label: "Logos", page: "logos" },
-      { icon: Film, label: "Pre Roll", page: "preroll" },
-      { icon: ShoppingCart, label: "Shopping", page: "shopping" },
+      { icon: MessageSquareQuote, label: "testemunhais", page: "testemunhais" },
+      { icon: Tag, label: "promoções", page: "promocoes" },
+      { icon: Image, label: "logos", page: "logos" },
+      { icon: Film, label: "pre roll", page: "preroll" },
+      { icon: ShoppingCart, label: "shopping", page: "shopping" },
     ]
   },
   {
     icon: Wrench, label: "ferramentas", children: [
-      { icon: Scissors, label: "Cortes de Vídeo", page: "cortevideo" },
+      { icon: Tag, label: "tela promo", page: undefined as unknown as Page },
+      { icon: Scissors, label: "corte de vídeo", page: "cortevideo" },
     ]
   },
-  { icon: Settings, label: "configurações", page: "configuracoes" },
 ];
 
 // Map menu items to module keys for plan filtering
