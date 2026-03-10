@@ -874,51 +874,89 @@ function StatsWidget() {
 
 /* ========== WIDGET: Weather ========== */
 function DashboardWeatherWidget() {
-  const { user } = useAuth();
   const [weather, setWeather] = useState<any>(null);
 
   useEffect(() => {
-    if (!user) return;
-    // Try to get cached weather from localStorage
-    try {
-      const cached = localStorage.getItem(`weather_data_${user.id}`);
-      if (cached) {
-        const data = JSON.parse(cached);
-        setWeather(data);
-      }
-    } catch {}
-
-    // Fetch from edge function
     const fetchWeather = async () => {
       try {
-        const { data: settings } = await supabase
-          .from("user_settings")
-          .select("*")
-          .eq("user_id", user.id)
-          .maybeSingle();
+        // Get primary city from localStorage (set by PrevisaoTempo module)
+        const primaryRaw = localStorage.getItem("masterview_primary_city");
+        let lat: number, lon: number, cityName: string;
 
-        const { data: config } = await supabase
-          .from("empresa_config")
-          .select("nome")
-          .eq("user_id", user.id)
-          .maybeSingle();
-
-        // Use city from config or default
-        const city = config?.nome || "São Paulo";
-
-        const res = await supabase.functions.invoke("weather-description", {
-          body: { city },
-        });
-
-        if (res.data) {
-          setWeather(res.data);
-          localStorage.setItem(`weather_data_${user.id}`, JSON.stringify(res.data));
+        if (primaryRaw) {
+          const primary = JSON.parse(primaryRaw);
+          lat = primary.lat;
+          lon = primary.lon;
+          cityName = primary.name;
+        } else {
+          // Fallback: try last searched city
+          const lastCity = localStorage.getItem("masterview_last_city");
+          if (!lastCity) {
+            setWeather(null);
+            return;
+          }
+          // Geocode
+          const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(lastCity)}&count=1&language=pt`);
+          const geoData = await geoRes.json();
+          if (!geoData.results?.length) return;
+          lat = geoData.results[0].latitude;
+          lon = geoData.results[0].longitude;
+          cityName = geoData.results[0].name;
         }
+
+        const wxRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code&timezone=auto&forecast_days=2`);
+        const wxData = await wxRes.json();
+
+        const current = {
+          temp: Math.round(wxData.current.temperature_2m),
+          weatherCode: wxData.current.weather_code,
+          humidity: wxData.current.relative_humidity_2m,
+          tempMin: Math.round(wxData.daily.temperature_2m_min[0]),
+          tempMax: Math.round(wxData.daily.temperature_2m_max[0]),
+          rainChance: wxData.daily.precipitation_probability_max[0] ?? 0,
+        };
+
+        const tomorrow = wxData.daily.time[1] ? {
+          date: wxData.daily.time[1],
+          tempMin: Math.round(wxData.daily.temperature_2m_min[1]),
+          tempMax: Math.round(wxData.daily.temperature_2m_max[1]),
+          weatherCode: wxData.daily.weather_code[1],
+          rainChance: wxData.daily.precipitation_probability_max[1] ?? 0,
+        } : null;
+
+        setWeather({ city: cityName, current, tomorrow });
       } catch {}
     };
 
     fetchWeather();
-  }, [user]);
+    const iv = setInterval(fetchWeather, 5 * 60 * 1000);
+    return () => clearInterval(iv);
+  }, []);
+
+  const weatherLabels: Record<number, string> = {
+    0: "Céu limpo", 1: "Parc. limpo", 2: "Parc. nublado", 3: "Nublado",
+    45: "Neblina", 48: "Neblina", 51: "Garoa", 53: "Garoa", 55: "Garoa forte",
+    61: "Chuva leve", 63: "Chuva", 65: "Chuva forte",
+    80: "Pancadas", 81: "Pancadas", 82: "Pancadas fortes",
+    95: "Tempestade", 96: "Tempestade", 99: "Tempestade",
+  };
+
+  const getLabel = (code: number) => {
+    const closest = Object.keys(weatherLabels).map(Number)
+      .reduce((prev, curr) => (Math.abs(curr - code) < Math.abs(prev - code) ? curr : prev));
+    return weatherLabels[closest] || "—";
+  };
+
+  const formatTomorrow = (dateStr: string) => {
+    const d = new Date(dateStr + "T12:00:00");
+    return d.toLocaleDateString("pt-BR", { weekday: "short", day: "numeric" });
+  };
+
+  // Lazy import WeatherIcon
+  const [WeatherIconComp, setWeatherIconComp] = useState<React.ComponentType<any> | null>(null);
+  useEffect(() => {
+    import("./WeatherIcons").then(mod => setWeatherIconComp(() => mod.WeatherIcon));
+  }, []);
 
   return (
     <div>
@@ -928,27 +966,42 @@ function DashboardWeatherWidget() {
       </div>
       {weather ? (
         <div>
-          <div className="flex items-center gap-3 mb-2">
-            <p className="text-3xl font-bold text-[#268ffa]">{weather.temperature || weather.temp || "--"}°</p>
+          {/* Current */}
+          <div className="flex items-center gap-3 mb-3">
+            <div className="flex-shrink-0">
+              {WeatherIconComp && <WeatherIconComp code={weather.current.weatherCode} size={48} />}
+            </div>
             <div>
-              <p className="text-[#0d0446] text-xs font-semibold">{weather.city || weather.location || ""}</p>
-              <p className="text-[#0d0446]/50 text-[10px]">{weather.description || weather.condition || ""}</p>
+              <p className="text-3xl font-bold text-[#268ffa] leading-none">{weather.current.temp}°</p>
+              <p className="text-[#0d0446] text-[10px] font-semibold mt-0.5">{weather.city}</p>
+              <p className="text-[#0d0446]/50 text-[9px]">{getLabel(weather.current.weatherCode)}</p>
+            </div>
+            <div className="ml-auto text-right">
+              <p className="text-[#0d0446]/40 text-[9px]">↑ {weather.current.tempMax}° ↓ {weather.current.tempMin}°</p>
+              <p className="text-[#0d0446]/40 text-[9px]">💧 {weather.current.humidity}%</p>
+              <p className="text-[#0d0446]/40 text-[9px]">🌧 {weather.current.rainChance}%</p>
             </div>
           </div>
-          {weather.forecast && Array.isArray(weather.forecast) && weather.forecast.length > 0 && (
-            <div className="flex gap-2 mt-2">
-              {weather.forecast.slice(0, 3).map((day: any, i: number) => (
-                <div key={i} className="flex-1 px-2 py-1.5 rounded-lg text-center" style={{ background: "rgba(38,143,250,0.06)" }}>
-                  <p className="text-[#0d0446]/40 text-[8px] font-bold uppercase">{day.day || day.name}</p>
-                  <p className="text-[#0d0446] text-xs font-bold">{day.max || day.temp_max}°</p>
-                  <p className="text-[#0d0446]/40 text-[9px]">{day.min || day.temp_min}°</p>
-                </div>
-              ))}
+
+          {/* Tomorrow */}
+          {weather.tomorrow && (
+            <div className="px-3 py-2 rounded-lg flex items-center gap-3" style={{ background: "rgba(38,143,250,0.06)" }}>
+              <div className="flex-shrink-0">
+                {WeatherIconComp && <WeatherIconComp code={weather.tomorrow.weatherCode} size={28} forceDay />}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[#0d0446]/60 text-[9px] font-bold uppercase">{formatTomorrow(weather.tomorrow.date)}</p>
+                <p className="text-[#0d0446] text-xs font-bold">{weather.tomorrow.tempMax}° / {weather.tomorrow.tempMin}°</p>
+              </div>
+              <div className="text-right">
+                <p className="text-[#0d0446]/40 text-[9px]">{getLabel(weather.tomorrow.weatherCode)}</p>
+                <p className="text-[#0d0446]/40 text-[9px]">🌧 {weather.tomorrow.rainChance}%</p>
+              </div>
             </div>
           )}
         </div>
       ) : (
-        <p className="text-[#0d0446]/30 text-xs">Carregando previsão...</p>
+        <p className="text-[#0d0446]/30 text-xs">Configure uma cidade no módulo Previsão do Tempo</p>
       )}
     </div>
   );
