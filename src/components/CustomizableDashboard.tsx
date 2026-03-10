@@ -646,7 +646,7 @@ function ShoppingPreview() {
 }
 
 /* ========== WIDGET: Agenda ========== */
-function DashboardAgendaWidget() {
+function DashboardAgendaWidget({ onNavigate }: { onNavigate: (page: Page) => void }) {
   const { user } = useAuth();
   const [events, setEvents] = useState<any[]>([]);
 
@@ -664,7 +664,7 @@ function DashboardAgendaWidget() {
   }, [user]);
 
   return (
-    <div>
+    <div className="flex flex-col h-full">
       <div className="flex items-center gap-2 mb-3">
         <CalendarDays size={14} className="text-[#268ffa]" />
         <p className="text-[#0d0446] font-bold text-sm">Agenda de Eventos</p>
@@ -683,6 +683,17 @@ function DashboardAgendaWidget() {
           ))}
         </div>
       )}
+      <div className="mt-auto pt-3">
+        <button
+          onClick={() => onNavigate("agenda")}
+          className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold transition-all"
+          style={{ backgroundColor: "rgba(38,143,250,0.1)", color: "#268ffa" }}
+          onMouseEnter={e => { e.currentTarget.style.backgroundColor = "rgba(38,143,250,0.2)"; }}
+          onMouseLeave={e => { e.currentTarget.style.backgroundColor = "rgba(38,143,250,0.1)"; }}
+        >
+          <Plus size={10} /> Adicionar evento
+        </button>
+      </div>
     </div>
   );
 }
