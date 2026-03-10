@@ -229,7 +229,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
       {/* Section: Widgets */}
       {items.filter(i => i.type === "widget").length > 0 && (
         <div className="mb-4">
-          <p className="text-white/30 text-[10px] font-bold uppercase tracking-[0.15em] mb-3 animate-fade-in">Widgets</p>
+          <p className="text-[#0d0446]/50 text-[10px] font-bold uppercase tracking-[0.15em] mb-3 animate-fade-in">Widgets</p>
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
             {items.filter(i => i.type === "widget").map(item => {
               const isDragging = draggedId === item.id;
@@ -239,10 +239,9 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                   key={item.id}
                   className={`relative group rounded-2xl overflow-hidden animate-fade-in ${isDragging ? "opacity-40 scale-95" : ""}`}
                   style={{
-                    background: "linear-gradient(160deg, rgba(13,4,70,0.6), rgba(26,10,110,0.4))",
-                    backdropFilter: "blur(24px) saturate(1.4)",
-                    border: isDragOver ? "2px solid #268ffa" : "1px solid rgba(255,255,255,0.08)",
-                    boxShadow: "0 4px 20px rgba(0,0,0,0.2)",
+                    background: "#ffffff",
+                    border: isDragOver ? "2px solid #268ffa" : "1px solid rgba(13,4,70,0.08)",
+                    boxShadow: "0 2px 12px rgba(13,4,70,0.06)",
                     minHeight: item.widgetType === "agenda" ? "280px" : "180px",
                   }}
                   draggable
@@ -251,9 +250,9 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                   onDrop={() => handleDrop(item.id)}
                   onDragEnd={handleDragEnd}
                 >
-                  <div className="flex items-center gap-1.5 px-4 py-2.5 cursor-grab active:cursor-grabbing" style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-                    <GripVertical size={10} className="text-white/20" />
-                    <span className="text-white/30 text-[9px] font-bold uppercase tracking-[0.15em]">
+                  <div className="flex items-center gap-1.5 px-4 py-2.5 cursor-grab active:cursor-grabbing" style={{ borderBottom: "1px solid rgba(13,4,70,0.06)" }}>
+                    <GripVertical size={10} className="text-[#0d0446]/20" />
+                    <span className="text-[#0d0446]/40 text-[9px] font-bold uppercase tracking-[0.15em]">
                       {item.widgetType === "agenda" ? "Agenda" : item.widgetType === "musica" ? "No Ar" : "Estatísticas"}
                     </span>
                   </div>
@@ -261,15 +260,15 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                     <button
                       onClick={() => removeItem(item.id)}
                       className="w-5 h-5 rounded-md flex items-center justify-center"
-                      style={{ border: "1px solid rgba(255,255,255,0.2)" }}
-                      onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.5)"; }}
-                      onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)"; }}
+                      style={{ border: "1px solid rgba(13,4,70,0.15)" }}
+                      onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(13,4,70,0.4)"; }}
+                      onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(13,4,70,0.15)"; }}
                     >
-                      <X size={9} className="text-white/50" />
+                      <X size={9} className="text-[#0d0446]/40" />
                     </button>
                   </div>
                   <div className="p-4 h-full">
-                    <Suspense fallback={<Loader2 className="animate-spin text-white/30" size={18} />}>
+                    <Suspense fallback={<Loader2 className="animate-spin text-[#268ffa]/40" size={18} />}>
                       {item.widgetType === "agenda" && <DashboardAgendaWidget />}
                       {item.widgetType === "musica" && <MusicProgramWidget />}
                       {item.widgetType === "stats" && <StatsWidget />}
