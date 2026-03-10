@@ -1,7 +1,9 @@
 import { useState, useEffect, useCallback, lazy, Suspense } from "react";
-import { Plus, X, Link2, BarChart3, CalendarDays, Music, Eye, Users, Mic2, PlaySquare, Newspaper, Settings, ShoppingBag, Tag, Image, Film, ShoppingCart, Monitor, Wrench, Scissors, MonitorPlay, ExternalLink, GripVertical, Loader2, Trash2, MessageSquareQuote, Radio } from "lucide-react";
+import { Plus, X, Link2, BarChart3, CalendarDays, Music, Eye, Users, Mic2, PlaySquare, Newspaper, Settings, ShoppingBag, Tag, Image, Film, ShoppingCart, Monitor, Wrench, Scissors, MonitorPlay, ExternalLink, GripVertical, Loader2, Trash2, MessageSquareQuote, Radio, Clock, Tv, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 const AgendaPage = lazy(() => import("./AgendaPage"));
 const OnAirWidget = lazy(() => import("./OnAirWidget"));
@@ -172,39 +174,45 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
       {linkItems.length > 0 && (
         <div className="mb-4">
           <p className="text-white/40 text-[10px] font-bold uppercase tracking-widest mb-2">Atalhos</p>
-          <div className="flex flex-wrap gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
             {linkItems.map(item => {
               const Icon = getIcon(item.linkIcon || "Link2");
               return (
                 <div
                   key={item.id}
-                  className={`relative group ${draggedId === item.id ? "opacity-50" : ""}`}
+                  className={`relative group cursor-pointer ${draggedId === item.id ? "opacity-50" : ""}`}
                   draggable={editMode}
                   onDragStart={() => handleDragStart(item.id)}
                   onDragOver={(e) => handleDragOver(e, item.id)}
                   onDragEnd={handleDragEnd}
+                  onClick={() => handleLinkClick(item)}
                 >
-                  <button
-                    onClick={() => handleLinkClick(item)}
-                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all"
+                  <div
+                    className="rounded-2xl overflow-hidden transition-all hover:scale-[1.02]"
                     style={{
-                      background: "rgba(255,255,255,0.1)",
+                      background: "rgba(255,255,255,0.08)",
                       backdropFilter: "blur(16px)",
                       border: "1px solid rgba(255,255,255,0.12)",
-                      color: "#fff",
                     }}
-                    onMouseEnter={e => { e.currentTarget.style.background = "rgba(38,143,250,0.3)"; e.currentTarget.style.borderColor = "rgba(38,143,250,0.5)"; }}
-                    onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.1)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)"; }}
                   >
-                    {editMode && <GripVertical size={12} className="text-white/40 cursor-grab" />}
-                    <Icon size={14} />
-                    <span>{item.linkLabel}</span>
-                    {item.linkExternal && <ExternalLink size={10} className="text-white/40" />}
-                  </button>
-                  {/* Always visible on hover */}
+                    {/* Header */}
+                    <div className="flex items-center gap-2 px-3 py-2.5" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+                      {editMode && <GripVertical size={12} className="text-white/40 cursor-grab" />}
+                      <div className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)" }}>
+                        <Icon size={12} className="text-white" />
+                      </div>
+                      <span className="text-white text-xs font-semibold truncate flex-1">{item.linkLabel}</span>
+                      {item.linkExternal && <ExternalLink size={10} className="text-white/30" />}
+                    </div>
+                    {/* Preview area */}
+                    <div className="px-3 py-2.5 min-h-[70px]">
+                      <LinkPreview page={item.linkPage} external={item.linkExternal} />
+                    </div>
+                  </div>
+                  {/* Close button on hover */}
                   <button
-                    onClick={() => removeItem(item.id)}
-                    className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={(e) => { e.stopPropagation(); removeItem(item.id); }}
+                    className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10"
                     style={{ backgroundColor: "#dc2626" }}
                   >
                     <X size={10} className="text-white" />
@@ -212,20 +220,20 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                 </div>
               );
             })}
-            {/* Inline + button after links */}
-            <button
+            {/* Inline + button */}
+            <div
               onClick={() => { setShowAddDialog(true); setAddStep("choose"); }}
-              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all"
+              className="rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all hover:scale-[1.02] min-h-[110px]"
               style={{
-                background: "rgba(255,255,255,0.06)",
-                border: "1px dashed rgba(255,255,255,0.2)",
-                color: "rgba(255,255,255,0.5)",
+                background: "rgba(255,255,255,0.04)",
+                border: "1px dashed rgba(255,255,255,0.15)",
               }}
-              onMouseEnter={e => { e.currentTarget.style.background = "rgba(38,143,250,0.15)"; e.currentTarget.style.borderColor = "rgba(38,143,250,0.4)"; e.currentTarget.style.color = "#fff"; }}
-              onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)"; e.currentTarget.style.color = "rgba(255,255,255,0.5)"; }}
+              onMouseEnter={e => { e.currentTarget.style.background = "rgba(38,143,250,0.1)"; e.currentTarget.style.borderColor = "rgba(38,143,250,0.4)"; }}
+              onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.04)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)"; }}
             >
-              <Plus size={14} /> Adicionar
-            </button>
+              <Plus size={18} className="text-white/30 mb-1" />
+              <span className="text-white/40 text-[10px] font-semibold">Adicionar</span>
+            </div>
           </div>
         </div>
       )}
@@ -429,6 +437,166 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
       )}
     </div>
   );
+}
+
+/* ========== LINK PREVIEW COMPONENT ========== */
+function LinkPreview({ page, external }: { page?: Page; external?: string }) {
+  switch (page) {
+    case "agenda": return <AgendaPreview />;
+    case "musica": return <MusicaPreview />;
+    case "noticias": return <NoticiasPreview />;
+    case "apresentadores": return <ApresentadoresPreview />;
+    case "programas": return <ProgramasPreview />;
+    case "promocoes": return <PromosPreview />;
+    case "preroll": return <PrerollPreview />;
+    case "shopping": return <ShoppingPreview />;
+    case "testemunhais": return <GenericPreview icon={MessageSquareQuote} text="Testemunhais ativos" />;
+    case "logos": return <GenericPreview icon={Image} text="Logos de patrocinadores" />;
+    case "configuracoes": return <GenericPreview icon={Settings} text="Configurações gerais" />;
+    case "playerconfig": return <GenericPreview icon={Settings} text="Config. do Player" />;
+    case "vmix": return <GenericPreview icon={Monitor} text="Controle de transmissão" />;
+    case "cortevideo": return <GenericPreview icon={Scissors} text="Cortes de vídeo" />;
+    case "curtidas": return <GenericPreview icon={Music} text="Músicas curtidas" />;
+    default:
+      if (external === "player") return <GenericPreview icon={MonitorPlay} text="Player ao vivo" />;
+      if (external === "telapromo") return <GenericPreview icon={Tag} text="Tela de promoções" />;
+      return <GenericPreview icon={Link2} text="Atalho rápido" />;
+  }
+}
+
+function GenericPreview({ icon: Icon, text }: { icon: React.ComponentType<any>; text: string }) {
+  return (
+    <div className="flex items-center gap-2">
+      <Icon size={12} className="text-white/20" />
+      <p className="text-white/30 text-[10px]">{text}</p>
+    </div>
+  );
+}
+
+function AgendaPreview() {
+  const { user } = useAuth();
+  const [events, setEvents] = useState<any[]>([]);
+  useEffect(() => {
+    if (!user) return;
+    const today = new Date().toISOString().split("T")[0];
+    supabase.from("agenda_eventos").select("data, descricao").eq("user_id", user.id).gte("data", today).order("data").limit(3)
+      .then(({ data }) => { if (data) setEvents(data); });
+  }, [user]);
+
+  const today = new Date();
+  return (
+    <div>
+      <div className="flex items-center gap-1.5 mb-1.5">
+        <p className="text-white/50 text-[10px] font-bold">{format(today, "dd MMM", { locale: ptBR }).toUpperCase()}</p>
+      </div>
+      {events.length === 0 ? (
+        <p className="text-white/25 text-[10px]">Sem eventos próximos</p>
+      ) : (
+        <div className="space-y-1">
+          {events.map((ev, i) => (
+            <div key={i} className="flex items-center gap-1.5">
+              <div className="w-1 h-1 rounded-full flex-shrink-0" style={{ backgroundColor: "#268ffa" }} />
+              <p className="text-white/50 text-[10px] truncate">{ev.descricao || format(new Date(ev.data + "T12:00:00"), "dd/MM")}</p>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MusicaPreview() {
+  const [music, setMusic] = useState<any>(null);
+  useEffect(() => {
+    const update = () => {
+      try { const raw = localStorage.getItem("nexo_music_data"); if (raw) { const d = JSON.parse(raw); if (d.music) setMusic(d.music); } } catch {}
+    };
+    update();
+    const iv = setInterval(update, 5000);
+    return () => clearInterval(iv);
+  }, []);
+  return music ? (
+    <div className="flex items-center gap-2">
+      {music.capa && <img src={music.capa} alt="" className="w-8 h-8 rounded object-cover flex-shrink-0" />}
+      <div className="min-w-0">
+        <p className="text-white/60 text-[10px] font-semibold truncate">{music.titulo}</p>
+        <p className="text-white/30 text-[9px] truncate">{music.artista}</p>
+      </div>
+    </div>
+  ) : <p className="text-white/25 text-[10px]">Sem música no ar</p>;
+}
+
+function NoticiasPreview() {
+  const { user } = useAuth();
+  const [news, setNews] = useState<any[]>([]);
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("selected_news").select("title").eq("user_id", user.id).order("created_at", { ascending: false }).limit(2)
+      .then(({ data }) => { if (data) setNews(data); });
+  }, [user]);
+  return news.length > 0 ? (
+    <div className="space-y-1">
+      {news.map((n, i) => (
+        <p key={i} className="text-white/40 text-[10px] truncate leading-tight">• {n.title}</p>
+      ))}
+    </div>
+  ) : <p className="text-white/25 text-[10px]">Sem notícias salvas</p>;
+}
+
+function ApresentadoresPreview() {
+  const { user } = useAuth();
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("apresentadores").select("id", { count: "exact", head: true }).eq("user_id", user.id)
+      .then(({ count: c }) => setCount(c || 0));
+  }, [user]);
+  return <p className="text-white/40 text-[10px]">{count} apresentador{count !== 1 ? "es" : ""} cadastrado{count !== 1 ? "s" : ""}</p>;
+}
+
+function ProgramasPreview() {
+  const { user } = useAuth();
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("programas").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("ativo", true)
+      .then(({ count: c }) => setCount(c || 0));
+  }, [user]);
+  return <p className="text-white/40 text-[10px]">{count} programa{count !== 1 ? "s" : ""} ativo{count !== 1 ? "s" : ""}</p>;
+}
+
+function PromosPreview() {
+  const { user } = useAuth();
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    if (!user) return;
+    const today = new Date().toISOString().split("T")[0];
+    supabase.from("promocoes").select("id", { count: "exact", head: true }).eq("user_id", user.id).gte("data_fim", today)
+      .then(({ count: c }) => setCount(c || 0));
+  }, [user]);
+  return <p className="text-white/40 text-[10px]">{count} promoção{count !== 1 ? "ões" : ""} ativa{count !== 1 ? "s" : ""}</p>;
+}
+
+function PrerollPreview() {
+  const { user } = useAuth();
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("comercial_preroll").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("active", true)
+      .then(({ count: c }) => setCount(c || 0));
+  }, [user]);
+  return <p className="text-white/40 text-[10px]">{count} pre-roll{count !== 1 ? "s" : ""} ativo{count !== 1 ? "s" : ""}</p>;
+}
+
+function ShoppingPreview() {
+  const { user } = useAuth();
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("shopping_products").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("active", true)
+      .then(({ count: c }) => setCount(c || 0));
+  }, [user]);
+  return <p className="text-white/40 text-[10px]">{count} produto{count !== 1 ? "s" : ""} ativo{count !== 1 ? "s" : ""}</p>;
 }
 
 /* ========== WIDGET: Agenda ========== */
