@@ -208,7 +208,6 @@ export default function PlayerChat({ channelId, onClose, shopOpen = false }: Pla
       className="absolute left-0 right-0 z-[55] mx-auto"
       style={{ bottom: "170px", width: "80%", paddingLeft: "8px", paddingRight: "8px" }}
     >
-    >
       <div className="ml-auto" style={{ maxWidth: "340px" }}>
         <div
           className="flex flex-col rounded-2xl border border-white/10"
