@@ -439,61 +439,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         <p className="text-xs mt-0.5" style={{ color: "#268ffa" }}>{user?.email || ""}</p>
       </div>
 
-      <div className="flex gap-[30px] pt-3 flex-1 min-h-0 px-4 lg:px-[50px] lg:pt-[80px]">
+      <div className="flex gap-[30px] pt-3 flex-1 min-h-0 px-4 lg:px-8">
 
         {/* === MAIN CONTENT === */}
         <main className="flex-1 flex flex-col min-w-0">
-          {/* Header - desktop only */}
-          <div className="hidden lg:flex items-center justify-end mb-3">
-            <div className="flex items-center gap-3" style={{ marginRight: "50px" }}>
-              <Suspense fallback={<div className="w-9 h-9 rounded-full" style={{ backgroundColor: "#0d0446" }} />}>
-                <MessageNotification />
-              </Suspense>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={() => {
-                      const slug = user?.email?.split("@")[0] || "";
-                      window.open(`/user/${slug}/nexohub/player`, "_blank");
-                    }}
-                    className="w-9 h-9 rounded-full flex items-center justify-center transition-opacity hover:opacity-80"
-                    style={{ background: "rgba(255,255,255,0.12)", backdropFilter: "blur(24px) saturate(1.4)", WebkitBackdropFilter: "blur(24px) saturate(1.4)", border: "1px solid rgba(255,255,255,0.15)" }}
-                  >
-                    <MonitorPlay size={16} className="text-white" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom"><p className="text-xs">Player Externo</p></TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={() => {
-                      const slug = user?.email?.split("@")[0] || "";
-                      window.open(`/user/${slug}/nexohub/telapromo`, "_blank");
-                    }}
-                    className="w-9 h-9 rounded-full flex items-center justify-center transition-opacity hover:opacity-80"
-                    style={{ background: "rgba(255,255,255,0.12)", backdropFilter: "blur(24px) saturate(1.4)", WebkitBackdropFilter: "blur(24px) saturate(1.4)", border: "1px solid rgba(255,255,255,0.15)" }}
-                  >
-                    <Tag size={16} className="text-white" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom"><p className="text-xs">Tela Promoções</p></TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={() => setCurrentPage("configuracoes")}
-                    className="w-9 h-9 rounded-full flex items-center justify-center transition-opacity hover:opacity-80"
-                    style={{ background: "rgba(255,255,255,0.12)", backdropFilter: "blur(24px) saturate(1.4)", WebkitBackdropFilter: "blur(24px) saturate(1.4)", border: "1px solid rgba(255,255,255,0.15)" }}
-                  >
-                    <Settings size={16} className="text-white" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom"><p className="text-xs">Configurações</p></TooltipContent>
-              </Tooltip>
-              <ServerClock />
-            </div>
-          </div>
 
           {/* Content area */}
           {currentPage !== "dashboard" && (
