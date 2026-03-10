@@ -147,7 +147,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
   const [dragOverId, setDragOverId] = useState<string | null>(null);
 
   return (
-    <div className="flex flex-col h-full overflow-y-auto" style={{ scrollBehavior: "smooth" }}>
+    <div className="flex flex-col h-full overflow-y-auto overflow-x-hidden" style={{ scrollBehavior: "smooth" }}>
       {/* Top actions */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
