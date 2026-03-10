@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback, lazy, Suspense } from "react";
-import { Plus, X, Link2, BarChart3, CalendarDays, Music, Eye, Users, Mic2, PlaySquare, Newspaper, Settings, ShoppingBag, Tag, Image, Film, ShoppingCart, Monitor, Wrench, Scissors, MonitorPlay, ExternalLink, GripVertical, Loader2, Trash2, MessageSquareQuote, Radio, Clock, Tv, FileText, CloudSun } from "lucide-react";
+import { useState, useEffect, useCallback, useRef, lazy, Suspense } from "react";
+import { Plus, X, Link2, BarChart3, CalendarDays, Music, Eye, Users, Mic2, PlaySquare, Newspaper, Settings, ShoppingBag, Tag, Image, Film, ShoppingCart, Monitor, Wrench, Scissors, MonitorPlay, ExternalLink, GripVertical, Loader2, Trash2, MessageSquareQuote, Radio, Clock, Tv, FileText, CloudSun, ChevronDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
@@ -146,9 +146,27 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
   const handleDragEnd = () => { setDraggedId(null); setDragOverId(null); };
 
   const [dragOverId, setDragOverId] = useState<string | null>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [showScrollHint, setShowScrollHint] = useState(false);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const check = () => {
+      const canScroll = el.scrollHeight > el.clientHeight + 20;
+      const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 20;
+      setShowScrollHint(canScroll && !atBottom);
+    };
+    check();
+    el.addEventListener("scroll", check);
+    const ro = new ResizeObserver(check);
+    ro.observe(el);
+    return () => { el.removeEventListener("scroll", check); ro.disconnect(); };
+  }, [items]);
 
   return (
-    <div className="flex flex-col h-full overflow-y-auto overflow-x-hidden" style={{ scrollBehavior: "smooth" }}>
+    <div ref={scrollRef} className="flex flex-col h-full overflow-y-auto overflow-x-hidden scrollbar-hide relative" style={{ scrollBehavior: "smooth" }}>
+
 
       {/* Section: Atalhos */}
       {items.filter(i => i.type === "link").length > 0 && (
@@ -454,6 +472,18 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                 ← Voltar
               </button>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Scroll down hint */}
+      {showScrollHint && (
+        <div
+          className="sticky bottom-0 left-0 right-0 flex justify-center py-2 pointer-events-none animate-fade-in"
+          style={{ background: "linear-gradient(0deg, rgba(255,255,255,0.9) 0%, transparent 100%)" }}
+        >
+          <div className="animate-bounce">
+            <ChevronDown size={18} className="text-[#268ffa]/40" />
           </div>
         </div>
       )}
