@@ -689,9 +689,14 @@ function DashboardAgendaWidget() {
 
 /* ========== WIDGET: Music + Program ========== */
 function MusicProgramWidget() {
+  const { user } = useAuth();
   const [music, setMusic] = useState<{ titulo: string; artista: string; capa: string } | null>(null);
   const [programa, setPrograma] = useState<string>("");
+  const [currentProgram, setCurrentProgram] = useState<any>(null);
+  const [elapsed, setElapsed] = useState(0);
+  const [total, setTotal] = useState(0);
 
+  // Fetch music data from localStorage
   useEffect(() => {
     const update = () => {
       try {
@@ -708,26 +713,113 @@ function MusicProgramWidget() {
     return () => clearInterval(interval);
   }, []);
 
+  // Fetch current program from DB
+  useEffect(() => {
+    if (!user) return;
+    const fetchProgram = async () => {
+      const now = new Date();
+      const dayMap: Record<number, string> = { 0: "domingo", 1: "segunda", 2: "terca", 3: "quarta", 4: "quinta", 5: "sexta", 6: "sabado" };
+      const todayKey = dayMap[now.getDay()];
+      const currentTime = now.toTimeString().slice(0, 5);
+
+      const { data } = await supabase
+        .from("programas")
+        .select("*, apresentadores(nome, foto)")
+        .eq("user_id", user.id)
+        .eq("ativo", true)
+        .lte("horario_inicio", currentTime)
+        .gte("horario_fim", currentTime)
+        .contains("dias_semana", [todayKey])
+        .limit(1)
+        .maybeSingle();
+
+      if (data) {
+        setCurrentProgram(data);
+        // Calculate elapsed/total
+        const [startH, startM] = data.horario_inicio.split(":").map(Number);
+        const [endH, endM] = data.horario_fim.split(":").map(Number);
+        const startMin = startH * 60 + startM;
+        const endMin = endH * 60 + endM;
+        const nowMin = now.getHours() * 60 + now.getMinutes();
+        setTotal(endMin - startMin);
+        setElapsed(nowMin - startMin);
+      }
+    };
+    fetchProgram();
+    const iv = setInterval(fetchProgram, 60000);
+    return () => clearInterval(iv);
+  }, [user]);
+
+  // Update elapsed every minute
+  useEffect(() => {
+    if (!currentProgram) return;
+    const iv = setInterval(() => {
+      const now = new Date();
+      const [startH, startM] = currentProgram.horario_inicio.split(":").map(Number);
+      const startMin = startH * 60 + startM;
+      const nowMin = now.getHours() * 60 + now.getMinutes();
+      setElapsed(nowMin - startMin);
+    }, 60000);
+    return () => clearInterval(iv);
+  }, [currentProgram]);
+
+  const progressPercent = total > 0 ? Math.min(100, Math.max(0, (elapsed / total) * 100)) : 0;
+  const apresentador = currentProgram?.apresentadores;
+
   return (
     <div>
       <div className="flex items-center gap-2 mb-3">
         <Music size={14} className="text-[#268ffa]" />
-        <p className="text-[#0d0446] font-bold text-sm">Música no Ar</p>
+        <p className="text-[#0d0446] font-bold text-sm">No Ar</p>
       </div>
+
+      {/* Current Program */}
+      {currentProgram && (
+        <div className="flex items-center gap-3 mb-3 px-3 py-2.5 rounded-xl" style={{ background: "rgba(38,143,250,0.06)" }}>
+          {apresentador?.foto ? (
+            <img src={apresentador.foto} alt="" className="w-10 h-10 rounded-full object-cover flex-shrink-0 border-2 border-[#268ffa]/30" />
+          ) : (
+            <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "rgba(38,143,250,0.15)" }}>
+              <Mic2 size={14} className="text-[#268ffa]" />
+            </div>
+          )}
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-1.5">
+              <Radio size={10} className="text-red-500 animate-pulse flex-shrink-0" />
+              <p className="text-[#0d0446] text-xs font-bold truncate">{currentProgram.nome}</p>
+            </div>
+            {apresentador?.nome && (
+              <p className="text-[#0d0446]/50 text-[10px] truncate">{apresentador.nome}</p>
+            )}
+            <div className="flex items-center gap-2 mt-1.5">
+              <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(13,4,70,0.08)" }}>
+                <div
+                  className="h-full rounded-full transition-all duration-1000"
+                  style={{ width: `${progressPercent}%`, background: "linear-gradient(90deg, #268ffa, #2dbef3)" }}
+                />
+              </div>
+              <span className="text-[8px] text-[#0d0446]/40 font-semibold flex-shrink-0">
+                {currentProgram.horario_inicio} — {currentProgram.horario_fim}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Music */}
       {music ? (
         <div className="flex items-center gap-3">
           {music.capa && (
-            <img src={music.capa} alt="" className="w-12 h-12 rounded-lg object-cover flex-shrink-0" />
+            <img src={music.capa} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
           )}
           <div className="min-w-0">
-            <p className="text-[#0d0446] text-sm font-semibold truncate">{music.titulo}</p>
-            <p className="text-[#0d0446]/50 text-xs truncate">{music.artista}</p>
-            {programa && <p className="text-[#268ffa] text-[10px] mt-0.5 truncate">🔴 {programa}</p>}
+            <p className="text-[#0d0446] text-xs font-semibold truncate">{music.titulo}</p>
+            <p className="text-[#0d0446]/50 text-[10px] truncate">{music.artista}</p>
           </div>
         </div>
-      ) : (
-        <p className="text-[#0d0446]/30 text-xs">Sem música no momento</p>
-      )}
+      ) : !currentProgram ? (
+        <p className="text-[#0d0446]/30 text-xs">Sem programa no momento</p>
+      ) : null}
     </div>
   );
 }
