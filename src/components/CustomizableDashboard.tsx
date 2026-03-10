@@ -984,7 +984,11 @@ function DashboardWeatherWidget() {
           rainChance: wxData.daily.precipitation_probability_max[1] ?? 0,
         } : null;
 
-        setWeather({ city: cityName, current, tomorrow });
+        setWeather((prev: any) => {
+          const newTemp = Math.round(wxData.current.temperature_2m);
+          if (!prev || prev.current.temp !== newTemp) setWeatherKey(k => k + 1);
+          return { city: cityName, current, tomorrow };
+        });
       } catch {}
     };
 
