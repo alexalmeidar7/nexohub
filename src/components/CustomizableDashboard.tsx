@@ -171,7 +171,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                   onClick={() => handleLinkClick(item)}
                 >
                   <div
-                    className="w-[90px] h-[90px] rounded-2xl flex flex-col items-center justify-center transition-all hover:scale-[1.06] hover:shadow-lg"
+                    className="w-[90px] h-[90px] rounded-2xl flex flex-col items-center pt-[18px] transition-all hover:scale-[1.06] hover:shadow-lg"
                     style={{
                       background: isDragOver
                         ? "linear-gradient(145deg, #268ffa, #2dbef3)"
@@ -191,11 +191,11 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                       e.currentTarget.style.borderColor = isDragOver ? "#268ffa" : "rgba(13,4,70,0.08)";
                     }}
                   >
-                    <div className="w-9 h-9 rounded-xl flex items-center justify-center mb-1.5" style={{ background: "rgba(38,143,250,0.1)" }}>
+                    <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "rgba(38,143,250,0.1)" }}>
                       <Icon size={18} className="text-[#268ffa]" />
                     </div>
-                    <span className="text-[#0d0446] text-[9px] font-semibold text-center leading-tight px-1.5 max-w-full truncate">{item.linkLabel}</span>
-                    {item.linkExternal && <ExternalLink size={7} className="text-[#0d0446]/25 mt-0.5" />}
+                    <span className="text-[#0d0446] text-[9px] font-semibold text-center leading-tight px-1.5 max-w-full truncate mt-1.5">{item.linkLabel}</span>
+                    {item.linkExternal && <ExternalLink size={7} className="text-[#0d0446]/25 absolute bottom-1.5 right-1.5" />}
                   </div>
                   <button
                     onClick={(e) => { e.stopPropagation(); removeItem(item.id); }}
