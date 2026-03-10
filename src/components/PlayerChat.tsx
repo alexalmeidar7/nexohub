@@ -276,7 +276,6 @@ export default function PlayerChat({ channelId, onClose, shopOpen = false }: Pla
               </div>
             </div>
           )}
-          )}
 
           {/* Input */}
           <div className="px-3 py-3 border-t border-white/10 flex items-center gap-2">
