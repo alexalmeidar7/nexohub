@@ -296,7 +296,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 return (
                   <div key={item.label}>
                     <button onClick={() => handleMenuClick(item)}
-                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${active ? "text-primary bg-sidebar-accent font-semibold shadow-sm" : "text-sidebar-foreground hover:text-foreground hover:bg-sidebar-accent/50"}`}
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${active ? "text-primary bg-sidebar-accent font-semibold shadow-sm" : "text-sidebar-foreground hover:text-foreground hover:bg-sidebar-accent/50"}`}
                       aria-label={item.label}
                       role="menuitem"
                     >
@@ -311,7 +311,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                           const childActive = currentPage === child.page;
                           return (
                             <button key={child.page} onClick={() => { setCurrentPage(child.page); setMobileMenuOpen(false); }}
-                              className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${childActive ? "text-primary bg-sidebar-accent/70 font-semibold" : "text-sidebar-foreground hover:text-foreground hover:bg-sidebar-accent/30"}`}
+                              className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-[10px] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${childActive ? "text-primary bg-sidebar-accent/70 font-semibold" : "text-sidebar-foreground hover:text-foreground hover:bg-sidebar-accent/30"}`}
                               aria-label={child.label}
                               role="menuitem"
                             >
@@ -380,7 +380,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                     setCurrentPage(item.page);
                   }
                 }}
-                className="text-sm font-semibold py-2 transition-colors whitespace-nowrap"
+                className="text-xs font-semibold py-2 transition-colors whitespace-nowrap"
                 style={{ color: active ? "#268ffa" : "#ffffff" }}
                 onMouseEnter={e => { if (!active) e.currentTarget.style.color = "#268ffa"; }}
                 onMouseLeave={e => { if (!active) e.currentTarget.style.color = "#ffffff"; }}
@@ -405,7 +405,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                       <button
                         key={child.label}
                         onClick={() => handleChildClick(child, item.label)}
-                        className="w-full text-left px-4 py-2 text-sm transition-colors"
+                        className="w-full text-left px-4 py-2 text-xs transition-colors"
                         style={{ color: child.page && currentPage === child.page ? "#268ffa" : "#ffffff" }}
                         onMouseEnter={e => { if (!(child.page && currentPage === child.page)) { e.currentTarget.style.color = "#268ffa"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.05)"; } }}
                         onMouseLeave={e => { if (!(child.page && currentPage === child.page)) { e.currentTarget.style.color = "#ffffff"; e.currentTarget.style.backgroundColor = "transparent"; } }}
