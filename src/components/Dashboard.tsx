@@ -405,7 +405,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                       <button
                         key={child.label}
                         onClick={() => handleChildClick(child, item.label)}
-                        className="w-full text-left px-4 py-2 text-sm transition-colors"
+                        className="w-full text-left px-4 py-2 text-xs transition-colors"
                         style={{ color: child.page && currentPage === child.page ? "#268ffa" : "#ffffff" }}
                         onMouseEnter={e => { if (!(child.page && currentPage === child.page)) { e.currentTarget.style.color = "#268ffa"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.05)"; } }}
                         onMouseLeave={e => { if (!(child.page && currentPage === child.page)) { e.currentTarget.style.color = "#ffffff"; e.currentTarget.style.backgroundColor = "transparent"; } }}
