@@ -589,7 +589,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
                     <tr key={c.id} className="transition-colors hover:bg-blue-50/50" style={{ backgroundColor: i % 2 === 0 ? "#ffffff" : "#f8f9fe", borderTop: "1px solid rgba(13,4,70,0.05)" }}>
                       <td className="px-4 py-3">
                         <span className="inline-flex items-center justify-center w-7 h-7 rounded-lg text-xs font-bold" style={{ backgroundColor: "rgba(38,143,250,0.1)", color: "#268ffa" }}>
-                          {c.type === "catalog" ? "—" : c.numero_canal || "—"}
+                          {c.numero_canal || "—"}
                         </span>
                       </td>
                       <td className="px-4 py-3">
