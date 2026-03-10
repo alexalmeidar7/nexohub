@@ -768,3 +768,85 @@ function StatsWidget() {
     </div>
   );
 }
+
+/* ========== WIDGET: Weather ========== */
+function DashboardWeatherWidget() {
+  const { user } = useAuth();
+  const [weather, setWeather] = useState<any>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    // Try to get cached weather from localStorage
+    try {
+      const cached = localStorage.getItem(`weather_data_${user.id}`);
+      if (cached) {
+        const data = JSON.parse(cached);
+        setWeather(data);
+      }
+    } catch {}
+
+    // Fetch from edge function
+    const fetchWeather = async () => {
+      try {
+        const { data: settings } = await supabase
+          .from("user_settings")
+          .select("*")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        const { data: config } = await supabase
+          .from("empresa_config")
+          .select("nome")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        // Use city from config or default
+        const city = config?.nome || "São Paulo";
+
+        const res = await supabase.functions.invoke("weather-description", {
+          body: { city },
+        });
+
+        if (res.data) {
+          setWeather(res.data);
+          localStorage.setItem(`weather_data_${user.id}`, JSON.stringify(res.data));
+        }
+      } catch {}
+    };
+
+    fetchWeather();
+  }, [user]);
+
+  return (
+    <div>
+      <div className="flex items-center gap-2 mb-3">
+        <CloudSun size={14} className="text-[#268ffa]" />
+        <p className="text-[#0d0446] font-bold text-sm">Previsão do Tempo</p>
+      </div>
+      {weather ? (
+        <div>
+          <div className="flex items-center gap-3 mb-2">
+            <p className="text-3xl font-bold text-[#268ffa]">{weather.temperature || weather.temp || "--"}°</p>
+            <div>
+              <p className="text-[#0d0446] text-xs font-semibold">{weather.city || weather.location || ""}</p>
+              <p className="text-[#0d0446]/50 text-[10px]">{weather.description || weather.condition || ""}</p>
+            </div>
+          </div>
+          {weather.forecast && Array.isArray(weather.forecast) && weather.forecast.length > 0 && (
+            <div className="flex gap-2 mt-2">
+              {weather.forecast.slice(0, 3).map((day: any, i: number) => (
+                <div key={i} className="flex-1 px-2 py-1.5 rounded-lg text-center" style={{ background: "rgba(38,143,250,0.06)" }}>
+                  <p className="text-[#0d0446]/40 text-[8px] font-bold uppercase">{day.day || day.name}</p>
+                  <p className="text-[#0d0446] text-xs font-bold">{day.max || day.temp_max}°</p>
+                  <p className="text-[#0d0446]/40 text-[9px]">{day.min || day.temp_min}°</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      ) : (
+        <p className="text-[#0d0446]/30 text-xs">Carregando previsão...</p>
+      )}
+    </div>
+  );
+}
