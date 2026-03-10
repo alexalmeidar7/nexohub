@@ -487,7 +487,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
           <div className="rounded-2xl p-5 space-y-4" style={{ backgroundColor: "#d9e9fa", boxShadow: "0 2px 8px rgba(13,4,70,0.06)" }}>
             <div className="flex items-center gap-2 mb-1">
               <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)" }}>
-                <Image size={12} className="text-white" />
+                <ImageIcon size={12} className="text-white" />
               </div>
               <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#0d0446" }}>{canalMode === "catalog" ? "Imagens do Catálogo" : "Imagens do Canal"}</span>
             </div>
