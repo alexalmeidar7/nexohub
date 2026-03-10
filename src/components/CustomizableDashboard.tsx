@@ -547,13 +547,13 @@ function MusicaPreview() {
       {music.capa ? (
         <img src={music.capa} alt="" className="w-12 h-12 rounded-lg object-cover flex-shrink-0 shadow-md" />
       ) : (
-        <div className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "rgba(38,143,250,0.15)" }}>
+        <div className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "rgba(38,143,250,0.1)" }}>
           <Music size={16} className="text-[#268ffa]" />
         </div>
       )}
       <div className="min-w-0 flex-1">
-        <p className="text-white text-[11px] font-bold truncate leading-tight">{music.titulo}</p>
-        <p className="text-white/50 text-[10px] truncate">{music.artista}</p>
+        <p className="text-[#0d0446] text-[11px] font-bold truncate leading-tight">{music.titulo}</p>
+        <p className="text-[#0d0446]/50 text-[10px] truncate">{music.artista}</p>
         {programa && (
           <p className="text-[9px] mt-0.5 truncate" style={{ color: "#268ffa" }}>🔴 {programa}</p>
         )}
@@ -561,10 +561,10 @@ function MusicaPreview() {
     </div>
   ) : (
     <div className="flex items-center gap-2">
-      <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: "rgba(255,255,255,0.06)" }}>
-        <Music size={14} className="text-white/20" />
+      <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: "rgba(38,143,250,0.06)" }}>
+        <Music size={14} className="text-[#0d0446]/20" />
       </div>
-      <p className="text-white/25 text-[10px]">Sem música no ar</p>
+      <p className="text-[#0d0446]/30 text-[10px]">Sem música no ar</p>
     </div>
   );
 }
