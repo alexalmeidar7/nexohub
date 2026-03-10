@@ -20,7 +20,7 @@ function getCurrentProgram(
   programas: { nome: string; horario_inicio: string; horario_fim: string; dias_semana: string[] | null; variavel: boolean; data_variavel: string | null; ativo: boolean }[]
 ): string {
   const now = new Date();
-  const dias = ["dom", "seg", "ter", "qua", "qui", "sex", "sab"];
+  const dias = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
   const diaAtual = dias[now.getDay()];
   const horaAtual = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
   const todayStr = now.toISOString().slice(0, 10);
