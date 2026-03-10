@@ -2090,7 +2090,17 @@ export default function PlayerPage() {
           {/* Controls */}
           <div className="flex items-center gap-1.5 px-1 sm:px-3 sm:border-l border-player-border shrink-0 flex-wrap justify-center sm:justify-start">
 
-            {/* Volume — first element */}
+            {/* Home button */}
+            <button
+              onClick={handleHomeClick}
+              className="rounded-lg border border-player-border bg-player-surface/80 p-1.5 text-player-muted-foreground hover:text-player-foreground hover:bg-player-surface-hover transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-player-accent"
+              title="Voltar ao Hub"
+              aria-label="Voltar ao Hub"
+            >
+              <Home size={15} />
+            </button>
+
+            {/* Volume */}
             <div className="relative flex items-center" onMouseEnter={showVolume} onMouseLeave={hideVolume}>
               <button
                 onClick={toggleMuteWithOsd}
