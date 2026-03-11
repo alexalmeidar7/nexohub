@@ -828,12 +828,12 @@ function TpScreen({ user, onBack }: { user: any; onBack: () => void }) {
     <div ref={containerRef} className="tp-screen-grid" style={{ display: "grid", gridTemplateColumns: "90px 1fr", height: "100vh", overflow: "hidden", fontFamily: "'Inter', 'Segoe UI', sans-serif", backgroundColor: "#000" }}>
 
       {/* ─── Sidebar ─── */}
-      <div style={{
+      <div className="tp-sidebar" style={{
         background: "linear-gradient(180deg, #080830 0%, #0d0446 100%)",
         display: "flex", flexDirection: "column", justifyContent: "space-between", alignItems: "center",
         padding: "24px 0", borderRight: "1px solid rgba(74,144,226,0.15)",
       }}>
-        <div style={{ textAlign: "center" }}>
+        <div className="tp-sidebar-top" style={{ textAlign: "center" }}>
           <div style={{ fontSize: "9px", textTransform: "uppercase", fontWeight: 700, letterSpacing: "2px", color: "rgba(255,255,255,0.4)", lineHeight: 1.4 }}>
             TELE<br />PROMPTER
           </div>
