@@ -322,8 +322,8 @@ export default function TpController({ user, onBack }: TpControllerProps) {
         </div>
       </div>
 
-      {/* Controls */}
-      <div className="tp-ctrl-bar mt-5 flex items-center gap-3 bg-tp-control backdrop-blur-[20px] px-7 py-3 rounded-[20px] border border-tp-accent/20 shadow-[0_8px_32px_hsl(var(--tp-shadow))]">
+      {/* Controls - Desktop */}
+      <div className="tp-ctrl-bar mt-5 hidden md:flex items-center gap-3 bg-tp-control backdrop-blur-[20px] px-7 py-3 rounded-[20px] border border-tp-accent/20 shadow-[0_8px_32px_hsl(var(--tp-shadow))]">
         <div className="flex items-center gap-1">
           <button onClick={() => sendCommand("fontSize", Math.max(20, fontSize - 5))} className={`${tpControlBtnClasses} px-2.5 py-1.5 text-[11px] font-bold gap-0.5`}>
             <Minus size={10} /> A
@@ -333,7 +333,7 @@ export default function TpController({ user, onBack }: TpControllerProps) {
             <Plus size={10} /> A
           </button>
         </div>
-        <div className="tp-divider w-px h-6 bg-tp-border-subtle" />
+        <div className="w-px h-6 bg-tp-border-subtle" />
         <div className="flex items-center gap-2">
           <Type size={12} className="text-tp-foreground/30" />
           <input type="range" min={0} max={10} value={speed}
@@ -341,7 +341,7 @@ export default function TpController({ user, onBack }: TpControllerProps) {
             className="tp-speed-slider w-[120px] h-1 accent-tp-accent" />
           <span className="text-[10px] text-tp-muted min-w-[14px]">{speed}</span>
         </div>
-        <div className="tp-divider w-px h-6 bg-tp-border-subtle" />
+        <div className="w-px h-6 bg-tp-border-subtle" />
         <button onClick={() => sendCommand("toggle")} className={`border-none rounded-full w-12 h-12 cursor-pointer flex items-center justify-center transition-all ${
           scrolling
             ? "bg-gradient-to-br from-red-500 to-red-700 shadow-[0_4px_16px_rgba(226,74,74,0.4)]"
@@ -349,12 +349,12 @@ export default function TpController({ user, onBack }: TpControllerProps) {
         }`}>
           {scrolling ? <Pause size={20} className="text-white" /> : <Play size={20} className="text-white ml-0.5" />}
         </button>
-        <div className="tp-divider w-px h-6 bg-tp-border-subtle" />
+        <div className="w-px h-6 bg-tp-border-subtle" />
         <div className="flex flex-col gap-1">
           <button onClick={() => sendCommand("scrollStep", 80)} title="Scroll para cima" className={`${tpControlBtnClasses} py-1 px-2.5`}>▲</button>
           <button onClick={() => sendCommand("scrollStep", -80)} title="Scroll para baixo" className={`${tpControlBtnClasses} py-1 px-2.5`}>▼</button>
         </div>
-        <div className="tp-divider w-px h-6 bg-tp-border-subtle" />
+        <div className="w-px h-6 bg-tp-border-subtle" />
         <button onClick={() => sendCommand("flipH")} title="Inverter H"
           className={`${tpControlBtnClasses} ${flipH ? tpControlBtnActiveClasses : ""}`}>
           <FlipHorizontal2 size={14} className={flipH ? "text-tp-accent" : "text-tp-muted-strong"} />
@@ -363,15 +363,77 @@ export default function TpController({ user, onBack }: TpControllerProps) {
           className={`${tpControlBtnClasses} ${flipV ? tpControlBtnActiveClasses : ""}`}>
           <FlipVertical2 size={14} className={flipV ? "text-tp-accent" : "text-tp-muted-strong"} />
         </button>
-        <div className="tp-divider w-px h-6 bg-tp-border-subtle" />
+        <div className="w-px h-6 bg-tp-border-subtle" />
         <button onClick={() => sendCommand("reset")} title="Reiniciar" className={tpControlBtnClasses}>
           <RotateCcw size={14} className="text-tp-muted-strong" />
         </button>
-        <div className="tp-divider w-px h-6 bg-tp-border-subtle" />
+        <div className="w-px h-6 bg-tp-border-subtle" />
         <button onClick={() => setShowSetup(true)} title="Carregar texto"
           className={`${tpControlBtnClasses} ${showSetup ? tpControlBtnActiveClasses : ""}`}>
           <Settings size={14} className="text-tp-accent" />
         </button>
+      </div>
+
+      {/* Controls - Mobile */}
+      <div className="md:hidden mt-4 w-full max-w-[95vw] flex flex-col gap-3 px-2">
+        {/* Play/Pause + Scroll row */}
+        <div className="flex items-center justify-center gap-3">
+          <button onTouchEnd={(e) => { e.preventDefault(); sendCommand("scrollStep", 80); }} onClick={() => sendCommand("scrollStep", 80)}
+            className="w-12 h-12 rounded-xl bg-tp-foreground/[0.08] border border-tp-border-subtle flex items-center justify-center text-tp-foreground text-lg active:scale-95 transition-transform">▲</button>
+          <button onTouchEnd={(e) => { e.preventDefault(); sendCommand("toggle"); }} onClick={() => sendCommand("toggle")}
+            className={`border-none rounded-full w-16 h-16 flex items-center justify-center transition-all active:scale-95 ${
+              scrolling
+                ? "bg-gradient-to-br from-red-500 to-red-700 shadow-[0_4px_16px_rgba(226,74,74,0.4)]"
+                : "bg-gradient-to-br from-tp-accent to-tp-accent-hover shadow-[0_4px_16px_hsl(var(--tp-accent)/0.4)]"
+            }`}>
+            {scrolling ? <Pause size={28} className="text-white" /> : <Play size={28} className="text-white ml-0.5" />}
+          </button>
+          <button onTouchEnd={(e) => { e.preventDefault(); sendCommand("scrollStep", -80); }} onClick={() => sendCommand("scrollStep", -80)}
+            className="w-12 h-12 rounded-xl bg-tp-foreground/[0.08] border border-tp-border-subtle flex items-center justify-center text-tp-foreground text-lg active:scale-95 transition-transform">▼</button>
+        </div>
+
+        {/* Speed slider */}
+        <div className="flex items-center justify-center gap-3 bg-tp-control backdrop-blur-[20px] px-4 py-2.5 rounded-2xl border border-tp-accent/20">
+          <Type size={14} className="text-tp-foreground/30" />
+          <span className="text-[10px] text-tp-muted">Vel</span>
+          <input type="range" min={0} max={10} value={speed}
+            onChange={(e) => sendCommand("speed", Number(e.target.value))}
+            className="flex-1 h-1.5 accent-tp-accent" />
+          <span className="text-xs text-tp-muted font-bold min-w-[16px] text-center">{speed}</span>
+        </div>
+
+        {/* Action buttons grid */}
+        <div className="grid grid-cols-5 gap-2">
+          <button onTouchEnd={(e) => { e.preventDefault(); sendCommand("fontSize", Math.max(20, fontSize - 5)); }} onClick={() => sendCommand("fontSize", Math.max(20, fontSize - 5))}
+            className="h-11 rounded-xl bg-tp-foreground/[0.08] border border-tp-border-subtle flex items-center justify-center text-tp-foreground text-xs font-bold gap-1 active:scale-95 transition-transform">
+            <Minus size={12} /> A
+          </button>
+          <button onTouchEnd={(e) => { e.preventDefault(); sendCommand("fontSize", Math.min(120, fontSize + 5)); }} onClick={() => sendCommand("fontSize", Math.min(120, fontSize + 5))}
+            className="h-11 rounded-xl bg-tp-foreground/[0.08] border border-tp-border-subtle flex items-center justify-center text-tp-foreground text-xs font-bold gap-1 active:scale-95 transition-transform">
+            <Plus size={12} /> A
+          </button>
+          <button onTouchEnd={(e) => { e.preventDefault(); sendCommand("flipH"); }} onClick={() => sendCommand("flipH")}
+            className={`h-11 rounded-xl border flex items-center justify-center active:scale-95 transition-transform ${flipH ? "bg-tp-accent/20 border-tp-border text-tp-accent" : "bg-tp-foreground/[0.08] border-tp-border-subtle text-tp-muted-strong"}`}>
+            <FlipHorizontal2 size={16} />
+          </button>
+          <button onTouchEnd={(e) => { e.preventDefault(); sendCommand("flipV"); }} onClick={() => sendCommand("flipV")}
+            className={`h-11 rounded-xl border flex items-center justify-center active:scale-95 transition-transform ${flipV ? "bg-tp-accent/20 border-tp-border text-tp-accent" : "bg-tp-foreground/[0.08] border-tp-border-subtle text-tp-muted-strong"}`}>
+            <FlipVertical2 size={16} />
+          </button>
+          <button onTouchEnd={(e) => { e.preventDefault(); sendCommand("reset"); }} onClick={() => sendCommand("reset")}
+            className="h-11 rounded-xl bg-tp-foreground/[0.08] border border-tp-border-subtle flex items-center justify-center text-tp-muted-strong active:scale-95 transition-transform">
+            <RotateCcw size={16} />
+          </button>
+        </div>
+
+        {/* Font size indicator + Load text */}
+        <div className="flex items-center justify-center gap-3">
+          <span className="text-[10px] text-tp-foreground/30">{fontSize}px</span>
+          <button onTouchEnd={(e) => { e.preventDefault(); setShowSetup(true); }} onClick={() => setShowSetup(true)}
+            className="flex-1 h-11 rounded-xl bg-tp-accent/20 border border-tp-accent/40 flex items-center justify-center gap-2 text-tp-accent text-xs font-semibold active:scale-95 transition-transform">
+            <Settings size={14} /> Carregar Texto
+          </button>
+        </div>
       </div>
 
       {/* Back button */}
