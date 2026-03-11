@@ -1438,7 +1438,7 @@ function TpController({ user, onBack }: { user: any; onBack: () => void }) {
           <RotateCcw size={14} color="rgba(255,255,255,0.5)" />
         </button>
 
-        <div style={{ width: "1px", height: "24px", background: "rgba(255,255,255,0.1)" }} />
+        <div className="tp-divider" style={{ width: "1px", height: "24px", background: "rgba(255,255,255,0.1)" }} />
 
         {/* Load text */}
         <button onClick={() => setShowSetup(true)} title="Carregar texto" style={{
