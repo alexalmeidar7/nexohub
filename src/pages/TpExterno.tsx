@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Settings, Minus, Plus, Play, Pause, RotateCcw, Type, FileText, Maximize, FlipHorizontal2, FlipVertical2, Loader2, MessageSquare, Monitor, ArrowRight, LogOut, RotateCw, Trash2, SlidersHorizontal } from "lucide-react";
+import { Settings, Minus, Plus, Play, Pause, RotateCcw, Type, FileText, Maximize, FlipHorizontal2, FlipVertical2, Loader2, MessageSquare, Monitor, ArrowRight, LogOut, RotateCw, Trash2, SlidersHorizontal, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { usePageTitle } from "@/hooks/usePageTitle";
@@ -367,8 +367,21 @@ export default function TpExterno() {
         <div style={{
           background: "linear-gradient(135deg, #0d0446, #1a0a6e)", borderRadius: "20px",
           padding: "32px", width: "min(450px, 90%)", border: "1px solid rgba(74,144,226,0.3)",
-          boxShadow: "0 16px 48px rgba(0,0,0,0.4)",
+          boxShadow: "0 16px 48px rgba(0,0,0,0.4)", position: "relative",
         }}>
+          {/* Close X button */}
+          <button
+            onClick={() => setStep("menu")}
+            style={{
+              position: "absolute", top: "14px", right: "14px",
+              background: "none", border: "none", cursor: "pointer",
+              display: "flex", alignItems: "center", gap: "4px", padding: "4px",
+            }}
+          >
+            <X size={16} color="rgba(255,255,255,0.5)" />
+            <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)", fontWeight: 600 }}>esc</span>
+          </button>
+
           <h3 style={{ color: "#fff", fontSize: "16px", fontWeight: 700, margin: "0 0 4px" }}>
             <MessageSquare size={16} style={{ display: "inline", verticalAlign: "-2px", marginRight: "8px" }} />
             Enviar Mensagem
@@ -389,7 +402,7 @@ export default function TpExterno() {
             placeholder="Digite sua mensagem..."
             rows={5}
             style={{
-              width: "100%", background: "rgba(0,0,0,0.3)", color: "#fff", border: "1px solid rgba(255,255,255,0.1)",
+              width: "100%", background: "#ffffff", color: "#0d0446", border: "1px solid rgba(74,144,226,0.2)",
               borderRadius: "10px", padding: "12px", fontSize: "13px", resize: "none", outline: "none",
             }}
           />
@@ -406,12 +419,6 @@ export default function TpExterno() {
               }}
             >
               {msgSending ? <Loader2 size={14} className="animate-spin" /> : "Enviar"}
-            </button>
-            <button onClick={() => setStep("menu")} style={{
-              background: "none", border: "1px solid rgba(255,255,255,0.15)", borderRadius: "10px",
-              padding: "10px 20px", cursor: "pointer", color: "rgba(255,255,255,0.5)", fontSize: "12px",
-            }}>
-              Voltar
             </button>
             {msgHistory.length > 0 && (
               <button onClick={clearHistory} title="Apagar histórico" style={{
