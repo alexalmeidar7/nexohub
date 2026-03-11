@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CalendarIcon, FileText, Building2, Clock, Plus, X, Download, UserPlus, Check, Bold, Underline, AlignLeft, AlignCenter, AlignRight, List, ListOrdered, Type } from "lucide-react";
+import { CalendarIcon, FileText, Building2, Clock, Plus, X, Download, UserPlus, Check, Bold, Underline, AlignLeft, AlignCenter, AlignRight, List, ListOrdered, Type, Trash2, Pencil, Save, History } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
@@ -62,6 +62,11 @@ export default function RoteiroPrograma() {
   const nameInputRef = useRef<HTMLInputElement>(null);
   const isAgendado = selectedDate > new Date(new Date().toDateString());
 
+  // Histórico de roteiros
+  const [historico, setHistorico] = useState<any[]>([]);
+  const [editingRoteiroId, setEditingRoteiroId] = useState<string | null>(null);
+  const [savingRoteiro, setSavingRoteiro] = useState(false);
+
   const categorias = ["Apresentador(a)", "Jornalista", "Convidado(a)"];
 
   // Filter suggestions based on typed name
@@ -101,6 +106,86 @@ export default function RoteiroPrograma() {
     };
     load();
   }, [user]);
+
+  // Fetch historico
+  const fetchHistorico = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from("roteiros")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(10);
+    setHistorico(data || []);
+  };
+
+  useEffect(() => {
+    if (user) fetchHistorico();
+  }, [user]);
+
+  const salvarRoteiro = async () => {
+    if (!user) return;
+    setSavingRoteiro(true);
+    const status = isAgendado ? "agendado" : "rascunho";
+    const payload = {
+      user_id: user.id,
+      programa_nome: programaNome,
+      estudio,
+      tipo_programa: tipoPrograma,
+      data_programa: format(selectedDate, "yyyy-MM-dd"),
+      horario,
+      titulo: roteiroTitulo,
+      subtitulo: roteiroSubtitulo,
+      conteudo_html: editorRef.current?.innerHTML || roteiroTexto,
+      participantes: JSON.stringify(participantes),
+      status,
+    };
+
+    let error;
+    if (editingRoteiroId) {
+      ({ error } = await supabase.from("roteiros").update({ ...payload, updated_at: new Date().toISOString() }).eq("id", editingRoteiroId));
+    } else {
+      ({ error } = await supabase.from("roteiros").insert(payload));
+    }
+
+    setSavingRoteiro(false);
+    if (error) {
+      toast.error("Erro ao salvar roteiro");
+    } else {
+      toast.success(editingRoteiroId ? "Roteiro atualizado!" : "Roteiro salvo!");
+      setEditingRoteiroId(null);
+      fetchHistorico();
+    }
+  };
+
+  const excluirRoteiro = async (id: string) => {
+    const { error } = await supabase.from("roteiros").delete().eq("id", id);
+    if (error) {
+      toast.error("Erro ao excluir roteiro");
+    } else {
+      toast.success("Roteiro excluído");
+      fetchHistorico();
+    }
+  };
+
+  const editarRoteiro = (r: any) => {
+    setEstudio(r.estudio || "");
+    setTipoPrograma(r.tipo_programa || "");
+    setProgramaNome(r.programa_nome || "");
+    setSelectedDate(new Date(r.data_programa));
+    setHorario(r.horario || "");
+    setRoteiroTitulo(r.titulo || "");
+    setRoteiroSubtitulo(r.subtitulo || "");
+    setRoteiroTexto(r.conteudo_html || "");
+    try {
+      setParticipantes(typeof r.participantes === "string" ? JSON.parse(r.participantes) : r.participantes || []);
+    } catch { setParticipantes([]); }
+    setEditingRoteiroId(r.id);
+    setShowRoteiro(true);
+    setTimeout(() => {
+      if (editorRef.current) editorRef.current.innerHTML = r.conteudo_html || "";
+    }, 150);
+  };
 
   const handleEstudioChange = (val: string) => {
     setEstudio(val);
@@ -651,14 +736,72 @@ export default function RoteiroPrograma() {
             </button>
           </div>
 
-          {/* Exportar Roteiro */}
-          <button
-            className="w-full py-3 rounded-xl text-sm font-bold transition-all hover:opacity-90 flex items-center justify-center gap-2"
-            style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#ffffff", boxShadow: "0 4px 16px rgba(38,143,250,0.3)" }}
-          >
-            <Download size={14} />
-            exportar roteiro
-          </button>
+          {/* Salvar + Exportar */}
+          <div className="flex gap-3">
+            <button
+              onClick={salvarRoteiro}
+              disabled={savingRoteiro}
+              className="flex-1 py-3 rounded-xl text-sm font-bold transition-all hover:opacity-90 flex items-center justify-center gap-2"
+              style={{ background: "#0d0446", color: "#ffffff" }}
+            >
+              <Save size={14} />
+              {savingRoteiro ? "salvando..." : editingRoteiroId ? "atualizar roteiro" : "salvar roteiro"}
+            </button>
+            <button
+              className="flex-1 py-3 rounded-xl text-sm font-bold transition-all hover:opacity-90 flex items-center justify-center gap-2"
+              style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#ffffff", boxShadow: "0 4px 16px rgba(38,143,250,0.3)" }}
+            >
+              <Download size={14} />
+              exportar roteiro
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Histórico de Roteiros */}
+      {historico.length > 0 && (
+        <div className="rounded-xl p-4 mt-4" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.08)" }}>
+          <div className="flex items-center gap-2 mb-3">
+            <History size={14} style={{ color: "#268ffa" }} />
+            <p className="text-xs font-bold" style={{ color: "#0d0446" }}>Últimos roteiros</p>
+          </div>
+          <div className="space-y-2">
+            {historico.map(r => {
+              const dataFormatada = format(new Date(r.data_programa), "dd/MM/yyyy");
+              const isAgd = r.status === "agendado";
+              return (
+                <div key={r.id} className="flex items-center justify-between px-3 py-2.5 rounded-lg" style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "1px solid rgba(13,4,70,0.06)" }}>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="text-xs font-semibold truncate" style={{ color: "#0d0446" }}>
+                        {r.programa_nome || "Sem programa"}
+                      </p>
+                      <span
+                        className="text-[10px] px-2 py-0.5 rounded-full font-semibold"
+                        style={{
+                          backgroundColor: isAgd ? "rgba(38,143,250,0.1)" : "rgba(13,4,70,0.06)",
+                          color: isAgd ? "#268ffa" : "rgba(13,4,70,0.5)",
+                        }}
+                      >
+                        {isAgd ? "agendado" : r.status}
+                      </span>
+                    </div>
+                    <p className="text-[10px] mt-0.5" style={{ color: "rgba(13,4,70,0.45)" }}>
+                      {dataFormatada} {r.horario ? `· ${r.horario}` : ""} {r.titulo ? `· ${r.titulo}` : ""}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1 ml-2">
+                    <button onClick={() => editarRoteiro(r)} className="h-7 w-7 flex items-center justify-center rounded-lg hover:opacity-70 transition" style={{ backgroundColor: "rgba(38,143,250,0.08)" }} title="Editar">
+                      <Pencil size={12} style={{ color: "#268ffa" }} />
+                    </button>
+                    <button onClick={() => excluirRoteiro(r.id)} className="h-7 w-7 flex items-center justify-center rounded-lg hover:opacity-70 transition" style={{ backgroundColor: "rgba(220,38,38,0.08)" }} title="Excluir">
+                      <Trash2 size={12} style={{ color: "#dc2626" }} />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
 

@@ -684,6 +684,57 @@ export type Database = {
         }
         Relationships: []
       }
+      roteiros: {
+        Row: {
+          conteudo_html: string
+          created_at: string
+          data_programa: string
+          estudio: string
+          horario: string
+          id: string
+          participantes: Json
+          programa_nome: string
+          status: string
+          subtitulo: string
+          tipo_programa: string
+          titulo: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          conteudo_html?: string
+          created_at?: string
+          data_programa?: string
+          estudio?: string
+          horario?: string
+          id?: string
+          participantes?: Json
+          programa_nome?: string
+          status?: string
+          subtitulo?: string
+          tipo_programa?: string
+          titulo?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          conteudo_html?: string
+          created_at?: string
+          data_programa?: string
+          estudio?: string
+          horario?: string
+          id?: string
+          participantes?: Json
+          programa_nome?: string
+          status?: string
+          subtitulo?: string
+          tipo_programa?: string
+          titulo?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       selected_cotacoes: {
         Row: {
           change: string
