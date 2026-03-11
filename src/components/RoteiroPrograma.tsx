@@ -62,6 +62,11 @@ export default function RoteiroPrograma() {
   const nameInputRef = useRef<HTMLInputElement>(null);
   const isAgendado = selectedDate > new Date(new Date().toDateString());
 
+  // Histórico de roteiros
+  const [historico, setHistorico] = useState<any[]>([]);
+  const [editingRoteiroId, setEditingRoteiroId] = useState<string | null>(null);
+  const [savingRoteiro, setSavingRoteiro] = useState(false);
+
   const categorias = ["Apresentador(a)", "Jornalista", "Convidado(a)"];
 
   // Filter suggestions based on typed name
