@@ -1419,7 +1419,7 @@ function TpController({ user, onBack }: { user: any; onBack: () => void }) {
           </button>
         </div>
 
-        <div style={{ width: "1px", height: "24px", background: "rgba(255,255,255,0.1)" }} />
+        <div className="tp-divider" style={{ width: "1px", height: "24px", background: "rgba(255,255,255,0.1)" }} />
 
         {/* Flip */}
         <button onClick={() => sendCommand("flipH")} title="Inverter H"
