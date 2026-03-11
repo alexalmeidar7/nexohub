@@ -382,7 +382,7 @@ export default function RoteiroPrograma() {
                     <div className="flex-1">
                       <p className="text-[10px] font-bold mb-1" style={{ color: "#268ffa" }}>Participante {idx + 1}</p>
                       <p className="text-xs font-bold" style={{ color: "#0d0446" }}>{p.nome}</p>
-                      <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.5)" }}>{p.cargo}</p>
+                      <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.5)" }}>{p.categoria}{p.cargo ? ` · ${p.cargo}` : ""}</p>
                       {p.instagram && <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.4)" }}>@{p.instagram.replace("@", "")}</p>}
                     </div>
                     <button onClick={() => removeParticipante(idx)} className="hover:opacity-70 mt-1">
