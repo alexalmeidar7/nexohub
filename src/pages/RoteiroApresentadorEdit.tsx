@@ -175,7 +175,7 @@ export default function RoteiroApresentadorEdit() {
     } else {
       setSavedMsg(true);
       setTimeout(() => setSavedMsg(false), 3000);
-      fetchHistorico(roteiro.user_id);
+      fetchHistorico(roteiro.user_id, roteiro.id);
     }
   };
 
