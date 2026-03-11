@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { Settings, Minus, Plus, Play, Pause, RotateCcw, Type, FileText, Maximize, FlipHorizontal2, FlipVertical2, MessageSquare, LogOut } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
-import { Roteiro, extractRoteiroHtml, controlBtnStyle, tabBtnStyle } from "./tp-utils";
+import { Roteiro, extractRoteiroHtml, tpControlBtnClasses, tpControlBtnActiveClasses } from "./tp-utils";
 
 interface TpScreenProps {
   user: User | null;
@@ -44,7 +44,6 @@ export default function TpScreen({ user, onBack }: TpScreenProps) {
   const animRef = useRef<number>();
   const timerRef = useRef<ReturnType<typeof setInterval>>();
 
-  // Process next message in queue
   function processQueue() {
     if (isShowingRef.current || msgQueueRef.current.length === 0) return;
     const msg = msgQueueRef.current.shift()!;
@@ -87,7 +86,6 @@ export default function TpScreen({ user, onBack }: TpScreenProps) {
     processQueue();
   }
 
-  // Realtime message listener (no localStorage fallback)
   useEffect(() => {
     if (!user) return;
     const channel = supabase
@@ -114,7 +112,6 @@ export default function TpScreen({ user, onBack }: TpScreenProps) {
     setHasUnread(false);
   }
 
-  // Load roteiros
   useEffect(() => {
     if (!user) return;
     supabase
@@ -126,7 +123,6 @@ export default function TpScreen({ user, onBack }: TpScreenProps) {
       .then(({ data }) => { if (data) setRoteiros(data); });
   }, [user]);
 
-  // Clock
   useEffect(() => {
     const tick = () => {
       const now = new Date();
@@ -137,7 +133,6 @@ export default function TpScreen({ user, onBack }: TpScreenProps) {
     return () => clearInterval(id);
   }, []);
 
-  // Timer
   useEffect(() => {
     if (scrolling) {
       timerRef.current = setInterval(() => setTimerSeconds((s) => s + 1), 1000);
@@ -153,7 +148,6 @@ export default function TpScreen({ user, onBack }: TpScreenProps) {
     return `${m}:${s}`;
   })();
 
-  // Scroll animation with deceleration
   const speedMultiplierRef = useRef(1);
   const animate = useCallback(() => {
     if (scrolling && textRef.current) {
@@ -179,7 +173,6 @@ export default function TpScreen({ user, onBack }: TpScreenProps) {
     return () => { if (animRef.current) cancelAnimationFrame(animRef.current); };
   }, [animate]);
 
-  // Keyboard
   useEffect(() => {
     const STEP = 80;
     const handleKey = (e: KeyboardEvent) => {
@@ -208,7 +201,6 @@ export default function TpScreen({ user, onBack }: TpScreenProps) {
     return () => window.removeEventListener("keydown", handleKey);
   }, [showSetup]);
 
-  // Mouse wheel
   useEffect(() => {
     const el = containerRef.current?.querySelector("[data-tp-display]") as HTMLElement | null;
     if (!el) return;
@@ -282,7 +274,6 @@ export default function TpScreen({ user, onBack }: TpScreenProps) {
     return () => { supabase.removeChannel(ch); stateChannelRef.current = null; };
   }, [user]);
 
-  // Smart broadcast — only send when state actually changes + slow keepalive
   const lastBroadcastRef = useRef<string>("");
 
   function buildStatePayload() {
@@ -303,22 +294,19 @@ export default function TpScreen({ user, onBack }: TpScreenProps) {
     stateChannelRef.current.send({ type: "broadcast", event: "tp-state", payload });
   }
 
-  // Broadcast on any state change
   useEffect(() => { broadcastState(); }, [scrolling, speed, fontSize, flipH, flipV, displayText, isHtmlContent, timerSeconds]);
 
-  // When scrolling, broadcast scroll position at ~10fps instead of 60fps
   useEffect(() => {
     if (!scrolling) return;
     const id = setInterval(() => {
       if (!stateChannelRef.current) return;
       const payload = buildStatePayload();
-      lastBroadcastRef.current = "";  // force send
+      lastBroadcastRef.current = "";
       stateChannelRef.current.send({ type: "broadcast", event: "tp-state", payload });
     }, 100);
     return () => clearInterval(id);
   }, [scrolling, speed, fontSize, flipH, flipV, isHtmlContent]);
 
-  // Slow keepalive (every 2s) so controller knows TP is alive
   useEffect(() => {
     if (!stateChannelRef.current) return;
     const id = setInterval(() => {
@@ -363,97 +351,56 @@ export default function TpScreen({ user, onBack }: TpScreenProps) {
   }
 
   return (
-    <div ref={containerRef} className="tp-screen-grid" style={{ display: "grid", gridTemplateColumns: "90px 1fr", height: "100vh", overflow: "hidden", fontFamily: "'Inter', 'Segoe UI', sans-serif", backgroundColor: "#000" }}>
+    <div ref={containerRef} className="tp-screen-grid overflow-hidden font-['Inter','Segoe_UI',sans-serif] bg-black" style={{ display: "grid", gridTemplateColumns: "90px 1fr", height: "100vh" }}>
 
       {/* Sidebar */}
-      <div className="tp-sidebar" style={{
-        background: "linear-gradient(180deg, #080830 0%, #0d0446 100%)",
-        display: "flex", flexDirection: "column", justifyContent: "space-between", alignItems: "center",
-        padding: "24px 0", borderRight: "1px solid rgba(74,144,226,0.15)",
-      }}>
-        <div className="tp-sidebar-top" style={{ textAlign: "center" }}>
-          <div style={{ fontSize: "9px", textTransform: "uppercase", fontWeight: 700, letterSpacing: "2px", color: "rgba(255,255,255,0.4)", lineHeight: 1.4 }}>
+      <div className="tp-sidebar bg-gradient-to-b from-[hsl(240,75%,7%)] to-tp-surface flex flex-col justify-between items-center py-6 border-r border-tp-accent/15">
+        <div className="tp-sidebar-top text-center">
+          <div className="text-[9px] uppercase font-bold tracking-[2px] text-tp-muted leading-tight">
             TELE<br />PROMPTER
           </div>
-          <div style={{ fontSize: "24px", fontWeight: 700, color: "#4a90e2", marginTop: "8px", fontVariantNumeric: "tabular-nums" }}>
+          <div className="text-2xl font-bold text-tp-accent mt-2 tabular-nums">
             {clock}
           </div>
-          <div style={{ width: "32px", height: "2px", background: "linear-gradient(90deg, transparent, #4a90e2, transparent)", margin: "12px auto" }} />
-          <button onClick={handleMsgIconClick} title="Mensagens" style={{
-            background: "none", border: "none", cursor: "pointer", position: "relative",
-            marginTop: "4px", padding: "4px",
-          }}>
-            <MessageSquare size={20} color="rgba(255,255,255,0.5)" />
+          <div className="w-8 h-0.5 bg-gradient-to-r from-transparent via-tp-accent to-transparent mx-auto my-3" />
+          <button onClick={handleMsgIconClick} title="Mensagens" className="bg-transparent border-none cursor-pointer relative mt-1 p-1">
+            <MessageSquare size={20} className="text-tp-muted-strong" />
             {hasUnread && (
-              <span style={{
-                position: "absolute", top: "2px", right: "2px", width: "8px", height: "8px",
-                borderRadius: "50%", backgroundColor: "#ef4444",
-                boxShadow: "0 0 6px rgba(239,68,68,0.6)",
-              }} />
+              <span className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-destructive shadow-[0_0_6px_hsl(var(--destructive)/0.6)]" />
             )}
           </button>
         </div>
 
-        <div className="tp-sidebar-mid" style={{ display: "flex", flexDirection: "column", gap: "16px", alignItems: "center" }}>
-          <button onClick={() => setShowSetup(!showSetup)} title="Configurações" style={{
-            background: showSetup ? "rgba(74,144,226,0.2)" : "rgba(255,255,255,0.05)",
-            border: "1px solid rgba(74,144,226,0.3)", borderRadius: "12px",
-            width: "44px", height: "44px", cursor: "pointer",
-            display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.2s",
-          }}>
-            <Settings size={18} color="#4a90e2" />
+        <div className="tp-sidebar-mid flex flex-col gap-4 items-center">
+          <button onClick={() => setShowSetup(!showSetup)} title="Configurações" className={`rounded-xl w-11 h-11 cursor-pointer flex items-center justify-center transition-all border ${showSetup ? "bg-tp-accent/20 border-tp-border" : "bg-tp-foreground/5 border-tp-border"}`}>
+            <Settings size={18} className="text-tp-accent" />
           </button>
-          <button onClick={handleReset} title="Reiniciar" style={{
-            background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)",
-            borderRadius: "12px", width: "44px", height: "44px", cursor: "pointer",
-            display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.2s",
-          }}>
-            <RotateCcw size={16} color="rgba(255,255,255,0.5)" />
+          <button onClick={handleReset} title="Reiniciar" className="bg-tp-foreground/5 border border-tp-border-subtle rounded-xl w-11 h-11 cursor-pointer flex items-center justify-center transition-all">
+            <RotateCcw size={16} className="text-tp-muted-strong" />
           </button>
-          <button onClick={onBack} title="Voltar ao menu" style={{
-            background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)",
-            borderRadius: "12px", width: "44px", height: "44px", cursor: "pointer",
-            display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.2s",
-          }}>
-            <LogOut size={16} color="rgba(255,255,255,0.5)" />
+          <button onClick={onBack} title="Voltar ao menu" className="bg-tp-foreground/5 border border-tp-border-subtle rounded-xl w-11 h-11 cursor-pointer flex items-center justify-center transition-all">
+            <LogOut size={16} className="text-tp-muted-strong" />
           </button>
         </div>
 
-        <div className="tp-sidebar-bottom" style={{ textAlign: "center" }}>
-          <div style={{ fontSize: "8px", textTransform: "uppercase", letterSpacing: "1.5px", color: "rgba(255,255,255,0.3)", lineHeight: 1.3, fontWeight: 600 }}>
+        <div className="tp-sidebar-bottom text-center">
+          <div className="text-[8px] uppercase tracking-[1.5px] text-tp-foreground/30 leading-tight font-semibold">
             tempo de<br />programa
           </div>
-          <div style={{
-            fontSize: "22px", fontWeight: 700, color: scrolling ? "#4a90e2" : "rgba(255,255,255,0.7)",
-            marginTop: "4px", fontVariantNumeric: "tabular-nums", transition: "color 0.3s",
-          }}>
+          <div className={`text-[22px] font-bold mt-1 tabular-nums transition-colors ${scrolling ? "text-tp-accent" : "text-tp-foreground/70"}`}>
             {timerDisplay}
           </div>
         </div>
       </div>
 
       {/* Display Area */}
-      <div data-tp-display style={{ position: "relative", backgroundColor: "#020210", overflow: "hidden" }}>
-        <div style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 5, background: "radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.6) 100%)" }} />
+      <div data-tp-display className="relative bg-tp-display overflow-hidden">
+        <div className="absolute inset-0 pointer-events-none z-[5]" style={{ background: "radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.6) 100%)" }} />
 
         {/* Remote control indicator */}
-        <div style={{
-          position: "absolute", top: "12px", left: "12px", zIndex: 20,
-          display: "flex", alignItems: "center", gap: "6px",
-          background: remoteActive ? "rgba(34,197,94,0.15)" : "rgba(255,255,255,0.05)",
-          border: `1px solid ${remoteActive ? "rgba(34,197,94,0.5)" : "rgba(255,255,255,0.1)"}`,
-          borderRadius: "8px", padding: "5px 10px", transition: "all 0.3s ease",
-        }}>
-          <div style={{
-            width: "7px", height: "7px", borderRadius: "50%",
-            backgroundColor: remoteActive ? "#22c55e" : "rgba(255,255,255,0.2)",
-            boxShadow: remoteActive ? "0 0 8px rgba(34,197,94,0.6)" : "none",
-            animation: remoteActive ? "tp-remote-blink 1s ease-in-out infinite" : "none",
-          }} />
-          <span style={{
-            fontSize: "9px", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase",
-            color: remoteActive ? "#22c55e" : "rgba(255,255,255,0.2)", transition: "color 0.3s",
-          }}>
+        <div className={`absolute top-3 left-3 z-20 flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 transition-all border ${remoteActive ? "bg-green-500/15 border-green-500/50" : "bg-tp-foreground/5 border-tp-border-subtle"}`}>
+          <div className={`w-[7px] h-[7px] rounded-full ${remoteActive ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)] animate-[tp-remote-blink_1s_ease-in-out_infinite]" : "bg-tp-foreground/20"}`} />
+          <span className={`text-[9px] font-bold tracking-wider uppercase transition-colors ${remoteActive ? "text-green-500" : "text-tp-foreground/20"}`}>
             Controle Remoto {remoteActive ? "Ativo" : "Inativo"}
           </span>
         </div>
@@ -463,33 +410,19 @@ export default function TpScreen({ user, onBack }: TpScreenProps) {
 
         {/* Highlight Banner */}
         {incomingMsg && (
-          <div style={{
-            position: "absolute", top: "24px", left: "50%", transform: "translateX(-50%)",
-            zIndex: 50, transition: "opacity 0.3s, transform 0.3s",
-            opacity: msgVisible ? 1 : 0, pointerEvents: msgVisible ? "auto" : "none",
-          }}>
-            <div style={{
-              background: "rgba(13,4,70,0.92)", backdropFilter: "blur(20px)",
-              borderRadius: "14px", padding: "16px 24px 10px", minWidth: "300px", maxWidth: "500px",
-              boxShadow: "0 12px 40px rgba(0,0,0,0.5)", overflow: "hidden", position: "relative",
-              animation: msgVisible ? "tp-msg-border-pulse 1s ease-in-out infinite" : "none",
-              border: "2px solid rgba(255,255,255,0.8)",
-            }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
-                <MessageSquare size={14} color="#4a90e2" />
-                <span style={{ color: "#4a90e2", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px" }}>
+          <div className="absolute top-6 left-1/2 -translate-x-1/2 z-50 transition-all duration-300" style={{ opacity: msgVisible ? 1 : 0, pointerEvents: msgVisible ? "auto" : "none" }}>
+            <div className="bg-tp-surface/[0.92] backdrop-blur-[20px] rounded-[14px] px-6 pt-4 pb-2.5 min-w-[300px] max-w-[500px] shadow-[0_12px_40px_hsl(var(--tp-shadow))] overflow-hidden relative border-2 border-tp-foreground/80" style={{ animation: msgVisible ? "tp-msg-border-pulse 1s ease-in-out infinite" : "none" }}>
+              <div className="flex items-center gap-2 mb-1.5">
+                <MessageSquare size={14} className="text-tp-accent" />
+                <span className="text-tp-accent text-[11px] font-bold uppercase tracking-wider">
                   {incomingMsg.subject || "Mensagem"}
                 </span>
               </div>
-              <p style={{ color: "#fff", fontSize: "24px", fontWeight: 700, margin: 0, lineHeight: 1.4 }}>
+              <p className="text-tp-foreground text-2xl font-bold m-0 leading-relaxed">
                 {incomingMsg.text}
               </p>
-              <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "3px", background: "rgba(255,255,255,0.1)" }}>
-                <div style={{
-                  height: "100%", background: "linear-gradient(90deg, #4a90e2, #2dbff4)",
-                  borderRadius: "0 2px 2px 0",
-                  animation: msgVisible ? "tp-msg-shrink 5s linear forwards" : "none",
-                }} />
+              <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-tp-foreground/10">
+                <div className="h-full bg-gradient-to-r from-tp-accent to-sky-400 rounded-r-sm" style={{ animation: msgVisible ? "tp-msg-shrink 5s linear forwards" : "none" }} />
               </div>
             </div>
           </div>
@@ -497,34 +430,23 @@ export default function TpScreen({ user, onBack }: TpScreenProps) {
 
         {/* Message Log */}
         {messageLog.length > 0 && (
-          <div style={{
-            position: "absolute", bottom: "16px", right: "16px", zIndex: 40,
-            maxWidth: "360px", maxHeight: "40vh", overflowY: "auto",
-            display: "flex", flexDirection: "column", gap: "6px", scrollbarWidth: "none",
-          }}>
+          <div className="absolute bottom-4 right-4 z-40 max-w-[360px] max-h-[40vh] overflow-y-auto flex flex-col gap-1.5" style={{ scrollbarWidth: "none" }}>
             {messageLog.slice(-5).map((m, i) => {
               const isLatest = i === messageLog.slice(-5).length - 1;
               const age = Date.now() - m.ts;
               const fading = age > 30000;
               return (
-                <div key={m.ts + i} style={{
-                  background: isLatest ? "rgba(13,4,70,0.85)" : "rgba(13,4,70,0.5)",
-                  backdropFilter: "blur(12px)", borderRadius: "10px", padding: "8px 14px",
-                  border: isLatest ? "1px solid rgba(74,144,226,0.5)" : "1px solid rgba(255,255,255,0.08)",
+                <div key={m.ts + i} className={`backdrop-blur-[12px] rounded-[10px] px-3.5 py-2 ${isLatest ? "bg-tp-surface/85 border border-tp-accent/50" : "bg-tp-surface/50 border border-tp-foreground/[0.08]"}`} style={{
                   opacity: fading ? 0.5 : 1, transition: "opacity 0.5s",
                   animation: isLatest ? "tp-msg-log-in 0.3s ease-out" : "none",
                 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "2px" }}>
-                    <MessageSquare size={10} color={isLatest ? "#4a90e2" : "rgba(255,255,255,0.3)"} />
-                    <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.4)", fontWeight: 600 }}>
+                  <div className="flex items-center gap-1.5 mb-0.5">
+                    <MessageSquare size={10} className={isLatest ? "text-tp-accent" : "text-tp-foreground/30"} />
+                    <span className="text-[9px] text-tp-muted font-semibold">
                       {new Date(m.ts).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
                     </span>
                   </div>
-                  <p style={{
-                    color: isLatest ? "#fff" : "rgba(255,255,255,0.7)",
-                    fontSize: isLatest ? "16px" : "13px", fontWeight: isLatest ? 700 : 500,
-                    margin: 0, lineHeight: 1.3,
-                  }}>
+                  <p className={`m-0 leading-tight ${isLatest ? "text-tp-foreground text-base font-bold" : "text-tp-foreground/70 text-[13px] font-medium"}`}>
                     {m.text}
                   </p>
                 </div>
@@ -536,171 +458,128 @@ export default function TpScreen({ user, onBack }: TpScreenProps) {
         <style>{`
           @keyframes tp-msg-shrink { from { width: 100%; } to { width: 0%; } }
           @keyframes tp-msg-border-pulse {
-            0%, 100% { border-color: rgba(255,255,255,0.9); box-shadow: 0 12px 40px rgba(0,0,0,0.5), 0 0 15px rgba(255,255,255,0.2); }
-            50% { border-color: rgba(255,255,255,0.2); box-shadow: 0 12px 40px rgba(0,0,0,0.5), 0 0 5px rgba(255,255,255,0.05); }
+            0%, 100% { border-color: hsl(var(--tp-foreground) / 0.9); box-shadow: 0 12px 40px hsl(var(--tp-shadow)), 0 0 15px hsl(var(--tp-foreground) / 0.2); }
+            50% { border-color: hsl(var(--tp-foreground) / 0.2); box-shadow: 0 12px 40px hsl(var(--tp-shadow)), 0 0 5px hsl(var(--tp-foreground) / 0.05); }
           }
           @keyframes tp-msg-log-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         `}</style>
 
         {/* Fade overlays */}
-        <div style={{
-          position: "absolute", top: 0, left: 0, right: 0, height: "25%",
-          background: "linear-gradient(to bottom, #020210 0%, rgba(2,2,16,0.85) 40%, rgba(2,2,16,0) 100%)",
-          pointerEvents: "none", zIndex: 8,
-        }} />
-        <div style={{
-          position: "absolute", bottom: 0, left: 0, right: 0, height: "15%",
-          background: "linear-gradient(to top, #020210 0%, rgba(2,2,16,0) 100%)",
-          pointerEvents: "none", zIndex: 8,
-        }} />
+        <div className="absolute top-0 left-0 right-0 h-1/4 bg-gradient-to-b from-tp-display via-tp-display/85 to-transparent pointer-events-none z-[8]" />
+        <div className="absolute bottom-0 left-0 right-0 h-[15%] bg-gradient-to-t from-tp-display to-transparent pointer-events-none z-[8]" />
 
         {/* Eyeline markers */}
-        <div style={{ position: "absolute", left: 0, top: "50%", transform: "translateY(-50%)", zIndex: 10 }}>
-          <div style={{ width: 0, height: 0, borderTop: "20px solid transparent", borderBottom: "20px solid transparent", borderLeft: "32px solid #4a90e2", filter: "drop-shadow(0 0 8px rgba(74,144,226,0.5))" }} />
+        <div className="absolute left-0 top-1/2 -translate-y-1/2 z-10">
+          <div className="w-0 h-0 border-t-[20px] border-t-transparent border-b-[20px] border-b-transparent border-l-[32px] border-l-tp-accent drop-shadow-[0_0_8px_hsl(var(--tp-accent)/0.5)]" />
         </div>
-        <div style={{ position: "absolute", right: 0, top: "50%", transform: "translateY(-50%) rotate(180deg)", zIndex: 10 }}>
-          <div style={{ width: 0, height: 0, borderTop: "20px solid transparent", borderBottom: "20px solid transparent", borderLeft: "32px solid #4a90e2", filter: "drop-shadow(0 0 8px rgba(74,144,226,0.5))", opacity: 0.4 }} />
+        <div className="absolute right-0 top-1/2 -translate-y-1/2 rotate-180 z-10">
+          <div className="w-0 h-0 border-t-[20px] border-t-transparent border-b-[20px] border-b-transparent border-l-[32px] border-l-tp-accent opacity-40 drop-shadow-[0_0_8px_hsl(var(--tp-accent)/0.5)]" />
         </div>
-        <div style={{ position: "absolute", left: "40px", right: "40px", top: "50%", height: "1px", background: "rgba(74,144,226,0.3)", zIndex: 6 }} />
+        <div className="absolute left-10 right-10 top-1/2 h-px bg-tp-accent/30 z-[6]" />
 
         {/* Text */}
-        <div ref={textRef} style={{
-          width: "75%", margin: "0 auto", fontSize: `${fontSize}px`, lineHeight: 1.5,
-          textAlign: "center", whiteSpace: "pre-wrap", position: "absolute", top: "50%", left: "12.5%",
+        <div ref={textRef} className="absolute text-tp-foreground font-normal" style={{
+          width: "75%", fontSize: `${fontSize}px`, lineHeight: 1.5,
+          textAlign: "center", whiteSpace: "pre-wrap", top: "50%", left: "12.5%",
           transition: scrolling ? "font-size 0.2s" : "top 0.35s cubic-bezier(0.25, 0.1, 0.25, 1), font-size 0.2s",
-          color: "#ffffff", textShadow: "0 2px 20px rgba(0,0,0,0.5)", fontWeight: 400,
+          textShadow: "0 2px 20px rgba(0,0,0,0.5)",
           transform: `${flipH ? "scaleX(-1)" : ""} ${flipV ? "scaleY(-1)" : ""}`.trim() || "none",
         }}>
           {isHtmlContent ? <span dangerouslySetInnerHTML={{ __html: displayText }} /> : displayText}
         </div>
 
         {/* Controls bar */}
-        <div className="tp-controls-bar" style={{
-          position: "absolute", bottom: "24px", left: "50%", transform: "translateX(-50%)",
-          background: "rgba(11,11,48,0.9)", backdropFilter: "blur(20px)",
-          padding: "10px 24px", borderRadius: "20px",
-          display: "flex", alignItems: "center", gap: "12px",
-          border: "1px solid rgba(74,144,226,0.2)", boxShadow: "0 8px 32px rgba(0,0,0,0.5)", zIndex: 20,
-        }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-            <button onClick={() => setFontSize((s) => Math.max(20, s - 5))} style={{
-              background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)",
-              borderRadius: "8px", padding: "6px 10px", cursor: "pointer",
-              display: "flex", alignItems: "center", gap: 3, color: "#fff", fontSize: "11px", fontWeight: 700,
-            }}>
+        <div className="tp-controls-bar absolute bottom-6 left-1/2 -translate-x-1/2 bg-tp-control backdrop-blur-[20px] px-6 py-2.5 rounded-[20px] flex items-center gap-3 border border-tp-accent/20 shadow-[0_8px_32px_hsl(var(--tp-shadow))] z-20">
+          <div className="flex items-center gap-1">
+            <button onClick={() => setFontSize((s) => Math.max(20, s - 5))} className={`${tpControlBtnClasses} px-2.5 py-1.5 text-[11px] font-bold gap-0.5`}>
               <Minus size={10} /> A
             </button>
-            <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.3)", minWidth: "30px", textAlign: "center" }}>{fontSize}px</span>
-            <button onClick={() => setFontSize((s) => Math.min(120, s + 5))} style={{
-              background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)",
-              borderRadius: "8px", padding: "6px 10px", cursor: "pointer",
-              display: "flex", alignItems: "center", gap: 3, color: "#fff", fontSize: "11px", fontWeight: 700,
-            }}>
+            <span className="text-[10px] text-tp-foreground/30 min-w-[30px] text-center">{fontSize}px</span>
+            <button onClick={() => setFontSize((s) => Math.min(120, s + 5))} className={`${tpControlBtnClasses} px-2.5 py-1.5 text-[11px] font-bold gap-0.5`}>
               <Plus size={10} /> A
             </button>
           </div>
-          <div className="tp-divider" style={{ width: "1px", height: "24px", background: "rgba(255,255,255,0.1)" }} />
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <Type size={12} color="rgba(255,255,255,0.3)" />
+          <div className="tp-divider w-px h-6 bg-tp-border-subtle" />
+          <div className="flex items-center gap-2">
+            <Type size={12} className="text-tp-foreground/30" />
             <input type="range" min={0} max={10} value={speed} onChange={(e) => setSpeed(Number(e.target.value))}
-              className="tp-speed-slider" style={{ width: "120px", accentColor: "#4a90e2", height: "4px" }} />
-            <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.4)", minWidth: "14px" }}>{speed}</span>
+              className="tp-speed-slider w-[120px] h-1 accent-tp-accent" />
+            <span className="text-[10px] text-tp-muted min-w-[14px]">{speed}</span>
           </div>
-          <div className="tp-divider" style={{ width: "1px", height: "24px", background: "rgba(255,255,255,0.1)" }} />
-          <button className="tp-play-btn" onClick={() => setScrolling(!scrolling)} style={{
-            background: scrolling ? "linear-gradient(135deg, #e24a4a, #c0392b)" : "linear-gradient(135deg, #4a90e2, #2d6dc0)",
-            border: "none", borderRadius: "50%", width: "44px", height: "44px", cursor: "pointer",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            boxShadow: scrolling ? "0 4px 16px rgba(226,74,74,0.4)" : "0 4px 16px rgba(74,144,226,0.4)",
-            transition: "all 0.3s",
-          }}>
-            {scrolling ? <Pause size={18} color="#fff" /> : <Play size={18} color="#fff" style={{ marginLeft: "2px" }} />}
+          <div className="tp-divider w-px h-6 bg-tp-border-subtle" />
+          <button className={`tp-play-btn border-none rounded-full w-11 h-11 cursor-pointer flex items-center justify-center transition-all ${
+            scrolling
+              ? "bg-gradient-to-br from-red-500 to-red-700 shadow-[0_4px_16px_rgba(226,74,74,0.4)]"
+              : "bg-gradient-to-br from-tp-accent to-tp-accent-hover shadow-[0_4px_16px_hsl(var(--tp-accent)/0.4)]"
+          }`} onClick={() => setScrolling(!scrolling)}>
+            {scrolling ? <Pause size={18} className="text-white" /> : <Play size={18} className="text-white ml-0.5" />}
           </button>
-          <div className="tp-divider" style={{ width: "1px", height: "24px", background: "rgba(255,255,255,0.1)" }} />
+          <div className="tp-divider w-px h-6 bg-tp-border-subtle" />
           <button onClick={() => setFlipH((f) => !f)} title="Inverter horizontalmente"
-            style={{ ...controlBtnStyle, background: flipH ? "rgba(74,144,226,0.2)" : controlBtnStyle.background }}>
-            <FlipHorizontal2 size={14} color={flipH ? "#4a90e2" : "rgba(255,255,255,0.5)"} />
+            className={`${tpControlBtnClasses} ${flipH ? tpControlBtnActiveClasses : ""}`}>
+            <FlipHorizontal2 size={14} className={flipH ? "text-tp-accent" : "text-tp-muted-strong"} />
           </button>
           <button onClick={() => setFlipV((f) => !f)} title="Inverter verticalmente"
-            style={{ ...controlBtnStyle, background: flipV ? "rgba(74,144,226,0.2)" : controlBtnStyle.background }}>
-            <FlipVertical2 size={14} color={flipV ? "#4a90e2" : "rgba(255,255,255,0.5)"} />
+            className={`${tpControlBtnClasses} ${flipV ? tpControlBtnActiveClasses : ""}`}>
+            <FlipVertical2 size={14} className={flipV ? "text-tp-accent" : "text-tp-muted-strong"} />
           </button>
-          <button onClick={toggleFullscreen} title="Tela cheia" style={controlBtnStyle}>
-            <Maximize size={14} color="rgba(255,255,255,0.5)" />
+          <button onClick={toggleFullscreen} title="Tela cheia" className={tpControlBtnClasses}>
+            <Maximize size={14} className="text-tp-muted-strong" />
           </button>
         </div>
 
         {/* Setup Modal */}
         {showSetup && (
           <>
-            <div onClick={() => setShowSetup(false)} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 90 }} />
-            <div className="tp-setup-modal" style={{
-              position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)",
-              width: "min(650px, 85%)", maxHeight: "75vh",
-              background: "linear-gradient(135deg, #0d0446, #1a0a6e)",
-              border: "1px solid rgba(74,144,226,0.3)",
-              zIndex: 100, padding: "28px", borderRadius: "16px",
-              display: "flex", flexDirection: "column",
-              boxShadow: "0 24px 64px rgba(0,0,0,0.6)", overflow: "hidden",
-            }}>
-              <h3 style={{ margin: "0 0 4px", color: "#fff", fontSize: "16px", fontWeight: 700 }}>
+            <div onClick={() => setShowSetup(false)} className="absolute inset-0 bg-black/60 z-[90]" />
+            <div className="tp-setup-modal absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 max-h-[75vh] bg-gradient-to-br from-tp-surface to-tp-surface-light border border-tp-border z-[100] p-7 rounded-2xl flex flex-col shadow-[0_24px_64px_hsl(var(--tp-shadow))] overflow-hidden" style={{ width: "min(650px, 85%)" }}>
+              <h3 className="m-0 mb-1 text-tp-foreground text-base font-bold">
                 Carregar Texto no Teleprompter
               </h3>
-              <p style={{ margin: "0 0 16px", color: "rgba(255,255,255,0.4)", fontSize: "12px" }}>
+              <p className="m-0 mb-4 text-tp-muted text-xs">
                 Selecione um roteiro salvo ou cole um texto manualmente
               </p>
 
-              <div style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
-                <button onClick={() => setTab("roteiros")} style={tabBtnStyle(tab === "roteiros")}>
-                  <FileText size={12} style={{ display: "inline", marginRight: "6px", verticalAlign: "-2px" }} />
+              <div className="flex gap-2 mb-4">
+                <button onClick={() => setTab("roteiros")} className={`rounded-lg px-4 py-2 cursor-pointer text-xs font-semibold transition-all border ${tab === "roteiros" ? "bg-tp-accent/20 border-tp-accent/40 text-tp-accent" : "bg-transparent border-tp-border-subtle text-tp-muted-strong"}`}>
+                  <FileText size={12} className="inline mr-1.5 align-[-2px]" />
                   Roteiros Salvos
                 </button>
-                <button onClick={() => setTab("manual")} style={tabBtnStyle(tab === "manual")}>
+                <button onClick={() => setTab("manual")} className={`rounded-lg px-4 py-2 cursor-pointer text-xs font-semibold transition-all border ${tab === "manual" ? "bg-tp-accent/20 border-tp-accent/40 text-tp-accent" : "bg-transparent border-tp-border-subtle text-tp-muted-strong"}`}>
                   Texto Manual
                 </button>
               </div>
 
               {tab === "roteiros" ? (
-                <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
+                <div className="flex-1 flex flex-col min-h-0">
                   {!user ? (
-                    <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "13px", textAlign: "center", padding: "40px 0" }}>
+                    <p className="text-tp-muted-strong text-[13px] text-center py-10">
                       Faça login para acessar seus roteiros salvos.
                     </p>
                   ) : roteiros.length === 0 ? (
-                    <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "13px", textAlign: "center", padding: "40px 0" }}>
+                    <p className="text-tp-muted-strong text-[13px] text-center py-10">
                       Nenhum roteiro encontrado.
                     </p>
                   ) : (
                     <>
-                      <div style={{
-                        flex: 1, overflowY: "auto", borderRadius: "10px",
-                        border: "1px solid rgba(255,255,255,0.1)", marginBottom: "12px",
-                      }}>
+                      <div className="flex-1 overflow-y-auto rounded-[10px] border border-tp-border-subtle mb-3">
                         {roteiros.map((r) => {
                           const isSelected = selectedRoteiroId === r.id;
                           return (
                             <button
                               key={r.id}
                               onClick={() => setSelectedRoteiroId(r.id)}
-                              style={{
-                                width: "100%", textAlign: "left", padding: "12px 14px",
-                                background: isSelected ? "rgba(74,144,226,0.15)" : "transparent",
-                                border: "none", borderBottom: "1px solid rgba(255,255,255,0.06)",
-                                cursor: "pointer", transition: "all 0.15s",
-                                display: "flex", flexDirection: "column", gap: "2px",
-                              }}
-                              onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.background = "rgba(255,255,255,0.04)"; }}
-                              onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.background = "transparent"; }}
+                              className={`w-full text-left px-3.5 py-3 border-none cursor-pointer transition-all flex flex-col gap-0.5 border-b border-b-tp-foreground/[0.06] ${isSelected ? "bg-tp-accent/15" : "bg-transparent hover:bg-tp-foreground/[0.04]"}`}
                             >
-                              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                                <span style={{ color: isSelected ? "#4a90e2" : "#fff", fontSize: "13px", fontWeight: 600 }}>
+                              <div className="flex items-center gap-2">
+                                <span className={`text-[13px] font-semibold ${isSelected ? "text-tp-accent" : "text-tp-foreground"}`}>
                                   {r.programa_nome || "Sem programa"}
                                 </span>
                                 {r.numero_roteiro && (
-                                  <span style={{ color: "rgba(255,255,255,0.3)", fontSize: "11px" }}>#{r.numero_roteiro}</span>
+                                  <span className="text-tp-foreground/30 text-[11px]">#{r.numero_roteiro}</span>
                                 )}
                               </div>
-                              <span style={{ color: "rgba(255,255,255,0.35)", fontSize: "11px" }}>
+                              <span className="text-tp-foreground/[0.35] text-[11px]">
                                 {r.data_programa} {r.horario ? `· ${r.horario}` : ""} {r.titulo ? `· ${r.titulo}` : ""}
                               </span>
                             </button>
@@ -710,13 +589,11 @@ export default function TpScreen({ user, onBack }: TpScreenProps) {
                       <button
                         onClick={handleLoadRoteiro}
                         disabled={!selectedRoteiroId}
-                        style={{
-                          background: selectedRoteiroId ? "linear-gradient(135deg, #4a90e2, #2d6dc0)" : "rgba(255,255,255,0.05)",
-                          color: selectedRoteiroId ? "#fff" : "rgba(255,255,255,0.3)",
-                          border: "none", borderRadius: "10px", padding: "10px 24px",
-                          fontWeight: 700, cursor: selectedRoteiroId ? "pointer" : "not-allowed",
-                          fontSize: "13px", alignSelf: "flex-start", transition: "all 0.2s",
-                        }}
+                        className={`rounded-[10px] px-6 py-2.5 font-bold text-[13px] self-start transition-all border-none ${
+                          selectedRoteiroId
+                            ? "bg-gradient-to-br from-tp-accent to-tp-accent-hover text-white cursor-pointer"
+                            : "bg-tp-foreground/5 text-tp-foreground/30 cursor-not-allowed"
+                        }`}
                       >
                         CARREGAR ROTEIRO
                       </button>
@@ -724,30 +601,21 @@ export default function TpScreen({ user, onBack }: TpScreenProps) {
                   )}
                 </div>
               ) : (
-                <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+                <div className="flex-1 flex flex-col">
                   <textarea
                     value={inputText}
                     onChange={(e) => setInputText(e.target.value)}
                     placeholder="Cole o texto aqui..."
-                    style={{
-                      flex: 1, minHeight: "180px", background: "rgba(0,0,0,0.3)", color: "#fff",
-                      border: "1px solid rgba(255,255,255,0.1)", padding: "14px", borderRadius: "10px",
-                      resize: "none", fontSize: "14px", lineHeight: 1.6, outline: "none",
-                    }}
-                    onFocus={(e) => { e.currentTarget.style.borderColor = "rgba(74,144,226,0.5)"; }}
-                    onBlur={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"; }}
+                    className="flex-1 min-h-[180px] bg-black/30 text-tp-foreground border border-tp-border-subtle p-3.5 rounded-[10px] resize-none text-sm leading-relaxed outline-none focus:border-tp-accent/50"
                   />
                   <button
                     onClick={handleSaveManual}
                     disabled={!inputText.trim()}
-                    style={{
-                      marginTop: "12px",
-                      background: inputText.trim() ? "linear-gradient(135deg, #4a90e2, #2d6dc0)" : "rgba(255,255,255,0.05)",
-                      color: inputText.trim() ? "#fff" : "rgba(255,255,255,0.3)",
-                      border: "none", borderRadius: "10px", padding: "10px 24px",
-                      fontWeight: 700, cursor: inputText.trim() ? "pointer" : "not-allowed",
-                      fontSize: "13px", alignSelf: "flex-start",
-                    }}
+                    className={`mt-3 rounded-[10px] px-6 py-2.5 font-bold text-[13px] self-start border-none ${
+                      inputText.trim()
+                        ? "bg-gradient-to-br from-tp-accent to-tp-accent-hover text-white cursor-pointer"
+                        : "bg-tp-foreground/5 text-tp-foreground/30 cursor-not-allowed"
+                    }`}
                   >
                     CARREGAR TEXTO
                   </button>
@@ -756,11 +624,7 @@ export default function TpScreen({ user, onBack }: TpScreenProps) {
 
               <button
                 onClick={() => setShowSetup(false)}
-                style={{
-                  marginTop: "12px", background: "none", color: "rgba(255,255,255,0.4)",
-                  border: "1px solid rgba(255,255,255,0.1)", borderRadius: "10px",
-                  padding: "8px 16px", cursor: "pointer", fontSize: "12px", alignSelf: "flex-start",
-                }}
+                className="mt-3 bg-transparent text-tp-muted border border-tp-border-subtle rounded-[10px] px-4 py-2 cursor-pointer text-xs self-start"
               >
                 Cancelar
               </button>
