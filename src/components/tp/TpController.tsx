@@ -221,6 +221,8 @@ export default function TpController({ user, onBack }: TpControllerProps) {
       setShowSetup(false);
       setInputText("");
     }
+  }
+
   const statusLabel = !tpPresenceOnline
     ? "Aguardando TP..."
     : !tpState
@@ -233,9 +235,9 @@ export default function TpController({ user, onBack }: TpControllerProps) {
       <div className="tp-ctrl-header flex items-center gap-3 mb-4 flex-wrap justify-center">
         <SlidersHorizontal size={20} className="text-tp-accent" />
         <span className="text-tp-foreground text-base font-bold">Controle Remoto do TP</span>
-        <div className={`w-2.5 h-2.5 rounded-full ml-2 ${connected && tpState ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]" : "bg-destructive shadow-[0_0_8px_rgba(239,68,68,0.5)]"}`} />
+        <div className={`w-2.5 h-2.5 rounded-full ml-2 ${connected ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]" : "bg-destructive shadow-[0_0_8px_rgba(239,68,68,0.5)]"}`} />
         <span className="text-tp-muted text-[11px]">
-          {connected && tpState ? "TP Conectado" : "Aguardando TP..."}
+          {statusLabel}
         </span>
       </div>
 
