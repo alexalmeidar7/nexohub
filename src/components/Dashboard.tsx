@@ -60,7 +60,7 @@ const sidebarMenu: MenuItem[] = [
       { icon: PlaySquare, label: "Programas", page: "programas" },
     ]
   },
-  { icon: Newspaper, label: "notícias", page: "noticias" },
+  { icon: FileText, label: "roteiro de programa", page: "noticias" },
   { icon: Music, label: "música no ar", page: "musica" },
   { icon: CalendarDays, label: "agenda", page: "agenda" },
   {
