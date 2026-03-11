@@ -6,6 +6,7 @@ import { ptBR } from "date-fns/locale";
 import { Lock, Check, History, Save, Pencil, Bold, Underline, AlignLeft, AlignCenter, AlignRight, List, ListOrdered } from "lucide-react";
 import { toast } from "sonner";
 import { injectPerguntaActions } from "@/lib/roteiroActions";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 interface Participante {
   nome: string;
@@ -14,6 +15,7 @@ interface Participante {
 }
 
 export default function RoteiroApresentadorEdit() {
+  usePageTitle("Editar Roteiro");
   const [searchParams] = useSearchParams();
   const token = searchParams.get("token") || "";
 

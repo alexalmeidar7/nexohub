@@ -1,4 +1,5 @@
 import { useAuth } from "@/hooks/useAuth";
+import { usePageTitle } from "@/hooks/usePageTitle";
 import { lazy, Suspense } from "react";
 import { Loader2 } from "lucide-react";
 import { Navigate } from "react-router-dom";
@@ -7,6 +8,7 @@ const LoginScreen = lazy(() => import("@/components/LoginScreen"));
 
 export default function Index() {
   const { user, loading, role } = useAuth();
+  usePageTitle("Login");
 
   if (loading) {
     return (

@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AdminLayout from "./AdminLayout";
 import ClientCard from "@/components/admin/ClientCard";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 interface ClientRow {
   user_id: string;

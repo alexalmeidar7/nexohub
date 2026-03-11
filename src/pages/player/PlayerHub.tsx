@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useParams, useSearchParams } from "react-router-dom";
+import { usePageTitle } from "@/hooks/usePageTitle";
 import SplashScreen from "./SplashScreen";
 import AccessScreen from "./AccessScreen";
 import WelcomeScreen from "./WelcomeScreen";
@@ -10,6 +11,7 @@ import PlayerHome from "./PlayerHome";
 type Step = "splash" | "access" | "welcome" | "home";
 
 export default function PlayerHub() {
+  usePageTitle("Player");
   const { user, loading } = useAuth();
   const { userSlug } = useParams();
   const [searchParams] = useSearchParams();
