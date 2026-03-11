@@ -478,7 +478,7 @@ export default function AgendaPage() {
         </div>
 
         <Dialog open={dialogOpen} onOpenChange={(open) => { if (!open) resetForm(); setDialogOpen(open); }}>
-          <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto p-0" style={{ backgroundColor: "#ffffff", borderRadius: "20px", border: "none", boxShadow: "0 20px 60px rgba(13,4,70,0.15)" }}>
+          <DialogContent className="max-w-md max-h-[70vh] overflow-hidden p-0 flex flex-col" style={{ backgroundColor: "#ffffff", borderRadius: "20px", border: "none", boxShadow: "0 20px 60px rgba(13,4,70,0.15)" }}>
             <style>{`
               .agenda-form-input:focus, .agenda-form-input:focus-visible, .agenda-form-input:active {
                 outline: none !important;
