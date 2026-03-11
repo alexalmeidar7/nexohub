@@ -95,9 +95,7 @@ export default function RoteiroPrograma() {
     const prog = programas.find(p => p.nome === nome);
     if (prog) {
       if (prog.horario_inicio) {
-        const h = prog.horario_inicio.slice(0, 5);
-        const hFim = prog.horario_fim ? prog.horario_fim.slice(0, 5) : "";
-        setHorario(hFim ? `${h} - ${hFim}` : h);
+        setHorario(prog.horario_inicio.slice(0, 5));
       }
     }
   };
