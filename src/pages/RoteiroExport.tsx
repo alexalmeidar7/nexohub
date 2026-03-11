@@ -20,6 +20,8 @@ export default function RoteiroExport() {
     assuntoSubtitulo: string;
     participantes: { nome: string; categoria: string; cargo: string; instagram: string }[];
     conteudoHtml: string;
+    numeroRoteiro?: number | null;
+    logoUrl?: string | null;
   } | null;
 
   if (!data) {
