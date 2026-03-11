@@ -38,11 +38,12 @@ const PreRollPage = lazy(() => import("./PreRollPage"));
 const CortesVideoPage = lazy(() => import("./CortesVideoPage"));
 const VmixPage = lazy(() => import("./VmixPage"));
 const CustomizableDashboard = lazy(() => import("./CustomizableDashboard"));
+const PropostasPage = lazy(() => import("./PropostasPage"));
 const MessageNotification = lazy(() => import("./MessageNotification"));
 import DashboardSkeleton from "./skeletons/DashboardSkeleton";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import { normalizeMusicText } from "@/lib/textEncoding";
-type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll" | "cortevideo" | "playerconfig" | "vmix";
+type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll" | "cortevideo" | "playerconfig" | "vmix" | "propostas";
 
 // Sidebar structured menu
 interface MenuItem {
@@ -76,6 +77,7 @@ const sidebarMenu: MenuItem[] = [
       { icon: Image, label: "logos", page: "logos" },
       { icon: Film, label: "pre roll", page: "preroll" },
       { icon: ShoppingCart, label: "shopping", page: "shopping" },
+      { icon: FileText, label: "propostas comerciais", page: "propostas" },
     ]
   },
   { icon: Monitor, label: "vmix", page: "vmix" },
@@ -115,6 +117,7 @@ const pageTitle: Record<Page, string> = {
   logos: "Comercial — Logos Patrocinadores",
   shopping: "Comercial — Shopping",
   preroll: "Comercial — Pré-Roll",
+  propostas: "Comercial — Propostas Comerciais",
   cortevideo: "Ferramentas — Cortes de Vídeo",
   playerconfig: "Player — Configurações",
   vmix: "vMix — Controle de Transmissão",
@@ -169,7 +172,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const isModuleEnabled = (page: Page): boolean => {
     if (page === "dashboard" || page === "configuracoes" || page === "cortevideo" || page === "playerconfig") return true;
     if (!enabledModules) return true;
-    if (page === "testemunhais" || page === "promocoes" || page === "logos" || page === "preroll" || page === "shopping") {
+    if (page === "testemunhais" || page === "promocoes" || page === "logos" || page === "preroll" || page === "shopping" || page === "propostas") {
       return enabledModules.has("comercial");
     }
     return enabledModules.has(page);
@@ -495,6 +498,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               {currentPage === "preroll" && <PreRollPage />}
               {currentPage === "cortevideo" && <CortesVideoPage />}
               {currentPage === "vmix" && <VmixPage />}
+              {currentPage === "propostas" && <PropostasPage />}
             </Suspense>
           </div>
         </main>
