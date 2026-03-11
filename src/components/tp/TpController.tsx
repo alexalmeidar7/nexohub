@@ -34,7 +34,7 @@ export default function TpController({ user, onBack }: TpControllerProps) {
   useEffect(() => {
     if (!user) return;
     const ch = supabase
-      .channel(`tp-state-${user.id}`)
+      .channel(`tp-state-${user.id}`, { config: { broadcast: { self: true } } })
       .on("broadcast", { event: "tp-state" }, (payload: any) => {
         setTpState(payload.payload);
         lastStateAtRef.current = Date.now();
@@ -56,7 +56,7 @@ export default function TpController({ user, onBack }: TpControllerProps) {
   const cmdReadyRef = useRef(false);
   useEffect(() => {
     if (!user) return;
-    const ch = supabase.channel(`tp-control-${user.id}`);
+    const ch = supabase.channel(`tp-control-${user.id}`, { config: { broadcast: { self: true } } });
     ch.subscribe((status) => { cmdReadyRef.current = status === "SUBSCRIBED"; });
     cmdChannelRef.current = ch;
     return () => {
