@@ -362,7 +362,7 @@ export default function TpExterno() {
           height: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
           backgroundColor: "#0f1058", fontFamily: "'Poppins', 'Inter', sans-serif", gap: "20px", outline: "none",
         }}
-        ref={(el) => el?.focus()}
+        ref={(el) => { if (el && !el.contains(document.activeElement)) el.focus(); }}
       >
         <div style={{
           background: "linear-gradient(135deg, #0d0446, #1a0a6e)", borderRadius: "20px",
