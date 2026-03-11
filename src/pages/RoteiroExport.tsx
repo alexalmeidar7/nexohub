@@ -1,7 +1,7 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ArrowLeft, Printer } from "lucide-react";
+import { ArrowLeft, Download } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
 
 export default function RoteiroExport() {
@@ -49,14 +49,21 @@ export default function RoteiroExport() {
           <ArrowLeft size={14} />
           voltar
         </button>
-        <button onClick={() => window.print()} className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold text-white hover:opacity-90 transition" style={{ backgroundColor: "#268ffa" }}>
-          <Printer size={14} />
-          imprimir
+        <button onClick={async () => {
+          const el = document.getElementById("roteiro-export-page-content");
+          if (el) {
+            const { generatePdf } = await import("@/lib/generatePdf");
+            const safeName = (data.programaNome || "roteiro").replace(/\s+/g, "_").toLowerCase();
+            await generatePdf(el, `roteiro_${safeName}.pdf`);
+          }
+        }} className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold text-white hover:opacity-90 transition" style={{ backgroundColor: "#268ffa" }}>
+          <Download size={14} />
+          gerar PDF
         </button>
       </div>
 
       {/* Content */}
-      <div className="max-w-3xl mx-auto px-6 py-8 print:px-0 print:py-4 print:max-w-none">
+      <div id="roteiro-export-page-content" className="max-w-3xl mx-auto px-6 py-8 print:px-0 print:py-4 print:max-w-none">
         {/* Header */}
         <div className="mb-8 print:mb-6">
           <h1 className="text-2xl font-bold uppercase mb-2" style={{ color: "#0d0446" }}>
