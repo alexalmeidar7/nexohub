@@ -383,7 +383,11 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
       </CollapsibleBox>}
 
       {/* Box 2: Configurações do Player */}
-      {(section === "all" || section === "player") && <CollapsibleBox title="Configurações do Player" defaultOpen={section === "player"}>
+      {(section === "all" || section === "player") && <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}>
+        <div className="w-full flex items-center justify-between px-5 py-3" style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)" }}>
+          <h3 className="text-sm font-bold text-white">Configurações do Player</h3>
+        </div>
+        <div className="p-5 space-y-4">
         <div className="space-y-6">
           {/* ── Header + Mode ── */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4" style={{ borderBottom: "1px solid rgba(13,4,70,0.08)" }}>
