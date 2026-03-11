@@ -82,6 +82,15 @@ export default function TpController({ user, onBack }: TpControllerProps) {
     });
   }
 
+  // Handshake/fallback: ask TP to re-broadcast state while disconnected
+  useEffect(() => {
+    if (!user || connected) return;
+    const id = setInterval(() => {
+      void sendCommand("requestState");
+    }, 1500);
+    return () => clearInterval(id);
+  }, [user, connected]);
+
   const scrolling = tpState?.scrolling ?? false;
   const speed = tpState?.speed ?? 2;
   const fontSize = tpState?.fontSize ?? 60;
