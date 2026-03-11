@@ -165,22 +165,8 @@ export default function TpExterno() {
     try { return JSON.parse(localStorage.getItem("tp-msg-history") || "[]"); } catch { return []; }
   });
 
-  // Persistent message channel
-  const msgChannelRef = useRef<any>(null);
-  const msgChannelReadyRef = useRef(false);
-  useEffect(() => {
-    if (!user) return;
-    const ch = supabase.channel(`tp-msg-send-${user.id}`);
-    ch.subscribe((status) => {
-      msgChannelReadyRef.current = status === "SUBSCRIBED";
-    });
-    msgChannelRef.current = ch;
-    return () => {
-      msgChannelReadyRef.current = false;
-      supabase.removeChannel(ch);
-      msgChannelRef.current = null;
-    };
-  }, [user]);
+  // No persistent sender channel — send via temporary channel to avoid
+  // name conflict with TpScreen's receiver channel on the same name
 
   // Redirect to menu (or directly to TP if ?view=tp) if already logged in
   useEffect(() => {
