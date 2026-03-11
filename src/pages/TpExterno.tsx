@@ -165,22 +165,8 @@ export default function TpExterno() {
     try { return JSON.parse(localStorage.getItem("tp-msg-history") || "[]"); } catch { return []; }
   });
 
-  // Persistent message channel
-  const msgChannelRef = useRef<any>(null);
-  const msgChannelReadyRef = useRef(false);
-  useEffect(() => {
-    if (!user) return;
-    const ch = supabase.channel(`tp-msg-${user.id}`);
-    ch.subscribe((status) => {
-      msgChannelReadyRef.current = status === "SUBSCRIBED";
-    });
-    msgChannelRef.current = ch;
-    return () => {
-      msgChannelReadyRef.current = false;
-      supabase.removeChannel(ch);
-      msgChannelRef.current = null;
-    };
-  }, [user]);
+  // No persistent sender channel — send via temporary channel to avoid
+  // name conflict with TpScreen's receiver channel on the same name
 
   // Redirect to menu (or directly to TP if ?view=tp) if already logged in
   useEffect(() => {
@@ -223,17 +209,12 @@ export default function TpExterno() {
     const newHistory = [{ text: text.trim(), ts: Date.now() }, ...msgHistory].slice(0, 50);
     setMsgHistory(newHistory);
     localStorage.setItem("tp-msg-history", JSON.stringify(newHistory));
-    // Broadcast via persistent channel
+    // Broadcast via temp channel (same name as receiver's channel)
     try {
-      if (msgChannelRef.current && msgChannelReadyRef.current) {
-        await msgChannelRef.current.send({ type: "broadcast", event: "tp-message", payload: msg });
-      } else {
-        // Fallback: create temp channel
-        const ch = supabase.channel(`tp-msg-${user.id}-tmp-${Date.now()}`);
-        await ch.subscribe();
-        await ch.send({ type: "broadcast", event: "tp-message", payload: msg });
-        supabase.removeChannel(ch);
-      }
+      const ch = supabase.channel(`tp-msg-${user.id}`);
+      await ch.subscribe();
+      await ch.send({ type: "broadcast", event: "tp-message", payload: msg });
+      supabase.removeChannel(ch);
     } catch (_) {}
     setMsgSending(false);
     setMsgSent(true);
