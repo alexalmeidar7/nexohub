@@ -916,6 +916,7 @@ export default function RoteiroPrograma() {
                     if (error) { toast.error("Erro ao salvar roteiro"); return; }
                     const url = `${window.location.origin}/roteiro-apresentador-edit?token=${shareToken}`;
                     await navigator.clipboard.writeText(url).catch(() => {});
+                    window.open(url, '_blank');
                     toast.success(`Link copiado! Login: ${firstName} / Senha: edit123`);
                   } else if (editingRoteiroId && user) {
                     const shareToken = crypto.randomUUID();
@@ -923,6 +924,7 @@ export default function RoteiroPrograma() {
                     await supabase.from("roteiros").update({ share_token: shareToken, share_login: firstName }).eq("id", editingRoteiroId);
                     const url = `${window.location.origin}/roteiro-apresentador-edit?token=${shareToken}`;
                     await navigator.clipboard.writeText(url).catch(() => {});
+                    window.open(url, '_blank');
                     toast.success(`Link copiado! Login: ${firstName} / Senha: edit123`);
                     fetchHistorico();
                   }
