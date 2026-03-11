@@ -553,6 +553,59 @@ ${perguntaActions}
         </button>
       )}
 
+      {/* Histórico de Roteiros */}
+      {historico.length > 0 && (
+        <div className="rounded-xl p-4 mt-4" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.08)" }}>
+          <div className="flex items-center gap-2 mb-3">
+            <History size={14} style={{ color: "#268ffa" }} />
+            <p className="text-xs font-bold" style={{ color: "#0d0446" }}>Últimos roteiros</p>
+          </div>
+          <div className="space-y-2">
+            {historico.map(r => {
+              const dataFormatada = format(new Date(r.data_programa), "dd/MM/yyyy");
+              const isAgd = r.status === "agendado";
+              return (
+                <div key={r.id} className="flex items-center justify-between px-3 py-2.5 rounded-lg" style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "1px solid rgba(13,4,70,0.06)" }}>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="text-xs font-semibold truncate" style={{ color: "#0d0446" }}>
+                        {r.programa_nome || "Sem programa"}
+                      </p>
+                      <span
+                        className="text-[10px] px-2 py-0.5 rounded-full font-semibold"
+                        style={{
+                          backgroundColor: isAgd ? "rgba(38,143,250,0.1)" : "rgba(13,4,70,0.06)",
+                          color: isAgd ? "#268ffa" : "rgba(13,4,70,0.5)",
+                        }}
+                      >
+                        {isAgd ? "agendado" : r.status}
+                      </span>
+                    </div>
+                    <p className="text-[10px] mt-0.5" style={{ color: "rgba(13,4,70,0.45)" }}>
+                      {dataFormatada} {r.horario ? `· ${r.horario}` : ""} {r.titulo ? `· ${r.titulo}` : ""}
+                    </p>
+                    {r.editado_at && (
+                      <p className="text-[10px] mt-0.5" style={{ color: "rgba(13,4,70,0.4)" }}>
+                        Editado por último em: {format(new Date(r.editado_at), "dd/MM/yyyy 'às' HH:mm")}
+                        {r.share_login ? ` por: ${r.share_login}` : ""}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1 ml-2">
+                    <button onClick={() => editarRoteiro(r)} className="h-7 w-7 flex items-center justify-center rounded-lg hover:opacity-70 transition" style={{ backgroundColor: "rgba(38,143,250,0.08)" }} title="Editar">
+                      <Pencil size={12} style={{ color: "#268ffa" }} />
+                    </button>
+                    <button onClick={() => excluirRoteiro(r.id)} className="h-7 w-7 flex items-center justify-center rounded-lg hover:opacity-70 transition" style={{ backgroundColor: "rgba(220,38,38,0.08)" }} title="Excluir">
+                      <Trash2 size={12} style={{ color: "#dc2626" }} />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Roteiro Form */}
       {showRoteiro && (
         <div className="rounded-2xl overflow-hidden" style={{ background: "#d9e9fa", boxShadow: "0 8px 32px rgba(13,4,70,0.12)", padding: "24px" }}>
