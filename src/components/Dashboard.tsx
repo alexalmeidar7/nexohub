@@ -750,7 +750,7 @@ function UnifiedXmlField() {
       }
     };
     update();
-    const interval = setInterval(update, 5000);
+    const interval = setInterval(update, 15000);
     return () => clearInterval(interval);
   }, []);
 
