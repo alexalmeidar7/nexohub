@@ -1394,7 +1394,7 @@ function TpController({ user, onBack }: { user: any; onBack: () => void }) {
           <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.4)", minWidth: "14px" }}>{speed}</span>
         </div>
 
-        <div style={{ width: "1px", height: "24px", background: "rgba(255,255,255,0.1)" }} />
+        <div className="tp-divider" style={{ width: "1px", height: "24px", background: "rgba(255,255,255,0.1)" }} />
 
         {/* Play/Pause */}
         <button onClick={() => sendCommand("toggle")} style={{
