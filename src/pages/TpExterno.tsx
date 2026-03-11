@@ -389,7 +389,7 @@ function TpScreen({ user, onBack }: { user: any; onBack: () => void }) {
         const msg = payload.payload as { text: string; subject: string };
         // Remove from localStorage if it was also stored there
         const queue = JSON.parse(localStorage.getItem("tp-msg-queue") || "[]");
-        const filtered = queue.filter((q: any) => q.text !== msg.text || Math.abs((q.ts || 0) - (msg.ts || 0)) > 2000);
+        const filtered = queue.filter((q: any) => q.text !== msg.text || Math.abs((q.ts || 0) - ((msg as any).ts || 0)) > 2000);
         localStorage.setItem("tp-msg-queue", JSON.stringify(filtered));
         if (pendingDelayRef.current) clearTimeout(pendingDelayRef.current);
         pendingMsgRef.current = msg;
