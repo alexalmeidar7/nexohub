@@ -33,48 +33,32 @@ export default function TpLogin({ authLoading, onLoginSuccess }: TpLoginProps) {
 
   if (authLoading) {
     return (
-      <div style={{ height: "100vh", display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: "#0f1058" }}>
-        <Loader2 size={32} color="#268ffa" className="animate-spin" />
+      <div className="h-screen flex items-center justify-center bg-tp">
+        <Loader2 size={32} className="animate-spin text-tp-accent" />
       </div>
     );
   }
 
   return (
-    <div style={{
-      height: "100vh", display: "flex", alignItems: "center", justifyContent: "center",
-      backgroundColor: "#0f1058", fontFamily: "'Poppins', 'Inter', sans-serif",
-    }}>
-      <form onSubmit={handleLogin} style={{
-        background: "#fff", borderRadius: "2rem", padding: "40px 36px", width: "min(400px, 90%)",
-        display: "flex", flexDirection: "column", alignItems: "center", gap: "16px",
-      }}>
-        <img src={logoNexo} alt="Nexo" style={{ height: "40px", marginBottom: "8px" }} />
-        <h2 style={{ fontSize: "14px", fontWeight: 700, color: "#0d0446", margin: 0 }}>Acesso ao Teleprompter</h2>
+    <div className="h-screen flex items-center justify-center bg-tp font-sans">
+      <form onSubmit={handleLogin} className="bg-white rounded-[2rem] px-9 py-10 w-[min(400px,90%)] flex flex-col items-center gap-4">
+        <img src={logoNexo} alt="Nexo" className="h-10 mb-2" />
+        <h2 className="text-sm font-bold text-tp-surface m-0">Acesso ao Teleprompter</h2>
         <input
           type="email" placeholder="E-mail" value={email}
           onChange={(e) => setEmail(e.target.value)}
-          style={{
-            width: "100%", padding: "10px 14px", borderRadius: "10px", border: "1px solid #c7d2e0",
-            fontSize: "12px", outline: "none", color: "#0d0446",
-          }}
+          className="w-full px-3.5 py-2.5 rounded-[10px] border border-slate-300 text-xs outline-none text-tp-surface"
         />
         <input
           type="password" placeholder="Senha" value={password}
           onChange={(e) => setPassword(e.target.value)}
-          style={{
-            width: "100%", padding: "10px 14px", borderRadius: "10px", border: "1px solid #c7d2e0",
-            fontSize: "12px", outline: "none", color: "#0d0446",
-          }}
+          className="w-full px-3.5 py-2.5 rounded-[10px] border border-slate-300 text-xs outline-none text-tp-surface"
         />
-        {error && <span style={{ fontSize: "11px", color: "#ef4444" }}>{error}</span>}
-        <button type="submit" disabled={loading} style={{
-          width: "100%", padding: "10px", borderRadius: "10px", border: "none",
-          backgroundColor: "#268ffa", color: "#fff", fontSize: "12px", fontWeight: 700,
-          cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
-        }}>
+        {error && <span className="text-[11px] text-destructive">{error}</span>}
+        <button type="submit" disabled={loading} className="w-full py-2.5 rounded-[10px] border-none bg-tp-accent text-white text-xs font-bold cursor-pointer flex items-center justify-center gap-2">
           {loading ? <Loader2 size={16} className="animate-spin" /> : <>Entrar <ArrowRight size={14} /></>}
         </button>
-        <span style={{ fontSize: "10px", color: "rgba(13,4,70,0.4)", marginTop: "8px" }}>© Nexo Soluções Visuais</span>
+        <span className="text-[10px] text-tp-surface/40 mt-2">© Nexo Soluções Visuais</span>
       </form>
     </div>
   );

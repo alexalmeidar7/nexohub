@@ -90,21 +90,20 @@ export function stripHtml(html: string): string {
 
 export const TP_RESPONSIVE_STYLES = `
   .tp-menu-buttons { display: flex; gap: 24px; flex-wrap: wrap; justify-content: center; }
-  .tp-menu-btn { width: 180px; height: 180px; }
   .tp-screen-grid { display: grid; grid-template-columns: 90px 1fr; height: 100vh; }
   .tp-controls-bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: center; }
-  .tp-controls-bar .tp-divider { width: 1px; height: 24px; background: rgba(255,255,255,0.1); }
+  .tp-controls-bar .tp-divider { width: 1px; height: 24px; }
   .tp-speed-slider { width: 120px; }
   .tp-ctrl-preview { width: min(900px, 90vw); height: min(500px, 55vh); }
   .tp-ctrl-bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: center; }
-  .tp-ctrl-bar .tp-divider { width: 1px; height: 24px; background: rgba(255,255,255,0.1); }
+  .tp-ctrl-bar .tp-divider { width: 1px; height: 24px; }
   .tp-msg-screen { width: min(500px, 90%); }
 
   @media (max-width: 768px) {
     .tp-menu-btn { width: 140px !important; height: 140px !important; }
     .tp-menu-buttons { gap: 12px !important; }
     .tp-screen-grid { grid-template-columns: 1fr !important; grid-template-rows: auto 1fr !important; }
-    .tp-sidebar { flex-direction: row !important; padding: 8px 12px !important; border-right: none !important; border-bottom: 1px solid rgba(74,144,226,0.15) !important; justify-content: space-between !important; overflow-x: auto; }
+    .tp-sidebar { flex-direction: row !important; padding: 8px 12px !important; border-right: none !important; border-bottom: 1px solid hsl(var(--tp-border)) !important; justify-content: space-between !important; overflow-x: auto; }
     .tp-sidebar-top { flex-direction: row !important; gap: 12px !important; align-items: center !important; }
     .tp-sidebar-mid { flex-direction: row !important; gap: 8px !important; }
     .tp-sidebar-mid button { width: 36px !important; height: 36px !important; }
@@ -129,18 +128,7 @@ export const TP_RESPONSIVE_STYLES = `
   }
 `;
 
-export const controlBtnStyle: React.CSSProperties = {
-  background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)",
-  borderRadius: "8px", padding: "6px 8px", cursor: "pointer",
-  display: "flex", alignItems: "center", justifyContent: "center", color: "#fff",
-  transition: "all 0.2s",
-};
+// Shared styles as CSS classes for tp-control buttons
+export const tpControlBtnClasses = "bg-tp-foreground/[0.08] border border-tp-border-subtle rounded-lg p-1.5 cursor-pointer flex items-center justify-center text-tp-foreground transition-all";
 
-export const tabBtnStyle = (active: boolean): React.CSSProperties => ({
-  background: active ? "rgba(74,144,226,0.2)" : "transparent",
-  border: active ? "1px solid rgba(74,144,226,0.4)" : "1px solid rgba(255,255,255,0.1)",
-  borderRadius: "8px", padding: "8px 16px", cursor: "pointer",
-  color: active ? "#4a90e2" : "rgba(255,255,255,0.5)",
-  fontSize: "12px", fontWeight: 600, transition: "all 0.2s",
-});
-
+export const tpControlBtnActiveClasses = "bg-tp-accent/20 border-tp-border";
