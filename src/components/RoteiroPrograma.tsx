@@ -583,12 +583,12 @@ ${perguntaActions}
                 <div key={r.id} className="flex items-center justify-between px-3 py-2.5 rounded-lg" style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "1px solid rgba(13,4,70,0.06)" }}>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <p className="text-xs font-semibold truncate" style={{ color: "#0d0446" }}>
+                      <p className="text-sm font-bold truncate" style={{ color: "#0d0446" }}>
                         {r.programa_nome || "Sem programa"}
-                        {r.numero_roteiro && <span className="text-[10px] font-normal" style={{ color: "rgba(13,4,70,0.4)" }}> #{r.numero_roteiro}</span>}
+                        {r.numero_roteiro && <span className="text-xs font-semibold" style={{ color: "rgba(13,4,70,0.5)" }}> #{r.numero_roteiro}</span>}
                       </p>
                       <span
-                        className="text-[10px] px-2 py-0.5 rounded-full font-semibold"
+                        className="text-[10px] px-2 py-0.5 rounded-full font-bold"
                         style={{
                           backgroundColor: isAgd ? "rgba(38,143,250,0.1)" : "rgba(13,4,70,0.06)",
                           color: isAgd ? "#268ffa" : "rgba(13,4,70,0.5)",
@@ -597,7 +597,7 @@ ${perguntaActions}
                         {isAgd ? "agendado" : r.status}
                       </span>
                     </div>
-                    <p className="text-[10px] mt-0.5" style={{ color: "rgba(13,4,70,0.45)" }}>
+                    <p className="text-xs font-medium mt-0.5" style={{ color: "rgba(13,4,70,0.6)" }}>
                       {dataFormatada} {r.horario ? `· ${r.horario}` : ""} {r.titulo ? `· ${r.titulo}` : ""}
                     </p>
                     {r.editado_at && (
