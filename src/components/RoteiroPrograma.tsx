@@ -488,7 +488,7 @@ export default function RoteiroPrograma() {
               value={roteiroTitulo}
               onChange={e => setRoteiroTitulo(e.target.value)}
               placeholder="Ex: Entrevista sobre dependência química"
-              className="w-full px-3 py-2 rounded-lg outline-none transition-colors"
+              className="w-full px-3 py-2 rounded-lg outline-none transition-colors uppercase"
               style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.15)", color: "#0d0446", fontSize: "16px", fontWeight: "bold" }}
             />
           </div>
