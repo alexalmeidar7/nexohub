@@ -345,17 +345,41 @@ export default function RoteiroPrograma() {
                   </button>
                 </div>
               ))}
+
+              {/* Inline add participant fields */}
+              <div className="rounded-xl p-3 space-y-2" style={{ backgroundColor: "#ffffff", border: "1px dashed rgba(13,4,70,0.15)" }}>
+                <input
+                  value={newNome}
+                  onChange={e => setNewNome(e.target.value)}
+                  placeholder="nome"
+                  className="w-full px-3 py-2 rounded-lg text-xs outline-none"
+                  style={{ backgroundColor: "rgba(13,4,70,0.04)", border: "1px solid rgba(13,4,70,0.08)", color: "#0d0446" }}
+                />
+                <input
+                  value={newCargo}
+                  onChange={e => setNewCargo(e.target.value)}
+                  placeholder="cargo"
+                  className="w-full px-3 py-2 rounded-lg text-xs outline-none"
+                  style={{ backgroundColor: "rgba(13,4,70,0.04)", border: "1px solid rgba(13,4,70,0.08)", color: "#0d0446" }}
+                />
+                <input
+                  value={newInstagram}
+                  onChange={e => setNewInstagram(e.target.value)}
+                  placeholder="rede social (@usuario)"
+                  className="w-full px-3 py-2 rounded-lg text-xs outline-none"
+                  style={{ backgroundColor: "rgba(13,4,70,0.04)", border: "1px solid rgba(13,4,70,0.08)", color: "#0d0446" }}
+                />
+                <button
+                  onClick={addParticipante}
+                  disabled={!newNome.trim()}
+                  className="w-full py-2 rounded-lg text-xs font-bold transition-all hover:opacity-90 disabled:opacity-40"
+                  style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#ffffff" }}
+                >
+                  <Plus size={12} className="inline mr-1" />adicionar participante
+                </button>
+              </div>
             </div>
           </div>
-
-          {/* Adicionar Participante */}
-          <button
-            onClick={() => setShowAddParticipante(true)}
-            className="w-full py-2.5 rounded-xl text-xs font-bold transition-all hover:opacity-90 mb-4"
-            style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#ffffff" }}
-          >
-            adicionar participante
-          </button>
 
           {/* Texto Roteiro */}
           <div className="rounded-xl p-4 mb-4" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.08)" }}>
