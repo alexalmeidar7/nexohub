@@ -163,18 +163,26 @@ export default function TpExterno() {
     return `${m}:${s}`;
   })();
 
-  // Scroll animation — auto-reset timer when text scrolls past top
+  // Scroll animation — decelerate near end of text
+  const speedMultiplierRef = useRef(1);
+
   const animate = useCallback(() => {
     if (scrolling && textRef.current) {
-      scrollPosRef.current -= speed * 0.1;
-      textRef.current.style.top = scrollPosRef.current + "%";
-
-      // Stop at end of text
       const textBottom = textRef.current.getBoundingClientRect().bottom;
-      const containerBottom = textRef.current.parentElement?.getBoundingClientRect().bottom || window.innerHeight;
-      if (textBottom < containerBottom * 0.5) {
+      const containerMid = (textRef.current.parentElement?.getBoundingClientRect().bottom || window.innerHeight) * 0.5;
+      const distToEnd = textBottom - containerMid;
+
+      if (distToEnd < 300 && distToEnd > 0) {
+        speedMultiplierRef.current = Math.max(0.05, distToEnd / 300);
+      } else if (distToEnd <= 0) {
+        speedMultiplierRef.current = 0;
         setScrolling(false);
+      } else {
+        speedMultiplierRef.current = 1;
       }
+
+      scrollPosRef.current -= speed * 0.1 * speedMultiplierRef.current;
+      textRef.current.style.top = scrollPosRef.current + "%";
     }
     animRef.current = requestAnimationFrame(animate);
   }, [scrolling, speed]);
