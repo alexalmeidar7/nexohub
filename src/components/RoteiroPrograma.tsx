@@ -7,7 +7,6 @@ import { CalendarIcon, FileText, Building2, Clock, Plus, X, Download } from "luc
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 
 const NoticiasPanel = lazy(() => import("./NoticiasPanel"));
