@@ -119,9 +119,9 @@ export default function RoteiroPrograma() {
           </div>
         </div>
 
-        {/* Form Fields */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
-          {/* Campo 1: Estúdio */}
+        {/* Form Fields - Row 1: Estúdio, Tipo, Programa */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          {/* Estúdio */}
           <div>
             <label className="text-[11px] font-bold mb-1 block" style={{ color: "#0d0446" }}>
               <Building2 size={11} className="inline mr-1" />Estúdio
@@ -137,7 +137,21 @@ export default function RoteiroPrograma() {
             </select>
           </div>
 
-          {/* Campo 2: Nome do Programa */}
+          {/* Tipo de Programa (filtro) */}
+          <div>
+            <label className="text-[11px] font-bold mb-1 block" style={{ color: "#0d0446" }}>Tipo de Programa</label>
+            <select
+              value={tipoPrograma}
+              onChange={e => handleTipoChange(e.target.value)}
+              className="w-full px-3 py-2 rounded-lg text-xs outline-none transition-colors"
+              style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.15)", color: "#0d0446" }}
+            >
+              <option value="">Todos os tipos</option>
+              {tiposPrograma.map(t => <option key={t} value={t}>{t}</option>)}
+            </select>
+          </div>
+
+          {/* Programa (filtrado por tipo) */}
           <div>
             <label className="text-[11px] font-bold mb-1 block" style={{ color: "#0d0446" }}>
               <FileText size={11} className="inline mr-1" />Programa
@@ -149,11 +163,14 @@ export default function RoteiroPrograma() {
               style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.15)", color: "#0d0446" }}
             >
               <option value="">Selecione o programa</option>
-              {programas.map(p => <option key={p.id} value={p.nome}>{p.nome}</option>)}
+              {programasFiltrados.map(p => <option key={p.id} value={p.nome}>{p.nome}</option>)}
             </select>
           </div>
+        </div>
 
-          {/* Campo 3: Data */}
+        {/* Form Fields - Row 2: Data, Horário */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          {/* Data */}
           <div>
             <label className="text-[11px] font-bold mb-1 block" style={{ color: "#0d0446" }}>
               <CalendarIcon size={11} className="inline mr-1" />Data
@@ -161,9 +178,7 @@ export default function RoteiroPrograma() {
             <Popover>
               <PopoverTrigger asChild>
                 <button
-                  className={cn(
-                    "w-full px-3 py-2 rounded-lg text-xs text-left flex items-center gap-2 outline-none transition-colors",
-                  )}
+                  className="w-full px-3 py-2 rounded-lg text-xs text-left flex items-center gap-2 outline-none transition-colors"
                   style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.15)", color: "#0d0446" }}
                 >
                   <CalendarIcon size={12} style={{ color: "#268ffa" }} />
@@ -182,19 +197,18 @@ export default function RoteiroPrograma() {
             </Popover>
           </div>
 
-          {/* Campo 5: Tipo de Programa */}
+          {/* Horário */}
           <div>
-            <label className="text-[11px] font-bold mb-1 block" style={{ color: "#0d0446" }}>Tipo de Programa</label>
-            <select
-              value={tipoPrograma}
-              onChange={e => setTipoPrograma(e.target.value)}
+            <label className="text-[11px] font-bold mb-1 block" style={{ color: "#0d0446" }}>
+              <Clock size={11} className="inline mr-1" />Horário
+            </label>
+            <input
+              value={horario}
+              onChange={e => setHorario(e.target.value)}
+              placeholder="Ex: 08:00 - 12:00"
               className="w-full px-3 py-2 rounded-lg text-xs outline-none transition-colors"
               style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.15)", color: "#0d0446" }}
-            >
-              <option value="">Selecione o tipo</option>
-              {tiposPrograma.map(t => <option key={t} value={t}>{t}</option>)}
-              {!tiposPrograma.includes("Jornalístico") && <option value="Jornalístico">Jornalístico</option>}
-            </select>
+            />
           </div>
         </div>
 
@@ -206,55 +220,6 @@ export default function RoteiroPrograma() {
           <NoticiasPanel />
         </Suspense>
       )}
-
-      {/* Add Participante Dialog */}
-      <Dialog open={showAddParticipante} onOpenChange={setShowAddParticipante}>
-        <DialogContent className="sm:max-w-md" style={{ backgroundColor: "#ffffff" }}>
-          <DialogHeader>
-            <DialogTitle style={{ color: "#0d0446" }}>Adicionar Participante</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3 py-2">
-            <div>
-              <label className="text-[11px] font-bold mb-1 block" style={{ color: "#0d0446" }}>Nome</label>
-              <input
-                value={newParticipanteNome}
-                onChange={e => setNewParticipanteNome(e.target.value)}
-                onKeyDown={e => { if (e.key === "Enter") addParticipante(); }}
-                placeholder="Nome do participante"
-                className="w-full px-3 py-2 rounded-lg text-xs outline-none"
-                style={{ border: "1px solid rgba(13,4,70,0.15)", color: "#0d0446" }}
-                autoFocus
-              />
-            </div>
-            <div>
-              <label className="text-[11px] font-bold mb-1 block" style={{ color: "#0d0446" }}>Categoria</label>
-              <select
-                value={newParticipanteCargo}
-                onChange={e => setNewParticipanteCargo(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg text-xs outline-none"
-                style={{ border: "1px solid rgba(13,4,70,0.15)", color: "#0d0446" }}
-              >
-                <option>Apresentador</option>
-                <option>Jornalista</option>
-                <option>Convidado</option>
-              </select>
-            </div>
-          </div>
-          <DialogFooter>
-            <button onClick={() => setShowAddParticipante(false)} className="px-4 py-2 rounded-lg text-xs" style={{ color: "#0d0446" }}>
-              Cancelar
-            </button>
-            <button
-              onClick={addParticipante}
-              disabled={!newParticipanteNome.trim()}
-              className="px-4 py-2 rounded-lg text-xs font-bold transition-all disabled:opacity-50"
-              style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#ffffff" }}
-            >
-              Adicionar
-            </button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
