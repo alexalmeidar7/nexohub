@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { MessageSquare, Loader2, Trash2, RotateCw, X } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { MessageSquare, Loader2, Trash2, RotateCw, X, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
 
@@ -11,31 +11,65 @@ interface TpMessageProps {
 export default function TpMessage({ user, onBack }: TpMessageProps) {
   const [msgText, setMsgText] = useState("");
   const [msgSending, setMsgSending] = useState(false);
-  const [msgSent, setMsgSent] = useState(false);
+  const [sendStatus, setSendStatus] = useState<"idle" | "sent" | "error">("idle");
   const [msgHistory, setMsgHistory] = useState<{ text: string; ts: number }[]>(() => {
     try { return JSON.parse(localStorage.getItem("tp-msg-history") || "[]"); } catch { return []; }
   });
 
+  // Persistent channel — subscribe once, reuse for all sends
+  const channelRef = useRef<any>(null);
+  const channelReadyRef = useRef(false);
+
+  useEffect(() => {
+    const ch = supabase.channel(`tp-msg-${user.id}`);
+    ch.subscribe((status) => { channelReadyRef.current = status === "SUBSCRIBED"; });
+    channelRef.current = ch;
+    return () => {
+      channelReadyRef.current = false;
+      supabase.removeChannel(ch);
+      channelRef.current = null;
+    };
+  }, [user.id]);
+
   async function sendMsg(text: string) {
     if (!text.trim()) return;
     setMsgSending(true);
+    setSendStatus("idle");
     const msg = { text: text.trim(), subject: "Mensagem", ts: Date.now() };
-    const queue = JSON.parse(localStorage.getItem("tp-msg-queue") || "[]");
-    queue.push(msg);
-    localStorage.setItem("tp-msg-queue", JSON.stringify(queue));
+
+    // Save to history
     const newHistory = [{ text: text.trim(), ts: Date.now() }, ...msgHistory].slice(0, 50);
     setMsgHistory(newHistory);
     localStorage.setItem("tp-msg-history", JSON.stringify(newHistory));
+
     try {
-      const ch = supabase.channel(`tp-msg-${user.id}`);
-      await ch.subscribe();
-      await ch.send({ type: "broadcast", event: "tp-message", payload: msg });
-      supabase.removeChannel(ch);
-    } catch (_) {}
+      // Wait for channel readiness (up to 1.5s)
+      if (!channelReadyRef.current) {
+        await new Promise<void>((resolve) => {
+          const started = Date.now();
+          const check = setInterval(() => {
+            if (channelReadyRef.current || Date.now() - started > 1500) {
+              clearInterval(check);
+              resolve();
+            }
+          }, 50);
+        });
+      }
+
+      if (!channelReadyRef.current) {
+        throw new Error("Canal não conectado");
+      }
+
+      await channelRef.current.send({ type: "broadcast", event: "tp-message", payload: msg });
+      setSendStatus("sent");
+      setMsgText("");
+      setTimeout(() => setSendStatus("idle"), 3000);
+    } catch (err) {
+      console.error("Erro ao enviar mensagem:", err);
+      setSendStatus("error");
+      setTimeout(() => setSendStatus("idle"), 5000);
+    }
     setMsgSending(false);
-    setMsgSent(true);
-    setMsgText("");
-    setTimeout(() => setMsgSent(false), 3000);
   }
 
   function clearHistory() {
@@ -89,13 +123,29 @@ export default function TpMessage({ user, onBack }: TpMessageProps) {
           }}
           placeholder="Digite sua mensagem..."
           rows={5}
+          maxLength={500}
           style={{
             width: "100%", background: "#ffffff", color: "#0d0446", border: "1px solid rgba(74,144,226,0.2)",
             borderRadius: "10px", padding: "12px", fontSize: "13px", resize: "none", outline: "none",
           }}
         />
-        {msgSent && <p style={{ color: "#22c55e", fontSize: "12px", marginTop: "8px" }}>✓ Mensagem enviada!</p>}
-        <div style={{ display: "flex", gap: "10px", marginTop: "14px" }}>
+        {/* Character counter */}
+        <div style={{ display: "flex", justifyContent: "space-between", marginTop: "4px" }}>
+          <div>
+            {sendStatus === "sent" && (
+              <span style={{ color: "#22c55e", fontSize: "12px", fontWeight: 600 }}>✓ Mensagem enviada!</span>
+            )}
+            {sendStatus === "error" && (
+              <span style={{ color: "#ef4444", fontSize: "12px", fontWeight: 600, display: "flex", alignItems: "center", gap: "4px" }}>
+                <AlertCircle size={12} /> Falha ao enviar. Tente novamente.
+              </span>
+            )}
+          </div>
+          <span style={{ fontSize: "10px", color: msgText.length > 450 ? "#ef4444" : "rgba(255,255,255,0.25)" }}>
+            {msgText.length}/500
+          </span>
+        </div>
+        <div style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
           <button
             onClick={() => sendMsg(msgText)}
             disabled={!msgText.trim() || msgSending}

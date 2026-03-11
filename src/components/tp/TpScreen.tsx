@@ -87,31 +87,17 @@ export default function TpScreen({ user, onBack }: TpScreenProps) {
     processQueue();
   }
 
-  // localStorage queue + realtime listener
+  // Realtime message listener (no localStorage fallback)
   useEffect(() => {
     if (!user) return;
-    function drainLocalStorage() {
-      const queue = JSON.parse(localStorage.getItem("tp-msg-queue") || "[]");
-      if (queue.length > 0) {
-        localStorage.setItem("tp-msg-queue", "[]");
-        queue.forEach((msg: any) => enqueueMessage(msg));
-      }
-    }
-    drainLocalStorage();
-    const onStorage = (e: StorageEvent) => { if (e.key === "tp-msg-queue") drainLocalStorage(); };
-    window.addEventListener("storage", onStorage);
     const channel = supabase
       .channel(`tp-msg-${user.id}`)
       .on("broadcast", { event: "tp-message" }, (payload: any) => {
         const msg = payload.payload as { text: string; subject: string };
-        const queue = JSON.parse(localStorage.getItem("tp-msg-queue") || "[]");
-        const filtered = queue.filter((q: any) => q.text !== msg.text || Math.abs((q.ts || 0) - ((msg as any).ts || 0)) > 2000);
-        localStorage.setItem("tp-msg-queue", JSON.stringify(filtered));
-        enqueueMessage(msg);
+        if (msg) enqueueMessage(msg);
       })
       .subscribe();
     return () => {
-      window.removeEventListener("storage", onStorage);
       supabase.removeChannel(channel);
       if (msgTimerRef.current) clearTimeout(msgTimerRef.current);
     };
