@@ -1524,13 +1524,12 @@ function TpController({ user, onBack }: { user: any; onBack: () => void }) {
         <div style={{ position: "absolute", left: "24px", right: "24px", top: "50%", height: "1px", background: "rgba(74,144,226,0.3)", zIndex: 6 }} />
 
         {/* Text preview */}
-        <div style={{
+        <div ref={previewTextRef} style={{
           width: "75%", margin: "0 auto", fontSize: `${Math.max(14, fontSize * 0.3)}px`, lineHeight: 1.5,
           textAlign: "center", whiteSpace: "pre-wrap", position: "absolute",
-          top: `${scrollPos}%`, left: "12.5%",
+          top: `${serverScrollPos}%`, left: "12.5%",
           color: "#ffffff", textShadow: "0 1px 8px rgba(0,0,0,0.5)", fontWeight: 400,
           transform: `${flipH ? "scaleX(-1)" : ""} ${flipV ? "scaleY(-1)" : ""}`.trim() || "none",
-          transition: "top 0.12s linear",
         }}>
           {isHtmlContent ? <span dangerouslySetInnerHTML={{ __html: displayText }} /> : displayText}
         </div>
