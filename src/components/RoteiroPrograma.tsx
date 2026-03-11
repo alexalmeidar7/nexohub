@@ -216,6 +216,7 @@ export default function RoteiroPrograma() {
     } catch { setParticipantes([]); }
     setEditingRoteiroId(r.id);
     setShowRoteiro(true);
+    setShowExportView(false);
     setTimeout(() => {
       if (editorRef.current) editorRef.current.innerHTML = r.conteudo_html || "";
     }, 150);
