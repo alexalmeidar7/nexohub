@@ -168,6 +168,7 @@ function AdminDashboardContent() {
 }
 
 export default function AdminDashboard() {
+  usePageTitle("Admin Dashboard");
   return (
     <ProtectedRoute requiredRole="admin">
       <AdminLayout title="Dashboard Administrativo">

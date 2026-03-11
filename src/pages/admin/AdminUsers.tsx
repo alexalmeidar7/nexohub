@@ -236,6 +236,7 @@ function AdminUsersContent() {
 }
 
 export default function AdminUsers() {
+  usePageTitle("Admin Clientes");
   return (
     <ProtectedRoute requiredRole="admin">
       <AdminLayout title="Gestão de Clientes">

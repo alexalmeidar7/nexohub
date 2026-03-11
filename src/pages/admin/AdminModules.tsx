@@ -144,6 +144,7 @@ function AdminModulesContent() {
 }
 
 export default function AdminModules() {
+  usePageTitle("Admin Módulos");
   return (
     <ProtectedRoute requiredRole="admin">
       <AdminLayout title="Catálogo de Módulos">

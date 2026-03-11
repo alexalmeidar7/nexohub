@@ -197,6 +197,7 @@ function AdminMessagesContent() {
 }
 
 export default function AdminMessages() {
+  usePageTitle("Admin Mensagens");
   return (
     <ProtectedRoute requiredRole="admin">
       <AdminLayout title="Mensagens">

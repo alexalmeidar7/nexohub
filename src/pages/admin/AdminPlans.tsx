@@ -331,6 +331,7 @@ function AdminPlansContent() {
 }
 
 export default function AdminPlans() {
+  usePageTitle("Admin Planos");
   return (
     <ProtectedRoute requiredRole="admin">
       <AdminLayout title="Cadastro de Planos">
