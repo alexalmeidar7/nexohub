@@ -1126,6 +1126,7 @@ function TpScreen({ user, onBack }: { user: any; onBack: () => void }) {
    ═══════════════════════════════════════════════════════════════ */
 function TpController({ user, onBack }: { user: any; onBack: () => void }) {
   const [tpState, setTpState] = useState<any>(null);
+  const [connected, setConnected] = useState(false);
   const [showSetup, setShowSetup] = useState(false);
   const [roteiros, setRoteiros] = useState<Roteiro[]>([]);
   const [selectedRoteiroId, setSelectedRoteiroId] = useState("");
