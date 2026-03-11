@@ -147,7 +147,7 @@ export default function TpController({ user, onBack }: TpControllerProps) {
 
   // Fallback: if state got stale, request a fresh snapshot from TP screen
   useEffect(() => {
-    if (!user || !tpPresenceOnline) return;
+    if (!user || !(tpPresenceOnline || dbTpOnline)) return;
     const id = setInterval(() => {
       const stale = !lastStateAtRef.current || Date.now() - lastStateAtRef.current > 5000;
       if (stale) {
@@ -155,7 +155,35 @@ export default function TpController({ user, onBack }: TpControllerProps) {
       }
     }, 1500);
     return () => clearInterval(id);
-  }, [user, tpPresenceOnline]);
+  }, [user, tpPresenceOnline, dbTpOnline]);
+
+  // Fallback: load saved text from DB when no realtime state received
+  useEffect(() => {
+    if (!user || tpState) return;
+    const timer = setTimeout(async () => {
+      if (tpState) return; // got state in the meantime
+      const { data } = await (supabase as any)
+        .from("teleprompters")
+        .select("texto_atual, is_html")
+        .eq("user_id", user.id)
+        .eq("ativo", true)
+        .limit(1);
+      if (data && data.length > 0 && data[0].texto_atual) {
+        setTpState((prev: any) => prev || {
+          scrolling: false,
+          speed: 2,
+          fontSize: 60,
+          flipH: false,
+          flipV: false,
+          displayText: data[0].texto_atual,
+          isHtmlContent: data[0].is_html || false,
+          timerSeconds: 0,
+          scrollPos: 50,
+        });
+      }
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [user, tpState]);
 
   const scrolling = tpState?.scrolling ?? false;
   const speed = tpState?.speed ?? 2;
