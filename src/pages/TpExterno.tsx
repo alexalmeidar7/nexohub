@@ -980,7 +980,7 @@ function TpScreen({ user, onBack }: { user: any; onBack: () => void }) {
         </div>
 
         {/* ─── Controls bar ─── */}
-        <div style={{
+        <div className="tp-controls-bar" style={{
           position: "absolute", bottom: "24px", left: "50%", transform: "translateX(-50%)",
           background: "rgba(11,11,48,0.9)", backdropFilter: "blur(20px)",
           padding: "10px 24px", borderRadius: "20px",
