@@ -294,16 +294,23 @@ export default function TpScreen({ user, onBack }: TpScreenProps) {
 
   const lastBroadcastRef = useRef<string>("");
 
+  // Keep a ref with latest state to avoid stale closures in intervals/handlers
+  const latestStateRef = useRef({ scrolling, speed, fontSize, flipH, flipV, displayText, isHtmlContent, timerSeconds });
+  useEffect(() => {
+    latestStateRef.current = { scrolling, speed, fontSize, flipH, flipV, displayText, isHtmlContent, timerSeconds };
+  }, [scrolling, speed, fontSize, flipH, flipV, displayText, isHtmlContent, timerSeconds]);
+
   function buildStatePayload() {
+    const s = latestStateRef.current;
     return {
-      scrolling,
-      speed,
-      fontSize,
-      flipH,
-      flipV,
-      displayText: displayText.substring(0, 2000),
-      isHtmlContent,
-      timerSeconds,
+      scrolling: s.scrolling,
+      speed: s.speed,
+      fontSize: s.fontSize,
+      flipH: s.flipH,
+      flipV: s.flipV,
+      displayText: s.displayText.substring(0, 2000),
+      isHtmlContent: s.isHtmlContent,
+      timerSeconds: s.timerSeconds,
       scrollPos: scrollPosRef.current,
     };
   }

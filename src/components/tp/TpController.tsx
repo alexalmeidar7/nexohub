@@ -283,7 +283,7 @@ export default function TpController({ user, onBack }: TpControllerProps) {
       {showSetup && (
         <>
           <div onClick={() => setShowSetup(false)} className="fixed inset-0 bg-black/60 z-[90]" />
-          <div className="tp-setup-modal fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 max-h-[75vh] bg-gradient-to-br from-tp-surface to-tp-surface-light border border-tp-border z-[100] p-7 rounded-2xl flex flex-col shadow-[0_24px_64px_hsl(var(--tp-shadow))] overflow-hidden" style={{ width: "min(650px, 85%)" }}>
+          <div onClick={(e) => e.stopPropagation()} className="tp-setup-modal fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 max-h-[75vh] bg-gradient-to-br from-tp-surface to-tp-surface-light border border-tp-border z-[100] p-7 rounded-2xl flex flex-col shadow-[0_24px_64px_hsl(var(--tp-shadow))] overflow-hidden" style={{ width: "min(650px, 85%)" }}>
             <h3 className="m-0 mb-1 text-tp-foreground text-base font-bold">
               Carregar Texto no Teleprompter
             </h3>
