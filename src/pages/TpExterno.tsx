@@ -331,11 +331,92 @@ function TpScreen({ user, onBack }: { user: any; onBack: () => void }) {
   const [flipV, setFlipV] = useState(false);
   const [isHtmlContent, setIsHtmlContent] = useState(false);
 
+  // Message notification state
+  const [incomingMsg, setIncomingMsg] = useState<{ text: string; subject: string } | null>(null);
+  const [msgVisible, setMsgVisible] = useState(false);
+  const [hasUnread, setHasUnread] = useState(false);
+  const msgTimerRef = useRef<ReturnType<typeof setTimeout>>();
+
   const scrollPosRef = useRef(50);
   const textRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const animRef = useRef<number>();
   const timerRef = useRef<ReturnType<typeof setInterval>>();
+
+  // Subscribe to realtime messages for this user
+  useEffect(() => {
+    if (!user) return;
+
+    // Load latest unread on mount
+    supabase
+      .from("admin_messages")
+      .select("message, subject")
+      .or(`recipient_id.eq.${user.id},is_broadcast.eq.true`)
+      .eq("is_read", false)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .then(({ data }) => {
+        if (data && data.length > 0) {
+          setHasUnread(true);
+        }
+      });
+
+    const channel = supabase
+      .channel("tp-messages")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "admin_messages",
+        },
+        (payload: any) => {
+          const msg = payload.new;
+          if (msg.recipient_id === user.id || msg.is_broadcast) {
+            showMessage({ text: msg.message, subject: msg.subject });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [user]);
+
+  function showMessage(msg: { text: string; subject: string }) {
+    if (msgTimerRef.current) clearTimeout(msgTimerRef.current);
+    setIncomingMsg(msg);
+    setMsgVisible(true);
+    setHasUnread(false);
+    msgTimerRef.current = setTimeout(() => {
+      setMsgVisible(false);
+      setTimeout(() => setIncomingMsg(null), 300);
+    }, 5000);
+  }
+
+  function handleMsgIconClick() {
+    if (incomingMsg && msgVisible) {
+      // Close current message
+      if (msgTimerRef.current) clearTimeout(msgTimerRef.current);
+      setMsgVisible(false);
+      setTimeout(() => setIncomingMsg(null), 300);
+      return;
+    }
+    // Load latest unread
+    if (!user) return;
+    supabase
+      .from("admin_messages")
+      .select("message, subject")
+      .or(`recipient_id.eq.${user.id},is_broadcast.eq.true`)
+      .eq("is_read", false)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .then(({ data }) => {
+        if (data && data.length > 0) {
+          showMessage({ text: data[0].message, subject: data[0].subject });
+        }
+      });
+    setHasUnread(false);
+  }
 
   // Load roteiros
   useEffect(() => {
@@ -534,6 +615,19 @@ function TpScreen({ user, onBack }: { user: any; onBack: () => void }) {
             {clock}
           </div>
           <div style={{ width: "32px", height: "2px", background: "linear-gradient(90deg, transparent, #4a90e2, transparent)", margin: "12px auto" }} />
+          <button onClick={handleMsgIconClick} title="Mensagens" style={{
+            background: "none", border: "none", cursor: "pointer", position: "relative",
+            marginTop: "4px", padding: "4px",
+          }}>
+            <MessageSquare size={20} color="rgba(255,255,255,0.5)" />
+            {hasUnread && (
+              <span style={{
+                position: "absolute", top: "2px", right: "2px", width: "8px", height: "8px",
+                borderRadius: "50%", backgroundColor: "#ef4444",
+                boxShadow: "0 0 6px rgba(239,68,68,0.6)",
+              }} />
+            )}
+          </button>
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: "16px", alignItems: "center" }}>
@@ -577,6 +671,45 @@ function TpScreen({ user, onBack }: { user: any; onBack: () => void }) {
       {/* ─── Display Area ─── */}
       <div data-tp-display style={{ position: "relative", backgroundColor: "#020210", overflow: "hidden" }}>
         <div style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 5, background: "radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.6) 100%)" }} />
+
+        {/* ─── Message Balloon ─── */}
+        {incomingMsg && (
+          <div style={{
+            position: "absolute", top: "24px", left: "50%", transform: "translateX(-50%)",
+            zIndex: 50, transition: "opacity 0.3s, transform 0.3s",
+            opacity: msgVisible ? 1 : 0,
+            pointerEvents: msgVisible ? "auto" : "none",
+          }}>
+            <div style={{
+              background: "rgba(13,4,70,0.92)", backdropFilter: "blur(20px)",
+              borderRadius: "14px", padding: "16px 24px 10px", minWidth: "300px", maxWidth: "500px",
+              border: "1px solid rgba(74,144,226,0.3)", boxShadow: "0 12px 40px rgba(0,0,0,0.5)",
+              overflow: "hidden", position: "relative",
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
+                <MessageSquare size={14} color="#4a90e2" />
+                <span style={{ color: "#4a90e2", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px" }}>
+                  {incomingMsg.subject || "Mensagem"}
+                </span>
+              </div>
+              <p style={{ color: "#fff", fontSize: "14px", margin: 0, lineHeight: 1.5 }}>
+                {incomingMsg.text}
+              </p>
+              {/* Progress bar */}
+              <div style={{
+                position: "absolute", bottom: 0, left: 0, right: 0, height: "3px",
+                background: "rgba(255,255,255,0.1)",
+              }}>
+                <div style={{
+                  height: "100%", background: "linear-gradient(90deg, #4a90e2, #2dbff4)",
+                  borderRadius: "0 2px 2px 0",
+                  animation: msgVisible ? "tp-msg-shrink 5s linear forwards" : "none",
+                }} />
+              </div>
+            </div>
+          </div>
+        )}
+        <style>{`@keyframes tp-msg-shrink { from { width: 100%; } to { width: 0%; } }`}</style>
 
         {/* Top fade-out overlay — text disappears smoothly */}
         <div style={{
