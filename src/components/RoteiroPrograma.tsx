@@ -297,6 +297,8 @@ export default function RoteiroPrograma() {
     setRoteiroSubtitulo("");
     setRoteiroTexto("");
     setShowRoteiro(true);
+    setNumeroRoteiro(null);
+    setEditingRoteiroId(null);
 
     const tdStyle = "border:1px solid rgba(13,4,70,0.12);padding:8px 10px";
     const actionBtnStyle = "cursor:pointer;padding:2px 4px;border-radius:4px;display:inline-flex;align-items:center;justify-content:center";
