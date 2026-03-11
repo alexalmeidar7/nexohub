@@ -514,7 +514,13 @@ export default function AgendaPage() {
             </div>
 
             {/* Form body */}
-            <div className="px-6 pb-6 pt-4 space-y-5">
+            <div className="px-6 pb-6 pt-4 space-y-5 overflow-y-auto flex-1 min-h-0" style={{ scrollbarWidth: "thin", scrollbarColor: "#268ffa transparent" }}>
+              <style>{`
+                .agenda-dialog-scroll::-webkit-scrollbar { width: 6px; }
+                .agenda-dialog-scroll::-webkit-scrollbar-track { background: transparent; margin: 8px 0; }
+                .agenda-dialog-scroll::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #268ffa, #2dbef3); border-radius: 10px; }
+                .agenda-dialog-scroll::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, #1a7ae0, #268ffa); }
+              `}</style>
 
               {/* Programa */}
               <div>
