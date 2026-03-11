@@ -47,7 +47,7 @@ export default function RoteiroPrograma() {
   const [roteiroSubtitulo, setRoteiroSubtitulo] = useState("");
   const [roteiroTexto, setRoteiroTexto] = useState("");
   const [participantes, setParticipantes] = useState<{ nome: string; cargo: string; instagram: string }[]>([]);
-  const [showAddParticipante, setShowAddParticipante] = useState(false);
+  
   const [newNome, setNewNome] = useState("");
   const [newCargo, setNewCargo] = useState("Apresentador(a)");
   const [newInstagram, setNewInstagram] = useState("");
