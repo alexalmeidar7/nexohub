@@ -65,6 +65,7 @@ const App = () => (
             <Route path="/player" element={<Navigate to="/user/nexohub/player" replace />} />
             <Route path="/jornal-export" element={<JornalExport />} />
             <Route path="/roteiro-export" element={<RoteiroExport />} />
+            <Route path="/roteiro-apresentador-edit" element={<RoteiroApresentadorEdit />} />
 
             {/* Admin routes */}
             <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
