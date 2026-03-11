@@ -87,6 +87,7 @@ const sidebarMenu: MenuItem[] = [
       { icon: Tag, label: "tela promo", page: undefined as unknown as Page },
       { icon: Scissors, label: "corte de vídeo", page: "cortevideo" },
       { icon: Monitor, label: "TP", page: "tp" },
+      { icon: ExternalLink, label: "abrir TP externo", page: undefined as unknown as Page },
     ]
   },
 ];
