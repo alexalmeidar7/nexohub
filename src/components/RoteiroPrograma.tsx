@@ -69,7 +69,6 @@ export default function RoteiroPrograma() {
   const tiposFiltrados = estudio
     ? [...new Set(programas.filter(p => p.estudio === estudio).map(p => p.tipo_programa).filter(Boolean))] as string[]
     : [...new Set(programas.map(p => p.tipo_programa).filter(Boolean))] as string[];
-  if (!tiposFiltrados.includes("Jornalístico")) tiposFiltrados.push("Jornalístico");
 
   // Filter programs by estudio + tipo
   const programasFiltrados = programas.filter(p => {
