@@ -7,7 +7,6 @@ import { CalendarIcon, FileText, Building2, Clock, Plus, X, Download } from "luc
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 
 const NoticiasPanel = lazy(() => import("./NoticiasPanel"));
@@ -28,6 +27,7 @@ interface Programa {
   horario_inicio: string;
   horario_fim: string;
   dias_semana: string[];
+  apresentador_id: string | null;
 }
 
 export default function RoteiroPrograma() {
@@ -47,7 +47,7 @@ export default function RoteiroPrograma() {
   const [roteiroSubtitulo, setRoteiroSubtitulo] = useState("");
   const [roteiroTexto, setRoteiroTexto] = useState("");
   const [participantes, setParticipantes] = useState<{ nome: string; cargo: string; instagram: string }[]>([]);
-  const [showAddParticipante, setShowAddParticipante] = useState(false);
+  
   const [newNome, setNewNome] = useState("");
   const [newCargo, setNewCargo] = useState("Apresentador(a)");
   const [newInstagram, setNewInstagram] = useState("");
@@ -71,7 +71,7 @@ export default function RoteiroPrograma() {
     const load = async () => {
       setLoading(true);
       const [progRes, apresRes] = await Promise.all([
-        supabase.from("programas").select("id, nome, estudio, tipo_programa, horario_inicio, horario_fim, dias_semana").eq("ativo", true),
+        supabase.from("programas").select("id, nome, estudio, tipo_programa, horario_inicio, horario_fim, dias_semana, apresentador_id").eq("ativo", true),
         supabase.from("apresentadores").select("id, nome, cargo, instagram, ativo").eq("ativo", true),
       ]);
       const progs = progRes.data || [];
@@ -111,7 +111,15 @@ export default function RoteiroPrograma() {
   };
 
   const handleMontarRoteiro = () => {
-    setParticipantes(apresentadores.map(a => ({ nome: a.nome, cargo: a.cargo || "Apresentador(a)", instagram: (a as any).instagram || "" })));
+    const prog = programas.find(p => p.nome === programaNome);
+    const defaultParticipantes: { nome: string; cargo: string; instagram: string }[] = [];
+    if (prog?.apresentador_id) {
+      const apres = apresentadores.find(a => a.id === prog.apresentador_id);
+      if (apres) {
+        defaultParticipantes.push({ nome: apres.nome, cargo: apres.cargo || "Apresentador(a)", instagram: (apres as any).instagram || "" });
+      }
+    }
+    setParticipantes(defaultParticipantes);
     setRoteiroTitulo("");
     setRoteiroSubtitulo("");
     setRoteiroTexto("");
@@ -122,9 +130,8 @@ export default function RoteiroPrograma() {
     if (!newNome.trim()) return;
     setParticipantes(prev => [...prev, { nome: newNome.trim(), cargo: newCargo, instagram: newInstagram.trim() }]);
     setNewNome("");
-    setNewCargo("Apresentador(a)");
+    setNewCargo("");
     setNewInstagram("");
-    setShowAddParticipante(false);
   };
 
   const removeParticipante = (idx: number) => {
@@ -336,17 +343,41 @@ export default function RoteiroPrograma() {
                   </button>
                 </div>
               ))}
+
+              {/* Inline add participant fields */}
+              <div className="rounded-xl p-3 space-y-2" style={{ backgroundColor: "#ffffff", border: "1px dashed rgba(13,4,70,0.15)" }}>
+                <input
+                  value={newNome}
+                  onChange={e => setNewNome(e.target.value)}
+                  placeholder="nome"
+                  className="w-full px-3 py-2 rounded-lg text-xs outline-none"
+                  style={{ backgroundColor: "rgba(13,4,70,0.04)", border: "1px solid rgba(13,4,70,0.08)", color: "#0d0446" }}
+                />
+                <input
+                  value={newCargo}
+                  onChange={e => setNewCargo(e.target.value)}
+                  placeholder="cargo"
+                  className="w-full px-3 py-2 rounded-lg text-xs outline-none"
+                  style={{ backgroundColor: "rgba(13,4,70,0.04)", border: "1px solid rgba(13,4,70,0.08)", color: "#0d0446" }}
+                />
+                <input
+                  value={newInstagram}
+                  onChange={e => setNewInstagram(e.target.value)}
+                  placeholder="rede social (@usuario)"
+                  className="w-full px-3 py-2 rounded-lg text-xs outline-none"
+                  style={{ backgroundColor: "rgba(13,4,70,0.04)", border: "1px solid rgba(13,4,70,0.08)", color: "#0d0446" }}
+                />
+                <button
+                  onClick={addParticipante}
+                  disabled={!newNome.trim()}
+                  className="w-full py-2 rounded-lg text-xs font-bold transition-all hover:opacity-90 disabled:opacity-40"
+                  style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#ffffff" }}
+                >
+                  <Plus size={12} className="inline mr-1" />adicionar participante
+                </button>
+              </div>
             </div>
           </div>
-
-          {/* Adicionar Participante */}
-          <button
-            onClick={() => setShowAddParticipante(true)}
-            className="w-full py-2.5 rounded-xl text-xs font-bold transition-all hover:opacity-90 mb-4"
-            style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#ffffff" }}
-          >
-            adicionar participante
-          </button>
 
           {/* Texto Roteiro */}
           <div className="rounded-xl p-4 mb-4" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.08)" }}>
@@ -378,65 +409,6 @@ export default function RoteiroPrograma() {
         </Suspense>
       )}
 
-      {/* Add Participante Dialog */}
-      <Dialog open={showAddParticipante} onOpenChange={setShowAddParticipante}>
-        <DialogContent className="sm:max-w-md" style={{ backgroundColor: "#ffffff" }}>
-          <DialogHeader>
-            <DialogTitle style={{ color: "#0d0446" }}>Adicionar Participante</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3 py-2">
-            <div>
-              <label className="text-[11px] font-bold mb-1 block" style={{ color: "#0d0446" }}>Nome</label>
-              <input
-                value={newNome}
-                onChange={e => setNewNome(e.target.value)}
-                onKeyDown={e => { if (e.key === "Enter") addParticipante(); }}
-                placeholder="Nome do participante"
-                className="w-full px-3 py-2 rounded-lg text-xs outline-none"
-                style={{ border: "1px solid rgba(13,4,70,0.15)", color: "#0d0446" }}
-                autoFocus
-              />
-            </div>
-            <div>
-              <label className="text-[11px] font-bold mb-1 block" style={{ color: "#0d0446" }}>Cargo</label>
-              <select
-                value={newCargo}
-                onChange={e => setNewCargo(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg text-xs outline-none"
-                style={{ border: "1px solid rgba(13,4,70,0.15)", color: "#0d0446" }}
-              >
-                <option>Apresentador(a)</option>
-                <option>Jornalista</option>
-                <option>Convidado(a)</option>
-                <option>Repórter</option>
-              </select>
-            </div>
-            <div>
-              <label className="text-[11px] font-bold mb-1 block" style={{ color: "#0d0446" }}>Instagram</label>
-              <input
-                value={newInstagram}
-                onChange={e => setNewInstagram(e.target.value)}
-                placeholder="@usuario"
-                className="w-full px-3 py-2 rounded-lg text-xs outline-none"
-                style={{ border: "1px solid rgba(13,4,70,0.15)", color: "#0d0446" }}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <button onClick={() => setShowAddParticipante(false)} className="px-4 py-2 rounded-lg text-xs" style={{ color: "#0d0446" }}>
-              Cancelar
-            </button>
-            <button
-              onClick={addParticipante}
-              disabled={!newNome.trim()}
-              className="px-4 py-2 rounded-lg text-xs font-bold transition-all disabled:opacity-50"
-              style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#ffffff" }}
-            >
-              Adicionar
-            </button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
