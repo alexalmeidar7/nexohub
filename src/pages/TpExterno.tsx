@@ -165,9 +165,16 @@ export default function TpExterno() {
     try { return JSON.parse(localStorage.getItem("tp-msg-history") || "[]"); } catch { return []; }
   });
 
-  // Redirect to menu if already logged in
+  // Redirect to menu (or directly to TP if ?view=tp) if already logged in
   useEffect(() => {
-    if (!authLoading && user && step === "login") setStep("menu");
+    if (!authLoading && user && step === "login") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("view") === "tp") {
+        setStep("tp");
+      } else {
+        setStep("menu");
+      }
+    }
   }, [authLoading, user, step]);
 
   async function handleLogin(e: React.FormEvent) {
@@ -317,7 +324,7 @@ export default function TpExterno() {
           </button>
           <button
             className="tp-menu-btn"
-            onClick={() => setStep("tp")}
+            onClick={() => window.open(`${window.location.pathname}?view=tp`, '_blank')}
             style={{
               width: "180px", height: "180px", borderRadius: "20px", border: "1px solid rgba(74,144,226,0.3)",
               background: "linear-gradient(135deg, rgba(13,4,70,0.9), rgba(26,10,110,0.9))",
