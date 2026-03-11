@@ -3,7 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Lock, Check, History, Save, Pencil } from "lucide-react";
+import { Lock, Check, History, Save, Pencil, Bold, Underline, AlignLeft, AlignCenter, AlignRight, List, ListOrdered } from "lucide-react";
 import { toast } from "sonner";
 
 interface Participante {
@@ -26,6 +26,7 @@ export default function RoteiroApresentadorEdit() {
   const [historico, setHistorico] = useState<any[]>([]);
   const [participantes, setParticipantes] = useState<Participante[]>([]);
   const [editingPart, setEditingPart] = useState<number | null>(null);
+  const [fontSize, setFontSize] = useState("14");
   const editorRef = useRef<HTMLDivElement>(null);
 
   const handleLogin = async () => {
@@ -182,6 +183,69 @@ export default function RoteiroApresentadorEdit() {
         {/* Conteúdo editável do roteiro */}
         <div className="rounded-xl p-4 mb-4" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.08)" }}>
           <p className="text-xs font-bold uppercase mb-3" style={{ color: "#0d0446" }}>Roteiro do programa</p>
+
+          {/* Toolbar */}
+          <div className="flex flex-wrap items-center gap-1 mb-3 pb-3" style={{ borderBottom: "1px solid rgba(13,4,70,0.08)" }}>
+            <select
+              value={fontSize}
+              onChange={e => {
+                setFontSize(e.target.value);
+                document.execCommand("fontSize", false, "7");
+                const sel = window.getSelection();
+                if (sel && sel.rangeCount > 0) {
+                  const fonts = editorRef.current?.querySelectorAll('font[size="7"]');
+                  fonts?.forEach(f => {
+                    const span = document.createElement("span");
+                    span.style.fontSize = e.target.value + "px";
+                    span.innerHTML = f.innerHTML;
+                    f.replaceWith(span);
+                  });
+                }
+              }}
+              className="h-8 px-2 rounded-lg text-xs outline-none cursor-pointer"
+              style={{ backgroundColor: "rgba(13,4,70,0.04)", border: "1px solid rgba(13,4,70,0.08)", color: "#0d0446" }}
+            >
+              <option value="12">12px</option>
+              <option value="14">14px</option>
+              <option value="16">16px</option>
+              <option value="18">18px</option>
+              <option value="20">20px</option>
+              <option value="24">24px</option>
+              <option value="28">28px</option>
+            </select>
+
+            <div className="w-px h-5 mx-1" style={{ backgroundColor: "rgba(13,4,70,0.1)" }} />
+
+            <button type="button" onClick={() => document.execCommand("bold")} className="h-8 w-8 flex items-center justify-center rounded-lg hover:opacity-70 transition" style={{ backgroundColor: "rgba(13,4,70,0.04)" }} title="Negrito">
+              <Bold size={14} style={{ color: "#0d0446" }} />
+            </button>
+            <button type="button" onClick={() => document.execCommand("underline")} className="h-8 w-8 flex items-center justify-center rounded-lg hover:opacity-70 transition" style={{ backgroundColor: "rgba(13,4,70,0.04)" }} title="Sublinhado">
+              <Underline size={14} style={{ color: "#0d0446" }} />
+            </button>
+
+            <div className="w-px h-5 mx-1" style={{ backgroundColor: "rgba(13,4,70,0.1)" }} />
+
+            <button type="button" onClick={() => document.execCommand("justifyLeft")} className="h-8 w-8 flex items-center justify-center rounded-lg hover:opacity-70 transition" style={{ backgroundColor: "rgba(13,4,70,0.04)" }} title="Alinhar à esquerda">
+              <AlignLeft size={14} style={{ color: "#0d0446" }} />
+            </button>
+            <button type="button" onClick={() => document.execCommand("justifyCenter")} className="h-8 w-8 flex items-center justify-center rounded-lg hover:opacity-70 transition" style={{ backgroundColor: "rgba(13,4,70,0.04)" }} title="Centralizar">
+              <AlignCenter size={14} style={{ color: "#0d0446" }} />
+            </button>
+            <button type="button" onClick={() => document.execCommand("justifyRight")} className="h-8 w-8 flex items-center justify-center rounded-lg hover:opacity-70 transition" style={{ backgroundColor: "rgba(13,4,70,0.04)" }} title="Alinhar à direita">
+              <AlignRight size={14} style={{ color: "#0d0446" }} />
+            </button>
+
+            <div className="w-px h-5 mx-1" style={{ backgroundColor: "rgba(13,4,70,0.1)" }} />
+
+            <button type="button" onClick={() => document.execCommand("insertUnorderedList")} className="h-8 w-8 flex items-center justify-center rounded-lg hover:opacity-70 transition" style={{ backgroundColor: "rgba(13,4,70,0.04)" }} title="Lista com marcadores">
+              <List size={14} style={{ color: "#0d0446" }} />
+            </button>
+            <button type="button" onClick={() => document.execCommand("insertOrderedList")} className="h-8 w-8 flex items-center justify-center rounded-lg hover:opacity-70 transition" style={{ backgroundColor: "rgba(13,4,70,0.04)" }} title="Lista numerada">
+              <ListOrdered size={14} style={{ color: "#0d0446" }} />
+            </button>
+          </div>
+
+          {/* Editor */}
           <div
             ref={editorRef}
             contentEditable
