@@ -920,7 +920,10 @@ export type Database = {
           created_at: string
           estudio: string
           id: string
+          is_html: boolean | null
+          last_seen: string | null
           nome: string
+          texto_atual: string | null
           user_id: string
         }
         Insert: {
@@ -928,7 +931,10 @@ export type Database = {
           created_at?: string
           estudio?: string
           id?: string
+          is_html?: boolean | null
+          last_seen?: string | null
           nome?: string
+          texto_atual?: string | null
           user_id: string
         }
         Update: {
@@ -936,7 +942,10 @@ export type Database = {
           created_at?: string
           estudio?: string
           id?: string
+          is_html?: boolean | null
+          last_seen?: string | null
           nome?: string
+          texto_atual?: string | null
           user_id?: string
         }
         Relationships: []
