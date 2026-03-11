@@ -1380,6 +1380,15 @@ function TpController({ user, onBack }: { user: any; onBack: () => void }) {
         <button onClick={() => sendCommand("reset")} title="Reiniciar" style={controlBtnStyle}>
           <RotateCcw size={14} color="rgba(255,255,255,0.5)" />
         </button>
+
+        <div style={{ width: "1px", height: "24px", background: "rgba(255,255,255,0.1)" }} />
+
+        {/* Load text */}
+        <button onClick={() => setShowSetup(true)} title="Carregar texto" style={{
+          ...controlBtnStyle, background: showSetup ? "rgba(74,144,226,0.2)" : controlBtnStyle.background,
+        }}>
+          <Settings size={14} color="#4a90e2" />
+        </button>
       </div>
 
       {/* Back button */}
@@ -1390,6 +1399,141 @@ function TpController({ user, onBack }: { user: any; onBack: () => void }) {
       }}>
         <LogOut size={12} /> Voltar
       </button>
+
+      {/* ─── Setup Modal ─── */}
+      {showSetup && (
+        <>
+          <div onClick={() => setShowSetup(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 90 }} />
+          <div style={{
+            position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)",
+            width: "min(650px, 85%)", maxHeight: "75vh",
+            background: "linear-gradient(135deg, #0d0446, #1a0a6e)",
+            border: "1px solid rgba(74,144,226,0.3)",
+            zIndex: 100, padding: "28px", borderRadius: "16px",
+            display: "flex", flexDirection: "column",
+            boxShadow: "0 24px 64px rgba(0,0,0,0.6)", overflow: "hidden",
+          }}>
+            <h3 style={{ margin: "0 0 4px", color: "#fff", fontSize: "16px", fontWeight: 700 }}>
+              Carregar Texto no Teleprompter
+            </h3>
+            <p style={{ margin: "0 0 16px", color: "rgba(255,255,255,0.4)", fontSize: "12px" }}>
+              Selecione um roteiro salvo ou cole um texto manualmente
+            </p>
+
+            {/* Tabs */}
+            <div style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
+              <button onClick={() => setTab("roteiros")} style={tabBtnStyle(tab === "roteiros")}>
+                <FileText size={12} style={{ display: "inline", marginRight: "6px", verticalAlign: "-2px" }} />
+                Roteiros Salvos
+              </button>
+              <button onClick={() => setTab("manual")} style={tabBtnStyle(tab === "manual")}>
+                Texto Manual
+              </button>
+            </div>
+
+            {tab === "roteiros" ? (
+              <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
+                {roteiros.length === 0 ? (
+                  <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "13px", textAlign: "center", padding: "40px 0" }}>
+                    Nenhum roteiro encontrado.
+                  </p>
+                ) : (
+                  <>
+                    <div style={{
+                      flex: 1, overflowY: "auto", borderRadius: "10px",
+                      border: "1px solid rgba(255,255,255,0.1)", marginBottom: "12px",
+                    }}>
+                      {roteiros.map((r) => {
+                        const isSelected = selectedRoteiroId === r.id;
+                        return (
+                          <button
+                            key={r.id}
+                            onClick={() => setSelectedRoteiroId(r.id)}
+                            style={{
+                              width: "100%", textAlign: "left", padding: "12px 14px",
+                              background: isSelected ? "rgba(74,144,226,0.15)" : "transparent",
+                              border: "none", borderBottom: "1px solid rgba(255,255,255,0.06)",
+                              cursor: "pointer", transition: "all 0.15s",
+                              display: "flex", flexDirection: "column", gap: "2px",
+                            }}
+                            onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.background = "rgba(255,255,255,0.04)"; }}
+                            onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.background = "transparent"; }}
+                          >
+                            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                              <span style={{ color: isSelected ? "#4a90e2" : "#fff", fontSize: "13px", fontWeight: 600 }}>
+                                {r.programa_nome || "Sem programa"}
+                              </span>
+                              {r.numero_roteiro && (
+                                <span style={{ color: "rgba(255,255,255,0.3)", fontSize: "11px" }}>#{r.numero_roteiro}</span>
+                              )}
+                            </div>
+                            <span style={{ color: "rgba(255,255,255,0.35)", fontSize: "11px" }}>
+                              {r.data_programa} {r.horario ? `· ${r.horario}` : ""} {r.titulo ? `· ${r.titulo}` : ""}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <button
+                      onClick={handleLoadRoteiro}
+                      disabled={!selectedRoteiroId}
+                      style={{
+                        background: selectedRoteiroId ? "linear-gradient(135deg, #4a90e2, #2d6dc0)" : "rgba(255,255,255,0.05)",
+                        color: selectedRoteiroId ? "#fff" : "rgba(255,255,255,0.3)",
+                        border: "none", borderRadius: "10px", padding: "10px 24px",
+                        fontWeight: 700, cursor: selectedRoteiroId ? "pointer" : "not-allowed",
+                        fontSize: "13px", alignSelf: "flex-start", transition: "all 0.2s",
+                      }}
+                    >
+                      CARREGAR ROTEIRO
+                    </button>
+                  </>
+                )}
+              </div>
+            ) : (
+              <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+                <textarea
+                  value={inputText}
+                  onChange={(e) => setInputText(e.target.value)}
+                  placeholder="Cole o texto aqui..."
+                  style={{
+                    flex: 1, minHeight: "180px", background: "rgba(0,0,0,0.3)", color: "#fff",
+                    border: "1px solid rgba(255,255,255,0.1)", padding: "14px", borderRadius: "10px",
+                    resize: "none", fontSize: "14px", lineHeight: 1.6, outline: "none",
+                  }}
+                  onFocus={(e) => { e.currentTarget.style.borderColor = "rgba(74,144,226,0.5)"; }}
+                  onBlur={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"; }}
+                />
+                <button
+                  onClick={handleLoadManual}
+                  disabled={!inputText.trim()}
+                  style={{
+                    marginTop: "12px",
+                    background: inputText.trim() ? "linear-gradient(135deg, #4a90e2, #2d6dc0)" : "rgba(255,255,255,0.05)",
+                    color: inputText.trim() ? "#fff" : "rgba(255,255,255,0.3)",
+                    border: "none", borderRadius: "10px", padding: "10px 24px",
+                    fontWeight: 700, cursor: inputText.trim() ? "pointer" : "not-allowed",
+                    fontSize: "13px", alignSelf: "flex-start",
+                  }}
+                >
+                  CARREGAR TEXTO
+                </button>
+              </div>
+            )}
+
+            <button
+              onClick={() => setShowSetup(false)}
+              style={{
+                marginTop: "12px", background: "none", color: "rgba(255,255,255,0.4)",
+                border: "1px solid rgba(255,255,255,0.1)", borderRadius: "10px",
+                padding: "8px 16px", cursor: "pointer", fontSize: "12px", alignSelf: "flex-start",
+              }}
+            >
+              Cancelar
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 }
