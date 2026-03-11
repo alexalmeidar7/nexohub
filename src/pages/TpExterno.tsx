@@ -506,6 +506,25 @@ function TpScreen({ user, onBack }: { user: any; onBack: () => void }) {
     msgTimerRef.current = setTimeout(() => {
       setIncomingMsg(msg);
       setMsgVisible(true);
+      // Play notification sound
+      try {
+        const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+        const playTone = (freq: number, start: number, dur: number, vol = 0.3) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = "sine";
+          osc.frequency.setValueAtTime(freq, ctx.currentTime + start);
+          gain.gain.setValueAtTime(vol, ctx.currentTime + start);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + start + dur);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(ctx.currentTime + start);
+          osc.stop(ctx.currentTime + start + dur);
+        };
+        playTone(880, 0, 0.15, 0.25);
+        playTone(1100, 0.12, 0.15, 0.25);
+        playTone(1320, 0.24, 0.2, 0.2);
+      } catch (_) {}
       // Auto-close after 5s, then process next
       msgTimerRef.current = setTimeout(() => {
         setMsgVisible(false);
