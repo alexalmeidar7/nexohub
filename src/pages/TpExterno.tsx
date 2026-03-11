@@ -209,6 +209,14 @@ export default function TpExterno() {
           textRef.current.style.top = scrollPosRef.current + "%";
         }
       }
+      if (e.code === "NumpadAdd" || (e.key === "+" && e.location === 3)) {
+        e.preventDefault();
+        setSpeed((s) => Math.min(10, s + 1));
+      }
+      if (e.code === "NumpadSubtract" || (e.key === "-" && e.location === 3)) {
+        e.preventDefault();
+        setSpeed((s) => Math.max(0, s - 1));
+      }
     };
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
