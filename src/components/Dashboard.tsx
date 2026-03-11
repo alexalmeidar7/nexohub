@@ -227,6 +227,11 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       setHoveredMenu(null);
       return;
     }
+    if (parentLabel === "ferramentas" && child.label === "abrir TP externo") {
+      window.open("/tp-externo", "_blank");
+      setHoveredMenu(null);
+      return;
+    }
     if (child.page) {
       console.log("[DEBUG] Setting currentPage to:", child.page);
       setCurrentPage(child.page);
