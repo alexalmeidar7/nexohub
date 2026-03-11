@@ -39,27 +39,56 @@ export default function RoteiroApresentadorEdit() {
     if (!table) return;
 
     const tdS = "border:1px solid rgba(13,4,70,0.12);padding:8px 10px";
+    const actionBtnS = "cursor:pointer;padding:2px 4px;border-radius:4px;display:inline-flex;align-items:center;justify-content:center";
+
+    const renumberPerguntas = () => {
+      const all = Array.from(table.querySelectorAll("tr[data-pergunta]"));
+      all.forEach((row, i) => {
+        row.setAttribute("data-pergunta", String(i + 1));
+        const elCell = row.querySelectorAll("td")[1];
+        if (elCell) elCell.innerHTML = `PERGUNTA ${i + 1}`;
+      });
+      setPerguntaCount(all.length);
+    };
 
     if (action === "add-pergunta") {
       const allPerguntas = Array.from(table.querySelectorAll("tr[data-pergunta]"));
       const newNum = allPerguntas.length + 1;
-      setPerguntaCount(newNum);
       const insertAfter = allPerguntas.length > 0
         ? allPerguntas[allPerguntas.length - 1]
         : Array.from(table.querySelectorAll("tr")).find(r => r.innerHTML.includes("ENTREVISTA")) || null;
       if (insertAfter) {
         const newRow = document.createElement("tr");
         newRow.setAttribute("data-pergunta", String(newNum));
-        newRow.innerHTML = `<td style="${tdS}">--:--</td><td style="${tdS};font-weight:600">PERGUNTA ${newNum}</td><td style="${tdS}">[Insira a pergunta aqui]</td>`;
+        newRow.innerHTML = `<td style="${tdS}">--:--</td><td style="${tdS};font-weight:600">PERGUNTA ${newNum}</td><td style="${tdS}">[Insira a pergunta aqui]</td><td style="${tdS};white-space:nowrap;text-align:center;width:90px" contenteditable="false"><span data-action="move-up" style="${actionBtnS};color:#268ffa" title="Mover para cima">▲</span> <span data-action="move-down" style="${actionBtnS};color:#268ffa" title="Mover para baixo">▼</span> <span data-action="delete-pergunta" style="${actionBtnS};color:#dc2626" title="Remover pergunta">🗑</span></td>`;
         insertAfter.insertAdjacentElement("afterend", newRow);
         const actionRow = table.querySelector("tr[data-action-row]");
         if (actionRow) newRow.insertAdjacentElement("afterend", actionRow);
+        renumberPerguntas();
       }
-    } else if (action === "remove-pergunta") {
+    } else if (action === "delete-pergunta") {
+      const row = target.closest("tr[data-pergunta]");
+      if (!row) return;
       const allPerguntas = Array.from(table.querySelectorAll("tr[data-pergunta]"));
       if (allPerguntas.length <= 1) return;
-      allPerguntas[allPerguntas.length - 1].remove();
-      setPerguntaCount(prev => Math.max(1, prev - 1));
+      row.remove();
+      renumberPerguntas();
+    } else if (action === "move-up") {
+      const row = target.closest("tr[data-pergunta]");
+      if (!row) return;
+      const allPerguntas = Array.from(table.querySelectorAll("tr[data-pergunta]"));
+      const idx = allPerguntas.indexOf(row as HTMLTableRowElement);
+      if (idx <= 0) return;
+      allPerguntas[idx - 1].insertAdjacentElement("beforebegin", row);
+      renumberPerguntas();
+    } else if (action === "move-down") {
+      const row = target.closest("tr[data-pergunta]");
+      if (!row) return;
+      const allPerguntas = Array.from(table.querySelectorAll("tr[data-pergunta]"));
+      const idx = allPerguntas.indexOf(row as HTMLTableRowElement);
+      if (idx < 0 || idx >= allPerguntas.length - 1) return;
+      allPerguntas[idx + 1].insertAdjacentElement("afterend", row);
+      renumberPerguntas();
     }
   };
 
