@@ -317,7 +317,7 @@ export default function TpExterno() {
           </button>
           <button
             className="tp-menu-btn"
-            onClick={() => setStep("tp")}
+            onClick={() => window.open(`${window.location.pathname}?view=tp`, '_blank')}
             style={{
               width: "180px", height: "180px", borderRadius: "20px", border: "1px solid rgba(74,144,226,0.3)",
               background: "linear-gradient(135deg, rgba(13,4,70,0.9), rgba(26,10,110,0.9))",
