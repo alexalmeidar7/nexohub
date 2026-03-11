@@ -14,17 +14,50 @@ interface Roteiro {
   numero_roteiro: number | null;
 }
 
-function extractRoteiroText(html: string): string {
+function sanitizeInlineHtml(el: Element): string {
+  let result = "";
+  el.childNodes.forEach((node) => {
+    if (node.nodeType === Node.TEXT_NODE) {
+      result += node.textContent || "";
+    } else if (node.nodeType === Node.ELEMENT_NODE) {
+      const tag = (node as Element).tagName.toLowerCase();
+      const inner = sanitizeInlineHtml(node as Element);
+      if (tag === "b" || tag === "strong") {
+        result += `<b>${inner}</b>`;
+      } else if (tag === "i" || tag === "em") {
+        result += `<i>${inner}</i>`;
+      } else if (tag === "u") {
+        result += `<u>${inner}</u>`;
+      } else if (tag === "mark") {
+        result += `<mark style="background:#fef08a;color:inherit">${inner}</mark>`;
+      } else if (tag === "span") {
+        const style = (node as HTMLElement).getAttribute("style") || "";
+        if (style.includes("background")) {
+          result += `<mark style="background:#fef08a;color:inherit">${inner}</mark>`;
+        } else if (style.includes("font-weight")) {
+          result += `<b>${inner}</b>`;
+        } else if (style.includes("font-style")) {
+          result += `<i>${inner}</i>`;
+        } else {
+          result += inner;
+        }
+      } else {
+        result += inner;
+      }
+    }
+  });
+  return result;
+}
+
+function extractRoteiroHtml(html: string): string {
   const div = document.createElement("div");
   div.innerHTML = html;
 
-  // Try to parse as structured table (Tempo | Elemento | Descrição | Ações)
   const rows = div.querySelectorAll("tr[data-pergunta], table tr");
   const lines: string[] = [];
 
   if (rows.length > 0) {
     rows.forEach((row) => {
-      // Skip header, action rows, and rows without meaningful content
       if (row.querySelector("th")) return;
       if (row.getAttribute("data-action-row") === "true") return;
       if (row.querySelector("[contenteditable='false']") && !row.getAttribute("data-pergunta")) return;
@@ -32,26 +65,25 @@ function extractRoteiroText(html: string): string {
       const cells = row.querySelectorAll("td");
       if (cells.length < 3) return;
 
-      // cells[0] = Tempo, cells[1] = Elemento, cells[2] = Descrição/Texto
       const elemento = (cells[1]?.textContent || "").trim();
-      const descricao = (cells[2]?.textContent || "").trim();
+      const descricaoHtml = sanitizeInlineHtml(cells[2]).trim();
+      const descricaoText = (cells[2]?.textContent || "").trim();
 
-      if (!elemento && !descricao) return;
-      // Skip placeholder text
-      if (descricao === "[Insira a pergunta aqui]" || descricao === "[Insira o texto aqui]") return;
+      if (!elemento && !descricaoText) return;
+      if (descricaoText === "[Insira a pergunta aqui]" || descricaoText === "[Insira o texto aqui]") return;
 
-      if (elemento) lines.push(elemento.toUpperCase());
-      if (descricao) lines.push(descricao);
-      lines.push(""); // blank line separator
+      if (elemento) lines.push(`<b>${elemento.toUpperCase()}</b>`);
+      if (descricaoHtml) lines.push(descricaoHtml);
+      lines.push("");
     });
   }
 
   if (lines.filter((l) => l.trim()).length > 0) {
-    return lines.join("\n").trim();
+    return lines.join("<br/>").trim();
   }
 
-  // Fallback: plain text extraction
-  return div.textContent || div.innerText || "";
+  // Fallback: preserve inline formatting from raw html
+  return sanitizeInlineHtml(div) || div.textContent || "";
 }
 
 function stripHtml(html: string): string {
@@ -78,6 +110,7 @@ export default function TpExterno() {
   const [tab, setTab] = useState<"roteiros" | "manual">("roteiros");
   const [flipH, setFlipH] = useState(false);
   const [flipV, setFlipV] = useState(false);
+  const [isHtmlContent, setIsHtmlContent] = useState(false);
 
   const scrollPosRef = useRef(50);
   const textRef = useRef<HTMLDivElement>(null);
@@ -194,8 +227,9 @@ export default function TpExterno() {
     return () => el.removeEventListener("wheel", handleWheel);
   }, [showSetup]);
 
-  function applyText(text: string) {
+  function applyText(text: string, html = false) {
     setDisplayText(text);
+    setIsHtmlContent(html);
     scrollPosRef.current = 50;
     if (textRef.current) textRef.current.style.top = "50%";
     setTimerSeconds(0);
@@ -203,14 +237,14 @@ export default function TpExterno() {
   }
 
   function handleSaveManual() {
-    if (inputText.trim()) applyText(inputText);
+    if (inputText.trim()) applyText(inputText, false);
   }
 
   function handleLoadRoteiro() {
     const r = roteiros.find((x) => x.id === selectedRoteiroId);
     if (r) {
-      const parsed = extractRoteiroText(r.conteudo_html);
-      applyText(parsed || "Roteiro sem conteúdo de texto.");
+      const parsed = extractRoteiroHtml(r.conteudo_html);
+      applyText(parsed || "Roteiro sem conteúdo de texto.", true);
     }
   }
 
@@ -329,7 +363,7 @@ export default function TpExterno() {
           color: "#ffffff", textShadow: "0 2px 20px rgba(0,0,0,0.5)", fontWeight: 400,
           transform: `${flipH ? "scaleX(-1)" : ""} ${flipV ? "scaleY(-1)" : ""}`.trim() || "none",
         }}>
-          {displayText}
+          {isHtmlContent ? <span dangerouslySetInnerHTML={{ __html: displayText }} /> : displayText}
         </div>
 
         {/* ─── Controls bar ─── */}
