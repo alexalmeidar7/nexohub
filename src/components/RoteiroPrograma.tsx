@@ -53,6 +53,7 @@ export default function RoteiroPrograma() {
   const [fontSize, setFontSize] = useState("14");
   const [perguntaCount, setPerguntaCount] = useState(1);
   const editorRef = useRef<HTMLDivElement>(null);
+  const exportViewRef = useRef<HTMLDivElement>(null);
   const [participantes, setParticipantes] = useState<{ nome: string; categoria: string; cargo: string; instagram: string }[]>([]);
   
   const [newNome, setNewNome] = useState("");
