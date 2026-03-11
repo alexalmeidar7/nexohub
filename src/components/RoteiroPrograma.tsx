@@ -1123,6 +1123,7 @@ ${perguntaActions}
         </Suspense>
       )}
 
+      <PdfPopup status={pdfPopup.status} blobUrl={pdfPopup.blobUrl} filename={pdfPopup.filename} onClose={pdfPopup.close} />
     </div>
   );
 }
