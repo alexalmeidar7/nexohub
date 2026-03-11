@@ -90,6 +90,28 @@ export default function TpController({ user, onBack }: TpControllerProps) {
     };
   }, [user]);
 
+  async function sendCommand(action: string, value?: any) {
+    if (!cmdChannelRef.current) return;
+    if (!cmdReadyRef.current) {
+      await new Promise<void>((resolve) => {
+        const started = Date.now();
+        const check = setInterval(() => {
+          if (cmdReadyRef.current || Date.now() - started > 1000) {
+            clearInterval(check);
+            resolve();
+          }
+        }, 40);
+      });
+    }
+
+    await cmdChannelRef.current.send({
+      type: "broadcast",
+      event: "tp-command",
+      payload: { action, value },
+    });
+  }
+
+
   useEffect(() => {
     const id = setInterval(() => {
       const hasRecentState = !!lastStateAtRef.current && Date.now() - lastStateAtRef.current < 15000;
