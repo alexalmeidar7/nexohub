@@ -294,6 +294,14 @@ export default function TpScreen({ user, onBack }: TpScreenProps) {
             if (textRef.current) textRef.current.style.top = "50%";
             setTimerSeconds(0);
             setScrolling(false);
+            // Persist remotely loaded text to DB
+            if (activeTpId) {
+              (supabase as any)
+                .from("teleprompters")
+                .update({ texto_atual: cmd.value.text, is_html: cmd.value.html })
+                .eq("id", activeTpId)
+                .then(() => {});
+            }
             break;
           case "requestState":
             queueStateBroadcast(true);
