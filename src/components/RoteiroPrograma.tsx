@@ -205,6 +205,7 @@ export default function RoteiroPrograma() {
       }
 
       setEditingRoteiroId(null);
+      setNumeroRoteiro(null);
       fetchHistorico();
       
       // Reopen export view and scroll to end
