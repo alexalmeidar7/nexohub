@@ -73,6 +73,18 @@ export default function RoteiroPrograma() {
   const [showExportView, setShowExportView] = useState(false);
   const [apresentadorStatus, setApresentadorStatus] = useState<{ editado: boolean; editadoAt: string | null; login: string | null } | null>(null);
 
+  const fetchApresentadorStatus = async (roteiroId: string) => {
+    const { data } = await supabase.from("roteiros").select("apresentador_editado, editado_at, share_login").eq("id", roteiroId).maybeSingle();
+    if (data) setApresentadorStatus({ editado: !!data.apresentador_editado, editadoAt: data.editado_at, login: data.share_login });
+  };
+
+  // Auto-refresh apresentador status while export view is open
+  useEffect(() => {
+    if (!showExportView || !editingRoteiroId) return;
+    const interval = setInterval(() => fetchApresentadorStatus(editingRoteiroId), 5000);
+    return () => clearInterval(interval);
+  }, [showExportView, editingRoteiroId]);
+
   const categorias = ["Apresentador(a)", "Jornalista", "Convidado(a)"];
 
   // Filter suggestions based on typed name
@@ -803,8 +815,7 @@ export default function RoteiroPrograma() {
               onClick={async () => {
                 setShowExportView(true);
                 if (editingRoteiroId) {
-                  const { data } = await supabase.from("roteiros").select("apresentador_editado, editado_at, share_login").eq("id", editingRoteiroId).maybeSingle();
-                  if (data) setApresentadorStatus({ editado: !!data.apresentador_editado, editadoAt: data.editado_at, login: data.share_login });
+                  fetchApresentadorStatus(editingRoteiroId);
                 } else {
                   setApresentadorStatus(null);
                 }
