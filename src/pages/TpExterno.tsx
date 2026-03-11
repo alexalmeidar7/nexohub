@@ -335,14 +335,13 @@ function TpScreen({ user, onBack }: { user: any; onBack: () => void }) {
   const [flipV, setFlipV] = useState(false);
   const [isHtmlContent, setIsHtmlContent] = useState(false);
 
-  // Message notification state
+  // Message queue state
   const [incomingMsg, setIncomingMsg] = useState<{ text: string; subject: string } | null>(null);
-  // Pending message queue (waits 3s before showing)
-  const pendingMsgRef = useRef<{ text: string; subject: string } | null>(null);
-  const pendingDelayRef = useRef<ReturnType<typeof setTimeout>>();
   const [msgVisible, setMsgVisible] = useState(false);
   const [hasUnread, setHasUnread] = useState(false);
+  const msgQueueRef = useRef<{ text: string; subject: string }[]>([]);
   const msgTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const isShowingRef = useRef(false);
 
   const scrollPosRef = useRef(50);
   const textRef = useRef<HTMLDivElement>(null);
@@ -350,89 +349,88 @@ function TpScreen({ user, onBack }: { user: any; onBack: () => void }) {
   const animRef = useRef<number>();
   const timerRef = useRef<ReturnType<typeof setInterval>>();
 
+  // Process next message in queue
+  function processQueue() {
+    if (isShowingRef.current || msgQueueRef.current.length === 0) return;
+    const msg = msgQueueRef.current.shift()!;
+    isShowingRef.current = true;
+    setHasUnread(msgQueueRef.current.length > 0);
+
+    // Wait 3s then show
+    msgTimerRef.current = setTimeout(() => {
+      setIncomingMsg(msg);
+      setMsgVisible(true);
+      // Auto-close after 5s, then process next
+      msgTimerRef.current = setTimeout(() => {
+        setMsgVisible(false);
+        setTimeout(() => {
+          setIncomingMsg(null);
+          isShowingRef.current = false;
+          processQueue();
+        }, 400);
+      }, 5000);
+    }, 3000);
+  }
+
+  function enqueueMessage(msg: { text: string; subject: string }) {
+    msgQueueRef.current.push(msg);
+    setHasUnread(true);
+    processQueue();
+  }
+
   // Check localStorage queue on mount + listen for storage events + realtime
   useEffect(() => {
     if (!user) return;
 
-    function checkQueue() {
+    function drainLocalStorage() {
       const queue = JSON.parse(localStorage.getItem("tp-msg-queue") || "[]");
       if (queue.length > 0) {
-        const msg = queue.shift();
-        localStorage.setItem("tp-msg-queue", JSON.stringify(queue));
-        setHasUnread(true);
-        if (pendingDelayRef.current) clearTimeout(pendingDelayRef.current);
-        pendingMsgRef.current = msg;
-        pendingDelayRef.current = setTimeout(() => {
-          if (pendingMsgRef.current) {
-            showMessage(pendingMsgRef.current);
-            pendingMsgRef.current = null;
-            // Check for more after this one closes
-            setTimeout(checkQueue, 5500);
-          }
-        }, 3000);
+        localStorage.setItem("tp-msg-queue", "[]");
+        queue.forEach((msg: any) => enqueueMessage(msg));
       }
     }
 
-    // Check on mount
-    checkQueue();
+    drainLocalStorage();
 
-    // Listen for storage changes (cross-tab)
     const onStorage = (e: StorageEvent) => {
-      if (e.key === "tp-msg-queue") checkQueue();
+      if (e.key === "tp-msg-queue") drainLocalStorage();
     };
     window.addEventListener("storage", onStorage);
 
-    // Also listen via realtime broadcast for same-tab or multi-device
     const channel = supabase
       .channel(`tp-msg-${user.id}`)
       .on("broadcast", { event: "tp-message" }, (payload: any) => {
         const msg = payload.payload as { text: string; subject: string };
-        // Remove from localStorage if it was also stored there
+        // Remove from localStorage to avoid duplicate
         const queue = JSON.parse(localStorage.getItem("tp-msg-queue") || "[]");
         const filtered = queue.filter((q: any) => q.text !== msg.text || Math.abs((q.ts || 0) - ((msg as any).ts || 0)) > 2000);
         localStorage.setItem("tp-msg-queue", JSON.stringify(filtered));
-        if (pendingDelayRef.current) clearTimeout(pendingDelayRef.current);
-        pendingMsgRef.current = msg;
-        setHasUnread(true);
-        pendingDelayRef.current = setTimeout(() => {
-          if (pendingMsgRef.current) {
-            showMessage(pendingMsgRef.current);
-            pendingMsgRef.current = null;
-          }
-        }, 3000);
+        enqueueMessage(msg);
       })
       .subscribe();
 
     return () => {
       window.removeEventListener("storage", onStorage);
       supabase.removeChannel(channel);
-      if (pendingDelayRef.current) clearTimeout(pendingDelayRef.current);
+      if (msgTimerRef.current) clearTimeout(msgTimerRef.current);
     };
   }, [user]);
 
-  function showMessage(msg: { text: string; subject: string }) {
-    if (msgTimerRef.current) clearTimeout(msgTimerRef.current);
-    setIncomingMsg(msg);
-    setMsgVisible(true);
-    setHasUnread(false);
-    msgTimerRef.current = setTimeout(() => {
-      setMsgVisible(false);
-      setTimeout(() => setIncomingMsg(null), 300);
-    }, 5000);
-  }
-
   function handleMsgIconClick() {
     if (incomingMsg && msgVisible) {
+      // Close current, advance queue
       if (msgTimerRef.current) clearTimeout(msgTimerRef.current);
       setMsgVisible(false);
-      setTimeout(() => setIncomingMsg(null), 300);
+      setTimeout(() => {
+        setIncomingMsg(null);
+        isShowingRef.current = false;
+        processQueue();
+      }, 300);
       return;
     }
-    // If there's a pending message, show it immediately
-    if (pendingMsgRef.current) {
-      if (pendingDelayRef.current) clearTimeout(pendingDelayRef.current);
-      showMessage(pendingMsgRef.current);
-      pendingMsgRef.current = null;
+    // Force process queue
+    if (msgQueueRef.current.length > 0 && !isShowingRef.current) {
+      processQueue();
     }
     setHasUnread(false);
   }
