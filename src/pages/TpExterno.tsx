@@ -541,6 +541,8 @@ function TpScreen({ user, onBack }: { user: any; onBack: () => void }) {
 
     setIncomingMsg(msg);
     setMsgVisible(true);
+    // Add to persistent log (keep last 20)
+    setMessageLog(prev => [...prev, { ...msg, ts: Date.now() }].slice(-20));
     // Play notification sound
     try {
       const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
