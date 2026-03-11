@@ -296,40 +296,49 @@ export default function TpScreen({ user, onBack }: TpScreenProps) {
     return () => { supabase.removeChannel(ch); stateChannelRef.current = null; };
   }, [user]);
 
-  const scrollingRef = useRef(scrolling);
-  const speedRef = useRef(speed);
-  const fontSizeRef = useRef(fontSize);
-  const flipHRef = useRef(flipH);
-  const flipVRef = useRef(flipV);
-  const displayTextRef = useRef(displayText);
-  const isHtmlContentRef = useRef(isHtmlContent);
-  const timerSecondsRef = useRef(timerSeconds);
+  // Smart broadcast — only send when state actually changes + slow keepalive
+  const lastBroadcastRef = useRef<string>("");
 
-  useEffect(() => { scrollingRef.current = scrolling; }, [scrolling]);
-  useEffect(() => { speedRef.current = speed; }, [speed]);
-  useEffect(() => { fontSizeRef.current = fontSize; }, [fontSize]);
-  useEffect(() => { flipHRef.current = flipH; }, [flipH]);
-  useEffect(() => { flipVRef.current = flipV; }, [flipV]);
-  useEffect(() => { displayTextRef.current = displayText; }, [displayText]);
-  useEffect(() => { isHtmlContentRef.current = isHtmlContent; }, [isHtmlContent]);
-  useEffect(() => { timerSecondsRef.current = timerSeconds; }, [timerSeconds]);
+  function buildStatePayload() {
+    return {
+      scrolling, speed, fontSize, flipH, flipV,
+      displayText: displayText.substring(0, 2000),
+      isHtmlContent, timerSeconds,
+      scrollPos: scrollPosRef.current,
+    };
+  }
 
-  // Heartbeat broadcast
+  function broadcastState() {
+    if (!stateChannelRef.current) return;
+    const payload = buildStatePayload();
+    const signature = `${payload.scrolling}-${payload.speed}-${payload.fontSize}-${payload.flipH}-${payload.flipV}-${payload.isHtmlContent}-${Math.round(payload.scrollPos)}-${payload.timerSeconds}-${payload.displayText.length}`;
+    if (signature === lastBroadcastRef.current) return;
+    lastBroadcastRef.current = signature;
+    stateChannelRef.current.send({ type: "broadcast", event: "tp-state", payload });
+  }
+
+  // Broadcast on any state change
+  useEffect(() => { broadcastState(); }, [scrolling, speed, fontSize, flipH, flipV, displayText, isHtmlContent, timerSeconds]);
+
+  // When scrolling, broadcast scroll position at ~10fps instead of 60fps
+  useEffect(() => {
+    if (!scrolling) return;
+    const id = setInterval(() => {
+      if (!stateChannelRef.current) return;
+      const payload = buildStatePayload();
+      lastBroadcastRef.current = "";  // force send
+      stateChannelRef.current.send({ type: "broadcast", event: "tp-state", payload });
+    }, 100);
+    return () => clearInterval(id);
+  }, [scrolling, speed, fontSize, flipH, flipV, isHtmlContent]);
+
+  // Slow keepalive (every 2s) so controller knows TP is alive
   useEffect(() => {
     if (!stateChannelRef.current) return;
     const id = setInterval(() => {
-      stateChannelRef.current?.send({
-        type: "broadcast", event: "tp-state",
-        payload: {
-          scrolling: scrollingRef.current, speed: speedRef.current,
-          fontSize: fontSizeRef.current, flipH: flipHRef.current, flipV: flipVRef.current,
-          displayText: displayTextRef.current.substring(0, 2000),
-          isHtmlContent: isHtmlContentRef.current,
-          timerSeconds: timerSecondsRef.current,
-          scrollPos: scrollPosRef.current,
-        },
-      });
-    }, 150);
+      const payload = buildStatePayload();
+      stateChannelRef.current?.send({ type: "broadcast", event: "tp-state", payload });
+    }, 2000);
     return () => clearInterval(id);
   }, [user]);
 

@@ -46,12 +46,12 @@ export default function TpController({ user, onBack }: TpControllerProps) {
     return () => { supabase.removeChannel(ch); };
   }, [user]);
 
-  // Mark disconnected when heartbeat is stale
+  // Mark disconnected when heartbeat is stale (keepalive is every 2s)
   useEffect(() => {
     const id = setInterval(() => {
       if (!lastStateAtRef.current) { setConnected(false); return; }
-      setConnected(Date.now() - lastStateAtRef.current < 1200);
-    }, 300);
+      setConnected(Date.now() - lastStateAtRef.current < 4000);
+    }, 1000);
     return () => clearInterval(id);
   }, []);
 
