@@ -1362,7 +1362,7 @@ function TpController({ user, onBack }: { user: any; onBack: () => void }) {
       </div>
 
       {/* Controls */}
-      <div style={{
+      <div className="tp-ctrl-bar" style={{
         marginTop: "20px", display: "flex", alignItems: "center", gap: "12px",
         background: "rgba(11,11,48,0.9)", backdropFilter: "blur(20px)",
         padding: "12px 28px", borderRadius: "20px",
