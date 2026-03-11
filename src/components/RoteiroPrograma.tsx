@@ -42,7 +42,15 @@ export default function RoteiroPrograma() {
   const [loading, setLoading] = useState(true);
   const [estudios, setEstudios] = useState<string[]>([]);
   const [tiposPrograma, setTiposPrograma] = useState<string[]>([]);
-
+  const [showRoteiro, setShowRoteiro] = useState(false);
+  const [roteiroTitulo, setRoteiroTitulo] = useState("");
+  const [roteiroSubtitulo, setRoteiroSubtitulo] = useState("");
+  const [roteiroTexto, setRoteiroTexto] = useState("");
+  const [participantes, setParticipantes] = useState<{ nome: string; cargo: string; instagram: string }[]>([]);
+  const [showAddParticipante, setShowAddParticipante] = useState(false);
+  const [newNome, setNewNome] = useState("");
+  const [newCargo, setNewCargo] = useState("Apresentador(a)");
+  const [newInstagram, setNewInstagram] = useState("");
   const isAgendado = selectedDate > new Date(new Date().toDateString());
 
   // Derive tipos filtered by estudio
