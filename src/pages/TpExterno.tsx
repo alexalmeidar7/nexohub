@@ -133,14 +133,15 @@ export default function TpExterno() {
   async function handleSendMessage() {
     if (!msgText.trim() || !user) return;
     setMsgSending(true);
-    // Send as admin_messages (broadcast from this user)
-    await supabase.from("admin_messages").insert({
-      sender_id: user.id,
-      message: msgText.trim(),
-      subject: "Mensagem do TP",
-      is_broadcast: false,
-      recipient_id: null,
+    // Broadcast via Supabase Realtime channel (no DB needed)
+    const channel = supabase.channel(`tp-msg-${user.id}`);
+    await channel.subscribe();
+    await channel.send({
+      type: "broadcast",
+      event: "tp-message",
+      payload: { text: msgText.trim(), subject: "Mensagem" },
     });
+    supabase.removeChannel(channel);
     setMsgSending(false);
     setMsgSent(true);
     setMsgText("");
