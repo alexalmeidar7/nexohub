@@ -602,50 +602,6 @@ export default function AgendaPage() {
                 />
               </div>
 
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <Label className="text-xs font-semibold flex items-center gap-1" style={{ color: "#0d0446" }}>
-                    <Users size={14} /> Participantes
-                  </Label>
-                  <Button type="button" variant="ghost" size="sm" onClick={addParticipante} style={{ color: "#268ffa" }}>
-                    <Plus size={14} /> Adicionar
-                  </Button>
-                </div>
-                <div className="space-y-2">
-                  {formParticipantes.map((p, i) => (
-                    <div key={i} className="flex items-center gap-2">
-                      <Input
-                        value={p.nome}
-                        onChange={(e) => updateParticipante(i, "nome", e.target.value)}
-                        placeholder="Nome"
-                        className="agenda-form-input flex-1"
-                        style={{ borderColor: "rgba(38,143,250,0.3)", borderRadius: "12px", backgroundColor: "#ffffff", color: "#0d0446" }}
-                      />
-                      <div className="flex items-center gap-1 flex-1">
-                        <Instagram size={14} className="shrink-0" style={{ color: "rgba(13,4,70,0.4)" }} />
-                        <Input
-                          value={p.instagram}
-                          onChange={(e) => updateParticipante(i, "instagram", e.target.value)}
-                          placeholder="@instagram"
-                          className="agenda-form-input"
-                          style={{ borderColor: "rgba(38,143,250,0.3)", borderRadius: "12px", backgroundColor: "#ffffff", color: "#0d0446" }}
-                        />
-                      </div>
-                      {formParticipantes.length > 1 && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 shrink-0"
-                          onClick={() => removeParticipante(i)}
-                        >
-                          <Trash2 size={14} className="text-destructive" />
-                        </Button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
 
               <Button onClick={handleSave} disabled={!formProgramaId || !formData} className="w-full font-bold" style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#ffffff", borderRadius: "12px", border: "none" }}>
                 {editingId ? "Atualizar Evento" : "Salvar Evento"}
