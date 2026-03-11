@@ -37,13 +37,14 @@ const ShoppingPage = lazy(() => import("./ShoppingPage"));
 const PreRollPage = lazy(() => import("./PreRollPage"));
 const CortesVideoPage = lazy(() => import("./CortesVideoPage"));
 const VmixPage = lazy(() => import("./VmixPage"));
+const TeleprompterPage = lazy(() => import("./TeleprompterPage"));
 const CustomizableDashboard = lazy(() => import("./CustomizableDashboard"));
 const PropostasPage = lazy(() => import("./PropostasPage"));
 const MessageNotification = lazy(() => import("./MessageNotification"));
 import DashboardSkeleton from "./skeletons/DashboardSkeleton";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import { normalizeMusicText } from "@/lib/textEncoding";
-type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll" | "cortevideo" | "playerconfig" | "vmix" | "propostas";
+type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll" | "cortevideo" | "playerconfig" | "vmix" | "propostas" | "tp";
 
 // Sidebar structured menu
 interface MenuItem {
@@ -85,6 +86,7 @@ const sidebarMenu: MenuItem[] = [
     icon: Wrench, label: "ferramentas", children: [
       { icon: Tag, label: "tela promo", page: undefined as unknown as Page },
       { icon: Scissors, label: "corte de vídeo", page: "cortevideo" },
+      { icon: Monitor, label: "TP", page: "tp" },
     ]
   },
 ];
@@ -119,6 +121,7 @@ const pageTitle: Record<Page, string> = {
   preroll: "Comercial — Pré-Roll",
   propostas: "Comercial — Propostas Comerciais",
   cortevideo: "Ferramentas — Cortes de Vídeo",
+  tp: "Ferramentas — TP",
   playerconfig: "Player — Configurações",
   vmix: "vMix — Controle de Transmissão",
 };
@@ -499,6 +502,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               {currentPage === "cortevideo" && <CortesVideoPage />}
               {currentPage === "vmix" && <VmixPage />}
               {currentPage === "propostas" && <PropostasPage />}
+              {currentPage === "tp" && <TeleprompterPage />}
             </Suspense>
           </div>
         </main>
