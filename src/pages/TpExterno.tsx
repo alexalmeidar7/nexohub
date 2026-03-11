@@ -730,7 +730,13 @@ function TpScreen({ user, onBack }: { user: any; onBack: () => void }) {
             </div>
           </div>
         )}
-        <style>{`@keyframes tp-msg-shrink { from { width: 100%; } to { width: 0%; } }`}</style>
+        <style>{`
+          @keyframes tp-msg-shrink { from { width: 100%; } to { width: 0%; } }
+          @keyframes tp-msg-border-pulse {
+            0%, 100% { border-color: rgba(255,255,255,0.9); box-shadow: 0 12px 40px rgba(0,0,0,0.5), 0 0 15px rgba(255,255,255,0.2); }
+            50% { border-color: rgba(255,255,255,0.2); box-shadow: 0 12px 40px rgba(0,0,0,0.5), 0 0 5px rgba(255,255,255,0.05); }
+          }
+        `}</style>
 
         {/* Top fade-out overlay — text disappears smoothly */}
         <div style={{
