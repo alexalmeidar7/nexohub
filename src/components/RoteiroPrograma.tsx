@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CalendarIcon, FileText, Building2, Clock, Plus, X, Download, UserPlus, Check, Bold, Underline, AlignLeft, AlignCenter, AlignRight, List, ListOrdered, Type, Trash2, Pencil, Save, History, ArrowLeft, Printer } from "lucide-react";
+import { CalendarIcon, FileText, Building2, Clock, Plus, X, Download, UserPlus, Check, Bold, Underline, AlignLeft, AlignCenter, AlignRight, List, ListOrdered, Type, Trash2, Pencil, Save, History, ArrowLeft, Printer, Send, MessageSquare } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
@@ -861,15 +861,36 @@ export default function RoteiroPrograma() {
       {showExportView && (
         <div className="mt-4">
           {/* Top bar */}
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
             <button onClick={() => setShowExportView(false)} className="flex items-center gap-2 text-xs font-semibold hover:opacity-80 transition" style={{ color: "#268ffa" }}>
               <ArrowLeft size={14} />
               voltar ao roteiro
             </button>
-            <button onClick={() => window.print()} className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold text-white hover:opacity-90 transition print:hidden" style={{ backgroundColor: "#268ffa" }}>
-              <Printer size={14} />
-              imprimir
-            </button>
+            <div className="flex items-center gap-2 print:hidden flex-wrap">
+              <button onClick={() => window.print()} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold text-white hover:opacity-90 transition" style={{ backgroundColor: "#268ffa" }}>
+                <Printer size={13} />
+                imprimir
+              </button>
+              <button onClick={() => toast.info("Funcionalidade de envio ao apresentador em breve!")} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold hover:opacity-90 transition" style={{ backgroundColor: "rgba(13,4,70,0.06)", color: "#0d0446" }}>
+                <Send size={13} />
+                enviar para o apresentador
+              </button>
+              <button onClick={() => toast.info("Funcionalidade de envio ao TP em breve!")} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold hover:opacity-90 transition" style={{ backgroundColor: "rgba(13,4,70,0.06)", color: "#0d0446" }}>
+                <Send size={13} />
+                enviar para o TP
+              </button>
+              <button
+                onClick={() => {
+                  const texto = `*${roteiroTitulo || "Roteiro"}*\n${programaNome} · ${estudio}\n${format(selectedDate, "dd/MM/yyyy")} ${horario}\n\n${(editorRef.current?.innerText || roteiroTexto).substring(0, 2000)}`;
+                  window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, "_blank");
+                }}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold text-white hover:opacity-90 transition"
+                style={{ backgroundColor: "#25d366" }}
+              >
+                <MessageSquare size={13} />
+                enviar por whatsapp
+              </button>
+            </div>
           </div>
 
           <div className="rounded-xl p-6" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.08)" }}>
