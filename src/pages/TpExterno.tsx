@@ -1390,7 +1390,7 @@ function TpController({ user, onBack }: { user: any; onBack: () => void }) {
           <Type size={12} color="rgba(255,255,255,0.3)" />
           <input type="range" min={0} max={10} value={speed}
             onChange={(e) => sendCommand("speed", Number(e.target.value))}
-            style={{ width: "120px", accentColor: "#4a90e2", height: "4px" }} />
+            className="tp-speed-slider" style={{ width: "120px", accentColor: "#4a90e2", height: "4px" }} />
           <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.4)", minWidth: "14px" }}>{speed}</span>
         </div>
 
