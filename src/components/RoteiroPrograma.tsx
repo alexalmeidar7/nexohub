@@ -779,6 +779,26 @@ export default function RoteiroPrograma() {
               <Plus size={14} />
               adicionar pergunta
             </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                if (!editorRef.current) return;
+                const table = editorRef.current.querySelector("table tbody");
+                if (!table) return;
+                const allRows = Array.from(table.querySelectorAll("tr[data-pergunta]"));
+                if (allRows.length === 0) return;
+                const lastRow = allRows[allRows.length - 1];
+                lastRow.remove();
+                setPerguntaCount(prev => Math.max(1, prev - 1));
+                setRoteiroTexto(editorRef.current.innerHTML);
+              }}
+              className="flex items-center gap-1.5 mt-1 text-xs font-semibold hover:opacity-80 transition cursor-pointer"
+              style={{ color: "#dc2626" }}
+            >
+              <Trash2 size={13} />
+              remover última pergunta
+            </button>
           </div>
 
           {/* Salvar + Exportar */}
