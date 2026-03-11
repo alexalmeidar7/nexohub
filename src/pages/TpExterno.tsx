@@ -209,6 +209,14 @@ export default function TpExterno() {
           textRef.current.style.top = scrollPosRef.current + "%";
         }
       }
+      if (e.code === "NumpadAdd" || (e.key === "+" && e.location === 3)) {
+        e.preventDefault();
+        setSpeed((s) => Math.min(10, s + 1));
+      }
+      if (e.code === "NumpadSubtract" || (e.key === "-" && e.location === 3)) {
+        e.preventDefault();
+        setSpeed((s) => Math.max(0, s - 1));
+      }
     };
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
@@ -221,7 +229,12 @@ export default function TpExterno() {
     const handleWheel = (e: WheelEvent) => {
       if (showSetup) return;
       e.preventDefault();
-      setSpeed((s) => Math.min(10, Math.max(0, s + (e.deltaY > 0 ? 1 : -1))));
+      if (textRef.current) {
+        const containerH = textRef.current.parentElement?.clientHeight || 1;
+        const step = 60;
+        scrollPosRef.current += (e.deltaY > 0 ? -step : step) / containerH * 100;
+        textRef.current.style.top = scrollPosRef.current + "%";
+      }
     };
     el.addEventListener("wheel", handleWheel, { passive: false });
     return () => el.removeEventListener("wheel", handleWheel);
