@@ -170,7 +170,7 @@ export default function TpExterno() {
   const msgChannelReadyRef = useRef(false);
   useEffect(() => {
     if (!user) return;
-    const ch = supabase.channel(`tp-msg-${user.id}`);
+    const ch = supabase.channel(`tp-msg-send-${user.id}`);
     ch.subscribe((status) => {
       msgChannelReadyRef.current = status === "SUBSCRIBED";
     });
