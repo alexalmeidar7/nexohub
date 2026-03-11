@@ -47,10 +47,11 @@ export default function RoteiroPrograma() {
   const [roteiroTitulo, setRoteiroTitulo] = useState("");
   const [roteiroSubtitulo, setRoteiroSubtitulo] = useState("");
   const [roteiroTexto, setRoteiroTexto] = useState("");
-  const [participantes, setParticipantes] = useState<{ nome: string; cargo: string; instagram: string }[]>([]);
+  const [participantes, setParticipantes] = useState<{ nome: string; categoria: string; cargo: string; instagram: string }[]>([]);
   
   const [newNome, setNewNome] = useState("");
-  const [newCargo, setNewCargo] = useState("Apresentador(a)");
+  const [newCategoria, setNewCategoria] = useState("Apresentador(a)");
+  const [newCargoText, setNewCargoText] = useState("");
   const [newInstagram, setNewInstagram] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedFromDb, setSelectedFromDb] = useState(false);
@@ -127,11 +128,11 @@ export default function RoteiroPrograma() {
 
   const handleMontarRoteiro = () => {
     const prog = programas.find(p => p.nome === programaNome);
-    const defaultParticipantes: { nome: string; cargo: string; instagram: string }[] = [];
+    const defaultParticipantes: { nome: string; categoria: string; cargo: string; instagram: string }[] = [];
     if (prog?.apresentador_id) {
       const apres = apresentadores.find(a => a.id === prog.apresentador_id);
       if (apres) {
-        defaultParticipantes.push({ nome: apres.nome, cargo: apres.cargo || "Apresentador(a)", instagram: (apres as any).instagram || "" });
+        defaultParticipantes.push({ nome: apres.nome, categoria: apres.cargo || "Apresentador(a)", cargo: "", instagram: (apres as any).instagram || "" });
       }
     }
     setParticipantes(defaultParticipantes);
@@ -143,7 +144,8 @@ export default function RoteiroPrograma() {
 
   const selectSuggestion = (apres: Apresentador) => {
     setNewNome(apres.nome);
-    setNewCargo(apres.cargo || "Apresentador(a)");
+    setNewCategoria(apres.cargo || "Apresentador(a)");
+    setNewCargoText("");
     setNewInstagram(apres.instagram || "");
     setSelectedFromDb(true);
     setShowSuggestions(false);
@@ -153,18 +155,17 @@ export default function RoteiroPrograma() {
     if (!newNome.trim()) return;
     const isNew = !selectedFromDb && !apresentadores.some(a => a.nome.toLowerCase() === newNome.trim().toLowerCase());
     
-    setParticipantes(prev => [...prev, { nome: newNome.trim(), cargo: newCargo, instagram: newInstagram.trim() }]);
+    setParticipantes(prev => [...prev, { nome: newNome.trim(), categoria: newCategoria, cargo: newCargoText.trim(), instagram: newInstagram.trim() }]);
     
     // If not from DB, register as new apresentador
     if (isNew && user) {
       await supabase.from("apresentadores").insert({
         nome: newNome.trim(),
-        cargo: newCargo,
+        cargo: newCategoria,
         instagram: newInstagram.trim(),
         user_id: user.id,
         ativo: true,
       });
-      // Refresh list
       const { data } = await supabase.from("apresentadores").select("id, nome, cargo, instagram, ativo").eq("ativo", true);
       if (data) setApresentadores(data);
       setCadastroMsg(true);
@@ -172,7 +173,8 @@ export default function RoteiroPrograma() {
     }
     
     setNewNome("");
-    setNewCargo("Apresentador(a)");
+    setNewCategoria("Apresentador(a)");
+    setNewCargoText("");
     setNewInstagram("");
     setSelectedFromDb(false);
   };
@@ -380,7 +382,7 @@ export default function RoteiroPrograma() {
                     <div className="flex-1">
                       <p className="text-[10px] font-bold mb-1" style={{ color: "#268ffa" }}>Participante {idx + 1}</p>
                       <p className="text-xs font-bold" style={{ color: "#0d0446" }}>{p.nome}</p>
-                      <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.5)" }}>{p.cargo}</p>
+                      <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.5)" }}>{p.categoria}{p.cargo ? ` · ${p.cargo}` : ""}</p>
                       {p.instagram && <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.4)" }}>@{p.instagram.replace("@", "")}</p>}
                     </div>
                     <button onClick={() => removeParticipante(idx)} className="hover:opacity-70 mt-1">
@@ -439,13 +441,22 @@ export default function RoteiroPrograma() {
 
                 {/* Categoria (same as cadastros) */}
                 <select
-                  value={newCargo}
-                  onChange={e => setNewCargo(e.target.value)}
+                  value={newCategoria}
+                  onChange={e => setNewCategoria(e.target.value)}
                   className="w-full px-3 py-2 rounded-lg text-xs outline-none"
                   style={{ backgroundColor: "rgba(13,4,70,0.04)", border: "1px solid rgba(13,4,70,0.08)", color: "#0d0446" }}
                 >
                   {categorias.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
+
+                {/* Cargo */}
+                <input
+                  value={newCargoText}
+                  onChange={e => setNewCargoText(e.target.value)}
+                  placeholder="cargo (ex: Diretor, Produtor...)"
+                  className="w-full px-3 py-2 rounded-lg text-xs outline-none"
+                  style={{ backgroundColor: "rgba(13,4,70,0.04)", border: "1px solid rgba(13,4,70,0.08)", color: "#0d0446" }}
+                />
 
                 <input
                   value={newInstagram}
