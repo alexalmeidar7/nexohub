@@ -322,6 +322,7 @@ ${perguntaActions}
 <td style="${tdStyle}">--:--</td>
 <td style="${tdStyle};font-weight:600">ENCERRAMENTO</td>
 <td style="${tdStyle}">APRESENTADOR: "Agradecemos ao [Nome]. Se você precisa de ajuda, ligue para o [Número/CAPS]. Até amanhã."</td>
+<td style="${tdStyle}"></td>
 </tr>
 </tbody>
 </table>`;
