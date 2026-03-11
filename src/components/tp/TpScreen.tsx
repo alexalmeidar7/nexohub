@@ -89,7 +89,7 @@ export default function TpScreen({ user, onBack }: TpScreenProps) {
   useEffect(() => {
     if (!user) return;
     const channel = supabase
-      .channel(`tp-msg-${user.id}`)
+      .channel(`tp-msg-${user.id}`, { config: { broadcast: { self: true } } })
       .on("broadcast", { event: "tp-message" }, (payload: any) => {
         const msg = payload.payload as { text: string; subject: string };
         if (msg) enqueueMessage(msg);
