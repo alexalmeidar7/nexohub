@@ -71,6 +71,7 @@ export default function RoteiroPrograma() {
   const [savingRoteiro, setSavingRoteiro] = useState(false);
   const [showParticipantForm, setShowParticipantForm] = useState(true);
   const [showExportView, setShowExportView] = useState(false);
+  const [apresentadorStatus, setApresentadorStatus] = useState<{ editado: boolean; editadoAt: string | null; login: string | null } | null>(null);
 
   const categorias = ["Apresentador(a)", "Jornalista", "Convidado(a)"];
 
@@ -799,7 +800,15 @@ export default function RoteiroPrograma() {
               {savingRoteiro ? "salvando..." : editingRoteiroId ? "atualizar roteiro" : "salvar roteiro"}
             </button>
             <button
-              onClick={() => setShowExportView(true)}
+              onClick={async () => {
+                setShowExportView(true);
+                if (editingRoteiroId) {
+                  const { data } = await supabase.from("roteiros").select("apresentador_editado, editado_at, share_login").eq("id", editingRoteiroId).maybeSingle();
+                  if (data) setApresentadorStatus({ editado: !!data.apresentador_editado, editadoAt: data.editado_at, login: data.share_login });
+                } else {
+                  setApresentadorStatus(null);
+                }
+              }}
               className="flex-1 py-3 rounded-xl text-sm font-bold transition-all hover:opacity-90 flex items-center justify-center gap-2"
               style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#ffffff", boxShadow: "0 4px 16px rgba(38,143,250,0.3)" }}
             >
@@ -982,6 +991,17 @@ export default function RoteiroPrograma() {
             <div className="mt-8 pt-4 text-center" style={{ borderTop: "1px solid rgba(13,4,70,0.1)" }}>
               <p className="text-lg font-bold italic" style={{ color: "#268ffa" }}>Bom programa! 🎙️</p>
             </div>
+
+            {/* Apresentador edit status */}
+            {apresentadorStatus?.editado && (
+              <div className="mt-4 px-4 py-3 rounded-xl flex items-center gap-2" style={{ backgroundColor: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.25)" }}>
+                <Check size={16} style={{ color: "#16a34a" }} />
+                <p className="text-xs font-semibold" style={{ color: "#16a34a" }}>
+                  Programa ok por {apresentadorStatus.login || "apresentador"}
+                  {apresentadorStatus.editadoAt && `, ${format(new Date(apresentadorStatus.editadoAt), "dd/MM/yyyy 'às' HH:mm")}`}
+                </p>
+              </div>
+            )}
           </div>
         </div>
       )}
