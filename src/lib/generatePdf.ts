@@ -5,7 +5,7 @@ export async function generatePdfBlob(element: HTMLElement): Promise<Blob> {
   // Force all text/elements to black for better readability
   element.classList.add("pdf-force-black");
   const style = document.createElement("style");
-  style.textContent = `.pdf-force-black, .pdf-force-black * { color: #000000 !important; border-color: #000000 !important; }`;
+  style.textContent = `.pdf-force-black, .pdf-force-black * { color: #000000 !important; border-color: #000000 !important; } .pdf-force-black .pdf-logo-black { filter: brightness(0) !important; }`;
   document.head.appendChild(style);
 
   try {
