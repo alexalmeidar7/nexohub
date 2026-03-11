@@ -98,8 +98,8 @@ export default function TpExterno() {
   const { user, loading: authLoading, signOut } = useAuth();
   usePageTitle("NexoHub - Tele Prompter");
 
-  // Flow: "login" → "menu" → "tp" | "mensagem"
-  const [step, setStep] = useState<"login" | "menu" | "tp" | "mensagem">("login");
+  // Flow: "login" → "menu" → "tp" | "mensagem" | "controlar"
+  const [step, setStep] = useState<"login" | "menu" | "tp" | "mensagem" | "controlar">("login");
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [loginError, setLoginError] = useState("");
