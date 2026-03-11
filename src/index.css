@@ -231,6 +231,12 @@
 .mv-content-area h3 {
   color: #0d0446;
 }
+.mv-content-area h2.text-white,
+.mv-content-area h3.text-white,
+.mv-content-area [style*="color: #ffffff"] h3,
+.mv-content-area [style*="color: rgb(255, 255, 255)"] h3 {
+  color: #ffffff;
+}
 
 .mv-content-area label {
   color: #0d0446;
@@ -293,6 +299,16 @@
 .mv-content-area p,
 .mv-content-area span {
   color: #0d0446;
+}
+/* Allow white text inside dark-background containers */
+.mv-content-area .text-white,
+.mv-content-area .text-white\/70,
+.mv-content-area [style*="color: #ffffff"] p,
+.mv-content-area [style*="color: #ffffff"] span,
+.mv-content-area [style*="color: #ffffff"] h3,
+.mv-content-area [style*="color: rgb(255, 255, 255)"] p,
+.mv-content-area [style*="color: rgb(255, 255, 255)"] span {
+  color: inherit;
 }
 
 .mv-content-area .text-muted-foreground {
