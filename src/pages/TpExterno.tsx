@@ -1369,7 +1369,34 @@ function TpController({ user, onBack }: { user: any; onBack: () => void }) {
   const displayText = tpState?.displayText ?? "";
   const isHtmlContent = tpState?.isHtmlContent ?? false;
   const timerSeconds = tpState?.timerSeconds ?? 0;
-  const scrollPos = tpState?.scrollPos ?? 50;
+  const serverScrollPos = tpState?.scrollPos ?? 50;
+
+  // Local scroll animation that mirrors the TP's own animation loop
+  const localScrollRef = useRef(50);
+  const previewTextRef = useRef<HTMLDivElement>(null);
+
+  // Snap to server position on each state update
+  useEffect(() => {
+    localScrollRef.current = serverScrollPos;
+    if (previewTextRef.current) {
+      previewTextRef.current.style.top = `${serverScrollPos}%`;
+    }
+  }, [serverScrollPos]);
+
+  // Local animation loop — runs between broadcasts to keep preview smooth
+  useEffect(() => {
+    if (!scrolling) return;
+    let animId: number;
+    const animate = () => {
+      localScrollRef.current -= speed * 0.1;
+      if (previewTextRef.current) {
+        previewTextRef.current.style.top = `${localScrollRef.current}%`;
+      }
+      animId = requestAnimationFrame(animate);
+    };
+    animId = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(animId);
+  }, [scrolling, speed]);
 
   const timerDisplay = (() => {
     const m = Math.floor(timerSeconds / 60).toString().padStart(2, "0");
