@@ -441,13 +441,22 @@ export default function RoteiroPrograma() {
 
                 {/* Categoria (same as cadastros) */}
                 <select
-                  value={newCargo}
-                  onChange={e => setNewCargo(e.target.value)}
+                  value={newCategoria}
+                  onChange={e => setNewCategoria(e.target.value)}
                   className="w-full px-3 py-2 rounded-lg text-xs outline-none"
                   style={{ backgroundColor: "rgba(13,4,70,0.04)", border: "1px solid rgba(13,4,70,0.08)", color: "#0d0446" }}
                 >
                   {categorias.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
+
+                {/* Cargo */}
+                <input
+                  value={newCargoText}
+                  onChange={e => setNewCargoText(e.target.value)}
+                  placeholder="cargo (ex: Diretor, Produtor...)"
+                  className="w-full px-3 py-2 rounded-lg text-xs outline-none"
+                  style={{ backgroundColor: "rgba(13,4,70,0.04)", border: "1px solid rgba(13,4,70,0.08)", color: "#0d0446" }}
+                />
 
                 <input
                   value={newInstagram}
