@@ -991,6 +991,17 @@ export default function RoteiroPrograma() {
             <div className="mt-8 pt-4 text-center" style={{ borderTop: "1px solid rgba(13,4,70,0.1)" }}>
               <p className="text-lg font-bold italic" style={{ color: "#268ffa" }}>Bom programa! 🎙️</p>
             </div>
+
+            {/* Apresentador edit status */}
+            {apresentadorStatus?.editado && (
+              <div className="mt-4 px-4 py-3 rounded-xl flex items-center gap-2" style={{ backgroundColor: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.25)" }}>
+                <Check size={16} style={{ color: "#16a34a" }} />
+                <p className="text-xs font-semibold" style={{ color: "#16a34a" }}>
+                  Programa ok por {apresentadorStatus.login || "apresentador"}
+                  {apresentadorStatus.editadoAt && `, ${format(new Date(apresentadorStatus.editadoAt), "dd/MM/yyyy 'às' HH:mm")}`}
+                </p>
+              </div>
+            )}
           </div>
         </div>
       )}
