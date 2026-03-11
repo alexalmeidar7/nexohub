@@ -290,7 +290,7 @@ export default function RoteiroApresentadorEdit() {
             contentEditable
             suppressContentEditableWarning
             onClick={handleEditorClick}
-            className="w-full min-h-[300px] text-sm outline-none prose prose-sm max-w-none"
+            className="w-full min-h-[300px] text-sm outline-none"
             style={{ color: "#0d0446", lineHeight: "1.7" }}
           />
         </div>
