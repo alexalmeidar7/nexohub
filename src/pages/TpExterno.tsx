@@ -1496,7 +1496,7 @@ function TpController({ user, onBack }: { user: any; onBack: () => void }) {
           top: `${scrollPos}%`, left: "12.5%",
           color: "#ffffff", textShadow: "0 1px 8px rgba(0,0,0,0.5)", fontWeight: 400,
           transform: `${flipH ? "scaleX(-1)" : ""} ${flipV ? "scaleY(-1)" : ""}`.trim() || "none",
-          transition: "top 0.5s ease-out",
+          transition: "top 0.12s linear",
         }}>
           {isHtmlContent ? <span dangerouslySetInnerHTML={{ __html: displayText }} /> : displayText}
         </div>
