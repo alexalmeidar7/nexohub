@@ -56,7 +56,7 @@ export default function TpController({ user, onBack }: TpControllerProps) {
   const cmdReadyRef = useRef(false);
   useEffect(() => {
     if (!user) return;
-    const ch = supabase.channel(`tp-control-${user.id}`);
+    const ch = supabase.channel(`tp-control-${user.id}`, { config: { broadcast: { self: true } } });
     ch.subscribe((status) => { cmdReadyRef.current = status === "SUBSCRIBED"; });
     cmdChannelRef.current = ch;
     return () => {

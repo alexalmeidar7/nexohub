@@ -275,7 +275,7 @@ export default function TpScreen({ user, onBack }: TpScreenProps) {
 
   useEffect(() => {
     if (!user) return;
-    const ch = supabase.channel(`tp-state-${user.id}`);
+    const ch = supabase.channel(`tp-state-${user.id}`, { config: { broadcast: { self: true } } });
     ch.subscribe((status) => {
       stateReadyRef.current = status === "SUBSCRIBED";
       if (stateReadyRef.current) {
