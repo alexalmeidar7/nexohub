@@ -17,7 +17,7 @@ import { useAuth } from "@/hooks/useAuth";
 const ApresentadorForm = lazy(() => import("./ApresentadorForm"));
 const ProgramaForm = lazy(() => import("./ProgramaForm"));
 const PrevisaoTempo = lazy(() => import("./PrevisaoTempo"));
-const NoticiasPanel = lazy(() => import("./NoticiasPanel"));
+const RoteiroPrograma = lazy(() => import("./RoteiroPrograma"));
 const WeatherWidget = lazy(() => import("./WeatherWidget"));
 const OnAirWidget = lazy(() => import("./OnAirWidget"));
 const MusicaNoAr = lazy(() => import("./MusicaNoAr"));
