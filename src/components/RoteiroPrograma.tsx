@@ -47,10 +47,11 @@ export default function RoteiroPrograma() {
   const [roteiroTitulo, setRoteiroTitulo] = useState("");
   const [roteiroSubtitulo, setRoteiroSubtitulo] = useState("");
   const [roteiroTexto, setRoteiroTexto] = useState("");
-  const [participantes, setParticipantes] = useState<{ nome: string; cargo: string; instagram: string }[]>([]);
+  const [participantes, setParticipantes] = useState<{ nome: string; categoria: string; cargo: string; instagram: string }[]>([]);
   
   const [newNome, setNewNome] = useState("");
-  const [newCargo, setNewCargo] = useState("Apresentador(a)");
+  const [newCategoria, setNewCategoria] = useState("Apresentador(a)");
+  const [newCargoText, setNewCargoText] = useState("");
   const [newInstagram, setNewInstagram] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedFromDb, setSelectedFromDb] = useState(false);
