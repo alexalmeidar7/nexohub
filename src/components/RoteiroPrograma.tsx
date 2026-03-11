@@ -34,6 +34,7 @@ interface Programa {
 
 export default function RoteiroPrograma() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [estudio, setEstudio] = useState("");
   const [programaNome, setProgramaNome] = useState("");
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
