@@ -222,7 +222,7 @@ export default function TpScreen({ user, onBack }: TpScreenProps) {
   useEffect(() => {
     if (!user) return;
     const channel = supabase
-      .channel(`tp-control-${user.id}`)
+      .channel(`tp-control-${user.id}`, { config: { broadcast: { self: true } } })
       .on("broadcast", { event: "tp-command" }, (payload: any) => {
         const cmd = payload.payload;
         if (!cmd) return;
