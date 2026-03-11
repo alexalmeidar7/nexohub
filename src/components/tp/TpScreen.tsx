@@ -264,57 +264,94 @@ export default function TpScreen({ user, onBack }: TpScreenProps) {
     return () => { supabase.removeChannel(channel); };
   }, [user]);
 
-  // Broadcast state to controller
+  // Broadcast state to controller (reliable queue)
   const stateChannelRef = useRef<any>(null);
+  const stateReadyRef = useRef(false);
+  const stateSendingRef = useRef(false);
+  const pendingStateRef = useRef<any>(null);
+
   useEffect(() => {
     if (!user) return;
     const ch = supabase.channel(`tp-state-${user.id}`);
-    ch.subscribe();
+    ch.subscribe((status) => {
+      stateReadyRef.current = status === "SUBSCRIBED";
+      if (stateReadyRef.current) {
+        void flushStateQueue();
+      }
+    });
     stateChannelRef.current = ch;
-    return () => { supabase.removeChannel(ch); stateChannelRef.current = null; };
+    return () => {
+      stateReadyRef.current = false;
+      stateSendingRef.current = false;
+      pendingStateRef.current = null;
+      supabase.removeChannel(ch);
+      stateChannelRef.current = null;
+    };
   }, [user]);
 
   const lastBroadcastRef = useRef<string>("");
 
   function buildStatePayload() {
     return {
-      scrolling, speed, fontSize, flipH, flipV,
+      scrolling,
+      speed,
+      fontSize,
+      flipH,
+      flipV,
       displayText: displayText.substring(0, 2000),
-      isHtmlContent, timerSeconds,
+      isHtmlContent,
+      timerSeconds,
       scrollPos: scrollPosRef.current,
     };
   }
 
-  function broadcastState() {
-    if (!stateChannelRef.current) return;
-    const payload = buildStatePayload();
-    const signature = `${payload.scrolling}-${payload.speed}-${payload.fontSize}-${payload.flipH}-${payload.flipV}-${payload.isHtmlContent}-${Math.round(payload.scrollPos)}-${payload.timerSeconds}-${payload.displayText.length}`;
-    if (signature === lastBroadcastRef.current) return;
-    lastBroadcastRef.current = signature;
-    stateChannelRef.current.send({ type: "broadcast", event: "tp-state", payload });
+  async function flushStateQueue() {
+    if (stateSendingRef.current || !stateReadyRef.current || !stateChannelRef.current) return;
+    stateSendingRef.current = true;
+
+    while (pendingStateRef.current && stateReadyRef.current && stateChannelRef.current) {
+      const payload = pendingStateRef.current;
+      pendingStateRef.current = null;
+      try {
+        await stateChannelRef.current.send({ type: "broadcast", event: "tp-state", payload });
+      } catch (err) {
+        console.error("Erro ao enviar estado TP:", err);
+        pendingStateRef.current = payload;
+        break;
+      }
+    }
+
+    stateSendingRef.current = false;
   }
 
-  useEffect(() => { broadcastState(); }, [scrolling, speed, fontSize, flipH, flipV, displayText, isHtmlContent, timerSeconds]);
+  function queueStateBroadcast(force = false) {
+    const payload = buildStatePayload();
+    const signature = `${payload.scrolling}-${payload.speed}-${payload.fontSize}-${payload.flipH}-${payload.flipV}-${payload.isHtmlContent}-${Math.round(payload.scrollPos)}-${payload.timerSeconds}-${payload.displayText.length}`;
+
+    if (!force && signature === lastBroadcastRef.current) return;
+    lastBroadcastRef.current = signature;
+    pendingStateRef.current = payload;
+    void flushStateQueue();
+  }
+
+  useEffect(() => {
+    queueStateBroadcast(false);
+  }, [scrolling, speed, fontSize, flipH, flipV, displayText, isHtmlContent, timerSeconds]);
 
   useEffect(() => {
     if (!scrolling) return;
     const id = setInterval(() => {
-      if (!stateChannelRef.current) return;
-      const payload = buildStatePayload();
-      lastBroadcastRef.current = "";
-      stateChannelRef.current.send({ type: "broadcast", event: "tp-state", payload });
+      queueStateBroadcast(true);
     }, 100);
     return () => clearInterval(id);
   }, [scrolling, speed, fontSize, flipH, flipV, isHtmlContent]);
 
   useEffect(() => {
-    if (!stateChannelRef.current) return;
     const id = setInterval(() => {
-      const payload = buildStatePayload();
-      stateChannelRef.current?.send({ type: "broadcast", event: "tp-state", payload });
+      queueStateBroadcast(true);
     }, 2000);
     return () => clearInterval(id);
-  }, [user]);
+  }, [user, scrolling, speed, fontSize, flipH, flipV, displayText, isHtmlContent, timerSeconds]);
 
   function applyText(text: string, html = false) {
     setDisplayText(text);
