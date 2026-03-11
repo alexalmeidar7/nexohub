@@ -52,7 +52,18 @@ export default function RoteiroPrograma() {
   const [newNome, setNewNome] = useState("");
   const [newCargo, setNewCargo] = useState("Apresentador(a)");
   const [newInstagram, setNewInstagram] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [selectedFromDb, setSelectedFromDb] = useState(false);
+  const [cadastroMsg, setCadastroMsg] = useState(false);
+  const nameInputRef = useRef<HTMLInputElement>(null);
   const isAgendado = selectedDate > new Date(new Date().toDateString());
+
+  const categorias = ["Apresentador(a)", "Jornalista", "Convidado(a)"];
+
+  // Filter suggestions based on typed name
+  const nameSuggestions = newNome.trim().length >= 2
+    ? apresentadores.filter(a => a.nome.toLowerCase().includes(newNome.toLowerCase().trim()))
+    : [];
 
   // Derive tipos filtered by estudio
   const tiposFiltrados = estudio
