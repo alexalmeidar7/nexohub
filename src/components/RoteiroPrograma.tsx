@@ -895,7 +895,7 @@ export default function RoteiroPrograma() {
 
       {/* Export View Inline */}
       {showExportView && (
-        <div className="mt-4">
+        <div ref={exportViewRef} className="mt-4">
           {/* Top bar */}
           <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
             <button onClick={() => setShowExportView(false)} className="flex items-center gap-2 text-xs font-semibold hover:opacity-80 transition" style={{ color: "#268ffa" }}>
