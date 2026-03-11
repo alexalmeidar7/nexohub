@@ -26,6 +26,7 @@ export default function RoteiroApresentadorEdit() {
   const [historico, setHistorico] = useState<any[]>([]);
   const [participantes, setParticipantes] = useState<Participante[]>([]);
   const [editingPart, setEditingPart] = useState<number | null>(null);
+  const [fontSize, setFontSize] = useState("14");
   const editorRef = useRef<HTMLDivElement>(null);
 
   const handleLogin = async () => {
