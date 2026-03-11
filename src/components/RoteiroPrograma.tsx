@@ -189,6 +189,14 @@ export default function RoteiroPrograma() {
 
       setEditingRoteiroId(null);
       fetchHistorico();
+      
+      // Reopen export view and scroll to end
+      setShowExportView(true);
+      setTimeout(() => {
+        if (exportViewRef.current) {
+          exportViewRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
+        }
+      }, 300);
     }
   };
 
