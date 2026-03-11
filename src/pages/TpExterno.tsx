@@ -95,8 +95,225 @@ function stripHtml(html: string): string {
 }
 
 export default function TpExterno() {
-  const { user } = useAuth();
+  const { user, loading: authLoading, signOut } = useAuth();
   usePageTitle("Tele Prompter");
+
+  // Flow: "login" → "menu" → "tp" | "mensagem"
+  const [step, setStep] = useState<"login" | "menu" | "tp" | "mensagem">("login");
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [loginError, setLoginError] = useState("");
+  const [loginLoading, setLoginLoading] = useState(false);
+  const [msgText, setMsgText] = useState("");
+  const [msgSending, setMsgSending] = useState(false);
+  const [msgSent, setMsgSent] = useState(false);
+
+  // Redirect to menu if already logged in
+  useEffect(() => {
+    if (!authLoading && user && step === "login") setStep("menu");
+  }, [authLoading, user, step]);
+
+  async function handleLogin(e: React.FormEvent) {
+    e.preventDefault();
+    setLoginError("");
+    if (!loginEmail.trim() || !loginPassword.trim()) {
+      setLoginError("Preencha todos os campos");
+      return;
+    }
+    setLoginLoading(true);
+    const { error } = await supabase.auth.signInWithPassword({ email: loginEmail.trim(), password: loginPassword });
+    setLoginLoading(false);
+    if (error) {
+      setLoginError("E-mail ou senha inválidos");
+    } else {
+      setStep("menu");
+    }
+  }
+
+  async function handleSendMessage() {
+    if (!msgText.trim() || !user) return;
+    setMsgSending(true);
+    // Send as admin_messages (broadcast from this user)
+    await supabase.from("admin_messages").insert({
+      sender_id: user.id,
+      message: msgText.trim(),
+      subject: "Mensagem do TP",
+      is_broadcast: false,
+      recipient_id: null,
+    });
+    setMsgSending(false);
+    setMsgSent(true);
+    setMsgText("");
+    setTimeout(() => setMsgSent(false), 3000);
+  }
+
+  async function handleLogout() {
+    await signOut();
+    setStep("login");
+  }
+
+  // ─── Login Screen ───
+  if (step === "login") {
+    if (authLoading) {
+      return (
+        <div style={{ height: "100vh", display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: "#0f1058" }}>
+          <Loader2 size={32} color="#268ffa" className="animate-spin" />
+        </div>
+      );
+    }
+    return (
+      <div style={{
+        height: "100vh", display: "flex", alignItems: "center", justifyContent: "center",
+        backgroundColor: "#0f1058", fontFamily: "'Poppins', 'Inter', sans-serif",
+      }}>
+        <form onSubmit={handleLogin} style={{
+          background: "#fff", borderRadius: "2rem", padding: "40px 36px", width: "min(400px, 90%)",
+          display: "flex", flexDirection: "column", alignItems: "center", gap: "16px",
+        }}>
+          <img src={logoNexo} alt="Nexo" style={{ height: "40px", marginBottom: "8px" }} />
+          <h2 style={{ fontSize: "14px", fontWeight: 700, color: "#0d0446", margin: 0 }}>Acesso ao Teleprompter</h2>
+          <input
+            type="email" placeholder="E-mail" value={loginEmail}
+            onChange={(e) => setLoginEmail(e.target.value)}
+            style={{
+              width: "100%", padding: "10px 14px", borderRadius: "10px", border: "1px solid #c7d2e0",
+              fontSize: "12px", outline: "none", color: "#0d0446",
+            }}
+          />
+          <input
+            type="password" placeholder="Senha" value={loginPassword}
+            onChange={(e) => setLoginPassword(e.target.value)}
+            style={{
+              width: "100%", padding: "10px 14px", borderRadius: "10px", border: "1px solid #c7d2e0",
+              fontSize: "12px", outline: "none", color: "#0d0446",
+            }}
+          />
+          {loginError && <span style={{ fontSize: "11px", color: "#ef4444" }}>{loginError}</span>}
+          <button type="submit" disabled={loginLoading} style={{
+            width: "100%", padding: "10px", borderRadius: "10px", border: "none",
+            backgroundColor: "#268ffa", color: "#fff", fontSize: "12px", fontWeight: 700,
+            cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
+          }}>
+            {loginLoading ? <Loader2 size={16} className="animate-spin" /> : <>Entrar <ArrowRight size={14} /></>}
+          </button>
+          <span style={{ fontSize: "10px", color: "rgba(13,4,70,0.4)", marginTop: "8px" }}>© Nexo Soluções Visuais</span>
+        </form>
+      </div>
+    );
+  }
+
+  // ─── Menu Screen ───
+  if (step === "menu") {
+    return (
+      <div style={{
+        height: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+        backgroundColor: "#0f1058", fontFamily: "'Poppins', 'Inter', sans-serif", gap: "32px",
+      }}>
+        <img src={logoNexo} alt="Nexo" style={{ height: "36px", opacity: 0.9 }} />
+        <div style={{ display: "flex", gap: "24px" }}>
+          <button
+            onClick={() => setStep("mensagem")}
+            style={{
+              width: "180px", height: "180px", borderRadius: "20px", border: "1px solid rgba(74,144,226,0.3)",
+              background: "linear-gradient(135deg, rgba(13,4,70,0.9), rgba(26,10,110,0.9))",
+              cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "16px",
+              transition: "all 0.2s", boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#4a90e2"; e.currentTarget.style.transform = "scale(1.04)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(74,144,226,0.3)"; e.currentTarget.style.transform = "scale(1)"; }}
+          >
+            <MessageSquare size={40} color="#4a90e2" />
+            <span style={{ color: "#fff", fontSize: "13px", fontWeight: 700 }}>Mandar Mensagem</span>
+          </button>
+          <button
+            onClick={() => setStep("tp")}
+            style={{
+              width: "180px", height: "180px", borderRadius: "20px", border: "1px solid rgba(74,144,226,0.3)",
+              background: "linear-gradient(135deg, rgba(13,4,70,0.9), rgba(26,10,110,0.9))",
+              cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "16px",
+              transition: "all 0.2s", boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#4a90e2"; e.currentTarget.style.transform = "scale(1.04)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(74,144,226,0.3)"; e.currentTarget.style.transform = "scale(1)"; }}
+          >
+            <Monitor size={40} color="#4a90e2" />
+            <span style={{ color: "#fff", fontSize: "13px", fontWeight: 700 }}>Abrir TP</span>
+          </button>
+        </div>
+        <button onClick={handleLogout} style={{
+          background: "none", border: "1px solid rgba(255,255,255,0.15)", borderRadius: "10px",
+          padding: "8px 20px", cursor: "pointer", color: "rgba(255,255,255,0.4)", fontSize: "11px",
+          display: "flex", alignItems: "center", gap: "6px", marginTop: "8px",
+        }}>
+          <LogOut size={12} /> Sair
+        </button>
+      </div>
+    );
+  }
+
+  // ─── Mensagem Screen ───
+  if (step === "mensagem") {
+    return (
+      <div style={{
+        height: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+        backgroundColor: "#0f1058", fontFamily: "'Poppins', 'Inter', sans-serif", gap: "20px",
+      }}>
+        <div style={{
+          background: "linear-gradient(135deg, #0d0446, #1a0a6e)", borderRadius: "20px",
+          padding: "32px", width: "min(450px, 90%)", border: "1px solid rgba(74,144,226,0.3)",
+          boxShadow: "0 16px 48px rgba(0,0,0,0.4)",
+        }}>
+          <h3 style={{ color: "#fff", fontSize: "16px", fontWeight: 700, margin: "0 0 4px" }}>
+            <MessageSquare size={16} style={{ display: "inline", verticalAlign: "-2px", marginRight: "8px" }} />
+            Enviar Mensagem
+          </h3>
+          <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "11px", margin: "0 0 16px" }}>
+            Envie uma mensagem para a produção
+          </p>
+          <textarea
+            value={msgText}
+            onChange={(e) => setMsgText(e.target.value)}
+            placeholder="Digite sua mensagem..."
+            rows={5}
+            style={{
+              width: "100%", background: "rgba(0,0,0,0.3)", color: "#fff", border: "1px solid rgba(255,255,255,0.1)",
+              borderRadius: "10px", padding: "12px", fontSize: "13px", resize: "none", outline: "none",
+            }}
+          />
+          {msgSent && <p style={{ color: "#22c55e", fontSize: "12px", marginTop: "8px" }}>✓ Mensagem enviada!</p>}
+          <div style={{ display: "flex", gap: "10px", marginTop: "14px" }}>
+            <button
+              onClick={handleSendMessage}
+              disabled={!msgText.trim() || msgSending}
+              style={{
+                background: msgText.trim() ? "linear-gradient(135deg, #4a90e2, #2d6dc0)" : "rgba(255,255,255,0.05)",
+                color: msgText.trim() ? "#fff" : "rgba(255,255,255,0.3)",
+                border: "none", borderRadius: "10px", padding: "10px 24px",
+                fontWeight: 700, cursor: msgText.trim() ? "pointer" : "not-allowed", fontSize: "12px",
+              }}
+            >
+              {msgSending ? <Loader2 size={14} className="animate-spin" /> : "Enviar"}
+            </button>
+            <button onClick={() => setStep("menu")} style={{
+              background: "none", border: "1px solid rgba(255,255,255,0.15)", borderRadius: "10px",
+              padding: "10px 20px", cursor: "pointer", color: "rgba(255,255,255,0.5)", fontSize: "12px",
+            }}>
+              Voltar
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ─── TP Screen (step === "tp") ───
+  return <TpScreen user={user} onBack={() => setStep("menu")} />;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   TP Screen — extracted to its own component to keep state isolated
+   ═══════════════════════════════════════════════════════════════ */
+function TpScreen({ user, onBack }: { user: any; onBack: () => void }) {
   const [scrolling, setScrolling] = useState(false);
   const [fontSize, setFontSize] = useState(60);
   const [speed, setSpeed] = useState(2);
