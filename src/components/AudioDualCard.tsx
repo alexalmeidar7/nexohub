@@ -1,6 +1,7 @@
 import { Heart, Mic, Plus, Instagram, MessageCircle, X, Music } from "lucide-react";
 import { lazy, Suspense, useState, useRef, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useIsMobile } from "@/hooks/use-mobile";
 const AudioSpectrum = lazy(() => import("@/components/AudioSpectrum"));
 
 // WhatsApp icon as inline SVG (lucide doesn't have it)
@@ -53,6 +54,7 @@ export default function AudioDualCard({
   onOpenChat,
   userId,
 }: AudioDualCardProps) {
+  const isMobile = useIsMobile();
   const isSemTitulo = !musicTitle || musicTitle === "Sem título";
   const isCoverMissing = !musicCover || musicCover.toLowerCase().includes("não encontrada") || musicCover.toLowerCase().includes("nao encontrada");
   const [menuOpen, setMenuOpen] = useState(false);
@@ -135,32 +137,34 @@ export default function AudioDualCard({
   const cleanPhone = whatsappPhone?.replace(/\D/g, "") || "";
 
   return (
-    <div className="absolute inset-0 z-10 flex items-center justify-center overflow-hidden" style={{ paddingBottom: "100px" }}>
+    <div className="absolute inset-0 z-10 flex items-center justify-center overflow-hidden" style={{ paddingBottom: isMobile ? "80px" : "100px" }}>
       {/* Background — same as player home */}
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{ backgroundImage: "url(/images/player-bg.png)", backgroundColor: "hsl(0 0% 5%)" }}
       />
-      {/* Wrapper with relative positioning so presenter sits behind music card */}
-      <div className={`relative flex items-center justify-center ${isTV ? "max-w-[1200px]" : "max-w-[800px]"}`} style={{ width: isTV ? "80vw" : "80vw", height: isTV ? "80vh" : "min(80vh, 420px)" }}>
+      {/* Wrapper */}
+      <div className={`relative ${isMobile ? "flex flex-col items-center gap-3 w-[90vw] max-w-[360px]" : `flex items-center justify-center ${isTV ? "max-w-[1200px]" : "max-w-[800px]"}`}`} style={isMobile ? {} : { width: isTV ? "80vw" : "80vw", height: isTV ? "80vh" : "min(80vh, 420px)" }}>
 
         {/* Left — Presenter (hidden behind cover, slides left at 3s) */}
         <div
-          className="absolute md:w-[50%] w-[70%] aspect-square rounded-3xl overflow-hidden shadow-xl"
+          className={`${isMobile ? "relative w-full" : "absolute md:w-[50%] w-[70%]"} aspect-square rounded-3xl overflow-hidden shadow-xl`}
           style={{
-            animation: "presenterReveal 1.6s cubic-bezier(0.22, 1, 0.36, 1) 3s forwards",
-            opacity: 0,
-            left: "50%",
-            transform: "translateX(-50%)",
+            ...(isMobile ? {} : {
+              animation: "presenterReveal 1.6s cubic-bezier(0.22, 1, 0.36, 1) 3s forwards",
+              opacity: 0,
+              left: "50%",
+              transform: "translateX(-50%)",
+            }),
             backgroundColor: "#a10a0b",
             backgroundImage: presenterPhoto ? `url(${presenterPhoto})` : undefined,
             backgroundSize: "cover",
             backgroundPosition: "top center",
             zIndex: 1,
-            transition: "margin-left 0.5s ease-out",
+            ...(isMobile ? {} : { transition: "margin-left 0.5s ease-out" }),
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.marginLeft = "-40px"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.marginLeft = "0px"; }}
+          onMouseEnter={isMobile ? undefined : (e) => { e.currentTarget.style.marginLeft = "-40px"; }}
+          onMouseLeave={isMobile ? undefined : (e) => { e.currentTarget.style.marginLeft = "0px"; }}
         >
           {!presenterPhoto && (
             <div className="absolute inset-0 flex items-center justify-center">
@@ -258,7 +262,8 @@ export default function AudioDualCard({
           </div>
         </div>
 
-        {/* History box — slides out to the right of the music card */}
+        {/* History box — slides out to the right of the music card (hidden on mobile, shown as overlay) */}
+        {!isMobile && (
         <div
           className="absolute md:w-[55%] w-[70%] rounded-3xl overflow-hidden backdrop-blur-xl"
           style={{
@@ -337,14 +342,61 @@ export default function AudioDualCard({
             </div>
           </div>
         </div>
+        )}
+
+        {/* Mobile history overlay */}
+        {isMobile && historyOpen && (
+          <div
+            className="relative w-full rounded-3xl overflow-hidden backdrop-blur-xl"
+            style={{
+              zIndex: 3,
+              maxHeight: "50vh",
+              background: "linear-gradient(135deg, rgba(20,20,20,0.95) 0%, rgba(40,10,10,0.95) 100%)",
+              boxShadow: "0 25px 60px hsla(0,0%,0%,0.6), 0 0 0 1px hsla(0,80%,45%,0.3)",
+              border: "1px solid hsla(0,80%,45%,0.2)",
+            }}
+          >
+            <div className="flex flex-col h-full p-4">
+              <div className="flex items-center gap-2 mb-3 pb-3" style={{ borderBottom: "1px solid hsla(0,80%,45%,0.2)" }}>
+                <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: "hsla(0,80%,45%,0.2)" }}>
+                  <Music size={14} style={{ color: "#a10a0b" }} />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-bold text-sm text-white">Últimas Tocadas</h3>
+                </div>
+                <button onClick={() => setHistoryOpen(false)} className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-white/10 active:scale-95">
+                  <X size={14} className="text-white/60" />
+                </button>
+              </div>
+              <div className="flex-1 min-h-0 overflow-y-auto pr-1" style={{ scrollbarWidth: "thin", scrollbarColor: "#a10a0b transparent", maxHeight: "35vh" }}>
+                {recentSongs.length === 0 ? (
+                  <p className="text-xs text-center mt-4 text-white/30">Nenhuma música registrada</p>
+                ) : (
+                  <div className="flex flex-col gap-1">
+                    {recentSongs.map((song) => (
+                      <div key={song.id} className="flex items-center gap-3 py-2 px-3 rounded-xl" style={{ backgroundColor: "hsla(0,0%,100%,0.03)" }}>
+                        <div className="shrink-0 px-2 py-1 rounded-md" style={{ backgroundColor: "hsla(0,80%,45%,0.2)" }}>
+                          <span className="text-[10px] font-mono font-bold text-white">{song.horario?.slice(0, 5)}</span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-semibold text-white truncate">{song.musica}</p>
+                          <p className="text-[10px] text-white/50 truncate">{song.artista}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Outer wrapper handles the initial entry animation */}
         <div
-          className="relative md:w-[55%] w-[75%]"
+          className={`relative ${isMobile ? "w-full" : "md:w-[55%] w-[75%]"}`}
           style={{
             zIndex: 2,
-            animation: "coverFadeAndSlide 3.5s cubic-bezier(0.22, 1, 0.36, 1) forwards",
-            opacity: 0,
+            ...(isMobile ? {} : { animation: "coverFadeAndSlide 3.5s cubic-bezier(0.22, 1, 0.36, 1) forwards", opacity: 0 }),
           }}
         >
           {/* Inner wrapper handles the history slide */}
@@ -352,8 +404,8 @@ export default function AudioDualCard({
             className="relative w-full aspect-square rounded-3xl overflow-hidden"
             style={{
               backgroundColor: isSemTitulo ? "#880000" : "hsl(0 0% 5%)",
-              transform: historyOpen ? "translateX(-25%) scale(0.96)" : "translateX(0%) scale(1)",
-              boxShadow: historyOpen
+              transform: isMobile ? "none" : (historyOpen ? "translateX(-25%) scale(0.96)" : "translateX(0%) scale(1)"),
+              boxShadow: historyOpen && !isMobile
                 ? "0 25px 60px hsla(0, 0%, 0%, 0.5), 0 0 0 1px hsla(0, 0%, 100%, 0.05)"
                 : "0 25px 50px hsla(0, 0%, 0%, 0.35)",
               transition: "transform 0.5s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.5s ease",
