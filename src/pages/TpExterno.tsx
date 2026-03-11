@@ -258,7 +258,7 @@ export default function TpExterno() {
       </div>
 
       {/* ─── Display Area ─── */}
-      <div style={{ position: "relative", backgroundColor: "#020210", overflow: "hidden" }}>
+      <div data-tp-display style={{ position: "relative", backgroundColor: "#020210", overflow: "hidden" }}>
         <div style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 5, background: "radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.6) 100%)" }} />
 
         {/* Eyeline markers */}
