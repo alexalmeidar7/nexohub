@@ -29,7 +29,7 @@ function sanitizeInlineHtml(el: Element): string {
       } else if (tag === "u") {
         result += `<u>${inner}</u>`;
       } else if (tag === "mark") {
-        result += `<mark style="background:#fef08a;color:inherit">${inner}</mark>`;
+        result += `<mark style="background:#b4ff20;color:#000;text-shadow:none;border-radius:3px;padding:0 2px">${inner}</mark>`;
       } else if (tag === "span") {
         const style = (node as HTMLElement).getAttribute("style") || "";
         if (style.includes("background")) {
