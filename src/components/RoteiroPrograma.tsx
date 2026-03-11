@@ -273,12 +273,15 @@ export default function RoteiroPrograma() {
     setShowRoteiro(true);
 
     const tdStyle = "border:1px solid rgba(13,4,70,0.12);padding:8px 10px";
+    const actionBtnStyle = "cursor:pointer;padding:2px 4px;border-radius:4px;display:inline-flex;align-items:center;justify-content:center";
+    const perguntaActions = `<td style="${tdStyle};white-space:nowrap;text-align:center;width:90px" contenteditable="false"><span data-action="move-up" style="${actionBtnStyle};color:#268ffa" title="Mover para cima">▲</span> <span data-action="move-down" style="${actionBtnStyle};color:#268ffa" title="Mover para baixo">▼</span> <span data-action="delete-pergunta" style="${actionBtnStyle};color:#dc2626" title="Remover pergunta">🗑</span></td>`;
     const defaultContent = `<table style="width:100%;border-collapse:collapse;font-size:13px;color:#0d0446">
 <thead>
 <tr style="background:rgba(38,143,250,0.08)">
 <th style="${tdStyle};text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:0.5px">Tempo</th>
 <th style="${tdStyle};text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:0.5px">Elemento</th>
 <th style="${tdStyle};text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:0.5px">Descrição / Texto</th>
+<th style="${tdStyle};text-align:center;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;width:90px">Ações</th>
 </tr>
 </thead>
 <tbody>
@@ -286,31 +289,34 @@ export default function RoteiroPrograma() {
 <td style="${tdStyle}">--:--</td>
 <td style="${tdStyle};font-weight:600">VINHETA</td>
 <td style="${tdStyle}">Abertura padrão do programa (Áudio + Vídeo).</td>
+<td style="${tdStyle}"></td>
 </tr>
 <tr>
 <td style="${tdStyle}">--:--</td>
 <td style="${tdStyle};font-weight:600">OFF / CABEÇA</td>
 <td style="${tdStyle}">APRESENTADOR: "Olá! Hoje o tema é sério. Vamos falar sobre como a informação é o melhor caminho contra a dependência química."</td>
+<td style="${tdStyle}"></td>
 </tr>
 <tr style="background:rgba(38,143,250,0.06)">
 <td style="${tdStyle}"></td>
-<td style="${tdStyle};font-weight:700;color:#268ffa" colspan="2">ENTREVISTA</td>
+<td style="${tdStyle};font-weight:700;color:#268ffa" colspan="3">ENTREVISTA</td>
 </tr>
 <tr data-pergunta="1">
 <td style="${tdStyle}">--:--</td>
 <td style="${tdStyle};font-weight:600">PERGUNTA 1</td>
 <td style="${tdStyle}">[Insira a pergunta aqui]</td>
+${perguntaActions}
 </tr>
 <tr data-action-row="true" contenteditable="false">
-<td style="${tdStyle}" colspan="3">
-<span data-action="add-pergunta" style="color:#268ffa;font-weight:600;font-size:12px;cursor:pointer;margin-right:16px">＋ adicionar pergunta</span>
-<span data-action="remove-pergunta" style="color:#dc2626;font-weight:600;font-size:12px;cursor:pointer">✕ remover última pergunta</span>
+<td style="${tdStyle}" colspan="4">
+<span data-action="add-pergunta" style="color:#268ffa;font-weight:600;font-size:12px;cursor:pointer">＋ adicionar pergunta</span>
 </td>
 </tr>
 <tr>
 <td style="${tdStyle}">--:--</td>
 <td style="${tdStyle};font-weight:600">OBSERVAÇÕES</td>
 <td style="${tdStyle}">Inserir imagens de apoio (família conversando, centros de apoio) enquanto o convidado fala.</td>
+<td style="${tdStyle}"></td>
 </tr>
 <tr>
 <td style="${tdStyle}">--:--</td>
