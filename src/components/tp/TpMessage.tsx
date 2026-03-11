@@ -20,7 +20,7 @@ export default function TpMessage({ user, onBack }: TpMessageProps) {
   const channelReadyRef = useRef(false);
 
   useEffect(() => {
-    const ch = supabase.channel(`tp-msg-${user.id}`);
+    const ch = supabase.channel(`tp-msg-${user.id}`, { config: { broadcast: { self: true } } });
     ch.subscribe((status) => { channelReadyRef.current = status === "SUBSCRIBED"; });
     channelRef.current = ch;
     return () => {
