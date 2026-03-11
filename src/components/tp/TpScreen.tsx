@@ -354,14 +354,14 @@ export default function TpScreen({ user, onBack }: TpScreenProps) {
       queueStateBroadcast(true);
     }, 100);
     return () => clearInterval(id);
-  }, [scrolling, speed, fontSize, flipH, flipV, isHtmlContent]);
+  }, [scrolling]);
 
   useEffect(() => {
     const id = setInterval(() => {
       queueStateBroadcast(true);
     }, 2000);
     return () => clearInterval(id);
-  }, [user, scrolling, speed, fontSize, flipH, flipV, displayText, isHtmlContent, timerSeconds]);
+  }, [user]);
 
   function applyText(text: string, html = false) {
     setDisplayText(text);
