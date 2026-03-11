@@ -98,7 +98,12 @@ export default function RoteiroApresentadorEdit() {
     fetchHistorico(data.user_id);
 
     setTimeout(() => {
-      if (editorRef.current) editorRef.current.innerHTML = data.conteudo_html || "";
+      if (editorRef.current) {
+        editorRef.current.innerHTML = data.conteudo_html || "";
+        // Count existing perguntas
+        const existing = editorRef.current.querySelectorAll("tr[data-pergunta]");
+        setPerguntaCount(existing.length || 1);
+      }
     }, 100);
   };
 
