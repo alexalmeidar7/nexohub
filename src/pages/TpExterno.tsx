@@ -1112,3 +1112,234 @@ function TpScreen({ user, onBack }: { user: any; onBack: () => void }) {
     </div>
   );
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   TP Controller — remote control for an active TP session
+   ═══════════════════════════════════════════════════════════════ */
+function TpController({ user, onBack }: { user: any; onBack: () => void }) {
+  const [tpState, setTpState] = useState<any>(null);
+  const [connected, setConnected] = useState(false);
+
+  // Listen for TP state broadcasts
+  useEffect(() => {
+    if (!user) return;
+    const ch = supabase
+      .channel(`tp-state-${user.id}`)
+      .on("broadcast", { event: "tp-state" }, (payload: any) => {
+        setTpState(payload.payload);
+        setConnected(true);
+      })
+      .subscribe();
+
+    // If no state received in 5s, mark as disconnected
+    const timeout = setTimeout(() => {
+      setConnected((c) => c);
+    }, 5000);
+
+    return () => { supabase.removeChannel(ch); clearTimeout(timeout); };
+  }, [user]);
+
+  // Send command to TP
+  async function sendCommand(action: string, value?: any) {
+    if (!user) return;
+    const ch = supabase.channel(`tp-control-${user.id}`);
+    await ch.subscribe();
+    await ch.send({ type: "broadcast", event: "tp-command", payload: { action, value } });
+    supabase.removeChannel(ch);
+  }
+
+  const scrolling = tpState?.scrolling ?? false;
+  const speed = tpState?.speed ?? 2;
+  const fontSize = tpState?.fontSize ?? 60;
+  const flipH = tpState?.flipH ?? false;
+  const flipV = tpState?.flipV ?? false;
+  const displayText = tpState?.displayText ?? "";
+  const isHtmlContent = tpState?.isHtmlContent ?? false;
+  const timerSeconds = tpState?.timerSeconds ?? 0;
+  const scrollPos = tpState?.scrollPos ?? 50;
+
+  const timerDisplay = (() => {
+    const m = Math.floor(timerSeconds / 60).toString().padStart(2, "0");
+    const s = (timerSeconds % 60).toString().padStart(2, "0");
+    return `${m}:${s}`;
+  })();
+
+  const [clock, setClock] = useState("00:00");
+  useEffect(() => {
+    const tick = () => {
+      const now = new Date();
+      setClock(now.getHours().toString().padStart(2, "0") + ":" + now.getMinutes().toString().padStart(2, "0"));
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  const controlBtnStyle: React.CSSProperties = {
+    background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)",
+    borderRadius: "8px", padding: "6px 8px", cursor: "pointer",
+    display: "flex", alignItems: "center", justifyContent: "center", color: "#fff",
+    transition: "all 0.2s",
+  };
+
+  return (
+    <div style={{
+      height: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+      backgroundColor: "#0f1058", fontFamily: "'Poppins', 'Inter', sans-serif", padding: "20px",
+    }}>
+      {/* Header */}
+      <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px" }}>
+        <SlidersHorizontal size={20} color="#4a90e2" />
+        <span style={{ color: "#fff", fontSize: "16px", fontWeight: 700 }}>Controle Remoto do TP</span>
+        <div style={{
+          width: "10px", height: "10px", borderRadius: "50%",
+          backgroundColor: connected && tpState ? "#22c55e" : "#ef4444",
+          boxShadow: connected && tpState ? "0 0 8px rgba(34,197,94,0.5)" : "0 0 8px rgba(239,68,68,0.5)",
+          marginLeft: "8px",
+        }} />
+        <span style={{ color: "rgba(255,255,255,0.4)", fontSize: "11px" }}>
+          {connected && tpState ? "TP Conectado" : "Aguardando TP..."}
+        </span>
+      </div>
+
+      {/* TP Preview Mirror */}
+      <div style={{
+        width: "min(900px, 90vw)", height: "min(500px, 55vh)", position: "relative",
+        backgroundColor: "#020210", borderRadius: "12px", overflow: "hidden",
+        border: "1px solid rgba(74,144,226,0.3)", boxShadow: "0 16px 48px rgba(0,0,0,0.5)",
+      }}>
+        {/* Fade overlays */}
+        <div style={{
+          position: "absolute", top: 0, left: 0, right: 0, height: "25%",
+          background: "linear-gradient(to bottom, #020210 0%, rgba(2,2,16,0.85) 40%, rgba(2,2,16,0) 100%)",
+          pointerEvents: "none", zIndex: 8,
+        }} />
+        <div style={{
+          position: "absolute", bottom: 0, left: 0, right: 0, height: "15%",
+          background: "linear-gradient(to top, #020210 0%, rgba(2,2,16,0) 100%)",
+          pointerEvents: "none", zIndex: 8,
+        }} />
+
+        {/* Eyeline */}
+        <div style={{ position: "absolute", left: 0, top: "50%", transform: "translateY(-50%)", zIndex: 10 }}>
+          <div style={{ width: 0, height: 0, borderTop: "12px solid transparent", borderBottom: "12px solid transparent", borderLeft: "20px solid #4a90e2", filter: "drop-shadow(0 0 6px rgba(74,144,226,0.5))" }} />
+        </div>
+        <div style={{ position: "absolute", left: "24px", right: "24px", top: "50%", height: "1px", background: "rgba(74,144,226,0.3)", zIndex: 6 }} />
+
+        {/* Text preview */}
+        <div style={{
+          width: "75%", margin: "0 auto", fontSize: `${Math.max(14, fontSize * 0.3)}px`, lineHeight: 1.5,
+          textAlign: "center", whiteSpace: "pre-wrap", position: "absolute",
+          top: `${scrollPos}%`, left: "12.5%",
+          color: "#ffffff", textShadow: "0 1px 8px rgba(0,0,0,0.5)", fontWeight: 400,
+          transform: `${flipH ? "scaleX(-1)" : ""} ${flipV ? "scaleY(-1)" : ""}`.trim() || "none",
+          transition: "top 0.5s ease-out",
+        }}>
+          {isHtmlContent ? <span dangerouslySetInnerHTML={{ __html: displayText }} /> : displayText}
+        </div>
+
+        {/* Status overlay */}
+        <div style={{
+          position: "absolute", top: "12px", right: "16px", zIndex: 20,
+          display: "flex", alignItems: "center", gap: "12px",
+        }}>
+          <span style={{ color: "rgba(255,255,255,0.4)", fontSize: "10px", fontWeight: 600 }}>{clock}</span>
+          <span style={{
+            color: scrolling ? "#4a90e2" : "rgba(255,255,255,0.5)",
+            fontSize: "10px", fontWeight: 700, transition: "color 0.3s",
+          }}>
+            {scrolling ? "▶ RODANDO" : "⏸ PAUSADO"}
+          </span>
+          <span style={{ color: "rgba(255,255,255,0.3)", fontSize: "10px" }}>⏱ {timerDisplay}</span>
+        </div>
+      </div>
+
+      {/* Controls */}
+      <div style={{
+        marginTop: "20px", display: "flex", alignItems: "center", gap: "12px",
+        background: "rgba(11,11,48,0.9)", backdropFilter: "blur(20px)",
+        padding: "12px 28px", borderRadius: "20px",
+        border: "1px solid rgba(74,144,226,0.2)", boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
+      }}>
+        {/* Font size */}
+        <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+          <button onClick={() => sendCommand("fontSize", Math.max(20, fontSize - 5))} style={{
+            ...controlBtnStyle, padding: "6px 10px", fontSize: "11px", fontWeight: 700,
+          }}>
+            <Minus size={10} /> A
+          </button>
+          <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.3)", minWidth: "30px", textAlign: "center" }}>{fontSize}px</span>
+          <button onClick={() => sendCommand("fontSize", Math.min(120, fontSize + 5))} style={{
+            ...controlBtnStyle, padding: "6px 10px", fontSize: "11px", fontWeight: 700,
+          }}>
+            <Plus size={10} /> A
+          </button>
+        </div>
+
+        <div style={{ width: "1px", height: "24px", background: "rgba(255,255,255,0.1)" }} />
+
+        {/* Speed */}
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <Type size={12} color="rgba(255,255,255,0.3)" />
+          <input type="range" min={0} max={10} value={speed}
+            onChange={(e) => sendCommand("speed", Number(e.target.value))}
+            style={{ width: "120px", accentColor: "#4a90e2", height: "4px" }} />
+          <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.4)", minWidth: "14px" }}>{speed}</span>
+        </div>
+
+        <div style={{ width: "1px", height: "24px", background: "rgba(255,255,255,0.1)" }} />
+
+        {/* Play/Pause */}
+        <button onClick={() => sendCommand("toggle")} style={{
+          background: scrolling ? "linear-gradient(135deg, #e24a4a, #c0392b)" : "linear-gradient(135deg, #4a90e2, #2d6dc0)",
+          border: "none", borderRadius: "50%", width: "48px", height: "48px", cursor: "pointer",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          boxShadow: scrolling ? "0 4px 16px rgba(226,74,74,0.4)" : "0 4px 16px rgba(74,144,226,0.4)",
+          transition: "all 0.3s",
+        }}>
+          {scrolling ? <Pause size={20} color="#fff" /> : <Play size={20} color="#fff" style={{ marginLeft: "2px" }} />}
+        </button>
+
+        <div style={{ width: "1px", height: "24px", background: "rgba(255,255,255,0.1)" }} />
+
+        {/* Scroll step buttons */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+          <button onClick={() => sendCommand("scrollStep", 80)} title="Scroll para cima" style={{ ...controlBtnStyle, padding: "4px 10px" }}>
+            ▲
+          </button>
+          <button onClick={() => sendCommand("scrollStep", -80)} title="Scroll para baixo" style={{ ...controlBtnStyle, padding: "4px 10px" }}>
+            ▼
+          </button>
+        </div>
+
+        <div style={{ width: "1px", height: "24px", background: "rgba(255,255,255,0.1)" }} />
+
+        {/* Flip */}
+        <button onClick={() => sendCommand("flipH")} title="Inverter H"
+          style={{ ...controlBtnStyle, background: flipH ? "rgba(74,144,226,0.2)" : controlBtnStyle.background }}>
+          <FlipHorizontal2 size={14} color={flipH ? "#4a90e2" : "rgba(255,255,255,0.5)"} />
+        </button>
+        <button onClick={() => sendCommand("flipV")} title="Inverter V"
+          style={{ ...controlBtnStyle, background: flipV ? "rgba(74,144,226,0.2)" : controlBtnStyle.background }}>
+          <FlipVertical2 size={14} color={flipV ? "#4a90e2" : "rgba(255,255,255,0.5)"} />
+        </button>
+
+        <div style={{ width: "1px", height: "24px", background: "rgba(255,255,255,0.1)" }} />
+
+        {/* Reset */}
+        <button onClick={() => sendCommand("reset")} title="Reiniciar" style={controlBtnStyle}>
+          <RotateCcw size={14} color="rgba(255,255,255,0.5)" />
+        </button>
+      </div>
+
+      {/* Back button */}
+      <button onClick={onBack} style={{
+        marginTop: "16px", background: "none", border: "1px solid rgba(255,255,255,0.15)", borderRadius: "10px",
+        padding: "8px 20px", cursor: "pointer", color: "rgba(255,255,255,0.4)", fontSize: "11px",
+        display: "flex", alignItems: "center", gap: "6px",
+      }}>
+        <LogOut size={12} /> Voltar
+      </button>
+    </div>
+  );
+}
