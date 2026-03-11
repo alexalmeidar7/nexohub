@@ -66,6 +66,7 @@ export default function RoteiroPrograma() {
   const [historico, setHistorico] = useState<any[]>([]);
   const [editingRoteiroId, setEditingRoteiroId] = useState<string | null>(null);
   const [savingRoteiro, setSavingRoteiro] = useState(false);
+  const [showParticipantForm, setShowParticipantForm] = useState(true);
 
   const categorias = ["Apresentador(a)", "Jornalista", "Convidado(a)"];
 
