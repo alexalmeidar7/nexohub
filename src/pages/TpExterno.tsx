@@ -1359,6 +1359,7 @@ function TpController({ user, onBack }: { user: any; onBack: () => void }) {
     return () => window.removeEventListener("wheel", handleWheel);
   }, [showSetup]);
 
+  const controlBtnStyle: React.CSSProperties = {
     background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)",
     borderRadius: "8px", padding: "6px 8px", cursor: "pointer",
     display: "flex", alignItems: "center", justifyContent: "center", color: "#fff",
