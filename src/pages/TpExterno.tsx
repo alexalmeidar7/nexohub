@@ -286,6 +286,18 @@ export default function TpExterno() {
           }}>
             {scrolling ? <Pause size={18} color="#fff" /> : <Play size={18} color="#fff" style={{ marginLeft: "2px" }} />}
           </button>
+          <div style={{ width: "1px", height: "24px", background: "rgba(255,255,255,0.1)" }} />
+          <button onClick={() => setFlipH((f) => !f)} title="Inverter horizontalmente"
+            style={{ ...controlBtnStyle, background: flipH ? "rgba(74,144,226,0.2)" : controlBtnStyle.background }}>
+            <FlipHorizontal2 size={14} color={flipH ? "#4a90e2" : "rgba(255,255,255,0.5)"} />
+          </button>
+          <button onClick={() => setFlipV((f) => !f)} title="Inverter verticalmente"
+            style={{ ...controlBtnStyle, background: flipV ? "rgba(74,144,226,0.2)" : controlBtnStyle.background }}>
+            <FlipVertical2 size={14} color={flipV ? "#4a90e2" : "rgba(255,255,255,0.5)"} />
+          </button>
+          <button onClick={toggleFullscreen} title="Tela cheia" style={controlBtnStyle}>
+            <Maximize size={14} color="rgba(255,255,255,0.5)" />
+          </button>
         </div>
 
         {/* ─── Setup Modal ─── */}
