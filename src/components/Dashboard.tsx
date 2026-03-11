@@ -231,7 +231,6 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       return;
     }
     if (child.page) {
-      console.log("[DEBUG] Setting currentPage to:", child.page);
       setCurrentPage(child.page);
       setMobileMenuOpen(false);
       setHoveredMenu(null);
