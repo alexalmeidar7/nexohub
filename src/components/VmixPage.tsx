@@ -160,7 +160,7 @@ export default function VmixPage() {
       <div style={headerStyle} className="flex items-center gap-3">
         <Monitor size={20} />
         <div>
-          <h3 className="font-bold text-base">Controle vMix</h3>
+          <h3 className="font-bold text-base text-white">Controle vMix</h3>
           <p className="text-xs text-white/70">Integração com vMix Web Controller para controle de transmissão ao vivo</p>
         </div>
       </div>
