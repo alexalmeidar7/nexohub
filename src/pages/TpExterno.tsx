@@ -107,6 +107,9 @@ export default function TpExterno() {
   const [msgText, setMsgText] = useState("");
   const [msgSending, setMsgSending] = useState(false);
   const [msgSent, setMsgSent] = useState(false);
+  const [msgHistory, setMsgHistory] = useState<{ text: string; ts: number }[]>(() => {
+    try { return JSON.parse(localStorage.getItem("tp-msg-history") || "[]"); } catch { return []; }
+  });
 
   // Redirect to menu if already logged in
   useEffect(() => {
