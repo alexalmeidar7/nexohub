@@ -881,7 +881,7 @@ function TpScreen({ user, onBack }: { user: any; onBack: () => void }) {
           </button>
         </div>
 
-        <div style={{ textAlign: "center" }}>
+        <div className="tp-sidebar-bottom" style={{ textAlign: "center" }}>
           <div style={{ fontSize: "8px", textTransform: "uppercase", letterSpacing: "1.5px", color: "rgba(255,255,255,0.3)", lineHeight: 1.3, fontWeight: 600 }}>
             tempo de<br />programa
           </div>
