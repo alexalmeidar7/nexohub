@@ -3,10 +3,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CalendarIcon, FileText, Building2, Clock } from "lucide-react";
+import { CalendarIcon, FileText, Building2, Clock, Plus, X, Download } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 
 const NoticiasPanel = lazy(() => import("./NoticiasPanel"));
@@ -15,6 +16,7 @@ interface Apresentador {
   id: string;
   nome: string;
   cargo: string;
+  instagram?: string;
   ativo: boolean;
 }
 
@@ -40,7 +42,15 @@ export default function RoteiroPrograma() {
   const [loading, setLoading] = useState(true);
   const [estudios, setEstudios] = useState<string[]>([]);
   const [tiposPrograma, setTiposPrograma] = useState<string[]>([]);
-
+  const [showRoteiro, setShowRoteiro] = useState(false);
+  const [roteiroTitulo, setRoteiroTitulo] = useState("");
+  const [roteiroSubtitulo, setRoteiroSubtitulo] = useState("");
+  const [roteiroTexto, setRoteiroTexto] = useState("");
+  const [participantes, setParticipantes] = useState<{ nome: string; cargo: string; instagram: string }[]>([]);
+  const [showAddParticipante, setShowAddParticipante] = useState(false);
+  const [newNome, setNewNome] = useState("");
+  const [newCargo, setNewCargo] = useState("Apresentador(a)");
+  const [newInstagram, setNewInstagram] = useState("");
   const isAgendado = selectedDate > new Date(new Date().toDateString());
 
   // Derive tipos filtered by estudio
@@ -62,7 +72,7 @@ export default function RoteiroPrograma() {
       setLoading(true);
       const [progRes, apresRes] = await Promise.all([
         supabase.from("programas").select("id, nome, estudio, tipo_programa, horario_inicio, horario_fim, dias_semana").eq("ativo", true),
-        supabase.from("apresentadores").select("id, nome, cargo, ativo").eq("ativo", true),
+        supabase.from("apresentadores").select("id, nome, cargo, instagram, ativo").eq("ativo", true),
       ]);
       const progs = progRes.data || [];
       const apres = apresRes.data || [];
@@ -98,6 +108,27 @@ export default function RoteiroPrograma() {
         setHorario(prog.horario_inicio.slice(0, 5));
       }
     }
+  };
+
+  const handleMontarRoteiro = () => {
+    setParticipantes(apresentadores.map(a => ({ nome: a.nome, cargo: a.cargo || "Apresentador(a)", instagram: (a as any).instagram || "" })));
+    setRoteiroTitulo("");
+    setRoteiroSubtitulo("");
+    setRoteiroTexto("");
+    setShowRoteiro(true);
+  };
+
+  const addParticipante = () => {
+    if (!newNome.trim()) return;
+    setParticipantes(prev => [...prev, { nome: newNome.trim(), cargo: newCargo, instagram: newInstagram.trim() }]);
+    setNewNome("");
+    setNewCargo("Apresentador(a)");
+    setNewInstagram("");
+    setShowAddParticipante(false);
+  };
+
+  const removeParticipante = (idx: number) => {
+    setParticipantes(prev => prev.filter((_, i) => i !== idx));
   };
 
   if (loading) return <ModulePageSkeleton />;
@@ -243,12 +274,169 @@ export default function RoteiroPrograma() {
 
       </div>
 
+      {/* Botão Montar Roteiro */}
+      {!showRoteiro && programaNome && (
+        <button
+          onClick={handleMontarRoteiro}
+          className="w-full py-3 rounded-xl text-sm font-bold transition-all hover:opacity-90"
+          style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#ffffff", boxShadow: "0 4px 16px rgba(38,143,250,0.3)" }}
+        >
+          Montar Roteiro
+        </button>
+      )}
+
+      {/* Roteiro Form */}
+      {showRoteiro && (
+        <div className="rounded-2xl overflow-hidden" style={{ background: "#d9e9fa", boxShadow: "0 8px 32px rgba(13,4,70,0.12)", padding: "24px" }}>
+          {/* Header */}
+          <div className="mb-5">
+            <p className="text-xs font-bold" style={{ color: "#0d0446" }}>roteiro para o programa</p>
+            <h2 className="text-2xl font-bold" style={{ color: "#0d0446" }}>{programaNome}</h2>
+            <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold mt-1" style={{ backgroundColor: "#268ffa", color: "#ffffff" }}>
+              estúdio {estudio || "—"}
+            </span>
+            <p className="text-xs mt-2" style={{ color: "rgba(13,4,70,0.5)" }}>
+              programa para o dia:<br />
+              {format(selectedDate, "dd/MM/yy", { locale: ptBR })} às {horario || "—"}
+            </p>
+          </div>
+
+          {/* Assunto */}
+          <div className="rounded-xl p-4 mb-4" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.08)" }}>
+            <label className="text-xs font-semibold mb-2 block" style={{ color: "rgba(13,4,70,0.5)" }}>assunto do {tipoPrograma?.toLowerCase() || "programa"}</label>
+            <input
+              value={roteiroTitulo}
+              onChange={e => setRoteiroTitulo(e.target.value)}
+              placeholder="título"
+              className="w-full px-3 py-2 rounded-lg text-xs outline-none mb-2"
+              style={{ backgroundColor: "rgba(13,4,70,0.04)", border: "1px solid rgba(13,4,70,0.08)", color: "#0d0446" }}
+            />
+            <input
+              value={roteiroSubtitulo}
+              onChange={e => setRoteiroSubtitulo(e.target.value)}
+              placeholder="subtítulo"
+              className="w-full px-3 py-2 rounded-lg text-xs outline-none"
+              style={{ backgroundColor: "rgba(13,4,70,0.04)", border: "1px solid rgba(13,4,70,0.08)", color: "#0d0446" }}
+            />
+          </div>
+
+          {/* Participantes */}
+          <div className="mb-4">
+            <label className="text-xs font-semibold mb-2 block" style={{ color: "rgba(13,4,70,0.5)" }}>participantes</label>
+            <div className="space-y-2">
+              {participantes.map((p, idx) => (
+                <div key={idx} className="rounded-xl p-3 flex items-start justify-between" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.08)" }}>
+                  <div className="flex-1">
+                    <p className="text-xs font-bold" style={{ color: "#0d0446" }}>{p.nome}</p>
+                    <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.5)" }}>{p.cargo}</p>
+                    {p.instagram && <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.4)" }}>@{p.instagram.replace("@", "")}</p>}
+                  </div>
+                  <button onClick={() => removeParticipante(idx)} className="hover:opacity-70 mt-1">
+                    <X size={12} style={{ color: "rgba(13,4,70,0.3)" }} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Adicionar Participante */}
+          <button
+            onClick={() => setShowAddParticipante(true)}
+            className="w-full py-2.5 rounded-xl text-xs font-bold transition-all hover:opacity-90 mb-4"
+            style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#ffffff" }}
+          >
+            adicionar participante
+          </button>
+
+          {/* Texto Roteiro */}
+          <div className="rounded-xl p-4 mb-4" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.08)" }}>
+            <textarea
+              value={roteiroTexto}
+              onChange={e => setRoteiroTexto(e.target.value)}
+              placeholder="Texto roteiro"
+              rows={14}
+              className="w-full text-xs outline-none resize-none"
+              style={{ color: "#0d0446" }}
+            />
+          </div>
+
+          {/* Exportar Roteiro */}
+          <button
+            className="w-full py-3 rounded-xl text-sm font-bold transition-all hover:opacity-90 flex items-center justify-center gap-2"
+            style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#ffffff", boxShadow: "0 4px 16px rgba(38,143,250,0.3)" }}
+          >
+            <Download size={14} />
+            exportar roteiro
+          </button>
+        </div>
+      )}
+
       {/* Conditional: Jornalístico shows NoticiasPanel */}
       {tipoPrograma === "Jornalístico" && (
         <Suspense fallback={<ModulePageSkeleton />}>
           <NoticiasPanel />
         </Suspense>
       )}
+
+      {/* Add Participante Dialog */}
+      <Dialog open={showAddParticipante} onOpenChange={setShowAddParticipante}>
+        <DialogContent className="sm:max-w-md" style={{ backgroundColor: "#ffffff" }}>
+          <DialogHeader>
+            <DialogTitle style={{ color: "#0d0446" }}>Adicionar Participante</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div>
+              <label className="text-[11px] font-bold mb-1 block" style={{ color: "#0d0446" }}>Nome</label>
+              <input
+                value={newNome}
+                onChange={e => setNewNome(e.target.value)}
+                onKeyDown={e => { if (e.key === "Enter") addParticipante(); }}
+                placeholder="Nome do participante"
+                className="w-full px-3 py-2 rounded-lg text-xs outline-none"
+                style={{ border: "1px solid rgba(13,4,70,0.15)", color: "#0d0446" }}
+                autoFocus
+              />
+            </div>
+            <div>
+              <label className="text-[11px] font-bold mb-1 block" style={{ color: "#0d0446" }}>Cargo</label>
+              <select
+                value={newCargo}
+                onChange={e => setNewCargo(e.target.value)}
+                className="w-full px-3 py-2 rounded-lg text-xs outline-none"
+                style={{ border: "1px solid rgba(13,4,70,0.15)", color: "#0d0446" }}
+              >
+                <option>Apresentador(a)</option>
+                <option>Jornalista</option>
+                <option>Convidado(a)</option>
+                <option>Repórter</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-[11px] font-bold mb-1 block" style={{ color: "#0d0446" }}>Instagram</label>
+              <input
+                value={newInstagram}
+                onChange={e => setNewInstagram(e.target.value)}
+                placeholder="@usuario"
+                className="w-full px-3 py-2 rounded-lg text-xs outline-none"
+                style={{ border: "1px solid rgba(13,4,70,0.15)", color: "#0d0446" }}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <button onClick={() => setShowAddParticipante(false)} className="px-4 py-2 rounded-lg text-xs" style={{ color: "#0d0446" }}>
+              Cancelar
+            </button>
+            <button
+              onClick={addParticipante}
+              disabled={!newNome.trim()}
+              className="px-4 py-2 rounded-lg text-xs font-bold transition-all disabled:opacity-50"
+              style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#ffffff" }}
+            >
+              Adicionar
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
