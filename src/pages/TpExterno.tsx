@@ -246,6 +246,20 @@ export default function TpExterno() {
             <span style={{ color: "#fff", fontSize: "13px", fontWeight: 700 }}>Mandar Mensagem</span>
           </button>
           <button
+            onClick={() => { /* TODO: Controlar TP */ }}
+            style={{
+              width: "180px", height: "180px", borderRadius: "20px", border: "1px solid rgba(74,144,226,0.3)",
+              background: "linear-gradient(135deg, rgba(13,4,70,0.9), rgba(26,10,110,0.9))",
+              cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "16px",
+              transition: "all 0.2s", boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#4a90e2"; e.currentTarget.style.transform = "scale(1.04)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(74,144,226,0.3)"; e.currentTarget.style.transform = "scale(1)"; }}
+          >
+            <SlidersHorizontal size={40} color="#4a90e2" />
+            <span style={{ color: "#fff", fontSize: "13px", fontWeight: 700 }}>Controlar TP</span>
+          </button>
+          <button
             onClick={() => setStep("tp")}
             style={{
               width: "180px", height: "180px", borderRadius: "20px", border: "1px solid rgba(74,144,226,0.3)",
