@@ -929,11 +929,17 @@ export default function RoteiroPrograma() {
                     fetchHistorico();
                   }
                 }}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold hover:opacity-90 transition"
-                style={{ backgroundColor: "rgba(13,4,70,0.06)", color: "#0d0446" }}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold hover:opacity-90 transition`}
+                style={apresentadorStatus?.editado
+                  ? { backgroundColor: "#16a34a", color: "#fff" }
+                  : { backgroundColor: "rgba(13,4,70,0.06)", color: "#0d0446" }
+                }
               >
-                <Send size={13} />
-                enviar para o apresentador
+                {apresentadorStatus?.editado ? <Check size={13} /> : <Send size={13} />}
+                {apresentadorStatus?.editado
+                  ? `ok - editado pelo apresentador ${apresentadorStatus.login || "apresentador"}`
+                  : "enviar para o apresentador"
+                }
               </button>
               <button onClick={() => toast.info("Funcionalidade de envio ao TP em breve!")} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold hover:opacity-90 transition" style={{ backgroundColor: "rgba(13,4,70,0.06)", color: "#0d0446" }}>
                 <Send size={13} />
