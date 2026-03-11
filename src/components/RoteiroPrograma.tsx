@@ -131,9 +131,8 @@ export default function RoteiroPrograma() {
     if (!newNome.trim()) return;
     setParticipantes(prev => [...prev, { nome: newNome.trim(), cargo: newCargo, instagram: newInstagram.trim() }]);
     setNewNome("");
-    setNewCargo("Apresentador(a)");
+    setNewCargo("");
     setNewInstagram("");
-    setShowAddParticipante(false);
   };
 
   const removeParticipante = (idx: number) => {
