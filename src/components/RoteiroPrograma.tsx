@@ -154,6 +154,21 @@ export default function RoteiroPrograma() {
       toast.error("Erro ao salvar roteiro");
     } else {
       toast.success(editingRoteiroId ? "Roteiro atualizado!" : "Roteiro salvo!");
+
+      // Se data futura, criar evento na agenda
+      if (isAgendado && !editingRoteiroId) {
+        const descricao = `Roteiro: ${programaNome}${roteiroTitulo ? ` — ${roteiroTitulo}` : ""}`;
+        await supabase.from("agenda_eventos").insert({
+          user_id: user.id,
+          data: format(selectedDate, "yyyy-MM-dd"),
+          descricao,
+          local: estudio || "",
+          prioridade: "normal",
+          recorrencia: "unico",
+          programa_id: programas.find(p => p.nome === programaNome)?.id || null,
+        });
+      }
+
       setEditingRoteiroId(null);
       fetchHistorico();
     }
