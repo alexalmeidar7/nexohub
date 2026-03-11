@@ -321,6 +321,25 @@ export default function AgendaPage() {
 
   const selectedPrograma = programas.find((p) => p.id === formProgramaId);
 
+  // Upcoming events for the next 7 days
+  const upcomingEvents = useMemo(() => {
+    const today = new Date();
+    const days: { dateStr: string; date: Date; events: Evento[] }[] = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(today);
+      d.setDate(d.getDate() + i);
+      const ds = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      const dayEvents = eventos.filter((e) => {
+        const matchLocal = filterLocal === "todos" || e.local === filterLocal;
+        return matchLocal && eventMatchesDate(e, ds);
+      });
+      if (dayEvents.length > 0) {
+        days.push({ dateStr: ds, date: new Date(d), events: dayEvents });
+      }
+    }
+    return days;
+  }, [eventos, filterLocal]);
+
   const renderEventCard = (evt: Evento, inactive = false) => (
     <div
       key={evt.id}
