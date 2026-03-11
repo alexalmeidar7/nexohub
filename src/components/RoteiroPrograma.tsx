@@ -571,6 +571,7 @@ ${perguntaActions}
                       <p className="text-xs font-semibold truncate" style={{ color: "#0d0446" }}>
                         {r.programa_nome || "Sem programa"}
                         {r.numero_roteiro && <span className="text-[10px] font-normal" style={{ color: "rgba(13,4,70,0.4)" }}> #{r.numero_roteiro}</span>}
+                      </p>
                       <span
                         className="text-[10px] px-2 py-0.5 rounded-full font-semibold"
                         style={{
