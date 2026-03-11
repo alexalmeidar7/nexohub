@@ -8,6 +8,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AdminLayout from "./AdminLayout";
 import AdminSkeleton from "@/components/skeletons/AdminSkeleton";
+import { usePageTitle } from "@/hooks/usePageTitle";
 import { compressImage } from "@/lib/imageCompressor";
 
 interface Plan {
@@ -330,6 +331,7 @@ function AdminPlansContent() {
 }
 
 export default function AdminPlans() {
+  usePageTitle("Admin Planos");
   return (
     <ProtectedRoute requiredRole="admin">
       <AdminLayout title="Cadastro de Planos">

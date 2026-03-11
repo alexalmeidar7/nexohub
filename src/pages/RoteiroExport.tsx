@@ -2,8 +2,10 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ArrowLeft, Printer } from "lucide-react";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 export default function RoteiroExport() {
+  usePageTitle("Roteiro Export");
   const location = useLocation();
   const navigate = useNavigate();
   const data = location.state as {

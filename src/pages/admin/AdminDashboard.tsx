@@ -5,6 +5,7 @@ import { Users, Puzzle, Radio, ClipboardList } from "lucide-react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AdminLayout from "./AdminLayout";
 import AdminSkeleton from "@/components/skeletons/AdminSkeleton";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 interface ClientInfo {
   user_id: string;
@@ -167,6 +168,7 @@ function AdminDashboardContent() {
 }
 
 export default function AdminDashboard() {
+  usePageTitle("Admin Dashboard");
   return (
     <ProtectedRoute requiredRole="admin">
       <AdminLayout title="Dashboard Administrativo">

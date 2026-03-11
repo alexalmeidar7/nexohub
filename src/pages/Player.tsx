@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback, useMemo, lazy, Suspense } fro
 import type HlsType from "hls.js";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { usePageTitle } from "@/hooks/usePageTitle";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import {
   ChevronUp,
@@ -245,6 +246,7 @@ function MarqueeText({ text, className }: { text: string; className?: string }) 
 }
 
 export default function PlayerPage() {
+  usePageTitle("Player");
   const { userSlug } = useParams<{ userSlug?: string }>();
   const [searchParams] = useSearchParams();
   const requestedChannelId = searchParams.get("ch");

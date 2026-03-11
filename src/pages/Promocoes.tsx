@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams } from "react-router-dom";
+import { usePageTitle } from "@/hooks/usePageTitle";
 import { supabase } from "@/integrations/supabase/client";
 import { getEmpresaConfig, type EmpresaConfig } from "@/components/ConfiguracoesPage";
 import { findCurrentProgram } from "@/components/OnAirWidget";
@@ -60,6 +61,7 @@ function renderBoldMarkdown(text: string) {
 }
 
 export default function PromocoesKiosk() {
+  usePageTitle("Promoções");
   const { userSlug } = useParams<{ userSlug?: string }>();
   const isPublicMode = !!userSlug;
   const [loading, setLoading] = useState(true);

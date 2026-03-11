@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AdminLayout from "./AdminLayout";
 import ClientCard from "@/components/admin/ClientCard";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 interface ClientRow {
   user_id: string;
@@ -235,6 +236,7 @@ function AdminUsersContent() {
 }
 
 export default function AdminUsers() {
+  usePageTitle("Admin Clientes");
   return (
     <ProtectedRoute requiredRole="admin">
       <AdminLayout title="Gestão de Clientes">

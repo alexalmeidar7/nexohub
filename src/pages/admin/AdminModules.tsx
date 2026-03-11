@@ -5,6 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AdminLayout from "./AdminLayout";
 import AdminSkeleton from "@/components/skeletons/AdminSkeleton";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 interface ModuleRow {
   id: string;
@@ -143,6 +144,7 @@ function AdminModulesContent() {
 }
 
 export default function AdminModules() {
+  usePageTitle("Admin Módulos");
   return (
     <ProtectedRoute requiredRole="admin">
       <AdminLayout title="Catálogo de Módulos">

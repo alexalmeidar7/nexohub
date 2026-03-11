@@ -4,9 +4,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Navigate } from "react-router-dom";
 import logoNexo from "@/assets/logo-nexo.png";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 export default function AdminLogin() {
   const { user, loading, role } = useAuth();
+  usePageTitle("Admin Login");
   const [email, setEmail] = useState("");
   const [pass, setPass] = useState("");
   const [remember, setRemember] = useState(false);

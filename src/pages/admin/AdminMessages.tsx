@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import AdminSkeleton from "@/components/skeletons/AdminSkeleton";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AdminLayout from "./AdminLayout";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 interface ClientOption {
   user_id: string;
@@ -196,6 +197,7 @@ function AdminMessagesContent() {
 }
 
 export default function AdminMessages() {
+  usePageTitle("Admin Mensagens");
   return (
     <ProtectedRoute requiredRole="admin">
       <AdminLayout title="Mensagens">

@@ -2,8 +2,10 @@ import { useEffect, useState } from "react";
 import JornalExportView from "@/components/JornalExportView";
 import type { JornalConfig } from "@/components/MontarJornalInline";
 import type { JornalNewsItem } from "@/components/JornalBlockBuilder";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 export default function JornalExportPage() {
+  usePageTitle("Jornal Export");
   const [data, setData] = useState<{ config: JornalConfig; blocks: Record<number, JornalNewsItem[]> } | null>(null);
 
   useEffect(() => {
