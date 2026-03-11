@@ -410,65 +410,6 @@ export default function RoteiroPrograma() {
         </Suspense>
       )}
 
-      {/* Add Participante Dialog */}
-      <Dialog open={showAddParticipante} onOpenChange={setShowAddParticipante}>
-        <DialogContent className="sm:max-w-md" style={{ backgroundColor: "#ffffff" }}>
-          <DialogHeader>
-            <DialogTitle style={{ color: "#0d0446" }}>Adicionar Participante</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3 py-2">
-            <div>
-              <label className="text-[11px] font-bold mb-1 block" style={{ color: "#0d0446" }}>Nome</label>
-              <input
-                value={newNome}
-                onChange={e => setNewNome(e.target.value)}
-                onKeyDown={e => { if (e.key === "Enter") addParticipante(); }}
-                placeholder="Nome do participante"
-                className="w-full px-3 py-2 rounded-lg text-xs outline-none"
-                style={{ border: "1px solid rgba(13,4,70,0.15)", color: "#0d0446" }}
-                autoFocus
-              />
-            </div>
-            <div>
-              <label className="text-[11px] font-bold mb-1 block" style={{ color: "#0d0446" }}>Cargo</label>
-              <select
-                value={newCargo}
-                onChange={e => setNewCargo(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg text-xs outline-none"
-                style={{ border: "1px solid rgba(13,4,70,0.15)", color: "#0d0446" }}
-              >
-                <option>Apresentador(a)</option>
-                <option>Jornalista</option>
-                <option>Convidado(a)</option>
-                <option>Repórter</option>
-              </select>
-            </div>
-            <div>
-              <label className="text-[11px] font-bold mb-1 block" style={{ color: "#0d0446" }}>Instagram</label>
-              <input
-                value={newInstagram}
-                onChange={e => setNewInstagram(e.target.value)}
-                placeholder="@usuario"
-                className="w-full px-3 py-2 rounded-lg text-xs outline-none"
-                style={{ border: "1px solid rgba(13,4,70,0.15)", color: "#0d0446" }}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <button onClick={() => setShowAddParticipante(false)} className="px-4 py-2 rounded-lg text-xs" style={{ color: "#0d0446" }}>
-              Cancelar
-            </button>
-            <button
-              onClick={addParticipante}
-              disabled={!newNome.trim()}
-              className="px-4 py-2 rounded-lg text-xs font-bold transition-all disabled:opacity-50"
-              style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#ffffff" }}
-            >
-              Adicionar
-            </button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
