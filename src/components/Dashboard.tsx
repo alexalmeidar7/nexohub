@@ -214,7 +214,6 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   };
 
   const handleChildClick = (child: { label: string; page?: Page }, parentLabel: string) => {
-    console.log("[DEBUG] handleChildClick called:", { childLabel: child.label, childPage: child.page, parentLabel });
     if (parentLabel === "player" && child.label === "módulo externo") {
       window.open("/user/nexohub/player", "_blank");
       setHoveredMenu(null);
