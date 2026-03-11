@@ -125,7 +125,7 @@ export default function RoteiroApresentadorEdit() {
     } catch { parts = []; }
     setParticipantes(parts);
 
-    fetchHistorico(data.user_id);
+    fetchHistorico(data.user_id, data.id);
 
     setTimeout(() => {
       if (editorRef.current) {
@@ -138,13 +138,17 @@ export default function RoteiroApresentadorEdit() {
     }, 100);
   };
 
-  const fetchHistorico = async (userId: string) => {
-    const { data } = await supabase
+  const fetchHistorico = async (userId: string, excludeId?: string) => {
+    let query = supabase
       .from("roteiros")
       .select("*")
       .eq("user_id", userId)
-      .order("editado_at", { ascending: false })
+      .order("created_at", { ascending: false })
       .limit(10);
+    if (excludeId) {
+      query = query.neq("id", excludeId);
+    }
+    const { data } = await query;
     setHistorico(data || []);
   };
 
@@ -171,7 +175,7 @@ export default function RoteiroApresentadorEdit() {
     } else {
       setSavedMsg(true);
       setTimeout(() => setSavedMsg(false), 3000);
-      fetchHistorico(roteiro.user_id);
+      fetchHistorico(roteiro.user_id, roteiro.id);
     }
   };
 
