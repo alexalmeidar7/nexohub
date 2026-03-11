@@ -100,9 +100,13 @@ export default function RoteiroPrograma() {
 
   const handleEstudioChange = (val: string) => {
     setEstudio(val);
-    setTipoPrograma("");
     setProgramaNome("");
     setHorario("");
+    // Auto-select tipo if only one option
+    const tipos = val
+      ? [...new Set(programas.filter(p => p.estudio === val).map(p => p.tipo_programa).filter(Boolean))] as string[]
+      : [...new Set(programas.map(p => p.tipo_programa).filter(Boolean))] as string[];
+    setTipoPrograma(tipos.length === 1 ? tipos[0] : "");
   };
 
   const handleTipoChange = (tipo: string) => {
