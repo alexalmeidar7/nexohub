@@ -133,15 +133,18 @@ export default function TpExterno() {
   async function handleSendMessage() {
     if (!msgText.trim() || !user) return;
     setMsgSending(true);
-    // Broadcast via Supabase Realtime channel (no DB needed)
-    const channel = supabase.channel(`tp-msg-${user.id}`);
-    await channel.subscribe();
-    await channel.send({
-      type: "broadcast",
-      event: "tp-message",
-      payload: { text: msgText.trim(), subject: "Mensagem" },
-    });
-    supabase.removeChannel(channel);
+    const msg = { text: msgText.trim(), subject: "Mensagem", ts: Date.now() };
+    // Save to localStorage queue so TP picks it up even if opened later
+    const queue = JSON.parse(localStorage.getItem("tp-msg-queue") || "[]");
+    queue.push(msg);
+    localStorage.setItem("tp-msg-queue", JSON.stringify(queue));
+    // Also broadcast for live TP sessions
+    try {
+      const channel = supabase.channel(`tp-msg-${user.id}`);
+      await channel.subscribe();
+      await channel.send({ type: "broadcast", event: "tp-message", payload: msg });
+      supabase.removeChannel(channel);
+    } catch (_) {}
     setMsgSending(false);
     setMsgSent(true);
     setMsgText("");
@@ -347,16 +350,47 @@ function TpScreen({ user, onBack }: { user: any; onBack: () => void }) {
   const animRef = useRef<number>();
   const timerRef = useRef<ReturnType<typeof setInterval>>();
 
-  // Subscribe to realtime messages for this user
-  // Subscribe to realtime broadcast channel for messages
+  // Check localStorage queue on mount + listen for storage events + realtime
   useEffect(() => {
     if (!user) return;
 
+    function checkQueue() {
+      const queue = JSON.parse(localStorage.getItem("tp-msg-queue") || "[]");
+      if (queue.length > 0) {
+        const msg = queue.shift();
+        localStorage.setItem("tp-msg-queue", JSON.stringify(queue));
+        setHasUnread(true);
+        if (pendingDelayRef.current) clearTimeout(pendingDelayRef.current);
+        pendingMsgRef.current = msg;
+        pendingDelayRef.current = setTimeout(() => {
+          if (pendingMsgRef.current) {
+            showMessage(pendingMsgRef.current);
+            pendingMsgRef.current = null;
+            // Check for more after this one closes
+            setTimeout(checkQueue, 5500);
+          }
+        }, 3000);
+      }
+    }
+
+    // Check on mount
+    checkQueue();
+
+    // Listen for storage changes (cross-tab)
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === "tp-msg-queue") checkQueue();
+    };
+    window.addEventListener("storage", onStorage);
+
+    // Also listen via realtime broadcast for same-tab or multi-device
     const channel = supabase
       .channel(`tp-msg-${user.id}`)
       .on("broadcast", { event: "tp-message" }, (payload: any) => {
         const msg = payload.payload as { text: string; subject: string };
-        // Store pending, show after 3 seconds
+        // Remove from localStorage if it was also stored there
+        const queue = JSON.parse(localStorage.getItem("tp-msg-queue") || "[]");
+        const filtered = queue.filter((q: any) => q.text !== msg.text || Math.abs((q.ts || 0) - ((msg as any).ts || 0)) > 2000);
+        localStorage.setItem("tp-msg-queue", JSON.stringify(filtered));
         if (pendingDelayRef.current) clearTimeout(pendingDelayRef.current);
         pendingMsgRef.current = msg;
         setHasUnread(true);
@@ -370,6 +404,7 @@ function TpScreen({ user, onBack }: { user: any; onBack: () => void }) {
       .subscribe();
 
     return () => {
+      window.removeEventListener("storage", onStorage);
       supabase.removeChannel(channel);
       if (pendingDelayRef.current) clearTimeout(pendingDelayRef.current);
     };
