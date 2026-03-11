@@ -87,6 +87,7 @@ const sidebarMenu: MenuItem[] = [
       { icon: Tag, label: "tela promo", page: undefined as unknown as Page },
       { icon: Scissors, label: "corte de vídeo", page: "cortevideo" },
       { icon: Monitor, label: "TP", page: "tp" },
+      { icon: ExternalLink, label: "abrir TP externo", page: undefined as unknown as Page },
     ]
   },
 ];
@@ -223,6 +224,11 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     if (parentLabel === "ferramentas" && child.label === "tela promo") {
       const slug = user?.email?.split("@")[0] || "";
       window.open(`/user/${slug}/nexohub/telapromo`, "_blank");
+      setHoveredMenu(null);
+      return;
+    }
+    if (parentLabel === "ferramentas" && child.label === "abrir TP externo") {
+      window.open("/tp-externo", "_blank");
       setHoveredMenu(null);
       return;
     }

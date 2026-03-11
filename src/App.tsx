@@ -24,6 +24,7 @@ const AdminLogin = lazy(() => import("./pages/admin/AdminLogin"));
 const JornalExport = lazy(() => import("./pages/JornalExport"));
 const RoteiroExport = lazy(() => import("./pages/RoteiroExport"));
 const RoteiroApresentadorEdit = lazy(() => import("./pages/RoteiroApresentadorEdit"));
+const TpExterno = lazy(() => import("./pages/TpExterno"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -66,6 +67,7 @@ const App = () => (
             <Route path="/jornal-export" element={<JornalExport />} />
             <Route path="/roteiro-export" element={<RoteiroExport />} />
             <Route path="/roteiro-apresentador-edit" element={<RoteiroApresentadorEdit />} />
+            <Route path="/tp-externo" element={<TpExterno />} />
 
             {/* Admin routes */}
             <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
