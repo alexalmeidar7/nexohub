@@ -1293,20 +1293,36 @@ function TpController({ user, onBack }: { user: any; onBack: () => void }) {
   }, [user]);
 
   const lastStateAtRef = useRef(0);
+  const stateBufferRef = useRef<any[]>([]);
 
-  // Listen for TP state broadcasts
+  // Listen for TP state broadcasts — delay preview by 2s
   useEffect(() => {
     if (!user) return;
+
+    // Process buffered states every 150ms
+    const processId = setInterval(() => {
+      const now = Date.now();
+      // Find states that are at least 2s old
+      const ready = stateBufferRef.current.filter(s => now - s._receivedAt >= 2000);
+      if (ready.length > 0) {
+        // Apply the most recent ready state
+        const latest = ready[ready.length - 1];
+        setTpState(latest);
+        // Remove all processed states
+        stateBufferRef.current = stateBufferRef.current.filter(s => now - s._receivedAt < 2000);
+      }
+    }, 150);
+
     const ch = supabase
       .channel(`tp-state-${user.id}`)
       .on("broadcast", { event: "tp-state" }, (payload: any) => {
-        setTpState(payload.payload);
+        stateBufferRef.current.push({ ...payload.payload, _receivedAt: Date.now() });
         lastStateAtRef.current = Date.now();
         setConnected(true);
       })
       .subscribe();
 
-    return () => { supabase.removeChannel(ch); };
+    return () => { clearInterval(processId); supabase.removeChannel(ch); };
   }, [user]);
 
   // Mark disconnected when heartbeat is stale
