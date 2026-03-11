@@ -342,14 +342,61 @@ export default function AudioDualCard({
             </div>
           </div>
         </div>
+        )}
+
+        {/* Mobile history overlay */}
+        {isMobile && historyOpen && (
+          <div
+            className="relative w-full rounded-3xl overflow-hidden backdrop-blur-xl"
+            style={{
+              zIndex: 3,
+              maxHeight: "50vh",
+              background: "linear-gradient(135deg, rgba(20,20,20,0.95) 0%, rgba(40,10,10,0.95) 100%)",
+              boxShadow: "0 25px 60px hsla(0,0%,0%,0.6), 0 0 0 1px hsla(0,80%,45%,0.3)",
+              border: "1px solid hsla(0,80%,45%,0.2)",
+            }}
+          >
+            <div className="flex flex-col h-full p-4">
+              <div className="flex items-center gap-2 mb-3 pb-3" style={{ borderBottom: "1px solid hsla(0,80%,45%,0.2)" }}>
+                <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: "hsla(0,80%,45%,0.2)" }}>
+                  <Music size={14} style={{ color: "#a10a0b" }} />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-bold text-sm text-white">Últimas Tocadas</h3>
+                </div>
+                <button onClick={() => setHistoryOpen(false)} className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-white/10 active:scale-95">
+                  <X size={14} className="text-white/60" />
+                </button>
+              </div>
+              <div className="flex-1 min-h-0 overflow-y-auto pr-1" style={{ scrollbarWidth: "thin", scrollbarColor: "#a10a0b transparent", maxHeight: "35vh" }}>
+                {recentSongs.length === 0 ? (
+                  <p className="text-xs text-center mt-4 text-white/30">Nenhuma música registrada</p>
+                ) : (
+                  <div className="flex flex-col gap-1">
+                    {recentSongs.map((song) => (
+                      <div key={song.id} className="flex items-center gap-3 py-2 px-3 rounded-xl" style={{ backgroundColor: "hsla(0,0%,100%,0.03)" }}>
+                        <div className="shrink-0 px-2 py-1 rounded-md" style={{ backgroundColor: "hsla(0,80%,45%,0.2)" }}>
+                          <span className="text-[10px] font-mono font-bold text-white">{song.horario?.slice(0, 5)}</span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-semibold text-white truncate">{song.musica}</p>
+                          <p className="text-[10px] text-white/50 truncate">{song.artista}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Outer wrapper handles the initial entry animation */}
         <div
-          className="relative md:w-[55%] w-[75%]"
+          className={`relative ${isMobile ? "w-full" : "md:w-[55%] w-[75%]"}`}
           style={{
             zIndex: 2,
-            animation: "coverFadeAndSlide 3.5s cubic-bezier(0.22, 1, 0.36, 1) forwards",
-            opacity: 0,
+            ...(isMobile ? {} : { animation: "coverFadeAndSlide 3.5s cubic-bezier(0.22, 1, 0.36, 1) forwards", opacity: 0 }),
           }}
         >
           {/* Inner wrapper handles the history slide */}
