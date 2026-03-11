@@ -91,18 +91,36 @@ export default function TpController({ user, onBack }: TpControllerProps) {
   }, [user]);
 
   async function sendCommand(action: string, value?: any) {
-    if (!cmdChannelRef.current) return;
-    if (!cmdReadyRef.current) {
+    // If channel is missing or not ready, attempt reconnect
+    if (!cmdChannelRef.current || !cmdReadyRef.current) {
+      // Reconnect the command channel
+      if (cmdChannelRef.current) {
+        try { supabase.removeChannel(cmdChannelRef.current); } catch (_) {}
+      }
+      if (user) {
+        const ch = supabase.channel(`tp-control-${user.id}`, { config: { broadcast: { self: true } } });
+        cmdChannelRef.current = ch;
+        cmdReadyRef.current = false;
+        setCmdReady(false);
+        ch.subscribe((status) => {
+          const ready = status === "SUBSCRIBED";
+          cmdReadyRef.current = ready;
+          setCmdReady(ready);
+        });
+      }
+      // Wait up to 2s for reconnect
       await new Promise<void>((resolve) => {
         const started = Date.now();
         const check = setInterval(() => {
-          if (cmdReadyRef.current || Date.now() - started > 1000) {
+          if (cmdReadyRef.current || Date.now() - started > 2000) {
             clearInterval(check);
             resolve();
           }
-        }, 40);
+        }, 50);
       });
     }
+
+    if (!cmdChannelRef.current || !cmdReadyRef.current) return;
 
     await cmdChannelRef.current.send({
       type: "broadcast",
