@@ -230,7 +230,7 @@ export default function TpExterno() {
         backgroundColor: "#0f1058", fontFamily: "'Poppins', 'Inter', sans-serif", gap: "32px",
       }}>
         <img src={logoNexo} alt="Nexo" style={{ height: "36px", opacity: 0.9 }} />
-        <div style={{ display: "flex", gap: "24px" }}>
+        <div className="tp-menu-buttons" style={{ display: "flex", gap: "24px" }}>
           <button
             onClick={() => setStep("mensagem")}
             style={{
