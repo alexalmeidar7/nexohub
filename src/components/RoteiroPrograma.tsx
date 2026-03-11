@@ -95,9 +95,7 @@ export default function RoteiroPrograma() {
     const prog = programas.find(p => p.nome === nome);
     if (prog) {
       if (prog.horario_inicio) {
-        const h = prog.horario_inicio.slice(0, 5);
-        const hFim = prog.horario_fim ? prog.horario_fim.slice(0, 5) : "";
-        setHorario(hFim ? `${h} - ${hFim}` : h);
+        setHorario(prog.horario_inicio.slice(0, 5));
       }
     }
   };
@@ -233,9 +231,10 @@ export default function RoteiroPrograma() {
               <Clock size={11} className="inline mr-1" />Horário
             </label>
             <input
+              type="time"
               value={horario}
               onChange={e => setHorario(e.target.value)}
-              placeholder="Ex: 08:00 - 12:00"
+              placeholder="Ex: 08:00"
               className="w-full px-3 py-2 rounded-lg text-xs outline-none transition-colors"
               style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.15)", color: "#0d0446" }}
             />
