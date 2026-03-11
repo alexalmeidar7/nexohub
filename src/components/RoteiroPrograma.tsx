@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CalendarIcon, FileText, Building2, Clock, Plus, X, Download, UserPlus, Check, Bold, Underline, AlignLeft, AlignCenter, AlignRight, List, ListOrdered, Type, Trash2, Pencil, Save, History } from "lucide-react";
+import { CalendarIcon, FileText, Building2, Clock, Plus, X, Download, UserPlus, Check, Bold, Underline, AlignLeft, AlignCenter, AlignRight, List, ListOrdered, Type, Trash2, Pencil, Save, History, ArrowLeft, Printer } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
@@ -70,6 +70,7 @@ export default function RoteiroPrograma() {
   const [editingRoteiroId, setEditingRoteiroId] = useState<string | null>(null);
   const [savingRoteiro, setSavingRoteiro] = useState(false);
   const [showParticipantForm, setShowParticipantForm] = useState(true);
+  const [showExportView, setShowExportView] = useState(false);
 
   const categorias = ["Apresentador(a)", "Jornalista", "Convidado(a)"];
 
@@ -798,21 +799,7 @@ export default function RoteiroPrograma() {
               {savingRoteiro ? "salvando..." : editingRoteiroId ? "atualizar roteiro" : "salvar roteiro"}
             </button>
             <button
-              onClick={() => {
-                navigate("/roteiro-export", {
-                  state: {
-                    titulo: roteiroTitulo,
-                    programaNome,
-                    estudio,
-                    data: format(selectedDate, "yyyy-MM-dd"),
-                    horario,
-                    assuntoTitulo: roteiroSubtitulo,
-                    assuntoSubtitulo,
-                    participantes,
-                    conteudoHtml: editorRef.current?.innerHTML || roteiroTexto,
-                  },
-                });
-              }}
+              onClick={() => setShowExportView(true)}
               className="flex-1 py-3 rounded-xl text-sm font-bold transition-all hover:opacity-90 flex items-center justify-center gap-2"
               style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#ffffff", boxShadow: "0 4px 16px rgba(38,143,250,0.3)" }}
             >
@@ -866,6 +853,76 @@ export default function RoteiroPrograma() {
                 </div>
               );
             })}
+          </div>
+        </div>
+      )}
+
+      {/* Export View Inline */}
+      {showExportView && (
+        <div className="mt-4">
+          {/* Top bar */}
+          <div className="flex items-center justify-between mb-4">
+            <button onClick={() => setShowExportView(false)} className="flex items-center gap-2 text-xs font-semibold hover:opacity-80 transition" style={{ color: "#268ffa" }}>
+              <ArrowLeft size={14} />
+              voltar ao roteiro
+            </button>
+            <button onClick={() => window.print()} className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold text-white hover:opacity-90 transition print:hidden" style={{ backgroundColor: "#268ffa" }}>
+              <Printer size={14} />
+              imprimir
+            </button>
+          </div>
+
+          <div className="rounded-xl p-6" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.08)" }}>
+            {/* Header */}
+            <div className="mb-6">
+              <h1 className="text-xl font-bold uppercase mb-2" style={{ color: "#0d0446" }}>
+                {roteiroTitulo || "Roteiro"}
+              </h1>
+              <p className="text-sm" style={{ color: "rgba(13,4,70,0.7)" }}>
+                <span className="font-semibold" style={{ color: "#0d0446" }}>{programaNome}</span>
+                {estudio && <span> · Estúdio {estudio}</span>}
+              </p>
+              <p className="text-sm" style={{ color: "rgba(13,4,70,0.6)" }}>
+                {format(selectedDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })} {horario && `às ${horario}`}
+              </p>
+
+              {/* Assunto */}
+              {(roteiroSubtitulo || assuntoSubtitulo) && (
+                <div className="mt-3 px-4 py-3 rounded-lg" style={{ backgroundColor: "rgba(38,143,250,0.06)", borderLeft: "3px solid #268ffa" }}>
+                  <p className="text-xs font-bold uppercase mb-0.5" style={{ color: "#268ffa" }}>Assunto da entrevista</p>
+                  {roteiroSubtitulo && <p className="text-sm font-bold" style={{ color: "#0d0446" }}>{roteiroSubtitulo}</p>}
+                  {assuntoSubtitulo && <p className="text-xs" style={{ color: "rgba(13,4,70,0.6)" }}>{assuntoSubtitulo}</p>}
+                </div>
+              )}
+
+              {/* Participantes */}
+              {participantes.length > 0 && (
+                <div className="mt-3">
+                  <p className="text-xs font-bold uppercase mb-2" style={{ color: "rgba(13,4,70,0.5)" }}>Participantes</p>
+                  <div className="flex flex-wrap gap-2">
+                    {participantes.map((p, i) => (
+                      <span key={i} className="px-3 py-1.5 rounded-lg text-xs font-semibold" style={{ backgroundColor: "rgba(13,4,70,0.05)", color: "#0d0446" }}>
+                        {p.nome}
+                        {p.cargo ? <span style={{ color: "rgba(13,4,70,0.4)" }}> · {p.cargo}</span> : p.categoria && <span style={{ color: "rgba(13,4,70,0.4)" }}> · {p.categoria}</span>}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="h-px mb-4" style={{ backgroundColor: "rgba(13,4,70,0.1)" }} />
+
+            <h2 className="text-sm font-bold uppercase mb-3" style={{ color: "#0d0446" }}>Roteiro do programa</h2>
+            <div
+              className="text-sm leading-relaxed"
+              style={{ color: "#0d0446" }}
+              dangerouslySetInnerHTML={{ __html: editorRef.current?.innerHTML || roteiroTexto }}
+            />
+
+            <div className="mt-8 pt-4 text-center" style={{ borderTop: "1px solid rgba(13,4,70,0.1)" }}>
+              <p className="text-lg font-bold italic" style={{ color: "#268ffa" }}>Bom programa! 🎙️</p>
+            </div>
           </div>
         </div>
       )}
