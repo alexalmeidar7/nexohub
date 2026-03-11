@@ -3,7 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Lock, Check, History, Save, Pencil } from "lucide-react";
+import { Lock, Check, History, Save, Pencil, Bold, Underline, AlignLeft, AlignCenter, AlignRight, List, ListOrdered } from "lucide-react";
 import { toast } from "sonner";
 
 interface Participante {
