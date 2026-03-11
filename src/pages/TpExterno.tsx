@@ -504,46 +504,43 @@ function TpScreen({ user, onBack }: { user: any; onBack: () => void }) {
   const animRef = useRef<number>();
   const timerRef = useRef<ReturnType<typeof setInterval>>();
 
-  // Process next message in queue
+  // Process next message in queue — show instantly
   function processQueue() {
     if (isShowingRef.current || msgQueueRef.current.length === 0) return;
     const msg = msgQueueRef.current.shift()!;
     isShowingRef.current = true;
     setHasUnread(msgQueueRef.current.length > 0);
 
-    // Wait 3s then show
+    setIncomingMsg(msg);
+    setMsgVisible(true);
+    // Play notification sound
+    try {
+      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const playTone = (freq: number, start: number, dur: number, vol = 0.3) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(freq, ctx.currentTime + start);
+        gain.gain.setValueAtTime(vol, ctx.currentTime + start);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + start + dur);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(ctx.currentTime + start);
+        osc.stop(ctx.currentTime + start + dur);
+      };
+      playTone(880, 0, 0.15, 0.25);
+      playTone(1100, 0.12, 0.15, 0.25);
+      playTone(1320, 0.24, 0.2, 0.2);
+    } catch (_) {}
+    // Auto-close after 5s, then process next
     msgTimerRef.current = setTimeout(() => {
-      setIncomingMsg(msg);
-      setMsgVisible(true);
-      // Play notification sound
-      try {
-        const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-        const playTone = (freq: number, start: number, dur: number, vol = 0.3) => {
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.type = "sine";
-          osc.frequency.setValueAtTime(freq, ctx.currentTime + start);
-          gain.gain.setValueAtTime(vol, ctx.currentTime + start);
-          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + start + dur);
-          osc.connect(gain);
-          gain.connect(ctx.destination);
-          osc.start(ctx.currentTime + start);
-          osc.stop(ctx.currentTime + start + dur);
-        };
-        playTone(880, 0, 0.15, 0.25);
-        playTone(1100, 0.12, 0.15, 0.25);
-        playTone(1320, 0.24, 0.2, 0.2);
-      } catch (_) {}
-      // Auto-close after 5s, then process next
-      msgTimerRef.current = setTimeout(() => {
-        setMsgVisible(false);
-        setTimeout(() => {
-          setIncomingMsg(null);
-          isShowingRef.current = false;
-          processQueue();
-        }, 400);
-      }, 5000);
-    }, 3000);
+      setMsgVisible(false);
+      setTimeout(() => {
+        setIncomingMsg(null);
+        isShowingRef.current = false;
+        processQueue();
+      }, 400);
+    }, 5000);
   }
 
   function enqueueMessage(msg: { text: string; subject: string }) {
