@@ -1407,7 +1407,7 @@ function TpController({ user, onBack }: { user: any; onBack: () => void }) {
           {scrolling ? <Pause size={20} color="#fff" /> : <Play size={20} color="#fff" style={{ marginLeft: "2px" }} />}
         </button>
 
-        <div style={{ width: "1px", height: "24px", background: "rgba(255,255,255,0.1)" }} />
+        <div className="tp-divider" style={{ width: "1px", height: "24px", background: "rgba(255,255,255,0.1)" }} />
 
         {/* Scroll step buttons */}
         <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
