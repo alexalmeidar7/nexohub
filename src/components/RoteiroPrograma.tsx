@@ -128,11 +128,11 @@ export default function RoteiroPrograma() {
 
   const handleMontarRoteiro = () => {
     const prog = programas.find(p => p.nome === programaNome);
-    const defaultParticipantes: { nome: string; cargo: string; instagram: string }[] = [];
+    const defaultParticipantes: { nome: string; categoria: string; cargo: string; instagram: string }[] = [];
     if (prog?.apresentador_id) {
       const apres = apresentadores.find(a => a.id === prog.apresentador_id);
       if (apres) {
-        defaultParticipantes.push({ nome: apres.nome, cargo: apres.cargo || "Apresentador(a)", instagram: (apres as any).instagram || "" });
+        defaultParticipantes.push({ nome: apres.nome, categoria: apres.cargo || "Apresentador(a)", cargo: "", instagram: (apres as any).instagram || "" });
       }
     }
     setParticipantes(defaultParticipantes);
@@ -144,7 +144,8 @@ export default function RoteiroPrograma() {
 
   const selectSuggestion = (apres: Apresentador) => {
     setNewNome(apres.nome);
-    setNewCargo(apres.cargo || "Apresentador(a)");
+    setNewCategoria(apres.cargo || "Apresentador(a)");
+    setNewCargoText("");
     setNewInstagram(apres.instagram || "");
     setSelectedFromDb(true);
     setShowSuggestions(false);
@@ -154,18 +155,17 @@ export default function RoteiroPrograma() {
     if (!newNome.trim()) return;
     const isNew = !selectedFromDb && !apresentadores.some(a => a.nome.toLowerCase() === newNome.trim().toLowerCase());
     
-    setParticipantes(prev => [...prev, { nome: newNome.trim(), cargo: newCargo, instagram: newInstagram.trim() }]);
+    setParticipantes(prev => [...prev, { nome: newNome.trim(), categoria: newCategoria, cargo: newCargoText.trim(), instagram: newInstagram.trim() }]);
     
     // If not from DB, register as new apresentador
     if (isNew && user) {
       await supabase.from("apresentadores").insert({
         nome: newNome.trim(),
-        cargo: newCargo,
+        cargo: newCategoria,
         instagram: newInstagram.trim(),
         user_id: user.id,
         ativo: true,
       });
-      // Refresh list
       const { data } = await supabase.from("apresentadores").select("id, nome, cargo, instagram, ativo").eq("ativo", true);
       if (data) setApresentadores(data);
       setCadastroMsg(true);
@@ -173,7 +173,8 @@ export default function RoteiroPrograma() {
     }
     
     setNewNome("");
-    setNewCargo("Apresentador(a)");
+    setNewCategoria("Apresentador(a)");
+    setNewCargoText("");
     setNewInstagram("");
     setSelectedFromDb(false);
   };
