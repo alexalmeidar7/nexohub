@@ -133,15 +133,18 @@ export default function TpExterno() {
   async function handleSendMessage() {
     if (!msgText.trim() || !user) return;
     setMsgSending(true);
-    // Broadcast via Supabase Realtime channel (no DB needed)
-    const channel = supabase.channel(`tp-msg-${user.id}`);
-    await channel.subscribe();
-    await channel.send({
-      type: "broadcast",
-      event: "tp-message",
-      payload: { text: msgText.trim(), subject: "Mensagem" },
-    });
-    supabase.removeChannel(channel);
+    const msg = { text: msgText.trim(), subject: "Mensagem", ts: Date.now() };
+    // Save to localStorage queue so TP picks it up even if opened later
+    const queue = JSON.parse(localStorage.getItem("tp-msg-queue") || "[]");
+    queue.push(msg);
+    localStorage.setItem("tp-msg-queue", JSON.stringify(queue));
+    // Also broadcast for live TP sessions
+    try {
+      const channel = supabase.channel(`tp-msg-${user.id}`);
+      await channel.subscribe();
+      await channel.send({ type: "broadcast", event: "tp-message", payload: msg });
+      supabase.removeChannel(channel);
+    } catch (_) {}
     setMsgSending(false);
     setMsgSent(true);
     setMsgText("");
