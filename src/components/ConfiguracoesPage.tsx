@@ -383,7 +383,11 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
       </CollapsibleBox>}
 
       {/* Box 2: Configurações do Player */}
-      {(section === "all" || section === "player") && <CollapsibleBox title="Configurações do Player" defaultOpen={section === "player"}>
+      {(section === "all" || section === "player") && <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}>
+        <div className="w-full flex items-center justify-between px-5 py-3" style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)" }}>
+          <h3 className="text-sm font-bold text-white">Configurações do Player</h3>
+        </div>
+        <div className="p-5 space-y-4">
         <div className="space-y-6">
           {/* ── Header + Mode ── */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4" style={{ borderBottom: "1px solid rgba(13,4,70,0.08)" }}>
@@ -400,11 +404,15 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
                 </p>
               </div>
             </div>
-            <div className="flex rounded-full overflow-hidden shadow-sm" style={{ border: "2px solid #0d0446" }}>
+            <div className="flex gap-2">
               <button
                 onClick={() => { setCanalMode("live"); setCanalForm(p => ({ ...p, type: "audio_live" })); }}
-                className="px-5 py-2 text-xs font-bold transition-all flex items-center gap-1.5"
-                style={{ backgroundColor: canalMode === "live" ? "#0d0446" : "#ffffff", color: canalMode === "live" ? "#ffffff" : "#0d0446" }}
+                className="px-5 py-2.5 text-xs font-bold transition-all flex items-center gap-2 rounded-xl"
+                style={{
+                  backgroundColor: canalMode === "live" ? "#0d0446" : "rgba(13,4,70,0.05)",
+                  color: canalMode === "live" ? "#ffffff" : "#0d0446",
+                  boxShadow: canalMode === "live" ? "0 4px 12px rgba(13,4,70,0.25)" : "none",
+                }}
               >
                 📡 Ao Vivo
               </button>
@@ -418,8 +426,12 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
                   }, 0);
                   setCanalForm(p => ({ ...p, type: "catalog", numero_canal: String(maxNum + 1).padStart(2, "0") }));
                 }}
-                className="px-5 py-2 text-xs font-bold transition-all flex items-center gap-1.5"
-                style={{ backgroundColor: canalMode === "catalog" ? "#0d0446" : "#ffffff", color: canalMode === "catalog" ? "#ffffff" : "#0d0446", borderLeft: "2px solid #0d0446" }}
+                className="px-5 py-2.5 text-xs font-bold transition-all flex items-center gap-2 rounded-xl"
+                style={{
+                  backgroundColor: canalMode === "catalog" ? "#0d0446" : "rgba(13,4,70,0.05)",
+                  color: canalMode === "catalog" ? "#ffffff" : "#0d0446",
+                  boxShadow: canalMode === "catalog" ? "0 4px 12px rgba(13,4,70,0.25)" : "none",
+                }}
               >
                 📁 Catálogo
               </button>
@@ -576,7 +588,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
               <table className="w-full text-sm" style={{ color: "#0d0446" }}>
                 <thead>
                   <tr style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)", color: "#ffffff" }}>
-                    <th className="px-4 py-3 text-left font-semibold text-xs uppercase tracking-wider">Canal</th>
+                    <th className="px-4 py-3 text-left font-semibold text-xs uppercase tracking-wider" style={{ minWidth: "80px", whiteSpace: "nowrap" }}>Canal</th>
                     <th className="px-4 py-3 text-left font-semibold text-xs uppercase tracking-wider">Nome</th>
                     <th className="px-4 py-3 text-left font-semibold text-xs uppercase tracking-wider">Tipo</th>
                     <th className="px-4 py-3 text-center font-semibold text-xs uppercase tracking-wider">Capa</th>
@@ -587,8 +599,8 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
                 <tbody>
                   {canais.map((c, i) => (
                     <tr key={c.id} className="transition-colors hover:bg-blue-50/50" style={{ backgroundColor: i % 2 === 0 ? "#ffffff" : "#f8f9fe", borderTop: "1px solid rgba(13,4,70,0.05)" }}>
-                      <td className="px-4 py-3">
-                        <span className="inline-flex items-center justify-center w-7 h-7 rounded-lg text-xs font-bold" style={{ backgroundColor: "rgba(38,143,250,0.1)", color: "#268ffa" }}>
+                      <td className="px-4 py-3" style={{ minWidth: "80px", whiteSpace: "nowrap" }}>
+                        <span className="inline-flex items-center justify-center min-w-[32px] h-7 px-2 rounded-lg text-xs font-bold" style={{ backgroundColor: "rgba(38,143,250,0.1)", color: "#268ffa" }}>
                           {c.numero_canal || "—"}
                         </span>
                       </td>
@@ -630,7 +642,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
             </div>
           </div>
         )}
-      </CollapsibleBox>}
+      </div></div>}
         </div>
       </div>
     </div>
