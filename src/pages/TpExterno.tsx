@@ -764,24 +764,43 @@ function TpScreen({ user, onBack }: { user: any; onBack: () => void }) {
     return () => { supabase.removeChannel(ch); stateChannelRef.current = null; };
   }, [user]);
 
-  const broadcastTpState = useCallback(() => {
-    if (!stateChannelRef.current) return;
-    stateChannelRef.current.send({
-      type: "broadcast", event: "tp-state",
-      payload: {
-        scrolling, speed, fontSize, flipH, flipV,
-        displayText: displayText.substring(0, 2000),
-        isHtmlContent, timerSeconds, scrollPos: scrollPosRef.current,
-      },
-    });
-  }, [scrolling, speed, fontSize, flipH, flipV, displayText, isHtmlContent, timerSeconds]);
+  // Use refs for broadcast to avoid constant useCallback recreation
+  const scrollingRef = useRef(scrolling);
+  const speedRef = useRef(speed);
+  const fontSizeRef = useRef(fontSize);
+  const flipHRef = useRef(flipH);
+  const flipVRef = useRef(flipV);
+  const displayTextRef = useRef(displayText);
+  const isHtmlContentRef = useRef(isHtmlContent);
+  const timerSecondsRef = useRef(timerSeconds);
 
-  // Broadcast immediately + heartbeat (low latency)
+  useEffect(() => { scrollingRef.current = scrolling; }, [scrolling]);
+  useEffect(() => { speedRef.current = speed; }, [speed]);
+  useEffect(() => { fontSizeRef.current = fontSize; }, [fontSize]);
+  useEffect(() => { flipHRef.current = flipH; }, [flipH]);
+  useEffect(() => { flipVRef.current = flipV; }, [flipV]);
+  useEffect(() => { displayTextRef.current = displayText; }, [displayText]);
+  useEffect(() => { isHtmlContentRef.current = isHtmlContent; }, [isHtmlContent]);
+  useEffect(() => { timerSecondsRef.current = timerSeconds; }, [timerSeconds]);
+
+  // Broadcast heartbeat — stable ref, no dependency churn
   useEffect(() => {
-    broadcastTpState();
-    const id = setInterval(broadcastTpState, 120);
+    if (!stateChannelRef.current) return;
+    const id = setInterval(() => {
+      stateChannelRef.current?.send({
+        type: "broadcast", event: "tp-state",
+        payload: {
+          scrolling: scrollingRef.current, speed: speedRef.current,
+          fontSize: fontSizeRef.current, flipH: flipHRef.current, flipV: flipVRef.current,
+          displayText: displayTextRef.current.substring(0, 2000),
+          isHtmlContent: isHtmlContentRef.current,
+          timerSeconds: timerSecondsRef.current,
+          scrollPos: scrollPosRef.current,
+        },
+      });
+    }, 150);
     return () => clearInterval(id);
-  }, [broadcastTpState]);
+  }, [user]);
 
   function applyText(text: string, html = false) {
     setDisplayText(text);
