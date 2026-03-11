@@ -43,10 +43,18 @@ export default function RoteiroPrograma() {
 
   const isAgendado = selectedDate > new Date(new Date().toDateString());
 
-  // Filter programs by selected tipo
-  const programasFiltrados = tipoPrograma
-    ? programas.filter(p => p.tipo_programa === tipoPrograma)
-    : programas;
+  // Derive tipos filtered by estudio
+  const tiposFiltrados = estudio
+    ? [...new Set(programas.filter(p => p.estudio === estudio).map(p => p.tipo_programa).filter(Boolean))] as string[]
+    : [...new Set(programas.map(p => p.tipo_programa).filter(Boolean))] as string[];
+  if (!tiposFiltrados.includes("Jornalístico")) tiposFiltrados.push("Jornalístico");
+
+  // Filter programs by estudio + tipo
+  const programasFiltrados = programas.filter(p => {
+    if (estudio && p.estudio !== estudio) return false;
+    if (tipoPrograma && p.tipo_programa !== tipoPrograma) return false;
+    return true;
+  });
 
   useEffect(() => {
     if (!user) return;
@@ -63,20 +71,22 @@ export default function RoteiroPrograma() {
 
       const uniqueEstudios = [...new Set(progs.map(p => p.estudio).filter(Boolean))] as string[];
       setEstudios(uniqueEstudios);
-      const uniqueTipos = [...new Set(progs.map(p => p.tipo_programa).filter(Boolean))] as string[];
-      if (!uniqueTipos.includes("Jornalístico")) uniqueTipos.push("Jornalístico");
-      setTiposPrograma(uniqueTipos);
 
       setLoading(false);
     };
     load();
   }, [user]);
 
+  const handleEstudioChange = (val: string) => {
+    setEstudio(val);
+    setTipoPrograma("");
+    setProgramaNome("");
+    setHorario("");
+  };
+
   const handleTipoChange = (tipo: string) => {
     setTipoPrograma(tipo);
-    // Reset programa when tipo changes
     setProgramaNome("");
-    setEstudio("");
     setHorario("");
   };
 
@@ -84,8 +94,6 @@ export default function RoteiroPrograma() {
     setProgramaNome(nome);
     const prog = programas.find(p => p.nome === nome);
     if (prog) {
-      if (prog.estudio) setEstudio(prog.estudio);
-      if (prog.tipo_programa) setTipoPrograma(prog.tipo_programa);
       if (prog.horario_inicio) {
         const h = prog.horario_inicio.slice(0, 5);
         const hFim = prog.horario_fim ? prog.horario_fim.slice(0, 5) : "";
