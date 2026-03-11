@@ -1028,10 +1028,6 @@ ${perguntaActions}
                   : "enviar para o apresentador"
                 }
               </button>
-              <button onClick={() => toast.info("Funcionalidade de envio ao TP em breve!")} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold hover:opacity-90 transition" style={{ backgroundColor: "rgba(13,4,70,0.06)", color: "#0d0446" }}>
-                <Send size={13} />
-                enviar para o TP
-              </button>
               <button
                 onClick={() => {
                   const texto = `*${roteiroTitulo || "Roteiro"}*\n${programaNome} · ${estudio}\n${format(selectedDate, "dd/MM/yyyy")} ${horario}\n\n${(editorRef.current?.innerText || roteiroTexto).substring(0, 2000)}`;
