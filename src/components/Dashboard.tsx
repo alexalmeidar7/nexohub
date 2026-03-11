@@ -91,7 +91,7 @@ const sidebarMenu: MenuItem[] = [
 const menuToModuleKey: Record<string, string> = {
   "cadastros": "cadastros",
   "previsão do tempo": "previsao",
-  "notícias": "noticias",
+  "roteiro de programa": "noticias",
   "música no ar": "musica",
   "agenda": "agenda",
   "player": "player",
