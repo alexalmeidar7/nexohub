@@ -33,7 +33,7 @@ function sanitizeInlineHtml(el: Element): string {
       } else if (tag === "span") {
         const style = (node as HTMLElement).getAttribute("style") || "";
         if (style.includes("background")) {
-          result += `<mark style="background:#fef08a;color:inherit">${inner}</mark>`;
+          result += `<mark style="background:#b4ff20;color:#000;text-shadow:none;border-radius:3px;padding:0 2px">${inner}</mark>`;
         } else if (style.includes("font-weight")) {
           result += `<b>${inner}</b>`;
         } else if (style.includes("font-style")) {
