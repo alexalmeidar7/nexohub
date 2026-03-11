@@ -246,7 +246,7 @@ export default function TpExterno() {
             <span style={{ color: "#fff", fontSize: "13px", fontWeight: 700 }}>Mandar Mensagem</span>
           </button>
           <button
-            onClick={() => { /* TODO: Controlar TP */ }}
+            onClick={() => setStep("controlar")}
             style={{
               width: "180px", height: "180px", borderRadius: "20px", border: "1px solid rgba(74,144,226,0.3)",
               background: "linear-gradient(135deg, rgba(13,4,70,0.9), rgba(26,10,110,0.9))",
