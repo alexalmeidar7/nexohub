@@ -120,6 +120,7 @@ const pageTitle: Record<Page, string> = {
   preroll: "Comercial — Pré-Roll",
   propostas: "Comercial — Propostas Comerciais",
   cortevideo: "Ferramentas — Cortes de Vídeo",
+  tp: "Ferramentas — TP",
   playerconfig: "Player — Configurações",
   vmix: "vMix — Controle de Transmissão",
 };
