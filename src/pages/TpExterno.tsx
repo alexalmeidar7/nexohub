@@ -366,7 +366,7 @@ export default function TpExterno() {
         <div style={{ position: "absolute", right: 0, top: "50%", transform: "translateY(-50%) rotate(180deg)", zIndex: 10 }}>
           <div style={{ width: 0, height: 0, borderTop: "20px solid transparent", borderBottom: "20px solid transparent", borderLeft: "32px solid #4a90e2", filter: "drop-shadow(0 0 8px rgba(74,144,226,0.5))", opacity: 0.4 }} />
         </div>
-        <div style={{ position: "absolute", left: "40px", right: "40px", top: "50%", height: "2px", background: "rgba(74,144,226,0.35)", zIndex: 6, boxShadow: "0 0 6px rgba(74,144,226,0.3)" }} />
+        <div style={{ position: "absolute", left: "40px", right: "40px", top: "50%", height: "1px", background: "rgba(74,144,226,0.3)", zIndex: 6 }} />
 
         {/* Text */}
         <div ref={textRef} style={{
