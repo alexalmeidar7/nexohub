@@ -34,7 +34,7 @@ export default function TpController({ user, onBack }: TpControllerProps) {
   useEffect(() => {
     if (!user) return;
     const ch = supabase
-      .channel(`tp-state-${user.id}`)
+      .channel(`tp-state-ctrl-${user.id}`)
       .on("broadcast", { event: "tp-state" }, (payload: any) => {
         setTpState(payload.payload);
         lastStateAtRef.current = Date.now();
