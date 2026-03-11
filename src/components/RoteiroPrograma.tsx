@@ -112,7 +112,15 @@ export default function RoteiroPrograma() {
   };
 
   const handleMontarRoteiro = () => {
-    setParticipantes(apresentadores.map(a => ({ nome: a.nome, cargo: a.cargo || "Apresentador(a)", instagram: (a as any).instagram || "" })));
+    const prog = programas.find(p => p.nome === programaNome);
+    const defaultParticipantes: { nome: string; cargo: string; instagram: string }[] = [];
+    if (prog?.apresentador_id) {
+      const apres = apresentadores.find(a => a.id === prog.apresentador_id);
+      if (apres) {
+        defaultParticipantes.push({ nome: apres.nome, cargo: apres.cargo || "Apresentador(a)", instagram: (apres as any).instagram || "" });
+      }
+    }
+    setParticipantes(defaultParticipantes);
     setRoteiroTitulo("");
     setRoteiroSubtitulo("");
     setRoteiroTexto("");
