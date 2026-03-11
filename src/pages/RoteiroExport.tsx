@@ -49,9 +49,16 @@ export default function RoteiroExport() {
           <ArrowLeft size={14} />
           voltar
         </button>
-        <button onClick={() => window.print()} className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold text-white hover:opacity-90 transition" style={{ backgroundColor: "#268ffa" }}>
-          <Printer size={14} />
-          imprimir
+        <button onClick={async () => {
+          const el = document.getElementById("roteiro-export-page-content");
+          if (el) {
+            const { generatePdf } = await import("@/lib/generatePdf");
+            const safeName = (data.programaNome || "roteiro").replace(/\s+/g, "_").toLowerCase();
+            await generatePdf(el, `roteiro_${safeName}.pdf`);
+          }
+        }} className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold text-white hover:opacity-90 transition" style={{ backgroundColor: "#268ffa" }}>
+          <Download size={14} />
+          gerar PDF
         </button>
       </div>
 
