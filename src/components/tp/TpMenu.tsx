@@ -60,8 +60,8 @@ export default function TpMenu({ onMessage, onControl, onOpenTp, onLogout }: TpM
   }, [user]);
 
   const items = [
-    { icon: <MessageSquare size={40} className={tpOnline ? "text-tp-accent" : "text-tp-foreground/20"} />, label: "Mandar Mensagem", onClick: onMessage, needsTp: true },
-    { icon: <SlidersHorizontal size={40} className={tpOnline ? "text-tp-accent" : "text-tp-foreground/20"} />, label: "Controlar TP", onClick: onControl, needsTp: true },
+    { icon: <MessageSquare size={40} className="text-tp-accent" />, label: "Mandar Mensagem", onClick: onMessage, needsTp: false },
+    { icon: <SlidersHorizontal size={40} className="text-tp-accent" />, label: "Controlar TP", onClick: onControl, needsTp: false },
     { icon: <Monitor size={40} className="text-tp-accent" />, label: "Abrir TP", onClick: onOpenTp, needsTp: false },
   ];
 
