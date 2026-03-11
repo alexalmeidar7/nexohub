@@ -324,6 +324,12 @@ export default function RoteiroApresentadorEdit() {
                       {r.editado_at ? format(new Date(r.editado_at), "dd/MM/yyyy 'às' HH:mm") : r.created_at ? format(new Date(r.created_at), "dd/MM/yyyy") : ""}
                       {r.titulo ? ` · ${r.titulo}` : ""}
                     </p>
+                    {r.editado_at && (
+                      <p className="text-[10px] mt-0.5" style={{ color: "rgba(13,4,70,0.4)" }}>
+                        Editado por último em: {format(new Date(r.editado_at), "dd/MM/yyyy 'às' HH:mm")}
+                        {r.share_login ? ` por: ${r.share_login}` : ""}
+                      </p>
+                    )}
                   </div>
                   {r.apresentador_editado && (
                     <span className="px-2 py-1 rounded-md text-[9px] font-bold uppercase" style={{ backgroundColor: "rgba(34,197,94,0.1)", color: "#16a34a" }}>editado</span>

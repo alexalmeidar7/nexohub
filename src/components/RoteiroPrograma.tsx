@@ -861,6 +861,12 @@ export default function RoteiroPrograma() {
                     <p className="text-[10px] mt-0.5" style={{ color: "rgba(13,4,70,0.45)" }}>
                       {dataFormatada} {r.horario ? `· ${r.horario}` : ""} {r.titulo ? `· ${r.titulo}` : ""}
                     </p>
+                    {r.editado_at && (
+                      <p className="text-[10px] mt-0.5" style={{ color: "rgba(13,4,70,0.4)" }}>
+                        Editado por último em: {format(new Date(r.editado_at), "dd/MM/yyyy 'às' HH:mm")}
+                        {r.share_login ? ` por: ${r.share_login}` : ""}
+                      </p>
+                    )}
                   </div>
                   <div className="flex items-center gap-1 ml-2">
                     <button onClick={() => editarRoteiro(r)} className="h-7 w-7 flex items-center justify-center rounded-lg hover:opacity-70 transition" style={{ backgroundColor: "rgba(38,143,250,0.08)" }} title="Editar">
