@@ -1207,6 +1207,31 @@ function TpController({ user, onBack }: { user: any; onBack: () => void }) {
     transition: "all 0.2s",
   };
 
+  const tabBtnStyle = (active: boolean): React.CSSProperties => ({
+    background: active ? "rgba(74,144,226,0.2)" : "transparent",
+    border: active ? "1px solid rgba(74,144,226,0.4)" : "1px solid rgba(255,255,255,0.1)",
+    borderRadius: "8px", padding: "8px 16px", cursor: "pointer",
+    color: active ? "#4a90e2" : "rgba(255,255,255,0.5)",
+    fontSize: "12px", fontWeight: 600, transition: "all 0.2s",
+  });
+
+  function handleLoadRoteiro() {
+    const r = roteiros.find((x) => x.id === selectedRoteiroId);
+    if (r) {
+      const parsed = extractRoteiroHtml(r.conteudo_html);
+      sendCommand("loadText", { text: parsed || "Roteiro sem conteúdo.", html: true });
+      setShowSetup(false);
+    }
+  }
+
+  function handleLoadManual() {
+    if (inputText.trim()) {
+      sendCommand("loadText", { text: inputText.trim(), html: false });
+      setShowSetup(false);
+      setInputText("");
+    }
+  }
+
   return (
     <div style={{
       height: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
