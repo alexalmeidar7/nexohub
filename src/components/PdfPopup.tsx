@@ -42,18 +42,42 @@ export function usePdfPopup() {
   return { ...state, generate, close };
 }
 
-export function PdfPopup({ status, blobUrl, filename, onClose }: {
+export function PdfPopup({ status, blobUrl, filename, onClose, anchorId }: {
   status: PdfStatus;
   blobUrl: string | null;
   filename: string;
   onClose: () => void;
+  anchorId?: string;
 }) {
   if (status === "idle") return null;
 
+  // If anchorId provided, position over that element
+  const anchorEl = anchorId ? document.getElementById(anchorId) : null;
+  const anchorRect = anchorEl?.getBoundingClientRect();
+
+  const popupStyle: React.CSSProperties = anchorRect
+    ? {
+        position: "absolute",
+        top: anchorRect.top + window.scrollY + 40,
+        left: anchorRect.left + anchorRect.width / 2,
+        transform: "translateX(-50%)",
+        zIndex: 9999,
+      }
+    : {
+        position: "fixed",
+        top: "50%",
+        left: "50%",
+        transform: "translate(-50%, -50%)",
+        zIndex: 9999,
+      };
+
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center" style={{ backgroundColor: "rgba(0,0,0,0.4)" }}>
-      <div className="relative rounded-2xl shadow-2xl flex flex-col items-center justify-center gap-4 px-8 py-6"
-        style={{ width: 450, minHeight: 165, backgroundColor: "rgba(13,4,70,0.92)" }}>
+    <div className="fixed inset-0 z-[9998]" style={{ backgroundColor: "rgba(0,0,0,0.3)" }} onClick={onClose}>
+      <div
+        className="rounded-2xl shadow-2xl flex flex-col items-center justify-center gap-4 px-8 py-6"
+        style={{ ...popupStyle, width: 420, minHeight: 160, backgroundColor: "rgba(13,4,70,0.94)" }}
+        onClick={(e) => e.stopPropagation()}
+      >
         
         <button onClick={onClose} className="absolute top-3 right-3 text-white/50 hover:text-white transition">
           <X size={16} />

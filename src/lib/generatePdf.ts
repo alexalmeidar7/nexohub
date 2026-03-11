@@ -32,5 +32,9 @@ export async function generatePdfBlob(element: HTMLElement): Promise<Blob> {
     position += usableHeight;
   }
 
-  return pdf.output("blob");
+    return pdf.output("blob");
+  } finally {
+    element.classList.remove("pdf-force-black");
+    style.remove();
+  }
 }
