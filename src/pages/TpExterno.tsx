@@ -748,9 +748,9 @@ function TpScreen({ user, onBack }: { user: any; onBack: () => void }) {
             setScrolling(false);
             break;
         }
-      })
-      .subscribe();
+      });
 
+    channel.subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [user]);
 
@@ -764,21 +764,24 @@ function TpScreen({ user, onBack }: { user: any; onBack: () => void }) {
     return () => { supabase.removeChannel(ch); stateChannelRef.current = null; };
   }, [user]);
 
-  // Broadcast state changes periodically
-  useEffect(() => {
+  const broadcastTpState = useCallback(() => {
     if (!stateChannelRef.current) return;
-    const id = setInterval(() => {
-      stateChannelRef.current?.send({
-        type: "broadcast", event: "tp-state",
-        payload: {
-          scrolling, speed, fontSize, flipH, flipV,
-          displayText: displayText.substring(0, 1000),
-          isHtmlContent, timerSeconds, scrollPos: scrollPosRef.current,
-        },
-      });
-    }, 500);
-    return () => clearInterval(id);
+    stateChannelRef.current.send({
+      type: "broadcast", event: "tp-state",
+      payload: {
+        scrolling, speed, fontSize, flipH, flipV,
+        displayText: displayText.substring(0, 2000),
+        isHtmlContent, timerSeconds, scrollPos: scrollPosRef.current,
+      },
+    });
   }, [scrolling, speed, fontSize, flipH, flipV, displayText, isHtmlContent, timerSeconds]);
+
+  // Broadcast immediately + heartbeat (low latency)
+  useEffect(() => {
+    broadcastTpState();
+    const id = setInterval(broadcastTpState, 120);
+    return () => clearInterval(id);
+  }, [broadcastTpState]);
 
   function applyText(text: string, html = false) {
     setDisplayText(text);
