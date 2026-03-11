@@ -20,6 +20,8 @@ export default function RoteiroExport() {
     assuntoSubtitulo: string;
     participantes: { nome: string; categoria: string; cargo: string; instagram: string }[];
     conteudoHtml: string;
+    numeroRoteiro?: number | null;
+    logoUrl?: string | null;
   } | null;
 
   if (!data) {
@@ -67,9 +69,19 @@ export default function RoteiroExport() {
       <div id="roteiro-export-page-content" className="max-w-3xl mx-auto px-6 py-8 print:px-0 print:py-4 print:max-w-none">
         {/* Header */}
         <div className="mb-8 print:mb-6">
-          <h1 className="text-2xl font-bold uppercase mb-2" style={{ color: "#0d0446" }}>
-            {data.titulo || "Roteiro"}
-          </h1>
+          <div className="flex items-start justify-between gap-4">
+            <h1 className="text-2xl font-bold uppercase mb-2" style={{ color: "#0d0446" }}>
+              {data.titulo || "Roteiro"}{data.numeroRoteiro ? ` #${data.numeroRoteiro}` : ""}
+            </h1>
+            {data.logoUrl && (
+              <img
+                src={data.logoUrl}
+                alt={data.programaNome}
+                className="pdf-logo-black"
+                style={{ width: 60, height: 60, objectFit: "contain", filter: "brightness(0)" }}
+              />
+            )}
+          </div>
           <div className="space-y-1">
             <p className="text-sm" style={{ color: "rgba(13,4,70,0.7)" }}>
               <span className="font-semibold" style={{ color: "#0d0446" }}>{data.programaNome}</span>

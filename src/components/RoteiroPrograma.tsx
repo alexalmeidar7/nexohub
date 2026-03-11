@@ -32,6 +32,8 @@ interface Programa {
   horario_fim: string;
   dias_semana: string[];
   apresentador_id: string | null;
+  capa: string | null;
+  selo: string | null;
 }
 
 export default function RoteiroPrograma() {
@@ -114,7 +116,7 @@ export default function RoteiroPrograma() {
     const load = async () => {
       setLoading(true);
       const [progRes, apresRes] = await Promise.all([
-        supabase.from("programas").select("id, nome, estudio, tipo_programa, horario_inicio, horario_fim, dias_semana, apresentador_id").eq("ativo", true),
+        supabase.from("programas").select("id, nome, estudio, tipo_programa, horario_inicio, horario_fim, dias_semana, apresentador_id, capa, selo").eq("ativo", true),
         supabase.from("apresentadores").select("id, nome, cargo, instagram, ativo").eq("ativo", true),
       ]);
       const progs = progRes.data || [];
@@ -1053,9 +1055,24 @@ ${perguntaActions}
           <div id="roteiro-export-content" className="rounded-xl p-6" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.08)" }}>
             {/* Header */}
             <div className="mb-6">
-              <h1 className="text-xl font-bold uppercase mb-2" style={{ color: "#0d0446" }}>
-                {roteiroTitulo || "Roteiro"}
-              </h1>
+              <div className="flex items-start justify-between gap-4">
+                <h1 className="text-xl font-bold uppercase mb-2" style={{ color: "#0d0446" }}>
+                  {roteiroTitulo || "Roteiro"}{numeroRoteiro ? ` #${numeroRoteiro}` : ""}
+                </h1>
+                {(() => {
+                  const prog = programas.find(p => p.nome === programaNome);
+                  const logoUrl = prog?.selo || prog?.capa;
+                  if (!logoUrl) return null;
+                  return (
+                    <img
+                      src={logoUrl}
+                      alt={programaNome}
+                      className="pdf-logo-black"
+                      style={{ width: 60, height: 60, objectFit: "contain", filter: "brightness(0)" }}
+                    />
+                  );
+                })()}
+              </div>
               <p className="text-sm" style={{ color: "rgba(13,4,70,0.7)" }}>
                 <span className="font-semibold" style={{ color: "#0d0446" }}>{programaNome}</span>
                 {estudio && <span> · Estúdio {estudio}</span>}
