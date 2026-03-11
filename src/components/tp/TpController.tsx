@@ -248,7 +248,7 @@ export default function TpController({ user, onBack }: TpControllerProps) {
     }
   }
 
-  const statusLabel = !tpPresenceOnline
+  const statusLabel = !(tpPresenceOnline || dbTpOnline)
     ? "Aguardando TP..."
     : !tpState
       ? "Sincronizando preview..."
