@@ -114,6 +114,7 @@ export default function TpScreen({ user, onBack }: TpScreenProps) {
     setHasUnread(false);
   }
 
+  // Load roteiros
   useEffect(() => {
     if (!user) return;
     supabase
@@ -124,6 +125,40 @@ export default function TpScreen({ user, onBack }: TpScreenProps) {
       .limit(30)
       .then(({ data }) => { if (data) setRoteiros(data); });
   }, [user]);
+
+  // Load active TP and saved text on mount
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const { data } = await (supabase as any)
+        .from("teleprompters")
+        .select("id, texto_atual, is_html")
+        .eq("user_id", user.id)
+        .eq("ativo", true)
+        .limit(1);
+      if (data && data.length > 0) {
+        setActiveTpId(data[0].id);
+        if (data[0].texto_atual) {
+          setDisplayText(data[0].texto_atual);
+          setIsHtmlContent(data[0].is_html || false);
+        }
+      }
+    })();
+  }, [user]);
+
+  // Heartbeat: update last_seen every 5s so other devices know TP is open
+  useEffect(() => {
+    if (!activeTpId) return;
+    const heartbeat = async () => {
+      await (supabase as any)
+        .from("teleprompters")
+        .update({ last_seen: new Date().toISOString() })
+        .eq("id", activeTpId);
+    };
+    heartbeat();
+    const interval = setInterval(heartbeat, 5000);
+    return () => clearInterval(interval);
+  }, [activeTpId]);
 
   useEffect(() => {
     const tick = () => {
