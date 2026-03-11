@@ -148,6 +148,21 @@ export default function TpExterno() {
     setTimerSeconds(0);
   }
 
+  function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+      containerRef.current?.requestFullscreen?.();
+    } else {
+      document.exitFullscreen?.();
+    }
+  }
+
+  const controlBtnStyle: React.CSSProperties = {
+    background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)",
+    borderRadius: "8px", padding: "6px 8px", cursor: "pointer",
+    display: "flex", alignItems: "center", justifyContent: "center", color: "#fff",
+    transition: "all 0.2s",
+  };
+
   const tabBtnStyle = (active: boolean): React.CSSProperties => ({
     background: active ? "rgba(74,144,226,0.2)" : "transparent",
     border: active ? "1px solid rgba(74,144,226,0.4)" : "1px solid rgba(255,255,255,0.1)",
