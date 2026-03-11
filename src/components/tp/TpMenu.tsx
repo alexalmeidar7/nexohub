@@ -15,26 +15,46 @@ export default function TpMenu({ onMessage, onControl, onOpenTp, onLogout }: TpM
   const { user } = useAuth();
   const [tpOnline, setTpOnline] = useState(false);
   const lastStateRef = useRef(0);
+  const menuPresenceKeyRef = useRef(`tp-menu-${typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : Math.random().toString(36).slice(2)}`);
 
-  // Listen for TP state broadcasts (keepalive every 2s)
+  // Listen for TP presence + state broadcasts for resilient online status
   useEffect(() => {
     if (!user) return;
+
     const ch = supabase
-      .channel(`tp-state-${user.id}`, { config: { broadcast: { self: true } } })
+      .channel(`tp-state-${user.id}`, {
+        config: {
+          broadcast: { self: true },
+          presence: { key: menuPresenceKeyRef.current },
+        },
+      })
       .on("broadcast", { event: "tp-state" }, () => {
         lastStateRef.current = Date.now();
-        setTpOnline(true);
       })
-      .subscribe();
+      .on("presence", { event: "sync" }, () => {
+        const peers = Object.values(ch.presenceState()).flat() as any[];
+        const hasScreen = peers.some((peer) => peer?.role === "screen");
+        const hasRecentState = !!lastStateRef.current && Date.now() - lastStateRef.current < 15000;
+        setTpOnline(hasScreen || hasRecentState);
+      });
 
-    // Check staleness every 2s
+    ch.subscribe((status) => {
+      if (status === "SUBSCRIBED") {
+        void ch.track({ role: "menu", at: new Date().toISOString() });
+      }
+    });
+
     const interval = setInterval(() => {
-      if (!lastStateRef.current) { setTpOnline(false); return; }
-      setTpOnline(Date.now() - lastStateRef.current < 5000);
+      const peers = Object.values(ch.presenceState()).flat() as any[];
+      const hasScreen = peers.some((peer) => peer?.role === "screen");
+      const hasRecentState = !!lastStateRef.current && Date.now() - lastStateRef.current < 15000;
+      setTpOnline(hasScreen || hasRecentState);
     }, 2000);
 
     return () => {
       clearInterval(interval);
+      setTpOnline(false);
+      void ch.untrack();
       supabase.removeChannel(ch);
     };
   }, [user]);

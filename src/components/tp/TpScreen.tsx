@@ -28,6 +28,7 @@ export default function TpScreen({ user, onBack }: TpScreenProps) {
   const [isHtmlContent, setIsHtmlContent] = useState(false);
   const [remoteActive, setRemoteActive] = useState(false);
   const remoteTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const screenPresenceKeyRef = useRef(`tp-screen-${typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : Math.random().toString(36).slice(2)}`);
 
   // Message state
   const [incomingMsg, setIncomingMsg] = useState<{ text: string; subject: string } | null>(null);
@@ -275,18 +276,28 @@ export default function TpScreen({ user, onBack }: TpScreenProps) {
 
   useEffect(() => {
     if (!user) return;
-    const ch = supabase.channel(`tp-state-${user.id}`, { config: { broadcast: { self: true } } });
+    const ch = supabase.channel(`tp-state-${user.id}`, {
+      config: {
+        broadcast: { self: true },
+        presence: { key: screenPresenceKeyRef.current },
+      },
+    });
+
     ch.subscribe((status) => {
       stateReadyRef.current = status === "SUBSCRIBED";
-      if (stateReadyRef.current) {
+      if (status === "SUBSCRIBED") {
+        void ch.track({ role: "screen", at: new Date().toISOString() });
         void flushStateQueue();
+        queueStateBroadcast(true);
       }
     });
+
     stateChannelRef.current = ch;
     return () => {
       stateReadyRef.current = false;
       stateSendingRef.current = false;
       pendingStateRef.current = null;
+      void ch.untrack();
       supabase.removeChannel(ch);
       stateChannelRef.current = null;
     };
