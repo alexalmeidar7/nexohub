@@ -17,7 +17,7 @@ import { useAuth } from "@/hooks/useAuth";
 const ApresentadorForm = lazy(() => import("./ApresentadorForm"));
 const ProgramaForm = lazy(() => import("./ProgramaForm"));
 const PrevisaoTempo = lazy(() => import("./PrevisaoTempo"));
-const NoticiasPanel = lazy(() => import("./NoticiasPanel"));
+const RoteiroPrograma = lazy(() => import("./RoteiroPrograma"));
 const WeatherWidget = lazy(() => import("./WeatherWidget"));
 const OnAirWidget = lazy(() => import("./OnAirWidget"));
 const MusicaNoAr = lazy(() => import("./MusicaNoAr"));
@@ -60,7 +60,7 @@ const sidebarMenu: MenuItem[] = [
       { icon: PlaySquare, label: "Programas", page: "programas" },
     ]
   },
-  { icon: Newspaper, label: "notícias", page: "noticias" },
+  { icon: FileText, label: "roteiro de programa", page: "noticias" },
   { icon: Music, label: "música no ar", page: "musica" },
   { icon: CalendarDays, label: "agenda", page: "agenda" },
   {
@@ -91,7 +91,7 @@ const sidebarMenu: MenuItem[] = [
 const menuToModuleKey: Record<string, string> = {
   "cadastros": "cadastros",
   "previsão do tempo": "previsao",
-  "notícias": "noticias",
+  "roteiro de programa": "noticias",
   "música no ar": "musica",
   "agenda": "agenda",
   "player": "player",
@@ -103,7 +103,7 @@ const menuToModuleKey: Record<string, string> = {
 const pageTitle: Record<Page, string> = {
   dashboard: "Home",
   previsao: "Previsão do Tempo",
-  noticias: "Notícias",
+  noticias: "Roteiro de Programa",
   apresentadores: "Cadastro de Apresentadores",
   programas: "Cadastro de Programas",
   musica: "Música no Ar",
@@ -480,7 +480,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             <Suspense fallback={<ModulePageSkeleton />}>
               {currentPage === "dashboard" && <CustomizableDashboard onNavigate={setCurrentPage} />}
               {currentPage === "previsao" && <PrevisaoTempo />}
-              {currentPage === "noticias" && <NoticiasPanel />}
+              {currentPage === "noticias" && <RoteiroPrograma />}
               {currentPage === "apresentadores" && <ApresentadorForm />}
               {currentPage === "programas" && <ProgramaForm />}
               {currentPage === "musica" && <MusicaNoAr />}
