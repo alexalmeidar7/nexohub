@@ -43,7 +43,7 @@ const MessageNotification = lazy(() => import("./MessageNotification"));
 import DashboardSkeleton from "./skeletons/DashboardSkeleton";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import { normalizeMusicText } from "@/lib/textEncoding";
-type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll" | "cortevideo" | "playerconfig" | "vmix" | "propostas";
+type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll" | "cortevideo" | "playerconfig" | "vmix" | "propostas" | "tp";
 
 // Sidebar structured menu
 interface MenuItem {
