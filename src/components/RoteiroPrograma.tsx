@@ -34,18 +34,20 @@ export default function RoteiroPrograma() {
   const [estudio, setEstudio] = useState("");
   const [programaNome, setProgramaNome] = useState("");
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [participantes, setParticipantes] = useState<{ nome: string; cargo: string }[]>([]);
+  const [horario, setHorario] = useState("");
   const [tipoPrograma, setTipoPrograma] = useState("");
   const [programas, setProgramas] = useState<Programa[]>([]);
   const [apresentadores, setApresentadores] = useState<Apresentador[]>([]);
   const [loading, setLoading] = useState(true);
   const [estudios, setEstudios] = useState<string[]>([]);
   const [tiposPrograma, setTiposPrograma] = useState<string[]>([]);
-  const [showAddParticipante, setShowAddParticipante] = useState(false);
-  const [newParticipanteNome, setNewParticipanteNome] = useState("");
-  const [newParticipanteCargo, setNewParticipanteCargo] = useState("Apresentador");
 
   const isAgendado = selectedDate > new Date(new Date().toDateString());
+
+  // Filter programs by selected tipo
+  const programasFiltrados = tipoPrograma
+    ? programas.filter(p => p.tipo_programa === tipoPrograma)
+    : programas;
 
   useEffect(() => {
     if (!user) return;
@@ -60,18 +62,24 @@ export default function RoteiroPrograma() {
       setProgramas(progs);
       setApresentadores(apres);
 
-      // Extract unique studios and program types
       const uniqueEstudios = [...new Set(progs.map(p => p.estudio).filter(Boolean))] as string[];
       setEstudios(uniqueEstudios);
       const uniqueTipos = [...new Set(progs.map(p => p.tipo_programa).filter(Boolean))] as string[];
+      if (!uniqueTipos.includes("Jornalístico")) uniqueTipos.push("Jornalístico");
       setTiposPrograma(uniqueTipos);
 
-      // Default participants from apresentadores
-      setParticipantes(apres.map(a => ({ nome: a.nome, cargo: a.cargo || "Apresentador" })));
       setLoading(false);
     };
     load();
   }, [user]);
+
+  const handleTipoChange = (tipo: string) => {
+    setTipoPrograma(tipo);
+    // Reset programa when tipo changes
+    setProgramaNome("");
+    setEstudio("");
+    setHorario("");
+  };
 
   const handleProgramaChange = (nome: string) => {
     setProgramaNome(nome);
@@ -79,19 +87,12 @@ export default function RoteiroPrograma() {
     if (prog) {
       if (prog.estudio) setEstudio(prog.estudio);
       if (prog.tipo_programa) setTipoPrograma(prog.tipo_programa);
+      if (prog.horario_inicio) {
+        const h = prog.horario_inicio.slice(0, 5);
+        const hFim = prog.horario_fim ? prog.horario_fim.slice(0, 5) : "";
+        setHorario(hFim ? `${h} - ${hFim}` : h);
+      }
     }
-  };
-
-  const removeParticipante = (idx: number) => {
-    setParticipantes(prev => prev.filter((_, i) => i !== idx));
-  };
-
-  const addParticipante = () => {
-    if (!newParticipanteNome.trim()) return;
-    setParticipantes(prev => [...prev, { nome: newParticipanteNome.trim(), cargo: newParticipanteCargo }]);
-    setNewParticipanteNome("");
-    setNewParticipanteCargo("Apresentador");
-    setShowAddParticipante(false);
   };
 
   if (loading) return <ModulePageSkeleton />;
