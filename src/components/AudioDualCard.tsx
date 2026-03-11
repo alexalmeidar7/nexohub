@@ -148,21 +148,23 @@ export default function AudioDualCard({
 
         {/* Left — Presenter (hidden behind cover, slides left at 3s) */}
         <div
-          className="absolute md:w-[50%] w-[70%] aspect-square rounded-3xl overflow-hidden shadow-xl"
+          className={`${isMobile ? "relative w-full" : "absolute md:w-[50%] w-[70%]"} aspect-square rounded-3xl overflow-hidden shadow-xl`}
           style={{
-            animation: "presenterReveal 1.6s cubic-bezier(0.22, 1, 0.36, 1) 3s forwards",
-            opacity: 0,
-            left: "50%",
-            transform: "translateX(-50%)",
+            ...(isMobile ? {} : {
+              animation: "presenterReveal 1.6s cubic-bezier(0.22, 1, 0.36, 1) 3s forwards",
+              opacity: 0,
+              left: "50%",
+              transform: "translateX(-50%)",
+            }),
             backgroundColor: "#a10a0b",
             backgroundImage: presenterPhoto ? `url(${presenterPhoto})` : undefined,
             backgroundSize: "cover",
             backgroundPosition: "top center",
             zIndex: 1,
-            transition: "margin-left 0.5s ease-out",
+            ...(isMobile ? {} : { transition: "margin-left 0.5s ease-out" }),
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.marginLeft = "-40px"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.marginLeft = "0px"; }}
+          onMouseEnter={isMobile ? undefined : (e) => { e.currentTarget.style.marginLeft = "-40px"; }}
+          onMouseLeave={isMobile ? undefined : (e) => { e.currentTarget.style.marginLeft = "0px"; }}
         >
           {!presenterPhoto && (
             <div className="absolute inset-0 flex items-center justify-center">
