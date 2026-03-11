@@ -1431,7 +1431,7 @@ function TpController({ user, onBack }: { user: any; onBack: () => void }) {
           <FlipVertical2 size={14} color={flipV ? "#4a90e2" : "rgba(255,255,255,0.5)"} />
         </button>
 
-        <div style={{ width: "1px", height: "24px", background: "rgba(255,255,255,0.1)" }} />
+        <div className="tp-divider" style={{ width: "1px", height: "24px", background: "rgba(255,255,255,0.1)" }} />
 
         {/* Reset */}
         <button onClick={() => sendCommand("reset")} title="Reiniciar" style={controlBtnStyle}>
