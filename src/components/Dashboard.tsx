@@ -116,6 +116,7 @@ const pageTitle: Record<Page, string> = {
   logos: "Comercial — Logos Patrocinadores",
   shopping: "Comercial — Shopping",
   preroll: "Comercial — Pré-Roll",
+  propostas: "Comercial — Propostas Comerciais",
   cortevideo: "Ferramentas — Cortes de Vídeo",
   playerconfig: "Player — Configurações",
   vmix: "vMix — Controle de Transmissão",
