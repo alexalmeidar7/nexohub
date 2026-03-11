@@ -631,7 +631,10 @@ ${perguntaActions}
           {/* Header */}
           <div className="mb-5">
             <p className="text-xs font-bold" style={{ color: "#0d0446" }}>roteiro para o programa</p>
-            <h2 className="text-2xl font-bold" style={{ color: "#0d0446" }}>{programaNome}</h2>
+            <h2 className="text-2xl font-bold" style={{ color: "#0d0446" }}>
+              {programaNome}
+              {numeroRoteiro && <span className="text-sm font-semibold ml-2" style={{ color: "rgba(13,4,70,0.4)" }}>#{numeroRoteiro}</span>}
+            </h2>
             <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold mt-1" style={{ backgroundColor: "#268ffa", color: "#ffffff" }}>
               estúdio {estudio || "—"}
             </span>
