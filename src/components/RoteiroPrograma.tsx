@@ -110,6 +110,27 @@ export default function RoteiroPrograma() {
     }
   };
 
+  const handleMontarRoteiro = () => {
+    setParticipantes(apresentadores.map(a => ({ nome: a.nome, cargo: a.cargo || "Apresentador(a)", instagram: (a as any).instagram || "" })));
+    setRoteiroTitulo("");
+    setRoteiroSubtitulo("");
+    setRoteiroTexto("");
+    setShowRoteiro(true);
+  };
+
+  const addParticipante = () => {
+    if (!newNome.trim()) return;
+    setParticipantes(prev => [...prev, { nome: newNome.trim(), cargo: newCargo, instagram: newInstagram.trim() }]);
+    setNewNome("");
+    setNewCargo("Apresentador(a)");
+    setNewInstagram("");
+    setShowAddParticipante(false);
+  };
+
+  const removeParticipante = (idx: number) => {
+    setParticipantes(prev => prev.filter((_, i) => i !== idx));
+  };
+
   if (loading) return <ModulePageSkeleton />;
 
   return (
