@@ -478,6 +478,20 @@ export default function RoteiroPrograma() {
               style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.15)", color: "#0d0446" }}
             />
           </div>
+
+          {/* Título do Roteiro */}
+          <div>
+            <label className="text-[11px] font-bold mb-1 block" style={{ color: "#0d0446" }}>
+              <FileText size={11} className="inline mr-1" />Título do Roteiro
+            </label>
+            <input
+              value={roteiroTitulo}
+              onChange={e => setRoteiroTitulo(e.target.value)}
+              placeholder="Ex: Entrevista sobre dependência química"
+              className="w-full px-3 py-2 rounded-lg outline-none transition-colors"
+              style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.15)", color: "#0d0446", fontSize: "16px", fontWeight: "bold" }}
+            />
+          </div>
         </div>
 
       </div>
