@@ -480,7 +480,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             <Suspense fallback={<ModulePageSkeleton />}>
               {currentPage === "dashboard" && <CustomizableDashboard onNavigate={setCurrentPage} />}
               {currentPage === "previsao" && <PrevisaoTempo />}
-              {currentPage === "noticias" && <NoticiasPanel />}
+              {currentPage === "noticias" && <RoteiroPrograma />}
               {currentPage === "apresentadores" && <ApresentadorForm />}
               {currentPage === "programas" && <ProgramaForm />}
               {currentPage === "musica" && <MusicaNoAr />}
