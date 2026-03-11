@@ -1212,6 +1212,8 @@ function TpController({ user, onBack }: { user: any; onBack: () => void }) {
       .then(({ data }) => { if (data) setRoteiros(data); });
   }, [user]);
 
+  const lastStateAtRef = useRef(0);
+
   // Listen for TP state broadcasts
   useEffect(() => {
     if (!user) return;
@@ -1219,32 +1221,64 @@ function TpController({ user, onBack }: { user: any; onBack: () => void }) {
       .channel(`tp-state-${user.id}`)
       .on("broadcast", { event: "tp-state" }, (payload: any) => {
         setTpState(payload.payload);
+        lastStateAtRef.current = Date.now();
         setConnected(true);
       })
       .subscribe();
 
-    // If no state received in 5s, mark as disconnected
-    const timeout = setTimeout(() => {
-      setConnected((c) => c);
-    }, 5000);
-
-    return () => { supabase.removeChannel(ch); clearTimeout(timeout); };
+    return () => { supabase.removeChannel(ch); };
   }, [user]);
+
+  // Mark disconnected when heartbeat is stale
+  useEffect(() => {
+    const id = setInterval(() => {
+      if (!lastStateAtRef.current) {
+        setConnected(false);
+        return;
+      }
+      setConnected(Date.now() - lastStateAtRef.current < 1200);
+    }, 300);
+    return () => clearInterval(id);
+  }, []);
 
   // Persistent command channel
   const cmdChannelRef = useRef<any>(null);
+  const cmdReadyRef = useRef(false);
   useEffect(() => {
     if (!user) return;
     const ch = supabase.channel(`tp-control-${user.id}`);
-    ch.subscribe();
+    ch.subscribe((status) => {
+      cmdReadyRef.current = status === "SUBSCRIBED";
+    });
     cmdChannelRef.current = ch;
-    return () => { supabase.removeChannel(ch); cmdChannelRef.current = null; };
+    return () => {
+      cmdReadyRef.current = false;
+      supabase.removeChannel(ch);
+      cmdChannelRef.current = null;
+    };
   }, [user]);
 
   // Send command to TP
   async function sendCommand(action: string, value?: any) {
     if (!cmdChannelRef.current) return;
-    await cmdChannelRef.current.send({ type: "broadcast", event: "tp-command", payload: { action, value } });
+
+    if (!cmdReadyRef.current) {
+      await new Promise<void>((resolve) => {
+        const started = Date.now();
+        const check = setInterval(() => {
+          if (cmdReadyRef.current || Date.now() - started > 1000) {
+            clearInterval(check);
+            resolve();
+          }
+        }, 40);
+      });
+    }
+
+    await cmdChannelRef.current.send({
+      type: "broadcast",
+      event: "tp-command",
+      payload: { action, value },
+    });
   }
 
   const scrolling = tpState?.scrolling ?? false;
