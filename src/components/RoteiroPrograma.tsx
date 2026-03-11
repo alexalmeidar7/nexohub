@@ -832,6 +832,9 @@ ${perguntaActions}
               <button type="button" onClick={() => document.execCommand("underline")} className="h-8 w-8 flex items-center justify-center rounded-lg hover:opacity-70 transition" style={{ backgroundColor: "rgba(13,4,70,0.04)" }} title="Sublinhado">
                 <Underline size={14} style={{ color: "#0d0446" }} />
               </button>
+              <button type="button" onClick={() => document.execCommand("hiliteColor", false, "#fef08a")} className="h-8 w-8 flex items-center justify-center rounded-lg hover:opacity-70 transition" style={{ backgroundColor: "rgba(13,4,70,0.04)" }} title="Grifar / Realçar">
+                <Highlighter size={14} style={{ color: "#0d0446" }} />
+              </button>
 
               <div className="w-px h-5 mx-1" style={{ backgroundColor: "rgba(13,4,70,0.1)" }} />
 
