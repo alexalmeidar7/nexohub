@@ -79,6 +79,7 @@ function extractRoteiroHtml(html: string): string {
   }
 
   if (lines.filter((l) => l.trim()).length > 0) {
+    lines.push('<br/><br/><span style="opacity:0.4;font-size:0.5em;letter-spacing:3px">*** FIM DO TEXTO ***</span>');
     return lines.join("<br/>").trim();
   }
 
