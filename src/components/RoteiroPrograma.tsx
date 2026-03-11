@@ -70,6 +70,7 @@ export default function RoteiroPrograma() {
   // Histórico de roteiros
   const [historico, setHistorico] = useState<any[]>([]);
   const [editingRoteiroId, setEditingRoteiroId] = useState<string | null>(null);
+  const [numeroRoteiro, setNumeroRoteiro] = useState<number | null>(null);
   const [savingRoteiro, setSavingRoteiro] = useState(false);
   const [showParticipantForm, setShowParticipantForm] = useState(true);
   const [showExportView, setShowExportView] = useState(false);
