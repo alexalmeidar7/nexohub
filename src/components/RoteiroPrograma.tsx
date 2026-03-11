@@ -70,6 +70,7 @@ export default function RoteiroPrograma() {
   const [editingRoteiroId, setEditingRoteiroId] = useState<string | null>(null);
   const [savingRoteiro, setSavingRoteiro] = useState(false);
   const [showParticipantForm, setShowParticipantForm] = useState(true);
+  const [showExportView, setShowExportView] = useState(false);
 
   const categorias = ["Apresentador(a)", "Jornalista", "Convidado(a)"];
 
