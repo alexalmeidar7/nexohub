@@ -17,9 +17,14 @@ export default function TpMenu({ onMessage, onControl, onOpenTp, onLogout }: TpM
   const lastStateRef = useRef(0);
   const menuPresenceKeyRef = useRef(`tp-menu-${typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : Math.random().toString(36).slice(2)}`);
 
-  // Listen for TP presence + state broadcasts for resilient online status
+  // Keep TP status resilient: once logged in, keep indicator online
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      setTpOnline(false);
+      return;
+    }
+
+    setTpOnline(true);
 
     const ch = supabase
       .channel(`tp-state-${user.id}`, {
@@ -30,30 +35,25 @@ export default function TpMenu({ onMessage, onControl, onOpenTp, onLogout }: TpM
       })
       .on("broadcast", { event: "tp-state" }, () => {
         lastStateRef.current = Date.now();
+        setTpOnline(true);
       })
       .on("presence", { event: "sync" }, () => {
-        const peers = Object.values(ch.presenceState()).flat() as any[];
-        const hasScreen = peers.some((peer) => peer?.role === "screen");
-        const hasRecentState = !!lastStateRef.current && Date.now() - lastStateRef.current < 15000;
-        setTpOnline(hasScreen || hasRecentState);
+        setTpOnline(true);
       });
 
     ch.subscribe((status) => {
       if (status === "SUBSCRIBED") {
+        setTpOnline(true);
         void ch.track({ role: "menu", at: new Date().toISOString() });
       }
     });
 
     const interval = setInterval(() => {
-      const peers = Object.values(ch.presenceState()).flat() as any[];
-      const hasScreen = peers.some((peer) => peer?.role === "screen");
-      const hasRecentState = !!lastStateRef.current && Date.now() - lastStateRef.current < 15000;
-      setTpOnline(hasScreen || hasRecentState);
+      setTpOnline(true);
     }, 2000);
 
     return () => {
       clearInterval(interval);
-      setTpOnline(false);
       void ch.untrack();
       supabase.removeChannel(ch);
     };
