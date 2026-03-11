@@ -133,14 +133,15 @@ export default function TpExterno() {
   async function handleSendMessage() {
     if (!msgText.trim() || !user) return;
     setMsgSending(true);
-    // Send as admin_messages (broadcast from this user)
-    await supabase.from("admin_messages").insert({
-      sender_id: user.id,
-      message: msgText.trim(),
-      subject: "Mensagem do TP",
-      is_broadcast: false,
-      recipient_id: null,
+    // Broadcast via Supabase Realtime channel (no DB needed)
+    const channel = supabase.channel(`tp-msg-${user.id}`);
+    await channel.subscribe();
+    await channel.send({
+      type: "broadcast",
+      event: "tp-message",
+      payload: { text: msgText.trim(), subject: "Mensagem" },
     });
+    supabase.removeChannel(channel);
     setMsgSending(false);
     setMsgSent(true);
     setMsgText("");
@@ -333,6 +334,9 @@ function TpScreen({ user, onBack }: { user: any; onBack: () => void }) {
 
   // Message notification state
   const [incomingMsg, setIncomingMsg] = useState<{ text: string; subject: string } | null>(null);
+  // Pending message queue (waits 3s before showing)
+  const pendingMsgRef = useRef<{ text: string; subject: string } | null>(null);
+  const pendingDelayRef = useRef<ReturnType<typeof setTimeout>>();
   const [msgVisible, setMsgVisible] = useState(false);
   const [hasUnread, setHasUnread] = useState(false);
   const msgTimerRef = useRef<ReturnType<typeof setTimeout>>();
@@ -344,42 +348,31 @@ function TpScreen({ user, onBack }: { user: any; onBack: () => void }) {
   const timerRef = useRef<ReturnType<typeof setInterval>>();
 
   // Subscribe to realtime messages for this user
+  // Subscribe to realtime broadcast channel for messages
   useEffect(() => {
     if (!user) return;
 
-    // Load latest unread on mount
-    supabase
-      .from("admin_messages")
-      .select("message, subject")
-      .or(`recipient_id.eq.${user.id},is_broadcast.eq.true`)
-      .eq("is_read", false)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .then(({ data }) => {
-        if (data && data.length > 0) {
-          setHasUnread(true);
-        }
-      });
-
     const channel = supabase
-      .channel("tp-messages")
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "admin_messages",
-        },
-        (payload: any) => {
-          const msg = payload.new;
-          if (msg.recipient_id === user.id || msg.is_broadcast) {
-            showMessage({ text: msg.message, subject: msg.subject });
+      .channel(`tp-msg-${user.id}`)
+      .on("broadcast", { event: "tp-message" }, (payload: any) => {
+        const msg = payload.payload as { text: string; subject: string };
+        // Store pending, show after 3 seconds
+        if (pendingDelayRef.current) clearTimeout(pendingDelayRef.current);
+        pendingMsgRef.current = msg;
+        setHasUnread(true);
+        pendingDelayRef.current = setTimeout(() => {
+          if (pendingMsgRef.current) {
+            showMessage(pendingMsgRef.current);
+            pendingMsgRef.current = null;
           }
-        }
-      )
+        }, 3000);
+      })
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      supabase.removeChannel(channel);
+      if (pendingDelayRef.current) clearTimeout(pendingDelayRef.current);
+    };
   }, [user]);
 
   function showMessage(msg: { text: string; subject: string }) {
@@ -395,26 +388,17 @@ function TpScreen({ user, onBack }: { user: any; onBack: () => void }) {
 
   function handleMsgIconClick() {
     if (incomingMsg && msgVisible) {
-      // Close current message
       if (msgTimerRef.current) clearTimeout(msgTimerRef.current);
       setMsgVisible(false);
       setTimeout(() => setIncomingMsg(null), 300);
       return;
     }
-    // Load latest unread
-    if (!user) return;
-    supabase
-      .from("admin_messages")
-      .select("message, subject")
-      .or(`recipient_id.eq.${user.id},is_broadcast.eq.true`)
-      .eq("is_read", false)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .then(({ data }) => {
-        if (data && data.length > 0) {
-          showMessage({ text: data[0].message, subject: data[0].subject });
-        }
-      });
+    // If there's a pending message, show it immediately
+    if (pendingMsgRef.current) {
+      if (pendingDelayRef.current) clearTimeout(pendingDelayRef.current);
+      showMessage(pendingMsgRef.current);
+      pendingMsgRef.current = null;
+    }
     setHasUnread(false);
   }
 
