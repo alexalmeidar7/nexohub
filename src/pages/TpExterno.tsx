@@ -165,6 +165,23 @@ export default function TpExterno() {
     try { return JSON.parse(localStorage.getItem("tp-msg-history") || "[]"); } catch { return []; }
   });
 
+  // Persistent message channel
+  const msgChannelRef = useRef<any>(null);
+  const msgChannelReadyRef = useRef(false);
+  useEffect(() => {
+    if (!user) return;
+    const ch = supabase.channel(`tp-msg-${user.id}`);
+    ch.subscribe((status) => {
+      msgChannelReadyRef.current = status === "SUBSCRIBED";
+    });
+    msgChannelRef.current = ch;
+    return () => {
+      msgChannelReadyRef.current = false;
+      supabase.removeChannel(ch);
+      msgChannelRef.current = null;
+    };
+  }, [user]);
+
   // Redirect to menu (or directly to TP if ?view=tp) if already logged in
   useEffect(() => {
     if (!authLoading && user && step === "login") {
