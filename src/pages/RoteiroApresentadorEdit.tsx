@@ -138,13 +138,17 @@ export default function RoteiroApresentadorEdit() {
     }, 100);
   };
 
-  const fetchHistorico = async (userId: string) => {
-    const { data } = await supabase
+  const fetchHistorico = async (userId: string, excludeId?: string) => {
+    let query = supabase
       .from("roteiros")
       .select("*")
       .eq("user_id", userId)
-      .order("editado_at", { ascending: false })
+      .order("created_at", { ascending: false })
       .limit(10);
+    if (excludeId) {
+      query = query.neq("id", excludeId);
+    }
+    const { data } = await query;
     setHistorico(data || []);
   };
 
