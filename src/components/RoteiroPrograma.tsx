@@ -372,34 +372,78 @@ export default function RoteiroPrograma() {
             <label className="text-xs font-semibold mb-2 block" style={{ color: "rgba(13,4,70,0.5)" }}>participantes</label>
             <div className="space-y-2">
               {participantes.map((p, idx) => (
-                <div key={idx} className="rounded-xl p-3 flex items-start justify-between" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.08)" }}>
-                  <div className="flex-1">
-                    <p className="text-xs font-bold" style={{ color: "#0d0446" }}>{p.nome}</p>
-                    <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.5)" }}>{p.cargo}</p>
-                    {p.instagram && <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.4)" }}>@{p.instagram.replace("@", "")}</p>}
+                <div key={idx} className="rounded-xl p-3" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.08)" }}>
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <p className="text-[10px] font-bold mb-1" style={{ color: "#268ffa" }}>Participante {idx + 1}</p>
+                      <p className="text-xs font-bold" style={{ color: "#0d0446" }}>{p.nome}</p>
+                      <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.5)" }}>{p.cargo}</p>
+                      {p.instagram && <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.4)" }}>@{p.instagram.replace("@", "")}</p>}
+                    </div>
+                    <button onClick={() => removeParticipante(idx)} className="hover:opacity-70 mt-1">
+                      <X size={12} style={{ color: "rgba(13,4,70,0.3)" }} />
+                    </button>
                   </div>
-                  <button onClick={() => removeParticipante(idx)} className="hover:opacity-70 mt-1">
-                    <X size={12} style={{ color: "rgba(13,4,70,0.3)" }} />
-                  </button>
                 </div>
               ))}
 
+              {/* Cadastro message */}
+              {cadastroMsg && (
+                <div className="rounded-xl p-3 flex items-center gap-2" style={{ backgroundColor: "rgba(38,143,250,0.1)", border: "1px solid rgba(38,143,250,0.3)" }}>
+                  <Check size={14} style={{ color: "#268ffa" }} />
+                  <p className="text-xs font-semibold" style={{ color: "#268ffa" }}>Cadastrei esse participante na nossa agenda!</p>
+                </div>
+              )}
+
               {/* Inline add participant fields */}
               <div className="rounded-xl p-3 space-y-2" style={{ backgroundColor: "#ffffff", border: "1px dashed rgba(13,4,70,0.15)" }}>
-                <input
-                  value={newNome}
-                  onChange={e => setNewNome(e.target.value)}
-                  placeholder="nome"
-                  className="w-full px-3 py-2 rounded-lg text-xs outline-none"
-                  style={{ backgroundColor: "rgba(13,4,70,0.04)", border: "1px solid rgba(13,4,70,0.08)", color: "#0d0446" }}
-                />
-                <input
+                <p className="text-[10px] font-bold" style={{ color: "#268ffa" }}>Participante {participantes.length + 1}</p>
+                
+                {/* Nome with autocomplete */}
+                <div className="relative">
+                  <input
+                    ref={nameInputRef}
+                    value={newNome}
+                    onChange={e => {
+                      setNewNome(e.target.value);
+                      setSelectedFromDb(false);
+                      setShowSuggestions(true);
+                    }}
+                    onFocus={() => setShowSuggestions(true)}
+                    onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                    placeholder="nome"
+                    className="w-full px-3 py-2 rounded-lg text-xs outline-none"
+                    style={{ backgroundColor: "rgba(13,4,70,0.04)", border: "1px solid rgba(13,4,70,0.08)", color: "#0d0446" }}
+                  />
+                  {showSuggestions && nameSuggestions.length > 0 && (
+                    <div className="absolute z-10 left-0 right-0 mt-1 rounded-lg overflow-hidden shadow-lg" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.12)" }}>
+                      {nameSuggestions.map(s => (
+                        <button
+                          key={s.id}
+                          onMouseDown={() => selectSuggestion(s)}
+                          className="w-full text-left px-3 py-2 hover:bg-[rgba(38,143,250,0.08)] transition-colors flex items-center gap-2"
+                        >
+                          <UserPlus size={11} style={{ color: "#268ffa" }} />
+                          <div>
+                            <p className="text-xs font-semibold" style={{ color: "#0d0446" }}>{s.nome}</p>
+                            <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.4)" }}>{s.cargo}</p>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Categoria (same as cadastros) */}
+                <select
                   value={newCargo}
                   onChange={e => setNewCargo(e.target.value)}
-                  placeholder="cargo"
                   className="w-full px-3 py-2 rounded-lg text-xs outline-none"
                   style={{ backgroundColor: "rgba(13,4,70,0.04)", border: "1px solid rgba(13,4,70,0.08)", color: "#0d0446" }}
-                />
+                >
+                  {categorias.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+
                 <input
                   value={newInstagram}
                   onChange={e => setNewInstagram(e.target.value)}
