@@ -387,6 +387,11 @@ export default function TpExterno() {
     );
   }
 
+  // ─── Controlar TP Screen ───
+  if (step === "controlar") {
+    return <TpController user={user} onBack={() => setStep("menu")} />;
+  }
+
   // ─── TP Screen (step === "tp") ───
   return <TpScreen user={user} onBack={() => setStep("menu")} />;
 }
