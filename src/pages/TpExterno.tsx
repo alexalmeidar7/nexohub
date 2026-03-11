@@ -223,12 +223,17 @@ export default function TpExterno() {
     const newHistory = [{ text: text.trim(), ts: Date.now() }, ...msgHistory].slice(0, 50);
     setMsgHistory(newHistory);
     localStorage.setItem("tp-msg-history", JSON.stringify(newHistory));
-    // Broadcast
+    // Broadcast via persistent channel
     try {
-      const channel = supabase.channel(`tp-msg-${user.id}`);
-      await channel.subscribe();
-      await channel.send({ type: "broadcast", event: "tp-message", payload: msg });
-      supabase.removeChannel(channel);
+      if (msgChannelRef.current && msgChannelReadyRef.current) {
+        await msgChannelRef.current.send({ type: "broadcast", event: "tp-message", payload: msg });
+      } else {
+        // Fallback: create temp channel
+        const ch = supabase.channel(`tp-msg-${user.id}-tmp-${Date.now()}`);
+        await ch.subscribe();
+        await ch.send({ type: "broadcast", event: "tp-message", payload: msg });
+        supabase.removeChannel(ch);
+      }
     } catch (_) {}
     setMsgSending(false);
     setMsgSent(true);
