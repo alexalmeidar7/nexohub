@@ -675,6 +675,14 @@ function TpScreen({ user, onBack }: { user: any; onBack: () => void }) {
             break;
           case "flipH": setFlipH(f => !f); break;
           case "flipV": setFlipV(f => !f); break;
+          case "loadText":
+            setDisplayText(cmd.value.text);
+            setIsHtmlContent(cmd.value.html);
+            scrollPosRef.current = 50;
+            if (textRef.current) textRef.current.style.top = "50%";
+            setTimerSeconds(0);
+            setScrolling(false);
+            break;
         }
       })
       .subscribe();
