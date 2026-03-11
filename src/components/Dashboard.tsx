@@ -76,6 +76,7 @@ const sidebarMenu: MenuItem[] = [
       { icon: Image, label: "logos", page: "logos" },
       { icon: Film, label: "pre roll", page: "preroll" },
       { icon: ShoppingCart, label: "shopping", page: "shopping" },
+      { icon: FileText, label: "propostas comerciais", page: "propostas" },
     ]
   },
   { icon: Monitor, label: "vmix", page: "vmix" },
