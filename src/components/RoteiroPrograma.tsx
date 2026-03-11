@@ -256,12 +256,12 @@ export default function RoteiroPrograma() {
 </thead>
 <tbody>
 <tr>
-<td style="${tdStyle}">00:00</td>
+<td style="${tdStyle}">--:--</td>
 <td style="${tdStyle};font-weight:600">VINHETA</td>
 <td style="${tdStyle}">Abertura padrão do programa (Áudio + Vídeo).</td>
 </tr>
 <tr>
-<td style="${tdStyle}">00:15</td>
+<td style="${tdStyle}">--:--</td>
 <td style="${tdStyle};font-weight:600">OFF / CABEÇA</td>
 <td style="${tdStyle}">APRESENTADOR: "Olá! Hoje o tema é sério. Vamos falar sobre como a informação é o melhor caminho contra a dependência química."</td>
 </tr>
@@ -270,7 +270,7 @@ export default function RoteiroPrograma() {
 <td style="${tdStyle};font-weight:700;color:#268ffa" colspan="2">ENTREVISTA</td>
 </tr>
 <tr data-pergunta="1">
-<td style="${tdStyle}">00:45</td>
+<td style="${tdStyle}">--:--</td>
 <td style="${tdStyle};font-weight:600">PERGUNTA 1</td>
 <td style="${tdStyle}">[Insira a pergunta aqui]</td>
 </tr>
@@ -281,12 +281,12 @@ export default function RoteiroPrograma() {
 </td>
 </tr>
 <tr>
-<td style="${tdStyle}">01:30</td>
-<td style="${tdStyle};font-weight:600">CORTES / B-ROLL</td>
+<td style="${tdStyle}">--:--</td>
+<td style="${tdStyle};font-weight:600">OBSERVAÇÕES</td>
 <td style="${tdStyle}">Inserir imagens de apoio (família conversando, centros de apoio) enquanto o convidado fala.</td>
 </tr>
 <tr>
-<td style="${tdStyle}">04:00</td>
+<td style="${tdStyle}">--:--</td>
 <td style="${tdStyle};font-weight:600">ENCERRAMENTO</td>
 <td style="${tdStyle}">APRESENTADOR: "Agradecemos ao [Nome]. Se você precisa de ajuda, ligue para o [Número/CAPS]. Até amanhã."</td>
 </tr>
