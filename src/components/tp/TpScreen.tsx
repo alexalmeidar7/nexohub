@@ -359,8 +359,11 @@ export default function TpScreen({ user, onBack }: TpScreenProps) {
   const stateSendingRef = useRef(false);
   const pendingStateRef = useRef<any>(null);
 
-  useEffect(() => {
+  function setupStateChannel() {
     if (!user) return;
+    if (stateChannelRef.current) {
+      supabase.removeChannel(stateChannelRef.current);
+    }
     const ch = supabase.channel(`tp-state-${user.id}`, {
       config: {
         broadcast: { self: true },
@@ -378,13 +381,26 @@ export default function TpScreen({ user, onBack }: TpScreenProps) {
     });
 
     stateChannelRef.current = ch;
+  }
+
+  function reconnectStateChannel() {
+    stateReadyRef.current = false;
+    stateSendingRef.current = false;
+    setupStateChannel();
+  }
+
+  useEffect(() => {
+    if (!user) return;
+    setupStateChannel();
     return () => {
       stateReadyRef.current = false;
       stateSendingRef.current = false;
       pendingStateRef.current = null;
-      void ch.untrack();
-      supabase.removeChannel(ch);
-      stateChannelRef.current = null;
+      if (stateChannelRef.current) {
+        void stateChannelRef.current.untrack();
+        supabase.removeChannel(stateChannelRef.current);
+        stateChannelRef.current = null;
+      }
     };
   }, [user]);
 
