@@ -694,6 +694,7 @@ export type Database = {
           estudio: string
           horario: string
           id: string
+          numero_roteiro: number | null
           participantes: Json
           programa_nome: string
           share_login: string | null
@@ -714,6 +715,7 @@ export type Database = {
           estudio?: string
           horario?: string
           id?: string
+          numero_roteiro?: number | null
           participantes?: Json
           programa_nome?: string
           share_login?: string | null
@@ -734,6 +736,7 @@ export type Database = {
           estudio?: string
           horario?: string
           id?: string
+          numero_roteiro?: number | null
           participantes?: Json
           programa_nome?: string
           share_login?: string | null
