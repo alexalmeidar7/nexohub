@@ -355,7 +355,7 @@ export default function AudioDualCard({
         >
           {/* Inner wrapper handles the history slide */}
           <div
-            className="relative w-full aspect-square rounded-3xl overflow-hidden"
+            className={`relative w-full ${isMobile ? "aspect-[4/3]" : "aspect-square"} rounded-3xl overflow-hidden`}
             style={{
               backgroundColor: isSemTitulo ? "#880000" : "hsl(0 0% 5%)",
               transform: isMobile ? "none" : (historyOpen ? "translateX(-25%) scale(0.96)" : "translateX(0%) scale(1)"),
@@ -366,12 +366,8 @@ export default function AudioDualCard({
             }}
           >
           {isSemTitulo ? (
-            /* "Sem título" state: dark red bg + audio spectrum only */
             <div className="absolute inset-0 flex flex-col items-center justify-center rounded-3xl overflow-hidden">
-              {/* Subtle radial glow */}
               <div className="absolute inset-0" style={{ background: "radial-gradient(circle at center, hsla(0,70%,20%,0.4) 0%, transparent 70%)" }} />
-
-              {/* Spectrum fills entire card */}
               <Suspense fallback={null}>
                 <div className="absolute inset-0 z-[2]">
                   <div className="relative w-full h-full">
@@ -382,7 +378,6 @@ export default function AudioDualCard({
             </div>
           ) : (
             <>
-              {/* Cover image or spectrum fallback */}
               {isCoverMissing ? (
                 <div className="absolute inset-0 flex flex-col items-center justify-center" style={{ backgroundColor: "hsl(0 0% 0%)" }}>
                   <Suspense fallback={null}>
@@ -423,31 +418,68 @@ export default function AudioDualCard({
                 </div>
               )}
 
-              {/* Bottom gradient for readability */}
               <div className="absolute inset-x-0 bottom-0 rounded-b-3xl" style={{ height: "50%", background: "linear-gradient(to top, hsla(0,0%,0%,0.85) 0%, transparent 100%)" }} />
 
-              {/* + button top-right — opens history */}
               {userId && (
                 <button
                   onClick={() => setHistoryOpen(o => !o)}
-                  className="absolute top-4 right-4 z-[5] w-8 h-8 rounded-full flex items-center justify-center transition-all hover:scale-110 active:scale-95"
+                  className="absolute top-3 right-3 z-[5] w-7 h-7 rounded-full flex items-center justify-center transition-all hover:scale-110 active:scale-95"
                   style={{ backgroundColor: "hsl(0 80% 45%)" }}
                 >
-                  {historyOpen ? <X size={16} className="text-white" /> : <Plus size={16} className="text-white" />}
+                  {historyOpen ? <X size={14} className="text-white" /> : <Plus size={14} className="text-white" />}
                 </button>
               )}
 
-              {/* Footer: heart → title → artist (stacked) */}
-              <div className="absolute bottom-0 left-0 right-0 p-5 z-[3] flex flex-col items-start gap-1 animate-fade-in" style={{ animationDuration: "0.7s" }}>
-                {/* Heart like button */}
+              {/* Mobile history overlay — on top of the music card */}
+              {isMobile && historyOpen && (
+                <div
+                  className="absolute inset-0 z-[6] rounded-3xl overflow-hidden backdrop-blur-xl flex flex-col"
+                  style={{
+                    background: "linear-gradient(135deg, rgba(20,20,20,0.95) 0%, rgba(40,10,10,0.95) 100%)",
+                    border: "1px solid hsla(0,80%,45%,0.2)",
+                  }}
+                >
+                  <div className="flex items-center gap-2 p-3 pb-2" style={{ borderBottom: "1px solid hsla(0,80%,45%,0.2)" }}>
+                    <div className="w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: "hsla(0,80%,45%,0.2)" }}>
+                      <Music size={12} style={{ color: "#a10a0b" }} />
+                    </div>
+                    <span className="font-bold text-xs text-white flex-1">Últimas Tocadas</span>
+                    <button onClick={() => setHistoryOpen(false)} className="w-6 h-6 rounded-full flex items-center justify-center hover:bg-white/10 active:scale-95">
+                      <X size={12} className="text-white/60" />
+                    </button>
+                  </div>
+                  <div className="flex-1 min-h-0 overflow-y-auto p-2" style={{ scrollbarWidth: "thin", scrollbarColor: "#a10a0b transparent" }}>
+                    {recentSongs.length === 0 ? (
+                      <p className="text-[10px] text-center mt-4 text-white/30">Nenhuma música registrada</p>
+                    ) : (
+                      <div className="flex flex-col gap-1">
+                        {recentSongs.map((song) => (
+                          <div key={song.id} className="flex items-center gap-2 py-1.5 px-2 rounded-lg" style={{ backgroundColor: "hsla(0,0%,100%,0.03)" }}>
+                            <div className="shrink-0 px-1.5 py-0.5 rounded" style={{ backgroundColor: "hsla(0,80%,45%,0.2)" }}>
+                              <span className="text-[9px] font-mono font-bold text-white">{song.horario?.slice(0, 5)}</span>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-[11px] font-semibold text-white truncate">{song.musica}</p>
+                              <p className="text-[9px] text-white/50 truncate">{song.artista}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Footer: heart → title → artist */}
+              <div className={`absolute bottom-0 left-0 right-0 ${isMobile ? "p-3" : "p-5"} z-[3] flex flex-col items-start gap-0.5 animate-fade-in`} style={{ animationDuration: "0.7s" }}>
                 {onToggleLike && musicTitle && (
                   <button
                     onClick={onToggleLike}
-                    className="mb-1 p-1.5 rounded-full transition-all hover:scale-110 active:scale-95"
+                    className="mb-0.5 p-1 rounded-full transition-all hover:scale-110 active:scale-95"
                     style={{ backgroundColor: "hsla(0, 0%, 100%, 0.15)" }}
                   >
                     <Heart
-                      size={20}
+                      size={isMobile ? 16 : 20}
                       className="transition-colors"
                       style={{
                         color: liked ? "hsl(0 80% 50%)" : "white",
@@ -456,17 +488,13 @@ export default function AudioDualCard({
                     />
                   </button>
                 )}
-
-                {/* Song title */}
                 {musicTitle && (
-                  <span className="text-white font-bold text-lg md:text-xl leading-tight drop-shadow-lg">
+                  <span className={`text-white font-bold ${isMobile ? "text-sm" : "text-lg md:text-xl"} leading-tight drop-shadow-lg`}>
                     {musicTitle}
                   </span>
                 )}
-
-                {/* Artist name */}
                 {musicArtist && (
-                  <span className="text-white/70 text-sm leading-tight drop-shadow-lg">
+                  <span className={`text-white/70 ${isMobile ? "text-xs" : "text-sm"} leading-tight drop-shadow-lg`}>
                     {musicArtist}
                   </span>
                 )}
