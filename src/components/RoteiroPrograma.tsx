@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef, lazy, Suspense } from "react";
+import { usePdfPopup, PdfPopup } from "@/components/PdfPopup";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CalendarIcon, FileText, Building2, Clock, Plus, X, Download, UserPlus, Check, Bold, Underline, Highlighter, AlignLeft, AlignCenter, AlignRight, List, ListOrdered, Type, Trash2, Pencil, Save, History, ArrowLeft, Printer, Send, MessageSquare } from "lucide-react";
+import { CalendarIcon, FileText, Building2, Clock, Plus, X, Download, UserPlus, Check, Bold, Underline, Highlighter, AlignLeft, AlignCenter, AlignRight, List, ListOrdered, Type, Trash2, Pencil, Save, History, ArrowLeft, Send, MessageSquare } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
@@ -36,6 +37,7 @@ interface Programa {
 export default function RoteiroPrograma() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const pdfPopup = usePdfPopup();
   const [estudio, setEstudio] = useState("");
   const [programaNome, setProgramaNome] = useState("");
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -974,12 +976,11 @@ ${perguntaActions}
               voltar ao roteiro
             </button>
             <div className="flex items-center gap-2 print:hidden flex-wrap">
-              <button onClick={async () => {
+              <button onClick={() => {
                 const el = document.getElementById("roteiro-export-content");
                 if (el) {
-                  const { generatePdf } = await import("@/lib/generatePdf");
                   const safeName = (programaNome || "roteiro").replace(/\s+/g, "_").toLowerCase();
-                  await generatePdf(el, `roteiro_${safeName}.pdf`);
+                  pdfPopup.generate(el, `roteiro_${safeName}.pdf`);
                 }
               }} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold text-white hover:opacity-90 transition" style={{ backgroundColor: "#268ffa" }}>
                 <Download size={13} />
@@ -1122,6 +1123,7 @@ ${perguntaActions}
         </Suspense>
       )}
 
+      <PdfPopup status={pdfPopup.status} blobUrl={pdfPopup.blobUrl} filename={pdfPopup.filename} onClose={pdfPopup.close} />
     </div>
   );
 }

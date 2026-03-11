@@ -3,11 +3,13 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ArrowLeft, Download } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import { usePdfPopup, PdfPopup } from "@/components/PdfPopup";
 
 export default function RoteiroExport() {
   usePageTitle("Roteiro Export");
   const location = useLocation();
   const navigate = useNavigate();
+  const pdfPopup = usePdfPopup();
   const data = location.state as {
     titulo: string;
     programaNome: string;
@@ -49,12 +51,11 @@ export default function RoteiroExport() {
           <ArrowLeft size={14} />
           voltar
         </button>
-        <button onClick={async () => {
+        <button onClick={() => {
           const el = document.getElementById("roteiro-export-page-content");
           if (el) {
-            const { generatePdf } = await import("@/lib/generatePdf");
             const safeName = (data.programaNome || "roteiro").replace(/\s+/g, "_").toLowerCase();
-            await generatePdf(el, `roteiro_${safeName}.pdf`);
+            pdfPopup.generate(el, `roteiro_${safeName}.pdf`);
           }
         }} className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold text-white hover:opacity-90 transition" style={{ backgroundColor: "#268ffa" }}>
           <Download size={14} />
@@ -135,6 +136,7 @@ export default function RoteiroExport() {
           @page { margin: 1.5cm; }
         }
       `}</style>
+      <PdfPopup status={pdfPopup.status} blobUrl={pdfPopup.blobUrl} filename={pdfPopup.filename} onClose={pdfPopup.close} />
     </div>
   );
 }
