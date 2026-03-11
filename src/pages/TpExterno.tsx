@@ -517,10 +517,11 @@ function TpScreen({ user, onBack }: { user: any; onBack: () => void }) {
   const [remoteActive, setRemoteActive] = useState(false);
   const remoteTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
-  // Message queue state
+  // Message state — persistent list + current highlight
   const [incomingMsg, setIncomingMsg] = useState<{ text: string; subject: string } | null>(null);
   const [msgVisible, setMsgVisible] = useState(false);
   const [hasUnread, setHasUnread] = useState(false);
+  const [messageLog, setMessageLog] = useState<{ text: string; subject: string; ts: number }[]>([]);
   const msgQueueRef = useRef<{ text: string; subject: string }[]>([]);
   const msgTimerRef = useRef<ReturnType<typeof setTimeout>>();
   const isShowingRef = useRef(false);
@@ -540,6 +541,8 @@ function TpScreen({ user, onBack }: { user: any; onBack: () => void }) {
 
     setIncomingMsg(msg);
     setMsgVisible(true);
+    // Add to persistent log (keep last 20)
+    setMessageLog(prev => [...prev, { ...msg, ts: Date.now() }].slice(-20));
     // Play notification sound
     try {
       const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -1012,7 +1015,7 @@ function TpScreen({ user, onBack }: { user: any; onBack: () => void }) {
             50% { opacity: 0.3; }
           }
         `}</style>
-        {/* ─── Message Balloon ─── */}
+        {/* ─── Highlight Banner (current message) ─── */}
         {incomingMsg && (
           <div style={{
             position: "absolute", top: "24px", left: "50%", transform: "translateX(-50%)",
@@ -1037,7 +1040,6 @@ function TpScreen({ user, onBack }: { user: any; onBack: () => void }) {
               <p style={{ color: "#fff", fontSize: "24px", fontWeight: 700, margin: 0, lineHeight: 1.4 }}>
                 {incomingMsg.text}
               </p>
-              {/* Progress bar */}
               <div style={{
                 position: "absolute", bottom: 0, left: 0, right: 0, height: "3px",
                 background: "rgba(255,255,255,0.1)",
@@ -1051,11 +1053,60 @@ function TpScreen({ user, onBack }: { user: any; onBack: () => void }) {
             </div>
           </div>
         )}
+
+        {/* ─── Persistent Message Log (bottom-right) ─── */}
+        {messageLog.length > 0 && (
+          <div style={{
+            position: "absolute", bottom: "16px", right: "16px", zIndex: 40,
+            maxWidth: "360px", maxHeight: "40vh", overflowY: "auto",
+            display: "flex", flexDirection: "column", gap: "6px",
+            scrollbarWidth: "none",
+          }}>
+            {messageLog.slice(-5).map((m, i) => {
+              const isLatest = i === messageLog.slice(-5).length - 1;
+              const age = Date.now() - m.ts;
+              const fading = age > 30000; // fade after 30s
+              return (
+                <div key={m.ts + i} style={{
+                  background: isLatest ? "rgba(13,4,70,0.85)" : "rgba(13,4,70,0.5)",
+                  backdropFilter: "blur(12px)",
+                  borderRadius: "10px", padding: "8px 14px",
+                  border: isLatest ? "1px solid rgba(74,144,226,0.5)" : "1px solid rgba(255,255,255,0.08)",
+                  opacity: fading ? 0.5 : 1,
+                  transition: "opacity 0.5s",
+                  animation: isLatest ? "tp-msg-log-in 0.3s ease-out" : "none",
+                }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "2px" }}>
+                    <MessageSquare size={10} color={isLatest ? "#4a90e2" : "rgba(255,255,255,0.3)"} />
+                    <span style={{
+                      fontSize: "9px", color: "rgba(255,255,255,0.4)", fontWeight: 600,
+                    }}>
+                      {new Date(m.ts).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                    </span>
+                  </div>
+                  <p style={{
+                    color: isLatest ? "#fff" : "rgba(255,255,255,0.7)",
+                    fontSize: isLatest ? "16px" : "13px",
+                    fontWeight: isLatest ? 700 : 500,
+                    margin: 0, lineHeight: 1.3,
+                  }}>
+                    {m.text}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
         <style>{`
           @keyframes tp-msg-shrink { from { width: 100%; } to { width: 0%; } }
           @keyframes tp-msg-border-pulse {
             0%, 100% { border-color: rgba(255,255,255,0.9); box-shadow: 0 12px 40px rgba(0,0,0,0.5), 0 0 15px rgba(255,255,255,0.2); }
             50% { border-color: rgba(255,255,255,0.2); box-shadow: 0 12px 40px rgba(0,0,0,0.5), 0 0 5px rgba(255,255,255,0.05); }
+          }
+          @keyframes tp-msg-log-in {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
           }
         `}</style>
 
