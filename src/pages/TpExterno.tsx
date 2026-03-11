@@ -672,6 +672,45 @@ function TpScreen({ user, onBack }: { user: any; onBack: () => void }) {
       <div data-tp-display style={{ position: "relative", backgroundColor: "#020210", overflow: "hidden" }}>
         <div style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 5, background: "radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.6) 100%)" }} />
 
+        {/* ─── Message Balloon ─── */}
+        {incomingMsg && (
+          <div style={{
+            position: "absolute", top: "24px", left: "50%", transform: "translateX(-50%)",
+            zIndex: 50, transition: "opacity 0.3s, transform 0.3s",
+            opacity: msgVisible ? 1 : 0,
+            pointerEvents: msgVisible ? "auto" : "none",
+          }}>
+            <div style={{
+              background: "rgba(13,4,70,0.92)", backdropFilter: "blur(20px)",
+              borderRadius: "14px", padding: "16px 24px 10px", minWidth: "300px", maxWidth: "500px",
+              border: "1px solid rgba(74,144,226,0.3)", boxShadow: "0 12px 40px rgba(0,0,0,0.5)",
+              overflow: "hidden", position: "relative",
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
+                <MessageSquare size={14} color="#4a90e2" />
+                <span style={{ color: "#4a90e2", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px" }}>
+                  {incomingMsg.subject || "Mensagem"}
+                </span>
+              </div>
+              <p style={{ color: "#fff", fontSize: "14px", margin: 0, lineHeight: 1.5 }}>
+                {incomingMsg.text}
+              </p>
+              {/* Progress bar */}
+              <div style={{
+                position: "absolute", bottom: 0, left: 0, right: 0, height: "3px",
+                background: "rgba(255,255,255,0.1)",
+              }}>
+                <div style={{
+                  height: "100%", background: "linear-gradient(90deg, #4a90e2, #2dbff4)",
+                  borderRadius: "0 2px 2px 0",
+                  animation: msgVisible ? "tp-msg-shrink 5s linear forwards" : "none",
+                }} />
+              </div>
+            </div>
+          </div>
+        )}
+        <style>{`@keyframes tp-msg-shrink { from { width: 100%; } to { width: 0%; } }`}</style>
+
         {/* Top fade-out overlay — text disappears smoothly */}
         <div style={{
           position: "absolute", top: 0, left: 0, right: 0, height: "25%",
