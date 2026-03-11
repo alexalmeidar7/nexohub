@@ -94,9 +94,63 @@ function stripHtml(html: string): string {
   return div.textContent || div.innerText || "";
 }
 
+// Responsive styles injected once
+const TP_RESPONSIVE_STYLES = `
+  .tp-menu-buttons { display: flex; gap: 24px; flex-wrap: wrap; justify-content: center; }
+  .tp-menu-btn { width: 180px; height: 180px; }
+  .tp-screen-grid { display: grid; grid-template-columns: 90px 1fr; height: 100vh; }
+  .tp-controls-bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: center; }
+  .tp-controls-bar .tp-divider { width: 1px; height: 24px; background: rgba(255,255,255,0.1); }
+  .tp-speed-slider { width: 120px; }
+  .tp-ctrl-preview { width: min(900px, 90vw); height: min(500px, 55vh); }
+  .tp-ctrl-bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: center; }
+  .tp-ctrl-bar .tp-divider { width: 1px; height: 24px; background: rgba(255,255,255,0.1); }
+  .tp-msg-screen { width: min(500px, 90%); }
+
+  @media (max-width: 768px) {
+    .tp-menu-btn { width: 140px !important; height: 140px !important; }
+    .tp-menu-buttons { gap: 12px !important; }
+    .tp-screen-grid { grid-template-columns: 1fr !important; grid-template-rows: auto 1fr !important; }
+    .tp-sidebar { flex-direction: row !important; padding: 8px 12px !important; border-right: none !important; border-bottom: 1px solid rgba(74,144,226,0.15) !important; justify-content: space-between !important; overflow-x: auto; }
+    .tp-sidebar-top { flex-direction: row !important; gap: 12px !important; align-items: center !important; }
+    .tp-sidebar-mid { flex-direction: row !important; gap: 8px !important; }
+    .tp-sidebar-mid button { width: 36px !important; height: 36px !important; }
+    .tp-sidebar-bottom { flex-direction: row !important; gap: 8px !important; align-items: center !important; }
+    .tp-sidebar-bottom > div:first-child { display: none; }
+    .tp-controls-bar { gap: 8px !important; padding: 8px 12px !important; border-radius: 14px !important; bottom: 8px !important; }
+    .tp-controls-bar .tp-divider { display: none; }
+    .tp-speed-slider { width: 80px !important; }
+    .tp-ctrl-preview { width: 95vw !important; height: 35vh !important; }
+    .tp-ctrl-bar { gap: 8px !important; padding: 8px 14px !important; }
+    .tp-ctrl-bar .tp-divider { display: none; }
+    .tp-setup-modal { width: 95% !important; padding: 16px !important; }
+  }
+
+  @media (max-width: 480px) {
+    .tp-menu-btn { width: 110px !important; height: 110px !important; }
+    .tp-menu-btn svg { width: 28px !important; height: 28px !important; }
+    .tp-menu-btn span { font-size: 11px !important; }
+    .tp-controls-bar { gap: 6px !important; padding: 6px 8px !important; }
+    .tp-play-btn { width: 38px !important; height: 38px !important; }
+    .tp-ctrl-preview { height: 30vh !important; }
+  }
+`;
+
 export default function TpExterno() {
   const { user, loading: authLoading, signOut } = useAuth();
   usePageTitle("NexoHub - Tele Prompter");
+
+  // Inject responsive styles once
+  useEffect(() => {
+    const id = "tp-responsive-styles";
+    if (!document.getElementById(id)) {
+      const style = document.createElement("style");
+      style.id = id;
+      style.textContent = TP_RESPONSIVE_STYLES;
+      document.head.appendChild(style);
+    }
+    return () => { document.getElementById(id)?.remove(); };
+  }, []);
 
   // Flow: "login" → "menu" → "tp" | "mensagem" | "controlar"
   const [step, setStep] = useState<"login" | "menu" | "tp" | "mensagem" | "controlar">("login");
@@ -230,8 +284,9 @@ export default function TpExterno() {
         backgroundColor: "#0f1058", fontFamily: "'Poppins', 'Inter', sans-serif", gap: "32px",
       }}>
         <img src={logoNexo} alt="Nexo" style={{ height: "36px", opacity: 0.9 }} />
-        <div style={{ display: "flex", gap: "24px" }}>
+        <div className="tp-menu-buttons" style={{ display: "flex", gap: "24px" }}>
           <button
+            className="tp-menu-btn"
             onClick={() => setStep("mensagem")}
             style={{
               width: "180px", height: "180px", borderRadius: "20px", border: "1px solid rgba(74,144,226,0.3)",
@@ -246,6 +301,7 @@ export default function TpExterno() {
             <span style={{ color: "#fff", fontSize: "13px", fontWeight: 700 }}>Mandar Mensagem</span>
           </button>
           <button
+            className="tp-menu-btn"
             onClick={() => setStep("controlar")}
             style={{
               width: "180px", height: "180px", borderRadius: "20px", border: "1px solid rgba(74,144,226,0.3)",
@@ -260,6 +316,7 @@ export default function TpExterno() {
             <span style={{ color: "#fff", fontSize: "13px", fontWeight: 700 }}>Controlar TP</span>
           </button>
           <button
+            className="tp-menu-btn"
             onClick={() => setStep("tp")}
             style={{
               width: "180px", height: "180px", borderRadius: "20px", border: "1px solid rgba(74,144,226,0.3)",
@@ -768,15 +825,15 @@ function TpScreen({ user, onBack }: { user: any; onBack: () => void }) {
   });
 
   return (
-    <div ref={containerRef} style={{ display: "grid", gridTemplateColumns: "90px 1fr", height: "100vh", overflow: "hidden", fontFamily: "'Inter', 'Segoe UI', sans-serif", backgroundColor: "#000" }}>
+    <div ref={containerRef} className="tp-screen-grid" style={{ display: "grid", gridTemplateColumns: "90px 1fr", height: "100vh", overflow: "hidden", fontFamily: "'Inter', 'Segoe UI', sans-serif", backgroundColor: "#000" }}>
 
       {/* ─── Sidebar ─── */}
-      <div style={{
+      <div className="tp-sidebar" style={{
         background: "linear-gradient(180deg, #080830 0%, #0d0446 100%)",
         display: "flex", flexDirection: "column", justifyContent: "space-between", alignItems: "center",
         padding: "24px 0", borderRight: "1px solid rgba(74,144,226,0.15)",
       }}>
-        <div style={{ textAlign: "center" }}>
+        <div className="tp-sidebar-top" style={{ textAlign: "center" }}>
           <div style={{ fontSize: "9px", textTransform: "uppercase", fontWeight: 700, letterSpacing: "2px", color: "rgba(255,255,255,0.4)", lineHeight: 1.4 }}>
             TELE<br />PROMPTER
           </div>
@@ -799,7 +856,7 @@ function TpScreen({ user, onBack }: { user: any; onBack: () => void }) {
           </button>
         </div>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: "16px", alignItems: "center" }}>
+        <div className="tp-sidebar-mid" style={{ display: "flex", flexDirection: "column", gap: "16px", alignItems: "center" }}>
           <button onClick={() => setShowSetup(!showSetup)} title="Configurações" style={{
             background: showSetup ? "rgba(74,144,226,0.2)" : "rgba(255,255,255,0.05)",
             border: "1px solid rgba(74,144,226,0.3)", borderRadius: "12px",
@@ -824,7 +881,7 @@ function TpScreen({ user, onBack }: { user: any; onBack: () => void }) {
           </button>
         </div>
 
-        <div style={{ textAlign: "center" }}>
+        <div className="tp-sidebar-bottom" style={{ textAlign: "center" }}>
           <div style={{ fontSize: "8px", textTransform: "uppercase", letterSpacing: "1.5px", color: "rgba(255,255,255,0.3)", lineHeight: 1.3, fontWeight: 600 }}>
             tempo de<br />programa
           </div>
@@ -923,7 +980,7 @@ function TpScreen({ user, onBack }: { user: any; onBack: () => void }) {
         </div>
 
         {/* ─── Controls bar ─── */}
-        <div style={{
+        <div className="tp-controls-bar" style={{
           position: "absolute", bottom: "24px", left: "50%", transform: "translateX(-50%)",
           background: "rgba(11,11,48,0.9)", backdropFilter: "blur(20px)",
           padding: "10px 24px", borderRadius: "20px",
@@ -947,15 +1004,15 @@ function TpScreen({ user, onBack }: { user: any; onBack: () => void }) {
               <Plus size={10} /> A
             </button>
           </div>
-          <div style={{ width: "1px", height: "24px", background: "rgba(255,255,255,0.1)" }} />
+          <div className="tp-divider" style={{ width: "1px", height: "24px", background: "rgba(255,255,255,0.1)" }} />
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <Type size={12} color="rgba(255,255,255,0.3)" />
             <input type="range" min={0} max={10} value={speed} onChange={(e) => setSpeed(Number(e.target.value))}
-              style={{ width: "120px", accentColor: "#4a90e2", height: "4px" }} />
+              className="tp-speed-slider" style={{ width: "120px", accentColor: "#4a90e2", height: "4px" }} />
             <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.4)", minWidth: "14px" }}>{speed}</span>
           </div>
-          <div style={{ width: "1px", height: "24px", background: "rgba(255,255,255,0.1)" }} />
-          <button onClick={() => setScrolling(!scrolling)} style={{
+          <div className="tp-divider" style={{ width: "1px", height: "24px", background: "rgba(255,255,255,0.1)" }} />
+          <button className="tp-play-btn" onClick={() => setScrolling(!scrolling)} style={{
             background: scrolling ? "linear-gradient(135deg, #e24a4a, #c0392b)" : "linear-gradient(135deg, #4a90e2, #2d6dc0)",
             border: "none", borderRadius: "50%", width: "44px", height: "44px", cursor: "pointer",
             display: "flex", alignItems: "center", justifyContent: "center",
@@ -964,7 +1021,7 @@ function TpScreen({ user, onBack }: { user: any; onBack: () => void }) {
           }}>
             {scrolling ? <Pause size={18} color="#fff" /> : <Play size={18} color="#fff" style={{ marginLeft: "2px" }} />}
           </button>
-          <div style={{ width: "1px", height: "24px", background: "rgba(255,255,255,0.1)" }} />
+          <div className="tp-divider" style={{ width: "1px", height: "24px", background: "rgba(255,255,255,0.1)" }} />
           <button onClick={() => setFlipH((f) => !f)} title="Inverter horizontalmente"
             style={{ ...controlBtnStyle, background: flipH ? "rgba(74,144,226,0.2)" : controlBtnStyle.background }}>
             <FlipHorizontal2 size={14} color={flipH ? "#4a90e2" : "rgba(255,255,255,0.5)"} />
@@ -982,7 +1039,7 @@ function TpScreen({ user, onBack }: { user: any; onBack: () => void }) {
         {showSetup && (
           <>
             <div onClick={() => setShowSetup(false)} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 90 }} />
-            <div style={{
+            <div className="tp-setup-modal" style={{
               position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)",
               width: "min(650px, 85%)", maxHeight: "75vh",
               background: "linear-gradient(135deg, #0d0446, #1a0a6e)",
@@ -1238,7 +1295,7 @@ function TpController({ user, onBack }: { user: any; onBack: () => void }) {
       backgroundColor: "#0f1058", fontFamily: "'Poppins', 'Inter', sans-serif", padding: "20px",
     }}>
       {/* Header */}
-      <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px" }}>
+      <div className="tp-ctrl-header" style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px", flexWrap: "wrap", justifyContent: "center" }}>
         <SlidersHorizontal size={20} color="#4a90e2" />
         <span style={{ color: "#fff", fontSize: "16px", fontWeight: 700 }}>Controle Remoto do TP</span>
         <div style={{
@@ -1253,7 +1310,7 @@ function TpController({ user, onBack }: { user: any; onBack: () => void }) {
       </div>
 
       {/* TP Preview Mirror */}
-      <div style={{
+      <div className="tp-ctrl-preview" style={{
         width: "min(900px, 90vw)", height: "min(500px, 55vh)", position: "relative",
         backgroundColor: "#020210", borderRadius: "12px", overflow: "hidden",
         border: "1px solid rgba(74,144,226,0.3)", boxShadow: "0 16px 48px rgba(0,0,0,0.5)",
@@ -1305,7 +1362,7 @@ function TpController({ user, onBack }: { user: any; onBack: () => void }) {
       </div>
 
       {/* Controls */}
-      <div style={{
+      <div className="tp-ctrl-bar" style={{
         marginTop: "20px", display: "flex", alignItems: "center", gap: "12px",
         background: "rgba(11,11,48,0.9)", backdropFilter: "blur(20px)",
         padding: "12px 28px", borderRadius: "20px",
@@ -1326,18 +1383,18 @@ function TpController({ user, onBack }: { user: any; onBack: () => void }) {
           </button>
         </div>
 
-        <div style={{ width: "1px", height: "24px", background: "rgba(255,255,255,0.1)" }} />
+        <div className="tp-divider" style={{ width: "1px", height: "24px", background: "rgba(255,255,255,0.1)" }} />
 
         {/* Speed */}
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           <Type size={12} color="rgba(255,255,255,0.3)" />
           <input type="range" min={0} max={10} value={speed}
             onChange={(e) => sendCommand("speed", Number(e.target.value))}
-            style={{ width: "120px", accentColor: "#4a90e2", height: "4px" }} />
+            className="tp-speed-slider" style={{ width: "120px", accentColor: "#4a90e2", height: "4px" }} />
           <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.4)", minWidth: "14px" }}>{speed}</span>
         </div>
 
-        <div style={{ width: "1px", height: "24px", background: "rgba(255,255,255,0.1)" }} />
+        <div className="tp-divider" style={{ width: "1px", height: "24px", background: "rgba(255,255,255,0.1)" }} />
 
         {/* Play/Pause */}
         <button onClick={() => sendCommand("toggle")} style={{
@@ -1350,7 +1407,7 @@ function TpController({ user, onBack }: { user: any; onBack: () => void }) {
           {scrolling ? <Pause size={20} color="#fff" /> : <Play size={20} color="#fff" style={{ marginLeft: "2px" }} />}
         </button>
 
-        <div style={{ width: "1px", height: "24px", background: "rgba(255,255,255,0.1)" }} />
+        <div className="tp-divider" style={{ width: "1px", height: "24px", background: "rgba(255,255,255,0.1)" }} />
 
         {/* Scroll step buttons */}
         <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
@@ -1362,7 +1419,7 @@ function TpController({ user, onBack }: { user: any; onBack: () => void }) {
           </button>
         </div>
 
-        <div style={{ width: "1px", height: "24px", background: "rgba(255,255,255,0.1)" }} />
+        <div className="tp-divider" style={{ width: "1px", height: "24px", background: "rgba(255,255,255,0.1)" }} />
 
         {/* Flip */}
         <button onClick={() => sendCommand("flipH")} title="Inverter H"
@@ -1374,14 +1431,14 @@ function TpController({ user, onBack }: { user: any; onBack: () => void }) {
           <FlipVertical2 size={14} color={flipV ? "#4a90e2" : "rgba(255,255,255,0.5)"} />
         </button>
 
-        <div style={{ width: "1px", height: "24px", background: "rgba(255,255,255,0.1)" }} />
+        <div className="tp-divider" style={{ width: "1px", height: "24px", background: "rgba(255,255,255,0.1)" }} />
 
         {/* Reset */}
         <button onClick={() => sendCommand("reset")} title="Reiniciar" style={controlBtnStyle}>
           <RotateCcw size={14} color="rgba(255,255,255,0.5)" />
         </button>
 
-        <div style={{ width: "1px", height: "24px", background: "rgba(255,255,255,0.1)" }} />
+        <div className="tp-divider" style={{ width: "1px", height: "24px", background: "rgba(255,255,255,0.1)" }} />
 
         {/* Load text */}
         <button onClick={() => setShowSetup(true)} title="Carregar texto" style={{
@@ -1404,7 +1461,7 @@ function TpController({ user, onBack }: { user: any; onBack: () => void }) {
       {showSetup && (
         <>
           <div onClick={() => setShowSetup(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 90 }} />
-          <div style={{
+          <div className="tp-setup-modal" style={{
             position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)",
             width: "min(650px, 85%)", maxHeight: "75vh",
             background: "linear-gradient(135deg, #0d0446, #1a0a6e)",
