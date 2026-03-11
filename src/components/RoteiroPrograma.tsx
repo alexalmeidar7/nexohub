@@ -315,7 +315,7 @@ export default function RoteiroPrograma() {
               value={roteiroTitulo}
               onChange={e => setRoteiroTitulo(e.target.value)}
               placeholder="título"
-              className="w-full px-3 py-2 rounded-lg text-xs outline-none mb-2"
+              className="w-full px-3 py-2 rounded-lg text-sm font-bold outline-none mb-2"
               style={{ backgroundColor: "rgba(13,4,70,0.04)", border: "1px solid rgba(13,4,70,0.08)", color: "#0d0446" }}
             />
             <input
