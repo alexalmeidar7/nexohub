@@ -144,4 +144,3 @@ export const tabBtnStyle = (active: boolean): React.CSSProperties => ({
   fontSize: "12px", fontWeight: 600, transition: "all 0.2s",
 });
 
-import React from "react";
