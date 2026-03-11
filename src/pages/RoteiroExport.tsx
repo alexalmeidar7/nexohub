@@ -63,7 +63,7 @@ export default function RoteiroExport() {
       </div>
 
       {/* Content */}
-      <div className="max-w-3xl mx-auto px-6 py-8 print:px-0 print:py-4 print:max-w-none">
+      <div id="roteiro-export-page-content" className="max-w-3xl mx-auto px-6 py-8 print:px-0 print:py-4 print:max-w-none">
         {/* Header */}
         <div className="mb-8 print:mb-6">
           <h1 className="text-2xl font-bold uppercase mb-2" style={{ color: "#0d0446" }}>

@@ -1049,7 +1049,7 @@ ${perguntaActions}
             </div>
           </div>
 
-          <div className="rounded-xl p-6" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.08)" }}>
+          <div id="roteiro-export-content" className="rounded-xl p-6" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.08)" }}>
             {/* Header */}
             <div className="mb-6">
               <h1 className="text-xl font-bold uppercase mb-2" style={{ color: "#0d0446" }}>
