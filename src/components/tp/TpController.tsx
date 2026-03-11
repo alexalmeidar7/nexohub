@@ -112,13 +112,38 @@ export default function TpController({ user, onBack }: TpControllerProps) {
   }
 
 
+  // Poll DB for cross-network TP status (fallback)
+  const [dbTpOnline, setDbTpOnline] = useState(false);
+  useEffect(() => {
+    if (!user) return;
+    let active = true;
+    async function checkDb() {
+      const { data } = await (supabase as any)
+        .from("teleprompters")
+        .select("last_seen")
+        .eq("user_id", user!.id)
+        .eq("ativo", true)
+        .order("last_seen", { ascending: false, nullsFirst: false })
+        .limit(1);
+      if (!active) return;
+      if (data && data.length > 0 && data[0].last_seen) {
+        setDbTpOnline(Date.now() - new Date(data[0].last_seen).getTime() < 15000);
+      } else {
+        setDbTpOnline(false);
+      }
+    }
+    checkDb();
+    const interval = setInterval(checkDb, 5000);
+    return () => { active = false; clearInterval(interval); };
+  }, [user]);
+
   useEffect(() => {
     const id = setInterval(() => {
       const hasRecentState = !!lastStateAtRef.current && Date.now() - lastStateAtRef.current < 15000;
-      setConnected(tpPresenceOnline && (hasRecentState || cmdReady));
+      setConnected((tpPresenceOnline || dbTpOnline) && (hasRecentState || cmdReady));
     }, 1000);
     return () => clearInterval(id);
-  }, [tpPresenceOnline, cmdReady]);
+  }, [tpPresenceOnline, cmdReady, dbTpOnline]);
 
   // Fallback: if state got stale, request a fresh snapshot from TP screen
   useEffect(() => {
