@@ -536,8 +536,15 @@ export default function RoteiroPrograma() {
             <input
               value={roteiroSubtitulo}
               onChange={e => setRoteiroSubtitulo(e.target.value)}
-              placeholder="Assunto da entrevista (ex: Dependência química)"
-              className="w-full px-3 py-2 rounded-lg text-sm font-bold outline-none"
+              placeholder="Título da entrevista"
+              className="w-full px-3 py-2 rounded-lg text-sm font-bold outline-none mb-2"
+              style={{ backgroundColor: "rgba(13,4,70,0.04)", border: "1px solid rgba(13,4,70,0.08)", color: "#0d0446" }}
+            />
+            <input
+              value={assuntoSubtitulo}
+              onChange={e => setAssuntoSubtitulo(e.target.value)}
+              placeholder="Subtítulo"
+              className="w-full px-3 py-2 rounded-lg text-xs outline-none"
               style={{ backgroundColor: "rgba(13,4,70,0.04)", border: "1px solid rgba(13,4,70,0.08)", color: "#0d0446" }}
             />
           </div>
