@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Settings, Minus, Plus, Play, Pause, RotateCcw, Type, FileText, Maximize, FlipHorizontal2, FlipVertical2, Loader2, MessageSquare, Monitor, ArrowRight, LogOut } from "lucide-react";
+import { Settings, Minus, Plus, Play, Pause, RotateCcw, Type, FileText, Maximize, FlipHorizontal2, FlipVertical2, Loader2, MessageSquare, Monitor, ArrowRight, LogOut, RotateCw, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { usePageTitle } from "@/hooks/usePageTitle";
@@ -107,6 +107,9 @@ export default function TpExterno() {
   const [msgText, setMsgText] = useState("");
   const [msgSending, setMsgSending] = useState(false);
   const [msgSent, setMsgSent] = useState(false);
+  const [msgHistory, setMsgHistory] = useState<{ text: string; ts: number }[]>(() => {
+    try { return JSON.parse(localStorage.getItem("tp-msg-history") || "[]"); } catch { return []; }
+  });
 
   // Redirect to menu if already logged in
   useEffect(() => {
@@ -130,15 +133,19 @@ export default function TpExterno() {
     }
   }
 
-  async function handleSendMessage() {
-    if (!msgText.trim() || !user) return;
+  async function sendMsg(text: string) {
+    if (!text.trim() || !user) return;
     setMsgSending(true);
-    const msg = { text: msgText.trim(), subject: "Mensagem", ts: Date.now() };
-    // Save to localStorage queue so TP picks it up even if opened later
+    const msg = { text: text.trim(), subject: "Mensagem", ts: Date.now() };
+    // Save to localStorage queue for TP
     const queue = JSON.parse(localStorage.getItem("tp-msg-queue") || "[]");
     queue.push(msg);
     localStorage.setItem("tp-msg-queue", JSON.stringify(queue));
-    // Also broadcast for live TP sessions
+    // Save to history
+    const newHistory = [{ text: text.trim(), ts: Date.now() }, ...msgHistory].slice(0, 50);
+    setMsgHistory(newHistory);
+    localStorage.setItem("tp-msg-history", JSON.stringify(newHistory));
+    // Broadcast
     try {
       const channel = supabase.channel(`tp-msg-${user.id}`);
       await channel.subscribe();
@@ -149,6 +156,15 @@ export default function TpExterno() {
     setMsgSent(true);
     setMsgText("");
     setTimeout(() => setMsgSent(false), 3000);
+  }
+
+  async function handleSendMessage() { await sendMsg(msgText); }
+
+  async function handleResend(text: string) { await sendMsg(text); }
+
+  function clearHistory() {
+    setMsgHistory([]);
+    localStorage.removeItem("tp-msg-history");
   }
 
   async function handleLogout() {
@@ -304,7 +320,54 @@ export default function TpExterno() {
             }}>
               Voltar
             </button>
+            {msgHistory.length > 0 && (
+              <button onClick={clearHistory} title="Apagar histórico" style={{
+                background: "none", border: "1px solid rgba(239,68,68,0.3)", borderRadius: "10px",
+                padding: "10px 16px", cursor: "pointer", color: "rgba(239,68,68,0.7)", fontSize: "12px",
+                display: "flex", alignItems: "center", gap: "6px",
+              }}>
+                <Trash2 size={12} /> Limpar
+              </button>
+            )}
           </div>
+
+          {/* Histórico */}
+          {msgHistory.length > 0 && (
+            <div style={{ marginTop: "20px" }}>
+              <div style={{ fontSize: "11px", fontWeight: 700, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "8px" }}>
+                Histórico
+              </div>
+              <div style={{ maxHeight: "180px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "6px" }}>
+                {msgHistory.map((h, i) => (
+                  <div key={i} style={{
+                    display: "flex", alignItems: "center", gap: "8px",
+                    background: "rgba(0,0,0,0.2)", borderRadius: "8px", padding: "8px 12px",
+                    border: "1px solid rgba(255,255,255,0.06)",
+                  }}>
+                    <span style={{ flex: 1, color: "rgba(255,255,255,0.7)", fontSize: "12px", lineHeight: 1.4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {h.text}
+                    </span>
+                    <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.25)", whiteSpace: "nowrap" }}>
+                      {new Date(h.ts).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                    </span>
+                    <button
+                      onClick={() => handleResend(h.text)}
+                      disabled={msgSending}
+                      title="Reenviar"
+                      style={{
+                        background: "rgba(74,144,226,0.15)", border: "1px solid rgba(74,144,226,0.3)",
+                        borderRadius: "6px", padding: "4px 8px", cursor: "pointer",
+                        display: "flex", alignItems: "center", gap: "4px",
+                        color: "#4a90e2", fontSize: "10px", fontWeight: 700, whiteSpace: "nowrap",
+                      }}
+                    >
+                      <RotateCw size={10} /> Reenviar
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );
