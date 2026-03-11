@@ -896,7 +896,7 @@ function ComercialWidgets() {
 
   useEffect(() => {
     if (!user) return;
-    const fetch = async () => {
+    const fetchData = async () => {
       const [{ count }] = await Promise.all([
         supabase.from("logos_patrocinadores").select("*", { count: "exact", head: true }).eq("user_id", user.id).eq("ativo", true),
       ]);
