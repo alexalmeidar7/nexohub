@@ -772,7 +772,7 @@ function TpScreen({ user, onBack }: { user: any; onBack: () => void }) {
         type: "broadcast", event: "tp-state",
         payload: {
           scrolling, speed, fontSize, flipH, flipV,
-          displayText: displayText.substring(0, 200),
+          displayText: displayText.substring(0, 1000),
           isHtmlContent, timerSeconds, scrollPos: scrollPosRef.current,
         },
       });
@@ -1228,13 +1228,20 @@ function TpController({ user, onBack }: { user: any; onBack: () => void }) {
     return () => { supabase.removeChannel(ch); clearTimeout(timeout); };
   }, [user]);
 
-  // Send command to TP
-  async function sendCommand(action: string, value?: any) {
+  // Persistent command channel
+  const cmdChannelRef = useRef<any>(null);
+  useEffect(() => {
     if (!user) return;
     const ch = supabase.channel(`tp-control-${user.id}`);
-    await ch.subscribe();
-    await ch.send({ type: "broadcast", event: "tp-command", payload: { action, value } });
-    supabase.removeChannel(ch);
+    ch.subscribe();
+    cmdChannelRef.current = ch;
+    return () => { supabase.removeChannel(ch); cmdChannelRef.current = null; };
+  }, [user]);
+
+  // Send command to TP
+  async function sendCommand(action: string, value?: any) {
+    if (!cmdChannelRef.current) return;
+    await cmdChannelRef.current.send({ type: "broadcast", event: "tp-command", payload: { action, value } });
   }
 
   const scrolling = tpState?.scrolling ?? false;
