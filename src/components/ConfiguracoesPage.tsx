@@ -642,7 +642,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
             </div>
           </div>
         )}
-      </CollapsibleBox>}
+      </div></div>}
         </div>
       </div>
     </div>
