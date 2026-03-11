@@ -620,12 +620,13 @@ export default function AgendaPage() {
               {/* Descrição */}
               <div>
                 <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: "rgba(13,4,70,0.5)" }}>Descrição</Label>
-                <Input
+                <textarea
                   value={formDescricao}
                   onChange={(e) => setFormDescricao(e.target.value)}
                   placeholder="Breve descrição do evento..."
-                  className="agenda-form-input h-10"
-                  style={{ borderColor: "rgba(38,143,250,0.2)", borderRadius: "12px", backgroundColor: "#f8faff", color: "#0d0446" }}
+                  rows={3}
+                  className="agenda-form-input w-full resize-none text-xs px-3 py-2.5"
+                  style={{ borderColor: "rgba(38,143,250,0.2)", borderRadius: "12px", backgroundColor: "#f8faff", color: "#0d0446", border: "1px solid rgba(38,143,250,0.2)" }}
                 />
               </div>
 
