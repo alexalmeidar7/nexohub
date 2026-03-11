@@ -825,7 +825,7 @@ function TpScreen({ user, onBack }: { user: any; onBack: () => void }) {
   });
 
   return (
-    <div ref={containerRef} style={{ display: "grid", gridTemplateColumns: "90px 1fr", height: "100vh", overflow: "hidden", fontFamily: "'Inter', 'Segoe UI', sans-serif", backgroundColor: "#000" }}>
+    <div ref={containerRef} className="tp-screen-grid" style={{ display: "grid", gridTemplateColumns: "90px 1fr", height: "100vh", overflow: "hidden", fontFamily: "'Inter', 'Segoe UI', sans-serif", backgroundColor: "#000" }}>
 
       {/* ─── Sidebar ─── */}
       <div style={{
