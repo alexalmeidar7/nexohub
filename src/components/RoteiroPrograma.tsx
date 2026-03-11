@@ -533,17 +533,10 @@ export default function RoteiroPrograma() {
           <div className="rounded-xl p-4 mb-4" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.08)" }}>
             <label className="text-xs font-semibold mb-2 block" style={{ color: "rgba(13,4,70,0.5)" }}>assunto do {tipoPrograma?.toLowerCase() || "programa"}</label>
             <input
-              value={roteiroTitulo}
-              onChange={e => setRoteiroTitulo(e.target.value)}
-              placeholder="título"
-              className="w-full px-3 py-2 rounded-lg text-sm font-bold outline-none mb-2"
-              style={{ backgroundColor: "rgba(13,4,70,0.04)", border: "1px solid rgba(13,4,70,0.08)", color: "#0d0446" }}
-            />
-            <input
               value={roteiroSubtitulo}
               onChange={e => setRoteiroSubtitulo(e.target.value)}
-              placeholder="subtítulo"
-              className="w-full px-3 py-2 rounded-lg text-xs outline-none"
+              placeholder="Assunto da entrevista (ex: Dependência química)"
+              className="w-full px-3 py-2 rounded-lg text-sm font-bold outline-none"
               style={{ backgroundColor: "rgba(13,4,70,0.04)", border: "1px solid rgba(13,4,70,0.08)", color: "#0d0446" }}
             />
           </div>
