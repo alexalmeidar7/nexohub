@@ -903,7 +903,7 @@ function ComercialWidgets() {
       setTotalLogos(count || 0);
       setLoading(false);
     };
-    fetch();
+    fetchData();
   }, [user]);
 
   if (loading) return (
