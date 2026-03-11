@@ -27,7 +27,41 @@ export default function RoteiroApresentadorEdit() {
   const [participantes, setParticipantes] = useState<Participante[]>([]);
   const [editingPart, setEditingPart] = useState<number | null>(null);
   const [fontSize, setFontSize] = useState("14");
+  const [perguntaCount, setPerguntaCount] = useState(1);
   const editorRef = useRef<HTMLDivElement>(null);
+
+  const handleEditorClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement;
+    const action = target.getAttribute("data-action");
+    if (!action || !editorRef.current) return;
+
+    const table = editorRef.current.querySelector("table");
+    if (!table) return;
+
+    const tdS = "border:1px solid rgba(13,4,70,0.12);padding:8px 10px";
+
+    if (action === "add-pergunta") {
+      const allPerguntas = Array.from(table.querySelectorAll("tr[data-pergunta]"));
+      const newNum = allPerguntas.length + 1;
+      setPerguntaCount(newNum);
+      const insertAfter = allPerguntas.length > 0
+        ? allPerguntas[allPerguntas.length - 1]
+        : Array.from(table.querySelectorAll("tr")).find(r => r.innerHTML.includes("ENTREVISTA")) || null;
+      if (insertAfter) {
+        const newRow = document.createElement("tr");
+        newRow.setAttribute("data-pergunta", String(newNum));
+        newRow.innerHTML = `<td style="${tdS}">--:--</td><td style="${tdS};font-weight:600">PERGUNTA ${newNum}</td><td style="${tdS}">[Insira a pergunta aqui]</td>`;
+        insertAfter.insertAdjacentElement("afterend", newRow);
+        const actionRow = table.querySelector("tr[data-action-row]");
+        if (actionRow) newRow.insertAdjacentElement("afterend", actionRow);
+      }
+    } else if (action === "remove-pergunta") {
+      const allPerguntas = Array.from(table.querySelectorAll("tr[data-pergunta]"));
+      if (allPerguntas.length <= 1) return;
+      allPerguntas[allPerguntas.length - 1].remove();
+      setPerguntaCount(prev => Math.max(1, prev - 1));
+    }
+  };
 
   const handleLogin = async () => {
     if (!token) { toast.error("Link inválido"); return; }
