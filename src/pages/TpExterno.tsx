@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Settings, Minus, Plus, Play, Pause, RotateCcw, Type, FileText } from "lucide-react";
+import { Settings, Minus, Plus, Play, Pause, RotateCcw, Type, FileText, Maximize, FlipHorizontal2, FlipVertical2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -34,9 +34,12 @@ export default function TpExterno() {
   const [roteiros, setRoteiros] = useState<Roteiro[]>([]);
   const [selectedRoteiroId, setSelectedRoteiroId] = useState<string>("");
   const [tab, setTab] = useState<"roteiros" | "manual">("roteiros");
+  const [flipH, setFlipH] = useState(false);
+  const [flipV, setFlipV] = useState(false);
 
   const scrollPosRef = useRef(50);
   const textRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const animRef = useRef<number>();
   const timerRef = useRef<ReturnType<typeof setInterval>>();
 
@@ -68,7 +71,7 @@ export default function TpExterno() {
     return () => clearInterval(id);
   }, []);
 
-  // Program timer
+  // Program timer — starts with play, resets when text returns to top
   useEffect(() => {
     if (scrolling) {
       timerRef.current = setInterval(() => setTimerSeconds((s) => s + 1), 1000);
@@ -84,11 +87,19 @@ export default function TpExterno() {
     return `${m}:${s}`;
   })();
 
-  // Scroll animation
+  // Scroll animation — auto-reset timer when text scrolls past top
   const animate = useCallback(() => {
     if (scrolling && textRef.current) {
       scrollPosRef.current -= speed * 0.1;
       textRef.current.style.top = scrollPosRef.current + "%";
+
+      // Check if text scrolled past the top — reset
+      const textBottom = textRef.current.getBoundingClientRect().bottom;
+      if (textBottom < 0) {
+        scrollPosRef.current = 50;
+        textRef.current.style.top = "50%";
+        setTimerSeconds(0);
+      }
     }
     animRef.current = requestAnimationFrame(animate);
   }, [scrolling, speed]);
@@ -97,6 +108,18 @@ export default function TpExterno() {
     animRef.current = requestAnimationFrame(animate);
     return () => { if (animRef.current) cancelAnimationFrame(animRef.current); };
   }, [animate]);
+
+  // Spacebar toggle play/pause
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.code === "Space" && !showSetup) {
+        e.preventDefault();
+        setScrolling((s) => !s);
+      }
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [showSetup]);
 
   function applyText(text: string) {
     setDisplayText(text);
@@ -125,6 +148,21 @@ export default function TpExterno() {
     setTimerSeconds(0);
   }
 
+  function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+      containerRef.current?.requestFullscreen?.();
+    } else {
+      document.exitFullscreen?.();
+    }
+  }
+
+  const controlBtnStyle: React.CSSProperties = {
+    background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)",
+    borderRadius: "8px", padding: "6px 8px", cursor: "pointer",
+    display: "flex", alignItems: "center", justifyContent: "center", color: "#fff",
+    transition: "all 0.2s",
+  };
+
   const tabBtnStyle = (active: boolean): React.CSSProperties => ({
     background: active ? "rgba(74,144,226,0.2)" : "transparent",
     border: active ? "1px solid rgba(74,144,226,0.4)" : "1px solid rgba(255,255,255,0.1)",
@@ -134,7 +172,7 @@ export default function TpExterno() {
   });
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "90px 1fr", height: "100vh", overflow: "hidden", fontFamily: "'Inter', 'Segoe UI', sans-serif" }}>
+    <div ref={containerRef} style={{ display: "grid", gridTemplateColumns: "90px 1fr", height: "100vh", overflow: "hidden", fontFamily: "'Inter', 'Segoe UI', sans-serif", backgroundColor: "#000" }}>
 
       {/* ─── Sidebar ─── */}
       <div style={{
@@ -201,6 +239,7 @@ export default function TpExterno() {
           width: "75%", margin: "0 auto", fontSize: `${fontSize}px`, lineHeight: 1.5,
           textAlign: "center", whiteSpace: "pre-wrap", position: "absolute", top: "50%", left: "12.5%",
           transition: "font-size 0.2s", color: "#ffffff", textShadow: "0 2px 20px rgba(0,0,0,0.5)", fontWeight: 400,
+          transform: `${flipH ? "scaleX(-1)" : ""} ${flipV ? "scaleY(-1)" : ""}`.trim() || "none",
         }}>
           {displayText}
         </div>
@@ -246,6 +285,18 @@ export default function TpExterno() {
             transition: "all 0.3s",
           }}>
             {scrolling ? <Pause size={18} color="#fff" /> : <Play size={18} color="#fff" style={{ marginLeft: "2px" }} />}
+          </button>
+          <div style={{ width: "1px", height: "24px", background: "rgba(255,255,255,0.1)" }} />
+          <button onClick={() => setFlipH((f) => !f)} title="Inverter horizontalmente"
+            style={{ ...controlBtnStyle, background: flipH ? "rgba(74,144,226,0.2)" : controlBtnStyle.background }}>
+            <FlipHorizontal2 size={14} color={flipH ? "#4a90e2" : "rgba(255,255,255,0.5)"} />
+          </button>
+          <button onClick={() => setFlipV((f) => !f)} title="Inverter verticalmente"
+            style={{ ...controlBtnStyle, background: flipV ? "rgba(74,144,226,0.2)" : controlBtnStyle.background }}>
+            <FlipVertical2 size={14} color={flipV ? "#4a90e2" : "rgba(255,255,255,0.5)"} />
+          </button>
+          <button onClick={toggleFullscreen} title="Tela cheia" style={controlBtnStyle}>
+            <Maximize size={14} color="rgba(255,255,255,0.5)" />
           </button>
         </div>
 
