@@ -22,6 +22,7 @@ const AdminMessages = lazy(() => import("./pages/admin/AdminMessages"));
 const MasterViewHome = lazy(() => import("./pages/masterview/MasterViewHome"));
 const AdminLogin = lazy(() => import("./pages/admin/AdminLogin"));
 const JornalExport = lazy(() => import("./pages/JornalExport"));
+const RoteiroExport = lazy(() => import("./pages/RoteiroExport"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
