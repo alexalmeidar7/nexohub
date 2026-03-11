@@ -168,12 +168,11 @@ export default function TpExterno() {
       scrollPosRef.current -= speed * 0.1;
       textRef.current.style.top = scrollPosRef.current + "%";
 
-      // Check if text scrolled past the top — reset
+      // Stop at end of text
       const textBottom = textRef.current.getBoundingClientRect().bottom;
-      if (textBottom < 0) {
-        scrollPosRef.current = 50;
-        textRef.current.style.top = "50%";
-        setTimerSeconds(0);
+      const containerBottom = textRef.current.parentElement?.getBoundingClientRect().bottom || window.innerHeight;
+      if (textBottom < containerBottom * 0.5) {
+        setScrolling(false);
       }
     }
     animRef.current = requestAnimationFrame(animate);
