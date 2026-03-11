@@ -9,6 +9,7 @@ export default function RoteiroExport() {
   usePageTitle("Roteiro Export");
   const location = useLocation();
   const navigate = useNavigate();
+  const pdfPopup = usePdfPopup();
   const data = location.state as {
     titulo: string;
     programaNome: string;
