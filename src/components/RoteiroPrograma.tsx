@@ -611,6 +611,44 @@ export default function RoteiroPrograma() {
               style={{ color: "#0d0446", fontSize: fontSize + "px", lineHeight: "1.7" }}
               data-placeholder="Digite o roteiro aqui..."
             />
+
+            {/* Adicionar pergunta */}
+            <button
+              type="button"
+              onClick={() => {
+                if (!editorRef.current) return;
+                const table = editorRef.current.querySelector("table tbody");
+                if (!table) return;
+                const newNum = perguntaCount + 1;
+                setPerguntaCount(newNum);
+                const tdS = "border:1px solid rgba(13,4,70,0.12);padding:8px 10px";
+                // Find the last pergunta row or the ENTREVISTA row to insert after
+                const allRows = Array.from(table.querySelectorAll("tr"));
+                let insertAfter: Element | null = null;
+                for (let i = allRows.length - 1; i >= 0; i--) {
+                  if (allRows[i].getAttribute("data-pergunta")) {
+                    insertAfter = allRows[i];
+                    break;
+                  }
+                }
+                if (!insertAfter) {
+                  // fallback: find ENTREVISTA row
+                  insertAfter = allRows.find(r => r.innerHTML.includes("ENTREVISTA")) || null;
+                }
+                if (insertAfter) {
+                  const newRow = document.createElement("tr");
+                  newRow.setAttribute("data-pergunta", String(newNum));
+                  newRow.innerHTML = `<td style="${tdS}"></td><td style="${tdS};font-weight:600">PERGUNTA ${newNum}</td><td style="${tdS}">[Insira a pergunta aqui]</td>`;
+                  insertAfter.insertAdjacentElement("afterend", newRow);
+                  setRoteiroTexto(editorRef.current.innerHTML);
+                }
+              }}
+              className="flex items-center gap-1.5 mt-2 text-xs font-semibold hover:opacity-80 transition cursor-pointer"
+              style={{ color: "#268ffa" }}
+            >
+              <Plus size={14} />
+              adicionar pergunta
+            </button>
           </div>
 
           {/* Exportar Roteiro */}
