@@ -332,9 +332,9 @@ export default function RoteiroApresentadorEdit() {
         </div>
 
         {/* Save button */}
-        <button onClick={handleSave} disabled={saving} className="w-full py-3 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2" style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", boxShadow: "0 4px 16px rgba(38,143,250,0.3)" }}>
-          <Save size={14} />
-          {saving ? "salvando..." : "programa ok"}
+        <button onClick={handleSave} disabled={saving} className="w-full py-3 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2" style={{ background: savedMsg ? "linear-gradient(135deg, #22c55e, #16a34a)" : "linear-gradient(135deg, #268ffa, #2dbef3)", boxShadow: savedMsg ? "0 4px 16px rgba(34,197,94,0.3)" : "0 4px 16px rgba(38,143,250,0.3)" }}>
+          {savedMsg ? <Check size={14} /> : <Save size={14} />}
+          {saving ? "salvando..." : savedMsg ? "programa ok ✓" : "programa ok"}
         </button>
 
         {savedMsg && (
