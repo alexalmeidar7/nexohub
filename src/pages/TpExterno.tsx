@@ -1039,7 +1039,7 @@ function TpScreen({ user, onBack }: { user: any; onBack: () => void }) {
         {showSetup && (
           <>
             <div onClick={() => setShowSetup(false)} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 90 }} />
-            <div style={{
+            <div className="tp-setup-modal" style={{
               position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)",
               width: "min(650px, 85%)", maxHeight: "75vh",
               background: "linear-gradient(135deg, #0d0446, #1a0a6e)",
