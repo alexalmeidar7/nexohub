@@ -1,7 +1,7 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ArrowLeft, Printer } from "lucide-react";
+import { ArrowLeft, Download } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
 
 export default function RoteiroExport() {
