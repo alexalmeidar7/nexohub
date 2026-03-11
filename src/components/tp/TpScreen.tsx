@@ -297,11 +297,11 @@ export default function TpScreen({ user, onBack }: TpScreenProps) {
             setTimerSeconds(0);
             setScrolling(false);
             // Persist remotely loaded text to DB
-            if (activeTpId) {
+            if (activeTpIdRef.current) {
               (supabase as any)
                 .from("teleprompters")
                 .update({ texto_atual: cmd.value.text, is_html: cmd.value.html })
-                .eq("id", activeTpId)
+                .eq("id", activeTpIdRef.current)
                 .then(() => {});
             }
             break;
