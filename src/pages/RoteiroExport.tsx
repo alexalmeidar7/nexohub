@@ -136,7 +136,7 @@ export default function RoteiroExport() {
           @page { margin: 1.5cm; }
         }
       `}</style>
-      <PdfPopup status={pdfPopup.status} blobUrl={pdfPopup.blobUrl} filename={pdfPopup.filename} onClose={pdfPopup.close} />
+      <PdfPopup status={pdfPopup.status} blobUrl={pdfPopup.blobUrl} filename={pdfPopup.filename} onClose={pdfPopup.close} anchorId="roteiro-export-page-content" />
     </div>
   );
 }
