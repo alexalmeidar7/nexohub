@@ -542,79 +542,94 @@ export default function RoteiroPrograma() {
               )}
 
               {/* Inline add participant fields */}
-              <div className="rounded-xl p-3 space-y-2" style={{ backgroundColor: "#ffffff", border: "1px dashed rgba(13,4,70,0.15)" }}>
-                <p className="text-[10px] font-bold" style={{ color: "#268ffa" }}>Participante {participantes.length + 1}</p>
-                
-                {/* Nome with autocomplete */}
-                <div className="relative">
+              {showParticipantForm ? (
+                <div className="rounded-xl p-3 space-y-2" style={{ backgroundColor: "#ffffff", border: "1px dashed rgba(13,4,70,0.15)" }}>
+                  <p className="text-[10px] font-bold" style={{ color: "#268ffa" }}>Participante {participantes.length + 1}</p>
+                  
+                  {/* Nome with autocomplete */}
+                  <div className="relative">
+                    <input
+                      ref={nameInputRef}
+                      value={newNome}
+                      onChange={e => {
+                        setNewNome(e.target.value);
+                        setSelectedFromDb(false);
+                        setShowSuggestions(true);
+                      }}
+                      onFocus={() => setShowSuggestions(true)}
+                      onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                      placeholder="nome"
+                      className="w-full px-3 py-2 rounded-lg text-xs outline-none"
+                      style={{ backgroundColor: "rgba(13,4,70,0.04)", border: "1px solid rgba(13,4,70,0.08)", color: "#0d0446" }}
+                    />
+                    {showSuggestions && nameSuggestions.length > 0 && (
+                      <div className="absolute z-10 left-0 right-0 mt-1 rounded-lg overflow-hidden shadow-lg" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.12)" }}>
+                        {nameSuggestions.map(s => (
+                          <button
+                            key={s.id}
+                            onMouseDown={() => selectSuggestion(s)}
+                            className="w-full text-left px-3 py-2 hover:bg-[rgba(38,143,250,0.08)] transition-colors flex items-center gap-2"
+                          >
+                            <UserPlus size={11} style={{ color: "#268ffa" }} />
+                            <div>
+                              <p className="text-xs font-semibold" style={{ color: "#0d0446" }}>{s.nome}</p>
+                              <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.4)" }}>{s.cargo}</p>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Categoria */}
+                  <select
+                    value={newCategoria}
+                    onChange={e => setNewCategoria(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg text-xs outline-none"
+                    style={{ backgroundColor: "rgba(13,4,70,0.04)", border: "1px solid rgba(13,4,70,0.08)", color: "#0d0446" }}
+                  >
+                    {categorias.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+
+                  {/* Cargo */}
                   <input
-                    ref={nameInputRef}
-                    value={newNome}
-                    onChange={e => {
-                      setNewNome(e.target.value);
-                      setSelectedFromDb(false);
-                      setShowSuggestions(true);
-                    }}
-                    onFocus={() => setShowSuggestions(true)}
-                    onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                    placeholder="nome"
+                    value={newCargoText}
+                    onChange={e => setNewCargoText(e.target.value)}
+                    placeholder="cargo (ex: Diretor, Produtor...)"
                     className="w-full px-3 py-2 rounded-lg text-xs outline-none"
                     style={{ backgroundColor: "rgba(13,4,70,0.04)", border: "1px solid rgba(13,4,70,0.08)", color: "#0d0446" }}
                   />
-                  {showSuggestions && nameSuggestions.length > 0 && (
-                    <div className="absolute z-10 left-0 right-0 mt-1 rounded-lg overflow-hidden shadow-lg" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.12)" }}>
-                      {nameSuggestions.map(s => (
-                        <button
-                          key={s.id}
-                          onMouseDown={() => selectSuggestion(s)}
-                          className="w-full text-left px-3 py-2 hover:bg-[rgba(38,143,250,0.08)] transition-colors flex items-center gap-2"
-                        >
-                          <UserPlus size={11} style={{ color: "#268ffa" }} />
-                          <div>
-                            <p className="text-xs font-semibold" style={{ color: "#0d0446" }}>{s.nome}</p>
-                            <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.4)" }}>{s.cargo}</p>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
+
+                  <input
+                    value={newInstagram}
+                    onChange={e => setNewInstagram(e.target.value)}
+                    placeholder="rede social (@usuario)"
+                    className="w-full px-3 py-2 rounded-lg text-xs outline-none"
+                    style={{ backgroundColor: "rgba(13,4,70,0.04)", border: "1px solid rgba(13,4,70,0.08)", color: "#0d0446" }}
+                  />
+                  <button
+                    onClick={() => {
+                      addParticipante();
+                      setShowParticipantForm(false);
+                    }}
+                    disabled={!newNome.trim()}
+                    className="w-full py-2 rounded-lg text-xs font-bold transition-all hover:opacity-90 disabled:opacity-40 flex items-center justify-center gap-1.5"
+                    style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#ffffff" }}
+                  >
+                    <Save size={12} />
+                    salvar participante
+                  </button>
                 </div>
-
-                {/* Categoria (same as cadastros) */}
-                <select
-                  value={newCategoria}
-                  onChange={e => setNewCategoria(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg text-xs outline-none"
-                  style={{ backgroundColor: "rgba(13,4,70,0.04)", border: "1px solid rgba(13,4,70,0.08)", color: "#0d0446" }}
-                >
-                  {categorias.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
-
-                {/* Cargo */}
-                <input
-                  value={newCargoText}
-                  onChange={e => setNewCargoText(e.target.value)}
-                  placeholder="cargo (ex: Diretor, Produtor...)"
-                  className="w-full px-3 py-2 rounded-lg text-xs outline-none"
-                  style={{ backgroundColor: "rgba(13,4,70,0.04)", border: "1px solid rgba(13,4,70,0.08)", color: "#0d0446" }}
-                />
-
-                <input
-                  value={newInstagram}
-                  onChange={e => setNewInstagram(e.target.value)}
-                  placeholder="rede social (@usuario)"
-                  className="w-full px-3 py-2 rounded-lg text-xs outline-none"
-                  style={{ backgroundColor: "rgba(13,4,70,0.04)", border: "1px solid rgba(13,4,70,0.08)", color: "#0d0446" }}
-                />
+              ) : (
                 <button
-                  onClick={addParticipante}
-                  disabled={!newNome.trim()}
-                  className="w-full py-2 rounded-lg text-xs font-bold transition-all hover:opacity-90 disabled:opacity-40"
-                  style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#ffffff" }}
+                  onClick={() => setShowParticipantForm(true)}
+                  className="w-full py-2.5 rounded-xl text-xs font-bold transition-all hover:opacity-90 flex items-center justify-center gap-1.5"
+                  style={{ border: "1px dashed rgba(38,143,250,0.4)", color: "#268ffa", backgroundColor: "rgba(38,143,250,0.04)" }}
                 >
-                  <Plus size={12} className="inline mr-1" />adicionar participante
+                  <Plus size={12} />
+                  adicionar participante
                 </button>
-              </div>
+              )}
             </div>
           </div>
 
