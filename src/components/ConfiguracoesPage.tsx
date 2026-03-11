@@ -588,7 +588,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
               <table className="w-full text-sm" style={{ color: "#0d0446" }}>
                 <thead>
                   <tr style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)", color: "#ffffff" }}>
-                    <th className="px-4 py-3 text-left font-semibold text-xs uppercase tracking-wider">Canal</th>
+                    <th className="px-4 py-3 text-left font-semibold text-xs uppercase tracking-wider" style={{ minWidth: "80px", whiteSpace: "nowrap" }}>Canal</th>
                     <th className="px-4 py-3 text-left font-semibold text-xs uppercase tracking-wider">Nome</th>
                     <th className="px-4 py-3 text-left font-semibold text-xs uppercase tracking-wider">Tipo</th>
                     <th className="px-4 py-3 text-center font-semibold text-xs uppercase tracking-wider">Capa</th>
@@ -599,8 +599,8 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
                 <tbody>
                   {canais.map((c, i) => (
                     <tr key={c.id} className="transition-colors hover:bg-blue-50/50" style={{ backgroundColor: i % 2 === 0 ? "#ffffff" : "#f8f9fe", borderTop: "1px solid rgba(13,4,70,0.05)" }}>
-                      <td className="px-4 py-3">
-                        <span className="inline-flex items-center justify-center w-7 h-7 rounded-lg text-xs font-bold" style={{ backgroundColor: "rgba(38,143,250,0.1)", color: "#268ffa" }}>
+                      <td className="px-4 py-3" style={{ minWidth: "80px", whiteSpace: "nowrap" }}>
+                        <span className="inline-flex items-center justify-center min-w-[32px] h-7 px-2 rounded-lg text-xs font-bold" style={{ backgroundColor: "rgba(38,143,250,0.1)", color: "#268ffa" }}>
                           {c.numero_canal || "—"}
                         </span>
                       </td>
