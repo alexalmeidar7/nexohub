@@ -552,6 +552,13 @@ function TpScreen({ user, onBack }: { user: any; onBack: () => void }) {
           }}>
             <RotateCcw size={16} color="rgba(255,255,255,0.5)" />
           </button>
+          <button onClick={onBack} title="Voltar ao menu" style={{
+            background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)",
+            borderRadius: "12px", width: "44px", height: "44px", cursor: "pointer",
+            display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.2s",
+          }}>
+            <LogOut size={16} color="rgba(255,255,255,0.5)" />
+          </button>
         </div>
 
         <div style={{ textAlign: "center" }}>
