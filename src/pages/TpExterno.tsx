@@ -14,6 +14,46 @@ interface Roteiro {
   numero_roteiro: number | null;
 }
 
+function extractRoteiroText(html: string): string {
+  const div = document.createElement("div");
+  div.innerHTML = html;
+
+  // Try to parse as structured table (Tempo | Elemento | Descrição | Ações)
+  const rows = div.querySelectorAll("tr[data-pergunta], table tr");
+  const lines: string[] = [];
+
+  if (rows.length > 0) {
+    rows.forEach((row) => {
+      // Skip header, action rows, and rows without meaningful content
+      if (row.querySelector("th")) return;
+      if (row.getAttribute("data-action-row") === "true") return;
+      if (row.querySelector("[contenteditable='false']") && !row.getAttribute("data-pergunta")) return;
+
+      const cells = row.querySelectorAll("td");
+      if (cells.length < 3) return;
+
+      // cells[0] = Tempo, cells[1] = Elemento, cells[2] = Descrição/Texto
+      const elemento = (cells[1]?.textContent || "").trim();
+      const descricao = (cells[2]?.textContent || "").trim();
+
+      if (!elemento && !descricao) return;
+      // Skip placeholder text
+      if (descricao === "[Insira a pergunta aqui]" || descricao === "[Insira o texto aqui]") return;
+
+      if (elemento) lines.push(elemento.toUpperCase());
+      if (descricao) lines.push(descricao);
+      lines.push(""); // blank line separator
+    });
+  }
+
+  if (lines.filter((l) => l.trim()).length > 0) {
+    return lines.join("\n").trim();
+  }
+
+  // Fallback: plain text extraction
+  return div.textContent || div.innerText || "";
+}
+
 function stripHtml(html: string): string {
   const div = document.createElement("div");
   div.innerHTML = html;
