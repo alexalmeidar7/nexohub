@@ -96,7 +96,7 @@ function stripHtml(html: string): string {
 
 export default function TpExterno() {
   const { user, loading: authLoading, signOut } = useAuth();
-  usePageTitle("Tele Prompter");
+  usePageTitle("NexoHub - Tele Prompter");
 
   // Flow: "login" → "menu" → "tp" | "mensagem"
   const [step, setStep] = useState<"login" | "menu" | "tp" | "mensagem">("login");
