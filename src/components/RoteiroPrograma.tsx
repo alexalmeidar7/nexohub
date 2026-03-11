@@ -47,6 +47,7 @@ export default function RoteiroPrograma() {
   const [roteiroTitulo, setRoteiroTitulo] = useState("");
   const [roteiroSubtitulo, setRoteiroSubtitulo] = useState("");
   const [roteiroTexto, setRoteiroTexto] = useState("");
+  const [assuntoSubtitulo, setAssuntoSubtitulo] = useState("");
   const [fontSize, setFontSize] = useState("14");
   const [perguntaCount, setPerguntaCount] = useState(1);
   const editorRef = useRef<HTMLDivElement>(null);
