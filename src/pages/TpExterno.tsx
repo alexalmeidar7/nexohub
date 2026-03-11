@@ -71,7 +71,7 @@ export default function TpExterno() {
     return () => clearInterval(id);
   }, []);
 
-  // Program timer
+  // Program timer — starts with play, resets when text returns to top
   useEffect(() => {
     if (scrolling) {
       timerRef.current = setInterval(() => setTimerSeconds((s) => s + 1), 1000);
@@ -87,11 +87,19 @@ export default function TpExterno() {
     return `${m}:${s}`;
   })();
 
-  // Scroll animation
+  // Scroll animation — auto-reset timer when text scrolls past top
   const animate = useCallback(() => {
     if (scrolling && textRef.current) {
       scrollPosRef.current -= speed * 0.1;
       textRef.current.style.top = scrollPosRef.current + "%";
+
+      // Check if text scrolled past the top — reset
+      const textBottom = textRef.current.getBoundingClientRect().bottom;
+      if (textBottom < 0) {
+        scrollPosRef.current = 50;
+        textRef.current.style.top = "50%";
+        setTimerSeconds(0);
+      }
     }
     animRef.current = requestAnimationFrame(animate);
   }, [scrolling, speed]);
@@ -100,6 +108,18 @@ export default function TpExterno() {
     animRef.current = requestAnimationFrame(animate);
     return () => { if (animRef.current) cancelAnimationFrame(animRef.current); };
   }, [animate]);
+
+  // Spacebar toggle play/pause
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.code === "Space" && !showSetup) {
+        e.preventDefault();
+        setScrolling((s) => !s);
+      }
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [showSetup]);
 
   function applyText(text: string) {
     setDisplayText(text);
