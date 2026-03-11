@@ -914,6 +914,33 @@ export type Database = {
         }
         Relationships: []
       }
+      teleprompters: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          estudio: string
+          id: string
+          nome: string
+          user_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          estudio?: string
+          id?: string
+          nome?: string
+          user_id: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          estudio?: string
+          id?: string
+          nome?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       testemunhais: {
         Row: {
           created_at: string
