@@ -1310,7 +1310,7 @@ function TpController({ user, onBack }: { user: any; onBack: () => void }) {
       </div>
 
       {/* TP Preview Mirror */}
-      <div style={{
+      <div className="tp-ctrl-preview" style={{
         width: "min(900px, 90vw)", height: "min(500px, 55vh)", position: "relative",
         backgroundColor: "#020210", borderRadius: "12px", overflow: "hidden",
         border: "1px solid rgba(74,144,226,0.3)", boxShadow: "0 16px 48px rgba(0,0,0,0.5)",
