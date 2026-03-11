@@ -274,6 +274,12 @@ export default function RoteiroPrograma() {
 <td style="${tdStyle};font-weight:600">PERGUNTA 1</td>
 <td style="${tdStyle}">[Insira a pergunta aqui]</td>
 </tr>
+<tr data-action-row="true" contenteditable="false">
+<td style="${tdStyle}" colspan="3">
+<span data-action="add-pergunta" style="color:#268ffa;font-weight:600;font-size:12px;cursor:pointer;margin-right:16px">＋ adicionar pergunta</span>
+<span data-action="remove-pergunta" style="color:#dc2626;font-weight:600;font-size:12px;cursor:pointer">✕ remover última pergunta</span>
+</td>
+</tr>
 <tr>
 <td style="${tdStyle}">01:30</td>
 <td style="${tdStyle};font-weight:600">CORTES / B-ROLL</td>
