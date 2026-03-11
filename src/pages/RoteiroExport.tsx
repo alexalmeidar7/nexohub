@@ -3,6 +3,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ArrowLeft, Download } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import { usePdfPopup, PdfPopup } from "@/components/PdfPopup";
 
 export default function RoteiroExport() {
   usePageTitle("Roteiro Export");
