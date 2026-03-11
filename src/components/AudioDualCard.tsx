@@ -262,7 +262,8 @@ export default function AudioDualCard({
           </div>
         </div>
 
-        {/* History box — slides out to the right of the music card */}
+        {/* History box — slides out to the right of the music card (hidden on mobile, shown as overlay) */}
+        {!isMobile && (
         <div
           className="absolute md:w-[55%] w-[70%] rounded-3xl overflow-hidden backdrop-blur-xl"
           style={{
