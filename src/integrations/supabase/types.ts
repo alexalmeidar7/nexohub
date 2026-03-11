@@ -686,14 +686,18 @@ export type Database = {
       }
       roteiros: {
         Row: {
+          apresentador_editado: boolean | null
           conteudo_html: string
           created_at: string
           data_programa: string
+          editado_at: string | null
           estudio: string
           horario: string
           id: string
           participantes: Json
           programa_nome: string
+          share_login: string | null
+          share_token: string | null
           status: string
           subtitulo: string
           tipo_programa: string
@@ -702,14 +706,18 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          apresentador_editado?: boolean | null
           conteudo_html?: string
           created_at?: string
           data_programa?: string
+          editado_at?: string | null
           estudio?: string
           horario?: string
           id?: string
           participantes?: Json
           programa_nome?: string
+          share_login?: string | null
+          share_token?: string | null
           status?: string
           subtitulo?: string
           tipo_programa?: string
@@ -718,14 +726,18 @@ export type Database = {
           user_id: string
         }
         Update: {
+          apresentador_editado?: boolean | null
           conteudo_html?: string
           created_at?: string
           data_programa?: string
+          editado_at?: string | null
           estudio?: string
           horario?: string
           id?: string
           participantes?: Json
           programa_nome?: string
+          share_login?: string | null
+          share_token?: string | null
           status?: string
           subtitulo?: string
           tipo_programa?: string

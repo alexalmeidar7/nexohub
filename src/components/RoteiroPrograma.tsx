@@ -871,7 +871,45 @@ export default function RoteiroPrograma() {
                 <Printer size={13} />
                 imprimir
               </button>
-              <button onClick={() => toast.info("Funcionalidade de envio ao apresentador em breve!")} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold hover:opacity-90 transition" style={{ backgroundColor: "rgba(13,4,70,0.06)", color: "#0d0446" }}>
+              <button
+                onClick={async () => {
+                  // First save roteiro if not saved yet
+                  if (!editingRoteiroId && user) {
+                    const shareToken = crypto.randomUUID();
+                    const firstName = participantes.length > 0 ? participantes[0].nome.split(" ")[0].toLowerCase() : "apresentador";
+                    const payload = {
+                      user_id: user.id,
+                      programa_nome: programaNome,
+                      estudio,
+                      tipo_programa: tipoPrograma,
+                      data_programa: format(selectedDate, "yyyy-MM-dd"),
+                      horario,
+                      titulo: roteiroTitulo,
+                      subtitulo: roteiroSubtitulo,
+                      conteudo_html: editorRef.current?.innerHTML || roteiroTexto,
+                      participantes: JSON.stringify(participantes),
+                      status: isAgendado ? "agendado" : "rascunho",
+                      share_token: shareToken,
+                      share_login: firstName,
+                    };
+                    const { error } = await supabase.from("roteiros").insert(payload);
+                    if (error) { toast.error("Erro ao salvar roteiro"); return; }
+                    const url = `${window.location.origin}/roteiro-apresentador-edit?token=${shareToken}`;
+                    await navigator.clipboard.writeText(url).catch(() => {});
+                    toast.success(`Link copiado! Login: ${firstName} / Senha: edit123`);
+                  } else if (editingRoteiroId && user) {
+                    const shareToken = crypto.randomUUID();
+                    const firstName = participantes.length > 0 ? participantes[0].nome.split(" ")[0].toLowerCase() : "apresentador";
+                    await supabase.from("roteiros").update({ share_token: shareToken, share_login: firstName }).eq("id", editingRoteiroId);
+                    const url = `${window.location.origin}/roteiro-apresentador-edit?token=${shareToken}`;
+                    await navigator.clipboard.writeText(url).catch(() => {});
+                    toast.success(`Link copiado! Login: ${firstName} / Senha: edit123`);
+                    fetchHistorico();
+                  }
+                }}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold hover:opacity-90 transition"
+                style={{ backgroundColor: "rgba(13,4,70,0.06)", color: "#0d0446" }}
+              >
                 <Send size={13} />
                 enviar para o apresentador
               </button>
