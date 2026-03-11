@@ -20,7 +20,7 @@ export default function TpMenu({ onMessage, onControl, onOpenTp, onLogout }: TpM
   useEffect(() => {
     if (!user) return;
     const ch = supabase
-      .channel(`tp-state-${user.id}-menu`)
+      .channel(`tp-state-${user.id}`)
       .on("broadcast", { event: "tp-state" }, () => {
         lastStateRef.current = Date.now();
         setTpOnline(true);
