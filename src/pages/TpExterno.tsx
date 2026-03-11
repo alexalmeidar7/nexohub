@@ -772,7 +772,7 @@ function TpScreen({ user, onBack }: { user: any; onBack: () => void }) {
         type: "broadcast", event: "tp-state",
         payload: {
           scrolling, speed, fontSize, flipH, flipV,
-          displayText: displayText.substring(0, 200),
+          displayText: displayText.substring(0, 1000),
           isHtmlContent, timerSeconds, scrollPos: scrollPosRef.current,
         },
       });
