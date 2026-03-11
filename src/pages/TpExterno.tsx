@@ -109,16 +109,52 @@ export default function TpExterno() {
     return () => { if (animRef.current) cancelAnimationFrame(animRef.current); };
   }, [animate]);
 
-  // Spacebar toggle play/pause
+  // Keyboard: Spacebar toggle, PageUp/PageDown scroll
   useEffect(() => {
+    const STEP = 80; // pixels per key press
     const handleKey = (e: KeyboardEvent) => {
-      if (e.code === "Space" && !showSetup) {
+      if (showSetup) return;
+      if (e.code === "Space") {
         e.preventDefault();
         setScrolling((s) => !s);
+      }
+      if (e.code === "PageDown" || e.code === "ArrowDown") {
+        e.preventDefault();
+        if (textRef.current) {
+          const containerH = textRef.current.parentElement?.clientHeight || 1;
+          scrollPosRef.current -= (STEP / containerH) * 100;
+          textRef.current.style.top = scrollPosRef.current + "%";
+        }
+      }
+      if (e.code === "PageUp" || e.code === "ArrowUp") {
+        e.preventDefault();
+        if (textRef.current) {
+          const containerH = textRef.current.parentElement?.clientHeight || 1;
+          scrollPosRef.current += (STEP / containerH) * 100;
+          textRef.current.style.top = scrollPosRef.current + "%";
+        }
       }
     };
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
+  }, [showSetup]);
+
+  // Mouse wheel scroll
+  useEffect(() => {
+    const el = containerRef.current?.querySelector("[data-tp-display]") as HTMLElement | null;
+    if (!el) return;
+    const handleWheel = (e: WheelEvent) => {
+      if (showSetup) return;
+      e.preventDefault();
+      if (textRef.current) {
+        const containerH = el.clientHeight || 1;
+        const delta = (e.deltaY / containerH) * 100;
+        scrollPosRef.current -= delta * 0.3;
+        textRef.current.style.top = scrollPosRef.current + "%";
+      }
+    };
+    el.addEventListener("wheel", handleWheel, { passive: false });
+    return () => el.removeEventListener("wheel", handleWheel);
   }, [showSetup]);
 
   function applyText(text: string) {
@@ -222,7 +258,7 @@ export default function TpExterno() {
       </div>
 
       {/* ─── Display Area ─── */}
-      <div style={{ position: "relative", backgroundColor: "#020210", overflow: "hidden" }}>
+      <div data-tp-display style={{ position: "relative", backgroundColor: "#020210", overflow: "hidden" }}>
         <div style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 5, background: "radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.6) 100%)" }} />
 
         {/* Eyeline markers */}
