@@ -404,11 +404,15 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
                 </p>
               </div>
             </div>
-            <div className="flex rounded-full overflow-hidden shadow-sm" style={{ border: "2px solid #0d0446" }}>
+            <div className="flex gap-2">
               <button
                 onClick={() => { setCanalMode("live"); setCanalForm(p => ({ ...p, type: "audio_live" })); }}
-                className="px-5 py-2 text-xs font-bold transition-all flex items-center gap-1.5"
-                style={{ backgroundColor: canalMode === "live" ? "#0d0446" : "#ffffff", color: canalMode === "live" ? "#ffffff" : "#0d0446" }}
+                className="px-5 py-2.5 text-xs font-bold transition-all flex items-center gap-2 rounded-xl"
+                style={{
+                  backgroundColor: canalMode === "live" ? "#0d0446" : "rgba(13,4,70,0.05)",
+                  color: canalMode === "live" ? "#ffffff" : "#0d0446",
+                  boxShadow: canalMode === "live" ? "0 4px 12px rgba(13,4,70,0.25)" : "none",
+                }}
               >
                 📡 Ao Vivo
               </button>
@@ -422,8 +426,12 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
                   }, 0);
                   setCanalForm(p => ({ ...p, type: "catalog", numero_canal: String(maxNum + 1).padStart(2, "0") }));
                 }}
-                className="px-5 py-2 text-xs font-bold transition-all flex items-center gap-1.5"
-                style={{ backgroundColor: canalMode === "catalog" ? "#0d0446" : "#ffffff", color: canalMode === "catalog" ? "#ffffff" : "#0d0446", borderLeft: "2px solid #0d0446" }}
+                className="px-5 py-2.5 text-xs font-bold transition-all flex items-center gap-2 rounded-xl"
+                style={{
+                  backgroundColor: canalMode === "catalog" ? "#0d0446" : "rgba(13,4,70,0.05)",
+                  color: canalMode === "catalog" ? "#ffffff" : "#0d0446",
+                  boxShadow: canalMode === "catalog" ? "0 4px 12px rgba(13,4,70,0.25)" : "none",
+                }}
               >
                 📁 Catálogo
               </button>
