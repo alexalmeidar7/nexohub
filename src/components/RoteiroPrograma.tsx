@@ -797,6 +797,21 @@ export default function RoteiroPrograma() {
               {savingRoteiro ? "salvando..." : editingRoteiroId ? "atualizar roteiro" : "salvar roteiro"}
             </button>
             <button
+              onClick={() => {
+                navigate("/roteiro-export", {
+                  state: {
+                    titulo: roteiroTitulo,
+                    programaNome,
+                    estudio,
+                    data: format(selectedDate, "yyyy-MM-dd"),
+                    horario,
+                    assuntoTitulo: roteiroSubtitulo,
+                    assuntoSubtitulo,
+                    participantes,
+                    conteudoHtml: editorRef.current?.innerHTML || roteiroTexto,
+                  },
+                });
+              }}
               className="flex-1 py-3 rounded-xl text-sm font-bold transition-all hover:opacity-90 flex items-center justify-center gap-2"
               style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#ffffff", boxShadow: "0 4px 16px rgba(38,143,250,0.3)" }}
             >
