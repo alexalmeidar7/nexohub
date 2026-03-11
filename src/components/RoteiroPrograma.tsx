@@ -974,9 +974,16 @@ ${perguntaActions}
               voltar ao roteiro
             </button>
             <div className="flex items-center gap-2 print:hidden flex-wrap">
-              <button onClick={() => window.print()} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold text-white hover:opacity-90 transition" style={{ backgroundColor: "#268ffa" }}>
-                <Printer size={13} />
-                imprimir
+              <button onClick={async () => {
+                const el = document.getElementById("roteiro-export-content");
+                if (el) {
+                  const { generatePdf } = await import("@/lib/generatePdf");
+                  const safeName = (programaNome || "roteiro").replace(/\s+/g, "_").toLowerCase();
+                  await generatePdf(el, `roteiro_${safeName}.pdf`);
+                }
+              }} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold text-white hover:opacity-90 transition" style={{ backgroundColor: "#268ffa" }}>
+                <Download size={13} />
+                gerar PDF
               </button>
               <button
                 onClick={async () => {
