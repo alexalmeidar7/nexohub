@@ -137,18 +137,18 @@ export default function AudioDualCard({
   const cleanPhone = whatsappPhone?.replace(/\D/g, "") || "";
 
   return (
-    <div className="absolute inset-0 z-10 flex items-center justify-center overflow-hidden" style={{ paddingBottom: isMobile ? "80px" : "100px" }}>
+    <div className="absolute inset-0 z-10 flex items-center justify-center overflow-hidden" style={{ paddingBottom: isMobile ? "70px" : "100px" }}>
       {/* Background — same as player home */}
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{ backgroundImage: "url(/images/player-bg.png)", backgroundColor: "hsl(0 0% 5%)" }}
       />
       {/* Wrapper */}
-      <div className={`relative ${isMobile ? "flex flex-col items-center gap-3 w-[90vw] max-w-[360px]" : `flex items-center justify-center ${isTV ? "max-w-[1200px]" : "max-w-[800px]"}`}`} style={isMobile ? {} : { width: isTV ? "80vw" : "80vw", height: isTV ? "80vh" : "min(80vh, 420px)" }}>
+      <div className={`relative ${isMobile ? "flex flex-col items-center gap-2 w-[85vw] max-w-[320px]" : `flex items-center justify-center ${isTV ? "max-w-[1200px]" : "max-w-[800px]"}`}`} style={isMobile ? {} : { width: isTV ? "80vw" : "80vw", height: isTV ? "80vh" : "min(80vh, 420px)" }}>
 
-        {/* Left — Presenter (hidden behind cover, slides left at 3s) */}
+        {/* Left — Presenter */}
         <div
-          className={`${isMobile ? "relative w-full" : "absolute md:w-[50%] w-[70%]"} aspect-square rounded-3xl overflow-hidden shadow-xl`}
+          className={`${isMobile ? "relative w-full aspect-[4/3]" : "absolute md:w-[50%] w-[70%] aspect-square"} rounded-3xl overflow-hidden shadow-xl`}
           style={{
             ...(isMobile ? {} : {
               animation: "presenterReveal 1.6s cubic-bezier(0.22, 1, 0.36, 1) 3s forwards",
