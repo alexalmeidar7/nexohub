@@ -142,6 +142,50 @@ export default function RoteiroPrograma() {
     setRoteiroSubtitulo("");
     setRoteiroTexto("");
     setShowRoteiro(true);
+
+    // Preenche o editor com a estrutura padrão após render
+    setTimeout(() => {
+      if (editorRef.current) {
+        const defaultContent = `<table style="width:100%;border-collapse:collapse;font-size:13px;color:#0d0446">
+<thead>
+<tr style="background:rgba(38,143,250,0.08)">
+<th style="border:1px solid rgba(13,4,70,0.12);padding:8px 10px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:0.5px">Tempo</th>
+<th style="border:1px solid rgba(13,4,70,0.12);padding:8px 10px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:0.5px">Elemento</th>
+<th style="border:1px solid rgba(13,4,70,0.12);padding:8px 10px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:0.5px">Descrição / Texto</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="border:1px solid rgba(13,4,70,0.12);padding:8px 10px">00:00</td>
+<td style="border:1px solid rgba(13,4,70,0.12);padding:8px 10px;font-weight:600">VINHETA</td>
+<td style="border:1px solid rgba(13,4,70,0.12);padding:8px 10px">Abertura padrão do programa (Áudio + Vídeo).</td>
+</tr>
+<tr>
+<td style="border:1px solid rgba(13,4,70,0.12);padding:8px 10px">00:15</td>
+<td style="border:1px solid rgba(13,4,70,0.12);padding:8px 10px;font-weight:600">OFF / CABEÇA</td>
+<td style="border:1px solid rgba(13,4,70,0.12);padding:8px 10px">APRESENTADOR: "Olá! Hoje o tema é sério. Vamos falar sobre como a informação é o melhor caminho contra a dependência química."</td>
+</tr>
+<tr>
+<td style="border:1px solid rgba(13,4,70,0.12);padding:8px 10px">00:45</td>
+<td style="border:1px solid rgba(13,4,70,0.12);padding:8px 10px;font-weight:600">ENTREVISTA</td>
+<td style="border:1px solid rgba(13,4,70,0.12);padding:8px 10px">PERGUNTA 01: [Insira a pergunta aqui]</td>
+</tr>
+<tr>
+<td style="border:1px solid rgba(13,4,70,0.12);padding:8px 10px">01:30</td>
+<td style="border:1px solid rgba(13,4,70,0.12);padding:8px 10px;font-weight:600">CORTES / B-ROLL</td>
+<td style="border:1px solid rgba(13,4,70,0.12);padding:8px 10px">Inserir imagens de apoio (família conversando, centros de apoio) enquanto o convidado fala.</td>
+</tr>
+<tr>
+<td style="border:1px solid rgba(13,4,70,0.12);padding:8px 10px">04:00</td>
+<td style="border:1px solid rgba(13,4,70,0.12);padding:8px 10px;font-weight:600">ENCERRAMENTO</td>
+<td style="border:1px solid rgba(13,4,70,0.12);padding:8px 10px">APRESENTADOR: "Agradecemos ao [Nome]. Se você precisa de ajuda, ligue para o [Número/CAPS]. Até amanhã."</td>
+</tr>
+</tbody>
+</table>`;
+        editorRef.current.innerHTML = defaultContent;
+        setRoteiroTexto(defaultContent);
+      }
+    }, 100);
   };
 
   const selectSuggestion = (apres: Apresentador) => {
