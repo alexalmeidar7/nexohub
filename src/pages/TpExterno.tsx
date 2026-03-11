@@ -165,9 +165,16 @@ export default function TpExterno() {
     try { return JSON.parse(localStorage.getItem("tp-msg-history") || "[]"); } catch { return []; }
   });
 
-  // Redirect to menu if already logged in
+  // Redirect to menu (or directly to TP if ?view=tp) if already logged in
   useEffect(() => {
-    if (!authLoading && user && step === "login") setStep("menu");
+    if (!authLoading && user && step === "login") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("view") === "tp") {
+        setStep("tp");
+      } else {
+        setStep("menu");
+      }
+    }
   }, [authLoading, user, step]);
 
   async function handleLogin(e: React.FormEvent) {
