@@ -53,6 +53,7 @@ export default function RoteiroPrograma() {
   const [fontSize, setFontSize] = useState("14");
   const [perguntaCount, setPerguntaCount] = useState(1);
   const editorRef = useRef<HTMLDivElement>(null);
+  const exportViewRef = useRef<HTMLDivElement>(null);
   const [participantes, setParticipantes] = useState<{ nome: string; categoria: string; cargo: string; instagram: string }[]>([]);
   
   const [newNome, setNewNome] = useState("");
@@ -188,6 +189,14 @@ export default function RoteiroPrograma() {
 
       setEditingRoteiroId(null);
       fetchHistorico();
+      
+      // Reopen export view and scroll to end
+      setShowExportView(true);
+      setTimeout(() => {
+        if (exportViewRef.current) {
+          exportViewRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
+        }
+      }, 300);
     }
   };
 
@@ -215,6 +224,7 @@ export default function RoteiroPrograma() {
     } catch { setParticipantes([]); }
     setEditingRoteiroId(r.id);
     setShowRoteiro(true);
+    setShowExportView(false);
     setTimeout(() => {
       if (editorRef.current) editorRef.current.innerHTML = r.conteudo_html || "";
     }, 150);
@@ -885,7 +895,7 @@ export default function RoteiroPrograma() {
 
       {/* Export View Inline */}
       {showExportView && (
-        <div className="mt-4">
+        <div ref={exportViewRef} className="mt-4">
           {/* Top bar */}
           <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
             <button onClick={() => setShowExportView(false)} className="flex items-center gap-2 text-xs font-semibold hover:opacity-80 transition" style={{ color: "#268ffa" }}>
