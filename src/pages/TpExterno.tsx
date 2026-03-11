@@ -1327,7 +1327,38 @@ function TpController({ user, onBack }: { user: any; onBack: () => void }) {
     return () => clearInterval(id);
   }, []);
 
-  const controlBtnStyle: React.CSSProperties = {
+  // Keyboard controls: Space=toggle, Numpad+/-=speed
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (showSetup) return;
+      if (e.code === "Space") {
+        e.preventDefault();
+        sendCommand("toggle");
+      }
+      if (e.code === "NumpadAdd" || (e.key === "+" && e.location === 3)) {
+        e.preventDefault();
+        sendCommand("speed", Math.min(10, speed + 1));
+      }
+      if (e.code === "NumpadSubtract" || (e.key === "-" && e.location === 3)) {
+        e.preventDefault();
+        sendCommand("speed", Math.max(0, speed - 1));
+      }
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [showSetup, speed]);
+
+  // Mouse wheel: scroll text
+  useEffect(() => {
+    const handleWheel = (e: WheelEvent) => {
+      if (showSetup) return;
+      e.preventDefault();
+      sendCommand("scrollStep", e.deltaY > 0 ? -60 : 60);
+    };
+    window.addEventListener("wheel", handleWheel, { passive: false });
+    return () => window.removeEventListener("wheel", handleWheel);
+  }, [showSetup]);
+
     background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)",
     borderRadius: "8px", padding: "6px 8px", cursor: "pointer",
     display: "flex", alignItems: "center", justifyContent: "center", color: "#fff",
