@@ -702,8 +702,10 @@ function TpScreen({ user, onBack }: { user: any; onBack: () => void }) {
             <div style={{
               background: "rgba(13,4,70,0.92)", backdropFilter: "blur(20px)",
               borderRadius: "14px", padding: "16px 24px 10px", minWidth: "300px", maxWidth: "500px",
-              border: "1px solid rgba(74,144,226,0.3)", boxShadow: "0 12px 40px rgba(0,0,0,0.5)",
+              boxShadow: "0 12px 40px rgba(0,0,0,0.5)",
               overflow: "hidden", position: "relative",
+              animation: msgVisible ? "tp-msg-border-pulse 1s ease-in-out infinite" : "none",
+              border: "2px solid rgba(255,255,255,0.8)",
             }}>
               <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
                 <MessageSquare size={14} color="#4a90e2" />
@@ -711,7 +713,7 @@ function TpScreen({ user, onBack }: { user: any; onBack: () => void }) {
                   {incomingMsg.subject || "Mensagem"}
                 </span>
               </div>
-              <p style={{ color: "#fff", fontSize: "14px", margin: 0, lineHeight: 1.5 }}>
+              <p style={{ color: "#fff", fontSize: "24px", fontWeight: 700, margin: 0, lineHeight: 1.4 }}>
                 {incomingMsg.text}
               </p>
               {/* Progress bar */}
