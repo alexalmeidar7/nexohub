@@ -239,6 +239,7 @@ export default function TpExterno() {
           width: "75%", margin: "0 auto", fontSize: `${fontSize}px`, lineHeight: 1.5,
           textAlign: "center", whiteSpace: "pre-wrap", position: "absolute", top: "50%", left: "12.5%",
           transition: "font-size 0.2s", color: "#ffffff", textShadow: "0 2px 20px rgba(0,0,0,0.5)", fontWeight: 400,
+          transform: `${flipH ? "scaleX(-1)" : ""} ${flipV ? "scaleY(-1)" : ""}`.trim() || "none",
         }}>
           {displayText}
         </div>
