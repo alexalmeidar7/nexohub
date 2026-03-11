@@ -133,15 +133,19 @@ export default function TpExterno() {
     }
   }
 
-  async function handleSendMessage() {
-    if (!msgText.trim() || !user) return;
+  async function sendMsg(text: string) {
+    if (!text.trim() || !user) return;
     setMsgSending(true);
-    const msg = { text: msgText.trim(), subject: "Mensagem", ts: Date.now() };
-    // Save to localStorage queue so TP picks it up even if opened later
+    const msg = { text: text.trim(), subject: "Mensagem", ts: Date.now() };
+    // Save to localStorage queue for TP
     const queue = JSON.parse(localStorage.getItem("tp-msg-queue") || "[]");
     queue.push(msg);
     localStorage.setItem("tp-msg-queue", JSON.stringify(queue));
-    // Also broadcast for live TP sessions
+    // Save to history
+    const newHistory = [{ text: text.trim(), ts: Date.now() }, ...msgHistory].slice(0, 50);
+    setMsgHistory(newHistory);
+    localStorage.setItem("tp-msg-history", JSON.stringify(newHistory));
+    // Broadcast
     try {
       const channel = supabase.channel(`tp-msg-${user.id}`);
       await channel.subscribe();
@@ -152,6 +156,15 @@ export default function TpExterno() {
     setMsgSent(true);
     setMsgText("");
     setTimeout(() => setMsgSent(false), 3000);
+  }
+
+  async function handleSendMessage() { await sendMsg(msgText); }
+
+  async function handleResend(text: string) { await sendMsg(text); }
+
+  function clearHistory() {
+    setMsgHistory([]);
+    localStorage.removeItem("tp-msg-history");
   }
 
   async function handleLogout() {
