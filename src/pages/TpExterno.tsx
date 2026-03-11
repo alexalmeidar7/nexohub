@@ -141,19 +141,14 @@ export default function TpExterno() {
     return () => window.removeEventListener("keydown", handleKey);
   }, [showSetup]);
 
-  // Mouse wheel scroll
+  // Mouse wheel — adjust speed
   useEffect(() => {
     const el = containerRef.current?.querySelector("[data-tp-display]") as HTMLElement | null;
     if (!el) return;
     const handleWheel = (e: WheelEvent) => {
       if (showSetup) return;
       e.preventDefault();
-      if (textRef.current) {
-        const containerH = el.clientHeight || 1;
-        const delta = (e.deltaY / containerH) * 100;
-        scrollPosRef.current -= delta * 0.3;
-        textRef.current.style.top = scrollPosRef.current + "%";
-      }
+      setSpeed((s) => Math.min(10, Math.max(0, s + (e.deltaY > 0 ? 1 : -1))));
     };
     el.addEventListener("wheel", handleWheel, { passive: false });
     return () => el.removeEventListener("wheel", handleWheel);
