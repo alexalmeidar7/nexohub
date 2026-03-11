@@ -226,7 +226,10 @@ export default function RoteiroPrograma() {
     setShowRoteiro(true);
     setShowExportView(false);
     setTimeout(() => {
-      if (editorRef.current) editorRef.current.innerHTML = r.conteudo_html || "";
+      if (editorRef.current) {
+        editorRef.current.innerHTML = r.conteudo_html || "";
+        injectPerguntaActions(editorRef.current);
+      }
     }, 150);
   };
 
