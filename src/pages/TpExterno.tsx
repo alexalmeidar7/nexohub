@@ -286,6 +286,7 @@ export default function TpExterno() {
         <img src={logoNexo} alt="Nexo" style={{ height: "36px", opacity: 0.9 }} />
         <div className="tp-menu-buttons" style={{ display: "flex", gap: "24px" }}>
           <button
+            className="tp-menu-btn"
             onClick={() => setStep("mensagem")}
             style={{
               width: "180px", height: "180px", borderRadius: "20px", border: "1px solid rgba(74,144,226,0.3)",
