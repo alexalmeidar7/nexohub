@@ -5,6 +5,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Lock, Check, History, Save, Pencil, Bold, Underline, AlignLeft, AlignCenter, AlignRight, List, ListOrdered } from "lucide-react";
 import { toast } from "sonner";
+import { injectPerguntaActions } from "@/lib/roteiroActions";
 
 interface Participante {
   nome: string;
@@ -129,6 +130,7 @@ export default function RoteiroApresentadorEdit() {
     setTimeout(() => {
       if (editorRef.current) {
         editorRef.current.innerHTML = data.conteudo_html || "";
+        injectPerguntaActions(editorRef.current);
         // Count existing perguntas
         const existing = editorRef.current.querySelectorAll("tr[data-pergunta]");
         setPerguntaCount(existing.length || 1);
