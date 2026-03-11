@@ -856,7 +856,7 @@ function TpScreen({ user, onBack }: { user: any; onBack: () => void }) {
           </button>
         </div>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: "16px", alignItems: "center" }}>
+        <div className="tp-sidebar-mid" style={{ display: "flex", flexDirection: "column", gap: "16px", alignItems: "center" }}>
           <button onClick={() => setShowSetup(!showSetup)} title="Configurações" style={{
             background: showSetup ? "rgba(74,144,226,0.2)" : "rgba(255,255,255,0.05)",
             border: "1px solid rgba(74,144,226,0.3)", borderRadius: "12px",
