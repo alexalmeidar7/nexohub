@@ -739,6 +739,10 @@ function TpScreen({ user, onBack }: { user: any; onBack: () => void }) {
       .on("broadcast", { event: "tp-command" }, (payload: any) => {
         const cmd = payload.payload;
         if (!cmd) return;
+        // Mark remote control as active
+        setRemoteActive(true);
+        if (remoteTimeoutRef.current) clearTimeout(remoteTimeoutRef.current);
+        remoteTimeoutRef.current = setTimeout(() => setRemoteActive(false), 5000);
         switch (cmd.action) {
           case "play": setScrolling(true); break;
           case "pause": setScrolling(false); break;
