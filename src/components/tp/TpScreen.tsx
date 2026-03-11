@@ -19,6 +19,8 @@ export default function TpScreen({ user, onBack }: TpScreenProps) {
     "Clique em ⚙️ para selecionar um roteiro ou colar um texto..."
   );
   const [activeTpId, setActiveTpId] = useState<string | null>(null);
+  const activeTpIdRef = useRef<string | null>(null);
+  useEffect(() => { activeTpIdRef.current = activeTpId; }, [activeTpId]);
   const [clock, setClock] = useState("00:00");
   const [timerSeconds, setTimerSeconds] = useState(0);
   const [roteiros, setRoteiros] = useState<Roteiro[]>([]);
