@@ -131,7 +131,7 @@ export default function RoteiroPrograma() {
             </label>
             <select
               value={estudio}
-              onChange={e => setEstudio(e.target.value)}
+              onChange={e => handleEstudioChange(e.target.value)}
               className="w-full px-3 py-2 rounded-lg text-xs outline-none transition-colors"
               style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.15)", color: "#0d0446" }}
             >
