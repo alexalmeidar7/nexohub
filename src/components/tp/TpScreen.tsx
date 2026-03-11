@@ -417,6 +417,14 @@ export default function TpScreen({ user, onBack }: TpScreenProps) {
     if (textRef.current) textRef.current.style.top = "50%";
     setTimerSeconds(0);
     setShowSetup(false);
+    // Persist text to DB
+    if (activeTpId) {
+      (supabase as any)
+        .from("teleprompters")
+        .update({ texto_atual: text, is_html: html })
+        .eq("id", activeTpId)
+        .then(() => {});
+    }
   }
 
   function handleSaveManual() { if (inputText.trim()) applyText(inputText, false); }
