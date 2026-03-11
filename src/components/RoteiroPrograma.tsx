@@ -242,6 +242,7 @@ export default function RoteiroPrograma() {
       setParticipantes(typeof r.participantes === "string" ? JSON.parse(r.participantes) : r.participantes || []);
     } catch { setParticipantes([]); }
     setEditingRoteiroId(r.id);
+    setNumeroRoteiro(r.numero_roteiro || null);
     setShowRoteiro(true);
     setShowExportView(false);
     setTimeout(() => {
