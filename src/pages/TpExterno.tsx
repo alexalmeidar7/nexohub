@@ -646,6 +646,68 @@ function TpScreen({ user, onBack }: { user: any; onBack: () => void }) {
     return () => el.removeEventListener("wheel", handleWheel);
   }, [showSetup]);
 
+  // ─── Remote control listener ───
+  useEffect(() => {
+    if (!user) return;
+    const channel = supabase
+      .channel(`tp-control-${user.id}`)
+      .on("broadcast", { event: "tp-command" }, (payload: any) => {
+        const cmd = payload.payload;
+        if (!cmd) return;
+        switch (cmd.action) {
+          case "play": setScrolling(true); break;
+          case "pause": setScrolling(false); break;
+          case "toggle": setScrolling(s => !s); break;
+          case "speed": setSpeed(cmd.value); break;
+          case "fontSize": setFontSize(cmd.value); break;
+          case "reset":
+            setScrolling(false);
+            scrollPosRef.current = 50;
+            if (textRef.current) textRef.current.style.top = "50%";
+            setTimerSeconds(0);
+            break;
+          case "scrollStep":
+            if (textRef.current) {
+              const containerH = textRef.current.parentElement?.clientHeight || 1;
+              scrollPosRef.current += (cmd.value / containerH) * 100;
+              textRef.current.style.top = scrollPosRef.current + "%";
+            }
+            break;
+          case "flipH": setFlipH(f => !f); break;
+          case "flipV": setFlipV(f => !f); break;
+        }
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [user]);
+
+  // ─── Broadcast state to controller ───
+  const stateChannelRef = useRef<any>(null);
+  useEffect(() => {
+    if (!user) return;
+    const ch = supabase.channel(`tp-state-${user.id}`);
+    ch.subscribe();
+    stateChannelRef.current = ch;
+    return () => { supabase.removeChannel(ch); stateChannelRef.current = null; };
+  }, [user]);
+
+  // Broadcast state changes periodically
+  useEffect(() => {
+    if (!stateChannelRef.current) return;
+    const id = setInterval(() => {
+      stateChannelRef.current?.send({
+        type: "broadcast", event: "tp-state",
+        payload: {
+          scrolling, speed, fontSize, flipH, flipV,
+          displayText: displayText.substring(0, 200),
+          isHtmlContent, timerSeconds, scrollPos: scrollPosRef.current,
+        },
+      });
+    }, 500);
+    return () => clearInterval(id);
+  }, [scrolling, speed, fontSize, flipH, flipV, displayText, isHtmlContent, timerSeconds]);
+
   function applyText(text: string, html = false) {
     setDisplayText(text);
     setIsHtmlContent(html);
