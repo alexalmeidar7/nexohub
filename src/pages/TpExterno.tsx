@@ -374,10 +374,15 @@ export default function TpExterno() {
   // ─── Mensagem Screen ───
   if (step === "mensagem") {
     return (
-      <div style={{
-        height: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-        backgroundColor: "#0f1058", fontFamily: "'Poppins', 'Inter', sans-serif", gap: "20px",
-      }}>
+      <div
+        tabIndex={-1}
+        onKeyDown={(e) => { if (e.key === "Escape") setStep("menu"); }}
+        style={{
+          height: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+          backgroundColor: "#0f1058", fontFamily: "'Poppins', 'Inter', sans-serif", gap: "20px", outline: "none",
+        }}
+        ref={(el) => el?.focus()}
+      >
         <div style={{
           background: "linear-gradient(135deg, #0d0446, #1a0a6e)", borderRadius: "20px",
           padding: "32px", width: "min(450px, 90%)", border: "1px solid rgba(74,144,226,0.3)",
