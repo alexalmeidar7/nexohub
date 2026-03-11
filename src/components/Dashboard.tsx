@@ -173,19 +173,23 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   }, [user]);
 
   const isModuleEnabled = (page: Page): boolean => {
-    if (page === "dashboard" || page === "configuracoes" || page === "cortevideo" || page === "playerconfig") return true;
-    if (!enabledModules) return true;
+    if (page === "dashboard" || page === "configuracoes" || page === "playerconfig" || page === "cortevideo" || page === "tp") return true;
+
+    const modulesSource = planModules ?? enabledModules;
+    if (!modulesSource) return true;
+
     if (page === "testemunhais" || page === "promocoes" || page === "logos" || page === "preroll" || page === "shopping" || page === "propostas") {
-      return enabledModules.has("comercial");
+      return modulesSource.has("comercial");
     }
-    return enabledModules.has(page);
+
+    return modulesSource.has(page);
   };
 
   useEffect(() => {
-    if (enabledModules !== null && currentPage !== "dashboard" && currentPage !== "configuracoes" && currentPage !== "playerconfig" && !isModuleEnabled(currentPage)) {
+    if (currentPage !== "dashboard" && currentPage !== "configuracoes" && currentPage !== "playerconfig" && !isModuleEnabled(currentPage)) {
       setCurrentPage("dashboard");
     }
-  }, [currentPage, enabledModules]);
+  }, [currentPage, enabledModules, planModules]);
 
   useGlobalMusicXmlUpload();
   useGlobalMusicSync();
