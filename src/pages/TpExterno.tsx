@@ -332,8 +332,9 @@ function TpScreen({ user, onBack }: { user: any; onBack: () => void }) {
   const [flipV, setFlipV] = useState(false);
   const [isHtmlContent, setIsHtmlContent] = useState(false);
 
-  // Message notification state
-  const [incomingMsg, setIncomingMsg] = useState<{ text: string; subject: string } | null>(null);
+  // Pending message queue (waits 3s before showing)
+  const pendingMsgRef = useRef<{ text: string; subject: string } | null>(null);
+  const pendingDelayRef = useRef<ReturnType<typeof setTimeout>>();
   const [msgVisible, setMsgVisible] = useState(false);
   const [hasUnread, setHasUnread] = useState(false);
   const msgTimerRef = useRef<ReturnType<typeof setTimeout>>();
