@@ -107,6 +107,86 @@ export default function RoteiroPrograma() {
     load();
   }, [user]);
 
+  // Fetch historico
+  const fetchHistorico = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from("roteiros")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(10);
+    setHistorico(data || []);
+  };
+
+  useEffect(() => {
+    if (user) fetchHistorico();
+  }, [user]);
+
+  const salvarRoteiro = async () => {
+    if (!user) return;
+    setSavingRoteiro(true);
+    const status = isAgendado ? "agendado" : "rascunho";
+    const payload = {
+      user_id: user.id,
+      programa_nome: programaNome,
+      estudio,
+      tipo_programa: tipoPrograma,
+      data_programa: format(selectedDate, "yyyy-MM-dd"),
+      horario,
+      titulo: roteiroTitulo,
+      subtitulo: roteiroSubtitulo,
+      conteudo_html: editorRef.current?.innerHTML || roteiroTexto,
+      participantes: JSON.stringify(participantes),
+      status,
+    };
+
+    let error;
+    if (editingRoteiroId) {
+      ({ error } = await supabase.from("roteiros").update({ ...payload, updated_at: new Date().toISOString() }).eq("id", editingRoteiroId));
+    } else {
+      ({ error } = await supabase.from("roteiros").insert(payload));
+    }
+
+    setSavingRoteiro(false);
+    if (error) {
+      toast.error("Erro ao salvar roteiro");
+    } else {
+      toast.success(editingRoteiroId ? "Roteiro atualizado!" : "Roteiro salvo!");
+      setEditingRoteiroId(null);
+      fetchHistorico();
+    }
+  };
+
+  const excluirRoteiro = async (id: string) => {
+    const { error } = await supabase.from("roteiros").delete().eq("id", id);
+    if (error) {
+      toast.error("Erro ao excluir roteiro");
+    } else {
+      toast.success("Roteiro excluído");
+      fetchHistorico();
+    }
+  };
+
+  const editarRoteiro = (r: any) => {
+    setEstudio(r.estudio || "");
+    setTipoPrograma(r.tipo_programa || "");
+    setProgramaNome(r.programa_nome || "");
+    setSelectedDate(new Date(r.data_programa));
+    setHorario(r.horario || "");
+    setRoteiroTitulo(r.titulo || "");
+    setRoteiroSubtitulo(r.subtitulo || "");
+    setRoteiroTexto(r.conteudo_html || "");
+    try {
+      setParticipantes(typeof r.participantes === "string" ? JSON.parse(r.participantes) : r.participantes || []);
+    } catch { setParticipantes([]); }
+    setEditingRoteiroId(r.id);
+    setShowRoteiro(true);
+    setTimeout(() => {
+      if (editorRef.current) editorRef.current.innerHTML = r.conteudo_html || "";
+    }, 150);
+  };
+
   const handleEstudioChange = (val: string) => {
     setEstudio(val);
     setProgramaNome("");
