@@ -331,11 +331,92 @@ function TpScreen({ user, onBack }: { user: any; onBack: () => void }) {
   const [flipV, setFlipV] = useState(false);
   const [isHtmlContent, setIsHtmlContent] = useState(false);
 
+  // Message notification state
+  const [incomingMsg, setIncomingMsg] = useState<{ text: string; subject: string } | null>(null);
+  const [msgVisible, setMsgVisible] = useState(false);
+  const [hasUnread, setHasUnread] = useState(false);
+  const msgTimerRef = useRef<ReturnType<typeof setTimeout>>();
+
   const scrollPosRef = useRef(50);
   const textRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const animRef = useRef<number>();
   const timerRef = useRef<ReturnType<typeof setInterval>>();
+
+  // Subscribe to realtime messages for this user
+  useEffect(() => {
+    if (!user) return;
+
+    // Load latest unread on mount
+    supabase
+      .from("admin_messages")
+      .select("message, subject")
+      .or(`recipient_id.eq.${user.id},is_broadcast.eq.true`)
+      .eq("is_read", false)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .then(({ data }) => {
+        if (data && data.length > 0) {
+          setHasUnread(true);
+        }
+      });
+
+    const channel = supabase
+      .channel("tp-messages")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "admin_messages",
+        },
+        (payload: any) => {
+          const msg = payload.new;
+          if (msg.recipient_id === user.id || msg.is_broadcast) {
+            showMessage({ text: msg.message, subject: msg.subject });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [user]);
+
+  function showMessage(msg: { text: string; subject: string }) {
+    if (msgTimerRef.current) clearTimeout(msgTimerRef.current);
+    setIncomingMsg(msg);
+    setMsgVisible(true);
+    setHasUnread(false);
+    msgTimerRef.current = setTimeout(() => {
+      setMsgVisible(false);
+      setTimeout(() => setIncomingMsg(null), 300);
+    }, 5000);
+  }
+
+  function handleMsgIconClick() {
+    if (incomingMsg && msgVisible) {
+      // Close current message
+      if (msgTimerRef.current) clearTimeout(msgTimerRef.current);
+      setMsgVisible(false);
+      setTimeout(() => setIncomingMsg(null), 300);
+      return;
+    }
+    // Load latest unread
+    if (!user) return;
+    supabase
+      .from("admin_messages")
+      .select("message, subject")
+      .or(`recipient_id.eq.${user.id},is_broadcast.eq.true`)
+      .eq("is_read", false)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .then(({ data }) => {
+        if (data && data.length > 0) {
+          showMessage({ text: data[0].message, subject: data[0].subject });
+        }
+      });
+    setHasUnread(false);
+  }
 
   // Load roteiros
   useEffect(() => {
