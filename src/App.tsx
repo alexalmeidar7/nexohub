@@ -67,6 +67,7 @@ const App = () => (
             <Route path="/jornal-export" element={<JornalExport />} />
             <Route path="/roteiro-export" element={<RoteiroExport />} />
             <Route path="/roteiro-apresentador-edit" element={<RoteiroApresentadorEdit />} />
+            <Route path="/tp-externo" element={<TpExterno />} />
 
             {/* Admin routes */}
             <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
