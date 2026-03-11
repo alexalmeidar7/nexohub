@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Settings, Minus, Plus, Play, Pause } from "lucide-react";
+import { Settings, Minus, Plus, Play, Pause, RotateCcw, Type } from "lucide-react";
 
 export default function TpExterno() {
   const [scrolling, setScrolling] = useState(false);
@@ -8,10 +8,9 @@ export default function TpExterno() {
   const [showSetup, setShowSetup] = useState(false);
   const [inputText, setInputText] = useState("");
   const [displayText, setDisplayText] = useState(
-    "Cole seu texto no botão de configuração (engrenagem) para começar a leitura..."
+    "Cole seu texto no botão de configuração ⚙️ para começar a leitura..."
   );
   const [clock, setClock] = useState("00:00");
-  const [timer, setTimer] = useState("00:00");
   const [timerSeconds, setTimerSeconds] = useState(0);
 
   const scrollPosRef = useRef(50);
@@ -19,14 +18,12 @@ export default function TpExterno() {
   const animRef = useRef<number>();
   const timerRef = useRef<ReturnType<typeof setInterval>>();
 
-  // Clock
   useEffect(() => {
     const tick = () => {
       const now = new Date();
       setClock(
-        now.getHours().toString().padStart(2, "0") +
-          ":" +
-          now.getMinutes().toString().padStart(2, "0")
+        now.getHours().toString().padStart(2, "0") + ":" +
+        now.getMinutes().toString().padStart(2, "0")
       );
     };
     tick();
@@ -34,29 +31,21 @@ export default function TpExterno() {
     return () => clearInterval(id);
   }, []);
 
-  // Program timer
   useEffect(() => {
     if (scrolling) {
-      timerRef.current = setInterval(() => {
-        setTimerSeconds((s) => s + 1);
-      }, 1000);
+      timerRef.current = setInterval(() => setTimerSeconds((s) => s + 1), 1000);
     } else if (timerRef.current) {
       clearInterval(timerRef.current);
     }
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [scrolling]);
 
-  useEffect(() => {
-    const m = Math.floor(timerSeconds / 60)
-      .toString()
-      .padStart(2, "0");
+  const timerDisplay = (() => {
+    const m = Math.floor(timerSeconds / 60).toString().padStart(2, "0");
     const s = (timerSeconds % 60).toString().padStart(2, "0");
-    setTimer(`${m}:${s}`);
-  }, [timerSeconds]);
+    return `${m}:${s}`;
+  })();
 
-  // Scroll animation
   const animate = useCallback(() => {
     if (scrolling && textRef.current) {
       scrollPosRef.current -= speed * 0.1;
@@ -67,9 +56,7 @@ export default function TpExterno() {
 
   useEffect(() => {
     animRef.current = requestAnimationFrame(animate);
-    return () => {
-      if (animRef.current) cancelAnimationFrame(animRef.current);
-    };
+    return () => { if (animRef.current) cancelAnimationFrame(animRef.current); };
   }, [animate]);
 
   function handleSave() {
@@ -82,251 +69,285 @@ export default function TpExterno() {
     setShowSetup(false);
   }
 
+  function handleReset() {
+    setScrolling(false);
+    scrollPosRef.current = 50;
+    if (textRef.current) textRef.current.style.top = "50%";
+    setTimerSeconds(0);
+  }
+
   return (
-    <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: "80px 1fr",
-        height: "100vh",
-        margin: 0,
-        padding: 0,
-        backgroundColor: "#000",
-        color: "#fff",
-        fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-        overflow: "hidden",
-      }}
-    >
-      {/* Sidebar */}
-      <div
-        style={{
-          backgroundColor: "#0b0b30",
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "space-between",
-          alignItems: "center",
-          padding: "20px 0",
-          borderRight: "1px solid #1a1a4a",
-        }}
-      >
+    <div style={{ display: "grid", gridTemplateColumns: "90px 1fr", height: "100vh", overflow: "hidden", fontFamily: "'Inter', 'Segoe UI', sans-serif" }}>
+
+      {/* ─── Sidebar ─── */}
+      <div style={{
+        background: "linear-gradient(180deg, #080830 0%, #0d0446 100%)",
+        display: "flex", flexDirection: "column", justifyContent: "space-between", alignItems: "center",
+        padding: "24px 0", borderRight: "1px solid rgba(74,144,226,0.15)",
+      }}>
+        {/* Top */}
         <div style={{ textAlign: "center" }}>
-          <div
-            style={{
-              fontSize: "10px",
-              textTransform: "uppercase",
-              fontWeight: "bold",
-            }}
-          >
-            NOME
-            <br />
-            DO TP
+          <div style={{
+            fontSize: "9px", textTransform: "uppercase", fontWeight: 700, letterSpacing: "2px",
+            color: "rgba(255,255,255,0.4)", lineHeight: 1.4,
+          }}>
+            TELE
+            <br />PROMPTER
           </div>
-          <div
-            style={{
-              fontSize: "20px",
-              fontWeight: "bold",
-              color: "#4a90e2",
-              marginTop: "5px",
-            }}
-          >
+          <div style={{
+            fontSize: "24px", fontWeight: 700, color: "#4a90e2", marginTop: "8px",
+            fontVariantNumeric: "tabular-nums",
+          }}>
             {clock}
           </div>
+          <div style={{
+            width: "32px", height: "2px", background: "linear-gradient(90deg, transparent, #4a90e2, transparent)",
+            margin: "12px auto",
+          }} />
         </div>
 
-        <button
-          onClick={() => setShowSetup(!showSetup)}
-          style={{
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            color: "#4a90e2",
-          }}
-        >
-          <Settings size={24} />
-        </button>
+        {/* Middle icons */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "16px", alignItems: "center" }}>
+          <button
+            onClick={() => setShowSetup(!showSetup)}
+            title="Configurações"
+            style={{
+              background: showSetup ? "rgba(74,144,226,0.2)" : "rgba(255,255,255,0.05)",
+              border: "1px solid rgba(74,144,226,0.3)", borderRadius: "12px",
+              width: "44px", height: "44px", cursor: "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              transition: "all 0.2s",
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(74,144,226,0.25)"; e.currentTarget.style.borderColor = "#4a90e2"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = showSetup ? "rgba(74,144,226,0.2)" : "rgba(255,255,255,0.05)"; e.currentTarget.style.borderColor = "rgba(74,144,226,0.3)"; }}
+          >
+            <Settings size={18} color="#4a90e2" />
+          </button>
+          <button
+            onClick={handleReset}
+            title="Reiniciar"
+            style={{
+              background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)",
+              borderRadius: "12px", width: "44px", height: "44px", cursor: "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              transition: "all 0.2s",
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.1)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.05)"; }}
+          >
+            <RotateCcw size={16} color="rgba(255,255,255,0.5)" />
+          </button>
+        </div>
 
-        <div style={{ textAlign: "center", marginBottom: "20px" }}>
-          <div style={{ fontSize: "8px", lineHeight: 1 }}>
+        {/* Bottom timer */}
+        <div style={{ textAlign: "center" }}>
+          <div style={{
+            fontSize: "8px", textTransform: "uppercase", letterSpacing: "1.5px",
+            color: "rgba(255,255,255,0.3)", lineHeight: 1.3, fontWeight: 600,
+          }}>
             tempo de
-            <br />
-            programa
+            <br />programa
           </div>
-          <div style={{ fontSize: "22px", fontWeight: "bold" }}>{timer}</div>
+          <div style={{
+            fontSize: "22px", fontWeight: 700, color: scrolling ? "#4a90e2" : "rgba(255,255,255,0.7)",
+            marginTop: "4px", fontVariantNumeric: "tabular-nums",
+            transition: "color 0.3s",
+          }}>
+            {timerDisplay}
+          </div>
         </div>
       </div>
 
-      {/* Display area */}
-      <div
-        style={{
-          position: "relative",
-          backgroundColor: "#000",
-          overflow: "hidden",
-          display: "flex",
-          alignItems: "center",
-        }}
-      >
-        {/* Eyeline marker */}
-        <div
-          style={{
-            position: "absolute",
-            left: 0,
-            top: "50%",
-            transform: "translateY(-50%)",
-            width: 0,
-            height: 0,
-            borderTop: "25px solid transparent",
-            borderBottom: "25px solid transparent",
-            borderLeft: "40px solid #4a90e2",
-            zIndex: 10,
-          }}
-        />
+      {/* ─── Display Area ─── */}
+      <div style={{ position: "relative", backgroundColor: "#020210", overflow: "hidden" }}>
 
-        {/* Text */}
+        {/* Subtle vignette */}
+        <div style={{
+          position: "absolute", inset: 0, pointerEvents: "none", zIndex: 5,
+          background: "radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.6) 100%)",
+        }} />
+
+        {/* Eyeline marker */}
+        <div style={{
+          position: "absolute", left: 0, top: "50%", transform: "translateY(-50%)", zIndex: 10,
+        }}>
+          <div style={{
+            width: 0, height: 0,
+            borderTop: "20px solid transparent", borderBottom: "20px solid transparent",
+            borderLeft: "32px solid #4a90e2",
+            filter: "drop-shadow(0 0 8px rgba(74,144,226,0.5))",
+          }} />
+        </div>
+        {/* Right marker */}
+        <div style={{
+          position: "absolute", right: 0, top: "50%", transform: "translateY(-50%) rotate(180deg)", zIndex: 10,
+        }}>
+          <div style={{
+            width: 0, height: 0,
+            borderTop: "20px solid transparent", borderBottom: "20px solid transparent",
+            borderLeft: "32px solid #4a90e2",
+            filter: "drop-shadow(0 0 8px rgba(74,144,226,0.5))",
+            opacity: 0.4,
+          }} />
+        </div>
+
+        {/* Center line guide */}
+        <div style={{
+          position: "absolute", left: "40px", right: "40px", top: "50%",
+          height: "1px", background: "rgba(74,144,226,0.08)", zIndex: 6,
+        }} />
+
+        {/* Scrolling text */}
         <div
           ref={textRef}
           style={{
-            width: "80%",
-            margin: "0 auto",
-            fontSize: `${fontSize}px`,
-            lineHeight: 1.5,
-            textAlign: "center",
-            whiteSpace: "pre-wrap",
-            position: "absolute",
-            top: "50%",
-            left: "10%",
+            width: "75%", margin: "0 auto",
+            fontSize: `${fontSize}px`, lineHeight: 1.5,
+            textAlign: "center", whiteSpace: "pre-wrap",
+            position: "absolute", top: "50%", left: "12.5%",
             transition: "font-size 0.2s",
+            color: "#ffffff", textShadow: "0 2px 20px rgba(0,0,0,0.5)",
+            fontWeight: 400,
           }}
         >
           {displayText}
         </div>
 
-        {/* Controls bar */}
-        <div
-          style={{
-            position: "absolute",
-            bottom: "20px",
-            left: "20px",
-            background: "#0b0b30",
-            padding: "10px 20px",
-            borderRadius: "15px",
-            display: "flex",
-            alignItems: "center",
-            gap: "15px",
-            border: "1px solid #333",
-            zIndex: 20,
-          }}
-        >
-          <button
-            onClick={() => setFontSize((s) => Math.max(20, s - 5))}
-            style={{
-              background: "#fff",
-              border: "none",
-              borderRadius: "5px",
-              padding: "5px 12px",
-              fontWeight: "bold",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: 4,
-            }}
-          >
-            <Minus size={12} /> A
-          </button>
-          <button
-            onClick={() => setFontSize((s) => Math.min(120, s + 5))}
-            style={{
-              background: "#fff",
-              border: "none",
-              borderRadius: "5px",
-              padding: "5px 12px",
-              fontWeight: "bold",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: 4,
-            }}
-          >
-            <Plus size={12} /> A
-          </button>
-          <span style={{ fontSize: "10px", color: "#fff" }}>velocidade</span>
-          <input
-            type="range"
-            min={0}
-            max={10}
-            value={speed}
-            onChange={(e) => setSpeed(Number(e.target.value))}
-            style={{ width: "150px", accentColor: "#4a90e2" }}
-          />
+        {/* ─── Controls bar ─── */}
+        <div style={{
+          position: "absolute", bottom: "24px", left: "50%", transform: "translateX(-50%)",
+          background: "rgba(11,11,48,0.9)", backdropFilter: "blur(20px)",
+          padding: "10px 24px", borderRadius: "20px",
+          display: "flex", alignItems: "center", gap: "12px",
+          border: "1px solid rgba(74,144,226,0.2)",
+          boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
+          zIndex: 20,
+        }}>
+          {/* Font size */}
+          <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+            <button
+              onClick={() => setFontSize((s) => Math.max(20, s - 5))}
+              style={{
+                background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)",
+                borderRadius: "8px", padding: "6px 10px", cursor: "pointer",
+                display: "flex", alignItems: "center", gap: 3, color: "#fff", fontSize: "11px", fontWeight: 700,
+              }}
+            >
+              <Minus size={10} /> A
+            </button>
+            <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.3)", minWidth: "30px", textAlign: "center" }}>{fontSize}px</span>
+            <button
+              onClick={() => setFontSize((s) => Math.min(120, s + 5))}
+              style={{
+                background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)",
+                borderRadius: "8px", padding: "6px 10px", cursor: "pointer",
+                display: "flex", alignItems: "center", gap: 3, color: "#fff", fontSize: "11px", fontWeight: 700,
+              }}
+            >
+              <Plus size={10} /> A
+            </button>
+          </div>
+
+          {/* Divider */}
+          <div style={{ width: "1px", height: "24px", background: "rgba(255,255,255,0.1)" }} />
+
+          {/* Speed */}
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <Type size={12} color="rgba(255,255,255,0.3)" />
+            <input
+              type="range" min={0} max={10} value={speed}
+              onChange={(e) => setSpeed(Number(e.target.value))}
+              style={{ width: "120px", accentColor: "#4a90e2", height: "4px" }}
+            />
+            <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.4)", minWidth: "14px" }}>{speed}</span>
+          </div>
+
+          {/* Divider */}
+          <div style={{ width: "1px", height: "24px", background: "rgba(255,255,255,0.1)" }} />
+
+          {/* Play/Pause */}
           <button
             onClick={() => setScrolling(!scrolling)}
             style={{
-              background: "#fff",
-              border: "none",
-              borderRadius: "50%",
-              width: "40px",
-              height: "40px",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
+              background: scrolling
+                ? "linear-gradient(135deg, #e24a4a, #c0392b)"
+                : "linear-gradient(135deg, #4a90e2, #2d6dc0)",
+              border: "none", borderRadius: "50%",
+              width: "44px", height: "44px", cursor: "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              boxShadow: scrolling
+                ? "0 4px 16px rgba(226,74,74,0.4)"
+                : "0 4px 16px rgba(74,144,226,0.4)",
+              transition: "all 0.3s",
             }}
           >
-            {scrolling ? <Pause size={16} /> : <Play size={16} />}
+            {scrolling ? <Pause size={18} color="#fff" /> : <Play size={18} color="#fff" style={{ marginLeft: "2px" }} />}
           </button>
         </div>
 
-        {/* Setup modal */}
+        {/* ─── Setup Modal ─── */}
         {showSetup && (
-          <div
-            style={{
-              position: "absolute",
-              top: "20%",
-              left: "20%",
-              width: "60%",
-              height: "50%",
-              background: "#111",
-              border: "2px solid #4a90e2",
-              zIndex: 100,
-              padding: "20px",
-              borderRadius: "10px",
-              display: "flex",
-              flexDirection: "column",
-            }}
-          >
-            <h3 style={{ margin: "0 0 10px", color: "#fff" }}>
-              Configurações do Roteiro
-            </h3>
-            <textarea
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              placeholder="Cole o texto aqui..."
-              style={{
-                flex: 1,
-                background: "#222",
-                color: "#fff",
-                border: "none",
-                padding: "10px",
-                borderRadius: "5px",
-                resize: "none",
-                fontSize: "14px",
-              }}
+          <>
+            <div
+              onClick={() => setShowSetup(false)}
+              style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 90 }}
             />
-            <button
-              onClick={handleSave}
-              style={{
-                marginTop: "10px",
-                background: "#4a90e2",
-                color: "#fff",
-                border: "none",
-                borderRadius: "5px",
-                padding: "10px 20px",
-                fontWeight: "bold",
-                cursor: "pointer",
-                alignSelf: "flex-start",
-              }}
-            >
-              SALVAR E FECHAR
-            </button>
-          </div>
+            <div style={{
+              position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)",
+              width: "min(600px, 80%)", maxHeight: "70vh",
+              background: "linear-gradient(135deg, #0d0446, #1a0a6e)",
+              border: "1px solid rgba(74,144,226,0.3)",
+              zIndex: 100, padding: "28px", borderRadius: "16px",
+              display: "flex", flexDirection: "column",
+              boxShadow: "0 24px 64px rgba(0,0,0,0.6)",
+            }}>
+              <h3 style={{ margin: "0 0 4px", color: "#fff", fontSize: "16px", fontWeight: 700 }}>
+                Configurações do Roteiro
+              </h3>
+              <p style={{ margin: "0 0 16px", color: "rgba(255,255,255,0.4)", fontSize: "12px" }}>
+                Cole o texto que será exibido no teleprompter
+              </p>
+              <textarea
+                value={inputText}
+                onChange={(e) => setInputText(e.target.value)}
+                placeholder="Cole o texto aqui..."
+                style={{
+                  flex: 1, minHeight: "200px",
+                  background: "rgba(0,0,0,0.3)", color: "#fff",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  padding: "14px", borderRadius: "10px", resize: "none",
+                  fontSize: "14px", lineHeight: 1.6, outline: "none",
+                }}
+                onFocus={(e) => { e.currentTarget.style.borderColor = "rgba(74,144,226,0.5)"; }}
+                onBlur={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"; }}
+              />
+              <div style={{ display: "flex", gap: "10px", marginTop: "16px" }}>
+                <button
+                  onClick={handleSave}
+                  style={{
+                    background: "linear-gradient(135deg, #4a90e2, #2d6dc0)",
+                    color: "#fff", border: "none", borderRadius: "10px",
+                    padding: "10px 24px", fontWeight: 700, cursor: "pointer",
+                    fontSize: "13px", transition: "all 0.2s",
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-1px)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; }}
+                >
+                  SALVAR E FECHAR
+                </button>
+                <button
+                  onClick={() => setShowSetup(false)}
+                  style={{
+                    background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.6)",
+                    border: "1px solid rgba(255,255,255,0.1)", borderRadius: "10px",
+                    padding: "10px 20px", cursor: "pointer", fontSize: "13px",
+                  }}
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          </>
         )}
       </div>
     </div>
