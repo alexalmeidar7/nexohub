@@ -54,6 +54,7 @@ export default function AudioDualCard({
   onOpenChat,
   userId,
 }: AudioDualCardProps) {
+  const isMobile = useIsMobile();
   const isSemTitulo = !musicTitle || musicTitle === "Sem título";
   const isCoverMissing = !musicCover || musicCover.toLowerCase().includes("não encontrada") || musicCover.toLowerCase().includes("nao encontrada");
   const [menuOpen, setMenuOpen] = useState(false);
