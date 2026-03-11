@@ -515,14 +515,31 @@ export default function AgendaPage() {
 
               <div>
                 <Label className="text-xs font-semibold" style={{ color: "#0d0446" }}>Data do Evento</Label>
-                <Calendar
-                  mode="single"
-                  selected={formData}
-                  onSelect={setFormData}
-                  className={cn("p-3 pointer-events-auto border rounded-lg mt-1")}
-                  style={{ borderColor: "rgba(38,143,250,0.3)" }}
-                  locale={ptBR}
-                />
+                <div className="agenda-form-calendar">
+                  <style>{`
+                    .agenda-form-calendar .rdp { color: #0d0446 !important; }
+                    .agenda-form-calendar .rdp-caption_label { color: #0d0446 !important; font-weight: 700; }
+                    .agenda-form-calendar .rdp-head_cell { color: rgba(13,4,70,0.5) !important; }
+                    .agenda-form-calendar .rdp-day { color: #0d0446 !important; }
+                    .agenda-form-calendar .rdp-day:hover { background-color: rgba(38,143,250,0.15) !important; color: #268ffa !important; }
+                    .agenda-form-calendar .rdp-day_selected { background-color: #268ffa !important; color: #fff !important; }
+                    .agenda-form-calendar .rdp-day_selected:hover { background-color: #1a7ae0 !important; color: #fff !important; }
+                    .agenda-form-calendar .rdp-day_today { background-color: #0d0446 !important; color: #fff !important; font-weight: 700; }
+                    .agenda-form-calendar .rdp-day_outside { color: rgba(13,4,70,0.25) !important; }
+                    .agenda-form-calendar .rdp-nav_button { color: #0d0446 !important; }
+                    .agenda-form-calendar .rdp-nav_button:hover { background-color: rgba(38,143,250,0.1) !important; }
+                    .agenda-form-calendar button[name="previous-month"],
+                    .agenda-form-calendar button[name="next-month"] { color: #0d0446 !important; }
+                  `}</style>
+                  <Calendar
+                    mode="single"
+                    selected={formData}
+                    onSelect={setFormData}
+                    className={cn("p-3 pointer-events-auto border rounded-lg mt-1")}
+                    style={{ borderColor: "rgba(38,143,250,0.3)", backgroundColor: "#ffffff" }}
+                    locale={ptBR}
+                  />
+                </div>
                 {formData && (
                   <p className="text-xs mt-1" style={{ color: "rgba(13,4,70,0.5)" }}>
                     {format(formData, "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
