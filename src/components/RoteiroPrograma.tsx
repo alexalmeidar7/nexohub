@@ -188,7 +188,7 @@ export default function RoteiroPrograma() {
                   {format(selectedDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
                 </button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0 border-none shadow-xl" align="start" style={{ borderRadius: "16px", overflow: "hidden" }}>
+              <PopoverContent className="w-auto p-0 border-none shadow-xl bg-white" align="start" style={{ borderRadius: "16px", overflow: "hidden" }}>
                 <Calendar
                   mode="single"
                   selected={selectedDate}
