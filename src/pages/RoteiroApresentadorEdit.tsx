@@ -125,7 +125,7 @@ export default function RoteiroApresentadorEdit() {
     } catch { parts = []; }
     setParticipantes(parts);
 
-    fetchHistorico(data.user_id);
+    fetchHistorico(data.user_id, data.id);
 
     setTimeout(() => {
       if (editorRef.current) {
