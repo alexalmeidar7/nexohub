@@ -1,13 +1,12 @@
-import { useState, useEffect, useCallback, lazy, Suspense } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CalendarIcon, Plus, X, Users, FileText, Building2, Loader2 } from "lucide-react";
+import { CalendarIcon, FileText, Building2, Clock } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 
 const NoticiasPanel = lazy(() => import("./NoticiasPanel"));
@@ -34,18 +33,20 @@ export default function RoteiroPrograma() {
   const [estudio, setEstudio] = useState("");
   const [programaNome, setProgramaNome] = useState("");
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [participantes, setParticipantes] = useState<{ nome: string; cargo: string }[]>([]);
+  const [horario, setHorario] = useState("");
   const [tipoPrograma, setTipoPrograma] = useState("");
   const [programas, setProgramas] = useState<Programa[]>([]);
   const [apresentadores, setApresentadores] = useState<Apresentador[]>([]);
   const [loading, setLoading] = useState(true);
   const [estudios, setEstudios] = useState<string[]>([]);
   const [tiposPrograma, setTiposPrograma] = useState<string[]>([]);
-  const [showAddParticipante, setShowAddParticipante] = useState(false);
-  const [newParticipanteNome, setNewParticipanteNome] = useState("");
-  const [newParticipanteCargo, setNewParticipanteCargo] = useState("Apresentador");
 
   const isAgendado = selectedDate > new Date(new Date().toDateString());
+
+  // Filter programs by selected tipo
+  const programasFiltrados = tipoPrograma
+    ? programas.filter(p => p.tipo_programa === tipoPrograma)
+    : programas;
 
   useEffect(() => {
     if (!user) return;
@@ -60,18 +61,24 @@ export default function RoteiroPrograma() {
       setProgramas(progs);
       setApresentadores(apres);
 
-      // Extract unique studios and program types
       const uniqueEstudios = [...new Set(progs.map(p => p.estudio).filter(Boolean))] as string[];
       setEstudios(uniqueEstudios);
       const uniqueTipos = [...new Set(progs.map(p => p.tipo_programa).filter(Boolean))] as string[];
+      if (!uniqueTipos.includes("Jornalístico")) uniqueTipos.push("Jornalístico");
       setTiposPrograma(uniqueTipos);
 
-      // Default participants from apresentadores
-      setParticipantes(apres.map(a => ({ nome: a.nome, cargo: a.cargo || "Apresentador" })));
       setLoading(false);
     };
     load();
   }, [user]);
+
+  const handleTipoChange = (tipo: string) => {
+    setTipoPrograma(tipo);
+    // Reset programa when tipo changes
+    setProgramaNome("");
+    setEstudio("");
+    setHorario("");
+  };
 
   const handleProgramaChange = (nome: string) => {
     setProgramaNome(nome);
@@ -79,19 +86,12 @@ export default function RoteiroPrograma() {
     if (prog) {
       if (prog.estudio) setEstudio(prog.estudio);
       if (prog.tipo_programa) setTipoPrograma(prog.tipo_programa);
+      if (prog.horario_inicio) {
+        const h = prog.horario_inicio.slice(0, 5);
+        const hFim = prog.horario_fim ? prog.horario_fim.slice(0, 5) : "";
+        setHorario(hFim ? `${h} - ${hFim}` : h);
+      }
     }
-  };
-
-  const removeParticipante = (idx: number) => {
-    setParticipantes(prev => prev.filter((_, i) => i !== idx));
-  };
-
-  const addParticipante = () => {
-    if (!newParticipanteNome.trim()) return;
-    setParticipantes(prev => [...prev, { nome: newParticipanteNome.trim(), cargo: newParticipanteCargo }]);
-    setNewParticipanteNome("");
-    setNewParticipanteCargo("Apresentador");
-    setShowAddParticipante(false);
   };
 
   if (loading) return <ModulePageSkeleton />;
@@ -119,9 +119,9 @@ export default function RoteiroPrograma() {
           </div>
         </div>
 
-        {/* Form Fields */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
-          {/* Campo 1: Estúdio */}
+        {/* Form Fields - Row 1: Estúdio, Tipo, Programa */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          {/* Estúdio */}
           <div>
             <label className="text-[11px] font-bold mb-1 block" style={{ color: "#0d0446" }}>
               <Building2 size={11} className="inline mr-1" />Estúdio
@@ -137,7 +137,21 @@ export default function RoteiroPrograma() {
             </select>
           </div>
 
-          {/* Campo 2: Nome do Programa */}
+          {/* Tipo de Programa (filtro) */}
+          <div>
+            <label className="text-[11px] font-bold mb-1 block" style={{ color: "#0d0446" }}>Tipo de Programa</label>
+            <select
+              value={tipoPrograma}
+              onChange={e => handleTipoChange(e.target.value)}
+              className="w-full px-3 py-2 rounded-lg text-xs outline-none transition-colors"
+              style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.15)", color: "#0d0446" }}
+            >
+              <option value="">Todos os tipos</option>
+              {tiposPrograma.map(t => <option key={t} value={t}>{t}</option>)}
+            </select>
+          </div>
+
+          {/* Programa (filtrado por tipo) */}
           <div>
             <label className="text-[11px] font-bold mb-1 block" style={{ color: "#0d0446" }}>
               <FileText size={11} className="inline mr-1" />Programa
@@ -149,11 +163,14 @@ export default function RoteiroPrograma() {
               style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.15)", color: "#0d0446" }}
             >
               <option value="">Selecione o programa</option>
-              {programas.map(p => <option key={p.id} value={p.nome}>{p.nome}</option>)}
+              {programasFiltrados.map(p => <option key={p.id} value={p.nome}>{p.nome}</option>)}
             </select>
           </div>
+        </div>
 
-          {/* Campo 3: Data */}
+        {/* Form Fields - Row 2: Data, Horário */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          {/* Data */}
           <div>
             <label className="text-[11px] font-bold mb-1 block" style={{ color: "#0d0446" }}>
               <CalendarIcon size={11} className="inline mr-1" />Data
@@ -161,9 +178,7 @@ export default function RoteiroPrograma() {
             <Popover>
               <PopoverTrigger asChild>
                 <button
-                  className={cn(
-                    "w-full px-3 py-2 rounded-lg text-xs text-left flex items-center gap-2 outline-none transition-colors",
-                  )}
+                  className="w-full px-3 py-2 rounded-lg text-xs text-left flex items-center gap-2 outline-none transition-colors"
                   style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.15)", color: "#0d0446" }}
                 >
                   <CalendarIcon size={12} style={{ color: "#268ffa" }} />
@@ -182,19 +197,18 @@ export default function RoteiroPrograma() {
             </Popover>
           </div>
 
-          {/* Campo 5: Tipo de Programa */}
+          {/* Horário */}
           <div>
-            <label className="text-[11px] font-bold mb-1 block" style={{ color: "#0d0446" }}>Tipo de Programa</label>
-            <select
-              value={tipoPrograma}
-              onChange={e => setTipoPrograma(e.target.value)}
+            <label className="text-[11px] font-bold mb-1 block" style={{ color: "#0d0446" }}>
+              <Clock size={11} className="inline mr-1" />Horário
+            </label>
+            <input
+              value={horario}
+              onChange={e => setHorario(e.target.value)}
+              placeholder="Ex: 08:00 - 12:00"
               className="w-full px-3 py-2 rounded-lg text-xs outline-none transition-colors"
               style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.15)", color: "#0d0446" }}
-            >
-              <option value="">Selecione o tipo</option>
-              {tiposPrograma.map(t => <option key={t} value={t}>{t}</option>)}
-              {!tiposPrograma.includes("Jornalístico") && <option value="Jornalístico">Jornalístico</option>}
-            </select>
+            />
           </div>
         </div>
 
@@ -206,55 +220,6 @@ export default function RoteiroPrograma() {
           <NoticiasPanel />
         </Suspense>
       )}
-
-      {/* Add Participante Dialog */}
-      <Dialog open={showAddParticipante} onOpenChange={setShowAddParticipante}>
-        <DialogContent className="sm:max-w-md" style={{ backgroundColor: "#ffffff" }}>
-          <DialogHeader>
-            <DialogTitle style={{ color: "#0d0446" }}>Adicionar Participante</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3 py-2">
-            <div>
-              <label className="text-[11px] font-bold mb-1 block" style={{ color: "#0d0446" }}>Nome</label>
-              <input
-                value={newParticipanteNome}
-                onChange={e => setNewParticipanteNome(e.target.value)}
-                onKeyDown={e => { if (e.key === "Enter") addParticipante(); }}
-                placeholder="Nome do participante"
-                className="w-full px-3 py-2 rounded-lg text-xs outline-none"
-                style={{ border: "1px solid rgba(13,4,70,0.15)", color: "#0d0446" }}
-                autoFocus
-              />
-            </div>
-            <div>
-              <label className="text-[11px] font-bold mb-1 block" style={{ color: "#0d0446" }}>Categoria</label>
-              <select
-                value={newParticipanteCargo}
-                onChange={e => setNewParticipanteCargo(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg text-xs outline-none"
-                style={{ border: "1px solid rgba(13,4,70,0.15)", color: "#0d0446" }}
-              >
-                <option>Apresentador</option>
-                <option>Jornalista</option>
-                <option>Convidado</option>
-              </select>
-            </div>
-          </div>
-          <DialogFooter>
-            <button onClick={() => setShowAddParticipante(false)} className="px-4 py-2 rounded-lg text-xs" style={{ color: "#0d0446" }}>
-              Cancelar
-            </button>
-            <button
-              onClick={addParticipante}
-              disabled={!newParticipanteNome.trim()}
-              className="px-4 py-2 rounded-lg text-xs font-bold transition-all disabled:opacity-50"
-              style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#ffffff" }}
-            >
-              Adicionar
-            </button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
