@@ -129,6 +129,7 @@ export default function RoteiroApresentadorEdit() {
     setTimeout(() => {
       if (editorRef.current) {
         editorRef.current.innerHTML = data.conteudo_html || "";
+        injectPerguntaActions(editorRef.current);
         // Count existing perguntas
         const existing = editorRef.current.querySelectorAll("tr[data-pergunta]");
         setPerguntaCount(existing.length || 1);
