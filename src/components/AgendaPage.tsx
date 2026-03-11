@@ -321,6 +321,25 @@ export default function AgendaPage() {
 
   const selectedPrograma = programas.find((p) => p.id === formProgramaId);
 
+  // Upcoming events for the next 7 days
+  const upcomingEvents = useMemo(() => {
+    const today = new Date();
+    const days: { dateStr: string; date: Date; events: Evento[] }[] = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(today);
+      d.setDate(d.getDate() + i);
+      const ds = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      const dayEvents = eventos.filter((e) => {
+        const matchLocal = filterLocal === "todos" || e.local === filterLocal;
+        return matchLocal && eventMatchesDate(e, ds);
+      });
+      if (dayEvents.length > 0) {
+        days.push({ dateStr: ds, date: new Date(d), events: dayEvents });
+      }
+    }
+    return days;
+  }, [eventos, filterLocal]);
+
   const renderEventCard = (evt: Evento, inactive = false) => (
     <div
       key={evt.id}
@@ -649,32 +668,89 @@ export default function AgendaPage() {
           </DialogContent>
         </Dialog>
 
-        {/* Calendar + Events Grid */}
+        {/* Calendar + Upcoming + Events Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-          {/* Calendar */}
-          <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}>
-            <div className="px-4 py-2.5 font-bold text-xs tracking-wide text-white" style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)" }}>
-              📅 Calendário
+          {/* Calendar + Upcoming */}
+          <div className="space-y-4">
+            {/* Calendar */}
+            <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}>
+              <div className="px-4 py-2.5 font-bold text-xs tracking-wide text-white" style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)" }}>
+                📅 Calendário
+              </div>
+              <div className="p-3">
+                <style>{`
+                  .agenda-calendar .rdp-day:hover { background-color: rgba(38,143,250,0.15) !important; color: #268ffa !important; }
+                  .agenda-calendar .rdp-day_selected { background-color: #268ffa !important; color: #fff !important; }
+                  .agenda-calendar .rdp-day_selected:hover { background-color: #268ffa !important; }
+                  .agenda-calendar .rdp-day_today { background-color: #0d0446 !important; color: #ffffff !important; font-weight: 700 !important; }
+                  .agenda-calendar .rdp-day_today:hover { background-color: #0d0446 !important; color: #ffffff !important; }
+                  .agenda-calendar [class*="day_today"] { background-color: #0d0446 !important; color: #ffffff !important; font-weight: 700 !important; }
+                  .agenda-calendar .has-event-day { background-color: rgba(38,143,250,0.15) !important; color: #268ffa !important; font-weight: bold; }
+                `}</style>
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={setSelectedDate}
+                  className={cn("p-2 pointer-events-auto agenda-calendar")}
+                  locale={ptBR}
+                  modifiers={{ hasEvent: eventDates }}
+                  modifiersClassNames={{ hasEvent: "has-event-day" }}
+                />
+              </div>
             </div>
-            <div className="p-3">
-              <style>{`
-                .agenda-calendar .rdp-day:hover { background-color: rgba(38,143,250,0.15) !important; color: #268ffa !important; }
-                .agenda-calendar .rdp-day_selected { background-color: #268ffa !important; color: #fff !important; }
-                .agenda-calendar .rdp-day_selected:hover { background-color: #268ffa !important; }
-                .agenda-calendar .rdp-day_today { background-color: #0d0446 !important; color: #ffffff !important; font-weight: 700 !important; }
-                .agenda-calendar .rdp-day_today:hover { background-color: #0d0446 !important; color: #ffffff !important; }
-                .agenda-calendar [class*="day_today"] { background-color: #0d0446 !important; color: #ffffff !important; font-weight: 700 !important; }
-                .agenda-calendar .has-event-day { background-color: rgba(38,143,250,0.15) !important; color: #268ffa !important; font-weight: bold; }
-              `}</style>
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={setSelectedDate}
-                className={cn("p-2 pointer-events-auto agenda-calendar")}
-                locale={ptBR}
-                modifiers={{ hasEvent: eventDates }}
-                modifiersClassNames={{ hasEvent: "has-event-day" }}
-              />
+
+            {/* Upcoming Events */}
+            <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}>
+              <div className="px-4 py-2.5 font-bold text-xs tracking-wide text-white" style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)" }}>
+                🗓️ Próximos 7 dias
+              </div>
+              <div className="p-3 space-y-3 max-h-[400px] overflow-y-auto" style={{ scrollbarWidth: "thin", scrollbarColor: "#268ffa transparent" }}>
+                {upcomingEvents.length === 0 ? (
+                  <p className="text-xs py-4 text-center" style={{ color: "rgba(13,4,70,0.4)" }}>
+                    Nenhum evento nos próximos dias.
+                  </p>
+                ) : (
+                  upcomingEvents.map(({ dateStr, date, events: dayEvents }) => (
+                    <div key={dateStr}>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedDate(date)}
+                        className="text-[10px] font-bold uppercase tracking-wider mb-1.5 flex items-center gap-1.5 hover:opacity-80 transition-opacity cursor-pointer"
+                        style={{ color: "#268ffa" }}
+                      >
+                        <CalendarIcon size={10} />
+                        {format(date, "EEEE, dd/MM", { locale: ptBR })}
+                        <span className="ml-auto text-[9px] font-normal px-1.5 py-0.5 rounded-full" style={{ backgroundColor: "rgba(38,143,250,0.1)", color: "#268ffa" }}>
+                          {dayEvents.length}
+                        </span>
+                      </button>
+                      <div className="space-y-1.5">
+                        {dayEvents.map((evt) => (
+                          <div
+                            key={evt.id}
+                            className="rounded-lg px-3 py-2 cursor-pointer hover:shadow-sm transition-shadow"
+                            style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "1px solid rgba(13,4,70,0.06)" }}
+                            onClick={() => { setSelectedDate(date); }}
+                          >
+                            <p className="text-xs font-semibold truncate" style={{ color: "#0d0446" }}>
+                              {evt.programa?.nome || "Programa removido"}
+                            </p>
+                            <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.5)" }}>
+                              {evt.programa ? `${evt.programa.horario_inicio} - ${evt.programa.horario_fim}` : ""}
+                              {evt.local ? ` • ${evt.local}` : ""}
+                            </p>
+                            {evt.recorrencia !== "unico" && (
+                              <span className="inline-block text-[9px] font-semibold px-1.5 py-0.5 rounded mt-0.5" style={{ backgroundColor: "rgba(38,143,250,0.15)", color: "#268ffa" }}>
+                                🔁 {recorrenciaLabels[evt.recorrencia]}
+                              </span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
           </div>
 
