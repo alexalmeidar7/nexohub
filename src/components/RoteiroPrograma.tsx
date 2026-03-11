@@ -165,7 +165,22 @@ export default function RoteiroPrograma() {
     if (editingRoteiroId) {
       ({ error } = await supabase.from("roteiros").update({ ...payload, updated_at: new Date().toISOString() }).eq("id", editingRoteiroId));
     } else {
-      ({ error } = await supabase.from("roteiros").insert(payload));
+      // Check for duplicate (same programa + data + user)
+      const { data: existing } = await supabase
+        .from("roteiros")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("programa_nome", programaNome)
+        .eq("data_programa", format(selectedDate, "yyyy-MM-dd"))
+        .maybeSingle();
+
+      if (existing) {
+        // Replace existing roteiro
+        ({ error } = await supabase.from("roteiros").update({ ...payload, updated_at: new Date().toISOString() }).eq("id", existing.id));
+        setEditingRoteiroId(existing.id);
+      } else {
+        ({ error } = await supabase.from("roteiros").insert(payload));
+      }
     }
 
     setSavingRoteiro(false);
@@ -570,6 +585,7 @@ ${perguntaActions}
                     <div className="flex items-center gap-2">
                       <p className="text-xs font-semibold truncate" style={{ color: "#0d0446" }}>
                         {r.programa_nome || "Sem programa"}
+                        {r.numero_roteiro && <span className="text-[10px] font-normal" style={{ color: "rgba(13,4,70,0.4)" }}> #{r.numero_roteiro}</span>}
                       </p>
                       <span
                         className="text-[10px] px-2 py-0.5 rounded-full font-semibold"
