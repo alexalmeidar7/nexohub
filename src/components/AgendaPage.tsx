@@ -478,23 +478,49 @@ export default function AgendaPage() {
         </div>
 
         <Dialog open={dialogOpen} onOpenChange={(open) => { if (!open) resetForm(); setDialogOpen(open); }}>
-          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto" style={{ backgroundColor: "#ffffff", borderRadius: "20px", border: "1px solid rgba(38,143,250,0.3)" }}>
+          <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto p-0" style={{ backgroundColor: "#ffffff", borderRadius: "20px", border: "none", boxShadow: "0 20px 60px rgba(13,4,70,0.15)" }}>
             <style>{`
               .agenda-form-input:focus, .agenda-form-input:focus-visible, .agenda-form-input:active {
                 outline: none !important;
-                box-shadow: none !important;
-                ring: none !important;
+                box-shadow: 0 0 0 2px rgba(38,143,250,0.2) !important;
                 border-color: #268ffa !important;
               }
+              .agenda-form-calendar .rdp { color: #0d0446 !important; }
+              .agenda-form-calendar .rdp-caption_label { color: #0d0446 !important; font-weight: 700; }
+              .agenda-form-calendar .rdp-head_cell { color: rgba(13,4,70,0.5) !important; }
+              .agenda-form-calendar .rdp-day { color: #0d0446 !important; }
+              .agenda-form-calendar .rdp-day:hover { background-color: rgba(38,143,250,0.15) !important; color: #268ffa !important; }
+              .agenda-form-calendar .rdp-day_selected { background-color: #268ffa !important; color: #fff !important; }
+              .agenda-form-calendar .rdp-day_selected:hover { background-color: #1a7ae0 !important; color: #fff !important; }
+              .agenda-form-calendar .rdp-day_today { background-color: #0d0446 !important; color: #fff !important; font-weight: 700; }
+              .agenda-form-calendar .rdp-day_outside { color: rgba(13,4,70,0.25) !important; }
+              .agenda-form-calendar .rdp-nav_button { color: #0d0446 !important; }
+              .agenda-form-calendar .rdp-nav_button:hover { background-color: rgba(38,143,250,0.1) !important; }
+              .agenda-form-calendar button[name="previous-month"],
+              .agenda-form-calendar button[name="next-month"] { color: #0d0446 !important; }
             `}</style>
-            <DialogHeader>
-              <DialogTitle className="text-sm font-bold" style={{ color: "#0d0446" }}>{editingId ? "Editar Evento" : "Cadastrar Evento"}</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
+
+            {/* Header */}
+            <div className="px-6 pt-5 pb-4" style={{ background: "linear-gradient(135deg, #0d0446 0%, #1a0a6e 100%)", borderRadius: "20px 20px 0 0" }}>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: "rgba(255,255,255,0.15)" }}>
+                  <CalendarIcon size={20} className="text-white" />
+                </div>
+                <div>
+                  <DialogTitle className="text-sm font-bold text-white m-0">{editingId ? "Editar Evento" : "Novo Evento"}</DialogTitle>
+                  <p className="text-[10px] text-white/60 mt-0.5">Preencha os dados abaixo</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Form body */}
+            <div className="px-6 pb-6 pt-4 space-y-5">
+
+              {/* Programa */}
               <div>
-                <Label className="text-xs font-semibold" style={{ color: "#0d0446" }}>Programa</Label>
+                <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: "rgba(13,4,70,0.5)" }}>Programa</Label>
                 <Select value={formProgramaId} onValueChange={setFormProgramaId}>
-                  <SelectTrigger className="agenda-form-input mt-1" style={{ borderColor: "rgba(38,143,250,0.3)", borderRadius: "12px", backgroundColor: "#ffffff", color: "#0d0446" }}>
+                  <SelectTrigger className="agenda-form-input h-10" style={{ borderColor: "rgba(38,143,250,0.2)", borderRadius: "12px", backgroundColor: "#f8faff", color: "#0d0446" }}>
                     <SelectValue placeholder="Selecione o programa" />
                   </SelectTrigger>
                   <SelectContent>
@@ -506,105 +532,111 @@ export default function AgendaPage() {
                   </SelectContent>
                 </Select>
                 {selectedPrograma && (
-                  <p className="text-xs mt-1" style={{ color: "rgba(13,4,70,0.5)" }}>
-                    Horário: {selectedPrograma.horario_inicio} às {selectedPrograma.horario_fim}
-                    {selectedPrograma.estudio && ` • Estúdio: ${selectedPrograma.estudio}`}
+                  <p className="text-[10px] mt-1.5 px-1" style={{ color: "#268ffa" }}>
+                    ⏰ {selectedPrograma.horario_inicio} às {selectedPrograma.horario_fim}
+                    {selectedPrograma.estudio && ` • ${selectedPrograma.estudio}`}
                   </p>
                 )}
               </div>
 
+              {/* Calendário */}
               <div>
-                <Label className="text-xs font-semibold" style={{ color: "#0d0446" }}>Data do Evento</Label>
-                <div className="agenda-form-calendar">
-                  <style>{`
-                    .agenda-form-calendar .rdp { color: #0d0446 !important; }
-                    .agenda-form-calendar .rdp-caption_label { color: #0d0446 !important; font-weight: 700; }
-                    .agenda-form-calendar .rdp-head_cell { color: rgba(13,4,70,0.5) !important; }
-                    .agenda-form-calendar .rdp-day { color: #0d0446 !important; }
-                    .agenda-form-calendar .rdp-day:hover { background-color: rgba(38,143,250,0.15) !important; color: #268ffa !important; }
-                    .agenda-form-calendar .rdp-day_selected { background-color: #268ffa !important; color: #fff !important; }
-                    .agenda-form-calendar .rdp-day_selected:hover { background-color: #1a7ae0 !important; color: #fff !important; }
-                    .agenda-form-calendar .rdp-day_today { background-color: #0d0446 !important; color: #fff !important; font-weight: 700; }
-                    .agenda-form-calendar .rdp-day_outside { color: rgba(13,4,70,0.25) !important; }
-                    .agenda-form-calendar .rdp-nav_button { color: #0d0446 !important; }
-                    .agenda-form-calendar .rdp-nav_button:hover { background-color: rgba(38,143,250,0.1) !important; }
-                    .agenda-form-calendar button[name="previous-month"],
-                    .agenda-form-calendar button[name="next-month"] { color: #0d0446 !important; }
-                  `}</style>
+                <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: "rgba(13,4,70,0.5)" }}>Data do Evento</Label>
+                <div className="agenda-form-calendar rounded-xl overflow-hidden" style={{ border: "1px solid rgba(38,143,250,0.15)", backgroundColor: "#f8faff" }}>
                   <Calendar
                     mode="single"
                     selected={formData}
                     onSelect={setFormData}
-                    className={cn("p-3 pointer-events-auto border rounded-lg mt-1")}
-                    style={{ borderColor: "rgba(38,143,250,0.3)", backgroundColor: "#ffffff" }}
+                    className={cn("p-3 pointer-events-auto")}
+                    style={{ backgroundColor: "transparent" }}
                     locale={ptBR}
                   />
                 </div>
                 {formData && (
-                  <p className="text-xs mt-1" style={{ color: "rgba(13,4,70,0.5)" }}>
-                    {format(formData, "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                  <p className="text-[10px] mt-1.5 px-1 font-medium capitalize" style={{ color: "#268ffa" }}>
+                    📅 {format(formData, "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
                   </p>
                 )}
               </div>
 
-              <div>
-                <Label className="text-xs font-semibold" style={{ color: "#0d0446" }}>Recorrência</Label>
-                <Select value={formRecorrencia} onValueChange={setFormRecorrencia}>
-                  <SelectTrigger className="agenda-form-input mt-1" style={{ borderColor: "rgba(38,143,250,0.3)", borderRadius: "12px", backgroundColor: "#ffffff", color: "#0d0446" }}>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="unico">Somente este dia</SelectItem>
-                    <SelectItem value="semanal">Toda semana neste dia</SelectItem>
-                    <SelectItem value="mensal">Todo mês neste dia</SelectItem>
-                    <SelectItem value="programa_semanal">Programa semanal</SelectItem>
-                  </SelectContent>
-                </Select>
+              {/* Recorrência + Local (side by side) */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: "rgba(13,4,70,0.5)" }}>Recorrência</Label>
+                  <Select value={formRecorrencia} onValueChange={setFormRecorrencia}>
+                    <SelectTrigger className="agenda-form-input h-10" style={{ borderColor: "rgba(38,143,250,0.2)", borderRadius: "12px", backgroundColor: "#f8faff", color: "#0d0446" }}>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="unico">Somente este dia</SelectItem>
+                      <SelectItem value="semanal">Toda semana</SelectItem>
+                      <SelectItem value="mensal">Todo mês</SelectItem>
+                      <SelectItem value="programa_semanal">Programa semanal</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: "rgba(13,4,70,0.5)" }}>Local</Label>
+                  <Select value={formLocal} onValueChange={setFormLocal}>
+                    <SelectTrigger className="agenda-form-input h-10" style={{ borderColor: "rgba(38,143,250,0.2)", borderRadius: "12px", backgroundColor: "#f8faff", color: "#0d0446" }}>
+                      <SelectValue placeholder="Local" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {estudios.map((e) => (
+                        <SelectItem key={e} value={e}>{e}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
+              {/* Prioridade */}
               <div>
-                <Label className="text-xs font-semibold" style={{ color: "#0d0446" }}>Local</Label>
-                <Select value={formLocal} onValueChange={setFormLocal}>
-                  <SelectTrigger className="agenda-form-input mt-1" style={{ borderColor: "rgba(38,143,250,0.3)", borderRadius: "12px", backgroundColor: "#ffffff", color: "#0d0446" }}>
-                    <SelectValue placeholder="Selecione o local" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {estudios.map((e) => (
-                      <SelectItem key={e} value={e}>{e}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: "rgba(13,4,70,0.5)" }}>Prioridade</Label>
+                <div className="flex gap-2">
+                  {[
+                    { value: "baixa", label: "Baixa", color: "#22c55e" },
+                    { value: "normal", label: "Normal", color: "#268ffa" },
+                    { value: "alta", label: "Alta", color: "#f59e0b" },
+                    { value: "urgente", label: "Urgente", color: "#ef4444" },
+                  ].map((p) => (
+                    <button
+                      key={p.value}
+                      type="button"
+                      onClick={() => setFormPrioridade(p.value)}
+                      className="flex-1 py-2 rounded-lg text-[10px] font-bold transition-all"
+                      style={{
+                        backgroundColor: formPrioridade === p.value ? p.color : "rgba(13,4,70,0.04)",
+                        color: formPrioridade === p.value ? "#fff" : "rgba(13,4,70,0.5)",
+                        border: `1.5px solid ${formPrioridade === p.value ? p.color : "rgba(13,4,70,0.08)"}`,
+                      }}
+                    >
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
               </div>
 
+              {/* Descrição */}
               <div>
-                <Label className="text-xs font-semibold" style={{ color: "#0d0446" }}>Prioridade</Label>
-                <Select value={formPrioridade} onValueChange={setFormPrioridade}>
-                  <SelectTrigger className="agenda-form-input mt-1" style={{ borderColor: "rgba(38,143,250,0.3)", borderRadius: "12px", backgroundColor: "#ffffff", color: "#0d0446" }}>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="baixa">Baixa</SelectItem>
-                    <SelectItem value="normal">Normal</SelectItem>
-                    <SelectItem value="alta">Alta</SelectItem>
-                    <SelectItem value="urgente">Urgente</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label className="text-xs font-semibold" style={{ color: "#0d0446" }}>Descrição</Label>
+                <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: "rgba(13,4,70,0.5)" }}>Descrição</Label>
                 <Input
                   value={formDescricao}
                   onChange={(e) => setFormDescricao(e.target.value)}
-                  placeholder="Descrição do evento"
-                  className="agenda-form-input mt-1"
-                  style={{ borderColor: "rgba(38,143,250,0.3)", borderRadius: "12px", backgroundColor: "#ffffff", color: "#0d0446" }}
+                  placeholder="Breve descrição do evento..."
+                  className="agenda-form-input h-10"
+                  style={{ borderColor: "rgba(38,143,250,0.2)", borderRadius: "12px", backgroundColor: "#f8faff", color: "#0d0446" }}
                 />
               </div>
 
-
-              <Button onClick={handleSave} disabled={!formProgramaId || !formData} className="w-full font-bold" style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#ffffff", borderRadius: "12px", border: "none" }}>
-                {editingId ? "Atualizar Evento" : "Salvar Evento"}
+              {/* Submit */}
+              <Button
+                onClick={handleSave}
+                disabled={!formProgramaId || !formData}
+                className="w-full h-11 font-bold text-xs tracking-wide"
+                style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#ffffff", borderRadius: "14px", border: "none", boxShadow: "0 4px 15px rgba(38,143,250,0.3)" }}
+              >
+                {editingId ? "✓ Atualizar Evento" : "✓ Salvar Evento"}
               </Button>
             </div>
           </DialogContent>
