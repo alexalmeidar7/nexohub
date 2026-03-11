@@ -226,8 +226,9 @@ export default function TpExterno() {
     return () => el.removeEventListener("wheel", handleWheel);
   }, [showSetup]);
 
-  function applyText(text: string) {
+  function applyText(text: string, html = false) {
     setDisplayText(text);
+    setIsHtmlContent(html);
     scrollPosRef.current = 50;
     if (textRef.current) textRef.current.style.top = "50%";
     setTimerSeconds(0);
@@ -235,14 +236,14 @@ export default function TpExterno() {
   }
 
   function handleSaveManual() {
-    if (inputText.trim()) applyText(inputText);
+    if (inputText.trim()) applyText(inputText, false);
   }
 
   function handleLoadRoteiro() {
     const r = roteiros.find((x) => x.id === selectedRoteiroId);
     if (r) {
-      const parsed = extractRoteiroText(r.conteudo_html);
-      applyText(parsed || "Roteiro sem conteúdo de texto.");
+      const parsed = extractRoteiroHtml(r.conteudo_html);
+      applyText(parsed || "Roteiro sem conteúdo de texto.", true);
     }
   }
 
