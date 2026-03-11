@@ -615,6 +615,19 @@ function TpScreen({ user, onBack }: { user: any; onBack: () => void }) {
             {clock}
           </div>
           <div style={{ width: "32px", height: "2px", background: "linear-gradient(90deg, transparent, #4a90e2, transparent)", margin: "12px auto" }} />
+          <button onClick={handleMsgIconClick} title="Mensagens" style={{
+            background: "none", border: "none", cursor: "pointer", position: "relative",
+            marginTop: "4px", padding: "4px",
+          }}>
+            <MessageSquare size={20} color="rgba(255,255,255,0.5)" />
+            {hasUnread && (
+              <span style={{
+                position: "absolute", top: "2px", right: "2px", width: "8px", height: "8px",
+                borderRadius: "50%", backgroundColor: "#ef4444",
+                boxShadow: "0 0 6px rgba(239,68,68,0.6)",
+              }} />
+            )}
+          </button>
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: "16px", alignItems: "center" }}>
