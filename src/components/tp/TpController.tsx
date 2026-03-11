@@ -30,66 +30,85 @@ export default function TpController({ user, onBack }: TpControllerProps) {
   }, [user]);
 
   const lastStateAtRef = useRef(0);
+  const controllerPresenceKeyRef = useRef(`tp-controller-${typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : Math.random().toString(36).slice(2)}`);
+  const [tpPresenceOnline, setTpPresenceOnline] = useState(false);
 
   useEffect(() => {
     if (!user) return;
+
     const ch = supabase
-      .channel(`tp-state-${user.id}`, { config: { broadcast: { self: true } } })
+      .channel(`tp-state-${user.id}`, {
+        config: {
+          broadcast: { self: true },
+          presence: { key: controllerPresenceKeyRef.current },
+        },
+      })
       .on("broadcast", { event: "tp-state" }, (payload: any) => {
         setTpState(payload.payload);
         lastStateAtRef.current = Date.now();
-        setConnected(true);
       })
-      .subscribe();
-    return () => { supabase.removeChannel(ch); };
-  }, [user]);
+      .on("presence", { event: "sync" }, () => {
+        const peers = Object.values(ch.presenceState()).flat() as any[];
+        const hasScreen = peers.some((peer) => peer?.role === "screen");
+        setTpPresenceOnline(hasScreen);
+      });
 
-  useEffect(() => {
-    const id = setInterval(() => {
-      if (!lastStateAtRef.current) { setConnected(false); return; }
-      setConnected(Date.now() - lastStateAtRef.current < 4000);
-    }, 1000);
-    return () => clearInterval(id);
-  }, []);
+    ch.subscribe((status) => {
+      if (status === "SUBSCRIBED") {
+        void ch.track({ role: "controller", at: new Date().toISOString() });
+      }
+      if (status === "CLOSED" || status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+        setTpPresenceOnline(false);
+      }
+    });
+
+    return () => {
+      setTpPresenceOnline(false);
+      void ch.untrack();
+      supabase.removeChannel(ch);
+    };
+  }, [user]);
 
   const cmdChannelRef = useRef<any>(null);
   const cmdReadyRef = useRef(false);
+  const [cmdReady, setCmdReady] = useState(false);
+
   useEffect(() => {
     if (!user) return;
     const ch = supabase.channel(`tp-control-${user.id}`, { config: { broadcast: { self: true } } });
-    ch.subscribe((status) => { cmdReadyRef.current = status === "SUBSCRIBED"; });
+    ch.subscribe((status) => {
+      const ready = status === "SUBSCRIBED";
+      cmdReadyRef.current = ready;
+      setCmdReady(ready);
+    });
     cmdChannelRef.current = ch;
     return () => {
       cmdReadyRef.current = false;
+      setCmdReady(false);
       supabase.removeChannel(ch);
       cmdChannelRef.current = null;
     };
   }, [user]);
 
-  async function sendCommand(action: string, value?: any) {
-    if (!cmdChannelRef.current) return;
-    if (!cmdReadyRef.current) {
-      await new Promise<void>((resolve) => {
-        const started = Date.now();
-        const check = setInterval(() => {
-          if (cmdReadyRef.current || Date.now() - started > 1000) { clearInterval(check); resolve(); }
-        }, 40);
-      });
-    }
-    await cmdChannelRef.current.send({
-      type: "broadcast", event: "tp-command",
-      payload: { action, value },
-    });
-  }
-
-  // Handshake/fallback: ask TP to re-broadcast state while disconnected
   useEffect(() => {
-    if (!user || connected) return;
     const id = setInterval(() => {
-      void sendCommand("requestState");
+      const hasRecentState = !!lastStateAtRef.current && Date.now() - lastStateAtRef.current < 15000;
+      setConnected(tpPresenceOnline && (hasRecentState || cmdReady));
+    }, 1000);
+    return () => clearInterval(id);
+  }, [tpPresenceOnline, cmdReady]);
+
+  // Fallback: if state got stale, request a fresh snapshot from TP screen
+  useEffect(() => {
+    if (!user || !tpPresenceOnline) return;
+    const id = setInterval(() => {
+      const stale = !lastStateAtRef.current || Date.now() - lastStateAtRef.current > 5000;
+      if (stale) {
+        void sendCommand("requestState");
+      }
     }, 1500);
     return () => clearInterval(id);
-  }, [user, connected]);
+  }, [user, tpPresenceOnline]);
 
   const scrolling = tpState?.scrolling ?? false;
   const speed = tpState?.speed ?? 2;
