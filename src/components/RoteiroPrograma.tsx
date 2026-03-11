@@ -803,8 +803,7 @@ export default function RoteiroPrograma() {
               onClick={async () => {
                 setShowExportView(true);
                 if (editingRoteiroId) {
-                  const { data } = await supabase.from("roteiros").select("apresentador_editado, editado_at, share_login").eq("id", editingRoteiroId).maybeSingle();
-                  if (data) setApresentadorStatus({ editado: !!data.apresentador_editado, editadoAt: data.editado_at, login: data.share_login });
+                  fetchApresentadorStatus(editingRoteiroId);
                 } else {
                   setApresentadorStatus(null);
                 }
