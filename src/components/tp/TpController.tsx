@@ -72,61 +72,118 @@ export default function TpController({ user, onBack }: TpControllerProps) {
   const cmdChannelRef = useRef<any>(null);
   const cmdReadyRef = useRef(false);
   const [cmdReady, setCmdReady] = useState(false);
+  const cmdReconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cmdConnectPromiseRef = useRef<Promise<boolean> | null>(null);
+
+  function scheduleCmdReconnect(delay = 1200) {
+    if (cmdReconnectTimerRef.current) return;
+    cmdReconnectTimerRef.current = setTimeout(() => {
+      cmdReconnectTimerRef.current = null;
+      void connectCmdChannel(true);
+    }, delay);
+  }
+
+  function connectCmdChannel(force = false): Promise<boolean> {
+    if (!user) return Promise.resolve(false);
+
+    if (!force && cmdChannelRef.current && cmdReadyRef.current) {
+      return Promise.resolve(true);
+    }
+
+    if (cmdConnectPromiseRef.current) return cmdConnectPromiseRef.current;
+
+    cmdConnectPromiseRef.current = new Promise<boolean>((resolve) => {
+      let settled = false;
+      const finish = (ok: boolean) => {
+        if (settled) return;
+        settled = true;
+        cmdConnectPromiseRef.current = null;
+        resolve(ok);
+      };
+
+      if (cmdChannelRef.current) {
+        try {
+          supabase.removeChannel(cmdChannelRef.current);
+        } catch (_) {}
+        cmdChannelRef.current = null;
+      }
+
+      const ch = supabase.channel(`tp-control-${user.id}`, { config: { broadcast: { self: true } } });
+      cmdChannelRef.current = ch;
+      cmdReadyRef.current = false;
+      setCmdReady(false);
+
+      ch.subscribe((status) => {
+        const ready = status === "SUBSCRIBED";
+        cmdReadyRef.current = ready;
+        setCmdReady(ready);
+
+        if (ready) {
+          finish(true);
+          return;
+        }
+
+        if (status === "CLOSED" || status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+          finish(false);
+          scheduleCmdReconnect();
+        }
+      });
+
+      setTimeout(() => finish(cmdReadyRef.current), 2500);
+    });
+
+    return cmdConnectPromiseRef.current;
+  }
 
   useEffect(() => {
     if (!user) return;
-    const ch = supabase.channel(`tp-control-${user.id}`, { config: { broadcast: { self: true } } });
-    ch.subscribe((status) => {
-      const ready = status === "SUBSCRIBED";
-      cmdReadyRef.current = ready;
-      setCmdReady(ready);
-    });
-    cmdChannelRef.current = ch;
+
+    void connectCmdChannel(true);
+
+    const watchdog = setInterval(() => {
+      if (!cmdReadyRef.current) {
+        void connectCmdChannel(true);
+      }
+    }, 5000);
+
     return () => {
+      clearInterval(watchdog);
+      if (cmdReconnectTimerRef.current) {
+        clearTimeout(cmdReconnectTimerRef.current);
+        cmdReconnectTimerRef.current = null;
+      }
+      cmdConnectPromiseRef.current = null;
       cmdReadyRef.current = false;
       setCmdReady(false);
-      supabase.removeChannel(ch);
-      cmdChannelRef.current = null;
+      if (cmdChannelRef.current) {
+        try {
+          supabase.removeChannel(cmdChannelRef.current);
+        } catch (_) {}
+        cmdChannelRef.current = null;
+      }
     };
   }, [user]);
 
   async function sendCommand(action: string, value?: any) {
-    // If channel is missing or not ready, attempt reconnect
-    if (!cmdChannelRef.current || !cmdReadyRef.current) {
-      // Reconnect the command channel
-      if (cmdChannelRef.current) {
-        try { supabase.removeChannel(cmdChannelRef.current); } catch (_) {}
-      }
-      if (user) {
-        const ch = supabase.channel(`tp-control-${user.id}`, { config: { broadcast: { self: true } } });
-        cmdChannelRef.current = ch;
+    const message = {
+      type: "broadcast" as const,
+      event: "tp-command" as const,
+      payload: { action, value },
+    };
+
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const ready = await connectCmdChannel(attempt > 0);
+      if (!ready || !cmdChannelRef.current || !cmdReadyRef.current) continue;
+
+      try {
+        await cmdChannelRef.current.send(message);
+        return;
+      } catch (err) {
         cmdReadyRef.current = false;
         setCmdReady(false);
-        ch.subscribe((status) => {
-          const ready = status === "SUBSCRIBED";
-          cmdReadyRef.current = ready;
-          setCmdReady(ready);
-        });
+        scheduleCmdReconnect(0);
       }
-      // Wait up to 2s for reconnect
-      await new Promise<void>((resolve) => {
-        const started = Date.now();
-        const check = setInterval(() => {
-          if (cmdReadyRef.current || Date.now() - started > 2000) {
-            clearInterval(check);
-            resolve();
-          }
-        }, 50);
-      });
     }
-
-    if (!cmdChannelRef.current || !cmdReadyRef.current) return;
-
-    await cmdChannelRef.current.send({
-      type: "broadcast",
-      event: "tp-command",
-      payload: { action, value },
-    });
   }
 
 
