@@ -246,6 +246,7 @@ function MarqueeText({ text, className }: { text: string; className?: string }) 
 }
 
 export default function PlayerPage() {
+  usePageTitle("Player");
   const { userSlug } = useParams<{ userSlug?: string }>();
   const [searchParams] = useSearchParams();
   const requestedChannelId = searchParams.get("ch");

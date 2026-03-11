@@ -61,6 +61,7 @@ function renderBoldMarkdown(text: string) {
 }
 
 export default function PromocoesKiosk() {
+  usePageTitle("Promoções");
   const { userSlug } = useParams<{ userSlug?: string }>();
   const isPublicMode = !!userSlug;
   const [loading, setLoading] = useState(true);
