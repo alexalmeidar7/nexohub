@@ -109,11 +109,6 @@ export default function RoteiroPrograma() {
               <h3 className="text-lg font-bold" style={{ color: "#0d0446" }}>Roteiro de Programa</h3>
               <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.5)" }}>
                 Estruture o roteiro do seu programa
-                {isAgendado && (
-                  <span className="ml-2 px-2 py-0.5 rounded-full text-[9px] font-bold" style={{ backgroundColor: "rgba(38,143,250,0.15)", color: "#268ffa" }}>
-                    Roteiro Agendado
-                  </span>
-                )}
               </p>
             </div>
           </div>
