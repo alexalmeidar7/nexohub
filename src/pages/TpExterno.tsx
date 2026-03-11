@@ -371,6 +371,13 @@ export default function TpExterno() {
           <textarea
             value={msgText}
             onChange={(e) => setMsgText(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                if (msgText.trim() && !msgSending) handleSendMessage();
+              }
+              if (e.key === "Escape") setStep("menu");
+            }}
             placeholder="Digite sua mensagem..."
             rows={5}
             style={{
