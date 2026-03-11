@@ -1437,6 +1437,11 @@ function TpController({ user, onBack }: { user: any; onBack: () => void }) {
   // Keyboard controls: Space=toggle, Numpad+/-=speed
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && showSetup) {
+        e.preventDefault();
+        setShowSetup(false);
+        return;
+      }
       if (showSetup) return;
       if (e.code === "Space") {
         e.preventDefault();
