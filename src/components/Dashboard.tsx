@@ -103,7 +103,7 @@ const menuToModuleKey: Record<string, string> = {
 const pageTitle: Record<Page, string> = {
   dashboard: "Home",
   previsao: "Previsão do Tempo",
-  noticias: "Notícias",
+  noticias: "Roteiro de Programa",
   apresentadores: "Cadastro de Apresentadores",
   programas: "Cadastro de Programas",
   musica: "Música no Ar",
