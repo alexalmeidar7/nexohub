@@ -150,7 +150,7 @@ export default function RoteiroPrograma() {
               style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.15)", color: "#0d0446" }}
             >
               <option value="">Todos os tipos</option>
-              {tiposPrograma.map(t => <option key={t} value={t}>{t}</option>)}
+              {tiposFiltrados.map(t => <option key={t} value={t}>{t}</option>)}
             </select>
           </div>
 
