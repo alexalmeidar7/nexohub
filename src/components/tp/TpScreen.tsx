@@ -258,6 +258,9 @@ export default function TpScreen({ user, onBack }: TpScreenProps) {
             setTimerSeconds(0);
             setScrolling(false);
             break;
+          case "requestState":
+            queueStateBroadcast(true);
+            break;
         }
       });
     channel.subscribe();
