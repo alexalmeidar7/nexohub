@@ -514,7 +514,7 @@ export default function AgendaPage() {
             </div>
 
             {/* Form body */}
-            <div className="px-6 pb-6 pt-4 space-y-5 overflow-y-auto flex-1 min-h-0" style={{ scrollbarWidth: "thin", scrollbarColor: "#268ffa transparent" }}>
+            <div className="agenda-dialog-scroll px-6 pb-6 pt-4 space-y-5 overflow-y-auto flex-1 min-h-0" style={{ scrollbarWidth: "thin", scrollbarColor: "#268ffa transparent" }}>
               <style>{`
                 .agenda-dialog-scroll::-webkit-scrollbar { width: 6px; }
                 .agenda-dialog-scroll::-webkit-scrollbar-track { background: transparent; margin: 8px 0; }
