@@ -28,6 +28,7 @@ export default function TpScreen({ user, onBack }: TpScreenProps) {
   const [isHtmlContent, setIsHtmlContent] = useState(false);
   const [remoteActive, setRemoteActive] = useState(false);
   const remoteTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const screenPresenceKeyRef = useRef(`tp-screen-${typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : Math.random().toString(36).slice(2)}`);
 
   // Message state
   const [incomingMsg, setIncomingMsg] = useState<{ text: string; subject: string } | null>(null);
