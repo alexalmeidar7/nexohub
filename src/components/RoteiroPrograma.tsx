@@ -188,13 +188,40 @@ export default function RoteiroPrograma() {
                   {format(selectedDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
                 </button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
+              <PopoverContent className="w-auto p-0 border-none shadow-xl" align="start" style={{ borderRadius: "16px", overflow: "hidden" }}>
                 <Calendar
                   mode="single"
                   selected={selectedDate}
                   onSelect={(d) => d && setSelectedDate(d)}
                   locale={ptBR}
-                  className="p-3 pointer-events-auto"
+                  className="p-4 pointer-events-auto"
+                  classNames={{
+                    months: "flex flex-col space-y-4",
+                    month: "space-y-3",
+                    caption: "flex justify-center pt-1 relative items-center",
+                    caption_label: "text-sm font-bold",
+                    nav: "space-x-1 flex items-center",
+                    nav_button: "h-7 w-7 rounded-full flex items-center justify-center hover:opacity-100 transition-all",
+                    nav_button_previous: "absolute left-1",
+                    nav_button_next: "absolute right-1",
+                    table: "w-full border-collapse",
+                    head_row: "flex",
+                    head_cell: "rounded-md w-9 font-semibold text-[0.7rem] uppercase",
+                    row: "flex w-full mt-1",
+                    cell: "h-9 w-9 text-center text-sm p-0 relative rounded-full",
+                    day: "h-9 w-9 p-0 font-medium rounded-full transition-all hover:bg-[rgba(38,143,250,0.12)]",
+                    day_selected: "bg-[#268ffa] text-white hover:bg-[#268ffa] focus:bg-[#268ffa] font-bold shadow-md",
+                    day_today: "bg-[rgba(13,4,70,0.08)] font-bold",
+                    day_outside: "opacity-30",
+                    day_disabled: "opacity-30",
+                    day_hidden: "invisible",
+                  }}
+                  styles={{
+                    caption_label: { color: "#0d0446" },
+                    head_cell: { color: "rgba(13,4,70,0.45)" },
+                    day: { color: "#0d0446" },
+                    nav_button: { color: "#268ffa", backgroundColor: "rgba(38,143,250,0.08)" },
+                  }}
                 />
               </PopoverContent>
             </Popover>
