@@ -295,7 +295,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
           </div>
           <div>
             <h3 className="text-base font-bold" style={{ color: "#0d0446" }}>Configurações</h3>
-            <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.5)" }}>Gerencie os dados da empresa e canais do player</p>
+            <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.5)" }}>Gerencie os dados dos canais do player</p>
           </div>
         </div>
         <div className="space-y-5">
