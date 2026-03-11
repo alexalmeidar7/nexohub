@@ -28,6 +28,7 @@ interface Programa {
   horario_inicio: string;
   horario_fim: string;
   dias_semana: string[];
+  apresentador_id: string | null;
 }
 
 export default function RoteiroPrograma() {
