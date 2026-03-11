@@ -481,13 +481,82 @@ export default function RoteiroPrograma() {
 
           {/* Texto Roteiro */}
           <div className="rounded-xl p-4 mb-4" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.08)" }}>
-            <textarea
-              value={roteiroTexto}
-              onChange={e => setRoteiroTexto(e.target.value)}
-              placeholder="Texto roteiro"
-              rows={14}
-              className="w-full text-xs outline-none resize-none"
-              style={{ color: "#0d0446" }}
+            <p className="text-xs font-bold mb-3" style={{ color: "#0d0446" }}>Escreva seu roteiro</p>
+
+            {/* Toolbar */}
+            <div className="flex flex-wrap items-center gap-1 mb-3 pb-3" style={{ borderBottom: "1px solid rgba(13,4,70,0.08)" }}>
+              {/* Font size */}
+              <select
+                value={fontSize}
+                onChange={e => {
+                  setFontSize(e.target.value);
+                  document.execCommand("fontSize", false, "7");
+                  // Override the font size via span styling
+                  const sel = window.getSelection();
+                  if (sel && sel.rangeCount > 0) {
+                    const fonts = editorRef.current?.querySelectorAll('font[size="7"]');
+                    fonts?.forEach(f => {
+                      const span = document.createElement("span");
+                      span.style.fontSize = e.target.value + "px";
+                      span.innerHTML = f.innerHTML;
+                      f.replaceWith(span);
+                    });
+                  }
+                }}
+                className="h-8 px-2 rounded-lg text-xs outline-none cursor-pointer"
+                style={{ backgroundColor: "rgba(13,4,70,0.04)", border: "1px solid rgba(13,4,70,0.08)", color: "#0d0446" }}
+              >
+                <option value="12">12px</option>
+                <option value="14">14px</option>
+                <option value="16">16px</option>
+                <option value="18">18px</option>
+                <option value="20">20px</option>
+                <option value="24">24px</option>
+                <option value="28">28px</option>
+              </select>
+
+              <div className="w-px h-5 mx-1" style={{ backgroundColor: "rgba(13,4,70,0.1)" }} />
+
+              <button type="button" onClick={() => document.execCommand("bold")} className="h-8 w-8 flex items-center justify-center rounded-lg hover:opacity-70 transition" style={{ backgroundColor: "rgba(13,4,70,0.04)" }} title="Negrito">
+                <Bold size={14} style={{ color: "#0d0446" }} />
+              </button>
+              <button type="button" onClick={() => document.execCommand("underline")} className="h-8 w-8 flex items-center justify-center rounded-lg hover:opacity-70 transition" style={{ backgroundColor: "rgba(13,4,70,0.04)" }} title="Sublinhado">
+                <Underline size={14} style={{ color: "#0d0446" }} />
+              </button>
+
+              <div className="w-px h-5 mx-1" style={{ backgroundColor: "rgba(13,4,70,0.1)" }} />
+
+              <button type="button" onClick={() => document.execCommand("justifyLeft")} className="h-8 w-8 flex items-center justify-center rounded-lg hover:opacity-70 transition" style={{ backgroundColor: "rgba(13,4,70,0.04)" }} title="Alinhar à esquerda">
+                <AlignLeft size={14} style={{ color: "#0d0446" }} />
+              </button>
+              <button type="button" onClick={() => document.execCommand("justifyCenter")} className="h-8 w-8 flex items-center justify-center rounded-lg hover:opacity-70 transition" style={{ backgroundColor: "rgba(13,4,70,0.04)" }} title="Centralizar">
+                <AlignCenter size={14} style={{ color: "#0d0446" }} />
+              </button>
+              <button type="button" onClick={() => document.execCommand("justifyRight")} className="h-8 w-8 flex items-center justify-center rounded-lg hover:opacity-70 transition" style={{ backgroundColor: "rgba(13,4,70,0.04)" }} title="Alinhar à direita">
+                <AlignRight size={14} style={{ color: "#0d0446" }} />
+              </button>
+
+              <div className="w-px h-5 mx-1" style={{ backgroundColor: "rgba(13,4,70,0.1)" }} />
+
+              <button type="button" onClick={() => document.execCommand("insertUnorderedList")} className="h-8 w-8 flex items-center justify-center rounded-lg hover:opacity-70 transition" style={{ backgroundColor: "rgba(13,4,70,0.04)" }} title="Lista com marcadores">
+                <List size={14} style={{ color: "#0d0446" }} />
+              </button>
+              <button type="button" onClick={() => document.execCommand("insertOrderedList")} className="h-8 w-8 flex items-center justify-center rounded-lg hover:opacity-70 transition" style={{ backgroundColor: "rgba(13,4,70,0.04)" }} title="Lista numerada">
+                <ListOrdered size={14} style={{ color: "#0d0446" }} />
+              </button>
+            </div>
+
+            {/* Editor */}
+            <div
+              ref={editorRef}
+              contentEditable
+              suppressContentEditableWarning
+              onInput={() => {
+                if (editorRef.current) setRoteiroTexto(editorRef.current.innerHTML);
+              }}
+              className="w-full min-h-[280px] text-sm outline-none"
+              style={{ color: "#0d0446", fontSize: fontSize + "px", lineHeight: "1.7" }}
+              data-placeholder="Digite o roteiro aqui..."
             />
           </div>
 
