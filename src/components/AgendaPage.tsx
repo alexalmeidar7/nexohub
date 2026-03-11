@@ -628,7 +628,6 @@ export default function AgendaPage() {
                   className="agenda-form-input w-full resize-none text-xs px-3 py-2.5"
                   style={{ borderColor: "rgba(38,143,250,0.2)", borderRadius: "12px", backgroundColor: "#f8faff", color: "#0d0446", border: "1px solid rgba(38,143,250,0.2)" }}
                 />
-                />
               </div>
 
               {/* Submit */}
