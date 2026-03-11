@@ -72,7 +72,7 @@ function extractRoteiroHtml(html: string): string {
       if (!elemento && !descricaoText) return;
       if (descricaoText === "[Insira a pergunta aqui]" || descricaoText === "[Insira o texto aqui]") return;
 
-      if (elemento) lines.push(`<b>${elemento.toUpperCase()}</b>`);
+      if (elemento) lines.push(`<span style="font-size:0.6em;opacity:0.55;letter-spacing:2px">${elemento.toUpperCase()}</span>`);
       if (descricaoHtml) lines.push(descricaoHtml);
       lines.push("");
     });
