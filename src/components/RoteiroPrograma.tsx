@@ -180,7 +180,9 @@ export default function RoteiroPrograma() {
         ({ error } = await supabase.from("roteiros").update({ ...payload, updated_at: new Date().toISOString() }).eq("id", existing.id));
         setEditingRoteiroId(existing.id);
       } else {
-        ({ error } = await supabase.from("roteiros").insert(payload));
+        const { error: insertError, data: insertedData } = await supabase.from("roteiros").insert(payload).select("numero_roteiro").single();
+        error = insertError;
+        if (insertedData) setNumeroRoteiro(insertedData.numero_roteiro);
       }
     }
 
