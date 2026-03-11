@@ -480,6 +480,8 @@ function TpScreen({ user, onBack }: { user: any; onBack: () => void }) {
   const [flipH, setFlipH] = useState(false);
   const [flipV, setFlipV] = useState(false);
   const [isHtmlContent, setIsHtmlContent] = useState(false);
+  const [remoteActive, setRemoteActive] = useState(false);
+  const remoteTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
   // Message queue state
   const [incomingMsg, setIncomingMsg] = useState<{ text: string; subject: string } | null>(null);
