@@ -70,6 +70,7 @@ export default function RoteiroPrograma() {
   // Histórico de roteiros
   const [historico, setHistorico] = useState<any[]>([]);
   const [editingRoteiroId, setEditingRoteiroId] = useState<string | null>(null);
+  const [numeroRoteiro, setNumeroRoteiro] = useState<number | null>(null);
   const [savingRoteiro, setSavingRoteiro] = useState(false);
   const [showParticipantForm, setShowParticipantForm] = useState(true);
   const [showExportView, setShowExportView] = useState(false);
@@ -179,7 +180,9 @@ export default function RoteiroPrograma() {
         ({ error } = await supabase.from("roteiros").update({ ...payload, updated_at: new Date().toISOString() }).eq("id", existing.id));
         setEditingRoteiroId(existing.id);
       } else {
-        ({ error } = await supabase.from("roteiros").insert(payload));
+        const { error: insertError, data: insertedData } = await supabase.from("roteiros").insert(payload).select("numero_roteiro").single();
+        error = insertError;
+        if (insertedData) setNumeroRoteiro(insertedData.numero_roteiro);
       }
     }
 
@@ -204,6 +207,7 @@ export default function RoteiroPrograma() {
       }
 
       setEditingRoteiroId(null);
+      setNumeroRoteiro(null);
       fetchHistorico();
       
       // Reopen export view and scroll to end
@@ -241,6 +245,7 @@ export default function RoteiroPrograma() {
       setParticipantes(typeof r.participantes === "string" ? JSON.parse(r.participantes) : r.participantes || []);
     } catch { setParticipantes([]); }
     setEditingRoteiroId(r.id);
+    setNumeroRoteiro(r.numero_roteiro || null);
     setShowRoteiro(true);
     setShowExportView(false);
     setTimeout(() => {
@@ -292,6 +297,8 @@ export default function RoteiroPrograma() {
     setRoteiroSubtitulo("");
     setRoteiroTexto("");
     setShowRoteiro(true);
+    setNumeroRoteiro(null);
+    setEditingRoteiroId(null);
 
     const tdStyle = "border:1px solid rgba(13,4,70,0.12);padding:8px 10px";
     const actionBtnStyle = "cursor:pointer;padding:2px 4px;border-radius:4px;display:inline-flex;align-items:center;justify-content:center";
@@ -628,7 +635,10 @@ ${perguntaActions}
           {/* Header */}
           <div className="mb-5">
             <p className="text-xs font-bold" style={{ color: "#0d0446" }}>roteiro para o programa</p>
-            <h2 className="text-2xl font-bold" style={{ color: "#0d0446" }}>{programaNome}</h2>
+            <h2 className="text-2xl font-bold" style={{ color: "#0d0446" }}>
+              {programaNome}
+              {numeroRoteiro && <span className="text-sm font-semibold ml-2" style={{ color: "rgba(13,4,70,0.4)" }}>#{numeroRoteiro}</span>}
+            </h2>
             <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold mt-1" style={{ backgroundColor: "#268ffa", color: "#ffffff" }}>
               estúdio {estudio || "—"}
             </span>
