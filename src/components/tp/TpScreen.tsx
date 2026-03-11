@@ -257,61 +257,100 @@ export default function TpScreen({ user, onBack }: TpScreenProps) {
     return () => el.removeEventListener("wheel", handleWheel);
   }, [showSetup]);
 
-  // Remote control listener
+  // Remote control listener with auto-reconnect
+  const cmdChannelRef = useRef<any>(null);
+  const cmdReadyRef = useRef(false);
+
+  const handleCommand = useCallback((payload: any) => {
+    const cmd = payload.payload;
+    if (!cmd) return;
+    setRemoteActive(true);
+    if (remoteTimeoutRef.current) clearTimeout(remoteTimeoutRef.current);
+    remoteTimeoutRef.current = setTimeout(() => setRemoteActive(false), 5000);
+    switch (cmd.action) {
+      case "play": setScrolling(true); break;
+      case "pause": setScrolling(false); break;
+      case "toggle": setScrolling(s => !s); break;
+      case "speed": setSpeed(cmd.value); break;
+      case "fontSize": setFontSize(cmd.value); break;
+      case "reset":
+        setScrolling(false);
+        scrollPosRef.current = 50;
+        if (textRef.current) textRef.current.style.top = "50%";
+        setTimerSeconds(0);
+        break;
+      case "scrollStep":
+        if (textRef.current) {
+          const containerH = textRef.current.parentElement?.clientHeight || 1;
+          scrollPosRef.current += (cmd.value / containerH) * 100;
+          textRef.current.style.top = scrollPosRef.current + "%";
+        }
+        break;
+      case "flipH": setFlipH(f => !f); break;
+      case "flipV": setFlipV(f => !f); break;
+      case "loadText":
+        setDisplayText(cmd.value.text);
+        setIsHtmlContent(cmd.value.html);
+        scrollPosRef.current = 50;
+        if (textRef.current) textRef.current.style.top = "50%";
+        setTimerSeconds(0);
+        setScrolling(false);
+        if (activeTpIdRef.current) {
+          (supabase as any)
+            .from("teleprompters")
+            .update({ texto_atual: cmd.value.text, is_html: cmd.value.html })
+            .eq("id", activeTpIdRef.current)
+            .then(() => {});
+        }
+        break;
+      case "requestState":
+        queueStateBroadcast(true);
+        break;
+    }
+  }, []);
+
+  function connectCmdChannel() {
+    if (!user) return;
+    if (cmdChannelRef.current) {
+      supabase.removeChannel(cmdChannelRef.current);
+    }
+    const ch = supabase
+      .channel(`tp-control-${user.id}`, { config: { broadcast: { self: true } } })
+      .on("broadcast", { event: "tp-command" }, handleCommand);
+    ch.subscribe((status) => {
+      cmdReadyRef.current = status === "SUBSCRIBED";
+    });
+    cmdChannelRef.current = ch;
+  }
+
   useEffect(() => {
     if (!user) return;
-    const channel = supabase
-      .channel(`tp-control-${user.id}`, { config: { broadcast: { self: true } } })
-      .on("broadcast", { event: "tp-command" }, (payload: any) => {
-        const cmd = payload.payload;
-        if (!cmd) return;
-        setRemoteActive(true);
-        if (remoteTimeoutRef.current) clearTimeout(remoteTimeoutRef.current);
-        remoteTimeoutRef.current = setTimeout(() => setRemoteActive(false), 5000);
-        switch (cmd.action) {
-          case "play": setScrolling(true); break;
-          case "pause": setScrolling(false); break;
-          case "toggle": setScrolling(s => !s); break;
-          case "speed": setSpeed(cmd.value); break;
-          case "fontSize": setFontSize(cmd.value); break;
-          case "reset":
-            setScrolling(false);
-            scrollPosRef.current = 50;
-            if (textRef.current) textRef.current.style.top = "50%";
-            setTimerSeconds(0);
-            break;
-          case "scrollStep":
-            if (textRef.current) {
-              const containerH = textRef.current.parentElement?.clientHeight || 1;
-              scrollPosRef.current += (cmd.value / containerH) * 100;
-              textRef.current.style.top = scrollPosRef.current + "%";
-            }
-            break;
-          case "flipH": setFlipH(f => !f); break;
-          case "flipV": setFlipV(f => !f); break;
-          case "loadText":
-            setDisplayText(cmd.value.text);
-            setIsHtmlContent(cmd.value.html);
-            scrollPosRef.current = 50;
-            if (textRef.current) textRef.current.style.top = "50%";
-            setTimerSeconds(0);
-            setScrolling(false);
-            // Persist remotely loaded text to DB
-            if (activeTpIdRef.current) {
-              (supabase as any)
-                .from("teleprompters")
-                .update({ texto_atual: cmd.value.text, is_html: cmd.value.html })
-                .eq("id", activeTpIdRef.current)
-                .then(() => {});
-            }
-            break;
-          case "requestState":
-            queueStateBroadcast(true);
-            break;
-        }
-      });
-    channel.subscribe();
-    return () => { supabase.removeChannel(channel); };
+    connectCmdChannel();
+    return () => {
+      if (cmdChannelRef.current) {
+        supabase.removeChannel(cmdChannelRef.current);
+        cmdChannelRef.current = null;
+        cmdReadyRef.current = false;
+      }
+    };
+  }, [user]);
+
+  // Auto-reconnect check every 5s for both command and state channels
+  useEffect(() => {
+    if (!user) return;
+    const interval = setInterval(() => {
+      // Reconnect command channel if disconnected
+      if (!cmdReadyRef.current) {
+        console.log("[TP] Comando desconectado, reconectando...");
+        connectCmdChannel();
+      }
+      // Reconnect state channel if disconnected
+      if (!stateReadyRef.current && stateChannelRef.current) {
+        console.log("[TP] Estado desconectado, reconectando...");
+        reconnectStateChannel();
+      }
+    }, 5000);
+    return () => clearInterval(interval);
   }, [user]);
 
   // Broadcast state to controller (reliable queue)
@@ -320,8 +359,11 @@ export default function TpScreen({ user, onBack }: TpScreenProps) {
   const stateSendingRef = useRef(false);
   const pendingStateRef = useRef<any>(null);
 
-  useEffect(() => {
+  function setupStateChannel() {
     if (!user) return;
+    if (stateChannelRef.current) {
+      supabase.removeChannel(stateChannelRef.current);
+    }
     const ch = supabase.channel(`tp-state-${user.id}`, {
       config: {
         broadcast: { self: true },
@@ -339,13 +381,26 @@ export default function TpScreen({ user, onBack }: TpScreenProps) {
     });
 
     stateChannelRef.current = ch;
+  }
+
+  function reconnectStateChannel() {
+    stateReadyRef.current = false;
+    stateSendingRef.current = false;
+    setupStateChannel();
+  }
+
+  useEffect(() => {
+    if (!user) return;
+    setupStateChannel();
     return () => {
       stateReadyRef.current = false;
       stateSendingRef.current = false;
       pendingStateRef.current = null;
-      void ch.untrack();
-      supabase.removeChannel(ch);
-      stateChannelRef.current = null;
+      if (stateChannelRef.current) {
+        void stateChannelRef.current.untrack();
+        supabase.removeChannel(stateChannelRef.current);
+        stateChannelRef.current = null;
+      }
     };
   }, [user]);
 
