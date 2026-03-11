@@ -274,6 +274,12 @@ export default function RoteiroPrograma() {
 <td style="${tdStyle};font-weight:600">PERGUNTA 1</td>
 <td style="${tdStyle}">[Insira a pergunta aqui]</td>
 </tr>
+<tr data-action-row="true" contenteditable="false">
+<td style="${tdStyle}" colspan="3">
+<span data-action="add-pergunta" style="color:#268ffa;font-weight:600;font-size:12px;cursor:pointer;margin-right:16px">＋ adicionar pergunta</span>
+<span data-action="remove-pergunta" style="color:#dc2626;font-weight:600;font-size:12px;cursor:pointer">✕ remover última pergunta</span>
+</td>
+</tr>
 <tr>
 <td style="${tdStyle}">01:30</td>
 <td style="${tdStyle};font-weight:600">CORTES / B-ROLL</td>
@@ -737,68 +743,44 @@ export default function RoteiroPrograma() {
               onInput={() => {
                 if (editorRef.current) setRoteiroTexto(editorRef.current.innerHTML);
               }}
+              onClick={(e) => {
+                const target = e.target as HTMLElement;
+                const action = target.getAttribute("data-action");
+                if (!action || !editorRef.current) return;
+                e.preventDefault();
+                const table = editorRef.current.querySelector("table tbody");
+                if (!table) return;
+                const tdS = "border:1px solid rgba(13,4,70,0.12);padding:8px 10px";
+                const actionRow = table.querySelector("tr[data-action-row]");
+
+                if (action === "add-pergunta") {
+                  const newNum = perguntaCount + 1;
+                  setPerguntaCount(newNum);
+                  const allPerguntas = Array.from(table.querySelectorAll("tr[data-pergunta]"));
+                  const insertAfter = allPerguntas.length > 0
+                    ? allPerguntas[allPerguntas.length - 1]
+                    : Array.from(table.querySelectorAll("tr")).find(r => r.innerHTML.includes("ENTREVISTA")) || null;
+                  if (insertAfter) {
+                    const newRow = document.createElement("tr");
+                    newRow.setAttribute("data-pergunta", String(newNum));
+                    newRow.innerHTML = `<td style="${tdS}"></td><td style="${tdS};font-weight:600">PERGUNTA ${newNum}</td><td style="${tdS}">[Insira a pergunta aqui]</td>`;
+                    insertAfter.insertAdjacentElement("afterend", newRow);
+                    // Move action row to after the new row
+                    if (actionRow) newRow.insertAdjacentElement("afterend", actionRow);
+                    setRoteiroTexto(editorRef.current!.innerHTML);
+                  }
+                } else if (action === "remove-pergunta") {
+                  const allPerguntas = Array.from(table.querySelectorAll("tr[data-pergunta]"));
+                  if (allPerguntas.length === 0) return;
+                  allPerguntas[allPerguntas.length - 1].remove();
+                  setPerguntaCount(prev => Math.max(1, prev - 1));
+                  setRoteiroTexto(editorRef.current!.innerHTML);
+                }
+              }}
               className="w-full min-h-[280px] text-sm outline-none"
               style={{ color: "#0d0446", fontSize: fontSize + "px", lineHeight: "1.7" }}
               data-placeholder="Digite o roteiro aqui..."
             />
-
-            {/* Adicionar pergunta */}
-            <button
-              type="button"
-              onClick={() => {
-                if (!editorRef.current) return;
-                const table = editorRef.current.querySelector("table tbody");
-                if (!table) return;
-                const newNum = perguntaCount + 1;
-                setPerguntaCount(newNum);
-                const tdS = "border:1px solid rgba(13,4,70,0.12);padding:8px 10px";
-                // Find the last pergunta row or the ENTREVISTA row to insert after
-                const allRows = Array.from(table.querySelectorAll("tr"));
-                let insertAfter: Element | null = null;
-                for (let i = allRows.length - 1; i >= 0; i--) {
-                  if (allRows[i].getAttribute("data-pergunta")) {
-                    insertAfter = allRows[i];
-                    break;
-                  }
-                }
-                if (!insertAfter) {
-                  // fallback: find ENTREVISTA row
-                  insertAfter = allRows.find(r => r.innerHTML.includes("ENTREVISTA")) || null;
-                }
-                if (insertAfter) {
-                  const newRow = document.createElement("tr");
-                  newRow.setAttribute("data-pergunta", String(newNum));
-                  newRow.innerHTML = `<td style="${tdS}"></td><td style="${tdS};font-weight:600">PERGUNTA ${newNum}</td><td style="${tdS}">[Insira a pergunta aqui]</td>`;
-                  insertAfter.insertAdjacentElement("afterend", newRow);
-                  setRoteiroTexto(editorRef.current.innerHTML);
-                }
-              }}
-              className="flex items-center gap-1.5 mt-2 text-xs font-semibold hover:opacity-80 transition cursor-pointer"
-              style={{ color: "#268ffa" }}
-            >
-              <Plus size={14} />
-              adicionar pergunta
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                if (!editorRef.current) return;
-                const table = editorRef.current.querySelector("table tbody");
-                if (!table) return;
-                const allRows = Array.from(table.querySelectorAll("tr[data-pergunta]"));
-                if (allRows.length === 0) return;
-                const lastRow = allRows[allRows.length - 1];
-                lastRow.remove();
-                setPerguntaCount(prev => Math.max(1, prev - 1));
-                setRoteiroTexto(editorRef.current.innerHTML);
-              }}
-              className="flex items-center gap-1.5 mt-1 text-xs font-semibold hover:opacity-80 transition cursor-pointer"
-              style={{ color: "#dc2626" }}
-            >
-              <Trash2 size={13} />
-              remover última pergunta
-            </button>
           </div>
 
           {/* Salvar + Exportar */}
