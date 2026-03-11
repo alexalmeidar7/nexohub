@@ -34,7 +34,7 @@ export default function TpController({ user, onBack }: TpControllerProps) {
   useEffect(() => {
     if (!user) return;
     const ch = supabase
-      .channel(`tp-state-${user.id}`)
+      .channel(`tp-state-ctrl-${user.id}`)
       .on("broadcast", { event: "tp-state" }, (payload: any) => {
         setTpState(payload.payload);
         lastStateAtRef.current = Date.now();
@@ -131,7 +131,12 @@ export default function TpController({ user, onBack }: TpControllerProps) {
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && showSetup) { e.preventDefault(); setShowSetup(false); return; }
+      if (e.key === "Escape") {
+        e.preventDefault();
+        if (showSetup) { setShowSetup(false); return; }
+        onBack();
+        return;
+      }
       if (showSetup) return;
       if (e.code === "Space") { e.preventDefault(); sendCommand("toggle"); }
       if (e.code === "NumpadAdd" || (e.key === "+" && e.location === 3)) { e.preventDefault(); sendCommand("speed", Math.min(10, speed + 1)); }
@@ -139,7 +144,7 @@ export default function TpController({ user, onBack }: TpControllerProps) {
     };
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  }, [showSetup, speed]);
+  }, [showSetup, speed, onBack]);
 
   useEffect(() => {
     const handleWheel = (e: WheelEvent) => {
