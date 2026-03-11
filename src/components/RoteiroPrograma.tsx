@@ -138,12 +138,40 @@ export default function RoteiroPrograma() {
     setShowRoteiro(true);
   };
 
-  const addParticipante = () => {
+  const selectSuggestion = (apres: Apresentador) => {
+    setNewNome(apres.nome);
+    setNewCargo(apres.cargo || "Apresentador(a)");
+    setNewInstagram(apres.instagram || "");
+    setSelectedFromDb(true);
+    setShowSuggestions(false);
+  };
+
+  const addParticipante = async () => {
     if (!newNome.trim()) return;
+    const isNew = !selectedFromDb && !apresentadores.some(a => a.nome.toLowerCase() === newNome.trim().toLowerCase());
+    
     setParticipantes(prev => [...prev, { nome: newNome.trim(), cargo: newCargo, instagram: newInstagram.trim() }]);
+    
+    // If not from DB, register as new apresentador
+    if (isNew && user) {
+      await supabase.from("apresentadores").insert({
+        nome: newNome.trim(),
+        cargo: newCargo,
+        instagram: newInstagram.trim(),
+        user_id: user.id,
+        ativo: true,
+      });
+      // Refresh list
+      const { data } = await supabase.from("apresentadores").select("id, nome, cargo, instagram, ativo").eq("ativo", true);
+      if (data) setApresentadores(data);
+      setCadastroMsg(true);
+      setTimeout(() => setCadastroMsg(false), 4000);
+    }
+    
     setNewNome("");
-    setNewCargo("");
+    setNewCargo("Apresentador(a)");
     setNewInstagram("");
+    setSelectedFromDb(false);
   };
 
   const removeParticipante = (idx: number) => {
