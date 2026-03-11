@@ -1126,7 +1126,23 @@ function TpScreen({ user, onBack }: { user: any; onBack: () => void }) {
    ═══════════════════════════════════════════════════════════════ */
 function TpController({ user, onBack }: { user: any; onBack: () => void }) {
   const [tpState, setTpState] = useState<any>(null);
-  const [connected, setConnected] = useState(false);
+  const [showSetup, setShowSetup] = useState(false);
+  const [roteiros, setRoteiros] = useState<Roteiro[]>([]);
+  const [selectedRoteiroId, setSelectedRoteiroId] = useState("");
+  const [tab, setTab] = useState<"roteiros" | "manual">("roteiros");
+  const [inputText, setInputText] = useState("");
+
+  // Load roteiros
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("roteiros")
+      .select("id, programa_nome, titulo, data_programa, horario, conteudo_html, numero_roteiro")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(30)
+      .then(({ data }) => { if (data) setRoteiros(data); });
+  }, [user]);
 
   // Listen for TP state broadcasts
   useEffect(() => {
