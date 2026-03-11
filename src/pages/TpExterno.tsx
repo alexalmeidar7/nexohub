@@ -109,6 +109,7 @@ export default function TpExterno() {
   const [selectedRoteiroId, setSelectedRoteiroId] = useState<string>("");
   const [tab, setTab] = useState<"roteiros" | "manual">("roteiros");
   const [flipH, setFlipH] = useState(false);
+  const [flipV, setFlipV] = useState(false);
   const [isHtmlContent, setIsHtmlContent] = useState(false);
 
   const scrollPosRef = useRef(50);
