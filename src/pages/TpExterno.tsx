@@ -209,8 +209,8 @@ export default function TpExterno() {
   function handleLoadRoteiro() {
     const r = roteiros.find((x) => x.id === selectedRoteiroId);
     if (r) {
-      const plainText = stripHtml(r.conteudo_html);
-      applyText(plainText || "Roteiro sem conteúdo de texto.");
+      const parsed = extractRoteiroText(r.conteudo_html);
+      applyText(parsed || "Roteiro sem conteúdo de texto.");
     }
   }
 
