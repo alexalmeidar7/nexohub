@@ -883,7 +883,7 @@ function useGlobalMusicSync() {
     };
 
     fetchAndSync();
-    const interval = setInterval(fetchAndSync, 2000);
+    const interval = setInterval(fetchAndSync, 5000);
     return () => clearInterval(interval);
   }, [user]);
 }
