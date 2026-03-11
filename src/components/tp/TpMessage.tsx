@@ -16,7 +16,6 @@ export default function TpMessage({ user, onBack }: TpMessageProps) {
     try { return JSON.parse(localStorage.getItem("tp-msg-history") || "[]"); } catch { return []; }
   });
 
-  // Persistent channel — subscribe once, reuse for all sends
   const channelRef = useRef<any>(null);
   const channelReadyRef = useRef(false);
 
@@ -37,13 +36,11 @@ export default function TpMessage({ user, onBack }: TpMessageProps) {
     setSendStatus("idle");
     const msg = { text: text.trim(), subject: "Mensagem", ts: Date.now() };
 
-    // Save to history
     const newHistory = [{ text: text.trim(), ts: Date.now() }, ...msgHistory].slice(0, 50);
     setMsgHistory(newHistory);
     localStorage.setItem("tp-msg-history", JSON.stringify(newHistory));
 
     try {
-      // Wait for channel readiness (up to 1.5s)
       if (!channelReadyRef.current) {
         await new Promise<void>((resolve) => {
           const started = Date.now();
@@ -56,9 +53,7 @@ export default function TpMessage({ user, onBack }: TpMessageProps) {
         });
       }
 
-      if (!channelReadyRef.current) {
-        throw new Error("Canal não conectado");
-      }
+      if (!channelReadyRef.current) throw new Error("Canal não conectado");
 
       await channelRef.current.send({ type: "broadcast", event: "tp-message", payload: msg });
       setSendStatus("sent");
@@ -81,34 +76,23 @@ export default function TpMessage({ user, onBack }: TpMessageProps) {
     <div
       tabIndex={-1}
       onKeyDown={(e) => { if (e.key === "Escape") onBack(); }}
-      style={{
-        height: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-        backgroundColor: "#0f1058", fontFamily: "'Poppins', 'Inter', sans-serif", gap: "20px", outline: "none",
-      }}
+      className="h-screen flex flex-col items-center justify-center bg-tp font-sans gap-5 outline-none"
       ref={(el) => { if (el && !el.contains(document.activeElement)) el.focus(); }}
     >
-      <div style={{
-        background: "linear-gradient(135deg, #0d0446, #1a0a6e)", borderRadius: "20px",
-        padding: "32px", width: "min(450px, 90%)", border: "1px solid rgba(74,144,226,0.3)",
-        boxShadow: "0 16px 48px rgba(0,0,0,0.4)", position: "relative",
-      }}>
+      <div className="bg-gradient-to-br from-tp-surface to-tp-surface-light rounded-[20px] p-8 w-[min(450px,90%)] border border-tp-border shadow-[0_16px_48px_hsl(var(--tp-shadow))] relative">
         <button
           onClick={onBack}
-          style={{
-            position: "absolute", top: "14px", right: "14px",
-            background: "none", border: "none", cursor: "pointer",
-            display: "flex", alignItems: "center", gap: "4px", padding: "4px",
-          }}
+          className="absolute top-3.5 right-3.5 bg-transparent border-none cursor-pointer flex items-center gap-1 p-1"
         >
-          <X size={16} color="rgba(255,255,255,0.5)" />
-          <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)", fontWeight: 600 }}>esc</span>
+          <X size={16} className="text-tp-muted-strong" />
+          <span className="text-[9px] text-tp-foreground/30 font-semibold">esc</span>
         </button>
 
-        <h3 style={{ color: "#fff", fontSize: "16px", fontWeight: 700, margin: "0 0 4px" }}>
-          <MessageSquare size={16} style={{ display: "inline", verticalAlign: "-2px", marginRight: "8px" }} />
+        <h3 className="text-tp-foreground text-base font-bold m-0 mb-1">
+          <MessageSquare size={16} className="inline align-[-2px] mr-2" />
           Enviar Mensagem
         </h3>
-        <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "11px", margin: "0 0 16px" }}>
+        <p className="text-tp-muted text-[11px] m-0 mb-4">
           Envie uma mensagem para a produção
         </p>
         <textarea
@@ -124,79 +108,62 @@ export default function TpMessage({ user, onBack }: TpMessageProps) {
           placeholder="Digite sua mensagem..."
           rows={5}
           maxLength={500}
-          style={{
-            width: "100%", background: "#ffffff", color: "#0d0446", border: "1px solid rgba(74,144,226,0.2)",
-            borderRadius: "10px", padding: "12px", fontSize: "13px", resize: "none", outline: "none",
-          }}
+          className="w-full bg-white text-tp-surface border border-tp-accent/20 rounded-[10px] p-3 text-[13px] resize-none outline-none focus:border-tp-accent/50"
         />
         {/* Character counter */}
-        <div style={{ display: "flex", justifyContent: "space-between", marginTop: "4px" }}>
+        <div className="flex justify-between mt-1">
           <div>
             {sendStatus === "sent" && (
-              <span style={{ color: "#22c55e", fontSize: "12px", fontWeight: 600 }}>✓ Mensagem enviada!</span>
+              <span className="text-green-500 text-xs font-semibold">✓ Mensagem enviada!</span>
             )}
             {sendStatus === "error" && (
-              <span style={{ color: "#ef4444", fontSize: "12px", fontWeight: 600, display: "flex", alignItems: "center", gap: "4px" }}>
+              <span className="text-destructive text-xs font-semibold flex items-center gap-1">
                 <AlertCircle size={12} /> Falha ao enviar. Tente novamente.
               </span>
             )}
           </div>
-          <span style={{ fontSize: "10px", color: msgText.length > 450 ? "#ef4444" : "rgba(255,255,255,0.25)" }}>
+          <span className={`text-[10px] ${msgText.length > 450 ? "text-destructive" : "text-tp-foreground/25"}`}>
             {msgText.length}/500
           </span>
         </div>
-        <div style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
+        <div className="flex gap-2.5 mt-2.5">
           <button
             onClick={() => sendMsg(msgText)}
             disabled={!msgText.trim() || msgSending}
-            style={{
-              background: msgText.trim() ? "linear-gradient(135deg, #4a90e2, #2d6dc0)" : "rgba(255,255,255,0.05)",
-              color: msgText.trim() ? "#fff" : "rgba(255,255,255,0.3)",
-              border: "none", borderRadius: "10px", padding: "10px 24px",
-              fontWeight: 700, cursor: msgText.trim() ? "pointer" : "not-allowed", fontSize: "12px",
-            }}
+            className={`rounded-[10px] px-6 py-2.5 font-bold text-xs border-none ${
+              msgText.trim()
+                ? "bg-gradient-to-br from-tp-accent to-tp-accent-hover text-white cursor-pointer"
+                : "bg-tp-foreground/5 text-tp-foreground/30 cursor-not-allowed"
+            }`}
           >
             {msgSending ? <Loader2 size={14} className="animate-spin" /> : "Enviar"}
           </button>
           {msgHistory.length > 0 && (
-            <button onClick={clearHistory} title="Apagar histórico" style={{
-              background: "none", border: "1px solid rgba(239,68,68,0.3)", borderRadius: "10px",
-              padding: "10px 16px", cursor: "pointer", color: "rgba(239,68,68,0.7)", fontSize: "12px",
-              display: "flex", alignItems: "center", gap: "6px",
-            }}>
+            <button onClick={clearHistory} title="Apagar histórico" className="bg-transparent border border-destructive/30 rounded-[10px] px-4 py-2.5 cursor-pointer text-destructive/70 text-xs flex items-center gap-1.5">
               <Trash2 size={12} /> Limpar
             </button>
           )}
         </div>
 
         {msgHistory.length > 0 && (
-          <div style={{ marginTop: "20px" }}>
-            <div style={{ fontSize: "11px", fontWeight: 700, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "8px" }}>
+          <div className="mt-5">
+            <div className="text-[11px] font-bold text-tp-muted uppercase tracking-wider mb-2">
               Histórico
             </div>
-            <div style={{ maxHeight: "180px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "6px" }}>
+            <div className="max-h-[180px] overflow-y-auto flex flex-col gap-1.5">
               {msgHistory.map((h, i) => (
-                <div key={i} style={{
-                  display: "flex", alignItems: "center", gap: "8px",
-                  background: "rgba(0,0,0,0.2)", borderRadius: "8px", padding: "8px 12px",
-                  border: "1px solid rgba(255,255,255,0.06)",
-                }}>
-                  <span style={{ flex: 1, color: "rgba(255,255,255,0.7)", fontSize: "12px", lineHeight: 1.4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                <div key={i} className="flex items-center gap-2 bg-black/20 rounded-lg px-3 py-2 border border-tp-foreground/[0.06]">
+                  <span className="flex-1 text-tp-foreground/70 text-xs leading-relaxed overflow-hidden text-ellipsis whitespace-nowrap">
                     {h.text}
                   </span>
-                  <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.25)", whiteSpace: "nowrap" }}>
+                  <span className="text-[10px] text-tp-foreground/25 whitespace-nowrap">
                     {new Date(h.ts).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
                   </span>
                   <button
                     onClick={() => sendMsg(h.text)}
                     disabled={msgSending}
                     title="Reenviar"
-                    style={{
-                      background: "rgba(74,144,226,0.15)", border: "1px solid rgba(74,144,226,0.3)",
-                      borderRadius: "6px", padding: "4px 8px", cursor: "pointer",
-                      display: "flex", alignItems: "center", gap: "4px",
-                      color: "#4a90e2", fontSize: "10px", fontWeight: 700, whiteSpace: "nowrap",
-                    }}
+                    className="bg-tp-accent/15 border border-tp-border rounded-md px-2 py-1 cursor-pointer flex items-center gap-1 text-tp-accent text-[10px] font-bold whitespace-nowrap"
                   >
                     <RotateCw size={10} /> Reenviar
                   </button>

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Settings, Minus, Plus, Play, Pause, RotateCcw, Type, FileText, FlipHorizontal2, FlipVertical2, SlidersHorizontal, LogOut } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
-import { Roteiro, extractRoteiroHtml, controlBtnStyle, tabBtnStyle } from "./tp-utils";
+import { Roteiro, extractRoteiroHtml, tpControlBtnClasses, tpControlBtnActiveClasses } from "./tp-utils";
 
 interface TpControllerProps {
   user: User | null;
@@ -18,7 +18,6 @@ export default function TpController({ user, onBack }: TpControllerProps) {
   const [tab, setTab] = useState<"roteiros" | "manual">("roteiros");
   const [inputText, setInputText] = useState("");
 
-  // Load roteiros
   useEffect(() => {
     if (!user) return;
     supabase
@@ -32,7 +31,6 @@ export default function TpController({ user, onBack }: TpControllerProps) {
 
   const lastStateAtRef = useRef(0);
 
-  // Listen for TP state broadcasts
   useEffect(() => {
     if (!user) return;
     const ch = supabase
@@ -46,7 +44,6 @@ export default function TpController({ user, onBack }: TpControllerProps) {
     return () => { supabase.removeChannel(ch); };
   }, [user]);
 
-  // Mark disconnected when heartbeat is stale (keepalive is every 2s)
   useEffect(() => {
     const id = setInterval(() => {
       if (!lastStateAtRef.current) { setConnected(false); return; }
@@ -55,7 +52,6 @@ export default function TpController({ user, onBack }: TpControllerProps) {
     return () => clearInterval(id);
   }, []);
 
-  // Persistent command channel
   const cmdChannelRef = useRef<any>(null);
   const cmdReadyRef = useRef(false);
   useEffect(() => {
@@ -96,7 +92,6 @@ export default function TpController({ user, onBack }: TpControllerProps) {
   const timerSeconds = tpState?.timerSeconds ?? 0;
   const serverScrollPos = tpState?.scrollPos ?? 50;
 
-  // Local scroll animation mirror
   const localScrollRef = useRef(50);
   const previewTextRef = useRef<HTMLDivElement>(null);
 
@@ -134,7 +129,6 @@ export default function TpController({ user, onBack }: TpControllerProps) {
     return () => clearInterval(id);
   }, []);
 
-  // Keyboard controls
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === "Escape" && showSetup) { e.preventDefault(); setShowSetup(false); return; }
@@ -147,7 +141,6 @@ export default function TpController({ user, onBack }: TpControllerProps) {
     return () => window.removeEventListener("keydown", handleKey);
   }, [showSetup, speed]);
 
-  // Mouse wheel
   useEffect(() => {
     const handleWheel = (e: WheelEvent) => {
       if (showSetup) return;
@@ -176,207 +169,150 @@ export default function TpController({ user, onBack }: TpControllerProps) {
   }
 
   return (
-    <div style={{
-      height: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-      backgroundColor: "#0f1058", fontFamily: "'Poppins', 'Inter', sans-serif", padding: "20px",
-    }}>
+    <div className="h-screen flex flex-col items-center justify-center bg-tp font-sans p-5">
       {/* Header */}
-      <div className="tp-ctrl-header" style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px", flexWrap: "wrap", justifyContent: "center" }}>
-        <SlidersHorizontal size={20} color="#4a90e2" />
-        <span style={{ color: "#fff", fontSize: "16px", fontWeight: 700 }}>Controle Remoto do TP</span>
-        <div style={{
-          width: "10px", height: "10px", borderRadius: "50%",
-          backgroundColor: connected && tpState ? "#22c55e" : "#ef4444",
-          boxShadow: connected && tpState ? "0 0 8px rgba(34,197,94,0.5)" : "0 0 8px rgba(239,68,68,0.5)",
-          marginLeft: "8px",
-        }} />
-        <span style={{ color: "rgba(255,255,255,0.4)", fontSize: "11px" }}>
+      <div className="tp-ctrl-header flex items-center gap-3 mb-4 flex-wrap justify-center">
+        <SlidersHorizontal size={20} className="text-tp-accent" />
+        <span className="text-tp-foreground text-base font-bold">Controle Remoto do TP</span>
+        <div className={`w-2.5 h-2.5 rounded-full ml-2 ${connected && tpState ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]" : "bg-destructive shadow-[0_0_8px_rgba(239,68,68,0.5)]"}`} />
+        <span className="text-tp-muted text-[11px]">
           {connected && tpState ? "TP Conectado" : "Aguardando TP..."}
         </span>
       </div>
 
       {/* TP Preview Mirror */}
-      <div className="tp-ctrl-preview" style={{
-        width: "min(900px, 90vw)", height: "min(500px, 55vh)", position: "relative",
-        backgroundColor: "#020210", borderRadius: "12px", overflow: "hidden",
-        border: "1px solid rgba(74,144,226,0.3)", boxShadow: "0 16px 48px rgba(0,0,0,0.5)",
-      }}>
-        <div style={{
-          position: "absolute", top: 0, left: 0, right: 0, height: "25%",
-          background: "linear-gradient(to bottom, #020210 0%, rgba(2,2,16,0.85) 40%, rgba(2,2,16,0) 100%)",
-          pointerEvents: "none", zIndex: 8,
-        }} />
-        <div style={{
-          position: "absolute", bottom: 0, left: 0, right: 0, height: "15%",
-          background: "linear-gradient(to top, #020210 0%, rgba(2,2,16,0) 100%)",
-          pointerEvents: "none", zIndex: 8,
-        }} />
-        <div style={{ position: "absolute", left: 0, top: "50%", transform: "translateY(-50%)", zIndex: 10 }}>
-          <div style={{ width: 0, height: 0, borderTop: "12px solid transparent", borderBottom: "12px solid transparent", borderLeft: "20px solid #4a90e2", filter: "drop-shadow(0 0 6px rgba(74,144,226,0.5))" }} />
+      <div className="tp-ctrl-preview relative bg-tp-display rounded-xl overflow-hidden border border-tp-border shadow-[0_16px_48px_hsl(var(--tp-shadow))]" style={{ width: "min(900px, 90vw)", height: "min(500px, 55vh)" }}>
+        <div className="absolute top-0 left-0 right-0 h-1/4 bg-gradient-to-b from-tp-display via-tp-display/85 to-transparent pointer-events-none z-[8]" />
+        <div className="absolute bottom-0 left-0 right-0 h-[15%] bg-gradient-to-t from-tp-display to-transparent pointer-events-none z-[8]" />
+        <div className="absolute left-0 top-1/2 -translate-y-1/2 z-10">
+          <div className="w-0 h-0 border-t-[12px] border-t-transparent border-b-[12px] border-b-transparent border-l-[20px] border-l-tp-accent drop-shadow-[0_0_6px_hsl(var(--tp-accent)/0.5)]" />
         </div>
-        <div style={{ position: "absolute", left: "24px", right: "24px", top: "50%", height: "1px", background: "rgba(74,144,226,0.3)", zIndex: 6 }} />
+        <div className="absolute left-6 right-6 top-1/2 h-px bg-tp-accent/30 z-[6]" />
 
-        <div ref={previewTextRef} style={{
-          width: "75%", margin: "0 auto", fontSize: `${Math.max(14, fontSize * 0.3)}px`, lineHeight: 1.5,
-          textAlign: "center", whiteSpace: "pre-wrap", position: "absolute",
+        <div ref={previewTextRef} className="absolute text-tp-foreground font-normal" style={{
+          width: "75%", fontSize: `${Math.max(14, fontSize * 0.3)}px`, lineHeight: 1.5,
+          textAlign: "center", whiteSpace: "pre-wrap",
           top: `${serverScrollPos}%`, left: "12.5%",
-          color: "#ffffff", textShadow: "0 1px 8px rgba(0,0,0,0.5)", fontWeight: 400,
+          textShadow: "0 1px 8px rgba(0,0,0,0.5)",
           transform: `${flipH ? "scaleX(-1)" : ""} ${flipV ? "scaleY(-1)" : ""}`.trim() || "none",
         }}>
           {isHtmlContent ? <span dangerouslySetInnerHTML={{ __html: displayText }} /> : displayText}
         </div>
 
-        <div style={{
-          position: "absolute", top: "12px", right: "16px", zIndex: 20,
-          display: "flex", alignItems: "center", gap: "12px",
-        }}>
-          <span style={{ color: "rgba(255,255,255,0.4)", fontSize: "10px", fontWeight: 600 }}>{clock}</span>
-          <span style={{
-            color: scrolling ? "#4a90e2" : "rgba(255,255,255,0.5)",
-            fontSize: "10px", fontWeight: 700, transition: "color 0.3s",
-          }}>
+        <div className="absolute top-3 right-4 z-20 flex items-center gap-3">
+          <span className="text-tp-muted text-[10px] font-semibold">{clock}</span>
+          <span className={`text-[10px] font-bold transition-colors ${scrolling ? "text-tp-accent" : "text-tp-muted-strong"}`}>
             {scrolling ? "▶ RODANDO" : "⏸ PAUSADO"}
           </span>
-          <span style={{ color: "rgba(255,255,255,0.3)", fontSize: "10px" }}>⏱ {timerDisplay}</span>
+          <span className="text-tp-foreground/30 text-[10px]">⏱ {timerDisplay}</span>
         </div>
       </div>
 
       {/* Controls */}
-      <div className="tp-ctrl-bar" style={{
-        marginTop: "20px", display: "flex", alignItems: "center", gap: "12px",
-        background: "rgba(11,11,48,0.9)", backdropFilter: "blur(20px)",
-        padding: "12px 28px", borderRadius: "20px",
-        border: "1px solid rgba(74,144,226,0.2)", boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
-      }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-          <button onClick={() => sendCommand("fontSize", Math.max(20, fontSize - 5))} style={{ ...controlBtnStyle, padding: "6px 10px", fontSize: "11px", fontWeight: 700 }}>
+      <div className="tp-ctrl-bar mt-5 flex items-center gap-3 bg-tp-control backdrop-blur-[20px] px-7 py-3 rounded-[20px] border border-tp-accent/20 shadow-[0_8px_32px_hsl(var(--tp-shadow))]">
+        <div className="flex items-center gap-1">
+          <button onClick={() => sendCommand("fontSize", Math.max(20, fontSize - 5))} className={`${tpControlBtnClasses} px-2.5 py-1.5 text-[11px] font-bold gap-0.5`}>
             <Minus size={10} /> A
           </button>
-          <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.3)", minWidth: "30px", textAlign: "center" }}>{fontSize}px</span>
-          <button onClick={() => sendCommand("fontSize", Math.min(120, fontSize + 5))} style={{ ...controlBtnStyle, padding: "6px 10px", fontSize: "11px", fontWeight: 700 }}>
+          <span className="text-[10px] text-tp-foreground/30 min-w-[30px] text-center">{fontSize}px</span>
+          <button onClick={() => sendCommand("fontSize", Math.min(120, fontSize + 5))} className={`${tpControlBtnClasses} px-2.5 py-1.5 text-[11px] font-bold gap-0.5`}>
             <Plus size={10} /> A
           </button>
         </div>
-        <div className="tp-divider" style={{ width: "1px", height: "24px", background: "rgba(255,255,255,0.1)" }} />
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <Type size={12} color="rgba(255,255,255,0.3)" />
+        <div className="tp-divider w-px h-6 bg-tp-border-subtle" />
+        <div className="flex items-center gap-2">
+          <Type size={12} className="text-tp-foreground/30" />
           <input type="range" min={0} max={10} value={speed}
             onChange={(e) => sendCommand("speed", Number(e.target.value))}
-            className="tp-speed-slider" style={{ width: "120px", accentColor: "#4a90e2", height: "4px" }} />
-          <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.4)", minWidth: "14px" }}>{speed}</span>
+            className="tp-speed-slider w-[120px] h-1 accent-tp-accent" />
+          <span className="text-[10px] text-tp-muted min-w-[14px]">{speed}</span>
         </div>
-        <div className="tp-divider" style={{ width: "1px", height: "24px", background: "rgba(255,255,255,0.1)" }} />
-        <button onClick={() => sendCommand("toggle")} style={{
-          background: scrolling ? "linear-gradient(135deg, #e24a4a, #c0392b)" : "linear-gradient(135deg, #4a90e2, #2d6dc0)",
-          border: "none", borderRadius: "50%", width: "48px", height: "48px", cursor: "pointer",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          boxShadow: scrolling ? "0 4px 16px rgba(226,74,74,0.4)" : "0 4px 16px rgba(74,144,226,0.4)",
-          transition: "all 0.3s",
-        }}>
-          {scrolling ? <Pause size={20} color="#fff" /> : <Play size={20} color="#fff" style={{ marginLeft: "2px" }} />}
+        <div className="tp-divider w-px h-6 bg-tp-border-subtle" />
+        <button onClick={() => sendCommand("toggle")} className={`border-none rounded-full w-12 h-12 cursor-pointer flex items-center justify-center transition-all ${
+          scrolling
+            ? "bg-gradient-to-br from-red-500 to-red-700 shadow-[0_4px_16px_rgba(226,74,74,0.4)]"
+            : "bg-gradient-to-br from-tp-accent to-tp-accent-hover shadow-[0_4px_16px_hsl(var(--tp-accent)/0.4)]"
+        }`}>
+          {scrolling ? <Pause size={20} className="text-white" /> : <Play size={20} className="text-white ml-0.5" />}
         </button>
-        <div className="tp-divider" style={{ width: "1px", height: "24px", background: "rgba(255,255,255,0.1)" }} />
-        <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-          <button onClick={() => sendCommand("scrollStep", 80)} title="Scroll para cima" style={{ ...controlBtnStyle, padding: "4px 10px" }}>▲</button>
-          <button onClick={() => sendCommand("scrollStep", -80)} title="Scroll para baixo" style={{ ...controlBtnStyle, padding: "4px 10px" }}>▼</button>
+        <div className="tp-divider w-px h-6 bg-tp-border-subtle" />
+        <div className="flex flex-col gap-1">
+          <button onClick={() => sendCommand("scrollStep", 80)} title="Scroll para cima" className={`${tpControlBtnClasses} py-1 px-2.5`}>▲</button>
+          <button onClick={() => sendCommand("scrollStep", -80)} title="Scroll para baixo" className={`${tpControlBtnClasses} py-1 px-2.5`}>▼</button>
         </div>
-        <div className="tp-divider" style={{ width: "1px", height: "24px", background: "rgba(255,255,255,0.1)" }} />
+        <div className="tp-divider w-px h-6 bg-tp-border-subtle" />
         <button onClick={() => sendCommand("flipH")} title="Inverter H"
-          style={{ ...controlBtnStyle, background: flipH ? "rgba(74,144,226,0.2)" : controlBtnStyle.background }}>
-          <FlipHorizontal2 size={14} color={flipH ? "#4a90e2" : "rgba(255,255,255,0.5)"} />
+          className={`${tpControlBtnClasses} ${flipH ? tpControlBtnActiveClasses : ""}`}>
+          <FlipHorizontal2 size={14} className={flipH ? "text-tp-accent" : "text-tp-muted-strong"} />
         </button>
         <button onClick={() => sendCommand("flipV")} title="Inverter V"
-          style={{ ...controlBtnStyle, background: flipV ? "rgba(74,144,226,0.2)" : controlBtnStyle.background }}>
-          <FlipVertical2 size={14} color={flipV ? "#4a90e2" : "rgba(255,255,255,0.5)"} />
+          className={`${tpControlBtnClasses} ${flipV ? tpControlBtnActiveClasses : ""}`}>
+          <FlipVertical2 size={14} className={flipV ? "text-tp-accent" : "text-tp-muted-strong"} />
         </button>
-        <div className="tp-divider" style={{ width: "1px", height: "24px", background: "rgba(255,255,255,0.1)" }} />
-        <button onClick={() => sendCommand("reset")} title="Reiniciar" style={controlBtnStyle}>
-          <RotateCcw size={14} color="rgba(255,255,255,0.5)" />
+        <div className="tp-divider w-px h-6 bg-tp-border-subtle" />
+        <button onClick={() => sendCommand("reset")} title="Reiniciar" className={tpControlBtnClasses}>
+          <RotateCcw size={14} className="text-tp-muted-strong" />
         </button>
-        <div className="tp-divider" style={{ width: "1px", height: "24px", background: "rgba(255,255,255,0.1)" }} />
-        <button onClick={() => setShowSetup(true)} title="Carregar texto" style={{
-          ...controlBtnStyle, background: showSetup ? "rgba(74,144,226,0.2)" : controlBtnStyle.background,
-        }}>
-          <Settings size={14} color="#4a90e2" />
+        <div className="tp-divider w-px h-6 bg-tp-border-subtle" />
+        <button onClick={() => setShowSetup(true)} title="Carregar texto"
+          className={`${tpControlBtnClasses} ${showSetup ? tpControlBtnActiveClasses : ""}`}>
+          <Settings size={14} className="text-tp-accent" />
         </button>
       </div>
 
       {/* Back button */}
-      <button onClick={onBack} style={{
-        marginTop: "16px", background: "none", border: "1px solid rgba(255,255,255,0.15)", borderRadius: "10px",
-        padding: "8px 20px", cursor: "pointer", color: "rgba(255,255,255,0.4)", fontSize: "11px",
-        display: "flex", alignItems: "center", gap: "6px",
-      }}>
+      <button onClick={onBack} className="mt-4 bg-transparent border border-tp-border-subtle rounded-[10px] px-5 py-2 cursor-pointer text-tp-muted text-[11px] flex items-center gap-1.5">
         <LogOut size={12} /> Voltar
       </button>
 
       {/* Setup Modal */}
       {showSetup && (
         <>
-          <div onClick={() => setShowSetup(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 90 }} />
-          <div className="tp-setup-modal" style={{
-            position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)",
-            width: "min(650px, 85%)", maxHeight: "75vh",
-            background: "linear-gradient(135deg, #0d0446, #1a0a6e)",
-            border: "1px solid rgba(74,144,226,0.3)",
-            zIndex: 100, padding: "28px", borderRadius: "16px",
-            display: "flex", flexDirection: "column",
-            boxShadow: "0 24px 64px rgba(0,0,0,0.6)", overflow: "hidden",
-          }}>
-            <h3 style={{ margin: "0 0 4px", color: "#fff", fontSize: "16px", fontWeight: 700 }}>
+          <div onClick={() => setShowSetup(false)} className="fixed inset-0 bg-black/60 z-[90]" />
+          <div className="tp-setup-modal fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 max-h-[75vh] bg-gradient-to-br from-tp-surface to-tp-surface-light border border-tp-border z-[100] p-7 rounded-2xl flex flex-col shadow-[0_24px_64px_hsl(var(--tp-shadow))] overflow-hidden" style={{ width: "min(650px, 85%)" }}>
+            <h3 className="m-0 mb-1 text-tp-foreground text-base font-bold">
               Carregar Texto no Teleprompter
             </h3>
-            <p style={{ margin: "0 0 16px", color: "rgba(255,255,255,0.4)", fontSize: "12px" }}>
+            <p className="m-0 mb-4 text-tp-muted text-xs">
               Selecione um roteiro salvo ou cole um texto manualmente
             </p>
 
-            <div style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
-              <button onClick={() => setTab("roteiros")} style={tabBtnStyle(tab === "roteiros")}>
-                <FileText size={12} style={{ display: "inline", marginRight: "6px", verticalAlign: "-2px" }} />
+            <div className="flex gap-2 mb-4">
+              <button onClick={() => setTab("roteiros")} className={`rounded-lg px-4 py-2 cursor-pointer text-xs font-semibold transition-all border ${tab === "roteiros" ? "bg-tp-accent/20 border-tp-accent/40 text-tp-accent" : "bg-transparent border-tp-border-subtle text-tp-muted-strong"}`}>
+                <FileText size={12} className="inline mr-1.5 align-[-2px]" />
                 Roteiros Salvos
               </button>
-              <button onClick={() => setTab("manual")} style={tabBtnStyle(tab === "manual")}>
+              <button onClick={() => setTab("manual")} className={`rounded-lg px-4 py-2 cursor-pointer text-xs font-semibold transition-all border ${tab === "manual" ? "bg-tp-accent/20 border-tp-accent/40 text-tp-accent" : "bg-transparent border-tp-border-subtle text-tp-muted-strong"}`}>
                 Texto Manual
               </button>
             </div>
 
             {tab === "roteiros" ? (
-              <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
+              <div className="flex-1 flex flex-col min-h-0">
                 {roteiros.length === 0 ? (
-                  <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "13px", textAlign: "center", padding: "40px 0" }}>
+                  <p className="text-tp-muted-strong text-[13px] text-center py-10">
                     Nenhum roteiro encontrado.
                   </p>
                 ) : (
                   <>
-                    <div style={{
-                      flex: 1, overflowY: "auto", borderRadius: "10px",
-                      border: "1px solid rgba(255,255,255,0.1)", marginBottom: "12px",
-                    }}>
+                    <div className="flex-1 overflow-y-auto rounded-[10px] border border-tp-border-subtle mb-3">
                       {roteiros.map((r) => {
                         const isSelected = selectedRoteiroId === r.id;
                         return (
                           <button
                             key={r.id}
                             onClick={() => setSelectedRoteiroId(r.id)}
-                            style={{
-                              width: "100%", textAlign: "left", padding: "12px 14px",
-                              background: isSelected ? "rgba(74,144,226,0.15)" : "transparent",
-                              border: "none", borderBottom: "1px solid rgba(255,255,255,0.06)",
-                              cursor: "pointer", transition: "all 0.15s",
-                              display: "flex", flexDirection: "column", gap: "2px",
-                            }}
-                            onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.background = "rgba(255,255,255,0.04)"; }}
-                            onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.background = "transparent"; }}
+                            className={`w-full text-left px-3.5 py-3 border-none cursor-pointer transition-all flex flex-col gap-0.5 border-b border-b-tp-foreground/[0.06] ${isSelected ? "bg-tp-accent/15" : "bg-transparent hover:bg-tp-foreground/[0.04]"}`}
                           >
-                            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                              <span style={{ color: isSelected ? "#4a90e2" : "#fff", fontSize: "13px", fontWeight: 600 }}>
+                            <div className="flex items-center gap-2">
+                              <span className={`text-[13px] font-semibold ${isSelected ? "text-tp-accent" : "text-tp-foreground"}`}>
                                 {r.programa_nome || "Sem programa"}
                               </span>
                               {r.numero_roteiro && (
-                                <span style={{ color: "rgba(255,255,255,0.3)", fontSize: "11px" }}>#{r.numero_roteiro}</span>
+                                <span className="text-tp-foreground/30 text-[11px]">#{r.numero_roteiro}</span>
                               )}
                             </div>
-                            <span style={{ color: "rgba(255,255,255,0.35)", fontSize: "11px" }}>
+                            <span className="text-tp-foreground/[0.35] text-[11px]">
                               {r.data_programa} {r.horario ? `· ${r.horario}` : ""} {r.titulo ? `· ${r.titulo}` : ""}
                             </span>
                           </button>
@@ -386,13 +322,11 @@ export default function TpController({ user, onBack }: TpControllerProps) {
                     <button
                       onClick={handleLoadRoteiro}
                       disabled={!selectedRoteiroId}
-                      style={{
-                        background: selectedRoteiroId ? "linear-gradient(135deg, #4a90e2, #2d6dc0)" : "rgba(255,255,255,0.05)",
-                        color: selectedRoteiroId ? "#fff" : "rgba(255,255,255,0.3)",
-                        border: "none", borderRadius: "10px", padding: "10px 24px",
-                        fontWeight: 700, cursor: selectedRoteiroId ? "pointer" : "not-allowed",
-                        fontSize: "13px", alignSelf: "flex-start", transition: "all 0.2s",
-                      }}
+                      className={`rounded-[10px] px-6 py-2.5 font-bold text-[13px] self-start transition-all border-none ${
+                        selectedRoteiroId
+                          ? "bg-gradient-to-br from-tp-accent to-tp-accent-hover text-white cursor-pointer"
+                          : "bg-tp-foreground/5 text-tp-foreground/30 cursor-not-allowed"
+                      }`}
                     >
                       CARREGAR ROTEIRO
                     </button>
@@ -400,30 +334,21 @@ export default function TpController({ user, onBack }: TpControllerProps) {
                 )}
               </div>
             ) : (
-              <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+              <div className="flex-1 flex flex-col">
                 <textarea
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
                   placeholder="Cole o texto aqui..."
-                  style={{
-                    flex: 1, minHeight: "180px", background: "rgba(0,0,0,0.3)", color: "#fff",
-                    border: "1px solid rgba(255,255,255,0.1)", padding: "14px", borderRadius: "10px",
-                    resize: "none", fontSize: "14px", lineHeight: 1.6, outline: "none",
-                  }}
-                  onFocus={(e) => { e.currentTarget.style.borderColor = "rgba(74,144,226,0.5)"; }}
-                  onBlur={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"; }}
+                  className="flex-1 min-h-[180px] bg-black/30 text-tp-foreground border border-tp-border-subtle p-3.5 rounded-[10px] resize-none text-sm leading-relaxed outline-none focus:border-tp-accent/50"
                 />
                 <button
                   onClick={handleLoadManual}
                   disabled={!inputText.trim()}
-                  style={{
-                    marginTop: "12px",
-                    background: inputText.trim() ? "linear-gradient(135deg, #4a90e2, #2d6dc0)" : "rgba(255,255,255,0.05)",
-                    color: inputText.trim() ? "#fff" : "rgba(255,255,255,0.3)",
-                    border: "none", borderRadius: "10px", padding: "10px 24px",
-                    fontWeight: 700, cursor: inputText.trim() ? "pointer" : "not-allowed",
-                    fontSize: "13px", alignSelf: "flex-start",
-                  }}
+                  className={`mt-3 rounded-[10px] px-6 py-2.5 font-bold text-[13px] self-start border-none ${
+                    inputText.trim()
+                      ? "bg-gradient-to-br from-tp-accent to-tp-accent-hover text-white cursor-pointer"
+                      : "bg-tp-foreground/5 text-tp-foreground/30 cursor-not-allowed"
+                  }`}
                 >
                   CARREGAR TEXTO
                 </button>
@@ -432,11 +357,7 @@ export default function TpController({ user, onBack }: TpControllerProps) {
 
             <button
               onClick={() => setShowSetup(false)}
-              style={{
-                marginTop: "12px", background: "none", color: "rgba(255,255,255,0.4)",
-                border: "1px solid rgba(255,255,255,0.1)", borderRadius: "10px",
-                padding: "8px 16px", cursor: "pointer", fontSize: "12px", alignSelf: "flex-start",
-              }}
+              className="mt-3 bg-transparent text-tp-muted border border-tp-border-subtle rounded-[10px] px-4 py-2 cursor-pointer text-xs self-start"
             >
               Cancelar
             </button>
