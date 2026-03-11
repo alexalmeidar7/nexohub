@@ -517,10 +517,11 @@ function TpScreen({ user, onBack }: { user: any; onBack: () => void }) {
   const [remoteActive, setRemoteActive] = useState(false);
   const remoteTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
-  // Message queue state
+  // Message state — persistent list + current highlight
   const [incomingMsg, setIncomingMsg] = useState<{ text: string; subject: string } | null>(null);
   const [msgVisible, setMsgVisible] = useState(false);
   const [hasUnread, setHasUnread] = useState(false);
+  const [messageLog, setMessageLog] = useState<{ text: string; subject: string; ts: number }[]>([]);
   const msgQueueRef = useRef<{ text: string; subject: string }[]>([]);
   const msgTimerRef = useRef<ReturnType<typeof setTimeout>>();
   const isShowingRef = useRef(false);
