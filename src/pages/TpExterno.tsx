@@ -952,6 +952,35 @@ function TpScreen({ user, onBack }: { user: any; onBack: () => void }) {
       <div data-tp-display style={{ position: "relative", backgroundColor: "#020210", overflow: "hidden" }}>
         <div style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 5, background: "radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.6) 100%)" }} />
 
+        {/* Remote control indicator */}
+        <div style={{
+          position: "absolute", top: "12px", left: "12px", zIndex: 20,
+          display: "flex", alignItems: "center", gap: "6px",
+          background: remoteActive ? "rgba(34,197,94,0.15)" : "rgba(255,255,255,0.05)",
+          border: `1px solid ${remoteActive ? "rgba(34,197,94,0.5)" : "rgba(255,255,255,0.1)"}`,
+          borderRadius: "8px", padding: "5px 10px",
+          transition: "all 0.3s ease",
+        }}>
+          <div style={{
+            width: "7px", height: "7px", borderRadius: "50%",
+            backgroundColor: remoteActive ? "#22c55e" : "rgba(255,255,255,0.2)",
+            boxShadow: remoteActive ? "0 0 8px rgba(34,197,94,0.6)" : "none",
+            animation: remoteActive ? "tp-remote-blink 1s ease-in-out infinite" : "none",
+          }} />
+          <span style={{
+            fontSize: "9px", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase",
+            color: remoteActive ? "#22c55e" : "rgba(255,255,255,0.2)",
+            transition: "color 0.3s",
+          }}>
+            Controle Remoto {remoteActive ? "Ativo" : "Inativo"}
+          </span>
+        </div>
+        <style>{`
+          @keyframes tp-remote-blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+          }
+        `}</style>
         {/* ─── Message Balloon ─── */}
         {incomingMsg && (
           <div style={{
