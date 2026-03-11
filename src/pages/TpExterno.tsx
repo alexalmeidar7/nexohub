@@ -261,6 +261,20 @@ export default function TpExterno() {
       <div data-tp-display style={{ position: "relative", backgroundColor: "#020210", overflow: "hidden" }}>
         <div style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 5, background: "radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.6) 100%)" }} />
 
+        {/* Top fade-out overlay — text disappears smoothly */}
+        <div style={{
+          position: "absolute", top: 0, left: 0, right: 0, height: "25%",
+          background: "linear-gradient(to bottom, #020210 0%, rgba(2,2,16,0.85) 40%, rgba(2,2,16,0) 100%)",
+          pointerEvents: "none", zIndex: 8,
+        }} />
+
+        {/* Bottom fade overlay */}
+        <div style={{
+          position: "absolute", bottom: 0, left: 0, right: 0, height: "15%",
+          background: "linear-gradient(to top, #020210 0%, rgba(2,2,16,0) 100%)",
+          pointerEvents: "none", zIndex: 8,
+        }} />
+
         {/* Eyeline markers */}
         <div style={{ position: "absolute", left: 0, top: "50%", transform: "translateY(-50%)", zIndex: 10 }}>
           <div style={{ width: 0, height: 0, borderTop: "20px solid transparent", borderBottom: "20px solid transparent", borderLeft: "32px solid #4a90e2", filter: "drop-shadow(0 0 8px rgba(74,144,226,0.5))" }} />
@@ -274,7 +288,8 @@ export default function TpExterno() {
         <div ref={textRef} style={{
           width: "75%", margin: "0 auto", fontSize: `${fontSize}px`, lineHeight: 1.5,
           textAlign: "center", whiteSpace: "pre-wrap", position: "absolute", top: "50%", left: "12.5%",
-          transition: "font-size 0.2s", color: "#ffffff", textShadow: "0 2px 20px rgba(0,0,0,0.5)", fontWeight: 400,
+          transition: scrolling ? "font-size 0.2s" : "top 0.35s cubic-bezier(0.25, 0.1, 0.25, 1), font-size 0.2s",
+          color: "#ffffff", textShadow: "0 2px 20px rgba(0,0,0,0.5)", fontWeight: 400,
           transform: `${flipH ? "scaleX(-1)" : ""} ${flipV ? "scaleY(-1)" : ""}`.trim() || "none",
         }}>
           {displayText}
