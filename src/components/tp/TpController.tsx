@@ -221,7 +221,11 @@ export default function TpController({ user, onBack }: TpControllerProps) {
       setShowSetup(false);
       setInputText("");
     }
-  }
+  const statusLabel = !tpPresenceOnline
+    ? "Aguardando TP..."
+    : !tpState
+      ? "Sincronizando preview..."
+      : "TP Conectado";
 
   return (
     <div className="h-screen flex flex-col items-center justify-center bg-tp font-sans p-5">
