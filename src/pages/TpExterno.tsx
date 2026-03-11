@@ -1295,7 +1295,7 @@ function TpController({ user, onBack }: { user: any; onBack: () => void }) {
       backgroundColor: "#0f1058", fontFamily: "'Poppins', 'Inter', sans-serif", padding: "20px",
     }}>
       {/* Header */}
-      <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px" }}>
+      <div className="tp-ctrl-header" style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px", flexWrap: "wrap", justifyContent: "center" }}>
         <SlidersHorizontal size={20} color="#4a90e2" />
         <span style={{ color: "#fff", fontSize: "16px", fontWeight: 700 }}>Controle Remoto do TP</span>
         <div style={{
