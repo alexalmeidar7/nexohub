@@ -198,51 +198,6 @@ export default function RoteiroPrograma() {
           </div>
         </div>
 
-        {/* Campo 4: Participantes */}
-        <div className="mb-4">
-          <div className="flex items-center justify-between mb-2">
-            <label className="text-[11px] font-bold" style={{ color: "#0d0446" }}>
-              <Users size={11} className="inline mr-1" />Participantes
-            </label>
-            <button
-              onClick={() => setShowAddParticipante(true)}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-full font-bold text-[10px] transition-all"
-              style={{ backgroundColor: "#0d0446", color: "#ffffff" }}
-            >
-              <Plus size={10} /> Adicionar Participante
-            </button>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {participantes.map((p, idx) => (
-              <div
-                key={idx}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px]"
-                style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)", color: "#0d0446" }}
-              >
-                <span className="font-semibold">{p.nome}</span>
-                <span className="text-[9px] px-1.5 py-0.5 rounded-full" style={{ backgroundColor: "rgba(46,193,247,0.1)", color: "#2ec1f7" }}>
-                  {p.cargo}
-                </span>
-                <button onClick={() => removeParticipante(idx)} className="ml-1 hover:opacity-70">
-                  <X size={10} style={{ color: "rgba(13,4,70,0.3)" }} />
-                </button>
-              </div>
-            ))}
-            {participantes.length === 0 && (
-              <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.4)" }}>Nenhum participante adicionado</p>
-            )}
-          </div>
-        </div>
-
-        {/* Status badge */}
-        {isAgendado && (
-          <div className="rounded-lg px-4 py-2 mb-2 flex items-center gap-2" style={{ backgroundColor: "rgba(38,143,250,0.08)", border: "1px solid rgba(38,143,250,0.15)" }}>
-            <CalendarIcon size={14} style={{ color: "#268ffa" }} />
-            <span className="text-xs font-semibold" style={{ color: "#268ffa" }}>
-              Roteiro Agendado para {format(selectedDate, "dd/MM/yyyy")}
-            </span>
-          </div>
-        )}
       </div>
 
       {/* Conditional: Jornalístico shows NoticiasPanel */}
