@@ -668,38 +668,62 @@ export default function AgendaPage() {
           </DialogContent>
         </Dialog>
 
-        {/* Calendar + Upcoming + Events Grid */}
+        {/* Calendar + Events Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-          {/* Calendar + Upcoming */}
-          <div className="space-y-4">
-            {/* Calendar */}
+          {/* Calendar */}
+          <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}>
+            <div className="px-4 py-2.5 font-bold text-xs tracking-wide text-white" style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)" }}>
+              📅 Calendário
+            </div>
+            <div className="p-3">
+              <style>{`
+                .agenda-calendar .rdp-day:hover { background-color: rgba(38,143,250,0.15) !important; color: #268ffa !important; }
+                .agenda-calendar .rdp-day_selected { background-color: #268ffa !important; color: #fff !important; }
+                .agenda-calendar .rdp-day_selected:hover { background-color: #268ffa !important; }
+                .agenda-calendar .rdp-day_today { background-color: #0d0446 !important; color: #ffffff !important; font-weight: 700 !important; }
+                .agenda-calendar .rdp-day_today:hover { background-color: #0d0446 !important; color: #ffffff !important; }
+                .agenda-calendar [class*="day_today"] { background-color: #0d0446 !important; color: #ffffff !important; font-weight: 700 !important; }
+                .agenda-calendar .has-event-day { background-color: rgba(38,143,250,0.15) !important; color: #268ffa !important; font-weight: bold; }
+              `}</style>
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={setSelectedDate}
+                className={cn("p-2 pointer-events-auto agenda-calendar")}
+                locale={ptBR}
+                modifiers={{ hasEvent: eventDates }}
+                modifiersClassNames={{ hasEvent: "has-event-day" }}
+              />
+            </div>
+          </div>
+
+          {/* Events + Upcoming */}
+          <div className="lg:col-span-2 space-y-4">
+            {/* Events of selected day */}
             <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}>
-              <div className="px-4 py-2.5 font-bold text-xs tracking-wide text-white" style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)" }}>
-                📅 Calendário
+              <div className="px-4 py-2.5 font-bold text-xs tracking-wide text-white flex items-center justify-between" style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)" }}>
+                <span style={{ color: "#ffffff" }}>
+                  {selectedDate
+                    ? `📋 Eventos em ${format(selectedDate, "dd/MM/yyyy")}`
+                    : "📋 Todos os eventos"}
+                  {filterLocal !== "todos" && ` • ${filterLocal}`}
+                </span>
+                <span className="text-[9px] font-normal px-2 py-0.5 rounded-full" style={{ backgroundColor: "rgba(255,255,255,0.15)" }}>
+                  {filteredEventos.length} evento{filteredEventos.length !== 1 ? "s" : ""}
+                </span>
               </div>
-              <div className="p-3">
-                <style>{`
-                  .agenda-calendar .rdp-day:hover { background-color: rgba(38,143,250,0.15) !important; color: #268ffa !important; }
-                  .agenda-calendar .rdp-day_selected { background-color: #268ffa !important; color: #fff !important; }
-                  .agenda-calendar .rdp-day_selected:hover { background-color: #268ffa !important; }
-                  .agenda-calendar .rdp-day_today { background-color: #0d0446 !important; color: #ffffff !important; font-weight: 700 !important; }
-                  .agenda-calendar .rdp-day_today:hover { background-color: #0d0446 !important; color: #ffffff !important; }
-                  .agenda-calendar [class*="day_today"] { background-color: #0d0446 !important; color: #ffffff !important; font-weight: 700 !important; }
-                  .agenda-calendar .has-event-day { background-color: rgba(38,143,250,0.15) !important; color: #268ffa !important; font-weight: bold; }
-                `}</style>
-                <Calendar
-                  mode="single"
-                  selected={selectedDate}
-                  onSelect={setSelectedDate}
-                  className={cn("p-2 pointer-events-auto agenda-calendar")}
-                  locale={ptBR}
-                  modifiers={{ hasEvent: eventDates }}
-                  modifiersClassNames={{ hasEvent: "has-event-day" }}
-                />
+              <div className="p-3 space-y-2">
+                {filteredEventos.length === 0 ? (
+                  <p className="text-sm py-8 text-center" style={{ color: "rgba(13,4,70,0.4)" }}>
+                    Nenhum evento encontrado para esta data.
+                  </p>
+                ) : (
+                  filteredEventos.map((evt) => renderEventCard(evt))
+                )}
               </div>
             </div>
 
-            {/* Upcoming Events */}
+            {/* Upcoming 7 days */}
             <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}>
               <div className="px-4 py-2.5 font-bold text-xs tracking-wide text-white" style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)" }}>
                 🗓️ Próximos 7 dias
@@ -715,7 +739,7 @@ export default function AgendaPage() {
                       <button
                         type="button"
                         onClick={() => setSelectedDate(date)}
-                        className="text-[10px] font-bold uppercase tracking-wider mb-1.5 flex items-center gap-1.5 hover:opacity-80 transition-opacity cursor-pointer"
+                        className="text-[10px] font-bold uppercase tracking-wider mb-1.5 flex items-center gap-1.5 w-full hover:opacity-80 transition-opacity cursor-pointer"
                         style={{ color: "#268ffa" }}
                       >
                         <CalendarIcon size={10} />
@@ -749,32 +773,6 @@ export default function AgendaPage() {
                       </div>
                     </div>
                   ))
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Events */}
-          <div className="lg:col-span-2 space-y-3">
-            <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}>
-              <div className="px-4 py-2.5 font-bold text-xs tracking-wide text-white flex items-center justify-between" style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)" }}>
-                <span style={{ color: "#ffffff" }}>
-                  {selectedDate
-                    ? `📋 Eventos em ${format(selectedDate, "dd/MM/yyyy")}`
-                    : "📋 Todos os eventos"}
-                  {filterLocal !== "todos" && ` • ${filterLocal}`}
-                </span>
-                <span className="text-[9px] font-normal px-2 py-0.5 rounded-full" style={{ backgroundColor: "rgba(255,255,255,0.15)" }}>
-                  {filteredEventos.length} evento{filteredEventos.length !== 1 ? "s" : ""}
-                </span>
-              </div>
-              <div className="p-3 space-y-2">
-                {filteredEventos.length === 0 ? (
-                  <p className="text-sm py-8 text-center" style={{ color: "rgba(13,4,70,0.4)" }}>
-                    Nenhum evento encontrado para esta data.
-                  </p>
-                ) : (
-                  filteredEventos.map((evt) => renderEventCard(evt))
                 )}
               </div>
             </div>
