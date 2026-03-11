@@ -1012,7 +1012,7 @@ function TpScreen({ user, onBack }: { user: any; onBack: () => void }) {
             <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.4)", minWidth: "14px" }}>{speed}</span>
           </div>
           <div className="tp-divider" style={{ width: "1px", height: "24px", background: "rgba(255,255,255,0.1)" }} />
-          <button onClick={() => setScrolling(!scrolling)} style={{
+          <button className="tp-play-btn" onClick={() => setScrolling(!scrolling)} style={{
             background: scrolling ? "linear-gradient(135deg, #e24a4a, #c0392b)" : "linear-gradient(135deg, #4a90e2, #2d6dc0)",
             border: "none", borderRadius: "50%", width: "44px", height: "44px", cursor: "pointer",
             display: "flex", alignItems: "center", justifyContent: "center",
