@@ -2,11 +2,18 @@ import html2canvas from "html2canvas-pro";
 import { jsPDF } from "jspdf";
 
 export async function generatePdfBlob(element: HTMLElement): Promise<Blob> {
-  const canvas = await html2canvas(element, {
-    scale: 2,
-    useCORS: true,
-    backgroundColor: "#ffffff",
-  });
+  // Force all text/elements to black for better readability
+  element.classList.add("pdf-force-black");
+  const style = document.createElement("style");
+  style.textContent = `.pdf-force-black, .pdf-force-black * { color: #000000 !important; border-color: #000000 !important; }`;
+  document.head.appendChild(style);
+
+  try {
+    const canvas = await html2canvas(element, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: "#ffffff",
+    });
 
   const imgData = canvas.toDataURL("image/jpeg", 0.95);
   const pdf = new jsPDF("p", "mm", "a4");
