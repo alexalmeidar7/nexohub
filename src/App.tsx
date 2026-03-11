@@ -24,6 +24,7 @@ const AdminLogin = lazy(() => import("./pages/admin/AdminLogin"));
 const JornalExport = lazy(() => import("./pages/JornalExport"));
 const RoteiroExport = lazy(() => import("./pages/RoteiroExport"));
 const RoteiroApresentadorEdit = lazy(() => import("./pages/RoteiroApresentadorEdit"));
+const TpExterno = lazy(() => import("./pages/TpExterno"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
