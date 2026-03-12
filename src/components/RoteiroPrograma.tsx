@@ -304,7 +304,7 @@ export default function RoteiroPrograma() {
     setNumeroRoteiro(null);
     setEditingRoteiroId(null);
 
-    const tdStyle = "border:1px solid rgba(13,4,70,0.12);padding:8px 10px";
+    const tdStyle = "border:1px solid rgba(13,4,70,0.12);padding:8px 10px;word-wrap:break-word;overflow-wrap:break-word";
     const actionBtnStyle = "cursor:pointer;padding:2px 4px;border-radius:4px;display:inline-flex;align-items:center;justify-content:center";
     const perguntaActions = `<td style="${tdStyle};white-space:nowrap;text-align:center;width:90px" contenteditable="false"><span data-action="move-up" style="${actionBtnStyle};color:#268ffa" title="Mover para cima">▲</span> <span data-action="move-down" style="${actionBtnStyle};color:#268ffa" title="Mover para baixo">▼</span> <span data-action="delete-pergunta" style="${actionBtnStyle};color:#dc2626" title="Remover pergunta">🗑</span></td>`;
     const defaultContent = `<table style="width:100%;border-collapse:collapse;font-size:13px;color:#0d0446;table-layout:fixed">
