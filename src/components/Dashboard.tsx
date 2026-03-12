@@ -450,8 +450,11 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               <div
                 key={item.label}
                 className="relative flex items-center"
-                onMouseEnter={() => { if (menuLeaveTimer.current) { clearTimeout(menuLeaveTimer.current); menuLeaveTimer.current = null; } if (item.children) setHoveredMenu(item.label); }}
-                onMouseLeave={() => { menuLeaveTimer.current = setTimeout(() => setHoveredMenu(null), 250); }}
+                onMouseEnter={() => {
+                  clearMenuLeaveTimer();
+                  if (item.children) setHoveredMenu(item.label);
+                }}
+                onMouseLeave={scheduleCloseMenu}
               >
                 {idx > 0 && <span className="text-white/10 mx-2.5 text-[10px] select-none">•</span>}
                 <button
@@ -473,7 +476,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
                 {/* Dropdown */}
                 {item.children && isOpen && (
-                  <div className="absolute top-full left-0 pt-2 z-[70]">
+                  <div className="absolute top-full left-0 pt-2 z-[70]" onMouseEnter={clearMenuLeaveTimer} onMouseLeave={scheduleCloseMenu}>
                     <div
                       className="rounded-xl py-1.5 min-w-[180px]"
                       style={{
