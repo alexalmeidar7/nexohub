@@ -264,7 +264,7 @@ export default function ApresentadorForm() {
                 <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: "#25D366" }}>
                   <Phone size={16} className="text-white" />
                 </div>
-                <input value={whatsapp} onChange={(e) => setWhatsapp(formatWhatsapp(e.target.value))} placeholder="+55 (00) 00000-0000"
+                <input value={whatsapp} onChange={(e) => setWhatsapp(formatWhatsapp(e.target.value))} placeholder="+55 (DDD) 00000-0000"
                   className="flex-1 px-4 py-2 outline-none transition-all text-sm placeholder:text-[#0d0446]/40"
                   style={{ backgroundColor: "rgba(255,255,255,0.6)", border: "1px solid rgba(13,4,70,0.15)", borderRadius: "12px", color: "#0d0446" }}
                   onFocus={e => { e.currentTarget.style.borderColor = "#268ffa"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.8)"; }}
