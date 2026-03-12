@@ -1229,9 +1229,14 @@ ${perguntaActions}
                 {numeroRoteiro && (
                   <p className="text-3xl font-black mb-1" style={{ color: "#268ffa" }}>#{numeroRoteiro}</p>
                 )}
-                <h1 className="text-xl font-bold uppercase mb-2" style={{ color: "#0d0446" }}>
-                  {roteiroTitulo || "Roteiro"}
-                </h1>
+                <div className="flex-1 min-w-0">
+                  <h1 className="text-xl font-bold uppercase mb-1" style={{ color: "#0d0446" }}>
+                    {roteiroTitulo || "Roteiro"}
+                  </h1>
+                  {roteiroSubtitulo && (
+                    <p className="text-sm mb-2" style={{ color: "rgba(13,4,70,0.6)" }}>{roteiroSubtitulo}</p>
+                  )}
+                </div>
                 {(() => {
                   const prog = programas.find(p => p.nome === programaNome);
                   const logoUrl = prog?.selo || prog?.capa;
