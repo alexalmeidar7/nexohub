@@ -87,7 +87,7 @@ export default function WeatherWidget({ onNavigate }: { onNavigate?: (page: any)
         }
 
         const wxRes = await fetch(
-          `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto&forecast_days=1`
+          `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=2`
         );
         const wxData = await wxRes.json();
 
@@ -96,8 +96,8 @@ export default function WeatherWidget({ onNavigate }: { onNavigate?: (page: any)
           temp: Math.round(wxData.current.temperature_2m),
           tempMin: Math.round(wxData.daily.temperature_2m_min[0]),
           tempMax: Math.round(wxData.daily.temperature_2m_max[0]),
-          humidity: wxData.current.relative_humidity_2m,
-          rainChance: wxData.daily.precipitation_probability_max[0] ?? 0,
+          tomorrowMin: Math.round(wxData.daily.temperature_2m_min[1]),
+          tomorrowMax: Math.round(wxData.daily.temperature_2m_max[1]),
           weatherCode: wxData.current.weather_code,
         });
       } catch { /* silent */ }
