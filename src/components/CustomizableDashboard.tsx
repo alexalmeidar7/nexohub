@@ -880,7 +880,7 @@ function DashboardAgendaWidget({ onNavigate }: { onNavigate: (page: Page) => voi
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center gap-2 mb-3">
-        <CalendarDays size={14} className="text-[#268ffa]" />
+        <CalendarDays size={14} className="text-[#be0101]" />
         <p className="text-[#0d0446] font-bold text-sm">Agenda de Eventos</p>
       </div>
       {events.length === 0 ? (
@@ -888,7 +888,7 @@ function DashboardAgendaWidget({ onNavigate }: { onNavigate: (page: Page) => voi
       ) : (
         <div className="space-y-2">
           {events.map(ev => (
-            <div key={ev.id} className="px-3 py-2 rounded-lg" style={{ background: "rgba(38,143,250,0.06)" }}>
+            <div key={ev.id} className="px-3 py-2 rounded-lg" style={{ background: "rgba(190,1,1,0.06)" }}>
               <p className="text-[#0d0446] text-xs font-semibold truncate">{ev.descricao || "Evento"}</p>
               <p className="text-[#0d0446]/40 text-[10px]">
                 {new Date(ev.data + "T12:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })} — {ev.local}
@@ -901,9 +901,9 @@ function DashboardAgendaWidget({ onNavigate }: { onNavigate: (page: Page) => voi
         <button
           onClick={() => onNavigate("agenda")}
           className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold transition-all"
-          style={{ backgroundColor: "rgba(38,143,250,0.1)", color: "#268ffa" }}
-          onMouseEnter={e => { e.currentTarget.style.backgroundColor = "rgba(38,143,250,0.2)"; }}
-          onMouseLeave={e => { e.currentTarget.style.backgroundColor = "rgba(38,143,250,0.1)"; }}
+          style={{ backgroundColor: "rgba(190,1,1,0.1)", color: "#be0101" }}
+          onMouseEnter={e => { e.currentTarget.style.backgroundColor = "rgba(190,1,1,0.2)"; }}
+          onMouseLeave={e => { e.currentTarget.style.backgroundColor = "rgba(190,1,1,0.1)"; }}
         >
           <Plus size={10} /> Adicionar evento
         </button>
