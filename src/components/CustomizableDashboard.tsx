@@ -1454,10 +1454,10 @@ function DashboardPlayerWidget({ onVideoChange }: { onVideoChange?: (active: boo
         <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(10,10,10,0.6) 0%, rgba(10,10,10,0.9) 100%)" }} />
       </div>
 
-      {/* Video inside widget */}
+      {/* Video area - grows above controls */}
       {showVideo && isVideo && (
         <div className="relative -mx-4 -mt-4 mb-3 rounded-t-2xl overflow-hidden" style={{ animation: "widget-video-grow 0.4s ease-out forwards" }}>
-          <video ref={videoRef} autoPlay muted={isMuted} playsInline className="w-full object-contain" style={{ aspectRatio: "16/9", maxHeight: "220px" }} />
+          <video ref={videoRef} autoPlay muted={isMuted} playsInline className="w-full object-contain" style={{ aspectRatio: "16/9", maxHeight: "220px", background: "#000" }} />
           <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(180deg, transparent 50%, rgba(10,10,10,0.7) 100%)" }} />
           <button onClick={() => stopAll()} className="absolute top-2 right-2 w-5 h-5 rounded-full flex items-center justify-center z-10" style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)" }}>
             <X size={10} className="text-white" />
@@ -1465,11 +1465,14 @@ function DashboardPlayerWidget({ onVideoChange }: { onVideoChange?: (active: boo
         </div>
       )}
 
-      {/* Controls row */}
+      {/* Spacer to push controls to bottom */}
+      <div className="flex-1" />
+
+      {/* Controls row - always at bottom */}
       {channels.length === 0 ? (
         <p className="text-white/30 text-xs relative z-10">Nenhum canal cadastrado</p>
       ) : (
-        <div className="relative z-10 flex items-center gap-3">
+        <div className="relative z-10 flex items-center gap-3 flex-shrink-0">
           {channels.length > 1 && (
             <button onClick={goPrev} className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-all hover:scale-110" style={{ background: "rgba(255,255,255,0.1)" }} onMouseEnter={e => { e.currentTarget.style.background = "rgba(190,1,1,0.4)"; }} onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.1)"; }}>
               <ChevronLeft size={14} className="text-white/70" />
