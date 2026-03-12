@@ -15,6 +15,7 @@ import { sanitizeRoteiroHtml } from "@/lib/sanitizeRoteiroHtml";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 
 const NoticiasPanel = lazy(() => import("./NoticiasPanel"));
+const WhatsAppSendDialog = lazy(() => import("./WhatsAppSendDialog"));
 
 interface Apresentador {
   id: string;
@@ -84,6 +85,7 @@ export default function RoteiroPrograma() {
   const [apresentadorStatus, setApresentadorStatus] = useState<{ editado: boolean; editadoAt: string | null; login: string | null } | null>(null);
   const [mergeCells, setMergeCells] = useState<HTMLTableCellElement[]>([]);
   const mergeHighlightColor = "rgba(38,143,250,0.18)";
+  const [showWhatsAppDialog, setShowWhatsAppDialog] = useState(false);
 
   const fetchApresentadorStatus = async (roteiroId: string) => {
     const { data } = await supabase.from("roteiros").select("apresentador_editado, editado_at, share_login").eq("id", roteiroId).maybeSingle();
@@ -267,7 +269,6 @@ export default function RoteiroPrograma() {
     const t2 = setTimeout(tryRestore, 300);
     return () => { clearTimeout(t1); clearTimeout(t2); };
   }, [showRoteiro, roteiroTexto]);
-
 
   const editarRoteiro = (r: any) => {
     setEstudio(r.estudio || "");
@@ -1304,10 +1305,7 @@ ${perguntaActions}
                 }
               </button>
               <button
-                onClick={() => {
-                  const texto = `*${roteiroTitulo || "Roteiro"}*\n${programaNome} · ${estudio}\n${format(selectedDate, "dd/MM/yyyy")} ${horario}\n\n${(editorRef.current?.innerText || roteiroTexto).substring(0, 2000)}`;
-                  window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, "_blank");
-                }}
+                onClick={() => setShowWhatsAppDialog(true)}
                 className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold text-white hover:opacity-90 transition"
                 style={{ backgroundColor: "#25d366" }}
               >
@@ -1412,8 +1410,22 @@ ${perguntaActions}
           <NoticiasPanel />
         </Suspense>
       )}
+      <Suspense fallback={null}>
+        <WhatsAppSendDialog
+          open={showWhatsAppDialog}
+          onClose={() => setShowWhatsAppDialog(false)}
+          roteiroData={{
+            titulo: roteiroTitulo || "Roteiro",
+            programaNome,
+            estudio,
+            data: format(selectedDate, "dd/MM/yyyy"),
+            horario,
+            participantes,
+            conteudoTexto: editorRef.current?.innerText || roteiroTexto,
+          }}
+        />
+      </Suspense>
 
-      
     </div>
   );
 }
