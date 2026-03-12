@@ -151,8 +151,8 @@ export default function RoteiroPrograma() {
   };
 
   useEffect(() => {
-    if (user) fetchHistorico();
-  }, [user]);
+    if (userId) fetchHistorico();
+  }, [userId]);
 
   const salvarRoteiro = async () => {
     if (!user) return;
