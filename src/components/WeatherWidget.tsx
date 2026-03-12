@@ -113,7 +113,7 @@ export default function WeatherWidget({ onNavigate }: { onNavigate?: (page: any)
     return (
       <div className="flex flex-col h-full items-start justify-between">
         <div className="flex items-center gap-1.5 mb-2">
-          <Sun size={14} style={{ color: "#268ffa", animationDuration: "8s" }} className="animate-spin" />
+          <WeatherIcon code={0} size={16} forceDay />
           <span className="font-bold text-xs text-white">TEMPO</span>
         </div>
         <p className="text-xs flex-1 text-white/50">Nenhuma cidade configurada.</p>
