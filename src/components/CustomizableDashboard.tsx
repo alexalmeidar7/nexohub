@@ -1080,15 +1080,15 @@ function StatsWidget() {
   return (
     <div>
       <div className="flex items-center gap-2 mb-3">
-        <BarChart3 size={14} className="text-[#268ffa]" />
+        <BarChart3 size={14} className="text-[#be0101]" />
         <p className="text-[#0d0446] font-bold text-sm">Dados Estatísticos</p>
       </div>
       <div className="grid grid-cols-2 gap-3">
-        <div className="px-3 py-3 rounded-xl text-center" style={{ background: "rgba(38,143,250,0.06)" }}>
+        <div className="px-3 py-3 rounded-xl text-center" style={{ background: "rgba(190,1,1,0.06)" }}>
           <p className="text-2xl font-bold text-[#0d0446]">{prerollCount}</p>
           <p className="text-[#0d0446]/40 text-[10px] mt-0.5">Pre-rolls Ativos</p>
         </div>
-        <div className="px-3 py-3 rounded-xl text-center" style={{ background: "rgba(38,143,250,0.06)" }}>
+        <div className="px-3 py-3 rounded-xl text-center" style={{ background: "rgba(190,1,1,0.06)" }}>
           <p className="text-2xl font-bold text-[#0d0446]">{channelCount}</p>
           <p className="text-[#0d0446]/40 text-[10px] mt-0.5">Canais Ativos</p>
         </div>
