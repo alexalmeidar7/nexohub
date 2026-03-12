@@ -390,7 +390,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
 
             {/* Descrição */}
             {onAirProgram.descricao && (
-              <p className="text-white text-[11px] leading-relaxed line-clamp-3 mb-2" style={{ maxWidth: 400 }}>{onAirProgram.descricao}</p>
+              <p className="text-white text-[11px] leading-relaxed line-clamp-2 sm:line-clamp-3 mb-2" style={{ maxWidth: 400 }}>{onAirProgram.descricao}</p>
             )}
 
             {/* Apresentador */}
