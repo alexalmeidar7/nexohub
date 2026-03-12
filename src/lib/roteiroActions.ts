@@ -36,15 +36,23 @@ export function injectPerguntaActions(container: HTMLElement) {
     lastPergunta.insertAdjacentElement("afterend", actionRow);
   }
 
-  // Add empty 4th cell to non-pergunta rows missing it
+  // Add empty 4th cell to non-pergunta rows missing it (with word-break for long text)
   const allRows = container.querySelectorAll("tbody tr:not([data-pergunta]):not([data-action-row])");
   allRows.forEach((row) => {
     const cells = row.querySelectorAll("td, th");
     const hasColspan = Array.from(cells).some(c => (c as HTMLElement).getAttribute("colspan"));
     if (!hasColspan && cells.length === 3) {
       const td = document.createElement("td");
-      td.setAttribute("style", tdS);
+      td.setAttribute("style", `${tdS};white-space:normal;word-break:break-word`);
       row.appendChild(td);
+    }
+    // Ensure existing 4th cells also have word-break
+    if (!hasColspan && cells.length >= 4) {
+      const lastCell = cells[cells.length - 1] as HTMLElement;
+      if (!lastCell.hasAttribute("data-action")) {
+        lastCell.style.whiteSpace = "normal";
+        lastCell.style.wordBreak = "break-word";
+      }
     }
   });
 }
