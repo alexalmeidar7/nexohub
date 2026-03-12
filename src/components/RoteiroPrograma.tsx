@@ -617,6 +617,7 @@ ${perguntaActions}
                   <Clock size={12} style={{ color: "#268ffa" }} />Horário
                 </label>
                 <input
+                  data-field="horario"
                   type="time"
                   value={horario}
                   onChange={e => setHorario(e.target.value)}
