@@ -778,7 +778,7 @@ function MusicaPreview() {
     </div>
   ) : (
     <div className="flex items-center gap-2">
-      <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: "rgba(38,143,250,0.06)" }}>
+      <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: "rgba(190,1,1,0.06)" }}>
         <Music size={14} className="text-[#0d0446]/20" />
       </div>
       <p className="text-[#0d0446]/30 text-[10px]">Sem música no ar</p>
