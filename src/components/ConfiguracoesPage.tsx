@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from "react";
-import { Save, Loader2, ChevronDown, ChevronUp, Plus, Trash2, Upload, Pencil, X, CheckCircle, Settings, Tv, ImageIcon } from "lucide-react";
+import { Save, Loader2, ChevronDown, ChevronUp, Plus, Trash2, Upload, Pencil, X, CheckCircle, Settings, Tv, ImageIcon, Palette } from "lucide-react";
+import { lazy, Suspense } from "react";
+const LayoutCustomizer = lazy(() => import("./LayoutCustomizer"));
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -643,6 +645,13 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
           </div>
         )}
       </div></div>}
+
+      {/* Box 3: Layout */}
+      {(section === "all") && <CollapsibleBox title="Layout — Cores e Personalização">
+        <Suspense fallback={<div className="flex items-center gap-2 text-xs py-8 justify-center" style={{ color: "rgba(13,4,70,0.5)" }}><Loader2 size={16} className="animate-spin" /> Carregando...</div>}>
+          <LayoutCustomizer />
+        </Suspense>
+      </CollapsibleBox>}
         </div>
       </div>
     </div>
