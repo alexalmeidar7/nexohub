@@ -47,6 +47,17 @@ export async function generatePdfBlob(element: HTMLElement, logoUrl?: string | n
     position += usableHeight;
   }
 
+  // Add logo to top-right of first page
+  if (logoUrl) {
+    const logoData = await loadImageAsDataUrl(logoUrl);
+    if (logoData) {
+      pdf.setPage(1);
+      const logoW = 18;
+      const logoH = 18;
+      pdf.addImage(logoData, "PNG", pageWidth - margin - logoW, margin, logoW, logoH);
+    }
+  }
+
     return pdf.output("blob");
   } finally {
     element.classList.remove("pdf-force-black");
