@@ -969,7 +969,7 @@ function ComercialWidgets() {
   if (loading) return (
     <div className="animate-pulse">
       <div className="flex items-center gap-1.5 mb-2">
-        <div className="w-3.5 h-3.5 rounded bg-[#268ffa]/20" />
+        <div className="w-3.5 h-3.5 rounded bg-[#be0101]/20" />
         <div className="w-28 h-3 rounded bg-white/10" />
       </div>
       <div className="w-12 h-8 rounded bg-white/10 mb-1" />
