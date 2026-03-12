@@ -79,8 +79,10 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
     horario_fim: string;
     classificacao_etaria: string;
     descricao: string;
+    apresentador_nome: string;
   }
   const [onAirProgram, setOnAirProgram] = useState<OnAirProgram | null>(null);
+  const [currentMusic, setCurrentMusic] = useState<{ titulo: string; artista: string } | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -89,7 +91,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
     const fetchOnAir = async () => {
       const { data } = await supabase
         .from("programas")
-        .select("nome, selo, horario_inicio, horario_fim, classificacao_etaria, descricao, dias_semana, ativo")
+        .select("nome, selo, horario_inicio, horario_fim, classificacao_etaria, descricao, dias_semana, ativo, apresentador_id, apresentadores(nome)")
         .eq("user_id", user.id)
         .eq("ativo", true);
       if (cancelled || !data) return;
@@ -108,12 +110,33 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
         horario_fim: current.horario_fim,
         classificacao_etaria: current.classificacao_etaria || "L",
         descricao: current.descricao || "",
+        apresentador_nome: (current.apresentadores as any)?.nome || "",
       } : null);
     };
     fetchOnAir();
     const interval = setInterval(fetchOnAir, 30000);
     return () => { cancelled = true; clearInterval(interval); };
   }, [user]);
+
+  // Poll music from localStorage
+  useEffect(() => {
+    const pollMusic = () => {
+      try {
+        const raw = localStorage.getItem("musicaNoAr");
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed.titulo) {
+            setCurrentMusic({ titulo: parsed.titulo, artista: parsed.artista || "" });
+            return;
+          }
+        }
+      } catch {}
+      setCurrentMusic(null);
+    };
+    pollMusic();
+    const interval = setInterval(pollMusic, 3000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Load dashboard items from DB (fallback to localStorage for migration)
   useEffect(() => {
