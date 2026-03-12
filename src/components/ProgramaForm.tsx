@@ -280,6 +280,7 @@ export default function ProgramaForm() {
   const [apresentadorId, setApresentadorId] = useState("");
   const [selo, setSelo] = useState("");
   const [capa, setCapa] = useState("");
+  const [thumb, setThumb] = useState("");
   const [diasSemana, setDiasSemana] = useState<string[]>([]);
   const [horarioInicio, setHorarioInicio] = useState("");
   const [horarioFim, setHorarioFim] = useState("");
