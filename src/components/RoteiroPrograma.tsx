@@ -327,7 +327,7 @@ export default function RoteiroPrograma() {
 <td style="${tdStyle}">--:--</td>
 <td style="${tdStyle};font-weight:600">OFF / CABEÇA</td>
 <td style="${tdStyle}">APRESENTADOR: "Olá! Hoje o tema é sério. Vamos falar sobre como a informação é o melhor caminho contra a dependência química."</td>
-<td style="${tdStyle}"></td>
+<td style="${tdStyle};white-space:normal;word-break:break-word">Abertura do programa</td>
 </tr>
 <tr style="background:rgba(38,143,250,0.06)">
 <td style="${tdStyle}"></td>
