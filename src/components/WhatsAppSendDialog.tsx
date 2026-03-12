@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { X, Loader2, Send, Plus, Trash2, MessageSquare } from "lucide-react";
+import { X, Loader2, Send, Plus, Trash2, MessageSquare, Copy } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -88,7 +88,21 @@ export default function WhatsAppSendDialog({ open, onClose, roteiroData }: Whats
     setContatos(prev => prev.filter((_, i) => i !== idx));
   };
 
-  const enviar = () => {
+  const copiarMensagem = async () => {
+    if (!formattedText.trim()) {
+      toast.error("Sem texto para copiar");
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(formattedText);
+      toast.success("Mensagem copiada! Cole no WhatsApp.");
+    } catch {
+      toast.error("Não foi possível copiar automaticamente");
+    }
+  };
+
+  const enviar = async () => {
     if (!formattedText.trim()) {
       toast.error("Aguarde a formatação do texto");
       return;
@@ -98,17 +112,23 @@ export default function WhatsAppSendDialog({ open, onClose, roteiroData }: Whats
       return;
     }
 
+    try {
+      await navigator.clipboard.writeText(formattedText);
+    } catch {
+      // ignore clipboard errors here
+    }
+
     const text = encodeURIComponent(formattedText);
 
     contatos.forEach((c, i) => {
       const phone = c.whatsapp.startsWith("55") ? c.whatsapp : `55${c.whatsapp}`;
       setTimeout(() => {
-        window.open(`https://web.whatsapp.com/send?phone=${phone}&text=${text}`, "_blank");
-      }, i * 600); // stagger opens to avoid popup blocking
+        window.open(`whatsapp://send?phone=${phone}&text=${text}`, "_blank");
+      }, i * 700);
     });
 
-    toast.success(`Abrindo WhatsApp para ${contatos.length} contato(s)...`);
-    setTimeout(onClose, 1500);
+    toast.success(`Tentando abrir WhatsApp Desktop para ${contatos.length} contato(s). Mensagem também copiada.`);
+    setTimeout(onClose, 1600);
   };
 
   if (!open) return null;
@@ -208,6 +228,15 @@ export default function WhatsAppSendDialog({ open, onClose, roteiroData }: Whats
         <div className="px-5 py-4 border-t flex items-center justify-end gap-2" style={{ borderColor: "rgba(255,255,255,0.1)" }}>
           <button onClick={onClose} className="px-4 py-2 rounded-lg text-xs font-bold text-white/60 hover:text-white transition">
             cancelar
+          </button>
+          <button
+            onClick={copiarMensagem}
+            disabled={loading || !formattedText.trim()}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold text-white hover:opacity-90 transition disabled:opacity-40"
+            style={{ backgroundColor: "rgba(255,255,255,0.14)" }}
+          >
+            <Copy size={13} />
+            copiar texto
           </button>
           <button
             onClick={enviar}
