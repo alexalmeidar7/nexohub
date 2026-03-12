@@ -422,7 +422,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       )}
 
       {/* Navigation bar - floating rounded box with company name */}
-      <div className="hidden lg:flex items-center gap-4 px-8 pt-5 pb-1 relative z-[60]">
+      <div className="hidden lg:flex items-center gap-2 xl:gap-4 px-4 xl:px-8 pt-5 pb-1 relative z-[60]">
         {/* Menu box */}
         <div
           className="flex items-center px-5 py-2.5"
