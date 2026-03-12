@@ -895,60 +895,60 @@ ${perguntaActions}
               <button
                 type="button"
                 onClick={() => {
-                  const sel = window.getSelection();
-                  if (!sel || sel.rangeCount === 0 || !editorRef.current) {
-                    toast.error("Selecione as células que deseja mesclar");
+                  if (mergeCells.length < 2) {
+                    toast.error("Ctrl+clique em pelo menos 2 células para mesclar");
                     return;
                   }
-                  // Collect all selected TD cells
-                  const range = sel.getRangeAt(0);
-                  const container = range.commonAncestorContainer as HTMLElement;
-                  const tableEl = (container.closest?.("table") || container.querySelector?.("table") || editorRef.current.querySelector("table")) as HTMLTableElement | null;
-                  if (!tableEl) { toast.error("Nenhuma tabela encontrada"); return; }
-
-                  // Find cells that intersect the selection
-                  const allCells = Array.from(tableEl.querySelectorAll("td, th")) as HTMLTableCellElement[];
-                  const selectedCells = allCells.filter(cell => {
-                    if (cell.hasAttribute("data-action") || cell.querySelector("[data-action]")) return false;
-                    return sel.containsNode(cell, true);
-                  });
-
-                  if (selectedCells.length < 2) {
-                    toast.error("Selecione pelo menos 2 células para mesclar");
-                    return;
-                  }
-
-                  // Check cells are in the same row
-                  const firstRow = selectedCells[0].parentElement;
-                  const sameRow = selectedCells.every(c => c.parentElement === firstRow);
+                  const firstRow = mergeCells[0].parentElement;
+                  const sameRow = mergeCells.every(c => c.parentElement === firstRow);
                   if (!sameRow) {
-                    toast.error("Selecione células da mesma linha para mesclar");
+                    toast.error("Selecione células da mesma linha");
+                    mergeCells.forEach(c => { c.style.outline = ""; c.style.backgroundColor = ""; });
+                    setMergeCells([]);
                     return;
                   }
-
-                  // Merge: combine content into first cell, remove others, set colspan
-                  const firstCell = selectedCells[0];
+                  // Sort by DOM order
+                  const sorted = [...mergeCells].sort((a, b) => {
+                    const cells = Array.from(firstRow!.children);
+                    return cells.indexOf(a) - cells.indexOf(b);
+                  });
+                  const first = sorted[0];
                   let totalColspan = 0;
-                  selectedCells.forEach((cell, i) => {
+                  sorted.forEach((cell, i) => {
                     totalColspan += parseInt(cell.getAttribute("colspan") || "1", 10);
                     if (i > 0) {
-                      if (cell.textContent?.trim()) {
-                        firstCell.innerHTML += " " + cell.innerHTML;
-                      }
+                      if (cell.textContent?.trim()) first.innerHTML += " " + cell.innerHTML;
                       cell.remove();
                     }
                   });
-                  firstCell.setAttribute("colspan", String(totalColspan));
+                  first.setAttribute("colspan", String(totalColspan));
+                  first.style.outline = "";
+                  first.style.backgroundColor = "";
+                  setMergeCells([]);
                   toast.success("Células mescladas!");
                   if (editorRef.current) setRoteiroTexto(editorRef.current.innerHTML);
                 }}
                 className="h-8 px-2 flex items-center justify-center gap-1 rounded-lg hover:opacity-70 transition text-[11px] font-medium"
-                style={{ backgroundColor: "rgba(13,4,70,0.04)", color: "#0d0446" }}
-                title="Mesclar células selecionadas"
+                style={{ backgroundColor: mergeCells.length >= 2 ? "rgba(38,143,250,0.15)" : "rgba(13,4,70,0.04)", color: mergeCells.length >= 2 ? "#268ffa" : "#0d0446", border: mergeCells.length >= 2 ? "1px solid #268ffa" : "none" }}
+                title="Ctrl+clique nas células, depois clique aqui para mesclar"
               >
                 <Columns size={14} />
-                <span className="hidden sm:inline">Mesclar</span>
+                <span className="hidden sm:inline">Mesclar{mergeCells.length >= 2 ? ` (${mergeCells.length})` : ""}</span>
               </button>
+              {mergeCells.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    mergeCells.forEach(c => { c.style.outline = ""; c.style.backgroundColor = ""; });
+                    setMergeCells([]);
+                  }}
+                  className="h-8 w-8 flex items-center justify-center rounded-lg hover:opacity-70 transition"
+                  style={{ backgroundColor: "rgba(220,38,38,0.08)" }}
+                  title="Cancelar seleção"
+                >
+                  <X size={14} style={{ color: "#dc2626" }} />
+                </button>
+              )}
             </div>
 
             {/* Editor */}
