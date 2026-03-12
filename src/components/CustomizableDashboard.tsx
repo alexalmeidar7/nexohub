@@ -425,7 +425,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                   className={`relative group rounded-2xl overflow-hidden animate-fade-in ${isDragging ? "opacity-40 scale-95" : ""}`}
                   style={{
                     background: "#ffffff",
-                    border: isDragOver ? "2px solid #268ffa" : "1px solid rgba(13,4,70,0.08)",
+                    border: isDragOver ? "2px solid #be0101" : "1px solid rgba(13,4,70,0.08)",
                     boxShadow: "0 2px 12px rgba(13,4,70,0.06)",
                     minHeight: item.widgetType === "agenda" ? "280px" : "180px",
                   }}
