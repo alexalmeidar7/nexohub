@@ -173,7 +173,9 @@ export default function RoteiroPrograma() {
 
     let error;
     if (editingRoteiroId) {
-      ({ error } = await supabase.from("roteiros").update({ ...payload, updated_at: new Date().toISOString() }).eq("id", editingRoteiroId));
+      const { error: updateError, data: updatedData } = await supabase.from("roteiros").update({ ...payload, updated_at: new Date().toISOString() }).eq("id", editingRoteiroId).select("numero_roteiro").single();
+      error = updateError;
+      if (updatedData) setNumeroRoteiro(updatedData.numero_roteiro);
     } else {
       // Check for duplicate (same programa + data + user)
       const { data: existing } = await supabase
@@ -186,7 +188,9 @@ export default function RoteiroPrograma() {
 
       if (existing) {
         // Replace existing roteiro
-        ({ error } = await supabase.from("roteiros").update({ ...payload, updated_at: new Date().toISOString() }).eq("id", existing.id));
+        const { error: replaceError, data: replacedData } = await supabase.from("roteiros").update({ ...payload, updated_at: new Date().toISOString() }).eq("id", existing.id).select("numero_roteiro").single();
+        error = replaceError;
+        if (replacedData) setNumeroRoteiro(replacedData.numero_roteiro);
         setEditingRoteiroId(existing.id);
       } else {
         const { error: insertError, data: insertedData } = await supabase.from("roteiros").insert(payload).select("numero_roteiro").single();
