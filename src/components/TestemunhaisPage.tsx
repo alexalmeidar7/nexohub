@@ -222,7 +222,7 @@ export default function TestemunhaisPage() {
                   <textarea value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="Relato do cliente..." rows={4} required
                     className="w-full px-4 py-2 text-sm outline-none transition-colors min-h-[80px]"
                     style={{ ...inputStyle, borderRadius: "12px" }}
-                    onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
+                    onFocus={e => { e.currentTarget.style.borderColor = "#be0101"; }}
                     onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
                   />
                 </div>
@@ -234,7 +234,7 @@ export default function TestemunhaisPage() {
                   <select value={programaId} onChange={(e) => setProgramaId(e.target.value)}
                     className="w-full px-4 py-1.5 text-sm outline-none appearance-none"
                     style={inputStyle}
-                    onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
+                    onFocus={e => { e.currentTarget.style.borderColor = "#be0101"; }}
                     onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
                   >
                     <option value="">Selecione um programa</option>
@@ -250,7 +250,7 @@ export default function TestemunhaisPage() {
                     <input type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} required
                       className="w-full px-4 py-1.5 text-sm outline-none"
                       style={inputStyle}
-                      onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
+                      onFocus={e => { e.currentTarget.style.borderColor = "#be0101"; }}
                       onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
                     />
                   </div>
@@ -259,7 +259,7 @@ export default function TestemunhaisPage() {
                     <input type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} required
                       className="w-full px-4 py-1.5 text-sm outline-none"
                       style={inputStyle}
-                      onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
+                      onFocus={e => { e.currentTarget.style.borderColor = "#be0101"; }}
                       onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
                     />
                   </div>
@@ -267,8 +267,8 @@ export default function TestemunhaisPage() {
 
                 <button type="submit" disabled={saving}
                   className="w-full px-6 py-2 font-bold text-sm transition-all flex items-center justify-center gap-2 disabled:opacity-50 rounded-full"
-                  style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#ffffff", border: "none" }}
-                  onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 4px 15px rgba(38,143,250,0.4)"; }}
+                  style={{ background: "linear-gradient(135deg, #960101, #be0101)", color: "#ffffff", border: "none" }}
+                  onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 4px 15px rgba(190,1,1,0.4)"; }}
                   onMouseLeave={e => { e.currentTarget.style.boxShadow = "none"; }}
                 >
                   {saving ? <><Loader2 className="animate-spin" size={14} /> Salvando...</> : editingId ? "Atualizar Testemunhal" : "Cadastrar Testemunhal"}

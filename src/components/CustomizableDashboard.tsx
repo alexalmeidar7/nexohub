@@ -425,7 +425,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                   className={`relative group rounded-2xl overflow-hidden animate-fade-in ${isDragging ? "opacity-40 scale-95" : ""}`}
                   style={{
                     background: "#ffffff",
-                    border: isDragOver ? "2px solid #268ffa" : "1px solid rgba(13,4,70,0.08)",
+                    border: isDragOver ? "2px solid #be0101" : "1px solid rgba(13,4,70,0.08)",
                     boxShadow: "0 2px 12px rgba(13,4,70,0.06)",
                     minHeight: item.widgetType === "agenda" ? "280px" : "180px",
                   }}
@@ -453,7 +453,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                     </button>
                   </div>
                   <div className="p-4 h-full">
-                    <Suspense fallback={<Loader2 className="animate-spin text-[#268ffa]/40" size={18} />}>
+                    <Suspense fallback={<Loader2 className="animate-spin text-[#be0101]/40" size={18} />}>
                       {item.widgetType === "agenda" && <DashboardAgendaWidget onNavigate={onNavigate} />}
                       {item.widgetType === "musica" && <MusicProgramWidget />}
                       {item.widgetType === "stats" && <StatsWidget />}
@@ -497,7 +497,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
           <button
             onClick={() => { setShowAddDialog(true); setAddStep("choose"); }}
             className="px-6 py-2.5 rounded-xl text-xs font-bold transition-all hover:scale-[1.03]"
-            style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#fff", boxShadow: "0 4px 16px rgba(38,143,250,0.25)" }}
+            style={{ background: "linear-gradient(135deg, #960101, #be0101)", color: "#fff", boxShadow: "0 4px 16px rgba(150,1,1,0.25)" }}
           >
             <Plus size={12} className="inline mr-1.5" /> Começar a personalizar
           </button>
@@ -533,10 +533,10 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                   onClick={() => setAddStep("link")}
                   className="flex flex-col items-center gap-3 p-5 rounded-xl transition-all"
                   style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}
-                  onMouseEnter={e => { e.currentTarget.style.background = "rgba(38,143,250,0.15)"; e.currentTarget.style.borderColor = "rgba(38,143,250,0.4)"; }}
+                  onMouseEnter={e => { e.currentTarget.style.background = "rgba(190,1,1,0.15)"; e.currentTarget.style.borderColor = "rgba(190,1,1,0.4)"; }}
                   onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"; }}
                 >
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)" }}>
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: "linear-gradient(135deg, #960101, #be0101)" }}>
                     <Link2 size={20} className="text-white" />
                   </div>
                   <div className="text-center">
@@ -548,10 +548,10 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                   onClick={() => setAddStep("widget")}
                   className="flex flex-col items-center gap-3 p-5 rounded-xl transition-all"
                   style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}
-                  onMouseEnter={e => { e.currentTarget.style.background = "rgba(38,143,250,0.15)"; e.currentTarget.style.borderColor = "rgba(38,143,250,0.4)"; }}
+                  onMouseEnter={e => { e.currentTarget.style.background = "rgba(190,1,1,0.15)"; e.currentTarget.style.borderColor = "rgba(190,1,1,0.4)"; }}
                   onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"; }}
                 >
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)" }}>
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: "linear-gradient(135deg, #960101, #be0101)" }}>
                     <BarChart3 size={20} className="text-white" />
                   </div>
                   <div className="text-center">
@@ -581,7 +581,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                         opacity: exists ? 0.4 : 1,
                         color: "#fff",
                       }}
-                      onMouseEnter={e => { if (!exists) { e.currentTarget.style.background = "rgba(38,143,250,0.15)"; } }}
+                      onMouseEnter={e => { if (!exists) { e.currentTarget.style.background = "rgba(190,1,1,0.15)"; } }}
                       onMouseLeave={e => { e.currentTarget.style.background = exists ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.06)"; }}
                     >
                       <Icon size={16} />
@@ -610,10 +610,10 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                         opacity: exists ? 0.4 : 1,
                         color: "#fff",
                       }}
-                      onMouseEnter={e => { if (!exists) { e.currentTarget.style.background = "rgba(38,143,250,0.15)"; } }}
+                      onMouseEnter={e => { if (!exists) { e.currentTarget.style.background = "rgba(190,1,1,0.15)"; } }}
                       onMouseLeave={e => { e.currentTarget.style.background = exists ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.06)"; }}
                     >
-                      <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)" }}>
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: "linear-gradient(135deg, #960101, #be0101)" }}>
                         {opt.type === "agenda" && <CalendarDays size={14} className="text-white" />}
                         {opt.type === "musica" && <Music size={14} className="text-white" />}
                         {opt.type === "stats" && <BarChart3 size={14} className="text-white" />}
@@ -731,7 +731,7 @@ function AgendaPreview() {
         <div className="space-y-1">
           {events.map((ev, i) => (
             <div key={i} className="flex items-center gap-1.5">
-              <div className="w-1 h-1 rounded-full flex-shrink-0" style={{ backgroundColor: "#268ffa" }} />
+              <div className="w-1 h-1 rounded-full flex-shrink-0" style={{ backgroundColor: "#be0101" }} />
               <p className="text-[#0d0446]/50 text-[10px] truncate">{ev.descricao || format(new Date(ev.data + "T12:00:00"), "dd/MM")}</p>
             </div>
           ))}
@@ -764,21 +764,21 @@ function MusicaPreview() {
       {music.capa ? (
         <img src={music.capa} alt="" className="w-12 h-12 rounded-lg object-cover flex-shrink-0 shadow-md" />
       ) : (
-        <div className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "rgba(38,143,250,0.1)" }}>
-          <Music size={16} className="text-[#268ffa]" />
+        <div className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "rgba(190,1,1,0.1)" }}>
+          <Music size={16} className="text-[#be0101]" />
         </div>
       )}
       <div className="min-w-0 flex-1">
         <p className="text-[#0d0446] text-[11px] font-bold truncate leading-tight">{music.titulo}</p>
         <p className="text-[#0d0446]/50 text-[10px] truncate">{music.artista}</p>
         {programa && (
-          <p className="text-[9px] mt-0.5 truncate" style={{ color: "#268ffa" }}>🔴 {programa}</p>
+          <p className="text-[9px] mt-0.5 truncate" style={{ color: "#be0101" }}>🔴 {programa}</p>
         )}
       </div>
     </div>
   ) : (
     <div className="flex items-center gap-2">
-      <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: "rgba(38,143,250,0.06)" }}>
+      <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: "rgba(190,1,1,0.06)" }}>
         <Music size={14} className="text-[#0d0446]/20" />
       </div>
       <p className="text-[#0d0446]/30 text-[10px]">Sem música no ar</p>
@@ -880,7 +880,7 @@ function DashboardAgendaWidget({ onNavigate }: { onNavigate: (page: Page) => voi
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center gap-2 mb-3">
-        <CalendarDays size={14} className="text-[#268ffa]" />
+        <CalendarDays size={14} className="text-[#be0101]" />
         <p className="text-[#0d0446] font-bold text-sm">Agenda de Eventos</p>
       </div>
       {events.length === 0 ? (
@@ -888,7 +888,7 @@ function DashboardAgendaWidget({ onNavigate }: { onNavigate: (page: Page) => voi
       ) : (
         <div className="space-y-2">
           {events.map(ev => (
-            <div key={ev.id} className="px-3 py-2 rounded-lg" style={{ background: "rgba(38,143,250,0.06)" }}>
+            <div key={ev.id} className="px-3 py-2 rounded-lg" style={{ background: "rgba(190,1,1,0.06)" }}>
               <p className="text-[#0d0446] text-xs font-semibold truncate">{ev.descricao || "Evento"}</p>
               <p className="text-[#0d0446]/40 text-[10px]">
                 {new Date(ev.data + "T12:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })} — {ev.local}
@@ -901,9 +901,9 @@ function DashboardAgendaWidget({ onNavigate }: { onNavigate: (page: Page) => voi
         <button
           onClick={() => onNavigate("agenda")}
           className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold transition-all"
-          style={{ backgroundColor: "rgba(38,143,250,0.1)", color: "#268ffa" }}
-          onMouseEnter={e => { e.currentTarget.style.backgroundColor = "rgba(38,143,250,0.2)"; }}
-          onMouseLeave={e => { e.currentTarget.style.backgroundColor = "rgba(38,143,250,0.1)"; }}
+          style={{ backgroundColor: "rgba(190,1,1,0.1)", color: "#be0101" }}
+          onMouseEnter={e => { e.currentTarget.style.backgroundColor = "rgba(190,1,1,0.2)"; }}
+          onMouseLeave={e => { e.currentTarget.style.backgroundColor = "rgba(190,1,1,0.1)"; }}
         >
           <Plus size={10} /> Adicionar evento
         </button>
@@ -1005,18 +1005,18 @@ function MusicProgramWidget() {
   return (
     <div>
       <div className="flex items-center gap-2 mb-3">
-        <Music size={14} className="text-[#268ffa]" />
+        <Music size={14} className="text-[#be0101]" />
         <p className="text-[#0d0446] font-bold text-sm">No Ar</p>
       </div>
 
       {/* Current Program */}
       {currentProgram && (
-        <div key={`prog-${programKey}`} className="flex items-center gap-3 mb-3 px-3 py-2.5 rounded-xl animate-fade-in" style={{ background: "rgba(38,143,250,0.06)" }}>
+        <div key={`prog-${programKey}`} className="flex items-center gap-3 mb-3 px-3 py-2.5 rounded-xl animate-fade-in" style={{ background: "rgba(190,1,1,0.06)" }}>
           {apresentador?.foto ? (
-            <img src={apresentador.foto} alt="" className="w-10 h-10 rounded-full object-cover flex-shrink-0 border-2 border-[#268ffa]/30" />
+            <img src={apresentador.foto} alt="" className="w-10 h-10 rounded-full object-cover flex-shrink-0 border-2 border-[#be0101]/30" />
           ) : (
-            <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "rgba(38,143,250,0.15)" }}>
-              <Mic2 size={14} className="text-[#268ffa]" />
+            <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "rgba(190,1,1,0.15)" }}>
+              <Mic2 size={14} className="text-[#be0101]" />
             </div>
           )}
           <div className="min-w-0 flex-1">
@@ -1031,7 +1031,7 @@ function MusicProgramWidget() {
               <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(13,4,70,0.08)" }}>
                 <div
                   className="h-full rounded-full transition-all duration-1000"
-                  style={{ width: `${progressPercent}%`, background: "linear-gradient(90deg, #268ffa, #2dbef3)" }}
+                  style={{ width: `${progressPercent}%`, background: "linear-gradient(90deg, #960101, #be0101)" }}
                 />
               </div>
               <span className="text-[8px] text-[#0d0446]/40 font-semibold flex-shrink-0">
@@ -1080,15 +1080,15 @@ function StatsWidget() {
   return (
     <div>
       <div className="flex items-center gap-2 mb-3">
-        <BarChart3 size={14} className="text-[#268ffa]" />
+        <BarChart3 size={14} className="text-[#be0101]" />
         <p className="text-[#0d0446] font-bold text-sm">Dados Estatísticos</p>
       </div>
       <div className="grid grid-cols-2 gap-3">
-        <div className="px-3 py-3 rounded-xl text-center" style={{ background: "rgba(38,143,250,0.06)" }}>
+        <div className="px-3 py-3 rounded-xl text-center" style={{ background: "rgba(190,1,1,0.06)" }}>
           <p className="text-2xl font-bold text-[#0d0446]">{prerollCount}</p>
           <p className="text-[#0d0446]/40 text-[10px] mt-0.5">Pre-rolls Ativos</p>
         </div>
-        <div className="px-3 py-3 rounded-xl text-center" style={{ background: "rgba(38,143,250,0.06)" }}>
+        <div className="px-3 py-3 rounded-xl text-center" style={{ background: "rgba(190,1,1,0.06)" }}>
           <p className="text-2xl font-bold text-[#0d0446]">{channelCount}</p>
           <p className="text-[#0d0446]/40 text-[10px] mt-0.5">Canais Ativos</p>
         </div>
@@ -1191,7 +1191,7 @@ function DashboardWeatherWidget() {
   return (
     <div>
       <div className="flex items-center gap-2 mb-3">
-        <CloudSun size={14} className="text-[#268ffa]" />
+        <CloudSun size={14} className="text-[#be0101]" />
         <p className="text-[#0d0446] font-bold text-sm">Previsão do Tempo</p>
       </div>
       {weather ? (
@@ -1202,7 +1202,7 @@ function DashboardWeatherWidget() {
               {WeatherIconComp && <WeatherIconComp code={weather.current.weatherCode} size={48} />}
             </div>
             <div>
-              <p className="text-3xl font-bold text-[#268ffa] leading-none">{weather.current.temp}°</p>
+              <p className="text-3xl font-bold text-[#be0101] leading-none">{weather.current.temp}°</p>
               <p className="text-[#0d0446] text-[10px] font-semibold mt-0.5">{weather.city}</p>
               <p className="text-[#0d0446]/50 text-[9px]">{getLabel(weather.current.weatherCode)}</p>
             </div>
@@ -1215,7 +1215,7 @@ function DashboardWeatherWidget() {
 
           {/* Tomorrow */}
           {weather.tomorrow && (
-            <div className="px-3 py-2 rounded-lg flex items-center gap-3" style={{ background: "rgba(38,143,250,0.06)" }}>
+            <div className="px-3 py-2 rounded-lg flex items-center gap-3" style={{ background: "rgba(190,1,1,0.06)" }}>
               <div className="flex-shrink-0">
                 {WeatherIconComp && <WeatherIconComp code={weather.tomorrow.weatherCode} size={28} forceDay />}
               </div>

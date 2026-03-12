@@ -2,12 +2,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function DashboardSkeleton() {
   return (
-    <div className="h-screen flex flex-col overflow-hidden animate-pulse" style={{ backgroundColor: "#268ffa" }}>
+    <div className="h-screen flex flex-col overflow-hidden animate-pulse" style={{ backgroundColor: "#1a1a1a" }}>
       {/* Top nav bar skeleton */}
       <nav
         className="flex items-center px-8 gap-4"
         style={{
-          background: "rgba(13, 4, 70, 0.65)",
+          background: "rgba(0, 0, 0, 0.85)",
           backdropFilter: "blur(24px)",
           minHeight: "52px",
         }}
