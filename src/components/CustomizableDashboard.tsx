@@ -1241,7 +1241,10 @@ function DashboardPlayerWidget() {
   const [activeIdx, setActiveIdx] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
+  const [showVideo, setShowVideo] = useState(false);
+  const [currentMusic, setCurrentMusic] = useState<{ titulo: string; artista: string; capa: string } | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -1271,6 +1274,26 @@ function DashboardPlayerWidget() {
     fetchChannels();
   }, [user]);
 
+  // Poll music from localStorage
+  useEffect(() => {
+    const poll = () => {
+      try {
+        const raw = localStorage.getItem("masterview_music_data");
+        if (raw) {
+          const d = JSON.parse(raw);
+          if (d.titulo) {
+            setCurrentMusic({ titulo: d.titulo, artista: d.artista || "", capa: d.capa || "" });
+            return;
+          }
+        }
+      } catch {}
+      setCurrentMusic(null);
+    };
+    poll();
+    const iv = setInterval(poll, 3000);
+    return () => clearInterval(iv);
+  }, []);
+
   useEffect(() => {
     if (!audioRef.current) {
       const audio = new Audio();
@@ -1280,128 +1303,225 @@ function DashboardPlayerWidget() {
   }, []);
 
   const activeChannel = channels[activeIdx];
-
-  const togglePlay = () => {
-    const audio = audioRef.current;
-    if (!audio || !activeChannel) return;
-    if (isPlaying) {
-      audio.pause();
-      setIsPlaying(false);
-    } else {
-      if (audio.src !== activeChannel.url) audio.src = activeChannel.url;
-      audio.play().then(() => setIsPlaying(true)).catch(() => {});
-    }
-  };
-
-  const goNext = () => {
-    if (channels.length <= 1) return;
-    const next = (activeIdx + 1) % channels.length;
-    setActiveIdx(next);
-    const audio = audioRef.current;
-    if (audio && isPlaying) {
-      audio.src = channels[next].url;
-      audio.play().catch(() => {});
-    }
-  };
-
-  const goPrev = () => {
-    if (channels.length <= 1) return;
-    const prev = (activeIdx - 1 + channels.length) % channels.length;
-    setActiveIdx(prev);
-    const audio = audioRef.current;
-    if (audio && isPlaying) {
-      audio.src = channels[prev].url;
-      audio.play().catch(() => {});
-    }
-  };
-
-  const toggleMute = () => {
-    const audio = audioRef.current;
-    if (!audio) return;
-    audio.muted = !audio.muted;
-    setIsMuted(audio.muted);
-  };
-
-  const channelLogo = activeChannel?.background_url || activeChannel?.logo_url || activeChannel?.cover_url;
   const channelType = activeChannel?.type || "";
   const isVideo = channelType.includes("video");
 
+  const togglePlay = () => {
+    if (!activeChannel) return;
+
+    if (isVideo) {
+      // For video channels, toggle the video overlay
+      if (isPlaying) {
+        setShowVideo(false);
+        setIsPlaying(false);
+        if (videoRef.current) { videoRef.current.pause(); videoRef.current.src = ""; }
+      } else {
+        setShowVideo(true);
+        setIsPlaying(true);
+      }
+    } else {
+      const audio = audioRef.current;
+      if (!audio) return;
+      if (isPlaying) {
+        audio.pause();
+        setIsPlaying(false);
+      } else {
+        if (audio.src !== activeChannel.url) audio.src = activeChannel.url;
+        audio.play().then(() => setIsPlaying(true)).catch(() => {});
+      }
+    }
+  };
+
+  const switchTo = (idx: number) => {
+    // Stop current
+    if (isPlaying) {
+      if (showVideo && videoRef.current) { videoRef.current.pause(); videoRef.current.src = ""; }
+      if (audioRef.current) audioRef.current.pause();
+    }
+    setShowVideo(false);
+    setActiveIdx(idx);
+
+    const ch = channels[idx];
+    const chIsVideo = (ch?.type || "").includes("video");
+
+    if (isPlaying) {
+      if (chIsVideo) {
+        setShowVideo(true);
+      } else {
+        const audio = audioRef.current;
+        if (audio) {
+          audio.src = ch.url;
+          audio.play().catch(() => {});
+        }
+      }
+    }
+  };
+
+  const goNext = () => { if (channels.length > 1) switchTo((activeIdx + 1) % channels.length); };
+  const goPrev = () => { if (channels.length > 1) switchTo((activeIdx - 1 + channels.length) % channels.length); };
+
+  const toggleMute = () => {
+    const audio = audioRef.current;
+    if (audio) { audio.muted = !audio.muted; setIsMuted(audio.muted); }
+    if (videoRef.current) videoRef.current.muted = !isMuted;
+  };
+
+  const channelLogo = activeChannel?.background_url || activeChannel?.logo_url || activeChannel?.cover_url;
+  // Show music cover when music is playing, otherwise channel logo
+  const displayArt = currentMusic?.capa || channelLogo;
+
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex items-center gap-2 mb-2">
-        <Radio size={14} className="text-[#be0101]" />
-        <p className="text-black font-bold text-sm">Player</p>
-      </div>
-
-      {channels.length === 0 ? (
-        <p className="text-black/30 text-xs">Nenhum canal cadastrado</p>
-      ) : (
-        <div className="flex items-center gap-2">
-          {/* Left arrow */}
-          {channels.length > 1 && (
-            <button
-              onClick={goPrev}
-              className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-all hover:scale-110"
-              style={{ background: "rgba(0,0,0,0.06)" }}
-              onMouseEnter={e => { e.currentTarget.style.background = "rgba(190,1,1,0.15)"; }}
-              onMouseLeave={e => { e.currentTarget.style.background = "rgba(0,0,0,0.06)"; }}
-            >
-              <ChevronLeft size={14} className="text-black/50" />
-            </button>
-          )}
-
-          {/* Channel logo */}
-          <div
-            className="w-14 h-14 rounded-xl flex-shrink-0 flex items-center justify-center overflow-hidden"
-            style={{ background: "rgba(190,1,1,0.08)" }}
-          >
-            {channelLogo ? (
-              <img src={channelLogo} alt="" className="w-full h-full object-cover rounded-xl" />
-            ) : (
-              <Tv size={20} className="text-[#be0101]/40" />
-            )}
-          </div>
-
-          {/* Info + controls */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1.5 mb-1">
-              {isPlaying && <Circle size={6} fill="#ff0000" color="#ff0000" className="animate-pulse flex-shrink-0" />}
-              <p className="text-black text-[11px] font-bold truncate">{activeChannel?.name}</p>
-            </div>
-            <div className="flex items-center gap-1 mb-1.5">
-              <span className="text-[8px] font-bold px-1.5 py-0.5 rounded" style={{ background: "rgba(190,1,1,0.1)", color: "#be0101" }}>
-                {activeChannel?.numero_canal}
-              </span>
-              <span className="text-black/30 text-[8px]">{isVideo ? "Vídeo" : "Áudio"}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={togglePlay}
-                className="w-7 h-7 rounded-full flex items-center justify-center transition-all hover:scale-110"
-                style={{ background: "linear-gradient(135deg, #960101, #be0101)" }}
-              >
-                {isPlaying ? <Pause size={11} className="text-white" /> : <Play size={11} className="text-white ml-0.5" />}
-              </button>
-              <button onClick={toggleMute} className="text-black/40 hover:text-black transition-colors">
-                {isMuted ? <VolumeX size={13} /> : <Volume2 size={13} />}
-              </button>
-            </div>
-          </div>
-
-          {/* Right arrow */}
-          {channels.length > 1 && (
-            <button
-              onClick={goNext}
-              className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-all hover:scale-110"
-              style={{ background: "rgba(0,0,0,0.06)" }}
-              onMouseEnter={e => { e.currentTarget.style.background = "rgba(190,1,1,0.15)"; }}
-              onMouseLeave={e => { e.currentTarget.style.background = "rgba(0,0,0,0.06)"; }}
-            >
-              <ChevronRight size={14} className="text-black/50" />
-            </button>
-          )}
+    <div className="flex flex-col h-full relative">
+      {/* Blurred background art */}
+      {displayArt && (
+        <div className="absolute inset-0 -m-4 overflow-hidden pointer-events-none">
+          <img
+            src={displayArt}
+            alt=""
+            className="w-full h-full object-cover"
+            style={{ filter: "blur(20px) brightness(0.3) saturate(1.4)", transform: "scale(1.3)" }}
+          />
+          <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(10,10,10,0.6) 0%, rgba(10,10,10,0.9) 100%)" }} />
         </div>
       )}
+
+      {/* Content */}
+      <div className="relative z-10 flex items-center gap-3 h-full">
+        {/* Left arrow */}
+        {channels.length > 1 && (
+          <button
+            onClick={goPrev}
+            className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-all hover:scale-110"
+            style={{ background: "rgba(255,255,255,0.1)" }}
+            onMouseEnter={e => { e.currentTarget.style.background = "rgba(190,1,1,0.4)"; }}
+            onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.1)"; }}
+          >
+            <ChevronLeft size={14} className="text-white/70" />
+          </button>
+        )}
+
+        {/* Art / Cover */}
+        <div className="w-16 h-16 rounded-xl flex-shrink-0 flex items-center justify-center overflow-hidden relative" style={{ background: "rgba(255,255,255,0.05)", boxShadow: "0 4px 15px rgba(0,0,0,0.5)" }}>
+          {displayArt ? (
+            <img src={displayArt} alt="" className="w-full h-full object-cover rounded-xl transition-all duration-500" />
+          ) : (
+            <Tv size={22} className="text-white/20" />
+          )}
+          {isPlaying && !isVideo && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="flex items-end gap-[2px] h-4">
+                {[0, 1, 2, 3].map(i => (
+                  <div
+                    key={i}
+                    className="w-[3px] rounded-full"
+                    style={{
+                      background: "linear-gradient(0deg, #be0101, #ff4444)",
+                      animation: `eq-bar 0.${4 + i}s ease-in-out infinite alternate`,
+                      height: `${6 + Math.random() * 10}px`,
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Info + controls */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5 mb-0.5">
+            {isPlaying && <Circle size={5} fill="#ff0000" color="#ff0000" className="animate-pulse flex-shrink-0" />}
+            <p className="text-white text-[11px] font-bold truncate">{activeChannel?.name}</p>
+          </div>
+
+          {/* Music info when playing */}
+          {currentMusic && (
+            <div className="mb-1">
+              <p className="text-white/70 text-[9px] truncate">{currentMusic.titulo}</p>
+              <p className="text-white/40 text-[8px] truncate">{currentMusic.artista}</p>
+            </div>
+          )}
+
+          {!currentMusic && (
+            <div className="flex items-center gap-1 mb-1">
+              <span className="text-[7px] font-bold px-1.5 py-0.5 rounded" style={{ background: "rgba(190,1,1,0.3)", color: "#ff6666" }}>
+                {activeChannel?.numero_canal}
+              </span>
+              <span className="text-white/30 text-[8px]">{isVideo ? "Vídeo" : "Áudio"}</span>
+            </div>
+          )}
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={togglePlay}
+              className="w-8 h-8 rounded-full flex items-center justify-center transition-all hover:scale-110"
+              style={{ background: "linear-gradient(135deg, #be0101, #e60000)", boxShadow: "0 2px 12px rgba(190,1,1,0.4)" }}
+            >
+              {isPlaying ? <Pause size={12} className="text-white" /> : <Play size={12} className="text-white ml-0.5" />}
+            </button>
+            <button onClick={toggleMute} className="text-white/40 hover:text-white transition-colors">
+              {isMuted ? <VolumeX size={13} /> : <Volume2 size={13} />}
+            </button>
+            {isVideo && (
+              <span className="text-[7px] font-bold text-white/20 ml-auto">
+                <Tv size={10} className="inline mr-0.5" />VIDEO
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Right arrow */}
+        {channels.length > 1 && (
+          <button
+            onClick={goNext}
+            className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-all hover:scale-110"
+            style={{ background: "rgba(255,255,255,0.1)" }}
+            onMouseEnter={e => { e.currentTarget.style.background = "rgba(190,1,1,0.4)"; }}
+            onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.1)"; }}
+          >
+            <ChevronRight size={14} className="text-white/70" />
+          </button>
+        )}
+      </div>
+
+      {/* Video overlay - rises from behind the widget */}
+      {showVideo && isVideo && activeChannel && (
+        <div
+          className="absolute left-0 right-0 rounded-2xl overflow-hidden animate-fade-in"
+          style={{
+            bottom: "100%",
+            marginBottom: "-8px",
+            height: "160px",
+            boxShadow: "0 -8px 30px rgba(0,0,0,0.6)",
+            border: "1px solid rgba(255,255,255,0.1)",
+            zIndex: 50,
+          }}
+        >
+          <video
+            ref={videoRef}
+            src={activeChannel.url}
+            autoPlay
+            muted={isMuted}
+            playsInline
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(180deg, transparent 60%, rgba(0,0,0,0.6) 100%)" }} />
+          <button
+            onClick={() => { setShowVideo(false); setIsPlaying(false); if (videoRef.current) { videoRef.current.pause(); videoRef.current.src = ""; } }}
+            className="absolute top-2 right-2 w-5 h-5 rounded-full flex items-center justify-center z-10"
+            style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)" }}
+          >
+            <X size={10} className="text-white" />
+          </button>
+        </div>
+      )}
+
+      {/* CSS for equalizer animation */}
+      <style>{`
+        @keyframes eq-bar {
+          0% { height: 3px; }
+          100% { height: 14px; }
+        }
+      `}</style>
     </div>
   );
 }
