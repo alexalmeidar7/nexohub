@@ -1007,6 +1007,20 @@ ${perguntaActions}
               ref={editorRef}
               contentEditable
               suppressContentEditableWarning
+              onPaste={(e) => {
+                e.preventDefault();
+                const text = e.clipboardData.getData("text/plain");
+                const sel = window.getSelection();
+                if (sel && sel.rangeCount > 0) {
+                  const range = sel.getRangeAt(0);
+                  range.deleteContents();
+                  range.insertNode(document.createTextNode(text));
+                  range.collapse(false);
+                  sel.removeAllRanges();
+                  sel.addRange(range);
+                }
+                if (editorRef.current) setRoteiroTexto(editorRef.current.innerHTML);
+              }}
               onInput={() => {
                 if (editorRef.current) setRoteiroTexto(editorRef.current.innerHTML);
               }}
