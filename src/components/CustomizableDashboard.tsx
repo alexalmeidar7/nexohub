@@ -284,7 +284,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                         ? "linear-gradient(145deg, #be0101, #960101)"
                         : "linear-gradient(135deg, #960101, #be0101)";
                       e.currentTarget.style.boxShadow = "0 4px 15px rgba(150,1,1,0.35), inset 0 1px 0 rgba(255,255,255,0.15)";
-                    }
+                    }}
                   >
                     <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "rgba(255,255,255,0.2)" }}>
                       <Icon size={18} className="text-white" />
