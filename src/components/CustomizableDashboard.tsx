@@ -1331,10 +1331,16 @@ function DashboardPlayerWidget() {
   };
 
   const switchTo = (idx: number) => {
-    // Stop current
-    if (isPlaying) {
-      if (showVideo && videoRef.current) { videoRef.current.pause(); videoRef.current.src = ""; }
-      if (audioRef.current) audioRef.current.pause();
+    // Always stop ALL current streams to prevent duplication
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.removeAttribute("src");
+      audioRef.current.load();
+    }
+    if (videoRef.current) {
+      videoRef.current.pause();
+      videoRef.current.removeAttribute("src");
+      videoRef.current.load();
     }
     setShowVideo(false);
     setActiveIdx(idx);
