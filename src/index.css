@@ -219,6 +219,29 @@
   scrollbar-color: #268ffa transparent;
 }
 
+/* ====== Widget inner scrollbar ====== */
+.widget-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+.widget-scroll::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 4px 0;
+}
+.widget-scroll::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #268ffa, #2dbef3);
+  border-radius: 10px;
+}
+.widget-scroll::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #1a7ae0, #268ffa);
+}
+.widget-scroll::-webkit-scrollbar-button {
+  display: none;
+}
+.widget-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #268ffa transparent;
+}
+
 /* ====== Form styling for masterview content area ====== */
 .mv-content-area {
   background-color: #ffffff;
