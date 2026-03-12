@@ -1535,8 +1535,37 @@ function DashboardPlayerWidget() {
           }}
         >
           <video
-            ref={videoRef}
-            src={activeChannel.url}
+            ref={el => {
+              videoRef.current = el;
+              if (el && activeChannel?.url) {
+                // Destroy previous HLS if any
+                if (hlsRef.current) { hlsRef.current.destroy(); hlsRef.current = null; }
+                const url = activeChannel.url;
+                if (url.includes(".m3u8")) {
+                  import("hls.js").then(({ default: Hls }) => {
+                    if (!Hls.isSupported()) {
+                      el.src = url;
+                      el.play().catch(() => {});
+                      return;
+                    }
+                    const hls = new Hls({ maxBufferLength: 30, maxMaxBufferLength: 60 });
+                    hlsRef.current = hls;
+                    hls.loadSource(url);
+                    hls.attachMedia(el);
+                    hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                      el.volume = volume;
+                      el.muted = isMuted;
+                      el.play().catch(() => {});
+                    });
+                  });
+                } else {
+                  el.src = url;
+                  el.volume = volume;
+                  el.muted = isMuted;
+                  el.play().catch(() => {});
+                }
+              }
+            }}
             autoPlay
             muted={isMuted}
             playsInline
