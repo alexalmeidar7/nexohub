@@ -116,8 +116,9 @@ export default function RoteiroPrograma() {
     return true;
   });
 
+  const userId = user?.id;
   useEffect(() => {
-    if (!user) return;
+    if (!userId) return;
     const load = async () => {
       setLoading(true);
       const [progRes, apresRes] = await Promise.all([
@@ -135,7 +136,7 @@ export default function RoteiroPrograma() {
       setLoading(false);
     };
     load();
-  }, [user]);
+  }, [userId]);
 
   // Fetch historico
   const fetchHistorico = async () => {
