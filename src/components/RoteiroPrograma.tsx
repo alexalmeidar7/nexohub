@@ -632,6 +632,7 @@ ${perguntaActions}
                   <Type size={12} style={{ color: "#268ffa" }} />Título do Roteiro
                 </label>
                 <input
+                  data-field="titulo"
                   value={roteiroTitulo}
                   onChange={e => setRoteiroTitulo(e.target.value)}
                   placeholder="Ex: Gravação de Podcast"
