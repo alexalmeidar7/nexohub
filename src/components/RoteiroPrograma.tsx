@@ -275,7 +275,7 @@ export default function RoteiroPrograma() {
     setEstudio(r.estudio || "");
     setTipoPrograma(r.tipo_programa || "");
     setProgramaNome(r.programa_nome || "");
-    setSelectedDate(new Date(r.data_programa));
+    setSelectedDate(new Date(r.data_programa + "T12:00:00"));
     setHorario(r.horario || "");
     setRoteiroTitulo(r.titulo || "");
     try {
