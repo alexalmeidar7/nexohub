@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef, lazy, Suspense } from "react";
+import { createPortal } from "react-dom";
 import { Plus, X, Link2, BarChart3, CalendarDays, Music, Eye, Users, Mic2, PlaySquare, Newspaper, Settings, ShoppingBag, Tag, Image, Film, ShoppingCart, Monitor, Wrench, Scissors, MonitorPlay, ExternalLink, GripVertical, Loader2, Trash2, MessageSquareQuote, Radio, Clock, Tv, FileText, CloudSun, ChevronDown, ChevronLeft, ChevronRight, Play, Pause, Volume2, VolumeX, Circle, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -1245,6 +1246,23 @@ function DashboardPlayerWidget() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const hlsRef = useRef<any>(null);
+  const widgetContainerRef = useRef<HTMLDivElement | null>(null);
+  const [videoPos, setVideoPos] = useState<{ top: number; left: number; width: number } | null>(null);
+
+  // Update video position when showVideo changes
+  useEffect(() => {
+    if (!showVideo || !widgetContainerRef.current) { setVideoPos(null); return; }
+    const update = () => {
+      const el = widgetContainerRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      setVideoPos({ top: rect.top - 168, left: rect.left, width: rect.width });
+    };
+    update();
+    window.addEventListener("scroll", update, true);
+    window.addEventListener("resize", update);
+    return () => { window.removeEventListener("scroll", update, true); window.removeEventListener("resize", update); };
+  }, [showVideo]);
 
   useEffect(() => {
     if (!user) return;
@@ -1396,7 +1414,7 @@ function DashboardPlayerWidget() {
   const displayArt = currentMusic?.capa || channelLogo;
 
   return (
-    <div className="flex flex-col h-full relative">
+    <div ref={widgetContainerRef} className="flex flex-col h-full relative">
       {/* Blurred background art */}
       {displayArt && (
         <div className="absolute inset-0 -m-4 overflow-hidden pointer-events-none">
@@ -1521,24 +1539,24 @@ function DashboardPlayerWidget() {
         )}
       </div>
 
-      {/* Video overlay - rises from behind the widget */}
-      {showVideo && isVideo && activeChannel && (
+      {/* Video overlay rendered via portal outside widget container */}
+      {showVideo && isVideo && activeChannel && videoPos && createPortal(
         <div
-          className="absolute left-0 right-0 rounded-2xl overflow-hidden animate-fade-in"
+          className="fixed rounded-2xl overflow-hidden animate-fade-in"
           style={{
-            bottom: "100%",
-            marginBottom: "-8px",
+            top: videoPos.top,
+            left: videoPos.left,
+            width: videoPos.width,
             height: "160px",
-            boxShadow: "0 -8px 30px rgba(0,0,0,0.6)",
+            boxShadow: "0 8px 40px rgba(0,0,0,0.7)",
             border: "1px solid rgba(255,255,255,0.1)",
-            zIndex: 50,
+            zIndex: 9999,
           }}
         >
           <video
             ref={el => {
               videoRef.current = el;
               if (el && activeChannel?.url) {
-                // Destroy previous HLS if any
                 if (hlsRef.current) { hlsRef.current.destroy(); hlsRef.current = null; }
                 const url = activeChannel.url;
                 if (url.includes(".m3u8")) {
@@ -1579,7 +1597,8 @@ function DashboardPlayerWidget() {
           >
             <X size={10} className="text-white" />
           </button>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* CSS for equalizer animation */}
