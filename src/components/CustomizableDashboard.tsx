@@ -350,7 +350,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
       {/* On-Air Program Info */}
       {onAirProgram && (
         <div className="mb-4 animate-fade-in">
-          <div className="flex items-start gap-3 sm:gap-4 flex-col sm:flex-row">
+          <div className="flex flex-col items-start gap-3">
             {/* Selo / Logo do programa */}
             {onAirProgram.selo && (
                <img
