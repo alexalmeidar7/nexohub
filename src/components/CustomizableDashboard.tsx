@@ -1481,9 +1481,22 @@ function DashboardPlayerWidget() {
             >
               {isPlaying ? <Pause size={12} className="text-white" /> : <Play size={12} className="text-white ml-0.5" />}
             </button>
-            <button onClick={toggleMute} className="text-white/40 hover:text-white transition-colors">
-              {isMuted ? <VolumeX size={13} /> : <Volume2 size={13} />}
+            <button onClick={toggleMute} className="text-white/40 hover:text-white transition-colors flex-shrink-0">
+              {isMuted || volume === 0 ? <VolumeX size={13} /> : <Volume2 size={13} />}
             </button>
+            <input
+              type="range"
+              min={0}
+              max={1}
+              step={0.01}
+              value={isMuted ? 0 : volume}
+              onChange={e => handleVolume(Number(e.target.value))}
+              className="w-14 h-1 appearance-none rounded-full cursor-pointer flex-shrink-0"
+              style={{
+                background: `linear-gradient(to right, #be0101 ${(isMuted ? 0 : volume) * 100}%, rgba(255,255,255,0.15) ${(isMuted ? 0 : volume) * 100}%)`,
+                accentColor: "#be0101",
+              }}
+            />
             {isVideo && (
               <span className="text-[7px] font-bold text-white/20 ml-auto">
                 <Tv size={10} className="inline mr-0.5" />VIDEO
