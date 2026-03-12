@@ -268,23 +268,23 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                     className="w-[90px] h-[90px] rounded-2xl flex flex-col items-center pt-[18px] transition-all hover:scale-[1.06] hover:shadow-lg"
                     style={{
                       background: isDragOver
-                        ? "linear-gradient(145deg, #268ffa, #2dbef3)"
-                        : "linear-gradient(135deg, rgba(38,143,250,0.85), rgba(45,190,243,0.85))",
+                        ? "linear-gradient(145deg, #be0101, #960101)"
+                        : "linear-gradient(135deg, #960101, #be0101)",
                       backdropFilter: "blur(12px)",
                       WebkitBackdropFilter: "blur(12px)",
-                      border: isDragOver ? "2px solid #268ffa" : "1px solid rgba(255,255,255,0.25)",
-                      boxShadow: "0 4px 15px rgba(38,143,250,0.25), inset 0 1px 0 rgba(255,255,255,0.2)",
+                      border: isDragOver ? "2px solid #be0101" : "1px solid rgba(255,255,255,0.25)",
+                      boxShadow: "0 4px 15px rgba(150,1,1,0.35), inset 0 1px 0 rgba(255,255,255,0.15)",
                     }}
                     onMouseEnter={e => {
-                      e.currentTarget.style.boxShadow = "0 8px 25px rgba(38,143,250,0.4), inset 0 1px 0 rgba(255,255,255,0.3)";
-                      e.currentTarget.style.background = "linear-gradient(135deg, rgba(38,143,250,0.95), rgba(45,190,243,0.95))";
+                      e.currentTarget.style.boxShadow = "0 8px 25px rgba(150,1,1,0.5), inset 0 1px 0 rgba(255,255,255,0.2)";
+                      e.currentTarget.style.background = "linear-gradient(135deg, #be0101, #d40101)";
                     }}
                     onMouseLeave={e => {
                       e.currentTarget.style.background = isDragOver
-                        ? "linear-gradient(145deg, #268ffa, #2dbef3)"
-                        : "linear-gradient(135deg, rgba(38,143,250,0.85), rgba(45,190,243,0.85))";
-                      e.currentTarget.style.boxShadow = "0 4px 15px rgba(38,143,250,0.25), inset 0 1px 0 rgba(255,255,255,0.2)";
-                    }}
+                        ? "linear-gradient(145deg, #be0101, #960101)"
+                        : "linear-gradient(135deg, #960101, #be0101)";
+                      e.currentTarget.style.boxShadow = "0 4px 15px rgba(150,1,1,0.35), inset 0 1px 0 rgba(255,255,255,0.15)";
+                    }
                   >
                     <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "rgba(255,255,255,0.2)" }}>
                       <Icon size={18} className="text-white" />
