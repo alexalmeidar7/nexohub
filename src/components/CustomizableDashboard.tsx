@@ -1192,7 +1192,7 @@ function DashboardWeatherWidget() {
     <div>
       <div className="flex items-center gap-2 mb-3">
         <CloudSun size={14} className="text-[#be0101]" />
-        <p className="text-[#0d0446] font-bold text-sm">Previsão do Tempo</p>
+        <p className="text-black font-bold text-sm">Previsão do Tempo</p>
       </div>
       {weather ? (
         <div>
@@ -1203,13 +1203,13 @@ function DashboardWeatherWidget() {
             </div>
             <div>
               <p className="text-3xl font-bold text-[#be0101] leading-none">{weather.current.temp}°</p>
-              <p className="text-[#0d0446] text-[10px] font-semibold mt-0.5">{weather.city}</p>
-              <p className="text-[#0d0446]/50 text-[9px]">{getLabel(weather.current.weatherCode)}</p>
+              <p className="text-black text-[10px] font-semibold mt-0.5">{weather.city}</p>
+              <p className="text-black/50 text-[9px]">{getLabel(weather.current.weatherCode)}</p>
             </div>
             <div className="ml-auto text-right">
-              <p className="text-[#0d0446]/40 text-[9px]">↑ {weather.current.tempMax}° ↓ {weather.current.tempMin}°</p>
-              <p className="text-[#0d0446]/40 text-[9px]">💧 {weather.current.humidity}%</p>
-              <p className="text-[#0d0446]/40 text-[9px]">🌧 {weather.current.rainChance}%</p>
+              <p className="text-black/40 text-[9px]">↑ {weather.current.tempMax}° ↓ {weather.current.tempMin}°</p>
+              <p className="text-black/40 text-[9px]">💧 {weather.current.humidity}%</p>
+              <p className="text-black/40 text-[9px]">🌧 {weather.current.rainChance}%</p>
             </div>
           </div>
 
@@ -1220,18 +1220,18 @@ function DashboardWeatherWidget() {
                 {WeatherIconComp && <WeatherIconComp code={weather.tomorrow.weatherCode} size={28} forceDay />}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[#0d0446]/60 text-[9px] font-bold uppercase">{formatTomorrow(weather.tomorrow.date)}</p>
-                <p className="text-[#0d0446] text-xs font-bold">{weather.tomorrow.tempMax}° / {weather.tomorrow.tempMin}°</p>
+                <p className="text-black/60 text-[9px] font-bold uppercase">{formatTomorrow(weather.tomorrow.date)}</p>
+                <p className="text-black text-xs font-bold">{weather.tomorrow.tempMax}° / {weather.tomorrow.tempMin}°</p>
               </div>
               <div className="text-right">
-                <p className="text-[#0d0446]/40 text-[9px]">{getLabel(weather.tomorrow.weatherCode)}</p>
-                <p className="text-[#0d0446]/40 text-[9px]">🌧 {weather.tomorrow.rainChance}%</p>
+                <p className="text-black/40 text-[9px]">{getLabel(weather.tomorrow.weatherCode)}</p>
+                <p className="text-black/40 text-[9px]">🌧 {weather.tomorrow.rainChance}%</p>
               </div>
             </div>
           )}
         </div>
       ) : (
-        <p className="text-[#0d0446]/30 text-xs">Configure uma cidade no módulo Previsão do Tempo</p>
+        <p className="text-black/30 text-xs">Configure uma cidade no módulo Previsão do Tempo</p>
       )}
     </div>
   );
