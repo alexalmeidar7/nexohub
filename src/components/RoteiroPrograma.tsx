@@ -1313,6 +1313,28 @@ ${perguntaActions}
                 <MessageSquare size={13} />
                 enviar por whatsapp
               </button>
+              <button
+                onClick={async () => {
+                  await salvarRoteiro();
+                  fetchHistorico();
+                  setShowExportView(false);
+                  setShowRoteiro(false);
+                  setEditingRoteiroId(null);
+                  setRoteiroTitulo("");
+                  setRoteiroSubtitulo("");
+                  setRoteiroTexto("");
+                  setAssuntoSubtitulo("");
+                  setParticipantes([]);
+                  setNumeroRoteiro(null);
+                  if (editorRef.current) editorRef.current.innerHTML = "";
+                  toast.success("Roteiro salvo e fechado!");
+                }}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold text-white hover:opacity-90 transition"
+                style={{ backgroundColor: "#268ffa" }}
+              >
+                <Save size={13} />
+                salvar e fechar
+              </button>
             </div>
           </div>
 
