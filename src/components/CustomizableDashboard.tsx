@@ -845,7 +845,7 @@ function PrerollPreview() {
     supabase.from("comercial_preroll").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("active", true)
       .then(({ count: c }) => setCount(c || 0));
   }, [user]);
-  return <p className="text-[#0d0446]/50 text-[10px]">{count} pre-roll{count !== 1 ? "s" : ""} ativo{count !== 1 ? "s" : ""}</p>;
+  return <p className="text-black/50 text-[10px]">{count} pre-roll{count !== 1 ? "s" : ""} ativo{count !== 1 ? "s" : ""}</p>;
 }
 
 function ShoppingPreview() {
