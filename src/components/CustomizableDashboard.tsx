@@ -427,7 +427,8 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                     background: "#ffffff",
                     border: isDragOver ? "2px solid #be0101" : "1px solid rgba(0,0,0,0.08)",
                     boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
-                    minHeight: item.widgetType === "agenda" ? "280px" : "180px",
+                    minHeight: item.widgetType === "agenda" ? "200px" : "150px",
+                    maxHeight: item.widgetType === "agenda" ? "240px" : "180px",
                   }}
                   draggable
                   onDragStart={() => handleDragStart(item.id)}
