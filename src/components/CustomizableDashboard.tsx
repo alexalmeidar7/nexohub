@@ -1414,7 +1414,7 @@ function DashboardPlayerWidget() {
   const displayArt = currentMusic?.capa || channelLogo;
 
   return (
-    <div className="flex flex-col h-full relative">
+    <div ref={widgetContainerRef} className="flex flex-col h-full relative">
       {/* Blurred background art */}
       {displayArt && (
         <div className="absolute inset-0 -m-4 overflow-hidden pointer-events-none">
