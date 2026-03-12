@@ -339,8 +339,8 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
               {/* Ao vivo + horário + classificação */}
               <div className="flex items-center gap-3 mb-2">
                 <div className="flex items-center gap-1.5">
-                  <Circle size={8} fill="#dc2626" className="text-red-600 animate-pulse" />
-                  <span className="text-red-500 text-[10px] font-bold uppercase tracking-wider">Ao Vivo</span>
+                  <Circle size={8} fill="#ff0000" color="#ff0000" className="animate-pulse" />
+                  <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#ff0000" }}>Ao Vivo</span>
                 </div>
                 <span className="text-white/50 text-[10px]">
                   {onAirProgram.horario_inicio} — {onAirProgram.horario_fim}
