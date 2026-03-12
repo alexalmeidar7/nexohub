@@ -961,6 +961,26 @@ ${perguntaActions}
               }}
               onClick={(e) => {
                 const target = e.target as HTMLElement;
+
+                // Ctrl/Cmd+click on a table cell → toggle merge selection
+                const cell = target.closest("td, th") as HTMLTableCellElement | null;
+                if (cell && (e.ctrlKey || e.metaKey) && !cell.hasAttribute("data-action") && !cell.querySelector("[data-action]")) {
+                  e.preventDefault();
+                  setMergeCells(prev => {
+                    const already = prev.includes(cell);
+                    if (already) {
+                      cell.style.outline = "";
+                      cell.style.backgroundColor = "";
+                      return prev.filter(c => c !== cell);
+                    } else {
+                      cell.style.outline = "2px solid #268ffa";
+                      cell.style.backgroundColor = mergeHighlightColor;
+                      return [...prev, cell];
+                    }
+                  });
+                  return;
+                }
+
                 const action = target.getAttribute("data-action");
                 if (!action || !editorRef.current) return;
                 e.preventDefault();
