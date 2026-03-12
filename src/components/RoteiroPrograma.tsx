@@ -1231,7 +1231,9 @@ ${perguntaActions}
                   const el = document.getElementById("roteiro-export-content");
                   if (el) {
                     const safeName = (programaNome || "roteiro").replace(/\s+/g, "_").toLowerCase();
-                    pdfPopup.generate(el, `roteiro_${safeName}.pdf`);
+                    const prog = programas.find(p => p.nome === programaNome);
+                    const logoUrl = prog?.selo || prog?.capa || null;
+                    pdfPopup.generate(el, `roteiro_${safeName}.pdf`, logoUrl);
                   }
                 }}
                   disabled={pdfPopup.status === "generating"}
