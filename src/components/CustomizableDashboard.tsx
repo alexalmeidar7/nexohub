@@ -264,7 +264,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
   }, [items]);
 
   return (
-    <div ref={scrollRef} className="flex flex-col h-full overflow-y-auto overflow-x-hidden scrollbar-hide relative pt-1" style={{ scrollBehavior: "smooth" }}>
+    <div ref={scrollRef} className="flex flex-col h-full overflow-hidden relative pt-1">
 
 
       {/* Section: Atalhos */}
@@ -347,16 +347,17 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
 
       {/* On-Air Program Info */}
       {onAirProgram && (
-        <div className="mb-6 animate-fade-in">
-          <div className="flex flex-col items-start">
+        <div className="mb-4 animate-fade-in">
+          <div className="flex items-start gap-4">
             {/* Selo / Logo do programa */}
             {onAirProgram.selo && (
               <img
                 src={onAirProgram.selo}
                 alt={onAirProgram.nome}
-                className="w-56 h-56 rounded-xl object-contain mb-4"
+                className="w-28 h-28 rounded-xl object-contain flex-shrink-0"
               />
             )}
+            <div className="flex flex-col items-start min-w-0">
 
             {/* Ao vivo + horário + classificação */}
             <div className="flex items-center gap-3 mb-2">
@@ -407,6 +408,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                 </span>
               </div>
             )}
+            </div>
           </div>
         </div>
       )}
