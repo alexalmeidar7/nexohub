@@ -138,6 +138,16 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
   const [hoveredMenu, setHoveredMenu] = useState<string | null>(null);
   const menuLeaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const clearMenuLeaveTimer = useCallback(() => {
+    if (menuLeaveTimer.current) {
+      clearTimeout(menuLeaveTimer.current);
+      menuLeaveTimer.current = null;
+    }
+  }, []);
+  const scheduleCloseMenu = useCallback(() => {
+    clearMenuLeaveTimer();
+    menuLeaveTimer.current = setTimeout(() => setHoveredMenu(null), 450);
+  }, [clearMenuLeaveTimer]);
   const [noArCollapsed, setNoArCollapsed] = useState(false);
   const [empresa, setEmpresa] = useState<import("./ConfiguracoesPage").EmpresaConfig>({} as any);
   const [enabledModules, setEnabledModules] = useState<Set<string> | null>(null);
