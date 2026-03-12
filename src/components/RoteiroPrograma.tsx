@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CalendarIcon, FileText, Building2, Clock, Plus, X, Download, UserPlus, Check, Bold, Underline, Highlighter, AlignLeft, AlignCenter, AlignRight, List, ListOrdered, Type, Trash2, Pencil, Save, History, ArrowLeft, Send, MessageSquare, Code2, Copy } from "lucide-react";
+import { CalendarIcon, FileText, Building2, Clock, Plus, X, Download, UserPlus, Check, Bold, Underline, Highlighter, AlignLeft, AlignCenter, AlignRight, List, ListOrdered, Type, Trash2, Pencil, Save, History, ArrowLeft, Send, MessageSquare, Code2, Copy, Columns } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
@@ -886,6 +886,66 @@ ${perguntaActions}
               </button>
               <button type="button" onClick={() => document.execCommand("insertOrderedList")} className="h-8 w-8 flex items-center justify-center rounded-lg hover:opacity-70 transition" style={{ backgroundColor: "rgba(13,4,70,0.04)" }} title="Lista numerada">
                 <ListOrdered size={14} style={{ color: "#0d0446" }} />
+              </button>
+
+              <div className="w-px h-5 mx-1" style={{ backgroundColor: "rgba(13,4,70,0.1)" }} />
+
+              <button
+                type="button"
+                onClick={() => {
+                  const sel = window.getSelection();
+                  if (!sel || sel.rangeCount === 0 || !editorRef.current) {
+                    toast.error("Selecione as células que deseja mesclar");
+                    return;
+                  }
+                  // Collect all selected TD cells
+                  const range = sel.getRangeAt(0);
+                  const container = range.commonAncestorContainer as HTMLElement;
+                  const tableEl = (container.closest?.("table") || container.querySelector?.("table") || editorRef.current.querySelector("table")) as HTMLTableElement | null;
+                  if (!tableEl) { toast.error("Nenhuma tabela encontrada"); return; }
+
+                  // Find cells that intersect the selection
+                  const allCells = Array.from(tableEl.querySelectorAll("td, th")) as HTMLTableCellElement[];
+                  const selectedCells = allCells.filter(cell => {
+                    if (cell.hasAttribute("data-action") || cell.querySelector("[data-action]")) return false;
+                    return sel.containsNode(cell, true);
+                  });
+
+                  if (selectedCells.length < 2) {
+                    toast.error("Selecione pelo menos 2 células para mesclar");
+                    return;
+                  }
+
+                  // Check cells are in the same row
+                  const firstRow = selectedCells[0].parentElement;
+                  const sameRow = selectedCells.every(c => c.parentElement === firstRow);
+                  if (!sameRow) {
+                    toast.error("Selecione células da mesma linha para mesclar");
+                    return;
+                  }
+
+                  // Merge: combine content into first cell, remove others, set colspan
+                  const firstCell = selectedCells[0];
+                  let totalColspan = 0;
+                  selectedCells.forEach((cell, i) => {
+                    totalColspan += parseInt(cell.getAttribute("colspan") || "1", 10);
+                    if (i > 0) {
+                      if (cell.textContent?.trim()) {
+                        firstCell.innerHTML += " " + cell.innerHTML;
+                      }
+                      cell.remove();
+                    }
+                  });
+                  firstCell.setAttribute("colspan", String(totalColspan));
+                  toast.success("Células mescladas!");
+                  if (editorRef.current) setRoteiroTexto(editorRef.current.innerHTML);
+                }}
+                className="h-8 px-2 flex items-center justify-center gap-1 rounded-lg hover:opacity-70 transition text-[11px] font-medium"
+                style={{ backgroundColor: "rgba(13,4,70,0.04)", color: "#0d0446" }}
+                title="Mesclar células selecionadas"
+              >
+                <Columns size={14} />
+                <span className="hidden sm:inline">Mesclar</span>
               </button>
             </div>
 
