@@ -165,7 +165,7 @@ export default function RoteiroPrograma() {
       data_programa: format(selectedDate, "yyyy-MM-dd"),
       horario,
       titulo: roteiroTitulo,
-      subtitulo: roteiroSubtitulo,
+      subtitulo: JSON.stringify({ titulo: roteiroSubtitulo, obs: assuntoSubtitulo }),
       conteudo_html: sanitizeRoteiroHtml(editorRef.current?.innerHTML || roteiroTexto),
       participantes: JSON.stringify(participantes),
       status,
@@ -268,7 +268,14 @@ export default function RoteiroPrograma() {
     setSelectedDate(new Date(r.data_programa));
     setHorario(r.horario || "");
     setRoteiroTitulo(r.titulo || "");
-    setRoteiroSubtitulo(r.subtitulo || "");
+    try {
+      const sub = JSON.parse(r.subtitulo || "{}");
+      setRoteiroSubtitulo(sub.titulo || r.subtitulo || "");
+      setAssuntoSubtitulo(sub.obs || "");
+    } catch {
+      setRoteiroSubtitulo(r.subtitulo || "");
+      setAssuntoSubtitulo("");
+    }
     setRoteiroTexto(r.conteudo_html || "");
     try {
       setParticipantes(typeof r.participantes === "string" ? JSON.parse(r.participantes) : r.participantes || []);
@@ -1172,7 +1179,7 @@ ${perguntaActions}
                       data_programa: format(selectedDate, "yyyy-MM-dd"),
                       horario,
                       titulo: roteiroTitulo,
-                      subtitulo: roteiroSubtitulo,
+                      subtitulo: JSON.stringify({ titulo: roteiroSubtitulo, obs: assuntoSubtitulo }),
                       conteudo_html: sanitizeRoteiroHtml(editorRef.current?.innerHTML || roteiroTexto),
                       participantes: JSON.stringify(participantes),
                       status: isAgendado ? "agendado" : "rascunho",
