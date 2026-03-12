@@ -76,7 +76,7 @@ export default function ApresentadorForm() {
   };
 
   const resetForm = () => {
-    setNome(""); setCategoria(""); setCargoConvidado(""); setInstagram(""); setFoto(""); setAtivo(true); setEditingId(null);
+    setNome(""); setCategoria(""); setCargoConvidado(""); setInstagram(""); setWhatsapp(""); setFoto(""); setAtivo(true); setEditingId(null);
   };
 
   const handleSave = async () => {
