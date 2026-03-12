@@ -539,6 +539,7 @@ ${perguntaActions}
                   <FileText size={12} style={{ color: "#268ffa" }} />Programa
                 </label>
                 <select
+                  data-field="programa"
                   value={programaNome}
                   onChange={e => handleProgramaChange(e.target.value)}
                   className="w-full px-3 py-2.5 rounded-xl text-xs outline-none transition-all focus:ring-2 focus:ring-[#268ffa]/20"
