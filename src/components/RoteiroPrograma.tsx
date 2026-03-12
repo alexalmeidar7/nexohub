@@ -307,39 +307,43 @@ export default function RoteiroPrograma() {
     setNumeroRoteiro(null);
     setEditingRoteiroId(null);
 
-    const tdStyle = "border:1px solid rgba(13,4,70,0.12);padding:8px 10px;word-wrap:break-word;overflow-wrap:break-word";
-    const actionBtnStyle = "cursor:pointer;padding:2px 4px;border-radius:4px;display:inline-flex;align-items:center;justify-content:center";
+    const tdStyle = "border:1px solid rgba(13,4,70,0.10);padding:10px 12px;word-wrap:break-word;overflow-wrap:break-word;vertical-align:top;line-height:1.6";
+    const thStyle = `${tdStyle};text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:0.8px;font-weight:700;color:#0d0446;background:rgba(38,143,250,0.06)`;
+    const actionBtnStyle = "cursor:pointer;padding:2px 6px;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;font-size:13px";
     const perguntaActions = `<td style="${tdStyle};white-space:nowrap;text-align:center;width:90px" contenteditable="false"><span data-action="move-up" style="${actionBtnStyle};color:#268ffa" title="Mover para cima">▲</span> <span data-action="move-down" style="${actionBtnStyle};color:#268ffa" title="Mover para baixo">▼</span> <span data-action="delete-pergunta" style="${actionBtnStyle};color:#dc2626" title="Remover pergunta">🗑</span></td>`;
+    const elStyle = `${tdStyle};font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.3px;color:#0d0446`;
+    const timeStyle = `${tdStyle};font-family:monospace;font-size:12px;color:rgba(13,4,70,0.5);text-align:center`;
+
     const defaultContent = `<table style="width:100%;border-collapse:collapse;font-size:13px;color:#0d0446;table-layout:fixed">
-<colgroup><col style="width:60px"><col style="width:120px"><col><col style="width:90px"></colgroup>
+<colgroup><col style="width:70px"><col style="width:130px"><col><col style="width:90px"></colgroup>
 <thead>
-<tr style="background:rgba(38,143,250,0.08)">
-<th style="${tdStyle};text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:0.5px">Tempo</th>
-<th style="${tdStyle};text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:0.5px">Elemento</th>
-<th style="${tdStyle};text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:0.5px">Descrição / Texto</th>
-<th style="${tdStyle};text-align:center;font-size:11px;text-transform:uppercase;letter-spacing:0.5px">Ações</th>
+<tr>
+<th style="${thStyle}">Tempo</th>
+<th style="${thStyle}">Elemento</th>
+<th style="${thStyle}">Descrição / Texto</th>
+<th style="${thStyle};text-align:center">Ações</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="${tdStyle}">--:--</td>
-<td style="${tdStyle};font-weight:600">VINHETA</td>
+<td style="${timeStyle}">--:--</td>
+<td style="${elStyle}">Vinheta</td>
 <td style="${tdStyle}">Abertura padrão do programa (Áudio + Vídeo).</td>
 <td style="${tdStyle}"></td>
 </tr>
 <tr>
-<td style="${tdStyle}">--:--</td>
-<td style="${tdStyle};font-weight:600">OFF / CABEÇA</td>
-<td style="${tdStyle}">APRESENTADOR: "Olá! Hoje o tema é sério. Vamos falar sobre como a informação é o melhor caminho contra a dependência química."</td>
-<td style="${tdStyle};white-space:normal;word-break:break-word">Abertura do programa</td>
+<td style="${timeStyle}">--:--</td>
+<td style="${elStyle}">Off / Cabeça</td>
+<td style="${tdStyle}"><strong>APRESENTADOR:</strong> "Olá! Hoje o tema é sério. Vamos falar sobre como a informação é o melhor caminho contra a dependência química."</td>
+<td style="${tdStyle};font-size:11px;color:rgba(13,4,70,0.5)">Abertura do programa</td>
 </tr>
-<tr style="background:rgba(38,143,250,0.06)">
-<td style="${tdStyle}"></td>
-<td style="${tdStyle};font-weight:700;color:#268ffa" colspan="3">ENTREVISTA</td>
+<tr>
+<td style="${tdStyle};background:rgba(38,143,250,0.04)"></td>
+<td style="${tdStyle};font-weight:700;color:#268ffa;background:rgba(38,143,250,0.04)" colspan="3">ENTREVISTA</td>
 </tr>
 <tr data-pergunta="1">
-<td style="${tdStyle}">--:--</td>
-<td style="${tdStyle};font-weight:600">PERGUNTA 1</td>
+<td style="${timeStyle}">--:--</td>
+<td style="${elStyle}">Pergunta 1</td>
 <td style="${tdStyle}">[Insira a pergunta aqui]</td>
 ${perguntaActions}
 </tr>
@@ -349,16 +353,16 @@ ${perguntaActions}
 </td>
 </tr>
 <tr>
-<td style="${tdStyle}">--:--</td>
-<td style="${tdStyle};font-weight:600">OBSERVAÇÕES</td>
+<td style="${timeStyle}">--:--</td>
+<td style="${elStyle}">Observações</td>
 <td style="${tdStyle}">Inserir imagens de apoio (família conversando, centros de apoio) enquanto o convidado fala.</td>
 <td style="${tdStyle}"></td>
 </tr>
 <tr>
-<td style="${tdStyle}">--:--</td>
-<td style="${tdStyle};font-weight:600">ENCERRAMENTO</td>
-<td style="${tdStyle}">APRESENTADOR: "Agradecemos ao [Nome]. Se você precisa de ajuda, ligue para o [Número/CAPS]. Até amanhã."</td>
-<td style="${tdStyle};white-space:normal;word-break:break-word">Encerrar programa</td>
+<td style="${timeStyle}">--:--</td>
+<td style="${elStyle}">Encerramento</td>
+<td style="${tdStyle}"><strong>APRESENTADOR:</strong> "Agradecemos ao [Nome]. Se você precisa de ajuda, ligue para o [Número/CAPS]. Até amanhã."</td>
+<td style="${tdStyle};font-size:11px;color:rgba(13,4,70,0.5)">Encerrar programa</td>
 </tr>
 </tbody>
 </table>`;
@@ -418,184 +422,177 @@ ${perguntaActions}
   if (loading) return <ModulePageSkeleton />;
 
   return (
-    <div className="animate-fade-in space-y-4">
-      {/* Header Card */}
-      <div className="rounded-2xl overflow-hidden" style={{ background: "#d9e9fa", boxShadow: "0 8px 32px rgba(13,4,70,0.12)", padding: "20px" }}>
-        <div className="flex items-center justify-between mb-5">
+    <div className="animate-fade-in space-y-5">
+      {/* ── STEP 1: Configuração do Programa ── */}
+      <div className="rounded-2xl overflow-hidden" style={{ background: "#ffffff", boxShadow: "0 4px 24px rgba(13,4,70,0.08)", border: "1px solid rgba(13,4,70,0.06)" }}>
+        {/* Section Header */}
+        <div className="px-6 py-4 flex items-center justify-between" style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)", borderBottom: "1px solid rgba(13,4,70,0.06)" }}>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(13,4,70,0.08)" }}>
-              <FileText size={20} style={{ color: "#0d0446" }} />
+            <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: "rgba(255,255,255,0.15)" }}>
+              <FileText size={18} className="text-white" />
             </div>
             <div>
-              <h3 className="text-lg font-bold" style={{ color: "#0d0446" }}>Roteiro de Programa</h3>
-              <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.5)" }}>
-                Estruture o roteiro do seu programa
-              </p>
+              <h3 className="text-base font-bold text-white">Roteiro de Programa</h3>
+              <p className="text-[10px] text-white/50">Passo 1 — Selecione o programa e a data</p>
             </div>
           </div>
           {editingRoteiroId && (
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg" style={{ backgroundColor: "rgba(38,143,250,0.08)", border: "1px solid rgba(38,143,250,0.2)" }}>
-              <Code2 size={14} style={{ color: "#268ffa" }} />
-              <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: "#268ffa" }}>XML</span>
-              <span
-                className="text-[8px] font-mono truncate max-w-[200px] cursor-pointer hover:underline"
-                style={{ color: "rgba(13,4,70,0.5)" }}
-                title="Clique para copiar"
-                onClick={() => {
-                  const xmlUrl = `https://${import.meta.env.VITE_SUPABASE_PROJECT_ID}.supabase.co/functions/v1/roteiro-xml?id=${editingRoteiroId}`;
-                  navigator.clipboard.writeText(xmlUrl).then(() => toast.success("URL do XML copiada!")).catch(() => toast.error("Erro ao copiar"));
-                }}
-              >
-                {`...roteiro-xml?id=${editingRoteiroId.slice(0, 8)}...`}
-              </span>
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg" style={{ backgroundColor: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.2)" }}>
+              <Code2 size={14} className="text-white" />
+              <span className="text-[9px] font-bold uppercase tracking-wider text-white/80">XML</span>
               <button
                 onClick={() => {
                   const xmlUrl = `https://${import.meta.env.VITE_SUPABASE_PROJECT_ID}.supabase.co/functions/v1/roteiro-xml?id=${editingRoteiroId}`;
                   navigator.clipboard.writeText(xmlUrl).then(() => toast.success("URL do XML copiada!")).catch(() => toast.error("Erro ao copiar"));
                 }}
-                className="p-0.5 rounded hover:bg-white/50 transition-colors"
+                className="p-1 rounded hover:bg-white/20 transition-colors"
+                title="Copiar URL do XML"
               >
-                <Copy size={11} style={{ color: "#268ffa" }} />
+                <Copy size={12} className="text-white" />
               </button>
             </div>
           )}
         </div>
 
-        {/* Form Fields - Row 1: Estúdio, Tipo, Programa */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-          {/* Estúdio */}
+        <div className="p-6 space-y-5">
+          {/* Row 1: Estúdio + Tipo + Programa */}
           <div>
-            <label className="text-[11px] font-bold mb-1 block" style={{ color: "#0d0446" }}>
-              <Building2 size={11} className="inline mr-1" />Estúdio
-            </label>
-            <select
-              value={estudio}
-              onChange={e => handleEstudioChange(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg text-xs outline-none transition-colors"
-              style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.15)", color: "#0d0446" }}
-            >
-              <option value="">Selecione o estúdio</option>
-              {estudios.map(e => <option key={e} value={e}>{e}</option>)}
-            </select>
-          </div>
-
-          {/* Tipo de Programa (filtro) */}
-          <div>
-            <label className="text-[11px] font-bold mb-1 block" style={{ color: "#0d0446" }}>Tipo de Programa</label>
-            <select
-              value={tipoPrograma}
-              onChange={e => handleTipoChange(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg text-xs outline-none transition-colors"
-              style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.15)", color: "#0d0446" }}
-            >
-              <option value="">Todos os tipos</option>
-              {tiposFiltrados.map(t => <option key={t} value={t}>{t}</option>)}
-            </select>
-          </div>
-
-          {/* Programa (filtrado por tipo) */}
-          <div>
-            <label className="text-[11px] font-bold mb-1 block" style={{ color: "#0d0446" }}>
-              <FileText size={11} className="inline mr-1" />Programa
-            </label>
-            <select
-              value={programaNome}
-              onChange={e => handleProgramaChange(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg text-xs outline-none transition-colors"
-              style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.15)", color: "#0d0446" }}
-            >
-              <option value="">Selecione o programa</option>
-              {programasFiltrados.map(p => <option key={p.id} value={p.nome}>{p.nome}</option>)}
-            </select>
-          </div>
-        </div>
-
-        {/* Form Fields - Row 2: Data, Horário */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          {/* Data */}
-          <div>
-            <label className="text-[11px] font-bold mb-1 block" style={{ color: "#0d0446" }}>
-              <CalendarIcon size={11} className="inline mr-1" />Data
-            </label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <button
-                  className="w-full px-3 py-2 rounded-lg text-xs text-left flex items-center gap-2 outline-none transition-colors"
-                  style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.15)", color: "#0d0446" }}
+            <p className="text-[10px] font-bold uppercase tracking-wider mb-3" style={{ color: "rgba(13,4,70,0.4)" }}>Identificação do programa</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="text-[11px] font-semibold mb-1.5 flex items-center gap-1.5" style={{ color: "#0d0446" }}>
+                  <Building2 size={12} style={{ color: "#268ffa" }} />Estúdio
+                </label>
+                <select
+                  value={estudio}
+                  onChange={e => handleEstudioChange(e.target.value)}
+                  className="w-full px-3 py-2.5 rounded-xl text-xs outline-none transition-all focus:ring-2 focus:ring-[#268ffa]/20"
+                  style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "1px solid rgba(13,4,70,0.1)", color: "#0d0446" }}
                 >
-                  <CalendarIcon size={12} style={{ color: "#268ffa" }} />
-                  {format(selectedDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
-                </button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0 border-none shadow-xl bg-white" align="start" style={{ borderRadius: "16px", overflow: "hidden" }}>
-                <Calendar
-                  mode="single"
-                  selected={selectedDate}
-                  onSelect={(d) => d && setSelectedDate(d)}
-                  locale={ptBR}
-                  className="p-4 pointer-events-auto"
-                  classNames={{
-                    months: "flex flex-col space-y-4",
-                    month: "space-y-3",
-                    caption: "flex justify-center pt-1 relative items-center",
-                    caption_label: "text-sm font-bold",
-                    nav: "space-x-1 flex items-center",
-                    nav_button: "h-7 w-7 rounded-full flex items-center justify-center hover:opacity-100 transition-all",
-                    nav_button_previous: "absolute left-1",
-                    nav_button_next: "absolute right-1",
-                    table: "w-full border-collapse",
-                    head_row: "flex",
-                    head_cell: "rounded-md w-9 font-semibold text-[0.7rem] uppercase",
-                    row: "flex w-full mt-1",
-                    cell: "h-9 w-9 text-center text-sm p-0 relative rounded-full",
-                    day: "h-9 w-9 p-0 font-medium rounded-full transition-all hover:bg-[rgba(38,143,250,0.12)]",
-                    day_selected: "bg-[#268ffa] text-white hover:bg-[#268ffa] focus:bg-[#268ffa] font-bold shadow-md",
-                    day_today: "bg-[rgba(13,4,70,0.08)] font-bold",
-                    day_outside: "opacity-30",
-                    day_disabled: "opacity-30",
-                    day_hidden: "invisible",
-                  }}
-                  styles={{
-                    caption_label: { color: "#0d0446" },
-                    head_cell: { color: "rgba(13,4,70,0.45)" },
-                    day: { color: "#0d0446" },
-                    nav_button: { color: "#268ffa", backgroundColor: "rgba(38,143,250,0.08)" },
-                  }}
+                  <option value="">Selecione o estúdio</option>
+                  {estudios.map(e => <option key={e} value={e}>{e}</option>)}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-[11px] font-semibold mb-1.5 block" style={{ color: "#0d0446" }}>Tipo de Programa</label>
+                <select
+                  value={tipoPrograma}
+                  onChange={e => handleTipoChange(e.target.value)}
+                  className="w-full px-3 py-2.5 rounded-xl text-xs outline-none transition-all focus:ring-2 focus:ring-[#268ffa]/20"
+                  style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "1px solid rgba(13,4,70,0.1)", color: "#0d0446" }}
+                >
+                  <option value="">Todos os tipos</option>
+                  {tiposFiltrados.map(t => <option key={t} value={t}>{t}</option>)}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-[11px] font-semibold mb-1.5 flex items-center gap-1.5" style={{ color: "#0d0446" }}>
+                  <FileText size={12} style={{ color: "#268ffa" }} />Programa
+                </label>
+                <select
+                  value={programaNome}
+                  onChange={e => handleProgramaChange(e.target.value)}
+                  className="w-full px-3 py-2.5 rounded-xl text-xs outline-none transition-all focus:ring-2 focus:ring-[#268ffa]/20"
+                  style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "1px solid rgba(13,4,70,0.1)", color: "#0d0446" }}
+                >
+                  <option value="">Selecione o programa</option>
+                  {programasFiltrados.map(p => <option key={p.id} value={p.nome}>{p.nome}</option>)}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Divider */}
+          <div className="h-px" style={{ backgroundColor: "rgba(13,4,70,0.06)" }} />
+
+          {/* Row 2: Data + Horário + Título */}
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-wider mb-3" style={{ color: "rgba(13,4,70,0.4)" }}>Data, horário e título</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="text-[11px] font-semibold mb-1.5 flex items-center gap-1.5" style={{ color: "#0d0446" }}>
+                  <CalendarIcon size={12} style={{ color: "#268ffa" }} />Data do Programa
+                </label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button
+                      className="w-full px-3 py-2.5 rounded-xl text-xs text-left flex items-center gap-2 outline-none transition-all hover:border-[#268ffa]/30"
+                      style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "1px solid rgba(13,4,70,0.1)", color: "#0d0446" }}
+                    >
+                      <CalendarIcon size={12} style={{ color: "#268ffa" }} />
+                      {format(selectedDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0 border-none shadow-xl bg-white" align="start" style={{ borderRadius: "16px", overflow: "hidden" }}>
+                    <Calendar
+                      mode="single"
+                      selected={selectedDate}
+                      onSelect={(d) => d && setSelectedDate(d)}
+                      locale={ptBR}
+                      className="p-4 pointer-events-auto"
+                      classNames={{
+                        months: "flex flex-col space-y-4",
+                        month: "space-y-3",
+                        caption: "flex justify-center pt-1 relative items-center",
+                        caption_label: "text-sm font-bold",
+                        nav: "space-x-1 flex items-center",
+                        nav_button: "h-7 w-7 rounded-full flex items-center justify-center hover:opacity-100 transition-all",
+                        nav_button_previous: "absolute left-1",
+                        nav_button_next: "absolute right-1",
+                        table: "w-full border-collapse",
+                        head_row: "flex",
+                        head_cell: "rounded-md w-9 font-semibold text-[0.7rem] uppercase",
+                        row: "flex w-full mt-1",
+                        cell: "h-9 w-9 text-center text-sm p-0 relative rounded-full",
+                        day: "h-9 w-9 p-0 font-medium rounded-full transition-all hover:bg-[rgba(38,143,250,0.12)]",
+                        day_selected: "bg-[#268ffa] text-white hover:bg-[#268ffa] focus:bg-[#268ffa] font-bold shadow-md",
+                        day_today: "bg-[rgba(13,4,70,0.08)] font-bold",
+                        day_outside: "opacity-30",
+                        day_disabled: "opacity-30",
+                        day_hidden: "invisible",
+                      }}
+                      styles={{
+                        caption_label: { color: "#0d0446" },
+                        head_cell: { color: "rgba(13,4,70,0.45)" },
+                        day: { color: "#0d0446" },
+                        nav_button: { color: "#268ffa", backgroundColor: "rgba(38,143,250,0.08)" },
+                      }}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <div>
+                <label className="text-[11px] font-semibold mb-1.5 flex items-center gap-1.5" style={{ color: "#0d0446" }}>
+                  <Clock size={12} style={{ color: "#268ffa" }} />Horário
+                </label>
+                <input
+                  type="time"
+                  value={horario}
+                  onChange={e => setHorario(e.target.value)}
+                  placeholder="Ex: 08:00"
+                  className="w-full px-3 py-2.5 rounded-xl text-xs outline-none transition-all focus:ring-2 focus:ring-[#268ffa]/20"
+                  style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "1px solid rgba(13,4,70,0.1)", color: "#0d0446" }}
                 />
-              </PopoverContent>
-            </Popover>
-          </div>
+              </div>
 
-          {/* Horário */}
-          <div>
-            <label className="text-[11px] font-bold mb-1 block" style={{ color: "#0d0446" }}>
-              <Clock size={11} className="inline mr-1" />Horário
-            </label>
-            <input
-              type="time"
-              value={horario}
-              onChange={e => setHorario(e.target.value)}
-              placeholder="Ex: 08:00"
-              className="w-full px-3 py-2 rounded-lg text-xs outline-none transition-colors"
-              style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.15)", color: "#0d0446" }}
-            />
-          </div>
-
-          {/* Título do Roteiro */}
-          <div>
-            <label className="text-[11px] font-bold mb-1 block" style={{ color: "#0d0446" }}>
-              <FileText size={11} className="inline mr-1" />Título do Roteiro
-            </label>
-            <input
-              value={roteiroTitulo}
-              onChange={e => setRoteiroTitulo(e.target.value)}
-              placeholder="Gravação de Podcast"
-              className="w-full px-3 py-2 rounded-lg outline-none transition-colors uppercase"
-              style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.15)", color: "#0d0446", fontSize: "16px", fontWeight: "bold" }}
-            />
+              <div>
+                <label className="text-[11px] font-semibold mb-1.5 flex items-center gap-1.5" style={{ color: "#0d0446" }}>
+                  <Type size={12} style={{ color: "#268ffa" }} />Título do Roteiro
+                </label>
+                <input
+                  value={roteiroTitulo}
+                  onChange={e => setRoteiroTitulo(e.target.value)}
+                  placeholder="Ex: Gravação de Podcast"
+                  className="w-full px-3 py-2.5 rounded-xl outline-none transition-all focus:ring-2 focus:ring-[#268ffa]/20 uppercase text-sm font-bold"
+                  style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "1px solid rgba(13,4,70,0.1)", color: "#0d0446" }}
+                />
+              </div>
+            </div>
           </div>
         </div>
-
       </div>
 
       {/* Botão Montar Roteiro */}
@@ -665,46 +662,56 @@ ${perguntaActions}
 
       {/* Roteiro Form */}
       {showRoteiro && (
-        <div className="rounded-2xl overflow-hidden" style={{ background: "#d9e9fa", boxShadow: "0 8px 32px rgba(13,4,70,0.12)", padding: "24px" }}>
-          {/* Header */}
-          <div className="mb-5">
-            <p className="text-xs font-bold" style={{ color: "#0d0446" }}>roteiro para o programa</p>
-            <h2 className="text-2xl font-bold" style={{ color: "#0d0446" }}>
-              {programaNome}
-              {numeroRoteiro && <span className="text-sm font-semibold ml-2" style={{ color: "rgba(13,4,70,0.4)" }}>#{numeroRoteiro}</span>}
-            </h2>
-            <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold mt-1" style={{ backgroundColor: "#268ffa", color: "#ffffff" }}>
-              estúdio {estudio || "—"}
-            </span>
-            <p className="text-xs mt-2" style={{ color: "rgba(13,4,70,0.5)" }}>
-              programa para o dia:<br />
-              {format(selectedDate, "dd/MM/yy", { locale: ptBR })} às {horario || "—"}
-            </p>
+        <div className="rounded-2xl overflow-hidden" style={{ background: "#ffffff", boxShadow: "0 4px 24px rgba(13,4,70,0.08)", border: "1px solid rgba(13,4,70,0.06)" }}>
+          {/* Section Header */}
+          <div className="px-6 py-4" style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)" }}>
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-white/60">Passo 2 — Conteúdo do Roteiro</p>
+                <h2 className="text-lg font-bold text-white mt-0.5">
+                  {programaNome}
+                  {numeroRoteiro && <span className="text-sm font-medium ml-2 text-white/60">#{numeroRoteiro}</span>}
+                </h2>
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="px-2.5 py-1 rounded-full text-[10px] font-bold" style={{ backgroundColor: "rgba(255,255,255,0.2)", color: "#ffffff" }}>
+                  Estúdio {estudio || "—"}
+                </span>
+                <span className="px-2.5 py-1 rounded-full text-[10px] font-bold" style={{ backgroundColor: "rgba(255,255,255,0.2)", color: "#ffffff" }}>
+                  {format(selectedDate, "dd/MM/yy", { locale: ptBR })} · {horario || "—"}
+                </span>
+              </div>
+            </div>
           </div>
 
+          <div className="p-6 space-y-5">
+            {/* Assunto */}
+            <div className="rounded-xl p-4" style={{ backgroundColor: "rgba(38,143,250,0.03)", border: "1px solid rgba(38,143,250,0.1)" }}>
+              <p className="text-[10px] font-bold uppercase tracking-wider mb-3" style={{ color: "#268ffa" }}>
+                Assunto do {tipoPrograma?.toLowerCase() || "programa"}
+              </p>
+              <input
+                value={roteiroSubtitulo}
+                onChange={e => setRoteiroSubtitulo(e.target.value)}
+                placeholder="Título da entrevista"
+                className="w-full px-3 py-2.5 rounded-xl text-sm font-bold outline-none mb-2 transition-all focus:ring-2 focus:ring-[#268ffa]/20"
+                style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.08)", color: "#0d0446" }}
+              />
+              <input
+                value={assuntoSubtitulo}
+                onChange={e => setAssuntoSubtitulo(e.target.value)}
+                placeholder="Subtítulo ou observação"
+                className="w-full px-3 py-2.5 rounded-xl text-xs outline-none transition-all focus:ring-2 focus:ring-[#268ffa]/20"
+                style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.08)", color: "#0d0446" }}
+              />
+            </div>
 
+            {/* Divider */}
+            <div className="h-px" style={{ backgroundColor: "rgba(13,4,70,0.06)" }} />
 
-          <div className="rounded-xl p-4 mb-4" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.08)" }}>
-            <label className="text-xs font-semibold mb-2 block" style={{ color: "rgba(13,4,70,0.5)" }}>assunto do {tipoPrograma?.toLowerCase() || "programa"}</label>
-            <input
-              value={roteiroSubtitulo}
-              onChange={e => setRoteiroSubtitulo(e.target.value)}
-              placeholder="Título da entrevista"
-              className="w-full px-3 py-2 rounded-lg text-sm font-bold outline-none mb-2"
-              style={{ backgroundColor: "rgba(13,4,70,0.04)", border: "1px solid rgba(13,4,70,0.08)", color: "#0d0446" }}
-            />
-            <input
-              value={assuntoSubtitulo}
-              onChange={e => setAssuntoSubtitulo(e.target.value)}
-              placeholder="Subtítulo"
-              className="w-full px-3 py-2 rounded-lg text-xs outline-none"
-              style={{ backgroundColor: "rgba(13,4,70,0.04)", border: "1px solid rgba(13,4,70,0.08)", color: "#0d0446" }}
-            />
-          </div>
-
-          {/* Participantes */}
-          <div className="mb-4">
-            <label className="text-xs font-semibold mb-2 block" style={{ color: "rgba(13,4,70,0.5)" }}>participantes</label>
+            {/* Participantes */}
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-wider mb-3" style={{ color: "rgba(13,4,70,0.4)" }}>Participantes</p>
             <div className="space-y-2">
               {participantes.map((p, idx) => (
                 <div key={idx} className="rounded-xl p-3" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.08)" }}>
@@ -820,11 +827,15 @@ ${perguntaActions}
                 </button>
               )}
             </div>
-          </div>
+            </div>
 
-          {/* Texto Roteiro */}
-          <div className="rounded-xl p-4 mb-4" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.08)" }}>
-            <p className="text-xs font-bold mb-3" style={{ color: "#0d0446" }}>Escreva seu roteiro</p>
+            {/* Divider */}
+            <div className="h-px" style={{ backgroundColor: "rgba(13,4,70,0.06)" }} />
+
+            {/* Texto Roteiro */}
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-wider mb-3" style={{ color: "rgba(13,4,70,0.4)" }}>Conteúdo do roteiro</p>
+              <div className="rounded-xl p-4" style={{ backgroundColor: "rgba(13,4,70,0.02)", border: "1px solid rgba(13,4,70,0.06)" }}>
 
             {/* Toolbar */}
             <div className="flex flex-wrap items-center gap-1 mb-3 pb-3" style={{ borderBottom: "1px solid rgba(13,4,70,0.08)" }}>
@@ -1045,26 +1056,28 @@ ${perguntaActions}
               style={{ color: "#0d0446", fontSize: fontSize + "px", lineHeight: "1.7" }}
               data-placeholder="Digite o roteiro aqui..."
             />
-          </div>
+              </div>
+            </div>
 
-          {/* Salvar / Exportar */}
-          <button
-            onClick={async () => {
-              await salvarRoteiro();
-              setShowExportView(true);
-              if (editingRoteiroId) {
-                fetchApresentadorStatus(editingRoteiroId);
-              } else {
-                setApresentadorStatus(null);
-              }
-            }}
-            disabled={savingRoteiro}
-            className="w-full py-3 rounded-xl text-sm font-bold transition-all hover:opacity-90 flex items-center justify-center gap-2"
-            style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#ffffff", boxShadow: "0 4px 16px rgba(38,143,250,0.3)" }}
-          >
-            <Save size={14} />
-            {savingRoteiro ? "salvando..." : "salvar / exportar roteiro"}
-          </button>
+            {/* Salvar / Exportar */}
+            <button
+              onClick={async () => {
+                await salvarRoteiro();
+                setShowExportView(true);
+                if (editingRoteiroId) {
+                  fetchApresentadorStatus(editingRoteiroId);
+                } else {
+                  setApresentadorStatus(null);
+                }
+              }}
+              disabled={savingRoteiro}
+              className="w-full py-3.5 rounded-xl text-sm font-bold transition-all hover:opacity-90 flex items-center justify-center gap-2"
+              style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#ffffff", boxShadow: "0 4px 16px rgba(38,143,250,0.3)" }}
+            >
+              <Save size={14} />
+              {savingRoteiro ? "salvando..." : "Salvar e Exportar Roteiro"}
+            </button>
+          </div>
         </div>
       )}
 
