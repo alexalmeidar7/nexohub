@@ -254,11 +254,19 @@ export default function RoteiroPrograma() {
 
   // Restore editor content when showRoteiro becomes true and roteiroTexto has content
   useEffect(() => {
-    if (showRoteiro && roteiroTexto && editorRef.current && !editorRef.current.innerHTML.trim()) {
-      editorRef.current.innerHTML = roteiroTexto;
-      injectPerguntaActions(editorRef.current);
-    }
-  }, [showRoteiro]);
+    if (!showRoteiro || !roteiroTexto) return;
+    const tryRestore = () => {
+      if (editorRef.current && !editorRef.current.innerHTML.trim()) {
+        editorRef.current.innerHTML = roteiroTexto;
+        injectPerguntaActions(editorRef.current);
+      }
+    };
+    // Try immediately and with delays to handle rendering timing
+    tryRestore();
+    const t1 = setTimeout(tryRestore, 100);
+    const t2 = setTimeout(tryRestore, 300);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, [showRoteiro, roteiroTexto]);
 
 
   const editarRoteiro = (r: any) => {
