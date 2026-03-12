@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef, lazy, Suspense } from "react";
-import { Plus, X, Link2, BarChart3, CalendarDays, Music, Eye, Users, Mic2, PlaySquare, Newspaper, Settings, ShoppingBag, Tag, Image, Film, ShoppingCart, Monitor, Wrench, Scissors, MonitorPlay, ExternalLink, GripVertical, Loader2, Trash2, MessageSquareQuote, Radio, Clock, Tv, FileText, CloudSun, ChevronDown, Play, Pause, Volume2, VolumeX, Circle, User } from "lucide-react";
+import { Plus, X, Link2, BarChart3, CalendarDays, Music, Eye, Users, Mic2, PlaySquare, Newspaper, Settings, ShoppingBag, Tag, Image, Film, ShoppingCart, Monitor, Wrench, Scissors, MonitorPlay, ExternalLink, GripVertical, Loader2, Trash2, MessageSquareQuote, Radio, Clock, Tv, FileText, CloudSun, ChevronDown, ChevronLeft, ChevronRight, Play, Pause, Volume2, VolumeX, Circle, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
@@ -1246,44 +1246,37 @@ function DashboardPlayerWidget() {
   useEffect(() => {
     if (!user) return;
     const fetchChannels = async () => {
-      // Try own channels first
       let { data, error } = await supabase
         .from("streaming_channels")
         .select("*")
         .eq("user_id", user.id)
         .eq("active", true)
+        .neq("type", "catalog")
         .order("numero_canal");
 
-      // Fallback: if no own channels, fetch all active channels the user can see
       if (!error && (!data || data.length === 0)) {
         const fallback = await supabase
           .from("streaming_channels")
           .select("*")
           .eq("active", true)
+          .neq("type", "catalog")
           .order("numero_canal");
         data = fallback.data;
         error = fallback.error;
       }
 
-      if (error) {
-        console.error("Player widget: error fetching channels", error);
-        return;
-      }
+      if (error) return;
       if (data && data.length > 0) setChannels(data);
     };
     fetchChannels();
   }, [user]);
 
-  // Persist audio element across renders
   useEffect(() => {
     if (!audioRef.current) {
       const audio = new Audio();
       audio.preload = "none";
       audioRef.current = audio;
     }
-    return () => {
-      // Don't destroy audio on unmount to allow persistent playback
-    };
   }, []);
 
   const activeChannel = channels[activeIdx];
@@ -1291,23 +1284,33 @@ function DashboardPlayerWidget() {
   const togglePlay = () => {
     const audio = audioRef.current;
     if (!audio || !activeChannel) return;
-
     if (isPlaying) {
       audio.pause();
       setIsPlaying(false);
     } else {
-      if (audio.src !== activeChannel.url) {
-        audio.src = activeChannel.url;
-      }
+      if (audio.src !== activeChannel.url) audio.src = activeChannel.url;
       audio.play().then(() => setIsPlaying(true)).catch(() => {});
     }
   };
 
-  const switchChannel = (idx: number) => {
+  const goNext = () => {
+    if (channels.length <= 1) return;
+    const next = (activeIdx + 1) % channels.length;
+    setActiveIdx(next);
     const audio = audioRef.current;
-    setActiveIdx(idx);
     if (audio && isPlaying) {
-      audio.src = channels[idx].url;
+      audio.src = channels[next].url;
+      audio.play().catch(() => {});
+    }
+  };
+
+  const goPrev = () => {
+    if (channels.length <= 1) return;
+    const prev = (activeIdx - 1 + channels.length) % channels.length;
+    setActiveIdx(prev);
+    const audio = audioRef.current;
+    if (audio && isPlaying) {
+      audio.src = channels[prev].url;
       audio.play().catch(() => {});
     }
   };
@@ -1320,22 +1323,34 @@ function DashboardPlayerWidget() {
   };
 
   const channelLogo = activeChannel?.background_url || activeChannel?.logo_url || activeChannel?.cover_url;
+  const channelType = activeChannel?.type || "";
+  const isVideo = channelType.includes("video");
 
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center gap-2 mb-2">
         <Radio size={14} className="text-[#be0101]" />
         <p className="text-black font-bold text-sm">Player</p>
-        {activeChannel && (
-          <span className="text-black/40 text-[9px] ml-auto truncate max-w-[100px]">{activeChannel.name}</span>
-        )}
       </div>
 
       {channels.length === 0 ? (
         <p className="text-black/30 text-xs">Nenhum canal cadastrado</p>
       ) : (
-        <div className="flex items-center gap-3">
-          {/* Channel logo / art */}
+        <div className="flex items-center gap-2">
+          {/* Left arrow */}
+          {channels.length > 1 && (
+            <button
+              onClick={goPrev}
+              className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-all hover:scale-110"
+              style={{ background: "rgba(0,0,0,0.06)" }}
+              onMouseEnter={e => { e.currentTarget.style.background = "rgba(190,1,1,0.15)"; }}
+              onMouseLeave={e => { e.currentTarget.style.background = "rgba(0,0,0,0.06)"; }}
+            >
+              <ChevronLeft size={14} className="text-black/50" />
+            </button>
+          )}
+
+          {/* Channel logo */}
           <div
             className="w-14 h-14 rounded-xl flex-shrink-0 flex items-center justify-center overflow-hidden"
             style={{ background: "rgba(190,1,1,0.08)" }}
@@ -1347,48 +1362,44 @@ function DashboardPlayerWidget() {
             )}
           </div>
 
+          {/* Info + controls */}
           <div className="flex-1 min-w-0">
-            {/* Channel name + live badge */}
             <div className="flex items-center gap-1.5 mb-1">
               {isPlaying && <Circle size={6} fill="#ff0000" color="#ff0000" className="animate-pulse flex-shrink-0" />}
-              <p className="text-black text-xs font-bold truncate">{activeChannel?.name}</p>
+              <p className="text-black text-[11px] font-bold truncate">{activeChannel?.name}</p>
             </div>
-
-            {/* Controls */}
+            <div className="flex items-center gap-1 mb-1.5">
+              <span className="text-[8px] font-bold px-1.5 py-0.5 rounded" style={{ background: "rgba(190,1,1,0.1)", color: "#be0101" }}>
+                {activeChannel?.numero_canal}
+              </span>
+              <span className="text-black/30 text-[8px]">{isVideo ? "Vídeo" : "Áudio"}</span>
+            </div>
             <div className="flex items-center gap-2">
               <button
                 onClick={togglePlay}
-                className="w-8 h-8 rounded-full flex items-center justify-center transition-all hover:scale-110"
+                className="w-7 h-7 rounded-full flex items-center justify-center transition-all hover:scale-110"
                 style={{ background: "linear-gradient(135deg, #960101, #be0101)" }}
               >
-                {isPlaying ? <Pause size={12} className="text-white" /> : <Play size={12} className="text-white ml-0.5" />}
+                {isPlaying ? <Pause size={11} className="text-white" /> : <Play size={11} className="text-white ml-0.5" />}
               </button>
-
               <button onClick={toggleMute} className="text-black/40 hover:text-black transition-colors">
-                {isMuted ? <VolumeX size={14} /> : <Volume2 size={14} />}
+                {isMuted ? <VolumeX size={13} /> : <Volume2 size={13} />}
               </button>
-
-              {/* Channel selector */}
-              {channels.length > 1 && (
-                <div className="flex gap-1 ml-auto">
-                  {channels.slice(0, 4).map((ch, i) => (
-                    <button
-                      key={ch.id}
-                      onClick={() => switchChannel(i)}
-                      className="w-5 h-5 rounded-md flex items-center justify-center text-[8px] font-bold transition-all"
-                      style={{
-                        background: i === activeIdx ? "linear-gradient(135deg, #960101, #be0101)" : "rgba(0,0,0,0.06)",
-                        color: i === activeIdx ? "#fff" : "rgba(0,0,0,0.4)",
-                      }}
-                      title={ch.name}
-                    >
-                      {ch.numero_canal || i + 1}
-                    </button>
-                  ))}
-                </div>
-              )}
             </div>
           </div>
+
+          {/* Right arrow */}
+          {channels.length > 1 && (
+            <button
+              onClick={goNext}
+              className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-all hover:scale-110"
+              style={{ background: "rgba(0,0,0,0.06)" }}
+              onMouseEnter={e => { e.currentTarget.style.background = "rgba(190,1,1,0.15)"; }}
+              onMouseLeave={e => { e.currentTarget.style.background = "rgba(0,0,0,0.06)"; }}
+            >
+              <ChevronRight size={14} className="text-black/50" />
+            </button>
+          )}
         </div>
       )}
     </div>
