@@ -129,8 +129,8 @@ export default function MessageNotification() {
 
       {unreadCount > 0 && (
         <span
-          className="absolute -top-1 -right-1 w-[18px] h-[18px] rounded-full text-[9px] font-bold flex items-center justify-center animate-scale-in ring-2 ring-white/20"
-          style={{ background: "linear-gradient(135deg, #ef4444, #dc2626)", color: "#ffffff" }}
+          className="absolute -top-1 -right-1 w-[18px] h-[18px] rounded-full text-[9px] font-bold flex items-center justify-center animate-scale-in ring-2 ring-black/40"
+          style={{ background: "linear-gradient(135deg, #960101, #be0101)", color: "#ffffff", boxShadow: "0 0 10px rgba(190,1,1,0.5)" }}
         >
           {unreadCount > 9 ? "9+" : unreadCount}
         </span>
@@ -140,25 +140,25 @@ export default function MessageNotification() {
         <div
           className="absolute right-0 top-full mt-2 w-[340px] rounded-2xl overflow-hidden animate-fade-in z-50"
           style={{
-            background: "rgba(10, 5, 50, 0.75)",
+            background: "rgba(0, 0, 0, 0.85)",
             backdropFilter: "blur(40px) saturate(1.6)",
             WebkitBackdropFilter: "blur(40px) saturate(1.6)",
-            border: "1px solid rgba(255,255,255,0.12)",
-            boxShadow: "0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05) inset",
+            border: "1px solid rgba(255,255,255,0.08)",
+            boxShadow: "0 20px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.03) inset",
           }}
           onMouseEnter={() => { if (timeoutRef.current) clearTimeout(timeoutRef.current); }}
           onMouseLeave={handleMouseLeave}
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-5 py-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+          <div className="flex items-center justify-between px-5 py-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
             <div className="flex items-center gap-2">
-              <Bell size={13} className="text-white/60" />
+              <Bell size={13} style={{ color: "#be0101" }} />
               <span className="text-[11px] font-semibold text-white/90 tracking-wide uppercase">Notificações</span>
             </div>
             {unreadCount > 0 && (
               <span
                 className="text-[9px] font-bold px-2 py-0.5 rounded-full"
-                style={{ background: "rgba(38,143,250,0.25)", color: "#268ffa" }}
+                style={{ background: "rgba(190,1,1,0.2)", color: "#be0101" }}
               >
                 {unreadCount} nova{unreadCount > 1 ? "s" : ""}
               </span>
@@ -166,14 +166,14 @@ export default function MessageNotification() {
           </div>
 
           {/* Tabs */}
-          <div className="flex gap-1 px-4 py-2" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+          <div className="flex gap-1 px-4 py-2" style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
             <button
               onClick={() => setTab("novas")}
               className="text-[10px] font-semibold px-4 py-1.5 rounded-full transition-all duration-200"
               style={{
-                background: tab === "novas" ? "linear-gradient(135deg, #268ffa, #1a6fcc)" : "rgba(255,255,255,0.06)",
+                background: tab === "novas" ? "linear-gradient(135deg, #960101, #be0101)" : "rgba(255,255,255,0.06)",
                 color: tab === "novas" ? "#ffffff" : "rgba(255,255,255,0.5)",
-                boxShadow: tab === "novas" ? "0 2px 12px rgba(38,143,250,0.3)" : "none",
+                boxShadow: tab === "novas" ? "0 2px 12px rgba(190,1,1,0.3)" : "none",
               }}
             >
               Novas {unreadCount > 0 && `(${unreadCount})`}
@@ -182,9 +182,9 @@ export default function MessageNotification() {
               onClick={() => setTab("lidas")}
               className="text-[10px] font-semibold px-4 py-1.5 rounded-full transition-all duration-200"
               style={{
-                background: tab === "lidas" ? "linear-gradient(135deg, #268ffa, #1a6fcc)" : "rgba(255,255,255,0.06)",
+                background: tab === "lidas" ? "linear-gradient(135deg, #960101, #be0101)" : "rgba(255,255,255,0.06)",
                 color: tab === "lidas" ? "#ffffff" : "rgba(255,255,255,0.5)",
-                boxShadow: tab === "lidas" ? "0 2px 12px rgba(38,143,250,0.3)" : "none",
+                boxShadow: tab === "lidas" ? "0 2px 12px rgba(190,1,1,0.3)" : "none",
               }}
             >
               Lidas
@@ -220,8 +220,8 @@ export default function MessageNotification() {
                   <div
                     className="px-4 py-3 transition-colors"
                     style={{
-                      borderBottom: idx < filteredMessages.length - 1 ? "1px solid rgba(255,255,255,0.05)" : "none",
-                      background: openMsgId === msg.id ? "rgba(38,143,250,0.08)" : "transparent",
+                      borderBottom: idx < filteredMessages.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none",
+                      background: openMsgId === msg.id ? "rgba(190,1,1,0.08)" : "transparent",
                     }}
                   >
                     <div className="flex items-start gap-3">
@@ -230,14 +230,14 @@ export default function MessageNotification() {
                         <div
                           className="w-2 h-2 rounded-full"
                           style={{
-                            background: !msg.is_read ? "#268ffa" : "rgba(255,255,255,0.15)",
-                            boxShadow: !msg.is_read ? "0 0 8px rgba(38,143,250,0.5)" : "none",
+                            background: !msg.is_read ? "#be0101" : "rgba(255,255,255,0.15)",
+                            boxShadow: !msg.is_read ? "0 0 8px rgba(190,1,1,0.5)" : "none",
                           }}
                         />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-2">
-                          <p className="text-[11px] font-semibold truncate text-white/90">{msg.subject}</p>
+                          <p className="text-[11px] font-bold truncate" style={{ color: !msg.is_read ? "#be0101" : "rgba(255,255,255,0.9)" }}>{msg.subject}</p>
                           <div className="flex items-center gap-1 shrink-0">
                             <Clock size={9} className="text-white/30" />
                             <span className="text-[9px] text-white/35">{formatDate(msg.created_at)}</span>
@@ -248,8 +248,8 @@ export default function MessageNotification() {
                             <button
                               className="text-[9px] font-semibold px-3 py-1 rounded-full transition-all duration-200 flex items-center gap-1"
                               style={{
-                                background: openMsgId === msg.id ? "rgba(255,255,255,0.12)" : "rgba(38,143,250,0.15)",
-                                color: openMsgId === msg.id ? "#ffffff" : "#268ffa",
+                                background: openMsgId === msg.id ? "rgba(255,255,255,0.12)" : "rgba(190,1,1,0.15)",
+                                color: openMsgId === msg.id ? "#ffffff" : "#be0101",
                               }}
                             >
                               {openMsgId === msg.id ? "Fechar" : "Ler"}
