@@ -610,10 +610,10 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                         opacity: exists ? 0.4 : 1,
                         color: "#fff",
                       }}
-                      onMouseEnter={e => { if (!exists) { e.currentTarget.style.background = "rgba(38,143,250,0.15)"; } }}
+                      onMouseEnter={e => { if (!exists) { e.currentTarget.style.background = "rgba(190,1,1,0.15)"; } }}
                       onMouseLeave={e => { e.currentTarget.style.background = exists ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.06)"; }}
                     >
-                      <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)" }}>
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: "linear-gradient(135deg, #960101, #be0101)" }}>
                         {opt.type === "agenda" && <CalendarDays size={14} className="text-white" />}
                         {opt.type === "musica" && <Music size={14} className="text-white" />}
                         {opt.type === "stats" && <BarChart3 size={14} className="text-white" />}
