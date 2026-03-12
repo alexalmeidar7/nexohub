@@ -1410,8 +1410,22 @@ ${perguntaActions}
           <NoticiasPanel />
         </Suspense>
       )}
+      <Suspense fallback={null}>
+        <WhatsAppSendDialog
+          open={showWhatsAppDialog}
+          onClose={() => setShowWhatsAppDialog(false)}
+          roteiroData={{
+            titulo: roteiroTitulo || "Roteiro",
+            programaNome,
+            estudio,
+            data: format(selectedDate, "dd/MM/yyyy"),
+            horario,
+            participantes,
+            conteudoTexto: editorRef.current?.innerText || roteiroTexto,
+          }}
+        />
+      </Suspense>
 
-      
     </div>
   );
 }
