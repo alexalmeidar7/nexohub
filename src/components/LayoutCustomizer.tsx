@@ -105,11 +105,11 @@ export default function LayoutCustomizer() {
     if (!user) return;
     const { data: existing } = await supabase.from("user_settings").select("dashboard_items").eq("user_id", user.id).maybeSingle();
     const current = (existing?.dashboard_items && typeof existing.dashboard_items === "object") ? existing.dashboard_items as Record<string, any> : {};
-    await supabase.from("user_settings").upsert({
+    await supabase.from("user_settings").upsert([{
       user_id: user.id,
-      dashboard_items: { ...current, layout_colors: c },
+      dashboard_items: { ...current, layout_colors: c } as any,
       updated_at: new Date().toISOString(),
-    }, { onConflict: "user_id" });
+    }], { onConflict: "user_id" });
   };
 
   const resetColors = () => {
