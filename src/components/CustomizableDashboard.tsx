@@ -43,11 +43,12 @@ const linkOptions: { label: string; page?: Page; external?: string; icon: string
   { label: "Configurações", page: "configuracoes", icon: "Settings" },
 ];
 
-const widgetOptions: { label: string; type: "agenda" | "musica" | "stats" | "weather"; description: string }[] = [
+const widgetOptions: { label: string; type: "agenda" | "musica" | "stats" | "weather" | "player"; description: string }[] = [
   { label: "Agenda de Eventos", type: "agenda", description: "Exibe os próximos eventos do calendário" },
   { label: "Música no Ar + Programa", type: "musica", description: "Mostra a música e programa em exibição" },
   { label: "Dados Estatísticos", type: "stats", description: "Visualizações do pre-roll e audiência do player" },
   { label: "Previsão do Tempo", type: "weather", description: "Temperatura e previsão para os próximos dias" },
+  { label: "Player", type: "player", description: "Ouça ou assista seus canais cadastrados" },
 ];
 
 const iconMap: Record<string, React.ComponentType<any>> = {
