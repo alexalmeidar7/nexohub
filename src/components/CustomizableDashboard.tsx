@@ -1006,7 +1006,7 @@ function MusicProgramWidget() {
     <div>
       <div className="flex items-center gap-2 mb-3">
         <Music size={14} className="text-[#be0101]" />
-        <p className="text-[#0d0446] font-bold text-sm">No Ar</p>
+        <p className="text-black font-bold text-sm">No Ar</p>
       </div>
 
       {/* Current Program */}
