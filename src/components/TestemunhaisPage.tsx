@@ -222,7 +222,7 @@ export default function TestemunhaisPage() {
                   <textarea value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="Relato do cliente..." rows={4} required
                     className="w-full px-4 py-2 text-sm outline-none transition-colors min-h-[80px]"
                     style={{ ...inputStyle, borderRadius: "12px" }}
-                    onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
+                    onFocus={e => { e.currentTarget.style.borderColor = "#be0101"; }}
                     onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
                   />
                 </div>
