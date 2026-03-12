@@ -225,27 +225,28 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                     style={{
                       background: isDragOver
                         ? "linear-gradient(145deg, #268ffa, #2dbef3)"
-                        : "#ffffff",
-                      border: isDragOver ? "2px solid #268ffa" : "1px solid rgba(13,4,70,0.08)",
-                      boxShadow: "0 2px 8px rgba(13,4,70,0.06)",
+                        : "linear-gradient(135deg, rgba(38,143,250,0.85), rgba(45,190,243,0.85))",
+                      backdropFilter: "blur(12px)",
+                      WebkitBackdropFilter: "blur(12px)",
+                      border: isDragOver ? "2px solid #268ffa" : "1px solid rgba(255,255,255,0.25)",
+                      boxShadow: "0 4px 15px rgba(38,143,250,0.25), inset 0 1px 0 rgba(255,255,255,0.2)",
                     }}
                     onMouseEnter={e => {
-                      e.currentTarget.style.boxShadow = "0 6px 20px rgba(38,143,250,0.15)";
-                      e.currentTarget.style.borderColor = "rgba(38,143,250,0.3)";
+                      e.currentTarget.style.boxShadow = "0 8px 25px rgba(38,143,250,0.4), inset 0 1px 0 rgba(255,255,255,0.3)";
+                      e.currentTarget.style.background = "linear-gradient(135deg, rgba(38,143,250,0.95), rgba(45,190,243,0.95))";
                     }}
                     onMouseLeave={e => {
                       e.currentTarget.style.background = isDragOver
                         ? "linear-gradient(145deg, #268ffa, #2dbef3)"
-                        : "#ffffff";
-                      e.currentTarget.style.boxShadow = "0 2px 8px rgba(13,4,70,0.06)";
-                      e.currentTarget.style.borderColor = isDragOver ? "#268ffa" : "rgba(13,4,70,0.08)";
+                        : "linear-gradient(135deg, rgba(38,143,250,0.85), rgba(45,190,243,0.85))";
+                      e.currentTarget.style.boxShadow = "0 4px 15px rgba(38,143,250,0.25), inset 0 1px 0 rgba(255,255,255,0.2)";
                     }}
                   >
-                    <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "rgba(38,143,250,0.1)" }}>
-                      <Icon size={18} className="text-[#268ffa]" />
+                    <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "rgba(255,255,255,0.2)" }}>
+                      <Icon size={18} className="text-white" />
                     </div>
-                    <span className="text-[#0d0446] text-[9px] font-semibold text-center leading-tight px-1.5 max-w-full truncate mt-1.5">{item.linkLabel}</span>
-                    {item.linkExternal && <ExternalLink size={7} className="text-[#0d0446]/25 absolute bottom-1.5 right-1.5" />}
+                    <span className="text-white text-[9px] font-semibold text-center leading-tight px-1.5 max-w-full truncate mt-1.5">{item.linkLabel}</span>
+                    {item.linkExternal && <ExternalLink size={7} className="text-white/40 absolute bottom-1.5 right-1.5" />}
                   </div>
                   <button
                     onClick={(e) => { e.stopPropagation(); removeItem(item.id); }}
