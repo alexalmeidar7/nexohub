@@ -100,6 +100,7 @@ async function getProgramas(): Promise<Programa[]> {
     apresentadorId: p.apresentador_id || "",
     selo: p.selo || "",
     capa: (p as any).capa || "",
+    thumb: (p as any).thumb || "",
     diasSemana: p.dias_semana || [],
     horarioInicio: p.horario_inicio,
     horarioFim: p.horario_fim,
