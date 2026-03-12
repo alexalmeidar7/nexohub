@@ -343,7 +343,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           <div className="w-[280px] flex flex-col h-full overflow-y-auto" style={{ background: "rgba(0, 0, 0, 0.45)", backdropFilter: "blur(32px) saturate(1.5)", WebkitBackdropFilter: "blur(32px) saturate(1.5)", borderRight: "1px solid rgba(255,255,255,0.1)" }}>
             <div className="flex items-center justify-between px-4 pt-3 pb-2">
               <img src={seloNexohub} alt="NexoHUB" className="h-4" />
-              <button onClick={() => setMobileMenuOpen(false)} className="p-1.5 rounded-full" style={{ backgroundColor: "#268ffa" }}>
+              <button onClick={() => setMobileMenuOpen(false)} className="p-1.5 rounded-full" style={{ backgroundColor: "#be0101" }}>
                 <X size={16} className="text-white" />
               </button>
             </div>
