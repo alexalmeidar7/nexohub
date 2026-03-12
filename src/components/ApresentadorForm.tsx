@@ -100,7 +100,7 @@ export default function ApresentadorForm() {
         nome: nome.trim(),
         cargo: cargoValue,
         instagram: instagram.trim(),
-        whatsapp: whatsapp.trim(),
+        whatsapp: whatsapp.replace(/\D/g, "").length > 2 ? whatsapp.trim() : "",
         foto: showFoto ? foto : "",
         ativo,
       } as any);
