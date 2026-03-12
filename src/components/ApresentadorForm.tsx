@@ -375,7 +375,7 @@ export default function ApresentadorForm() {
                 <tr style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)", color: "#ffffff" }}>
                   <th className="px-4 py-2.5 text-left font-semibold text-[11px] uppercase tracking-wider">Categoria</th>
                   <th className="px-4 py-2.5 text-left font-semibold text-[11px] uppercase tracking-wider">Nome</th>
-                  <th className="px-4 py-2.5 text-left font-semibold text-[11px] uppercase tracking-wider">Rede Social</th>
+                  <th className="px-4 py-2.5 text-left font-semibold text-[11px] uppercase tracking-wider">Redes / Contato</th>
                   <th className="px-4 py-2.5 text-center font-semibold text-[11px] uppercase tracking-wider">Foto</th>
                   <th className="px-4 py-2.5 text-center font-semibold text-[11px] uppercase tracking-wider">Status</th>
                   <th className="px-4 py-2.5 text-center font-semibold text-[11px] uppercase tracking-wider">Ações</th>
