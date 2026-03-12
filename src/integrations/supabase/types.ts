@@ -599,6 +599,7 @@ export type Database = {
           id: string
           nome: string
           selo: string | null
+          thumb: string | null
           tipo_programa: string | null
           user_id: string
           variavel: boolean
@@ -618,6 +619,7 @@ export type Database = {
           id?: string
           nome: string
           selo?: string | null
+          thumb?: string | null
           tipo_programa?: string | null
           user_id: string
           variavel?: boolean
@@ -637,6 +639,7 @@ export type Database = {
           id?: string
           nome?: string
           selo?: string | null
+          thumb?: string | null
           tipo_programa?: string | null
           user_id?: string
           variavel?: boolean
