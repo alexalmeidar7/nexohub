@@ -549,7 +549,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         <p className="text-[10px] truncate" style={{ color: "rgba(255,255,255,0.4)" }}>{user?.email || ""}</p>
       </div>
 
-      <div className="flex gap-[30px] pt-3 flex-1 min-h-0 px-4 lg:px-8 relative z-[1]">
+      <div className="flex gap-4 lg:gap-[30px] pt-3 flex-1 min-h-0 px-3 sm:px-4 lg:px-4 xl:px-8 relative z-[1]">
 
         {/* === MAIN CONTENT === */}
         <main className="flex-1 flex flex-col min-w-0">
