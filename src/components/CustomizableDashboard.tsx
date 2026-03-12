@@ -322,7 +322,70 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
         </div>
       )}
 
-      {/* Section: Widgets */}
+      {/* On-Air Program Info */}
+      {onAirProgram && (
+        <div className="mb-6 animate-fade-in">
+          <div
+            className="flex items-start gap-5 px-5 py-4 rounded-2xl"
+            style={{
+              background: "rgba(0,0,0,0.35)",
+              backdropFilter: "blur(16px)",
+              WebkitBackdropFilter: "blur(16px)",
+              border: "1px solid rgba(255,255,255,0.08)",
+            }}
+          >
+            {/* Selo / Logo do programa */}
+            {onAirProgram.selo && (
+              <img
+                src={onAirProgram.selo}
+                alt={onAirProgram.nome}
+                className="w-16 h-16 rounded-xl object-contain flex-shrink-0"
+                style={{ background: "rgba(255,255,255,0.05)" }}
+              />
+            )}
+
+            <div className="flex flex-col min-w-0 flex-1">
+              {/* Nome do programa */}
+              <span className="text-white font-bold text-sm leading-tight mb-1.5 truncate">{onAirProgram.nome}</span>
+
+              {/* Ao vivo + horário + classificação */}
+              <div className="flex items-center gap-3 mb-2">
+                <div className="flex items-center gap-1.5">
+                  <Circle size={8} fill="#dc2626" className="text-red-600 animate-pulse" />
+                  <span className="text-red-500 text-[10px] font-bold uppercase tracking-wider">Ao Vivo</span>
+                </div>
+                <span className="text-white/50 text-[10px]">
+                  {onAirProgram.horario_inicio} — {onAirProgram.horario_fim}
+                </span>
+                {onAirProgram.classificacao_etaria && (
+                  <span
+                    className="text-[9px] font-bold px-1.5 py-0.5 rounded"
+                    style={{
+                      backgroundColor:
+                        onAirProgram.classificacao_etaria === "L" ? "#00a651" :
+                        onAirProgram.classificacao_etaria === "10" ? "#0091d4" :
+                        onAirProgram.classificacao_etaria === "12" ? "#f8c210" :
+                        onAirProgram.classificacao_etaria === "14" ? "#f68c1e" :
+                        onAirProgram.classificacao_etaria === "16" ? "#e2203a" :
+                        onAirProgram.classificacao_etaria === "18" ? "#1d1d1b" : "#666",
+                      color: "#fff",
+                    }}
+                  >
+                    {onAirProgram.classificacao_etaria === "L" ? "L" : `${onAirProgram.classificacao_etaria}+`}
+                  </span>
+                )}
+              </div>
+
+              {/* Descrição */}
+              {onAirProgram.descricao && (
+                <p className="text-white/40 text-[11px] leading-relaxed line-clamp-2">{onAirProgram.descricao}</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+
       {items.filter(i => i.type === "widget").length > 0 && (
         <div className="mb-4">
           <p className="text-white/70 text-[10px] font-bold uppercase tracking-[0.15em] mb-3 animate-fade-in">Widgets</p>
