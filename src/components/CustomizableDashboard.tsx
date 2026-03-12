@@ -1244,6 +1244,7 @@ function DashboardPlayerWidget() {
   const [currentMusic, setCurrentMusic] = useState<{ titulo: string; artista: string; capa: string } | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const hlsRef = useRef<any>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -1306,6 +1307,7 @@ function DashboardPlayerWidget() {
   const isVideo = channelType.includes("video");
 
   const stopAll = () => {
+    if (hlsRef.current) { hlsRef.current.destroy(); hlsRef.current = null; }
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.removeAttribute("src");
@@ -1533,8 +1535,37 @@ function DashboardPlayerWidget() {
           }}
         >
           <video
-            ref={videoRef}
-            src={activeChannel.url}
+            ref={el => {
+              videoRef.current = el;
+              if (el && activeChannel?.url) {
+                // Destroy previous HLS if any
+                if (hlsRef.current) { hlsRef.current.destroy(); hlsRef.current = null; }
+                const url = activeChannel.url;
+                if (url.includes(".m3u8")) {
+                  import("hls.js").then(({ default: Hls }) => {
+                    if (!Hls.isSupported()) {
+                      el.src = url;
+                      el.play().catch(() => {});
+                      return;
+                    }
+                    const hls = new Hls({ maxBufferLength: 30, maxMaxBufferLength: 60 });
+                    hlsRef.current = hls;
+                    hls.loadSource(url);
+                    hls.attachMedia(el);
+                    hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                      el.volume = volume;
+                      el.muted = isMuted;
+                      el.play().catch(() => {});
+                    });
+                  });
+                } else {
+                  el.src = url;
+                  el.volume = volume;
+                  el.muted = isMuted;
+                  el.play().catch(() => {});
+                }
+              }
+            }}
             autoPlay
             muted={isMuted}
             playsInline
@@ -1542,7 +1573,7 @@ function DashboardPlayerWidget() {
           />
           <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(180deg, transparent 60%, rgba(0,0,0,0.6) 100%)" }} />
           <button
-            onClick={() => { setShowVideo(false); setIsPlaying(false); if (videoRef.current) { videoRef.current.pause(); videoRef.current.src = ""; } }}
+            onClick={() => stopAll()}
             className="absolute top-2 right-2 w-5 h-5 rounded-full flex items-center justify-center z-10"
             style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)" }}
           >
