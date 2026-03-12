@@ -123,12 +123,19 @@ export default function ApresentadorForm() {
   };
 
   const formatWhatsapp = (value: string) => {
-    const digits = value.replace(/\D/g, "").slice(0, 13);
-    let formatted = "";
-    if (digits.length > 0) formatted += "+" + digits.slice(0, 2);
-    if (digits.length > 2) formatted += " (" + digits.slice(2, 4);
-    if (digits.length > 4) formatted += ") " + digits.slice(4, 9);
-    if (digits.length > 9) formatted += "-" + digits.slice(9, 13);
+    // Strip non-digits, but always keep 55 prefix
+    let digits = value.replace(/\D/g, "");
+    // If user somehow removed the 55 prefix, restore it
+    if (!digits.startsWith("55")) {
+      digits = "55" + digits.replace(/^55*/, "");
+    }
+    digits = digits.slice(0, 13); // 55 + 2 DDD + 9 digits
+    let formatted = "+55";
+    const local = digits.slice(2); // after country code
+    if (local.length > 0) formatted += " (" + local.slice(0, 2);
+    if (local.length >= 2) formatted += ")";
+    if (local.length > 2) formatted += " " + local.slice(2, 7);
+    if (local.length > 7) formatted += "-" + local.slice(7, 11);
     return formatted;
   };
 
