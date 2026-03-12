@@ -1151,6 +1151,40 @@ ${perguntaActions}
             {/* Salvar / Exportar */}
             <button
               onClick={async () => {
+                // Validate required fields
+                const requiredFields: { field: string; value: string; label: string }[] = [
+                  { field: "estudio", value: estudio, label: "Estúdio" },
+                  { field: "programa", value: programaNome, label: "Programa" },
+                  { field: "horario", value: horario, label: "Horário" },
+                  { field: "titulo", value: roteiroTitulo, label: "Título" },
+                ];
+                const emptyFields = requiredFields.filter(f => !f.value.trim());
+                if (emptyFields.length > 0) {
+                  // Clear previous blink animations
+                  document.querySelectorAll("[data-field]").forEach(el => {
+                    (el as HTMLElement).style.animation = "";
+                    (el as HTMLElement).style.borderColor = "";
+                  });
+                  // Highlight and scroll to first empty field
+                  const firstEmpty = document.querySelector(`[data-field="${emptyFields[0].field}"]`) as HTMLElement;
+                  emptyFields.forEach(f => {
+                    const el = document.querySelector(`[data-field="${f.field}"]`) as HTMLElement;
+                    if (el) {
+                      el.style.borderColor = "#dc2626";
+                      el.style.animation = "blink-border 0.6s ease-in-out 4";
+                      el.addEventListener("animationend", () => {
+                        el.style.animation = "";
+                        el.style.borderColor = "";
+                      }, { once: true });
+                    }
+                  });
+                  if (firstEmpty) {
+                    firstEmpty.scrollIntoView({ behavior: "smooth", block: "center" });
+                    firstEmpty.focus();
+                  }
+                  toast.error(`Preencha o campo: ${emptyFields[0].label}`);
+                  return;
+                }
                 await salvarRoteiro();
                 setShowExportView(true);
                 if (editingRoteiroId) {
