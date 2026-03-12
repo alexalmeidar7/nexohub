@@ -772,7 +772,7 @@ function MusicaPreview() {
         <p className="text-[#0d0446] text-[11px] font-bold truncate leading-tight">{music.titulo}</p>
         <p className="text-[#0d0446]/50 text-[10px] truncate">{music.artista}</p>
         {programa && (
-          <p className="text-[9px] mt-0.5 truncate" style={{ color: "#268ffa" }}>🔴 {programa}</p>
+          <p className="text-[9px] mt-0.5 truncate" style={{ color: "#be0101" }}>🔴 {programa}</p>
         )}
       </div>
     </div>
