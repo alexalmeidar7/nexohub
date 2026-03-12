@@ -725,6 +725,7 @@ ${perguntaActions}
                       <p className="text-xs font-bold" style={{ color: "#0d0446" }}>{p.nome}</p>
                       <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.5)" }}>{p.categoria}{p.cargo ? ` · ${p.cargo}` : ""}</p>
                       {p.instagram && <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.4)" }}>@{p.instagram.replace("@", "")}</p>}
+                      {p.whatsapp && <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.4)" }}>📱 {p.whatsapp}</p>}
                     </div>
                     <button onClick={() => removeParticipante(idx)} className="hover:opacity-70 mt-1">
                       <X size={12} style={{ color: "rgba(13,4,70,0.3)" }} />
