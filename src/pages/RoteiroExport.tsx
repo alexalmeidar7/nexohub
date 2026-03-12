@@ -132,7 +132,7 @@ export default function RoteiroExport() {
           <div
             className="text-sm leading-relaxed"
             style={{ color: "#0d0446" }}
-            dangerouslySetInnerHTML={{ __html: data.conteudoHtml }}
+            dangerouslySetInnerHTML={{ __html: sanitizeRoteiroHtml(data.conteudoHtml) }}
           />
         </div>
 

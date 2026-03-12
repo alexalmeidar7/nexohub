@@ -1113,7 +1113,7 @@ ${perguntaActions}
                       horario,
                       titulo: roteiroTitulo,
                       subtitulo: roteiroSubtitulo,
-                      conteudo_html: editorRef.current?.innerHTML || roteiroTexto,
+                      conteudo_html: sanitizeRoteiroHtml(editorRef.current?.innerHTML || roteiroTexto),
                       participantes: JSON.stringify(participantes),
                       status: isAgendado ? "agendado" : "rascunho",
                       share_token: shareToken,
