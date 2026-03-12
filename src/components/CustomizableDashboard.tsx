@@ -422,7 +422,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
               return (
                 <div
                   key={item.id}
-                  className={`relative group rounded-2xl overflow-hidden animate-fade-in ${isDragging ? "opacity-40 scale-95" : ""}`}
+                  className={`relative group rounded-2xl overflow-hidden animate-fade-in flex flex-col ${isDragging ? "opacity-40 scale-95" : ""}`}
                   style={{
                     background: "#ffffff",
                     border: isDragOver ? "2px solid #be0101" : "1px solid rgba(13,4,70,0.08)",
@@ -435,7 +435,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                   onDrop={() => handleDrop(item.id)}
                   onDragEnd={handleDragEnd}
                 >
-                  <div className="flex items-center gap-1.5 px-4 py-2.5 cursor-grab active:cursor-grabbing" style={{ borderBottom: "1px solid rgba(13,4,70,0.06)" }}>
+                  <div className="flex items-center gap-1.5 px-4 py-2.5 cursor-grab active:cursor-grabbing flex-shrink-0" style={{ borderBottom: "1px solid rgba(13,4,70,0.06)" }}>
                     <GripVertical size={10} className="text-[#0d0446]/20" />
                     <span className="text-[#0d0446]/40 text-[9px] font-bold uppercase tracking-[0.15em]">
                       {item.widgetType === "agenda" ? "Agenda" : item.widgetType === "musica" ? "No Ar" : item.widgetType === "weather" ? "Tempo" : "Estatísticas"}
@@ -452,7 +452,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                       <X size={9} className="text-[#0d0446]/40" />
                     </button>
                   </div>
-                  <div className="p-4 h-full">
+                  <div className="p-4 flex-1 overflow-y-auto overflow-x-hidden">
                     <Suspense fallback={<Loader2 className="animate-spin text-[#be0101]/40" size={18} />}>
                       {item.widgetType === "agenda" && <DashboardAgendaWidget onNavigate={onNavigate} />}
                       {item.widgetType === "musica" && <MusicProgramWidget />}
