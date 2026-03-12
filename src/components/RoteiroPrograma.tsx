@@ -211,10 +211,14 @@ export default function RoteiroPrograma() {
 
       // Se data futura, criar evento na agenda
       if (isAgendado && !editingRoteiroId) {
-        const descricao = `Roteiro: ${programaNome}${roteiroTitulo ? ` — ${roteiroTitulo}` : ""}`;
+        const descricao = `${horario ? `[${horario}] ` : ""}Roteiro: ${programaNome}${roteiroTitulo ? ` — ${roteiroTitulo}` : ""}`;
+        // Use horario as event time by combining with date
+        const eventData = horario
+          ? `${format(selectedDate, "yyyy-MM-dd")}T${horario}:00`
+          : format(selectedDate, "yyyy-MM-dd");
         await supabase.from("agenda_eventos").insert({
           user_id: user.id,
-          data: format(selectedDate, "yyyy-MM-dd"),
+          data: eventData,
           descricao,
           local: estudio || "",
           prioridade: "normal",
