@@ -290,7 +290,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                   onClick={() => handleLinkClick(item)}
                 >
                   <div
-                    className="w-[90px] h-[90px] rounded-2xl flex flex-col items-center pt-[18px] transition-all hover:scale-[1.06] hover:shadow-lg"
+                    className={`w-[70px] h-[70px] sm:w-[90px] sm:h-[90px] rounded-2xl flex flex-col items-center pt-[14px] sm:pt-[18px] transition-all hover:scale-[1.06] hover:shadow-lg`}
                     style={{
                       background: isDragOver
                         ? "linear-gradient(145deg, #be0101, #960101)"
