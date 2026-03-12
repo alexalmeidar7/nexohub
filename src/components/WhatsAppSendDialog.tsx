@@ -103,7 +103,7 @@ export default function WhatsAppSendDialog({ open, onClose, roteiroData }: Whats
     contatos.forEach((c, i) => {
       const phone = c.whatsapp.startsWith("55") ? c.whatsapp : `55${c.whatsapp}`;
       setTimeout(() => {
-        window.open(`https://wa.me/${phone}?text=${text}`, "_blank");
+        window.open(`https://web.whatsapp.com/send?phone=${phone}&text=${text}`, "_blank");
       }, i * 600); // stagger opens to avoid popup blocking
     });
 
