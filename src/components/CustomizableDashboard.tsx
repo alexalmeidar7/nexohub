@@ -1418,15 +1418,36 @@ function DashboardPlayerWidget() {
   const channelLogo = activeChannel?.background_url || activeChannel?.logo_url || activeChannel?.cover_url;
   const displayArt = currentMusic?.capa || channelLogo;
 
+  // Crossfade state for art transitions
+  const [visibleArt, setVisibleArt] = useState(displayArt);
+  const [fadingArt, setFadingArt] = useState<string | null>(null);
+  const [artOpacity, setArtOpacity] = useState(1);
+
+  useEffect(() => {
+    if (displayArt === visibleArt) return;
+    // Start crossfade: show old art fading out while new fades in
+    setFadingArt(visibleArt || null);
+    setVisibleArt(displayArt);
+    setArtOpacity(0);
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => setArtOpacity(1));
+    });
+    const timer = setTimeout(() => setFadingArt(null), 600);
+    return () => clearTimeout(timer);
+  }, [displayArt]);
+
   return (
     <div className="flex flex-col h-full relative">
-      {/* Blurred background art */}
-      {displayArt && (
-        <div className="absolute inset-0 -m-4 overflow-hidden pointer-events-none rounded-2xl">
-          <img src={displayArt} alt="" className="w-full h-full object-cover" style={{ filter: "blur(20px) brightness(0.3) saturate(1.4)", transform: "scale(1.3)" }} />
-          <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(10,10,10,0.6) 0%, rgba(10,10,10,0.9) 100%)" }} />
-        </div>
-      )}
+      {/* Blurred background art with crossfade */}
+      <div className="absolute inset-0 -m-4 overflow-hidden pointer-events-none rounded-2xl">
+        {fadingArt && (
+          <img src={fadingArt} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ filter: "blur(20px) brightness(0.3) saturate(1.4)", transform: "scale(1.3)", transition: "opacity 0.6s ease-out", opacity: 0 }} />
+        )}
+        {visibleArt && (
+          <img src={visibleArt} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ filter: "blur(20px) brightness(0.3) saturate(1.4)", transform: "scale(1.3)", transition: "opacity 0.6s ease-out", opacity: artOpacity }} />
+        )}
+        <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(10,10,10,0.6) 0%, rgba(10,10,10,0.9) 100%)" }} />
+      </div>
 
       {/* Video inside widget */}
       {showVideo && isVideo && (
@@ -1452,8 +1473,11 @@ function DashboardPlayerWidget() {
 
           {!showVideo && (
             <div className="w-16 h-16 rounded-xl flex-shrink-0 flex items-center justify-center overflow-hidden relative" style={{ background: "rgba(255,255,255,0.05)", boxShadow: "0 4px 15px rgba(0,0,0,0.5)" }}>
-              {displayArt ? (
-                <img src={displayArt} alt="" className="w-full h-full object-cover rounded-xl transition-all duration-500" />
+              {fadingArt && (
+                <img src={fadingArt} alt="" className="absolute inset-0 w-full h-full object-cover rounded-xl" style={{ transition: "opacity 0.5s ease-out", opacity: 0 }} />
+              )}
+              {visibleArt ? (
+                <img src={visibleArt} alt="" className="absolute inset-0 w-full h-full object-cover rounded-xl" style={{ transition: "opacity 0.5s ease-out", opacity: artOpacity }} />
               ) : (
                 <Tv size={22} className="text-white/20" />
               )}
