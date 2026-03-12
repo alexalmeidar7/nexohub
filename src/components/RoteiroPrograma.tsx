@@ -21,6 +21,7 @@ interface Apresentador {
   nome: string;
   cargo: string;
   instagram?: string;
+  whatsapp?: string;
   ativo: boolean;
 }
 
