@@ -76,6 +76,7 @@ interface Programa {
   apresentadorId: string;
   selo: string;
   capa: string;
+  thumb: string;
   diasSemana: string[];
   horarioInicio: string;
   horarioFim: string;
@@ -99,6 +100,7 @@ async function getProgramas(): Promise<Programa[]> {
     apresentadorId: p.apresentador_id || "",
     selo: p.selo || "",
     capa: (p as any).capa || "",
+    thumb: (p as any).thumb || "",
     diasSemana: p.dias_semana || [],
     horarioInicio: p.horario_inicio,
     horarioFim: p.horario_fim,
@@ -278,6 +280,7 @@ export default function ProgramaForm() {
   const [apresentadorId, setApresentadorId] = useState("");
   const [selo, setSelo] = useState("");
   const [capa, setCapa] = useState("");
+  const [thumb, setThumb] = useState("");
   const [diasSemana, setDiasSemana] = useState<string[]>([]);
   const [horarioInicio, setHorarioInicio] = useState("");
   const [horarioFim, setHorarioFim] = useState("");
@@ -441,12 +444,20 @@ export default function ProgramaForm() {
     reader.readAsDataURL(file);
   };
 
+  const handleThumb = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => setThumb(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
   const toggleDia = (dia: string) => {
     setDiasSemana(prev => prev.includes(dia) ? prev.filter(d => d !== dia) : [...prev, dia]);
   };
 
   const resetForm = () => {
-    setNome(""); setApresentadorId(""); setSelo(""); setCapa(""); setDiasSemana([]); setHorarioInicio(""); setHorarioFim(""); setEstudio(""); setAtivo(true); setVariavel(false); setDataVariavel(undefined); setDescricao(""); setConflictMsg(""); setEditingId(null); setTipoPrograma(""); setClassificacaoEtaria("");
+    setNome(""); setApresentadorId(""); setSelo(""); setCapa(""); setThumb(""); setDiasSemana([]); setHorarioInicio(""); setHorarioFim(""); setEstudio(""); setAtivo(true); setVariavel(false); setDataVariavel(undefined); setDescricao(""); setConflictMsg(""); setEditingId(null); setTipoPrograma(""); setClassificacaoEtaria("");
   };
 
   const handleAdd = async () => {
@@ -465,13 +476,13 @@ export default function ProgramaForm() {
       setSaving(true);
       if (editingId) {
         await supabase.from("programas").update({
-          nome: nome.trim(), apresentador_id: apresentadorId || null, selo, capa, dias_semana: [dayOfWeek],
+          nome: nome.trim(), apresentador_id: apresentadorId || null, selo, capa, thumb, dias_semana: [dayOfWeek],
           horario_inicio: horarioInicio, horario_fim: horarioFim, estudio: estudio.trim(), ativo, descricao: descricao.trim(),
            variavel: true, data_variavel: dataStr, classificacao_etaria: classificacaoEtaria || null, tipo_programa: tipoPrograma || null,
         } as any).eq("id", editingId);
       } else {
         await supabase.from("programas").insert({
-          user_id: user.id, nome: nome.trim(), apresentador_id: apresentadorId || null, selo, capa, dias_semana: [dayOfWeek],
+          user_id: user.id, nome: nome.trim(), apresentador_id: apresentadorId || null, selo, capa, thumb, dias_semana: [dayOfWeek],
           horario_inicio: horarioInicio, horario_fim: horarioFim, estudio: estudio.trim(), ativo, descricao: descricao.trim(),
            variavel: true, data_variavel: dataStr, classificacao_etaria: classificacaoEtaria || null, tipo_programa: tipoPrograma || null,
         } as any);
@@ -495,13 +506,13 @@ export default function ProgramaForm() {
 
     if (editingId) {
       await supabase.from("programas").update({
-        nome: nome.trim(), apresentador_id: apresentadorId || null, selo, capa, dias_semana: diasSemana,
+        nome: nome.trim(), apresentador_id: apresentadorId || null, selo, capa, thumb, dias_semana: diasSemana,
         horario_inicio: horarioInicio, horario_fim: horarioFim, estudio: estudio.trim(), ativo, descricao: descricao.trim(),
         variavel: false, data_variavel: null, classificacao_etaria: classificacaoEtaria || null, tipo_programa: tipoPrograma || null,
       } as any).eq("id", editingId);
     } else {
       await supabase.from("programas").insert({
-        user_id: user.id, nome: nome.trim(), apresentador_id: apresentadorId || null, selo, capa, dias_semana: diasSemana,
+        user_id: user.id, nome: nome.trim(), apresentador_id: apresentadorId || null, selo, capa, thumb, dias_semana: diasSemana,
         horario_inicio: horarioInicio, horario_fim: horarioFim, estudio: estudio.trim(), ativo, descricao: descricao.trim(),
         variavel: false, data_variavel: null, classificacao_etaria: classificacaoEtaria || null, tipo_programa: tipoPrograma || null,
       } as any);
@@ -514,7 +525,7 @@ export default function ProgramaForm() {
   };
 
   const startEdit = (p: Programa) => {
-    setEditingId(p.id); setNome(p.nome); setApresentadorId(p.apresentadorId); setSelo(p.selo); setCapa(p.capa);
+    setEditingId(p.id); setNome(p.nome); setApresentadorId(p.apresentadorId); setSelo(p.selo); setCapa(p.capa); setThumb(p.thumb);
     setDiasSemana(p.diasSemana); setHorarioInicio(p.horarioInicio); setHorarioFim(p.horarioFim);
     setEstudio(p.estudio); setAtivo(p.ativo); setVariavel(p.variavel); setDescricao(p.descricao);
     setDataVariavel(p.dataVariavel ? new Date(p.dataVariavel + "T12:00:00") : undefined);
@@ -745,8 +756,8 @@ export default function ProgramaForm() {
             />
           </div>
 
-          {/* Selo + Capa */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Selo + Capa + Thumb */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "#0d0446" }}>Selo (1080×1080 PNG alpha)</label>
               <label className="cursor-pointer group">
@@ -763,10 +774,10 @@ export default function ProgramaForm() {
               {selo && <button onClick={() => setSelo("")} className="text-[10px] text-red-400 hover:text-red-300 mt-1">Remover</button>}
             </div>
             <div>
-              <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "#0d0446" }}>Capa (1080×1080 PNG alpha)</label>
+              <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "#0d0446" }}>Capa (226×302 PNG alpha)</label>
               <label className="cursor-pointer group">
-                <div className="w-16 h-16 rounded-xl flex flex-col items-center justify-center gap-0.5 transition-all group-hover:border-[#268ffa]"
-                  style={{ backgroundColor: "rgba(255,255,255,0.5)", border: "2px dashed rgba(13,4,70,0.2)" }}>
+                <div className="rounded-xl flex flex-col items-center justify-center gap-0.5 transition-all group-hover:border-[#268ffa]"
+                  style={{ width: "56px", height: "75px", backgroundColor: "rgba(255,255,255,0.5)", border: "2px dashed rgba(13,4,70,0.2)" }}>
                   {capa ? (
                     <img src={capa} alt="Capa" className="w-full h-full object-cover rounded-xl" />
                   ) : (
@@ -776,6 +787,21 @@ export default function ProgramaForm() {
                 <input type="file" accept="image/*" onChange={handleCapa} className="hidden" />
               </label>
               {capa && <button onClick={() => setCapa("")} className="text-[10px] text-red-400 hover:text-red-300 mt-1">Remover</button>}
+            </div>
+            <div>
+              <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "#0d0446" }}>Thumb (1920×1080 PNG)</label>
+              <label className="cursor-pointer group">
+                <div className="rounded-xl flex flex-col items-center justify-center gap-0.5 transition-all group-hover:border-[#268ffa]"
+                  style={{ width: "96px", height: "54px", backgroundColor: "rgba(255,255,255,0.5)", border: "2px dashed rgba(13,4,70,0.2)" }}>
+                  {thumb ? (
+                    <img src={thumb} alt="Thumb" className="w-full h-full object-cover rounded-xl" />
+                  ) : (
+                    <span className="text-[9px]" style={{ color: "#0d0446" }}>Upload</span>
+                  )}
+                </div>
+                <input type="file" accept="image/*" onChange={handleThumb} className="hidden" />
+              </label>
+              {thumb && <button onClick={() => setThumb("")} className="text-[10px] text-red-400 hover:text-red-300 mt-1">Remover</button>}
             </div>
           </div>
 
