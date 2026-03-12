@@ -1539,24 +1539,24 @@ function DashboardPlayerWidget() {
         )}
       </div>
 
-      {/* Video overlay - rises from behind the widget */}
-      {showVideo && isVideo && activeChannel && (
+      {/* Video overlay rendered via portal outside widget container */}
+      {showVideo && isVideo && activeChannel && videoPos && createPortal(
         <div
-          className="absolute left-0 right-0 rounded-2xl overflow-hidden animate-fade-in"
+          className="fixed rounded-2xl overflow-hidden animate-fade-in"
           style={{
-            bottom: "100%",
-            marginBottom: "-8px",
+            top: videoPos.top,
+            left: videoPos.left,
+            width: videoPos.width,
             height: "160px",
-            boxShadow: "0 -8px 30px rgba(0,0,0,0.6)",
+            boxShadow: "0 8px 40px rgba(0,0,0,0.7)",
             border: "1px solid rgba(255,255,255,0.1)",
-            zIndex: 50,
+            zIndex: 9999,
           }}
         >
           <video
             ref={el => {
               videoRef.current = el;
               if (el && activeChannel?.url) {
-                // Destroy previous HLS if any
                 if (hlsRef.current) { hlsRef.current.destroy(); hlsRef.current = null; }
                 const url = activeChannel.url;
                 if (url.includes(".m3u8")) {
@@ -1597,7 +1597,8 @@ function DashboardPlayerWidget() {
           >
             <X size={10} className="text-white" />
           </button>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* CSS for equalizer animation */}
