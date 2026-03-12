@@ -756,8 +756,8 @@ export default function ProgramaForm() {
             />
           </div>
 
-          {/* Selo + Capa */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Selo + Capa + Thumb */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "#0d0446" }}>Selo (1080×1080 PNG alpha)</label>
               <label className="cursor-pointer group">
@@ -774,10 +774,10 @@ export default function ProgramaForm() {
               {selo && <button onClick={() => setSelo("")} className="text-[10px] text-red-400 hover:text-red-300 mt-1">Remover</button>}
             </div>
             <div>
-              <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "#0d0446" }}>Capa (1080×1080 PNG alpha)</label>
+              <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "#0d0446" }}>Capa (226×302 PNG alpha)</label>
               <label className="cursor-pointer group">
-                <div className="w-16 h-16 rounded-xl flex flex-col items-center justify-center gap-0.5 transition-all group-hover:border-[#268ffa]"
-                  style={{ backgroundColor: "rgba(255,255,255,0.5)", border: "2px dashed rgba(13,4,70,0.2)" }}>
+                <div className="rounded-xl flex flex-col items-center justify-center gap-0.5 transition-all group-hover:border-[#268ffa]"
+                  style={{ width: "56px", height: "75px", backgroundColor: "rgba(255,255,255,0.5)", border: "2px dashed rgba(13,4,70,0.2)" }}>
                   {capa ? (
                     <img src={capa} alt="Capa" className="w-full h-full object-cover rounded-xl" />
                   ) : (
@@ -787,6 +787,21 @@ export default function ProgramaForm() {
                 <input type="file" accept="image/*" onChange={handleCapa} className="hidden" />
               </label>
               {capa && <button onClick={() => setCapa("")} className="text-[10px] text-red-400 hover:text-red-300 mt-1">Remover</button>}
+            </div>
+            <div>
+              <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "#0d0446" }}>Thumb (1920×1080 PNG)</label>
+              <label className="cursor-pointer group">
+                <div className="rounded-xl flex flex-col items-center justify-center gap-0.5 transition-all group-hover:border-[#268ffa]"
+                  style={{ width: "96px", height: "54px", backgroundColor: "rgba(255,255,255,0.5)", border: "2px dashed rgba(13,4,70,0.2)" }}>
+                  {thumb ? (
+                    <img src={thumb} alt="Thumb" className="w-full h-full object-cover rounded-xl" />
+                  ) : (
+                    <span className="text-[9px]" style={{ color: "#0d0446" }}>Upload</span>
+                  )}
+                </div>
+                <input type="file" accept="image/*" onChange={handleThumb} className="hidden" />
+              </label>
+              {thumb && <button onClick={() => setThumb("")} className="text-[10px] text-red-400 hover:text-red-300 mt-1">Remover</button>}
             </div>
           </div>
 
