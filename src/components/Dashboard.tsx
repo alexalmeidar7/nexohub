@@ -366,7 +366,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                       aria-label={item.label}
                       role="menuitem"
                     >
-                      <Icon size={16} className={active ? "text-[#268ffa]" : "text-white"} />
+                      <Icon size={16} className={active ? "text-[#be0101]" : "text-white"} />
                       <span className="flex-1 text-left">{item.label}</span>
                       {item.children && (expanded ? <ChevronUp size={12} className="text-white/30" /> : <ChevronDown size={12} className="text-white/30" />)}
                     </button>
