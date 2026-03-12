@@ -497,7 +497,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
           <button
             onClick={() => { setShowAddDialog(true); setAddStep("choose"); }}
             className="px-6 py-2.5 rounded-xl text-xs font-bold transition-all hover:scale-[1.03]"
-            style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#fff", boxShadow: "0 4px 16px rgba(38,143,250,0.25)" }}
+            style={{ background: "linear-gradient(135deg, #960101, #be0101)", color: "#fff", boxShadow: "0 4px 16px rgba(150,1,1,0.25)" }}
           >
             <Plus size={12} className="inline mr-1.5" /> Começar a personalizar
           </button>
