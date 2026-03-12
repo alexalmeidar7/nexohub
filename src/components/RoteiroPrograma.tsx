@@ -658,42 +658,52 @@ ${perguntaActions}
 
       {/* Roteiro Form */}
       {showRoteiro && (
-        <div className="rounded-2xl overflow-hidden" style={{ background: "#d9e9fa", boxShadow: "0 8px 32px rgba(13,4,70,0.12)", padding: "24px" }}>
-          {/* Header */}
-          <div className="mb-5">
-            <p className="text-xs font-bold" style={{ color: "#0d0446" }}>roteiro para o programa</p>
-            <h2 className="text-2xl font-bold" style={{ color: "#0d0446" }}>
-              {programaNome}
-              {numeroRoteiro && <span className="text-sm font-semibold ml-2" style={{ color: "rgba(13,4,70,0.4)" }}>#{numeroRoteiro}</span>}
-            </h2>
-            <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold mt-1" style={{ backgroundColor: "#268ffa", color: "#ffffff" }}>
-              estúdio {estudio || "—"}
-            </span>
-            <p className="text-xs mt-2" style={{ color: "rgba(13,4,70,0.5)" }}>
-              programa para o dia:<br />
-              {format(selectedDate, "dd/MM/yy", { locale: ptBR })} às {horario || "—"}
-            </p>
+        <div className="rounded-2xl overflow-hidden" style={{ background: "#ffffff", boxShadow: "0 4px 24px rgba(13,4,70,0.08)", border: "1px solid rgba(13,4,70,0.06)" }}>
+          {/* Section Header */}
+          <div className="px-6 py-4" style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)" }}>
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-white/60">Passo 2 — Conteúdo do Roteiro</p>
+                <h2 className="text-lg font-bold text-white mt-0.5">
+                  {programaNome}
+                  {numeroRoteiro && <span className="text-sm font-medium ml-2 text-white/60">#{numeroRoteiro}</span>}
+                </h2>
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="px-2.5 py-1 rounded-full text-[10px] font-bold" style={{ backgroundColor: "rgba(255,255,255,0.2)", color: "#ffffff" }}>
+                  Estúdio {estudio || "—"}
+                </span>
+                <span className="px-2.5 py-1 rounded-full text-[10px] font-bold" style={{ backgroundColor: "rgba(255,255,255,0.2)", color: "#ffffff" }}>
+                  {format(selectedDate, "dd/MM/yy", { locale: ptBR })} · {horario || "—"}
+                </span>
+              </div>
+            </div>
           </div>
 
+          <div className="p-6 space-y-5">
+            {/* Assunto */}
+            <div className="rounded-xl p-4" style={{ backgroundColor: "rgba(38,143,250,0.03)", border: "1px solid rgba(38,143,250,0.1)" }}>
+              <p className="text-[10px] font-bold uppercase tracking-wider mb-3" style={{ color: "#268ffa" }}>
+                Assunto do {tipoPrograma?.toLowerCase() || "programa"}
+              </p>
+              <input
+                value={roteiroSubtitulo}
+                onChange={e => setRoteiroSubtitulo(e.target.value)}
+                placeholder="Título da entrevista"
+                className="w-full px-3 py-2.5 rounded-xl text-sm font-bold outline-none mb-2 transition-all focus:ring-2 focus:ring-[#268ffa]/20"
+                style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.08)", color: "#0d0446" }}
+              />
+              <input
+                value={assuntoSubtitulo}
+                onChange={e => setAssuntoSubtitulo(e.target.value)}
+                placeholder="Subtítulo ou observação"
+                className="w-full px-3 py-2.5 rounded-xl text-xs outline-none transition-all focus:ring-2 focus:ring-[#268ffa]/20"
+                style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.08)", color: "#0d0446" }}
+              />
+            </div>
 
-
-          <div className="rounded-xl p-4 mb-4" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.08)" }}>
-            <label className="text-xs font-semibold mb-2 block" style={{ color: "rgba(13,4,70,0.5)" }}>assunto do {tipoPrograma?.toLowerCase() || "programa"}</label>
-            <input
-              value={roteiroSubtitulo}
-              onChange={e => setRoteiroSubtitulo(e.target.value)}
-              placeholder="Título da entrevista"
-              className="w-full px-3 py-2 rounded-lg text-sm font-bold outline-none mb-2"
-              style={{ backgroundColor: "rgba(13,4,70,0.04)", border: "1px solid rgba(13,4,70,0.08)", color: "#0d0446" }}
-            />
-            <input
-              value={assuntoSubtitulo}
-              onChange={e => setAssuntoSubtitulo(e.target.value)}
-              placeholder="Subtítulo"
-              className="w-full px-3 py-2 rounded-lg text-xs outline-none"
-              style={{ backgroundColor: "rgba(13,4,70,0.04)", border: "1px solid rgba(13,4,70,0.08)", color: "#0d0446" }}
-            />
-          </div>
+            {/* Divider */}
+            <div className="h-px" style={{ backgroundColor: "rgba(13,4,70,0.06)" }} />
 
           {/* Participantes */}
           <div className="mb-4">
