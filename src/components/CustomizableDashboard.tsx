@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef, lazy, Suspense } from "react";
-import { Plus, X, Link2, BarChart3, CalendarDays, Music, Eye, Users, Mic2, PlaySquare, Newspaper, Settings, ShoppingBag, Tag, Image, Film, ShoppingCart, Monitor, Wrench, Scissors, MonitorPlay, ExternalLink, GripVertical, Loader2, Trash2, MessageSquareQuote, Radio, Clock, Tv, FileText, CloudSun, ChevronDown, Play, Pause, Volume2, VolumeX } from "lucide-react";
+import { Plus, X, Link2, BarChart3, CalendarDays, Music, Eye, Users, Mic2, PlaySquare, Newspaper, Settings, ShoppingBag, Tag, Image, Film, ShoppingCart, Monitor, Wrench, Scissors, MonitorPlay, ExternalLink, GripVertical, Loader2, Trash2, MessageSquareQuote, Radio, Clock, Tv, FileText, CloudSun, ChevronDown, Play, Pause, Volume2, VolumeX, Circle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
@@ -70,6 +70,50 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
   const [addStep, setAddStep] = useState<"choose" | "link" | "widget">("choose");
   const [editMode, setEditMode] = useState(false);
   const [draggedId, setDraggedId] = useState<string | null>(null);
+
+  // On-air program info
+  interface OnAirProgram {
+    nome: string;
+    selo: string;
+    horario_inicio: string;
+    horario_fim: string;
+    classificacao_etaria: string;
+    descricao: string;
+  }
+  const [onAirProgram, setOnAirProgram] = useState<OnAirProgram | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    const DIAS_MAP: Record<number, string> = { 1: "Segunda", 2: "Terça", 3: "Quarta", 4: "Quinta", 5: "Sexta", 6: "Sábado", 0: "Domingo" };
+    const fetchOnAir = async () => {
+      const { data } = await supabase
+        .from("programas")
+        .select("nome, selo, horario_inicio, horario_fim, classificacao_etaria, descricao, dias_semana, ativo")
+        .eq("user_id", user.id)
+        .eq("ativo", true);
+      if (cancelled || !data) return;
+      const now = new Date();
+      const diaAtual = DIAS_MAP[now.getDay()];
+      const horaAtual = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+      const current = data.find(p =>
+        (p.dias_semana || []).includes(diaAtual) &&
+        horaAtual >= p.horario_inicio &&
+        horaAtual < p.horario_fim
+      );
+      setOnAirProgram(current ? {
+        nome: current.nome,
+        selo: current.selo || "",
+        horario_inicio: current.horario_inicio,
+        horario_fim: current.horario_fim,
+        classificacao_etaria: current.classificacao_etaria || "L",
+        descricao: current.descricao || "",
+      } : null);
+    };
+    fetchOnAir();
+    const interval = setInterval(fetchOnAir, 30000);
+    return () => { cancelled = true; clearInterval(interval); };
+  }, [user]);
 
   // Load dashboard items from DB (fallback to localStorage for migration)
   useEffect(() => {
@@ -278,7 +322,70 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
         </div>
       )}
 
-      {/* Section: Widgets */}
+      {/* On-Air Program Info */}
+      {onAirProgram && (
+        <div className="mb-6 animate-fade-in">
+          <div
+            className="flex items-start gap-5 px-5 py-4 rounded-2xl"
+            style={{
+              background: "rgba(0,0,0,0.35)",
+              backdropFilter: "blur(16px)",
+              WebkitBackdropFilter: "blur(16px)",
+              border: "1px solid rgba(255,255,255,0.08)",
+            }}
+          >
+            {/* Selo / Logo do programa */}
+            {onAirProgram.selo && (
+              <img
+                src={onAirProgram.selo}
+                alt={onAirProgram.nome}
+                className="w-16 h-16 rounded-xl object-contain flex-shrink-0"
+                style={{ background: "rgba(255,255,255,0.05)" }}
+              />
+            )}
+
+            <div className="flex flex-col min-w-0 flex-1">
+              {/* Nome do programa */}
+              <span className="text-white font-bold text-sm leading-tight mb-1.5 truncate">{onAirProgram.nome}</span>
+
+              {/* Ao vivo + horário + classificação */}
+              <div className="flex items-center gap-3 mb-2">
+                <div className="flex items-center gap-1.5">
+                  <Circle size={8} fill="#dc2626" className="text-red-600 animate-pulse" />
+                  <span className="text-red-500 text-[10px] font-bold uppercase tracking-wider">Ao Vivo</span>
+                </div>
+                <span className="text-white/50 text-[10px]">
+                  {onAirProgram.horario_inicio} — {onAirProgram.horario_fim}
+                </span>
+                {onAirProgram.classificacao_etaria && (
+                  <span
+                    className="text-[9px] font-bold px-1.5 py-0.5 rounded"
+                    style={{
+                      backgroundColor:
+                        onAirProgram.classificacao_etaria === "L" ? "#00a651" :
+                        onAirProgram.classificacao_etaria === "10" ? "#0091d4" :
+                        onAirProgram.classificacao_etaria === "12" ? "#f8c210" :
+                        onAirProgram.classificacao_etaria === "14" ? "#f68c1e" :
+                        onAirProgram.classificacao_etaria === "16" ? "#e2203a" :
+                        onAirProgram.classificacao_etaria === "18" ? "#1d1d1b" : "#666",
+                      color: "#fff",
+                    }}
+                  >
+                    {onAirProgram.classificacao_etaria === "L" ? "L" : `${onAirProgram.classificacao_etaria}+`}
+                  </span>
+                )}
+              </div>
+
+              {/* Descrição */}
+              {onAirProgram.descricao && (
+                <p className="text-white/40 text-[11px] leading-relaxed line-clamp-2">{onAirProgram.descricao}</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+
       {items.filter(i => i.type === "widget").length > 0 && (
         <div className="mb-4">
           <p className="text-white/70 text-[10px] font-bold uppercase tracking-[0.15em] mb-3 animate-fade-in">Widgets</p>
