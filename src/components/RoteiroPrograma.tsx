@@ -158,7 +158,8 @@ export default function RoteiroPrograma() {
   const salvarRoteiro = async () => {
     if (!user) return;
     setSavingRoteiro(true);
-    const status = isAgendado ? "agendado" : "rascunho";
+    const now = new Date();
+    const status = isAgendado ? "agendado" : "salvo";
     const payload = {
       user_id: user.id,
       programa_nome: programaNome,
