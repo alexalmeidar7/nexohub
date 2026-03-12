@@ -192,7 +192,7 @@ export default function MessageNotification() {
           </div>
 
           {/* Message list */}
-          <div className="max-h-[300px] overflow-y-auto" style={{ scrollbarWidth: "thin", scrollbarColor: "rgba(255,255,255,0.15) transparent" }}>
+          <div className="max-h-[300px] overflow-y-auto widget-scroll">
             {filteredMessages.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-10 gap-2">
                 <Mail size={28} className="text-white/15" />
