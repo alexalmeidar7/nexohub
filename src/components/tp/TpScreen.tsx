@@ -20,7 +20,9 @@ export default function TpScreen({ user, onBack }: TpScreenProps) {
   );
   const [activeTpId, setActiveTpId] = useState<string | null>(null);
   const activeTpIdRef = useRef<string | null>(null);
+  const userIdRef = useRef<string | null>(user?.id ?? null);
   useEffect(() => { activeTpIdRef.current = activeTpId; }, [activeTpId]);
+  useEffect(() => { userIdRef.current = user?.id ?? null; }, [user]);
   const [clock, setClock] = useState("00:00");
   const [timerSeconds, setTimerSeconds] = useState(0);
   const [roteiros, setRoteiros] = useState<Roteiro[]>([]);
@@ -260,6 +262,16 @@ export default function TpScreen({ user, onBack }: TpScreenProps) {
   // Remote control listener with auto-reconnect
   const cmdChannelRef = useRef<any>(null);
   const cmdReadyRef = useRef(false);
+  const cmdReconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function applyLoadedText(text: string, html: boolean) {
+    setDisplayText(text);
+    setIsHtmlContent(html);
+    scrollPosRef.current = 50;
+    if (textRef.current) textRef.current.style.top = "50%";
+    setTimerSeconds(0);
+    setScrolling(false);
+  }
 
   const handleCommand = useCallback((payload: any) => {
     const cmd = payload.payload;
@@ -289,20 +301,40 @@ export default function TpScreen({ user, onBack }: TpScreenProps) {
       case "flipH": setFlipH(f => !f); break;
       case "flipV": setFlipV(f => !f); break;
       case "loadText":
-        setDisplayText(cmd.value.text);
-        setIsHtmlContent(cmd.value.html);
-        scrollPosRef.current = 50;
-        if (textRef.current) textRef.current.style.top = "50%";
-        setTimerSeconds(0);
-        setScrolling(false);
-        if (activeTpIdRef.current) {
-          (supabase as any)
-            .from("teleprompters")
-            .update({ texto_atual: cmd.value.text, is_html: cmd.value.html })
-            .eq("id", activeTpIdRef.current)
-            .then(() => {});
+        if (typeof cmd.value?.text === "string") {
+          applyLoadedText(cmd.value.text, !!cmd.value.html);
+          if (activeTpIdRef.current) {
+            (supabase as any)
+              .from("teleprompters")
+              .update({ texto_atual: cmd.value.text, is_html: !!cmd.value.html })
+              .eq("id", activeTpIdRef.current)
+              .then(() => {});
+          }
         }
         break;
+      case "loadTextFromDb": {
+        const currentUserId = userIdRef.current;
+        if (!currentUserId) break;
+        void (async () => {
+          let query = (supabase as any)
+            .from("teleprompters")
+            .select("id, texto_atual, is_html")
+            .eq("user_id", currentUserId)
+            .eq("ativo", true)
+            .order("created_at", { ascending: false })
+            .limit(1);
+
+          if (activeTpIdRef.current) {
+            query = query.eq("id", activeTpIdRef.current);
+          }
+
+          const { data } = await query;
+          const tp = data?.[0];
+          if (!tp) return;
+          applyLoadedText(tp.texto_atual || "", !!tp.is_html);
+        })();
+        break;
+      }
       case "requestState":
         queueStateBroadcast(true);
         break;
@@ -318,7 +350,22 @@ export default function TpScreen({ user, onBack }: TpScreenProps) {
       .channel(`tp-control-${user.id}`, { config: { broadcast: { self: true } } })
       .on("broadcast", { event: "tp-command" }, handleCommand);
     ch.subscribe((status) => {
-      cmdReadyRef.current = status === "SUBSCRIBED";
+      const isReady = status === "SUBSCRIBED";
+      cmdReadyRef.current = isReady;
+
+      if (isReady && cmdReconnectTimerRef.current) {
+        clearTimeout(cmdReconnectTimerRef.current);
+        cmdReconnectTimerRef.current = null;
+      }
+
+      if (!isReady && (status === "CLOSED" || status === "CHANNEL_ERROR" || status === "TIMED_OUT")) {
+        if (!cmdReconnectTimerRef.current) {
+          cmdReconnectTimerRef.current = setTimeout(() => {
+            cmdReconnectTimerRef.current = null;
+            connectCmdChannel();
+          }, 800);
+        }
+      }
     });
     cmdChannelRef.current = ch;
   }
@@ -327,6 +374,10 @@ export default function TpScreen({ user, onBack }: TpScreenProps) {
     if (!user) return;
     connectCmdChannel();
     return () => {
+      if (cmdReconnectTimerRef.current) {
+        clearTimeout(cmdReconnectTimerRef.current);
+        cmdReconnectTimerRef.current = null;
+      }
       if (cmdChannelRef.current) {
         supabase.removeChannel(cmdChannelRef.current);
         cmdChannelRef.current = null;
@@ -435,10 +486,14 @@ export default function TpScreen({ user, onBack }: TpScreenProps) {
       const payload = pendingStateRef.current;
       pendingStateRef.current = null;
       try {
-        await stateChannelRef.current.send({ type: "broadcast", event: "tp-state", payload });
+        const sendStatus = await stateChannelRef.current.send({ type: "broadcast", event: "tp-state", payload });
+        if (sendStatus !== "ok") {
+          throw new Error(`tp_state_send_${sendStatus}`);
+        }
       } catch (err) {
         console.error("Erro ao enviar estado TP:", err);
         pendingStateRef.current = payload;
+        reconnectStateChannel();
         break;
       }
     }
