@@ -137,6 +137,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
   const [hoveredMenu, setHoveredMenu] = useState<string | null>(null);
+  const menuLeaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [noArCollapsed, setNoArCollapsed] = useState(false);
   const [empresa, setEmpresa] = useState<import("./ConfiguracoesPage").EmpresaConfig>({} as any);
   const [enabledModules, setEnabledModules] = useState<Set<string> | null>(null);
@@ -439,8 +440,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               <div
                 key={item.label}
                 className="relative flex items-center"
-                onMouseEnter={() => item.children && setHoveredMenu(item.label)}
-                onMouseLeave={() => setHoveredMenu(null)}
+                onMouseEnter={() => { if (menuLeaveTimer.current) { clearTimeout(menuLeaveTimer.current); menuLeaveTimer.current = null; } if (item.children) setHoveredMenu(item.label); }}
+                onMouseLeave={() => { menuLeaveTimer.current = setTimeout(() => setHoveredMenu(null), 250); }}
               >
                 {idx > 0 && <span className="text-white/10 mx-2.5 text-[10px] select-none">•</span>}
                 <button
