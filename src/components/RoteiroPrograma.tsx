@@ -158,7 +158,8 @@ export default function RoteiroPrograma() {
   const salvarRoteiro = async () => {
     if (!user) return;
     setSavingRoteiro(true);
-    const status = isAgendado ? "agendado" : "rascunho";
+    const now = new Date();
+    const status = isAgendado ? "agendado" : "salvo";
     const payload = {
       user_id: user.id,
       programa_nome: programaNome,
@@ -1305,7 +1306,7 @@ ${perguntaActions}
                 }
               </button>
               <button
-                onClick={() => setShowWhatsAppDialog(true)}
+                onClick={() => { window.scrollTo({ top: 0, behavior: "smooth" }); setShowWhatsAppDialog(true); }}
                 className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold text-white hover:opacity-90 transition"
                 style={{ backgroundColor: "#25d366" }}
               >
