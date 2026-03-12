@@ -61,7 +61,7 @@ export default function RoteiroPrograma() {
   const [perguntaCount, setPerguntaCount] = useState(1);
   const editorRef = useRef<HTMLDivElement>(null);
   const exportViewRef = useRef<HTMLDivElement>(null);
-  const [participantes, setParticipantes] = useState<{ nome: string; categoria: string; cargo: string; instagram: string }[]>([]);
+  const [participantes, setParticipantes] = useState<{ nome: string; categoria: string; cargo: string; instagram: string; whatsapp?: string }[]>([]);
   
   const [newNome, setNewNome] = useState("");
   const [newCategoria, setNewCategoria] = useState("Apresentador(a)");
