@@ -467,7 +467,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                       setCurrentPage(item.page);
                     }
                   }}
-                  className="text-[11px] font-semibold py-1 px-1.5 rounded-lg transition-all whitespace-nowrap"
+                  className="text-[10px] lg:text-[11px] font-semibold py-1 px-1 lg:px-1.5 rounded-lg transition-all whitespace-nowrap"
                   style={{
                     color: active ? "#ffffff" : "rgba(255,255,255,0.6)",
                     backgroundColor: active ? "rgba(190,1,1,0.35)" : "transparent",
