@@ -88,7 +88,21 @@ export default function WhatsAppSendDialog({ open, onClose, roteiroData }: Whats
     setContatos(prev => prev.filter((_, i) => i !== idx));
   };
 
-  const enviar = () => {
+  const copiarMensagem = async () => {
+    if (!formattedText.trim()) {
+      toast.error("Sem texto para copiar");
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(formattedText);
+      toast.success("Mensagem copiada! Cole no WhatsApp.");
+    } catch {
+      toast.error("Não foi possível copiar automaticamente");
+    }
+  };
+
+  const enviar = async () => {
     if (!formattedText.trim()) {
       toast.error("Aguarde a formatação do texto");
       return;
@@ -98,17 +112,23 @@ export default function WhatsAppSendDialog({ open, onClose, roteiroData }: Whats
       return;
     }
 
+    try {
+      await navigator.clipboard.writeText(formattedText);
+    } catch {
+      // ignore clipboard errors here
+    }
+
     const text = encodeURIComponent(formattedText);
 
     contatos.forEach((c, i) => {
       const phone = c.whatsapp.startsWith("55") ? c.whatsapp : `55${c.whatsapp}`;
       setTimeout(() => {
-        window.open(`https://web.whatsapp.com/send?phone=${phone}&text=${text}`, "_blank");
-      }, i * 600); // stagger opens to avoid popup blocking
+        window.open(`whatsapp://send?phone=${phone}&text=${text}`, "_blank");
+      }, i * 700);
     });
 
-    toast.success(`Abrindo WhatsApp para ${contatos.length} contato(s)...`);
-    setTimeout(onClose, 1500);
+    toast.success(`Tentando abrir WhatsApp Desktop para ${contatos.length} contato(s). Mensagem também copiada.`);
+    setTimeout(onClose, 1600);
   };
 
   if (!open) return null;
