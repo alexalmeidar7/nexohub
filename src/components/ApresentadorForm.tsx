@@ -117,7 +117,7 @@ export default function ApresentadorForm() {
     setNome(a.nome);
     setCategoria(a.cargo);
     setInstagram(a.instagram);
-    setWhatsapp(a.whatsapp);
+    setWhatsapp(a.whatsapp || "+55");
     setFoto(a.foto);
     setAtivo(a.ativo);
   };
