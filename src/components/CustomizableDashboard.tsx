@@ -1238,7 +1238,7 @@ function DashboardWeatherWidget() {
 }
 
 /* ========== WIDGET: Player ========== */
-function DashboardPlayerWidget() {
+function DashboardPlayerWidget({ onVideoChange }: { onVideoChange?: (active: boolean) => void }) {
   const { user } = useAuth();
   const [channels, setChannels] = useState<any[]>([]);
   const [activeIdx, setActiveIdx] = useState(0);
