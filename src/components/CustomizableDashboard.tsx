@@ -19,7 +19,7 @@ interface DashboardItem {
   linkLabel?: string;
   linkIcon?: string;
   /** For widgets: which widget type */
-  widgetType?: "agenda" | "musica" | "stats" | "weather";
+  widgetType?: "agenda" | "musica" | "stats" | "weather" | "player";
 }
 
 const STORAGE_KEY = "nexohub_dashboard_items";
