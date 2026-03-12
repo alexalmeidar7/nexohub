@@ -249,6 +249,13 @@ export default function RoteiroPrograma() {
     }
   };
 
+  // Restore editor content when showRoteiro becomes true and roteiroTexto has content
+  useEffect(() => {
+    if (showRoteiro && roteiroTexto && editorRef.current && !editorRef.current.innerHTML.trim()) {
+      editorRef.current.innerHTML = roteiroTexto;
+      injectPerguntaActions(editorRef.current);
+    }
+  }, [showRoteiro]);
 
 
   const editarRoteiro = (r: any) => {
