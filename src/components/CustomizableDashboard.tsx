@@ -348,7 +348,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
       {/* On-Air Program Info */}
       {onAirProgram && (
         <div className="mb-6 animate-fade-in">
-          <div className="flex flex-col items-center text-center">
+          <div className="flex flex-col items-start">
             {/* Selo / Logo do programa */}
             {onAirProgram.selo && (
               <img
