@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { Sun, Settings } from "lucide-react";
+import { Settings } from "lucide-react";
+import { WeatherIcon } from "@/components/WeatherIcons";
 
 interface WidgetWeather {
   city: string;
@@ -112,7 +113,7 @@ export default function WeatherWidget({ onNavigate }: { onNavigate?: (page: any)
     return (
       <div className="flex flex-col h-full items-start justify-between">
         <div className="flex items-center gap-1.5 mb-2">
-          <Sun size={14} style={{ color: "#268ffa", animationDuration: "8s" }} className="animate-spin" />
+          <WeatherIcon code={0} size={16} forceDay />
           <span className="font-bold text-xs text-white">TEMPO</span>
         </div>
         <p className="text-xs flex-1 text-white/50">Nenhuma cidade configurada.</p>
@@ -155,7 +156,7 @@ export default function WeatherWidget({ onNavigate }: { onNavigate?: (page: any)
   return (
     <div className="rounded-xl flex flex-col h-full">
       <div className="flex items-center gap-1.5 mb-1">
-        <Sun size={14} className="animate-spin" style={{ color: "#268ffa", animationDuration: "8s" }} />
+        <WeatherIcon code={weather.weatherCode} size={16} />
         <span className="font-bold text-xs text-white">TEMPO</span>
       </div>
 
@@ -164,7 +165,7 @@ export default function WeatherWidget({ onNavigate }: { onNavigate?: (page: any)
         <div className="flex-1 min-w-0">
           <span className="text-[9px] font-bold tracking-wider text-white/40 uppercase">Agora</span>
           <div className="flex items-center gap-1.5 mt-0.5">
-            <span className="text-2xl leading-none">{getIcon(weather.weatherCode)}</span>
+            <WeatherIcon code={weather.weatherCode} size={32} />
             <p className="text-2xl font-bold leading-none" style={{ color: "#268ffa" }}>{weather.temp}°</p>
           </div>
           <p className="font-semibold text-[11px] text-white truncate mt-0.5">{weather.city}</p>
