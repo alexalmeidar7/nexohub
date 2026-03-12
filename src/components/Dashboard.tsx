@@ -1068,7 +1068,7 @@ function DashboardAgenda() {
           ))}
         </div>
         <div className="mt-1 space-y-1">
-          <div className="h-6 rounded-lg bg-[#268ffa]/15" />
+          <div className="h-6 rounded-lg bg-[#be0101]/15" />
         </div>
       </div>
     );
