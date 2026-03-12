@@ -357,14 +357,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         </div>
       )}
 
-      {/* Company name + user info */}
-      <div className="hidden lg:flex px-8 pt-5 pb-1 flex-col">
-        <h1 className="font-bold text-white" style={{ fontSize: "28px", lineHeight: 1.2 }}>{empresa.nome || "Dashboard"}</h1>
-        <p className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.5)" }}>{user?.email || ""}</p>
-      </div>
-
-      {/* Navigation bar - floating rounded box */}
-      <div className="hidden lg:flex items-center gap-3 px-8 pt-3 pb-1 relative z-[60]">
+      {/* Navigation bar - floating rounded box with company name */}
+      <div className="hidden lg:flex items-center gap-4 px-8 pt-5 pb-1 relative z-[60]">
         {/* Menu box */}
         <div
           className="flex items-center px-5 py-2.5"
@@ -446,6 +440,12 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               </div>
             );
           })}
+        </div>
+
+        {/* Company name - right of menu */}
+        <div className="flex flex-col min-w-0">
+          <h1 className="font-bold text-white text-lg leading-tight truncate">{empresa.nome || "Dashboard"}</h1>
+          <p className="text-[10px] truncate" style={{ color: "rgba(255,255,255,0.4)" }}>{user?.email || ""}</p>
         </div>
 
         {/* Right side icons - outside menu box */}
