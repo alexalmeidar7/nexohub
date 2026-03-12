@@ -811,7 +811,7 @@ function ApresentadoresPreview() {
     supabase.from("apresentadores").select("id", { count: "exact", head: true }).eq("user_id", user.id)
       .then(({ count: c }) => setCount(c || 0));
   }, [user]);
-  return <p className="text-[#0d0446]/50 text-[10px]">{count} apresentador{count !== 1 ? "es" : ""} cadastrado{count !== 1 ? "s" : ""}</p>;
+  return <p className="text-black/50 text-[10px]">{count} apresentador{count !== 1 ? "es" : ""} cadastrado{count !== 1 ? "s" : ""}</p>;
 }
 
 function ProgramasPreview() {
