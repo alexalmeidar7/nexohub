@@ -121,7 +121,7 @@ export default function RoteiroPrograma() {
       setLoading(true);
       const [progRes, apresRes] = await Promise.all([
         supabase.from("programas").select("id, nome, estudio, tipo_programa, horario_inicio, horario_fim, dias_semana, apresentador_id, capa, selo").eq("ativo", true),
-        supabase.from("apresentadores").select("id, nome, cargo, instagram, ativo").eq("ativo", true),
+        supabase.from("apresentadores").select("id, nome, cargo, instagram, whatsapp, ativo").eq("ativo", true),
       ]);
       const progs = progRes.data || [];
       const apres = apresRes.data || [];
