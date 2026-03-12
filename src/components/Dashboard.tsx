@@ -425,7 +425,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       <div className="hidden lg:flex items-center gap-2 xl:gap-4 px-4 xl:px-8 pt-5 pb-1 relative z-[60]">
         {/* Menu box */}
         <div
-          className="flex items-center flex-wrap px-3 xl:px-5 py-2.5"
+          className="flex items-center px-2 lg:px-3 xl:px-5 py-2.5"
           style={{
             background: "rgba(0, 0, 0, 0.85)",
             backdropFilter: "blur(20px) saturate(1.6)",
@@ -458,7 +458,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 }}
                 onMouseLeave={scheduleCloseMenu}
               >
-                {idx > 0 && <span className="text-white/10 mx-2.5 text-[10px] select-none">•</span>}
+                {idx > 0 && <span className="text-white/10 mx-1 lg:mx-1.5 xl:mx-2.5 text-[10px] select-none">•</span>}
                 <button
                   onClick={() => {
                     if (item.children) {
@@ -467,7 +467,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                       setCurrentPage(item.page);
                     }
                   }}
-                  className="text-[11px] font-semibold py-1 px-1.5 rounded-lg transition-all whitespace-nowrap"
+                  className="text-[10px] lg:text-[11px] font-semibold py-1 px-1 lg:px-1.5 rounded-lg transition-all whitespace-nowrap"
                   style={{
                     color: active ? "#ffffff" : "rgba(255,255,255,0.6)",
                     backgroundColor: active ? "rgba(190,1,1,0.35)" : "transparent",
