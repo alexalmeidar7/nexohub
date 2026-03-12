@@ -458,7 +458,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 }}
                 onMouseLeave={scheduleCloseMenu}
               >
-                {idx > 0 && <span className="text-white/10 mx-2.5 text-[10px] select-none">•</span>}
+                {idx > 0 && <span className="text-white/10 mx-1 lg:mx-1.5 xl:mx-2.5 text-[10px] select-none">•</span>}
                 <button
                   onClick={() => {
                     if (item.children) {
