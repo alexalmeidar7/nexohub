@@ -159,25 +159,23 @@ export default function WeatherWidget({ onNavigate }: { onNavigate?: (page: any)
         <span className="font-bold text-xs text-white">TEMPO</span>
       </div>
 
-      <div className="flex items-center gap-2 mb-1">
-        <span className="text-3xl leading-none">{getIcon(weather.weatherCode)}</span>
-        <div>
-          <p className="font-semibold text-sm text-white">{weather.city}</p>
-          <p className="text-[10px] text-white/60">{getLabel(weather.weatherCode)}</p>
+      <div className="flex items-start gap-3 flex-1">
+        {/* AGORA */}
+        <div className="flex-1 min-w-0">
+          <span className="text-[9px] font-bold tracking-wider text-white/40 uppercase">Agora</span>
+          <div className="flex items-center gap-1.5 mt-0.5">
+            <span className="text-2xl leading-none">{getIcon(weather.weatherCode)}</span>
+            <p className="text-2xl font-bold leading-none" style={{ color: "#268ffa" }}>{weather.temp}°</p>
+          </div>
+          <p className="font-semibold text-[11px] text-white truncate mt-0.5">{weather.city}</p>
+          <p className="text-[9px] text-white/50 truncate">{getLabel(weather.weatherCode)}</p>
         </div>
-      </div>
 
-      <p className="text-4xl font-bold mb-1" style={{ color: "#268ffa" }}>{weather.temp}°C</p>
-
-      <div className="flex items-center gap-3 text-[10px] flex-wrap text-white/60">
-        <div className="flex items-center gap-1">
-          <Thermometer size={10} /> ↓{weather.tempMin}° / ↑{weather.tempMax}°
-        </div>
-        <div className="flex items-center gap-1">
-          <Droplets size={10} /> {weather.humidity}%
-        </div>
-        <div className="flex items-center gap-1">
-          <CloudRain size={10} /> {weather.rainChance}%
+        {/* AMANHÃ */}
+        <div className="text-right shrink-0">
+          <span className="text-[9px] font-bold tracking-wider text-white/40 uppercase">Amanhã</span>
+          <p className="text-[11px] text-white/70 mt-1">↓ {weather.tomorrowMin}°</p>
+          <p className="text-[11px] text-white/70">↑ {weather.tomorrowMax}°</p>
         </div>
       </div>
 
