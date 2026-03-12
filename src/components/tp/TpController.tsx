@@ -176,7 +176,10 @@ export default function TpController({ user, onBack }: TpControllerProps) {
       if (!ready || !cmdChannelRef.current || !cmdReadyRef.current) continue;
 
       try {
-        await cmdChannelRef.current.send(message);
+        const sendStatus = await cmdChannelRef.current.send(message);
+        if (sendStatus !== "ok") {
+          throw new Error(`tp_command_send_${sendStatus}`);
+        }
         return;
       } catch (err) {
         cmdReadyRef.current = false;

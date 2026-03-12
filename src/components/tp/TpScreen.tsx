@@ -20,7 +20,9 @@ export default function TpScreen({ user, onBack }: TpScreenProps) {
   );
   const [activeTpId, setActiveTpId] = useState<string | null>(null);
   const activeTpIdRef = useRef<string | null>(null);
+  const userIdRef = useRef<string | null>(user?.id ?? null);
   useEffect(() => { activeTpIdRef.current = activeTpId; }, [activeTpId]);
+  useEffect(() => { userIdRef.current = user?.id ?? null; }, [user]);
   const [clock, setClock] = useState("00:00");
   const [timerSeconds, setTimerSeconds] = useState(0);
   const [roteiros, setRoteiros] = useState<Roteiro[]>([]);
