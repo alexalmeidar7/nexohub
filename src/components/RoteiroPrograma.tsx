@@ -415,6 +415,7 @@ ${perguntaActions}
     setNewCategoria("Apresentador(a)");
     setNewCargoText("");
     setNewInstagram("");
+    setNewWhatsapp("");
     setSelectedFromDb(false);
   };
 
