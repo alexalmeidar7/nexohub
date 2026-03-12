@@ -1,4 +1,4 @@
-import { useState, useEffect, createContext, useContext } from "react";
+import { useState, useEffect, useRef, createContext, useContext } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
 
@@ -25,19 +25,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [role, setRole] = useState<AppRole | null>(null);
+  const prevUserIdRef = useRef<string | null>(null);
 
   useEffect(() => {
-    // Set up auth state listener FIRST (non-async to avoid deadlocks)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        // Fetch role without blocking the callback
+    const updateAuth = (newSession: Session | null) => {
+      const newUser = newSession?.user ?? null;
+      const newId = newUser?.id ?? null;
+
+      // Only update user state if the user ID actually changed
+      // This prevents re-renders from token refreshes when switching tabs
+      if (newId !== prevUserIdRef.current) {
+        prevUserIdRef.current = newId;
+        setUser(newUser);
+      }
+      setSession(newSession);
+
+      if (newUser) {
         supabase
           .from("user_roles")
           .select("role")
-          .eq("user_id", session.user.id)
+          .eq("user_id", newUser.id)
           .then(({ data, error }) => {
             if (!error && data && data.length > 0) {
               const isAdmin = data.some((r: any) => r.role === "admin");
@@ -51,12 +58,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setRole(null);
         setLoading(false);
       }
+    };
+
+    // Set up auth state listener FIRST (non-async to avoid deadlocks)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      updateAuth(session);
     });
 
     // Then get initial session
     supabase.auth.getSession().then(({ data: { session }, error }) => {
       if (!session) {
-        // Clear any stale tokens from storage
         if (error) {
           supabase.auth.signOut();
         }
