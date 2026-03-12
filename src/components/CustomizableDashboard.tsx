@@ -1473,8 +1473,11 @@ function DashboardPlayerWidget() {
 
           {!showVideo && (
             <div className="w-16 h-16 rounded-xl flex-shrink-0 flex items-center justify-center overflow-hidden relative" style={{ background: "rgba(255,255,255,0.05)", boxShadow: "0 4px 15px rgba(0,0,0,0.5)" }}>
-              {displayArt ? (
-                <img src={displayArt} alt="" className="w-full h-full object-cover rounded-xl transition-all duration-500" />
+              {fadingArt && (
+                <img src={fadingArt} alt="" className="absolute inset-0 w-full h-full object-cover rounded-xl" style={{ transition: "opacity 0.5s ease-out", opacity: 0 }} />
+              )}
+              {visibleArt ? (
+                <img src={visibleArt} alt="" className="absolute inset-0 w-full h-full object-cover rounded-xl" style={{ transition: "opacity 0.5s ease-out", opacity: artOpacity }} />
               ) : (
                 <Tv size={22} className="text-white/20" />
               )}
