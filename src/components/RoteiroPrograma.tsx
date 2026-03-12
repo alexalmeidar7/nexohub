@@ -392,8 +392,10 @@ ${perguntaActions}
 
   const selectSuggestion = (apres: Apresentador) => {
     setNewNome(apres.nome);
-    setNewCategoria(apres.cargo || "Apresentador(a)");
-    setNewCargoText("");
+    const cargo = apres.cargo || "";
+    const matchesCategoria = categorias.some(c => c.toLowerCase() === cargo.toLowerCase());
+    setNewCategoria(matchesCategoria ? cargo : (cargo ? "Convidado(a)" : "Apresentador(a)"));
+    setNewCargoText(matchesCategoria ? "" : cargo);
     setNewInstagram(apres.instagram || "");
     setNewWhatsapp(apres.whatsapp || "");
     setSelectedFromDb(true);
