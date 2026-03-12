@@ -142,6 +142,39 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const [enabledModules, setEnabledModules] = useState<Set<string> | null>(null);
   const [planModules, setPlanModules] = useState<Set<string> | null>(null);
   const [initialLoading, setInitialLoading] = useState(true);
+  const [onAirThumb, setOnAirThumb] = useState<string | null>(null);
+  const prevThumbRef = useRef<string | null>(null);
+
+  // Poll current on-air program thumb every 30s
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    const fetchThumb = async () => {
+      const { data } = await supabase
+        .from("programas")
+        .select("thumb, dias_semana, horario_inicio, horario_fim, ativo")
+        .eq("user_id", user.id)
+        .eq("ativo", true);
+      if (cancelled || !data) return;
+      const now = new Date();
+      const DIAS_MAP: Record<number, string> = { 1: "Segunda", 2: "Terça", 3: "Quarta", 4: "Quinta", 5: "Sexta", 6: "Sábado", 0: "Domingo" };
+      const diaAtual = DIAS_MAP[now.getDay()];
+      const horaAtual = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+      const current = data.find(p =>
+        (p.dias_semana || []).includes(diaAtual) &&
+        horaAtual >= p.horario_inicio &&
+        horaAtual < p.horario_fim
+      );
+      const thumb = current?.thumb || null;
+      if (thumb !== prevThumbRef.current) {
+        prevThumbRef.current = thumb;
+        setOnAirThumb(thumb);
+      }
+    };
+    fetchThumb();
+    const interval = setInterval(fetchThumb, 30000);
+    return () => { cancelled = true; clearInterval(interval); };
+  }, [user]);
 
   useEffect(() => {
     if (!user) return;
