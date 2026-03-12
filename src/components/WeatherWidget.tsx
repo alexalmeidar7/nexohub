@@ -156,7 +156,7 @@ export default function WeatherWidget({ onNavigate }: { onNavigate?: (page: any)
   return (
     <div className="rounded-xl flex flex-col h-full">
       <div className="flex items-center gap-1.5 mb-1">
-        <Sun size={14} className="animate-spin" style={{ color: "#268ffa", animationDuration: "8s" }} />
+        <WeatherIcon code={weather.weatherCode} size={16} />
         <span className="font-bold text-xs text-white">TEMPO</span>
       </div>
 
