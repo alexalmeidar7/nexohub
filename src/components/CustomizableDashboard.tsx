@@ -71,6 +71,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
   const [addStep, setAddStep] = useState<"choose" | "link" | "widget">("choose");
   const [editMode, setEditMode] = useState(false);
   const [draggedId, setDraggedId] = useState<string | null>(null);
+  const [playerVideoActive, setPlayerVideoActive] = useState<string | null>(null);
 
   // On-air program info
   interface OnAirProgram {
@@ -431,7 +432,9 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                     minHeight: item.widgetType === "agenda" ? "200px" : "150px",
                     maxHeight: item.widgetType === "agenda" ? "240px" : "none",
                     overflow: item.widgetType === "player" ? "visible" : "hidden",
-                    transition: "max-height 0.4s ease, min-height 0.4s ease",
+                    transition: "margin-top 0.4s ease, max-height 0.4s ease, min-height 0.4s ease",
+                    marginTop: (item.widgetType === "player" && playerVideoActive === item.id) ? "-150px" : "0px",
+                    zIndex: (item.widgetType === "player" && playerVideoActive === item.id) ? 20 : undefined,
                   }}
                   onDragOver={(e) => handleDragOver(e, item.id)}
                   onDrop={() => handleDrop(item.id)}
@@ -463,7 +466,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                       {item.widgetType === "musica" && <MusicProgramWidget />}
                       {item.widgetType === "stats" && <StatsWidget />}
                       {item.widgetType === "weather" && <DashboardWeatherWidget />}
-                      {item.widgetType === "player" && <DashboardPlayerWidget />}
+                      {item.widgetType === "player" && <DashboardPlayerWidget onVideoChange={(active) => setPlayerVideoActive(active ? item.id : null)} />}
                     </Suspense>
                   </div>
                 </div>
@@ -1238,7 +1241,7 @@ function DashboardWeatherWidget() {
 }
 
 /* ========== WIDGET: Player ========== */
-function DashboardPlayerWidget() {
+function DashboardPlayerWidget({ onVideoChange }: { onVideoChange?: (active: boolean) => void }) {
   const { user } = useAuth();
   const [channels, setChannels] = useState<any[]>([]);
   const [activeIdx, setActiveIdx] = useState(0);
@@ -1247,6 +1250,8 @@ function DashboardPlayerWidget() {
   const [volume, setVolume] = useState(0.8);
   const [showVideo, setShowVideo] = useState(false);
   const [currentMusic, setCurrentMusic] = useState<{ titulo: string; artista: string; capa: string } | null>(null);
+
+  useEffect(() => { onVideoChange?.(showVideo); }, [showVideo, onVideoChange]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const hlsRef = useRef<any>(null);
