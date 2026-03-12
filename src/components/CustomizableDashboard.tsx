@@ -71,6 +71,50 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
   const [editMode, setEditMode] = useState(false);
   const [draggedId, setDraggedId] = useState<string | null>(null);
 
+  // On-air program info
+  interface OnAirProgram {
+    nome: string;
+    selo: string;
+    horario_inicio: string;
+    horario_fim: string;
+    classificacao_etaria: string;
+    descricao: string;
+  }
+  const [onAirProgram, setOnAirProgram] = useState<OnAirProgram | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    const DIAS_MAP: Record<number, string> = { 1: "Segunda", 2: "Terça", 3: "Quarta", 4: "Quinta", 5: "Sexta", 6: "Sábado", 0: "Domingo" };
+    const fetchOnAir = async () => {
+      const { data } = await supabase
+        .from("programas")
+        .select("nome, selo, horario_inicio, horario_fim, classificacao_etaria, descricao, dias_semana, ativo")
+        .eq("user_id", user.id)
+        .eq("ativo", true);
+      if (cancelled || !data) return;
+      const now = new Date();
+      const diaAtual = DIAS_MAP[now.getDay()];
+      const horaAtual = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+      const current = data.find(p =>
+        (p.dias_semana || []).includes(diaAtual) &&
+        horaAtual >= p.horario_inicio &&
+        horaAtual < p.horario_fim
+      );
+      setOnAirProgram(current ? {
+        nome: current.nome,
+        selo: current.selo || "",
+        horario_inicio: current.horario_inicio,
+        horario_fim: current.horario_fim,
+        classificacao_etaria: current.classificacao_etaria || "L",
+        descricao: current.descricao || "",
+      } : null);
+    };
+    fetchOnAir();
+    const interval = setInterval(fetchOnAir, 30000);
+    return () => { cancelled = true; clearInterval(interval); };
+  }, [user]);
+
   // Load dashboard items from DB (fallback to localStorage for migration)
   useEffect(() => {
     if (!user) return;
