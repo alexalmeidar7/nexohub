@@ -117,8 +117,19 @@ export default function ApresentadorForm() {
     setNome(a.nome);
     setCategoria(a.cargo);
     setInstagram(a.instagram);
+    setWhatsapp(a.whatsapp);
     setFoto(a.foto);
     setAtivo(a.ativo);
+  };
+
+  const formatWhatsapp = (value: string) => {
+    const digits = value.replace(/\D/g, "").slice(0, 13);
+    let formatted = "";
+    if (digits.length > 0) formatted += "+" + digits.slice(0, 2);
+    if (digits.length > 2) formatted += " (" + digits.slice(2, 4);
+    if (digits.length > 4) formatted += ") " + digits.slice(4, 9);
+    if (digits.length > 9) formatted += "-" + digits.slice(9, 13);
+    return formatted;
   };
 
   const toggleAtivo = async (id: string, current: boolean) => {
