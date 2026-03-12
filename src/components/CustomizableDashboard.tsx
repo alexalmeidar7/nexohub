@@ -1245,13 +1245,21 @@ function DashboardPlayerWidget() {
 
   useEffect(() => {
     if (!user) return;
-    supabase
-      .from("streaming_channels")
-      .select("*")
-      .eq("user_id", user.id)
-      .eq("active", true)
-      .order("numero_canal")
-      .then(({ data }) => { if (data) setChannels(data); });
+    const fetchChannels = async () => {
+      const { data, error } = await supabase
+        .from("streaming_channels")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("active", true)
+        .order("numero_canal");
+      if (error) {
+        console.error("Player widget: error fetching channels", error);
+        return;
+      }
+      console.log("Player widget: fetched channels", data?.length);
+      if (data && data.length > 0) setChannels(data);
+    };
+    fetchChannels();
   }, [user]);
 
   // Persist audio element across renders
