@@ -262,6 +262,7 @@ export default function TpScreen({ user, onBack }: TpScreenProps) {
   // Remote control listener with auto-reconnect
   const cmdChannelRef = useRef<any>(null);
   const cmdReadyRef = useRef(false);
+  const [cmdConnectionStatus, setCmdConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting');
   const cmdReconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   function applyLoadedText(text: string, html: boolean) {
@@ -353,15 +354,18 @@ export default function TpScreen({ user, onBack }: TpScreenProps) {
       const isReady = status === "SUBSCRIBED";
       cmdReadyRef.current = isReady;
 
-      if (isReady && cmdReconnectTimerRef.current) {
-        clearTimeout(cmdReconnectTimerRef.current);
-        cmdReconnectTimerRef.current = null;
-      }
-
-      if (!isReady && (status === "CLOSED" || status === "CHANNEL_ERROR" || status === "TIMED_OUT")) {
+      if (isReady) {
+        setCmdConnectionStatus('connected');
+        if (cmdReconnectTimerRef.current) {
+          clearTimeout(cmdReconnectTimerRef.current);
+          cmdReconnectTimerRef.current = null;
+        }
+      } else if (status === "CLOSED" || status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+        setCmdConnectionStatus('disconnected');
         if (!cmdReconnectTimerRef.current) {
           cmdReconnectTimerRef.current = setTimeout(() => {
             cmdReconnectTimerRef.current = null;
+            setCmdConnectionStatus('connecting');
             connectCmdChannel();
           }, 800);
         }
@@ -619,11 +623,18 @@ export default function TpScreen({ user, onBack }: TpScreenProps) {
       <div data-tp-display className="relative bg-tp-display overflow-hidden">
         <div className="absolute inset-0 pointer-events-none z-[5]" style={{ background: "radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.6) 100%)" }} />
 
+        {/* Reconnecting banner */}
+        {cmdConnectionStatus !== 'connected' && (
+          <div className="absolute top-0 left-0 right-0 z-50 bg-yellow-500/90 text-black text-[10px] font-bold text-center py-1 animate-pulse">
+            ⚡ {cmdConnectionStatus === 'connecting' ? 'Conectando controle remoto...' : 'Reconectando controle remoto...'}
+          </div>
+        )}
+
         {/* Remote control indicator */}
-        <div className={`absolute top-3 left-3 z-20 flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 transition-all border ${remoteActive ? "bg-green-500/15 border-green-500/50" : "bg-tp-foreground/5 border-tp-border-subtle"}`}>
-          <div className={`w-[7px] h-[7px] rounded-full ${remoteActive ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)] animate-[tp-remote-blink_1s_ease-in-out_infinite]" : "bg-tp-foreground/20"}`} />
-          <span className={`text-[9px] font-bold tracking-wider uppercase transition-colors ${remoteActive ? "text-green-500" : "text-tp-foreground/20"}`}>
-            Controle Remoto {remoteActive ? "Ativo" : "Inativo"}
+        <div className={`absolute ${cmdConnectionStatus !== 'connected' ? 'top-8' : 'top-3'} left-3 z-20 flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 transition-all border ${remoteActive ? "bg-green-500/15 border-green-500/50" : cmdConnectionStatus !== 'connected' ? "bg-yellow-500/15 border-yellow-500/50" : "bg-tp-foreground/5 border-tp-border-subtle"}`}>
+          <div className={`w-[7px] h-[7px] rounded-full ${remoteActive ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)] animate-[tp-remote-blink_1s_ease-in-out_infinite]" : cmdConnectionStatus !== 'connected' ? "bg-yellow-500 animate-pulse" : "bg-tp-foreground/20"}`} />
+          <span className={`text-[9px] font-bold tracking-wider uppercase transition-colors ${remoteActive ? "text-green-500" : cmdConnectionStatus !== 'connected' ? "text-yellow-400" : "text-tp-foreground/20"}`}>
+            {cmdConnectionStatus !== 'connected' ? 'Reconectando...' : `Controle Remoto ${remoteActive ? "Ativo" : "Inativo"}`}
           </span>
         </div>
         <style>{`

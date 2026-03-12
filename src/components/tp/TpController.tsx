@@ -380,20 +380,37 @@ export default function TpController({ user, onBack }: TpControllerProps) {
     }
   }
 
-  const statusLabel = !(tpPresenceOnline || dbTpOnline)
-    ? "Aguardando TP..."
-    : !tpState
-      ? "Sincronizando preview..."
-      : "TP Conectado";
+  const isReconnecting = !cmdReady && (tpPresenceOnline || dbTpOnline);
+
+  const statusLabel = isReconnecting
+    ? "Reconectando..."
+    : !(tpPresenceOnline || dbTpOnline)
+      ? "Aguardando TP..."
+      : !tpState
+        ? "Sincronizando preview..."
+        : "TP Conectado";
+
+  const statusDotClass = isReconnecting
+    ? "bg-yellow-500 shadow-[0_0_8px_rgba(234,179,8,0.5)] animate-pulse"
+    : connected
+      ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]"
+      : "bg-destructive shadow-[0_0_8px_rgba(239,68,68,0.5)]";
 
   return (
     <div className="h-screen flex flex-col items-center justify-center bg-tp font-sans p-5">
+      {/* Reconnecting banner */}
+      {isReconnecting && (
+        <div className="fixed top-0 left-0 right-0 z-50 bg-yellow-500/90 text-black text-xs font-bold text-center py-1.5 animate-pulse">
+          ⚡ Reconectando com o Teleprompter...
+        </div>
+      )}
+
       {/* Header */}
       <div className="tp-ctrl-header flex items-center gap-3 mb-4 flex-wrap justify-center">
         <SlidersHorizontal size={20} className="text-tp-accent" />
         <span className="text-tp-foreground text-base font-bold">Controle Remoto do TP</span>
-        <div className={`w-2.5 h-2.5 rounded-full ml-2 ${connected ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]" : "bg-destructive shadow-[0_0_8px_rgba(239,68,68,0.5)]"}`} />
-        <span className="text-tp-muted text-[11px]">
+        <div className={`w-2.5 h-2.5 rounded-full ml-2 ${statusDotClass}`} />
+        <span className={`text-[11px] ${isReconnecting ? "text-yellow-400 font-semibold" : "text-tp-muted"}`}>
           {statusLabel}
         </span>
       </div>
