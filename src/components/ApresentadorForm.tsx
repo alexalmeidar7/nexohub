@@ -90,18 +90,20 @@ export default function ApresentadorForm() {
         nome: nome.trim(),
         cargo: cargoValue,
         instagram: instagram.trim(),
+        whatsapp: whatsapp.trim(),
         foto: showFoto ? foto : "",
         ativo,
-      }).eq("id", editingId);
+      } as any).eq("id", editingId);
     } else {
       await supabase.from("apresentadores").insert({
         user_id: user.id,
         nome: nome.trim(),
         cargo: cargoValue,
         instagram: instagram.trim(),
+        whatsapp: whatsapp.trim(),
         foto: showFoto ? foto : "",
         ativo,
-      });
+      } as any);
     }
     await load();
     resetForm();
