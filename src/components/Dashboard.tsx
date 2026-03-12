@@ -478,8 +478,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                           key={child.label}
                           onClick={() => handleChildClick(child, item.label)}
                           className="w-full text-left px-4 py-2 text-[11px] transition-all rounded-lg mx-0"
-                          style={{ color: child.page && currentPage === child.page ? "#268ffa" : "rgba(255,255,255,0.8)" }}
-                          onMouseEnter={e => { if (!(child.page && currentPage === child.page)) { e.currentTarget.style.color = "#268ffa"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.05)"; } }}
+                          style={{ color: child.page && currentPage === child.page ? "#be0101" : "rgba(255,255,255,0.8)" }}
+                          onMouseEnter={e => { if (!(child.page && currentPage === child.page)) { e.currentTarget.style.color = "#be0101"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.05)"; } }}
                           onMouseLeave={e => { if (!(child.page && currentPage === child.page)) { e.currentTarget.style.color = "rgba(255,255,255,0.8)"; e.currentTarget.style.backgroundColor = "transparent"; } }}
                         >
                           {child.label}
@@ -521,9 +521,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           <button
             onClick={onLogout}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold transition-all"
-            style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#ffffff", boxShadow: "0 2px 10px rgba(38,143,250,0.3)" }}
-            onMouseEnter={e => { e.currentTarget.style.background = "linear-gradient(135deg, #1a7ae0, #268ffa)"; e.currentTarget.style.boxShadow = "0 4px 15px rgba(38,143,250,0.5)"; }}
-            onMouseLeave={e => { e.currentTarget.style.background = "linear-gradient(135deg, #268ffa, #2dbef3)"; e.currentTarget.style.boxShadow = "0 2px 10px rgba(38,143,250,0.3)"; }}
+            style={{ background: "linear-gradient(135deg, #960101, #be0101)", color: "#ffffff", boxShadow: "0 2px 10px rgba(150,1,1,0.3)" }}
+            onMouseEnter={e => { e.currentTarget.style.background = "linear-gradient(135deg, #be0101, #d40101)"; e.currentTarget.style.boxShadow = "0 4px 15px rgba(150,1,1,0.5)"; }}
+            onMouseLeave={e => { e.currentTarget.style.background = "linear-gradient(135deg, #960101, #be0101)"; e.currentTarget.style.boxShadow = "0 2px 10px rgba(150,1,1,0.3)"; }}
           >
             <LogOut size={10} /> Sair
           </button>
