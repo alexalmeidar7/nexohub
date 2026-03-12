@@ -1047,33 +1047,24 @@ ${perguntaActions}
             />
           </div>
 
-          {/* Salvar + Exportar */}
-          <div className="flex gap-3">
-            <button
-              onClick={salvarRoteiro}
-              disabled={savingRoteiro}
-              className="flex-1 py-3 rounded-xl text-sm font-bold transition-all hover:opacity-90 flex items-center justify-center gap-2"
-              style={{ background: "#0d0446", color: "#ffffff" }}
-            >
-              <Save size={14} />
-              {savingRoteiro ? "salvando..." : editingRoteiroId ? "atualizar roteiro" : "salvar roteiro"}
-            </button>
-            <button
-              onClick={async () => {
-                setShowExportView(true);
-                if (editingRoteiroId) {
-                  fetchApresentadorStatus(editingRoteiroId);
-                } else {
-                  setApresentadorStatus(null);
-                }
-              }}
-              className="flex-1 py-3 rounded-xl text-sm font-bold transition-all hover:opacity-90 flex items-center justify-center gap-2"
-              style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#ffffff", boxShadow: "0 4px 16px rgba(38,143,250,0.3)" }}
-            >
-              <Download size={14} />
-              exportar roteiro
-            </button>
-          </div>
+          {/* Salvar / Exportar */}
+          <button
+            onClick={async () => {
+              await salvarRoteiro();
+              setShowExportView(true);
+              if (editingRoteiroId) {
+                fetchApresentadorStatus(editingRoteiroId);
+              } else {
+                setApresentadorStatus(null);
+              }
+            }}
+            disabled={savingRoteiro}
+            className="w-full py-3 rounded-xl text-sm font-bold transition-all hover:opacity-90 flex items-center justify-center gap-2"
+            style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#ffffff", boxShadow: "0 4px 16px rgba(38,143,250,0.3)" }}
+          >
+            <Save size={14} />
+            {savingRoteiro ? "salvando..." : "salvar / exportar roteiro"}
+          </button>
         </div>
       )}
 
