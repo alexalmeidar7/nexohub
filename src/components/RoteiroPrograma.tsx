@@ -85,6 +85,7 @@ export default function RoteiroPrograma() {
   const [apresentadorStatus, setApresentadorStatus] = useState<{ editado: boolean; editadoAt: string | null; login: string | null } | null>(null);
   const [mergeCells, setMergeCells] = useState<HTMLTableCellElement[]>([]);
   const mergeHighlightColor = "rgba(38,143,250,0.18)";
+  const [showWhatsAppDialog, setShowWhatsAppDialog] = useState(false);
 
   const fetchApresentadorStatus = async (roteiroId: string) => {
     const { data } = await supabase.from("roteiros").select("apresentador_editado, editado_at, share_login").eq("id", roteiroId).maybeSingle();
