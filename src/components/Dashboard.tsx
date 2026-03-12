@@ -425,12 +425,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       <div className="hidden lg:flex items-center gap-2 xl:gap-4 px-4 xl:px-8 pt-5 pb-1 relative z-[60]">
         {/* Menu box */}
         <div
-          className="flex items-center px-3 xl:px-5 py-2.5 scrollbar-hide"
+          className="flex items-center px-2 lg:px-3 xl:px-5 py-2.5"
           style={{
-            ...{
-              overflowX: "auto" as const,
-              overflowY: "visible" as const,
-            },
             background: "rgba(0, 0, 0, 0.85)",
             backdropFilter: "blur(20px) saturate(1.6)",
             WebkitBackdropFilter: "blur(20px) saturate(1.6)",
