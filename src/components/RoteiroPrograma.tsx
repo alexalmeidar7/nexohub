@@ -1222,7 +1222,7 @@ ${perguntaActions}
             <div
               className="text-sm leading-relaxed"
               style={{ color: "#0d0446" }}
-              dangerouslySetInnerHTML={{ __html: editorRef.current?.innerHTML || roteiroTexto }}
+              dangerouslySetInnerHTML={{ __html: sanitizeRoteiroHtml(editorRef.current?.innerHTML || roteiroTexto) }}
             />
 
             <div className="mt-8 pt-4 text-center" style={{ borderTop: "1px solid rgba(13,4,70,0.1)" }}>
