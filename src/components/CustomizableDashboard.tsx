@@ -318,11 +318,11 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                   <button
                     onClick={(e) => { e.stopPropagation(); removeItem(item.id); }}
                     className="absolute top-1.5 right-1.5 w-4 h-4 rounded-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all z-10"
-                    style={{ border: "1px solid rgba(13,4,70,0.15)" }}
-                    onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(13,4,70,0.4)"; }}
-                    onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(13,4,70,0.15)"; }}
+                    style={{ border: "1px solid rgba(0,0,0,0.15)" }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(0,0,0,0.4)"; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(0,0,0,0.15)"; }}
                   >
-                    <X size={7} className="text-[#0d0446]/40" />
+                    <X size={7} className="text-black/40" />
                   </button>
                 </div>
               );
