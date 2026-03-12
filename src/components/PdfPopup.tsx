@@ -51,13 +51,24 @@ export function PdfPopup({ status, blobUrl, filename, onClose, anchorId }: {
 }) {
   if (status === "idle") return null;
 
-  const popupStyle: React.CSSProperties = {
-    position: "fixed",
-    top: "50%",
-    left: "50%",
-    transform: "translate(-50%, -50%)",
-    zIndex: 9999,
-  };
+  const anchorEl = anchorId ? document.getElementById(anchorId) : null;
+  const anchorRect = anchorEl?.getBoundingClientRect();
+
+  const popupStyle: React.CSSProperties = anchorRect
+    ? {
+        position: "fixed",
+        top: Math.max(anchorRect.top + 40, 80),
+        left: anchorRect.left + anchorRect.width / 2,
+        transform: "translateX(-50%)",
+        zIndex: 9999,
+      }
+    : {
+        position: "fixed",
+        top: "50%",
+        left: "50%",
+        transform: "translate(-50%, -50%)",
+        zIndex: 9999,
+      };
 
   return (
     <div className="fixed inset-0 z-[9998]" style={{ backgroundColor: "rgba(0,0,0,0.3)" }} onClick={onClose}>
