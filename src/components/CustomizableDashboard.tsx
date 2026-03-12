@@ -466,7 +466,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                       {item.widgetType === "musica" && <MusicProgramWidget />}
                       {item.widgetType === "stats" && <StatsWidget />}
                       {item.widgetType === "weather" && <DashboardWeatherWidget />}
-                      {item.widgetType === "player" && <DashboardPlayerWidget />}
+                      {item.widgetType === "player" && <DashboardPlayerWidget onVideoChange={(active) => setPlayerVideoActive(active ? item.id : null)} />}
                     </Suspense>
                   </div>
                 </div>
