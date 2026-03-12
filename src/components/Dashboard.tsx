@@ -569,7 +569,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               <span className="text-white font-semibold text-sm">{pageTitle[currentPage]}</span>
             </div>
           )}
-          <div className={`flex-1 overflow-y-auto overflow-x-hidden rounded-2xl ${currentPage !== "dashboard" ? "mv-content-area" : ""}`} style={currentPage === "dashboard" ? {} : { padding: "1rem" }}>
+          <div className={`flex-1 overflow-y-auto overflow-x-hidden rounded-xl lg:rounded-2xl ${currentPage !== "dashboard" ? "mv-content-area" : ""}`} style={currentPage === "dashboard" ? {} : { padding: "0.75rem" }}>
             <Suspense fallback={<ModulePageSkeleton />}>
               {currentPage === "dashboard" && <CustomizableDashboard onNavigate={setCurrentPage} />}
               {currentPage === "previsao" && <PrevisaoTempo />}
