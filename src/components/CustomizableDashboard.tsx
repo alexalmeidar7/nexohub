@@ -797,10 +797,10 @@ function NoticiasPreview() {
   return news.length > 0 ? (
     <div className="space-y-1">
       {news.map((n, i) => (
-        <p key={i} className="text-[#0d0446]/50 text-[10px] truncate leading-tight">• {n.title}</p>
+        <p key={i} className="text-black/50 text-[10px] truncate leading-tight">• {n.title}</p>
       ))}
     </div>
-  ) : <p className="text-[#0d0446]/30 text-[10px]">Sem notícias salvas</p>;
+  ) : <p className="text-black/30 text-[10px]">Sem notícias salvas</p>;
 }
 
 function ApresentadoresPreview() {
