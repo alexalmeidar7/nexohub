@@ -16,14 +16,14 @@ interface LayoutColors {
 }
 
 const defaultColors: LayoutColors = {
-  pageBg: "#0a0a0a",
-  pageText: "#ffffff",
+  pageBg: "#ffffff",
+  pageText: "#0d0446",
   headerBg: "#0d0446",
   headerText: "#ffffff",
-  buttonBg: "#268ffa",
+  buttonBg: "#be0101",
   buttonText: "#ffffff",
   linkColor: "#2dbef3",
-  accentColor: "#c8f542",
+  accentColor: "#be0101",
 };
 
 const colorLabels: Record<keyof LayoutColors, string> = {
