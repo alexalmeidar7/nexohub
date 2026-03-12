@@ -318,11 +318,11 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                   <button
                     onClick={(e) => { e.stopPropagation(); removeItem(item.id); }}
                     className="absolute top-1.5 right-1.5 w-4 h-4 rounded-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all z-10"
-                    style={{ border: "1px solid rgba(13,4,70,0.15)" }}
-                    onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(13,4,70,0.4)"; }}
-                    onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(13,4,70,0.15)"; }}
+                    style={{ border: "1px solid rgba(0,0,0,0.15)" }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(0,0,0,0.4)"; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(0,0,0,0.15)"; }}
                   >
-                    <X size={7} className="text-[#0d0446]/40" />
+                    <X size={7} className="text-black/40" />
                   </button>
                 </div>
               );
@@ -425,8 +425,8 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                   className={`relative group rounded-2xl overflow-hidden animate-fade-in flex flex-col ${isDragging ? "opacity-40 scale-95" : ""}`}
                   style={{
                     background: "#ffffff",
-                    border: isDragOver ? "2px solid #be0101" : "1px solid rgba(13,4,70,0.08)",
-                    boxShadow: "0 2px 12px rgba(13,4,70,0.06)",
+                    border: isDragOver ? "2px solid #be0101" : "1px solid rgba(0,0,0,0.08)",
+                    boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
                     minHeight: item.widgetType === "agenda" ? "280px" : "180px",
                   }}
                   draggable
@@ -435,9 +435,9 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                   onDrop={() => handleDrop(item.id)}
                   onDragEnd={handleDragEnd}
                 >
-                  <div className="flex items-center gap-1.5 px-4 py-2.5 cursor-grab active:cursor-grabbing flex-shrink-0" style={{ borderBottom: "1px solid rgba(13,4,70,0.06)" }}>
-                    <GripVertical size={10} className="text-[#0d0446]/20" />
-                    <span className="text-[#0d0446]/40 text-[9px] font-bold uppercase tracking-[0.15em]">
+                  <div className="flex items-center gap-1.5 px-4 py-2.5 cursor-grab active:cursor-grabbing flex-shrink-0" style={{ borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
+                    <GripVertical size={10} className="text-black/20" />
+                    <span className="text-black/40 text-[9px] font-bold uppercase tracking-[0.15em]">
                       {item.widgetType === "agenda" ? "Agenda" : item.widgetType === "musica" ? "No Ar" : item.widgetType === "weather" ? "Tempo" : "Estatísticas"}
                     </span>
                   </div>
@@ -445,11 +445,11 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                     <button
                       onClick={() => removeItem(item.id)}
                       className="w-5 h-5 rounded-md flex items-center justify-center"
-                      style={{ border: "1px solid rgba(13,4,70,0.15)" }}
-                      onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(13,4,70,0.4)"; }}
-                      onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(13,4,70,0.15)"; }}
+                      style={{ border: "1px solid rgba(0,0,0,0.15)" }}
+                      onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(0,0,0,0.4)"; }}
+                      onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(0,0,0,0.15)"; }}
                     >
-                      <X size={9} className="text-[#0d0446]/40" />
+                      <X size={9} className="text-black/40" />
                     </button>
                   </div>
                   <div className="p-4 flex-1 overflow-y-auto overflow-x-hidden">
@@ -511,7 +511,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
           <div
             className="relative rounded-2xl p-6 max-w-md w-full mx-4 max-h-[80vh] overflow-y-auto"
             style={{
-              background: "rgba(13, 4, 70, 0.95)",
+              background: "rgba(0, 0, 0, 0.95)",
               backdropFilter: "blur(24px)",
               border: "1px solid rgba(255,255,255,0.15)",
               boxShadow: "0 20px 60px rgba(0,0,0,0.5)",
@@ -703,8 +703,8 @@ function LinkPreview({ page, external }: { page?: Page; external?: string }) {
 function GenericPreview({ icon: Icon, text }: { icon: React.ComponentType<any>; text: string }) {
   return (
     <div className="flex items-center gap-2">
-      <Icon size={12} className="text-[#0d0446]/20" />
-      <p className="text-[#0d0446]/40 text-[10px]">{text}</p>
+      <Icon size={12} className="text-black/20" />
+      <p className="text-black/40 text-[10px]">{text}</p>
     </div>
   );
 }
@@ -723,16 +723,16 @@ function AgendaPreview() {
   return (
     <div>
       <div className="flex items-center gap-1.5 mb-1.5">
-        <p className="text-[#0d0446]/50 text-[10px] font-bold">{format(today, "dd MMM", { locale: ptBR }).toUpperCase()}</p>
+        <p className="text-black/50 text-[10px] font-bold">{format(today, "dd MMM", { locale: ptBR }).toUpperCase()}</p>
       </div>
       {events.length === 0 ? (
-        <p className="text-[#0d0446]/30 text-[10px]">Sem eventos próximos</p>
+        <p className="text-black/30 text-[10px]">Sem eventos próximos</p>
       ) : (
         <div className="space-y-1">
           {events.map((ev, i) => (
             <div key={i} className="flex items-center gap-1.5">
               <div className="w-1 h-1 rounded-full flex-shrink-0" style={{ backgroundColor: "#be0101" }} />
-              <p className="text-[#0d0446]/50 text-[10px] truncate">{ev.descricao || format(new Date(ev.data + "T12:00:00"), "dd/MM")}</p>
+              <p className="text-black/50 text-[10px] truncate">{ev.descricao || format(new Date(ev.data + "T12:00:00"), "dd/MM")}</p>
             </div>
           ))}
         </div>
@@ -769,8 +769,8 @@ function MusicaPreview() {
         </div>
       )}
       <div className="min-w-0 flex-1">
-        <p className="text-[#0d0446] text-[11px] font-bold truncate leading-tight">{music.titulo}</p>
-        <p className="text-[#0d0446]/50 text-[10px] truncate">{music.artista}</p>
+        <p className="text-black text-[11px] font-bold truncate leading-tight">{music.titulo}</p>
+        <p className="text-black/50 text-[10px] truncate">{music.artista}</p>
         {programa && (
           <p className="text-[9px] mt-0.5 truncate" style={{ color: "#be0101" }}>🔴 {programa}</p>
         )}
@@ -779,9 +779,9 @@ function MusicaPreview() {
   ) : (
     <div className="flex items-center gap-2">
       <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: "rgba(190,1,1,0.06)" }}>
-        <Music size={14} className="text-[#0d0446]/20" />
+        <Music size={14} className="text-black/20" />
       </div>
-      <p className="text-[#0d0446]/30 text-[10px]">Sem música no ar</p>
+      <p className="text-black/30 text-[10px]">Sem música no ar</p>
     </div>
   );
 }
@@ -797,10 +797,10 @@ function NoticiasPreview() {
   return news.length > 0 ? (
     <div className="space-y-1">
       {news.map((n, i) => (
-        <p key={i} className="text-[#0d0446]/50 text-[10px] truncate leading-tight">• {n.title}</p>
+        <p key={i} className="text-black/50 text-[10px] truncate leading-tight">• {n.title}</p>
       ))}
     </div>
-  ) : <p className="text-[#0d0446]/30 text-[10px]">Sem notícias salvas</p>;
+  ) : <p className="text-black/30 text-[10px]">Sem notícias salvas</p>;
 }
 
 function ApresentadoresPreview() {
@@ -811,7 +811,7 @@ function ApresentadoresPreview() {
     supabase.from("apresentadores").select("id", { count: "exact", head: true }).eq("user_id", user.id)
       .then(({ count: c }) => setCount(c || 0));
   }, [user]);
-  return <p className="text-[#0d0446]/50 text-[10px]">{count} apresentador{count !== 1 ? "es" : ""} cadastrado{count !== 1 ? "s" : ""}</p>;
+  return <p className="text-black/50 text-[10px]">{count} apresentador{count !== 1 ? "es" : ""} cadastrado{count !== 1 ? "s" : ""}</p>;
 }
 
 function ProgramasPreview() {
@@ -822,7 +822,7 @@ function ProgramasPreview() {
     supabase.from("programas").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("ativo", true)
       .then(({ count: c }) => setCount(c || 0));
   }, [user]);
-  return <p className="text-[#0d0446]/50 text-[10px]">{count} programa{count !== 1 ? "s" : ""} ativo{count !== 1 ? "s" : ""}</p>;
+  return <p className="text-black/50 text-[10px]">{count} programa{count !== 1 ? "s" : ""} ativo{count !== 1 ? "s" : ""}</p>;
 }
 
 function PromosPreview() {
@@ -834,7 +834,7 @@ function PromosPreview() {
     supabase.from("promocoes").select("id", { count: "exact", head: true }).eq("user_id", user.id).gte("data_fim", today)
       .then(({ count: c }) => setCount(c || 0));
   }, [user]);
-  return <p className="text-[#0d0446]/50 text-[10px]">{count} promoção{count !== 1 ? "ões" : ""} ativa{count !== 1 ? "s" : ""}</p>;
+  return <p className="text-black/50 text-[10px]">{count} promoção{count !== 1 ? "ões" : ""} ativa{count !== 1 ? "s" : ""}</p>;
 }
 
 function PrerollPreview() {
@@ -845,7 +845,7 @@ function PrerollPreview() {
     supabase.from("comercial_preroll").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("active", true)
       .then(({ count: c }) => setCount(c || 0));
   }, [user]);
-  return <p className="text-[#0d0446]/50 text-[10px]">{count} pre-roll{count !== 1 ? "s" : ""} ativo{count !== 1 ? "s" : ""}</p>;
+  return <p className="text-black/50 text-[10px]">{count} pre-roll{count !== 1 ? "s" : ""} ativo{count !== 1 ? "s" : ""}</p>;
 }
 
 function ShoppingPreview() {
@@ -856,7 +856,7 @@ function ShoppingPreview() {
     supabase.from("shopping_products").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("active", true)
       .then(({ count: c }) => setCount(c || 0));
   }, [user]);
-  return <p className="text-[#0d0446]/50 text-[10px]">{count} produto{count !== 1 ? "s" : ""} ativo{count !== 1 ? "s" : ""}</p>;
+  return <p className="text-black/50 text-[10px]">{count} produto{count !== 1 ? "s" : ""} ativo{count !== 1 ? "s" : ""}</p>;
 }
 
 /* ========== WIDGET: Agenda ========== */
@@ -881,16 +881,16 @@ function DashboardAgendaWidget({ onNavigate }: { onNavigate: (page: Page) => voi
     <div className="flex flex-col h-full">
       <div className="flex items-center gap-2 mb-3">
         <CalendarDays size={14} className="text-[#be0101]" />
-        <p className="text-[#0d0446] font-bold text-sm">Agenda de Eventos</p>
+        <p className="text-black font-bold text-sm">Agenda de Eventos</p>
       </div>
       {events.length === 0 ? (
-        <p className="text-[#0d0446]/30 text-xs">Nenhum evento próximo</p>
+        <p className="text-black/30 text-xs">Nenhum evento próximo</p>
       ) : (
         <div className="space-y-2">
           {events.map(ev => (
             <div key={ev.id} className="px-3 py-2 rounded-lg" style={{ background: "rgba(190,1,1,0.06)" }}>
-              <p className="text-[#0d0446] text-xs font-semibold truncate">{ev.descricao || "Evento"}</p>
-              <p className="text-[#0d0446]/40 text-[10px]">
+              <p className="text-black text-xs font-semibold truncate">{ev.descricao || "Evento"}</p>
+              <p className="text-black/40 text-[10px]">
                 {new Date(ev.data + "T12:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })} — {ev.local}
               </p>
             </div>
@@ -1006,7 +1006,7 @@ function MusicProgramWidget() {
     <div>
       <div className="flex items-center gap-2 mb-3">
         <Music size={14} className="text-[#be0101]" />
-        <p className="text-[#0d0446] font-bold text-sm">No Ar</p>
+        <p className="text-black font-bold text-sm">No Ar</p>
       </div>
 
       {/* Current Program */}
@@ -1022,19 +1022,19 @@ function MusicProgramWidget() {
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5">
               <Radio size={10} className="text-red-500 animate-pulse flex-shrink-0" />
-              <p className="text-[#0d0446] text-xs font-bold truncate">{currentProgram.nome}</p>
+              <p className="text-black text-xs font-bold truncate">{currentProgram.nome}</p>
             </div>
             {apresentador?.nome && (
-              <p className="text-[#0d0446]/50 text-[10px] truncate">{apresentador.nome}</p>
+              <p className="text-black/50 text-[10px] truncate">{apresentador.nome}</p>
             )}
             <div className="flex items-center gap-2 mt-1.5">
-              <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(13,4,70,0.08)" }}>
+              <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(0,0,0,0.08)" }}>
                 <div
                   className="h-full rounded-full transition-all duration-1000"
                   style={{ width: `${progressPercent}%`, background: "linear-gradient(90deg, #960101, #be0101)" }}
                 />
               </div>
-              <span className="text-[8px] text-[#0d0446]/40 font-semibold flex-shrink-0">
+              <span className="text-[8px] text-black/40 font-semibold flex-shrink-0">
                 {currentProgram.horario_inicio} — {currentProgram.horario_fim}
               </span>
             </div>
@@ -1049,12 +1049,12 @@ function MusicProgramWidget() {
             <img src={music.capa} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
           )}
           <div className="min-w-0">
-            <p className="text-[#0d0446] text-xs font-semibold truncate">{music.titulo}</p>
-            <p className="text-[#0d0446]/50 text-[10px] truncate">{music.artista}</p>
+            <p className="text-black text-xs font-semibold truncate">{music.titulo}</p>
+            <p className="text-black/50 text-[10px] truncate">{music.artista}</p>
           </div>
         </div>
       ) : !currentProgram ? (
-        <p className="text-[#0d0446]/30 text-xs">Sem programa no momento</p>
+        <p className="text-black/30 text-xs">Sem programa no momento</p>
       ) : null}
     </div>
   );
@@ -1081,16 +1081,16 @@ function StatsWidget() {
     <div>
       <div className="flex items-center gap-2 mb-3">
         <BarChart3 size={14} className="text-[#be0101]" />
-        <p className="text-[#0d0446] font-bold text-sm">Dados Estatísticos</p>
+        <p className="text-black font-bold text-sm">Dados Estatísticos</p>
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div className="px-3 py-3 rounded-xl text-center" style={{ background: "rgba(190,1,1,0.06)" }}>
-          <p className="text-2xl font-bold text-[#0d0446]">{prerollCount}</p>
-          <p className="text-[#0d0446]/40 text-[10px] mt-0.5">Pre-rolls Ativos</p>
+          <p className="text-2xl font-bold text-black">{prerollCount}</p>
+          <p className="text-black/40 text-[10px] mt-0.5">Pre-rolls Ativos</p>
         </div>
         <div className="px-3 py-3 rounded-xl text-center" style={{ background: "rgba(190,1,1,0.06)" }}>
-          <p className="text-2xl font-bold text-[#0d0446]">{channelCount}</p>
-          <p className="text-[#0d0446]/40 text-[10px] mt-0.5">Canais Ativos</p>
+          <p className="text-2xl font-bold text-black">{channelCount}</p>
+          <p className="text-black/40 text-[10px] mt-0.5">Canais Ativos</p>
         </div>
       </div>
     </div>
@@ -1192,7 +1192,7 @@ function DashboardWeatherWidget() {
     <div>
       <div className="flex items-center gap-2 mb-3">
         <CloudSun size={14} className="text-[#be0101]" />
-        <p className="text-[#0d0446] font-bold text-sm">Previsão do Tempo</p>
+        <p className="text-black font-bold text-sm">Previsão do Tempo</p>
       </div>
       {weather ? (
         <div>
@@ -1203,13 +1203,13 @@ function DashboardWeatherWidget() {
             </div>
             <div>
               <p className="text-3xl font-bold text-[#be0101] leading-none">{weather.current.temp}°</p>
-              <p className="text-[#0d0446] text-[10px] font-semibold mt-0.5">{weather.city}</p>
-              <p className="text-[#0d0446]/50 text-[9px]">{getLabel(weather.current.weatherCode)}</p>
+              <p className="text-black text-[10px] font-semibold mt-0.5">{weather.city}</p>
+              <p className="text-black/50 text-[9px]">{getLabel(weather.current.weatherCode)}</p>
             </div>
             <div className="ml-auto text-right">
-              <p className="text-[#0d0446]/40 text-[9px]">↑ {weather.current.tempMax}° ↓ {weather.current.tempMin}°</p>
-              <p className="text-[#0d0446]/40 text-[9px]">💧 {weather.current.humidity}%</p>
-              <p className="text-[#0d0446]/40 text-[9px]">🌧 {weather.current.rainChance}%</p>
+              <p className="text-black/40 text-[9px]">↑ {weather.current.tempMax}° ↓ {weather.current.tempMin}°</p>
+              <p className="text-black/40 text-[9px]">💧 {weather.current.humidity}%</p>
+              <p className="text-black/40 text-[9px]">🌧 {weather.current.rainChance}%</p>
             </div>
           </div>
 
@@ -1220,18 +1220,18 @@ function DashboardWeatherWidget() {
                 {WeatherIconComp && <WeatherIconComp code={weather.tomorrow.weatherCode} size={28} forceDay />}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[#0d0446]/60 text-[9px] font-bold uppercase">{formatTomorrow(weather.tomorrow.date)}</p>
-                <p className="text-[#0d0446] text-xs font-bold">{weather.tomorrow.tempMax}° / {weather.tomorrow.tempMin}°</p>
+                <p className="text-black/60 text-[9px] font-bold uppercase">{formatTomorrow(weather.tomorrow.date)}</p>
+                <p className="text-black text-xs font-bold">{weather.tomorrow.tempMax}° / {weather.tomorrow.tempMin}°</p>
               </div>
               <div className="text-right">
-                <p className="text-[#0d0446]/40 text-[9px]">{getLabel(weather.tomorrow.weatherCode)}</p>
-                <p className="text-[#0d0446]/40 text-[9px]">🌧 {weather.tomorrow.rainChance}%</p>
+                <p className="text-black/40 text-[9px]">{getLabel(weather.tomorrow.weatherCode)}</p>
+                <p className="text-black/40 text-[9px]">🌧 {weather.tomorrow.rainChance}%</p>
               </div>
             </div>
           )}
         </div>
       ) : (
-        <p className="text-[#0d0446]/30 text-xs">Configure uma cidade no módulo Previsão do Tempo</p>
+        <p className="text-black/30 text-xs">Configure uma cidade no módulo Previsão do Tempo</p>
       )}
     </div>
   );
