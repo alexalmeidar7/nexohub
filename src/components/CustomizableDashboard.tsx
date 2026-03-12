@@ -1375,9 +1375,18 @@ function DashboardPlayerWidget() {
   const goPrev = () => { if (channels.length > 1) switchTo((activeIdx - 1 + channels.length) % channels.length); };
 
   const toggleMute = () => {
-    const audio = audioRef.current;
-    if (audio) { audio.muted = !audio.muted; setIsMuted(audio.muted); }
-    if (videoRef.current) videoRef.current.muted = !isMuted;
+    const newMuted = !isMuted;
+    setIsMuted(newMuted);
+    if (audioRef.current) audioRef.current.muted = newMuted;
+    if (videoRef.current) videoRef.current.muted = newMuted;
+  };
+
+  const handleVolume = (val: number) => {
+    setVolume(val);
+    if (audioRef.current) audioRef.current.volume = val;
+    if (videoRef.current) videoRef.current.volume = val;
+    if (val === 0) setIsMuted(true);
+    else if (isMuted) { setIsMuted(false); if (audioRef.current) audioRef.current.muted = false; if (videoRef.current) videoRef.current.muted = false; }
   };
 
   const channelLogo = activeChannel?.background_url || activeChannel?.logo_url || activeChannel?.cover_url;
