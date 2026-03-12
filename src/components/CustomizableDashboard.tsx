@@ -1573,7 +1573,7 @@ function DashboardPlayerWidget() {
           />
           <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(180deg, transparent 60%, rgba(0,0,0,0.6) 100%)" }} />
           <button
-            onClick={() => { setShowVideo(false); setIsPlaying(false); if (videoRef.current) { videoRef.current.pause(); videoRef.current.src = ""; } }}
+            onClick={() => stopAll()}
             className="absolute top-2 right-2 w-5 h-5 rounded-full flex items-center justify-center z-10"
             style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)" }}
           >
