@@ -1511,6 +1511,10 @@ function DashboardPlayerWidget() {
               step={0.01}
               value={isMuted ? 0 : volume}
               onChange={e => handleVolume(Number(e.target.value))}
+              onMouseDown={e => e.stopPropagation()}
+              onTouchStart={e => e.stopPropagation()}
+              onDragStart={e => { e.stopPropagation(); e.preventDefault(); }}
+              draggable={false}
               className="w-14 h-1 appearance-none rounded-full cursor-pointer flex-shrink-0"
               style={{
                 background: `linear-gradient(to right, #be0101 ${(isMuted ? 0 : volume) * 100}%, rgba(255,255,255,0.15) ${(isMuted ? 0 : volume) * 100}%)`,
