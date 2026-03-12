@@ -269,7 +269,6 @@ export default function RoteiroPrograma() {
     const t2 = setTimeout(tryRestore, 300);
     return () => { clearTimeout(t1); clearTimeout(t2); };
   }, [showRoteiro, roteiroTexto]);
-  const [showWhatsAppDialog, setShowWhatsAppDialog] = useState(false);
 
   const editarRoteiro = (r: any) => {
     setEstudio(r.estudio || "");
