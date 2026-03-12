@@ -1209,8 +1209,11 @@ ${perguntaActions}
             {/* Header */}
             <div className="mb-6">
               <div className="flex items-start justify-between gap-4">
+                {numeroRoteiro && (
+                  <p className="text-3xl font-black mb-1" style={{ color: "#268ffa" }}>#{numeroRoteiro}</p>
+                )}
                 <h1 className="text-xl font-bold uppercase mb-2" style={{ color: "#0d0446" }}>
-                  {roteiroTitulo || "Roteiro"}{numeroRoteiro ? ` #${numeroRoteiro}` : ""}
+                  {roteiroTitulo || "Roteiro"}
                 </h1>
                 {(() => {
                   const prog = programas.find(p => p.nome === programaNome);

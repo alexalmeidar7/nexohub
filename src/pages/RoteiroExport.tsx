@@ -71,8 +71,11 @@ export default function RoteiroExport() {
         {/* Header */}
         <div className="mb-8 print:mb-6">
           <div className="flex items-start justify-between gap-4">
+            {data.numeroRoteiro && (
+              <p className="text-3xl font-black mb-1" style={{ color: "#268ffa" }}>#{data.numeroRoteiro}</p>
+            )}
             <h1 className="text-2xl font-bold uppercase mb-2" style={{ color: "#0d0446" }}>
-              {data.titulo || "Roteiro"}{data.numeroRoteiro ? ` #${data.numeroRoteiro}` : ""}
+              {data.titulo || "Roteiro"}
             </h1>
             {data.logoUrl && (
               <img
