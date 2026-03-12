@@ -1307,6 +1307,7 @@ function DashboardPlayerWidget() {
   const isVideo = channelType.includes("video");
 
   const stopAll = () => {
+    if (hlsRef.current) { hlsRef.current.destroy(); hlsRef.current = null; }
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.removeAttribute("src");
