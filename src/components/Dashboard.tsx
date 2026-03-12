@@ -320,7 +320,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       {/* Dark overlay for readability */}
       <div className="absolute inset-0 z-0" style={{ background: "rgba(0,0,0,0.3)" }} />
       {/* Mobile top bar */}
-      <div className="lg:hidden flex items-center justify-between px-4 pt-3 pb-2">
+      <div className="lg:hidden flex items-center justify-between px-4 pt-3 pb-2 relative z-[1]">
         <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="p-2 rounded-lg" style={{ backgroundColor: "rgba(0,0,0,0.4)" }}>
           {mobileMenuOpen ? <X size={20} className="text-white" /> : <Menu size={20} className="text-white" />}
         </button>
