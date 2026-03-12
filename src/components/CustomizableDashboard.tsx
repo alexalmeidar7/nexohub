@@ -1387,18 +1387,22 @@ function DashboardPlayerWidget({ onVideoChange }: { onVideoChange?: (active: boo
   const switchTo = (idx: number) => {
     destroyHls();
     if (audioRef.current) { audioRef.current.pause(); audioRef.current.removeAttribute("src"); audioRef.current.load(); }
-    if (videoRef.current) { videoRef.current.pause(); videoRef.current.removeAttribute("src"); videoRef.current.load(); }
-    setShowVideo(false);
     setActiveIdx(idx);
     const ch = channels[idx];
     const chIsVideo = (ch?.type || "").includes("video");
     if (isPlaying) {
       if (chIsVideo) {
-        setTimeout(() => setShowVideo(true), 50);
+        // Keep showVideo true, just let useEffect re-init with new URL
+        setShowVideo(true);
       } else {
+        if (videoRef.current) { videoRef.current.pause(); videoRef.current.removeAttribute("src"); videoRef.current.load(); }
+        setShowVideo(false);
         const audio = audioRef.current;
         if (audio) { audio.src = ch.url; audio.play().catch(() => {}); }
       }
+    } else {
+      if (videoRef.current) { videoRef.current.pause(); videoRef.current.removeAttribute("src"); videoRef.current.load(); }
+      setShowVideo(false);
     }
   };
 
