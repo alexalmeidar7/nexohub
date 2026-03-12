@@ -165,7 +165,7 @@ export default function WeatherWidget({ onNavigate }: { onNavigate?: (page: any)
         <div className="flex-1 min-w-0">
           <span className="text-[9px] font-bold tracking-wider text-white/40 uppercase">Agora</span>
           <div className="flex items-center gap-1.5 mt-0.5">
-            <span className="text-2xl leading-none">{getIcon(weather.weatherCode)}</span>
+            <WeatherIcon code={weather.weatherCode} size={32} />
             <p className="text-2xl font-bold leading-none" style={{ color: "#268ffa" }}>{weather.temp}°</p>
           </div>
           <p className="font-semibold text-[11px] text-white truncate mt-0.5">{weather.city}</p>
