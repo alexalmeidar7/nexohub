@@ -353,10 +353,11 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
           <div className="flex items-start gap-3 sm:gap-4 flex-col sm:flex-row">
             {/* Selo / Logo do programa */}
             {onAirProgram.selo && (
-              <img
-                src={onAirProgram.selo}
-                alt={onAirProgram.nome}
-                className="w-44 h-44 rounded-xl object-contain mb-3"
+               <img
+                 src={onAirProgram.selo}
+                 alt={onAirProgram.nome}
+                 className="w-28 h-28 sm:w-36 sm:h-36 lg:w-44 lg:h-44 rounded-xl object-contain"
+               />
               />
             )}
 
