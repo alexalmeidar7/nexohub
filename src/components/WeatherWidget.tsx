@@ -6,8 +6,8 @@ interface WidgetWeather {
   temp: number;
   tempMin: number;
   tempMax: number;
-  humidity: number;
-  rainChance: number;
+  tomorrowMin: number;
+  tomorrowMax: number;
   weatherCode: number;
 }
 
