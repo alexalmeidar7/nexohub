@@ -13,7 +13,7 @@ export function usePdfPopup() {
   const [state, setState] = useState<PdfPopupState>({ status: "idle", blobUrl: null, filename: "roteiro.pdf" });
   const blobUrlRef = useRef<string | null>(null);
 
-  const generate = useCallback(async (element: HTMLElement, filename = "roteiro.pdf") => {
+  const generate = useCallback(async (element: HTMLElement, filename = "roteiro.pdf", logoUrl?: string | null) => {
     // Cleanup previous blob
     if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current);
 
@@ -21,7 +21,7 @@ export function usePdfPopup() {
 
     try {
       const { generatePdfBlob } = await import("@/lib/generatePdf");
-      const blob = await generatePdfBlob(element);
+      const blob = await generatePdfBlob(element, logoUrl);
       const url = URL.createObjectURL(blob);
       blobUrlRef.current = url;
       setState({ status: "ready", blobUrl: url, filename });
