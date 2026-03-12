@@ -510,6 +510,7 @@ ${perguntaActions}
                   <Building2 size={12} style={{ color: "#268ffa" }} />Estúdio
                 </label>
                 <select
+                  data-field="estudio"
                   value={estudio}
                   onChange={e => handleEstudioChange(e.target.value)}
                   className="w-full px-3 py-2.5 rounded-xl text-xs outline-none transition-all focus:ring-2 focus:ring-[#268ffa]/20"
@@ -538,6 +539,7 @@ ${perguntaActions}
                   <FileText size={12} style={{ color: "#268ffa" }} />Programa
                 </label>
                 <select
+                  data-field="programa"
                   value={programaNome}
                   onChange={e => handleProgramaChange(e.target.value)}
                   className="w-full px-3 py-2.5 rounded-xl text-xs outline-none transition-all focus:ring-2 focus:ring-[#268ffa]/20"
@@ -615,6 +617,7 @@ ${perguntaActions}
                   <Clock size={12} style={{ color: "#268ffa" }} />Horário
                 </label>
                 <input
+                  data-field="horario"
                   type="time"
                   value={horario}
                   onChange={e => setHorario(e.target.value)}
@@ -629,6 +632,7 @@ ${perguntaActions}
                   <Type size={12} style={{ color: "#268ffa" }} />Título do Roteiro
                 </label>
                 <input
+                  data-field="titulo"
                   value={roteiroTitulo}
                   onChange={e => setRoteiroTitulo(e.target.value)}
                   placeholder="Ex: Gravação de Podcast"
@@ -1147,6 +1151,40 @@ ${perguntaActions}
             {/* Salvar / Exportar */}
             <button
               onClick={async () => {
+                // Validate required fields
+                const requiredFields: { field: string; value: string; label: string }[] = [
+                  { field: "estudio", value: estudio, label: "Estúdio" },
+                  { field: "programa", value: programaNome, label: "Programa" },
+                  { field: "horario", value: horario, label: "Horário" },
+                  { field: "titulo", value: roteiroTitulo, label: "Título" },
+                ];
+                const emptyFields = requiredFields.filter(f => !f.value.trim());
+                if (emptyFields.length > 0) {
+                  // Clear previous blink animations
+                  document.querySelectorAll("[data-field]").forEach(el => {
+                    (el as HTMLElement).style.animation = "";
+                    (el as HTMLElement).style.borderColor = "";
+                  });
+                  // Highlight and scroll to first empty field
+                  const firstEmpty = document.querySelector(`[data-field="${emptyFields[0].field}"]`) as HTMLElement;
+                  emptyFields.forEach(f => {
+                    const el = document.querySelector(`[data-field="${f.field}"]`) as HTMLElement;
+                    if (el) {
+                      el.style.borderColor = "#dc2626";
+                      el.style.animation = "blink-border 0.6s ease-in-out 4";
+                      el.addEventListener("animationend", () => {
+                        el.style.animation = "";
+                        el.style.borderColor = "";
+                      }, { once: true });
+                    }
+                  });
+                  if (firstEmpty) {
+                    firstEmpty.scrollIntoView({ behavior: "smooth", block: "center" });
+                    firstEmpty.focus();
+                  }
+                  toast.error(`Preencha o campo: ${emptyFields[0].label}`);
+                  return;
+                }
                 await salvarRoteiro();
                 setShowExportView(true);
                 if (editingRoteiroId) {
