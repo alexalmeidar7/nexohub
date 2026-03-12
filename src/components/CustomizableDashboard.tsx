@@ -433,7 +433,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                     maxHeight: item.widgetType === "agenda" ? "240px" : "none",
                     overflow: item.widgetType === "player" ? "visible" : "hidden",
                     transition: "margin-top 0.4s ease, max-height 0.4s ease, min-height 0.4s ease",
-                    marginTop: (item.widgetType === "player" && playerVideoActive === item.id) ? "-150px" : "0px",
+                    marginTop: (item.widgetType === "player" && playerVideoActive === item.id) ? "-220px" : "0px",
                     zIndex: (item.widgetType === "player" && playerVideoActive === item.id) ? 20 : undefined,
                   }}
                   onDragOver={(e) => handleDragOver(e, item.id)}
