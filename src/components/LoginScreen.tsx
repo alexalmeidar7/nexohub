@@ -68,9 +68,9 @@ export default function LoginScreen() {
               onChange={(e) => setEmail(e.target.value)}
               className="w-full rounded-full px-5 py-2.5 outline-none transition-colors"
               style={{ fontSize: "12px", color: "#0f1058", border: "2px solid #0d379a", backgroundColor: "#fff" }}
-              onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#268ffa")}
+              onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#be0101")}
               onMouseLeave={(e) => { if (document.activeElement !== e.currentTarget) e.currentTarget.style.borderColor = "#0d379a"; }}
-              onFocus={(e) => (e.currentTarget.style.borderColor = "#268ffa")}
+              onFocus={(e) => (e.currentTarget.style.borderColor = "#be0101")}
               onBlur={(e) => (e.currentTarget.style.borderColor = "#0d379a")}
             />
             <input
@@ -81,9 +81,9 @@ export default function LoginScreen() {
               onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
               className="w-full rounded-full px-5 py-2.5 outline-none transition-colors"
               style={{ fontSize: "12px", color: "#0f1058", border: "2px solid #0d379a", backgroundColor: "#fff" }}
-              onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#268ffa")}
+              onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#be0101")}
               onMouseLeave={(e) => { if (document.activeElement !== e.currentTarget) e.currentTarget.style.borderColor = "#0d379a"; }}
-              onFocus={(e) => (e.currentTarget.style.borderColor = "#268ffa")}
+              onFocus={(e) => (e.currentTarget.style.borderColor = "#be0101")}
               onBlur={(e) => (e.currentTarget.style.borderColor = "#0d379a")}
             />
 
@@ -94,7 +94,7 @@ export default function LoginScreen() {
                 onClick={() => { setShowForgot(!showForgot); setError(""); }}
                 className="transition-colors duration-200"
                 style={{ fontSize: "12px", color: "#0f1058" }}
-                onMouseEnter={(e) => (e.currentTarget.style.color = "#268ffa")}
+                onMouseEnter={(e) => (e.currentTarget.style.color = "#be0101")}
                 onMouseLeave={(e) => (e.currentTarget.style.color = "#0f1058")}
               >
                 Esqueci a senha
@@ -118,7 +118,7 @@ export default function LoginScreen() {
                 }}
               >
                 {loading ? (
-                  <Loader2 size={20} className="animate-spin" style={{ color: "#268ffa" }} />
+                  <Loader2 size={20} className="animate-spin" style={{ color: "#be0101" }} />
                 ) : (
                   <>
                     entrar
@@ -154,7 +154,7 @@ export default function LoginScreen() {
                   onClick={closeForgot}
                   className="mt-2 font-medium transition-colors duration-200 text-white"
                   style={{ fontSize: "12px" }}
-                  onMouseEnter={(e) => (e.currentTarget.style.color = "#268ffa")}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = "#be0101")}
                   onMouseLeave={(e) => (e.currentTarget.style.color = "#ffffff")}
                 >
                   Fechar
@@ -173,9 +173,9 @@ export default function LoginScreen() {
                   onKeyDown={(e) => e.key === "Enter" && handleForgot()}
                   className="w-full rounded-full px-5 py-2.5 outline-none transition-colors"
                   style={{ fontSize: "12px", color: "#0f1058", border: "2px solid rgba(255,255,255,0.3)", backgroundColor: "#fff" }}
-                  onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#268ffa")}
+                  onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#be0101")}
                   onMouseLeave={(e) => { if (document.activeElement !== e.currentTarget) e.currentTarget.style.borderColor = "#0d379a"; }}
-                  onFocus={(e) => (e.currentTarget.style.borderColor = "#268ffa")}
+                  onFocus={(e) => (e.currentTarget.style.borderColor = "#be0101")}
                   onBlur={(e) => (e.currentTarget.style.borderColor = "#0d379a")}
                 />
                 {forgotError && <p className="text-red-400 text-center" style={{ fontSize: "12px" }}>{forgotError}</p>}
@@ -184,7 +184,7 @@ export default function LoginScreen() {
                     onClick={closeForgot}
                     className="flex items-center gap-1 transition-colors duration-200 text-white"
                     style={{ fontSize: "12px" }}
-                    onMouseEnter={(e) => (e.currentTarget.style.color = "#268ffa")}
+                    onMouseEnter={(e) => (e.currentTarget.style.color = "#be0101")}
                     onMouseLeave={(e) => (e.currentTarget.style.color = "#ffffff")}
                   >
                     <X size={14} /> Fechar
@@ -193,20 +193,20 @@ export default function LoginScreen() {
                     onClick={handleForgot}
                     disabled={forgotLoading}
                     className="group flex items-center gap-3 px-6 py-2 rounded-full font-medium disabled:opacity-50 transition-all duration-300 text-white border-2 border-transparent"
-                    style={{ fontSize: "12px", backgroundColor: "#268ffa" }}
+                    style={{ fontSize: "12px", backgroundColor: "#be0101" }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.backgroundColor = "transparent";
                       e.currentTarget.style.borderColor = "rgba(255,255,255,0.5)";
                       e.currentTarget.style.color = "#ffffff";
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = "#268ffa";
+                      e.currentTarget.style.backgroundColor = "#be0101";
                       e.currentTarget.style.borderColor = "transparent";
                       e.currentTarget.style.color = "#ffffff";
                     }}
                   >
                     {forgotLoading ? (
-                      <Loader2 size={20} className="animate-spin" style={{ color: "#268ffa" }} />
+                      <Loader2 size={20} className="animate-spin" style={{ color: "#be0101" }} />
                     ) : (
                       <>
                         enviar
@@ -221,8 +221,8 @@ export default function LoginScreen() {
         </div>
       </div>
 
-      <p className="mt-8 text-center text-white/60" style={{ fontSize: "11px" }}>
-        Copyrighted 2026 - Todos os direitos reservados a Nexo Soluções Visuais
+      <p className="text-center mt-8 text-white/50" style={{ fontSize: "11px" }}>
+        © {new Date().getFullYear()} Nexo Soluções Visuais
       </p>
     </div>
   );
