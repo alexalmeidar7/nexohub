@@ -79,7 +79,7 @@ export default function RoteiroPrograma() {
   const [editingRoteiroId, setEditingRoteiroId] = useState<string | null>(null);
   const [numeroRoteiro, setNumeroRoteiro] = useState<number | null>(null);
   const [savingRoteiro, setSavingRoteiro] = useState(false);
-  const [showParticipantForm, setShowParticipantForm] = useState(true);
+  const [showParticipantForm, setShowParticipantForm] = useState(false);
   const [showExportView, setShowExportView] = useState(false);
   const [apresentadorStatus, setApresentadorStatus] = useState<{ editado: boolean; editadoAt: string | null; login: string | null } | null>(null);
   const [mergeCells, setMergeCells] = useState<HTMLTableCellElement[]>([]);
