@@ -294,11 +294,11 @@ export default function RoteiroPrograma() {
 
   const handleMontarRoteiro = () => {
     const prog = programas.find(p => p.nome === programaNome);
-    const defaultParticipantes: { nome: string; categoria: string; cargo: string; instagram: string }[] = [];
+    const defaultParticipantes: { nome: string; categoria: string; cargo: string; instagram: string; whatsapp?: string }[] = [];
     if (prog?.apresentador_id) {
       const apres = apresentadores.find(a => a.id === prog.apresentador_id);
       if (apres) {
-        defaultParticipantes.push({ nome: apres.nome, categoria: apres.cargo || "Apresentador(a)", cargo: "", instagram: (apres as any).instagram || "" });
+        defaultParticipantes.push({ nome: apres.nome, categoria: apres.cargo || "Apresentador(a)", cargo: apres.cargo || "", instagram: apres.instagram || "", whatsapp: apres.whatsapp || "" });
       }
     }
     setParticipantes(defaultParticipantes);
