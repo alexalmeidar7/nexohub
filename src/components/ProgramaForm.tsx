@@ -506,13 +506,13 @@ export default function ProgramaForm() {
 
     if (editingId) {
       await supabase.from("programas").update({
-        nome: nome.trim(), apresentador_id: apresentadorId || null, selo, capa, dias_semana: diasSemana,
+        nome: nome.trim(), apresentador_id: apresentadorId || null, selo, capa, thumb, dias_semana: diasSemana,
         horario_inicio: horarioInicio, horario_fim: horarioFim, estudio: estudio.trim(), ativo, descricao: descricao.trim(),
         variavel: false, data_variavel: null, classificacao_etaria: classificacaoEtaria || null, tipo_programa: tipoPrograma || null,
       } as any).eq("id", editingId);
     } else {
       await supabase.from("programas").insert({
-        user_id: user.id, nome: nome.trim(), apresentador_id: apresentadorId || null, selo, capa, dias_semana: diasSemana,
+        user_id: user.id, nome: nome.trim(), apresentador_id: apresentadorId || null, selo, capa, thumb, dias_semana: diasSemana,
         horario_inicio: horarioInicio, horario_fim: horarioFim, estudio: estudio.trim(), ativo, descricao: descricao.trim(),
         variavel: false, data_variavel: null, classificacao_etaria: classificacaoEtaria || null, tipo_programa: tipoPrograma || null,
       } as any);
