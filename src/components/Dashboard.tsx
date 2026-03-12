@@ -422,10 +422,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       )}
 
       {/* Navigation bar - floating rounded box with company name */}
-      <div className="hidden lg:flex items-center gap-4 px-8 pt-5 pb-1 relative z-[60]">
+      <div className="hidden lg:flex items-center gap-2 xl:gap-4 px-4 xl:px-8 pt-5 pb-1 relative z-[60]">
         {/* Menu box */}
         <div
-          className="flex items-center px-5 py-2.5"
+          className="flex items-center px-3 xl:px-5 py-2.5 overflow-x-auto scrollbar-hide"
           style={{
             background: "rgba(0, 0, 0, 0.85)",
             backdropFilter: "blur(20px) saturate(1.6)",
@@ -435,7 +435,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             boxShadow: "0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.06)",
           }}
         >
-          <img src={logoMenu} alt="NexoHUB" className="h-4 mr-5 flex-shrink-0 opacity-90" />
+          <img src={logoMenu} alt="NexoHUB" className="h-4 mr-3 xl:mr-5 flex-shrink-0 opacity-90" />
 
           {sidebarMenu.filter(item => {
             if (item.label === "home" || item.label === "cadastros" || item.label === "ferramentas") return true;
@@ -544,12 +544,12 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       </div>
 
       {/* Company name below menu */}
-      <div className="hidden lg:block px-8 pt-2 relative z-[50]">
-        <h1 className="font-bold text-white text-lg leading-tight truncate">{empresa.nome || "Dashboard"}</h1>
+      <div className="hidden lg:block px-4 xl:px-8 pt-2 relative z-[50]">
+        <h1 className="font-bold text-white text-base xl:text-lg leading-tight truncate">{empresa.nome || "Dashboard"}</h1>
         <p className="text-[10px] truncate" style={{ color: "rgba(255,255,255,0.4)" }}>{user?.email || ""}</p>
       </div>
 
-      <div className="flex gap-[30px] pt-3 flex-1 min-h-0 px-4 lg:px-8 relative z-[1]">
+      <div className="flex gap-4 lg:gap-[30px] pt-3 flex-1 min-h-0 px-3 sm:px-4 lg:px-4 xl:px-8 relative z-[1]">
 
         {/* === MAIN CONTENT === */}
         <main className="flex-1 flex flex-col min-w-0">
@@ -569,7 +569,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               <span className="text-white font-semibold text-sm">{pageTitle[currentPage]}</span>
             </div>
           )}
-          <div className={`flex-1 overflow-y-auto overflow-x-hidden rounded-2xl ${currentPage !== "dashboard" ? "mv-content-area" : ""}`} style={currentPage === "dashboard" ? {} : { padding: "1rem" }}>
+          <div className={`flex-1 overflow-y-auto overflow-x-hidden rounded-xl lg:rounded-2xl ${currentPage !== "dashboard" ? "mv-content-area" : ""}`} style={currentPage === "dashboard" ? {} : { padding: "0.75rem" }}>
             <Suspense fallback={<ModulePageSkeleton />}>
               {currentPage === "dashboard" && <CustomizableDashboard onNavigate={setCurrentPage} />}
               {currentPage === "previsao" && <PrevisaoTempo />}

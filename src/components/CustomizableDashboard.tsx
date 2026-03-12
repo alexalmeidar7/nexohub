@@ -273,7 +273,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
       {items.filter(i => i.type === "link").length > 0 && (
         <div className="mb-6">
           <p className="text-white/70 text-[10px] font-bold uppercase tracking-[0.15em] mb-3 animate-fade-in">Atalhos rápidos</p>
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-2 sm:gap-3">
             {items.filter(i => i.type === "link").map(item => {
               const Icon = getIcon(item.linkIcon || "Link2");
               const isDragging = draggedId === item.id;
@@ -290,7 +290,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                   onClick={() => handleLinkClick(item)}
                 >
                   <div
-                    className="w-[90px] h-[90px] rounded-2xl flex flex-col items-center pt-[18px] transition-all hover:scale-[1.06] hover:shadow-lg"
+                    className={`w-[70px] h-[70px] sm:w-[90px] sm:h-[90px] rounded-2xl flex flex-col items-center pt-[14px] sm:pt-[18px] transition-all hover:scale-[1.06] hover:shadow-lg`}
                     style={{
                       background: isDragOver
                         ? "linear-gradient(145deg, #be0101, #960101)"
@@ -311,8 +311,8 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                       e.currentTarget.style.boxShadow = "0 4px 15px rgba(150,1,1,0.35), inset 0 1px 0 rgba(255,255,255,0.15)";
                     }}
                   >
-                    <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "rgba(255,255,255,0.2)" }}>
-                      <Icon size={18} className="text-white" />
+                    <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "rgba(255,255,255,0.2)" }}>
+                      <Icon size={16} className="text-white sm:hidden" /><Icon size={18} className="text-white hidden sm:block" />
                     </div>
                     <span className="text-white text-[9px] font-semibold text-center leading-tight px-1.5 max-w-full truncate mt-1.5">{item.linkLabel}</span>
                     {item.linkExternal && <ExternalLink size={7} className="text-white/40 absolute bottom-1.5 right-1.5" />}
@@ -332,7 +332,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
             {/* Add button */}
             <div
               onClick={() => { setShowAddDialog(true); setAddStep("choose"); }}
-              className="w-[90px] h-[90px] rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all hover:scale-[1.06]"
+              className="w-[70px] h-[70px] sm:w-[90px] sm:h-[90px] rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all hover:scale-[1.06]"
               style={{
                 background: "rgba(255,255,255,0.08)",
                 border: "1.5px dashed rgba(255,255,255,0.25)",
@@ -350,16 +350,16 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
       {/* On-Air Program Info */}
       {onAirProgram && (
         <div className="mb-4 animate-fade-in">
-          <div className="flex flex-col items-start">
+          <div className="flex items-start gap-3 sm:gap-4 flex-col sm:flex-row">
             {/* Selo / Logo do programa */}
             {onAirProgram.selo && (
-              <img
-                src={onAirProgram.selo}
-                alt={onAirProgram.nome}
-                className="w-44 h-44 rounded-xl object-contain mb-3"
-              />
+               <img
+                 src={onAirProgram.selo}
+                 alt={onAirProgram.nome}
+                 className="w-28 h-28 sm:w-36 sm:h-36 lg:w-44 lg:h-44 rounded-xl object-contain"
+               />
             )}
-
+            <div className="flex-1 min-w-0">
             {/* Ao vivo + horário + classificação */}
             <div className="flex items-center gap-3 mb-2">
               <div className="flex items-center gap-1.5">
@@ -389,7 +389,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
 
             {/* Descrição */}
             {onAirProgram.descricao && (
-              <p className="text-white text-[11px] leading-relaxed line-clamp-3 mb-2" style={{ maxWidth: 400 }}>{onAirProgram.descricao}</p>
+              <p className="text-white text-[11px] leading-relaxed line-clamp-2 sm:line-clamp-3 mb-2" style={{ maxWidth: 400 }}>{onAirProgram.descricao}</p>
             )}
 
             {/* Apresentador */}
@@ -409,6 +409,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                 </span>
               </div>
             )}
+            </div>
           </div>
         </div>
       )}
@@ -481,7 +482,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
         <div className="mb-6">
           <div
             onClick={() => { setShowAddDialog(true); setAddStep("choose"); }}
-            className="w-[90px] h-[90px] rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all hover:scale-[1.06]"
+            className="w-[70px] h-[70px] sm:w-[90px] sm:h-[90px] rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all hover:scale-[1.06]"
             style={{
               background: "rgba(255,255,255,0.08)",
               border: "1.5px dashed rgba(255,255,255,0.25)",
