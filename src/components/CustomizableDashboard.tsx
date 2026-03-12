@@ -1480,14 +1480,14 @@ function DashboardPlayerWidget({ onVideoChange }: { onVideoChange?: (active: boo
         </div>
       )}
 
-      {/* Spacer to push controls to bottom */}
-      <div className="flex-1" />
+      {/* Spacer to push controls to bottom & center vertically */}
+      <div className="flex-1 min-h-0" />
 
-      {/* Controls row - always at bottom */}
+      {/* Controls row - vertically centered & bottom-aligned */}
       {channels.length === 0 ? (
-        <p className="text-white/30 text-xs relative z-10">Nenhum canal cadastrado</p>
+        <p className="text-white/30 text-xs relative z-10 my-auto">Nenhum canal cadastrado</p>
       ) : (
-        <div className="relative z-10 flex items-center gap-3 flex-shrink-0">
+        <div className="relative z-10 flex items-center gap-2.5 flex-shrink-0 pb-0.5">
           {channels.length > 1 && (
             <button onClick={goPrev} className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-all hover:scale-110" style={{ background: "rgba(255,255,255,0.1)" }} onMouseEnter={e => { e.currentTarget.style.background = "rgba(190,1,1,0.4)"; }} onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.1)"; }}>
               <ChevronLeft size={14} className="text-white/70" />
