@@ -823,11 +823,15 @@ ${perguntaActions}
                 </button>
               )}
             </div>
-          </div>
+            </div>
 
-          {/* Texto Roteiro */}
-          <div className="rounded-xl p-4 mb-4" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.08)" }}>
-            <p className="text-xs font-bold mb-3" style={{ color: "#0d0446" }}>Escreva seu roteiro</p>
+            {/* Divider */}
+            <div className="h-px" style={{ backgroundColor: "rgba(13,4,70,0.06)" }} />
+
+            {/* Texto Roteiro */}
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-wider mb-3" style={{ color: "rgba(13,4,70,0.4)" }}>Conteúdo do roteiro</p>
+              <div className="rounded-xl p-4" style={{ backgroundColor: "rgba(13,4,70,0.02)", border: "1px solid rgba(13,4,70,0.06)" }}>
 
             {/* Toolbar */}
             <div className="flex flex-wrap items-center gap-1 mb-3 pb-3" style={{ borderBottom: "1px solid rgba(13,4,70,0.08)" }}>
