@@ -354,7 +354,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
               <img
                 src={onAirProgram.selo}
                 alt={onAirProgram.nome}
-                className="w-40 h-40 rounded-xl object-contain mb-3"
+                className="w-56 h-56 rounded-xl object-contain mb-3"
               />
             )}
 
