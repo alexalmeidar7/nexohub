@@ -58,7 +58,7 @@ export default function RoteiroExport() {
           const el = document.getElementById("roteiro-export-page-content");
           if (el) {
             const safeName = (data.programaNome || "roteiro").replace(/\s+/g, "_").toLowerCase();
-            pdfPopup.generate(el, `roteiro_${safeName}.pdf`);
+            pdfPopup.generate(el, `roteiro_${safeName}.pdf`, data.logoUrl);
           }
         }} className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold text-white hover:opacity-90 transition" style={{ backgroundColor: "#268ffa" }}>
           <Download size={14} />
