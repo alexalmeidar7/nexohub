@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CalendarIcon, FileText, Building2, Clock, Plus, X, Download, UserPlus, Check, Bold, Underline, Highlighter, AlignLeft, AlignCenter, AlignRight, List, ListOrdered, Type, Trash2, Pencil, Save, History, ArrowLeft, Send, MessageSquare, Code2, Copy, Columns } from "lucide-react";
+import { CalendarIcon, FileText, Building2, Clock, Plus, X, Download, UserPlus, Check, Bold, Underline, Highlighter, AlignLeft, AlignCenter, AlignRight, List, ListOrdered, Type, Trash2, Pencil, Save, History, ArrowLeft, Send, MessageSquare, Code2, Copy, Columns, Loader2 } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
@@ -1177,16 +1177,42 @@ ${perguntaActions}
               voltar ao roteiro
             </button>
             <div className="flex items-center gap-2 print:hidden flex-wrap">
-              <button onClick={() => {
-                const el = document.getElementById("roteiro-export-content");
-                if (el) {
-                  const safeName = (programaNome || "roteiro").replace(/\s+/g, "_").toLowerCase();
-                  pdfPopup.generate(el, `roteiro_${safeName}.pdf`);
-                }
-              }} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold text-white hover:opacity-90 transition" style={{ backgroundColor: "#268ffa" }}>
-                <Download size={13} />
-                gerar PDF
-              </button>
+              {pdfPopup.status === "ready" && pdfPopup.blobUrl ? (
+                <a
+                  href={pdfPopup.blobUrl}
+                  download={pdfPopup.filename}
+                  onClick={() => setTimeout(() => pdfPopup.close(), 500)}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold text-white hover:opacity-90 transition animate-scale-in"
+                  style={{ backgroundColor: "#14A44D" }}
+                >
+                  <Download size={13} />
+                  PDF pronto · baixar
+                </a>
+              ) : (
+                <button onClick={() => {
+                  const el = document.getElementById("roteiro-export-content");
+                  if (el) {
+                    const safeName = (programaNome || "roteiro").replace(/\s+/g, "_").toLowerCase();
+                    pdfPopup.generate(el, `roteiro_${safeName}.pdf`);
+                  }
+                }}
+                  disabled={pdfPopup.status === "generating"}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold text-white hover:opacity-90 transition disabled:opacity-60"
+                  style={{ backgroundColor: "#268ffa" }}
+                >
+                  {pdfPopup.status === "generating" ? (
+                    <>
+                      <Loader2 size={13} className="animate-spin" />
+                      gerando PDF...
+                    </>
+                  ) : (
+                    <>
+                      <Download size={13} />
+                      gerar PDF
+                    </>
+                  )}
+                </button>
+              )}
               <button
                 onClick={async () => {
                   // First save roteiro if not saved yet
@@ -1347,7 +1373,7 @@ ${perguntaActions}
         </Suspense>
       )}
 
-      <PdfPopup status={pdfPopup.status} blobUrl={pdfPopup.blobUrl} filename={pdfPopup.filename} onClose={pdfPopup.close} anchorId="roteiro-export-content" />
+      
     </div>
   );
 }
