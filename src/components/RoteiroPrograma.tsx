@@ -726,6 +726,7 @@ ${perguntaActions}
             {historico.map(r => {
               const dataFormatada = format(new Date(r.data_programa), "dd/MM/yyyy");
               const isAgd = r.status === "agendado";
+              const isFeito = r.status === "feito";
               return (
                 <div key={r.id} className="flex items-center justify-between px-3 py-2.5 rounded-lg" style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "1px solid rgba(13,4,70,0.06)" }}>
                   <div className="flex-1 min-w-0">
@@ -737,11 +738,11 @@ ${perguntaActions}
                       <span
                         className="text-[10px] px-2 py-0.5 rounded-full font-bold"
                         style={{
-                          backgroundColor: isAgd ? "rgba(38,143,250,0.1)" : "rgba(13,4,70,0.06)",
-                          color: isAgd ? "#268ffa" : "rgba(13,4,70,0.5)",
+                          backgroundColor: isFeito ? "rgba(22,163,74,0.1)" : isAgd ? "rgba(38,143,250,0.1)" : "rgba(13,4,70,0.06)",
+                          color: isFeito ? "#16a34a" : isAgd ? "#268ffa" : "rgba(13,4,70,0.5)",
                         }}
                       >
-                        {isAgd ? "agendado" : r.status}
+                        {isFeito ? "feito" : isAgd ? "agendado" : r.status}
                       </span>
                     </div>
                     <p className="text-xs font-medium mt-0.5" style={{ color: "rgba(13,4,70,0.6)" }}>
