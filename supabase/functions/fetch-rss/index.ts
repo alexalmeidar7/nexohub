@@ -24,7 +24,7 @@ Deno.serve(async (req) => {
         "Accept-Charset": "utf-8",
         "Accept-Language": "pt-BR,pt;q=0.9,en;q=0.8",
       },
-      signal: AbortSignal.timeout(15000),
+      signal: AbortSignal.timeout(4000),
     });
 
     // Handle encoding properly
