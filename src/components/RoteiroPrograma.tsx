@@ -268,7 +268,14 @@ export default function RoteiroPrograma() {
     setSelectedDate(new Date(r.data_programa));
     setHorario(r.horario || "");
     setRoteiroTitulo(r.titulo || "");
-    setRoteiroSubtitulo(r.subtitulo || "");
+    try {
+      const sub = JSON.parse(r.subtitulo || "{}");
+      setRoteiroSubtitulo(sub.titulo || r.subtitulo || "");
+      setAssuntoSubtitulo(sub.obs || "");
+    } catch {
+      setRoteiroSubtitulo(r.subtitulo || "");
+      setAssuntoSubtitulo("");
+    }
     setRoteiroTexto(r.conteudo_html || "");
     try {
       setParticipantes(typeof r.participantes === "string" ? JSON.parse(r.participantes) : r.participantes || []);
