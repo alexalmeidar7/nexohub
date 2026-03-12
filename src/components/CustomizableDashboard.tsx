@@ -325,49 +325,47 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
       {/* On-Air Program Info */}
       {onAirProgram && (
         <div className="mb-6 animate-fade-in">
-          <div className="flex items-start gap-5">
-            {/* Selo / Logo do programa - 50% maior */}
+          <div className="flex flex-col">
+            {/* Selo / Logo do programa */}
             {onAirProgram.selo && (
               <img
                 src={onAirProgram.selo}
                 alt={onAirProgram.nome}
-                className="w-24 h-24 rounded-xl object-contain flex-shrink-0"
+                className="w-40 h-40 rounded-xl object-contain mb-3"
               />
             )}
 
-            <div className="flex flex-col min-w-0 flex-1">
-              {/* Ao vivo + horário + classificação */}
-              <div className="flex items-center gap-3 mb-2">
-                <div className="flex items-center gap-1.5">
-                  <Circle size={8} fill="#ff0000" color="#ff0000" className="animate-pulse" />
-                  <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#ff0000" }}>Ao Vivo</span>
-                </div>
-                <span className="text-white/50 text-[10px]">
-                  {onAirProgram.horario_inicio} — {onAirProgram.horario_fim}
-                </span>
-                {onAirProgram.classificacao_etaria && (
-                  <span
-                    className="text-[10px] font-bold"
-                    style={{
-                      color:
-                        onAirProgram.classificacao_etaria === "L" ? "#00a651" :
-                        onAirProgram.classificacao_etaria === "10" ? "#0091d4" :
-                        onAirProgram.classificacao_etaria === "12" ? "#f8c210" :
-                        onAirProgram.classificacao_etaria === "14" ? "#f68c1e" :
-                        onAirProgram.classificacao_etaria === "16" ? "#e2203a" :
-                        onAirProgram.classificacao_etaria === "18" ? "#1d1d1b" : "#666",
-                    }}
-                  >
-                    {onAirProgram.classificacao_etaria === "L" ? "L" : `${onAirProgram.classificacao_etaria}+`}
-                  </span>
-                )}
+            {/* Ao vivo + horário + classificação */}
+            <div className="flex items-center gap-3 mb-2">
+              <div className="flex items-center gap-1.5">
+                <Circle size={8} fill="#ff0000" color="#ff0000" className="animate-pulse" />
+                <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#ff0000" }}>Ao Vivo</span>
               </div>
-
-              {/* Descrição */}
-              {onAirProgram.descricao && (
-                <p className="text-white text-[11px] leading-relaxed line-clamp-3" style={{ maxWidth: 400 }}>{onAirProgram.descricao}</p>
+              <span className="text-white/50 text-[10px]">
+                {onAirProgram.horario_inicio} — {onAirProgram.horario_fim}
+              </span>
+              {onAirProgram.classificacao_etaria && (
+                <span
+                  className="text-[10px] font-bold"
+                  style={{
+                    color:
+                      onAirProgram.classificacao_etaria === "L" ? "#00a651" :
+                      onAirProgram.classificacao_etaria === "10" ? "#0091d4" :
+                      onAirProgram.classificacao_etaria === "12" ? "#f8c210" :
+                      onAirProgram.classificacao_etaria === "14" ? "#f68c1e" :
+                      onAirProgram.classificacao_etaria === "16" ? "#e2203a" :
+                      onAirProgram.classificacao_etaria === "18" ? "#1d1d1b" : "#666",
+                  }}
+                >
+                  {onAirProgram.classificacao_etaria === "L" ? "L" : `${onAirProgram.classificacao_etaria}+`}
+                </span>
               )}
             </div>
+
+            {/* Descrição */}
+            {onAirProgram.descricao && (
+              <p className="text-white text-[11px] leading-relaxed line-clamp-3" style={{ maxWidth: 400 }}>{onAirProgram.descricao}</p>
+            )}
           </div>
         </div>
       )}
