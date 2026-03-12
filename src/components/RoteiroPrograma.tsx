@@ -404,7 +404,7 @@ ${perguntaActions}
         user_id: user.id,
         ativo: true,
       });
-      const { data } = await supabase.from("apresentadores").select("id, nome, cargo, instagram, ativo").eq("ativo", true);
+      const { data } = await supabase.from("apresentadores").select("id, nome, cargo, instagram, whatsapp, ativo").eq("ativo", true);
       if (data) setApresentadores(data);
       setCadastroMsg(true);
       setTimeout(() => setCadastroMsg(false), 4000);
