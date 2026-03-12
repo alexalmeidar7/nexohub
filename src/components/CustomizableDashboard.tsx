@@ -1239,6 +1239,7 @@ function DashboardPlayerWidget() {
   const [activeIdx, setActiveIdx] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
+  const [volume, setVolume] = useState(0.8);
   const [showVideo, setShowVideo] = useState(false);
   const [currentMusic, setCurrentMusic] = useState<{ titulo: string; artista: string; capa: string } | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -1374,9 +1375,18 @@ function DashboardPlayerWidget() {
   const goPrev = () => { if (channels.length > 1) switchTo((activeIdx - 1 + channels.length) % channels.length); };
 
   const toggleMute = () => {
-    const audio = audioRef.current;
-    if (audio) { audio.muted = !audio.muted; setIsMuted(audio.muted); }
-    if (videoRef.current) videoRef.current.muted = !isMuted;
+    const newMuted = !isMuted;
+    setIsMuted(newMuted);
+    if (audioRef.current) audioRef.current.muted = newMuted;
+    if (videoRef.current) videoRef.current.muted = newMuted;
+  };
+
+  const handleVolume = (val: number) => {
+    setVolume(val);
+    if (audioRef.current) audioRef.current.volume = val;
+    if (videoRef.current) videoRef.current.volume = val;
+    if (val === 0) setIsMuted(true);
+    else if (isMuted) { setIsMuted(false); if (audioRef.current) audioRef.current.muted = false; if (videoRef.current) videoRef.current.muted = false; }
   };
 
   const channelLogo = activeChannel?.background_url || activeChannel?.logo_url || activeChannel?.cover_url;
@@ -1471,9 +1481,22 @@ function DashboardPlayerWidget() {
             >
               {isPlaying ? <Pause size={12} className="text-white" /> : <Play size={12} className="text-white ml-0.5" />}
             </button>
-            <button onClick={toggleMute} className="text-white/40 hover:text-white transition-colors">
-              {isMuted ? <VolumeX size={13} /> : <Volume2 size={13} />}
+            <button onClick={toggleMute} className="text-white/40 hover:text-white transition-colors flex-shrink-0">
+              {isMuted || volume === 0 ? <VolumeX size={13} /> : <Volume2 size={13} />}
             </button>
+            <input
+              type="range"
+              min={0}
+              max={1}
+              step={0.01}
+              value={isMuted ? 0 : volume}
+              onChange={e => handleVolume(Number(e.target.value))}
+              className="w-14 h-1 appearance-none rounded-full cursor-pointer flex-shrink-0"
+              style={{
+                background: `linear-gradient(to right, #be0101 ${(isMuted ? 0 : volume) * 100}%, rgba(255,255,255,0.15) ${(isMuted ? 0 : volume) * 100}%)`,
+                accentColor: "#be0101",
+              }}
+            />
             {isVideo && (
               <span className="text-[7px] font-bold text-white/20 ml-auto">
                 <Tv size={10} className="inline mr-0.5" />VIDEO
