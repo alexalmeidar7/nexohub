@@ -461,7 +461,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 {idx > 0 && <span className="text-white/10 mx-2.5 text-[10px] select-none">•</span>}
                 <button
                   onClick={() => {
-                    if (!item.children && item.page) {
+                    if (item.children) {
+                      setHoveredMenu(prev => prev === item.label ? null : item.label);
+                    } else if (item.page) {
                       setCurrentPage(item.page);
                     }
                   }}
