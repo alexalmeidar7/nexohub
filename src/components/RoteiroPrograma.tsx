@@ -86,6 +86,7 @@ export default function RoteiroPrograma() {
   const [mergeCells, setMergeCells] = useState<HTMLTableCellElement[]>([]);
   const mergeHighlightColor = "rgba(38,143,250,0.18)";
   const [showWhatsAppDialog, setShowWhatsAppDialog] = useState(false);
+  const [whatsAppHistoricoData, setWhatsAppHistoricoData] = useState<any>(null);
 
   const fetchApresentadorStatus = async (roteiroId: string) => {
     const { data } = await supabase.from("roteiros").select("apresentador_editado, editado_at, share_login").eq("id", roteiroId).maybeSingle();
@@ -697,7 +698,57 @@ ${perguntaActions}
                       </p>
                     )}
                   </div>
-                  <div className="flex items-center gap-1 ml-2">
+                  <div className="flex items-center gap-1 ml-2 flex-wrap">
+                    {/* Apresentador status */}
+                    {r.share_token && (
+                      <span
+                        className="text-[9px] px-2 py-0.5 rounded-full font-bold"
+                        style={{
+                          backgroundColor: r.apresentador_editado ? "rgba(20,164,77,0.1)" : "rgba(251,191,36,0.1)",
+                          color: r.apresentador_editado ? "#14A44D" : "#f59e0b",
+                        }}
+                      >
+                        {r.apresentador_editado ? "✓ Aprovado" : "⏳ Aguardando"}
+                      </span>
+                    )}
+                    {/* WhatsApp button */}
+                    <button
+                      onClick={() => {
+                        let parts: any[] = [];
+                        try { parts = typeof r.participantes === "string" ? JSON.parse(r.participantes) : r.participantes || []; } catch { parts = []; }
+                        setWhatsAppHistoricoData({
+                          titulo: r.titulo || "Roteiro",
+                          programaNome: r.programa_nome || "",
+                          estudio: r.estudio || "",
+                          data: format(new Date(r.data_programa), "dd/MM/yyyy"),
+                          horario: r.horario || "",
+                          participantes: parts,
+                          conteudoTexto: r.conteudo_html?.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim() || "",
+                        });
+                        setShowWhatsAppDialog(true);
+                      }}
+                      className="h-7 w-7 flex items-center justify-center rounded-lg hover:opacity-70 transition"
+                      style={{ backgroundColor: "rgba(37,211,102,0.08)" }}
+                      title="Enviar por WhatsApp"
+                    >
+                      <MessageSquare size={12} style={{ color: "#25d366" }} />
+                    </button>
+                    {/* PDF button - only for saved/exported roteiros */}
+                    {r.status !== "rascunho" && (
+                      <button
+                        onClick={() => {
+                          editarRoteiro(r);
+                          setTimeout(() => {
+                            setShowExportView(true);
+                          }, 300);
+                        }}
+                        className="h-7 w-7 flex items-center justify-center rounded-lg hover:opacity-70 transition"
+                        style={{ backgroundColor: "rgba(38,143,250,0.08)" }}
+                        title="Baixar PDF"
+                      >
+                        <Download size={12} style={{ color: "#268ffa" }} />
+                      </button>
+                    )}
                     <button onClick={() => editarRoteiro(r)} className="h-7 w-7 flex items-center justify-center rounded-lg hover:opacity-70 transition" style={{ backgroundColor: "rgba(38,143,250,0.08)" }} title="Editar">
                       <Pencil size={12} style={{ color: "#268ffa" }} />
                     </button>
@@ -1436,8 +1487,8 @@ ${perguntaActions}
       <Suspense fallback={null}>
         <WhatsAppSendDialog
           open={showWhatsAppDialog}
-          onClose={() => setShowWhatsAppDialog(false)}
-          roteiroData={{
+          onClose={() => { setShowWhatsAppDialog(false); setWhatsAppHistoricoData(null); }}
+          roteiroData={whatsAppHistoricoData || {
             titulo: roteiroTitulo || "Roteiro",
             programaNome,
             estudio,
