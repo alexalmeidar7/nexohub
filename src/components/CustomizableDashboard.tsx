@@ -764,8 +764,8 @@ function MusicaPreview() {
       {music.capa ? (
         <img src={music.capa} alt="" className="w-12 h-12 rounded-lg object-cover flex-shrink-0 shadow-md" />
       ) : (
-        <div className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "rgba(38,143,250,0.1)" }}>
-          <Music size={16} className="text-[#268ffa]" />
+        <div className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "rgba(190,1,1,0.1)" }}>
+          <Music size={16} className="text-[#be0101]" />
         </div>
       )}
       <div className="min-w-0 flex-1">
