@@ -425,7 +425,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       <div className="hidden lg:flex items-center gap-2 xl:gap-4 px-4 xl:px-8 pt-5 pb-1 relative z-[60]">
         {/* Menu box */}
         <div
-          className="flex items-center px-2 lg:px-3 xl:px-5 py-2.5"
+          className="flex items-center px-2 lg:px-2 xl:px-5 py-2 xl:py-2.5 flex-shrink min-w-0"
           style={{
             background: "rgba(0, 0, 0, 0.85)",
             backdropFilter: "blur(20px) saturate(1.6)",
@@ -435,7 +435,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             boxShadow: "0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.06)",
           }}
         >
-          <img src={logoMenu} alt="NexoHUB" className="h-4 mr-3 xl:mr-5 flex-shrink-0 opacity-90" />
+          <img src={logoMenu} alt="NexoHUB" className="h-4 mr-2 xl:mr-5 flex-shrink-0 opacity-90" />
 
           {sidebarMenu.filter(item => {
             if (item.label === "home" || item.label === "cadastros" || item.label === "ferramentas") return true;
@@ -447,38 +447,44 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           }).map((item, idx) => {
             const active = isItemActive(item);
             const isOpen = hoveredMenu === item.label;
+            const Icon = item.icon;
 
             return (
               <div
                 key={item.label}
-                className="relative flex items-center"
+                className="relative flex items-center flex-shrink-0"
                 onMouseEnter={() => {
                   clearMenuLeaveTimer();
                   if (item.children) setHoveredMenu(item.label);
                 }}
                 onMouseLeave={scheduleCloseMenu}
               >
-                {idx > 0 && <span className="text-white/10 mx-1 lg:mx-1.5 xl:mx-2.5 text-[10px] select-none">•</span>}
-                <button
-                  onClick={() => {
-                    if (item.children) {
-                      setHoveredMenu(prev => prev === item.label ? null : item.label);
-                    } else if (item.page) {
-                      setCurrentPage(item.page);
-                    }
-                  }}
-                  className="flex items-center gap-1 lg:gap-1.5 text-[10px] lg:text-[11px] font-semibold py-1 px-1 lg:px-1.5 rounded-lg transition-all whitespace-nowrap"
-                  style={{
-                    color: active ? "#ffffff" : "rgba(255,255,255,0.6)",
-                    backgroundColor: active ? "rgba(190,1,1,0.35)" : "transparent",
-                  }}
-                  onMouseEnter={e => { if (!active) { e.currentTarget.style.color = "#ffffff"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.08)"; } }}
-                  onMouseLeave={e => { if (!active) { e.currentTarget.style.color = "rgba(255,255,255,0.6)"; e.currentTarget.style.backgroundColor = "transparent"; } }}
-                >
-                  {(() => { const Icon = item.icon; return <Icon size={13} />; })()}
-                  {item.label}
-                  {item.children && <ChevronDown size={10} className="opacity-40" />}
-                </button>
+                {idx > 0 && <span className="text-white/10 mx-0.5 xl:mx-2 text-[10px] select-none hidden xl:inline">•</span>}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={() => {
+                        if (item.children) {
+                          setHoveredMenu(prev => prev === item.label ? null : item.label);
+                        } else if (item.page) {
+                          setCurrentPage(item.page);
+                        }
+                      }}
+                      className="flex items-center gap-1 xl:gap-1.5 text-[11px] font-semibold py-1.5 lg:py-1 px-1.5 lg:px-2 xl:px-1.5 rounded-lg transition-all whitespace-nowrap"
+                      style={{
+                        color: active ? "#ffffff" : "rgba(255,255,255,0.6)",
+                        backgroundColor: active ? "rgba(190,1,1,0.35)" : "transparent",
+                      }}
+                      onMouseEnter={e => { if (!active) { e.currentTarget.style.color = "#ffffff"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.08)"; } }}
+                      onMouseLeave={e => { if (!active) { e.currentTarget.style.color = "rgba(255,255,255,0.6)"; e.currentTarget.style.backgroundColor = "transparent"; } }}
+                    >
+                      <Icon size={14} className="flex-shrink-0" />
+                      <span className="hidden xl:inline">{item.label}</span>
+                      {item.children && <ChevronDown size={9} className="opacity-40 hidden xl:inline" />}
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="xl:hidden"><p className="text-xs capitalize">{item.label}</p></TooltipContent>
+                </Tooltip>
 
                 {/* Dropdown */}
                 {item.children && isOpen && (
