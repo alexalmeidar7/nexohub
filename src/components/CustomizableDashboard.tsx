@@ -349,15 +349,15 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                   className="inline-flex items-center justify-center w-5 h-5 rounded text-[9px] font-extrabold text-white leading-none"
                   style={{
                     backgroundColor:
-                      onAirProgram.classificacao_etaria === "L" ? "#00a651" :
-                      onAirProgram.classificacao_etaria === "10" ? "#0091d4" :
-                      onAirProgram.classificacao_etaria === "12" ? "#f8c210" :
-                      onAirProgram.classificacao_etaria === "14" ? "#f68c1e" :
-                      onAirProgram.classificacao_etaria === "16" ? "#e2203a" :
+                      onAirProgram.classificacao_etaria === "AL" || onAirProgram.classificacao_etaria === "L" ? "#14A44D" :
+                      onAirProgram.classificacao_etaria === "10" ? "#2563EB" :
+                      onAirProgram.classificacao_etaria === "12" ? "#EAB308" :
+                      onAirProgram.classificacao_etaria === "14" ? "#F97316" :
+                      onAirProgram.classificacao_etaria === "16" ? "#DC2626" :
                       onAirProgram.classificacao_etaria === "18" ? "#1d1d1b" : "#666",
                   }}
                 >
-                  {onAirProgram.classificacao_etaria === "L" ? "L" : onAirProgram.classificacao_etaria}
+                  {onAirProgram.classificacao_etaria}
                 </span>
               )}
             </div>
