@@ -23,3 +23,6 @@ verify_jwt = false
 
 [functions.monitor-music]
 verify_jwt = false
+
+[functions.roteiro-xml]
+verify_jwt = false

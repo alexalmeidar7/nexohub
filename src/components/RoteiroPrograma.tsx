@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CalendarIcon, FileText, Building2, Clock, Plus, X, Download, UserPlus, Check, Bold, Underline, Highlighter, AlignLeft, AlignCenter, AlignRight, List, ListOrdered, Type, Trash2, Pencil, Save, History, ArrowLeft, Send, MessageSquare } from "lucide-react";
+import { CalendarIcon, FileText, Building2, Clock, Plus, X, Download, UserPlus, Check, Bold, Underline, Highlighter, AlignLeft, AlignCenter, AlignRight, List, ListOrdered, Type, Trash2, Pencil, Save, History, ArrowLeft, Send, MessageSquare, Code2, Copy } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
@@ -429,6 +429,32 @@ ${perguntaActions}
               </p>
             </div>
           </div>
+          {editingRoteiroId && (
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg" style={{ backgroundColor: "rgba(38,143,250,0.08)", border: "1px solid rgba(38,143,250,0.2)" }}>
+              <Code2 size={14} style={{ color: "#268ffa" }} />
+              <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: "#268ffa" }}>XML</span>
+              <span
+                className="text-[8px] font-mono truncate max-w-[200px] cursor-pointer hover:underline"
+                style={{ color: "rgba(13,4,70,0.5)" }}
+                title="Clique para copiar"
+                onClick={() => {
+                  const xmlUrl = `https://${import.meta.env.VITE_SUPABASE_PROJECT_ID}.supabase.co/functions/v1/roteiro-xml?id=${editingRoteiroId}`;
+                  navigator.clipboard.writeText(xmlUrl).then(() => toast.success("URL do XML copiada!")).catch(() => toast.error("Erro ao copiar"));
+                }}
+              >
+                {`...roteiro-xml?id=${editingRoteiroId.slice(0, 8)}...`}
+              </span>
+              <button
+                onClick={() => {
+                  const xmlUrl = `https://${import.meta.env.VITE_SUPABASE_PROJECT_ID}.supabase.co/functions/v1/roteiro-xml?id=${editingRoteiroId}`;
+                  navigator.clipboard.writeText(xmlUrl).then(() => toast.success("URL do XML copiada!")).catch(() => toast.error("Erro ao copiar"));
+                }}
+                className="p-0.5 rounded hover:bg-white/50 transition-colors"
+              >
+                <Copy size={11} style={{ color: "#268ffa" }} />
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Form Fields - Row 1: Estúdio, Tipo, Programa */}
