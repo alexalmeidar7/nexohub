@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Instagram, UserCheck, UserX, Trash2, Pencil, X, Loader2, CheckCircle, UserPlus, Camera, Shield } from "lucide-react";
+import { Instagram, UserCheck, UserX, Trash2, Pencil, X, Loader2, CheckCircle, UserPlus, Camera, Shield, Phone } from "lucide-react";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -17,6 +17,7 @@ export interface Apresentador {
   nome: string;
   cargo: string;
   instagram: string;
+  whatsapp: string;
   foto: string;
   ativo: boolean;
 }
@@ -31,6 +32,7 @@ export async function getApresentadores(): Promise<Apresentador[]> {
     nome: a.nome,
     cargo: a.cargo || "",
     instagram: a.instagram || "",
+    whatsapp: (a as any).whatsapp || "",
     foto: a.foto || "",
     ativo: a.ativo ?? true,
   }));
@@ -43,6 +45,7 @@ export default function ApresentadorForm() {
   const [categoria, setCategoria] = useState("");
   const [cargoConvidado, setCargoConvidado] = useState("");
   const [instagram, setInstagram] = useState("");
+  const [whatsapp, setWhatsapp] = useState("");
   const [foto, setFoto] = useState("");
   const [ativo, setAtivo] = useState(true);
   const [apresentadores, setApresentadores] = useState<Apresentador[]>([]);
@@ -73,7 +76,7 @@ export default function ApresentadorForm() {
   };
 
   const resetForm = () => {
-    setNome(""); setCategoria(""); setCargoConvidado(""); setInstagram(""); setFoto(""); setAtivo(true); setEditingId(null);
+    setNome(""); setCategoria(""); setCargoConvidado(""); setInstagram(""); setWhatsapp(""); setFoto(""); setAtivo(true); setEditingId(null);
   };
 
   const handleSave = async () => {
@@ -87,18 +90,20 @@ export default function ApresentadorForm() {
         nome: nome.trim(),
         cargo: cargoValue,
         instagram: instagram.trim(),
+        whatsapp: whatsapp.trim(),
         foto: showFoto ? foto : "",
         ativo,
-      }).eq("id", editingId);
+      } as any).eq("id", editingId);
     } else {
       await supabase.from("apresentadores").insert({
         user_id: user.id,
         nome: nome.trim(),
         cargo: cargoValue,
         instagram: instagram.trim(),
+        whatsapp: whatsapp.trim(),
         foto: showFoto ? foto : "",
         ativo,
-      });
+      } as any);
     }
     await load();
     resetForm();
@@ -112,8 +117,19 @@ export default function ApresentadorForm() {
     setNome(a.nome);
     setCategoria(a.cargo);
     setInstagram(a.instagram);
+    setWhatsapp(a.whatsapp);
     setFoto(a.foto);
     setAtivo(a.ativo);
+  };
+
+  const formatWhatsapp = (value: string) => {
+    const digits = value.replace(/\D/g, "").slice(0, 13);
+    let formatted = "";
+    if (digits.length > 0) formatted += "+" + digits.slice(0, 2);
+    if (digits.length > 2) formatted += " (" + digits.slice(2, 4);
+    if (digits.length > 4) formatted += ") " + digits.slice(4, 9);
+    if (digits.length > 9) formatted += "-" + digits.slice(9, 13);
+    return formatted;
   };
 
   const toggleAtivo = async (id: string, current: boolean) => {
@@ -219,19 +235,35 @@ export default function ApresentadorForm() {
             </div>
           )}
 
-          {/* Instagram */}
-          <div>
-            <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "#0d0446" }}>Instagram</label>
-            <div className="flex items-center gap-2">
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)" }}>
-                <Instagram size={16} className="text-white" />
+          {/* Instagram + WhatsApp */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "#0d0446" }}>Instagram</label>
+              <div className="flex items-center gap-2">
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)" }}>
+                  <Instagram size={16} className="text-white" />
+                </div>
+                <input value={instagram} onChange={(e) => setInstagram(e.target.value)} placeholder="@usuario_instagram"
+                  className="flex-1 px-4 py-2 outline-none transition-all text-sm placeholder:text-[#0d0446]/40"
+                  style={{ backgroundColor: "rgba(255,255,255,0.6)", border: "1px solid rgba(13,4,70,0.15)", borderRadius: "12px", color: "#0d0446" }}
+                  onFocus={e => { e.currentTarget.style.borderColor = "#268ffa"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.8)"; }}
+                  onBlur={e => { e.currentTarget.style.borderColor = "rgba(13,4,70,0.15)"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.6)"; }}
+                />
               </div>
-              <input value={instagram} onChange={(e) => setInstagram(e.target.value)} placeholder="@usuario_instagram"
-                className="flex-1 px-4 py-2 outline-none transition-all text-sm placeholder:text-[#0d0446]/40"
-                style={{ backgroundColor: "rgba(255,255,255,0.6)", border: "1px solid rgba(13,4,70,0.15)", borderRadius: "12px", color: "#0d0446" }}
-                onFocus={e => { e.currentTarget.style.borderColor = "#268ffa"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.8)"; }}
-                onBlur={e => { e.currentTarget.style.borderColor = "rgba(13,4,70,0.15)"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.6)"; }}
-              />
+            </div>
+            <div>
+              <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "#0d0446" }}>WhatsApp</label>
+              <div className="flex items-center gap-2">
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: "#25D366" }}>
+                  <Phone size={16} className="text-white" />
+                </div>
+                <input value={whatsapp} onChange={(e) => setWhatsapp(formatWhatsapp(e.target.value))} placeholder="+55 (00) 00000-0000"
+                  className="flex-1 px-4 py-2 outline-none transition-all text-sm placeholder:text-[#0d0446]/40"
+                  style={{ backgroundColor: "rgba(255,255,255,0.6)", border: "1px solid rgba(13,4,70,0.15)", borderRadius: "12px", color: "#0d0446" }}
+                  onFocus={e => { e.currentTarget.style.borderColor = "#268ffa"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.8)"; }}
+                  onBlur={e => { e.currentTarget.style.borderColor = "rgba(13,4,70,0.15)"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.6)"; }}
+                />
+              </div>
             </div>
           </div>
 
@@ -343,7 +375,7 @@ export default function ApresentadorForm() {
                 <tr style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)", color: "#ffffff" }}>
                   <th className="px-4 py-2.5 text-left font-semibold text-[11px] uppercase tracking-wider">Categoria</th>
                   <th className="px-4 py-2.5 text-left font-semibold text-[11px] uppercase tracking-wider">Nome</th>
-                  <th className="px-4 py-2.5 text-left font-semibold text-[11px] uppercase tracking-wider">Rede Social</th>
+                  <th className="px-4 py-2.5 text-left font-semibold text-[11px] uppercase tracking-wider">Redes / Contato</th>
                   <th className="px-4 py-2.5 text-center font-semibold text-[11px] uppercase tracking-wider">Foto</th>
                   <th className="px-4 py-2.5 text-center font-semibold text-[11px] uppercase tracking-wider">Status</th>
                   <th className="px-4 py-2.5 text-center font-semibold text-[11px] uppercase tracking-wider">Ações</th>
@@ -364,9 +396,15 @@ export default function ApresentadorForm() {
                     </td>
                     <td className="px-4 py-2.5 font-semibold">{a.nome}</td>
                     <td className="px-4 py-2.5">
-                      {a.instagram ? (
-                        <span className="flex items-center gap-1.5 text-[11px]"><Instagram size={12} style={{ color: "#e1306c" }} /> {a.instagram}</span>
-                      ) : <span className="text-[#0d0446]/25">—</span>}
+                      <div className="flex flex-col gap-0.5">
+                        {a.instagram ? (
+                          <span className="flex items-center gap-1.5 text-[11px]"><Instagram size={12} style={{ color: "#e1306c" }} /> {a.instagram}</span>
+                        ) : null}
+                        {a.whatsapp ? (
+                          <span className="flex items-center gap-1.5 text-[11px]"><Phone size={12} style={{ color: "#25D366" }} /> {a.whatsapp}</span>
+                        ) : null}
+                        {!a.instagram && !a.whatsapp && <span className="text-[#0d0446]/25">—</span>}
+                      </div>
                     </td>
                     <td className="px-4 py-2.5 text-center">
                       {a.foto ? <CheckCircle size={15} className="inline" style={{ color: "#22c55e" }} /> : <span className="text-[#0d0446]/20">—</span>}

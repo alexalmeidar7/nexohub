@@ -136,6 +136,7 @@ export type Database = {
           instagram: string | null
           nome: string
           user_id: string
+          whatsapp: string | null
         }
         Insert: {
           ativo?: boolean | null
@@ -146,6 +147,7 @@ export type Database = {
           instagram?: string | null
           nome: string
           user_id: string
+          whatsapp?: string | null
         }
         Update: {
           ativo?: boolean | null
@@ -156,6 +158,7 @@ export type Database = {
           instagram?: string | null
           nome?: string
           user_id?: string
+          whatsapp?: string | null
         }
         Relationships: []
       }
