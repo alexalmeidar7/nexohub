@@ -230,10 +230,20 @@ export default function RoteiroPrograma() {
   };
 
   const excluirRoteiro = async (id: string) => {
+    // Find the roteiro to get its details for agenda cleanup
+    const roteiro = historico.find(r => r.id === id);
     const { error } = await supabase.from("roteiros").delete().eq("id", id);
     if (error) {
       toast.error("Erro ao excluir roteiro");
     } else {
+      // Remove associated agenda event
+      if (roteiro && user) {
+        const descricao = `Roteiro: ${roteiro.programa_nome}${roteiro.titulo ? ` — ${roteiro.titulo}` : ""}`;
+        await supabase.from("agenda_eventos").delete()
+          .eq("user_id", user.id)
+          .eq("data", roteiro.data_programa)
+          .like("descricao", `Roteiro: ${roteiro.programa_nome}%`);
+      }
       toast.success("Roteiro excluído");
       fetchHistorico();
     }
