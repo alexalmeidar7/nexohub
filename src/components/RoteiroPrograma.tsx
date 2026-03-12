@@ -394,7 +394,7 @@ ${perguntaActions}
     if (!newNome.trim()) return;
     const isNew = !selectedFromDb && !apresentadores.some(a => a.nome.toLowerCase() === newNome.trim().toLowerCase());
     
-    setParticipantes(prev => [...prev, { nome: newNome.trim(), categoria: newCategoria, cargo: newCargoText.trim(), instagram: newInstagram.trim() }]);
+    setParticipantes(prev => [...prev, { nome: newNome.trim(), categoria: newCategoria, cargo: newCargoText.trim(), instagram: newInstagram.trim(), whatsapp: newWhatsapp.trim() }]);
     
     // If not from DB, register as new apresentador
     if (isNew && user) {
