@@ -1239,6 +1239,7 @@ function DashboardPlayerWidget() {
   const [activeIdx, setActiveIdx] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
+  const [volume, setVolume] = useState(0.8);
   const [showVideo, setShowVideo] = useState(false);
   const [currentMusic, setCurrentMusic] = useState<{ titulo: string; artista: string; capa: string } | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
