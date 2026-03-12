@@ -262,6 +262,16 @@ export default function TpScreen({ user, onBack }: TpScreenProps) {
   // Remote control listener with auto-reconnect
   const cmdChannelRef = useRef<any>(null);
   const cmdReadyRef = useRef(false);
+  const cmdReconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function applyLoadedText(text: string, html: boolean) {
+    setDisplayText(text);
+    setIsHtmlContent(html);
+    scrollPosRef.current = 50;
+    if (textRef.current) textRef.current.style.top = "50%";
+    setTimerSeconds(0);
+    setScrolling(false);
+  }
 
   const handleCommand = useCallback((payload: any) => {
     const cmd = payload.payload;
