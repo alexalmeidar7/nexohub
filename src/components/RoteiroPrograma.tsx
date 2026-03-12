@@ -1305,10 +1305,7 @@ ${perguntaActions}
                 }
               </button>
               <button
-                onClick={() => {
-                  const texto = `*${roteiroTitulo || "Roteiro"}*\n${programaNome} · ${estudio}\n${format(selectedDate, "dd/MM/yyyy")} ${horario}\n\n${(editorRef.current?.innerText || roteiroTexto).substring(0, 2000)}`;
-                  window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, "_blank");
-                }}
+                onClick={() => setShowWhatsAppDialog(true)}
                 className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold text-white hover:opacity-90 transition"
                 style={{ backgroundColor: "#25d366" }}
               >
