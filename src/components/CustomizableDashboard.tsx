@@ -731,7 +731,7 @@ function AgendaPreview() {
         <div className="space-y-1">
           {events.map((ev, i) => (
             <div key={i} className="flex items-center gap-1.5">
-              <div className="w-1 h-1 rounded-full flex-shrink-0" style={{ backgroundColor: "#268ffa" }} />
+              <div className="w-1 h-1 rounded-full flex-shrink-0" style={{ backgroundColor: "#be0101" }} />
               <p className="text-[#0d0446]/50 text-[10px] truncate">{ev.descricao || format(new Date(ev.data + "T12:00:00"), "dd/MM")}</p>
             </div>
           ))}
