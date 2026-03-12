@@ -1247,6 +1247,8 @@ function DashboardPlayerWidget({ onVideoChange }: { onVideoChange?: (active: boo
   const [volume, setVolume] = useState(0.8);
   const [showVideo, setShowVideo] = useState(false);
   const [currentMusic, setCurrentMusic] = useState<{ titulo: string; artista: string; capa: string } | null>(null);
+
+  useEffect(() => { onVideoChange?.(showVideo); }, [showVideo, onVideoChange]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const hlsRef = useRef<any>(null);
