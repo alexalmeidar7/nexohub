@@ -290,17 +290,35 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   }
 
   return (
-    <div className="h-screen flex flex-col animate-fade-in overflow-hidden" style={{
-      backgroundColor: "#268ffa",
-      ...(empresa.backgroundUrl ? {
-        backgroundImage: `url(${empresa.backgroundUrl})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
-        backgroundAttachment: "fixed",
-        animation: "fade-in 1s ease-out",
-      } : {}),
-    }}>
+    <div className="h-screen flex flex-col animate-fade-in overflow-hidden relative" style={{ backgroundColor: "#268ffa" }}>
+      {/* Background layers with fade transition */}
+      {empresa.backgroundUrl && (
+        <div
+          className="absolute inset-0 z-0 transition-opacity duration-1000"
+          style={{
+            backgroundImage: `url(${empresa.backgroundUrl})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
+            opacity: onAirThumb ? 0 : 1,
+          }}
+        />
+      )}
+      {onAirThumb && (
+        <div
+          key={onAirThumb}
+          className="absolute inset-0 z-0 animate-fade-in"
+          style={{
+            backgroundImage: `url(${onAirThumb})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
+            animation: "fade-in 1s ease-out forwards",
+          }}
+        />
+      )}
+      {/* Dark overlay for readability */}
+      <div className="absolute inset-0 z-0" style={{ background: "rgba(0,0,0,0.3)" }} />
       {/* Mobile top bar */}
       <div className="lg:hidden flex items-center justify-between px-4 pt-3 pb-2">
         <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="p-2 rounded-lg" style={{ backgroundColor: "rgba(0,0,0,0.4)" }}>
