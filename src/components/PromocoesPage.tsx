@@ -280,7 +280,7 @@ export default function PromocoesPage() {
                     <input type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} required
                       className="w-full px-4 py-1.5 text-sm outline-none"
                       style={inputStyle}
-                      onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
+                      onFocus={e => { e.currentTarget.style.borderColor = "#be0101"; }}
                       onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
                     />
                   </div>
