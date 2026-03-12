@@ -703,8 +703,8 @@ function LinkPreview({ page, external }: { page?: Page; external?: string }) {
 function GenericPreview({ icon: Icon, text }: { icon: React.ComponentType<any>; text: string }) {
   return (
     <div className="flex items-center gap-2">
-      <Icon size={12} className="text-[#0d0446]/20" />
-      <p className="text-[#0d0446]/40 text-[10px]">{text}</p>
+      <Icon size={12} className="text-black/20" />
+      <p className="text-black/40 text-[10px]">{text}</p>
     </div>
   );
 }
