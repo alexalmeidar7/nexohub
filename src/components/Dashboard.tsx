@@ -142,6 +142,39 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const [enabledModules, setEnabledModules] = useState<Set<string> | null>(null);
   const [planModules, setPlanModules] = useState<Set<string> | null>(null);
   const [initialLoading, setInitialLoading] = useState(true);
+  const [onAirThumb, setOnAirThumb] = useState<string | null>(null);
+  const prevThumbRef = useRef<string | null>(null);
+
+  // Poll current on-air program thumb every 30s
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    const fetchThumb = async () => {
+      const { data } = await supabase
+        .from("programas")
+        .select("thumb, dias_semana, horario_inicio, horario_fim, ativo")
+        .eq("user_id", user.id)
+        .eq("ativo", true);
+      if (cancelled || !data) return;
+      const now = new Date();
+      const DIAS_MAP: Record<number, string> = { 1: "Segunda", 2: "Terça", 3: "Quarta", 4: "Quinta", 5: "Sexta", 6: "Sábado", 0: "Domingo" };
+      const diaAtual = DIAS_MAP[now.getDay()];
+      const horaAtual = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+      const current = data.find(p =>
+        (p.dias_semana || []).includes(diaAtual) &&
+        horaAtual >= p.horario_inicio &&
+        horaAtual < p.horario_fim
+      );
+      const thumb = current?.thumb || null;
+      if (thumb !== prevThumbRef.current) {
+        prevThumbRef.current = thumb;
+        setOnAirThumb(thumb);
+      }
+    };
+    fetchThumb();
+    const interval = setInterval(fetchThumb, 30000);
+    return () => { cancelled = true; clearInterval(interval); };
+  }, [user]);
 
   useEffect(() => {
     if (!user) return;
@@ -257,19 +290,37 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   }
 
   return (
-    <div className="h-screen flex flex-col animate-fade-in overflow-hidden" style={{
-      backgroundColor: "#268ffa",
-      ...(empresa.backgroundUrl ? {
-        backgroundImage: `url(${empresa.backgroundUrl})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
-        backgroundAttachment: "fixed",
-        animation: "fade-in 1s ease-out",
-      } : {}),
-    }}>
+    <div className="h-screen flex flex-col animate-fade-in overflow-hidden relative" style={{ backgroundColor: "#268ffa" }}>
+      {/* Background layers with fade transition */}
+      {empresa.backgroundUrl && (
+        <div
+          className="absolute inset-0 z-0 transition-opacity duration-1000"
+          style={{
+            backgroundImage: `url(${empresa.backgroundUrl})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
+            opacity: onAirThumb ? 0 : 1,
+          }}
+        />
+      )}
+      {onAirThumb && (
+        <div
+          key={onAirThumb}
+          className="absolute inset-0 z-0 animate-fade-in"
+          style={{
+            backgroundImage: `url(${onAirThumb})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
+            animation: "fade-in 1s ease-out forwards",
+          }}
+        />
+      )}
+      {/* Dark overlay for readability */}
+      <div className="absolute inset-0 z-0" style={{ background: "rgba(0,0,0,0.3)" }} />
       {/* Mobile top bar */}
-      <div className="lg:hidden flex items-center justify-between px-4 pt-3 pb-2">
+      <div className="lg:hidden flex items-center justify-between px-4 pt-3 pb-2 relative z-[1]">
         <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="p-2 rounded-lg" style={{ backgroundColor: "rgba(0,0,0,0.4)" }}>
           {mobileMenuOpen ? <X size={20} className="text-white" /> : <Menu size={20} className="text-white" />}
         </button>
@@ -480,7 +531,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         </div>
       </div>
 
-      <div className="flex gap-[30px] pt-3 flex-1 min-h-0 px-4 lg:px-8">
+      <div className="flex gap-[30px] pt-3 flex-1 min-h-0 px-4 lg:px-8 relative z-[1]">
 
         {/* === MAIN CONTENT === */}
         <main className="flex-1 flex flex-col min-w-0">
@@ -528,7 +579,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
 
       {/* === FOOTER === */}
-      <footer className="flex flex-col items-center gap-1 px-4 pb-3 pt-3">
+      <footer className="flex flex-col items-center gap-1 px-4 pb-3 pt-3 relative z-[1]">
         <img src={logoFooter} alt="Nexo" className="h-5 opacity-80" />
         <span className="text-white/60 text-[10px]">Copyrighted 2026 - Todos os direitos reservados.</span>
       </footer>
