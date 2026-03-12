@@ -486,10 +486,14 @@ export default function TpScreen({ user, onBack }: TpScreenProps) {
       const payload = pendingStateRef.current;
       pendingStateRef.current = null;
       try {
-        await stateChannelRef.current.send({ type: "broadcast", event: "tp-state", payload });
+        const sendStatus = await stateChannelRef.current.send({ type: "broadcast", event: "tp-state", payload });
+        if (sendStatus !== "ok") {
+          throw new Error(`tp_state_send_${sendStatus}`);
+        }
       } catch (err) {
         console.error("Erro ao enviar estado TP:", err);
         pendingStateRef.current = payload;
+        reconnectStateChannel();
         break;
       }
     }

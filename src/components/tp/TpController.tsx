@@ -337,20 +337,46 @@ export default function TpController({ user, onBack }: TpControllerProps) {
     return () => window.removeEventListener("wheel", handleWheel);
   }, [showSetup]);
 
+  async function loadTextIntoTp(text: string, html: boolean) {
+    const normalized = text.trim();
+    if (!normalized || !user) return;
+
+    setShowSetup(false);
+    setInputText("");
+    setTpState((prev: any) => ({
+      ...(prev || {}),
+      displayText: normalized,
+      isHtmlContent: html,
+      scrolling: false,
+      timerSeconds: 0,
+      scrollPos: 50,
+    }));
+
+    const { error } = await (supabase as any)
+      .from("teleprompters")
+      .update({ texto_atual: normalized, is_html: html })
+      .eq("user_id", user.id)
+      .eq("ativo", true);
+
+    if (error) {
+      await sendCommand("loadText", { text: normalized, html });
+      return;
+    }
+
+    await sendCommand("loadTextFromDb");
+  }
+
   function handleLoadRoteiro() {
     const r = roteiros.find((x) => x.id === selectedRoteiroId);
     if (r) {
       const parsed = extractRoteiroHtml(r.conteudo_html);
-      sendCommand("loadText", { text: parsed || "Roteiro sem conteúdo.", html: true });
-      setShowSetup(false);
+      void loadTextIntoTp(parsed || "Roteiro sem conteúdo.", true);
     }
   }
 
   function handleLoadManual() {
     if (inputText.trim()) {
-      sendCommand("loadText", { text: inputText.trim(), html: false });
-      setShowSetup(false);
-      setInputText("");
+      void loadTextIntoTp(inputText, false);
     }
   }
 
