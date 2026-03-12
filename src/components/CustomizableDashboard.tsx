@@ -1022,19 +1022,19 @@ function MusicProgramWidget() {
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5">
               <Radio size={10} className="text-red-500 animate-pulse flex-shrink-0" />
-              <p className="text-[#0d0446] text-xs font-bold truncate">{currentProgram.nome}</p>
+              <p className="text-black text-xs font-bold truncate">{currentProgram.nome}</p>
             </div>
             {apresentador?.nome && (
-              <p className="text-[#0d0446]/50 text-[10px] truncate">{apresentador.nome}</p>
+              <p className="text-black/50 text-[10px] truncate">{apresentador.nome}</p>
             )}
             <div className="flex items-center gap-2 mt-1.5">
-              <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(13,4,70,0.08)" }}>
+              <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(0,0,0,0.08)" }}>
                 <div
                   className="h-full rounded-full transition-all duration-1000"
                   style={{ width: `${progressPercent}%`, background: "linear-gradient(90deg, #960101, #be0101)" }}
                 />
               </div>
-              <span className="text-[8px] text-[#0d0446]/40 font-semibold flex-shrink-0">
+              <span className="text-[8px] text-black/40 font-semibold flex-shrink-0">
                 {currentProgram.horario_inicio} — {currentProgram.horario_fim}
               </span>
             </div>
