@@ -1487,8 +1487,8 @@ ${perguntaActions}
       <Suspense fallback={null}>
         <WhatsAppSendDialog
           open={showWhatsAppDialog}
-          onClose={() => setShowWhatsAppDialog(false)}
-          roteiroData={{
+          onClose={() => { setShowWhatsAppDialog(false); setWhatsAppHistoricoData(null); }}
+          roteiroData={whatsAppHistoricoData || {
             titulo: roteiroTitulo || "Roteiro",
             programaNome,
             estudio,
