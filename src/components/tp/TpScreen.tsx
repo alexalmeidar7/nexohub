@@ -374,6 +374,10 @@ export default function TpScreen({ user, onBack }: TpScreenProps) {
     if (!user) return;
     connectCmdChannel();
     return () => {
+      if (cmdReconnectTimerRef.current) {
+        clearTimeout(cmdReconnectTimerRef.current);
+        cmdReconnectTimerRef.current = null;
+      }
       if (cmdChannelRef.current) {
         supabase.removeChannel(cmdChannelRef.current);
         cmdChannelRef.current = null;
