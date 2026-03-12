@@ -312,7 +312,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                     }}
                   >
                     <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "rgba(255,255,255,0.2)" }}>
-                      <Icon size={18} className="text-white" />
+                      <Icon size={16} className="text-white sm:hidden" /><Icon size={18} className="text-white hidden sm:block" />
                     </div>
                     <span className="text-white text-[9px] font-semibold text-center leading-tight px-1.5 max-w-full truncate mt-1.5">{item.linkLabel}</span>
                     {item.linkExternal && <ExternalLink size={7} className="text-white/40 absolute bottom-1.5 right-1.5" />}
