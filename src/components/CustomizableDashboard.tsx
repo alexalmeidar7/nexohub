@@ -1244,6 +1244,7 @@ function DashboardPlayerWidget() {
   const [currentMusic, setCurrentMusic] = useState<{ titulo: string; artista: string; capa: string } | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const hlsRef = useRef<any>(null);
 
   useEffect(() => {
     if (!user) return;
