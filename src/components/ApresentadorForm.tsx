@@ -45,7 +45,7 @@ export default function ApresentadorForm() {
   const [categoria, setCategoria] = useState("");
   const [cargoConvidado, setCargoConvidado] = useState("");
   const [instagram, setInstagram] = useState("");
-  const [whatsapp, setWhatsapp] = useState("");
+  const [whatsapp, setWhatsapp] = useState("+55");
   const [foto, setFoto] = useState("");
   const [ativo, setAtivo] = useState(true);
   const [apresentadores, setApresentadores] = useState<Apresentador[]>([]);
@@ -76,7 +76,7 @@ export default function ApresentadorForm() {
   };
 
   const resetForm = () => {
-    setNome(""); setCategoria(""); setCargoConvidado(""); setInstagram(""); setWhatsapp(""); setFoto(""); setAtivo(true); setEditingId(null);
+    setNome(""); setCategoria(""); setCargoConvidado(""); setInstagram(""); setWhatsapp("+55"); setFoto(""); setAtivo(true); setEditingId(null);
   };
 
   const handleSave = async () => {
@@ -90,7 +90,7 @@ export default function ApresentadorForm() {
         nome: nome.trim(),
         cargo: cargoValue,
         instagram: instagram.trim(),
-        whatsapp: whatsapp.trim(),
+        whatsapp: whatsapp.replace(/\D/g, "").length > 2 ? whatsapp.trim() : "",
         foto: showFoto ? foto : "",
         ativo,
       } as any).eq("id", editingId);
@@ -100,7 +100,7 @@ export default function ApresentadorForm() {
         nome: nome.trim(),
         cargo: cargoValue,
         instagram: instagram.trim(),
-        whatsapp: whatsapp.trim(),
+        whatsapp: whatsapp.replace(/\D/g, "").length > 2 ? whatsapp.trim() : "",
         foto: showFoto ? foto : "",
         ativo,
       } as any);
@@ -117,18 +117,25 @@ export default function ApresentadorForm() {
     setNome(a.nome);
     setCategoria(a.cargo);
     setInstagram(a.instagram);
-    setWhatsapp(a.whatsapp);
+    setWhatsapp(a.whatsapp || "+55");
     setFoto(a.foto);
     setAtivo(a.ativo);
   };
 
   const formatWhatsapp = (value: string) => {
-    const digits = value.replace(/\D/g, "").slice(0, 13);
-    let formatted = "";
-    if (digits.length > 0) formatted += "+" + digits.slice(0, 2);
-    if (digits.length > 2) formatted += " (" + digits.slice(2, 4);
-    if (digits.length > 4) formatted += ") " + digits.slice(4, 9);
-    if (digits.length > 9) formatted += "-" + digits.slice(9, 13);
+    // Strip non-digits, but always keep 55 prefix
+    let digits = value.replace(/\D/g, "");
+    // If user somehow removed the 55 prefix, restore it
+    if (!digits.startsWith("55")) {
+      digits = "55" + digits.replace(/^55*/, "");
+    }
+    digits = digits.slice(0, 13); // 55 + 2 DDD + 9 digits
+    let formatted = "+55";
+    const local = digits.slice(2); // after country code
+    if (local.length > 0) formatted += " (" + local.slice(0, 2);
+    if (local.length >= 2) formatted += ")";
+    if (local.length > 2) formatted += " " + local.slice(2, 7);
+    if (local.length > 7) formatted += "-" + local.slice(7, 11);
     return formatted;
   };
 
@@ -257,7 +264,7 @@ export default function ApresentadorForm() {
                 <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: "#25D366" }}>
                   <Phone size={16} className="text-white" />
                 </div>
-                <input value={whatsapp} onChange={(e) => setWhatsapp(formatWhatsapp(e.target.value))} placeholder="+55 (00) 00000-0000"
+                <input value={whatsapp} onChange={(e) => setWhatsapp(formatWhatsapp(e.target.value))} placeholder="+55 (DDD) 00000-0000"
                   className="flex-1 px-4 py-2 outline-none transition-all text-sm placeholder:text-[#0d0446]/40"
                   style={{ backgroundColor: "rgba(255,255,255,0.6)", border: "1px solid rgba(13,4,70,0.15)", borderRadius: "12px", color: "#0d0446" }}
                   onFocus={e => { e.currentTarget.style.borderColor = "#268ffa"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.8)"; }}
