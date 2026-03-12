@@ -411,6 +411,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
             )}
             </div>
           </div>
+        </div>
       )}
 
 
