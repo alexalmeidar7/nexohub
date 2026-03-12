@@ -452,7 +452,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   className="text-[11px] font-semibold py-1 px-1.5 rounded-lg transition-all whitespace-nowrap"
                   style={{
                     color: active ? "#ffffff" : "rgba(255,255,255,0.6)",
-                    backgroundColor: active ? "rgba(38,143,250,0.25)" : "transparent",
+                    backgroundColor: active ? "rgba(190,1,1,0.35)" : "transparent",
                   }}
                   onMouseEnter={e => { if (!active) { e.currentTarget.style.color = "#ffffff"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.08)"; } }}
                   onMouseLeave={e => { if (!active) { e.currentTarget.style.color = "rgba(255,255,255,0.6)"; e.currentTarget.style.backgroundColor = "transparent"; } }}
