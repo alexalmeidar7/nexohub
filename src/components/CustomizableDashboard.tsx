@@ -437,9 +437,9 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                   onDrop={() => handleDrop(item.id)}
                   onDragEnd={handleDragEnd}
                 >
-                  <div className="flex items-center gap-1.5 px-4 py-2.5 cursor-grab active:cursor-grabbing flex-shrink-0" style={{ borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
-                    <GripVertical size={10} className="text-black/20" />
-                    <span className="text-black/40 text-[9px] font-bold uppercase tracking-[0.15em]">
+                  <div className="flex items-center gap-1.5 px-4 py-2.5 cursor-grab active:cursor-grabbing flex-shrink-0" style={{ borderBottom: item.widgetType === "player" ? "1px solid rgba(255,255,255,0.06)" : "1px solid rgba(0,0,0,0.06)" }}>
+                    <GripVertical size={10} className={item.widgetType === "player" ? "text-white/20" : "text-black/20"} />
+                    <span className={`text-[9px] font-bold uppercase tracking-[0.15em] ${item.widgetType === "player" ? "text-white/40" : "text-black/40"}`}>
                       {item.widgetType === "agenda" ? "Agenda" : item.widgetType === "musica" ? "No Ar" : item.widgetType === "weather" ? "Tempo" : item.widgetType === "player" ? "Player" : "Estatísticas"}
                     </span>
                   </div>
