@@ -19,7 +19,7 @@ interface DashboardItem {
   linkLabel?: string;
   linkIcon?: string;
   /** For widgets: which widget type */
-  widgetType?: "agenda" | "musica" | "stats" | "weather";
+  widgetType?: "agenda" | "musica" | "stats" | "weather" | "player";
 }
 
 const STORAGE_KEY = "nexohub_dashboard_items";
@@ -43,11 +43,12 @@ const linkOptions: { label: string; page?: Page; external?: string; icon: string
   { label: "Configurações", page: "configuracoes", icon: "Settings" },
 ];
 
-const widgetOptions: { label: string; type: "agenda" | "musica" | "stats" | "weather"; description: string }[] = [
+const widgetOptions: { label: string; type: "agenda" | "musica" | "stats" | "weather" | "player"; description: string }[] = [
   { label: "Agenda de Eventos", type: "agenda", description: "Exibe os próximos eventos do calendário" },
   { label: "Música no Ar + Programa", type: "musica", description: "Mostra a música e programa em exibição" },
   { label: "Dados Estatísticos", type: "stats", description: "Visualizações do pre-roll e audiência do player" },
   { label: "Previsão do Tempo", type: "weather", description: "Temperatura e previsão para os próximos dias" },
+  { label: "Player", type: "player", description: "Ouça ou assista seus canais cadastrados" },
 ];
 
 const iconMap: Record<string, React.ComponentType<any>> = {
@@ -439,7 +440,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                   <div className="flex items-center gap-1.5 px-4 py-2.5 cursor-grab active:cursor-grabbing flex-shrink-0" style={{ borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
                     <GripVertical size={10} className="text-black/20" />
                     <span className="text-black/40 text-[9px] font-bold uppercase tracking-[0.15em]">
-                      {item.widgetType === "agenda" ? "Agenda" : item.widgetType === "musica" ? "No Ar" : item.widgetType === "weather" ? "Tempo" : "Estatísticas"}
+                      {item.widgetType === "agenda" ? "Agenda" : item.widgetType === "musica" ? "No Ar" : item.widgetType === "weather" ? "Tempo" : item.widgetType === "player" ? "Player" : "Estatísticas"}
                     </span>
                   </div>
                   <div className="absolute top-2.5 right-2.5 z-10 opacity-0 group-hover:opacity-100 transition-all">
@@ -459,6 +460,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                       {item.widgetType === "musica" && <MusicProgramWidget />}
                       {item.widgetType === "stats" && <StatsWidget />}
                       {item.widgetType === "weather" && <DashboardWeatherWidget />}
+                      {item.widgetType === "player" && <DashboardPlayerWidget />}
                     </Suspense>
                   </div>
                 </div>
@@ -619,6 +621,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                         {opt.type === "musica" && <Music size={14} className="text-white" />}
                         {opt.type === "stats" && <BarChart3 size={14} className="text-white" />}
                         {opt.type === "weather" && <CloudSun size={14} className="text-white" />}
+                        {opt.type === "player" && <Radio size={14} className="text-white" />}
                       </div>
                       <div>
                         <p className="font-semibold">{opt.label}</p>
@@ -1226,6 +1229,147 @@ function DashboardWeatherWidget() {
         </div>
       ) : (
         <p className="text-black/30 text-xs">Configure uma cidade no módulo Previsão do Tempo</p>
+      )}
+    </div>
+  );
+}
+
+/* ========== WIDGET: Player ========== */
+function DashboardPlayerWidget() {
+  const { user } = useAuth();
+  const [channels, setChannels] = useState<any[]>([]);
+  const [activeIdx, setActiveIdx] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("streaming_channels")
+      .select("*")
+      .eq("user_id", user.id)
+      .eq("active", true)
+      .order("numero_canal")
+      .then(({ data }) => { if (data) setChannels(data); });
+  }, [user]);
+
+  // Persist audio element across renders
+  useEffect(() => {
+    if (!audioRef.current) {
+      const audio = new Audio();
+      audio.preload = "none";
+      audioRef.current = audio;
+    }
+    return () => {
+      // Don't destroy audio on unmount to allow persistent playback
+    };
+  }, []);
+
+  const activeChannel = channels[activeIdx];
+
+  const togglePlay = () => {
+    const audio = audioRef.current;
+    if (!audio || !activeChannel) return;
+
+    if (isPlaying) {
+      audio.pause();
+      setIsPlaying(false);
+    } else {
+      if (audio.src !== activeChannel.url) {
+        audio.src = activeChannel.url;
+      }
+      audio.play().then(() => setIsPlaying(true)).catch(() => {});
+    }
+  };
+
+  const switchChannel = (idx: number) => {
+    const audio = audioRef.current;
+    setActiveIdx(idx);
+    if (audio && isPlaying) {
+      audio.src = channels[idx].url;
+      audio.play().catch(() => {});
+    }
+  };
+
+  const toggleMute = () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.muted = !audio.muted;
+    setIsMuted(audio.muted);
+  };
+
+  const channelLogo = activeChannel?.background_url || activeChannel?.logo_url || activeChannel?.cover_url;
+
+  return (
+    <div className="flex flex-col h-full">
+      <div className="flex items-center gap-2 mb-2">
+        <Radio size={14} className="text-[#be0101]" />
+        <p className="text-black font-bold text-sm">Player</p>
+        {activeChannel && (
+          <span className="text-black/40 text-[9px] ml-auto truncate max-w-[100px]">{activeChannel.name}</span>
+        )}
+      </div>
+
+      {channels.length === 0 ? (
+        <p className="text-black/30 text-xs">Nenhum canal cadastrado</p>
+      ) : (
+        <div className="flex items-center gap-3">
+          {/* Channel logo / art */}
+          <div
+            className="w-14 h-14 rounded-xl flex-shrink-0 flex items-center justify-center overflow-hidden"
+            style={{ background: "rgba(190,1,1,0.08)" }}
+          >
+            {channelLogo ? (
+              <img src={channelLogo} alt="" className="w-full h-full object-cover rounded-xl" />
+            ) : (
+              <Tv size={20} className="text-[#be0101]/40" />
+            )}
+          </div>
+
+          <div className="flex-1 min-w-0">
+            {/* Channel name + live badge */}
+            <div className="flex items-center gap-1.5 mb-1">
+              {isPlaying && <Circle size={6} fill="#ff0000" color="#ff0000" className="animate-pulse flex-shrink-0" />}
+              <p className="text-black text-xs font-bold truncate">{activeChannel?.name}</p>
+            </div>
+
+            {/* Controls */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={togglePlay}
+                className="w-8 h-8 rounded-full flex items-center justify-center transition-all hover:scale-110"
+                style={{ background: "linear-gradient(135deg, #960101, #be0101)" }}
+              >
+                {isPlaying ? <Pause size={12} className="text-white" /> : <Play size={12} className="text-white ml-0.5" />}
+              </button>
+
+              <button onClick={toggleMute} className="text-black/40 hover:text-black transition-colors">
+                {isMuted ? <VolumeX size={14} /> : <Volume2 size={14} />}
+              </button>
+
+              {/* Channel selector */}
+              {channels.length > 1 && (
+                <div className="flex gap-1 ml-auto">
+                  {channels.slice(0, 4).map((ch, i) => (
+                    <button
+                      key={ch.id}
+                      onClick={() => switchChannel(i)}
+                      className="w-5 h-5 rounded-md flex items-center justify-center text-[8px] font-bold transition-all"
+                      style={{
+                        background: i === activeIdx ? "linear-gradient(135deg, #960101, #be0101)" : "rgba(0,0,0,0.06)",
+                        color: i === activeIdx ? "#fff" : "rgba(0,0,0,0.4)",
+                      }}
+                      title={ch.name}
+                    >
+                      {ch.numero_canal || i + 1}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
