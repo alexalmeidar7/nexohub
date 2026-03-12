@@ -1272,7 +1272,7 @@ ${perguntaActions}
                       subtitulo: JSON.stringify({ titulo: roteiroSubtitulo, obs: assuntoSubtitulo }),
                       conteudo_html: sanitizeRoteiroHtml(editorRef.current?.innerHTML || roteiroTexto),
                       participantes: JSON.stringify(participantes),
-                      status: isAgendado ? "agendado" : "rascunho",
+                      status: isAgendado ? "agendado" : "salvo",
                       share_token: shareToken,
                       share_login: firstName,
                     };
