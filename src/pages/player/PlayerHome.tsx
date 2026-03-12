@@ -437,6 +437,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
           setWatchHistory(unique);
         }
         if (shopRes.data) setShopProducts(shopRes.data as any);
+        setDataLoaded(true);
       } else if (userSlug && userSlug !== ":userSlug") {
         // Public access via slug (unauthenticated visitors)
         const { data } = await supabase.functions.invoke("public-player-data", {
@@ -446,9 +447,9 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
         if (data?.empresa?.logo) setLogoUrl(data.empresa.logo);
         if (data?.empresa?.nome) setChannelName(data.empresa.nome);
         if (data?.programas) setProgramas(data.programas);
+        setDataLoaded(true);
       }
-
-      setDataLoaded(true);
+      // Don't set dataLoaded if neither branch was reached (auth still loading)
     };
     fetchData();
   }, [user, userSlug]);
