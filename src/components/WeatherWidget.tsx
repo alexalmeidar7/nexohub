@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { Sun, Settings } from "lucide-react";
+import { Settings } from "lucide-react";
+import { WeatherIcon } from "@/components/WeatherIcons";
 
 interface WidgetWeather {
   city: string;
