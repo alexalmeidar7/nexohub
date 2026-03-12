@@ -860,18 +860,27 @@ ${perguntaActions}
                     className="w-full px-3 py-2 rounded-lg text-xs outline-none"
                     style={{ backgroundColor: "rgba(13,4,70,0.04)", border: "1px solid rgba(13,4,70,0.08)", color: "#0d0446" }}
                   />
-                  <button
-                    onClick={() => {
-                      addParticipante();
-                      setShowParticipantForm(false);
-                    }}
-                    disabled={!newNome.trim()}
-                    className="w-full py-2 rounded-lg text-xs font-bold transition-all hover:opacity-90 disabled:opacity-40 flex items-center justify-center gap-1.5"
-                    style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#ffffff" }}
-                  >
-                    <Save size={12} />
-                    salvar participante
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        addParticipante();
+                        // Keep form open, fields reset for next participant
+                      }}
+                      disabled={!newNome.trim()}
+                      className="flex-1 py-2 rounded-lg text-xs font-bold transition-all hover:opacity-90 disabled:opacity-40 flex items-center justify-center gap-1.5"
+                      style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#ffffff" }}
+                    >
+                      <Save size={12} />
+                      salvar participante
+                    </button>
+                    <button
+                      onClick={() => setShowParticipantForm(false)}
+                      className="px-3 py-2 rounded-lg text-xs font-bold transition-all hover:opacity-90"
+                      style={{ border: "1px solid rgba(13,4,70,0.1)", color: "rgba(13,4,70,0.5)" }}
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <button
