@@ -264,7 +264,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
   }, [items]);
 
   return (
-    <div ref={scrollRef} className="flex flex-col h-full overflow-y-auto overflow-x-hidden scrollbar-hide relative pt-1" style={{ scrollBehavior: "smooth" }}>
+    <div ref={scrollRef} className="flex flex-col h-full overflow-hidden relative pt-1">
 
 
       {/* Section: Atalhos */}
