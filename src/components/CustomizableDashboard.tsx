@@ -358,7 +358,6 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                  alt={onAirProgram.nome}
                  className="w-28 h-28 sm:w-36 sm:h-36 lg:w-44 lg:h-44 rounded-xl object-contain"
                />
-              />
             )}
             <div className="flex-1 min-w-0">
             {/* Ao vivo + horário + classificação */}
