@@ -435,7 +435,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             boxShadow: "0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.06)",
           }}
         >
-          <img src={logoMenu} alt="NexoHUB" className="h-4 mr-5 flex-shrink-0 opacity-90" />
+          <img src={logoMenu} alt="NexoHUB" className="h-4 mr-3 xl:mr-5 flex-shrink-0 opacity-90" />
 
           {sidebarMenu.filter(item => {
             if (item.label === "home" || item.label === "cadastros" || item.label === "ferramentas") return true;
