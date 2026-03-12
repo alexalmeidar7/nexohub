@@ -387,7 +387,25 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
 
             {/* Descrição */}
             {onAirProgram.descricao && (
-              <p className="text-white text-[11px] leading-relaxed line-clamp-3" style={{ maxWidth: 400 }}>{onAirProgram.descricao}</p>
+              <p className="text-white text-[11px] leading-relaxed line-clamp-3 mb-2" style={{ maxWidth: 400 }}>{onAirProgram.descricao}</p>
+            )}
+
+            {/* Apresentador */}
+            {onAirProgram.apresentador_nome && (
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <User size={12} style={{ color: "#be0101" }} />
+                <span className="text-white text-[11px] font-semibold">{onAirProgram.apresentador_nome}</span>
+              </div>
+            )}
+
+            {/* Música tocando */}
+            {currentMusic && (
+              <div className="flex items-center gap-1.5">
+                <Music size={12} style={{ color: "#be0101" }} />
+                <span className="text-white text-[11px]">
+                  {currentMusic.titulo}{currentMusic.artista ? ` — ${currentMusic.artista}` : ""}
+                </span>
+              </div>
             )}
           </div>
         </div>
