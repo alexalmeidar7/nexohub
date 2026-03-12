@@ -806,6 +806,13 @@ ${perguntaActions}
                     placeholder="rede social (@usuario)"
                     className="w-full px-3 py-2 rounded-lg text-xs outline-none"
                     style={{ backgroundColor: "rgba(13,4,70,0.04)", border: "1px solid rgba(13,4,70,0.08)", color: "#0d0446" }}
+                   />
+                  <input
+                    value={newWhatsapp}
+                    onChange={e => setNewWhatsapp(e.target.value)}
+                    placeholder="whatsapp (ex: +55 11 99999-9999)"
+                    className="w-full px-3 py-2 rounded-lg text-xs outline-none"
+                    style={{ backgroundColor: "rgba(13,4,70,0.04)", border: "1px solid rgba(13,4,70,0.08)", color: "#0d0446" }}
                   />
                   <button
                     onClick={() => {
