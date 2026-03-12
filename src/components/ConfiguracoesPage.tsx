@@ -644,6 +644,13 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
           </div>
         )}
       </div></div>}
+
+      {/* Box 3: Layout */}
+      {(section === "all") && <CollapsibleBox title="Layout — Cores e Personalização">
+        <Suspense fallback={<div className="flex items-center gap-2 text-xs py-8 justify-center" style={{ color: "rgba(13,4,70,0.5)" }}><Loader2 size={16} className="animate-spin" /> Carregando...</div>}>
+          <LayoutCustomizer />
+        </Suspense>
+      </CollapsibleBox>}
         </div>
       </div>
     </div>
