@@ -311,7 +311,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                       e.currentTarget.style.boxShadow = "0 4px 15px rgba(150,1,1,0.35), inset 0 1px 0 rgba(255,255,255,0.15)";
                     }}
                   >
-                    <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "rgba(255,255,255,0.2)" }}>
+                    <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "rgba(255,255,255,0.2)" }}>
                       <Icon size={18} className="text-white" />
                     </div>
                     <span className="text-white text-[9px] font-semibold text-center leading-tight px-1.5 max-w-full truncate mt-1.5">{item.linkLabel}</span>
