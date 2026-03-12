@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef, lazy, Suspense } from "react";
-import { Plus, X, Link2, BarChart3, CalendarDays, Music, Eye, Users, Mic2, PlaySquare, Newspaper, Settings, ShoppingBag, Tag, Image, Film, ShoppingCart, Monitor, Wrench, Scissors, MonitorPlay, ExternalLink, GripVertical, Loader2, Trash2, MessageSquareQuote, Radio, Clock, Tv, FileText, CloudSun, ChevronDown, Play, Pause, Volume2, VolumeX, Circle } from "lucide-react";
+import { Plus, X, Link2, BarChart3, CalendarDays, Music, Eye, Users, Mic2, PlaySquare, Newspaper, Settings, ShoppingBag, Tag, Image, Film, ShoppingCart, Monitor, Wrench, Scissors, MonitorPlay, ExternalLink, GripVertical, Loader2, Trash2, MessageSquareQuote, Radio, Clock, Tv, FileText, CloudSun, ChevronDown, Play, Pause, Volume2, VolumeX, Circle, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
@@ -79,8 +79,10 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
     horario_fim: string;
     classificacao_etaria: string;
     descricao: string;
+    apresentador_nome: string;
   }
   const [onAirProgram, setOnAirProgram] = useState<OnAirProgram | null>(null);
+  const [currentMusic, setCurrentMusic] = useState<{ titulo: string; artista: string } | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -89,7 +91,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
     const fetchOnAir = async () => {
       const { data } = await supabase
         .from("programas")
-        .select("nome, selo, horario_inicio, horario_fim, classificacao_etaria, descricao, dias_semana, ativo")
+        .select("nome, selo, horario_inicio, horario_fim, classificacao_etaria, descricao, dias_semana, ativo, apresentador_id, apresentadores(nome)")
         .eq("user_id", user.id)
         .eq("ativo", true);
       if (cancelled || !data) return;
@@ -108,12 +110,33 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
         horario_fim: current.horario_fim,
         classificacao_etaria: current.classificacao_etaria || "L",
         descricao: current.descricao || "",
+        apresentador_nome: (current.apresentadores as any)?.nome || "",
       } : null);
     };
     fetchOnAir();
     const interval = setInterval(fetchOnAir, 30000);
     return () => { cancelled = true; clearInterval(interval); };
   }, [user]);
+
+  // Poll music from localStorage
+  useEffect(() => {
+    const pollMusic = () => {
+      try {
+        const raw = localStorage.getItem("musicaNoAr");
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed.titulo) {
+            setCurrentMusic({ titulo: parsed.titulo, artista: parsed.artista || "" });
+            return;
+          }
+        }
+      } catch {}
+      setCurrentMusic(null);
+    };
+    pollMusic();
+    const interval = setInterval(pollMusic, 3000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Load dashboard items from DB (fallback to localStorage for migration)
   useEffect(() => {
@@ -364,7 +387,25 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
 
             {/* Descrição */}
             {onAirProgram.descricao && (
-              <p className="text-white text-[11px] leading-relaxed line-clamp-3" style={{ maxWidth: 400 }}>{onAirProgram.descricao}</p>
+              <p className="text-white text-[11px] leading-relaxed line-clamp-3 mb-2" style={{ maxWidth: 400 }}>{onAirProgram.descricao}</p>
+            )}
+
+            {/* Apresentador */}
+            {onAirProgram.apresentador_nome && (
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <User size={12} style={{ color: "#be0101" }} />
+                <span className="text-white text-[11px] font-semibold">{onAirProgram.apresentador_nome}</span>
+              </div>
+            )}
+
+            {/* Música tocando */}
+            {currentMusic && (
+              <div className="flex items-center gap-1.5">
+                <Music size={12} style={{ color: "#be0101" }} />
+                <span className="text-white text-[11px]">
+                  {currentMusic.titulo}{currentMusic.artista ? ` — ${currentMusic.artista}` : ""}
+                </span>
+              </div>
             )}
           </div>
         </div>
