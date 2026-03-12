@@ -357,95 +357,110 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         </div>
       )}
 
-      {/* Horizontal Navigation Bar - desktop */}
-      <nav
-        className="hidden lg:flex items-center px-8 relative z-[60]"
-        style={{
-          background: "rgba(13, 4, 70, 0.65)",
-          backdropFilter: "blur(24px) saturate(1.4)",
-          WebkitBackdropFilter: "blur(24px) saturate(1.4)",
-          borderBottom: "1px solid rgba(255,255,255,0.08)",
-          minHeight: "52px",
-        }}
-      >
-        <img src={logoMenu} alt="NexoHUB" className="h-5 mr-4 flex-shrink-0" />
+      {/* Company name + user info */}
+      <div className="hidden lg:flex px-8 pt-5 pb-1 flex-col">
+        <h1 className="font-bold text-white" style={{ fontSize: "28px", lineHeight: 1.2 }}>{empresa.nome || "Dashboard"}</h1>
+        <p className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.5)" }}>{user?.email || ""}</p>
+      </div>
 
-        {sidebarMenu.filter(item => {
-          if (item.label === "home" || item.label === "cadastros" || item.label === "ferramentas") return true;
-          const modKey = menuToModuleKey[item.label];
-          if (!modKey) return true;
-          if (planModules) return planModules.has(modKey);
-          if (enabledModules) return enabledModules.has(modKey);
-          return true;
-        }).map((item, idx) => {
-          const active = isItemActive(item);
-          const isOpen = hoveredMenu === item.label;
+      {/* Navigation bar - floating rounded box */}
+      <div className="hidden lg:flex items-center gap-3 px-8 pt-3 pb-1 relative z-[60]">
+        {/* Menu box */}
+        <div
+          className="flex items-center px-5 py-2.5"
+          style={{
+            background: "rgba(13, 4, 70, 0.55)",
+            backdropFilter: "blur(20px) saturate(1.6)",
+            WebkitBackdropFilter: "blur(20px) saturate(1.6)",
+            borderRadius: "16px",
+            border: "1px solid rgba(255,255,255,0.12)",
+            boxShadow: "0 4px 24px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.08)",
+          }}
+        >
+          <img src={logoMenu} alt="NexoHUB" className="h-4 mr-5 flex-shrink-0 opacity-90" />
 
-          return (
-            <div
-              key={item.label}
-              className="relative flex items-center"
-              onMouseEnter={() => item.children && setHoveredMenu(item.label)}
-              onMouseLeave={() => setHoveredMenu(null)}
-            >
-              {idx > 0 && <span className="text-white/20 mx-3 text-sm select-none">|</span>}
-              <button
-                onClick={() => {
-                  if (!item.children && item.page) {
-                    setCurrentPage(item.page);
-                  }
-                }}
-                className="text-xs font-semibold py-2 transition-colors whitespace-nowrap"
-                style={{ color: active ? "#268ffa" : "#ffffff" }}
-                onMouseEnter={e => { if (!active) e.currentTarget.style.color = "#268ffa"; }}
-                onMouseLeave={e => { if (!active) e.currentTarget.style.color = "#ffffff"; }}
+          {sidebarMenu.filter(item => {
+            if (item.label === "home" || item.label === "cadastros" || item.label === "ferramentas") return true;
+            const modKey = menuToModuleKey[item.label];
+            if (!modKey) return true;
+            if (planModules) return planModules.has(modKey);
+            if (enabledModules) return enabledModules.has(modKey);
+            return true;
+          }).map((item, idx) => {
+            const active = isItemActive(item);
+            const isOpen = hoveredMenu === item.label;
+
+            return (
+              <div
+                key={item.label}
+                className="relative flex items-center"
+                onMouseEnter={() => item.children && setHoveredMenu(item.label)}
+                onMouseLeave={() => setHoveredMenu(null)}
               >
-                {item.label}
-              </button>
+                {idx > 0 && <span className="text-white/10 mx-2.5 text-[10px] select-none">•</span>}
+                <button
+                  onClick={() => {
+                    if (!item.children && item.page) {
+                      setCurrentPage(item.page);
+                    }
+                  }}
+                  className="text-[11px] font-semibold py-1 px-1.5 rounded-lg transition-all whitespace-nowrap"
+                  style={{
+                    color: active ? "#ffffff" : "rgba(255,255,255,0.6)",
+                    backgroundColor: active ? "rgba(38,143,250,0.25)" : "transparent",
+                  }}
+                  onMouseEnter={e => { if (!active) { e.currentTarget.style.color = "#ffffff"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.08)"; } }}
+                  onMouseLeave={e => { if (!active) { e.currentTarget.style.color = "rgba(255,255,255,0.6)"; e.currentTarget.style.backgroundColor = "transparent"; } }}
+                >
+                  {item.label}
+                </button>
 
-              {/* Dropdown */}
-              {item.children && isOpen && (
-                <div className="absolute top-full left-0 pt-1 z-[70]">
-                  <div
-                    className="rounded-lg py-2 min-w-[180px]"
-                    style={{
-                      background: "rgba(13, 4, 70, 0.8)",
-                      backdropFilter: "blur(24px) saturate(1.4)",
-                      WebkitBackdropFilter: "blur(24px) saturate(1.4)",
-                      border: "1px solid rgba(255,255,255,0.1)",
-                      boxShadow: "0 8px 24px rgba(0,0,0,0.4)",
-                    }}
-                  >
-                    {item.children.map(child => (
-                      <button
-                        key={child.label}
-                        onClick={() => handleChildClick(child, item.label)}
-                        className="w-full text-left px-4 py-2 text-xs transition-colors"
-                        style={{ color: child.page && currentPage === child.page ? "#268ffa" : "#ffffff" }}
-                        onMouseEnter={e => { if (!(child.page && currentPage === child.page)) { e.currentTarget.style.color = "#268ffa"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.05)"; } }}
-                        onMouseLeave={e => { if (!(child.page && currentPage === child.page)) { e.currentTarget.style.color = "#ffffff"; e.currentTarget.style.backgroundColor = "transparent"; } }}
-                      >
-                        {child.label}
-                      </button>
-                    ))}
+                {/* Dropdown */}
+                {item.children && isOpen && (
+                  <div className="absolute top-full left-0 pt-2 z-[70]">
+                    <div
+                      className="rounded-xl py-1.5 min-w-[180px]"
+                      style={{
+                        background: "rgba(13, 4, 70, 0.85)",
+                        backdropFilter: "blur(24px) saturate(1.4)",
+                        WebkitBackdropFilter: "blur(24px) saturate(1.4)",
+                        border: "1px solid rgba(255,255,255,0.1)",
+                        boxShadow: "0 12px 32px rgba(0,0,0,0.4)",
+                      }}
+                    >
+                      {item.children.map(child => (
+                        <button
+                          key={child.label}
+                          onClick={() => handleChildClick(child, item.label)}
+                          className="w-full text-left px-4 py-2 text-[11px] transition-all rounded-lg mx-0"
+                          style={{ color: child.page && currentPage === child.page ? "#268ffa" : "rgba(255,255,255,0.8)" }}
+                          onMouseEnter={e => { if (!(child.page && currentPage === child.page)) { e.currentTarget.style.color = "#268ffa"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.05)"; } }}
+                          onMouseLeave={e => { if (!(child.page && currentPage === child.page)) { e.currentTarget.style.color = "rgba(255,255,255,0.8)"; e.currentTarget.style.backgroundColor = "transparent"; } }}
+                        >
+                          {child.label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
-          );
-        })}
+                )}
+              </div>
+            );
+          })}
+        </div>
 
-        {/* Right side: icons */}
-        <div className="ml-auto flex items-center gap-3">
-          <Suspense fallback={<div className="w-8 h-8 rounded-full" style={{ backgroundColor: "#0d0446" }} />}>
+        {/* Right side icons - outside menu box */}
+        <div className="flex items-center gap-2 ml-auto">
+          <Suspense fallback={<div className="w-8 h-8 rounded-full" style={{ backgroundColor: "rgba(255,255,255,0.1)" }} />}>
             <MessageNotification />
           </Suspense>
           <Tooltip>
             <TooltipTrigger asChild>
               <button
                 onClick={() => setCurrentPage("configuracoes")}
-                className="w-8 h-8 rounded-full flex items-center justify-center transition-opacity hover:opacity-80"
+                className="w-8 h-8 rounded-full flex items-center justify-center transition-all"
                 style={{ backgroundColor: "rgba(255,255,255,0.1)" }}
+                onMouseEnter={e => { e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.2)"; }}
+                onMouseLeave={e => { e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.1)"; }}
               >
                 <Settings size={14} className="text-white/70" />
               </button>
@@ -454,21 +469,15 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           </Tooltip>
           <button
             onClick={onLogout}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold transition-all"
-            style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#ffffff" }}
-            onMouseEnter={e => { e.currentTarget.style.background = "linear-gradient(135deg, #1a7ae0, #268ffa)"; }}
-            onMouseLeave={e => { e.currentTarget.style.background = "linear-gradient(135deg, #268ffa, #2dbef3)"; }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold transition-all"
+            style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#ffffff", boxShadow: "0 2px 10px rgba(38,143,250,0.3)" }}
+            onMouseEnter={e => { e.currentTarget.style.background = "linear-gradient(135deg, #1a7ae0, #268ffa)"; e.currentTarget.style.boxShadow = "0 4px 15px rgba(38,143,250,0.5)"; }}
+            onMouseLeave={e => { e.currentTarget.style.background = "linear-gradient(135deg, #268ffa, #2dbef3)"; e.currentTarget.style.boxShadow = "0 2px 10px rgba(38,143,250,0.3)"; }}
           >
             <LogOut size={10} /> Sair
           </button>
           <ServerClock />
         </div>
-      </nav>
-
-      {/* Company name + user info - below nav */}
-      <div className="hidden lg:flex px-8 pt-4 pb-1 flex-col">
-        <h1 className="font-bold text-white" style={{ fontSize: "28px", lineHeight: 1.2 }}>{empresa.nome || "Dashboard"}</h1>
-        <p className="text-xs mt-0.5" style={{ color: "#268ffa" }}>{user?.email || ""}</p>
       </div>
 
       <div className="flex gap-[30px] pt-3 flex-1 min-h-0 px-4 lg:px-8">
