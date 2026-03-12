@@ -307,39 +307,43 @@ export default function RoteiroPrograma() {
     setNumeroRoteiro(null);
     setEditingRoteiroId(null);
 
-    const tdStyle = "border:1px solid rgba(13,4,70,0.12);padding:8px 10px;word-wrap:break-word;overflow-wrap:break-word";
-    const actionBtnStyle = "cursor:pointer;padding:2px 4px;border-radius:4px;display:inline-flex;align-items:center;justify-content:center";
+    const tdStyle = "border:1px solid rgba(13,4,70,0.10);padding:10px 12px;word-wrap:break-word;overflow-wrap:break-word;vertical-align:top;line-height:1.6";
+    const thStyle = `${tdStyle};text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:0.8px;font-weight:700;color:#0d0446;background:rgba(38,143,250,0.06)`;
+    const actionBtnStyle = "cursor:pointer;padding:2px 6px;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;font-size:13px";
     const perguntaActions = `<td style="${tdStyle};white-space:nowrap;text-align:center;width:90px" contenteditable="false"><span data-action="move-up" style="${actionBtnStyle};color:#268ffa" title="Mover para cima">▲</span> <span data-action="move-down" style="${actionBtnStyle};color:#268ffa" title="Mover para baixo">▼</span> <span data-action="delete-pergunta" style="${actionBtnStyle};color:#dc2626" title="Remover pergunta">🗑</span></td>`;
+    const elStyle = `${tdStyle};font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.3px;color:#0d0446`;
+    const timeStyle = `${tdStyle};font-family:monospace;font-size:12px;color:rgba(13,4,70,0.5);text-align:center`;
+
     const defaultContent = `<table style="width:100%;border-collapse:collapse;font-size:13px;color:#0d0446;table-layout:fixed">
-<colgroup><col style="width:60px"><col style="width:120px"><col><col style="width:90px"></colgroup>
+<colgroup><col style="width:70px"><col style="width:130px"><col><col style="width:90px"></colgroup>
 <thead>
-<tr style="background:rgba(38,143,250,0.08)">
-<th style="${tdStyle};text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:0.5px">Tempo</th>
-<th style="${tdStyle};text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:0.5px">Elemento</th>
-<th style="${tdStyle};text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:0.5px">Descrição / Texto</th>
-<th style="${tdStyle};text-align:center;font-size:11px;text-transform:uppercase;letter-spacing:0.5px">Ações</th>
+<tr>
+<th style="${thStyle}">Tempo</th>
+<th style="${thStyle}">Elemento</th>
+<th style="${thStyle}">Descrição / Texto</th>
+<th style="${thStyle};text-align:center">Ações</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="${tdStyle}">--:--</td>
-<td style="${tdStyle};font-weight:600">VINHETA</td>
+<td style="${timeStyle}">--:--</td>
+<td style="${elStyle}">Vinheta</td>
 <td style="${tdStyle}">Abertura padrão do programa (Áudio + Vídeo).</td>
 <td style="${tdStyle}"></td>
 </tr>
 <tr>
-<td style="${tdStyle}">--:--</td>
-<td style="${tdStyle};font-weight:600">OFF / CABEÇA</td>
-<td style="${tdStyle}">APRESENTADOR: "Olá! Hoje o tema é sério. Vamos falar sobre como a informação é o melhor caminho contra a dependência química."</td>
-<td style="${tdStyle};white-space:normal;word-break:break-word">Abertura do programa</td>
+<td style="${timeStyle}">--:--</td>
+<td style="${elStyle}">Off / Cabeça</td>
+<td style="${tdStyle}"><strong>APRESENTADOR:</strong> "Olá! Hoje o tema é sério. Vamos falar sobre como a informação é o melhor caminho contra a dependência química."</td>
+<td style="${tdStyle};font-size:11px;color:rgba(13,4,70,0.5)">Abertura do programa</td>
 </tr>
-<tr style="background:rgba(38,143,250,0.06)">
-<td style="${tdStyle}"></td>
-<td style="${tdStyle};font-weight:700;color:#268ffa" colspan="3">ENTREVISTA</td>
+<tr>
+<td style="${tdStyle};background:rgba(38,143,250,0.04)"></td>
+<td style="${tdStyle};font-weight:700;color:#268ffa;background:rgba(38,143,250,0.04)" colspan="3">ENTREVISTA</td>
 </tr>
 <tr data-pergunta="1">
-<td style="${tdStyle}">--:--</td>
-<td style="${tdStyle};font-weight:600">PERGUNTA 1</td>
+<td style="${timeStyle}">--:--</td>
+<td style="${elStyle}">Pergunta 1</td>
 <td style="${tdStyle}">[Insira a pergunta aqui]</td>
 ${perguntaActions}
 </tr>
@@ -349,16 +353,16 @@ ${perguntaActions}
 </td>
 </tr>
 <tr>
-<td style="${tdStyle}">--:--</td>
-<td style="${tdStyle};font-weight:600">OBSERVAÇÕES</td>
+<td style="${timeStyle}">--:--</td>
+<td style="${elStyle}">Observações</td>
 <td style="${tdStyle}">Inserir imagens de apoio (família conversando, centros de apoio) enquanto o convidado fala.</td>
 <td style="${tdStyle}"></td>
 </tr>
 <tr>
-<td style="${tdStyle}">--:--</td>
-<td style="${tdStyle};font-weight:600">ENCERRAMENTO</td>
-<td style="${tdStyle}">APRESENTADOR: "Agradecemos ao [Nome]. Se você precisa de ajuda, ligue para o [Número/CAPS]. Até amanhã."</td>
-<td style="${tdStyle};white-space:normal;word-break:break-word">Encerrar programa</td>
+<td style="${timeStyle}">--:--</td>
+<td style="${elStyle}">Encerramento</td>
+<td style="${tdStyle}"><strong>APRESENTADOR:</strong> "Agradecemos ao [Nome]. Se você precisa de ajuda, ligue para o [Número/CAPS]. Até amanhã."</td>
+<td style="${tdStyle};font-size:11px;color:rgba(13,4,70,0.5)">Encerrar programa</td>
 </tr>
 </tbody>
 </table>`;
