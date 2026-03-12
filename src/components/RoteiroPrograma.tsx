@@ -278,8 +278,13 @@ export default function RoteiroPrograma() {
     setRoteiroTitulo(r.titulo || "");
     try {
       const sub = JSON.parse(r.subtitulo || "{}");
-      setRoteiroSubtitulo(sub.titulo || r.subtitulo || "");
-      setAssuntoSubtitulo(sub.obs || "");
+      if (sub && typeof sub === "object" && ("titulo" in sub || "obs" in sub)) {
+        setRoteiroSubtitulo(sub.titulo || "");
+        setAssuntoSubtitulo(sub.obs || "");
+      } else {
+        setRoteiroSubtitulo(r.subtitulo || "");
+        setAssuntoSubtitulo("");
+      }
     } catch {
       setRoteiroSubtitulo(r.subtitulo || "");
       setAssuntoSubtitulo("");
