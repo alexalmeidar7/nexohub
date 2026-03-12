@@ -1107,7 +1107,7 @@ function DashboardAgenda() {
       {dayEvents.length > 0 && (
         <div className="mt-1 space-y-1 overflow-y-auto flex-1 scrollbar-hide">
           {dayEvents.map((evt: any) => (
-            <div key={evt.id} className="rounded-lg px-2 py-1 text-[10px]" style={{ backgroundColor: "#268ffa", color: "#fff" }}>
+            <div key={evt.id} className="rounded-lg px-2 py-1 text-[10px]" style={{ backgroundColor: "#be0101", color: "#fff" }}>
               <p className="font-semibold">{evt.programa?.nome || "Evento"}</p>
               {evt.programa && <p className="opacity-70">{evt.programa.horario_inicio} - {evt.programa.horario_fim}</p>}
             </div>
