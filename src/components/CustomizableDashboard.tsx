@@ -433,13 +433,16 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                     overflow: item.widgetType === "player" ? "visible" : "hidden",
                     transition: "max-height 0.4s ease, min-height 0.4s ease",
                   }}
-                  draggable
-                  onDragStart={() => handleDragStart(item.id)}
                   onDragOver={(e) => handleDragOver(e, item.id)}
                   onDrop={() => handleDrop(item.id)}
                   onDragEnd={handleDragEnd}
                 >
-                  <div className="flex items-center gap-1.5 px-4 py-2.5 cursor-grab active:cursor-grabbing flex-shrink-0" style={{ borderBottom: item.widgetType === "player" ? "1px solid rgba(255,255,255,0.06)" : "1px solid rgba(0,0,0,0.06)" }}>
+                  <div
+                    className="flex items-center gap-1.5 px-4 py-2.5 cursor-grab active:cursor-grabbing flex-shrink-0"
+                    style={{ borderBottom: item.widgetType === "player" ? "1px solid rgba(255,255,255,0.06)" : "1px solid rgba(0,0,0,0.06)" }}
+                    draggable
+                    onDragStart={(e) => { e.stopPropagation(); handleDragStart(item.id); }}
+                  >
                     <GripVertical size={10} className={item.widgetType === "player" ? "text-white/20" : "text-black/20"} />
                     <span className={`text-[9px] font-bold uppercase tracking-[0.15em] ${item.widgetType === "player" ? "text-white/40" : "text-black/40"}`}>
                       {item.widgetType === "agenda" ? "Agenda" : item.widgetType === "musica" ? "No Ar" : item.widgetType === "weather" ? "Tempo" : item.widgetType === "player" ? "Player" : "Estatísticas"}
