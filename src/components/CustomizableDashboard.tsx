@@ -410,8 +410,8 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                 </span>
               </div>
             )}
+            </div>
           </div>
-        </div>
       )}
 
 
