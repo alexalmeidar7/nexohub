@@ -45,6 +45,7 @@ export default function ApresentadorForm() {
   const [categoria, setCategoria] = useState("");
   const [cargoConvidado, setCargoConvidado] = useState("");
   const [instagram, setInstagram] = useState("");
+  const [whatsapp, setWhatsapp] = useState("");
   const [foto, setFoto] = useState("");
   const [ativo, setAtivo] = useState(true);
   const [apresentadores, setApresentadores] = useState<Apresentador[]>([]);
