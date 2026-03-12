@@ -347,16 +347,15 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                 </span>
                 {onAirProgram.classificacao_etaria && (
                   <span
-                    className="text-[9px] font-bold px-1.5 py-0.5 rounded"
+                    className="text-[10px] font-bold"
                     style={{
-                      backgroundColor:
+                      color:
                         onAirProgram.classificacao_etaria === "L" ? "#00a651" :
                         onAirProgram.classificacao_etaria === "10" ? "#0091d4" :
                         onAirProgram.classificacao_etaria === "12" ? "#f8c210" :
                         onAirProgram.classificacao_etaria === "14" ? "#f68c1e" :
                         onAirProgram.classificacao_etaria === "16" ? "#e2203a" :
                         onAirProgram.classificacao_etaria === "18" ? "#1d1d1b" : "#666",
-                      color: "#fff",
                     }}
                   >
                     {onAirProgram.classificacao_etaria === "L" ? "L" : `${onAirProgram.classificacao_etaria}+`}
