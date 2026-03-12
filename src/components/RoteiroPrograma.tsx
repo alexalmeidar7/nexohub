@@ -1052,26 +1052,28 @@ ${perguntaActions}
               style={{ color: "#0d0446", fontSize: fontSize + "px", lineHeight: "1.7" }}
               data-placeholder="Digite o roteiro aqui..."
             />
-          </div>
+              </div>
+            </div>
 
-          {/* Salvar / Exportar */}
-          <button
-            onClick={async () => {
-              await salvarRoteiro();
-              setShowExportView(true);
-              if (editingRoteiroId) {
-                fetchApresentadorStatus(editingRoteiroId);
-              } else {
-                setApresentadorStatus(null);
-              }
-            }}
-            disabled={savingRoteiro}
-            className="w-full py-3 rounded-xl text-sm font-bold transition-all hover:opacity-90 flex items-center justify-center gap-2"
-            style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#ffffff", boxShadow: "0 4px 16px rgba(38,143,250,0.3)" }}
-          >
-            <Save size={14} />
-            {savingRoteiro ? "salvando..." : "salvar / exportar roteiro"}
-          </button>
+            {/* Salvar / Exportar */}
+            <button
+              onClick={async () => {
+                await salvarRoteiro();
+                setShowExportView(true);
+                if (editingRoteiroId) {
+                  fetchApresentadorStatus(editingRoteiroId);
+                } else {
+                  setApresentadorStatus(null);
+                }
+              }}
+              disabled={savingRoteiro}
+              className="w-full py-3.5 rounded-xl text-sm font-bold transition-all hover:opacity-90 flex items-center justify-center gap-2"
+              style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#ffffff", boxShadow: "0 4px 16px rgba(38,143,250,0.3)" }}
+            >
+              <Save size={14} />
+              {savingRoteiro ? "salvando..." : "Salvar e Exportar Roteiro"}
+            </button>
+          </div>
         </div>
       )}
 
