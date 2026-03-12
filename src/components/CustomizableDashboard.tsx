@@ -1323,6 +1323,10 @@ function DashboardPlayerWidget({ onVideoChange }: { onVideoChange?: (active: boo
     const url = ch.url;
     if (hlsInitUrlRef.current === url) return;
     hlsInitUrlRef.current = url;
+    setVideoLoading(true);
+
+    const onPlaying = () => setVideoLoading(false);
+    el.addEventListener("playing", onPlaying);
 
     if (hlsRef.current) { hlsRef.current.destroy(); hlsRef.current = null; }
 
@@ -1350,7 +1354,7 @@ function DashboardPlayerWidget({ onVideoChange }: { onVideoChange?: (active: boo
       el.play().catch(() => {});
     }
 
-    return () => { hlsInitUrlRef.current = ""; };
+    return () => { hlsInitUrlRef.current = ""; el.removeEventListener("playing", onPlaying); };
   }, [showVideo, activeIdx]);
 
   const activeChannel = channels[activeIdx];
