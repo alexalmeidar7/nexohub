@@ -156,6 +156,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const [onAirThumb, setOnAirThumb] = useState<string | null>(null);
   const prevThumbRef = useRef<string | null>(null);
 
+  useEffect(() => () => clearMenuLeaveTimer(), [clearMenuLeaveTimer]);
+
   // Poll current on-air program thumb every 30s
   useEffect(() => {
     if (!user) return;
