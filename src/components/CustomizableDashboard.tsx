@@ -432,7 +432,9 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                     minHeight: item.widgetType === "agenda" ? "200px" : "150px",
                     maxHeight: item.widgetType === "agenda" ? "240px" : "none",
                     overflow: item.widgetType === "player" ? "visible" : "hidden",
-                    transition: "max-height 0.4s ease, min-height 0.4s ease",
+                    transition: "margin-top 0.4s ease, max-height 0.4s ease, min-height 0.4s ease",
+                    marginTop: (item.widgetType === "player" && playerVideoActive === item.id) ? "-150px" : "0px",
+                    zIndex: (item.widgetType === "player" && playerVideoActive === item.id) ? 20 : undefined,
                   }}
                   onDragOver={(e) => handleDragOver(e, item.id)}
                   onDrop={() => handleDrop(item.id)}
