@@ -1,7 +1,22 @@
 import html2canvas from "html2canvas-pro";
 import { jsPDF } from "jspdf";
 
-export async function generatePdfBlob(element: HTMLElement): Promise<Blob> {
+async function loadImageAsDataUrl(url: string): Promise<string | null> {
+  try {
+    const res = await fetch(url, { mode: "cors" });
+    const blob = await res.blob();
+    return await new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
+}
+
+export async function generatePdfBlob(element: HTMLElement, logoUrl?: string | null): Promise<Blob> {
   // Force all text/elements to black for better readability
   element.classList.add("pdf-force-black");
   const style = document.createElement("style");
