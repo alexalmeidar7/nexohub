@@ -511,7 +511,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
           <div
             className="relative rounded-2xl p-6 max-w-md w-full mx-4 max-h-[80vh] overflow-y-auto"
             style={{
-              background: "rgba(13, 4, 70, 0.95)",
+              background: "rgba(0, 0, 0, 0.95)",
               backdropFilter: "blur(24px)",
               border: "1px solid rgba(255,255,255,0.15)",
               boxShadow: "0 20px 60px rgba(0,0,0,0.5)",
