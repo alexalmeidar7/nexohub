@@ -822,7 +822,7 @@ function ProgramasPreview() {
     supabase.from("programas").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("ativo", true)
       .then(({ count: c }) => setCount(c || 0));
   }, [user]);
-  return <p className="text-[#0d0446]/50 text-[10px]">{count} programa{count !== 1 ? "s" : ""} ativo{count !== 1 ? "s" : ""}</p>;
+  return <p className="text-black/50 text-[10px]">{count} programa{count !== 1 ? "s" : ""} ativo{count !== 1 ? "s" : ""}</p>;
 }
 
 function PromosPreview() {
