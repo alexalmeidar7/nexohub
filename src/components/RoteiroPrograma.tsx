@@ -15,6 +15,7 @@ import { sanitizeRoteiroHtml } from "@/lib/sanitizeRoteiroHtml";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 
 const NoticiasPanel = lazy(() => import("./NoticiasPanel"));
+const WhatsAppSendDialog = lazy(() => import("./WhatsAppSendDialog"));
 
 interface Apresentador {
   id: string;
