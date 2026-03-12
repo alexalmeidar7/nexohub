@@ -396,9 +396,15 @@ export default function ApresentadorForm() {
                     </td>
                     <td className="px-4 py-2.5 font-semibold">{a.nome}</td>
                     <td className="px-4 py-2.5">
-                      {a.instagram ? (
-                        <span className="flex items-center gap-1.5 text-[11px]"><Instagram size={12} style={{ color: "#e1306c" }} /> {a.instagram}</span>
-                      ) : <span className="text-[#0d0446]/25">—</span>}
+                      <div className="flex flex-col gap-0.5">
+                        {a.instagram ? (
+                          <span className="flex items-center gap-1.5 text-[11px]"><Instagram size={12} style={{ color: "#e1306c" }} /> {a.instagram}</span>
+                        ) : null}
+                        {a.whatsapp ? (
+                          <span className="flex items-center gap-1.5 text-[11px]"><Phone size={12} style={{ color: "#25D366" }} /> {a.whatsapp}</span>
+                        ) : null}
+                        {!a.instagram && !a.whatsapp && <span className="text-[#0d0446]/25">—</span>}
+                      </div>
                     </td>
                     <td className="px-4 py-2.5 text-center">
                       {a.foto ? <CheckCircle size={15} className="inline" style={{ color: "#22c55e" }} /> : <span className="text-[#0d0446]/20">—</span>}
