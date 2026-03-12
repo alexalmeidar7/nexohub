@@ -1191,7 +1191,7 @@ function DashboardWeatherWidget() {
   return (
     <div>
       <div className="flex items-center gap-2 mb-3">
-        <CloudSun size={14} className="text-[#268ffa]" />
+        <CloudSun size={14} className="text-[#be0101]" />
         <p className="text-[#0d0446] font-bold text-sm">Previsão do Tempo</p>
       </div>
       {weather ? (
@@ -1202,7 +1202,7 @@ function DashboardWeatherWidget() {
               {WeatherIconComp && <WeatherIconComp code={weather.current.weatherCode} size={48} />}
             </div>
             <div>
-              <p className="text-3xl font-bold text-[#268ffa] leading-none">{weather.current.temp}°</p>
+              <p className="text-3xl font-bold text-[#be0101] leading-none">{weather.current.temp}°</p>
               <p className="text-[#0d0446] text-[10px] font-semibold mt-0.5">{weather.city}</p>
               <p className="text-[#0d0446]/50 text-[9px]">{getLabel(weather.current.weatherCode)}</p>
             </div>
@@ -1215,7 +1215,7 @@ function DashboardWeatherWidget() {
 
           {/* Tomorrow */}
           {weather.tomorrow && (
-            <div className="px-3 py-2 rounded-lg flex items-center gap-3" style={{ background: "rgba(38,143,250,0.06)" }}>
+            <div className="px-3 py-2 rounded-lg flex items-center gap-3" style={{ background: "rgba(190,1,1,0.06)" }}>
               <div className="flex-shrink-0">
                 {WeatherIconComp && <WeatherIconComp code={weather.tomorrow.weatherCode} size={28} forceDay />}
               </div>
