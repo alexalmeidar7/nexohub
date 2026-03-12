@@ -1536,7 +1536,7 @@ function DashboardPlayerWidget({ onVideoChange }: { onVideoChange?: (active: boo
 
       <style>{`
         @keyframes eq-bar { 0% { height: 3px; } 100% { height: 14px; } }
-        @keyframes widget-video-grow { 0% { height: 0; opacity: 0; } 100% { height: 140px; opacity: 1; } }
+        @keyframes widget-video-grow { 0% { max-height: 0; opacity: 0; } 100% { max-height: 220px; opacity: 1; } }
       `}</style>
     </div>
   );
