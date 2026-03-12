@@ -1306,7 +1306,7 @@ ${perguntaActions}
                 }
               </button>
               <button
-                onClick={() => { window.scrollTo({ top: 0, behavior: "smooth" }); setShowWhatsAppDialog(true); }}
+                onClick={() => setShowWhatsAppDialog(true)}
                 className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold text-white hover:opacity-90 transition"
                 style={{ backgroundColor: "#25d366" }}
               >

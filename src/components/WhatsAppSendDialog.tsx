@@ -134,9 +134,9 @@ export default function WhatsAppSendDialog({ open, onClose, roteiroData }: Whats
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[9998] flex items-center justify-center" style={{ backgroundColor: "rgba(0,0,0,0.5)" }} onClick={onClose}>
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ backgroundColor: "rgba(0,0,0,0.6)" }} onClick={onClose}>
       <div
-        className="relative rounded-2xl shadow-2xl flex flex-col w-full max-w-lg max-h-[90vh] overflow-hidden"
+        className="relative rounded-2xl shadow-2xl flex flex-col w-full max-w-lg max-h-[85vh] overflow-hidden"
         style={{ backgroundColor: "#0d0446" }}
         onClick={e => e.stopPropagation()}
       >
