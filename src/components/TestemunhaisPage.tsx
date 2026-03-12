@@ -234,7 +234,7 @@ export default function TestemunhaisPage() {
                   <select value={programaId} onChange={(e) => setProgramaId(e.target.value)}
                     className="w-full px-4 py-1.5 text-sm outline-none appearance-none"
                     style={inputStyle}
-                    onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
+                    onFocus={e => { e.currentTarget.style.borderColor = "#be0101"; }}
                     onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
                   >
                     <option value="">Selecione um programa</option>
