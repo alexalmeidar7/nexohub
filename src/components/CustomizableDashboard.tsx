@@ -1246,6 +1246,23 @@ function DashboardPlayerWidget() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const hlsRef = useRef<any>(null);
+  const widgetContainerRef = useRef<HTMLDivElement | null>(null);
+  const [videoPos, setVideoPos] = useState<{ top: number; left: number; width: number } | null>(null);
+
+  // Update video position when showVideo changes
+  useEffect(() => {
+    if (!showVideo || !widgetContainerRef.current) { setVideoPos(null); return; }
+    const update = () => {
+      const el = widgetContainerRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      setVideoPos({ top: rect.top - 168, left: rect.left, width: rect.width });
+    };
+    update();
+    window.addEventListener("scroll", update, true);
+    window.addEventListener("resize", update);
+    return () => { window.removeEventListener("scroll", update, true); window.removeEventListener("resize", update); };
+  }, [showVideo]);
 
   useEffect(() => {
     if (!user) return;
