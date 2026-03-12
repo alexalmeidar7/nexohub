@@ -542,9 +542,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               <button
                 onClick={() => setCurrentPage("dashboard")}
                 className="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold transition-all"
-                style={{ backgroundColor: "#268ffa", color: "#ffffff" }}
-                onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#0d0446"; }}
-                onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#268ffa"; }}
+                style={{ backgroundColor: "#be0101", color: "#ffffff" }}
+                onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#960101"; }}
+                onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#be0101"; }}
               >
                 <ChevronUp size={14} className="rotate-[-90deg]" /> Voltar
               </button>
