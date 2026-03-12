@@ -350,7 +350,22 @@ export default function TpScreen({ user, onBack }: TpScreenProps) {
       .channel(`tp-control-${user.id}`, { config: { broadcast: { self: true } } })
       .on("broadcast", { event: "tp-command" }, handleCommand);
     ch.subscribe((status) => {
-      cmdReadyRef.current = status === "SUBSCRIBED";
+      const isReady = status === "SUBSCRIBED";
+      cmdReadyRef.current = isReady;
+
+      if (isReady && cmdReconnectTimerRef.current) {
+        clearTimeout(cmdReconnectTimerRef.current);
+        cmdReconnectTimerRef.current = null;
+      }
+
+      if (!isReady && (status === "CLOSED" || status === "CHANNEL_ERROR" || status === "TIMED_OUT")) {
+        if (!cmdReconnectTimerRef.current) {
+          cmdReconnectTimerRef.current = setTimeout(() => {
+            cmdReconnectTimerRef.current = null;
+            connectCmdChannel();
+          }, 800);
+        }
+      }
     });
     cmdChannelRef.current = ch;
   }
