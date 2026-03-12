@@ -1304,27 +1304,36 @@ function DashboardPlayerWidget() {
   const channelType = activeChannel?.type || "";
   const isVideo = channelType.includes("video");
 
+  const stopAll = () => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.removeAttribute("src");
+      audioRef.current.load();
+    }
+    if (videoRef.current) {
+      videoRef.current.pause();
+      videoRef.current.removeAttribute("src");
+      videoRef.current.load();
+    }
+    setShowVideo(false);
+    setIsPlaying(false);
+  };
+
   const togglePlay = () => {
     if (!activeChannel) return;
 
-    if (isVideo) {
-      // For video channels, toggle the video overlay
-      if (isPlaying) {
-        setShowVideo(false);
-        setIsPlaying(false);
-        if (videoRef.current) { videoRef.current.pause(); videoRef.current.src = ""; }
-      } else {
+    if (isPlaying) {
+      stopAll();
+    } else {
+      // Stop any lingering streams first
+      stopAll();
+      if (isVideo) {
         setShowVideo(true);
         setIsPlaying(true);
-      }
-    } else {
-      const audio = audioRef.current;
-      if (!audio) return;
-      if (isPlaying) {
-        audio.pause();
-        setIsPlaying(false);
       } else {
-        if (audio.src !== activeChannel.url) audio.src = activeChannel.url;
+        const audio = audioRef.current;
+        if (!audio) return;
+        audio.src = activeChannel.url;
         audio.play().then(() => setIsPlaying(true)).catch(() => {});
       }
     }
