@@ -354,15 +354,18 @@ export default function TpScreen({ user, onBack }: TpScreenProps) {
       const isReady = status === "SUBSCRIBED";
       cmdReadyRef.current = isReady;
 
-      if (isReady && cmdReconnectTimerRef.current) {
-        clearTimeout(cmdReconnectTimerRef.current);
-        cmdReconnectTimerRef.current = null;
-      }
-
-      if (!isReady && (status === "CLOSED" || status === "CHANNEL_ERROR" || status === "TIMED_OUT")) {
+      if (isReady) {
+        setCmdConnectionStatus('connected');
+        if (cmdReconnectTimerRef.current) {
+          clearTimeout(cmdReconnectTimerRef.current);
+          cmdReconnectTimerRef.current = null;
+        }
+      } else if (status === "CLOSED" || status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+        setCmdConnectionStatus('disconnected');
         if (!cmdReconnectTimerRef.current) {
           cmdReconnectTimerRef.current = setTimeout(() => {
             cmdReconnectTimerRef.current = null;
+            setCmdConnectionStatus('connecting');
             connectCmdChannel();
           }, 800);
         }
