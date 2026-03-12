@@ -76,6 +76,7 @@ interface Programa {
   apresentadorId: string;
   selo: string;
   capa: string;
+  thumb: string;
   diasSemana: string[];
   horarioInicio: string;
   horarioFim: string;
