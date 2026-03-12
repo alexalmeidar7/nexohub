@@ -71,6 +71,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
   const [addStep, setAddStep] = useState<"choose" | "link" | "widget">("choose");
   const [editMode, setEditMode] = useState(false);
   const [draggedId, setDraggedId] = useState<string | null>(null);
+  const [playerVideoActive, setPlayerVideoActive] = useState<string | null>(null);
 
   // On-air program info
   interface OnAirProgram {
