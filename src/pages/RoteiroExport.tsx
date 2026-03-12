@@ -4,6 +4,7 @@ import { ptBR } from "date-fns/locale";
 import { ArrowLeft, Download } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { usePdfPopup, PdfPopup } from "@/components/PdfPopup";
+import { sanitizeRoteiroHtml } from "@/lib/sanitizeRoteiroHtml";
 
 export default function RoteiroExport() {
   usePageTitle("Roteiro Export");
@@ -131,7 +132,7 @@ export default function RoteiroExport() {
           <div
             className="text-sm leading-relaxed"
             style={{ color: "#0d0446" }}
-            dangerouslySetInnerHTML={{ __html: data.conteudoHtml }}
+            dangerouslySetInnerHTML={{ __html: sanitizeRoteiroHtml(data.conteudoHtml) }}
           />
         </div>
 

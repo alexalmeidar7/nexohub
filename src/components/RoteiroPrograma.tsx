@@ -11,6 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { injectPerguntaActions } from "@/lib/roteiroActions";
+import { sanitizeRoteiroHtml } from "@/lib/sanitizeRoteiroHtml";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 
 const NoticiasPanel = lazy(() => import("./NoticiasPanel"));
@@ -163,7 +164,7 @@ export default function RoteiroPrograma() {
       horario,
       titulo: roteiroTitulo,
       subtitulo: roteiroSubtitulo,
-      conteudo_html: editorRef.current?.innerHTML || roteiroTexto,
+      conteudo_html: sanitizeRoteiroHtml(editorRef.current?.innerHTML || roteiroTexto),
       participantes: JSON.stringify(participantes),
       status,
     };
@@ -1112,7 +1113,7 @@ ${perguntaActions}
                       horario,
                       titulo: roteiroTitulo,
                       subtitulo: roteiroSubtitulo,
-                      conteudo_html: editorRef.current?.innerHTML || roteiroTexto,
+                      conteudo_html: sanitizeRoteiroHtml(editorRef.current?.innerHTML || roteiroTexto),
                       participantes: JSON.stringify(participantes),
                       status: isAgendado ? "agendado" : "rascunho",
                       share_token: shareToken,
@@ -1221,7 +1222,7 @@ ${perguntaActions}
             <div
               className="text-sm leading-relaxed"
               style={{ color: "#0d0446" }}
-              dangerouslySetInnerHTML={{ __html: editorRef.current?.innerHTML || roteiroTexto }}
+              dangerouslySetInnerHTML={{ __html: sanitizeRoteiroHtml(editorRef.current?.innerHTML || roteiroTexto) }}
             />
 
             <div className="mt-8 pt-4 text-center" style={{ borderTop: "1px solid rgba(13,4,70,0.1)" }}>
