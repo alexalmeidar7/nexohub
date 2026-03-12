@@ -301,20 +301,40 @@ export default function TpScreen({ user, onBack }: TpScreenProps) {
       case "flipH": setFlipH(f => !f); break;
       case "flipV": setFlipV(f => !f); break;
       case "loadText":
-        setDisplayText(cmd.value.text);
-        setIsHtmlContent(cmd.value.html);
-        scrollPosRef.current = 50;
-        if (textRef.current) textRef.current.style.top = "50%";
-        setTimerSeconds(0);
-        setScrolling(false);
-        if (activeTpIdRef.current) {
-          (supabase as any)
-            .from("teleprompters")
-            .update({ texto_atual: cmd.value.text, is_html: cmd.value.html })
-            .eq("id", activeTpIdRef.current)
-            .then(() => {});
+        if (typeof cmd.value?.text === "string") {
+          applyLoadedText(cmd.value.text, !!cmd.value.html);
+          if (activeTpIdRef.current) {
+            (supabase as any)
+              .from("teleprompters")
+              .update({ texto_atual: cmd.value.text, is_html: !!cmd.value.html })
+              .eq("id", activeTpIdRef.current)
+              .then(() => {});
+          }
         }
         break;
+      case "loadTextFromDb": {
+        const currentUserId = userIdRef.current;
+        if (!currentUserId) break;
+        void (async () => {
+          let query = (supabase as any)
+            .from("teleprompters")
+            .select("id, texto_atual, is_html")
+            .eq("user_id", currentUserId)
+            .eq("ativo", true)
+            .order("created_at", { ascending: false })
+            .limit(1);
+
+          if (activeTpIdRef.current) {
+            query = query.eq("id", activeTpIdRef.current);
+          }
+
+          const { data } = await query;
+          const tp = data?.[0];
+          if (!tp) return;
+          applyLoadedText(tp.texto_atual || "", !!tp.is_html);
+        })();
+        break;
+      }
       case "requestState":
         queueStateBroadcast(true);
         break;
