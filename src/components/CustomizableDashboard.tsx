@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, useRef, lazy, Suspense } from "react";
-import { createPortal } from "react-dom";
 import { Plus, X, Link2, BarChart3, CalendarDays, Music, Eye, Users, Mic2, PlaySquare, Newspaper, Settings, ShoppingBag, Tag, Image, Film, ShoppingCart, Monitor, Wrench, Scissors, MonitorPlay, ExternalLink, GripVertical, Loader2, Trash2, MessageSquareQuote, Radio, Clock, Tv, FileText, CloudSun, ChevronDown, ChevronLeft, ChevronRight, Play, Pause, Volume2, VolumeX, Circle, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -424,13 +423,15 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
               return (
                 <div
                   key={item.id}
-                  className={`relative group rounded-2xl overflow-hidden animate-fade-in flex flex-col ${isDragging ? "opacity-40 scale-95" : ""}`}
+                  className={`relative group rounded-2xl animate-fade-in flex flex-col ${isDragging ? "opacity-40 scale-95" : ""}`}
                   style={{
                     background: item.widgetType === "player" ? "#0a0a0a" : "#ffffff",
                     border: isDragOver ? "2px solid #be0101" : item.widgetType === "player" ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(0,0,0,0.08)",
                     boxShadow: item.widgetType === "player" ? "0 4px 20px rgba(0,0,0,0.4)" : "0 2px 12px rgba(0,0,0,0.06)",
                     minHeight: item.widgetType === "agenda" ? "200px" : "150px",
-                    maxHeight: item.widgetType === "agenda" ? "240px" : "180px",
+                    maxHeight: item.widgetType === "agenda" ? "240px" : "none",
+                    overflow: item.widgetType === "player" ? "visible" : "hidden",
+                    transition: "max-height 0.4s ease, min-height 0.4s ease",
                   }}
                   draggable
                   onDragStart={() => handleDragStart(item.id)}
@@ -1246,23 +1247,7 @@ function DashboardPlayerWidget() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const hlsRef = useRef<any>(null);
-  const widgetContainerRef = useRef<HTMLDivElement | null>(null);
-  const [videoPos, setVideoPos] = useState<{ top: number; left: number; width: number } | null>(null);
-
-  // Update video position when showVideo changes
-  useEffect(() => {
-    if (!showVideo || !widgetContainerRef.current) { setVideoPos(null); return; }
-    const update = () => {
-      const el = widgetContainerRef.current;
-      if (!el) return;
-      const rect = el.getBoundingClientRect();
-      setVideoPos({ top: rect.top - 168, left: rect.left, width: rect.width });
-    };
-    update();
-    window.addEventListener("scroll", update, true);
-    window.addEventListener("resize", update);
-    return () => { window.removeEventListener("scroll", update, true); window.removeEventListener("resize", update); };
-  }, [showVideo]);
+  const hlsInitUrlRef = useRef<string>("");
 
   useEffect(() => {
     if (!user) return;
@@ -1292,7 +1277,6 @@ function DashboardPlayerWidget() {
     fetchChannels();
   }, [user]);
 
-  // Poll music from localStorage
   useEffect(() => {
     const poll = () => {
       try {
@@ -1320,73 +1304,92 @@ function DashboardPlayerWidget() {
     }
   }, []);
 
+  // Attach HLS when showVideo activates
+  useEffect(() => {
+    if (!showVideo) return;
+    const ch = channels[activeIdx];
+    if (!ch) return;
+    const el = videoRef.current;
+    if (!el) return;
+    const url = ch.url;
+    if (hlsInitUrlRef.current === url) return;
+    hlsInitUrlRef.current = url;
+
+    if (hlsRef.current) { hlsRef.current.destroy(); hlsRef.current = null; }
+
+    if (url.includes(".m3u8")) {
+      import("hls.js").then(({ default: Hls }) => {
+        if (!Hls.isSupported()) {
+          el.src = url;
+          el.play().catch(() => {});
+          return;
+        }
+        const hls = new Hls({ maxBufferLength: 30, maxMaxBufferLength: 60 });
+        hlsRef.current = hls;
+        hls.loadSource(url);
+        hls.attachMedia(el);
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          el.volume = volume;
+          el.muted = isMuted;
+          el.play().catch(() => {});
+        });
+      });
+    } else {
+      el.src = url;
+      el.volume = volume;
+      el.muted = isMuted;
+      el.play().catch(() => {});
+    }
+
+    return () => { hlsInitUrlRef.current = ""; };
+  }, [showVideo, activeIdx]);
+
   const activeChannel = channels[activeIdx];
   const channelType = activeChannel?.type || "";
   const isVideo = channelType.includes("video");
 
-  const stopAll = () => {
+  const destroyHls = () => {
     if (hlsRef.current) { hlsRef.current.destroy(); hlsRef.current = null; }
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.removeAttribute("src");
-      audioRef.current.load();
-    }
-    if (videoRef.current) {
-      videoRef.current.pause();
-      videoRef.current.removeAttribute("src");
-      videoRef.current.load();
-    }
+    hlsInitUrlRef.current = "";
+  };
+
+  const stopAll = () => {
+    destroyHls();
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current.removeAttribute("src"); audioRef.current.load(); }
+    if (videoRef.current) { videoRef.current.pause(); videoRef.current.removeAttribute("src"); videoRef.current.load(); }
     setShowVideo(false);
     setIsPlaying(false);
   };
 
   const togglePlay = () => {
     if (!activeChannel) return;
-
-    if (isPlaying) {
-      stopAll();
+    if (isPlaying) { stopAll(); return; }
+    stopAll();
+    if (isVideo) {
+      setShowVideo(true);
+      setIsPlaying(true);
     } else {
-      // Stop any lingering streams first
-      stopAll();
-      if (isVideo) {
-        setShowVideo(true);
-        setIsPlaying(true);
-      } else {
-        const audio = audioRef.current;
-        if (!audio) return;
-        audio.src = activeChannel.url;
-        audio.play().then(() => setIsPlaying(true)).catch(() => {});
-      }
+      const audio = audioRef.current;
+      if (!audio) return;
+      audio.src = activeChannel.url;
+      audio.play().then(() => setIsPlaying(true)).catch(() => {});
     }
   };
 
   const switchTo = (idx: number) => {
-    // Always stop ALL current streams to prevent duplication
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.removeAttribute("src");
-      audioRef.current.load();
-    }
-    if (videoRef.current) {
-      videoRef.current.pause();
-      videoRef.current.removeAttribute("src");
-      videoRef.current.load();
-    }
+    destroyHls();
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current.removeAttribute("src"); audioRef.current.load(); }
+    if (videoRef.current) { videoRef.current.pause(); videoRef.current.removeAttribute("src"); videoRef.current.load(); }
     setShowVideo(false);
     setActiveIdx(idx);
-
     const ch = channels[idx];
     const chIsVideo = (ch?.type || "").includes("video");
-
     if (isPlaying) {
       if (chIsVideo) {
-        setShowVideo(true);
+        setTimeout(() => setShowVideo(true), 50);
       } else {
         const audio = audioRef.current;
-        if (audio) {
-          audio.src = ch.url;
-          audio.play().catch(() => {});
-        }
+        if (audio) { audio.src = ch.url; audio.play().catch(() => {}); }
       }
     }
   };
@@ -1395,10 +1398,10 @@ function DashboardPlayerWidget() {
   const goPrev = () => { if (channels.length > 1) switchTo((activeIdx - 1 + channels.length) % channels.length); };
 
   const toggleMute = () => {
-    const newMuted = !isMuted;
-    setIsMuted(newMuted);
-    if (audioRef.current) audioRef.current.muted = newMuted;
-    if (videoRef.current) videoRef.current.muted = newMuted;
+    const m = !isMuted;
+    setIsMuted(m);
+    if (audioRef.current) audioRef.current.muted = m;
+    if (videoRef.current) videoRef.current.muted = m;
   };
 
   const handleVolume = (val: number) => {
@@ -1410,207 +1413,98 @@ function DashboardPlayerWidget() {
   };
 
   const channelLogo = activeChannel?.background_url || activeChannel?.logo_url || activeChannel?.cover_url;
-  // Show music cover when music is playing, otherwise channel logo
   const displayArt = currentMusic?.capa || channelLogo;
 
   return (
-    <div ref={widgetContainerRef} className="flex flex-col h-full relative">
+    <div className="flex flex-col h-full relative">
       {/* Blurred background art */}
       {displayArt && (
-        <div className="absolute inset-0 -m-4 overflow-hidden pointer-events-none">
-          <img
-            src={displayArt}
-            alt=""
-            className="w-full h-full object-cover"
-            style={{ filter: "blur(20px) brightness(0.3) saturate(1.4)", transform: "scale(1.3)" }}
-          />
+        <div className="absolute inset-0 -m-4 overflow-hidden pointer-events-none rounded-2xl">
+          <img src={displayArt} alt="" className="w-full h-full object-cover" style={{ filter: "blur(20px) brightness(0.3) saturate(1.4)", transform: "scale(1.3)" }} />
           <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(10,10,10,0.6) 0%, rgba(10,10,10,0.9) 100%)" }} />
         </div>
       )}
 
-      {/* Content */}
-      <div className="relative z-10 flex items-center gap-3 h-full">
-        {/* Left arrow */}
-        {channels.length > 1 && (
-          <button
-            onClick={goPrev}
-            className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-all hover:scale-110"
-            style={{ background: "rgba(255,255,255,0.1)" }}
-            onMouseEnter={e => { e.currentTarget.style.background = "rgba(190,1,1,0.4)"; }}
-            onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.1)"; }}
-          >
-            <ChevronLeft size={14} className="text-white/70" />
-          </button>
-        )}
-
-        {/* Art / Cover */}
-        <div className="w-16 h-16 rounded-xl flex-shrink-0 flex items-center justify-center overflow-hidden relative" style={{ background: "rgba(255,255,255,0.05)", boxShadow: "0 4px 15px rgba(0,0,0,0.5)" }}>
-          {displayArt ? (
-            <img src={displayArt} alt="" className="w-full h-full object-cover rounded-xl transition-all duration-500" />
-          ) : (
-            <Tv size={22} className="text-white/20" />
-          )}
-          {isPlaying && !isVideo && (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="flex items-end gap-[2px] h-4">
-                {[0, 1, 2, 3].map(i => (
-                  <div
-                    key={i}
-                    className="w-[3px] rounded-full"
-                    style={{
-                      background: "linear-gradient(0deg, #be0101, #ff4444)",
-                      animation: `eq-bar 0.${4 + i}s ease-in-out infinite alternate`,
-                      height: `${6 + Math.random() * 10}px`,
-                    }}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Info + controls */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5 mb-0.5">
-            {isPlaying && <Circle size={5} fill="#ff0000" color="#ff0000" className="animate-pulse flex-shrink-0" />}
-            <p className="text-white text-[11px] font-bold truncate">{activeChannel?.name}</p>
-          </div>
-
-          {/* Music info when playing */}
-          {currentMusic && (
-            <div className="mb-1">
-              <p className="text-white/70 text-[9px] truncate">{currentMusic.titulo}</p>
-              <p className="text-white/40 text-[8px] truncate">{currentMusic.artista}</p>
-            </div>
-          )}
-
-          {!currentMusic && (
-            <div className="flex items-center gap-1 mb-1">
-              <span className="text-[7px] font-bold px-1.5 py-0.5 rounded" style={{ background: "rgba(190,1,1,0.3)", color: "#ff6666" }}>
-                {activeChannel?.numero_canal}
-              </span>
-              <span className="text-white/30 text-[8px]">{isVideo ? "Vídeo" : "Áudio"}</span>
-            </div>
-          )}
-
-          <div className="flex items-center gap-2">
-            <button
-              onClick={togglePlay}
-              className="w-8 h-8 rounded-full flex items-center justify-center transition-all hover:scale-110"
-              style={{ background: "linear-gradient(135deg, #be0101, #e60000)", boxShadow: "0 2px 12px rgba(190,1,1,0.4)" }}
-            >
-              {isPlaying ? <Pause size={12} className="text-white" /> : <Play size={12} className="text-white ml-0.5" />}
-            </button>
-            <button onClick={toggleMute} className="text-white/40 hover:text-white transition-colors flex-shrink-0">
-              {isMuted || volume === 0 ? <VolumeX size={13} /> : <Volume2 size={13} />}
-            </button>
-            <input
-              type="range"
-              min={0}
-              max={1}
-              step={0.01}
-              value={isMuted ? 0 : volume}
-              onChange={e => handleVolume(Number(e.target.value))}
-              onMouseDown={e => e.stopPropagation()}
-              onTouchStart={e => e.stopPropagation()}
-              onDragStart={e => { e.stopPropagation(); e.preventDefault(); }}
-              draggable={false}
-              className="w-14 h-1 appearance-none rounded-full cursor-pointer flex-shrink-0"
-              style={{
-                background: `linear-gradient(to right, #be0101 ${(isMuted ? 0 : volume) * 100}%, rgba(255,255,255,0.15) ${(isMuted ? 0 : volume) * 100}%)`,
-                accentColor: "#be0101",
-              }}
-            />
-            {isVideo && (
-              <span className="text-[7px] font-bold text-white/20 ml-auto">
-                <Tv size={10} className="inline mr-0.5" />VIDEO
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* Right arrow */}
-        {channels.length > 1 && (
-          <button
-            onClick={goNext}
-            className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-all hover:scale-110"
-            style={{ background: "rgba(255,255,255,0.1)" }}
-            onMouseEnter={e => { e.currentTarget.style.background = "rgba(190,1,1,0.4)"; }}
-            onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.1)"; }}
-          >
-            <ChevronRight size={14} className="text-white/70" />
-          </button>
-        )}
-      </div>
-
-      {/* Video overlay rendered via portal outside widget container */}
-      {showVideo && isVideo && activeChannel && videoPos && createPortal(
-        <div
-          className="fixed rounded-2xl overflow-hidden animate-fade-in"
-          style={{
-            top: videoPos.top,
-            left: videoPos.left,
-            width: videoPos.width,
-            height: "160px",
-            boxShadow: "0 8px 40px rgba(0,0,0,0.7)",
-            border: "1px solid rgba(255,255,255,0.1)",
-            zIndex: 9999,
-          }}
-        >
-          <video
-            ref={el => {
-              videoRef.current = el;
-              if (el && activeChannel?.url) {
-                if (hlsRef.current) { hlsRef.current.destroy(); hlsRef.current = null; }
-                const url = activeChannel.url;
-                if (url.includes(".m3u8")) {
-                  import("hls.js").then(({ default: Hls }) => {
-                    if (!Hls.isSupported()) {
-                      el.src = url;
-                      el.play().catch(() => {});
-                      return;
-                    }
-                    const hls = new Hls({ maxBufferLength: 30, maxMaxBufferLength: 60 });
-                    hlsRef.current = hls;
-                    hls.loadSource(url);
-                    hls.attachMedia(el);
-                    hls.on(Hls.Events.MANIFEST_PARSED, () => {
-                      el.volume = volume;
-                      el.muted = isMuted;
-                      el.play().catch(() => {});
-                    });
-                  });
-                } else {
-                  el.src = url;
-                  el.volume = volume;
-                  el.muted = isMuted;
-                  el.play().catch(() => {});
-                }
-              }
-            }}
-            autoPlay
-            muted={isMuted}
-            playsInline
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(180deg, transparent 60%, rgba(0,0,0,0.6) 100%)" }} />
-          <button
-            onClick={() => stopAll()}
-            className="absolute top-2 right-2 w-5 h-5 rounded-full flex items-center justify-center z-10"
-            style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)" }}
-          >
+      {/* Video inside widget */}
+      {showVideo && isVideo && (
+        <div className="relative -mx-4 -mt-4 mb-3 rounded-t-2xl overflow-hidden" style={{ animation: "widget-video-grow 0.4s ease-out forwards" }}>
+          <video ref={videoRef} autoPlay muted={isMuted} playsInline className="w-full h-full object-cover" style={{ height: "140px" }} />
+          <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(180deg, transparent 50%, rgba(10,10,10,0.7) 100%)" }} />
+          <button onClick={() => stopAll()} className="absolute top-2 right-2 w-5 h-5 rounded-full flex items-center justify-center z-10" style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)" }}>
             <X size={10} className="text-white" />
           </button>
-        </div>,
-        document.body
+        </div>
       )}
 
-      {/* CSS for equalizer animation */}
+      {/* Controls row */}
+      {channels.length === 0 ? (
+        <p className="text-white/30 text-xs relative z-10">Nenhum canal cadastrado</p>
+      ) : (
+        <div className="relative z-10 flex items-center gap-3">
+          {channels.length > 1 && (
+            <button onClick={goPrev} className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-all hover:scale-110" style={{ background: "rgba(255,255,255,0.1)" }} onMouseEnter={e => { e.currentTarget.style.background = "rgba(190,1,1,0.4)"; }} onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.1)"; }}>
+              <ChevronLeft size={14} className="text-white/70" />
+            </button>
+          )}
+
+          {!showVideo && (
+            <div className="w-16 h-16 rounded-xl flex-shrink-0 flex items-center justify-center overflow-hidden relative" style={{ background: "rgba(255,255,255,0.05)", boxShadow: "0 4px 15px rgba(0,0,0,0.5)" }}>
+              {displayArt ? (
+                <img src={displayArt} alt="" className="w-full h-full object-cover rounded-xl transition-all duration-500" />
+              ) : (
+                <Tv size={22} className="text-white/20" />
+              )}
+              {isPlaying && !isVideo && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="flex items-end gap-[2px] h-4">
+                    {[0, 1, 2, 3].map(i => (
+                      <div key={i} className="w-[3px] rounded-full" style={{ background: "linear-gradient(0deg, #be0101, #ff4444)", animation: `eq-bar 0.${4 + i}s ease-in-out infinite alternate`, height: `${6 + Math.random() * 10}px` }} />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5 mb-0.5">
+              {isPlaying && <Circle size={5} fill="#ff0000" color="#ff0000" className="animate-pulse flex-shrink-0" />}
+              <p className="text-white text-[11px] font-bold truncate">{activeChannel?.name}</p>
+            </div>
+            {currentMusic ? (
+              <div className="mb-1">
+                <p className="text-white/70 text-[9px] truncate">{currentMusic.titulo}</p>
+                <p className="text-white/40 text-[8px] truncate">{currentMusic.artista}</p>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1 mb-1">
+                <span className="text-[7px] font-bold px-1.5 py-0.5 rounded" style={{ background: "rgba(190,1,1,0.3)", color: "#ff6666" }}>{activeChannel?.numero_canal}</span>
+                <span className="text-white/30 text-[8px]">{isVideo ? "Vídeo" : "Áudio"}</span>
+              </div>
+            )}
+            <div className="flex items-center gap-2">
+              <button onClick={togglePlay} className="w-8 h-8 rounded-full flex items-center justify-center transition-all hover:scale-110" style={{ background: "linear-gradient(135deg, #be0101, #e60000)", boxShadow: "0 2px 12px rgba(190,1,1,0.4)" }}>
+                {isPlaying ? <Pause size={12} className="text-white" /> : <Play size={12} className="text-white ml-0.5" />}
+              </button>
+              <button onClick={toggleMute} className="text-white/40 hover:text-white transition-colors flex-shrink-0">
+                {isMuted || volume === 0 ? <VolumeX size={13} /> : <Volume2 size={13} />}
+              </button>
+              <input type="range" min={0} max={1} step={0.01} value={isMuted ? 0 : volume} onChange={e => handleVolume(Number(e.target.value))} onMouseDown={e => e.stopPropagation()} onTouchStart={e => e.stopPropagation()} onDragStart={e => { e.stopPropagation(); e.preventDefault(); }} draggable={false} className="w-14 h-1 appearance-none rounded-full cursor-pointer flex-shrink-0" style={{ background: `linear-gradient(to right, #be0101 ${(isMuted ? 0 : volume) * 100}%, rgba(255,255,255,0.15) ${(isMuted ? 0 : volume) * 100}%)`, accentColor: "#be0101" }} />
+              {isVideo && <span className="text-[7px] font-bold text-white/20 ml-auto"><Tv size={10} className="inline mr-0.5" />VIDEO</span>}
+            </div>
+          </div>
+
+          {channels.length > 1 && (
+            <button onClick={goNext} className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-all hover:scale-110" style={{ background: "rgba(255,255,255,0.1)" }} onMouseEnter={e => { e.currentTarget.style.background = "rgba(190,1,1,0.4)"; }} onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.1)"; }}>
+              <ChevronRight size={14} className="text-white/70" />
+            </button>
+          )}
+        </div>
+      )}
+
       <style>{`
-        @keyframes eq-bar {
-          0% { height: 3px; }
-          100% { height: 14px; }
-        }
+        @keyframes eq-bar { 0% { height: 3px; } 100% { height: 14px; } }
+        @keyframes widget-video-grow { 0% { height: 0; opacity: 0; } 100% { height: 140px; opacity: 1; } }
       `}</style>
     </div>
   );
