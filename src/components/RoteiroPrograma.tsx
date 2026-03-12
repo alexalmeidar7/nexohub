@@ -140,7 +140,7 @@ export default function RoteiroPrograma() {
     load();
   }, [user]);
 
-  // Fetch historico
+  // Fetch historico + auto-mark "feito" after 1h past event time
   const fetchHistorico = async () => {
     if (!user) return;
     const { data } = await supabase
@@ -149,7 +149,59 @@ export default function RoteiroPrograma() {
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .limit(10);
-    setHistorico(data || []);
+    if (!data) { setHistorico([]); return; }
+
+    const now = new Date();
+    const toMarkFeito: string[] = [];
+
+    for (const r of data) {
+      if (r.status === "feito" || r.status === "rascunho") continue;
+      // Build event datetime from data_programa + horario
+      let eventTime: Date;
+      if (r.horario) {
+        eventTime = new Date(`${r.data_programa}T${r.horario}:00`);
+      } else {
+        eventTime = new Date(`${r.data_programa}T23:59:00`);
+      }
+      // If 1 hour has passed since event time, mark as "feito"
+      const oneHourAfter = new Date(eventTime.getTime() + 60 * 60 * 1000);
+      if (now >= oneHourAfter) {
+        toMarkFeito.push(r.id);
+        r.status = "feito";
+      }
+    }
+
+    // Batch update status to "feito" in DB
+    if (toMarkFeito.length > 0) {
+      await supabase
+        .from("roteiros")
+        .update({ status: "feito" })
+        .in("id", toMarkFeito);
+
+      // Also mark related agenda events as "vencido" in description
+      for (const id of toMarkFeito) {
+        const rot = data.find(r => r.id === id);
+        if (!rot) continue;
+        const { data: eventos } = await supabase
+          .from("agenda_eventos")
+          .select("id, descricao")
+          .eq("user_id", user.id)
+          .ilike("descricao", `%Roteiro: ${rot.programa_nome}%`)
+          .eq("data", rot.horario ? `${rot.data_programa}T${rot.horario}:00` : rot.data_programa);
+        if (eventos && eventos.length > 0) {
+          for (const ev of eventos) {
+            if (!ev.descricao?.includes("[VENCIDO]")) {
+              await supabase
+                .from("agenda_eventos")
+                .update({ descricao: `[VENCIDO] ${ev.descricao}` })
+                .eq("id", ev.id);
+            }
+          }
+        }
+      }
+    }
+
+    setHistorico(data);
   };
 
   useEffect(() => {
@@ -674,6 +726,7 @@ ${perguntaActions}
             {historico.map(r => {
               const dataFormatada = format(new Date(r.data_programa), "dd/MM/yyyy");
               const isAgd = r.status === "agendado";
+              const isFeito = r.status === "feito";
               return (
                 <div key={r.id} className="flex items-center justify-between px-3 py-2.5 rounded-lg" style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "1px solid rgba(13,4,70,0.06)" }}>
                   <div className="flex-1 min-w-0">
@@ -685,11 +738,11 @@ ${perguntaActions}
                       <span
                         className="text-[10px] px-2 py-0.5 rounded-full font-bold"
                         style={{
-                          backgroundColor: isAgd ? "rgba(38,143,250,0.1)" : "rgba(13,4,70,0.06)",
-                          color: isAgd ? "#268ffa" : "rgba(13,4,70,0.5)",
+                          backgroundColor: isFeito ? "rgba(22,163,74,0.1)" : isAgd ? "rgba(38,143,250,0.1)" : "rgba(13,4,70,0.06)",
+                          color: isFeito ? "#16a34a" : isAgd ? "#268ffa" : "rgba(13,4,70,0.5)",
                         }}
                       >
-                        {isAgd ? "agendado" : r.status}
+                        {isFeito ? "feito" : isAgd ? "agendado" : r.status}
                       </span>
                     </div>
                     <p className="text-xs font-medium mt-0.5" style={{ color: "rgba(13,4,70,0.6)" }}>
