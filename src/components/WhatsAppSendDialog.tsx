@@ -207,8 +207,20 @@ export default function WhatsAppSendDialog({ open, onClose, roteiroData }: Whats
               />
               <input
                 value={novoWhatsapp}
-                onChange={e => setNovoWhatsapp(e.target.value)}
-                placeholder="Nº WhatsApp"
+                onChange={e => {
+                  const digits = e.target.value.replace(/\D/g, "").slice(0, 11);
+                  let masked = digits;
+                  if (digits.length > 2) {
+                    masked = `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+                  } else if (digits.length > 0) {
+                    masked = `(${digits}`;
+                  }
+                  if (digits.length > 7) {
+                    masked = `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+                  }
+                  setNovoWhatsapp(masked);
+                }}
+                placeholder="(XX) XXXXX-XXXX"
                 className="flex-1 px-3 py-2 rounded-lg text-xs outline-none"
                 style={{ backgroundColor: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff" }}
                 onKeyDown={e => { if (e.key === "Enter") addContato(); }}
