@@ -1194,39 +1194,32 @@ function DashboardWeatherWidget() {
       <div className="flex items-center gap-2 mb-3">
         <CloudSun size={14} className="text-[#be0101]" />
         <p className="text-black font-bold text-sm">Previsão do Tempo</p>
+        {weather && <span className="text-black/40 text-[9px] ml-auto">{weather.city}</span>}
       </div>
       {weather ? (
-        <div>
-          {/* Current */}
-          <div key={`wx-${weatherKey}`} className="flex items-center gap-3 mb-3 animate-fade-in">
+        <div key={`wx-${weatherKey}`} className="flex gap-3 animate-fade-in">
+          {/* Hoje */}
+          <div className="flex-1 flex items-center gap-2 px-3 py-2.5 rounded-lg" style={{ background: "rgba(190,1,1,0.05)" }}>
             <div className="flex-shrink-0">
-              {WeatherIconComp && <WeatherIconComp code={weather.current.weatherCode} size={48} />}
+              {WeatherIconComp && <WeatherIconComp code={weather.current.weatherCode} size={40} />}
             </div>
-            <div>
-              <p className="text-3xl font-bold text-[#be0101] leading-none">{weather.current.temp}°</p>
-              <p className="text-black text-[10px] font-semibold mt-0.5">{weather.city}</p>
-              <p className="text-black/50 text-[9px]">{getLabel(weather.current.weatherCode)}</p>
-            </div>
-            <div className="ml-auto text-right">
-              <p className="text-black/40 text-[9px]">↑ {weather.current.tempMax}° ↓ {weather.current.tempMin}°</p>
-              <p className="text-black/40 text-[9px]">💧 {weather.current.humidity}%</p>
-              <p className="text-black/40 text-[9px]">🌧 {weather.current.rainChance}%</p>
+            <div className="min-w-0">
+              <p className="text-[9px] font-bold uppercase text-black/50">Hoje</p>
+              <p className="text-2xl font-bold text-[#be0101] leading-none">{weather.current.temp}°</p>
+              <p className="text-black/50 text-[9px] mt-0.5">↑{weather.current.tempMax}° ↓{weather.current.tempMin}°</p>
             </div>
           </div>
 
-          {/* Tomorrow */}
+          {/* Amanhã */}
           {weather.tomorrow && (
-            <div className="px-3 py-2 rounded-lg flex items-center gap-3" style={{ background: "rgba(190,1,1,0.06)" }}>
+            <div className="flex-1 flex items-center gap-2 px-3 py-2.5 rounded-lg" style={{ background: "rgba(190,1,1,0.05)" }}>
               <div className="flex-shrink-0">
-                {WeatherIconComp && <WeatherIconComp code={weather.tomorrow.weatherCode} size={28} forceDay />}
+                {WeatherIconComp && <WeatherIconComp code={weather.tomorrow.weatherCode} size={32} forceDay />}
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-black/60 text-[9px] font-bold uppercase">{formatTomorrow(weather.tomorrow.date)}</p>
-                <p className="text-black text-xs font-bold">{weather.tomorrow.tempMax}° / {weather.tomorrow.tempMin}°</p>
-              </div>
-              <div className="text-right">
-                <p className="text-black/40 text-[9px]">{getLabel(weather.tomorrow.weatherCode)}</p>
-                <p className="text-black/40 text-[9px]">🌧 {weather.tomorrow.rainChance}%</p>
+              <div className="min-w-0">
+                <p className="text-[9px] font-bold uppercase text-black/50">Amanhã</p>
+                <p className="text-sm font-bold text-black leading-none">{weather.tomorrow.tempMax}° / {weather.tomorrow.tempMin}°</p>
+                <p className="text-black/40 text-[9px] mt-0.5">{getLabel(weather.tomorrow.weatherCode)}</p>
               </div>
             </div>
           )}
