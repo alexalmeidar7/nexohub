@@ -67,6 +67,7 @@ export default function RoteiroPrograma() {
   const [newCategoria, setNewCategoria] = useState("Apresentador(a)");
   const [newCargoText, setNewCargoText] = useState("");
   const [newInstagram, setNewInstagram] = useState("");
+  const [newWhatsapp, setNewWhatsapp] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedFromDb, setSelectedFromDb] = useState(false);
   const [cadastroMsg, setCadastroMsg] = useState(false);
