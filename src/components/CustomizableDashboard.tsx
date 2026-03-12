@@ -424,13 +424,15 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
               return (
                 <div
                   key={item.id}
-                  className={`relative group rounded-2xl overflow-hidden animate-fade-in flex flex-col ${isDragging ? "opacity-40 scale-95" : ""}`}
+                  className={`relative group rounded-2xl animate-fade-in flex flex-col ${isDragging ? "opacity-40 scale-95" : ""}`}
                   style={{
                     background: item.widgetType === "player" ? "#0a0a0a" : "#ffffff",
                     border: isDragOver ? "2px solid #be0101" : item.widgetType === "player" ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(0,0,0,0.08)",
                     boxShadow: item.widgetType === "player" ? "0 4px 20px rgba(0,0,0,0.4)" : "0 2px 12px rgba(0,0,0,0.06)",
                     minHeight: item.widgetType === "agenda" ? "200px" : "150px",
-                    maxHeight: item.widgetType === "agenda" ? "240px" : "180px",
+                    maxHeight: item.widgetType === "agenda" ? "240px" : "none",
+                    overflow: item.widgetType === "player" ? "visible" : "hidden",
+                    transition: "max-height 0.4s ease, min-height 0.4s ease",
                   }}
                   draggable
                   onDragStart={() => handleDragStart(item.id)}
