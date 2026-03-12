@@ -727,12 +727,12 @@ ${perguntaActions}
               </div>
                 <div className="flex items-center gap-2 flex-wrap">
                   <button
-                    onClick={() => { setShowRoteiro(false); setShowExportView(false); setEditingRoteiroId(null); }}
+                    onClick={async () => { await salvarRoteiro(); fetchHistorico(); setShowRoteiro(false); setShowExportView(false); setEditingRoteiroId(null); }}
                     className="px-3 py-1.5 rounded-full text-[11px] font-bold flex items-center gap-1.5 transition-all hover:bg-white/30"
                     style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "#ffffff" }}
                   >
-                    <ArrowLeft size={12} />
-                    Cancelar
+                    <X size={12} />
+                    Fechar
                   </button>
                   <span className="px-2.5 py-1 rounded-full text-[10px] font-bold" style={{ backgroundColor: "rgba(255,255,255,0.2)", color: "#ffffff" }}>
                     Estúdio {estudio || "—"}
