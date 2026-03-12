@@ -482,7 +482,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
         <div className="mb-6">
           <div
             onClick={() => { setShowAddDialog(true); setAddStep("choose"); }}
-            className="w-[90px] h-[90px] rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all hover:scale-[1.06]"
+            className="w-[70px] h-[70px] sm:w-[90px] sm:h-[90px] rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all hover:scale-[1.06]"
             style={{
               background: "rgba(255,255,255,0.08)",
               border: "1.5px dashed rgba(255,255,255,0.25)",
