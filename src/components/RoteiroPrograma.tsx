@@ -21,6 +21,7 @@ interface Apresentador {
   nome: string;
   cargo: string;
   instagram?: string;
+  whatsapp?: string;
   ativo: boolean;
 }
 
@@ -60,12 +61,13 @@ export default function RoteiroPrograma() {
   const [perguntaCount, setPerguntaCount] = useState(1);
   const editorRef = useRef<HTMLDivElement>(null);
   const exportViewRef = useRef<HTMLDivElement>(null);
-  const [participantes, setParticipantes] = useState<{ nome: string; categoria: string; cargo: string; instagram: string }[]>([]);
+  const [participantes, setParticipantes] = useState<{ nome: string; categoria: string; cargo: string; instagram: string; whatsapp?: string }[]>([]);
   
   const [newNome, setNewNome] = useState("");
   const [newCategoria, setNewCategoria] = useState("Apresentador(a)");
   const [newCargoText, setNewCargoText] = useState("");
   const [newInstagram, setNewInstagram] = useState("");
+  const [newWhatsapp, setNewWhatsapp] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedFromDb, setSelectedFromDb] = useState(false);
   const [cadastroMsg, setCadastroMsg] = useState(false);
@@ -120,7 +122,7 @@ export default function RoteiroPrograma() {
       setLoading(true);
       const [progRes, apresRes] = await Promise.all([
         supabase.from("programas").select("id, nome, estudio, tipo_programa, horario_inicio, horario_fim, dias_semana, apresentador_id, capa, selo").eq("ativo", true),
-        supabase.from("apresentadores").select("id, nome, cargo, instagram, ativo").eq("ativo", true),
+        supabase.from("apresentadores").select("id, nome, cargo, instagram, whatsapp, ativo").eq("ativo", true),
       ]);
       const progs = progRes.data || [];
       const apres = apresRes.data || [];
@@ -292,11 +294,11 @@ export default function RoteiroPrograma() {
 
   const handleMontarRoteiro = () => {
     const prog = programas.find(p => p.nome === programaNome);
-    const defaultParticipantes: { nome: string; categoria: string; cargo: string; instagram: string }[] = [];
+    const defaultParticipantes: { nome: string; categoria: string; cargo: string; instagram: string; whatsapp?: string }[] = [];
     if (prog?.apresentador_id) {
       const apres = apresentadores.find(a => a.id === prog.apresentador_id);
       if (apres) {
-        defaultParticipantes.push({ nome: apres.nome, categoria: apres.cargo || "Apresentador(a)", cargo: "", instagram: (apres as any).instagram || "" });
+        defaultParticipantes.push({ nome: apres.nome, categoria: apres.cargo || "Apresentador(a)", cargo: apres.cargo || "", instagram: apres.instagram || "", whatsapp: apres.whatsapp || "" });
       }
     }
     setParticipantes(defaultParticipantes);
@@ -381,8 +383,9 @@ ${perguntaActions}
   const selectSuggestion = (apres: Apresentador) => {
     setNewNome(apres.nome);
     setNewCategoria(apres.cargo || "Apresentador(a)");
-    setNewCargoText("");
+    setNewCargoText(apres.cargo || "");
     setNewInstagram(apres.instagram || "");
+    setNewWhatsapp(apres.whatsapp || "");
     setSelectedFromDb(true);
     setShowSuggestions(false);
   };
@@ -391,7 +394,7 @@ ${perguntaActions}
     if (!newNome.trim()) return;
     const isNew = !selectedFromDb && !apresentadores.some(a => a.nome.toLowerCase() === newNome.trim().toLowerCase());
     
-    setParticipantes(prev => [...prev, { nome: newNome.trim(), categoria: newCategoria, cargo: newCargoText.trim(), instagram: newInstagram.trim() }]);
+    setParticipantes(prev => [...prev, { nome: newNome.trim(), categoria: newCategoria, cargo: newCargoText.trim(), instagram: newInstagram.trim(), whatsapp: newWhatsapp.trim() }]);
     
     // If not from DB, register as new apresentador
     if (isNew && user) {
@@ -402,7 +405,7 @@ ${perguntaActions}
         user_id: user.id,
         ativo: true,
       });
-      const { data } = await supabase.from("apresentadores").select("id, nome, cargo, instagram, ativo").eq("ativo", true);
+      const { data } = await supabase.from("apresentadores").select("id, nome, cargo, instagram, whatsapp, ativo").eq("ativo", true);
       if (data) setApresentadores(data);
       setCadastroMsg(true);
       setTimeout(() => setCadastroMsg(false), 4000);
@@ -412,6 +415,7 @@ ${perguntaActions}
     setNewCategoria("Apresentador(a)");
     setNewCargoText("");
     setNewInstagram("");
+    setNewWhatsapp("");
     setSelectedFromDb(false);
   };
 
@@ -721,6 +725,7 @@ ${perguntaActions}
                       <p className="text-xs font-bold" style={{ color: "#0d0446" }}>{p.nome}</p>
                       <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.5)" }}>{p.categoria}{p.cargo ? ` · ${p.cargo}` : ""}</p>
                       {p.instagram && <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.4)" }}>@{p.instagram.replace("@", "")}</p>}
+                      {p.whatsapp && <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.4)" }}>📱 {p.whatsapp}</p>}
                     </div>
                     <button onClick={() => removeParticipante(idx)} className="hover:opacity-70 mt-1">
                       <X size={12} style={{ color: "rgba(13,4,70,0.3)" }} />
@@ -800,6 +805,13 @@ ${perguntaActions}
                     value={newInstagram}
                     onChange={e => setNewInstagram(e.target.value)}
                     placeholder="rede social (@usuario)"
+                    className="w-full px-3 py-2 rounded-lg text-xs outline-none"
+                    style={{ backgroundColor: "rgba(13,4,70,0.04)", border: "1px solid rgba(13,4,70,0.08)", color: "#0d0446" }}
+                   />
+                  <input
+                    value={newWhatsapp}
+                    onChange={e => setNewWhatsapp(e.target.value)}
+                    placeholder="whatsapp (ex: +55 11 99999-9999)"
                     className="w-full px-3 py-2 rounded-lg text-xs outline-none"
                     style={{ backgroundColor: "rgba(13,4,70,0.04)", border: "1px solid rgba(13,4,70,0.08)", color: "#0d0446" }}
                   />
