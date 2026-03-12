@@ -467,7 +467,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                       setCurrentPage(item.page);
                     }
                   }}
-                  className="text-[10px] lg:text-[11px] font-semibold py-1 px-1 lg:px-1.5 rounded-lg transition-all whitespace-nowrap"
+                  className="flex items-center gap-1 lg:gap-1.5 text-[10px] lg:text-[11px] font-semibold py-1 px-1 lg:px-1.5 rounded-lg transition-all whitespace-nowrap"
                   style={{
                     color: active ? "#ffffff" : "rgba(255,255,255,0.6)",
                     backgroundColor: active ? "rgba(190,1,1,0.35)" : "transparent",
@@ -475,7 +475,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   onMouseEnter={e => { if (!active) { e.currentTarget.style.color = "#ffffff"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.08)"; } }}
                   onMouseLeave={e => { if (!active) { e.currentTarget.style.color = "rgba(255,255,255,0.6)"; e.currentTarget.style.backgroundColor = "transparent"; } }}
                 >
+                  {(() => { const Icon = item.icon; return <Icon size={13} />; })()}
                   {item.label}
+                  {item.children && <ChevronDown size={10} className="opacity-40" />}
                 </button>
 
                 {/* Dropdown */}
