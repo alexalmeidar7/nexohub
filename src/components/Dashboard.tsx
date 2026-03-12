@@ -303,7 +303,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   }
 
   return (
-    <div className="h-screen flex flex-col animate-fade-in overflow-hidden relative" style={{ backgroundColor: "#1a1a1a" }}>
+    <div className="h-screen flex flex-col animate-fade-in overflow-hidden relative" style={{ backgroundColor: "#000000" }}>
       {/* Background layers with fade transition */}
       {empresa.backgroundUrl && (
         <div
