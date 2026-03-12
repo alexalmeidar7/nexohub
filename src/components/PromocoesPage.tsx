@@ -260,7 +260,7 @@ export default function PromocoesPage() {
                   <input value={oferecimento} onChange={(e) => setOferecimento(e.target.value)} placeholder="Quem assina a promoção"
                     className="w-full px-4 py-1.5 text-sm outline-none"
                     style={inputStyle}
-                    onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
+                    onFocus={e => { e.currentTarget.style.borderColor = "#be0101"; }}
                     onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
                   />
                 </div>
