@@ -32,6 +32,7 @@ export async function getApresentadores(): Promise<Apresentador[]> {
     nome: a.nome,
     cargo: a.cargo || "",
     instagram: a.instagram || "",
+    whatsapp: (a as any).whatsapp || "",
     foto: a.foto || "",
     ativo: a.ativo ?? true,
   }));
