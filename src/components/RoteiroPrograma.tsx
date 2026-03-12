@@ -1179,7 +1179,7 @@ ${perguntaActions}
                       data_programa: format(selectedDate, "yyyy-MM-dd"),
                       horario,
                       titulo: roteiroTitulo,
-                      subtitulo: roteiroSubtitulo,
+                      subtitulo: JSON.stringify({ titulo: roteiroSubtitulo, obs: assuntoSubtitulo }),
                       conteudo_html: sanitizeRoteiroHtml(editorRef.current?.innerHTML || roteiroTexto),
                       participantes: JSON.stringify(participantes),
                       status: isAgendado ? "agendado" : "rascunho",
