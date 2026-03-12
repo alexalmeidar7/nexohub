@@ -571,6 +571,11 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         </main>
       </div>
 
+      {/* Company name below menu */}
+      <div className="hidden lg:block px-8 pt-2">
+        <h1 className="font-bold text-white text-lg leading-tight truncate">{empresa.nome || "Dashboard"}</h1>
+        <p className="text-[10px] truncate" style={{ color: "rgba(255,255,255,0.4)" }}>{user?.email || ""}</p>
+      </div>
 
       {/* === FOOTER === */}
       <footer className="flex flex-col items-center gap-1 px-4 pb-3 pt-3 relative z-[1]">
