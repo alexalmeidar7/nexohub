@@ -1005,18 +1005,18 @@ function MusicProgramWidget() {
   return (
     <div>
       <div className="flex items-center gap-2 mb-3">
-        <Music size={14} className="text-[#268ffa]" />
+        <Music size={14} className="text-[#be0101]" />
         <p className="text-[#0d0446] font-bold text-sm">No Ar</p>
       </div>
 
       {/* Current Program */}
       {currentProgram && (
-        <div key={`prog-${programKey}`} className="flex items-center gap-3 mb-3 px-3 py-2.5 rounded-xl animate-fade-in" style={{ background: "rgba(38,143,250,0.06)" }}>
+        <div key={`prog-${programKey}`} className="flex items-center gap-3 mb-3 px-3 py-2.5 rounded-xl animate-fade-in" style={{ background: "rgba(190,1,1,0.06)" }}>
           {apresentador?.foto ? (
-            <img src={apresentador.foto} alt="" className="w-10 h-10 rounded-full object-cover flex-shrink-0 border-2 border-[#268ffa]/30" />
+            <img src={apresentador.foto} alt="" className="w-10 h-10 rounded-full object-cover flex-shrink-0 border-2 border-[#be0101]/30" />
           ) : (
-            <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "rgba(38,143,250,0.15)" }}>
-              <Mic2 size={14} className="text-[#268ffa]" />
+            <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "rgba(190,1,1,0.15)" }}>
+              <Mic2 size={14} className="text-[#be0101]" />
             </div>
           )}
           <div className="min-w-0 flex-1">
@@ -1031,7 +1031,7 @@ function MusicProgramWidget() {
               <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(13,4,70,0.08)" }}>
                 <div
                   className="h-full rounded-full transition-all duration-1000"
-                  style={{ width: `${progressPercent}%`, background: "linear-gradient(90deg, #268ffa, #2dbef3)" }}
+                  style={{ width: `${progressPercent}%`, background: "linear-gradient(90deg, #960101, #be0101)" }}
                 />
               </div>
               <span className="text-[8px] text-[#0d0446]/40 font-semibold flex-shrink-0">
