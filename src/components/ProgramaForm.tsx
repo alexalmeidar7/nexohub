@@ -444,6 +444,14 @@ export default function ProgramaForm() {
     reader.readAsDataURL(file);
   };
 
+  const handleThumb = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => setThumb(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
   const toggleDia = (dia: string) => {
     setDiasSemana(prev => prev.includes(dia) ? prev.filter(d => d !== dia) : [...prev, dia]);
   };
