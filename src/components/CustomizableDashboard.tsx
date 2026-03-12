@@ -346,9 +346,9 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
               </span>
               {onAirProgram.classificacao_etaria && (
                 <span
-                  className="text-[10px] font-bold"
+                  className="inline-flex items-center justify-center w-5 h-5 rounded text-[9px] font-extrabold text-white leading-none"
                   style={{
-                    color:
+                    backgroundColor:
                       onAirProgram.classificacao_etaria === "L" ? "#00a651" :
                       onAirProgram.classificacao_etaria === "10" ? "#0091d4" :
                       onAirProgram.classificacao_etaria === "12" ? "#f8c210" :
@@ -357,7 +357,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                       onAirProgram.classificacao_etaria === "18" ? "#1d1d1b" : "#666",
                   }}
                 >
-                  {onAirProgram.classificacao_etaria === "L" ? "L" : `${onAirProgram.classificacao_etaria}+`}
+                  {onAirProgram.classificacao_etaria === "L" ? "L" : onAirProgram.classificacao_etaria}
                 </span>
               )}
             </div>
