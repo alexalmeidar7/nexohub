@@ -705,9 +705,9 @@ ${perguntaActions}
             {/* Divider */}
             <div className="h-px" style={{ backgroundColor: "rgba(13,4,70,0.06)" }} />
 
-          {/* Participantes */}
-          <div className="mb-4">
-            <label className="text-xs font-semibold mb-2 block" style={{ color: "rgba(13,4,70,0.5)" }}>participantes</label>
+            {/* Participantes */}
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-wider mb-3" style={{ color: "rgba(13,4,70,0.4)" }}>Participantes</p>
             <div className="space-y-2">
               {participantes.map((p, idx) => (
                 <div key={idx} className="rounded-xl p-3" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.08)" }}>
