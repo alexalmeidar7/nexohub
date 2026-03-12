@@ -433,7 +433,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                     maxHeight: item.widgetType === "agenda" ? "240px" : "none",
                     overflow: item.widgetType === "player" ? "visible" : "hidden",
                     transition: "margin-top 0.4s ease, max-height 0.4s ease, min-height 0.4s ease",
-                    marginTop: (item.widgetType === "player" && playerVideoActive === item.id) ? "-150px" : "0px",
+                    marginTop: (item.widgetType === "player" && playerVideoActive === item.id) ? "-220px" : "0px",
                     zIndex: (item.widgetType === "player" && playerVideoActive === item.id) ? 20 : undefined,
                   }}
                   onDragOver={(e) => handleDragOver(e, item.id)}
@@ -1457,7 +1457,7 @@ function DashboardPlayerWidget({ onVideoChange }: { onVideoChange?: (active: boo
       {/* Video inside widget */}
       {showVideo && isVideo && (
         <div className="relative -mx-4 -mt-4 mb-3 rounded-t-2xl overflow-hidden" style={{ animation: "widget-video-grow 0.4s ease-out forwards" }}>
-          <video ref={videoRef} autoPlay muted={isMuted} playsInline className="w-full h-full object-cover" style={{ height: "140px" }} />
+          <video ref={videoRef} autoPlay muted={isMuted} playsInline className="w-full object-contain" style={{ aspectRatio: "16/9", maxHeight: "220px" }} />
           <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(180deg, transparent 50%, rgba(10,10,10,0.7) 100%)" }} />
           <button onClick={() => stopAll()} className="absolute top-2 right-2 w-5 h-5 rounded-full flex items-center justify-center z-10" style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)" }}>
             <X size={10} className="text-white" />
@@ -1536,7 +1536,7 @@ function DashboardPlayerWidget({ onVideoChange }: { onVideoChange?: (active: boo
 
       <style>{`
         @keyframes eq-bar { 0% { height: 3px; } 100% { height: 14px; } }
-        @keyframes widget-video-grow { 0% { height: 0; opacity: 0; } 100% { height: 140px; opacity: 1; } }
+        @keyframes widget-video-grow { 0% { max-height: 0; opacity: 0; } 100% { max-height: 220px; opacity: 1; } }
       `}</style>
     </div>
   );
