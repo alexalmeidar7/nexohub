@@ -74,9 +74,14 @@ export default function RoteiroExport() {
             {data.numeroRoteiro && (
               <p className="text-3xl font-black mb-1" style={{ color: "#268ffa" }}>#{data.numeroRoteiro}</p>
             )}
-            <h1 className="text-2xl font-bold uppercase mb-2" style={{ color: "#0d0446" }}>
-              {data.titulo || "Roteiro"}
-            </h1>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-2xl font-bold uppercase mb-1" style={{ color: "#0d0446" }}>
+                {data.titulo || "Roteiro"}
+              </h1>
+              {data.assuntoSubtitulo && (
+                <p className="text-sm mb-2" style={{ color: "rgba(13,4,70,0.6)" }}>{data.assuntoSubtitulo}</p>
+              )}
+            </div>
             {data.logoUrl && (
               <img
                 src={data.logoUrl}
