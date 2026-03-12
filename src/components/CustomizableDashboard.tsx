@@ -348,13 +348,13 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
       {/* On-Air Program Info */}
       {onAirProgram && (
         <div className="mb-6 animate-fade-in">
-          <div className="flex flex-col">
+          <div className="flex flex-col items-center text-center">
             {/* Selo / Logo do programa */}
             {onAirProgram.selo && (
               <img
                 src={onAirProgram.selo}
                 alt={onAirProgram.nome}
-                className="w-56 h-56 rounded-xl object-contain mb-3"
+                className="w-56 h-56 rounded-xl object-contain mb-4"
               />
             )}
 
