@@ -383,7 +383,7 @@ ${perguntaActions}
   const selectSuggestion = (apres: Apresentador) => {
     setNewNome(apres.nome);
     setNewCategoria(apres.cargo || "Apresentador(a)");
-    setNewCargoText(apres.cargo || "");
+    setNewCargoText("");
     setNewInstagram(apres.instagram || "");
     setNewWhatsapp(apres.whatsapp || "");
     setSelectedFromDb(true);
