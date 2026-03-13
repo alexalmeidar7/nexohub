@@ -714,9 +714,9 @@ function TrendingCard({ item, idx, channels, onClick }: {
 
       {/* Play overlay */}
       {!showVideo && (
-        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-[5] pointer-events-none">
-          <div className="w-10 h-10 rounded-full backdrop-blur-sm flex items-center justify-center" style={{ backgroundColor: "hsl(var(--player-accent))", opacity: 0.8 }}>
-            <Play className="h-4 w-4 text-white fill-white" />
+        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 z-[5] pointer-events-none">
+          <div className="w-12 h-12 rounded-full backdrop-blur-md flex items-center justify-center shadow-2xl" style={{ background: "hsla(var(--player-accent) / 0.85)", boxShadow: "0 8px 32px hsla(var(--player-accent) / 0.5)" }}>
+            <Play className="h-5 w-5 text-white fill-white" />
           </div>
         </div>
       )}
