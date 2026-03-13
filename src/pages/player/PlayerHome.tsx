@@ -786,11 +786,11 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                 </div>
               ) : (
                 <HeroBanner
-                  channels={streamingChannels}
                   currentProgram={currentProgram || undefined}
+                  nextProgram={nextProgram}
                   nowPlaying={nowPlaying}
                   channelName={channelName}
-                  onPlay={(chId) => goToPlayer(chId)}
+                  onPlay={() => goToPlayer(streamingChannels[0]?.id)}
                   onGrade={() => setShowGrade(true)}
                 />
               )}
