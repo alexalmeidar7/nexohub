@@ -659,7 +659,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
 
       {/* Main content */}
       <div className="flex-1 ml-[72px] overflow-y-auto h-full">
-        <div className="transition-opacity duration-200 ease-in-out" style={{ opacity: sectionFading ? 0 : 1 }}>
+        <div className="transition-all duration-500 ease-in-out" style={{ opacity: sectionFading ? 0 : 1, transform: sectionFading ? "translateY(12px)" : "translateY(0)" }}>
 
           {visibleSection === "home" && (
             <>
