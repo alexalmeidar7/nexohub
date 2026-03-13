@@ -313,7 +313,7 @@ interface PlayerHomeProps {
 }
 
 export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
-  const { user, signOut } = useAuth();
+  const { user, signOut, loading: authLoading } = useAuth();
   const { userSlug } = useParams();
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState<Section>("home");
