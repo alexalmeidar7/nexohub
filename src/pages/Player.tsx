@@ -801,7 +801,11 @@ export default function PlayerPage() {
     if (!match) return;
     supabase.functions.invoke("youtube-playlist", { body: { playlistId: match[1] } }).then(({ data }) => {
       if (data?.videos) {
-        setYoutubeVideos(data.videos);
+        const sorted = [...data.videos].sort((a: any, b: any) => {
+          if (a.published && b.published) return new Date(b.published).getTime() - new Date(a.published).getTime();
+          return 0;
+        });
+        setYoutubeVideos(sorted);
         // Auto-select video from ?vid= param (catalog deep link)
         if (requestedVideoId && data.videos.some((v: any) => v.videoId === requestedVideoId)) {
           setSelectedVideoId(requestedVideoId);
