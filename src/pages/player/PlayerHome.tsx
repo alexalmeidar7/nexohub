@@ -75,19 +75,19 @@ function HeroBanner({
   }
 
   return (
-    <div className="relative w-full" style={{ height: "clamp(340px, 56vh, 560px)" }}>
+    <div className="relative w-full overflow-hidden" style={{ height: "clamp(340px, 56vh, 560px)" }}>
       {/* Background image */}
       <img
         src={heroImage}
         alt="Hero"
-        className="absolute inset-0 w-full h-full object-cover object-top"
+        className="absolute inset-0 w-full h-full object-cover object-top player-hero-reveal"
       />
       {/* Gradient overlays */}
       <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.5) 40%, rgba(0,0,0,0.1) 70%, transparent 100%)" }} />
       <div className="absolute inset-0" style={{ background: "linear-gradient(to top, hsl(var(--player-bg)) 0%, rgba(0,0,0,0.3) 30%, transparent 60%)" }} />
 
       {/* Content */}
-      <div className="absolute bottom-0 left-0 right-0 px-8 sm:px-12 pb-10 z-10" style={{ maxWidth: "680px" }}>
+      <div className="absolute bottom-0 left-0 right-0 px-8 sm:px-12 pb-10 z-10 player-hero-content" style={{ maxWidth: "680px" }}>
         {/* Live badge */}
         {channel && (
           <div className="flex items-center gap-2 mb-3">
