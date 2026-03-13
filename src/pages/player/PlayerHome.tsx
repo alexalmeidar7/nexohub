@@ -1060,7 +1060,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
 
                 {/* Em Alta - Trending */}
                 {dataLoaded && (() => {
-                  const trendingItems: { id: string; image: string | null; title: string; subtitle?: string; type: "live" | "catalog"; channelId: string }[] = [];
+                  const trendingItems: { id: string; image: string | null; title: string; subtitle?: string; type: "live" | "catalog"; channelId: string; videoId?: string; logoUrl?: string | null }[] = [];
                   
                   // Add streaming channels as trending
                   streamingChannels.forEach(ch => {
@@ -1071,6 +1071,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                       subtitle: "Ao vivo",
                       type: "live",
                       channelId: ch.id,
+                      logoUrl: ch.logo_url,
                     });
                   });
 
@@ -1085,6 +1086,8 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                         subtitle: v.published ? new Date(v.published).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" }) : undefined,
                         type: "catalog",
                         channelId: ch.id,
+                        videoId: v.videoId,
+                        logoUrl: ch.logo_url,
                       });
                     }
                   });
@@ -1099,49 +1102,13 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                       </span>
                     }>
                       {trendingItems.slice(0, 5).map((item, idx) => (
-                        <button
+                        <TrendingCard
                           key={item.id}
-                          onClick={() => goToPlayer(item.channelId, item.type === "catalog" ? item.id : undefined)}
-                          className="flex-shrink-0 rounded-xl overflow-hidden relative transition-all duration-300 group border-2 border-transparent hover:border-player-accent/50 hover:shadow-[0_0_30px_-5px_rgba(200,0,0,0.3)] hover:-translate-y-1 player-card-pop"
-                          style={{ width: "200px", aspectRatio: "2/3", animationDelay: `${idx * 60}ms`, background: "hsl(var(--player-bg))" }}
-                        >
-                          {item.image ? (
-                            <img src={item.image} alt={item.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center" style={{ background: "hsl(var(--player-bg))" }}>
-                              <TrendingUp className="h-8 w-8" style={{ color: "hsl(var(--player-accent))", opacity: 0.5 }} />
-                            </div>
-                          )}
-
-                          {/* Ranking badge */}
-                          <div
-                            className="absolute top-2 left-2 z-10 w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-black shadow-lg"
-                            style={{ backgroundColor: "hsl(var(--player-accent))" }}
-                          >
-                            {idx + 1}
-                          </div>
-
-                          {/* Live badge */}
-                          {item.type === "live" && (
-                            <span className="absolute top-2 right-2 z-10 text-[9px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded text-white" style={{ backgroundColor: "hsl(var(--player-accent))", opacity: 0.9 }}>
-                              live
-                            </span>
-                          )}
-
-                          {/* Gradient + title */}
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent z-[1]" />
-                          <div className="absolute bottom-0 left-0 right-0 p-3 z-[2] text-left">
-                            <p className="text-sm font-bold text-white leading-tight line-clamp-2 drop-shadow">{item.title}</p>
-                            {item.subtitle && <p className="text-[11px] text-white/60 mt-0.5">{item.subtitle}</p>}
-                          </div>
-
-                          {/* Play overlay */}
-                          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-[3]">
-                            <div className="w-10 h-10 rounded-full backdrop-blur-sm flex items-center justify-center" style={{ backgroundColor: "hsl(var(--player-accent))", opacity: 0.8 }}>
-                              <Play className="h-4 w-4 text-white fill-white" />
-                            </div>
-                          </div>
-                        </button>
+                          item={item}
+                          idx={idx}
+                          channels={channels}
+                          onClick={() => goToPlayer(item.channelId, item.type === "catalog" ? item.videoId : undefined)}
+                        />
                       ))}
                     </ContentRow>
                   );
