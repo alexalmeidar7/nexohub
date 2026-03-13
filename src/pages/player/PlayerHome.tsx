@@ -664,8 +664,9 @@ function TrendingCard({ item, idx, channels, onClick }: {
       onMouseLeave={handleMouseLeave}
       className="flex-shrink-0 rounded-2xl overflow-hidden relative transition-all duration-500 ease-[cubic-bezier(0.25,0.1,0.25,1)] group cursor-pointer"
       style={{
-        width: showVideo ? "520px" : "200px",
-        aspectRatio: showVideo ? "16/9" : "2/3",
+        width: showVideo ? "560px" : "200px",
+        height: showVideo ? "315px" : undefined,
+        aspectRatio: showVideo ? undefined : "2/3",
         background: "linear-gradient(145deg, rgba(255,255,255,0.06) 0%, hsl(var(--player-bg)) 100%)",
         zIndex: showVideo ? 20 : 1,
         transform: hovered && !showVideo ? "translateY(-6px) scale(1.02)" : "none",
@@ -686,11 +687,10 @@ function TrendingCard({ item, idx, channels, onClick }: {
         </div>
       )}
 
-      {/* YouTube player container — no controls, no branding */}
+      {/* YouTube player container */}
       {showVideo && (
-        <div className="absolute inset-0 z-[2] animate-fade-in pointer-events-none">
-          <div className="yt-host w-full h-full [&_iframe]{w-full h-full}" />
-          {/* Overlay to block YouTube click interactions */}
+        <div className="absolute inset-[-8px] z-[2] animate-fade-in pointer-events-none">
+          <div className="yt-host w-full h-full" style={{ transform: "scale(1.06)" }} />
           <div className="absolute inset-0" />
         </div>
       )}
