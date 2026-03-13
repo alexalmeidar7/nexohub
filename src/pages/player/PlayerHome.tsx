@@ -26,6 +26,7 @@ interface Programa {
   horario_fim: string;
   dias_semana: string[] | null;
   capa: string | null;
+  thumb: string | null;
   descricao?: string | null;
 }
 
@@ -56,7 +57,7 @@ function HeroBanner({
   onPlay: () => void;
   onGrade: () => void;
 }) {
-  const heroImage = currentProgram?.capa || channel?.cover_url || channel?.background_url || channel?.logo_url || "/images/banner-home.png";
+  const heroImage = currentProgram?.thumb || currentProgram?.capa || channel?.cover_url || channel?.background_url || channel?.logo_url || "/images/banner-home.png";
 
   // Progress bar
   let pct = 0;
@@ -494,7 +495,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       const [chRes, empRes, progRes, histRes, shopRes] = await Promise.all([
         supabase.from("streaming_channels").select("*").eq("user_id", userId).eq("active", true).order("numero_canal"),
         supabase.from("empresa_config").select("logo, nome").eq("user_id", userId).single(),
-        supabase.from("programas").select("id, nome, horario_inicio, horario_fim, dias_semana, ativo, selo, estudio, variavel, data_variavel, capa, descricao, apresentador_id").eq("user_id", userId).eq("ativo", true).order("horario_inicio"),
+        supabase.from("programas").select("id, nome, horario_inicio, horario_fim, dias_semana, ativo, selo, estudio, variavel, data_variavel, capa, thumb, descricao, apresentador_id").eq("user_id", userId).eq("ativo", true).order("horario_inicio"),
         supabase.from("watch_history").select("id, channel_name, channel_cover_url, channel_logo_url, channel_type, watched_at, channel_id").eq("user_id", userId).order("watched_at", { ascending: false }).limit(10),
         supabase.from("shopping_products").select("id, name, description, price, image_url, payment_url, stock").eq("user_id", userId).eq("active", true),
       ]);
