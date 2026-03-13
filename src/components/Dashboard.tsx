@@ -807,7 +807,10 @@ function UnifiedXmlField() {
             const { latitude, longitude, name } = geo.results[0];
             const wx = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code&timezone=auto&forecast_days=1`);
             const d = await wx.json();
-            weatherXml = `  <tempo>\n    <cidade>${name}</cidade>\n    <temperatura>${Math.round(d.current.temperature_2m)}</temperatura>\n    <humidade>${d.current.relative_humidity_2m}</humidade>\n    <condicao_codigo>${d.current.weather_code}</condicao_codigo>\n    <minima>${Math.round(d.daily.temperature_2m_min[0])}</minima>\n    <maxima>${Math.round(d.daily.temperature_2m_max[0])}</maxima>\n    <chance_chuva>${d.daily.precipitation_probability_max[0] ?? 0}</chance_chuva>\n  </tempo>`;
+            const wbIcon = weatherCodeToWbIcon(d.current.weather_code);
+            const iconUrl = `https://www.weatherbit.io/static/img/icons/${wbIcon}.png`;
+            const condLabel = weatherLabelsMap[d.current.weather_code] || "Desconhecido";
+            weatherXml = `  <tempo>\n    <cidade>${name}</cidade>\n    <temperatura>${Math.round(d.current.temperature_2m)}Cº</temperatura>\n    <descricao>${condLabel}</descricao>\n    <icone_url>${iconUrl}</icone_url>\n    <minima>${Math.round(d.daily.temperature_2m_min[0])}Cº</minima>\n    <maxima>${Math.round(d.daily.temperature_2m_max[0])}Cº</maxima>\n    <humidade>${d.current.relative_humidity_2m}%</humidade>\n    <precipitacao>${d.daily.precipitation_probability_max[0] ?? 0}%</precipitacao>\n  </tempo>`;
           }
         } catch {}
       }
