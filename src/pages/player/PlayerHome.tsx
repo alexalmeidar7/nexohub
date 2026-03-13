@@ -65,19 +65,25 @@ function HeroBanner({
   const fetchAiAnalysis = (prog: Programa | undefined) => {
     if (!prog?.descricao || !prog.id || aiAnalysisDisabled.current) return;
     if (aiCache.current[prog.id]) { setAiData(prev => ({ ...prev, [prog.id!]: aiCache.current[prog.id!] })); return; }
+
     supabase.functions.invoke("analyze-program", { body: { nome: prog.nome, descricao: prog.descricao } })
-      .then(({ data }) => {
-        if (data?.error) {
-          if (data.error.includes("insuficientes") || data.error.includes("Limite")) {
+      .then(({ data, error }) => {
+        if (error || data?.error) {
+          const status = (error as any)?.context?.status ?? (error as any)?.status;
+          const msg = String((data as any)?.error || (error as any)?.message || "");
+          if (status === 402 || status === 429 || msg.includes("insuficientes") || msg.includes("Limite")) {
             aiAnalysisDisabled.current = true;
           }
           return;
         }
-        if (data && prog.id) {
-          const result = { keywords: data.keywords || [], classificacao: data.classificacao || "Livre" };
-          aiCache.current[prog.id] = result;
-          setAiData(prev => ({ ...prev, [prog.id!]: result }));
-        }
+
+        const result = { keywords: data?.keywords || [], classificacao: data?.classificacao || "Livre" };
+        aiCache.current[prog.id] = result;
+        setAiData(prev => ({ ...prev, [prog.id!]: result }));
+      })
+      .catch(() => {
+        // Avoid breaking UI if AI service fails
+        aiAnalysisDisabled.current = true;
       });
   };
 
