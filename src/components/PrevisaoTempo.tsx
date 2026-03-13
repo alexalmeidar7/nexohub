@@ -46,6 +46,18 @@ const weatherLabels: Record<number, string> = {
   95: "Tempestade", 96: "Tempestade com granizo", 99: "Tempestade severa",
 };
 
+function weatherCodeToWbIcon(code: number): string {
+  const map: Record<number, string> = {
+    0: "c01d", 1: "c02d", 2: "c02d", 3: "c04d",
+    45: "a05d", 48: "a05d", 51: "d01d", 53: "d02d", 55: "d03d",
+    61: "r01d", 63: "r02d", 65: "r03d", 71: "s01d", 73: "s02d", 75: "s03d",
+    80: "r04d", 81: "r05d", 82: "r06d", 95: "t01d", 96: "t04d", 99: "t05d",
+  };
+  const codes = Object.keys(map).map(Number);
+  const closest = codes.reduce((prev, curr) => (Math.abs(curr - code) < Math.abs(prev - code) ? curr : prev));
+  return map[closest] || "c01d";
+}
+
 function getWeatherLabel(code: number) {
   const closest = Object.keys(weatherLabels).map(Number)
     .reduce((prev, curr) => (Math.abs(curr - code) < Math.abs(prev - code) ? curr : prev));
@@ -506,8 +518,9 @@ export default function PrevisaoTempo() {
 
           <XmlLinkRow label="XML TEMPO" dark xmlContent={(() => {
             if (!weather) return "";
+            const iconUrl = (code: number) => `https://www.weatherbit.io/static/img/icons/${weatherCodeToWbIcon(code)}.png`;
             const dayToXml = (d: DayWeather, tag: string) =>
-              `  <${tag} date="${d.date}">\n    <temperatura>${d.temp}Cº</temperatura>\n    <minima>${d.tempMin}Cº</minima>\n    <maxima>${d.tempMax}Cº</maxima>\n    <humidade>${d.humidity}</humidade>\n    <chance_chuva>${d.rainChance}</chance_chuva>\n    <condicao>${getWeatherLabel(d.weatherCode)}</condicao>\n  </${tag}>`;
+              `  <${tag} date="${d.date}">\n    <cidade>${weather.city}</cidade>\n    <temperatura>${d.temp}Cº</temperatura>\n    <descricao>${getWeatherLabel(d.weatherCode)}</descricao>\n    <icone_url>${iconUrl(d.weatherCode)}</icone_url>\n    <minima>${d.tempMin}Cº</minima>\n    <maxima>${d.tempMax}Cº</maxima>\n    <humidade>${d.humidity}%</humidade>\n    <precipitacao>${d.rainChance}%</precipitacao>\n  </${tag}>`;
             return `<?xml version="1.0" encoding="UTF-8"?>\n<previsao>\n  <cidade>${weather.city}</cidade>\n${dayToXml(weather.current, "atual")}\n${weather.forecast.map((d) => dayToXml(d, "dia")).join("\n")}\n</previsao>`;
           })()} />
         </>
