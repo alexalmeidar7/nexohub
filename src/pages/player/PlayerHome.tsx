@@ -433,9 +433,27 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
 
       if (cancelled) return;
 
-      const channelsData = (chRes.data ?? []) as any[];
+      let channelsData = (chRes.data ?? []) as any[];
+      let channelError = chRes.error;
+
+      // Fallback resiliente: se o usuário autenticado não tiver canais próprios,
+      // usa os canais ativos disponíveis (catálogo + streaming) conforme política vigente.
+      if (!channelError && channelsData.length === 0) {
+        const fallbackChRes = await supabase
+          .from("streaming_channels")
+          .select("*")
+          .eq("active", true)
+          .order("numero_canal");
+
+        if (!fallbackChRes.error && fallbackChRes.data) {
+          channelsData = fallbackChRes.data as any[];
+        } else if (fallbackChRes.error) {
+          channelError = fallbackChRes.error;
+        }
+      }
+
       const programasData = (progRes.data ?? []) as any[];
-      const hasCriticalError = Boolean(chRes.error || progRes.error);
+      const hasCriticalError = Boolean(channelError || progRes.error);
       const possibleAuthRace = channelsData.length === 0 && programasData.length === 0;
 
       if ((hasCriticalError || possibleAuthRace) && scheduleRetry(() => fetchAuthenticatedData(attempt + 1), attempt)) {

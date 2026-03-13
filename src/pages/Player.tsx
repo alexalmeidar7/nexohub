@@ -656,8 +656,25 @@ export default function PlayerPage() {
         ]);
         if (cancelled) return;
 
-        if (!channelsRes.error && channelsRes.data) {
-          setCanais((channelsRes.data as Canal[]).filter(c => c.type !== "catalog"));
+        let canaisData = channelsRes.data as Canal[] | null;
+        let channelsError = channelsRes.error;
+
+        if (!channelsError && (!canaisData || canaisData.length === 0)) {
+          const fallbackChannelsRes = await supabase
+            .from("streaming_channels")
+            .select("*")
+            .eq("active", true)
+            .order("numero_canal");
+
+          if (!fallbackChannelsRes.error) {
+            canaisData = fallbackChannelsRes.data as Canal[] | null;
+          } else {
+            channelsError = fallbackChannelsRes.error;
+          }
+        }
+
+        if (!channelsError && canaisData) {
+          setCanais(canaisData.filter(c => c.type !== "catalog"));
         } else {
           setCanais([]);
         }
