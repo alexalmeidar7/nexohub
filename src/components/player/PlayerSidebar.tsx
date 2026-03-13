@@ -52,7 +52,7 @@ export default function PlayerSidebar({
       <aside
         onMouseEnter={() => autoHide && setHovered(true)}
         onMouseLeave={() => autoHide && setHovered(false)}
-        className="w-[52px] flex flex-col items-center py-6 gap-2 z-40 fixed left-0 top-0 bottom-0 transition-all duration-300 ease-in-out"
+        className="w-[52px] flex flex-col items-center py-6 pl-2 gap-2 z-40 fixed left-0 top-0 bottom-0 transition-all duration-300 ease-in-out"
         style={{
           background: "transparent",
           transform: isShown ? "translateX(0)" : "translateX(-100%)",
