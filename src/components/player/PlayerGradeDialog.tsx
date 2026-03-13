@@ -370,21 +370,17 @@ function PlayerGradeDialog({ programas, onClose }: Props) {
                           </div>
                           {/* AI keywords + rating in cell */}
                           {cellAiData[prog.id] && (
-                            <div className="flex flex-wrap items-center gap-0.5 mt-1">
-                              {cellAiData[prog.id].keywords.slice(0, 3).map((kw, ki) => (
-                                <span key={ki} className="text-[7px] px-1 py-0 rounded" style={{ backgroundColor: isOnAir ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.06)", color: isOnAir ? "rgba(255,255,255,0.8)" : "inherit", opacity: isOnAir ? 1 : 0.7 }}>
-                                  {kw}
-                                </span>
-                              ))}
-                              {(() => {
-                                const cls = cellAiData[prog.id].classificacao;
-                                const r = RATING_COLORS[cls] || RATING_COLORS["Livre"];
-                                return (
-                                  <span className="text-[7px] px-1 py-0 rounded font-bold" style={{ backgroundColor: r.bg, color: r.text, border: `1px solid ${r.text}` }}>
-                                    {r.label}
+                            <div className="mt-1">
+                              <div className="flex flex-wrap items-center gap-0.5">
+                                {cellAiData[prog.id].keywords.slice(0, 3).map((kw, ki) => (
+                                  <span key={ki} className="text-[7px] px-1 py-0 rounded" style={{ backgroundColor: isOnAir ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.06)", color: isOnAir ? "rgba(255,255,255,0.8)" : "inherit", opacity: isOnAir ? 1 : 0.7 }}>
+                                    {kw}
                                   </span>
-                                );
-                              })()}
+                                ))}
+                              </div>
+                              <span className="text-[7px] px-1 py-0 rounded font-bold mt-0.5 inline-block" style={{ backgroundColor: "rgba(255,255,255,0.06)", color: isOnAir ? "rgba(255,255,255,0.7)" : "rgba(200,200,200,0.7)" }}>
+                                {(RATING_COLORS[cellAiData[prog.id].classificacao] || RATING_COLORS["Livre"]).label}
+                              </span>
                             </div>
                           )}
                           {isOnAir && (
