@@ -1166,7 +1166,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                       subtitle: "Ao vivo",
                       type: "live",
                       channelId: ch.id,
-                      logoUrl: ch.logo_url,
+                      logoUrl: ch.background_url || ch.logo_url,
                     });
                   });
 
