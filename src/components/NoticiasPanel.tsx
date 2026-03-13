@@ -637,13 +637,15 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
             )}
           </div>
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => setWizardOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-bold text-[10px] transition-all hover:shadow-md"
-              style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#ffffff" }}
-            >
-              <Newspaper size={11} /> Montar Roteiro
-            </button>
+            {!defaultJornalConfig && (
+              <button
+                onClick={() => setWizardOpen(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-bold text-[10px] transition-all hover:shadow-md"
+                style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#ffffff" }}
+              >
+                <Newspaper size={11} /> Montar Roteiro
+              </button>
+            )}
             <button onClick={() => { loadAll(); loadCotacoes(); }} disabled={loading}
               className="w-8 h-8 rounded-full flex items-center justify-center transition-all disabled:opacity-50"
               style={{ backgroundColor: "rgba(13,4,70,0.06)" }}
