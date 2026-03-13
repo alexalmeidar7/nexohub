@@ -871,7 +871,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
               </div>
 
               {/* Content rows — slides behind the sticky hero */}
-              <div className="px-6 sm:px-10 pb-8 relative z-30" style={{ marginTop: "-4px", background: "hsl(var(--player-bg))" }}>
+              <div className="px-6 sm:px-10 pb-8 relative z-10" style={{ marginTop: "-4px", background: "hsl(var(--player-bg))" }}>
                 {/* Streaming ao vivo */}
                 {!dataLoaded ? (
                   <section className="mb-8">
