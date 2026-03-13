@@ -134,6 +134,7 @@ interface DashboardProps {
 
 export default function Dashboard({ onLogout }: DashboardProps) {
   const { user } = useAuth();
+  const layoutColors = useLayoutColors();
   const [currentPage, setCurrentPage] = useState<Page>("dashboard");
   const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set());
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
