@@ -29,3 +29,6 @@ verify_jwt = false
 
 [functions.generate-cover]
 verify_jwt = false
+
+[functions.update-weather-xml]
+verify_jwt = false
