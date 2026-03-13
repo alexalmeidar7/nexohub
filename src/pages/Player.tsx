@@ -675,7 +675,7 @@ export default function PlayerPage() {
         }
 
         if (!channelsError && canaisData) {
-          setCanais(canaisData.filter(c => c.type !== "catalog"));
+          setCanais(canaisData.filter(c => c.type !== "catalog" || c.id === requestedChannelId));
         } else {
           setCanais([]);
         }
