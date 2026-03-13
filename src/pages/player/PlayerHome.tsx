@@ -533,6 +533,9 @@ function ContentRow({ title, children }: { title: React.ReactNode; children: Rea
   );
 }
 
+// Global flag: stop AI cover calls if credits exhausted
+let aiCoverDisabled = false;
+
 /* ─── Trending Card (Em Alta) with expand-right video preview ─── */
 function TrendingCard({ item, idx, channels, onClick }: {
   item: { id: string; image: string | null; title: string; subtitle?: string; type: "live" | "catalog"; channelId: string; videoId?: string; logoUrl?: string | null };
