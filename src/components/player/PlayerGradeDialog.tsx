@@ -245,38 +245,63 @@ function PlayerGradeDialog({ programas, onClose }: Props) {
           boxShadow: "0 24px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06)",
         }}
       >
-        {/* Header */}
-        <div
-          className="flex items-center justify-between px-8 py-5"
-          style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
-        >
-          <div className="flex items-center gap-4">
-            <div
-              className="w-10 h-10 rounded-2xl flex items-center justify-center"
-              style={{ background: "linear-gradient(135deg, hsl(var(--player-accent)), hsl(var(--player-accent-hover)))" }}
-            >
-              <Radio size={18} className="text-white" />
+        {/* Header + Weekday row */}
+        <div style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+          <div className="flex items-center justify-between px-8 py-4">
+            <div className="flex items-center gap-4">
+              <div
+                className="w-10 h-10 rounded-2xl flex items-center justify-center"
+                style={{ background: "linear-gradient(135deg, hsl(var(--player-accent)), hsl(var(--player-accent-hover)))" }}
+              >
+                <Radio size={18} className="text-white" />
+              </div>
+              <div>
+                <h2 className="text-white text-lg font-bold tracking-tight">Grade de Programação</h2>
+                <p className="text-white/30 text-xs mt-0.5">
+                  <Calendar size={10} className="inline mr-1 -mt-0.5" />
+                  Semana {weekDates["Segunda"]} — {weekDates["Domingo"]}
+                </p>
+              </div>
             </div>
-            <div>
-              <h2 className="text-white text-lg font-bold tracking-tight">Grade de Programação</h2>
-              <p className="text-white/30 text-xs mt-0.5">
-                <Calendar size={10} className="inline mr-1 -mt-0.5" />
-                Semana {weekDates["Segunda"]} — {weekDates["Domingo"]}
-              </p>
+            <button
+              onClick={() => { onClose(); setDetailProg(null); }}
+              className="text-white/30 hover:text-white hover:bg-white/10 rounded-2xl p-2.5 transition-all duration-200"
+            >
+              <X size={20} />
+            </button>
+          </div>
+          {/* Weekday columns - fixed */}
+          <div className="px-5 pb-3">
+            <div className="flex" style={{ gap: "2px" }}>
+              <div className="flex-shrink-0" style={{ width: "58px" }} />
+              {DIAS_SEMANA.map(dia => {
+                const isToday = dia === diaAtual;
+                return (
+                  <div
+                    key={dia}
+                    className="flex-1 px-2 py-3 text-center rounded-xl transition-colors"
+                    style={{
+                      backgroundColor: isToday ? "hsla(var(--player-accent) / 0.18)" : "rgba(255,255,255,0.06)",
+                      color: isToday ? "hsl(var(--player-accent))" : "hsl(var(--player-foreground))",
+                      fontWeight: isToday ? 800 : 700,
+                    }}
+                  >
+                    <div className="text-[12px] uppercase tracking-wider font-bold">{dia.slice(0, 3)}</div>
+                    <div className="text-[10px] font-semibold mt-0.5" style={{ color: isToday ? "hsl(var(--player-accent))" : "hsl(var(--player-foreground))" }}>{weekDates[dia]}</div>
+                    {isToday && (
+                      <div className="w-5 h-[2px] rounded-full mx-auto mt-1.5" style={{ backgroundColor: "hsl(var(--player-accent))" }} />
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
-          <button
-            onClick={() => { onClose(); setDetailProg(null); }}
-            className="text-white/30 hover:text-white hover:bg-white/10 rounded-2xl p-2.5 transition-all duration-200"
-          >
-            <X size={20} />
-          </button>
         </div>
 
         {/* Table */}
         <div
           ref={gradeScrollRef}
-          className="overflow-auto max-h-[78vh] px-5 pb-5 pt-0 grade-scroll"
+          className="overflow-auto max-h-[70vh] px-5 pb-5 pt-0 grade-scroll"
           style={{ scrollbarWidth: "thin", scrollbarColor: "rgba(255,255,255,0.1) transparent" }}
         >
           <style>{`
@@ -290,36 +315,6 @@ function PlayerGradeDialog({ programas, onClose }: Props) {
             }
           `}</style>
           <table data-no-row-hover className="w-full text-xs border-separate table-fixed" style={{ borderSpacing: "2px" }}>
-            <thead className="sticky top-0 z-10">
-              <tr>
-                <th
-                  className="px-2 py-4 text-center rounded-xl text-[11px] uppercase tracking-widest font-semibold"
-                  style={{ backgroundColor: "rgba(255,255,255,0.06)", color: "hsl(var(--player-foreground))", width: "58px" }}
-                >
-                  <Clock size={12} className="mx-auto mb-0.5" />
-                </th>
-                {DIAS_SEMANA.map(dia => {
-                  const isToday = dia === diaAtual;
-                  return (
-                    <th
-                      key={dia}
-                      className="px-2 py-4 text-center rounded-xl transition-colors"
-                      style={{
-                        backgroundColor: isToday ? "hsla(var(--player-accent) / 0.18)" : "rgba(255,255,255,0.06)",
-                        color: isToday ? "hsl(var(--player-accent))" : "hsl(var(--player-foreground))",
-                        fontWeight: isToday ? 800 : 700,
-                      }}
-                    >
-                      <div className="text-[12px] uppercase tracking-wider font-bold">{dia.slice(0, 3)}</div>
-                      <div className="text-[10px] font-semibold mt-0.5" style={{ color: isToday ? "hsl(var(--player-accent))" : "hsl(var(--player-foreground))" }}>{weekDates[dia]}</div>
-                      {isToday && (
-                        <div className="w-5 h-[2px] rounded-full mx-auto mt-1.5" style={{ backgroundColor: "hsl(var(--player-accent))" }} />
-                      )}
-                    </th>
-                  );
-                })}
-              </tr>
-            </thead>
             <tbody>
               {gradeSlots.map(slot => {
                 const onAirKey = `${diaAtual}-${slot}`;
