@@ -1014,6 +1014,19 @@ ${perguntaActions}
             </div>
             </div>
 
+            {/* NoticiasPanel inline for Primeira Hora Positiva */}
+            {programaNome === "Primeira Hora Positiva" && (
+              <>
+                <div className="h-px" style={{ backgroundColor: "rgba(13,4,70,0.06)" }} />
+                <Suspense fallback={<ModulePageSkeleton />}>
+                  <NoticiasPanel />
+                </Suspense>
+              </>
+            )}
+
+            {/* Conteúdo do Roteiro - hidden for Primeira Hora Positiva */}
+            {programaNome !== "Primeira Hora Positiva" && (
+              <>
             {/* Divider */}
             <div className="h-px" style={{ backgroundColor: "rgba(13,4,70,0.06)" }} />
 
@@ -1030,7 +1043,6 @@ ${perguntaActions}
                 onChange={e => {
                   setFontSize(e.target.value);
                   document.execCommand("fontSize", false, "7");
-                  // Override the font size via span styling
                   const sel = window.getSelection();
                   if (sel && sel.rangeCount > 0) {
                     const fonts = editorRef.current?.querySelectorAll('font[size="7"]');
@@ -1062,7 +1074,21 @@ ${perguntaActions}
               <button type="button" onClick={() => document.execCommand("underline")} className="h-8 w-8 flex items-center justify-center rounded-lg hover:opacity-70 transition" style={{ backgroundColor: "rgba(13,4,70,0.04)" }} title="Sublinhado">
                 <Underline size={14} style={{ color: "#0d0446" }} />
               </button>
-              <button type="button" onClick={() => document.execCommand("hiliteColor", false, "#fef08a")} className="h-8 w-8 flex items-center justify-center rounded-lg hover:opacity-70 transition" style={{ backgroundColor: "rgba(13,4,70,0.04)" }} title="Grifar / Realçar">
+              <button type="button" onClick={() => {
+                const sel = window.getSelection();
+                if (sel && sel.rangeCount > 0 && !sel.isCollapsed) {
+                  const range = sel.getRangeAt(0);
+                  const parent = range.commonAncestorContainer.parentElement;
+                  if (parent?.tagName === "MARK") {
+                    const text = document.createTextNode(parent.textContent || "");
+                    parent.replaceWith(text);
+                  } else {
+                    const mark = document.createElement("mark");
+                    mark.style.backgroundColor = "#fef08a";
+                    range.surroundContents(mark);
+                  }
+                }
+              }} className="h-8 w-8 flex items-center justify-center rounded-lg hover:opacity-70 transition" style={{ backgroundColor: "rgba(13,4,70,0.04)" }} title="Destaque">
                 <Highlighter size={14} style={{ color: "#0d0446" }} />
               </button>
 
@@ -1080,7 +1106,7 @@ ${perguntaActions}
 
               <div className="w-px h-5 mx-1" style={{ backgroundColor: "rgba(13,4,70,0.1)" }} />
 
-              <button type="button" onClick={() => document.execCommand("insertUnorderedList")} className="h-8 w-8 flex items-center justify-center rounded-lg hover:opacity-70 transition" style={{ backgroundColor: "rgba(13,4,70,0.04)" }} title="Lista com marcadores">
+              <button type="button" onClick={() => document.execCommand("insertUnorderedList")} className="h-8 w-8 flex items-center justify-center rounded-lg hover:opacity-70 transition" style={{ backgroundColor: "rgba(13,4,70,0.04)" }} title="Lista">
                 <List size={14} style={{ color: "#0d0446" }} />
               </button>
               <button type="button" onClick={() => document.execCommand("insertOrderedList")} className="h-8 w-8 flex items-center justify-center rounded-lg hover:opacity-70 transition" style={{ backgroundColor: "rgba(13,4,70,0.04)" }} title="Lista numerada">
@@ -1089,107 +1115,96 @@ ${perguntaActions}
 
               <div className="w-px h-5 mx-1" style={{ backgroundColor: "rgba(13,4,70,0.1)" }} />
 
+              {/* Merge cells button */}
               <button
                 type="button"
                 onClick={() => {
                   if (mergeCells.length < 2) {
-                    toast.error("Ctrl+clique em pelo menos 2 células para mesclar");
+                    toast.info("Selecione 2 ou mais células da mesma linha para mesclar");
                     return;
                   }
                   const firstRow = mergeCells[0].parentElement;
-                  const sameRow = mergeCells.every(c => c.parentElement === firstRow);
-                  if (!sameRow) {
+                  const allSameRow = mergeCells.every(c => c.parentElement === firstRow);
+                  if (!allSameRow) {
                     toast.error("Selecione células da mesma linha");
                     mergeCells.forEach(c => { c.style.outline = ""; c.style.backgroundColor = ""; });
                     setMergeCells([]);
                     return;
                   }
-                  // Sort by DOM order
                   const sorted = [...mergeCells].sort((a, b) => {
                     const cells = Array.from(firstRow!.children);
                     return cells.indexOf(a) - cells.indexOf(b);
                   });
-                  const first = sorted[0];
-                  let totalColspan = 0;
-                  sorted.forEach((cell, i) => {
-                    totalColspan += parseInt(cell.getAttribute("colspan") || "1", 10);
-                    if (i > 0) {
-                      if (cell.textContent?.trim()) first.innerHTML += " " + cell.innerHTML;
-                      cell.remove();
-                    }
-                  });
-                  first.setAttribute("colspan", String(totalColspan));
-                  first.style.outline = "";
-                  first.style.backgroundColor = "";
+                  const combinedText = sorted.map(c => c.innerHTML).join(" ");
+                  const totalColspan = sorted.reduce((sum, c) => sum + (parseInt(c.getAttribute("colspan") || "1")), 0);
+                  sorted[0].innerHTML = combinedText;
+                  sorted[0].setAttribute("colspan", String(totalColspan));
+                  sorted[0].style.outline = "";
+                  sorted[0].style.backgroundColor = "";
+                  for (let i = 1; i < sorted.length; i++) {
+                    sorted[i].remove();
+                  }
                   setMergeCells([]);
+                  setRoteiroTexto(editorRef.current?.innerHTML || "");
                   toast.success("Células mescladas!");
-                  if (editorRef.current) setRoteiroTexto(editorRef.current.innerHTML);
                 }}
-                className="h-8 px-2 flex items-center justify-center gap-1 rounded-lg hover:opacity-70 transition text-[11px] font-medium"
-                style={{ backgroundColor: mergeCells.length >= 2 ? "rgba(38,143,250,0.15)" : "rgba(13,4,70,0.04)", color: mergeCells.length >= 2 ? "#268ffa" : "#0d0446", border: mergeCells.length >= 2 ? "1px solid #268ffa" : "none" }}
-                title="Ctrl+clique nas células, depois clique aqui para mesclar"
+                className="h-8 px-2 flex items-center justify-center rounded-lg hover:opacity-70 transition gap-1 text-xs font-semibold"
+                style={{ backgroundColor: mergeCells.length >= 2 ? "rgba(38,143,250,0.15)" : "rgba(13,4,70,0.04)", color: mergeCells.length >= 2 ? "#268ffa" : "#0d0446" }}
+                title="Mesclar células selecionadas"
               >
                 <Columns size={14} />
-                <span className="hidden sm:inline">Mesclar{mergeCells.length >= 2 ? ` (${mergeCells.length})` : ""}</span>
+                {mergeCells.length >= 2 && `(${mergeCells.length})`}
               </button>
-              {mergeCells.length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    mergeCells.forEach(c => { c.style.outline = ""; c.style.backgroundColor = ""; });
-                    setMergeCells([]);
-                  }}
-                  className="h-8 w-8 flex items-center justify-center rounded-lg hover:opacity-70 transition"
-                  style={{ backgroundColor: "rgba(220,38,38,0.08)" }}
-                  title="Cancelar seleção"
-                >
-                  <X size={14} style={{ color: "#dc2626" }} />
-                </button>
-              )}
+
+              {/* Copy button */}
+              <button
+                type="button"
+                onClick={() => {
+                  const text = editorRef.current?.innerText || "";
+                  navigator.clipboard.writeText(text);
+                  toast.success("Texto copiado!");
+                }}
+                className="h-8 w-8 flex items-center justify-center rounded-lg hover:opacity-70 transition"
+                style={{ backgroundColor: "rgba(13,4,70,0.04)" }}
+                title="Copiar texto"
+              >
+                <Copy size={14} style={{ color: "#0d0446" }} />
+              </button>
             </div>
 
-            {/* Editor */}
+            {/* Editor contentEditable */}
             <div
               ref={editorRef}
               contentEditable
               suppressContentEditableWarning
-              onPaste={(e) => {
-                e.preventDefault();
-                const text = e.clipboardData.getData("text/plain");
-                const sel = window.getSelection();
-                if (sel && sel.rangeCount > 0) {
-                  const range = sel.getRangeAt(0);
-                  range.deleteContents();
-                  range.insertNode(document.createTextNode(text));
-                  range.collapse(false);
-                  sel.removeAllRanges();
-                  sel.addRange(range);
-                }
-                if (editorRef.current) setRoteiroTexto(editorRef.current.innerHTML);
-              }}
-              onInput={() => {
-                if (editorRef.current) setRoteiroTexto(editorRef.current.innerHTML);
-              }}
+              dangerouslySetInnerHTML={{ __html: roteiroTexto }}
+              onInput={() => setRoteiroTexto(editorRef.current?.innerHTML || "")}
               onClick={(e) => {
                 const target = e.target as HTMLElement;
 
-                // Ctrl/Cmd+click on a table cell → toggle merge selection
-                const cell = target.closest("td, th") as HTMLTableCellElement | null;
-                if (cell && (e.ctrlKey || e.metaKey) && !cell.hasAttribute("data-action") && !cell.querySelector("[data-action]")) {
-                  e.preventDefault();
-                  setMergeCells(prev => {
-                    const already = prev.includes(cell);
-                    if (already) {
-                      cell.style.outline = "";
-                      cell.style.backgroundColor = "";
-                      return prev.filter(c => c !== cell);
+                // Merge cell selection mode
+                if (mergeCells.length > 0 || target.tagName === "TD" || target.tagName === "TH") {
+                  const cell = target.closest("td, th") as HTMLTableCellElement | null;
+                  if (cell && cell.closest("[contenteditable]") === editorRef.current) {
+                    // Check if clicking action buttons
+                    if (target.hasAttribute("data-action") || target.closest("[data-action]")) {
+                      // Don't intercept action clicks
                     } else {
-                      cell.style.outline = "2px solid #268ffa";
-                      cell.style.backgroundColor = mergeHighlightColor;
-                      return [...prev, cell];
+                      setMergeCells(prev => {
+                        const already = prev.includes(cell);
+                        if (already) {
+                          cell.style.outline = "";
+                          cell.style.backgroundColor = "";
+                          return prev.filter(c => c !== cell);
+                        } else {
+                          cell.style.outline = "2px solid #268ffa";
+                          cell.style.backgroundColor = mergeHighlightColor;
+                          return [...prev, cell];
+                        }
+                      });
+                      return;
                     }
-                  });
-                  return;
+                  }
                 }
 
                 const action = target.getAttribute("data-action");
@@ -1228,11 +1243,7 @@ ${perguntaActions}
                   }
                 } else if (action === "delete-pergunta") {
                   const row = target.closest("tr[data-pergunta]");
-                  if (!row) return;
-                  const allPerguntas = Array.from(table.querySelectorAll("tr[data-pergunta]"));
-                  if (allPerguntas.length <= 1) return;
-                  row.remove();
-                  renumberPerguntas();
+                  if (row) { row.remove(); renumberPerguntas(); }
                 } else if (action === "move-up") {
                   const row = target.closest("tr[data-pergunta]");
                   if (!row) return;
@@ -1257,7 +1268,8 @@ ${perguntaActions}
             />
               </div>
             </div>
-
+              </>
+            )}
             {/* Salvar / Exportar */}
             <button
               onClick={async () => {
@@ -1535,8 +1547,8 @@ ${perguntaActions}
         </div>
       )}
 
-      {/* Conditional: Jornalístico shows NoticiasPanel */}
-      {tipoPrograma === "Jornalístico" && (
+      {/* Conditional: Jornalístico shows NoticiasPanel (except Primeira Hora Positiva which shows inline) */}
+      {tipoPrograma === "Jornalístico" && programaNome !== "Primeira Hora Positiva" && (
         <Suspense fallback={<ModulePageSkeleton />}>
           <NoticiasPanel />
         </Suspense>
