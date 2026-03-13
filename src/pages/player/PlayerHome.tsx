@@ -370,7 +370,7 @@ function StreamingCard({ channel, currentProgram, nowPlaying, onClick }: {
 }
 
 /* ─── Content Row (horizontal scroll with arrows) ─── */
-function ContentRow({ title, children }: { title: string; children: React.ReactNode }) {
+function ContentRow({ title, children }: { title: React.ReactNode; children: React.ReactNode }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
