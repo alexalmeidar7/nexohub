@@ -117,21 +117,35 @@ function HeroBanner({
   }
 
   return (
-    <div className="relative w-full overflow-hidden" style={{ height: "clamp(340px, 56vh, 560px)" }}>
+    <div className="relative w-full overflow-hidden" style={{ height: "clamp(340px, 56vh, 560px)", backgroundColor: "black" }}>
       {/* Crossfade images */}
-      {items.map((ch, idx) => (
-        <img
-          key={ch?.id || "fallback"}
-          src={getSlideImage(ch)}
-          alt={ch?.name || "Banner"}
-          className="absolute inset-0 w-full h-full object-cover object-top"
-          style={{
-            opacity: idx === activeIdx ? 1 : idx === prevIdx ? 0 : 0,
-            transition: "opacity 1s ease-in-out",
-            zIndex: idx === activeIdx ? 1 : idx === prevIdx ? 0 : -1,
-          }}
-        />
-      ))}
+      {items.map((ch, idx) => {
+        const imgSrc = getSlideImage(ch);
+        if (!imgSrc) return (
+          <div
+            key={ch?.id || "fallback"}
+            className="absolute inset-0 w-full h-full bg-black"
+            style={{
+              opacity: idx === activeIdx ? 1 : 0,
+              transition: "opacity 1s ease-in-out",
+              zIndex: idx === activeIdx ? 1 : idx === prevIdx ? 0 : -1,
+            }}
+          />
+        );
+        return (
+          <img
+            key={ch?.id || "fallback"}
+            src={imgSrc}
+            alt={ch?.name || "Banner"}
+            className="absolute inset-0 w-full h-full object-cover object-top"
+            style={{
+              opacity: idx === activeIdx ? 1 : idx === prevIdx ? 0 : 0,
+              transition: "opacity 1s ease-in-out",
+              zIndex: idx === activeIdx ? 1 : idx === prevIdx ? 0 : -1,
+            }}
+          />
+        );
+      })}
 
       {/* Gradient overlays */}
       <div className="absolute inset-0 z-[2]" style={{ background: "linear-gradient(to right, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.5) 40%, rgba(0,0,0,0.1) 70%, transparent 100%)" }} />
