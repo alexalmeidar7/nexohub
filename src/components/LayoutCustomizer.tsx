@@ -465,6 +465,63 @@ export default function LayoutCustomizer() {
         </div>
       </div>
 
+      {/* Contrast Analysis Section */}
+      {(() => {
+        const issues = analyzeContrast(colors);
+        if (issues.length === 0) return null;
+        return (
+          <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(220,38,38,0.3)", backgroundColor: "rgba(220,38,38,0.04)" }}>
+            <div className="px-5 py-3 flex items-center gap-2" style={{ background: "linear-gradient(135deg, #dc2626, #ef4444)" }}>
+              <AlertTriangle size={16} className="text-white" />
+              <h4 className="text-sm font-bold text-white">Problemas de Legibilidade Detectados</h4>
+            </div>
+            <div className="p-4 space-y-3">
+              {issues.map((issue, i) => (
+                <div key={i} className="flex items-center gap-3 rounded-xl p-3" style={{ backgroundColor: "rgba(220,38,38,0.06)", border: "1px solid rgba(220,38,38,0.12)" }}>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <div className="w-6 h-6 rounded-md flex items-center justify-center text-[8px] font-bold" style={{ backgroundColor: issue.bgColor, color: issue.textColor, border: "1px solid rgba(0,0,0,0.15)" }}>
+                      Aa
+                    </div>
+                    <span className="text-[10px]" style={{ color: "#dc2626" }}>→</span>
+                    <div className="w-6 h-6 rounded-md flex items-center justify-center text-[8px] font-bold" style={{ backgroundColor: issue.bgColor, color: issue.fixedColor, border: "1px solid rgba(0,0,0,0.15)" }}>
+                      Aa
+                    </div>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[11px] font-semibold" style={{ color: "#0d0446" }}>{issue.label}</p>
+                    <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.5)" }}>
+                      Contraste: {issue.ratio.toFixed(1)}:1 (mínimo: 4.5:1)
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => { updateColor(issue.textKey as keyof LayoutColors, issue.fixedColor); }}
+                    className="px-3 py-1 text-[10px] font-bold rounded-lg transition-all shrink-0"
+                    style={{ backgroundColor: "#dc2626", color: "#ffffff" }}
+                  >
+                    Corrigir
+                  </button>
+                </div>
+              ))}
+              <button
+                onClick={() => {
+                  let updated = { ...colors };
+                  for (const issue of issues) {
+                    (updated as any)[issue.textKey] = issue.fixedColor;
+                  }
+                  setColors(updated);
+                  setHasChanges(true);
+                  toast.success("Todas as cores foram ajustadas para garantir legibilidade!");
+                }}
+                className="w-full px-4 py-2.5 text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition-all"
+                style={{ background: "linear-gradient(135deg, #dc2626, #ef4444)", color: "#ffffff", boxShadow: "0 4px 12px rgba(220,38,38,0.25)" }}
+              >
+                <Sparkles size={14} /> Corrigir Todos Automaticamente
+              </button>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Action buttons */}
       <div className="flex items-center justify-between pt-2">
         <button
