@@ -28,7 +28,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const prevUserIdRef = useRef<string | null>(null);
 
   useEffect(() => {
-    const updateAuth = (newSession: Session | null) => {
+    let mounted = true;
+
+    const updateAuth = async (newSession: Session | null) => {
+      if (!mounted) return;
+
       const newUser = newSession?.user ?? null;
       const newId = newUser?.id ?? null;
 
@@ -40,42 +44,53 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       setSession(newSession);
 
-      if (newUser) {
-        supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", newUser.id)
-          .then(({ data, error }) => {
-            if (!error && data && data.length > 0) {
-              const isAdmin = data.some((r: any) => r.role === "admin");
-              setRole(isAdmin ? "admin" : "user");
-            } else {
-              setRole("user");
-            }
-            setLoading(false);
-          });
-      } else {
+      if (!newUser) {
         setRole(null);
         setLoading(false);
+        return;
       }
+
+      const { data, error } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", newUser.id);
+
+      if (!mounted) return;
+
+      if (!error && data && data.length > 0) {
+        const isAdmin = data.some((r: any) => r.role === "admin");
+        setRole(isAdmin ? "admin" : "user");
+      } else {
+        setRole("user");
+      }
+      setLoading(false);
     };
 
-    // Set up auth state listener FIRST (non-async to avoid deadlocks)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      updateAuth(session);
+    // Set up auth state listener FIRST (non-async callback to avoid deadlocks)
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      void updateAuth(session);
     });
 
-    // Then get initial session
+    // Then restore initial session from storage (deterministic bootstrap)
     supabase.auth.getSession().then(({ data: { session }, error }) => {
-      if (!session) {
-        if (error) {
-          supabase.auth.signOut();
-        }
+      if (error && !session) {
+        prevUserIdRef.current = null;
+        setUser(null);
+        setSession(null);
+        setRole(null);
         setLoading(false);
+        return;
       }
+
+      void updateAuth(session);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signOut = async () => {
