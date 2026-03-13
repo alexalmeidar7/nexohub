@@ -75,19 +75,19 @@ function HeroBanner({
   }
 
   return (
-    <div className="relative w-full" style={{ height: "clamp(340px, 56vh, 560px)" }}>
+    <div className="relative w-full overflow-hidden" style={{ height: "clamp(340px, 56vh, 560px)" }}>
       {/* Background image */}
       <img
         src={heroImage}
         alt="Hero"
-        className="absolute inset-0 w-full h-full object-cover object-top"
+        className="absolute inset-0 w-full h-full object-cover object-top player-hero-reveal"
       />
       {/* Gradient overlays */}
       <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.5) 40%, rgba(0,0,0,0.1) 70%, transparent 100%)" }} />
       <div className="absolute inset-0" style={{ background: "linear-gradient(to top, hsl(var(--player-bg)) 0%, rgba(0,0,0,0.3) 30%, transparent 60%)" }} />
 
       {/* Content */}
-      <div className="absolute bottom-0 left-0 right-0 px-8 sm:px-12 pb-10 z-10" style={{ maxWidth: "680px" }}>
+      <div className="absolute bottom-0 left-0 right-0 px-8 sm:px-12 pb-10 z-10 player-hero-content" style={{ maxWidth: "680px" }}>
         {/* Live badge */}
         {channel && (
           <div className="flex items-center gap-2 mb-3">
@@ -249,7 +249,7 @@ function StreamingCard({ channel, currentProgram, nowPlaying, onClick }: {
       onClick={onClick}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      className="flex-shrink-0 rounded-xl overflow-hidden relative transition-all duration-300 group border-2 border-transparent hover:border-player-accent/60 hover:shadow-[0_0_30px_-5px_hsla(var(--player-accent)/0.3)]"
+      className="flex-shrink-0 rounded-xl overflow-hidden relative transition-all duration-300 group border-2 border-transparent hover:border-player-accent/60 hover:shadow-[0_0_30px_-5px_hsla(var(--player-accent)/0.3)] hover:-translate-y-1 player-card-pop"
       style={{ width: "320px", aspectRatio: "16/9" }}
     >
       {channel.cover_url ? (
@@ -324,8 +324,8 @@ function ContentRow({ title, children }: { title: string; children: React.ReactN
   };
 
   return (
-    <section className="mb-8 relative group/row">
-      <h2 className="text-base sm:text-lg font-bold mb-3 tracking-wide text-white/90 px-1">{title}</h2>
+    <section className="mb-8 relative group/row player-row-slide">
+      <h2 className="text-base sm:text-lg font-bold mb-3 tracking-wide text-white/90 px-1 player-hero-content">{title}</h2>
       <div className="relative">
         {canScrollLeft && (
           <button
@@ -358,7 +358,7 @@ function CatalogCard({ image, title, subtitle, onClick }: { image?: string | nul
   return (
     <button
       onClick={onClick}
-      className="flex-shrink-0 rounded-xl overflow-hidden relative transition-all duration-300 group border-2 border-transparent hover:border-white/30 hover:shadow-[0_8px_30px_-8px_rgba(0,0,0,0.6)]"
+      className="flex-shrink-0 rounded-xl overflow-hidden relative transition-all duration-300 group border-2 border-transparent hover:border-white/30 hover:shadow-[0_8px_30px_-8px_rgba(0,0,0,0.6)] hover:-translate-y-1 player-card-pop"
       style={{ width: "220px", aspectRatio: "16/9" }}
     >
       {image ? (
@@ -387,7 +387,7 @@ function HistoryCard({ item, onClick }: { item: { channel_name: string; channel_
   return (
     <button
       onClick={onClick}
-      className="flex-shrink-0 rounded-xl overflow-hidden relative transition-all duration-300 group border-2 border-transparent hover:border-white/30"
+      className="flex-shrink-0 rounded-xl overflow-hidden relative transition-all duration-300 group border-2 border-transparent hover:border-white/30 hover:-translate-y-1 player-card-pop"
       style={{ width: "200px", aspectRatio: "16/9" }}
     >
       {item.channel_cover_url ? (
@@ -659,7 +659,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
 
       {/* Main content */}
       <div className="flex-1 ml-[72px] overflow-y-auto h-full">
-        <div className="transition-opacity duration-200 ease-in-out" style={{ opacity: sectionFading ? 0 : 1 }}>
+        <div className="transition-all duration-500 ease-in-out" style={{ opacity: sectionFading ? 0 : 1, transform: sectionFading ? "translateY(12px)" : "translateY(0)" }}>
 
           {visibleSection === "home" && (
             <>
