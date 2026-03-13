@@ -706,10 +706,10 @@ function TrendingCard({ item, idx, channels, onClick }: {
       )}
 
       {/* Gradient + title */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent z-[3] pointer-events-none" />
-      <div className="absolute bottom-0 left-0 right-0 p-3 z-[4] text-left pointer-events-none">
-        <p className="text-[11px] font-bold text-white leading-tight line-clamp-2 drop-shadow">{item.title}</p>
-        {item.subtitle && <p className="text-[9px] text-white/60 mt-0.5">{item.subtitle}</p>}
+      <div className="absolute inset-0 z-[3] pointer-events-none" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 40%, transparent 70%)" }} />
+      <div className="absolute bottom-0 left-0 right-0 p-3.5 z-[4] text-left pointer-events-none">
+        <p className="text-xs font-bold text-white leading-tight line-clamp-2 drop-shadow-lg">{item.title}</p>
+        {item.subtitle && <p className="text-[10px] text-white/50 mt-1 font-medium">{item.subtitle}</p>}
       </div>
 
       {/* Play overlay */}
