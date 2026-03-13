@@ -549,7 +549,7 @@ function CatalogCard({ image, title, subtitle, onClick }: { image?: string | nul
       </div>
       <div className="absolute bottom-0 left-0 right-0 z-10 px-3 pb-2.5 pt-10" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.85) 10%, transparent)" }}>
         <p className="text-xs font-bold text-white line-clamp-2 text-left mb-0.5">{title}</p>
-        {subtitle && <p className="text-[10px] text-white/40">{subtitle}</p>}
+        {subtitle && <p className="text-[10px] text-white/40 text-left">{subtitle}</p>}
       </div>
     </button>
   );
