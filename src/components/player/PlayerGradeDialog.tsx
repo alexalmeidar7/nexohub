@@ -15,6 +15,7 @@ interface Programa {
   variavel: boolean;
   data_variavel: string | null;
   capa: string | null;
+  thumb?: string | null;
   descricao: string | null;
   apresentador_id: string | null;
 }
@@ -418,9 +419,9 @@ function PlayerGradeDialog({ programas, onClose }: Props) {
             >
               {/* Cover image / gradient header */}
               <div className="relative h-44 overflow-hidden">
-                {detailProg.capa ? (
+                {(detailProg.thumb || detailProg.capa) ? (
                   <img
-                    src={detailProg.capa}
+                    src={detailProg.thumb || detailProg.capa!}
                     alt={detailProg.nome}
                     className="w-full h-full object-cover"
                   />
