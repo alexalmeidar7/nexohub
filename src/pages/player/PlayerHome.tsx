@@ -453,7 +453,7 @@ function StreamingCard({ channel, currentProgram, nowPlaying, onClick }: {
       </div>
 
       {/* Info overlay - bottom */}
-      <div className="absolute bottom-0 left-0 right-0 z-10 px-4 pb-3 pt-14" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.9) 20%, transparent)" }}>
+      <div className="absolute bottom-0 left-0 right-0 z-10 px-4 pb-3 pt-14 text-left" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.9) 20%, transparent)" }}>
         <p className="text-sm font-bold text-white truncate mb-0.5">{channel.name}</p>
         {currentProgram && (
           <p className="text-[11px] text-white/60 truncate">{currentProgram.nome} • {currentProgram.horario_inicio} – {currentProgram.horario_fim}</p>
