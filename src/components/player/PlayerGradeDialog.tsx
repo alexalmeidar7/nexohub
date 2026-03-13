@@ -61,6 +61,7 @@ function PlayerGradeDialog({ programas, onClose }: Props) {
   const [detailProg, setDetailProg] = useState<Programa | null>(null);
   const [aiAnalysis, setAiAnalysis] = useState<AIAnalysis | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
+  const [cellAiData, setCellAiData] = useState<Record<string, AIAnalysis>>({});
   const gradeScrollRef = useRef<HTMLDivElement>(null);
   const analysisCache = useRef<Record<string, AIAnalysis>>({});
   const hasScrolledToNow = useRef(false);
@@ -141,6 +142,46 @@ function PlayerGradeDialog({ programas, onClose }: Props) {
     for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
     return colors[Math.abs(hash) % colors.length];
   };
+
+  // Batch fetch AI analysis for all unique programs with descriptions
+  useEffect(() => {
+    const uniqueProgs = programas.filter(p => p.ativo && p.descricao && p.descricao.trim().length > 0);
+    const seen = new Set<string>();
+    const toFetch: Programa[] = [];
+    for (const p of uniqueProgs) {
+      if (seen.has(p.id) || analysisCache.current[p.id]) {
+        if (analysisCache.current[p.id]) setCellAiData(prev => ({ ...prev, [p.id]: analysisCache.current[p.id] }));
+        continue;
+      }
+      seen.add(p.id);
+      toFetch.push(p);
+    }
+    // Fetch in parallel (max 6 at a time)
+    let cancelled = false;
+    const fetchBatch = async () => {
+      for (let i = 0; i < toFetch.length; i += 6) {
+        if (cancelled) return;
+        const batch = toFetch.slice(i, i + 6);
+        const results = await Promise.allSettled(
+          batch.map(p => supabase.functions.invoke("analyze-program", { body: { nome: p.nome, descricao: p.descricao } }).then(({ data, error }) => {
+            if (error || data?.error) return { id: p.id, result: { keywords: [], classificacao: "Livre", justificativa: "" } as AIAnalysis };
+            return { id: p.id, result: data as AIAnalysis };
+          }))
+        );
+        if (cancelled) return;
+        const updates: Record<string, AIAnalysis> = {};
+        for (const r of results) {
+          if (r.status === "fulfilled") {
+            analysisCache.current[r.value.id] = r.value.result;
+            updates[r.value.id] = r.value.result;
+          }
+        }
+        setCellAiData(prev => ({ ...prev, ...updates }));
+      }
+    };
+    fetchBatch();
+    return () => { cancelled = true; };
+  }, [programas]);
 
   // Fetch AI analysis when detail popup opens
   useEffect(() => {
@@ -323,9 +364,28 @@ function PlayerGradeDialog({ programas, onClose }: Props) {
                           onClick={() => setDetailProg(prog)}
                         >
                           <span className="text-[10px] font-semibold leading-tight line-clamp-2 block">{prog.nome}</span>
-                          <div className="text-[8px] opacity-50 mt-0.5 font-medium">
+                          <div className="text-[8px] mt-0.5 font-medium" style={{ color: isOnAir ? "rgba(255,255,255,0.7)" : "inherit", opacity: isOnAir ? 1 : 0.6 }}>
                             {prog.horario_inicio.slice(0, 5)}–{prog.horario_fim.slice(0, 5)}
                           </div>
+                          {/* AI keywords + rating in cell */}
+                          {cellAiData[prog.id] && (
+                            <div className="flex flex-wrap items-center gap-0.5 mt-1">
+                              {cellAiData[prog.id].keywords.slice(0, 3).map((kw, ki) => (
+                                <span key={ki} className="text-[7px] px-1 py-0 rounded" style={{ backgroundColor: isOnAir ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.06)", color: isOnAir ? "rgba(255,255,255,0.8)" : "inherit", opacity: isOnAir ? 1 : 0.7 }}>
+                                  {kw}
+                                </span>
+                              ))}
+                              {(() => {
+                                const cls = cellAiData[prog.id].classificacao;
+                                const r = RATING_COLORS[cls] || RATING_COLORS["Livre"];
+                                return (
+                                  <span className="text-[7px] px-1 py-0 rounded font-bold" style={{ backgroundColor: r.bg, color: r.text, border: `1px solid ${r.text}` }}>
+                                    {r.label}
+                                  </span>
+                                );
+                              })()}
+                            </div>
+                          )}
                           {isOnAir && (
                             <div className="mt-1.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5" style={{ backgroundColor: "rgba(255,255,255,0.2)" }}>
                               <div className="w-1.5 h-1.5 rounded-full bg-white" style={{ animation: "pulseOnAir 1.5s ease-in-out infinite" }} />
