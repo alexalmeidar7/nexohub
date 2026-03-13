@@ -521,7 +521,11 @@ export default function PrevisaoTempo() {
             const iconUrl = (code: number) => `https://www.weatherbit.io/static/img/icons/${weatherCodeToWbIcon(code)}.png`;
             const dayToXml = (d: DayWeather, tag: string) =>
               `  <${tag} date="${d.date}">\n    <cidade>${weather.city}</cidade>\n    <temperatura>${d.temp}Cº</temperatura>\n    <descricao>${getWeatherLabel(d.weatherCode)}</descricao>\n    <icone_url>${iconUrl(d.weatherCode)}</icone_url>\n    <minima>${d.tempMin}Cº</minima>\n    <maxima>${d.tempMax}Cº</maxima>\n    <humidade>${d.humidity}%</humidade>\n    <precipitacao>${d.rainChance}%</precipitacao>\n  </${tag}>`;
-            return `<?xml version="1.0" encoding="UTF-8"?>\n<previsao>\n  <cidade>${weather.city}</cidade>\n${dayToXml(weather.current, "atual")}\n${weather.forecast.map((d) => dayToXml(d, "dia")).join("\n")}\n</previsao>`;
+            const tomorrow = weather.forecast[0];
+            const amanhaXml = tomorrow
+              ? `  <amanha date="${tomorrow.date}">\n    <temperatura_minima>${tomorrow.tempMin}Cº</temperatura_minima>\n    <temperatura_maxima>${tomorrow.tempMax}Cº</temperatura_maxima>\n    <url_imagem_icone>${iconUrl(tomorrow.weatherCode)}</url_imagem_icone>\n    <descricao_tempo>${getWeatherLabel(tomorrow.weatherCode)}</descricao_tempo>\n  </amanha>`
+              : "";
+            return `<?xml version="1.0" encoding="UTF-8"?>\n<previsao>\n  <cidade>${weather.city}</cidade>\n${dayToXml(weather.current, "atual")}\n${amanhaXml}\n${weather.forecast.map((d) => dayToXml(d, "dia")).join("\n")}\n</previsao>`;
           })()} />
         </>
       )}
