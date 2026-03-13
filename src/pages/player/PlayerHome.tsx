@@ -944,7 +944,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                       {trendingItems.slice(0, 5).map((item, idx) => (
                         <button
                           key={item.id}
-                          onClick={() => goToPlayer(item.channelId)}
+                          onClick={() => goToPlayer(item.channelId, item.type === "catalog" ? item.id : undefined)}
                           className="flex-shrink-0 rounded-xl overflow-hidden relative transition-all duration-300 group border-2 border-transparent hover:border-player-accent/50 hover:shadow-[0_0_30px_-5px_rgba(200,0,0,0.3)] hover:-translate-y-1 player-card-pop"
                           style={{ width: "200px", aspectRatio: "2/3", animationDelay: `${idx * 60}ms`, background: "hsl(var(--player-bg))" }}
                         >
