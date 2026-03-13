@@ -414,8 +414,126 @@ export default function RoteiroPrograma() {
     const perguntaActions = `<td style="${tdStyle};white-space:nowrap;text-align:center;width:90px" contenteditable="false"><span data-action="move-up" style="${actionBtnStyle};color:#268ffa" title="Mover para cima">▲</span> <span data-action="move-down" style="${actionBtnStyle};color:#268ffa" title="Mover para baixo">▼</span> <span data-action="delete-pergunta" style="${actionBtnStyle};color:#dc2626" title="Remover pergunta">🗑</span></td>`;
     const elStyle = `${tdStyle};font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.3px;color:#0d0446`;
     const timeStyle = `${tdStyle};font-family:monospace;font-size:12px;color:rgba(13,4,70,0.5);text-align:center`;
+    const blocoStyle = `${tdStyle};font-weight:700;color:#ffffff;background:#0d0446;font-size:12px;text-transform:uppercase;letter-spacing:1px`;
+    const intervaloStyle = `${tdStyle};font-weight:700;color:#dc2626;background:rgba(220,38,38,0.06);font-size:11px;text-transform:uppercase;letter-spacing:0.5px`;
 
-    const defaultContent = `<table style="width:100%;border-collapse:collapse;font-size:13px;color:#0d0446;table-layout:fixed">
+    const isPrimeiraHora = programaNome === "Primeira Hora Positiva";
+
+    let defaultContent: string;
+
+    if (isPrimeiraHora) {
+      // Jornal: 3 blocos com 2 intervalos de 5 minutos
+      defaultContent = `<table style="width:100%;border-collapse:collapse;font-size:13px;color:#0d0446;table-layout:fixed">
+<colgroup><col style="width:70px"><col style="width:130px"><col><col style="width:90px"></colgroup>
+<thead>
+<tr>
+<th style="${thStyle}">Tempo</th>
+<th style="${thStyle}">Elemento</th>
+<th style="${thStyle}">Descrição / Texto</th>
+<th style="${thStyle};text-align:center">Ações</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="${blocoStyle}" colspan="4">📺 BLOCO 1</td>
+</tr>
+<tr>
+<td style="${timeStyle}">--:--</td>
+<td style="${elStyle}">Vinheta</td>
+<td style="${tdStyle}">Abertura do jornal — vinheta padrão.</td>
+<td style="${tdStyle}"></td>
+</tr>
+<tr>
+<td style="${timeStyle}">--:--</td>
+<td style="${elStyle}">Escalada</td>
+<td style="${tdStyle}">Manchetes principais do dia — chamadas rápidas.</td>
+<td style="${tdStyle}"></td>
+</tr>
+<tr>
+<td style="${timeStyle}">--:--</td>
+<td style="${elStyle}">Notícia 1</td>
+<td style="${tdStyle}">[Inserir manchete e texto da matéria]</td>
+<td style="${tdStyle}"></td>
+</tr>
+<tr>
+<td style="${timeStyle}">--:--</td>
+<td style="${elStyle}">Notícia 2</td>
+<td style="${tdStyle}">[Inserir manchete e texto da matéria]</td>
+<td style="${tdStyle}"></td>
+</tr>
+<tr>
+<td style="${timeStyle}">--:--</td>
+<td style="${elStyle}">Notícia 3</td>
+<td style="${tdStyle}">[Inserir manchete e texto da matéria]</td>
+<td style="${tdStyle}"></td>
+</tr>
+<tr>
+<td style="${intervaloStyle}" colspan="4">⏸ INTERVALO — 5 minutos</td>
+</tr>
+<tr>
+<td style="${blocoStyle}" colspan="4">📺 BLOCO 2</td>
+</tr>
+<tr>
+<td style="${timeStyle}">--:--</td>
+<td style="${elStyle}">Notícia 4</td>
+<td style="${tdStyle}">[Inserir manchete e texto da matéria]</td>
+<td style="${tdStyle}"></td>
+</tr>
+<tr>
+<td style="${timeStyle}">--:--</td>
+<td style="${elStyle}">Notícia 5</td>
+<td style="${tdStyle}">[Inserir manchete e texto da matéria]</td>
+<td style="${tdStyle}"></td>
+</tr>
+<tr>
+<td style="${timeStyle}">--:--</td>
+<td style="${elStyle}">Entrevista</td>
+<td style="${tdStyle}">[Inserir entrevista ou participação especial]</td>
+<td style="${tdStyle}"></td>
+</tr>
+<tr>
+<td style="${timeStyle}">--:--</td>
+<td style="${elStyle}">Previsão do Tempo</td>
+<td style="${tdStyle}">[Inserir previsão do tempo]</td>
+<td style="${tdStyle}"></td>
+</tr>
+<tr>
+<td style="${intervaloStyle}" colspan="4">⏸ INTERVALO — 5 minutos</td>
+</tr>
+<tr>
+<td style="${blocoStyle}" colspan="4">📺 BLOCO 3</td>
+</tr>
+<tr>
+<td style="${timeStyle}">--:--</td>
+<td style="${elStyle}">Notícia 6</td>
+<td style="${tdStyle}">[Inserir manchete e texto da matéria]</td>
+<td style="${tdStyle}"></td>
+</tr>
+<tr>
+<td style="${timeStyle}">--:--</td>
+<td style="${elStyle}">Notícia 7</td>
+<td style="${tdStyle}">[Inserir manchete e texto da matéria]</td>
+<td style="${tdStyle}"></td>
+</tr>
+<tr>
+<td style="${timeStyle}">--:--</td>
+<td style="${elStyle}">Quadro Especial</td>
+<td style="${tdStyle}">[Inserir quadro fixo ou especial do dia]</td>
+<td style="${tdStyle}"></td>
+</tr>
+<tr>
+<td style="${timeStyle}">--:--</td>
+<td style="${elStyle}">Encerramento</td>
+<td style="${tdStyle}"><strong>APRESENTADOR:</strong> "Encerramos por aqui a edição de hoje. Amanhã tem mais. Até lá!"</td>
+<td style="${tdStyle};font-size:11px;color:rgba(13,4,70,0.5)">Encerrar jornal</td>
+</tr>
+</tbody>
+</table>`;
+
+      setPerguntaCount(0);
+    } else {
+      // Template padrão de entrevista
+      defaultContent = `<table style="width:100%;border-collapse:collapse;font-size:13px;color:#0d0446;table-layout:fixed">
 <colgroup><col style="width:70px"><col style="width:130px"><col><col style="width:90px"></colgroup>
 <thead>
 <tr>
@@ -468,7 +586,8 @@ ${perguntaActions}
 </tbody>
 </table>`;
 
-    setPerguntaCount(1);
+      setPerguntaCount(1);
+    }
 
     // Preenche o editor com a estrutura padrão após render
     setTimeout(() => {
