@@ -250,6 +250,7 @@ export default function PlayerPage() {
   const { userSlug } = useParams<{ userSlug?: string }>();
   const [searchParams] = useSearchParams();
   const requestedChannelId = searchParams.get("ch");
+  const requestedVideoId = searchParams.get("vid");
   const navigate = useNavigate();
   const isPublicMode = !!userSlug;
   const playerHomePath = useMemo(() => userSlug ? `/user/${userSlug}/nexohub/player?step=home` : "/user/nexohub/player?step=home", [userSlug]);
@@ -341,12 +342,13 @@ export default function PlayerPage() {
     [canais]
   );
   const isAudio = canal?.type === "audio_live" || canal?.type === "audio";
-  const isYoutube = canal?.type === "youtube";
+  const isYoutube = canal?.type === "youtube" || canal?.type === "catalog";
+  const isCatalog = canal?.type === "catalog";
   const isVideo = canal?.type === "video" || canal?.type === "video_live";
   const isAutoplayChannel = useCallback((c?: Canal | null) => normalizeChannelNumber(c?.numero_canal) === "991-1", []);
   const autoPlayedRef = useRef(false);
   const [showHomeConfirm, setShowHomeConfirm] = useState(false);
-  const is991Channel = normalizeChannelNumber(canal?.numero_canal) === "991-1" || normalizeChannelNumber(canal?.numero_canal) === "991-2";
+  const is991Channel = normalizeChannelNumber(canal?.numero_canal) === "991-1" || normalizeChannelNumber(canal?.numero_canal) === "991-2" || isCatalog;
 
   const handleHomeClick = useCallback(() => {
     if (is991Channel && playing) {
@@ -590,7 +592,7 @@ export default function PlayerPage() {
           }
 
           setPublicUserId(data.userId);
-          setCanais(((data.channels || []) as Canal[]).filter(c => c.type !== "catalog"));
+          setCanais(((data.channels || []) as Canal[]).filter(c => c.type !== "catalog" || c.id === requestedChannelId));
           setProgramas((data.programas || []) as Programa[]);
           setApresentadores((data.apresentadores || []) as Apresentador[]);
           setShopProducts(data.shopProducts || []);
@@ -674,7 +676,7 @@ export default function PlayerPage() {
         }
 
         if (!channelsError && canaisData) {
-          setCanais(canaisData.filter(c => c.type !== "catalog"));
+          setCanais(canaisData.filter(c => c.type !== "catalog" || c.id === requestedChannelId));
         } else {
           setCanais([]);
         }
@@ -798,7 +800,16 @@ export default function PlayerPage() {
     const match = canal.url.match(/[?&]list=([a-zA-Z0-9_-]+)/);
     if (!match) return;
     supabase.functions.invoke("youtube-playlist", { body: { playlistId: match[1] } }).then(({ data }) => {
-      if (data?.videos) setYoutubeVideos(data.videos);
+      if (data?.videos) {
+        setYoutubeVideos(data.videos);
+        // Auto-select video from ?vid= param (catalog deep link)
+        if (requestedVideoId && data.videos.some((v: any) => v.videoId === requestedVideoId)) {
+          setSelectedVideoId(requestedVideoId);
+          setPlaying(true);
+          setBuffering(false);
+          setYtPlaying(true);
+        }
+      }
     });
   }, [canal?.url, isYoutube]);
 
