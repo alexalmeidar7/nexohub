@@ -752,12 +752,11 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                 </div>
               ) : (
                 <HeroBanner
-                  channel={heroChannel}
+                  channels={streamingChannels}
                   currentProgram={currentProgram || undefined}
                   nowPlaying={nowPlaying}
-                  logoUrl={logoUrl}
                   channelName={channelName}
-                  onPlay={() => goToPlayer(heroChannel?.id)}
+                  onPlay={(chId) => goToPlayer(chId)}
                   onGrade={() => setShowGrade(true)}
                 />
               )}
