@@ -124,11 +124,10 @@ function HeroBanner({
   return (
     <div className="relative w-full overflow-hidden" style={{ height: "clamp(340px, 56vh, 560px)", backgroundColor: "black" }}>
       {/* Crossfade images */}
-      {items.map((ch, idx) => {
-        const imgSrc = getSlideImage(ch);
-        if (!imgSrc) return (
+      {slides.map((slide, idx) => {
+        if (!slide.thumb) return (
           <div
-            key={ch?.id || "fallback"}
+            key={`slide-${idx}`}
             className="absolute inset-0 w-full h-full bg-black"
             style={{
               opacity: idx === activeIdx ? 1 : 0,
@@ -139,9 +138,9 @@ function HeroBanner({
         );
         return (
           <img
-            key={ch?.id || "fallback"}
-            src={imgSrc}
-            alt={ch?.name || "Banner"}
+            key={`slide-${idx}`}
+            src={slide.thumb}
+            alt={slide.program?.nome || "Banner"}
             className="absolute inset-0 w-full h-full object-cover object-top"
             style={{
               opacity: idx === activeIdx ? 1 : idx === prevIdx ? 0 : 0,
@@ -158,31 +157,31 @@ function HeroBanner({
 
       {/* Content */}
       <div className="absolute bottom-0 left-0 right-0 px-8 sm:px-12 pb-10 z-10 player-hero-content" style={{ maxWidth: "680px" }}>
-        {/* Live badge */}
-        {activeChannel && (
-          <div className="flex items-center gap-2 mb-3" key={activeChannel.id} style={{ animation: "player-hero-content 0.6s ease-out both" }}>
-            <span className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-wider font-semibold bg-player-accent/90 px-2.5 py-1 rounded-md text-white">
-              <span className="inline-block w-2 h-2 rounded-full bg-white animate-pulse" />
-              ao vivo
-            </span>
-            <span className="text-white/60 text-xs">{activeChannel.name}</span>
-          </div>
-        )}
+        {/* Slide label badge */}
+        <div className="flex items-center gap-2 mb-3" style={{ animation: "player-hero-content 0.6s ease-out both" }}>
+          <span className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-wider font-semibold bg-player-accent/90 px-2.5 py-1 rounded-md text-white">
+            <span className="inline-block w-2 h-2 rounded-full bg-white animate-pulse" />
+            {activeSlide?.label || "ao vivo"}
+          </span>
+          {channelName && <span className="text-white/60 text-xs">{channelName}</span>}
+        </div>
 
         {/* Program name */}
-        {currentProgram ? (
+        {displayProgram ? (
           <>
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white leading-tight tracking-tight mb-2 drop-shadow-lg" style={{ textShadow: "0 2px 20px rgba(0,0,0,0.5)" }}>
-              {currentProgram.nome}
+              {displayProgram.nome}
             </h1>
             <div className="flex items-center gap-3 mb-2">
-              <span className="text-sm text-white/70">{currentProgram.horario_inicio} – {currentProgram.horario_fim}</span>
-              <div className="w-32 h-1 rounded-full bg-white/20 overflow-hidden">
-                <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: "hsl(var(--player-accent))" }} />
-              </div>
+              <span className="text-sm text-white/70">{displayProgram.horario_inicio} – {displayProgram.horario_fim}</span>
+              {activeIdx === 0 && (
+                <div className="w-32 h-1 rounded-full bg-white/20 overflow-hidden">
+                  <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: "hsl(var(--player-accent))" }} />
+                </div>
+              )}
             </div>
-            {currentProgram.descricao && (
-              <p className="text-sm text-white/60 line-clamp-2 mb-4 max-w-lg">{currentProgram.descricao}</p>
+            {displayProgram.descricao && (
+              <p className="text-sm text-white/60 line-clamp-2 mb-4 max-w-lg">{displayProgram.descricao}</p>
             )}
           </>
         ) : channelName ? (
@@ -202,7 +201,7 @@ function HeroBanner({
         {/* Action buttons */}
         <div className="flex items-center gap-3">
           <button
-            onClick={() => onPlay(activeChannel?.id)}
+            onClick={onPlay}
             className="flex items-center gap-2 px-6 py-3 rounded-lg text-sm font-bold text-white transition-all duration-300 hover:scale-105"
             style={{
               background: "linear-gradient(135deg, hsl(var(--player-accent)), hsl(var(--player-accent-hover)))",
@@ -227,9 +226,9 @@ function HeroBanner({
         </div>
 
         {/* Carousel indicators */}
-        {items.length > 1 && (
+        {slides.length > 1 && (
           <div className="flex items-center gap-2 mt-5">
-            {items.map((_, idx) => (
+            {slides.map((slide, idx) => (
               <button
                 key={idx}
                 onClick={() => goTo(idx)}
