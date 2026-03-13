@@ -364,9 +364,28 @@ function PlayerGradeDialog({ programas, onClose }: Props) {
                           onClick={() => setDetailProg(prog)}
                         >
                           <span className="text-[10px] font-semibold leading-tight line-clamp-2 block">{prog.nome}</span>
-                          <div className="text-[8px] opacity-50 mt-0.5 font-medium">
+                          <div className="text-[8px] mt-0.5 font-medium" style={{ color: isOnAir ? "rgba(255,255,255,0.7)" : "inherit", opacity: isOnAir ? 1 : 0.6 }}>
                             {prog.horario_inicio.slice(0, 5)}–{prog.horario_fim.slice(0, 5)}
                           </div>
+                          {/* AI keywords + rating in cell */}
+                          {cellAiData[prog.id] && (
+                            <div className="flex flex-wrap items-center gap-0.5 mt-1">
+                              {cellAiData[prog.id].keywords.slice(0, 3).map((kw, ki) => (
+                                <span key={ki} className="text-[7px] px-1 py-0 rounded" style={{ backgroundColor: isOnAir ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.06)", color: isOnAir ? "rgba(255,255,255,0.8)" : "inherit", opacity: isOnAir ? 1 : 0.7 }}>
+                                  {kw}
+                                </span>
+                              ))}
+                              {(() => {
+                                const cls = cellAiData[prog.id].classificacao;
+                                const r = RATING_COLORS[cls] || RATING_COLORS["Livre"];
+                                return (
+                                  <span className="text-[7px] px-1 py-0 rounded font-bold" style={{ backgroundColor: r.bg, color: r.text, border: `1px solid ${r.text}` }}>
+                                    {r.label}
+                                  </span>
+                                );
+                              })()}
+                            </div>
+                          )}
                           {isOnAir && (
                             <div className="mt-1.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5" style={{ backgroundColor: "rgba(255,255,255,0.2)" }}>
                               <div className="w-1.5 h-1.5 rounded-full bg-white" style={{ animation: "pulseOnAir 1.5s ease-in-out infinite" }} />
