@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { loadMiniPlayerData, clearMiniPlayerData, type MiniPlayerData } from "@/components/player/MiniPlayerWidget";
 import PlayerSidebar from "@/components/player/PlayerSidebar";
 const MiniPlayerWidget = lazy(() => import("@/components/player/MiniPlayerWidget"));
+const PlayerGradeDialog = lazy(() => import("@/components/player/PlayerGradeDialog"));
 
 interface Channel {
   id: string;

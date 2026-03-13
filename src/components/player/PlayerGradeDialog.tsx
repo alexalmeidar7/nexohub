@@ -178,6 +178,17 @@ function PlayerGradeDialog({ programas, onClose }: Props) {
     return () => { cancelled = true; };
   }, [detailProg?.id]);
 
+  useEffect(() => {
+    if (hasScrolledToNow.current) return;
+    const container = gradeScrollRef.current;
+    if (!container) return;
+    const onAirRow = container.querySelector('tr[data-on-air="true"]') as HTMLTableRowElement | null;
+    if (!onAirRow) return;
+
+    hasScrolledToNow.current = true;
+    requestAnimationFrame(() => onAirRow.scrollIntoView({ behavior: "smooth", block: "center" }));
+  }, [spanMap, diaAtual, currentTimeStr]);
+
   return (
     <div
       className="absolute inset-0 z-[100] flex items-center justify-center"
