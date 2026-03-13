@@ -63,6 +63,7 @@ function PlayerGradeDialog({ programas, onClose }: Props) {
   const [aiLoading, setAiLoading] = useState(false);
   const gradeScrollRef = useRef<HTMLDivElement>(null);
   const analysisCache = useRef<Record<string, AIAnalysis>>({});
+  const hasScrolledToNow = useRef(false);
 
   const now = new Date();
   const diaAtual = DIAS_MAP_FULL[now.getDay()];
