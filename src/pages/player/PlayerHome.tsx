@@ -454,14 +454,14 @@ function StreamingCard({ channel, currentProgram, nowPlaying, onClick }: {
 
       {/* Info overlay - bottom */}
       <div className="absolute bottom-0 left-0 right-0 z-10 px-4 pb-3 pt-14 text-left" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.9) 20%, transparent)" }}>
-        <p className="text-sm font-bold text-white truncate mb-0.5">{channel.name}</p>
+        <p className="text-xs font-bold text-white truncate mb-0.5">{channel.name}</p>
         {currentProgram && (
-          <p className="text-[11px] text-white/60 truncate">{currentProgram.nome} • {currentProgram.horario_inicio} – {currentProgram.horario_fim}</p>
+          <p className="text-[10px] text-white/60 truncate">{currentProgram.nome} • {currentProgram.horario_inicio} – {currentProgram.horario_fim}</p>
         )}
         {nowPlaying?.musica && (
           <div className="flex items-center gap-1 mt-1">
             <Music className="h-2.5 w-2.5 text-player-accent flex-shrink-0" />
-            <p className="text-[10px] text-white/50 truncate">{nowPlaying.musica} — {nowPlaying.artista}</p>
+            <p className="text-[9px] text-white/50 truncate">{nowPlaying.musica} — {nowPlaying.artista}</p>
           </div>
         )}
       </div>
