@@ -12,6 +12,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
+import { useLayoutColors } from "@/hooks/useLayoutColors";
 
 // Lazy-load all tab pages for faster initial render
 const ApresentadorForm = lazy(() => import("./ApresentadorForm"));
