@@ -240,25 +240,25 @@ function PlayerGradeDialog({ programas, onClose }: Props) {
             <thead className="sticky top-0 z-10">
               <tr>
                 <th
-                  className="px-2 py-3 text-center rounded-xl text-[10px] uppercase tracking-widest font-medium"
-                  style={{ backgroundColor: "rgba(255,255,255,0.03)", color: "rgba(255,255,255,0.25)", width: "52px" }}
+                  className="px-2 py-4 text-center rounded-xl text-[11px] uppercase tracking-widest font-semibold"
+                  style={{ backgroundColor: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.5)", width: "58px" }}
                 >
-                  <Clock size={10} className="mx-auto mb-0.5 opacity-50" />
+                  <Clock size={12} className="mx-auto mb-0.5 opacity-70" />
                 </th>
                 {DIAS_SEMANA.map(dia => {
                   const isToday = dia === diaAtual;
                   return (
                     <th
                       key={dia}
-                      className="px-2 py-3 text-center rounded-xl transition-colors"
+                      className="px-2 py-4 text-center rounded-xl transition-colors"
                       style={{
-                        backgroundColor: isToday ? "hsla(var(--player-accent) / 0.12)" : "rgba(255,255,255,0.03)",
-                        color: isToday ? "hsl(var(--player-accent))" : "rgba(255,255,255,0.35)",
-                        fontWeight: isToday ? 700 : 500,
+                        backgroundColor: isToday ? "hsla(var(--player-accent) / 0.18)" : "rgba(255,255,255,0.06)",
+                        color: isToday ? "hsl(var(--player-accent))" : "rgba(255,255,255,0.7)",
+                        fontWeight: isToday ? 800 : 600,
                       }}
                     >
-                      <div className="text-[11px] uppercase tracking-wider">{dia.slice(0, 3)}</div>
-                      <div className="text-[9px] font-normal opacity-50 mt-0.5">{weekDates[dia]}</div>
+                      <div className="text-[12px] uppercase tracking-wider font-bold">{dia.slice(0, 3)}</div>
+                      <div className="text-[10px] font-medium mt-0.5" style={{ color: isToday ? "hsl(var(--player-accent))" : "rgba(255,255,255,0.4)" }}>{weekDates[dia]}</div>
                       {isToday && (
                         <div className="w-5 h-[2px] rounded-full mx-auto mt-1.5" style={{ backgroundColor: "hsl(var(--player-accent))" }} />
                       )}
