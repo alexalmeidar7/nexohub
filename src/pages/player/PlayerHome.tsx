@@ -542,26 +542,6 @@ function TrendingCard({ item, idx, channels, onClick }: {
   const playerRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const fadeIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const [aiCover, setAiCover] = useState<string | null>(null);
-  const [aiLoading, setAiLoading] = useState(false);
-
-  // Generate AI cover only if no image AND credits available
-  useEffect(() => {
-    if (item.image || aiCover || aiLoading || aiCoverDisabled) return;
-    setAiLoading(true);
-    supabase.functions.invoke("generate-cover", { body: { title: item.title, type: "trending" } })
-      .then(({ data, error }) => {
-        if (error) {
-          // Stop all future AI calls if credits exhausted
-          const status = (error as any)?.status || (typeof error === 'object' && (error as any)?.context?.status);
-          if (status === 402 || status === 500) aiCoverDisabled = true;
-          return;
-        }
-        if (data?.imageUrl) setAiCover(data.imageUrl);
-      })
-      .catch(() => { aiCoverDisabled = true; })
-      .finally(() => setAiLoading(false));
-  }, [item.image, item.title, aiCover, aiLoading]);
 
   // Load YouTube IFrame API once
   useEffect(() => {
