@@ -1030,10 +1030,248 @@ ${perguntaActions}
             {/* Divider */}
             <div className="h-px" style={{ backgroundColor: "rgba(13,4,70,0.06)" }} />
 
+            {/* Texto Roteiro - hidden for Primeira Hora Positiva */}
+            {programaNome !== "Primeira Hora Positiva" && (
+              <>
+            {/* Divider */}
+            <div className="h-px" style={{ backgroundColor: "rgba(13,4,70,0.06)" }} />
+
             {/* Texto Roteiro */}
-            <div style={{ display: "none" }}>
+            <div>
               <p className="text-[10px] font-bold uppercase tracking-wider mb-3" style={{ color: "rgba(13,4,70,0.4)" }}>Conteúdo do roteiro</p>
               <div className="rounded-xl p-4" style={{ backgroundColor: "rgba(13,4,70,0.02)", border: "1px solid rgba(13,4,70,0.06)" }}>
+
+            {/* Toolbar */}
+            <div className="flex flex-wrap items-center gap-1 mb-3 pb-3" style={{ borderBottom: "1px solid rgba(13,4,70,0.08)" }}>
+              {/* Font size */}
+              <select
+                value={fontSize}
+                onChange={e => {
+                  setFontSize(e.target.value);
+                  document.execCommand("fontSize", false, "7");
+                  const sel = window.getSelection();
+                  if (sel && sel.rangeCount > 0) {
+                    const fonts = editorRef.current?.querySelectorAll('font[size="7"]');
+                    fonts?.forEach(f => {
+                      const span = document.createElement("span");
+                      span.style.fontSize = e.target.value + "px";
+                      span.innerHTML = f.innerHTML;
+                      f.replaceWith(span);
+                    });
+                  }
+                }}
+                className="h-8 px-2 rounded-lg text-xs outline-none cursor-pointer"
+                style={{ backgroundColor: "rgba(13,4,70,0.04)", border: "1px solid rgba(13,4,70,0.08)", color: "#0d0446" }}
+              >
+                <option value="12">12px</option>
+                <option value="14">14px</option>
+                <option value="16">16px</option>
+                <option value="18">18px</option>
+                <option value="20">20px</option>
+                <option value="24">24px</option>
+                <option value="28">28px</option>
+              </select>
+
+              <div className="w-px h-5 mx-1" style={{ backgroundColor: "rgba(13,4,70,0.1)" }} />
+
+              <button type="button" onClick={() => document.execCommand("bold")} className="h-8 w-8 flex items-center justify-center rounded-lg hover:opacity-70 transition" style={{ backgroundColor: "rgba(13,4,70,0.04)" }} title="Negrito">
+                <Bold size={14} style={{ color: "#0d0446" }} />
+              </button>
+              <button type="button" onClick={() => document.execCommand("underline")} className="h-8 w-8 flex items-center justify-center rounded-lg hover:opacity-70 transition" style={{ backgroundColor: "rgba(13,4,70,0.04)" }} title="Sublinhado">
+                <Underline size={14} style={{ color: "#0d0446" }} />
+              </button>
+              <button type="button" onClick={() => {
+                const sel = window.getSelection();
+                if (sel && sel.rangeCount > 0 && !sel.isCollapsed) {
+                  const range = sel.getRangeAt(0);
+                  const parent = range.commonAncestorContainer.parentElement;
+                  if (parent?.tagName === "MARK") {
+                    const text = document.createTextNode(parent.textContent || "");
+                    parent.replaceWith(text);
+                  } else {
+                    const mark = document.createElement("mark");
+                    mark.style.backgroundColor = "#fef08a";
+                    range.surroundContents(mark);
+                  }
+                }
+              }} className="h-8 w-8 flex items-center justify-center rounded-lg hover:opacity-70 transition" style={{ backgroundColor: "rgba(13,4,70,0.04)" }} title="Destaque">
+                <Highlighter size={14} style={{ color: "#0d0446" }} />
+              </button>
+
+              <div className="w-px h-5 mx-1" style={{ backgroundColor: "rgba(13,4,70,0.1)" }} />
+
+              <button type="button" onClick={() => document.execCommand("justifyLeft")} className="h-8 w-8 flex items-center justify-center rounded-lg hover:opacity-70 transition" style={{ backgroundColor: "rgba(13,4,70,0.04)" }} title="Alinhar à esquerda">
+                <AlignLeft size={14} style={{ color: "#0d0446" }} />
+              </button>
+              <button type="button" onClick={() => document.execCommand("justifyCenter")} className="h-8 w-8 flex items-center justify-center rounded-lg hover:opacity-70 transition" style={{ backgroundColor: "rgba(13,4,70,0.04)" }} title="Centralizar">
+                <AlignCenter size={14} style={{ color: "#0d0446" }} />
+              </button>
+              <button type="button" onClick={() => document.execCommand("justifyRight")} className="h-8 w-8 flex items-center justify-center rounded-lg hover:opacity-70 transition" style={{ backgroundColor: "rgba(13,4,70,0.04)" }} title="Alinhar à direita">
+                <AlignRight size={14} style={{ color: "#0d0446" }} />
+              </button>
+
+              <div className="w-px h-5 mx-1" style={{ backgroundColor: "rgba(13,4,70,0.1)" }} />
+
+              <button type="button" onClick={() => document.execCommand("insertUnorderedList")} className="h-8 w-8 flex items-center justify-center rounded-lg hover:opacity-70 transition" style={{ backgroundColor: "rgba(13,4,70,0.04)" }} title="Lista">
+                <List size={14} style={{ color: "#0d0446" }} />
+              </button>
+              <button type="button" onClick={() => document.execCommand("insertOrderedList")} className="h-8 w-8 flex items-center justify-center rounded-lg hover:opacity-70 transition" style={{ backgroundColor: "rgba(13,4,70,0.04)" }} title="Lista numerada">
+                <ListOrdered size={14} style={{ color: "#0d0446" }} />
+              </button>
+
+              <div className="w-px h-5 mx-1" style={{ backgroundColor: "rgba(13,4,70,0.1)" }} />
+
+              {/* Merge cells button */}
+              <button
+                type="button"
+                onClick={() => {
+                  if (mergeCells.length < 2) {
+                    toast.info("Selecione 2 ou mais células da mesma linha para mesclar");
+                    return;
+                  }
+                  const firstRow = mergeCells[0].parentElement;
+                  const allSameRow = mergeCells.every(c => c.parentElement === firstRow);
+                  if (!allSameRow) {
+                    toast.error("Selecione células da mesma linha");
+                    mergeCells.forEach(c => { c.style.outline = ""; c.style.backgroundColor = ""; });
+                    setMergeCells([]);
+                    return;
+                  }
+                  const sorted = [...mergeCells].sort((a, b) => {
+                    const cells = Array.from(firstRow!.children);
+                    return cells.indexOf(a) - cells.indexOf(b);
+                  });
+                  const combinedText = sorted.map(c => c.innerHTML).join(" ");
+                  const totalColspan = sorted.reduce((sum, c) => sum + (parseInt(c.getAttribute("colspan") || "1")), 0);
+                  sorted[0].innerHTML = combinedText;
+                  sorted[0].setAttribute("colspan", String(totalColspan));
+                  sorted[0].style.outline = "";
+                  sorted[0].style.backgroundColor = "";
+                  for (let i = 1; i < sorted.length; i++) {
+                    sorted[i].remove();
+                  }
+                  setMergeCells([]);
+                  setRoteiroTexto(editorRef.current?.innerHTML || "");
+                  toast.success("Células mescladas!");
+                }}
+                className="h-8 px-2 flex items-center justify-center rounded-lg hover:opacity-70 transition gap-1 text-xs font-semibold"
+                style={{ backgroundColor: mergeCells.length >= 2 ? "rgba(38,143,250,0.15)" : "rgba(13,4,70,0.04)", color: mergeCells.length >= 2 ? "#268ffa" : "#0d0446" }}
+                title="Mesclar células selecionadas"
+              >
+                <Columns size={14} />
+                {mergeCells.length >= 2 && `(${mergeCells.length})`}
+              </button>
+
+              {/* Copy button */}
+              <button
+                type="button"
+                onClick={() => {
+                  const text = editorRef.current?.innerText || "";
+                  navigator.clipboard.writeText(text);
+                  toast.success("Texto copiado!");
+                }}
+                className="h-8 w-8 flex items-center justify-center rounded-lg hover:opacity-70 transition"
+                style={{ backgroundColor: "rgba(13,4,70,0.04)" }}
+                title="Copiar texto"
+              >
+                <Copy size={14} style={{ color: "#0d0446" }} />
+              </button>
+            </div>
+
+            {/* Editor contentEditable */}
+            <div
+              ref={editorRef}
+              contentEditable
+              suppressContentEditableWarning
+              dangerouslySetInnerHTML={{ __html: roteiroTexto }}
+              onInput={() => setRoteiroTexto(editorRef.current?.innerHTML || "")}
+              onClick={(e) => {
+                const target = e.target as HTMLElement;
+
+                // Merge cell selection mode
+                if (mergeCells.length > 0 || target.tagName === "TD" || target.tagName === "TH") {
+                  const cell = target.closest("td, th") as HTMLTableCellElement | null;
+                  if (cell && cell.closest("[contenteditable]") === editorRef.current) {
+                    // Check if clicking action buttons
+                    if (target.hasAttribute("data-action") || target.closest("[data-action]")) {
+                      // Don't intercept action clicks
+                    } else {
+                      setMergeCells(prev => {
+                        const already = prev.includes(cell);
+                        if (already) {
+                          cell.style.outline = "";
+                          cell.style.backgroundColor = "";
+                          return prev.filter(c => c !== cell);
+                        } else {
+                          cell.style.outline = "2px solid #268ffa";
+                          cell.style.backgroundColor = mergeHighlightColor;
+                          return [...prev, cell];
+                        }
+                      });
+                      return;
+                    }
+                  }
+                }
+
+                const action = target.getAttribute("data-action");
+                if (!action || !editorRef.current) return;
+                e.preventDefault();
+                const table = editorRef.current.querySelector("table tbody");
+                if (!table) return;
+                const tdS = "border:1px solid rgba(13,4,70,0.12);padding:8px 10px";
+                const actionBtnS = "cursor:pointer;padding:2px 4px;border-radius:4px;display:inline-flex;align-items:center;justify-content:center";
+                const actionRow = table.querySelector("tr[data-action-row]");
+
+                const renumberPerguntas = () => {
+                  const all = Array.from(table.querySelectorAll("tr[data-pergunta]"));
+                  all.forEach((row, i) => {
+                    row.setAttribute("data-pergunta", String(i + 1));
+                    const elCell = row.querySelectorAll("td")[1];
+                    if (elCell) elCell.innerHTML = `PERGUNTA ${i + 1}`;
+                  });
+                  setPerguntaCount(all.length);
+                  setRoteiroTexto(editorRef.current!.innerHTML);
+                };
+
+                if (action === "add-pergunta") {
+                  const allPerguntas = Array.from(table.querySelectorAll("tr[data-pergunta]"));
+                  const newNum = allPerguntas.length + 1;
+                  const insertAfter = allPerguntas.length > 0
+                    ? allPerguntas[allPerguntas.length - 1]
+                    : Array.from(table.querySelectorAll("tr")).find(r => r.innerHTML.includes("ENTREVISTA")) || null;
+                  if (insertAfter) {
+                    const newRow = document.createElement("tr");
+                    newRow.setAttribute("data-pergunta", String(newNum));
+                    newRow.innerHTML = `<td style="${tdS}">--:--</td><td style="${tdS};font-weight:600">PERGUNTA ${newNum}</td><td style="${tdS}">[Insira a pergunta aqui]</td><td style="${tdS};white-space:nowrap;text-align:center;width:90px" contenteditable="false"><span data-action="move-up" style="${actionBtnS};color:#268ffa" title="Mover para cima">▲</span> <span data-action="move-down" style="${actionBtnS};color:#268ffa" title="Mover para baixo">▼</span> <span data-action="delete-pergunta" style="${actionBtnS};color:#dc2626" title="Remover pergunta">🗑</span></td>`;
+                    insertAfter.insertAdjacentElement("afterend", newRow);
+                    if (actionRow) newRow.insertAdjacentElement("afterend", actionRow);
+                    renumberPerguntas();
+                  }
+                } else if (action === "delete-pergunta") {
+                  const row = target.closest("tr[data-pergunta]");
+                  if (row) { row.remove(); renumberPerguntas(); }
+                } else if (action === "move-up") {
+                  const row = target.closest("tr[data-pergunta]");
+                  if (!row) return;
+                  const allPerguntas = Array.from(table.querySelectorAll("tr[data-pergunta]"));
+                  const idx = allPerguntas.indexOf(row as HTMLTableRowElement);
+                  if (idx <= 0) return;
+                  allPerguntas[idx - 1].insertAdjacentElement("beforebegin", row);
+                  renumberPerguntas();
+                } else if (action === "move-down") {
+                  const row = target.closest("tr[data-pergunta]");
+                  if (!row) return;
+                  const allPerguntas = Array.from(table.querySelectorAll("tr[data-pergunta]"));
+                  const idx = allPerguntas.indexOf(row as HTMLTableRowElement);
+                  if (idx < 0 || idx >= allPerguntas.length - 1) return;
+                  allPerguntas[idx + 1].insertAdjacentElement("afterend", row);
+                  renumberPerguntas();
+                }
+              }}
+              className="w-full min-h-[280px] text-sm outline-none"
+              style={{ color: "#0d0446", fontSize: fontSize + "px", lineHeight: "1.7" }}
+              data-placeholder="Digite o roteiro aqui..."
+            />
               </div>
             </div>
               </>
