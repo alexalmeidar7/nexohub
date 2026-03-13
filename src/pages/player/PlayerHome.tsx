@@ -533,7 +533,7 @@ function ContentRow({ title, children }: { title: React.ReactNode; children: Rea
   );
 }
 
-/* ─── Trending Card (Em Alta) with YouTube hover preview ─── */
+/* ─── Trending Card (Em Alta) with expand-right video preview ─── */
 function TrendingCard({ item, idx, channels, onClick }: {
   item: { id: string; image: string | null; title: string; subtitle?: string; type: "live" | "catalog"; channelId: string; videoId?: string; logoUrl?: string | null };
   idx: number;
@@ -544,12 +544,15 @@ function TrendingCard({ item, idx, channels, onClick }: {
   const [showVideo, setShowVideo] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const stopTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const playerRef = useRef<any>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const fadeIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [aiCover, setAiCover] = useState<string | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
 
-  // Generate AI cover if no image
+  // Always generate AI cover for better visuals
   useEffect(() => {
-    if (item.image || aiCover || aiLoading) return;
+    if (aiCover || aiLoading) return;
     setAiLoading(true);
     supabase.functions.invoke("generate-cover", { body: { title: item.title, type: "trending" } })
       .then(({ data }) => {
@@ -557,45 +560,133 @@ function TrendingCard({ item, idx, channels, onClick }: {
       })
       .catch(() => {})
       .finally(() => setAiLoading(false));
-  }, [item.image, item.title, aiCover, aiLoading]);
+  }, [item.title, aiCover, aiLoading]);
+
+  // Load YouTube IFrame API once
+  useEffect(() => {
+    if ((window as any).YT) return;
+    const tag = document.createElement("script");
+    tag.src = "https://www.youtube.com/iframe_api";
+    document.head.appendChild(tag);
+  }, []);
+
+  const fadeInAudio = () => {
+    if (!playerRef.current?.setVolume) return;
+    let vol = 0;
+    playerRef.current.setVolume(0);
+    playerRef.current.unMute();
+    fadeIntervalRef.current = setInterval(() => {
+      vol = Math.min(vol + 5, 60);
+      playerRef.current?.setVolume(vol);
+      if (vol >= 60 && fadeIntervalRef.current) clearInterval(fadeIntervalRef.current);
+    }, 80);
+  };
+
+  const fadeOutAudio = () => {
+    if (!playerRef.current?.setVolume) return;
+    if (fadeIntervalRef.current) clearInterval(fadeIntervalRef.current);
+    let vol = playerRef.current.getVolume?.() || 60;
+    fadeIntervalRef.current = setInterval(() => {
+      vol = Math.max(vol - 8, 0);
+      playerRef.current?.setVolume(vol);
+      if (vol <= 0) {
+        if (fadeIntervalRef.current) clearInterval(fadeIntervalRef.current);
+        playerRef.current?.pauseVideo();
+      }
+    }, 50);
+  };
 
   const handleMouseEnter = () => {
     setHovered(true);
     if (item.type === "catalog" && item.videoId) {
-      timerRef.current = setTimeout(() => setShowVideo(true), 600);
+      timerRef.current = setTimeout(() => setShowVideo(true), 500);
     }
   };
 
   const handleMouseLeave = () => {
-    setHovered(false);
-    setShowVideo(false);
     if (timerRef.current) clearTimeout(timerRef.current);
     if (stopTimerRef.current) clearTimeout(stopTimerRef.current);
+    fadeOutAudio();
+    setTimeout(() => {
+      setShowVideo(false);
+      setHovered(false);
+      if (playerRef.current?.destroy) { playerRef.current.destroy(); playerRef.current = null; }
+    }, 400);
   };
 
+  // Create YT player when video should show
   useEffect(() => {
-    if (showVideo) {
-      stopTimerRef.current = setTimeout(() => setShowVideo(false), 15000);
-    }
-    return () => { if (stopTimerRef.current) clearTimeout(stopTimerRef.current); };
-  }, [showVideo]);
+    if (!showVideo || !item.videoId || !containerRef.current) return;
 
-  const coverSrc = item.image || aiCover;
+    const createPlayer = () => {
+      const div = document.createElement("div");
+      div.id = `yt-trending-${item.videoId}-${idx}`;
+      containerRef.current?.querySelector(".yt-host")?.replaceChildren(div);
+
+      playerRef.current = new (window as any).YT.Player(div.id, {
+        videoId: item.videoId,
+        playerVars: {
+          autoplay: 1,
+          mute: 1,
+          controls: 0,
+          modestbranding: 1,
+          showinfo: 0,
+          rel: 0,
+          iv_load_policy: 3,
+          disablekb: 1,
+          fs: 0,
+          playsinline: 1,
+          cc_load_policy: 0,
+          start: 30,
+        },
+        events: {
+          onReady: (e: any) => {
+            e.target.playVideo();
+            setTimeout(() => fadeInAudio(), 300);
+          },
+        },
+      });
+    };
+
+    if ((window as any).YT?.Player) {
+      createPlayer();
+    } else {
+      (window as any).onYouTubeIframeAPIReady = createPlayer;
+    }
+
+    stopTimerRef.current = setTimeout(() => handleMouseLeave(), 15000);
+
+    return () => {
+      if (fadeIntervalRef.current) clearInterval(fadeIntervalRef.current);
+    };
+  }, [showVideo, item.videoId]);
+
+  const coverSrc = aiCover || item.image;
 
   return (
-    <button
-      key={item.id}
+    <div
+      ref={containerRef}
       onClick={onClick}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      className="flex-shrink-0 rounded-xl overflow-hidden relative transition-all duration-300 group border-2 border-transparent hover:border-player-accent/50 hover:shadow-[0_0_30px_-5px_rgba(200,0,0,0.3)] hover:-translate-y-1 player-card-pop"
-      style={{ width: "200px", aspectRatio: "2/3", background: "hsl(var(--player-bg))" }}
+      className="flex-shrink-0 rounded-xl overflow-hidden relative transition-all duration-500 ease-out group border-2 border-transparent hover:border-player-accent/50 hover:shadow-[0_0_40px_-5px_rgba(200,0,0,0.4)] cursor-pointer"
+      style={{
+        width: showVideo ? "420px" : "200px",
+        aspectRatio: showVideo ? "16/9" : "2/3",
+        background: "hsl(var(--player-bg))",
+        zIndex: showVideo ? 20 : 1,
+        transform: hovered && !showVideo ? "translateY(-4px)" : "none",
+      }}
     >
       {/* Cover image */}
       {coverSrc ? (
-        <img src={coverSrc} alt={item.title} className={`w-full h-full object-cover transition-all duration-700 ${showVideo ? 'opacity-0 scale-105' : 'opacity-100'} group-hover:scale-105`} />
+        <img
+          src={coverSrc}
+          alt={item.title}
+          className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ${showVideo ? "opacity-0 scale-110 blur-sm" : "opacity-100"} group-hover:scale-105`}
+        />
       ) : (
-        <div className="w-full h-full flex items-center justify-center" style={{ background: "hsl(var(--player-bg))" }}>
+        <div className="absolute inset-0 w-full h-full flex items-center justify-center" style={{ background: "hsl(var(--player-bg))" }}>
           {aiLoading ? (
             <div className="w-6 h-6 rounded-full border-2 border-player-accent/40 border-t-player-accent animate-spin" />
           ) : (
@@ -604,15 +695,12 @@ function TrendingCard({ item, idx, channels, onClick }: {
         </div>
       )}
 
-      {/* YouTube preview on hover */}
-      {showVideo && item.videoId && (
-        <div className="absolute inset-0 z-[2] animate-fade-in">
-          <iframe
-            src={`https://www.youtube.com/embed/${item.videoId}?autoplay=1&mute=1&controls=0&modestbranding=1&start=60&showinfo=0&rel=0&loop=1`}
-            className="w-full h-full"
-            allow="autoplay; encrypted-media"
-            style={{ border: "none" }}
-          />
+      {/* YouTube player container — no controls, no branding */}
+      {showVideo && (
+        <div className="absolute inset-0 z-[2] animate-fade-in pointer-events-none">
+          <div className="yt-host w-full h-full [&_iframe]{w-full h-full}" />
+          {/* Overlay to block YouTube click interactions */}
+          <div className="absolute inset-0" />
         </div>
       )}
 
@@ -639,21 +727,21 @@ function TrendingCard({ item, idx, channels, onClick }: {
       )}
 
       {/* Gradient + title */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent z-[3]" />
-      <div className="absolute bottom-0 left-0 right-0 p-3 z-[4] text-left">
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent z-[3] pointer-events-none" />
+      <div className="absolute bottom-0 left-0 right-0 p-3 z-[4] text-left pointer-events-none">
         <p className="text-[11px] font-bold text-white leading-tight line-clamp-2 drop-shadow">{item.title}</p>
         {item.subtitle && <p className="text-[9px] text-white/60 mt-0.5">{item.subtitle}</p>}
       </div>
 
       {/* Play overlay */}
       {!showVideo && (
-        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-[5]">
+        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-[5] pointer-events-none">
           <div className="w-10 h-10 rounded-full backdrop-blur-sm flex items-center justify-center" style={{ backgroundColor: "hsl(var(--player-accent))", opacity: 0.8 }}>
             <Play className="h-4 w-4 text-white fill-white" />
           </div>
         </div>
       )}
-    </button>
+    </div>
   );
 }
 
