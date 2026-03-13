@@ -2,7 +2,7 @@ import { useEffect, useState, useRef, useCallback, lazy, Suspense } from "react"
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { Home, Radio, Film, ShoppingBag, LogOut, Clock, Music, ChevronLeft, ChevronRight, Play, LayoutGrid } from "lucide-react";
+import { Home, Radio, Film, ShoppingBag, LogOut, Clock, Music, ChevronLeft, ChevronRight, Play, LayoutGrid, Flame, TrendingUp } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { loadMiniPlayerData, clearMiniPlayerData, type MiniPlayerData } from "@/components/player/MiniPlayerWidget";
 import PlayerSidebar from "@/components/player/PlayerSidebar";
@@ -370,7 +370,7 @@ function StreamingCard({ channel, currentProgram, nowPlaying, onClick }: {
 }
 
 /* ─── Content Row (horizontal scroll with arrows) ─── */
-function ContentRow({ title, children }: { title: string; children: React.ReactNode }) {
+function ContentRow({ title, children }: { title: React.ReactNode; children: React.ReactNode }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
@@ -784,6 +784,92 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                     ))}
                   </ContentRow>
                 )}
+
+                {/* Em Alta - Trending */}
+                {dataLoaded && (() => {
+                  const trendingItems: { id: string; image: string | null; title: string; subtitle?: string; type: "live" | "catalog"; channelId: string }[] = [];
+                  
+                  // Add streaming channels as trending
+                  streamingChannels.forEach(ch => {
+                    trendingItems.push({
+                      id: `live-${ch.id}`,
+                      image: ch.cover_url || ch.logo_url,
+                      title: ch.name,
+                      subtitle: "Ao vivo",
+                      type: "live",
+                      channelId: ch.id,
+                    });
+                  });
+
+                  // Add catalog videos as trending
+                  Object.values(playlistVideos).flat().slice(0, 8).forEach(v => {
+                    const ch = catalogChannels.find(c => playlistVideos[c.id]?.some(pv => pv.videoId === v.videoId));
+                    if (ch) {
+                      trendingItems.push({
+                        id: `cat-${v.videoId}`,
+                        image: v.thumbnail,
+                        title: v.title,
+                        subtitle: v.published ? new Date(v.published).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" }) : undefined,
+                        type: "catalog",
+                        channelId: ch.id,
+                      });
+                    }
+                  });
+
+                  if (trendingItems.length === 0) return null;
+
+                  return (
+                    <ContentRow title={
+                      <span className="flex items-center gap-2">
+                        <Flame className="h-5 w-5 text-orange-500" />
+                        Em Alta
+                      </span>
+                    }>
+                      {trendingItems.slice(0, 12).map((item, idx) => (
+                        <button
+                          key={item.id}
+                          onClick={() => goToPlayer(item.channelId)}
+                          className="flex-shrink-0 rounded-xl overflow-hidden relative transition-all duration-300 group border-2 border-transparent hover:border-orange-500/50 hover:shadow-[0_0_30px_-5px_rgba(249,115,22,0.3)] hover:-translate-y-1 player-card-pop"
+                          style={{ width: "200px", aspectRatio: "2/3", animationDelay: `${idx * 60}ms` }}
+                        >
+                          {item.image ? (
+                            <img src={item.image} alt={item.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                          ) : (
+                            <div className="w-full h-full bg-gradient-to-br from-orange-500/20 to-player-bg flex items-center justify-center">
+                              <TrendingUp className="h-8 w-8 text-orange-500/50" />
+                            </div>
+                          )}
+
+                          {/* Ranking badge */}
+                          <div className="absolute top-2 left-2 z-10 w-7 h-7 rounded-full bg-orange-500/90 flex items-center justify-center text-white text-xs font-black shadow-lg">
+                            {idx + 1}
+                          </div>
+
+                          {/* Live badge */}
+                          {item.type === "live" && (
+                            <span className="absolute top-2 right-2 z-10 text-[9px] uppercase tracking-wider font-bold bg-player-accent/90 px-1.5 py-0.5 rounded text-white">
+                              live
+                            </span>
+                          )}
+
+                          {/* Gradient + title */}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent z-[1]" />
+                          <div className="absolute bottom-0 left-0 right-0 p-3 z-[2]">
+                            <p className="text-sm font-bold text-white leading-tight line-clamp-2 drop-shadow">{item.title}</p>
+                            {item.subtitle && <p className="text-[11px] text-white/60 mt-0.5">{item.subtitle}</p>}
+                          </div>
+
+                          {/* Play overlay */}
+                          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-[3]">
+                            <div className="w-10 h-10 rounded-full bg-orange-500/80 backdrop-blur-sm flex items-center justify-center">
+                              <Play className="h-4 w-4 text-white fill-white" />
+                            </div>
+                          </div>
+                        </button>
+                      ))}
+                    </ContentRow>
+                  );
+                })()}
 
                 {/* Watch history */}
                 {user && dataLoaded && watchHistory.length > 0 && (
