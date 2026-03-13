@@ -14,7 +14,6 @@ function slugify(text: string): string {
     .replace(/^-|-$/g, "");
 }
 
-// Simple fallback: distribute lyrics evenly (no AI)
 function plainToLrc(plain: string, durationSec: number): string {
   const lines = plain.split("\n").filter((l) => l.trim().length > 0);
   if (lines.length === 0) return "";
@@ -89,6 +88,45 @@ async function fetchFromLetras(artist: string, title: string): Promise<string | 
   }
 }
 
+async function aiSyncLyrics(plainLyrics: string, duration: number): Promise<string | null> {
+  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+  if (!LOVABLE_API_KEY) return null;
+
+  try {
+    const prompt = `Sincronize a letra abaixo no formato LRC com timestamps. A música tem ${duration} segundos de duração. Distribua os timestamps de forma natural, respeitando pausas entre estrofes. Retorne APENAS as linhas LRC, sem explicações.
+
+${plainLyrics}`;
+
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash-lite",
+        messages: [
+          { role: "system", content: "Você sincroniza letras de música no formato LRC. Retorne APENAS linhas no formato [MM:SS.ms] texto." },
+          { role: "user", content: prompt },
+        ],
+      }),
+    });
+
+    if (!response.ok) return null;
+
+    const data = await response.json();
+    const text = data.choices?.[0]?.message?.content?.trim() || "";
+    
+    // Validate it looks like LRC
+    if (text.includes("[") && text.includes("]")) {
+      return text.replace(/```[a-z]*\n?/g, "").replace(/```/g, "").trim();
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -109,6 +147,7 @@ Deno.serve(async (req) => {
 
     let syncedLyrics: string | null = null;
     let plainLyrics: string | null = null;
+    let aiSync = false;
 
     const getResp = await fetch(`https://lrclib.net/api/get?${params.toString()}`, {
       headers: { 'User-Agent': 'MasterView Player v1.0' },
@@ -143,10 +182,16 @@ Deno.serve(async (req) => {
       if (letrasText) plainLyrics = letrasText;
     }
 
-    // AI disabled – use simple distribution for unsynced lyrics
+    // Try AI sync first, fall back to linear distribution
     if (!syncedLyrics && plainLyrics) {
       const dur = duration || 180;
-      syncedLyrics = plainToLrc(plainLyrics, dur);
+      const aiResult = await aiSyncLyrics(plainLyrics, dur);
+      if (aiResult) {
+        syncedLyrics = aiResult;
+        aiSync = true;
+      } else {
+        syncedLyrics = plainToLrc(plainLyrics, dur);
+      }
     }
 
     if (!syncedLyrics && !plainLyrics) {
@@ -157,7 +202,7 @@ Deno.serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ success: true, syncedLyrics, plainLyrics, aiSync: false }),
+      JSON.stringify({ success: true, syncedLyrics, plainLyrics, aiSync }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
