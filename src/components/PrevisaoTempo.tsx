@@ -246,15 +246,33 @@ export default function PrevisaoTempo() {
   const isFavorited = weather ? favorites.some(f => f.name === weather.city) : false;
   const isPrimary = weather ? primaryCity?.name === weather.city : false;
 
-  const togglePrimaryCity = () => {
+  const togglePrimaryCity = async () => {
     if (!weather) return;
     if (isPrimary) {
       savePrimaryCity(null);
       setPrimaryCity(null);
+      // Clear from DB
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from("user_settings").update({
+          weather_city: null, weather_lat: null, weather_lon: null
+        }).eq("user_id", user.id);
+      }
     } else {
       const pc = { name: weather.city, lat: weather.lat, lon: weather.lon };
       savePrimaryCity(pc);
       setPrimaryCity(pc);
+      // Save to DB for background updates
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const row = { user_id: user.id, weather_city: pc.name, weather_lat: pc.lat, weather_lon: pc.lon };
+        const { data: existing } = await supabase.from("user_settings").select("id").eq("user_id", user.id).maybeSingle();
+        if (existing) {
+          await supabase.from("user_settings").update(row).eq("user_id", user.id);
+        } else {
+          await supabase.from("user_settings").insert(row);
+        }
+      }
     }
   };
 
