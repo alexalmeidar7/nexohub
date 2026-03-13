@@ -60,36 +60,29 @@ function HeroBanner({
   const INTERVAL = 8000;
   const [aiData, setAiData] = useState<Record<string, { keywords: string[]; classificacao: string }>>({});
   const aiCache = useRef<Record<string, { keywords: string[]; classificacao: string }>>({});
+  const aiAnalysisDisabled = useRef(false);
 
-  // Fetch AI analysis for current program
-  useEffect(() => {
-    const prog = currentProgram;
-    if (!prog?.descricao || !prog.id) return;
+  const fetchAiAnalysis = (prog: Programa | undefined) => {
+    if (!prog?.descricao || !prog.id || aiAnalysisDisabled.current) return;
     if (aiCache.current[prog.id]) { setAiData(prev => ({ ...prev, [prog.id!]: aiCache.current[prog.id!] })); return; }
     supabase.functions.invoke("analyze-program", { body: { nome: prog.nome, descricao: prog.descricao } })
       .then(({ data }) => {
-        if (data && !data.error && prog.id) {
+        if (data?.error) {
+          if (data.error.includes("insuficientes") || data.error.includes("Limite")) {
+            aiAnalysisDisabled.current = true;
+          }
+          return;
+        }
+        if (data && prog.id) {
           const result = { keywords: data.keywords || [], classificacao: data.classificacao || "Livre" };
           aiCache.current[prog.id] = result;
           setAiData(prev => ({ ...prev, [prog.id!]: result }));
         }
       });
-  }, [currentProgram?.id]);
+  };
 
-  // Fetch AI analysis for next program
-  useEffect(() => {
-    const prog = nextProgram;
-    if (!prog?.descricao || !prog.id) return;
-    if (aiCache.current[prog.id]) { setAiData(prev => ({ ...prev, [prog.id!]: aiCache.current[prog.id!] })); return; }
-    supabase.functions.invoke("analyze-program", { body: { nome: prog.nome, descricao: prog.descricao } })
-      .then(({ data }) => {
-        if (data && !data.error && prog.id) {
-          const result = { keywords: data.keywords || [], classificacao: data.classificacao || "Livre" };
-          aiCache.current[prog.id] = result;
-          setAiData(prev => ({ ...prev, [prog.id!]: result }));
-        }
-      });
-  }, [nextProgram?.id]);
+  useEffect(() => { fetchAiAnalysis(currentProgram); }, [currentProgram?.id]);
+  useEffect(() => { fetchAiAnalysis(nextProgram); }, [nextProgram?.id]);
 
   const RATING_COLORS: Record<string, { bg: string; text: string; label: string }> = {
     "Livre": { bg: "rgba(34,197,94,0.2)", text: "rgb(74,222,128)", label: "L" },
