@@ -1031,11 +1031,13 @@ ${perguntaActions}
             <div className="h-px" style={{ backgroundColor: "rgba(13,4,70,0.06)" }} />
 
             {/* Texto Roteiro */}
-            <div>
+            <div style={{ display: "none" }}>
               <p className="text-[10px] font-bold uppercase tracking-wider mb-3" style={{ color: "rgba(13,4,70,0.4)" }}>Conteúdo do roteiro</p>
               <div className="rounded-xl p-4" style={{ backgroundColor: "rgba(13,4,70,0.02)", border: "1px solid rgba(13,4,70,0.06)" }}>
-
-
+              </div>
+            </div>
+              </>
+            )}
             {/* Salvar / Exportar */}
             <button
               onClick={async () => {
