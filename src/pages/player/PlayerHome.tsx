@@ -57,6 +57,48 @@ function HeroBanner({
   onGrade: () => void;
 }) {
   const INTERVAL = 8000;
+  const [aiData, setAiData] = useState<Record<string, { keywords: string[]; classificacao: string }>>({});
+  const aiCache = useRef<Record<string, { keywords: string[]; classificacao: string }>>({});
+
+  // Fetch AI analysis for current program
+  useEffect(() => {
+    const prog = currentProgram;
+    if (!prog?.descricao || !prog.id) return;
+    if (aiCache.current[prog.id]) { setAiData(prev => ({ ...prev, [prog.id!]: aiCache.current[prog.id!] })); return; }
+    supabase.functions.invoke("analyze-program", { body: { nome: prog.nome, descricao: prog.descricao } })
+      .then(({ data }) => {
+        if (data && !data.error && prog.id) {
+          const result = { keywords: data.keywords || [], classificacao: data.classificacao || "Livre" };
+          aiCache.current[prog.id] = result;
+          setAiData(prev => ({ ...prev, [prog.id!]: result }));
+        }
+      });
+  }, [currentProgram?.id]);
+
+  // Fetch AI analysis for next program
+  useEffect(() => {
+    const prog = nextProgram;
+    if (!prog?.descricao || !prog.id) return;
+    if (aiCache.current[prog.id]) { setAiData(prev => ({ ...prev, [prog.id!]: aiCache.current[prog.id!] })); return; }
+    supabase.functions.invoke("analyze-program", { body: { nome: prog.nome, descricao: prog.descricao } })
+      .then(({ data }) => {
+        if (data && !data.error && prog.id) {
+          const result = { keywords: data.keywords || [], classificacao: data.classificacao || "Livre" };
+          aiCache.current[prog.id] = result;
+          setAiData(prev => ({ ...prev, [prog.id!]: result }));
+        }
+      });
+  }, [nextProgram?.id]);
+
+  const RATING_COLORS: Record<string, { bg: string; text: string; label: string }> = {
+    "Livre": { bg: "rgba(34,197,94,0.2)", text: "rgb(74,222,128)", label: "L" },
+    "6": { bg: "rgba(251,191,36,0.2)", text: "rgb(251,191,36)", label: "6" },
+    "10": { bg: "rgba(59,130,246,0.2)", text: "rgb(96,165,250)", label: "10" },
+    "12": { bg: "rgba(245,158,11,0.2)", text: "rgb(251,191,36)", label: "12" },
+    "14": { bg: "rgba(249,115,22,0.2)", text: "rgb(251,146,60)", label: "14" },
+    "16": { bg: "rgba(239,68,68,0.2)", text: "rgb(248,113,113)", label: "16" },
+    "18": { bg: "rgba(220,38,38,0.3)", text: "rgb(248,113,113)", label: "18" },
+  };
 
   // Build slides: current program thumb + next program thumb (if available)
   const slides = useMemo(() => {
