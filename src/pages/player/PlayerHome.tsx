@@ -57,7 +57,7 @@ function HeroBanner({
   onPlay: () => void;
   onGrade: () => void;
 }) {
-  const heroImage = currentProgram?.capa || channel?.cover_url || channel?.background_url || channel?.logo_url || "/images/banner-home.png";
+  const heroImage = currentProgram?.thumb || currentProgram?.capa || channel?.cover_url || channel?.background_url || channel?.logo_url || "/images/banner-home.png";
 
   // Progress bar
   let pct = 0;
