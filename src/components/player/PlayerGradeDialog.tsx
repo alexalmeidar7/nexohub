@@ -276,12 +276,15 @@ function PlayerGradeDialog({ programas, onClose }: Props) {
                 })();
 
                 return (
-                  <tr key={slot} ref={isOnAirRow ? (el) => {
-                    if (el) requestAnimationFrame(() => el.scrollIntoView({ behavior: "smooth", block: "center" }));
+                  <tr key={slot} ref={isOnAirRow && !hasScrolledToNow.current ? (el) => {
+                    if (el) {
+                      hasScrolledToNow.current = true;
+                      requestAnimationFrame(() => el.scrollIntoView({ behavior: "smooth", block: "center" }));
+                    }
                   } : undefined}>
                     <td
                       className="px-2 py-1 font-mono rounded-lg text-center"
-                      style={{ color: "rgba(255,255,255,0.15)", fontSize: "10px", letterSpacing: "0.05em" }}
+                      style={{ color: "rgba(255,255,255,0.35)", fontSize: "11px", fontWeight: 600, letterSpacing: "0.05em" }}
                     >
                       {slot.slice(0, 5)}
                     </td>
