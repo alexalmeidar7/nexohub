@@ -243,15 +243,15 @@
 
 /* ====== Form styling for masterview content area ====== */
 .mv-content-area {
-  background-color: #ffffff;
+  background-color: var(--layout-page-bg, #ffffff);
   border-radius: 12px;
-  color: #0d0446;
+  color: var(--layout-page-text, #0d0446);
   box-shadow: 0 4px 10px rgba(0,0,0,0.05);
 }
 
 .mv-content-area h2,
 .mv-content-area h3 {
-  color: #0d0446;
+  color: var(--layout-page-text, #0d0446);
 }
 .mv-content-area h2.text-white,
 .mv-content-area h3.text-white,
@@ -261,7 +261,7 @@
 }
 
 .mv-content-area label {
-  color: #0d0446;
+  color: var(--layout-page-text, #0d0446);
   font-weight: 600;
 }
 
@@ -275,9 +275,9 @@
 .mv-content-area input[type="tel"],
 .mv-content-area textarea,
 .mv-content-area select {
-  background-color: #ffffff !important;
-  border: 1px solid #0d0446 !important;
-  color: #0d0446 !important;
+  background-color: var(--layout-page-bg, #ffffff) !important;
+  border: 1px solid var(--layout-page-text, #0d0446) !important;
+  color: var(--layout-page-text, #0d0446) !important;
   border-radius: 20px !important;
   transition: border-color 0.3s ease;
   padding: 8px 16px;
@@ -286,14 +286,14 @@
 .mv-content-area input:focus,
 .mv-content-area textarea:focus,
 .mv-content-area select:focus {
-  border-color: #2dbef3;
+  border-color: var(--layout-link-color, #2dbef3);
   outline: none;
-  box-shadow: 0 0 0 2px rgba(45, 190, 243, 0.2);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--layout-link-color, #2dbef3) 20%, transparent);
 }
 
 .mv-content-area .mv-form-header {
-  background-color: #0d0446;
-  color: #ffffff;
+  background-color: var(--layout-header-bg, #0d0446);
+  color: var(--layout-header-text, #ffffff);
   padding: 15px 20px;
   border-radius: 12px 12px 0 0;
   font-weight: bold;
@@ -303,9 +303,9 @@
 
 .mv-content-area button[type="submit"],
 .mv-content-area .mv-btn-primary {
-  background-color: #0d0446;
-  color: #ffffff;
-  border: 2px solid #0d0446;
+  background-color: var(--layout-button-bg, #0d0446);
+  color: var(--layout-button-text, #ffffff);
+  border: 2px solid var(--layout-button-bg, #0d0446);
   border-radius: 6px;
   font-weight: bold;
   cursor: pointer;
@@ -314,13 +314,13 @@
 
 .mv-content-area button[type="submit"]:hover,
 .mv-content-area .mv-btn-primary:hover {
-  background-color: #ffffff;
-  color: #0d0446;
+  background-color: var(--layout-page-bg, #ffffff);
+  color: var(--layout-button-bg, #0d0446);
 }
 
 .mv-content-area p,
 .mv-content-area span {
-  color: #0d0446;
+  color: var(--layout-page-text, #0d0446);
 }
 /* Allow white text inside dark-background containers within mv-content-area */
 .mv-content-area .text-white { color: #ffffff !important; }
@@ -334,18 +334,28 @@
 }
 
 .mv-content-area .text-muted-foreground {
-  color: rgba(13, 4, 70, 0.5);
+  color: color-mix(in srgb, var(--layout-page-text, #0d0446) 50%, transparent);
 }
 
 .mv-content-area .text-destructive {
   color: #dc2626;
 }
 
+/* Links inside content area */
+.mv-content-area a:not(.text-white):not([style*="color"]) {
+  color: var(--layout-link-color, #2dbef3);
+}
+
+/* Accent badges/tags */
+.mv-content-area .text-primary {
+  color: var(--layout-accent-color, #be0101) !important;
+}
+
 /* Select dropdown inside mv-content-area */
 .mv-content-area [data-radix-popper-content-wrapper] [role="listbox"],
 .mv-content-area + [data-radix-popper-content-wrapper] [role="listbox"] {
-  background-color: #0d0446 !important;
-  color: #ffffff !important;
+  background-color: var(--layout-header-bg, #0d0446) !important;
+  color: var(--layout-header-text, #ffffff) !important;
   border: none !important;
   border-radius: 12px !important;
 }
@@ -355,7 +365,7 @@
 }
 
 [data-radix-popper-content-wrapper] [role="option"][data-highlighted] {
-  background-color: #2dbff4 !important;
+  background-color: var(--layout-link-color, #2dbef3) !important;
   color: #ffffff !important;
 }
 
@@ -365,7 +375,7 @@ table:not([data-no-row-hover]) tbody tr {
   outline-offset: -2px;
 }
 table:not([data-no-row-hover]) tbody tr:hover {
-  outline: 2px solid #2dbef3;
+  outline: 2px solid var(--layout-link-color, #2dbef3);
   border-radius: 4px;
 }
 
