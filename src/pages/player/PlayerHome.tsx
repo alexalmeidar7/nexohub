@@ -408,51 +408,116 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   const userName = profileName || user?.email?.split("@")[0] || "Visitante";
 
   useEffect(() => {
-    const fetchData = async () => {
-      const userId = user?.id;
+    let cancelled = false;
+    let retryTimer: ReturnType<typeof setTimeout> | null = null;
 
-      if (userId) {
-        // Logged-in user: fetch directly from DB
-        const [chRes, empRes, progRes, histRes, shopRes] = await Promise.all([
-          supabase.from("streaming_channels").select("*").eq("user_id", userId).eq("active", true).order("numero_canal"),
-          supabase.from("empresa_config").select("logo, nome").eq("user_id", userId).single(),
-          supabase.from("programas").select("id, nome, horario_inicio, horario_fim, dias_semana, ativo, selo, estudio, variavel, data_variavel, capa, descricao, apresentador_id").eq("user_id", userId).eq("ativo", true).order("horario_inicio"),
-          supabase.from("watch_history").select("id, channel_name, channel_cover_url, channel_logo_url, channel_type, watched_at, channel_id").eq("user_id", userId).order("watched_at", { ascending: false }).limit(10),
-          supabase.from("shopping_products").select("id, name, description, price, image_url, payment_url, stock").eq("user_id", userId).eq("active", true),
-        ]);
-        if (chRes.data) setChannels(chRes.data as any);
-        if (empRes.data) {
-          setLogoUrl(empRes.data.logo);
-          setChannelName(empRes.data.nome || "");
-        }
-        if (progRes.data) setProgramas(progRes.data as any);
-        if (histRes.data) {
-          const seen = new Set<string>();
-          const unique = histRes.data.filter(h => {
-            const key = h.channel_id || h.id;
-            if (seen.has(key)) return false;
-            seen.add(key);
-            return true;
-          });
-          setWatchHistory(unique);
-        }
-        if (shopRes.data) setShopProducts(shopRes.data as any);
-        setDataLoaded(true);
-      } else if (userSlug && userSlug !== ":userSlug") {
-        // Public access via slug (unauthenticated visitors)
-        const { data } = await supabase.functions.invoke("public-player-data", {
-          body: { slug: userSlug },
-        });
-        if (data?.channels) setChannels(data.channels);
-        if (data?.empresa?.logo) setLogoUrl(data.empresa.logo);
-        if (data?.empresa?.nome) setChannelName(data.empresa.nome);
-        if (data?.programas) setProgramas(data.programas);
-        setDataLoaded(true);
-      }
-      // Don't set dataLoaded if neither branch was reached (auth still loading)
+    const scheduleRetry = (callback: () => Promise<void>, attempt: number) => {
+      if (cancelled || attempt >= 2) return false;
+      retryTimer = setTimeout(() => {
+        void callback();
+      }, 500 * (attempt + 1));
+      return true;
     };
-    fetchData();
-  }, [user, userSlug]);
+
+    const fetchAuthenticatedData = async (attempt = 0) => {
+      const userId = user?.id;
+      if (!userId || cancelled) return;
+
+      const [chRes, empRes, progRes, histRes, shopRes] = await Promise.all([
+        supabase.from("streaming_channels").select("*").eq("user_id", userId).eq("active", true).order("numero_canal"),
+        supabase.from("empresa_config").select("logo, nome").eq("user_id", userId).single(),
+        supabase.from("programas").select("id, nome, horario_inicio, horario_fim, dias_semana, ativo, selo, estudio, variavel, data_variavel, capa, descricao, apresentador_id").eq("user_id", userId).eq("ativo", true).order("horario_inicio"),
+        supabase.from("watch_history").select("id, channel_name, channel_cover_url, channel_logo_url, channel_type, watched_at, channel_id").eq("user_id", userId).order("watched_at", { ascending: false }).limit(10),
+        supabase.from("shopping_products").select("id, name, description, price, image_url, payment_url, stock").eq("user_id", userId).eq("active", true),
+      ]);
+
+      if (cancelled) return;
+
+      const channelsData = (chRes.data ?? []) as any[];
+      const programasData = (progRes.data ?? []) as any[];
+      const hasCriticalError = Boolean(chRes.error || progRes.error);
+      const possibleAuthRace = channelsData.length === 0 && programasData.length === 0;
+
+      if ((hasCriticalError || possibleAuthRace) && scheduleRetry(() => fetchAuthenticatedData(attempt + 1), attempt)) {
+        return;
+      }
+
+      setChannels(channelsData as any);
+
+      if (empRes.data) {
+        setLogoUrl(empRes.data.logo);
+        setChannelName(empRes.data.nome || "");
+      }
+
+      setProgramas(programasData as any);
+
+      if (histRes.data) {
+        const seen = new Set<string>();
+        const unique = histRes.data.filter(h => {
+          const key = h.channel_id || h.id;
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
+        setWatchHistory(unique);
+      } else {
+        setWatchHistory([]);
+      }
+
+      setShopProducts((shopRes.data ?? []) as any);
+      setDataLoaded(true);
+    };
+
+    const fetchPublicData = async (slug: string, attempt = 0) => {
+      if (cancelled) return;
+
+      const { data, error } = await supabase.functions.invoke("public-player-data", {
+        body: { slug },
+      });
+
+      if (cancelled) return;
+
+      const invokeFailed = Boolean(error || data?.error);
+      if (invokeFailed && scheduleRetry(() => fetchPublicData(slug, attempt + 1), attempt)) {
+        return;
+      }
+
+      setChannels((data?.channels ?? []) as any);
+      if (data?.empresa?.logo) setLogoUrl(data.empresa.logo);
+      if (data?.empresa?.nome) setChannelName(data.empresa.nome);
+      setProgramas((data?.programas ?? []) as any);
+      setDataLoaded(true);
+    };
+
+    const fetchData = async () => {
+      if (authLoading) return;
+
+      setDataLoaded(false);
+
+      if (user?.id) {
+        await fetchAuthenticatedData();
+        return;
+      }
+
+      if (userSlug && userSlug !== ":userSlug") {
+        await fetchPublicData(userSlug);
+        return;
+      }
+
+      setChannels([]);
+      setProgramas([]);
+      setWatchHistory([]);
+      setShopProducts([]);
+      setDataLoaded(true);
+    };
+
+    void fetchData();
+
+    return () => {
+      cancelled = true;
+      if (retryTimer) clearTimeout(retryTimer);
+    };
+  }, [authLoading, user?.id, userSlug]);
 
   // Fetch profile
   useEffect(() => {
