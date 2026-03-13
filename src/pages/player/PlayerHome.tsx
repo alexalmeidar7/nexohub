@@ -21,6 +21,7 @@ interface Channel {
 }
 
 interface Programa {
+  id?: string;
   nome: string;
   horario_inicio: string;
   horario_fim: string;
