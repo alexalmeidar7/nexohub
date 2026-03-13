@@ -66,6 +66,7 @@ function PlayerGradeDialog({ programas, onClose }: Props) {
   const gradeScrollRef = useRef<HTMLDivElement>(null);
   const analysisCache = useRef<Record<string, AIAnalysis>>({});
   const hasScrolledToNow = useRef(false);
+  const aiAnalysisDisabled = useRef(false);
 
   const now = new Date();
   const diaAtual = DIAS_MAP_FULL[now.getDay()];
@@ -164,10 +165,18 @@ function PlayerGradeDialog({ programas, onClose }: Props) {
         if (cancelled) return;
         const batch = toFetch.slice(i, i + 6);
         const results = await Promise.allSettled(
-          batch.map(p => supabase.functions.invoke("analyze-program", { body: { nome: p.nome, descricao: p.descricao } }).then(({ data, error }) => {
+          batch.map(async (p) => {
+            if (aiAnalysisDisabled.current) return { id: p.id, result: { keywords: [], classificacao: "Livre", justificativa: "" } as AIAnalysis };
+            const { data, error } = await supabase.functions.invoke("analyze-program", { body: { nome: p.nome, descricao: p.descricao } });
+            const status = (error as any)?.context?.status ?? (error as any)?.status;
+            const msg = String((data as any)?.error || (error as any)?.message || "");
+            if (status === 402 || status === 429 || msg.includes("insuficientes") || msg.includes("Limite")) {
+              aiAnalysisDisabled.current = true;
+              return { id: p.id, result: { keywords: [], classificacao: "Livre", justificativa: "Análise indisponível no momento." } as AIAnalysis };
+            }
             if (error || data?.error) return { id: p.id, result: { keywords: [], classificacao: "Livre", justificativa: "" } as AIAnalysis };
             return { id: p.id, result: data as AIAnalysis };
-          }))
+          })
         );
         if (cancelled) return;
         const updates: Record<string, AIAnalysis> = {};
@@ -203,18 +212,39 @@ function PlayerGradeDialog({ programas, onClose }: Props) {
     setAiLoading(true);
     setAiAnalysis(null);
 
+    if (aiAnalysisDisabled.current) {
+      setAiLoading(false);
+      setAiAnalysis({ keywords: [], classificacao: "Livre", justificativa: "Análise indisponível no momento." });
+      return;
+    }
+
     supabase.functions.invoke("analyze-program", {
       body: { nome: detailProg.nome, descricao: detailProg.descricao },
     }).then(({ data, error }) => {
       if (cancelled) return;
       setAiLoading(false);
+      const status = (error as any)?.context?.status ?? (error as any)?.status;
+      const msg = String((data as any)?.error || (error as any)?.message || "");
+
+      if (status === 402 || status === 429 || msg.includes("insuficientes") || msg.includes("Limite")) {
+        aiAnalysisDisabled.current = true;
+        setAiAnalysis({ keywords: [], classificacao: "Livre", justificativa: "Análise indisponível no momento." });
+        return;
+      }
+
       if (error || data?.error) {
         setAiAnalysis({ keywords: [], classificacao: "Livre", justificativa: "Não foi possível analisar." });
         return;
       }
+
       const result = data as AIAnalysis;
       analysisCache.current[detailProg.id] = result;
       setAiAnalysis(result);
+    }).catch(() => {
+      if (cancelled) return;
+      setAiLoading(false);
+      aiAnalysisDisabled.current = true;
+      setAiAnalysis({ keywords: [], classificacao: "Livre", justificativa: "Análise indisponível no momento." });
     });
 
     return () => { cancelled = true; };
