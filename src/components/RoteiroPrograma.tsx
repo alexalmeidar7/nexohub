@@ -972,7 +972,7 @@ ${perguntaActions}
           </div>
 
           <div className="p-6 space-y-5">
-            {/* Assunto */}
+            {programaNome !== "Primeira Hora Positiva" && (
             <div className="rounded-xl p-4" style={{ backgroundColor: "rgba(38,143,250,0.03)", border: "1px solid rgba(38,143,250,0.1)" }}>
               <p className="text-[10px] font-bold uppercase tracking-wider mb-3" style={{ color: "#268ffa" }}>
                 Assunto do {tipoPrograma?.toLowerCase() || "programa"}
@@ -992,6 +992,7 @@ ${perguntaActions}
                 style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.08)", color: "#0d0446" }}
               />
             </div>
+            )}
 
             {/* Divider */}
             <div className="h-px" style={{ backgroundColor: "rgba(13,4,70,0.06)" }} />
