@@ -418,12 +418,12 @@ function PlayerGradeDialog({ programas, onClose }: Props) {
               }}
             >
               {/* Cover image / gradient header */}
-              <div className="relative h-44 overflow-hidden">
+              <div className="relative h-52 overflow-hidden">
                 {(detailProg.thumb || detailProg.capa) ? (
                   <img
                     src={detailProg.thumb || detailProg.capa!}
                     alt={detailProg.nome}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover object-center"
                   />
                 ) : (
                   <div
