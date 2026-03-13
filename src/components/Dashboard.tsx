@@ -830,7 +830,8 @@ function UnifiedXmlField() {
             const d = await wx.json();
             const wbIcon = weatherCodeToWbIcon(d.current.weather_code);
             const iconUrl = `https://www.weatherbit.io/static/img/icons/${wbIcon}.png`;
-            const condLabel = weatherLabelsMap[d.current.weather_code] || "Desconhecido";
+            const closestWc = Object.keys(weatherLabelsMap).map(Number).reduce((prev, curr) => (Math.abs(curr - d.current.weather_code) < Math.abs(prev - d.current.weather_code) ? curr : prev));
+            const condLabel = weatherLabelsMap[closestWc] || "Desconhecido";
             weatherXml = `  <tempo>\n    <cidade>${name}</cidade>\n    <temperatura>${Math.round(d.current.temperature_2m)}Cº</temperatura>\n    <descricao>${condLabel}</descricao>\n    <icone_url>${iconUrl}</icone_url>\n    <minima>${Math.round(d.daily.temperature_2m_min[0])}Cº</minima>\n    <maxima>${Math.round(d.daily.temperature_2m_max[0])}Cº</maxima>\n    <humidade>${d.current.relative_humidity_2m}%</humidade>\n    <precipitacao>${d.daily.precipitation_probability_max[0] ?? 0}%</precipitacao>\n  </tempo>`;
           }
         } catch {}
