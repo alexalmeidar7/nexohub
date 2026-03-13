@@ -786,7 +786,13 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
         if (!playlistId) continue;
         try {
           const { data, error } = await supabase.functions.invoke("youtube-playlist", { body: { playlistId } });
-          if (!error && data?.videos) results[ch.id] = data.videos.slice(0, 20);
+          if (!error && data?.videos) {
+            const sorted = [...data.videos].sort((a: any, b: any) => {
+              if (a.published && b.published) return new Date(b.published).getTime() - new Date(a.published).getTime();
+              return 0;
+            });
+            results[ch.id] = sorted.slice(0, 20);
+          }
         } catch {}
       }
       setPlaylistVideos(results);
