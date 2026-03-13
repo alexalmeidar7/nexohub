@@ -22,8 +22,8 @@ serve(async (req) => {
 
     const isVertical = type === "trending";
     const prompt = isVertical
-      ? `Create a cinematic, dark-toned vertical poster cover art for: "${title}". Style: dramatic lighting, moody atmosphere, professional broadcast quality, dark gradient background with subtle glowing accents. No text. Abstract artistic interpretation. On a solid dark background.`
-      : `Create a cinematic, dark-toned widescreen thumbnail for: "${title}". Style: dramatic lighting, moody atmosphere, professional broadcast quality, dark gradient background with subtle neon accents. No text. Abstract artistic interpretation. On a solid dark background.`;
+      ? `Professional portrait photo of the music artist "${title}". The artist is centered, looking at the camera with confidence, studio lighting from the side. Solid bright red background. High quality, realistic photography style, no text, no logos.`
+      : `Professional portrait photo of the music artist "${title}". The artist is centered, studio lighting. Solid bright red background. High quality, realistic photography style, no text, no logos.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",

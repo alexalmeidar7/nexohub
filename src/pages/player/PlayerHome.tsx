@@ -637,7 +637,7 @@ function TrendingCard({ item, idx, channels, onClick }: {
           fs: 0,
           playsinline: 1,
           cc_load_policy: 0,
-          start: 30,
+          start: 120,
         },
         events: {
           onReady: (e: any) => {
@@ -671,7 +671,7 @@ function TrendingCard({ item, idx, channels, onClick }: {
       onMouseLeave={handleMouseLeave}
       className="flex-shrink-0 rounded-xl overflow-hidden relative transition-all duration-500 ease-out group border-2 border-transparent hover:border-player-accent/50 hover:shadow-[0_0_40px_-5px_rgba(200,0,0,0.4)] cursor-pointer"
       style={{
-        width: showVideo ? "420px" : "200px",
+        width: showVideo ? "520px" : "200px",
         aspectRatio: showVideo ? "16/9" : "2/3",
         background: "hsl(var(--player-bg))",
         zIndex: showVideo ? 20 : 1,
@@ -1166,7 +1166,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                       subtitle: "Ao vivo",
                       type: "live",
                       channelId: ch.id,
-                      logoUrl: ch.logo_url,
+                      logoUrl: ch.background_url || ch.logo_url,
                     });
                   });
 
@@ -1182,7 +1182,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                         type: "catalog",
                         channelId: ch.id,
                         videoId: v.videoId,
-                        logoUrl: ch.logo_url,
+                        logoUrl: ch.background_url || ch.logo_url,
                       });
                     }
                   });
