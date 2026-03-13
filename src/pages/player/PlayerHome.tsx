@@ -726,55 +726,49 @@ function TrendingCard({ item, idx, channels, onClick }: {
 
 /* ─── Catalog Card ─── */
 function CatalogCard({ image, title, subtitle, logoUrl, onClick }: { image?: string | null; title: string; subtitle?: string; logoUrl?: string | null; onClick: () => void }) {
-  const [aiCover, setAiCover] = useState<string | null>(null);
-  const [aiLoading, setAiLoading] = useState(false);
-
-  useEffect(() => {
-    if (image || aiCover || aiLoading || aiCoverDisabled) return;
-    setAiLoading(true);
-    supabase.functions.invoke("generate-cover", { body: { title, type: "catalog" } })
-      .then(({ data, error }) => {
-        if (error) { aiCoverDisabled = true; return; }
-        if (data?.imageUrl) setAiCover(data.imageUrl);
-      })
-      .catch(() => { aiCoverDisabled = true; })
-      .finally(() => setAiLoading(false));
-  }, [image, title, aiCover, aiLoading]);
-
-  const coverSrc = image || aiCover;
-
   return (
     <button
       onClick={onClick}
-      className="flex-shrink-0 rounded-xl overflow-hidden relative transition-all duration-300 group border-2 border-transparent hover:border-white/30 hover:shadow-[0_8px_30px_-8px_rgba(0,0,0,0.6)] hover:-translate-y-1 player-card-pop"
-      style={{ width: "220px", aspectRatio: "16/9" }}
+      className="flex-shrink-0 rounded-2xl overflow-hidden relative transition-all duration-300 group cursor-pointer"
+      style={{
+        width: "220px",
+        aspectRatio: "16/9",
+        border: "1px solid rgba(255,255,255,0.06)",
+        boxShadow: "0 4px 20px -8px rgba(0,0,0,0.4)",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = "translateY(-4px) scale(1.02)";
+        e.currentTarget.style.boxShadow = "0 16px 48px -12px rgba(0,0,0,0.6)";
+        e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = "";
+        e.currentTarget.style.boxShadow = "0 4px 20px -8px rgba(0,0,0,0.4)";
+        e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)";
+      }}
     >
-      {coverSrc ? (
-        <img src={coverSrc} alt={title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+      {image ? (
+        <img src={image} alt={title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
       ) : (
-        <div className="w-full h-full bg-gradient-to-br from-white/10 to-player-bg flex items-center justify-center">
-          {aiLoading ? (
-            <div className="w-5 h-5 rounded-full border-2 border-white/20 border-t-white/60 animate-spin" />
-          ) : (
-            <Film className="h-8 w-8 text-white/20" />
-          )}
+        <div className="w-full h-full flex items-center justify-center" style={{ background: "linear-gradient(160deg, rgba(255,255,255,0.08) 0%, hsl(var(--player-bg)) 100%)" }}>
+          <Film className="h-8 w-8 text-white/15" />
         </div>
       )}
 
       {/* Channel logo top-right */}
       {logoUrl && (
-        <div className="absolute top-2 right-2 z-10 w-7 h-7 rounded-full overflow-hidden bg-black/50 backdrop-blur-sm border border-white/10 shadow">
-          <img src={logoUrl} alt="" className="w-full h-full object-cover" />
+        <div className="absolute top-2 right-2 z-10 w-8 h-5 flex items-center justify-center drop-shadow-[0_2px_4px_rgba(0,0,0,0.7)]">
+          <img src={logoUrl} alt="" className="max-w-full max-h-full object-contain" />
         </div>
       )}
 
       {/* Play overlay */}
-      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-[2]">
-        <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 z-[2]">
+        <div className="w-10 h-10 rounded-full backdrop-blur-md flex items-center justify-center" style={{ background: "hsla(var(--player-accent) / 0.8)", boxShadow: "0 4px 20px hsla(var(--player-accent) / 0.4)" }}>
           <Play className="h-4 w-4 text-white fill-white" />
         </div>
       </div>
-      <div className="absolute bottom-0 left-0 right-0 z-10 px-3 pb-2.5 pt-10" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.85) 10%, transparent)" }}>
+      <div className="absolute bottom-0 left-0 right-0 z-10 px-3 pb-2.5 pt-10" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.9) 10%, transparent)" }}>
         <p className="text-[10px] font-bold text-white line-clamp-2 text-left mb-0.5">{title}</p>
         {subtitle && <p className="text-[9px] text-white/40 text-left">{subtitle}</p>}
       </div>
