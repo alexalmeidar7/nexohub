@@ -159,6 +159,33 @@
   100% { opacity: 1; transform: scale(1); }
 }
 
+/* ─── Player Hub Animations ─── */
+@keyframes player-hero-reveal {
+  0% { opacity: 0; transform: scale(1.05); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes player-hero-content {
+  0% { opacity: 0; transform: translateY(30px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+@keyframes player-row-slide {
+  0% { opacity: 0; transform: translateY(24px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+@keyframes player-card-pop {
+  0% { opacity: 0; transform: scale(0.92) translateY(12px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+@keyframes player-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.player-hero-reveal { animation: player-hero-reveal 1s ease-out both; }
+.player-hero-content { animation: player-hero-content 0.8s ease-out 0.3s both; }
+.player-row-slide { animation: player-row-slide 0.6s ease-out both; }
+.player-card-pop { animation: player-card-pop 0.5s ease-out both; }
+.player-section-enter { animation: player-row-slide 0.4s ease-out both; }
+
 /* Sidebar thin white scrollbar */
 .sidebar-scroll::-webkit-scrollbar {
   width: 4px;
