@@ -2,7 +2,7 @@ import { useEffect, useState, useRef, useCallback, lazy, Suspense } from "react"
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { Home, Radio, Film, ShoppingBag, LogOut, Clock, Music, ChevronLeft, ChevronRight, Play, LayoutGrid } from "lucide-react";
+import { Home, Radio, Film, ShoppingBag, LogOut, Clock, Music, ChevronLeft, ChevronRight, Play, LayoutGrid, Flame, TrendingUp } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { loadMiniPlayerData, clearMiniPlayerData, type MiniPlayerData } from "@/components/player/MiniPlayerWidget";
 import PlayerSidebar from "@/components/player/PlayerSidebar";
