@@ -716,7 +716,7 @@ function TrendingCard({ item, idx, channels, onClick }: {
 
       {/* Channel/Catalog logo - top right, no circle, above everything */}
       {item.logoUrl && (
-        <div className="absolute top-2 right-2 z-[12] w-10 h-6 flex items-center justify-center drop-shadow-lg">
+        <div className={`absolute z-[15] flex items-center justify-center drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)] transition-all duration-500 ${showVideo ? "top-3 right-3 w-16 h-10" : "top-2 right-2 w-12 h-8"}`}>
           <img src={item.logoUrl} alt="" className="max-w-full max-h-full object-contain" />
         </div>
       )}
