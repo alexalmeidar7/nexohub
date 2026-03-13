@@ -243,13 +243,20 @@ function HeroBanner({
                   </span>
                 ))}
                 {(() => {
-                  const rating = RATING_COLORS[aiData[displayProgram.id].classificacao] || RATING_COLORS["Livre"];
+                  const cls = aiData[displayProgram.id].classificacao;
+                  const rating = RATING_COLORS[cls] || RATING_COLORS["Livre"];
                   return (
                     <span
-                      className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-md font-bold"
-                      style={{ backgroundColor: rating.bg, color: rating.text }}
+                      className="inline-flex items-center justify-center text-[11px] font-black rounded-md shadow-md"
+                      style={{
+                        backgroundColor: rating.bg,
+                        color: rating.text,
+                        border: `2px solid ${rating.text}`,
+                        minWidth: "28px",
+                        height: "28px",
+                        padding: "0 6px",
+                      }}
                     >
-                      <Shield size={9} />
                       {rating.label}
                     </span>
                   );
@@ -611,18 +618,16 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   // Poll for current music data
   useEffect(() => {
     const userId = user?.id;
-    const readLocal = () => {
+    const fetchMusic = async () => {
+      // Try localStorage first
       try {
         const raw = localStorage.getItem("masterview_music_data");
         if (raw) {
           const parsed = JSON.parse(raw);
-          if (parsed.titulo) { setNowPlaying({ musica: parsed.titulo, artista: parsed.artista || "" }); return true; }
+          if (parsed.titulo) { setNowPlaying({ musica: parsed.titulo, artista: parsed.artista || "" }); return; }
         }
       } catch {}
-      return false;
-    };
-    const fetchFromDb = async () => {
-      if (readLocal()) return;
+      // Fallback to DB
       const targetId = userId || undefined;
       if (!targetId && (!userSlug || userSlug === ":userSlug")) return;
       try {
@@ -635,8 +640,8 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
         }
       } catch {}
     };
-    fetchFromDb();
-    const interval = setInterval(fetchFromDb, 2000);
+    fetchMusic();
+    const interval = setInterval(fetchMusic, 5000);
     return () => clearInterval(interval);
   }, [user, userSlug]);
 
