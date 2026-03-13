@@ -15,6 +15,7 @@ interface Programa {
   variavel: boolean;
   data_variavel: string | null;
   capa: string | null;
+  thumb: string | null;
   descricao: string | null;
   apresentador_id: string | null;
 }
