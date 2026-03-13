@@ -63,6 +63,7 @@ function PlayerGradeDialog({ programas, onClose }: Props) {
   const [aiLoading, setAiLoading] = useState(false);
   const gradeScrollRef = useRef<HTMLDivElement>(null);
   const analysisCache = useRef<Record<string, AIAnalysis>>({});
+  const hasScrolledToNow = useRef(false);
 
   const now = new Date();
   const diaAtual = DIAS_MAP_FULL[now.getDay()];
@@ -126,17 +127,15 @@ function PlayerGradeDialog({ programas, onClose }: Props) {
     return { skipMap: skip, spanMap: span };
   }, [programas, gradeSlots]);
 
-  // Color palette for programs
+  // Color palette — only black, gray, red variations
   const getProgColor = (name: string) => {
     const colors = [
-      { bg: "rgba(239,68,68,0.12)", border: "rgba(239,68,68,0.25)", text: "rgb(252,165,165)" },
-      { bg: "rgba(59,130,246,0.12)", border: "rgba(59,130,246,0.25)", text: "rgb(147,197,253)" },
-      { bg: "rgba(16,185,129,0.12)", border: "rgba(16,185,129,0.25)", text: "rgb(110,231,183)" },
-      { bg: "rgba(245,158,11,0.12)", border: "rgba(245,158,11,0.25)", text: "rgb(252,211,77)" },
-      { bg: "rgba(139,92,246,0.12)", border: "rgba(139,92,246,0.25)", text: "rgb(196,181,253)" },
-      { bg: "rgba(236,72,153,0.12)", border: "rgba(236,72,153,0.25)", text: "rgb(249,168,212)" },
-      { bg: "rgba(6,182,212,0.12)", border: "rgba(6,182,212,0.25)", text: "rgb(103,232,249)" },
-      { bg: "rgba(251,146,60,0.12)", border: "rgba(251,146,60,0.25)", text: "rgb(253,186,116)" },
+      { bg: "rgba(200,0,0,0.10)", border: "rgba(200,0,0,0.25)", text: "rgb(248,140,140)" },
+      { bg: "rgba(255,255,255,0.05)", border: "rgba(255,255,255,0.12)", text: "rgb(200,200,200)" },
+      { bg: "rgba(150,1,1,0.12)", border: "rgba(150,1,1,0.30)", text: "rgb(255,160,160)" },
+      { bg: "rgba(255,255,255,0.04)", border: "rgba(255,255,255,0.10)", text: "rgb(180,180,180)" },
+      { bg: "rgba(190,1,1,0.10)", border: "rgba(190,1,1,0.22)", text: "rgb(252,170,170)" },
+      { bg: "rgba(255,255,255,0.06)", border: "rgba(255,255,255,0.14)", text: "rgb(210,210,210)" },
     ];
     let hash = 0;
     for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
@@ -241,25 +240,25 @@ function PlayerGradeDialog({ programas, onClose }: Props) {
             <thead className="sticky top-0 z-10">
               <tr>
                 <th
-                  className="px-2 py-3 text-center rounded-xl text-[10px] uppercase tracking-widest font-medium"
-                  style={{ backgroundColor: "rgba(255,255,255,0.03)", color: "rgba(255,255,255,0.25)", width: "52px" }}
+                  className="px-2 py-4 text-center rounded-xl text-[11px] uppercase tracking-widest font-semibold"
+                  style={{ backgroundColor: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.5)", width: "58px" }}
                 >
-                  <Clock size={10} className="mx-auto mb-0.5 opacity-50" />
+                  <Clock size={12} className="mx-auto mb-0.5 opacity-70" />
                 </th>
                 {DIAS_SEMANA.map(dia => {
                   const isToday = dia === diaAtual;
                   return (
                     <th
                       key={dia}
-                      className="px-2 py-3 text-center rounded-xl transition-colors"
+                      className="px-2 py-4 text-center rounded-xl transition-colors"
                       style={{
-                        backgroundColor: isToday ? "hsla(var(--player-accent) / 0.12)" : "rgba(255,255,255,0.03)",
-                        color: isToday ? "hsl(var(--player-accent))" : "rgba(255,255,255,0.35)",
-                        fontWeight: isToday ? 700 : 500,
+                        backgroundColor: isToday ? "hsla(var(--player-accent) / 0.18)" : "rgba(255,255,255,0.06)",
+                        color: isToday ? "hsl(var(--player-accent))" : "rgba(255,255,255,0.7)",
+                        fontWeight: isToday ? 800 : 600,
                       }}
                     >
-                      <div className="text-[11px] uppercase tracking-wider">{dia.slice(0, 3)}</div>
-                      <div className="text-[9px] font-normal opacity-50 mt-0.5">{weekDates[dia]}</div>
+                      <div className="text-[12px] uppercase tracking-wider font-bold">{dia.slice(0, 3)}</div>
+                      <div className="text-[10px] font-medium mt-0.5" style={{ color: isToday ? "hsl(var(--player-accent))" : "rgba(255,255,255,0.4)" }}>{weekDates[dia]}</div>
                       {isToday && (
                         <div className="w-5 h-[2px] rounded-full mx-auto mt-1.5" style={{ backgroundColor: "hsl(var(--player-accent))" }} />
                       )}
@@ -277,12 +276,15 @@ function PlayerGradeDialog({ programas, onClose }: Props) {
                 })();
 
                 return (
-                  <tr key={slot} ref={isOnAirRow ? (el) => {
-                    if (el) requestAnimationFrame(() => el.scrollIntoView({ behavior: "smooth", block: "center" }));
+                  <tr key={slot} ref={isOnAirRow && !hasScrolledToNow.current ? (el) => {
+                    if (el) {
+                      hasScrolledToNow.current = true;
+                      requestAnimationFrame(() => el.scrollIntoView({ behavior: "smooth", block: "center" }));
+                    }
                   } : undefined}>
                     <td
                       className="px-2 py-1 font-mono rounded-lg text-center"
-                      style={{ color: "rgba(255,255,255,0.15)", fontSize: "10px", letterSpacing: "0.05em" }}
+                      style={{ color: "rgba(255,255,255,0.35)", fontSize: "11px", fontWeight: 600, letterSpacing: "0.05em" }}
                     >
                       {slot.slice(0, 5)}
                     </td>
