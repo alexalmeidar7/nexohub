@@ -39,27 +39,68 @@ interface PlaylistVideo {
 
 type Section = "home" | "streaming" | "content" | "shop";
 
-/* ─── Hero Banner ─── */
+/* ─── Hero Banner Carousel ─── */
 function HeroBanner({
-  channel,
+  channels,
   currentProgram,
   nowPlaying,
-  logoUrl,
   channelName,
   onPlay,
   onGrade,
 }: {
-  channel?: Channel;
+  channels: Channel[];
   currentProgram?: Programa;
   nowPlaying?: { musica: string; artista: string } | null;
-  logoUrl?: string | null;
   channelName?: string;
-  onPlay: () => void;
+  onPlay: (channelId?: string) => void;
   onGrade: () => void;
 }) {
-  const heroImage = currentProgram?.thumb || currentProgram?.capa || channel?.cover_url || channel?.background_url || channel?.logo_url || "/images/banner-home.png";
+  const INTERVAL = 8000;
+  const items = channels.length > 0 ? channels : [null];
+  const [activeIdx, setActiveIdx] = useState(0);
+  const [prevIdx, setPrevIdx] = useState<number | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Progress bar
+  // Auto-rotate
+  useEffect(() => {
+    if (items.length <= 1) return;
+    timerRef.current = setInterval(() => {
+      setActiveIdx(prev => {
+        setPrevIdx(prev);
+        return (prev + 1) % items.length;
+      });
+    }, INTERVAL);
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, [items.length]);
+
+  // Clear prevIdx after crossfade completes
+  useEffect(() => {
+    if (prevIdx === null) return;
+    const t = setTimeout(() => setPrevIdx(null), 1000);
+    return () => clearTimeout(t);
+  }, [prevIdx]);
+
+  const goTo = (idx: number) => {
+    if (idx === activeIdx) return;
+    setPrevIdx(activeIdx);
+    setActiveIdx(idx);
+    // Reset timer
+    if (timerRef.current) clearInterval(timerRef.current);
+    if (items.length > 1) {
+      timerRef.current = setInterval(() => {
+        setActiveIdx(prev => { setPrevIdx(prev); return (prev + 1) % items.length; });
+      }, INTERVAL);
+    }
+  };
+
+  const getSlideImage = (ch: Channel | null) => {
+    if (!ch) return currentProgram?.thumb || currentProgram?.capa || "/images/banner-home.png";
+    return ch.background_url || ch.cover_url || ch.logo_url || currentProgram?.thumb || "/images/banner-home.png";
+  };
+
+  const activeChannel = items[activeIdx];
+
+  // Progress bar for current program
   let pct = 0;
   if (currentProgram) {
     const [hi, mi] = currentProgram.horario_inicio.split(":").map(Number);
@@ -76,36 +117,44 @@ function HeroBanner({
 
   return (
     <div className="relative w-full overflow-hidden" style={{ height: "clamp(340px, 56vh, 560px)" }}>
-      {/* Background image */}
-      <img
-        src={heroImage}
-        alt="Hero"
-        className="absolute inset-0 w-full h-full object-cover object-top player-hero-reveal"
-      />
+      {/* Crossfade images */}
+      {items.map((ch, idx) => (
+        <img
+          key={ch?.id || "fallback"}
+          src={getSlideImage(ch)}
+          alt={ch?.name || "Banner"}
+          className="absolute inset-0 w-full h-full object-cover object-top"
+          style={{
+            opacity: idx === activeIdx ? 1 : idx === prevIdx ? 0 : 0,
+            transition: "opacity 1s ease-in-out",
+            zIndex: idx === activeIdx ? 1 : idx === prevIdx ? 0 : -1,
+          }}
+        />
+      ))}
+
       {/* Gradient overlays */}
-      <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.5) 40%, rgba(0,0,0,0.1) 70%, transparent 100%)" }} />
-      <div className="absolute inset-0" style={{ background: "linear-gradient(to top, hsl(var(--player-bg)) 0%, rgba(0,0,0,0.3) 30%, transparent 60%)" }} />
+      <div className="absolute inset-0 z-[2]" style={{ background: "linear-gradient(to right, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.5) 40%, rgba(0,0,0,0.1) 70%, transparent 100%)" }} />
+      <div className="absolute inset-0 z-[2]" style={{ background: "linear-gradient(to top, hsl(var(--player-bg)) 0%, rgba(0,0,0,0.3) 30%, transparent 60%)" }} />
 
       {/* Content */}
       <div className="absolute bottom-0 left-0 right-0 px-8 sm:px-12 pb-10 z-10 player-hero-content" style={{ maxWidth: "680px" }}>
         {/* Live badge */}
-        {channel && (
-          <div className="flex items-center gap-2 mb-3">
+        {activeChannel && (
+          <div className="flex items-center gap-2 mb-3" key={activeChannel.id} style={{ animation: "player-hero-content 0.6s ease-out both" }}>
             <span className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-wider font-semibold bg-player-accent/90 px-2.5 py-1 rounded-md text-white">
               <span className="inline-block w-2 h-2 rounded-full bg-white animate-pulse" />
               ao vivo
             </span>
-            <span className="text-white/60 text-xs">{channel.name}</span>
+            <span className="text-white/60 text-xs">{activeChannel.name}</span>
           </div>
         )}
 
-        {/* Program name — big cinematic title */}
+        {/* Program name */}
         {currentProgram ? (
           <>
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white leading-tight tracking-tight mb-2 drop-shadow-lg" style={{ textShadow: "0 2px 20px rgba(0,0,0,0.5)" }}>
               {currentProgram.nome}
             </h1>
-            {/* Time + progress */}
             <div className="flex items-center gap-3 mb-2">
               <span className="text-sm text-white/70">{currentProgram.horario_inicio} – {currentProgram.horario_fim}</span>
               <div className="w-32 h-1 rounded-full bg-white/20 overflow-hidden">
@@ -133,7 +182,7 @@ function HeroBanner({
         {/* Action buttons */}
         <div className="flex items-center gap-3">
           <button
-            onClick={onPlay}
+            onClick={() => onPlay(activeChannel?.id)}
             className="flex items-center gap-2 px-6 py-3 rounded-lg text-sm font-bold text-white transition-all duration-300 hover:scale-105"
             style={{
               background: "linear-gradient(135deg, hsl(var(--player-accent)), hsl(var(--player-accent-hover)))",
@@ -156,6 +205,30 @@ function HeroBanner({
             Grade
           </button>
         </div>
+
+        {/* Carousel indicators */}
+        {items.length > 1 && (
+          <div className="flex items-center gap-2 mt-5">
+            {items.map((_, idx) => (
+              <button
+                key={idx}
+                onClick={() => goTo(idx)}
+                className="relative h-1 rounded-full overflow-hidden transition-all duration-300"
+                style={{ width: idx === activeIdx ? 32 : 12, background: "rgba(255,255,255,0.2)" }}
+              >
+                {idx === activeIdx && (
+                  <div
+                    className="absolute inset-0 rounded-full"
+                    style={{
+                      background: "hsl(var(--player-accent))",
+                      animation: `shrinkBarReverse ${INTERVAL}ms linear both`,
+                    }}
+                  />
+                )}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
