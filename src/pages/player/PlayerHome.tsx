@@ -42,39 +42,49 @@ type Section = "home" | "streaming" | "content" | "shop";
 
 /* ─── Hero Banner Carousel ─── */
 function HeroBanner({
-  channels,
   currentProgram,
+  nextProgram,
   nowPlaying,
   channelName,
   onPlay,
   onGrade,
 }: {
-  channels: Channel[];
   currentProgram?: Programa;
+  nextProgram?: Programa;
   nowPlaying?: { musica: string; artista: string } | null;
   channelName?: string;
-  onPlay: (channelId?: string) => void;
+  onPlay: () => void;
   onGrade: () => void;
 }) {
   const INTERVAL = 8000;
-  const items = channels.length > 0 ? channels : [null];
+
+  // Build slides: current program thumb + next program thumb (if available)
+  const slides = useMemo(() => {
+    const s: { thumb: string | null; program: Programa | undefined; label: string }[] = [];
+    s.push({ thumb: currentProgram?.thumb || null, program: currentProgram, label: "Agora" });
+    if (nextProgram?.thumb) {
+      s.push({ thumb: nextProgram.thumb, program: nextProgram, label: "A seguir" });
+    }
+    return s;
+  }, [currentProgram?.thumb, nextProgram?.thumb, currentProgram, nextProgram]);
+
   const [activeIdx, setActiveIdx] = useState(0);
   const [prevIdx, setPrevIdx] = useState<number | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Auto-rotate
   useEffect(() => {
-    if (items.length <= 1) return;
+    if (slides.length <= 1) return;
     timerRef.current = setInterval(() => {
       setActiveIdx(prev => {
         setPrevIdx(prev);
-        return (prev + 1) % items.length;
+        return (prev + 1) % slides.length;
       });
     }, INTERVAL);
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
-  }, [items.length]);
+  }, [slides.length]);
 
-  // Clear prevIdx after crossfade completes
+  // Clear prevIdx after crossfade
   useEffect(() => {
     if (prevIdx === null) return;
     const t = setTimeout(() => setPrevIdx(null), 1000);
@@ -85,22 +95,16 @@ function HeroBanner({
     if (idx === activeIdx) return;
     setPrevIdx(activeIdx);
     setActiveIdx(idx);
-    // Reset timer
     if (timerRef.current) clearInterval(timerRef.current);
-    if (items.length > 1) {
+    if (slides.length > 1) {
       timerRef.current = setInterval(() => {
-        setActiveIdx(prev => { setPrevIdx(prev); return (prev + 1) % items.length; });
+        setActiveIdx(prev => { setPrevIdx(prev); return (prev + 1) % slides.length; });
       }, INTERVAL);
     }
   };
 
-  const getSlideImage = (ch: Channel | null) => {
-    // Priorizar thumb do programa atual; se não houver, fundo preto (sem imagem)
-    if (currentProgram?.thumb) return currentProgram.thumb;
-    return null; // null = fundo preto
-  };
-
-  const activeChannel = items[activeIdx];
+  const activeSlide = slides[activeIdx];
+  const displayProgram = activeSlide?.program;
 
   // Progress bar for current program
   let pct = 0;
