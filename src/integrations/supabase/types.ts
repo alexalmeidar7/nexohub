@@ -1025,6 +1025,9 @@ export type Database = {
           music_xml_url: string | null
           updated_at: string
           user_id: string
+          weather_city: string | null
+          weather_lat: number | null
+          weather_lon: number | null
         }
         Insert: {
           dashboard_items?: Json | null
@@ -1032,6 +1035,9 @@ export type Database = {
           music_xml_url?: string | null
           updated_at?: string
           user_id: string
+          weather_city?: string | null
+          weather_lat?: number | null
+          weather_lon?: number | null
         }
         Update: {
           dashboard_items?: Json | null
@@ -1039,6 +1045,9 @@ export type Database = {
           music_xml_url?: string | null
           updated_at?: string
           user_id?: string
+          weather_city?: string | null
+          weather_lat?: number | null
+          weather_lon?: number | null
         }
         Relationships: []
       }
