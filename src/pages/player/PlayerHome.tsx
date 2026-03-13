@@ -439,6 +439,13 @@ function StreamingCard({ channel, currentProgram, nowPlaying, onClick }: {
         <img src={frames[frameIdx]} alt="preview" className="absolute inset-0 w-full h-full object-cover z-[1]" />
       )}
 
+      {/* Channel logo top-right */}
+      {channel.logo_url && (
+        <div className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full overflow-hidden bg-black/50 backdrop-blur-sm border border-white/10 shadow-lg">
+          <img src={channel.logo_url} alt="" className="w-full h-full object-cover" />
+        </div>
+      )}
+
       {/* Live badge */}
       <span className="absolute top-3 left-3 z-10 text-[10px] uppercase tracking-wider font-bold bg-player-accent/90 px-2 py-0.5 rounded-md flex items-center gap-1.5 text-white shadow-lg">
         <span className="inline-block w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
@@ -454,14 +461,14 @@ function StreamingCard({ channel, currentProgram, nowPlaying, onClick }: {
 
       {/* Info overlay - bottom */}
       <div className="absolute bottom-0 left-0 right-0 z-10 px-4 pb-3 pt-14 text-left" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.9) 20%, transparent)" }}>
-        <p className="text-sm font-bold text-white truncate mb-0.5">{channel.name}</p>
+        <p className="text-xs font-bold text-white truncate mb-0.5">{channel.name}</p>
         {currentProgram && (
-          <p className="text-[11px] text-white/60 truncate">{currentProgram.nome} • {currentProgram.horario_inicio} – {currentProgram.horario_fim}</p>
+          <p className="text-[10px] text-white/60 truncate">{currentProgram.nome} • {currentProgram.horario_inicio} – {currentProgram.horario_fim}</p>
         )}
         {nowPlaying?.musica && (
           <div className="flex items-center gap-1 mt-1">
             <Music className="h-2.5 w-2.5 text-player-accent flex-shrink-0" />
-            <p className="text-[10px] text-white/50 truncate">{nowPlaying.musica} — {nowPlaying.artista}</p>
+            <p className="text-[9px] text-white/50 truncate">{nowPlaying.musica} — {nowPlaying.artista}</p>
           </div>
         )}
       </div>
@@ -526,21 +533,173 @@ function ContentRow({ title, children }: { title: React.ReactNode; children: Rea
   );
 }
 
+/* ─── Trending Card (Em Alta) with YouTube hover preview ─── */
+function TrendingCard({ item, idx, channels, onClick }: {
+  item: { id: string; image: string | null; title: string; subtitle?: string; type: "live" | "catalog"; channelId: string; videoId?: string; logoUrl?: string | null };
+  idx: number;
+  channels: Channel[];
+  onClick: () => void;
+}) {
+  const [hovered, setHovered] = useState(false);
+  const [showVideo, setShowVideo] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const stopTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [aiCover, setAiCover] = useState<string | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+
+  // Generate AI cover if no image
+  useEffect(() => {
+    if (item.image || aiCover || aiLoading) return;
+    setAiLoading(true);
+    supabase.functions.invoke("generate-cover", { body: { title: item.title, type: "trending" } })
+      .then(({ data }) => {
+        if (data?.imageUrl) setAiCover(data.imageUrl);
+      })
+      .catch(() => {})
+      .finally(() => setAiLoading(false));
+  }, [item.image, item.title, aiCover, aiLoading]);
+
+  const handleMouseEnter = () => {
+    setHovered(true);
+    if (item.type === "catalog" && item.videoId) {
+      timerRef.current = setTimeout(() => setShowVideo(true), 600);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    setHovered(false);
+    setShowVideo(false);
+    if (timerRef.current) clearTimeout(timerRef.current);
+    if (stopTimerRef.current) clearTimeout(stopTimerRef.current);
+  };
+
+  useEffect(() => {
+    if (showVideo) {
+      stopTimerRef.current = setTimeout(() => setShowVideo(false), 15000);
+    }
+    return () => { if (stopTimerRef.current) clearTimeout(stopTimerRef.current); };
+  }, [showVideo]);
+
+  const coverSrc = item.image || aiCover;
+
+  return (
+    <button
+      key={item.id}
+      onClick={onClick}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      className="flex-shrink-0 rounded-xl overflow-hidden relative transition-all duration-300 group border-2 border-transparent hover:border-player-accent/50 hover:shadow-[0_0_30px_-5px_rgba(200,0,0,0.3)] hover:-translate-y-1 player-card-pop"
+      style={{ width: "200px", aspectRatio: "2/3", background: "hsl(var(--player-bg))" }}
+    >
+      {/* Cover image */}
+      {coverSrc ? (
+        <img src={coverSrc} alt={item.title} className={`w-full h-full object-cover transition-all duration-700 ${showVideo ? 'opacity-0 scale-105' : 'opacity-100'} group-hover:scale-105`} />
+      ) : (
+        <div className="w-full h-full flex items-center justify-center" style={{ background: "hsl(var(--player-bg))" }}>
+          {aiLoading ? (
+            <div className="w-6 h-6 rounded-full border-2 border-player-accent/40 border-t-player-accent animate-spin" />
+          ) : (
+            <TrendingUp className="h-8 w-8" style={{ color: "hsl(var(--player-accent))", opacity: 0.5 }} />
+          )}
+        </div>
+      )}
+
+      {/* YouTube preview on hover */}
+      {showVideo && item.videoId && (
+        <div className="absolute inset-0 z-[2] animate-fade-in">
+          <iframe
+            src={`https://www.youtube.com/embed/${item.videoId}?autoplay=1&mute=1&controls=0&modestbranding=1&start=60&showinfo=0&rel=0&loop=1`}
+            className="w-full h-full"
+            allow="autoplay; encrypted-media"
+            style={{ border: "none" }}
+          />
+        </div>
+      )}
+
+      {/* Ranking badge */}
+      <div
+        className="absolute top-2 left-2 z-10 w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-black shadow-lg"
+        style={{ backgroundColor: "hsl(var(--player-accent))" }}
+      >
+        {idx + 1}
+      </div>
+
+      {/* Channel/Catalog logo - top right */}
+      {item.logoUrl && (
+        <div className="absolute top-2 right-2 z-10 w-8 h-8 rounded-full overflow-hidden bg-black/50 backdrop-blur-sm border border-white/10 shadow-lg">
+          <img src={item.logoUrl} alt="" className="w-full h-full object-cover" />
+        </div>
+      )}
+
+      {/* Live badge */}
+      {item.type === "live" && !item.logoUrl && (
+        <span className="absolute top-2 right-2 z-10 text-[9px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded text-white" style={{ backgroundColor: "hsl(var(--player-accent))", opacity: 0.9 }}>
+          live
+        </span>
+      )}
+
+      {/* Gradient + title */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent z-[3]" />
+      <div className="absolute bottom-0 left-0 right-0 p-3 z-[4] text-left">
+        <p className="text-[11px] font-bold text-white leading-tight line-clamp-2 drop-shadow">{item.title}</p>
+        {item.subtitle && <p className="text-[9px] text-white/60 mt-0.5">{item.subtitle}</p>}
+      </div>
+
+      {/* Play overlay */}
+      {!showVideo && (
+        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-[5]">
+          <div className="w-10 h-10 rounded-full backdrop-blur-sm flex items-center justify-center" style={{ backgroundColor: "hsl(var(--player-accent))", opacity: 0.8 }}>
+            <Play className="h-4 w-4 text-white fill-white" />
+          </div>
+        </div>
+      )}
+    </button>
+  );
+}
+
 /* ─── Catalog Card ─── */
-function CatalogCard({ image, title, subtitle, onClick }: { image?: string | null; title: string; subtitle?: string; onClick: () => void }) {
+function CatalogCard({ image, title, subtitle, logoUrl, onClick }: { image?: string | null; title: string; subtitle?: string; logoUrl?: string | null; onClick: () => void }) {
+  const [aiCover, setAiCover] = useState<string | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+
+  useEffect(() => {
+    if (image || aiCover || aiLoading) return;
+    setAiLoading(true);
+    supabase.functions.invoke("generate-cover", { body: { title, type: "catalog" } })
+      .then(({ data }) => {
+        if (data?.imageUrl) setAiCover(data.imageUrl);
+      })
+      .catch(() => {})
+      .finally(() => setAiLoading(false));
+  }, [image, title, aiCover, aiLoading]);
+
+  const coverSrc = image || aiCover;
+
   return (
     <button
       onClick={onClick}
       className="flex-shrink-0 rounded-xl overflow-hidden relative transition-all duration-300 group border-2 border-transparent hover:border-white/30 hover:shadow-[0_8px_30px_-8px_rgba(0,0,0,0.6)] hover:-translate-y-1 player-card-pop"
       style={{ width: "220px", aspectRatio: "16/9" }}
     >
-      {image ? (
-        <img src={image} alt={title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+      {coverSrc ? (
+        <img src={coverSrc} alt={title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
       ) : (
         <div className="w-full h-full bg-gradient-to-br from-white/10 to-player-bg flex items-center justify-center">
-          <Film className="h-8 w-8 text-white/20" />
+          {aiLoading ? (
+            <div className="w-5 h-5 rounded-full border-2 border-white/20 border-t-white/60 animate-spin" />
+          ) : (
+            <Film className="h-8 w-8 text-white/20" />
+          )}
         </div>
       )}
+
+      {/* Channel logo top-right */}
+      {logoUrl && (
+        <div className="absolute top-2 right-2 z-10 w-7 h-7 rounded-full overflow-hidden bg-black/50 backdrop-blur-sm border border-white/10 shadow">
+          <img src={logoUrl} alt="" className="w-full h-full object-cover" />
+        </div>
+      )}
+
       {/* Play overlay */}
       <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-[2]">
         <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
@@ -548,13 +707,12 @@ function CatalogCard({ image, title, subtitle, onClick }: { image?: string | nul
         </div>
       </div>
       <div className="absolute bottom-0 left-0 right-0 z-10 px-3 pb-2.5 pt-10" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.85) 10%, transparent)" }}>
-        <p className="text-xs font-bold text-white line-clamp-2 text-left mb-0.5">{title}</p>
-        {subtitle && <p className="text-[10px] text-white/40 text-left">{subtitle}</p>}
+        <p className="text-[10px] font-bold text-white line-clamp-2 text-left mb-0.5">{title}</p>
+        {subtitle && <p className="text-[9px] text-white/40 text-left">{subtitle}</p>}
       </div>
     </button>
   );
 }
-
 /* ─── History Card ─── */
 function HistoryCard({ item, onClick }: { item: { channel_name: string; channel_cover_url: string | null; channel_logo_url: string | null; watched_at: string }; onClick: () => void }) {
   return (
@@ -909,7 +1067,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
 
                 {/* Em Alta - Trending */}
                 {dataLoaded && (() => {
-                  const trendingItems: { id: string; image: string | null; title: string; subtitle?: string; type: "live" | "catalog"; channelId: string }[] = [];
+                  const trendingItems: { id: string; image: string | null; title: string; subtitle?: string; type: "live" | "catalog"; channelId: string; videoId?: string; logoUrl?: string | null }[] = [];
                   
                   // Add streaming channels as trending
                   streamingChannels.forEach(ch => {
@@ -920,6 +1078,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                       subtitle: "Ao vivo",
                       type: "live",
                       channelId: ch.id,
+                      logoUrl: ch.logo_url,
                     });
                   });
 
@@ -934,6 +1093,8 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                         subtitle: v.published ? new Date(v.published).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" }) : undefined,
                         type: "catalog",
                         channelId: ch.id,
+                        videoId: v.videoId,
+                        logoUrl: ch.logo_url,
                       });
                     }
                   });
@@ -948,49 +1109,13 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                       </span>
                     }>
                       {trendingItems.slice(0, 5).map((item, idx) => (
-                        <button
+                        <TrendingCard
                           key={item.id}
-                          onClick={() => goToPlayer(item.channelId, item.type === "catalog" ? item.id : undefined)}
-                          className="flex-shrink-0 rounded-xl overflow-hidden relative transition-all duration-300 group border-2 border-transparent hover:border-player-accent/50 hover:shadow-[0_0_30px_-5px_rgba(200,0,0,0.3)] hover:-translate-y-1 player-card-pop"
-                          style={{ width: "200px", aspectRatio: "2/3", animationDelay: `${idx * 60}ms`, background: "hsl(var(--player-bg))" }}
-                        >
-                          {item.image ? (
-                            <img src={item.image} alt={item.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center" style={{ background: "hsl(var(--player-bg))" }}>
-                              <TrendingUp className="h-8 w-8" style={{ color: "hsl(var(--player-accent))", opacity: 0.5 }} />
-                            </div>
-                          )}
-
-                          {/* Ranking badge */}
-                          <div
-                            className="absolute top-2 left-2 z-10 w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-black shadow-lg"
-                            style={{ backgroundColor: "hsl(var(--player-accent))" }}
-                          >
-                            {idx + 1}
-                          </div>
-
-                          {/* Live badge */}
-                          {item.type === "live" && (
-                            <span className="absolute top-2 right-2 z-10 text-[9px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded text-white" style={{ backgroundColor: "hsl(var(--player-accent))", opacity: 0.9 }}>
-                              live
-                            </span>
-                          )}
-
-                          {/* Gradient + title */}
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent z-[1]" />
-                          <div className="absolute bottom-0 left-0 right-0 p-3 z-[2] text-left">
-                            <p className="text-sm font-bold text-white leading-tight line-clamp-2 drop-shadow">{item.title}</p>
-                            {item.subtitle && <p className="text-[11px] text-white/60 mt-0.5">{item.subtitle}</p>}
-                          </div>
-
-                          {/* Play overlay */}
-                          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-[3]">
-                            <div className="w-10 h-10 rounded-full backdrop-blur-sm flex items-center justify-center" style={{ backgroundColor: "hsl(var(--player-accent))", opacity: 0.8 }}>
-                              <Play className="h-4 w-4 text-white fill-white" />
-                            </div>
-                          </div>
-                        </button>
+                          item={item}
+                          idx={idx}
+                          channels={channels}
+                          onClick={() => goToPlayer(item.channelId, item.type === "catalog" ? item.videoId : undefined)}
+                        />
                       ))}
                     </ContentRow>
                   );
@@ -1021,6 +1146,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                             image={channel.cover_url || video.thumbnail}
                             title={video.title}
                             subtitle={video.published ? new Date(video.published).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" }) : undefined}
+                            logoUrl={channel.logo_url}
                             onClick={() => goToPlayer(channel.id, video.videoId)}
                           />
                         ))
@@ -1030,6 +1156,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                             key={item.id}
                             image={item.cover_url}
                             title={item.name}
+                            logoUrl={item.logo_url}
                             onClick={() => goToPlayer(item.id)}
                           />
                         ))
@@ -1091,12 +1218,13 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                             image={channel.cover_url || video.thumbnail}
                             title={video.title}
                             subtitle={video.published ? new Date(video.published).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" }) : undefined}
+                            logoUrl={channel.logo_url}
                             onClick={() => goToPlayer(channel.id, video.videoId)}
                           />
                         ))
                       ) : (
                         items.map(item => (
-                          <CatalogCard key={item.id} image={item.cover_url} title={item.name} onClick={() => goToPlayer(item.id)} />
+                          <CatalogCard key={item.id} image={item.cover_url} title={item.name} logoUrl={item.logo_url} onClick={() => goToPlayer(item.id)} />
                         ))
                       )}
                     </ContentRow>
