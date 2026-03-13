@@ -143,6 +143,46 @@ function PlayerGradeDialog({ programas, onClose }: Props) {
     return colors[Math.abs(hash) % colors.length];
   };
 
+  // Batch fetch AI analysis for all unique programs with descriptions
+  useEffect(() => {
+    const uniqueProgs = programas.filter(p => p.ativo && p.descricao && p.descricao.trim().length > 0);
+    const seen = new Set<string>();
+    const toFetch: Programa[] = [];
+    for (const p of uniqueProgs) {
+      if (seen.has(p.id) || analysisCache.current[p.id]) {
+        if (analysisCache.current[p.id]) setCellAiData(prev => ({ ...prev, [p.id]: analysisCache.current[p.id] }));
+        continue;
+      }
+      seen.add(p.id);
+      toFetch.push(p);
+    }
+    // Fetch in parallel (max 6 at a time)
+    let cancelled = false;
+    const fetchBatch = async () => {
+      for (let i = 0; i < toFetch.length; i += 6) {
+        if (cancelled) return;
+        const batch = toFetch.slice(i, i + 6);
+        const results = await Promise.allSettled(
+          batch.map(p => supabase.functions.invoke("analyze-program", { body: { nome: p.nome, descricao: p.descricao } }).then(({ data, error }) => {
+            if (error || data?.error) return { id: p.id, result: { keywords: [], classificacao: "Livre", justificativa: "" } as AIAnalysis };
+            return { id: p.id, result: data as AIAnalysis };
+          }))
+        );
+        if (cancelled) return;
+        const updates: Record<string, AIAnalysis> = {};
+        for (const r of results) {
+          if (r.status === "fulfilled") {
+            analysisCache.current[r.value.id] = r.value.result;
+            updates[r.value.id] = r.value.result;
+          }
+        }
+        setCellAiData(prev => ({ ...prev, ...updates }));
+      }
+    };
+    fetchBatch();
+    return () => { cancelled = true; };
+  }, [programas]);
+
   // Fetch AI analysis when detail popup opens
   useEffect(() => {
     if (!detailProg) { setAiAnalysis(null); return; }
