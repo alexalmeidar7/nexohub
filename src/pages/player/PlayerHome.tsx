@@ -786,23 +786,38 @@ function HistoryCard({ item, onClick }: { item: { channel_name: string; channel_
   return (
     <button
       onClick={onClick}
-      className="flex-shrink-0 rounded-xl overflow-hidden relative transition-all duration-300 group border-2 border-transparent hover:border-white/30 hover:-translate-y-1 player-card-pop"
-      style={{ width: "200px", aspectRatio: "16/9" }}
+      className="flex-shrink-0 rounded-2xl overflow-hidden relative transition-all duration-300 group cursor-pointer"
+      style={{
+        width: "200px",
+        aspectRatio: "16/9",
+        border: "1px solid rgba(255,255,255,0.06)",
+        boxShadow: "0 4px 20px -8px rgba(0,0,0,0.4)",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = "translateY(-4px) scale(1.02)";
+        e.currentTarget.style.boxShadow = "0 16px 48px -12px rgba(0,0,0,0.6)";
+        e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = "";
+        e.currentTarget.style.boxShadow = "0 4px 20px -8px rgba(0,0,0,0.4)";
+        e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)";
+      }}
     >
       {item.channel_cover_url ? (
-        <img src={item.channel_cover_url} alt={item.channel_name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+        <img src={item.channel_cover_url} alt={item.channel_name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
       ) : item.channel_logo_url ? (
-        <div className="w-full h-full bg-gradient-to-br from-white/5 to-player-bg flex items-center justify-center">
+        <div className="w-full h-full flex items-center justify-center" style={{ background: "linear-gradient(160deg, rgba(255,255,255,0.05) 0%, hsl(var(--player-bg)) 100%)" }}>
           <img src={item.channel_logo_url} alt={item.channel_name} className="h-12 w-auto object-contain" />
         </div>
       ) : (
-        <div className="w-full h-full bg-gradient-to-br from-player-accent/15 to-player-bg flex items-center justify-center">
-          <Radio className="h-8 w-8 text-white/20" />
+        <div className="w-full h-full flex items-center justify-center" style={{ background: "linear-gradient(160deg, hsla(var(--player-accent) / 0.1) 0%, hsl(var(--player-bg)) 100%)" }}>
+          <Radio className="h-8 w-8 text-white/15" />
         </div>
       )}
-      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/85 to-transparent px-3 pb-2 pt-8">
+      <div className="absolute bottom-0 left-0 right-0 px-3 pb-2.5 pt-10" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.9) 20%, transparent)" }}>
         <p className="text-xs font-bold text-white truncate">{item.channel_name}</p>
-        <p className="text-[10px] text-white/40 flex items-center gap-1">
+        <p className="text-[10px] text-white/40 flex items-center gap-1.5 mt-0.5">
           <Clock className="h-2.5 w-2.5" />
           {new Date(item.watched_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
         </p>
