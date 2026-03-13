@@ -1,9 +1,84 @@
 import { useState, useEffect, useRef } from "react";
-import { Palette, Save, RotateCcw, Upload, ImageIcon, X, Loader2 } from "lucide-react";
+import { Palette, Save, RotateCcw, Upload, ImageIcon, X, Loader2, AlertTriangle, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { compressImage } from "@/lib/imageCompressor";
+
+// --- Contrast Analysis Utilities ---
+function hexToRgb(hex: string): [number, number, number] {
+  const h = hex.replace("#", "");
+  return [parseInt(h.substring(0, 2), 16), parseInt(h.substring(2, 4), 16), parseInt(h.substring(4, 6), 16)];
+}
+
+function relativeLuminance([r, g, b]: [number, number, number]): number {
+  const [rs, gs, bs] = [r, g, b].map(c => {
+    const s = c / 255;
+    return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+  });
+  return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
+}
+
+function contrastRatio(hex1: string, hex2: string): number {
+  const l1 = relativeLuminance(hexToRgb(hex1));
+  const l2 = relativeLuminance(hexToRgb(hex2));
+  const lighter = Math.max(l1, l2);
+  const darker = Math.min(l1, l2);
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
+function rgbToHex(r: number, g: number, b: number): string {
+  return "#" + [r, g, b].map(c => Math.min(255, Math.max(0, Math.round(c))).toString(16).padStart(2, "0")).join("");
+}
+
+function adjustForContrast(textHex: string, bgHex: string, minRatio = 4.5): string {
+  const ratio = contrastRatio(textHex, bgHex);
+  if (ratio >= minRatio) return textHex;
+  // Determine if we should lighten or darken the text
+  const bgLum = relativeLuminance(hexToRgb(bgHex));
+  const [r, g, b] = hexToRgb(textHex);
+  const direction = bgLum > 0.5 ? -1 : 1; // darken text on light bg, lighten on dark bg
+  let adjusted = [r, g, b] as [number, number, number];
+  for (let i = 0; i < 100; i++) {
+    adjusted = adjusted.map(c => c + direction * 3) as [number, number, number];
+    adjusted = adjusted.map(c => Math.min(255, Math.max(0, c))) as [number, number, number];
+    const newHex = rgbToHex(...adjusted);
+    if (contrastRatio(newHex, bgHex) >= minRatio) return newHex;
+  }
+  return bgLum > 0.5 ? "#000000" : "#ffffff";
+}
+
+interface ContrastIssue {
+  label: string;
+  textColor: string;
+  bgColor: string;
+  ratio: number;
+  fixedColor: string;
+  textKey: string;
+}
+
+function analyzeContrast(colors: LayoutColors): ContrastIssue[] {
+  const issues: ContrastIssue[] = [];
+  const pairs: { label: string; textKey: string; textColor: string; bgColor: string }[] = [
+    { label: "Texto da página sobre fundo da página", textKey: "pageText", textColor: colors.pageText, bgColor: colors.pageBg },
+    { label: "Texto do cabeçalho sobre fundo do cabeçalho", textKey: "headerText", textColor: colors.headerText, bgColor: colors.headerBg },
+    { label: "Texto dos botões sobre fundo dos botões", textKey: "buttonText", textColor: colors.buttonText, bgColor: colors.buttonBg },
+    { label: "Links sobre fundo da página", textKey: "linkColor", textColor: colors.linkColor, bgColor: colors.pageBg },
+    { label: "Cor de destaque sobre fundo da página", textKey: "accentColor", textColor: colors.accentColor, bgColor: colors.pageBg },
+  ];
+  for (const pair of pairs) {
+    if (!/^#[0-9a-fA-F]{6}$/.test(pair.textColor) || !/^#[0-9a-fA-F]{6}$/.test(pair.bgColor)) continue;
+    const ratio = contrastRatio(pair.textColor, pair.bgColor);
+    if (ratio < 4.5) {
+      issues.push({
+        ...pair,
+        ratio,
+        fixedColor: adjustForContrast(pair.textColor, pair.bgColor),
+      });
+    }
+  }
+  return issues;
+}
 
 interface LayoutColors {
   pageBg: string;
