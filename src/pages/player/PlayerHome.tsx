@@ -665,6 +665,21 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   }, [programas]);
 
   const currentProgram = getCurrentProgram();
+
+  // Find next program (the one starting after current ends, same day)
+  const nextProgram = useMemo(() => {
+    if (!currentProgram) return undefined;
+    const now = new Date();
+    const today = DAY_MAP[String(now.getDay())];
+    const endTime = currentProgram.horario_fim;
+    // Find program that starts at or after current ends, on the same day, sorted by start time
+    const candidates = programas
+      .filter(p => p.id !== currentProgram.id && p.horario_inicio >= endTime)
+      .filter(p => !p.dias_semana || p.dias_semana.length === 0 || p.dias_semana.some(d => d.toLowerCase().startsWith(today)))
+      .sort((a, b) => a.horario_inicio.localeCompare(b.horario_inicio));
+    return candidates[0] || undefined;
+  }, [programas, currentProgram]);
+
   const streamingChannels = channels.filter(ch => ch.type === "video_live" || ch.type === "audio_live");
   const catalogChannels = channels.filter(ch => ch.type === "catalog");
   const catalogGroups: Record<string, Channel[]> = {};
