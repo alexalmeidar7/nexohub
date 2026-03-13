@@ -26,6 +26,7 @@ interface Programa {
   horario_fim: string;
   dias_semana: string[] | null;
   capa: string | null;
+  thumb: string | null;
   descricao?: string | null;
 }
 
