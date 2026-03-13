@@ -1182,7 +1182,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                         type: "catalog",
                         channelId: ch.id,
                         videoId: v.videoId,
-                        logoUrl: ch.logo_url,
+                        logoUrl: ch.background_url || ch.logo_url,
                       });
                     }
                   });
