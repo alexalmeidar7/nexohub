@@ -637,7 +637,7 @@ function TrendingCard({ item, idx, channels, onClick }: {
           fs: 0,
           playsinline: 1,
           cc_load_policy: 0,
-          start: 30,
+          start: 120,
         },
         events: {
           onReady: (e: any) => {
