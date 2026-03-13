@@ -387,7 +387,7 @@ function HistoryCard({ item, onClick }: { item: { channel_name: string; channel_
   return (
     <button
       onClick={onClick}
-      className="flex-shrink-0 rounded-xl overflow-hidden relative transition-all duration-300 group border-2 border-transparent hover:border-white/30"
+      className="flex-shrink-0 rounded-xl overflow-hidden relative transition-all duration-300 group border-2 border-transparent hover:border-white/30 hover:-translate-y-1 player-card-pop"
       style={{ width: "200px", aspectRatio: "16/9" }}
     >
       {item.channel_cover_url ? (
