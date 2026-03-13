@@ -1030,12 +1030,6 @@ ${perguntaActions}
             {/* Divider */}
             <div className="h-px" style={{ backgroundColor: "rgba(13,4,70,0.06)" }} />
 
-            {/* Texto Roteiro - hidden for Primeira Hora Positiva */}
-            {programaNome !== "Primeira Hora Positiva" && (
-              <>
-            {/* Divider */}
-            <div className="h-px" style={{ backgroundColor: "rgba(13,4,70,0.06)" }} />
-
             {/* Texto Roteiro */}
             <div>
               <p className="text-[10px] font-bold uppercase tracking-wider mb-3" style={{ color: "rgba(13,4,70,0.4)" }}>Conteúdo do roteiro</p>
