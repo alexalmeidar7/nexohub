@@ -358,7 +358,7 @@ function CatalogCard({ image, title, subtitle, onClick }: { image?: string | nul
   return (
     <button
       onClick={onClick}
-      className="flex-shrink-0 rounded-xl overflow-hidden relative transition-all duration-300 group border-2 border-transparent hover:border-white/30 hover:shadow-[0_8px_30px_-8px_rgba(0,0,0,0.6)]"
+      className="flex-shrink-0 rounded-xl overflow-hidden relative transition-all duration-300 group border-2 border-transparent hover:border-white/30 hover:shadow-[0_8px_30px_-8px_rgba(0,0,0,0.6)] hover:-translate-y-1 player-card-pop"
       style={{ width: "220px", aspectRatio: "16/9" }}
     >
       {image ? (
