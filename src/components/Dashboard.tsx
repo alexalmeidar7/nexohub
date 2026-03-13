@@ -826,13 +826,21 @@ function UnifiedXmlField() {
           const geo = await geoRes.json();
           if (geo.results?.length) {
             const { latitude, longitude, name } = geo.results[0];
-            const wx = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code&timezone=auto&forecast_days=1`);
+            const wx = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code&timezone=auto&forecast_days=2`);
             const d = await wx.json();
             const wbIcon = weatherCodeToWbIcon(d.current.weather_code);
             const iconUrl = `https://www.weatherbit.io/static/img/icons/${wbIcon}.png`;
             const closestWc = Object.keys(weatherLabelsMap).map(Number).reduce((prev, curr) => (Math.abs(curr - d.current.weather_code) < Math.abs(prev - d.current.weather_code) ? curr : prev));
             const condLabel = weatherLabelsMap[closestWc] || "Desconhecido";
-            weatherXml = `  <tempo>\n    <cidade>${name}</cidade>\n    <temperatura>${Math.round(d.current.temperature_2m)}Cº</temperatura>\n    <descricao>${condLabel}</descricao>\n    <icone_url>${iconUrl}</icone_url>\n    <minima>${Math.round(d.daily.temperature_2m_min[0])}Cº</minima>\n    <maxima>${Math.round(d.daily.temperature_2m_max[0])}Cº</maxima>\n    <humidade>${d.current.relative_humidity_2m}%</humidade>\n    <precipitacao>${d.daily.precipitation_probability_max[0] ?? 0}%</precipitacao>\n  </tempo>`;
+            let amanhaXml = "";
+            if (d.daily.temperature_2m_min[1] != null) {
+              const twCode = d.daily.weather_code[1] ?? 0;
+              const twIcon = `https://www.weatherbit.io/static/img/icons/${weatherCodeToWbIcon(twCode)}.png`;
+              const twClosest = Object.keys(weatherLabelsMap).map(Number).reduce((prev, curr) => (Math.abs(curr - twCode) < Math.abs(prev - twCode) ? curr : prev));
+              const twLabel = weatherLabelsMap[twClosest] || "Desconhecido";
+              amanhaXml = `\n    <amanha>\n      <temperatura_minima>${Math.round(d.daily.temperature_2m_min[1])}Cº</temperatura_minima>\n      <temperatura_maxima>${Math.round(d.daily.temperature_2m_max[1])}Cº</temperatura_maxima>\n      <url_imagem_icone>${twIcon}</url_imagem_icone>\n      <descricao_tempo>${twLabel}</descricao_tempo>\n    </amanha>`;
+            }
+            weatherXml = `  <tempo>\n    <cidade>${name}</cidade>\n    <temperatura>${Math.round(d.current.temperature_2m)}Cº</temperatura>\n    <descricao>${condLabel}</descricao>\n    <icone_url>${iconUrl}</icone_url>\n    <minima>${Math.round(d.daily.temperature_2m_min[0])}Cº</minima>\n    <maxima>${Math.round(d.daily.temperature_2m_max[0])}Cº</maxima>\n    <humidade>${d.current.relative_humidity_2m}%</humidade>\n    <precipitacao>${d.daily.precipitation_probability_max[0] ?? 0}%</precipitacao>${amanhaXml}\n  </tempo>`;
           }
         } catch {}
       }
