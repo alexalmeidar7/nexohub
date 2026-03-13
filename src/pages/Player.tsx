@@ -800,7 +800,16 @@ export default function PlayerPage() {
     const match = canal.url.match(/[?&]list=([a-zA-Z0-9_-]+)/);
     if (!match) return;
     supabase.functions.invoke("youtube-playlist", { body: { playlistId: match[1] } }).then(({ data }) => {
-      if (data?.videos) setYoutubeVideos(data.videos);
+      if (data?.videos) {
+        setYoutubeVideos(data.videos);
+        // Auto-select video from ?vid= param (catalog deep link)
+        if (requestedVideoId && data.videos.some((v: any) => v.videoId === requestedVideoId)) {
+          setSelectedVideoId(requestedVideoId);
+          setPlaying(true);
+          setBuffering(false);
+          setYtPlaying(true);
+        }
+      }
     });
   }, [canal?.url, isYoutube]);
 
