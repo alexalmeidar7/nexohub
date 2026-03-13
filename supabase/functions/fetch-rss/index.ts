@@ -17,15 +17,24 @@ Deno.serve(async (req) => {
       });
     }
 
-    const response = await fetch(url, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Accept": "application/rss+xml, application/xml, text/xml, text/html, */*",
-        "Accept-Charset": "utf-8",
-        "Accept-Language": "pt-BR,pt;q=0.9,en;q=0.8",
-      },
-      signal: AbortSignal.timeout(4000),
-    });
+    let response: Response;
+    try {
+      response = await fetch(url, {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (compatible; RSSBot/1.0)",
+          "Accept": "application/rss+xml, application/xml, text/xml, */*",
+        },
+        signal: AbortSignal.timeout(2500),
+      });
+    } catch (fetchErr) {
+      const msg = fetchErr instanceof DOMException && fetchErr.name === "TimeoutError"
+        ? "Feed demorou demais para responder"
+        : fetchErr.message;
+      return new Response(JSON.stringify({ error: msg }), {
+        status: 504,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     // Handle encoding properly
     const contentType = response.headers.get("content-type") || "";
