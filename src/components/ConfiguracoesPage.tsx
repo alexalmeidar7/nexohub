@@ -84,19 +84,22 @@ function StyledInput({ value, onChange, placeholder, type = "text", readOnly = f
   );
 }
 
-function CollapsibleBox({ title, defaultOpen = true, children }: { title: string; defaultOpen?: boolean; children: React.ReactNode }) {
-  const [open, setOpen] = useState(defaultOpen);
+function CollapsibleBox({ title, icon, children }: { title: string; icon?: React.ReactNode; defaultOpen?: boolean; children: React.ReactNode }) {
+  const [open, setOpen] = useState(true);
   return (
-    <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}>
+    <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "#ffffff", boxShadow: "0 4px 20px rgba(13,4,70,0.08)" }}>
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between px-5 py-3 transition-colors"
+        className="w-full flex items-center justify-between px-6 py-4 transition-colors"
         style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)", color: "#ffffff" }}
       >
-        <h3 className="text-sm font-bold text-white">{title}</h3>
-        {open ? <ChevronUp size={18} className="text-white" /> : <ChevronDown size={18} className="text-white" />}
+        <div className="flex items-center gap-3">
+          {icon}
+          <h3 className="text-sm font-bold text-white">{title}</h3>
+        </div>
+        {open ? <ChevronUp size={18} className="text-white/80" /> : <ChevronDown size={18} className="text-white/80" />}
       </button>
-      {open && <div className="p-5 space-y-4" style={{ backgroundColor: "#ffffff" }}>{children}</div>}
+      {open && <div className="p-6 space-y-5" style={{ backgroundColor: "#ffffff" }}>{children}</div>}
     </div>
   );
 }
