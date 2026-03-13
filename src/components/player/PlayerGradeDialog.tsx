@@ -212,18 +212,39 @@ function PlayerGradeDialog({ programas, onClose }: Props) {
     setAiLoading(true);
     setAiAnalysis(null);
 
+    if (aiAnalysisDisabled.current) {
+      setAiLoading(false);
+      setAiAnalysis({ keywords: [], classificacao: "Livre", justificativa: "Análise indisponível no momento." });
+      return;
+    }
+
     supabase.functions.invoke("analyze-program", {
       body: { nome: detailProg.nome, descricao: detailProg.descricao },
     }).then(({ data, error }) => {
       if (cancelled) return;
       setAiLoading(false);
+      const status = (error as any)?.context?.status ?? (error as any)?.status;
+      const msg = String((data as any)?.error || (error as any)?.message || "");
+
+      if (status === 402 || status === 429 || msg.includes("insuficientes") || msg.includes("Limite")) {
+        aiAnalysisDisabled.current = true;
+        setAiAnalysis({ keywords: [], classificacao: "Livre", justificativa: "Análise indisponível no momento." });
+        return;
+      }
+
       if (error || data?.error) {
         setAiAnalysis({ keywords: [], classificacao: "Livre", justificativa: "Não foi possível analisar." });
         return;
       }
+
       const result = data as AIAnalysis;
       analysisCache.current[detailProg.id] = result;
       setAiAnalysis(result);
+    }).catch(() => {
+      if (cancelled) return;
+      setAiLoading(false);
+      aiAnalysisDisabled.current = true;
+      setAiAnalysis({ keywords: [], classificacao: "Livre", justificativa: "Análise indisponível no momento." });
     });
 
     return () => { cancelled = true; };
