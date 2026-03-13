@@ -789,6 +789,27 @@ function ServerClock() {
 /* ========== UNIFIED XML FIELD ========== */
 const WEATHER_KEY = "masterview_last_city";
 
+const weatherLabelsMap: Record<number, string> = {
+  0: "Céu limpo", 1: "Parcialmente limpo", 2: "Parcialmente nublado", 3: "Nublado",
+  45: "Neblina", 48: "Neblina", 51: "Garoa leve", 53: "Garoa", 55: "Garoa forte",
+  61: "Chuva leve", 63: "Chuva moderada", 65: "Chuva forte",
+  71: "Neve leve", 73: "Neve", 75: "Neve forte",
+  80: "Pancadas leves", 81: "Pancadas", 82: "Pancadas fortes",
+  95: "Tempestade", 96: "Tempestade com granizo", 99: "Tempestade severa",
+};
+
+function weatherCodeToWbIcon(code: number): string {
+  const map: Record<number, string> = {
+    0: "c01d", 1: "c02d", 2: "c02d", 3: "c04d",
+    45: "a05d", 48: "a05d", 51: "d01d", 53: "d02d", 55: "d03d",
+    61: "r01d", 63: "r02d", 65: "r03d", 71: "s01d", 73: "s02d", 75: "s03d",
+    80: "r04d", 81: "r05d", 82: "r06d", 95: "t01d", 96: "t04d", 99: "t05d",
+  };
+  const codes = Object.keys(map).map(Number);
+  const closest = codes.reduce((prev, curr) => (Math.abs(curr - code) < Math.abs(prev - code) ? curr : prev));
+  return map[closest] || "c01d";
+}
+
 function UnifiedXmlField() {
   const [xmlContent, setXmlContent] = useState("");
 
