@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback, lazy, Suspense } from "react";
+import { useEffect, useState, useRef, useCallback, useMemo, lazy, Suspense } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,6 +21,7 @@ interface Channel {
 }
 
 interface Programa {
+  id?: string;
   nome: string;
   horario_inicio: string;
   horario_fim: string;
@@ -41,39 +42,49 @@ type Section = "home" | "streaming" | "content" | "shop";
 
 /* ─── Hero Banner Carousel ─── */
 function HeroBanner({
-  channels,
   currentProgram,
+  nextProgram,
   nowPlaying,
   channelName,
   onPlay,
   onGrade,
 }: {
-  channels: Channel[];
   currentProgram?: Programa;
+  nextProgram?: Programa;
   nowPlaying?: { musica: string; artista: string } | null;
   channelName?: string;
-  onPlay: (channelId?: string) => void;
+  onPlay: () => void;
   onGrade: () => void;
 }) {
   const INTERVAL = 8000;
-  const items = channels.length > 0 ? channels : [null];
+
+  // Build slides: current program thumb + next program thumb (if available)
+  const slides = useMemo(() => {
+    const s: { thumb: string | null; program: Programa | undefined; label: string }[] = [];
+    s.push({ thumb: currentProgram?.thumb || null, program: currentProgram, label: "Agora" });
+    if (nextProgram?.thumb) {
+      s.push({ thumb: nextProgram.thumb, program: nextProgram, label: "A seguir" });
+    }
+    return s;
+  }, [currentProgram?.thumb, nextProgram?.thumb, currentProgram, nextProgram]);
+
   const [activeIdx, setActiveIdx] = useState(0);
   const [prevIdx, setPrevIdx] = useState<number | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Auto-rotate
   useEffect(() => {
-    if (items.length <= 1) return;
+    if (slides.length <= 1) return;
     timerRef.current = setInterval(() => {
       setActiveIdx(prev => {
         setPrevIdx(prev);
-        return (prev + 1) % items.length;
+        return (prev + 1) % slides.length;
       });
     }, INTERVAL);
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
-  }, [items.length]);
+  }, [slides.length]);
 
-  // Clear prevIdx after crossfade completes
+  // Clear prevIdx after crossfade
   useEffect(() => {
     if (prevIdx === null) return;
     const t = setTimeout(() => setPrevIdx(null), 1000);
@@ -84,22 +95,16 @@ function HeroBanner({
     if (idx === activeIdx) return;
     setPrevIdx(activeIdx);
     setActiveIdx(idx);
-    // Reset timer
     if (timerRef.current) clearInterval(timerRef.current);
-    if (items.length > 1) {
+    if (slides.length > 1) {
       timerRef.current = setInterval(() => {
-        setActiveIdx(prev => { setPrevIdx(prev); return (prev + 1) % items.length; });
+        setActiveIdx(prev => { setPrevIdx(prev); return (prev + 1) % slides.length; });
       }, INTERVAL);
     }
   };
 
-  const getSlideImage = (ch: Channel | null) => {
-    // Priorizar thumb do programa atual; se não houver, fundo preto (sem imagem)
-    if (currentProgram?.thumb) return currentProgram.thumb;
-    return null; // null = fundo preto
-  };
-
-  const activeChannel = items[activeIdx];
+  const activeSlide = slides[activeIdx];
+  const displayProgram = activeSlide?.program;
 
   // Progress bar for current program
   let pct = 0;
@@ -119,11 +124,10 @@ function HeroBanner({
   return (
     <div className="relative w-full overflow-hidden" style={{ height: "clamp(340px, 56vh, 560px)", backgroundColor: "black" }}>
       {/* Crossfade images */}
-      {items.map((ch, idx) => {
-        const imgSrc = getSlideImage(ch);
-        if (!imgSrc) return (
+      {slides.map((slide, idx) => {
+        if (!slide.thumb) return (
           <div
-            key={ch?.id || "fallback"}
+            key={`slide-${idx}`}
             className="absolute inset-0 w-full h-full bg-black"
             style={{
               opacity: idx === activeIdx ? 1 : 0,
@@ -134,9 +138,9 @@ function HeroBanner({
         );
         return (
           <img
-            key={ch?.id || "fallback"}
-            src={imgSrc}
-            alt={ch?.name || "Banner"}
+            key={`slide-${idx}`}
+            src={slide.thumb}
+            alt={slide.program?.nome || "Banner"}
             className="absolute inset-0 w-full h-full object-cover object-top"
             style={{
               opacity: idx === activeIdx ? 1 : idx === prevIdx ? 0 : 0,
@@ -153,31 +157,31 @@ function HeroBanner({
 
       {/* Content */}
       <div className="absolute bottom-0 left-0 right-0 px-8 sm:px-12 pb-10 z-10 player-hero-content" style={{ maxWidth: "680px" }}>
-        {/* Live badge */}
-        {activeChannel && (
-          <div className="flex items-center gap-2 mb-3" key={activeChannel.id} style={{ animation: "player-hero-content 0.6s ease-out both" }}>
-            <span className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-wider font-semibold bg-player-accent/90 px-2.5 py-1 rounded-md text-white">
-              <span className="inline-block w-2 h-2 rounded-full bg-white animate-pulse" />
-              ao vivo
-            </span>
-            <span className="text-white/60 text-xs">{activeChannel.name}</span>
-          </div>
-        )}
+        {/* Slide label badge */}
+        <div className="flex items-center gap-2 mb-3" style={{ animation: "player-hero-content 0.6s ease-out both" }}>
+          <span className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-wider font-semibold bg-player-accent/90 px-2.5 py-1 rounded-md text-white">
+            <span className="inline-block w-2 h-2 rounded-full bg-white animate-pulse" />
+            {activeSlide?.label || "ao vivo"}
+          </span>
+          {channelName && <span className="text-white/60 text-xs">{channelName}</span>}
+        </div>
 
         {/* Program name */}
-        {currentProgram ? (
+        {displayProgram ? (
           <>
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white leading-tight tracking-tight mb-2 drop-shadow-lg" style={{ textShadow: "0 2px 20px rgba(0,0,0,0.5)" }}>
-              {currentProgram.nome}
+              {displayProgram.nome}
             </h1>
             <div className="flex items-center gap-3 mb-2">
-              <span className="text-sm text-white/70">{currentProgram.horario_inicio} – {currentProgram.horario_fim}</span>
-              <div className="w-32 h-1 rounded-full bg-white/20 overflow-hidden">
-                <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: "hsl(var(--player-accent))" }} />
-              </div>
+              <span className="text-sm text-white/70">{displayProgram.horario_inicio} – {displayProgram.horario_fim}</span>
+              {activeIdx === 0 && (
+                <div className="w-32 h-1 rounded-full bg-white/20 overflow-hidden">
+                  <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: "hsl(var(--player-accent))" }} />
+                </div>
+              )}
             </div>
-            {currentProgram.descricao && (
-              <p className="text-sm text-white/60 line-clamp-2 mb-4 max-w-lg">{currentProgram.descricao}</p>
+            {displayProgram.descricao && (
+              <p className="text-sm text-white/60 line-clamp-2 mb-4 max-w-lg">{displayProgram.descricao}</p>
             )}
           </>
         ) : channelName ? (
@@ -197,7 +201,7 @@ function HeroBanner({
         {/* Action buttons */}
         <div className="flex items-center gap-3">
           <button
-            onClick={() => onPlay(activeChannel?.id)}
+            onClick={onPlay}
             className="flex items-center gap-2 px-6 py-3 rounded-lg text-sm font-bold text-white transition-all duration-300 hover:scale-105"
             style={{
               background: "linear-gradient(135deg, hsl(var(--player-accent)), hsl(var(--player-accent-hover)))",
@@ -222,9 +226,9 @@ function HeroBanner({
         </div>
 
         {/* Carousel indicators */}
-        {items.length > 1 && (
+        {slides.length > 1 && (
           <div className="flex items-center gap-2 mt-5">
-            {items.map((_, idx) => (
+            {slides.map((slide, idx) => (
               <button
                 key={idx}
                 onClick={() => goTo(idx)}
@@ -665,6 +669,21 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   }, [programas]);
 
   const currentProgram = getCurrentProgram();
+
+  // Find next program (the one starting after current ends, same day)
+  const nextProgram = useMemo(() => {
+    if (!currentProgram) return undefined;
+    const now = new Date();
+    const today = DAY_MAP[String(now.getDay())];
+    const endTime = currentProgram.horario_fim;
+    // Find program that starts at or after current ends, on the same day, sorted by start time
+    const candidates = programas
+      .filter(p => p.id !== currentProgram.id && p.horario_inicio >= endTime)
+      .filter(p => !p.dias_semana || p.dias_semana.length === 0 || p.dias_semana.some(d => d.toLowerCase().startsWith(today)))
+      .sort((a, b) => a.horario_inicio.localeCompare(b.horario_inicio));
+    return candidates[0] || undefined;
+  }, [programas, currentProgram]);
+
   const streamingChannels = channels.filter(ch => ch.type === "video_live" || ch.type === "audio_live");
   const catalogChannels = channels.filter(ch => ch.type === "catalog");
   const catalogGroups: Record<string, Channel[]> = {};
@@ -767,11 +786,11 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                 </div>
               ) : (
                 <HeroBanner
-                  channels={streamingChannels}
                   currentProgram={currentProgram || undefined}
+                  nextProgram={nextProgram}
                   nowPlaying={nowPlaying}
                   channelName={channelName}
-                  onPlay={(chId) => goToPlayer(chId)}
+                  onPlay={() => goToPlayer(streamingChannels[0]?.id)}
                   onGrade={() => setShowGrade(true)}
                 />
               )}
