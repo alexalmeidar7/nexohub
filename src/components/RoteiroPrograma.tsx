@@ -1133,12 +1133,22 @@ ${perguntaActions}
             </div>
             </div>
 
-            {/* NoticiasPanel inline for Primeira Hora Positiva */}
+            {/* NoticiasPanel inline for Primeira Hora Positiva - with auto JornalBlockBuilder */}
             {programaNome === "Primeira Hora Positiva" && (
               <>
                 <div className="h-px" style={{ backgroundColor: "rgba(13,4,70,0.06)" }} />
                 <Suspense fallback={<ModulePageSkeleton />}>
-                  <NoticiasPanel />
+                  <NoticiasPanel defaultJornalConfig={{
+                    programaId: programas.find(p => p.nome === "Primeira Hora Positiva")?.id || "",
+                    programaNome: "Primeira Hora Positiva",
+                    blocos: 3,
+                    tempoBlocoMin: 15,
+                    intervalos: 2,
+                    tempoIntervaloMin: 5,
+                    temTestemunha: false,
+                    horarioTestemunha: "",
+                    textoTestemunhal: "",
+                  }} />
                 </Suspense>
               </>
             )}
