@@ -1,6 +1,7 @@
-import { useState, useRef, useMemo, memo } from "react";
-import { X, Clock, Radio, MapPin, Calendar, Users } from "lucide-react";
+import { useState, useRef, useMemo, useEffect, memo } from "react";
+import { X, Clock, Radio, MapPin, Calendar, Tag, Shield, Sparkles, Loader2 } from "lucide-react";
 import { format, addDays, startOfWeek } from "date-fns";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Programa {
   id: string;
@@ -16,6 +17,12 @@ interface Programa {
   capa: string | null;
   descricao: string | null;
   apresentador_id: string | null;
+}
+
+interface AIAnalysis {
+  keywords: string[];
+  classificacao: string;
+  justificativa: string;
 }
 
 const DIAS_SEMANA = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
@@ -35,6 +42,16 @@ function generateGradeSlots(): string[] {
   return slots;
 }
 
+const RATING_COLORS: Record<string, { bg: string; text: string; label: string }> = {
+  "Livre": { bg: "rgba(34,197,94,0.15)", text: "rgb(74,222,128)", label: "Livre" },
+  "6": { bg: "rgba(251,191,36,0.15)", text: "rgb(251,191,36)", label: "6 anos" },
+  "10": { bg: "rgba(59,130,246,0.15)", text: "rgb(96,165,250)", label: "10 anos" },
+  "12": { bg: "rgba(245,158,11,0.15)", text: "rgb(251,191,36)", label: "12 anos" },
+  "14": { bg: "rgba(249,115,22,0.15)", text: "rgb(251,146,60)", label: "14 anos" },
+  "16": { bg: "rgba(239,68,68,0.15)", text: "rgb(248,113,113)", label: "16 anos" },
+  "18": { bg: "rgba(0,0,0,0.3)", text: "rgb(248,113,113)", label: "18 anos" },
+};
+
 interface Props {
   programas: Programa[];
   onClose: () => void;
@@ -42,7 +59,10 @@ interface Props {
 
 function PlayerGradeDialog({ programas, onClose }: Props) {
   const [detailProg, setDetailProg] = useState<Programa | null>(null);
+  const [aiAnalysis, setAiAnalysis] = useState<AIAnalysis | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
   const gradeScrollRef = useRef<HTMLDivElement>(null);
+  const analysisCache = useRef<Record<string, AIAnalysis>>({});
 
   const now = new Date();
   const diaAtual = DIAS_MAP_FULL[now.getDay()];
@@ -106,7 +126,7 @@ function PlayerGradeDialog({ programas, onClose }: Props) {
     return { skipMap: skip, spanMap: span };
   }, [programas, gradeSlots]);
 
-  // Color palette for programs (deterministic by name)
+  // Color palette for programs
   const getProgColor = (name: string) => {
     const colors = [
       { bg: "rgba(239,68,68,0.12)", border: "rgba(239,68,68,0.25)", text: "rgb(252,165,165)" },
@@ -122,6 +142,42 @@ function PlayerGradeDialog({ programas, onClose }: Props) {
     for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
     return colors[Math.abs(hash) % colors.length];
   };
+
+  // Fetch AI analysis when detail popup opens
+  useEffect(() => {
+    if (!detailProg) { setAiAnalysis(null); return; }
+
+    // Check cache first
+    if (analysisCache.current[detailProg.id]) {
+      setAiAnalysis(analysisCache.current[detailProg.id]);
+      return;
+    }
+
+    if (!detailProg.descricao || detailProg.descricao.trim().length === 0) {
+      setAiAnalysis({ keywords: [], classificacao: "Livre", justificativa: "Sem descrição disponível." });
+      return;
+    }
+
+    let cancelled = false;
+    setAiLoading(true);
+    setAiAnalysis(null);
+
+    supabase.functions.invoke("analyze-program", {
+      body: { nome: detailProg.nome, descricao: detailProg.descricao },
+    }).then(({ data, error }) => {
+      if (cancelled) return;
+      setAiLoading(false);
+      if (error || data?.error) {
+        setAiAnalysis({ keywords: [], classificacao: "Livre", justificativa: "Não foi possível analisar." });
+        return;
+      }
+      const result = data as AIAnalysis;
+      analysisCache.current[detailProg.id] = result;
+      setAiAnalysis(result);
+    });
+
+    return () => { cancelled = true; };
+  }, [detailProg?.id]);
 
   return (
     <div
@@ -359,6 +415,23 @@ function PlayerGradeDialog({ programas, onClose }: Props) {
                       {detailProg.estudio}
                     </div>
                   )}
+
+                  {/* AI Age rating chip */}
+                  {aiAnalysis && (
+                    (() => {
+                      const rating = RATING_COLORS[aiAnalysis.classificacao] || RATING_COLORS["Livre"];
+                      return (
+                        <div
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold"
+                          style={{ backgroundColor: rating.bg, color: rating.text }}
+                          title={aiAnalysis.justificativa}
+                        >
+                          <Shield size={10} />
+                          {rating.label}
+                        </div>
+                      );
+                    })()
+                  )}
                 </div>
 
                 {/* Days of the week */}
@@ -388,6 +461,61 @@ function PlayerGradeDialog({ programas, onClose }: Props) {
                 {detailProg.descricao && (
                   <p className="text-sm text-white/50 mt-4 leading-relaxed">{detailProg.descricao}</p>
                 )}
+
+                {/* AI Analysis section */}
+                <div className="mt-4 pt-4" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+                  <div className="flex items-center gap-2 mb-3">
+                    <Sparkles size={12} style={{ color: "hsl(var(--player-accent))" }} />
+                    <span className="text-[11px] font-semibold text-white/40 uppercase tracking-wider">Análise por IA</span>
+                  </div>
+
+                  {aiLoading ? (
+                    <div className="flex items-center gap-2 py-3">
+                      <Loader2 size={14} className="animate-spin text-white/30" />
+                      <span className="text-xs text-white/30">Analisando programa...</span>
+                    </div>
+                  ) : aiAnalysis ? (
+                    <div className="space-y-3">
+                      {/* Keywords */}
+                      {aiAnalysis.keywords.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5">
+                          {aiAnalysis.keywords.map((kw, i) => (
+                            <span
+                              key={i}
+                              className="inline-flex items-center gap-1 text-[10px] px-2.5 py-1 rounded-lg font-medium"
+                              style={{
+                                backgroundColor: "hsla(var(--player-accent) / 0.1)",
+                                color: "hsl(var(--player-accent))",
+                                border: "1px solid hsla(var(--player-accent) / 0.2)",
+                              }}
+                            >
+                              <Tag size={8} />
+                              {kw}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Age classification with justification */}
+                      {aiAnalysis.justificativa && (
+                        <div
+                          className="rounded-xl p-3"
+                          style={{ backgroundColor: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.05)" }}
+                        >
+                          <div className="flex items-start gap-2">
+                            <Shield size={12} className="flex-shrink-0 mt-0.5" style={{ color: RATING_COLORS[aiAnalysis.classificacao]?.text || "rgb(74,222,128)" }} />
+                            <div>
+                              <span className="text-[11px] font-semibold" style={{ color: RATING_COLORS[aiAnalysis.classificacao]?.text || "rgb(74,222,128)" }}>
+                                Classificação: {RATING_COLORS[aiAnalysis.classificacao]?.label || aiAnalysis.classificacao}
+                              </span>
+                              <p className="text-[11px] text-white/40 mt-1 leading-relaxed">{aiAnalysis.justificativa}</p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ) : null}
+                </div>
               </div>
             </div>
           </div>
