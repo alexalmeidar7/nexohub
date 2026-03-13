@@ -760,13 +760,14 @@ function CatalogCard({ image, title, subtitle, logoUrl, onClick }: { image?: str
   const [aiLoading, setAiLoading] = useState(false);
 
   useEffect(() => {
-    if (image || aiCover || aiLoading) return;
+    if (image || aiCover || aiLoading || aiCoverDisabled) return;
     setAiLoading(true);
     supabase.functions.invoke("generate-cover", { body: { title, type: "catalog" } })
-      .then(({ data }) => {
+      .then(({ data, error }) => {
+        if (error) { aiCoverDisabled = true; return; }
         if (data?.imageUrl) setAiCover(data.imageUrl);
       })
-      .catch(() => {})
+      .catch(() => { aiCoverDisabled = true; })
       .finally(() => setAiLoading(false));
   }, [image, title, aiCover, aiLoading]);
 
