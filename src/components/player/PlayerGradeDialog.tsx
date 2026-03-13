@@ -1,5 +1,5 @@
 import { useState, useRef, useMemo, memo } from "react";
-import { X, Plus, Clock, Radio } from "lucide-react";
+import { X, Clock, Radio, MapPin, Calendar, Users } from "lucide-react";
 import { format, addDays, startOfWeek } from "date-fns";
 
 interface Programa {
@@ -34,14 +34,6 @@ function generateGradeSlots(): string[] {
   }
   return slots;
 }
-
-const glassStyle = {
-  backgroundColor: "rgba(0, 0, 0, 0.4)",
-  backdropFilter: "blur(32px)",
-  WebkitBackdropFilter: "blur(32px)",
-  boxShadow: "0 12px 48px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08)",
-  border: "1px solid rgba(255,255,255,0.1)",
-} as const;
 
 interface Props {
   programas: Programa[];
@@ -114,78 +106,107 @@ function PlayerGradeDialog({ programas, onClose }: Props) {
     return { skipMap: skip, spanMap: span };
   }, [programas, gradeSlots]);
 
+  // Color palette for programs (deterministic by name)
+  const getProgColor = (name: string) => {
+    const colors = [
+      { bg: "rgba(239,68,68,0.12)", border: "rgba(239,68,68,0.25)", text: "rgb(252,165,165)" },
+      { bg: "rgba(59,130,246,0.12)", border: "rgba(59,130,246,0.25)", text: "rgb(147,197,253)" },
+      { bg: "rgba(16,185,129,0.12)", border: "rgba(16,185,129,0.25)", text: "rgb(110,231,183)" },
+      { bg: "rgba(245,158,11,0.12)", border: "rgba(245,158,11,0.25)", text: "rgb(252,211,77)" },
+      { bg: "rgba(139,92,246,0.12)", border: "rgba(139,92,246,0.25)", text: "rgb(196,181,253)" },
+      { bg: "rgba(236,72,153,0.12)", border: "rgba(236,72,153,0.25)", text: "rgb(249,168,212)" },
+      { bg: "rgba(6,182,212,0.12)", border: "rgba(6,182,212,0.25)", text: "rgb(103,232,249)" },
+      { bg: "rgba(251,146,60,0.12)", border: "rgba(251,146,60,0.25)", text: "rgb(253,186,116)" },
+    ];
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    return colors[Math.abs(hash) % colors.length];
+  };
+
   return (
-    <div className="absolute inset-0 z-[100] flex items-center justify-center animate-fade-in" style={{ backgroundColor: "rgba(0,0,0,0.6)" }}>
+    <div
+      className="absolute inset-0 z-[100] flex items-center justify-center"
+      style={{ backgroundColor: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)" }}
+      onClick={(e) => { if (e.target === e.currentTarget) { onClose(); setDetailProg(null); } }}
+    >
       <div
-        className="relative w-[95vw] max-w-[1200px] max-h-[90vh] rounded-2xl overflow-hidden"
-        style={glassStyle}
+        className="relative w-[96vw] max-w-[1300px] max-h-[92vh] rounded-3xl overflow-hidden"
+        style={{
+          backgroundColor: "rgba(10, 10, 14, 0.92)",
+          backdropFilter: "blur(40px)",
+          boxShadow: "0 24px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06)",
+        }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
-          <div className="flex items-center gap-3">
+        <div
+          className="flex items-center justify-between px-8 py-5"
+          style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+        >
+          <div className="flex items-center gap-4">
             <div
-              className="w-9 h-9 rounded-xl flex items-center justify-center"
-              style={{ background: "linear-gradient(135deg, rgba(230,0,0,0.25), rgba(230,0,0,0.1))" }}
+              className="w-10 h-10 rounded-2xl flex items-center justify-center"
+              style={{ background: "linear-gradient(135deg, hsl(var(--player-accent)), hsl(var(--player-accent-hover)))" }}
             >
-              <Radio size={16} style={{ color: "#e60000" }} />
+              <Radio size={18} className="text-white" />
             </div>
             <div>
-              <h2 className="text-white text-base font-bold">Grade de Programação</h2>
-              <p className="text-white/30 text-[10px]">Semana de {weekDates["Segunda"]} a {weekDates["Domingo"]}</p>
+              <h2 className="text-white text-lg font-bold tracking-tight">Grade de Programação</h2>
+              <p className="text-white/30 text-xs mt-0.5">
+                <Calendar size={10} className="inline mr-1 -mt-0.5" />
+                Semana {weekDates["Segunda"]} — {weekDates["Domingo"]}
+              </p>
             </div>
           </div>
           <button
             onClick={() => { onClose(); setDetailProg(null); }}
-            className="text-white/40 hover:text-white hover:bg-white/10 rounded-xl p-2 transition-all"
+            className="text-white/30 hover:text-white hover:bg-white/10 rounded-2xl p-2.5 transition-all duration-200"
           >
-            <X size={18} />
+            <X size={20} />
           </button>
         </div>
 
         {/* Table */}
         <div
           ref={gradeScrollRef}
-          className="overflow-y-auto overflow-x-hidden max-h-[75vh] px-4 pb-4 pt-2 grade-scroll"
-          style={{ scrollbarWidth: "thin", scrollbarColor: "rgba(230,0,0,0.4) transparent" }}
+          className="overflow-auto max-h-[78vh] px-5 pb-5 pt-3 grade-scroll"
+          style={{ scrollbarWidth: "thin", scrollbarColor: "rgba(255,255,255,0.1) transparent" }}
         >
           <style>{`
-            .grade-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+            .grade-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
             .grade-scroll::-webkit-scrollbar-track { background: transparent; }
-            .grade-scroll::-webkit-scrollbar-thumb { background: rgba(230,0,0,0.3); border-radius: 3px; }
-            .grade-scroll::-webkit-scrollbar-thumb:hover { background: rgba(230,0,0,0.5); }
-            .grade-cell { transition: all 0.2s ease; }
-            .grade-cell:hover { outline: 2px solid #e60000 !important; outline-offset: -1px; z-index: 5; }
+            .grade-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 10px; }
+            .grade-scroll::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }
             @keyframes pulseOnAir {
-              0%, 100% { box-shadow: 0 0 0 2px rgba(255,255,255,0.9), 0 4px 16px rgba(230,0,0,0.3); }
-              50% { box-shadow: 0 0 0 2px rgba(255,255,255,0.3), 0 4px 16px rgba(230,0,0,0.3); }
+              0%, 100% { opacity: 1; }
+              50% { opacity: 0.7; }
             }
-            .grade-on-air { animation: pulseOnAir 1.5s ease-in-out infinite; }
           `}</style>
-          <table data-no-row-hover className="w-full text-xs border-separate table-fixed" style={{ borderSpacing: "3px" }}>
+          <table data-no-row-hover className="w-full text-xs border-separate table-fixed" style={{ borderSpacing: "2px" }}>
             <thead className="sticky top-0 z-10">
               <tr>
                 <th
-                  className="px-1.5 py-2.5 text-left rounded-xl text-[10px] uppercase tracking-wider font-semibold"
-                  style={{ backgroundColor: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.4)", width: "48px" }}
+                  className="px-2 py-3 text-center rounded-xl text-[10px] uppercase tracking-widest font-medium"
+                  style={{ backgroundColor: "rgba(255,255,255,0.03)", color: "rgba(255,255,255,0.25)", width: "52px" }}
                 >
-                  <Clock size={10} className="inline mr-0.5 opacity-60" />
-                  Hora
+                  <Clock size={10} className="mx-auto mb-0.5 opacity-50" />
                 </th>
                 {DIAS_SEMANA.map(dia => {
                   const isToday = dia === diaAtual;
                   return (
                     <th
                       key={dia}
-                      className="px-2 py-2.5 text-center rounded-xl"
+                      className="px-2 py-3 text-center rounded-xl transition-colors"
                       style={{
-                        backgroundColor: isToday ? "rgba(230,0,0,0.15)" : "rgba(255,255,255,0.05)",
-                        color: isToday ? "#e60000" : "rgba(255,255,255,0.5)",
+                        backgroundColor: isToday ? "hsla(var(--player-accent) / 0.12)" : "rgba(255,255,255,0.03)",
+                        color: isToday ? "hsl(var(--player-accent))" : "rgba(255,255,255,0.35)",
                         fontWeight: isToday ? 700 : 500,
                       }}
                     >
-                      <div className="text-[10px] uppercase tracking-wider">{dia.slice(0, 3)}</div>
-                      <div className="text-[9px] font-normal opacity-60 mt-0.5">{weekDates[dia]}</div>
-                      {isToday && <div className="w-4 h-0.5 rounded-full mx-auto mt-1" style={{ backgroundColor: "#e60000" }} />}
+                      <div className="text-[11px] uppercase tracking-wider">{dia.slice(0, 3)}</div>
+                      <div className="text-[9px] font-normal opacity-50 mt-0.5">{weekDates[dia]}</div>
+                      {isToday && (
+                        <div className="w-5 h-[2px] rounded-full mx-auto mt-1.5" style={{ backgroundColor: "hsl(var(--player-accent))" }} />
+                      )}
                     </th>
                   );
                 })}
@@ -204,8 +225,8 @@ function PlayerGradeDialog({ programas, onClose }: Props) {
                     if (el) requestAnimationFrame(() => el.scrollIntoView({ behavior: "smooth", block: "center" }));
                   } : undefined}>
                     <td
-                      className="px-2 py-1.5 font-mono rounded-lg text-center"
-                      style={{ color: "rgba(255,255,255,0.25)", fontSize: "10px" }}
+                      className="px-2 py-1 font-mono rounded-lg text-center"
+                      style={{ color: "rgba(255,255,255,0.15)", fontSize: "10px", letterSpacing: "0.05em" }}
                     >
                       {slot.slice(0, 5)}
                     </td>
@@ -213,37 +234,38 @@ function PlayerGradeDialog({ programas, onClose }: Props) {
                       const key = `${dia}-${slot}`;
                       if (skipMap[key]) return null;
                       const cellData = spanMap[key];
-                      if (!cellData) return <td key={dia} className="px-1 py-1 rounded-xl" />;
+                      if (!cellData) return <td key={dia} className="rounded-xl" style={{ background: "rgba(255,255,255,0.01)" }} />;
                       const { prog, rowSpan } = cellData;
                       const isOnAir = prog && dia === diaAtual && currentTimeStr >= prog.horario_inicio && currentTimeStr < prog.horario_fim;
+                      const color = getProgColor(prog.nome);
+
                       return (
                         <td
                           key={dia}
                           rowSpan={rowSpan}
-                          className={`px-2.5 py-2 text-left rounded-xl grade-cell relative cursor-pointer group ${isOnAir ? "grade-on-air" : ""}`}
+                          className="px-2.5 py-2 text-left rounded-xl cursor-pointer group transition-all duration-200 hover:scale-[1.02] hover:z-10 relative"
                           style={{
                             background: isOnAir
-                              ? "linear-gradient(135deg, #e60000, #b30000)"
-                              : "rgba(255,255,255,0.04)",
-                            color: isOnAir ? "#fff" : "rgba(255,255,255,0.7)",
-                            fontWeight: isOnAir ? 700 : 400,
+                              ? "linear-gradient(135deg, hsl(var(--player-accent)), hsl(var(--player-accent-hover)))"
+                              : color.bg,
+                            color: isOnAir ? "#fff" : color.text,
+                            fontWeight: isOnAir ? 700 : 500,
                             verticalAlign: "top",
-                            boxShadow: isOnAir ? "0 4px 16px rgba(230,0,0,0.3)" : "none",
-                            border: isOnAir ? "none" : "1px solid rgba(255,255,255,0.05)",
+                            boxShadow: isOnAir
+                              ? "0 4px 20px hsla(var(--player-accent) / 0.4), inset 0 1px 0 rgba(255,255,255,0.15)"
+                              : "none",
+                            border: isOnAir ? "none" : `1px solid ${color.border}`,
                           }}
                           onClick={() => setDetailProg(prog)}
                         >
-                          <div className="flex items-start gap-0.5">
-                            <span className="text-[10px] truncate leading-tight text-left">{prog.nome}</span>
-                            <Plus size={9} className="shrink-0 opacity-0 group-hover:opacity-60 transition-opacity mt-0.5" />
-                          </div>
-                          <div className="text-[8px] opacity-40 mt-0.5 text-left">
-                            {prog.horario_inicio.slice(0, 5)} – {prog.horario_fim.slice(0, 5)}
+                          <span className="text-[10px] font-semibold leading-tight line-clamp-2 block">{prog.nome}</span>
+                          <div className="text-[8px] opacity-50 mt-0.5 font-medium">
+                            {prog.horario_inicio.slice(0, 5)}–{prog.horario_fim.slice(0, 5)}
                           </div>
                           {isOnAir && (
-                            <div className="mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5" style={{ backgroundColor: "rgba(255,255,255,0.2)" }}>
-                              <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                              <span className="text-[8px] font-bold text-white uppercase tracking-wider">no ar</span>
+                            <div className="mt-1.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5" style={{ backgroundColor: "rgba(255,255,255,0.2)" }}>
+                              <div className="w-1.5 h-1.5 rounded-full bg-white" style={{ animation: "pulseOnAir 1.5s ease-in-out infinite" }} />
+                              <span className="text-[7px] font-bold text-white uppercase tracking-widest">no ar</span>
                             </div>
                           )}
                         </td>
@@ -258,59 +280,114 @@ function PlayerGradeDialog({ programas, onClose }: Props) {
 
         {/* Detail overlay */}
         {detailProg && (
-          <div className="absolute inset-0 z-20 flex items-center justify-center animate-fade-in" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+          <div
+            className="absolute inset-0 z-20 flex items-center justify-center"
+            style={{ backgroundColor: "rgba(0,0,0,0.6)", backdropFilter: "blur(12px)" }}
+            onClick={(e) => { if (e.target === e.currentTarget) setDetailProg(null); }}
+          >
             <div
-              className="rounded-2xl max-w-lg w-full mx-4 relative overflow-hidden"
+              className="rounded-3xl max-w-md w-full mx-4 relative overflow-hidden"
               style={{
-                ...glassStyle,
-                backgroundColor: "rgba(0, 0, 0, 0.6)",
+                backgroundColor: "rgba(15, 15, 20, 0.95)",
+                boxShadow: "0 32px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.08)",
               }}
             >
-              <button
-                onClick={() => setDetailProg(null)}
-                className="absolute top-4 right-4 text-white/40 hover:text-white hover:bg-white/10 rounded-xl p-1.5 transition-all z-10"
-              >
-                <X size={16} />
-              </button>
-              <div className="flex gap-4 p-5">
-                <div className="shrink-0">
-                  {detailProg.capa ? (
-                    <img src={detailProg.capa} alt={detailProg.nome} className="w-32 h-32 object-cover rounded-xl" style={{ boxShadow: "0 4px 16px rgba(0,0,0,0.3)" }} />
-                  ) : detailProg.selo ? (
-                    <img src={detailProg.selo} alt={detailProg.nome} className="w-32 h-32 object-contain rounded-xl" />
-                  ) : (
+              {/* Cover image / gradient header */}
+              <div className="relative h-44 overflow-hidden">
+                {detailProg.capa ? (
+                  <img
+                    src={detailProg.capa}
+                    alt={detailProg.nome}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div
+                    className="w-full h-full"
+                    style={{ background: "linear-gradient(135deg, hsl(var(--player-accent)), hsl(var(--player-accent-hover)), rgba(0,0,0,0.8))" }}
+                  />
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-[rgba(15,15,20,1)] via-[rgba(15,15,20,0.4)] to-transparent" />
+
+                {/* Close button */}
+                <button
+                  onClick={() => setDetailProg(null)}
+                  className="absolute top-3 right-3 text-white/50 hover:text-white bg-black/30 hover:bg-black/50 rounded-full p-2 transition-all duration-200 backdrop-blur-sm"
+                >
+                  <X size={16} />
+                </button>
+
+                {/* Program initial if no cover */}
+                {!detailProg.capa && (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="text-white/20 text-7xl font-black">{detailProg.nome.charAt(0)}</span>
+                  </div>
+                )}
+
+                {/* Selo badge */}
+                {detailProg.selo && (
+                  <img
+                    src={detailProg.selo}
+                    alt="selo"
+                    className="absolute bottom-3 right-4 h-10 object-contain drop-shadow-lg"
+                  />
+                )}
+              </div>
+
+              {/* Content */}
+              <div className="px-6 pb-6 -mt-2 relative z-10">
+                <h3 className="text-xl font-bold text-white tracking-tight leading-tight">{detailProg.nome}</h3>
+
+                {/* Metadata chips */}
+                <div className="flex flex-wrap items-center gap-2 mt-3">
+                  <div
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold"
+                    style={{
+                      backgroundColor: "hsla(var(--player-accent) / 0.12)",
+                      color: "hsl(var(--player-accent))",
+                    }}
+                  >
+                    <Clock size={11} />
+                    {detailProg.horario_inicio.slice(0, 5)} – {detailProg.horario_fim.slice(0, 5)}
+                  </div>
+
+                  {detailProg.estudio && (
                     <div
-                      className="w-32 h-32 rounded-xl flex items-center justify-center"
-                      style={{ background: "linear-gradient(135deg, #e60000, #b30000)" }}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-medium"
+                      style={{ backgroundColor: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.5)" }}
                     >
-                      <span className="text-white text-3xl font-bold">{detailProg.nome.charAt(0)}</span>
+                      <MapPin size={10} />
+                      {detailProg.estudio}
                     </div>
                   )}
                 </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-lg font-bold text-white mb-1 pr-8">{detailProg.nome}</h3>
-                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full mb-2" style={{ backgroundColor: "rgba(230,0,0,0.15)" }}>
-                    <Clock size={10} style={{ color: "#e60000" }} />
-                    <span className="text-[11px] font-semibold" style={{ color: "#e60000" }}>
-                      {detailProg.horario_inicio.slice(0, 5)} – {detailProg.horario_fim.slice(0, 5)}
-                    </span>
-                  </div>
-                  {detailProg.estudio && (
-                    <p className="text-xs text-white/40 mb-1">Estúdio: {detailProg.estudio}</p>
-                  )}
-                  {detailProg.dias_semana && detailProg.dias_semana.length > 0 && (
-                    <div className="flex flex-wrap gap-1 mb-2">
-                      {detailProg.dias_semana.map(d => (
-                        <span key={d} className="text-[9px] px-2 py-0.5 rounded-full" style={{ backgroundColor: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.5)" }}>
+
+                {/* Days of the week */}
+                {detailProg.dias_semana && detailProg.dias_semana.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mt-3">
+                    {detailProg.dias_semana.map(d => {
+                      const full = dayShortToFull[d] || d;
+                      const isToday = full === diaAtual;
+                      return (
+                        <span
+                          key={d}
+                          className="text-[10px] px-2.5 py-1 rounded-lg font-medium transition-colors"
+                          style={{
+                            backgroundColor: isToday ? "hsla(var(--player-accent) / 0.15)" : "rgba(255,255,255,0.05)",
+                            color: isToday ? "hsl(var(--player-accent))" : "rgba(255,255,255,0.4)",
+                            border: isToday ? "1px solid hsla(var(--player-accent) / 0.3)" : "1px solid rgba(255,255,255,0.06)",
+                          }}
+                        >
                           {d}
                         </span>
-                      ))}
-                    </div>
-                  )}
-                  {detailProg.descricao && (
-                    <p className="text-sm text-white/60 mt-2 leading-relaxed">{detailProg.descricao}</p>
-                  )}
-                </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Description */}
+                {detailProg.descricao && (
+                  <p className="text-sm text-white/50 mt-4 leading-relaxed">{detailProg.descricao}</p>
+                )}
               </div>
             </div>
           </div>
