@@ -415,16 +415,22 @@ function StreamingCard({ channel, currentProgram, nowPlaying, onClick }: {
       onClick={onClick}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      className="flex-shrink-0 rounded-xl overflow-hidden relative transition-all duration-300 group border-2 border-transparent hover:border-player-accent/60 hover:shadow-[0_0_30px_-5px_hsla(var(--player-accent)/0.3)] hover:-translate-y-1 player-card-pop"
-      style={{ width: "320px", aspectRatio: "16/9" }}
+      className="flex-shrink-0 rounded-2xl overflow-hidden relative transition-all duration-400 group cursor-pointer"
+      style={{
+        width: "320px",
+        aspectRatio: "16/9",
+        border: hovered ? "1px solid hsla(var(--player-accent) / 0.5)" : "1px solid rgba(255,255,255,0.06)",
+        boxShadow: hovered ? "0 20px 60px -15px rgba(0,0,0,0.7), 0 0 30px -8px hsla(var(--player-accent) / 0.2)" : "0 4px 20px -8px rgba(0,0,0,0.4)",
+        transform: hovered ? "translateY(-4px) scale(1.01)" : "none",
+      }}
     >
       {channel.cover_url ? (
         <img src={channel.cover_url} alt={channel.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
       ) : channel.logo_url ? (
         <img src={channel.logo_url} alt={channel.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
       ) : (
-        <div className="w-full h-full bg-gradient-to-br from-player-accent/20 to-player-bg flex items-center justify-center">
-          <Radio className="h-10 w-10 text-player-muted-foreground" />
+        <div className="w-full h-full flex items-center justify-center" style={{ background: "linear-gradient(160deg, hsla(var(--player-accent) / 0.15) 0%, hsl(var(--player-bg)) 100%)" }}>
+          <Radio className="h-10 w-10 text-white/15" />
         </div>
       )}
 
@@ -434,34 +440,34 @@ function StreamingCard({ channel, currentProgram, nowPlaying, onClick }: {
 
       {/* Channel logo top-right */}
       {channel.logo_url && (
-        <div className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full overflow-hidden bg-black/50 backdrop-blur-sm border border-white/10 shadow-lg">
+        <div className="absolute top-3 right-3 z-10 w-9 h-9 rounded-lg overflow-hidden bg-black/40 backdrop-blur-md border border-white/10 shadow-xl">
           <img src={channel.logo_url} alt="" className="w-full h-full object-cover" />
         </div>
       )}
 
       {/* Live badge */}
-      <span className="absolute top-3 left-3 z-10 text-[10px] uppercase tracking-wider font-bold bg-player-accent/90 px-2 py-0.5 rounded-md flex items-center gap-1.5 text-white shadow-lg">
+      <span className="absolute top-3 left-3 z-10 text-[10px] uppercase tracking-wider font-bold px-2.5 py-1 rounded-lg flex items-center gap-1.5 text-white shadow-xl" style={{ background: "linear-gradient(135deg, hsl(var(--player-accent)), hsl(var(--player-accent-hover)))", boxShadow: "0 4px 16px hsla(var(--player-accent) / 0.4)" }}>
         <span className="inline-block w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
         ao vivo
       </span>
 
       {/* Play overlay on hover */}
-      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-[2]">
-        <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-          <Play className="h-5 w-5 text-white fill-white" />
+      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 z-[2]">
+        <div className="w-14 h-14 rounded-full backdrop-blur-md flex items-center justify-center" style={{ background: "hsla(var(--player-accent) / 0.8)", boxShadow: "0 8px 32px hsla(var(--player-accent) / 0.5)" }}>
+          <Play className="h-6 w-6 text-white fill-white" />
         </div>
       </div>
 
       {/* Info overlay - bottom */}
-      <div className="absolute bottom-0 left-0 right-0 z-10 px-4 pb-3 pt-14 text-left" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.9) 20%, transparent)" }}>
-        <p className="text-xs font-bold text-white truncate mb-0.5">{channel.name}</p>
+      <div className="absolute bottom-0 left-0 right-0 z-10 px-4 pb-3.5 pt-16 text-left" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.9) 20%, transparent)" }}>
+        <p className="text-sm font-bold text-white truncate mb-0.5">{channel.name}</p>
         {currentProgram && (
           <p className="text-[10px] text-white/60 truncate">{currentProgram.nome} • {currentProgram.horario_inicio} – {currentProgram.horario_fim}</p>
         )}
         {nowPlaying?.musica && (
-          <div className="flex items-center gap-1 mt-1">
-            <Music className="h-2.5 w-2.5 text-player-accent flex-shrink-0" />
-            <p className="text-[9px] text-white/50 truncate">{nowPlaying.musica} — {nowPlaying.artista}</p>
+          <div className="flex items-center gap-1.5 mt-1.5">
+            <Music className="h-3 w-3 flex-shrink-0" style={{ color: "hsl(var(--player-accent))" }} />
+            <p className="text-[10px] text-white/50 truncate">{nowPlaying.musica} — {nowPlaying.artista}</p>
           </div>
         )}
       </div>
@@ -526,8 +532,7 @@ function ContentRow({ title, children }: { title: React.ReactNode; children: Rea
   );
 }
 
-// Global flag: stop AI cover calls if credits exhausted
-let aiCoverDisabled = false;
+// AI cover generation removed — cards use existing thumbnails only
 
 /* ─── Trending Card (Em Alta) with expand-right video preview ─── */
 function TrendingCard({ item, idx, channels, onClick }: {
@@ -543,26 +548,6 @@ function TrendingCard({ item, idx, channels, onClick }: {
   const playerRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const fadeIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const [aiCover, setAiCover] = useState<string | null>(null);
-  const [aiLoading, setAiLoading] = useState(false);
-
-  // Generate AI cover only if no image AND credits available
-  useEffect(() => {
-    if (item.image || aiCover || aiLoading || aiCoverDisabled) return;
-    setAiLoading(true);
-    supabase.functions.invoke("generate-cover", { body: { title: item.title, type: "trending" } })
-      .then(({ data, error }) => {
-        if (error) {
-          // Stop all future AI calls if credits exhausted
-          const status = (error as any)?.status || (typeof error === 'object' && (error as any)?.context?.status);
-          if (status === 402 || status === 500) aiCoverDisabled = true;
-          return;
-        }
-        if (data?.imageUrl) setAiCover(data.imageUrl);
-      })
-      .catch(() => { aiCoverDisabled = true; })
-      .finally(() => setAiLoading(false));
-  }, [item.image, item.title, aiCover, aiLoading]);
 
   // Load YouTube IFrame API once
   useEffect(() => {
@@ -663,7 +648,7 @@ function TrendingCard({ item, idx, channels, onClick }: {
     };
   }, [showVideo, item.videoId]);
 
-  const coverSrc = item.image || aiCover;
+  const coverSrc = item.image;
 
   return (
     <div
@@ -671,13 +656,15 @@ function TrendingCard({ item, idx, channels, onClick }: {
       onClick={onClick}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      className="flex-shrink-0 rounded-xl overflow-hidden relative transition-all duration-500 ease-out group border-2 border-transparent hover:border-player-accent/50 hover:shadow-[0_0_40px_-5px_rgba(200,0,0,0.4)] cursor-pointer"
+      className="flex-shrink-0 rounded-2xl overflow-hidden relative transition-all duration-500 ease-[cubic-bezier(0.25,0.1,0.25,1)] group cursor-pointer"
       style={{
         width: showVideo ? "520px" : "200px",
         aspectRatio: showVideo ? "16/9" : "2/3",
-        background: "hsl(var(--player-bg))",
+        background: "linear-gradient(145deg, rgba(255,255,255,0.06) 0%, hsl(var(--player-bg)) 100%)",
         zIndex: showVideo ? 20 : 1,
-        transform: hovered && !showVideo ? "translateY(-4px)" : "none",
+        transform: hovered && !showVideo ? "translateY(-6px) scale(1.02)" : "none",
+        boxShadow: hovered ? "0 20px 60px -15px rgba(0,0,0,0.7), 0 0 40px -10px hsla(var(--player-accent) / 0.25)" : "0 4px 20px -8px rgba(0,0,0,0.4)",
+        border: hovered ? "1px solid hsla(var(--player-accent) / 0.4)" : "1px solid rgba(255,255,255,0.06)",
       }}
     >
       {/* Cover image */}
@@ -685,15 +672,11 @@ function TrendingCard({ item, idx, channels, onClick }: {
         <img
           src={coverSrc}
           alt={item.title}
-          className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ${showVideo ? "opacity-0 scale-110 blur-sm" : "opacity-100"} group-hover:scale-105`}
+          className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ${showVideo ? "opacity-0 scale-110 blur-md" : "opacity-100"} group-hover:scale-105`}
         />
       ) : (
-        <div className="absolute inset-0 w-full h-full flex items-center justify-center" style={{ background: "hsl(var(--player-bg))" }}>
-          {aiLoading ? (
-            <div className="w-6 h-6 rounded-full border-2 border-player-accent/40 border-t-player-accent animate-spin" />
-          ) : (
-            <TrendingUp className="h-8 w-8" style={{ color: "hsl(var(--player-accent))", opacity: 0.5 }} />
-          )}
+        <div className="absolute inset-0 w-full h-full flex items-center justify-center" style={{ background: "linear-gradient(160deg, rgba(255,255,255,0.08) 0%, hsl(var(--player-bg)) 100%)" }}>
+          <TrendingUp className="h-10 w-10" style={{ color: "hsl(var(--player-accent))", opacity: 0.3 }} />
         </div>
       )}
 
@@ -708,8 +691,8 @@ function TrendingCard({ item, idx, channels, onClick }: {
 
       {/* Ranking badge */}
       <div
-        className="absolute top-2 left-2 z-10 w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-black shadow-lg"
-        style={{ backgroundColor: "hsl(var(--player-accent))" }}
+        className="absolute top-2.5 left-2.5 z-10 w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-black"
+        style={{ background: "linear-gradient(135deg, hsl(var(--player-accent)), hsl(var(--player-accent-hover)))", boxShadow: "0 4px 16px hsla(var(--player-accent) / 0.5)" }}
       >
         {idx + 1}
       </div>
@@ -729,17 +712,17 @@ function TrendingCard({ item, idx, channels, onClick }: {
       )}
 
       {/* Gradient + title */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent z-[3] pointer-events-none" />
-      <div className="absolute bottom-0 left-0 right-0 p-3 z-[4] text-left pointer-events-none">
-        <p className="text-[11px] font-bold text-white leading-tight line-clamp-2 drop-shadow">{item.title}</p>
-        {item.subtitle && <p className="text-[9px] text-white/60 mt-0.5">{item.subtitle}</p>}
+      <div className="absolute inset-0 z-[3] pointer-events-none" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 40%, transparent 70%)" }} />
+      <div className="absolute bottom-0 left-0 right-0 p-3.5 z-[4] text-left pointer-events-none">
+        <p className="text-xs font-bold text-white leading-tight line-clamp-2 drop-shadow-lg">{item.title}</p>
+        {item.subtitle && <p className="text-[10px] text-white/50 mt-1 font-medium">{item.subtitle}</p>}
       </div>
 
       {/* Play overlay */}
       {!showVideo && (
-        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-[5] pointer-events-none">
-          <div className="w-10 h-10 rounded-full backdrop-blur-sm flex items-center justify-center" style={{ backgroundColor: "hsl(var(--player-accent))", opacity: 0.8 }}>
-            <Play className="h-4 w-4 text-white fill-white" />
+        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 z-[5] pointer-events-none">
+          <div className="w-12 h-12 rounded-full backdrop-blur-md flex items-center justify-center shadow-2xl" style={{ background: "hsla(var(--player-accent) / 0.85)", boxShadow: "0 8px 32px hsla(var(--player-accent) / 0.5)" }}>
+            <Play className="h-5 w-5 text-white fill-white" />
           </div>
         </div>
       )}
@@ -749,55 +732,49 @@ function TrendingCard({ item, idx, channels, onClick }: {
 
 /* ─── Catalog Card ─── */
 function CatalogCard({ image, title, subtitle, logoUrl, onClick }: { image?: string | null; title: string; subtitle?: string; logoUrl?: string | null; onClick: () => void }) {
-  const [aiCover, setAiCover] = useState<string | null>(null);
-  const [aiLoading, setAiLoading] = useState(false);
-
-  useEffect(() => {
-    if (image || aiCover || aiLoading || aiCoverDisabled) return;
-    setAiLoading(true);
-    supabase.functions.invoke("generate-cover", { body: { title, type: "catalog" } })
-      .then(({ data, error }) => {
-        if (error) { aiCoverDisabled = true; return; }
-        if (data?.imageUrl) setAiCover(data.imageUrl);
-      })
-      .catch(() => { aiCoverDisabled = true; })
-      .finally(() => setAiLoading(false));
-  }, [image, title, aiCover, aiLoading]);
-
-  const coverSrc = image || aiCover;
-
   return (
     <button
       onClick={onClick}
-      className="flex-shrink-0 rounded-xl overflow-hidden relative transition-all duration-300 group border-2 border-transparent hover:border-white/30 hover:shadow-[0_8px_30px_-8px_rgba(0,0,0,0.6)] hover:-translate-y-1 player-card-pop"
-      style={{ width: "220px", aspectRatio: "16/9" }}
+      className="flex-shrink-0 rounded-2xl overflow-hidden relative transition-all duration-300 group cursor-pointer"
+      style={{
+        width: "220px",
+        aspectRatio: "16/9",
+        border: "1px solid rgba(255,255,255,0.06)",
+        boxShadow: "0 4px 20px -8px rgba(0,0,0,0.4)",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = "translateY(-4px) scale(1.02)";
+        e.currentTarget.style.boxShadow = "0 16px 48px -12px rgba(0,0,0,0.6)";
+        e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = "";
+        e.currentTarget.style.boxShadow = "0 4px 20px -8px rgba(0,0,0,0.4)";
+        e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)";
+      }}
     >
-      {coverSrc ? (
-        <img src={coverSrc} alt={title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+      {image ? (
+        <img src={image} alt={title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
       ) : (
-        <div className="w-full h-full bg-gradient-to-br from-white/10 to-player-bg flex items-center justify-center">
-          {aiLoading ? (
-            <div className="w-5 h-5 rounded-full border-2 border-white/20 border-t-white/60 animate-spin" />
-          ) : (
-            <Film className="h-8 w-8 text-white/20" />
-          )}
+        <div className="w-full h-full flex items-center justify-center" style={{ background: "linear-gradient(160deg, rgba(255,255,255,0.08) 0%, hsl(var(--player-bg)) 100%)" }}>
+          <Film className="h-8 w-8 text-white/15" />
         </div>
       )}
 
       {/* Channel logo top-right */}
       {logoUrl && (
-        <div className="absolute top-2 right-2 z-10 w-7 h-7 rounded-full overflow-hidden bg-black/50 backdrop-blur-sm border border-white/10 shadow">
-          <img src={logoUrl} alt="" className="w-full h-full object-cover" />
+        <div className="absolute top-2 right-2 z-10 w-8 h-5 flex items-center justify-center drop-shadow-[0_2px_4px_rgba(0,0,0,0.7)]">
+          <img src={logoUrl} alt="" className="max-w-full max-h-full object-contain" />
         </div>
       )}
 
       {/* Play overlay */}
-      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-[2]">
-        <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 z-[2]">
+        <div className="w-10 h-10 rounded-full backdrop-blur-md flex items-center justify-center" style={{ background: "hsla(var(--player-accent) / 0.8)", boxShadow: "0 4px 20px hsla(var(--player-accent) / 0.4)" }}>
           <Play className="h-4 w-4 text-white fill-white" />
         </div>
       </div>
-      <div className="absolute bottom-0 left-0 right-0 z-10 px-3 pb-2.5 pt-10" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.85) 10%, transparent)" }}>
+      <div className="absolute bottom-0 left-0 right-0 z-10 px-3 pb-2.5 pt-10" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.9) 10%, transparent)" }}>
         <p className="text-[10px] font-bold text-white line-clamp-2 text-left mb-0.5">{title}</p>
         {subtitle && <p className="text-[9px] text-white/40 text-left">{subtitle}</p>}
       </div>
@@ -809,23 +786,38 @@ function HistoryCard({ item, onClick }: { item: { channel_name: string; channel_
   return (
     <button
       onClick={onClick}
-      className="flex-shrink-0 rounded-xl overflow-hidden relative transition-all duration-300 group border-2 border-transparent hover:border-white/30 hover:-translate-y-1 player-card-pop"
-      style={{ width: "200px", aspectRatio: "16/9" }}
+      className="flex-shrink-0 rounded-2xl overflow-hidden relative transition-all duration-300 group cursor-pointer"
+      style={{
+        width: "200px",
+        aspectRatio: "16/9",
+        border: "1px solid rgba(255,255,255,0.06)",
+        boxShadow: "0 4px 20px -8px rgba(0,0,0,0.4)",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = "translateY(-4px) scale(1.02)";
+        e.currentTarget.style.boxShadow = "0 16px 48px -12px rgba(0,0,0,0.6)";
+        e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = "";
+        e.currentTarget.style.boxShadow = "0 4px 20px -8px rgba(0,0,0,0.4)";
+        e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)";
+      }}
     >
       {item.channel_cover_url ? (
-        <img src={item.channel_cover_url} alt={item.channel_name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+        <img src={item.channel_cover_url} alt={item.channel_name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
       ) : item.channel_logo_url ? (
-        <div className="w-full h-full bg-gradient-to-br from-white/5 to-player-bg flex items-center justify-center">
+        <div className="w-full h-full flex items-center justify-center" style={{ background: "linear-gradient(160deg, rgba(255,255,255,0.05) 0%, hsl(var(--player-bg)) 100%)" }}>
           <img src={item.channel_logo_url} alt={item.channel_name} className="h-12 w-auto object-contain" />
         </div>
       ) : (
-        <div className="w-full h-full bg-gradient-to-br from-player-accent/15 to-player-bg flex items-center justify-center">
-          <Radio className="h-8 w-8 text-white/20" />
+        <div className="w-full h-full flex items-center justify-center" style={{ background: "linear-gradient(160deg, hsla(var(--player-accent) / 0.1) 0%, hsl(var(--player-bg)) 100%)" }}>
+          <Radio className="h-8 w-8 text-white/15" />
         </div>
       )}
-      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/85 to-transparent px-3 pb-2 pt-8">
+      <div className="absolute bottom-0 left-0 right-0 px-3 pb-2.5 pt-10" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.9) 20%, transparent)" }}>
         <p className="text-xs font-bold text-white truncate">{item.channel_name}</p>
-        <p className="text-[10px] text-white/40 flex items-center gap-1">
+        <p className="text-[10px] text-white/40 flex items-center gap-1.5 mt-0.5">
           <Clock className="h-2.5 w-2.5" />
           {new Date(item.watched_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
         </p>
