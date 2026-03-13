@@ -61,6 +61,7 @@ function PlayerGradeDialog({ programas, onClose }: Props) {
   const [detailProg, setDetailProg] = useState<Programa | null>(null);
   const [aiAnalysis, setAiAnalysis] = useState<AIAnalysis | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
+  const [cellAiData, setCellAiData] = useState<Record<string, AIAnalysis>>({});
   const gradeScrollRef = useRef<HTMLDivElement>(null);
   const analysisCache = useRef<Record<string, AIAnalysis>>({});
   const hasScrolledToNow = useRef(false);
