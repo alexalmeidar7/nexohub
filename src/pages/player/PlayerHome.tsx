@@ -822,8 +822,6 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   // Hero channel = first streaming channel
   const heroChannel = streamingChannels[0];
 
-  // Lazy load PlayerGradeDialog
-  const PlayerGradeDialog = lazy(() => import("@/components/player/PlayerGradeDialog"));
 
   return (
     <div

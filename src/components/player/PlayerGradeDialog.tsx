@@ -234,7 +234,7 @@ function PlayerGradeDialog({ programas, onClose }: Props) {
         {/* Table */}
         <div
           ref={gradeScrollRef}
-          className="overflow-auto max-h-[78vh] px-5 pb-5 pt-3 grade-scroll"
+          className="overflow-auto max-h-[78vh] px-5 pb-5 pt-0 grade-scroll"
           style={{ scrollbarWidth: "thin", scrollbarColor: "rgba(255,255,255,0.1) transparent" }}
         >
           <style>{`
@@ -252,9 +252,9 @@ function PlayerGradeDialog({ programas, onClose }: Props) {
               <tr>
                 <th
                   className="px-2 py-4 text-center rounded-xl text-[11px] uppercase tracking-widest font-semibold"
-                  style={{ backgroundColor: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.5)", width: "58px" }}
+                  style={{ backgroundColor: "rgba(255,255,255,0.06)", color: "hsl(var(--player-foreground))", width: "58px" }}
                 >
-                  <Clock size={12} className="mx-auto mb-0.5 opacity-70" />
+                  <Clock size={12} className="mx-auto mb-0.5" />
                 </th>
                 {DIAS_SEMANA.map(dia => {
                   const isToday = dia === diaAtual;
@@ -264,12 +264,12 @@ function PlayerGradeDialog({ programas, onClose }: Props) {
                       className="px-2 py-4 text-center rounded-xl transition-colors"
                       style={{
                         backgroundColor: isToday ? "hsla(var(--player-accent) / 0.18)" : "rgba(255,255,255,0.06)",
-                        color: isToday ? "hsl(var(--player-accent))" : "rgba(255,255,255,0.7)",
-                        fontWeight: isToday ? 800 : 600,
+                        color: isToday ? "hsl(var(--player-accent))" : "hsl(var(--player-foreground))",
+                        fontWeight: isToday ? 800 : 700,
                       }}
                     >
                       <div className="text-[12px] uppercase tracking-wider font-bold">{dia.slice(0, 3)}</div>
-                      <div className="text-[10px] font-medium mt-0.5" style={{ color: isToday ? "hsl(var(--player-accent))" : "rgba(255,255,255,0.4)" }}>{weekDates[dia]}</div>
+                      <div className="text-[10px] font-semibold mt-0.5" style={{ color: isToday ? "hsl(var(--player-accent))" : "hsl(var(--player-foreground))" }}>{weekDates[dia]}</div>
                       {isToday && (
                         <div className="w-5 h-[2px] rounded-full mx-auto mt-1.5" style={{ backgroundColor: "hsl(var(--player-accent))" }} />
                       )}
@@ -287,15 +287,10 @@ function PlayerGradeDialog({ programas, onClose }: Props) {
                 })();
 
                 return (
-                  <tr key={slot} ref={isOnAirRow && !hasScrolledToNow.current ? (el) => {
-                    if (el) {
-                      hasScrolledToNow.current = true;
-                      requestAnimationFrame(() => el.scrollIntoView({ behavior: "smooth", block: "center" }));
-                    }
-                  } : undefined}>
+                  <tr key={slot} data-on-air={isOnAirRow ? "true" : "false"}>
                     <td
                       className="px-2 py-1 font-mono rounded-lg text-center"
-                      style={{ color: "rgba(255,255,255,0.35)", fontSize: "11px", fontWeight: 600, letterSpacing: "0.05em" }}
+                      style={{ color: "hsl(var(--player-foreground))", fontSize: "11px", fontWeight: 600, letterSpacing: "0.05em" }}
                     >
                       {slot.slice(0, 5)}
                     </td>
