@@ -249,7 +249,7 @@ function StreamingCard({ channel, currentProgram, nowPlaying, onClick }: {
       onClick={onClick}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      className="flex-shrink-0 rounded-xl overflow-hidden relative transition-all duration-300 group border-2 border-transparent hover:border-player-accent/60 hover:shadow-[0_0_30px_-5px_hsla(var(--player-accent)/0.3)]"
+      className="flex-shrink-0 rounded-xl overflow-hidden relative transition-all duration-300 group border-2 border-transparent hover:border-player-accent/60 hover:shadow-[0_0_30px_-5px_hsla(var(--player-accent)/0.3)] hover:-translate-y-1 player-card-pop"
       style={{ width: "320px", aspectRatio: "16/9" }}
     >
       {channel.cover_url ? (
