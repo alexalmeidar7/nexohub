@@ -1547,8 +1547,8 @@ ${perguntaActions}
         </div>
       )}
 
-      {/* Conditional: Jornalístico shows NoticiasPanel */}
-      {tipoPrograma === "Jornalístico" && (
+      {/* Conditional: Jornalístico shows NoticiasPanel (except Primeira Hora Positiva which shows inline) */}
+      {tipoPrograma === "Jornalístico" && programaNome !== "Primeira Hora Positiva" && (
         <Suspense fallback={<ModulePageSkeleton />}>
           <NoticiasPanel />
         </Suspense>
