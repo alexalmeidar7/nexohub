@@ -84,19 +84,22 @@ function StyledInput({ value, onChange, placeholder, type = "text", readOnly = f
   );
 }
 
-function CollapsibleBox({ title, defaultOpen = true, children }: { title: string; defaultOpen?: boolean; children: React.ReactNode }) {
-  const [open, setOpen] = useState(defaultOpen);
+function CollapsibleBox({ title, icon, children }: { title: string; icon?: React.ReactNode; defaultOpen?: boolean; children: React.ReactNode }) {
+  const [open, setOpen] = useState(true);
   return (
-    <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}>
+    <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "#ffffff", boxShadow: "0 4px 20px rgba(13,4,70,0.08)" }}>
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between px-5 py-3 transition-colors"
+        className="w-full flex items-center justify-between px-6 py-4 transition-colors"
         style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)", color: "#ffffff" }}
       >
-        <h3 className="text-sm font-bold text-white">{title}</h3>
-        {open ? <ChevronUp size={18} className="text-white" /> : <ChevronDown size={18} className="text-white" />}
+        <div className="flex items-center gap-3">
+          {icon}
+          <h3 className="text-sm font-bold text-white">{title}</h3>
+        </div>
+        {open ? <ChevronUp size={18} className="text-white/80" /> : <ChevronDown size={18} className="text-white/80" />}
       </button>
-      {open && <div className="p-5 space-y-4" style={{ backgroundColor: "#ffffff" }}>{children}</div>}
+      {open && <div className="p-6 space-y-5" style={{ backgroundColor: "#ffffff" }}>{children}</div>}
     </div>
   );
 }
@@ -303,7 +306,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
         <div className="space-y-5">
 
       {/* Box 1: Configurações da Empresa */}
-      {(section === "all" || section === "empresa") && <CollapsibleBox title="Configurações da Empresa">
+      {(section === "all" || section === "empresa") && <CollapsibleBox title="Configurações da Empresa" icon={<Settings size={16} className="text-white/80" />}>
         <div className="space-y-4">
           {field("Nome da Empresa", "nome", "Nome da empresa")}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -647,7 +650,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
       </div></div>}
 
       {/* Box 3: Layout */}
-      {(section === "all" || section === "empresa") && <CollapsibleBox title="Layout — Cores e Personalização">
+      {(section === "all" || section === "empresa") && <CollapsibleBox title="Layout — Cores e Personalização" icon={<Palette size={16} className="text-white/80" />}>
         <Suspense fallback={<div className="flex items-center gap-2 text-xs py-8 justify-center" style={{ color: "rgba(13,4,70,0.5)" }}><Loader2 size={16} className="animate-spin" /> Carregando...</div>}>
           <LayoutCustomizer />
         </Suspense>
