@@ -223,7 +223,38 @@ function HeroBanner({
               )}
             </div>
             {displayProgram.descricao && (
-              <p className="text-sm text-white/60 line-clamp-2 mb-4 max-w-lg">{displayProgram.descricao}</p>
+              <p className="text-xs text-white/50 line-clamp-1 mb-2 max-w-md">{displayProgram.descricao}</p>
+            )}
+            {/* Keywords + Age rating */}
+            {displayProgram.id && aiData[displayProgram.id] && (
+              <div className="flex items-center gap-2 mb-4 flex-wrap">
+                {aiData[displayProgram.id].keywords.map((kw, i) => (
+                  <span
+                    key={i}
+                    className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-md font-medium"
+                    style={{
+                      backgroundColor: "hsla(var(--player-accent) / 0.12)",
+                      color: "hsl(var(--player-accent))",
+                      border: "1px solid hsla(var(--player-accent) / 0.2)",
+                    }}
+                  >
+                    <Tag size={8} />
+                    {kw}
+                  </span>
+                ))}
+                {(() => {
+                  const rating = RATING_COLORS[aiData[displayProgram.id].classificacao] || RATING_COLORS["Livre"];
+                  return (
+                    <span
+                      className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-md font-bold"
+                      style={{ backgroundColor: rating.bg, color: rating.text }}
+                    >
+                      <Shield size={9} />
+                      {rating.label}
+                    </span>
+                  );
+                })()}
+              </div>
             )}
           </>
         ) : channelName ? (
