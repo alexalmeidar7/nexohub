@@ -231,7 +231,11 @@ function useDragReorder<T>(items: T[], setItems: (items: T[]) => void) {
   return { handleDragStart, handleDragOver, handleDrop };
 }
 
-export default function NoticiasPanel() {
+interface NoticiasPanelProps {
+  defaultJornalConfig?: JornalConfig | null;
+}
+
+export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProps = {}) {
   const { user } = useAuth();
   const [newsByPortal, setNewsByPortal] = useState<Record<string, NewsItem[]>>({});
   const [loading, setLoading] = useState(true);
@@ -246,7 +250,7 @@ export default function NoticiasPanel() {
   const [summaryPopup, setSummaryPopup] = useState<{ title: string; resumo: string; tempoLeitura: string } | null>(null);
   const [loadingSummary, setLoadingSummary] = useState(false);
   const [wizardOpen, setWizardOpen] = useState(false);
-  const [jornalConfig, setJornalConfig] = useState<JornalConfig | null>(null);
+  const [jornalConfig, setJornalConfig] = useState<JornalConfig | null>(defaultJornalConfig || null);
   const [programas, setProgramas] = useState<{ id: string; nome: string }[]>([]);
   const [showAddSiteInput, setShowAddSiteInput] = useState(false);
   const [hoveredImage, setHoveredImage] = useState<{ url: string; x: number; y: number } | null>(null);
