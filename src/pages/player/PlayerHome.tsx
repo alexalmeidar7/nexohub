@@ -94,8 +94,9 @@ function HeroBanner({
   };
 
   const getSlideImage = (ch: Channel | null) => {
-    if (!ch) return currentProgram?.thumb || currentProgram?.capa || "/images/banner-home.png";
-    return ch.background_url || ch.cover_url || ch.logo_url || currentProgram?.thumb || "/images/banner-home.png";
+    // Priorizar thumb do programa atual; se não houver, fundo preto (sem imagem)
+    if (currentProgram?.thumb) return currentProgram.thumb;
+    return null; // null = fundo preto
   };
 
   const activeChannel = items[activeIdx];
