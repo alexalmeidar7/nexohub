@@ -611,18 +611,16 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   // Poll for current music data
   useEffect(() => {
     const userId = user?.id;
-    const readLocal = () => {
+    const fetchMusic = async () => {
+      // Try localStorage first
       try {
         const raw = localStorage.getItem("masterview_music_data");
         if (raw) {
           const parsed = JSON.parse(raw);
-          if (parsed.titulo) { setNowPlaying({ musica: parsed.titulo, artista: parsed.artista || "" }); return true; }
+          if (parsed.titulo) { setNowPlaying({ musica: parsed.titulo, artista: parsed.artista || "" }); return; }
         }
       } catch {}
-      return false;
-    };
-    const fetchFromDb = async () => {
-      if (readLocal()) return;
+      // Fallback to DB
       const targetId = userId || undefined;
       if (!targetId && (!userSlug || userSlug === ":userSlug")) return;
       try {
@@ -635,8 +633,8 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
         }
       } catch {}
     };
-    fetchFromDb();
-    const interval = setInterval(fetchFromDb, 2000);
+    fetchMusic();
+    const interval = setInterval(fetchMusic, 5000);
     return () => clearInterval(interval);
   }, [user, userSlug]);
 
