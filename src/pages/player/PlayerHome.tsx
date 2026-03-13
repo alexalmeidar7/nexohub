@@ -979,7 +979,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
 
                           {/* Gradient + title */}
                           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent z-[1]" />
-                          <div className="absolute bottom-0 left-0 right-0 p-3 z-[2]">
+                          <div className="absolute bottom-0 left-0 right-0 p-3 z-[2] text-left">
                             <p className="text-sm font-bold text-white leading-tight line-clamp-2 drop-shadow">{item.title}</p>
                             {item.subtitle && <p className="text-[11px] text-white/60 mt-0.5">{item.subtitle}</p>}
                           </div>
