@@ -712,10 +712,10 @@ function TrendingCard({ item, idx, channels, onClick }: {
         {idx + 1}
       </div>
 
-      {/* Channel/Catalog logo - top right */}
+      {/* Channel/Catalog logo - top right, no circle, above everything */}
       {item.logoUrl && (
-        <div className="absolute top-2 right-2 z-10 w-8 h-8 rounded-full overflow-hidden bg-black/50 backdrop-blur-sm border border-white/10 shadow-lg">
-          <img src={item.logoUrl} alt="" className="w-full h-full object-cover" />
+        <div className="absolute top-2 right-2 z-[12] w-10 h-6 flex items-center justify-center drop-shadow-lg">
+          <img src={item.logoUrl} alt="" className="max-w-full max-h-full object-contain" />
         </div>
       )}
 
