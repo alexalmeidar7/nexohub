@@ -670,7 +670,7 @@ function TrendingCard({ item, idx, channels, onClick }: {
     };
   }, [showVideo, item.videoId]);
 
-  const coverSrc = aiCover || item.image;
+  const coverSrc = item.image || aiCover;
 
   return (
     <div
