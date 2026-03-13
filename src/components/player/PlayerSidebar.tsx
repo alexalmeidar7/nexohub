@@ -20,9 +20,7 @@ interface PlayerSidebarProps {
   onLogout?: () => void;
   onSignup?: () => void;
   loading?: boolean;
-  /** When true, sidebar auto-hides and only appears on left-edge hover */
   autoHide?: boolean;
-  /** External visibility signal (e.g. tied to control bar) */
   visible?: boolean;
 }
 
@@ -39,21 +37,12 @@ export default function PlayerSidebar({
   autoHide = false,
   visible = true,
 }: PlayerSidebarProps) {
-  const navRef = useRef<HTMLElement>(null);
-  const btnRefs = useRef<Record<string, HTMLButtonElement | null>>({});
-  const [, forceRender] = useState(0);
   const [hovered, setHovered] = useState(false);
-
-  // Force re-render after mount so sliding highlight has refs
-  useEffect(() => {
-    forceRender(1);
-  }, []);
 
   const isShown = autoHide ? (visible || hovered) : true;
 
   return (
     <>
-      {/* Invisible left-edge hover trigger zone (only when autoHide) */}
       {autoHide && !isShown && (
         <div
           className="fixed left-0 top-0 bottom-0 w-4 z-[41]"
@@ -63,7 +52,7 @@ export default function PlayerSidebar({
       <aside
         onMouseEnter={() => autoHide && setHovered(true)}
         onMouseLeave={() => autoHide && setHovered(false)}
-        className="w-[72px] flex flex-col items-center py-6 gap-2 z-40 fixed left-0 top-0 bottom-0 transition-all duration-300 ease-in-out"
+        className="w-[52px] flex flex-col items-center py-6 gap-2 z-40 fixed left-0 top-0 bottom-0 transition-all duration-300 ease-in-out"
         style={{
           background: "transparent",
           transform: isShown ? "translateX(0)" : "translateX(-100%)",
@@ -71,9 +60,9 @@ export default function PlayerSidebar({
           pointerEvents: isShown ? "auto" : "none",
         }}
       >
-        {/* Avatar with hover popup */}
+        {/* Avatar */}
         <div className="group/avatar relative flex flex-col items-center mb-2">
-          <div className="w-10 h-10 rounded-full bg-player-surface flex items-center justify-center overflow-hidden cursor-pointer">
+          <div className="w-9 h-9 rounded-full bg-player-surface/30 flex items-center justify-center overflow-hidden cursor-pointer transition-transform duration-200 hover:scale-110">
             {loading ? (
               <Skeleton className="w-full h-full rounded-full bg-white/10" />
             ) : avatarUrl ? (
@@ -82,7 +71,8 @@ export default function PlayerSidebar({
               <img src="/avatars/usr-default.png" alt="Visitante" className="w-full h-full object-cover" />
             )}
           </div>
-          <div className="absolute left-[56px] top-0 opacity-0 pointer-events-none group-hover/avatar:opacity-100 group-hover/avatar:pointer-events-auto transition-all duration-200 z-50">
+          {/* Tooltip on hover */}
+          <div className="absolute left-[48px] top-0 opacity-0 pointer-events-none group-hover/avatar:opacity-100 group-hover/avatar:pointer-events-auto transition-all duration-200 z-50">
             <div
               className="rounded-xl px-4 py-3 flex flex-col gap-0.5 whitespace-nowrap"
               style={{
@@ -111,67 +101,47 @@ export default function PlayerSidebar({
         </div>
 
         {/* Separator */}
-        <div className="w-8 h-px" style={{ background: "rgba(255,255,255,0.1)" }} />
+        <div className="w-6 h-px" style={{ background: "rgba(255,255,255,0.08)" }} />
 
-        {/* Nav items with sliding highlight */}
-        <nav ref={navRef} className="flex flex-col items-center gap-1.5 flex-1 justify-center relative">
-          {(() => {
-            const activeBtn = btnRefs.current[activeKey];
-            const nav = navRef.current;
-            if (!activeBtn || !nav) return null;
-            const navRect = nav.getBoundingClientRect();
-            const btnRect = activeBtn.getBoundingClientRect();
-            const top = btnRect.top - navRect.top;
-            const height = btnRect.height;
-            return (
-              <>
-                <div
-                  className="absolute left-1/2 -translate-x-1/2 rounded-xl pointer-events-none z-0"
-                  style={{
-                    top,
-                    height,
-                    width: 52,
-                    transition: "top 0.35s cubic-bezier(0.4, 0, 0.2, 1), height 0.35s cubic-bezier(0.4, 0, 0.2, 1)",
-                    background: "linear-gradient(135deg, hsl(var(--player-accent)), hsl(var(--player-accent-hover)))",
-                    boxShadow: "0 4px 20px hsla(var(--player-accent) / 0.4)",
-                  }}
-                />
-                <span
-                  className="absolute -left-[1px] w-[3px] h-7 rounded-r-full pointer-events-none z-0"
-                  style={{
-                    top: top + height / 2 - 14,
-                    transition: "top 0.35s cubic-bezier(0.4, 0, 0.2, 1)",
-                    backgroundColor: "hsl(var(--player-accent))",
-                  }}
-                />
-              </>
-            );
-          })()}
+        {/* Nav icons */}
+        <nav className="flex flex-col items-center gap-1 flex-1 justify-center">
           {items.map((item) => {
             const isActive = activeKey === item.key;
             return (
               <button
                 key={item.key}
-                ref={(el) => { btnRefs.current[item.key] = el; }}
                 onClick={item.action}
-                className="group relative w-[52px] rounded-xl px-2 py-3 flex flex-col items-center justify-center gap-1 transition-all duration-300 focus-visible:outline-none z-[1]"
+                className="group/btn relative w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-200 focus-visible:outline-none"
+                style={{
+                  background: isActive
+                    ? "linear-gradient(135deg, hsl(var(--player-accent)), hsl(var(--player-accent-hover)))"
+                    : "transparent",
+                  boxShadow: isActive ? "0 2px 12px hsla(var(--player-accent) / 0.35)" : "none",
+                }}
                 title={item.label}
                 aria-label={item.label}
               >
-                <div className="w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-300">
-                  <item.icon
-                    className={`h-[18px] w-[18px] transition-colors duration-200 ${
-                      isActive ? "text-white" : "text-white/50 group-hover:text-white/80"
-                    }`}
-                  />
-                </div>
-                <span
-                  className={`text-[8px] font-medium leading-none tracking-wide transition-colors duration-200 ${
-                    isActive ? "text-white" : "text-white/40 group-hover:text-white/70"
+                <item.icon
+                  className={`h-[18px] w-[18px] transition-colors duration-200 ${
+                    isActive ? "text-white" : "text-white/40 group-hover/btn:text-white/80"
                   }`}
+                />
+
+                {/* Label tooltip on hover */}
+                <div
+                  className="absolute left-[calc(100%+8px)] top-1/2 -translate-y-1/2 opacity-0 pointer-events-none group-hover/btn:opacity-100 transition-all duration-200 z-50"
                 >
-                  {item.label}
-                </span>
+                  <span
+                    className="block whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-semibold text-white"
+                    style={{
+                      background: "rgba(0,0,0,0.85)",
+                      backdropFilter: "blur(12px)",
+                      border: "1px solid rgba(255,255,255,0.08)",
+                    }}
+                  >
+                    {item.label}
+                  </span>
+                </div>
               </button>
             );
           })}
