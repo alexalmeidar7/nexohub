@@ -642,7 +642,7 @@ function TrendingCard({ item, idx, channels, onClick }: {
     };
   }, [showVideo, item.videoId]);
 
-  const coverSrc = item.image || aiCover;
+  const coverSrc = item.image;
 
   return (
     <div
@@ -650,13 +650,15 @@ function TrendingCard({ item, idx, channels, onClick }: {
       onClick={onClick}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      className="flex-shrink-0 rounded-xl overflow-hidden relative transition-all duration-500 ease-out group border-2 border-transparent hover:border-player-accent/50 hover:shadow-[0_0_40px_-5px_rgba(200,0,0,0.4)] cursor-pointer"
+      className="flex-shrink-0 rounded-2xl overflow-hidden relative transition-all duration-500 ease-[cubic-bezier(0.25,0.1,0.25,1)] group cursor-pointer"
       style={{
         width: showVideo ? "520px" : "200px",
         aspectRatio: showVideo ? "16/9" : "2/3",
-        background: "hsl(var(--player-bg))",
+        background: "linear-gradient(145deg, rgba(255,255,255,0.06) 0%, hsl(var(--player-bg)) 100%)",
         zIndex: showVideo ? 20 : 1,
-        transform: hovered && !showVideo ? "translateY(-4px)" : "none",
+        transform: hovered && !showVideo ? "translateY(-6px) scale(1.02)" : "none",
+        boxShadow: hovered ? "0 20px 60px -15px rgba(0,0,0,0.7), 0 0 40px -10px hsla(var(--player-accent) / 0.25)" : "0 4px 20px -8px rgba(0,0,0,0.4)",
+        border: hovered ? "1px solid hsla(var(--player-accent) / 0.4)" : "1px solid rgba(255,255,255,0.06)",
       }}
     >
       {/* Cover image */}
@@ -664,15 +666,11 @@ function TrendingCard({ item, idx, channels, onClick }: {
         <img
           src={coverSrc}
           alt={item.title}
-          className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ${showVideo ? "opacity-0 scale-110 blur-sm" : "opacity-100"} group-hover:scale-105`}
+          className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ${showVideo ? "opacity-0 scale-110 blur-md" : "opacity-100"} group-hover:scale-105`}
         />
       ) : (
-        <div className="absolute inset-0 w-full h-full flex items-center justify-center" style={{ background: "hsl(var(--player-bg))" }}>
-          {aiLoading ? (
-            <div className="w-6 h-6 rounded-full border-2 border-player-accent/40 border-t-player-accent animate-spin" />
-          ) : (
-            <TrendingUp className="h-8 w-8" style={{ color: "hsl(var(--player-accent))", opacity: 0.5 }} />
-          )}
+        <div className="absolute inset-0 w-full h-full flex items-center justify-center" style={{ background: "linear-gradient(160deg, rgba(255,255,255,0.08) 0%, hsl(var(--player-bg)) 100%)" }}>
+          <TrendingUp className="h-10 w-10" style={{ color: "hsl(var(--player-accent))", opacity: 0.3 }} />
         </div>
       )}
 
