@@ -439,6 +439,13 @@ function StreamingCard({ channel, currentProgram, nowPlaying, onClick }: {
         <img src={frames[frameIdx]} alt="preview" className="absolute inset-0 w-full h-full object-cover z-[1]" />
       )}
 
+      {/* Channel logo top-right */}
+      {channel.logo_url && (
+        <div className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full overflow-hidden bg-black/50 backdrop-blur-sm border border-white/10 shadow-lg">
+          <img src={channel.logo_url} alt="" className="w-full h-full object-cover" />
+        </div>
+      )}
+
       {/* Live badge */}
       <span className="absolute top-3 left-3 z-10 text-[10px] uppercase tracking-wider font-bold bg-player-accent/90 px-2 py-0.5 rounded-md flex items-center gap-1.5 text-white shadow-lg">
         <span className="inline-block w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
