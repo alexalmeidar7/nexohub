@@ -843,33 +843,35 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
 
           {visibleSection === "home" && (
             <>
-              {/* Hero Banner */}
-              {!dataLoaded ? (
-                <div style={{ height: "clamp(340px, 56vh, 560px)" }} className="relative">
-                  <Skeleton className="absolute inset-0 bg-white/5" />
-                  <div className="absolute bottom-10 left-12 space-y-3">
-                    <Skeleton className="h-4 w-20 bg-white/10" />
-                    <Skeleton className="h-10 w-72 bg-white/10" />
-                    <Skeleton className="h-4 w-48 bg-white/8" />
-                    <div className="flex gap-3">
-                      <Skeleton className="h-11 w-40 rounded-lg bg-white/10" />
-                      <Skeleton className="h-11 w-28 rounded-lg bg-white/8" />
+              {/* Hero Banner — sticky at top, content scrolls behind it */}
+              <div className="sticky top-0 z-20">
+                {!dataLoaded ? (
+                  <div style={{ height: "clamp(340px, 56vh, 560px)" }} className="relative">
+                    <Skeleton className="absolute inset-0 bg-white/5" />
+                    <div className="absolute bottom-10 left-12 space-y-3">
+                      <Skeleton className="h-4 w-20 bg-white/10" />
+                      <Skeleton className="h-10 w-72 bg-white/10" />
+                      <Skeleton className="h-4 w-48 bg-white/8" />
+                      <div className="flex gap-3">
+                        <Skeleton className="h-11 w-40 rounded-lg bg-white/10" />
+                        <Skeleton className="h-11 w-28 rounded-lg bg-white/8" />
+                      </div>
                     </div>
                   </div>
-                </div>
-              ) : (
-                <HeroBanner
-                  currentProgram={currentProgram || undefined}
-                  nextProgram={nextProgram}
-                  nowPlaying={nowPlaying}
-                  channelName={channelName}
-                  onPlay={() => goToPlayer(streamingChannels[0]?.id)}
-                  onGrade={() => setShowGrade(true)}
-                />
-              )}
+                ) : (
+                  <HeroBanner
+                    currentProgram={currentProgram || undefined}
+                    nextProgram={nextProgram}
+                    nowPlaying={nowPlaying}
+                    channelName={channelName}
+                    onPlay={() => goToPlayer(streamingChannels[0]?.id)}
+                    onGrade={() => setShowGrade(true)}
+                  />
+                )}
+              </div>
 
-              {/* Content rows */}
-              <div className="px-6 sm:px-10 pb-8 -mt-4 relative z-10">
+              {/* Content rows — slides behind the sticky hero */}
+              <div className="px-6 sm:px-10 pb-8 relative z-30" style={{ marginTop: "-4px", background: "hsl(var(--player-bg))" }}>
                 {/* Streaming ao vivo */}
                 {!dataLoaded ? (
                   <section className="mb-8">
