@@ -127,17 +127,15 @@ function PlayerGradeDialog({ programas, onClose }: Props) {
     return { skipMap: skip, spanMap: span };
   }, [programas, gradeSlots]);
 
-  // Color palette for programs
+  // Color palette — only black, gray, red variations
   const getProgColor = (name: string) => {
     const colors = [
-      { bg: "rgba(239,68,68,0.12)", border: "rgba(239,68,68,0.25)", text: "rgb(252,165,165)" },
-      { bg: "rgba(59,130,246,0.12)", border: "rgba(59,130,246,0.25)", text: "rgb(147,197,253)" },
-      { bg: "rgba(16,185,129,0.12)", border: "rgba(16,185,129,0.25)", text: "rgb(110,231,183)" },
-      { bg: "rgba(245,158,11,0.12)", border: "rgba(245,158,11,0.25)", text: "rgb(252,211,77)" },
-      { bg: "rgba(139,92,246,0.12)", border: "rgba(139,92,246,0.25)", text: "rgb(196,181,253)" },
-      { bg: "rgba(236,72,153,0.12)", border: "rgba(236,72,153,0.25)", text: "rgb(249,168,212)" },
-      { bg: "rgba(6,182,212,0.12)", border: "rgba(6,182,212,0.25)", text: "rgb(103,232,249)" },
-      { bg: "rgba(251,146,60,0.12)", border: "rgba(251,146,60,0.25)", text: "rgb(253,186,116)" },
+      { bg: "rgba(200,0,0,0.10)", border: "rgba(200,0,0,0.25)", text: "rgb(248,140,140)" },
+      { bg: "rgba(255,255,255,0.05)", border: "rgba(255,255,255,0.12)", text: "rgb(200,200,200)" },
+      { bg: "rgba(150,1,1,0.12)", border: "rgba(150,1,1,0.30)", text: "rgb(255,160,160)" },
+      { bg: "rgba(255,255,255,0.04)", border: "rgba(255,255,255,0.10)", text: "rgb(180,180,180)" },
+      { bg: "rgba(190,1,1,0.10)", border: "rgba(190,1,1,0.22)", text: "rgb(252,170,170)" },
+      { bg: "rgba(255,255,255,0.06)", border: "rgba(255,255,255,0.14)", text: "rgb(210,210,210)" },
     ];
     let hash = 0;
     for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
