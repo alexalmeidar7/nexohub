@@ -324,8 +324,8 @@ function ContentRow({ title, children }: { title: string; children: React.ReactN
   };
 
   return (
-    <section className="mb-8 relative group/row">
-      <h2 className="text-base sm:text-lg font-bold mb-3 tracking-wide text-white/90 px-1">{title}</h2>
+    <section className="mb-8 relative group/row player-row-slide">
+      <h2 className="text-base sm:text-lg font-bold mb-3 tracking-wide text-white/90 px-1 player-hero-content">{title}</h2>
       <div className="relative">
         {canScrollLeft && (
           <button
