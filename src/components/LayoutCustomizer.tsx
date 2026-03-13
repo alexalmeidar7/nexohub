@@ -284,69 +284,108 @@ export default function LayoutCustomizer() {
       </div>
 
       {/* Mockup preview */}
-      <div className="rounded-2xl overflow-hidden shadow-lg" style={{ border: "1px solid rgba(13,4,70,0.1)" }}>
-        <div className="text-xs font-bold uppercase tracking-wider px-4 py-2.5 flex items-center gap-2" style={{ background: "linear-gradient(135deg, rgba(13,4,70,0.06), rgba(46,193,247,0.06))", color: "#0d0446" }}>
-          <Palette size={14} /> Pré-visualização do Layout
+      <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(13,4,70,0.12)", boxShadow: "0 8px 32px rgba(13,4,70,0.10), 0 2px 8px rgba(13,4,70,0.06)" }}>
+        <div className="px-5 py-3 flex items-center justify-between" style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+          <div className="flex items-center gap-2">
+            <Palette size={14} className="text-white/70" />
+            <span className="text-xs font-bold text-white/90 uppercase tracking-wider">Pré-visualização</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: "#ff5f57" }} />
+            <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: "#febc2e" }} />
+            <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: "#28c840" }} />
+          </div>
+        </div>
+
+        {/* Browser chrome */}
+        <div className="px-4 py-2 flex items-center gap-3" style={{ backgroundColor: "#f5f5f7", borderBottom: "1px solid rgba(13,4,70,0.08)" }}>
+          <div className="flex items-center gap-1.5">
+            <div className="w-5 h-5 rounded-md flex items-center justify-center" style={{ backgroundColor: "rgba(13,4,70,0.08)" }}>
+              <span style={{ fontSize: 9, color: "rgba(13,4,70,0.4)" }}>‹</span>
+            </div>
+            <div className="w-5 h-5 rounded-md flex items-center justify-center" style={{ backgroundColor: "rgba(13,4,70,0.08)" }}>
+              <span style={{ fontSize: 9, color: "rgba(13,4,70,0.4)" }}>›</span>
+            </div>
+          </div>
+          <div className="flex-1 h-6 rounded-lg flex items-center px-3" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.1)" }}>
+            <span style={{ fontSize: 9, color: "rgba(13,4,70,0.35)", fontFamily: "monospace" }}>https://minharadio.com.br</span>
+          </div>
         </div>
 
         {/* Mockup page */}
-        <div style={{ backgroundColor: colors.pageBg, color: colors.pageText, minHeight: 320 }} className="transition-colors duration-300">
+        <div style={{ backgroundColor: colors.pageBg, color: colors.pageText }} className="transition-colors duration-300">
           {/* Header */}
           <div className="flex items-center justify-between px-5 py-3 transition-colors duration-300" style={{ backgroundColor: colors.headerBg }}>
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg" style={{ backgroundColor: colors.accentColor, opacity: 0.8 }} />
-              <span className="text-sm font-bold transition-colors duration-300" style={{ color: colors.headerText }}>Minha Rádio</span>
+              <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: colors.accentColor }}>
+                <span className="text-[10px] font-black" style={{ color: colors.buttonText }}>R</span>
+              </div>
+              <span className="text-xs font-bold transition-colors duration-300" style={{ color: colors.headerText }}>Minha Rádio</span>
             </div>
             <div className="flex items-center gap-4">
-              <span className="text-[11px] cursor-pointer transition-colors duration-300" style={{ color: colors.linkColor }}>Início</span>
-              <span className="text-[11px] cursor-pointer transition-colors duration-300" style={{ color: colors.linkColor }}>Programas</span>
-              <span className="text-[11px] cursor-pointer transition-colors duration-300" style={{ color: colors.linkColor }}>Contato</span>
+              {["Início", "Programas", "Contato"].map((l) => (
+                <span key={l} className="text-[10px] cursor-pointer font-medium transition-colors duration-300" style={{ color: colors.linkColor }}>{l}</span>
+              ))}
             </div>
           </div>
 
-          {/* Content */}
+          {/* Hero banner */}
+          <div className="px-5 py-5 transition-colors duration-300" style={{ background: `linear-gradient(135deg, ${colors.headerBg}ee, ${colors.accentColor}88)` }}>
+            <p className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: colors.accentColor }}>AO VIVO</p>
+            <h2 className="text-sm font-bold mb-1" style={{ color: colors.headerText }}>Primeira Hora Positiva</h2>
+            <p className="text-[10px] leading-relaxed mb-3" style={{ color: colors.headerText, opacity: 0.7 }}>O melhor conteúdo da manhã começa aqui.</p>
+            <button className="px-4 py-1.5 text-[10px] font-bold rounded-full transition-colors duration-300" style={{ backgroundColor: colors.buttonBg, color: colors.buttonText }}>
+              ▶ Ouvir Agora
+            </button>
+          </div>
+
+          {/* Content area */}
           <div className="p-5 space-y-4">
-            <h2 className="text-base font-bold transition-colors duration-300" style={{ color: colors.pageText }}>
-              Título da Página
-            </h2>
-            <p className="text-xs leading-relaxed transition-colors duration-300" style={{ color: colors.pageText, opacity: 0.7 }}>
-              Este é um exemplo de como o texto ficará com as cores selecionadas.
-            </p>
-
-            <div className="flex items-center gap-2">
-              <a href="#" className="text-xs underline transition-colors duration-300" style={{ color: colors.linkColor }} onClick={(e) => e.preventDefault()}>
-                Link de exemplo
-              </a>
-            </div>
-
             {/* Cards row */}
-            <div className="grid grid-cols-3 gap-3 pt-2">
-              {["Programa 1", "Programa 2", "Programa 3"].map((title) => (
-                <div key={title} className="rounded-xl p-3 space-y-2 transition-colors duration-300" style={{ backgroundColor: colors.headerBg + "22", border: `1px solid ${colors.accentColor}33` }}>
-                  <div className="w-full h-12 rounded-lg" style={{ backgroundColor: colors.accentColor + "20" }} />
-                  <p className="text-[11px] font-semibold" style={{ color: colors.pageText }}>{title}</p>
+            <div className="grid grid-cols-3 gap-2.5">
+              {[
+                { title: "Manhã Show", time: "06:00 - 09:00" },
+                { title: "Tarde Hits", time: "13:00 - 17:00" },
+                { title: "Noite Musical", time: "20:00 - 00:00" },
+              ].map((item) => (
+                <div key={item.title} className="rounded-xl overflow-hidden transition-colors duration-300" style={{ backgroundColor: colors.headerBg + "0d", border: `1px solid ${colors.accentColor}22` }}>
+                  <div className="h-10 w-full" style={{ background: `linear-gradient(135deg, ${colors.accentColor}30, ${colors.headerBg}20)` }} />
+                  <div className="px-2.5 py-2">
+                    <p className="text-[10px] font-bold" style={{ color: colors.pageText }}>{item.title}</p>
+                    <p className="text-[9px] mt-0.5" style={{ color: colors.pageText, opacity: 0.5 }}>{item.time}</p>
+                  </div>
                 </div>
               ))}
             </div>
 
-            {/* Buttons */}
-            <div className="flex items-center gap-3 pt-2">
-              <button className="px-4 py-2 text-xs font-bold rounded-full transition-colors duration-300" style={{ backgroundColor: colors.buttonBg, color: colors.buttonText }}>
-                Botão Primário
-              </button>
-              <button className="px-4 py-2 text-xs font-bold rounded-full transition-colors duration-300" style={{ backgroundColor: "transparent", color: colors.buttonBg, border: `2px solid ${colors.buttonBg}` }}>
-                Botão Secundário
-              </button>
-              <span className="text-xs font-semibold px-3 py-1 rounded-full transition-colors duration-300" style={{ backgroundColor: colors.accentColor + "22", color: colors.accentColor }}>
-                Destaque
+            {/* Link + text sample */}
+            <div className="flex items-center gap-3">
+              <a href="#" className="text-[10px] font-medium underline underline-offset-2 transition-colors duration-300" style={{ color: colors.linkColor }} onClick={(e) => e.preventDefault()}>
+                Ver grade completa →
+              </a>
+              <span className="text-[9px] font-semibold px-2.5 py-0.5 rounded-full" style={{ backgroundColor: colors.accentColor + "1a", color: colors.accentColor }}>
+                DESTAQUE
               </span>
+            </div>
+
+            {/* Buttons */}
+            <div className="flex items-center gap-2.5">
+              <button className="px-4 py-1.5 text-[10px] font-bold rounded-full transition-colors duration-300" style={{ backgroundColor: colors.buttonBg, color: colors.buttonText }}>
+                Participar
+              </button>
+              <button className="px-4 py-1.5 text-[10px] font-bold rounded-full transition-colors duration-300" style={{ backgroundColor: "transparent", color: colors.buttonBg, border: `1.5px solid ${colors.buttonBg}` }}>
+                Ver Promoções
+              </button>
             </div>
           </div>
 
           {/* Footer */}
-          <div className="px-5 py-3 flex items-center justify-between transition-colors duration-300" style={{ backgroundColor: colors.headerBg, borderTop: `1px solid ${colors.accentColor}33` }}>
-            <span className="text-[10px]" style={{ color: colors.headerText, opacity: 0.6 }}>© 2026 Minha Rádio</span>
-            <span className="text-[10px] cursor-pointer" style={{ color: colors.linkColor }}>Termos de Uso</span>
+          <div className="px-5 py-2.5 flex items-center justify-between transition-colors duration-300" style={{ backgroundColor: colors.headerBg, borderTop: `1px solid ${colors.accentColor}22` }}>
+            <span className="text-[9px] font-medium" style={{ color: colors.headerText, opacity: 0.5 }}>© 2026 Minha Rádio</span>
+            <div className="flex items-center gap-3">
+              <span className="text-[9px] cursor-pointer font-medium" style={{ color: colors.linkColor }}>Termos</span>
+              <span className="text-[9px] cursor-pointer font-medium" style={{ color: colors.linkColor }}>Contato</span>
+            </div>
           </div>
         </div>
       </div>
