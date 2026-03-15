@@ -268,6 +268,20 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
   return (
     <div ref={scrollRef} className="flex flex-col h-full overflow-hidden relative pt-1">
 
+      {/* Botão de ação rápida */}
+      <div className="mb-4 animate-fade-in">
+        <button
+          className="px-5 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:scale-105"
+          style={{
+            background: "linear-gradient(135deg, #960101, #be0101)",
+            boxShadow: "0 4px 15px rgba(150,1,1,0.35)",
+            border: "1px solid rgba(255,255,255,0.15)",
+          }}
+          onClick={() => alert("Botão clicado!")}
+        >
+          🚀 Ação Rápida
+        </button>
+      </div>
 
       {/* Section: Atalhos */}
       {items.filter(i => i.type === "link").length > 0 && (
