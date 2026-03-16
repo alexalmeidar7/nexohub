@@ -99,8 +99,8 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
       {/* ─── HERO: full-width cinematic cover ─── */}
       <div className="relative flex-1 min-h-0 w-full overflow-hidden">
         {/* Background cover — uses catalog thumbnail */}
-        {coverUrl ? (
-          <img src={coverUrl} alt="" className="absolute inset-0 w-full h-full object-cover" />
+        {heroBackground ? (
+          <img src={heroBackground} alt="" className="absolute inset-0 w-full h-full object-cover" onError={(e) => { if (videos[0]?.thumbnail) (e.target as HTMLImageElement).src = videos[0].thumbnail; }} />
         ) : (
           <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, hsl(var(--player-bg)) 0%, hsl(220 50% 15%) 50%, hsl(var(--player-bg)) 100%)" }} />
         )}
