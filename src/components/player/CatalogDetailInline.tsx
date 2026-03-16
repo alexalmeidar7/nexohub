@@ -166,12 +166,12 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
         </button>
 
         {/* Content: logo + program info, bottom-left */}
-        <div className="absolute bottom-10 left-8 sm:left-12 z-10 max-w-xl flex flex-col gap-3">
+        <div className="absolute bottom-16 left-8 sm:left-12 z-10 max-w-xl flex flex-col gap-3">
           {logoUrl ? (
             <img
               src={logoUrl}
               alt={catalogName}
-              className="h-20 sm:h-28 lg:h-32 object-contain object-left"
+              className="h-24 sm:h-36 lg:h-40 object-contain object-left"
               style={{ filter: "drop-shadow(0 4px 30px rgba(0,0,0,0.7))" }}
             />
           ) : (
