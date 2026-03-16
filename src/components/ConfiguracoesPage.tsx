@@ -56,6 +56,9 @@ interface Canal {
   is_hd: boolean;
   is_stereo: boolean;
   classificacao_etaria: string;
+  horario_inicio: string;
+  horario_fim: string;
+  descricao: string;
 }
 
 /* ── Styled input helper ── */
