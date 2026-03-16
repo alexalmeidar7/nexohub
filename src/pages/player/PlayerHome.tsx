@@ -1173,15 +1173,45 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   const goBackFromCatalog = () => {
     setActiveCatalog(null);
     setSectionFading(true);
-    setTimeout(() => { setVisibleSection("content"); setSectionFading(false); }, 200);
+    setTimeout(() => {
+      setVisibleSection("home");
+      setSectionFading(false);
+      // Scroll to catalog section after returning
+      setTimeout(() => {
+        const el = document.getElementById("section-content");
+        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 50);
+    }, 200);
   };
 
   const handleSectionChange = useCallback((section: Section) => {
-    if (section === activeSection && visibleSection === section) return;
+    // If we're in catalog-detail, go back to main view first
+    if (visibleSection === "catalog-detail") {
+      setActiveCatalog(null);
+      setSectionFading(true);
+      setTimeout(() => {
+        setVisibleSection("home");
+        setSectionFading(false);
+        // After returning to home, scroll to the section
+        setTimeout(() => {
+          const el = document.getElementById(`section-${section}`);
+          if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 50);
+      }, 200);
+      setActiveSection(section);
+      return;
+    }
+
     setActiveSection(section);
-    setSectionFading(true);
-    setTimeout(() => { setVisibleSection(section); setSectionFading(false); }, 200);
-  }, [activeSection, visibleSection]);
+
+    if (section === "home") {
+      // Scroll to top
+      contentScrollRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+    } else {
+      const el = document.getElementById(`section-${section}`);
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [visibleSection]);
 
   const handleSignOut = async () => { await signOut(); navigate("/user/nexohub/player"); };
 
@@ -1191,6 +1221,42 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
     { icon: Film, label: "Catálogo", key: "content", action: () => { setActiveCatalog(null); handleSectionChange("content"); } },
     ...(user ? [{ icon: ShoppingBag, label: "Loja", key: "shop", action: () => { setActiveCatalog(null); handleSectionChange("shop"); } }] : []),
   ];
+
+  // Track which section is in view for sidebar highlight
+  useEffect(() => {
+    if (visibleSection === "catalog-detail") return;
+    const container = contentScrollRef.current;
+    if (!container) return;
+
+    const sectionIds = ["section-streaming", "section-content", "section-shop"];
+    const handleScroll = () => {
+      const scrollTop = container.scrollTop;
+      const containerHeight = container.clientHeight;
+      // If near top, it's home
+      if (scrollTop < containerHeight * 0.3) {
+        setActiveSection("home");
+        return;
+      }
+      // Find last section whose top is above the middle of the viewport
+      for (let i = sectionIds.length - 1; i >= 0; i--) {
+        const el = document.getElementById(sectionIds[i]);
+        if (el) {
+          const rect = el.getBoundingClientRect();
+          const containerRect = container.getBoundingClientRect();
+          const relativeTop = rect.top - containerRect.top;
+          if (relativeTop < containerHeight * 0.5) {
+            const key = sectionIds[i].replace("section-", "") as Section;
+            setActiveSection(key);
+            return;
+          }
+        }
+      }
+      setActiveSection("home");
+    };
+
+    container.addEventListener("scroll", handleScroll, { passive: true });
+    return () => container.removeEventListener("scroll", handleScroll);
+  }, [visibleSection]);
 
   // Hero channel = first streaming channel
   const heroChannel = streamingChannels[0];
@@ -1215,13 +1281,13 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       />
 
       {/* Main content */}
-      <div ref={contentScrollRef} className={`flex-1 ml-[52px] h-full ${visibleSection === "catalog-detail" ? "overflow-hidden" : "overflow-y-auto"}`}>
+      <div ref={contentScrollRef} className={`flex-1 ml-[52px] h-full ${visibleSection === "catalog-detail" ? "overflow-hidden" : "overflow-y-auto scroll-smooth"}`}>
         <div className={`transition-all duration-500 ease-in-out ${visibleSection === "catalog-detail" ? "h-full" : ""}`} style={{ opacity: sectionFading ? 0 : 1, transform: sectionFading ? "translateY(12px)" : "translateY(0)" }}>
 
-          {visibleSection === "home" && (
+          {visibleSection !== "catalog-detail" && (
             <>
-              {/* Hero Banner — sticky at top, content scrolls behind it */}
-              <div className="sticky top-0 z-20">
+              {/* Hero Banner — sticky at top */}
+              <div className="sticky top-0 z-20" id="section-home">
                 {!dataLoaded ? (
                   <div style={{ height: "clamp(340px, 56vh, 560px)" }} className="relative">
                     <Skeleton className="absolute inset-0 bg-white/5" />
@@ -1249,35 +1315,37 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                 )}
               </div>
 
-              {/* Content rows — slides behind the sticky hero */}
+              {/* All sections stacked vertically */}
               <div className="px-6 sm:px-10 pb-8 relative z-10" style={{ marginTop: "-4px", background: "hsl(var(--player-bg))" }}>
+
                 {/* Streaming ao vivo */}
-                {!dataLoaded ? (
-                  <section className="mb-8">
-                    <Skeleton className="h-5 w-44 bg-white/10 mb-3" />
-                    <div className="flex gap-3">
-                      {[1, 2, 3].map(i => <Skeleton key={i} className="flex-shrink-0 rounded-xl bg-white/8" style={{ width: 160, aspectRatio: "2/3" }} />)}
+                <section id="section-streaming" className="scroll-mt-4">
+                  {!dataLoaded ? (
+                    <div className="mb-8">
+                      <Skeleton className="h-5 w-44 bg-white/10 mb-3" />
+                      <div className="flex gap-3">
+                        {[1, 2, 3].map(i => <Skeleton key={i} className="flex-shrink-0 rounded-xl bg-white/8" style={{ width: 160, aspectRatio: "2/3" }} />)}
+                      </div>
                     </div>
-                  </section>
-                ) : streamingChannels.length > 0 && (
-                  <ContentRow title="Canais ao Vivo" scrollRoot={contentScrollRef}>
-                    {streamingChannels.map(ch => (
-                      <StreamingCard
-                        key={ch.id}
-                        channel={ch}
-                        currentProgram={currentProgram || undefined}
-                        nowPlaying={nowPlaying}
-                        onClick={() => goToPlayer(ch.id)}
-                      />
-                    ))}
-                  </ContentRow>
-                )}
+                  ) : streamingChannels.length > 0 && (
+                    <ContentRow title="Canais ao Vivo" scrollRoot={contentScrollRef}>
+                      {streamingChannels.map(ch => (
+                        <StreamingCard
+                          key={ch.id}
+                          channel={ch}
+                          currentProgram={currentProgram || undefined}
+                          nowPlaying={nowPlaying}
+                          onClick={() => goToPlayer(ch.id)}
+                        />
+                      ))}
+                    </ContentRow>
+                  )}
+                </section>
 
                 {/* Em Alta - Trending */}
                 {dataLoaded && (() => {
                   const trendingItems: { id: string; image: string | null; title: string; subtitle?: string; type: "live" | "catalog"; channelId: string; videoId?: string; logoUrl?: string | null }[] = [];
                   
-                  // Add streaming channels as trending
                   streamingChannels.forEach(ch => {
                     trendingItems.push({
                       id: `live-${ch.id}`,
@@ -1290,7 +1358,6 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                     });
                   });
 
-                  // Add catalog videos as trending
                   Object.values(playlistVideos).flat().slice(0, 8).forEach(v => {
                     const ch = catalogChannels.find(c => playlistVideos[c.id]?.some(pv => pv.videoId === v.videoId));
                     if (ch) {
@@ -1329,94 +1396,93 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                   );
                 })()}
 
+                {/* Catálogo */}
+                <section id="section-content" className="scroll-mt-4">
+                  {dataLoaded && Object.keys(catalogGroups).length > 0 && (
+                    <ContentRow title={
+                      <span className="flex items-center gap-2">
+                        <LayoutGrid className="h-5 w-5" style={{ color: "hsl(var(--player-accent))" }} />
+                        Catálogo
+                      </span>
+                    } scrollRoot={contentScrollRef}>
+                      {Object.entries(catalogGroups).map(([groupName, items]) => {
+                        const primary = items[0];
+                        const videoCount = items.reduce((sum, item) => sum + (playlistVideos[item.id]?.length || 0), 0);
+                        return (
+                          <CatalogCard
+                            key={groupName}
+                            image={primary.cover_url}
+                            title={groupName}
+                            subtitle={videoCount > 0 ? `${videoCount} vídeos` : undefined}
+                            logoUrl={primary.background_url || primary.logo_url}
+                            onClick={() => goToCatalog(groupName)}
+                          />
+                        );
+                      })}
+                    </ContentRow>
+                  )}
+                </section>
 
-
-
-                {/* Catálogo — group covers */}
-                {dataLoaded && Object.keys(catalogGroups).length > 0 && (
-                  <ContentRow title={
-                    <span className="flex items-center gap-2">
-                      <LayoutGrid className="h-5 w-5" style={{ color: "hsl(var(--player-accent))" }} />
-                      Catálogo
-                    </span>
-                  } scrollRoot={contentScrollRef}>
-                    {Object.entries(catalogGroups).map(([groupName, items]) => {
-                      const primary = items[0];
-                      const videoCount = items.reduce((sum, item) => sum + (playlistVideos[item.id]?.length || 0), 0);
-                      return (
-                        <CatalogCard
-                          key={groupName}
-                          image={primary.cover_url}
-                          title={groupName}
-                          subtitle={videoCount > 0 ? `${videoCount} vídeos` : undefined}
-                          logoUrl={primary.background_url || primary.logo_url}
-                          onClick={() => goToCatalog(groupName)}
-                        />
-                      );
-                    })}
-                  </ContentRow>
+                {/* Loja */}
+                {user && (
+                  <section id="section-shop" className="scroll-mt-4 pt-4">
+                    <h2 className="text-lg font-bold mb-4 text-white">Loja</h2>
+                    {!dataLoaded ? (
+                      <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+                        {[1, 2, 3, 4, 5, 6].map(i => <Skeleton key={i} className="w-full aspect-[3/4] rounded-xl bg-white/8" />)}
+                      </div>
+                    ) : shopProducts.length === 0 ? (
+                      <div className="w-full h-40 rounded-xl bg-player-surface border border-player-border flex items-center justify-center text-player-muted-foreground text-sm">
+                        Nenhum produto disponível
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+                        {shopProducts.map((product: any) => (
+                          <div
+                            key={product.id}
+                            className="group rounded-xl overflow-hidden transition-all duration-300 hover:border-white/80"
+                            style={{ background: "linear-gradient(160deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%)", border: "1px solid rgba(255,255,255,0.08)" }}
+                          >
+                            <div className="aspect-square overflow-hidden relative">
+                              {product.image_url ? (
+                                <img src={product.image_url} alt={product.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-white/5 to-transparent">
+                                  <ShoppingBag className="h-8 w-8 text-white/20" />
+                                </div>
+                              )}
+                              <div className="absolute bottom-2 right-2 px-2 py-1 rounded-full text-xs font-bold text-white" style={{ background: "hsl(var(--player-accent))", boxShadow: "0 4px 16px hsla(var(--player-accent) / 0.5)" }}>
+                                R$ {product.price.toFixed(2).replace(".", ",")}
+                              </div>
+                              {product.stock <= 3 && (
+                                <span className="absolute top-2 left-2 text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-yellow-500/90 text-black">
+                                  {product.stock === 1 ? "Último!" : `Restam ${product.stock}`}
+                                </span>
+                              )}
+                            </div>
+                            <div className="p-3 flex flex-col gap-1.5">
+                              <p className="text-xs font-bold text-white truncate group-hover:text-player-accent transition-colors">{product.name}</p>
+                              {product.description && <p className="text-[10px] text-white/40 line-clamp-2">{product.description}</p>}
+                              {product.payment_url && (
+                                <a
+                                  href={product.payment_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="mt-1 w-full text-center text-[10px] font-bold py-2 rounded-lg transition-all uppercase tracking-wider text-white"
+                                  style={{ background: "linear-gradient(135deg, hsl(var(--player-accent)), hsl(var(--player-accent-hover)))", boxShadow: "0 2px 12px hsla(var(--player-accent) / 0.3)" }}
+                                >
+                                  Comprar
+                                </a>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </section>
                 )}
               </div>
             </>
-          )}
-
-          {visibleSection === "streaming" && (
-            <div className="px-6 sm:px-10 pt-8 pb-8">
-              <h1 className="text-2xl font-bold mb-6 text-white">Canais ao Vivo</h1>
-              {!dataLoaded ? (
-                <div className="flex flex-wrap gap-3">
-                  {[1, 2, 3, 4].map(i => <Skeleton key={i} className="flex-shrink-0 rounded-xl bg-white/8" style={{ width: 160, aspectRatio: "2/3" }} />)}
-                </div>
-              ) : streamingChannels.length === 0 ? (
-                <div className="w-full h-40 rounded-xl bg-player-surface border border-player-border flex items-center justify-center text-player-muted-foreground text-sm">
-                  Nenhum canal ao vivo disponível
-                </div>
-              ) : (
-                <div className="flex flex-wrap gap-3">
-                  {streamingChannels.map(ch => (
-                    <StreamingCard
-                      key={ch.id}
-                      channel={ch}
-                      currentProgram={currentProgram || undefined}
-                      nowPlaying={nowPlaying}
-                      onClick={() => goToPlayer(ch.id)}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {visibleSection === "content" && (
-            <div className="px-6 sm:px-10 pt-8 pb-8">
-              <h1 className="text-2xl font-bold mb-6 text-white">Catálogo</h1>
-              {!dataLoaded ? (
-                <div className="flex flex-wrap gap-3">
-                  {[1, 2, 3, 4].map(i => <Skeleton key={i} className="flex-shrink-0 rounded-xl bg-white/8" style={{ width: 160, aspectRatio: "2/3" }} />)}
-                </div>
-              ) : catalogChannels.length === 0 ? (
-                <div className="w-full h-40 rounded-xl bg-player-surface border border-player-border flex items-center justify-center text-player-muted-foreground text-sm">
-                  Nenhum conteúdo disponível
-                </div>
-              ) : (
-                <div className="flex flex-wrap gap-4">
-                  {Object.entries(catalogGroups).map(([groupName, items]) => {
-                    const primary = items[0];
-                    const videoCount = items.reduce((sum, item) => sum + (playlistVideos[item.id]?.length || 0), 0);
-                    return (
-                      <CatalogCard
-                        key={groupName}
-                        image={primary.cover_url}
-                        title={groupName}
-                        subtitle={videoCount > 0 ? `${videoCount} vídeos` : undefined}
-                        logoUrl={primary.background_url || primary.logo_url}
-                        onClick={() => goToCatalog(groupName)}
-                      />
-                    );
-                  })}
-                </div>
-              )}
-            </div>
           )}
 
           {visibleSection === "catalog-detail" && activeCatalog && (
