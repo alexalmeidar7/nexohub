@@ -276,6 +276,8 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
     setCatalogContentMode("playlist");
     setNewCatalogMode(false);
     setSelectedProgramaId("");
+    setVideoCoverUrl("");
+    setVideoThumbUrl("");
   };
 
   const handleEditCanal = (c: Canal) => {
