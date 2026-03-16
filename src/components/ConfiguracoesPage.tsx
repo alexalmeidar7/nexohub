@@ -672,6 +672,18 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
                       <label className="block text-[11px] font-semibold" style={{ color: "#0d0446" }}>Nome do Programa/Vídeo</label>
                       <StyledInput value={canalForm.name} onChange={(e) => setCanalForm(p => ({ ...p, name: e.target.value }))} placeholder="Ex: Episódio 01 - Título" />
                     </div>
+                    <div className="space-y-1.5">
+                      <label className="block text-[11px] font-semibold" style={{ color: "#0d0446" }}>Descrição do Vídeo</label>
+                      <textarea
+                        value={canalForm.classificacao_etaria === "L" ? "" : ""}
+                        rows={3}
+                        placeholder="Descreva o conteúdo do vídeo..."
+                        className="w-full px-4 py-2 outline-none transition-colors text-sm resize-none"
+                        style={inputStyle}
+                        onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
+                        onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
+                      />
+                    </div>
                     {/* Upload de imagens do vídeo individual */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
                       {([
