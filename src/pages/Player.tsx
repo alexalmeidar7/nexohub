@@ -651,7 +651,6 @@ export default function PlayerPage() {
 
       const now = new Date();
       const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-      const today = DAY_MAP_FULL[now.getDay()];
 
       try {
         // STAGE 1 — Critical: only channels + preroll (show UI ASAP)
