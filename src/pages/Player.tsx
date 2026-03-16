@@ -1821,10 +1821,6 @@ export default function PlayerPage() {
                     setTimeout(() => navigate(navState.fromPath), 300);
                     return;
                   }
-                  if (window.history.length > 1) {
-                    setTimeout(() => navigate(-1), 300);
-                    return;
-                  }
                   const basePath = userSlug
                     ? `/user/${userSlug}/nexohub/player`
                     : "/user/nexohub/player";

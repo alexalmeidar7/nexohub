@@ -200,6 +200,8 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
             ref={prerollVideoRef}
             src={prerollUrl}
             autoPlay
+            muted
+            playsInline
             className="absolute inset-0 w-full h-full object-contain"
             onEnded={onEnded}
           />
