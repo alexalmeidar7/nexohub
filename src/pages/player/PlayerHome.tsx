@@ -824,10 +824,12 @@ function HistoryCard({ item, onClick }: { item: { channel_name: string; channel_
       onMouseEnter={(e) => {
         e.currentTarget.style.borderColor = "hsl(var(--player-accent))";
         e.currentTarget.style.borderWidth = "2px";
+        e.currentTarget.style.boxShadow = "0 0 12px 2px hsla(var(--player-accent) / 0.5)";
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)";
         e.currentTarget.style.borderWidth = "1px";
+        e.currentTarget.style.boxShadow = "none";
       }}
     >
       {item.channel_cover_url ? (
