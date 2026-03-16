@@ -522,7 +522,7 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
           >
           {loading ? (
             Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="shrink-0 flex flex-col gap-2">
+              <div key={i} className="shrink-0 flex flex-col gap-2 animate-pulse">
                 <Skeleton className="rounded-xl bg-white/8" style={{ width: 180, height: 101 }} />
                 <Skeleton className="h-3 w-28 bg-white/6 rounded" />
               </div>
