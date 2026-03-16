@@ -125,6 +125,9 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
   const [newCatalogMode, setNewCatalogMode] = useState(false);
   const [programas, setProgramas] = useState<{ id: string; nome: string; descricao: string; horario_inicio: string; horario_fim: string; classificacao_etaria: string }[]>([]);
   const [selectedProgramaId, setSelectedProgramaId] = useState("");
+  const [savedCatalogs, setSavedCatalogs] = useState<string[]>([]);
+  const [videoCoverUrl, setVideoCoverUrl] = useState("");
+  const [videoThumbUrl, setVideoThumbUrl] = useState("");
 
   useEffect(() => {
     if (user) {
