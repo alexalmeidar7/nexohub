@@ -121,6 +121,8 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
   const [canalForm, setCanalForm] = useState({ numero_canal: "", name: "", logo_url: "", cover_url: "", background_url: "", url: "", type: "audio_live", catalog_name: "", is_hd: false, is_stereo: false, classificacao_etaria: "L" });
   const [savingCanal, setSavingCanal] = useState(false);
   const [editingCanal, setEditingCanal] = useState<string | null>(null);
+  const [catalogContentMode, setCatalogContentMode] = useState<"playlist" | "individual">("playlist");
+  const [newCatalogMode, setNewCatalogMode] = useState(false);
 
   useEffect(() => {
     if (user) getEmpresaConfig(user.id).then(c => { setConfig(c); setLoading(false); });
