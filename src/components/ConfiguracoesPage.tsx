@@ -121,6 +121,8 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
   const [canalForm, setCanalForm] = useState({ numero_canal: "", name: "", logo_url: "", cover_url: "", background_url: "", url: "", type: "audio_live", catalog_name: "", is_hd: false, is_stereo: false, classificacao_etaria: "L" });
   const [savingCanal, setSavingCanal] = useState(false);
   const [editingCanal, setEditingCanal] = useState<string | null>(null);
+  const [catalogContentMode, setCatalogContentMode] = useState<"playlist" | "individual">("playlist");
+  const [newCatalogMode, setNewCatalogMode] = useState(false);
 
   useEffect(() => {
     if (user) getEmpresaConfig(user.id).then(c => { setConfig(c); setLoading(false); });
@@ -261,6 +263,8 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
     setCanalForm({ numero_canal: "", name: "", logo_url: "", cover_url: "", background_url: "", url: "", type: "audio_live", catalog_name: "", is_hd: false, is_stereo: false, classificacao_etaria: "L" });
     setCanalMode("live");
     setEditingCanal(null);
+    setCatalogContentMode("playlist");
+    setNewCatalogMode(false);
   };
 
   const handleEditCanal = (c: Canal) => {
@@ -479,25 +483,117 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
                 </div>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="space-y-1.5">
-                  <label className="block text-[11px] font-semibold" style={{ color: "#0d0446" }}>Tipo de Transmissão</label>
-                  <div className="w-full px-4 py-2 text-sm font-medium" style={{ backgroundColor: "rgba(13,4,70,0.08)", color: "#0d0446", borderRadius: "20px", border: "2px solid rgba(13,4,70,0.2)" }}>
-                    Gravado
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="space-y-1.5">
+                    <label className="block text-[11px] font-semibold" style={{ color: "#0d0446" }}>Tipo de Transmissão</label>
+                    <div className="w-full px-4 py-2 text-sm font-medium" style={{ backgroundColor: "rgba(13,4,70,0.08)", color: "#0d0446", borderRadius: "20px", border: "2px solid rgba(13,4,70,0.2)" }}>
+                      Gravado
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="block text-[11px] font-semibold" style={{ color: "#0d0446" }}>Nº do Canal</label>
+                    <StyledInput value={canalForm.numero_canal} onChange={(e) => setCanalForm(p => ({ ...p, numero_canal: e.target.value }))} placeholder="Ex: 01" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="block text-[11px] font-semibold" style={{ color: "#0d0446" }}>Nome do Catálogo</label>
+                    {newCatalogMode || editingCanal ? (
+                      <div className="flex gap-2">
+                        <StyledInput value={canalForm.catalog_name} onChange={(e) => setCanalForm(p => ({ ...p, catalog_name: e.target.value }))} placeholder="Nome do novo catálogo" />
+                        {!editingCanal && (
+                          <button onClick={() => { setNewCatalogMode(false); setCanalForm(p => ({ ...p, catalog_name: "" })); }}
+                            className="px-3 py-1.5 text-xs font-bold rounded-full transition-all shrink-0"
+                            style={{ backgroundColor: "rgba(13,4,70,0.08)", color: "#0d0446" }}
+                          >
+                            Voltar
+                          </button>
+                        )}
+                      </div>
+                    ) : (() => {
+                      const existingCatalogs = [...new Set(canais.filter(c => c.type === "catalog" && c.catalog_name).map(c => c.catalog_name))];
+                      return (
+                        <div className="flex gap-2">
+                          <select
+                            value={canalForm.catalog_name}
+                            onChange={(e) => setCanalForm(p => ({ ...p, catalog_name: e.target.value, name: e.target.value }))}
+                            className="w-full px-4 py-2 outline-none text-sm font-medium cursor-pointer"
+                            style={{ backgroundColor: "#ffffff", color: "#0d0446", borderRadius: "20px", border: "1px solid #0d0446" }}
+                          >
+                            <option value="">Selecione um catálogo</option>
+                            {existingCatalogs.map(cat => (
+                              <option key={cat} value={cat}>{cat}</option>
+                            ))}
+                          </select>
+                          <button onClick={() => { setNewCatalogMode(true); setCanalForm(p => ({ ...p, catalog_name: "" })); }}
+                            className="px-3 py-1.5 text-xs font-bold rounded-full transition-all shrink-0 whitespace-nowrap flex items-center gap-1"
+                            style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#ffffff", border: "none" }}
+                          >
+                            <Plus size={12} /> Novo Catálogo
+                          </button>
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
-                <div className="space-y-1.5">
-                  <label className="block text-[11px] font-semibold" style={{ color: "#0d0446" }}>Nº do Canal</label>
-                  <StyledInput value={canalForm.numero_canal} onChange={(e) => setCanalForm(p => ({ ...p, numero_canal: e.target.value }))} placeholder="Ex: 01" />
+
+                {/* Modo de conteúdo do catálogo */}
+                <div className="rounded-xl p-4 space-y-3" style={{ backgroundColor: "rgba(38, 143, 250, 0.06)", border: "1px solid rgba(38, 143, 250, 0.15)" }}>
+                  <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#268ffa" }}>Modo de Cadastro</span>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setCatalogContentMode("playlist")}
+                      className="flex-1 px-4 py-3 rounded-xl text-xs font-bold transition-all text-left"
+                      style={{
+                        backgroundColor: catalogContentMode === "playlist" ? "#0d0446" : "#ffffff",
+                        color: catalogContentMode === "playlist" ? "#ffffff" : "#0d0446",
+                        border: `2px solid ${catalogContentMode === "playlist" ? "#0d0446" : "rgba(13,4,70,0.15)"}`,
+                        boxShadow: catalogContentMode === "playlist" ? "0 4px 12px rgba(13,4,70,0.25)" : "none",
+                      }}
+                    >
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-base">🔗</span>
+                        <span>Criar por URL de Playlist</span>
+                      </div>
+                      <p className="text-[10px] opacity-70 ml-7">Importa automaticamente todos os vídeos da playlist</p>
+                    </button>
+                    <button
+                      onClick={() => setCatalogContentMode("individual")}
+                      className="flex-1 px-4 py-3 rounded-xl text-xs font-bold transition-all text-left"
+                      style={{
+                        backgroundColor: catalogContentMode === "individual" ? "#0d0446" : "#ffffff",
+                        color: catalogContentMode === "individual" ? "#ffffff" : "#0d0446",
+                        border: `2px solid ${catalogContentMode === "individual" ? "#0d0446" : "rgba(13,4,70,0.15)"}`,
+                        boxShadow: catalogContentMode === "individual" ? "0 4px 12px rgba(13,4,70,0.25)" : "none",
+                      }}
+                    >
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-base">📹</span>
+                        <span>Cadastrar Vídeos Individualmente</span>
+                      </div>
+                      <p className="text-[10px] opacity-70 ml-7">Adicione vídeos um a um com capas personalizadas</p>
+                    </button>
+                  </div>
                 </div>
-                <div className="space-y-1.5">
-                  <label className="block text-[11px] font-semibold" style={{ color: "#0d0446" }}>Nome do Catálogo</label>
-                  <StyledInput value={canalForm.catalog_name} onChange={(e) => setCanalForm(p => ({ ...p, catalog_name: e.target.value }))} placeholder="Ex: Podcasts" />
-                </div>
-                <div className="space-y-1.5 sm:col-span-3">
-                  <label className="block text-[11px] font-semibold" style={{ color: "#0d0446" }}>URL da Playlist do YouTube</label>
-                  <StyledInput value={canalForm.url} onChange={(e) => setCanalForm(p => ({ ...p, url: e.target.value }))} placeholder="https://youtube.com/playlist?list=..." />
-                </div>
+
+                {/* Campos de acordo com o modo */}
+                {catalogContentMode === "playlist" ? (
+                  <div className="space-y-1.5">
+                    <label className="block text-[11px] font-semibold" style={{ color: "#0d0446" }}>URL da Playlist do YouTube</label>
+                    <StyledInput value={canalForm.url} onChange={(e) => setCanalForm(p => ({ ...p, url: e.target.value }))} placeholder="https://youtube.com/playlist?list=..." />
+                    <p className="text-[10px] mt-1" style={{ color: "rgba(13,4,70,0.4)" }}>Todos os vídeos da playlist serão importados automaticamente para o catálogo.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="space-y-1.5">
+                      <label className="block text-[11px] font-semibold" style={{ color: "#0d0446" }}>URL do Vídeo (YouTube)</label>
+                      <StyledInput value={canalForm.url} onChange={(e) => setCanalForm(p => ({ ...p, url: e.target.value }))} placeholder="https://youtube.com/watch?v=..." />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="block text-[11px] font-semibold" style={{ color: "#0d0446" }}>Nome do Programa/Vídeo</label>
+                      <StyledInput value={canalForm.name} onChange={(e) => setCanalForm(p => ({ ...p, name: e.target.value }))} placeholder="Ex: Episódio 01 - Título" />
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
