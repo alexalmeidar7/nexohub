@@ -3,7 +3,7 @@ import type HlsType from "hls.js";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { usePageTitle } from "@/hooks/usePageTitle";
-import { useParams, useNavigate, useSearchParams } from "react-router-dom";
+import { useLocation, useParams, useNavigate, useSearchParams } from "react-router-dom";
 import {
   ChevronUp,
   ChevronDown,
@@ -255,6 +255,7 @@ export default function PlayerPage() {
   const requestedChannelId = searchParams.get("ch");
   const requestedVideoId = searchParams.get("vid");
   const navigate = useNavigate();
+  const location = useLocation();
   const isPublicMode = !!userSlug;
   const playerHomePath = useMemo(() => userSlug ? `/user/${userSlug}/nexohub/player?step=home` : "/user/nexohub/player?step=home", [userSlug]);
   const { user, loading: authLoading, signOut } = useAuth();
@@ -1807,10 +1808,20 @@ export default function PlayerPage() {
               <button
                 onClick={() => {
                   setPageFadeOut(true);
+                  const navState = (location.state ?? {}) as { fromPath?: string; fromCatalog?: string | null };
+                  if (navState.fromPath) {
+                    setTimeout(() => navigate(navState.fromPath), 300);
+                    return;
+                  }
+                  if (window.history.length > 1) {
+                    setTimeout(() => navigate(-1), 300);
+                    return;
+                  }
                   const basePath = userSlug
                     ? `/user/${userSlug}/nexohub/player`
                     : "/user/nexohub/player";
-                  const catalogParam = canal?.catalog_name ? `?catalog=${encodeURIComponent(canal.catalog_name)}` : "";
+                  const catalogName = navState.fromCatalog || canal?.catalog_name;
+                  const catalogParam = catalogName ? `?catalog=${encodeURIComponent(catalogName)}` : "";
                   setTimeout(() => navigate(`${basePath}${catalogParam}`), 300);
                 }}
                 className="group flex items-center gap-2 pl-2.5 pr-4 py-2 rounded-full text-player-foreground/80 hover:text-player-foreground text-xs font-semibold tracking-wide transition-all duration-200 backdrop-blur-2xl border border-player-border hover:border-player-foreground/20 bg-player-surface hover:bg-player-surface-hover shadow-lg hover:shadow-xl"

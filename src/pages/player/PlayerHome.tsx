@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useCallback, useMemo, lazy, Suspense } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Home, Radio, Film, ShoppingBag, LogOut, Clock, Music, ChevronLeft, ChevronRight, Play, LayoutGrid, Flame, TrendingUp, Tag, Shield } from "lucide-react";
@@ -945,6 +945,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   const { user, signOut, loading: authLoading } = useAuth();
   const { userSlug } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const [activeSection, setActiveSection] = useState<Section>("home");
   const [visibleSection, setVisibleSection] = useState<Section>("home");
@@ -1177,8 +1178,16 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
     if (videoId) params.set("vid", videoId);
     const qs = params.toString() ? `?${params.toString()}` : "";
     setTimeout(() => {
-      if (userSlug) navigate(`/user/${userSlug}/nexohub/player/watch${qs}`);
-      else navigate(`/user/nexohub/player/watch${qs}`);
+      const watchPath = userSlug ? `/user/${userSlug}/nexohub/player/watch` : "/user/nexohub/player/watch";
+      const fromParams = new URLSearchParams(location.search);
+      if (activeCatalog) fromParams.set("catalog", activeCatalog);
+      const fromPath = `${location.pathname}${fromParams.toString() ? `?${fromParams.toString()}` : ""}`;
+      navigate(`${watchPath}${qs}`, {
+        state: {
+          fromPath,
+          fromCatalog: activeCatalog,
+        },
+      });
     }, 400);
   };
 
