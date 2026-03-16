@@ -135,11 +135,24 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
     onPlayVideo(primaryChannel.id, video.videoId);
   };
 
-  const scrollPlaylist = (dir: "left" | "right") => {
-    if (!scrollRef.current) return;
-    const amount = scrollRef.current.clientWidth * 0.75;
-    scrollRef.current.scrollBy({ left: dir === "left" ? -amount : amount, behavior: "smooth" });
-  };
+  const scrollAnimRef = useRef<number | null>(null);
+
+  const startAutoScroll = useCallback((direction: "left" | "right") => {
+    const scroll = () => {
+      if (!scrollRef.current) return;
+      const speed = 2.5;
+      scrollRef.current.scrollLeft += direction === "right" ? speed : -speed;
+      scrollAnimRef.current = requestAnimationFrame(scroll);
+    };
+    scrollAnimRef.current = requestAnimationFrame(scroll);
+  }, []);
+
+  const stopAutoScroll = useCallback(() => {
+    if (scrollAnimRef.current) {
+      cancelAnimationFrame(scrollAnimRef.current);
+      scrollAnimRef.current = null;
+    }
+  }, []);
 
   const rating = programa?.classificacao_etaria || "L";
   const ratingStyle = ratingColors[rating] || ratingColors["L"];
