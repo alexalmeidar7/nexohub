@@ -246,7 +246,8 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
     }
     const payload: any = {
       name: canalMode === "catalog" ? (canalForm.name || canalForm.catalog_name) : canalForm.name,
-      logo_url: canalForm.logo_url, cover_url: canalForm.cover_url,
+      logo_url: (canalMode === "catalog" && catalogContentMode === "individual" && videoThumbUrl) ? videoThumbUrl : canalForm.logo_url,
+      cover_url: (canalMode === "catalog" && catalogContentMode === "individual" && videoCoverUrl) ? videoCoverUrl : canalForm.cover_url,
       background_url: canalForm.background_url,
       url: canalForm.url, type: canalMode === "catalog" ? "catalog" : canalForm.type,
       catalog_name: canalMode === "catalog" ? canalForm.catalog_name : "",
