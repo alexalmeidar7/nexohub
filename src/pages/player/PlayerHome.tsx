@@ -1422,7 +1422,14 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
 
                 {/* Catálogo */}
                 <section id="section-content" className="scroll-mt-4">
-                  {dataLoaded && Object.keys(catalogGroups).length > 0 && (
+                  {!dataLoaded ? (
+                    <div className="mb-8">
+                      <Skeleton className="h-5 w-36 bg-white/10 mb-3" />
+                      <div className="flex gap-3">
+                        {[1, 2, 3, 4].map(i => <Skeleton key={i} className="flex-shrink-0 rounded-xl bg-white/8" style={{ width: 160, aspectRatio: "2/3" }} />)}
+                      </div>
+                    </div>
+                  ) : Object.keys(catalogGroups).length > 0 && (
                     <ContentRow title={
                       <span className="flex items-center gap-2">
                         <LayoutGrid className="h-5 w-5" style={{ color: "hsl(var(--player-accent))" }} />
