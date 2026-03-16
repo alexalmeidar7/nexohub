@@ -421,59 +421,66 @@ function StreamingCard({ channel, currentProgram, nowPlaying, onClick }: {
       onClick={onClick}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      className="flex-shrink-0 rounded-2xl overflow-hidden relative transition-all duration-400 group cursor-pointer"
+      className="flex-shrink-0 rounded-2xl overflow-hidden relative transition-all duration-500 ease-[cubic-bezier(0.25,0.1,0.25,1)] group cursor-pointer"
       style={{
-        width: "320px",
-        aspectRatio: "16/9",
-        border: hovered ? "1px solid hsla(var(--player-accent) / 0.5)" : "1px solid rgba(255,255,255,0.06)",
-        boxShadow: hovered ? "0 20px 60px -15px rgba(0,0,0,0.7), 0 0 30px -8px hsla(var(--player-accent) / 0.2)" : "0 4px 20px -8px rgba(0,0,0,0.4)",
-        transform: hovered ? "translateY(-4px) scale(1.01)" : "none",
+        width: "200px",
+        aspectRatio: "2/3",
+        background: "linear-gradient(145deg, rgba(255,255,255,0.06) 0%, hsl(var(--player-bg)) 100%)",
+        transform: hovered ? "translateY(-6px) scale(1.02)" : "none",
+        boxShadow: hovered ? "0 20px 60px -15px rgba(0,0,0,0.7), 0 0 40px -10px hsla(var(--player-accent) / 0.25)" : "0 4px 20px -8px rgba(0,0,0,0.4)",
+        border: hovered ? "1px solid hsla(var(--player-accent) / 0.4)" : "1px solid rgba(255,255,255,0.06)",
       }}
     >
+      {/* Cover image */}
       {channel.cover_url ? (
-        <img src={channel.cover_url} alt={channel.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+        <img src={channel.cover_url} alt={channel.name} className="absolute inset-0 w-full h-full object-cover transition-all duration-700 group-hover:scale-105" />
       ) : channel.logo_url ? (
-        <img src={channel.logo_url} alt={channel.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+        <img src={channel.logo_url} alt={channel.name} className="absolute inset-0 w-full h-full object-cover transition-all duration-700 group-hover:scale-105" />
       ) : (
-        <div className="w-full h-full flex items-center justify-center" style={{ background: "linear-gradient(160deg, hsla(var(--player-accent) / 0.15) 0%, hsl(var(--player-bg)) 100%)" }}>
+        <div className="absolute inset-0 w-full h-full flex items-center justify-center" style={{ background: "linear-gradient(160deg, hsla(var(--player-accent) / 0.15) 0%, hsl(var(--player-bg)) 100%)" }}>
           <Radio className="h-10 w-10 text-white/15" />
         </div>
       )}
 
+      {/* Hover preview frames */}
       {hovered && isVideo && frames.length > 0 && (
         <img src={frames[frameIdx]} alt="preview" className="absolute inset-0 w-full h-full object-cover z-[1]" />
       )}
 
       {/* Channel logo top-right */}
       {channel.logo_url && (
-        <div className="absolute top-3 right-3 z-10 w-9 h-9 rounded-lg overflow-hidden bg-black/40 backdrop-blur-md border border-white/10 shadow-xl">
-          <img src={channel.logo_url} alt="" className="w-full h-full object-cover" />
+        <div className="absolute top-2 right-2 z-[15] w-12 h-8 flex items-center justify-center drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)]">
+          <img src={channel.logo_url} alt="" className="max-w-full max-h-full object-contain" />
         </div>
       )}
 
       {/* Live badge */}
-      <span className="absolute top-3 left-3 z-10 text-[10px] uppercase tracking-wider font-bold px-2.5 py-1 rounded-lg flex items-center gap-1.5 text-white shadow-xl" style={{ background: "linear-gradient(135deg, hsl(var(--player-accent)), hsl(var(--player-accent-hover)))", boxShadow: "0 4px 16px hsla(var(--player-accent) / 0.4)" }}>
+      <span
+        className="absolute top-2.5 left-2.5 z-10 text-[9px] uppercase tracking-wider font-bold px-2 py-1 rounded-lg flex items-center gap-1.5 text-white"
+        style={{ background: "linear-gradient(135deg, hsl(var(--player-accent)), hsl(var(--player-accent-hover)))", boxShadow: "0 4px 16px hsla(var(--player-accent) / 0.5)" }}
+      >
         <span className="inline-block w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
         ao vivo
       </span>
 
       {/* Play overlay on hover */}
-      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 z-[2]">
-        <div className="w-14 h-14 rounded-full backdrop-blur-md flex items-center justify-center" style={{ background: "hsla(var(--player-accent) / 0.8)", boxShadow: "0 8px 32px hsla(var(--player-accent) / 0.5)" }}>
-          <Play className="h-6 w-6 text-white fill-white" />
+      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 z-[5] pointer-events-none">
+        <div className="w-12 h-12 rounded-full backdrop-blur-md flex items-center justify-center shadow-2xl" style={{ background: "hsla(var(--player-accent) / 0.85)", boxShadow: "0 8px 32px hsla(var(--player-accent) / 0.5)" }}>
+          <Play className="h-5 w-5 text-white fill-white" />
         </div>
       </div>
 
-      {/* Info overlay - bottom */}
-      <div className="absolute bottom-0 left-0 right-0 z-10 px-4 pb-3.5 pt-16 text-left" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.9) 20%, transparent)" }}>
-        <p className="text-sm font-bold text-white truncate mb-0.5">{channel.name}</p>
+      {/* Gradient + info overlay */}
+      <div className="absolute inset-0 z-[3] pointer-events-none" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 40%, transparent 70%)" }} />
+      <div className="absolute bottom-0 left-0 right-0 p-3.5 z-[4] text-left pointer-events-none">
+        <p className="text-xs font-bold text-white leading-tight line-clamp-2 drop-shadow-lg">{channel.name}</p>
         {currentProgram && (
-          <p className="text-[10px] text-white/60 truncate">{currentProgram.nome} • {currentProgram.horario_inicio} – {currentProgram.horario_fim}</p>
+          <p className="text-[10px] text-white/50 mt-1 font-medium truncate">{currentProgram.nome}</p>
         )}
         {nowPlaying?.musica && (
-          <div className="flex items-center gap-1.5 mt-1.5">
+          <div className="flex items-center gap-1 mt-1.5">
             <Music className="h-3 w-3 flex-shrink-0" style={{ color: "hsl(var(--player-accent))" }} />
-            <p className="text-[10px] text-white/50 truncate">{nowPlaying.musica} — {nowPlaying.artista}</p>
+            <p className="text-[10px] text-white/50 truncate">{nowPlaying.musica}</p>
           </div>
         )}
       </div>
