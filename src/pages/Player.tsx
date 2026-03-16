@@ -688,7 +688,7 @@ export default function PlayerPage() {
         if (!prerollDone && prerollRes.data && prerollRes.data.length > 0) {
           const todayStr = now.toISOString().slice(0, 10);
           const matching = prerollRes.data.filter((p: any) => {
-            if (p.dias_semana && p.dias_semana.length > 0 && !p.dias_semana.includes(today)) return false;
+            if (!matchesCampaignDay(p.dias_semana, now)) return false;
             if (p.data_inicial && todayStr < p.data_inicial) return false;
             if (p.data_final && todayStr > p.data_final) return false;
             return true;
