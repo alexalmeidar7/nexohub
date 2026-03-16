@@ -334,12 +334,12 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
         <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, hsla(var(--player-bg) / 0.4) 0%, transparent 20%)" }} />
 
         {/* Content: logo + program info, bottom-left */}
-        <div className="absolute bottom-[clamp(200px,32vh,300px)] left-8 sm:left-12 z-10 max-w-xl flex flex-col gap-3">
+        <div className="absolute bottom-[clamp(220px,35vh,340px)] left-8 sm:left-12 z-10 max-w-xl flex flex-col gap-3">
           {logoUrl ? (
             <img
               src={logoUrl}
               alt={catalogName}
-              className="h-36 sm:h-52 lg:h-60 object-contain object-left"
+              className="h-44 sm:h-64 lg:h-[19rem] object-contain object-left"
               style={{ filter: "drop-shadow(0 4px 30px rgba(0,0,0,0.7))" }}
             />
           ) : (
@@ -390,18 +390,27 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
           {/* Program description with expand */}
           {programa?.descricao && (
             <div className="max-w-md relative">
-              <p
-                className={`text-[13px] text-white/45 leading-relaxed ${descExpanded ? "" : "line-clamp-2"}`}
-                style={{ textShadow: "0 1px 8px rgba(0,0,0,0.5)" }}
+              <div
+                className="overflow-hidden transition-all duration-500 ease-in-out"
+                style={{
+                  maxHeight: descExpanded ? "500px" : "2.7em",
+                }}
               >
-                {programa.descricao}
-              </p>
+                <p
+                  className="text-[13px] text-white/45 leading-relaxed"
+                  style={{ textShadow: "0 1px 8px rgba(0,0,0,0.5)" }}
+                >
+                  {programa.descricao}
+                </p>
+              </div>
               <button
                 onClick={() => setDescExpanded(prev => !prev)}
-                className="inline-flex items-center justify-center mt-1.5 w-5 h-5 rounded-full border border-white/25 text-white/60 hover:text-white hover:border-white/50 transition-all duration-200"
+                className="inline-flex items-center justify-center mt-1.5 w-5 h-5 rounded-full border border-white/25 text-white/60 hover:text-white hover:border-white/50 transition-all duration-300"
                 title={descExpanded ? "Ver menos" : "Ver mais"}
               >
-                {descExpanded ? <Minus className="h-3 w-3" /> : <Plus className="h-3 w-3" />}
+                <span className="transition-transform duration-300" style={{ transform: descExpanded ? "rotate(180deg)" : "rotate(0)" }}>
+                  {descExpanded ? <Minus className="h-3 w-3" /> : <Plus className="h-3 w-3" />}
+                </span>
               </button>
             </div>
           )}
