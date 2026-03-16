@@ -603,6 +603,7 @@ function TrendingCard({ item, idx, channels, onClick }: {
 }) {
   const [hovered, setHovered] = useState(false);
   const [showVideo, setShowVideo] = useState(false);
+  const [videoReady, setVideoReady] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const stopTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const playerRef = useRef<any>(null);
