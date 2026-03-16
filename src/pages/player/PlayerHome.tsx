@@ -19,6 +19,8 @@ interface Channel {
   url?: string;
   catalog_name?: string;
   numero_canal?: string | null;
+  is_hd?: boolean | null;
+  is_stereo?: boolean | null;
 }
 
 interface Programa {
@@ -47,6 +49,8 @@ function HeroBanner({
   nextProgram,
   nowPlaying,
   channelName,
+  channelIsHd,
+  channelIsStereo,
   onPlay,
   onGrade,
 }: {
@@ -54,6 +58,8 @@ function HeroBanner({
   nextProgram?: Programa;
   nowPlaying?: { musica: string; artista: string } | null;
   channelName?: string;
+  channelIsHd?: boolean;
+  channelIsStereo?: boolean;
   onPlay: () => void;
   onGrade: () => void;
 }) {
@@ -91,13 +97,13 @@ function HeroBanner({
   useEffect(() => { fetchAiAnalysis(nextProgram); }, [nextProgram?.id]);
 
   const RATING_COLORS: Record<string, { bg: string; text: string; label: string }> = {
-    "Livre": { bg: "rgba(34,197,94,0.2)", text: "rgb(74,222,128)", label: "L" },
-    "6": { bg: "rgba(251,191,36,0.2)", text: "rgb(251,191,36)", label: "6" },
-    "10": { bg: "rgba(59,130,246,0.2)", text: "rgb(96,165,250)", label: "10" },
-    "12": { bg: "rgba(245,158,11,0.2)", text: "rgb(251,191,36)", label: "12" },
-    "14": { bg: "rgba(249,115,22,0.2)", text: "rgb(251,146,60)", label: "14" },
-    "16": { bg: "rgba(239,68,68,0.2)", text: "rgb(248,113,113)", label: "16" },
-    "18": { bg: "rgba(220,38,38,0.3)", text: "rgb(248,113,113)", label: "18" },
+    "Livre": { bg: "#22c55e", text: "#ffffff", label: "L" },
+    "6": { bg: "#facc15", text: "#000000", label: "6" },
+    "10": { bg: "#3b82f6", text: "#ffffff", label: "10" },
+    "12": { bg: "#f59e0b", text: "#000000", label: "12" },
+    "14": { bg: "#f97316", text: "#ffffff", label: "14" },
+    "16": { bg: "#ef4444", text: "#ffffff", label: "16" },
+    "18": { bg: "#000000", text: "#ffffff", label: "18" },
   };
 
   // Build slides: current program thumb + next program thumb (if available)
@@ -205,9 +211,14 @@ function HeroBanner({
             <span className="inline-block w-2 h-2 rounded-full bg-white animate-pulse" />
             {activeSlide?.label || "ao vivo"}
           </span>
-          {channelName && <span className="text-white/60 text-xs">{channelName}</span>}
+          {channelName && (
+            <span className="flex items-center gap-2 text-white/60 text-xs">
+              {channelName}
+              {channelIsHd && <img src="/images/icon-fullhd.png" alt="FULL HD" className="h-3.5" style={{ opacity: 0.6 }} />}
+              {channelIsStereo && <img src="/images/icon-stereo.png" alt="Stereo" className="h-3.5" style={{ opacity: 0.6 }} />}
+            </span>
+          )}
         </div>
-
         {/* Program name */}
         {displayProgram ? (
           <>
@@ -247,14 +258,13 @@ function HeroBanner({
                   const rating = RATING_COLORS[cls] || RATING_COLORS["Livre"];
                   return (
                     <span
-                      className="inline-flex items-center justify-center text-[8px] font-black rounded shadow"
+                      className="inline-flex items-center justify-center text-[9px] font-black rounded"
                       style={{
                         backgroundColor: rating.bg,
                         color: rating.text,
-                        border: `1.5px solid ${rating.text}`,
-                        minWidth: "18px",
-                        height: "18px",
-                        padding: "0 4px",
+                        minWidth: "20px",
+                        height: "20px",
+                        padding: "0 5px",
                       }}
                     >
                       {rating.label}
@@ -1137,6 +1147,8 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                     nextProgram={nextProgram}
                     nowPlaying={nowPlaying}
                     channelName={channelName}
+                    channelIsHd={streamingChannels[0]?.is_hd ?? false}
+                    channelIsStereo={streamingChannels[0]?.is_stereo ?? false}
                     onPlay={() => goToPlayer(streamingChannels[0]?.id)}
                     onGrade={() => setShowGrade(true)}
                   />
