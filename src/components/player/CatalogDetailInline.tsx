@@ -306,39 +306,48 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
       </div>
 
       {/* ─── PLAYLIST BAR — floating blue glass ─── */}
+      {/* Outer wrapper allows popups to overflow upward */}
       <div
-        className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 rounded-2xl"
-        style={{
-          width: "90%",
-          height: "clamp(120px, 18vh, 170px)",
-          background: "rgba(20, 60, 140, 0.35)",
-          backdropFilter: "blur(28px) saturate(1.6)",
-          WebkitBackdropFilter: "blur(28px) saturate(1.6)",
-          border: "1px solid rgba(100, 160, 255, 0.2)",
-          boxShadow: "0 8px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08)",
-        }}
+        className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20"
+        style={{ width: "90%" }}
       >
-
-        {/* Auto-scroll hover zones */}
+        {/* Glass background layer with rounded corners */}
         <div
-          className="absolute left-0 top-0 bottom-0 w-16 z-10 cursor-w-resize"
-          style={{ background: "linear-gradient(to right, rgba(10,30,80,0.5), transparent)" }}
-          onMouseEnter={() => startAutoScroll("left")}
-          onMouseLeave={stopAutoScroll}
-        />
-        <div
-          className="absolute right-0 top-0 bottom-0 w-16 z-10 cursor-e-resize"
-          style={{ background: "linear-gradient(to left, rgba(10,30,80,0.5), transparent)" }}
-          onMouseEnter={() => startAutoScroll("right")}
-          onMouseLeave={stopAutoScroll}
+          className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none"
+          style={{
+            background: "rgba(20, 60, 140, 0.35)",
+            backdropFilter: "blur(28px) saturate(1.6)",
+            WebkitBackdropFilter: "blur(28px) saturate(1.6)",
+            border: "1px solid rgba(100, 160, 255, 0.2)",
+            boxShadow: "0 8px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08)",
+          }}
         />
 
-        {/* Scrollable content */}
+        {/* Interactive content — can overflow upward for popups */}
         <div
-          ref={scrollRef}
-          className="flex items-center gap-3.5 h-full px-8 pb-3 pt-3 overflow-x-auto scrollbar-hide"
-          style={{ scrollBehavior: "smooth" }}
+          className="relative rounded-2xl"
+          style={{ height: "clamp(120px, 18vh, 170px)" }}
         >
+          {/* Auto-scroll hover zones */}
+          <div
+            className="absolute left-0 top-0 bottom-0 w-16 z-10 cursor-w-resize rounded-l-2xl overflow-hidden"
+            style={{ background: "linear-gradient(to right, rgba(10,30,80,0.5), transparent)" }}
+            onMouseEnter={() => startAutoScroll("left")}
+            onMouseLeave={stopAutoScroll}
+          />
+          <div
+            className="absolute right-0 top-0 bottom-0 w-16 z-10 cursor-e-resize rounded-r-2xl overflow-hidden"
+            style={{ background: "linear-gradient(to left, rgba(10,30,80,0.5), transparent)" }}
+            onMouseEnter={() => startAutoScroll("right")}
+            onMouseLeave={stopAutoScroll}
+          />
+
+          {/* Scrollable content — clips horizontally, overflows vertically for popups */}
+          <div
+            ref={scrollRef}
+            className="flex items-center gap-3.5 h-full px-8 pb-3 pt-3 scrollbar-hide"
+            style={{ scrollBehavior: "smooth", overflowX: "auto", overflowY: "visible" }}
+          >
           {loading ? (
             Array.from({ length: 8 }).map((_, i) => (
               <div key={i} className="shrink-0 flex flex-col gap-2">
