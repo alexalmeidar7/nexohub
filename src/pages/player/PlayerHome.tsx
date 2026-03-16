@@ -1290,7 +1290,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
 
                 {/* Watch history */}
                 {user && dataLoaded && watchHistory.length > 0 && (
-                  <ContentRow title="Visto por último">
+                  <ContentRow title="Visto por último" scrollRoot={contentScrollRef}>
                     {watchHistory.map(item => {
                       // Enrich with current channel data for up-to-date covers
                       const liveChannel = channels.find(c => c.id === item.channel_id);
