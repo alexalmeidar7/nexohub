@@ -136,9 +136,9 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
   const ratingStyle = ratingColors[rating] || ratingColors["L"];
 
   return (
-    <div className="flex flex-col h-full overflow-hidden animate-fade-in" data-catalog={catalogName}>
+    <div className="relative flex flex-col h-full overflow-hidden animate-fade-in" data-catalog={catalogName}>
       {/* ─── HERO: full-width cinematic cover ─── */}
-      <div className="relative flex-1 min-h-[280px] sm:min-h-[340px] w-full overflow-hidden">
+      <div className="absolute inset-0 overflow-hidden">
         {/* Background cover — uses catalog registered thumbnail */}
         {heroBackground ? (
           <img
@@ -166,12 +166,12 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
         </button>
 
         {/* Content: logo + program info, bottom-left */}
-        <div className="absolute bottom-16 left-8 sm:left-12 z-10 max-w-xl flex flex-col gap-3">
+        <div className="absolute bottom-[clamp(200px,32vh,300px)] left-8 sm:left-12 z-10 max-w-xl flex flex-col gap-3">
           {logoUrl ? (
             <img
               src={logoUrl}
               alt={catalogName}
-              className="h-24 sm:h-36 lg:h-40 object-contain object-left"
+              className="h-36 sm:h-52 lg:h-60 object-contain object-left"
               style={{ filter: "drop-shadow(0 4px 30px rgba(0,0,0,0.7))" }}
             />
           ) : (
@@ -242,16 +242,17 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
         </div>
       </div>
 
-      {/* ─── PLAYLIST BAR — glassmorphism ─── */}
+      {/* ─── PLAYLIST BAR — floating blue glass ─── */}
       <div
-        className="relative w-full shrink-0"
+        className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 rounded-2xl overflow-hidden"
         style={{
+          width: "90%",
           height: "clamp(160px, 26vh, 240px)",
-          background: "rgba(0, 0, 0, 0.45)",
-          backdropFilter: "blur(24px) saturate(1.4)",
-          WebkitBackdropFilter: "blur(24px) saturate(1.4)",
-          borderTop: "1px solid rgba(255,255,255,0.1)",
-          boxShadow: "0 -8px 32px rgba(0,0,0,0.4)",
+          background: "rgba(20, 60, 140, 0.35)",
+          backdropFilter: "blur(28px) saturate(1.6)",
+          WebkitBackdropFilter: "blur(28px) saturate(1.6)",
+          border: "1px solid rgba(100, 160, 255, 0.2)",
+          boxShadow: "0 8px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08)",
         }}
       >
         {/* Label */}
