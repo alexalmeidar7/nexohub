@@ -2442,9 +2442,9 @@ export default function PlayerPage() {
                 parent.addEventListener("mouseleave", () => { el.style.maxWidth = "0"; el.style.opacity = "0"; el.style.paddingLeft = "0"; });
               }}
             >
-              <div className="min-w-0 flex-1 whitespace-nowrap">
+              <div className="min-w-0 flex-1" style={{ maxWidth: "200px" }}>
                 <span className="text-[10px] font-bold uppercase" style={{ color: "#e60000" }}>A seguir:</span>
-                <div className="text-white text-sm font-medium leading-tight line-clamp-2">
+                <div className="text-white text-sm font-medium leading-tight line-clamp-2 whitespace-normal">
                   {isYoutube ? (nextYtVideo?.title || "Sem vídeo") : (nextProg?.nome || "Sem programação")}
                 </div>
                 {!isYoutube && (
