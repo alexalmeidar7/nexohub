@@ -923,10 +923,16 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       let channelsData = (chRes.data ?? []) as any[];
       let channelError = chRes.error;
 
-      if (!channelError && channelsData.length === 0) {
+      // Fallback: if user has no channels at all, or no live channels, merge global active channels
+      const hasLiveChannels = channelsData.some((ch: any) => ch.type === "video_live" || ch.type === "audio_live");
+      if (!channelError && (channelsData.length === 0 || !hasLiveChannels)) {
         const fallbackChRes = await supabase.from("streaming_channels").select("*").eq("active", true).order("numero_canal");
-        if (!fallbackChRes.error && fallbackChRes.data) channelsData = fallbackChRes.data as any[];
-        else if (fallbackChRes.error) channelError = fallbackChRes.error;
+        if (!fallbackChRes.error && fallbackChRes.data) {
+          // Merge: keep user's own + add others not already present
+          const existingIds = new Set(channelsData.map((ch: any) => ch.id));
+          const merged = [...channelsData, ...fallbackChRes.data.filter((ch: any) => !existingIds.has(ch.id))];
+          channelsData = merged as any[];
+        } else if (fallbackChRes.error) channelError = fallbackChRes.error;
       }
 
       const programasData = (progRes.data ?? []) as any[];
