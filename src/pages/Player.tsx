@@ -798,27 +798,44 @@ export default function PlayerPage() {
     return () => clearInterval(interval);
   }, [user, programas]);
 
-  // Fetch YouTube playlist videos
+  // Fetch YouTube playlist videos OR handle individual video URLs
   useEffect(() => {
     if (!isYoutube || !canal?.url) { setYoutubeVideos([]); setSelectedVideoId(null); return; }
-    const match = canal.url.match(/[?&]list=([a-zA-Z0-9_-]+)/);
-    if (!match) return;
-    supabase.functions.invoke("youtube-playlist", { body: { playlistId: match[1] } }).then(({ data }) => {
-      if (data?.videos) {
-        const sorted = [...data.videos].sort((a: any, b: any) => {
-          if (a.published && b.published) return new Date(b.published).getTime() - new Date(a.published).getTime();
-          return 0;
-        });
-        setYoutubeVideos(sorted);
-        // Auto-select video from ?vid= param (catalog deep link)
-        if (requestedVideoId && data.videos.some((v: any) => v.videoId === requestedVideoId)) {
-          setSelectedVideoId(requestedVideoId);
-          setPlaying(true);
-          setBuffering(false);
-          setYtPlaying(true);
+    const plMatch = canal.url.match(/[?&]list=([a-zA-Z0-9_-]+)/);
+    if (plMatch) {
+      // Playlist mode
+      supabase.functions.invoke("youtube-playlist", { body: { playlistId: plMatch[1] } }).then(({ data }) => {
+        if (data?.videos) {
+          const sorted = [...data.videos].sort((a: any, b: any) => {
+            if (a.published && b.published) return new Date(b.published).getTime() - new Date(a.published).getTime();
+            return 0;
+          });
+          setYoutubeVideos(sorted);
+          // Auto-select video from ?vid= param (catalog deep link)
+          if (requestedVideoId && data.videos.some((v: any) => v.videoId === requestedVideoId)) {
+            setSelectedVideoId(requestedVideoId);
+            setPlaying(true);
+            setBuffering(false);
+            setYtPlaying(true);
+          }
         }
+      });
+    } else {
+      // Individual video mode — extract video ID from watch?v= URL
+      const vidMatch = canal.url.match(/[?&]v=([a-zA-Z0-9_-]+)/);
+      if (vidMatch) {
+        const videoId = vidMatch[1];
+        setYoutubeVideos([{
+          videoId,
+          title: canal.name || "Vídeo",
+          thumbnail: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
+        }]);
+        setSelectedVideoId(videoId);
+        setPlaying(true);
+        setBuffering(false);
+        setYtPlaying(true);
       }
-    });
+    }
   }, [canal?.url, isYoutube]);
 
   // Sync music data directly from XML
@@ -1874,8 +1891,8 @@ export default function PlayerPage() {
         <div className="absolute inset-x-0 bottom-0 z-[1]" style={{ height: "200px", background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%)" }} />
       )}
 
-      {/* YouTube: Horizontal playlist — shown on home by default OR when sidebarOpen */}
-      {isYoutube && (isYtHome || sidebarOpen) && (
+      {/* YouTube: Horizontal playlist — shown on home by default OR when sidebarOpen, hidden for single-video catalogs */}
+      {isYoutube && youtubeVideos.length > 1 && (isYtHome || sidebarOpen) && (
         <div className="absolute left-0 right-0 z-[25] mx-auto" style={{ bottom: "155px", maxWidth: "1400px", paddingLeft: "20px", paddingRight: "20px" }}>
           <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "transparent", border: "none", boxShadow: "none" }}>
             <div className="flex items-center justify-between px-5 py-3 border-b border-white/10">
