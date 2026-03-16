@@ -13,9 +13,52 @@ interface Props {
   onEnded: () => void;
 }
 
-function extractYoutubeId(url: string): string | null {
-  const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([a-zA-Z0-9_-]{11})/);
-  return match ? match[1] : null;
+function extractYoutubeId(rawUrl: string): string | null {
+  const input = rawUrl?.trim();
+  if (!input) return null;
+
+  const isVideoId = (value: string) => /^[a-zA-Z0-9_-]{11}$/.test(value);
+
+  try {
+    const parsed = new URL(input);
+    const host = parsed.hostname.replace(/^www\./, "").toLowerCase();
+
+    if (host === "youtu.be") {
+      const id = parsed.pathname.split("/").filter(Boolean)[0] || "";
+      return isVideoId(id) ? id : null;
+    }
+
+    if (host.endsWith("youtube.com") || host.endsWith("youtube-nocookie.com")) {
+      const byQuery = parsed.searchParams.get("v") || "";
+      if (isVideoId(byQuery)) return byQuery;
+
+      const parts = parsed.pathname.split("/").filter(Boolean);
+      const markerIndex = parts.findIndex((part) => ["embed", "shorts", "live", "v"].includes(part));
+      const byPath = markerIndex >= 0 ? parts[markerIndex + 1] || "" : "";
+      if (isVideoId(byPath)) return byPath;
+    }
+  } catch {
+    // fallback regex below
+  }
+
+  const fallbackMatch = input.match(/(?:youtu\.be\/|youtube(?:-nocookie)?\.com\/(?:watch\?.*v=|embed\/|shorts\/|live\/|v\/))([a-zA-Z0-9_-]{11})/);
+  return fallbackMatch ? fallbackMatch[1] : null;
+}
+
+function getYoutubeErrorMessage(code?: number): string {
+  switch (code) {
+    case 2:
+      return "Link do YouTube inválido.";
+    case 5:
+      return "Falha no player HTML5 do YouTube.";
+    case 100:
+      return "Vídeo do YouTube não encontrado ou privado.";
+    case 101:
+    case 150:
+      return "Este vídeo do YouTube não permite incorporação.";
+    default:
+      return "Não foi possível reproduzir este vídeo do YouTube.";
+  }
 }
 
 export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLinkUrl, prerollMediaType, prerollYoutubeUrl, onSkip, onEnded }: Props) {
@@ -23,10 +66,14 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [ytFailed, setYtFailed] = useState(false);
+  const [ytErrorMessage, setYtErrorMessage] = useState<string | null>(null);
   const isYoutube = prerollMediaType === "youtube" && !!prerollYoutubeUrl;
   const ytId = isYoutube ? extractYoutubeId(prerollYoutubeUrl!) : null;
   const hasFallbackVideo = Boolean(prerollUrl && prerollUrl.trim() !== "");
-  const shouldUseNativeVideo = !isYoutube || !ytId || (ytFailed && hasFallbackVideo);
+  const hasValidYoutube = isYoutube && !!ytId;
+  const showYoutubePlayer = hasValidYoutube && !ytFailed;
+  const shouldUseNativeVideo = !isYoutube || (!showYoutubePlayer && hasFallbackVideo);
+  const showFailureState = isYoutube && !showYoutubePlayer && !hasFallbackVideo;
   const ytPlayerRef = useRef<any>(null);
   const pollRef = useRef<ReturnType<typeof setInterval>>();
   const onEndedRef = useRef(onEnded);
@@ -44,6 +91,22 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
     const t = setInterval(() => setCountdown(c => c - 1), 1000);
     return () => clearInterval(t);
   }, [countdown]);
+
+  useEffect(() => {
+    if (isYoutube && !ytId) {
+      setYtErrorMessage("Link do YouTube inválido ou não suportado.");
+      return;
+    }
+    if (!ytFailed) {
+      setYtErrorMessage(null);
+    }
+  }, [isYoutube, ytId, ytFailed]);
+
+  useEffect(() => {
+    if (!showFailureState) return;
+    const t = setTimeout(() => onEndedRef.current(), 3000);
+    return () => clearTimeout(t);
+  }, [showFailureState]);
 
   // Track time for native video
   useEffect(() => {
@@ -64,26 +127,30 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
 
   // Track time for YouTube with stall/error detection
   useEffect(() => {
-    if (!isYoutube || !ytId) return;
+    if (!showYoutubePlayer || !ytId) return;
     ytDestroyedRef.current = false;
 
     const fallbackTimer = hasFallbackVideo ? null : setTimeout(() => onEndedRef.current(), 120000);
 
-    // Detect YouTube stall (captcha, region block, autoplay blocked, etc.)
     let progressDetected = false;
+
+    const failYoutubePlayback = (message: string) => {
+      if (pollRef.current) clearInterval(pollRef.current);
+      try {
+        ytPlayerRef.current?.destroy();
+        ytDestroyedRef.current = true;
+      } catch {}
+      setCurrentTime(0);
+      setDuration(0);
+      setYtErrorMessage(message);
+      setYtFailed(true);
+    };
+
     const stallTimer = setTimeout(() => {
       if (!progressDetected) {
-        // Destroy the YT player before switching to fallback
-        if (pollRef.current) clearInterval(pollRef.current);
-        try { ytPlayerRef.current?.destroy(); ytDestroyedRef.current = true; } catch {}
-        setCurrentTime(0);
-        setDuration(0);
-        setYtFailed(true);
-        if (!hasFallbackVideo) {
-          setTimeout(() => onEndedRef.current(), 3000);
-        }
+        failYoutubePlayback("Não foi possível iniciar o vídeo do YouTube.");
       }
-    }, 8000);
+    }, 15000);
 
     const initPlayer = () => {
       if (ytDestroyedRef.current) return;
@@ -123,15 +190,8 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
             if (event.data === 1) progressDetected = true;
             if (event.data === 0) onEndedRef.current();
           },
-          onError: () => {
-            if (pollRef.current) clearInterval(pollRef.current);
-            try { ytPlayerRef.current?.destroy(); ytDestroyedRef.current = true; } catch {}
-            setCurrentTime(0);
-            setDuration(0);
-            setYtFailed(true);
-            if (!hasFallbackVideo) {
-              setTimeout(() => onEndedRef.current(), 2000);
-            }
+          onError: (event: any) => {
+            failYoutubePlayback(getYoutubeErrorMessage(event?.data));
           },
         },
       });
@@ -157,7 +217,7 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
         try { ytPlayerRef.current?.destroy(); } catch {}
       }
     };
-  }, [isYoutube, ytId, hasFallbackVideo]);
+  }, [showYoutubePlayer, ytId, hasFallbackVideo]);
 
   const canSkip = countdown <= 0;
 
@@ -179,7 +239,7 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
         }}
       >
         {/* Vídeo / YouTube */}
-        {!shouldUseNativeVideo && isYoutube && ytId ? (
+        {showYoutubePlayer ? (
           <>
             {/* YouTube player container — slightly oversized to crop YouTube UI */}
             <div
@@ -189,40 +249,14 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
                 left: "-10px",
                 right: "-10px",
                 bottom: "-60px",
-                opacity: ytFailed && !hasFallbackVideo ? 0 : 1,
-                transition: "opacity 0.5s ease",
               }}
             >
               <div id="preroll-yt-player" className="w-full h-full" />
             </div>
             {/* Transparent overlay to block interaction with YouTube */}
             <div className="absolute inset-0 z-[2]" />
-
-            {/* Fallback when YouTube is blocked/captcha and no local video exists */}
-            {ytFailed && !hasFallbackVideo && (
-              <div className="absolute inset-0 z-[3] flex flex-col items-center justify-center gap-4 animate-fade-in">
-                <div
-                  className="w-16 h-16 rounded-full flex items-center justify-center"
-                  style={{ backgroundColor: "hsl(0 100% 40%)" }}
-                >
-                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <polygon points="5 3 19 12 5 21 5 3" />
-                  </svg>
-                </div>
-                <p className="text-white/70 text-sm font-medium">Avançando automaticamente...</p>
-                <div className="w-32 h-1 rounded-full overflow-hidden" style={{ backgroundColor: "hsl(0 0% 20%)" }}>
-                  <div
-                    className="h-full rounded-full"
-                    style={{
-                      backgroundColor: "hsl(0 100% 50%)",
-                      animation: "preroll-progress 3s linear forwards",
-                    }}
-                  />
-                </div>
-              </div>
-            )}
           </>
-        ) : (
+        ) : shouldUseNativeVideo ? (
           <video
             ref={prerollVideoRef}
             src={prerollUrl}
@@ -232,6 +266,30 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
             className="absolute inset-0 w-full h-full object-contain"
             onEnded={onEnded}
           />
+        ) : (
+          <div className="absolute inset-0 z-[3] flex flex-col items-center justify-center gap-4 animate-fade-in">
+            <div
+              className="w-16 h-16 rounded-full flex items-center justify-center"
+              style={{ backgroundColor: "hsl(0 100% 40%)" }}
+            >
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polygon points="5 3 19 12 5 21 5 3" />
+              </svg>
+            </div>
+            <p className="text-white/80 text-sm font-medium text-center px-6">
+              {ytErrorMessage || "Este vídeo do YouTube não pôde ser reproduzido."}
+            </p>
+            <p className="text-white/60 text-xs">Avançando automaticamente...</p>
+            <div className="w-32 h-1 rounded-full overflow-hidden" style={{ backgroundColor: "hsl(0 0% 20%)" }}>
+              <div
+                className="h-full rounded-full"
+                style={{
+                  backgroundColor: "hsl(0 100% 50%)",
+                  animation: "preroll-progress 3s linear forwards",
+                }}
+              />
+            </div>
+          </div>
         )}
 
         {/* Botão Pular + Tempo — canto superior direito */}

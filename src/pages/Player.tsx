@@ -127,6 +127,13 @@ const MUSIC_START_KEY = "masterview_music_start";
 const DAY_MAP_SHORT: Record<number, string> = { 0: "dom", 1: "seg", 2: "ter", 3: "qua", 4: "qui", 5: "sex", 6: "sab" };
 const DAY_MAP_FULL: Record<number, string> = { 0: "Domingo", 1: "Segunda", 2: "Terça", 3: "Quarta", 4: "Quinta", 5: "Sexta", 6: "Sábado" };
 
+const matchesCampaignDay = (diasSemana: string[] | null | undefined, now: Date) => {
+  if (!diasSemana || diasSemana.length === 0) return true;
+  const todayShort = DAY_MAP_SHORT[now.getDay()];
+  const todayFull = DAY_MAP_FULL[now.getDay()];
+  return diasSemana.includes(todayShort) || diasSemana.includes(todayFull);
+};
+
 const normalizeChannelNumber = (num?: string | null) => (num || "").replace(/\s+/g, "").toLowerCase();
 
 function getCurrentProgram(programas: Programa[]): Programa | null {
@@ -600,10 +607,9 @@ export default function PlayerPage() {
           if (data.empresa?.logo) setEmpresaLogo(data.empresa.logo);
 
           const now = new Date();
-          const today = DAY_MAP_FULL[now.getDay()];
           const todayStr = now.toISOString().slice(0, 10);
           const prerolls = (data.prerolls || []).filter((p: any) => {
-            if (p.dias_semana && p.dias_semana.length > 0 && !p.dias_semana.includes(today)) return false;
+            if (!matchesCampaignDay(p.dias_semana, now)) return false;
             if (p.data_inicial && todayStr < p.data_inicial) return false;
             if (p.data_final && todayStr > p.data_final) return false;
             return true;
@@ -645,7 +651,6 @@ export default function PlayerPage() {
 
       const now = new Date();
       const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-      const today = DAY_MAP_FULL[now.getDay()];
 
       try {
         // STAGE 1 — Critical: only channels + preroll (show UI ASAP)
@@ -683,7 +688,7 @@ export default function PlayerPage() {
         if (!prerollDone && prerollRes.data && prerollRes.data.length > 0) {
           const todayStr = now.toISOString().slice(0, 10);
           const matching = prerollRes.data.filter((p: any) => {
-            if (p.dias_semana && p.dias_semana.length > 0 && !p.dias_semana.includes(today)) return false;
+            if (!matchesCampaignDay(p.dias_semana, now)) return false;
             if (p.data_inicial && todayStr < p.data_inicial) return false;
             if (p.data_final && todayStr > p.data_final) return false;
             return true;
@@ -1180,14 +1185,13 @@ export default function PlayerPage() {
     if (!user || prerollShowing) return;
     const now = new Date();
     const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-    const today = ["dom", "seg", "ter", "qua", "qui", "sex", "sab"][now.getDay()];
 
     const { data } = await supabase.from("comercial_preroll").select("*").eq("user_id", user.id).eq("active", true).lte("horario_inicio", currentTime).gte("horario_fim", currentTime).order("priority", { ascending: true });
 
     if (data && data.length > 0) {
-      const todayStr = new Date().toISOString().slice(0, 10);
+      const todayStr = now.toISOString().slice(0, 10);
       const matching = data.filter((p: any) => {
-        if (p.dias_semana && p.dias_semana.length > 0 && !p.dias_semana.includes(today)) return false;
+        if (!matchesCampaignDay(p.dias_semana, now)) return false;
         if (p.data_inicial && todayStr < p.data_inicial) return false;
         if (p.data_final && todayStr > p.data_final) return false;
         return true;
