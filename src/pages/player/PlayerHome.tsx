@@ -1184,6 +1184,18 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
     }, 200);
   };
 
+  const scrollToSection = useCallback((sectionId: string) => {
+    const container = contentScrollRef.current;
+    const el = document.getElementById(sectionId);
+    if (!container || !el) return;
+    // Calculate offset within the scroll container, accounting for the sticky hero
+    const containerRect = container.getBoundingClientRect();
+    const elRect = el.getBoundingClientRect();
+    const offset = elRect.top - containerRect.top + container.scrollTop;
+    // Small padding above the section title
+    container.scrollTo({ top: Math.max(0, offset - 8), behavior: "smooth" });
+  }, []);
+
   const handleSectionChange = useCallback((section: Section) => {
     // If we're in catalog-detail, go back to main view first
     if (visibleSection === "catalog-detail") {
@@ -1192,10 +1204,12 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       setTimeout(() => {
         setVisibleSection("home");
         setSectionFading(false);
-        // After returning to home, scroll to the section
         setTimeout(() => {
-          const el = document.getElementById(`section-${section}`);
-          if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+          if (section === "home") {
+            contentScrollRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+          } else {
+            scrollToSection(`section-${section}`);
+          }
         }, 50);
       }, 200);
       setActiveSection(section);
@@ -1205,13 +1219,11 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
     setActiveSection(section);
 
     if (section === "home") {
-      // Scroll to top
       contentScrollRef.current?.scrollTo({ top: 0, behavior: "smooth" });
     } else {
-      const el = document.getElementById(`section-${section}`);
-      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+      scrollToSection(`section-${section}`);
     }
-  }, [visibleSection]);
+  }, [visibleSection, scrollToSection]);
 
   const handleSignOut = async () => { await signOut(); navigate("/user/nexohub/player"); };
 
