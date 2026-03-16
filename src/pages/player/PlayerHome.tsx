@@ -1301,8 +1301,8 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
             <div className="px-6 sm:px-10 pt-8 pb-8">
               <h1 className="text-2xl font-bold mb-6 text-white">Canais ao Vivo</h1>
               {!dataLoaded ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {[1, 2, 3, 4].map(i => <Skeleton key={i} className="w-full rounded-xl bg-white/8" style={{ aspectRatio: "16/9" }} />)}
+                <div className="flex flex-wrap gap-3">
+                  {[1, 2, 3, 4].map(i => <Skeleton key={i} className="flex-shrink-0 rounded-xl bg-white/8" style={{ width: 160, aspectRatio: "2/3" }} />)}
                 </div>
               ) : streamingChannels.length === 0 ? (
                 <div className="w-full h-40 rounded-xl bg-player-surface border border-player-border flex items-center justify-center text-player-muted-foreground text-sm">
