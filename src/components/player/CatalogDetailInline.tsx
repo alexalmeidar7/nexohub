@@ -278,30 +278,25 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
         }}
       >
 
-        {/* Scroll arrows — glass buttons */}
-        <button
-          onClick={() => scrollPlaylist("left")}
-          className="absolute left-1.5 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full flex items-center justify-center text-white/50 hover:text-white hover:scale-110 transition-all duration-200"
-          style={{ background: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.1)" }}
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </button>
-        <button
-          onClick={() => scrollPlaylist("right")}
-          className="absolute right-1.5 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full flex items-center justify-center text-white/50 hover:text-white hover:scale-110 transition-all duration-200"
-          style={{ background: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.1)" }}
-        >
-          <ChevronRight className="h-4 w-4" />
-        </button>
-
-        {/* Edge fade masks */}
-        <div className="absolute left-0 top-0 bottom-0 w-12 z-[5] pointer-events-none" style={{ background: "linear-gradient(to right, rgba(0,0,0,0.5), transparent)" }} />
-        <div className="absolute right-0 top-0 bottom-0 w-12 z-[5] pointer-events-none" style={{ background: "linear-gradient(to left, rgba(0,0,0,0.5), transparent)" }} />
+        {/* Auto-scroll hover zones */}
+        <div
+          className="absolute left-0 top-0 bottom-0 w-16 z-10 cursor-w-resize"
+          style={{ background: "linear-gradient(to right, rgba(10,30,80,0.5), transparent)" }}
+          onMouseEnter={() => startAutoScroll("left")}
+          onMouseLeave={stopAutoScroll}
+        />
+        <div
+          className="absolute right-0 top-0 bottom-0 w-16 z-10 cursor-e-resize"
+          style={{ background: "linear-gradient(to left, rgba(10,30,80,0.5), transparent)" }}
+          onMouseEnter={() => startAutoScroll("right")}
+          onMouseLeave={stopAutoScroll}
+        />
 
         {/* Scrollable content */}
         <div
           ref={scrollRef}
-          className="flex items-center gap-3.5 h-full px-14 pb-3 pt-3 overflow-x-auto scrollbar-hide"
+          className="flex items-center gap-3.5 h-full px-8 pb-3 pt-3 overflow-x-auto scrollbar-hide"
+          style={{ scrollBehavior: "smooth" }}
         >
           {loading ? (
             Array.from({ length: 8 }).map((_, i) => (
