@@ -393,7 +393,7 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
               <div
                 className="overflow-hidden transition-all duration-500 ease-in-out"
                 style={{
-                  maxHeight: descExpanded ? "500px" : "2.7em",
+                  maxHeight: descExpanded ? "500px" : "42px",
                 }}
               >
                 <p
