@@ -95,13 +95,13 @@ function HeroBanner({
   useEffect(() => { fetchAiAnalysis(nextProgram); }, [nextProgram?.id]);
 
   const RATING_COLORS: Record<string, { bg: string; text: string; label: string }> = {
-    "Livre": { bg: "rgba(34,197,94,0.2)", text: "rgb(74,222,128)", label: "L" },
-    "6": { bg: "rgba(251,191,36,0.2)", text: "rgb(251,191,36)", label: "6" },
-    "10": { bg: "rgba(59,130,246,0.2)", text: "rgb(96,165,250)", label: "10" },
-    "12": { bg: "rgba(245,158,11,0.2)", text: "rgb(251,191,36)", label: "12" },
-    "14": { bg: "rgba(249,115,22,0.2)", text: "rgb(251,146,60)", label: "14" },
-    "16": { bg: "rgba(239,68,68,0.2)", text: "rgb(248,113,113)", label: "16" },
-    "18": { bg: "rgba(220,38,38,0.3)", text: "rgb(248,113,113)", label: "18" },
+    "Livre": { bg: "#22c55e", text: "#ffffff", label: "L" },
+    "6": { bg: "#facc15", text: "#000000", label: "6" },
+    "10": { bg: "#3b82f6", text: "#ffffff", label: "10" },
+    "12": { bg: "#f59e0b", text: "#000000", label: "12" },
+    "14": { bg: "#f97316", text: "#ffffff", label: "14" },
+    "16": { bg: "#ef4444", text: "#ffffff", label: "16" },
+    "18": { bg: "#000000", text: "#ffffff", label: "18" },
   };
 
   // Build slides: current program thumb + next program thumb (if available)
