@@ -506,7 +506,7 @@ function StreamingCard({ channel, currentProgram, nowPlaying, onClick }: {
 }
 
 /* ─── Content Row (horizontal scroll with arrows + scroll fade) ─── */
-function ContentRow({ title, children }: { title: React.ReactNode; children: React.ReactNode }) {
+function ContentRow({ title, children, scrollRoot }: { title: React.ReactNode; children: React.ReactNode; scrollRoot?: React.RefObject<HTMLDivElement> }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const sectionRef = useRef<HTMLElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -533,16 +533,20 @@ function ContentRow({ title, children }: { title: React.ReactNode; children: Rea
   // Intersection-based fade/scale as section scrolls out of view
   useEffect(() => {
     const el = sectionRef.current;
+    const root = scrollRoot?.current || null;
     if (!el) return;
     const obs = new IntersectionObserver(
       ([entry]) => {
-        setVisibility(Math.max(entry.intersectionRatio, 0.3));
+        setVisibility(Math.max(entry.intersectionRatio, 0.15));
       },
-      { threshold: Array.from({ length: 21 }, (_, i) => i / 20) }
+      {
+        root,
+        threshold: Array.from({ length: 21 }, (_, i) => i / 20),
+      }
     );
     obs.observe(el);
     return () => obs.disconnect();
-  }, []);
+  }, [scrollRoot]);
 
   const scroll = (dir: "left" | "right") => {
     scrollRef.current?.scrollBy({ left: dir === "left" ? -400 : 400, behavior: "smooth" });
@@ -925,6 +929,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   const [nowPlaying, setNowPlaying] = useState<{ musica: string; artista: string } | null>(null);
   const [shopProducts, setShopProducts] = useState<any[]>([]);
   const [showGrade, setShowGrade] = useState(false);
+  const contentScrollRef = useRef<HTMLDivElement>(null);
 
   const [miniPlayerData, setMiniPlayerData] = useState<MiniPlayerData | null>(() => loadMiniPlayerData());
 
@@ -1169,7 +1174,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       />
 
       {/* Main content */}
-      <div className="flex-1 ml-[52px] overflow-y-auto h-full">
+      <div ref={contentScrollRef} className="flex-1 ml-[52px] overflow-y-auto h-full">
         <div className="transition-all duration-500 ease-in-out" style={{ opacity: sectionFading ? 0 : 1, transform: sectionFading ? "translateY(12px)" : "translateY(0)" }}>
 
           {visibleSection === "home" && (
@@ -1214,7 +1219,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                     </div>
                   </section>
                 ) : streamingChannels.length > 0 && (
-                  <ContentRow title="Canais ao Vivo">
+                  <ContentRow title="Canais ao Vivo" scrollRoot={contentScrollRef}>
                     {streamingChannels.map(ch => (
                       <StreamingCard
                         key={ch.id}
@@ -1264,7 +1269,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                   if (trendingItems.length === 0) return null;
 
                   return (
-                    <ContentRow title={
+                    <ContentRow scrollRoot={contentScrollRef} title={
                       <span className="flex items-center gap-2">
                         <Flame className="h-5 w-5" style={{ color: "hsl(var(--player-accent))" }} />
                         Em Alta
@@ -1285,7 +1290,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
 
                 {/* Watch history */}
                 {user && dataLoaded && watchHistory.length > 0 && (
-                  <ContentRow title="Visto por último">
+                  <ContentRow title="Visto por último" scrollRoot={contentScrollRef}>
                     {watchHistory.map(item => {
                       // Enrich with current channel data for up-to-date covers
                       const liveChannel = channels.find(c => c.id === item.channel_id);
@@ -1307,7 +1312,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                   });
 
                   return (
-                    <ContentRow key={groupName} title={groupName}>
+                    <ContentRow key={groupName} title={groupName} scrollRoot={contentScrollRef}>
                       {groupVideos.length > 0 ? (
                         groupVideos.map(({ channel, ...video }) => (
                           <CatalogCard
@@ -1379,7 +1384,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                 Object.entries(catalogGroups).map(([groupName, items]) => {
                   const groupVideos = items.flatMap(item => (playlistVideos[item.id] || []).map(v => ({ ...v, channel: item })));
                   return (
-                    <ContentRow key={groupName} title={groupName}>
+                    <ContentRow key={groupName} title={groupName} scrollRoot={contentScrollRef}>
                       {groupVideos.length > 0 ? (
                         groupVideos.map(({ channel, ...video }) => (
                           <CatalogCard
