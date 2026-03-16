@@ -72,6 +72,8 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
     fetchChannels();
   }, [catalogName]);
 
+  const primaryChannel = channels[0];
+
   // Build program info from channel data (saved during catalog registration)
   useEffect(() => {
     if (!primaryChannel) return;
