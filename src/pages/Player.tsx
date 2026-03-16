@@ -1773,33 +1773,35 @@ export default function PlayerPage() {
       {/* Catalog: Back button — top-left, styled like control bar */}
       {isCatalog && (
         <>
-          {/* Top hover zone to trigger visibility */}
+          {/* Top-left hover zone — only shows back button, NOT control bar */}
           <div
-            className="absolute top-0 left-0 right-0 z-[59] h-16"
-            onMouseEnter={showBar}
-            onMouseLeave={hideBar}
-          />
-          <div
-            className="absolute top-4 left-[calc(10%+8px)] z-[60] transition-all duration-400 ease-in-out"
-            style={{
-              opacity: barVisible ? 1 : 0,
-              transform: barVisible ? "translateY(0)" : "translateY(-20px)",
-              pointerEvents: barVisible ? "auto" : "none",
-            }}
+            className="absolute top-0 left-0 z-[61] w-48 h-20"
+            onMouseEnter={() => setBackBtnVisible(true)}
+            onMouseLeave={() => setBackBtnVisible(false)}
           >
-            <button
-              onClick={() => {
-                const catalogName = canal?.catalog_name || canal?.name || "Catálogo";
-                const basePath = userSlug ? `/user/${userSlug}/nexohub/player` : "/user/nexohub/player";
-                setPageFadeOut(true);
-                setTimeout(() => navigate(`${basePath}?step=home&catalog=${encodeURIComponent(catalogName)}`), 400);
+            <div
+              className="absolute top-4 left-5 transition-all duration-300 ease-out"
+              style={{
+                opacity: backBtnVisible || barVisible ? 1 : 0,
+                transform: backBtnVisible || barVisible ? "translateY(0)" : "translateY(-12px)",
+                pointerEvents: backBtnVisible || barVisible ? "auto" : "none",
               }}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl text-white/70 hover:text-white text-xs font-medium transition-all backdrop-blur-xl border border-white/10"
-              style={{ backgroundColor: "rgba(0, 0, 0, 0.5)", boxShadow: "0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1)" }}
             >
-              <ChevronLeft size={14} />
-              Voltar
-            </button>
+              <button
+                onClick={() => {
+                  const catalogName = canal?.catalog_name || canal?.name || "Catálogo";
+                  const basePath = userSlug ? `/user/${userSlug}/nexohub/player` : "/user/nexohub/player";
+                  setPageFadeOut(true);
+                  setTimeout(() => navigate(`${basePath}?step=home&catalog=${encodeURIComponent(catalogName)}`), 400);
+                }}
+                className="group flex items-center gap-2 pl-2.5 pr-4 py-2 rounded-full text-player-foreground/80 hover:text-player-foreground text-xs font-semibold tracking-wide transition-all duration-200 backdrop-blur-2xl border border-player-border hover:border-player-foreground/20 bg-player-surface hover:bg-player-surface-hover shadow-lg hover:shadow-xl"
+              >
+                <span className="flex items-center justify-center w-5 h-5 rounded-full bg-player-foreground/10 group-hover:bg-player-accent transition-colors duration-200">
+                  <ChevronLeft size={13} className="group-hover:text-player-foreground transition-colors" />
+                </span>
+                Voltar
+              </button>
+            </div>
           </div>
         </>
       )}
