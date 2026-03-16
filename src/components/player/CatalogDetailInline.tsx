@@ -55,22 +55,37 @@ const ratingColors: Record<string, { bg: string; text: string }> = {
 function HoverPreviewPopup({ video, x, y }: { video: PlaylistVideo; x: number; y: number }) {
   const [videoReady, setVideoReady] = useState(false);
   const [entered, setEntered] = useState(false);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
     const t = requestAnimationFrame(() => setEntered(true));
     return () => cancelAnimationFrame(t);
   }, []);
 
+  // Detect playback start and unmute
   useEffect(() => {
-    const timer = setTimeout(() => setVideoReady(true), 2500);
+    const fallback = setTimeout(() => setVideoReady(true), 3000);
     const handleMessage = (e: MessageEvent) => {
       try {
         const d = typeof e.data === "string" ? JSON.parse(e.data) : e.data;
-        if (d?.event === "onReady" || d?.info?.playerState === 1) setVideoReady(true);
+        if (d?.event === "onReady" || d?.info?.playerState === 1) {
+          setVideoReady(true);
+          // Try to unmute via postMessage
+          try {
+            iframeRef.current?.contentWindow?.postMessage(
+              JSON.stringify({ event: "command", func: "unMute", args: [] }),
+              "*"
+            );
+            iframeRef.current?.contentWindow?.postMessage(
+              JSON.stringify({ event: "command", func: "setVolume", args: [40] }),
+              "*"
+            );
+          } catch {}
+        }
       } catch {}
     };
     window.addEventListener("message", handleMessage);
-    return () => { clearTimeout(timer); window.removeEventListener("message", handleMessage); };
+    return () => { clearTimeout(fallback); window.removeEventListener("message", handleMessage); };
   }, []);
 
   return (
@@ -96,20 +111,33 @@ function HoverPreviewPopup({ video, x, y }: { video: PlaylistVideo; x: number; y
           boxShadow: "0 16px 50px rgba(0,0,0,0.7), 0 0 40px hsla(var(--player-accent) / 0.15)",
         }}
       >
-        <div className="relative w-full" style={{ aspectRatio: "16/9", background: "#000" }}>
+        {/* Video area — scaled up to crop YouTube UI chrome */}
+        <div className="relative w-full overflow-hidden" style={{ aspectRatio: "16/9", background: "#000" }}>
           {!videoReady && (
             <div className="absolute inset-0 flex items-center justify-center z-10">
               <div className="w-7 h-7 rounded-full border-2 border-white/20 border-t-white/80 animate-spin" />
             </div>
           )}
           <iframe
-            src={`https://www.youtube.com/embed/${video.videoId}?autoplay=1&mute=1&start=1800&controls=0&showinfo=0&modestbranding=1&rel=0&loop=1&playlist=${video.videoId}&end=1810&enablejsapi=1`}
-            className="absolute inset-0 w-full h-full"
-            style={{ border: 0, opacity: videoReady ? 1 : 0, transition: "opacity 0.8s ease-in-out" }}
+            ref={iframeRef}
+            src={`https://www.youtube.com/embed/${video.videoId}?autoplay=1&mute=1&start=1800&controls=0&showinfo=0&modestbranding=1&rel=0&iv_load_policy=3&disablekb=1&fs=0&loop=1&playlist=${video.videoId}&end=1810&enablejsapi=1&origin=${window.location.origin}`}
+            className="absolute"
+            style={{
+              border: 0,
+              opacity: videoReady ? 1 : 0,
+              transition: "opacity 0.8s ease-in-out",
+              /* Scale up 20% to crop YouTube title bar and bottom controls */
+              top: "-10%",
+              left: "-10%",
+              width: "120%",
+              height: "120%",
+            }}
             allow="autoplay; encrypted-media"
             title={video.title}
           />
         </div>
+
+        {/* Info — slides up */}
         <div
           className="px-3.5 py-3"
           style={{
