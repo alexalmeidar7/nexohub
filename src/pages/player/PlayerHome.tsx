@@ -594,6 +594,12 @@ function ContentRow({ title, children, scrollRoot }: { title: React.ReactNode; c
 
 // AI cover generation removed — cards use existing thumbnails only
 
+/* ─── Random start times for catalog previews (10min, 32min, 51min) ─── */
+const PREVIEW_START_TIMES = [600, 1920, 3060];
+function getRandomPreviewStart() {
+  return PREVIEW_START_TIMES[Math.floor(Math.random() * PREVIEW_START_TIMES.length)];
+}
+
 /* ─── Trending Card (Em Alta) with expand-right video preview ─── */
 function TrendingCard({ item, idx, channels, onClick }: {
   item: { id: string; image: string | null; title: string; subtitle?: string; type: "live" | "catalog"; channelId: string; videoId?: string; logoUrl?: string | null };
@@ -609,6 +615,7 @@ function TrendingCard({ item, idx, channels, onClick }: {
   const playerRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const fadeIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const startTimeRef = useRef(getRandomPreviewStart());
 
   // Load YouTube IFrame API once
   useEffect(() => {
@@ -647,6 +654,7 @@ function TrendingCard({ item, idx, channels, onClick }: {
   const handleMouseEnter = () => {
     setHovered(true);
     if (item.type === "catalog" && item.videoId) {
+      startTimeRef.current = getRandomPreviewStart();
       timerRef.current = setTimeout(() => setShowVideo(true), 500);
     }
   };
@@ -686,7 +694,7 @@ function TrendingCard({ item, idx, channels, onClick }: {
           fs: 0,
           playsinline: 1,
           cc_load_policy: 0,
-          start: 120,
+          start: startTimeRef.current,
         },
         events: {
           onReady: (e: any) => {
@@ -714,7 +722,7 @@ function TrendingCard({ item, idx, channels, onClick }: {
   const coverSrc = item.image;
 
   const cardHeight = 225;
-  const videoWidth = Math.round(cardHeight * 16 / 9); // 400px — true 16:9
+  const videoWidth = Math.round(cardHeight * 16 / 9);
   const expandedWidth = hovered ? 150 + videoWidth : 150;
 
   return (
@@ -745,11 +753,29 @@ function TrendingCard({ item, idx, channels, onClick }: {
             <TrendingUp className="h-10 w-10" style={{ color: "hsl(var(--player-accent))", opacity: 0.3 }} />
           </div>
         )}
+        {/* Text overlay always visible on the cover side */}
+        <div className="absolute inset-0 z-[3] pointer-events-none" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 40%, transparent 70%)" }} />
+        <div className="absolute bottom-0 left-0 right-0 p-3 z-[4] text-left pointer-events-none">
+          <p className="text-xs font-bold text-white leading-tight line-clamp-2 drop-shadow-lg">{item.title}</p>
+          {item.subtitle && <p className="text-[10px] text-white/50 mt-1 font-medium">{item.subtitle}</p>}
+          {item.type === "catalog" && hovered && (
+            <p className="text-[9px] text-white/40 mt-1.5 uppercase tracking-wider font-semibold flex items-center gap-1">
+              <Play className="h-3 w-3 fill-current" style={{ color: "hsl(var(--player-accent))" }} />
+              Assistir agora
+            </p>
+          )}
+          {item.type === "live" && hovered && (
+            <p className="text-[9px] mt-1.5 uppercase tracking-wider font-bold flex items-center gap-1" style={{ color: "hsl(var(--player-accent))" }}>
+              <span className="inline-block w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: "hsl(var(--player-accent))" }} />
+              ao vivo
+            </p>
+          )}
+        </div>
       </div>
 
-      {/* Expanded right area – video preview or info */}
+      {/* Expanded right area – video preview only */}
       {hovered && (
-        <div className="absolute top-0 bottom-0 right-0 z-[2] flex flex-col justify-end" style={{ left: "150px" }}>
+        <div className="absolute top-0 bottom-0 right-0 z-[2]" style={{ left: "150px" }}>
           {showVideo ? (
             <div className="absolute inset-0 pointer-events-none overflow-hidden">
               {!videoReady && (
@@ -763,22 +789,6 @@ function TrendingCard({ item, idx, channels, onClick }: {
           ) : coverSrc ? (
             <img src={coverSrc} alt="" className="absolute inset-0 w-full h-full object-cover opacity-30 blur-sm" />
           ) : null}
-          <div className="relative z-[3] p-3" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 60%, transparent 100%)" }}>
-            <p className="text-xs font-bold text-white leading-tight line-clamp-2">{item.title}</p>
-            {item.subtitle && <p className="text-[10px] text-white/50 mt-1 font-medium">{item.subtitle}</p>}
-            {item.type === "catalog" && (
-              <p className="text-[9px] text-white/40 mt-1.5 uppercase tracking-wider font-semibold flex items-center gap-1">
-                <Play className="h-3 w-3 fill-current" style={{ color: "hsl(var(--player-accent))" }} />
-                Assistir agora
-              </p>
-            )}
-            {item.type === "live" && (
-              <p className="text-[9px] mt-1.5 uppercase tracking-wider font-bold flex items-center gap-1" style={{ color: "hsl(var(--player-accent))" }}>
-                <span className="inline-block w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: "hsl(var(--player-accent))" }} />
-                ao vivo
-              </p>
-            )}
-          </div>
         </div>
       )}
 
@@ -790,9 +800,9 @@ function TrendingCard({ item, idx, channels, onClick }: {
         {idx + 1}
       </div>
 
-      {/* Channel/Catalog logo - top right */}
-      {item.logoUrl && (
-        <div className="absolute top-2 right-2 z-[15] w-14 h-10 flex items-center justify-center">
+      {/* Channel/Catalog logo - top right of the cover */}
+      {item.logoUrl && !hovered && (
+        <div className="absolute top-2 right-2 z-[15] w-14 h-10 flex items-center justify-center" style={{ right: "auto", left: "calc(150px - 60px)" }}>
           <img src={item.logoUrl} alt="" className="max-w-full max-h-full object-contain" />
         </div>
       )}
@@ -802,17 +812,6 @@ function TrendingCard({ item, idx, channels, onClick }: {
         <span className="absolute top-2 right-2 z-10 text-[9px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded text-white" style={{ backgroundColor: "hsl(var(--player-accent))", opacity: 0.9 }}>
           live
         </span>
-      )}
-
-      {/* Gradient + title (only when not expanded) */}
-      {!hovered && (
-        <>
-          <div className="absolute inset-0 z-[3] pointer-events-none" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 40%, transparent 70%)" }} />
-          <div className="absolute bottom-0 left-0 right-0 p-3.5 z-[4] text-left pointer-events-none">
-            <p className="text-xs font-bold text-white leading-tight line-clamp-2 drop-shadow-lg">{item.title}</p>
-            {item.subtitle && <p className="text-[10px] text-white/50 mt-1 font-medium">{item.subtitle}</p>}
-          </div>
-        </>
       )}
     </div>
   );
