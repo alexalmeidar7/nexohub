@@ -807,9 +807,6 @@ function TrendingCard({ item, idx, channels, onClick }: {
     </div>
   );
 }
-    </div>
-  );
-}
 
 /* ─── Catalog Card ─── */
 function CatalogCard({ image, title, subtitle, logoUrl, onClick }: { image?: string | null; title: string; subtitle?: string; logoUrl?: string | null; onClick: () => void }) {
