@@ -1204,7 +1204,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       {/* Sidebar */}
       <PlayerSidebar
         items={sidebarItems}
-        activeKey={activeSection}
+        activeKey={visibleSection === "catalog-detail" ? "content" : activeSection}
         avatarUrl={profileAvatar}
         userName={userName}
         showLogout={!!user}
