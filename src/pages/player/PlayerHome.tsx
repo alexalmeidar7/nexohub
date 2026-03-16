@@ -209,9 +209,14 @@ function HeroBanner({
             <span className="inline-block w-2 h-2 rounded-full bg-white animate-pulse" />
             {activeSlide?.label || "ao vivo"}
           </span>
-          {channelName && <span className="text-white/60 text-xs">{channelName}</span>}
+          {channelName && (
+            <span className="flex items-center gap-2 text-white/60 text-xs">
+              {channelName}
+              {channelIsHd && <img src="/images/icon-fullhd.png" alt="FULL HD" className="h-3.5" style={{ opacity: 0.6 }} />}
+              {channelIsStereo && <img src="/images/icon-stereo.png" alt="Stereo" className="h-3.5" style={{ opacity: 0.6 }} />}
+            </span>
+          )}
         </div>
-
         {/* Program name */}
         {displayProgram ? (
           <>
