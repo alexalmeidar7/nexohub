@@ -1,0 +1,2 @@
+UPDATE streaming_channels SET cover_url = 'https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/empresa-assets/catalogo/capa-primeira-hora.png' WHERE id = '2259dd63-ca92-4887-b2b0-1915925b51a2';
+UPDATE streaming_channels SET cover_url = 'https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/empresa-assets/catalogo/capa-palco-positiva.png' WHERE id = '399c1cda-7e80-4c5b-9dfe-af64019abf8e';
