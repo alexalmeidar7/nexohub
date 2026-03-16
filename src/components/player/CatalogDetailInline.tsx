@@ -170,40 +170,55 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
         </div>
       </div>
 
-      {/* ─── PLAYLIST BAR ─── */}
+      {/* ─── PLAYLIST BAR — glassmorphism ─── */}
       <div
         className="relative w-full shrink-0"
         style={{
-          height: "clamp(150px, 24vh, 220px)",
-          background: "linear-gradient(to top, hsla(var(--player-bg) / 0.98) 0%, hsla(var(--player-bg) / 0.92) 100%)",
-          borderTop: "1px solid rgba(255,255,255,0.06)",
+          height: "clamp(160px, 26vh, 240px)",
+          background: "rgba(0, 0, 0, 0.45)",
+          backdropFilter: "blur(24px) saturate(1.4)",
+          WebkitBackdropFilter: "blur(24px) saturate(1.4)",
+          borderTop: "1px solid rgba(255,255,255,0.1)",
+          boxShadow: "0 -8px 32px rgba(0,0,0,0.4)",
         }}
       >
-        <div className="absolute top-3 left-12 z-10 text-[11px] uppercase tracking-widest font-semibold text-white/30">
-          Playlist
+        {/* Label */}
+        <div className="absolute top-3.5 left-12 z-10 flex items-center gap-2">
+          <div className="w-1 h-4 rounded-full" style={{ background: "hsl(var(--player-accent))" }} />
+          <span className="text-[11px] uppercase tracking-[0.2em] font-bold text-white/50">
+            Playlist
+          </span>
+          {!loading && videos.length > 0 && (
+            <span className="text-[10px] text-white/25 font-medium ml-1">
+              {videos.length} vídeos
+            </span>
+          )}
         </div>
 
+        {/* Scroll arrows — glass buttons */}
         <button
           onClick={() => scrollPlaylist("left")}
-          className="absolute left-1 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full flex items-center justify-center text-white/40 hover:text-white transition-colors"
-          style={{ background: "hsla(var(--player-bg) / 0.8)", backdropFilter: "blur(8px)" }}
+          className="absolute left-1.5 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full flex items-center justify-center text-white/50 hover:text-white hover:scale-110 transition-all duration-200"
+          style={{ background: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.1)" }}
         >
           <ChevronLeft className="h-4 w-4" />
         </button>
         <button
           onClick={() => scrollPlaylist("right")}
-          className="absolute right-1 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full flex items-center justify-center text-white/40 hover:text-white transition-colors"
-          style={{ background: "hsla(var(--player-bg) / 0.8)", backdropFilter: "blur(8px)" }}
+          className="absolute right-1.5 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full flex items-center justify-center text-white/50 hover:text-white hover:scale-110 transition-all duration-200"
+          style={{ background: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.1)" }}
         >
           <ChevronRight className="h-4 w-4" />
         </button>
 
-        <div className="absolute left-0 top-0 bottom-0 w-10 z-[5] pointer-events-none" style={{ background: "linear-gradient(to right, hsl(var(--player-bg)), transparent)" }} />
-        <div className="absolute right-0 top-0 bottom-0 w-10 z-[5] pointer-events-none" style={{ background: "linear-gradient(to left, hsl(var(--player-bg)), transparent)" }} />
+        {/* Edge fade masks */}
+        <div className="absolute left-0 top-0 bottom-0 w-12 z-[5] pointer-events-none" style={{ background: "linear-gradient(to right, rgba(0,0,0,0.5), transparent)" }} />
+        <div className="absolute right-0 top-0 bottom-0 w-12 z-[5] pointer-events-none" style={{ background: "linear-gradient(to left, rgba(0,0,0,0.5), transparent)" }} />
 
+        {/* Scrollable content */}
         <div
           ref={scrollRef}
-          className="flex items-end gap-3 h-full px-12 pb-4 pt-8 overflow-x-auto scrollbar-hide"
+          className="flex items-end gap-3.5 h-full px-14 pb-4 pt-9 overflow-x-auto scrollbar-hide"
         >
           {loading ? (
             Array.from({ length: 8 }).map((_, i) => (
