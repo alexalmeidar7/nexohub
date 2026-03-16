@@ -8,6 +8,7 @@ import { loadMiniPlayerData, clearMiniPlayerData, type MiniPlayerData } from "@/
 import PlayerSidebar from "@/components/player/PlayerSidebar";
 const MiniPlayerWidget = lazy(() => import("@/components/player/MiniPlayerWidget"));
 const PlayerGradeDialog = lazy(() => import("@/components/player/PlayerGradeDialog"));
+const CatalogDetailInline = lazy(() => import("@/components/player/CatalogDetailInline"));
 
 interface Channel {
   id: string;
