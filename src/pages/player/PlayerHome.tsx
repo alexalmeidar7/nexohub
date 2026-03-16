@@ -427,34 +427,42 @@ function StreamingCard({ channel, currentProgram, nowPlaying, onClick }: {
   }, [hovered, frames.length]);
 
   return (
+    const cardHeight = 240; // 160 * 3/2
+    const expandedWidth = hovered && isVideo && frames.length > 0 ? 160 + Math.round(cardHeight * 16 / 9) : 160;
+
+    return (
     <button
       onClick={onClick}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       className="flex-shrink-0 rounded-2xl overflow-hidden relative transition-all duration-500 ease-[cubic-bezier(0.25,0.1,0.25,1)] group cursor-pointer"
       style={{
-        width: "160px",
-        aspectRatio: "2/3",
+        width: `${expandedWidth}px`,
+        height: `${cardHeight}px`,
         background: "linear-gradient(145deg, rgba(255,255,255,0.06) 0%, hsl(var(--player-bg)) 100%)",
         transform: "none",
         boxShadow: hovered ? "0 0 12px 2px hsla(var(--player-accent) / 0.5)" : "none",
         border: hovered ? "2px solid hsl(var(--player-accent))" : "1px solid rgba(255,255,255,0.06)",
       }}
     >
-      {/* Cover image */}
-      {channel.cover_url ? (
-        <img src={channel.cover_url} alt={channel.name} className="absolute inset-0 w-full h-full object-cover transition-all duration-700 group-hover:scale-105" />
-      ) : channel.logo_url ? (
-        <img src={channel.logo_url} alt={channel.name} className="absolute inset-0 w-full h-full object-cover transition-all duration-700 group-hover:scale-105" />
-      ) : (
-        <div className="absolute inset-0 w-full h-full flex items-center justify-center" style={{ background: "linear-gradient(160deg, hsla(var(--player-accent) / 0.15) 0%, hsl(var(--player-bg)) 100%)" }}>
-          <Radio className="h-10 w-10 text-white/15" />
-        </div>
-      )}
+      {/* Cover image – pinned to left 160px */}
+      <div className="absolute top-0 left-0 bottom-0" style={{ width: "160px" }}>
+        {channel.cover_url ? (
+          <img src={channel.cover_url} alt={channel.name} className="w-full h-full object-cover" />
+        ) : channel.logo_url ? (
+          <img src={channel.logo_url} alt={channel.name} className="w-full h-full object-cover" />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center" style={{ background: "linear-gradient(160deg, hsla(var(--player-accent) / 0.15) 0%, hsl(var(--player-bg)) 100%)" }}>
+            <Radio className="h-10 w-10 text-white/15" />
+          </div>
+        )}
+      </div>
 
-      {/* Hover preview frames */}
+      {/* Video preview – fills expanded right area */}
       {hovered && isVideo && frames.length > 0 && (
-        <img src={frames[frameIdx]} alt="preview" className="absolute inset-0 w-full h-full object-cover z-[1]" />
+        <div className="absolute top-0 bottom-0 right-0 z-[1]" style={{ left: "160px" }}>
+          <img src={frames[frameIdx]} alt="preview" className="w-full h-full object-cover" />
+        </div>
       )}
 
       {/* Channel logo top-right */}
