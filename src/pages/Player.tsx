@@ -2497,17 +2497,9 @@ export default function PlayerPage() {
                 <ChevronRight size={16} />
               </div>
             </div>
-            {/* Expandable "A seguir" panel */}
+            {/* Expandable "A seguir" panel — uses CSS group-hover instead of imperative listeners */}
             <div
-              className="overflow-hidden transition-all duration-300 ease-in-out flex items-stretch gap-2"
-              style={{ maxWidth: "0", opacity: 0 }}
-              ref={(el) => {
-                if (!el) return;
-                const parent = el.closest(".group\\/next");
-                if (!parent) return;
-                parent.addEventListener("mouseenter", () => { el.style.maxWidth = "320px"; el.style.opacity = "1"; el.style.paddingLeft = "12px"; });
-                parent.addEventListener("mouseleave", () => { el.style.maxWidth = "0"; el.style.opacity = "0"; el.style.paddingLeft = "0"; });
-              }}
+              className="overflow-hidden transition-all duration-300 ease-in-out flex items-stretch gap-2 max-w-0 opacity-0 group-hover/next:max-w-[320px] group-hover/next:opacity-100 group-hover/next:pl-3"
             >
               <div className="min-w-0 flex-1" style={{ maxWidth: "200px" }}>
                 <span className="text-[10px] font-bold uppercase" style={{ color: "#e60000" }}>A seguir:</span>
