@@ -47,7 +47,7 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
 
   // Track time for native video
   useEffect(() => {
-    if (isYoutube) return;
+    if (!shouldUseNativeVideo) return;
     const video = prerollVideoRef.current;
     if (!video) return;
     const onTime = () => setCurrentTime(video.currentTime);
@@ -60,7 +60,7 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
       video.removeEventListener("loadedmetadata", onDur);
       video.removeEventListener("durationchange", onDur);
     };
-  }, [isYoutube, prerollVideoRef]);
+  }, [shouldUseNativeVideo, prerollVideoRef]);
 
   // Track time for YouTube with stall/error detection
   useEffect(() => {
