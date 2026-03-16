@@ -83,9 +83,10 @@ export default function PlayerCatalog() {
       }
       allVideos.sort((a, b) => new Date(b.published).getTime() - new Date(a.published).getTime());
       setVideos(allVideos);
-      if (allVideos.length > 0) {
-        const active = activeVideoId ? allVideos.find(v => v.videoId === activeVideoId) : null;
-        setSelectedVideo(active || allVideos[0]);
+      // Only select a video if explicitly requested via URL param
+      if (activeVideoId && allVideos.length > 0) {
+        const active = allVideos.find(v => v.videoId === activeVideoId) || null;
+        setSelectedVideo(active);
       }
       setLoading(false);
     };
