@@ -216,7 +216,11 @@ function HeroBanner({
             <span className="flex items-center gap-2 text-white/60 text-xs">
               {channelName}
               {channelIsHd && <img src="/images/icon-fullhd.png" alt="FULL HD" className="h-3.5" style={{ opacity: 0.6 }} />}
-              {channelIsStereo && <img src="/images/icon-stereo.png" alt="Stereo" className="h-3.5" style={{ opacity: 0.6 }} />}
+              {channelIsStereo && (
+                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wide text-white/40 border border-white/15">
+                  STEREO
+                </span>
+              )}
             </span>
           )}
         </div>
