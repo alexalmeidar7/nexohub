@@ -137,6 +137,20 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
     onPlayVideo(primaryChannel.id, video.videoId);
   };
 
+  const handleCardMouseEnter = useCallback((videoId: string) => {
+    hoverTimerRef.current = setTimeout(() => {
+      setHoveredVideoId(videoId);
+    }, 400);
+  }, []);
+
+  const handleCardMouseLeave = useCallback(() => {
+    if (hoverTimerRef.current) {
+      clearTimeout(hoverTimerRef.current);
+      hoverTimerRef.current = null;
+    }
+    setHoveredVideoId(null);
+  }, []);
+
   const scrollAnimRef = useRef<number | null>(null);
 
   const startAutoScroll = useCallback((direction: "left" | "right") => {
