@@ -1249,9 +1249,16 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                 {/* Watch history */}
                 {user && dataLoaded && watchHistory.length > 0 && (
                   <ContentRow title="Visto por último">
-                    {watchHistory.map(item => (
-                      <HistoryCard key={item.id} item={item} onClick={() => goToPlayer(item.channel_id || item.id)} />
-                    ))}
+                    {watchHistory.map(item => {
+                      // Enrich with current channel data for up-to-date covers
+                      const liveChannel = channels.find(c => c.id === item.channel_id);
+                      const enriched = liveChannel ? {
+                        ...item,
+                        channel_cover_url: liveChannel.cover_url || item.channel_cover_url,
+                        channel_logo_url: liveChannel.logo_url || item.channel_logo_url,
+                      } : item;
+                      return <HistoryCard key={item.id} item={enriched} onClick={() => goToPlayer(item.channel_id || item.id)} />;
+                    })}
                   </ContentRow>
                 )}
 
