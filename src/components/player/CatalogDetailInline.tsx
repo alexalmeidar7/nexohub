@@ -337,7 +337,7 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
         <div className="absolute top-[clamp(20px,4vh,60px)] left-8 sm:left-12 z-10 max-w-xl flex flex-col gap-3">
           {loading ? (
             /* ── Skeleton loader for hero content ── */
-            <div className="flex flex-col gap-4 animate-pulse">
+            <div className="flex flex-col gap-4 animate-pulse" key="skeleton-hero">
               {/* Logo skeleton */}
               <Skeleton className="h-44 sm:h-64 lg:h-[19rem] w-64 sm:w-80 lg:w-96 rounded-xl bg-white/8" />
               {/* Title skeleton */}
