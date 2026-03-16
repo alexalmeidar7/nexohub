@@ -12,6 +12,10 @@ interface Channel {
   type: string;
   url?: string;
   catalog_name?: string;
+  classificacao_etaria?: string;
+  horario_inicio?: string;
+  horario_fim?: string;
+  descricao?: string;
 }
 
 interface PlaylistVideo {
