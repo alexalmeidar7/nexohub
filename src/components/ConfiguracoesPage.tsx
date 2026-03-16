@@ -128,8 +128,9 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
   }, []);
 
   const loadCanais = async () => {
+    if (!user) return;
     setLoadingCanais(true);
-    const { data } = await supabase.from("streaming_channels").select("*").order("numero_canal", { ascending: true });
+    const { data } = await supabase.from("streaming_channels").select("*").eq("user_id", user.id).order("numero_canal", { ascending: true });
     if (data) {
       const seen = new Map<string, string>();
       const dupeIds: string[] = [];
