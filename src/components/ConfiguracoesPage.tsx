@@ -280,6 +280,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
     setSelectedProgramaId("");
     setVideoCoverUrl("");
     setVideoThumbUrl("");
+    setVideoDescription("");
   };
 
   const handleEditCanal = (c: Canal) => {
