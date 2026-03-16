@@ -76,6 +76,7 @@ interface Canal {
   cover_url: string;
   background_url: string;
   catalog_name?: string;
+  estudio?: string;
 }
 
 interface Programa {
