@@ -437,7 +437,7 @@ function StreamingCard({ channel, currentProgram, nowPlaying, onClick }: {
         aspectRatio: "2/3",
         background: "linear-gradient(145deg, rgba(255,255,255,0.06) 0%, hsl(var(--player-bg)) 100%)",
         transform: "none",
-        boxShadow: "0 4px 20px -8px rgba(0,0,0,0.4)",
+        boxShadow: hovered ? "0 0 12px 2px hsla(var(--player-accent) / 0.5)" : "none",
         border: hovered ? "2px solid hsl(var(--player-accent))" : "1px solid rgba(255,255,255,0.06)",
       }}
     >
