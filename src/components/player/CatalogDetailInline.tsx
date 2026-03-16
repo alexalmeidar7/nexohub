@@ -273,7 +273,7 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
 
       {/* ─── PLAYLIST BAR — floating blue glass ─── */}
       <div
-        className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 rounded-2xl overflow-hidden"
+        className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 rounded-2xl"
         style={{
           width: "90%",
           height: "clamp(120px, 18vh, 170px)",
