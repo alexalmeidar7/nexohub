@@ -280,12 +280,12 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
           )}
 
           {/* HD / Stereo icons */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             {primaryChannel?.is_hd && (
-              <img src="/images/icon-fullhd.png" alt="FULL HD" className="h-5 opacity-60" />
+              <img src="/images/icon-fullhd.png" alt="FULL HD" className="h-3 opacity-50" />
             )}
             {primaryChannel?.is_stereo && (
-              <img src="/images/icon-stereo.png" alt="Estéreo" className="h-5 opacity-60" />
+              <img src="/images/icon-stereo.png" alt="Estéreo" className="h-3 opacity-50" />
             )}
           </div>
 
