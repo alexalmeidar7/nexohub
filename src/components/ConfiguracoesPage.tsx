@@ -510,9 +510,9 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {([
-                { key: "cover_url" as const, label: canalMode === "catalog" ? "Capa do Catálogo" : "Capa do Canal", hint: "1280 × 720", alt: "Capa" },
+                { key: "background_url" as const, label: canalMode === "catalog" ? "Logo do Catálogo" : "Logo do Canal", hint: "1080 × 1080 (PNG)", alt: "Logo" },
+                { key: "cover_url" as const, label: canalMode === "catalog" ? "Capa do Catálogo" : "Capa do Canal", hint: "1080 × 1920", alt: "Capa" },
                 { key: "logo_url" as const, label: canalMode === "catalog" ? "Thumb do Catálogo" : "Thumb do Canal", hint: "1920 × 1080", alt: "Thumb" },
-                { key: "background_url" as const, label: canalMode === "catalog" ? "Logo do Catálogo" : "Logo do Canal", hint: "Transparente (PNG)", alt: "Logo" },
               ] as const).map(img => (
                 <div key={img.key} className="flex flex-col items-center gap-2.5 p-4 rounded-xl transition-all hover:shadow-md" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.08)" }}>
                   {(canalForm as any)[img.key] ? (
