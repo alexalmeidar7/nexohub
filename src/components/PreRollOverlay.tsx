@@ -239,7 +239,7 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
         }}
       >
         {/* Vídeo / YouTube */}
-        {!shouldUseNativeVideo && isYoutube && ytId ? (
+        {showYoutubePlayer ? (
           <>
             {/* YouTube player container — slightly oversized to crop YouTube UI */}
             <div
@@ -249,40 +249,14 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
                 left: "-10px",
                 right: "-10px",
                 bottom: "-60px",
-                opacity: ytFailed && !hasFallbackVideo ? 0 : 1,
-                transition: "opacity 0.5s ease",
               }}
             >
               <div id="preroll-yt-player" className="w-full h-full" />
             </div>
             {/* Transparent overlay to block interaction with YouTube */}
             <div className="absolute inset-0 z-[2]" />
-
-            {/* Fallback when YouTube is blocked/captcha and no local video exists */}
-            {ytFailed && !hasFallbackVideo && (
-              <div className="absolute inset-0 z-[3] flex flex-col items-center justify-center gap-4 animate-fade-in">
-                <div
-                  className="w-16 h-16 rounded-full flex items-center justify-center"
-                  style={{ backgroundColor: "hsl(0 100% 40%)" }}
-                >
-                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <polygon points="5 3 19 12 5 21 5 3" />
-                  </svg>
-                </div>
-                <p className="text-white/70 text-sm font-medium">Avançando automaticamente...</p>
-                <div className="w-32 h-1 rounded-full overflow-hidden" style={{ backgroundColor: "hsl(0 0% 20%)" }}>
-                  <div
-                    className="h-full rounded-full"
-                    style={{
-                      backgroundColor: "hsl(0 100% 50%)",
-                      animation: "preroll-progress 3s linear forwards",
-                    }}
-                  />
-                </div>
-              </div>
-            )}
           </>
-        ) : (
+        ) : shouldUseNativeVideo ? (
           <video
             ref={prerollVideoRef}
             src={prerollUrl}
@@ -292,6 +266,30 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
             className="absolute inset-0 w-full h-full object-contain"
             onEnded={onEnded}
           />
+        ) : (
+          <div className="absolute inset-0 z-[3] flex flex-col items-center justify-center gap-4 animate-fade-in">
+            <div
+              className="w-16 h-16 rounded-full flex items-center justify-center"
+              style={{ backgroundColor: "hsl(0 100% 40%)" }}
+            >
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polygon points="5 3 19 12 5 21 5 3" />
+              </svg>
+            </div>
+            <p className="text-white/80 text-sm font-medium text-center px-6">
+              {ytErrorMessage || "Este vídeo do YouTube não pôde ser reproduzido."}
+            </p>
+            <p className="text-white/60 text-xs">Avançando automaticamente...</p>
+            <div className="w-32 h-1 rounded-full overflow-hidden" style={{ backgroundColor: "hsl(0 0% 20%)" }}>
+              <div
+                className="h-full rounded-full"
+                style={{
+                  backgroundColor: "hsl(0 100% 50%)",
+                  animation: "preroll-progress 3s linear forwards",
+                }}
+              />
+            </div>
+          </div>
         )}
 
         {/* Botão Pular + Tempo — canto superior direito */}
