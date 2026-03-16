@@ -945,6 +945,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   const { user, signOut, loading: authLoading } = useAuth();
   const { userSlug } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const [activeSection, setActiveSection] = useState<Section>("home");
   const [visibleSection, setVisibleSection] = useState<Section>("home");
