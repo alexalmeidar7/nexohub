@@ -360,9 +360,9 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
             onMouseLeave={stopAutoScroll}
           />
 
-          {hoverPreview && (
+          {hoverPreview && createPortal(
             <div
-              className="fixed z-[70] pointer-events-none"
+              className="fixed z-[9999] pointer-events-none"
               style={{
                 left: hoverPreview.x,
                 top: hoverPreview.y,
@@ -411,7 +411,8 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
                   borderLeft: "none",
                 }}
               />
-            </div>
+            </div>,
+            document.body
           )}
 
           {/* Scrollable content — clips horizontally, overflows vertically for popups */}
