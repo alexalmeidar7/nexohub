@@ -51,6 +51,93 @@ const ratingColors: Record<string, { bg: string; text: string }> = {
   "16": { bg: "#e2203a", text: "#fff" },
   "18": { bg: "#1d1d1b", text: "#fff" },
 };
+/* ─── Hover Preview Popup (rendered via portal) ─── */
+function HoverPreviewPopup({ video, x, y }: { video: PlaylistVideo; x: number; y: number }) {
+  const [videoReady, setVideoReady] = useState(false);
+  const [entered, setEntered] = useState(false);
+
+  useEffect(() => {
+    const t = requestAnimationFrame(() => setEntered(true));
+    return () => cancelAnimationFrame(t);
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setVideoReady(true), 2500);
+    const handleMessage = (e: MessageEvent) => {
+      try {
+        const d = typeof e.data === "string" ? JSON.parse(e.data) : e.data;
+        if (d?.event === "onReady" || d?.info?.playerState === 1) setVideoReady(true);
+      } catch {}
+    };
+    window.addEventListener("message", handleMessage);
+    return () => { clearTimeout(timer); window.removeEventListener("message", handleMessage); };
+  }, []);
+
+  return (
+    <div
+      className="fixed z-[9999] pointer-events-none"
+      style={{
+        left: x,
+        top: y,
+        width: 280,
+        transform: `translate(-50%, -100%) scale(${entered ? 1 : 0.8})`,
+        transformOrigin: "bottom center",
+        opacity: entered ? 1 : 0,
+        transition: "all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)",
+      }}
+    >
+      <div
+        className="rounded-2xl overflow-hidden"
+        style={{
+          background: "rgba(10, 35, 90, 0.7)",
+          backdropFilter: "blur(28px) saturate(1.5)",
+          WebkitBackdropFilter: "blur(28px) saturate(1.5)",
+          border: "1px solid rgba(100, 160, 255, 0.2)",
+          boxShadow: "0 16px 50px rgba(0,0,0,0.7), 0 0 40px hsla(var(--player-accent) / 0.15)",
+        }}
+      >
+        <div className="relative w-full" style={{ aspectRatio: "16/9", background: "#000" }}>
+          {!videoReady && (
+            <div className="absolute inset-0 flex items-center justify-center z-10">
+              <div className="w-7 h-7 rounded-full border-2 border-white/20 border-t-white/80 animate-spin" />
+            </div>
+          )}
+          <iframe
+            src={`https://www.youtube.com/embed/${video.videoId}?autoplay=1&mute=1&start=1800&controls=0&showinfo=0&modestbranding=1&rel=0&loop=1&playlist=${video.videoId}&end=1810&enablejsapi=1`}
+            className="absolute inset-0 w-full h-full"
+            style={{ border: 0, opacity: videoReady ? 1 : 0, transition: "opacity 0.8s ease-in-out" }}
+            allow="autoplay; encrypted-media"
+            title={video.title}
+          />
+        </div>
+        <div
+          className="px-3.5 py-3"
+          style={{
+            opacity: entered ? 1 : 0,
+            transform: entered ? "translateY(0)" : "translateY(8px)",
+            transition: "all 0.5s ease 0.15s",
+          }}
+        >
+          <p className="text-[13px] font-semibold text-white leading-snug line-clamp-2">{video.title}</p>
+          {video.published && (
+            <p className="text-[10px] text-white/40 mt-1.5">
+              {new Date(video.published).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" })}
+            </p>
+          )}
+        </div>
+      </div>
+      <div
+        className="absolute left-1/2 -translate-x-1/2 -bottom-1.5 w-3.5 h-3.5 rotate-45"
+        style={{
+          background: "rgba(10, 35, 90, 0.7)",
+          border: "1px solid rgba(100, 160, 255, 0.2)",
+          borderTop: "none",
+          borderLeft: "none",
+        }}
+      />
+    </div>
+  );
+}
 
 export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }: CatalogDetailInlineProps) {
   const [channels, setChannels] = useState<Channel[]>([]);
@@ -361,57 +448,11 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
           />
 
           {hoverPreview && createPortal(
-            <div
-              className="fixed z-[9999] pointer-events-none"
-              style={{
-                left: hoverPreview.x,
-                top: hoverPreview.y,
-                width: 260,
-                transform: "translate(-50%, -100%) scale(1)",
-                transformOrigin: "bottom center",
-                opacity: 1,
-                transition: "all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)",
-              }}
-            >
-              <div
-                className="rounded-2xl overflow-hidden"
-                style={{
-                  background: "rgba(15, 50, 120, 0.55)",
-                  backdropFilter: "blur(24px) saturate(1.5)",
-                  WebkitBackdropFilter: "blur(24px) saturate(1.5)",
-                  border: "1px solid rgba(100, 160, 255, 0.25)",
-                  boxShadow: "0 12px 40px rgba(0,0,0,0.6), 0 0 30px hsla(var(--player-accent) / 0.2)",
-                }}
-              >
-                <div className="relative w-full" style={{ aspectRatio: "16/9" }}>
-                  <iframe
-                    src={`https://www.youtube.com/embed/${hoverPreview.video.videoId}?autoplay=1&mute=1&start=1800&controls=0&showinfo=0&modestbranding=1&rel=0&loop=1&playlist=${hoverPreview.video.videoId}&end=1810`}
-                    className="absolute inset-0 w-full h-full"
-                    style={{ border: 0 }}
-                    allow="autoplay; encrypted-media"
-                    title={hoverPreview.video.title}
-                  />
-                  <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(15,50,120,0.7) 0%, transparent 40%)" }} />
-                </div>
-                <div className="px-3 py-2.5">
-                  <p className="text-xs font-semibold text-white leading-snug line-clamp-2">{hoverPreview.video.title}</p>
-                  {hoverPreview.video.published && (
-                    <p className="text-[10px] text-white/40 mt-1">
-                      {new Date(hoverPreview.video.published).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" })}
-                    </p>
-                  )}
-                </div>
-              </div>
-              <div
-                className="absolute left-1/2 -translate-x-1/2 -bottom-2 w-4 h-4 rotate-45"
-                style={{
-                  background: "rgba(15, 50, 120, 0.55)",
-                  border: "1px solid rgba(100, 160, 255, 0.25)",
-                  borderTop: "none",
-                  borderLeft: "none",
-                }}
-              />
-            </div>,
+            <HoverPreviewPopup
+              video={hoverPreview.video}
+              x={hoverPreview.x}
+              y={hoverPreview.y}
+            />,
             document.body
           )}
 
