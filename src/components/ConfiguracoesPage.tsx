@@ -523,6 +523,20 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
                   <label className="block text-[11px] font-semibold" style={{ color: "#0d0446" }}>Nome do Canal</label>
                   <StyledInput value={canalForm.name} onChange={(e) => setCanalForm(p => ({ ...p, name: e.target.value }))} placeholder="Ex: Rádio FM" />
                 </div>
+                <div className="space-y-1.5">
+                  <label className="block text-[11px] font-semibold" style={{ color: "#0d0446" }}>Estúdio</label>
+                  <select
+                    value={canalForm.estudio}
+                    onChange={(e) => setCanalForm(p => ({ ...p, estudio: e.target.value }))}
+                    className="w-full px-4 py-2 text-sm font-medium appearance-none cursor-pointer"
+                    style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "20px", border: "2px solid #0d0446" }}
+                  >
+                    <option value="">Nenhum</option>
+                    {Array.from(new Set(programas.map(p => p.estudio).filter(Boolean))).sort().map(e => (
+                      <option key={e} value={e}>{e}</option>
+                    ))}
+                  </select>
+                </div>
                 <div className="space-y-1.5 sm:col-span-3">
                   <label className="block text-[11px] font-semibold" style={{ color: "#0d0446" }}>URL do Streaming</label>
                   <StyledInput value={canalForm.url} onChange={(e) => setCanalForm(p => ({ ...p, url: e.target.value }))} placeholder="https://..." />
