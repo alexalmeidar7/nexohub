@@ -475,7 +475,7 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
       {/* ─── PLAYLIST BAR — floating blue glass ─── */}
       {/* Outer wrapper allows popups to overflow upward */}
       <div
-        className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20"
+        className="absolute bottom-12 left-1/2 -translate-x-1/2 z-20"
         style={{ width: "90%" }}
       >
         {/* Glass background layer with rounded corners */}
