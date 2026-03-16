@@ -178,15 +178,6 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
         <div className="absolute inset-0" style={{ background: "linear-gradient(to top, hsl(var(--player-bg)) 0%, hsla(var(--player-bg) / 0.6) 30%, transparent 60%)" }} />
         <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, hsla(var(--player-bg) / 0.4) 0%, transparent 20%)" }} />
 
-        {/* Back button */}
-        <button
-          onClick={onBack}
-          className="absolute top-6 left-6 z-20 flex items-center gap-2 text-white/50 hover:text-white transition-colors text-xs font-medium tracking-wide uppercase"
-        >
-          <ChevronLeft className="h-4 w-4" />
-          Voltar
-        </button>
-
         {/* Content: logo + program info, bottom-left */}
         <div className="absolute bottom-[clamp(200px,32vh,300px)] left-8 sm:left-12 z-10 max-w-xl flex flex-col gap-3">
           {logoUrl ? (
