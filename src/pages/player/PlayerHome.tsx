@@ -505,11 +505,13 @@ function StreamingCard({ channel, currentProgram, nowPlaying, onClick }: {
   );
 }
 
-/* ─── Content Row (horizontal scroll with arrows) ─── */
+/* ─── Content Row (horizontal scroll with arrows + scroll fade) ─── */
 function ContentRow({ title, children }: { title: React.ReactNode; children: React.ReactNode }) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const sectionRef = useRef<HTMLElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
+  const [visibility, setVisibility] = useState(1);
 
   const checkScroll = useCallback(() => {
     const el = scrollRef.current;
@@ -528,12 +530,34 @@ function ContentRow({ title, children }: { title: React.ReactNode; children: Rea
     return () => { el.removeEventListener("scroll", checkScroll); ro.disconnect(); };
   }, [checkScroll]);
 
+  // Intersection-based fade/scale as section scrolls out of view
+  useEffect(() => {
+    const el = sectionRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => {
+        setVisibility(Math.max(entry.intersectionRatio, 0.3));
+      },
+      { threshold: Array.from({ length: 21 }, (_, i) => i / 20) }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
   const scroll = (dir: "left" | "right") => {
     scrollRef.current?.scrollBy({ left: dir === "left" ? -400 : 400, behavior: "smooth" });
   };
 
+  const fadeScale = visibility < 1
+    ? { opacity: visibility, transform: `scale(${0.92 + 0.08 * visibility})`, transformOrigin: "center top" }
+    : {};
+
   return (
-    <section className="mb-8 relative group/row player-row-slide">
+    <section
+      ref={sectionRef}
+      className="mb-8 relative group/row player-row-slide"
+      style={{ transition: "opacity 0.3s ease, transform 0.3s ease", willChange: "opacity, transform", ...fadeScale }}
+    >
       <h2 className="text-base sm:text-lg font-bold mb-3 tracking-wide text-white/90 px-1 player-hero-content">{title}</h2>
       <div className="relative">
         {canScrollLeft && (
@@ -688,7 +712,7 @@ function TrendingCard({ item, idx, channels, onClick }: {
       onMouseLeave={handleMouseLeave}
       className="flex-shrink-0 rounded-2xl overflow-hidden relative group cursor-pointer"
       style={{
-        width: showVideo ? "560px" : "200px",
+        width: showVideo ? "560px" : "150px",
         height: showVideo ? "315px" : undefined,
         aspectRatio: showVideo ? undefined : "2/3",
         background: "linear-gradient(145deg, rgba(255,255,255,0.06) 0%, hsl(var(--player-bg)) 100%)",
