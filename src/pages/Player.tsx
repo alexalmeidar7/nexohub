@@ -1638,7 +1638,7 @@ export default function PlayerPage() {
   // Music recording is handled by the monitor-music edge function (cron job)
   // No client-side insertion needed
 
-  const nextProg = getNextProgram(programas, currentProg);
+  const nextProg = getNextProgram(filteredProgramas, currentProg);
   const progress = getProgramProgress(currentProg);
   const currentPresenter = useMemo(() => {
     if (!currentProg?.apresentador_id) return null;
