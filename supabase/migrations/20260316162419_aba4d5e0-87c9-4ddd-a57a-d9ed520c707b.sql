@@ -1,0 +1,1 @@
+UPDATE streaming_channels SET cover_url = 'https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/empresa-assets/d17e65af-e407-466f-9b60-b55c43399513/thumb-primeira-hora.png' WHERE id = 'af955a83-c67a-4a01-bd77-d1d502643135';
