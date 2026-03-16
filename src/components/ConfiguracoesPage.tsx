@@ -59,6 +59,7 @@ interface Canal {
   horario_inicio: string;
   horario_fim: string;
   descricao: string;
+  estudio: string;
 }
 
 /* ── Styled input helper ── */
