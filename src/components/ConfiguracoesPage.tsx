@@ -544,7 +544,55 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
                   </div>
                 </div>
 
-                {/* Modo de conteúdo do catálogo */}
+                {/* Vincular Programa */}
+                <div className="rounded-xl p-4 space-y-3" style={{ backgroundColor: "rgba(139, 92, 246, 0.06)", border: "1px solid rgba(139, 92, 246, 0.15)" }}>
+                  <div className="flex items-center gap-2">
+                    <Link2 size={14} style={{ color: "#8b5cf6" }} />
+                    <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#8b5cf6" }}>Vincular Programa</span>
+                  </div>
+                  <select
+                    value={selectedProgramaId}
+                    onChange={(e) => {
+                      const id = e.target.value;
+                      setSelectedProgramaId(id);
+                      if (id) {
+                        const prog = programas.find(p => p.id === id);
+                        if (prog) {
+                          setCanalForm(p => ({ ...p, classificacao_etaria: prog.classificacao_etaria || "L" }));
+                        }
+                      }
+                    }}
+                    className="w-full px-4 py-2 outline-none text-sm font-medium cursor-pointer"
+                    style={{ backgroundColor: "#ffffff", color: "#0d0446", borderRadius: "20px", border: "1px solid #8b5cf6" }}
+                  >
+                    <option value="">Selecione um programa (opcional)</option>
+                    {programas.map(p => (
+                      <option key={p.id} value={p.id}>{p.nome}</option>
+                    ))}
+                  </select>
+                  {selectedProgramaId && (() => {
+                    const prog = programas.find(p => p.id === selectedProgramaId);
+                    if (!prog) return null;
+                    return (
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+                        <div className="rounded-lg p-3" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(139, 92, 246, 0.12)" }}>
+                          <span className="text-[10px] font-bold uppercase tracking-wider block mb-1" style={{ color: "rgba(13,4,70,0.4)" }}>Horário</span>
+                          <span className="text-sm font-semibold" style={{ color: "#0d0446" }}>{prog.horario_inicio} — {prog.horario_fim}</span>
+                        </div>
+                        <div className="rounded-lg p-3" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(139, 92, 246, 0.12)" }}>
+                          <span className="text-[10px] font-bold uppercase tracking-wider block mb-1" style={{ color: "rgba(13,4,70,0.4)" }}>Classificação Etária</span>
+                          <span className="text-sm font-semibold" style={{ color: "#0d0446" }}>{prog.classificacao_etaria || "Livre"}</span>
+                        </div>
+                        <div className="rounded-lg p-3 sm:col-span-1" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(139, 92, 246, 0.12)" }}>
+                          <span className="text-[10px] font-bold uppercase tracking-wider block mb-1" style={{ color: "rgba(13,4,70,0.4)" }}>Descrição</span>
+                          <span className="text-xs" style={{ color: "#0d0446" }}>{prog.descricao || "—"}</span>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+
+
                 <div className="rounded-xl p-4 space-y-3" style={{ backgroundColor: "rgba(38, 143, 250, 0.06)", border: "1px solid rgba(38, 143, 250, 0.15)" }}>
                   <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#268ffa" }}>Modo de Cadastro</span>
                   <div className="flex gap-3">
