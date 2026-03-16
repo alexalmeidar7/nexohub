@@ -712,9 +712,8 @@ function TrendingCard({ item, idx, channels, onClick }: {
       onMouseLeave={handleMouseLeave}
       className="flex-shrink-0 rounded-2xl overflow-hidden relative group cursor-pointer"
       style={{
-        width: showVideo ? "560px" : "150px",
-        height: showVideo ? "315px" : undefined,
-        aspectRatio: showVideo ? undefined : "2/3",
+        width: showVideo ? `${150 + Math.round(225 * 16 / 9)}px` : "150px",
+        height: "225px",
         background: "linear-gradient(145deg, rgba(255,255,255,0.06) 0%, hsl(var(--player-bg)) 100%)",
         zIndex: showVideo ? 20 : hovered ? 10 : 1,
         transform: hovered && !showVideo ? "translateY(-6px) scale(1.03)" : "translateY(0) scale(1)",
