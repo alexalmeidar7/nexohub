@@ -657,6 +657,7 @@ function TrendingCard({ item, idx, channels, onClick }: {
     fadeOutAudio();
     setTimeout(() => {
       setShowVideo(false);
+      setVideoReady(false);
       setHovered(false);
       if (playerRef.current?.destroy) { playerRef.current.destroy(); playerRef.current = null; }
     }, 400);
