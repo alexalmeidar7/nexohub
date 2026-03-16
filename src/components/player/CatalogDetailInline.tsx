@@ -136,7 +136,7 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
   const ratingStyle = ratingColors[rating] || ratingColors["L"];
 
   return (
-    <div className="flex flex-col h-full overflow-hidden animate-fade-in" data-catalog={catalogName}>
+    <div className="relative flex flex-col h-full overflow-hidden animate-fade-in" data-catalog={catalogName}>
       {/* ─── HERO: full-width cinematic cover ─── */}
       <div className="relative flex-1 min-h-[280px] sm:min-h-[340px] w-full overflow-hidden">
         {/* Background cover — uses catalog registered thumbnail */}
