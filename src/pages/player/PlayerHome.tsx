@@ -1289,7 +1289,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                             image={channel.cover_url || video.thumbnail}
                             title={video.title}
                             subtitle={video.published ? new Date(video.published).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" }) : undefined}
-                            logoUrl={channel.logo_url}
+                            logoUrl={channel.background_url || channel.logo_url}
                             onClick={() => goToPlayer(channel.id, video.videoId)}
                           />
                         ))
