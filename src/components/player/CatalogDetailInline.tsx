@@ -237,9 +237,12 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
           }
         } catch {}
       }
-      // Filter out future-dated and sort
-      const now = new Date();
-      const validVideos = allVideos.filter(v => new Date(v.published) <= now);
+      // Filter out future-dated and sort (compare date-only, ignoring time)
+      const todayStr = new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
+      const validVideos = allVideos.filter(v => {
+        const pubDate = v.published?.slice(0, 10) || "";
+        return pubDate <= todayStr;
+      });
       validVideos.sort((a, b) => new Date(b.published).getTime() - new Date(a.published).getTime());
       setVideos(validVideos);
       // Don't auto-select any video on initial load
