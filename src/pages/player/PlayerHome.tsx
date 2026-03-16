@@ -436,9 +436,9 @@ function StreamingCard({ channel, currentProgram, nowPlaying, onClick }: {
         width: "160px",
         aspectRatio: "2/3",
         background: "linear-gradient(145deg, rgba(255,255,255,0.06) 0%, hsl(var(--player-bg)) 100%)",
-        transform: hovered ? "translateY(-6px) scale(1.02)" : "none",
-        boxShadow: hovered ? "0 20px 60px -15px rgba(0,0,0,0.7), 0 0 40px -10px hsla(var(--player-accent) / 0.25)" : "0 4px 20px -8px rgba(0,0,0,0.4)",
-        border: hovered ? "1px solid hsla(var(--player-accent) / 0.4)" : "1px solid rgba(255,255,255,0.06)",
+        transform: "none",
+        boxShadow: "0 4px 20px -8px rgba(0,0,0,0.4)",
+        border: hovered ? "2px solid hsl(var(--player-accent))" : "1px solid rgba(255,255,255,0.06)",
       }}
     >
       {/* Cover image */}
@@ -686,9 +686,9 @@ function TrendingCard({ item, idx, channels, onClick }: {
         aspectRatio: showVideo ? undefined : "2/3",
         background: "linear-gradient(145deg, rgba(255,255,255,0.06) 0%, hsl(var(--player-bg)) 100%)",
         zIndex: showVideo ? 20 : 1,
-        transform: hovered && !showVideo ? "translateY(-6px) scale(1.02)" : "none",
-        boxShadow: hovered ? "0 20px 60px -15px rgba(0,0,0,0.7), 0 0 40px -10px hsla(var(--player-accent) / 0.25)" : "0 4px 20px -8px rgba(0,0,0,0.4)",
-        border: hovered ? "1px solid hsla(var(--player-accent) / 0.4)" : "1px solid rgba(255,255,255,0.06)",
+        transform: "none",
+        boxShadow: "0 4px 20px -8px rgba(0,0,0,0.4)",
+        border: hovered ? "2px solid hsl(var(--player-accent))" : "1px solid rgba(255,255,255,0.06)",
       }}
     >
       {/* Cover image */}
@@ -767,14 +767,12 @@ function CatalogCard({ image, title, subtitle, logoUrl, onClick }: { image?: str
         boxShadow: "0 4px 20px -8px rgba(0,0,0,0.4)",
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.transform = "translateY(-6px) scale(1.02)";
-        e.currentTarget.style.boxShadow = "0 20px 60px -15px rgba(0,0,0,0.7), 0 0 40px -10px hsla(var(--player-accent) / 0.25)";
-        e.currentTarget.style.borderColor = "hsla(var(--player-accent) / 0.4)";
+        e.currentTarget.style.borderColor = "hsl(var(--player-accent))";
+        e.currentTarget.style.borderWidth = "2px";
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.transform = "";
-        e.currentTarget.style.boxShadow = "0 4px 20px -8px rgba(0,0,0,0.4)";
         e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)";
+        e.currentTarget.style.borderWidth = "1px";
       }}
     >
       {image ? (
@@ -822,14 +820,12 @@ function HistoryCard({ item, onClick }: { item: { channel_name: string; channel_
         boxShadow: "0 4px 20px -8px rgba(0,0,0,0.4)",
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.transform = "translateY(-6px) scale(1.02)";
-        e.currentTarget.style.boxShadow = "0 20px 60px -15px rgba(0,0,0,0.7), 0 0 40px -10px hsla(var(--player-accent) / 0.25)";
-        e.currentTarget.style.borderColor = "hsla(var(--player-accent) / 0.4)";
+        e.currentTarget.style.borderColor = "hsl(var(--player-accent))";
+        e.currentTarget.style.borderWidth = "2px";
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.transform = "";
-        e.currentTarget.style.boxShadow = "0 4px 20px -8px rgba(0,0,0,0.4)";
         e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)";
+        e.currentTarget.style.borderWidth = "1px";
       }}
     >
       {item.channel_cover_url ? (
