@@ -25,6 +25,9 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
   const [ytFailed, setYtFailed] = useState(false);
   const isYoutube = prerollMediaType === "youtube" && prerollYoutubeUrl;
   const ytId = isYoutube ? extractYoutubeId(prerollYoutubeUrl!) : null;
+  const hasFallbackVideo = Boolean(prerollUrl);
+  const useVideoFallback = Boolean(isYoutube && ytFailed && hasFallbackVideo);
+  const shouldUseNativeVideo = !isYoutube || !ytId || useVideoFallback;
   const ytPlayerRef = useRef<any>(null);
   const pollRef = useRef<ReturnType<typeof setInterval>>();
   const onEndedRef = useRef(onEnded);
@@ -44,7 +47,7 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
 
   // Track time for native video
   useEffect(() => {
-    if (isYoutube) return;
+    if (!shouldUseNativeVideo) return;
     const video = prerollVideoRef.current;
     if (!video) return;
     const onTime = () => setCurrentTime(video.currentTime);
@@ -57,20 +60,22 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
       video.removeEventListener("loadedmetadata", onDur);
       video.removeEventListener("durationchange", onDur);
     };
-  }, [isYoutube, prerollVideoRef]);
+  }, [shouldUseNativeVideo, prerollVideoRef]);
 
   // Track time for YouTube with stall/error detection
   useEffect(() => {
     if (!isYoutube || !ytId) return;
 
-    const fallback = setTimeout(() => onEndedRef.current(), 120000);
+    const fallbackTimer = hasFallbackVideo ? null : setTimeout(() => onEndedRef.current(), 120000);
 
-    // Detect YouTube stall (captcha, region block, etc.) — no progress after 8s = failed
+    // Detect YouTube stall (captcha, region block, autoplay blocked, etc.)
     let progressDetected = false;
     const stallTimer = setTimeout(() => {
       if (!progressDetected) {
         setYtFailed(true);
-        setTimeout(() => onEndedRef.current(), 3000);
+        if (!hasFallbackVideo) {
+          setTimeout(() => onEndedRef.current(), 3000);
+        }
       }
     }, 8000);
 
@@ -90,7 +95,12 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
           playsinline: 1,
         },
         events: {
-          onReady: () => {
+          onReady: (event: any) => {
+            try {
+              event?.target?.mute?.();
+              event?.target?.playVideo?.();
+            } catch {}
+
             pollRef.current = setInterval(() => {
               try {
                 const p = ytPlayerRef.current;
@@ -102,11 +112,14 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
             }, 500);
           },
           onStateChange: (event: any) => {
+            if (event.data === 1) progressDetected = true;
             if (event.data === 0) onEndedRef.current();
           },
           onError: () => {
             setYtFailed(true);
-            setTimeout(() => onEndedRef.current(), 2000);
+            if (!hasFallbackVideo) {
+              setTimeout(() => onEndedRef.current(), 2000);
+            }
           },
         },
       });
@@ -125,12 +138,12 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
     }
 
     return () => {
-      clearTimeout(fallback);
+      if (fallbackTimer) clearTimeout(fallbackTimer);
       clearTimeout(stallTimer);
       if (pollRef.current) clearInterval(pollRef.current);
       try { ytPlayerRef.current?.destroy(); } catch {}
     };
-  }, [isYoutube, ytId]);
+  }, [isYoutube, ytId, hasFallbackVideo]);
 
   const canSkip = countdown <= 0;
 
@@ -152,7 +165,7 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
         }}
       >
         {/* Vídeo / YouTube */}
-        {isYoutube && ytId ? (
+        {!shouldUseNativeVideo && isYoutube && ytId ? (
           <>
             {/* YouTube player container — slightly oversized to crop YouTube UI */}
             <div
@@ -162,7 +175,7 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
                 left: "-10px",
                 right: "-10px",
                 bottom: "-60px",
-                opacity: ytFailed ? 0 : 1,
+                opacity: ytFailed && !hasFallbackVideo ? 0 : 1,
                 transition: "opacity 0.5s ease",
               }}
             >
@@ -171,8 +184,8 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
             {/* Transparent overlay to block interaction with YouTube */}
             <div className="absolute inset-0 z-[2]" />
 
-            {/* Fallback when YouTube is blocked/captcha */}
-            {ytFailed && (
+            {/* Fallback when YouTube is blocked/captcha and no local video exists */}
+            {ytFailed && !hasFallbackVideo && (
               <div className="absolute inset-0 z-[3] flex flex-col items-center justify-center gap-4 animate-fade-in">
                 <div
                   className="w-16 h-16 rounded-full flex items-center justify-center"
