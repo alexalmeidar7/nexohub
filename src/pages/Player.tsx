@@ -289,7 +289,8 @@ export default function PlayerPage() {
   const [fullscreen, setFullscreen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [loadingStatus, setLoadingStatus] = useState("Iniciando...");
-  const [barVisible, setBarVisible] = useState(true);
+   const [barVisible, setBarVisible] = useState(true);
+   const [backBtnVisible, setBackBtnVisible] = useState(false);
   const [pageFadeOut, setPageFadeOut] = useState(false);
   const [musicData, setMusicData] = useState<MusicData | null>(() => {
     try {
