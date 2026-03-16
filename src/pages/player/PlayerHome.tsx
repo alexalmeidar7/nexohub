@@ -1150,7 +1150,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                   <section className="mb-8">
                     <Skeleton className="h-5 w-44 bg-white/10 mb-3" />
                     <div className="flex gap-3">
-                      {[1, 2, 3].map(i => <Skeleton key={i} className="flex-shrink-0 rounded-xl bg-white/8" style={{ width: 320, aspectRatio: "16/9" }} />)}
+                      {[1, 2, 3].map(i => <Skeleton key={i} className="flex-shrink-0 rounded-xl bg-white/8" style={{ width: 200, aspectRatio: "2/3" }} />)}
                     </div>
                   </section>
                 ) : streamingChannels.length > 0 && (
