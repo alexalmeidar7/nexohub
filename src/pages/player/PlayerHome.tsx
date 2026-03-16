@@ -19,6 +19,8 @@ interface Channel {
   url?: string;
   catalog_name?: string;
   numero_canal?: string | null;
+  is_hd?: boolean | null;
+  is_stereo?: boolean | null;
 }
 
 interface Programa {
