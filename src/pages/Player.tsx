@@ -560,7 +560,6 @@ export default function PlayerPage() {
   useEffect(() => {
     let cancelled = false;
     const slug = userSlug ?? null;
-    console.log("[PLAYER-DIAG] Main useEffect fired", { isPublicMode, userId, authLoading, slug, bootstrapState: { ...publicBootstrapRef.current } });
 
     // PUBLIC MODE: fetch via edge function (bootstrap only once per slug)
     if (isPublicMode) {
