@@ -282,7 +282,7 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
         {/* Scrollable content */}
         <div
           ref={scrollRef}
-          className="flex items-end gap-3.5 h-full px-14 pb-4 pt-9 overflow-x-auto scrollbar-hide"
+          className="flex items-center gap-3.5 h-full px-14 pb-3 pt-3 overflow-x-auto scrollbar-hide"
         >
           {loading ? (
             Array.from({ length: 8 }).map((_, i) => (
