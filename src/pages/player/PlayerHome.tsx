@@ -1214,6 +1214,42 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
     ...(user ? [{ icon: ShoppingBag, label: "Loja", key: "shop", action: () => { setActiveCatalog(null); handleSectionChange("shop"); } }] : []),
   ];
 
+  // Track which section is in view for sidebar highlight
+  useEffect(() => {
+    if (visibleSection === "catalog-detail") return;
+    const container = contentScrollRef.current;
+    if (!container) return;
+
+    const sectionIds = ["section-streaming", "section-content", "section-shop"];
+    const handleScroll = () => {
+      const scrollTop = container.scrollTop;
+      const containerHeight = container.clientHeight;
+      // If near top, it's home
+      if (scrollTop < containerHeight * 0.3) {
+        setActiveSection("home");
+        return;
+      }
+      // Find last section whose top is above the middle of the viewport
+      for (let i = sectionIds.length - 1; i >= 0; i--) {
+        const el = document.getElementById(sectionIds[i]);
+        if (el) {
+          const rect = el.getBoundingClientRect();
+          const containerRect = container.getBoundingClientRect();
+          const relativeTop = rect.top - containerRect.top;
+          if (relativeTop < containerHeight * 0.5) {
+            const key = sectionIds[i].replace("section-", "") as Section;
+            setActiveSection(key);
+            return;
+          }
+        }
+      }
+      setActiveSection("home");
+    };
+
+    container.addEventListener("scroll", handleScroll, { passive: true });
+    return () => container.removeEventListener("scroll", handleScroll);
+  }, [visibleSection]);
+
   // Hero channel = first streaming channel
   const heroChannel = streamingChannels[0];
 
