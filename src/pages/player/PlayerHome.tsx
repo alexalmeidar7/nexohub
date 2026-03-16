@@ -423,7 +423,7 @@ function StreamingCard({ channel, currentProgram, nowPlaying, onClick }: {
       onMouseLeave={() => setHovered(false)}
       className="flex-shrink-0 rounded-2xl overflow-hidden relative transition-all duration-500 ease-[cubic-bezier(0.25,0.1,0.25,1)] group cursor-pointer"
       style={{
-        width: "200px",
+        width: "160px",
         aspectRatio: "2/3",
         background: "linear-gradient(145deg, rgba(255,255,255,0.06) 0%, hsl(var(--player-bg)) 100%)",
         transform: hovered ? "translateY(-6px) scale(1.02)" : "none",
