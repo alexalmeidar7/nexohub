@@ -119,7 +119,6 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
     fetchVideos();
   }, [channels]);
 
-  const primaryChannel = channels[0];
   const logoUrl = primaryChannel?.background_url || primaryChannel?.logo_url;
 
   // Hero background: prioritize catalog's registered thumbnail (logo_url = Thumb),
