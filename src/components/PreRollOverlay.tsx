@@ -165,7 +165,7 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
         }}
       >
         {/* Vídeo / YouTube */}
-        {isYoutube && ytId ? (
+        {!shouldUseNativeVideo && isYoutube && ytId ? (
           <>
             {/* YouTube player container — slightly oversized to crop YouTube UI */}
             <div
@@ -175,7 +175,7 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
                 left: "-10px",
                 right: "-10px",
                 bottom: "-60px",
-                opacity: ytFailed ? 0 : 1,
+                opacity: ytFailed && !hasFallbackVideo ? 0 : 1,
                 transition: "opacity 0.5s ease",
               }}
             >
@@ -184,8 +184,8 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
             {/* Transparent overlay to block interaction with YouTube */}
             <div className="absolute inset-0 z-[2]" />
 
-            {/* Fallback when YouTube is blocked/captcha */}
-            {ytFailed && (
+            {/* Fallback when YouTube is blocked/captcha and no local video exists */}
+            {ytFailed && !hasFallbackVideo && (
               <div className="absolute inset-0 z-[3] flex flex-col items-center justify-center gap-4 animate-fade-in">
                 <div
                   className="w-16 h-16 rounded-full flex items-center justify-center"
