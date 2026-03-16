@@ -300,15 +300,15 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
                 <button
                   key={video.videoId}
                   onClick={() => handlePlay(video)}
-                  className="group shrink-0 flex flex-col gap-1.5 transition-all duration-300 cursor-pointer"
-                  style={{ opacity: isSelected ? 1 : 0.6 }}
+                  className="group shrink-0 transition-all duration-300 cursor-pointer"
+                  style={{ opacity: isSelected ? 1 : 0.7 }}
                   onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.opacity = "1"; }}
-                  onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.opacity = "0.6"; }}
+                  onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.opacity = "0.7"; }}
                 >
                   <div
                     className="relative rounded-xl overflow-hidden transition-all duration-300"
                     style={{
-                      width: isSelected ? 200 : 170,
+                      width: 170,
                       aspectRatio: "16/9",
                       outline: isSelected ? "2px solid hsl(var(--player-accent))" : "1px solid rgba(255,255,255,0.08)",
                       outlineOffset: -1,
@@ -321,6 +321,9 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
                       className="w-full h-full object-cover"
                       onError={(e) => { (e.target as HTMLImageElement).src = video.thumbnail; }}
                     />
+                    {/* Gradient overlay for text readability */}
+                    <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 40%, transparent 70%)" }} />
+                    {/* Play icon on hover */}
                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                       <div
                         className="w-9 h-9 rounded-full backdrop-blur-md flex items-center justify-center"
@@ -334,15 +337,18 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
                         Atual
                       </div>
                     )}
+                    {/* Title & date inside the card */}
+                    <div className="absolute bottom-0 left-0 right-0 px-2 pb-1.5 pt-3">
+                      <p className={`text-[10px] leading-tight line-clamp-2 text-left ${isSelected ? "text-white font-semibold" : "text-white/80 font-medium"}`}>
+                        {video.title}
+                      </p>
+                      {video.published && (
+                        <p className="text-[8px] text-white/40 text-left mt-0.5">
+                          {new Date(video.published).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" })}
+                        </p>
+                      )}
+                    </div>
                   </div>
-                  <p className={`text-[11px] leading-tight line-clamp-2 text-left max-w-[170px] ${isSelected ? "text-white font-semibold" : "text-white/50 font-medium"}`}>
-                    {video.title}
-                  </p>
-                  {video.published && (
-                    <p className="text-[9px] text-white/25 text-left">
-                      {new Date(video.published).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" })}
-                    </p>
-                  )}
                 </button>
               );
             })
