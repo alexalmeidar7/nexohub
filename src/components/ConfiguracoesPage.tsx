@@ -542,19 +542,22 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
 
           {/* ── Seção 3: Especificações + Ação ── */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-2">
-            <div className="flex flex-wrap items-center gap-6">
-              <label className="flex items-center gap-2.5 cursor-pointer group" style={{ color: "#0d0446" }}>
-                <input type="checkbox" checked={canalForm.is_hd} onChange={(e) => setCanalForm(p => ({ ...p, is_hd: e.target.checked }))}
-                  className="w-4 h-4 rounded" style={{ accentColor: "#268ffa" }} />
-                <img src="/images/icon-fullhd.png" alt="FULL HD" className="h-4 opacity-80 group-hover:opacity-100 transition-opacity" />
-                <span className="text-sm font-semibold group-hover:opacity-80 transition-opacity">FULL HD</span>
-              </label>
-              <label className="flex items-center gap-2.5 cursor-pointer group" style={{ color: "#0d0446" }}>
-                <input type="checkbox" checked={canalForm.is_stereo} onChange={(e) => setCanalForm(p => ({ ...p, is_stereo: e.target.checked }))}
-                  className="w-4 h-4 rounded" style={{ accentColor: "#268ffa" }} />
-                <img src="/images/icon-stereo.png" alt="Stereo" className="h-4 opacity-80 group-hover:opacity-100 transition-opacity" />
-                <span className="text-sm font-semibold group-hover:opacity-80 transition-opacity">Áudio Estéreo</span>
-              </label>
+            <div className="rounded-xl p-4" style={{ background: "rgba(38, 143, 250, 0.08)", border: "1px solid rgba(38, 143, 250, 0.18)" }}>
+              <span className="text-xs font-bold uppercase tracking-wider mb-2 block" style={{ color: "#268ffa" }}>Especificações:</span>
+              <div className="flex flex-wrap items-center gap-6">
+                <label className="flex items-center gap-2.5 cursor-pointer group" style={{ color: "#0d0446" }}>
+                  <input type="checkbox" checked={canalForm.is_hd} onChange={(e) => setCanalForm(p => ({ ...p, is_hd: e.target.checked }))}
+                    className="w-4 h-4 rounded" style={{ accentColor: "#268ffa" }} />
+                  <img src="/images/icon-fullhd.png" alt="FULL HD" className="h-4 opacity-80 group-hover:opacity-100 transition-opacity" />
+                  <span className="text-sm font-semibold group-hover:opacity-80 transition-opacity">FULL HD</span>
+                </label>
+                <label className="flex items-center gap-2.5 cursor-pointer group" style={{ color: "#0d0446" }}>
+                  <input type="checkbox" checked={canalForm.is_stereo} onChange={(e) => setCanalForm(p => ({ ...p, is_stereo: e.target.checked }))}
+                    className="w-4 h-4 rounded" style={{ accentColor: "#268ffa" }} />
+                  <img src="/images/icon-stereo.png" alt="Stereo" className="h-4 opacity-80 group-hover:opacity-100 transition-opacity" />
+                  <span className="text-sm font-semibold group-hover:opacity-80 transition-opacity">Áudio Estéreo</span>
+                </label>
+              </div>
             </div>
             <div className="flex items-center gap-2">
               {editingCanal && (
