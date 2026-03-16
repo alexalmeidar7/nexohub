@@ -295,10 +295,14 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
           {/* HD / Stereo icons */}
           <div className="flex items-center gap-2">
             {primaryChannel?.is_hd && (
-              <img src="/images/icon-fullhd.png" alt="FULL HD" className="h-3 opacity-50" />
+              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wide text-white/40 border border-white/15">
+                <span className="text-[8px] font-black">1080p</span> FULL HD
+              </span>
             )}
             {primaryChannel?.is_stereo && (
-              <img src="/images/icon-stereo.png" alt="Estéreo" className="h-3 opacity-50" />
+              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wide text-white/40 border border-white/15">
+                STEREO
+              </span>
             )}
           </div>
 
