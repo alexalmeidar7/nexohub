@@ -872,6 +872,7 @@ export type Database = {
           cover_url: string | null
           created_at: string
           descricao: string | null
+          estudio: string | null
           horario_fim: string | null
           horario_inicio: string | null
           id: string
@@ -893,6 +894,7 @@ export type Database = {
           cover_url?: string | null
           created_at?: string
           descricao?: string | null
+          estudio?: string | null
           horario_fim?: string | null
           horario_inicio?: string | null
           id?: string
@@ -914,6 +916,7 @@ export type Database = {
           cover_url?: string | null
           created_at?: string
           descricao?: string | null
+          estudio?: string | null
           horario_fim?: string | null
           horario_inicio?: string | null
           id?: string
