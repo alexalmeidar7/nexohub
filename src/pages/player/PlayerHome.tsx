@@ -1289,7 +1289,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                             image={channel.cover_url || video.thumbnail}
                             title={video.title}
                             subtitle={video.published ? new Date(video.published).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" }) : undefined}
-                            logoUrl={channel.logo_url}
+                            logoUrl={channel.background_url || channel.logo_url}
                             onClick={() => goToPlayer(channel.id, video.videoId)}
                           />
                         ))
@@ -1299,7 +1299,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                             key={item.id}
                             image={item.cover_url}
                             title={item.name}
-                            logoUrl={item.logo_url}
+                            logoUrl={item.background_url || item.logo_url}
                             onClick={() => goToPlayer(item.id)}
                           />
                         ))
@@ -1361,13 +1361,13 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                             image={channel.cover_url || video.thumbnail}
                             title={video.title}
                             subtitle={video.published ? new Date(video.published).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" }) : undefined}
-                            logoUrl={channel.logo_url}
+                            logoUrl={channel.background_url || channel.logo_url}
                             onClick={() => goToPlayer(channel.id, video.videoId)}
                           />
                         ))
                       ) : (
                         items.map(item => (
-                          <CatalogCard key={item.id} image={item.cover_url} title={item.name} logoUrl={item.logo_url} onClick={() => goToPlayer(item.id)} />
+                          <CatalogCard key={item.id} image={item.cover_url} title={item.name} logoUrl={item.background_url || item.logo_url} onClick={() => goToPlayer(item.id)} />
                         ))
                       )}
                     </ContentRow>
