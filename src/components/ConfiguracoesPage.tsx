@@ -244,9 +244,10 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
     };
     setSavingCanal(true);
     if (editingCanal) {
-      const { error } = await supabase.from("streaming_channels").update(payload).eq("id", editingCanal);
+      const { error, count } = await supabase.from("streaming_channels").update(payload).eq("id", editingCanal).eq("user_id", user.id).select("id", { count: "exact", head: true });
       setSavingCanal(false);
-      if (error) { toast.error("Erro ao atualizar."); }
+      if (error) { toast.error("Erro ao atualizar: " + error.message); }
+      else if (count === 0) { toast.error("Não foi possível atualizar. Verifique as permissões."); }
       else { toast.success("Atualizado!"); resetCanalForm(); loadCanais(); }
     } else {
       const { error } = await supabase.from("streaming_channels").insert([{ ...payload, user_id: user.id }]);
