@@ -24,7 +24,7 @@ Deno.serve(async (req) => {
           "User-Agent": "Mozilla/5.0 (compatible; RSSBot/1.0)",
           "Accept": "application/rss+xml, application/xml, text/xml, */*",
         },
-        signal: AbortSignal.timeout(2500),
+        signal: AbortSignal.timeout(8000),
       });
     } catch (fetchErr) {
       const msg = fetchErr instanceof DOMException && fetchErr.name === "TimeoutError"
