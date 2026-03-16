@@ -263,6 +263,8 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
     setCanalForm({ numero_canal: "", name: "", logo_url: "", cover_url: "", background_url: "", url: "", type: "audio_live", catalog_name: "", is_hd: false, is_stereo: false, classificacao_etaria: "L" });
     setCanalMode("live");
     setEditingCanal(null);
+    setCatalogContentMode("playlist");
+    setNewCatalogMode(false);
   };
 
   const handleEditCanal = (c: Canal) => {
