@@ -72,20 +72,21 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
     fetchChannels();
   }, [catalogName]);
 
-  // Fetch matching program info
+  // Build program info from channel data (saved during catalog registration)
   useEffect(() => {
-    const fetchPrograma = async () => {
-      const { data } = await supabase
-        .from("programas")
-        .select("nome, descricao, horario_inicio, horario_fim, classificacao_etaria, selo")
-        .eq("ativo", true)
-        .ilike("nome", catalogName);
-      if (data && data.length > 0) {
-        setPrograma(data[0] as ProgramaInfo);
-      }
-    };
-    fetchPrograma();
-  }, [catalogName]);
+    if (!primaryChannel) return;
+    const ch = primaryChannel;
+    if (ch.horario_inicio || ch.descricao || ch.classificacao_etaria) {
+      setPrograma({
+        nome: ch.name,
+        descricao: ch.descricao || "",
+        horario_inicio: ch.horario_inicio || "",
+        horario_fim: ch.horario_fim || "",
+        classificacao_etaria: ch.classificacao_etaria || "L",
+        selo: "",
+      });
+    }
+  }, [channels]);
 
   // Fetch playlist videos
   useEffect(() => {
