@@ -1367,7 +1367,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                         ))
                       ) : (
                         items.map(item => (
-                          <CatalogCard key={item.id} image={item.cover_url} title={item.name} logoUrl={item.logo_url} onClick={() => goToPlayer(item.id)} />
+                          <CatalogCard key={item.id} image={item.cover_url} title={item.name} logoUrl={item.background_url || item.logo_url} onClick={() => goToPlayer(item.id)} />
                         ))
                       )}
                     </ContentRow>
