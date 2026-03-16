@@ -141,10 +141,21 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
     onPlayVideo(primaryChannel.id, video.videoId);
   };
 
-  const handleCardMouseEnter = useCallback((videoId: string) => {
+  const handleCardMouseEnter = useCallback((video: PlaylistVideo, target: HTMLElement) => {
+    if (hoverTimerRef.current) {
+      clearTimeout(hoverTimerRef.current);
+      hoverTimerRef.current = null;
+    }
+
+    const rect = target.getBoundingClientRect();
     hoverTimerRef.current = setTimeout(() => {
-      setHoveredVideoId(videoId);
-    }, 400);
+      setHoveredVideoId(video.videoId);
+      setHoverPreview({
+        video,
+        x: rect.left + rect.width / 2,
+        y: rect.top - 12,
+      });
+    }, 280);
   }, []);
 
   const handleCardMouseLeave = useCallback(() => {
@@ -153,6 +164,7 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
       hoverTimerRef.current = null;
     }
     setHoveredVideoId(null);
+    setHoverPreview(null);
   }, []);
 
   const scrollAnimRef = useRef<number | null>(null);
