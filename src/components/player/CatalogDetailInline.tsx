@@ -498,13 +498,13 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
           {/* Auto-scroll hover zones */}
           <div
             className="absolute left-0 top-0 bottom-0 w-16 z-10 cursor-w-resize rounded-l-2xl overflow-hidden"
-            style={{ background: "linear-gradient(to right, rgba(10,30,80,0.5), transparent)" }}
+            style={{ background: "linear-gradient(to right, rgba(0,0,0,0.6), transparent)" }}
             onMouseEnter={() => startAutoScroll("left")}
             onMouseLeave={stopAutoScroll}
           />
           <div
             className="absolute right-0 top-0 bottom-0 w-16 z-10 cursor-e-resize rounded-r-2xl overflow-hidden"
-            style={{ background: "linear-gradient(to left, rgba(10,30,80,0.5), transparent)" }}
+            style={{ background: "linear-gradient(to left, rgba(0,0,0,0.6), transparent)" }}
             onMouseEnter={() => startAutoScroll("right")}
             onMouseLeave={stopAutoScroll}
           />
