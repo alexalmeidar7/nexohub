@@ -104,11 +104,11 @@ function HoverPreviewPopup({ video, x, y }: { video: PlaylistVideo; x: number; y
       <div
         className="rounded-2xl overflow-hidden"
         style={{
-          background: "rgba(10, 35, 90, 0.7)",
+          background: "rgba(150, 1, 1, 0.85)",
           backdropFilter: "blur(28px) saturate(1.5)",
           WebkitBackdropFilter: "blur(28px) saturate(1.5)",
-          border: "1px solid rgba(100, 160, 255, 0.2)",
-          boxShadow: "0 16px 50px rgba(0,0,0,0.7), 0 0 40px hsla(var(--player-accent) / 0.15)",
+          border: "1px solid rgba(255, 80, 80, 0.3)",
+          boxShadow: "0 16px 50px rgba(0,0,0,0.7), 0 0 40px rgba(150, 1, 1, 0.3)",
         }}
       >
         {/* Video area — gentle crop to hide YouTube top bar only */}
