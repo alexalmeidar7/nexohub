@@ -686,16 +686,19 @@ function TrendingCard({ item, idx, channels, onClick }: {
       onClick={onClick}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      className="flex-shrink-0 rounded-2xl overflow-hidden relative transition-all duration-500 ease-[cubic-bezier(0.25,0.1,0.25,1)] group cursor-pointer"
+      className="flex-shrink-0 rounded-2xl overflow-hidden relative group cursor-pointer"
       style={{
         width: showVideo ? "560px" : "200px",
         height: showVideo ? "315px" : undefined,
         aspectRatio: showVideo ? undefined : "2/3",
         background: "linear-gradient(145deg, rgba(255,255,255,0.06) 0%, hsl(var(--player-bg)) 100%)",
-        zIndex: showVideo ? 20 : 1,
-        transform: "none",
-        boxShadow: hovered ? "0 0 12px 2px hsla(var(--player-accent) / 0.5)" : "none",
-        border: hovered ? "2px solid hsl(var(--player-accent))" : "1px solid rgba(255,255,255,0.06)",
+        zIndex: showVideo ? 20 : hovered ? 10 : 1,
+        transform: hovered && !showVideo ? "translateY(-6px) scale(1.03)" : "translateY(0) scale(1)",
+        boxShadow: hovered
+          ? "0 8px 30px -4px hsla(var(--player-accent) / 0.45), 0 0 0 1.5px hsl(var(--player-accent))"
+          : "0 4px 12px -4px rgba(0,0,0,0.3)",
+        border: hovered ? "1.5px solid hsl(var(--player-accent))" : "1px solid rgba(255,255,255,0.06)",
+        transition: "transform 0.4s cubic-bezier(0.25,0.1,0.25,1), box-shadow 0.4s ease, border 0.3s ease",
       }}
     >
       {/* Cover image */}
@@ -704,7 +707,6 @@ function TrendingCard({ item, idx, channels, onClick }: {
           src={coverSrc}
           alt={item.title}
           className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ${showVideo ? "opacity-0 scale-110 blur-md" : "opacity-100"}`}
-          style={{ transform: hovered && !showVideo ? "scaleX(0.92)" : undefined, transition: "transform 0.5s cubic-bezier(0.25,0.1,0.25,1)" }}
         />
       ) : (
         <div className="absolute inset-0 w-full h-full flex items-center justify-center" style={{ background: "linear-gradient(160deg, rgba(255,255,255,0.08) 0%, hsl(var(--player-bg)) 100%)" }}>
