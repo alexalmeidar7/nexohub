@@ -1177,11 +1177,11 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   };
 
   const handleSectionChange = useCallback((section: Section) => {
-    if (section === activeSection) return;
+    if (section === activeSection && visibleSection === section) return;
     setActiveSection(section);
     setSectionFading(true);
     setTimeout(() => { setVisibleSection(section); setSectionFading(false); }, 200);
-  }, [activeSection]);
+  }, [activeSection, visibleSection]);
 
   const handleSignOut = async () => { await signOut(); navigate("/user/nexohub/player"); };
 
