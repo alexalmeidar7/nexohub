@@ -565,10 +565,8 @@ export default function PlayerPage() {
     if (isPublicMode) {
       const alreadyBootstrapped = publicBootstrapRef.current.loaded && publicBootstrapRef.current.slug === slug;
       if (alreadyBootstrapped) {
-        console.log("[PLAYER-DIAG] Public bootstrap SKIPPED (already loaded)");
         return () => { cancelled = true; };
       }
-      console.log("[PLAYER-DIAG] Public bootstrap STARTING for slug:", slug);
 
       if (!slug) {
         setCanais([]);
