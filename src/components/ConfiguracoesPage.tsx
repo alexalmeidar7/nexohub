@@ -123,6 +123,8 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
   const [editingCanal, setEditingCanal] = useState<string | null>(null);
   const [catalogContentMode, setCatalogContentMode] = useState<"playlist" | "individual">("playlist");
   const [newCatalogMode, setNewCatalogMode] = useState(false);
+  const [programas, setProgramas] = useState<{ id: string; nome: string; descricao: string; horario_inicio: string; horario_fim: string; classificacao_etaria: string }[]>([]);
+  const [selectedProgramaId, setSelectedProgramaId] = useState("");
 
   useEffect(() => {
     if (user) getEmpresaConfig(user.id).then(c => { setConfig(c); setLoading(false); });
