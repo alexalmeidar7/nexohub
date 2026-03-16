@@ -1789,10 +1789,8 @@ export default function PlayerPage() {
             >
               <button
                 onClick={() => {
-                  const catalogName = canal?.catalog_name || canal?.name || "Catálogo";
-                  const basePath = userSlug ? `/user/${userSlug}/nexohub/player` : "/user/nexohub/player";
                   setPageFadeOut(true);
-                  setTimeout(() => navigate(`${basePath}?step=home&catalog=${encodeURIComponent(catalogName)}`), 400);
+                  setTimeout(() => window.history.back(), 300);
                 }}
                 className="group flex items-center gap-2 pl-2.5 pr-4 py-2 rounded-full text-player-foreground/80 hover:text-player-foreground text-xs font-semibold tracking-wide transition-all duration-200 backdrop-blur-2xl border border-player-border hover:border-player-foreground/20 bg-player-surface hover:bg-player-surface-hover shadow-lg hover:shadow-xl"
               >
