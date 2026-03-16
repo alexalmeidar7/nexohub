@@ -16,6 +16,8 @@ interface Channel {
   horario_inicio?: string;
   horario_fim?: string;
   descricao?: string;
+  is_hd?: boolean | null;
+  is_stereo?: boolean | null;
 }
 
 interface PlaylistVideo {
@@ -56,6 +58,7 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
   const [selectedVideo, setSelectedVideo] = useState<PlaylistVideo | null>(null);
   const [programa, setPrograma] = useState<ProgramaInfo | null>(null);
   const [hoveredVideoId, setHoveredVideoId] = useState<string | null>(null);
+  const [descExpanded, setDescExpanded] = useState(false);
   const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -64,7 +67,7 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
     const fetchChannels = async () => {
       const { data } = await supabase
         .from("streaming_channels")
-        .select("id, name, cover_url, logo_url, background_url, type, url, catalog_name, classificacao_etaria, horario_inicio, horario_fim, descricao")
+        .select("id, name, cover_url, logo_url, background_url, type, url, catalog_name, classificacao_etaria, horario_inicio, horario_fim, descricao, is_hd, is_stereo")
         .eq("type", "catalog")
         .eq("active", true);
 
@@ -248,12 +251,43 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
             )}
           </div>
 
-          {/* Program description */}
+          {/* Program description with expand */}
           {programa?.descricao && (
-            <p className="text-[13px] text-white/45 leading-relaxed max-w-md line-clamp-2" style={{ textShadow: "0 1px 8px rgba(0,0,0,0.5)" }}>
-              {programa.descricao}
-            </p>
+            <div className="max-w-md">
+              <p
+                className={`text-[13px] text-white/45 leading-relaxed ${descExpanded ? "" : "line-clamp-2"}`}
+                style={{ textShadow: "0 1px 8px rgba(0,0,0,0.5)" }}
+              >
+                {programa.descricao}
+                {!descExpanded && (
+                  <button
+                    onClick={() => setDescExpanded(true)}
+                    className="inline ml-1 text-white/70 hover:text-white font-bold transition-colors"
+                  >
+                    +
+                  </button>
+                )}
+              </p>
+              {descExpanded && (
+                <button
+                  onClick={() => setDescExpanded(false)}
+                  className="text-[11px] text-white/50 hover:text-white/70 mt-1 transition-colors"
+                >
+                  ver menos
+                </button>
+              )}
+            </div>
           )}
+
+          {/* HD / Stereo icons */}
+          <div className="flex items-center gap-3">
+            {primaryChannel?.is_hd && (
+              <img src="/images/icon-fullhd.png" alt="FULL HD" className="h-5 opacity-60" />
+            )}
+            {primaryChannel?.is_stereo && (
+              <img src="/images/icon-stereo.png" alt="Estéreo" className="h-5 opacity-60" />
+            )}
+          </div>
 
           {!loading && videos.length > 0 && (
             <button
