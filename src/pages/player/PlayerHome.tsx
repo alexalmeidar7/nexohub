@@ -1312,7 +1312,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                   });
 
                   return (
-                    <ContentRow key={groupName} title={groupName}>
+                    <ContentRow key={groupName} title={groupName} scrollRoot={contentScrollRef}>
                       {groupVideos.length > 0 ? (
                         groupVideos.map(({ channel, ...video }) => (
                           <CatalogCard
