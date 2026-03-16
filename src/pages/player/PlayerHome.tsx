@@ -941,6 +941,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   const { user, signOut, loading: authLoading } = useAuth();
   const { userSlug } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [activeSection, setActiveSection] = useState<Section>("home");
   const [visibleSection, setVisibleSection] = useState<Section>("home");
   const [sectionFading, setSectionFading] = useState(false);
@@ -961,6 +962,19 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   const contentScrollRef = useRef<HTMLDivElement>(null);
 
   const [miniPlayerData, setMiniPlayerData] = useState<MiniPlayerData | null>(() => loadMiniPlayerData());
+
+  // Open catalog detail from query param (e.g. returning from /watch)
+  const catalogParamHandled = useRef(false);
+  useEffect(() => {
+    if (catalogParamHandled.current) return;
+    const catalogParam = searchParams.get("catalog");
+    if (catalogParam) {
+      catalogParamHandled.current = true;
+      setActiveCatalog(catalogParam);
+      setVisibleSection("catalog-detail");
+      setActiveSection("content");
+    }
+  }, [searchParams]);
 
   // Poll for current music data
   useEffect(() => {
