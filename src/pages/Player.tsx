@@ -2278,7 +2278,8 @@ export default function PlayerPage() {
 
             {/* Playback & view controls */}
             <div className="flex items-center gap-0.5 rounded-lg border border-player-border bg-player-surface/60 px-1 py-0.5">
-              {isYoutube && (
+              {/* YouTube (non-catalog) controls: home, prev, play, next, playlist */}
+              {isYoutube && !isCatalog && (
                 <button
                   onClick={handleYtHome}
                   className={`rounded-md w-7 h-7 flex items-center justify-center transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-player-accent ${!selectedVideoId ? "bg-player-accent text-player-foreground" : "text-player-muted-foreground hover:text-player-foreground"}`}
@@ -2289,7 +2290,7 @@ export default function PlayerPage() {
                 </button>
               )}
 
-              {isYoutube && selectedVideoId && (
+              {isYoutube && !isCatalog && selectedVideoId && (
                 <>
                   <button onClick={ytPrevVideo} className="text-player-muted-foreground hover:text-player-foreground transition-colors rounded-md p-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-player-accent" title="Vídeo anterior" aria-label="Vídeo anterior">
                     <SkipBack size={13} />
@@ -2303,7 +2304,7 @@ export default function PlayerPage() {
                 </>
               )}
 
-              {isYoutube && (
+              {isYoutube && !isCatalog && (
                 <button
                   onClick={() => setSidebarOpen(!sidebarOpen)}
                   className={`rounded-md w-7 h-7 flex items-center justify-center transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-player-accent ${sidebarOpen ? "bg-player-accent text-player-foreground" : "text-player-muted-foreground hover:text-player-foreground"}`}
