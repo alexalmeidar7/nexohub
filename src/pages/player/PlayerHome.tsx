@@ -1360,7 +1360,14 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                 </section>
 
                 {/* Em Alta - Trending */}
-                {dataLoaded && (() => {
+                {!dataLoaded ? (
+                  <div className="mb-8">
+                    <Skeleton className="h-5 w-32 bg-white/10 mb-3" />
+                    <div className="flex gap-3">
+                      {[1, 2, 3, 4, 5].map(i => <Skeleton key={i} className="flex-shrink-0 rounded-2xl bg-white/8" style={{ width: 150, height: 225 }} />)}
+                    </div>
+                  </div>
+                ) : (() => {
                   const trendingItems: { id: string; image: string | null; title: string; subtitle?: string; type: "live" | "catalog"; channelId: string; videoId?: string; logoUrl?: string | null }[] = [];
                   
                   streamingChannels.forEach(ch => {
