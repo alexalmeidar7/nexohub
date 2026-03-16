@@ -195,7 +195,11 @@ function useBufferingDetection(videoRef: React.RefObject<HTMLVideoElement | null
   const [buffering, setBuffering] = useState(false);
 
   useEffect(() => {
-    const elements = [videoRef.current, audioRef.current].filter(Boolean) as HTMLMediaElement[];
+    const video = videoRef.current;
+    const audio = audioRef.current;
+    const elements = [video, audio].filter(Boolean) as HTMLMediaElement[];
+    if (elements.length === 0) return;
+
     const onWaiting = () => setBuffering(true);
     const onReady = () => setBuffering(false);
     
@@ -211,7 +215,7 @@ function useBufferingDetection(videoRef: React.RefObject<HTMLVideoElement | null
         el.removeEventListener("canplay", onReady);
       });
     };
-  }, []);
+  }, [videoRef, audioRef]);
 
   return { buffering, setBuffering };
 }
