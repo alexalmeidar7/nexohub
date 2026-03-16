@@ -1,8 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { ChevronLeft, Play, Film, Calendar, Clock } from "lucide-react";
+import { Play, Film, Calendar, Clock } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface Channel {
   id: string;
@@ -56,6 +55,8 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
   const [loading, setLoading] = useState(true);
   const [selectedVideo, setSelectedVideo] = useState<PlaylistVideo | null>(null);
   const [programa, setPrograma] = useState<ProgramaInfo | null>(null);
+  const [hoveredVideoId, setHoveredVideoId] = useState<string | null>(null);
+  const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Fetch channels for this catalog group
@@ -135,6 +136,20 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
     if (!primaryChannel) return;
     onPlayVideo(primaryChannel.id, video.videoId);
   };
+
+  const handleCardMouseEnter = useCallback((videoId: string) => {
+    hoverTimerRef.current = setTimeout(() => {
+      setHoveredVideoId(videoId);
+    }, 400);
+  }, []);
+
+  const handleCardMouseLeave = useCallback(() => {
+    if (hoverTimerRef.current) {
+      clearTimeout(hoverTimerRef.current);
+      hoverTimerRef.current = null;
+    }
+    setHoveredVideoId(null);
+  }, []);
 
   const scrollAnimRef = useRef<number | null>(null);
 
@@ -302,68 +317,133 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
           ) : (
             videos.map((video) => {
               const isSelected = selectedVideo?.videoId === video.videoId;
-              const tooltipLabel = video.published
-                ? `${video.title}\n${new Date(video.published).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" })}`
-                : video.title;
+              const isHovered = hoveredVideoId === video.videoId;
               return (
-                <TooltipProvider key={video.videoId} delayDuration={300}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        onClick={() => handlePlay(video)}
-                        className="group shrink-0 transition-all duration-300 cursor-pointer"
-                        style={{ opacity: isSelected ? 1 : 0.7 }}
-                        onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.opacity = "1"; }}
-                        onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.opacity = "0.7"; }}
-                      >
-                        <div
-                          className="relative rounded-xl overflow-hidden transition-all duration-300"
-                          style={{
-                            width: 170,
-                            aspectRatio: "16/9",
-                            outline: isSelected ? "2px solid hsl(var(--player-accent))" : "1px solid rgba(255,255,255,0.08)",
-                            outlineOffset: -1,
-                            boxShadow: isSelected ? "0 0 20px 3px hsla(var(--player-accent) / 0.4)" : "0 4px 12px rgba(0,0,0,0.3)",
-                          }}
-                        >
+                <div
+                  key={video.videoId}
+                  className="shrink-0 relative"
+                  onMouseEnter={() => handleCardMouseEnter(video.videoId)}
+                  onMouseLeave={handleCardMouseLeave}
+                >
+                  {/* Expanded preview popup — appears above card */}
+                  <div
+                    className="absolute bottom-full left-1/2 mb-3 z-30 pointer-events-none"
+                    style={{
+                      transform: `translateX(-50%) scale(${isHovered ? 1 : 0.85})`,
+                      opacity: isHovered ? 1 : 0,
+                      transition: "all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)",
+                      width: 260,
+                      transformOrigin: "bottom center",
+                    }}
+                  >
+                    <div
+                      className="rounded-2xl overflow-hidden pointer-events-auto"
+                      style={{
+                        background: "rgba(15, 50, 120, 0.55)",
+                        backdropFilter: "blur(24px) saturate(1.5)",
+                        WebkitBackdropFilter: "blur(24px) saturate(1.5)",
+                        border: "1px solid rgba(100, 160, 255, 0.25)",
+                        boxShadow: "0 12px 40px rgba(0,0,0,0.6), 0 0 30px hsla(var(--player-accent) / 0.2)",
+                      }}
+                    >
+                      {/* Video preview */}
+                      <div className="relative w-full" style={{ aspectRatio: "16/9" }}>
+                        {isHovered ? (
+                          <iframe
+                            src={`https://www.youtube.com/embed/${video.videoId}?autoplay=1&mute=1&start=1800&controls=0&showinfo=0&modestbranding=1&rel=0&loop=1&playlist=${video.videoId}&end=1810`}
+                            className="absolute inset-0 w-full h-full"
+                            style={{ border: 0 }}
+                            allow="autoplay; encrypted-media"
+                            title={video.title}
+                          />
+                        ) : (
                           <img
                             src={video.thumbnail?.replace(/\/(hq|mq|sd)default\.jpg/, "/maxresdefault.jpg") || video.thumbnail}
                             alt={video.title}
                             className="w-full h-full object-cover"
-                            onError={(e) => { (e.target as HTMLImageElement).src = video.thumbnail; }}
                           />
-                          <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 40%, transparent 70%)" }} />
-                          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                            <div
-                              className="w-9 h-9 rounded-full backdrop-blur-md flex items-center justify-center"
-                              style={{ background: "hsla(var(--player-accent) / 0.9)", boxShadow: "0 4px 16px hsla(var(--player-accent) / 0.5)" }}
-                            >
-                              <Play className="h-4 w-4 text-white fill-white" />
-                            </div>
-                          </div>
-                          {isSelected && (
-                            <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded text-[8px] uppercase tracking-wider font-bold text-white" style={{ background: "hsl(var(--player-accent))" }}>
-                              Atual
-                            </div>
-                          )}
-                          <div className="absolute bottom-0 left-0 right-0 px-2 pb-1.5 pt-3">
-                            <p className={`text-[10px] leading-tight line-clamp-2 text-left ${isSelected ? "text-white font-semibold" : "text-white/80 font-medium"}`}>
-                              {video.title}
-                            </p>
-                            {video.published && (
-                              <p className="text-[8px] text-white/40 text-left mt-0.5">
-                                {new Date(video.published).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" })}
-                              </p>
-                            )}
-                          </div>
+                        )}
+                        <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(to top, rgba(15,50,120,0.7) 0%, transparent 40%)" }} />
+                      </div>
+                      {/* Info */}
+                      <div className="px-3 py-2.5">
+                        <p className="text-xs font-semibold text-white leading-snug line-clamp-2">{video.title}</p>
+                        {video.published && (
+                          <p className="text-[10px] text-white/40 mt-1">
+                            {new Date(video.published).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" })}
+                          </p>
+                        )}
+                        <button
+                          onClick={() => handlePlay(video)}
+                          className="mt-2 mx-auto flex items-center justify-center w-9 h-9 rounded-full transition-transform duration-200 hover:scale-110"
+                          style={{
+                            background: "hsl(var(--player-accent))",
+                            boxShadow: "0 4px 16px hsla(var(--player-accent) / 0.5)",
+                          }}
+                        >
+                          <Play className="h-4 w-4 text-white fill-white" />
+                        </button>
+                      </div>
+                    </div>
+                    {/* Arrow pointing down */}
+                    <div
+                      className="absolute left-1/2 -translate-x-1/2 -bottom-2 w-4 h-4 rotate-45"
+                      style={{
+                        background: "rgba(15, 50, 120, 0.55)",
+                        border: "1px solid rgba(100, 160, 255, 0.25)",
+                        borderTop: "none",
+                        borderLeft: "none",
+                      }}
+                    />
+                  </div>
+
+                  {/* Base card (thumbnail) */}
+                  <button
+                    onClick={() => handlePlay(video)}
+                    className="shrink-0 cursor-pointer transition-all duration-300"
+                    style={{
+                      opacity: isSelected || isHovered ? 1 : 0.7,
+                      transform: isHovered ? "translateY(-4px) scale(1.05)" : "translateY(0) scale(1)",
+                      transition: "all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)",
+                    }}
+                  >
+                    <div
+                      className="relative rounded-xl overflow-hidden"
+                      style={{
+                        width: 170,
+                        aspectRatio: "16/9",
+                        outline: isSelected ? "2px solid hsl(var(--player-accent))" : isHovered ? "2px solid hsla(var(--player-accent) / 0.6)" : "1px solid rgba(255,255,255,0.08)",
+                        outlineOffset: -1,
+                        boxShadow: isHovered
+                          ? "0 8px 30px rgba(0,0,0,0.5), 0 0 20px hsla(var(--player-accent) / 0.3)"
+                          : isSelected ? "0 0 20px 3px hsla(var(--player-accent) / 0.4)" : "0 4px 12px rgba(0,0,0,0.3)",
+                      }}
+                    >
+                      <img
+                        src={video.thumbnail?.replace(/\/(hq|mq|sd)default\.jpg/, "/maxresdefault.jpg") || video.thumbnail}
+                        alt={video.title}
+                        className="w-full h-full object-cover"
+                        onError={(e) => { (e.target as HTMLImageElement).src = video.thumbnail; }}
+                      />
+                      <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 40%, transparent 70%)" }} />
+                      {isSelected && (
+                        <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded text-[8px] uppercase tracking-wider font-bold text-white" style={{ background: "hsl(var(--player-accent))" }}>
+                          Atual
                         </div>
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent side="top" className="max-w-[220px] text-center whitespace-pre-line text-xs">
-                      {tooltipLabel}
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                      )}
+                      <div className="absolute bottom-0 left-0 right-0 px-2 pb-1.5 pt-3">
+                        <p className={`text-[10px] leading-tight line-clamp-2 text-left ${isSelected ? "text-white font-semibold" : "text-white/80 font-medium"}`}>
+                          {video.title}
+                        </p>
+                        {video.published && (
+                          <p className="text-[8px] text-white/40 text-left mt-0.5">
+                            {new Date(video.published).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" })}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </button>
+                </div>
               );
             })
           )}
