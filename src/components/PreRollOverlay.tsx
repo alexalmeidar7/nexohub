@@ -66,14 +66,16 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
   useEffect(() => {
     if (!isYoutube || !ytId) return;
 
-    const fallback = setTimeout(() => onEndedRef.current(), 120000);
+    const fallbackTimer = hasFallbackVideo ? null : setTimeout(() => onEndedRef.current(), 120000);
 
-    // Detect YouTube stall (captcha, region block, etc.) — no progress after 8s = failed
+    // Detect YouTube stall (captcha, region block, autoplay blocked, etc.)
     let progressDetected = false;
     const stallTimer = setTimeout(() => {
       if (!progressDetected) {
         setYtFailed(true);
-        setTimeout(() => onEndedRef.current(), 3000);
+        if (!hasFallbackVideo) {
+          setTimeout(() => onEndedRef.current(), 3000);
+        }
       }
     }, 8000);
 
@@ -93,7 +95,12 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
           playsinline: 1,
         },
         events: {
-          onReady: () => {
+          onReady: (event: any) => {
+            try {
+              event?.target?.mute?.();
+              event?.target?.playVideo?.();
+            } catch {}
+
             pollRef.current = setInterval(() => {
               try {
                 const p = ytPlayerRef.current;
@@ -105,11 +112,14 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
             }, 500);
           },
           onStateChange: (event: any) => {
+            if (event.data === 1) progressDetected = true;
             if (event.data === 0) onEndedRef.current();
           },
           onError: () => {
             setYtFailed(true);
-            setTimeout(() => onEndedRef.current(), 2000);
+            if (!hasFallbackVideo) {
+              setTimeout(() => onEndedRef.current(), 2000);
+            }
           },
         },
       });
@@ -128,12 +138,12 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
     }
 
     return () => {
-      clearTimeout(fallback);
+      if (fallbackTimer) clearTimeout(fallbackTimer);
       clearTimeout(stallTimer);
       if (pollRef.current) clearInterval(pollRef.current);
       try { ytPlayerRef.current?.destroy(); } catch {}
     };
-  }, [isYoutube, ytId]);
+  }, [isYoutube, ytId, hasFallbackVideo]);
 
   const canSkip = countdown <= 0;
 
