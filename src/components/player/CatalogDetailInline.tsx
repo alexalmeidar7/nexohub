@@ -78,9 +78,10 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
   const primaryChannel = channels[0];
   const logoUrl = primaryChannel?.background_url || primaryChannel?.logo_url;
   // Use first video's maxres thumbnail as hero background
-  const heroBackground = videos.length > 0
-    ? (videos[0].thumbnail?.replace(/\/(hq|mq|sd)default\.jpg/, "/maxresdefault.jpg") || videos[0].thumbnail)
-    : primaryChannel?.cover_url;
+  const heroBackground = primaryChannel?.cover_url
+    || (videos.length > 0
+      ? (videos[0].thumbnail?.replace(/\/(hq|mq|sd)default\.jpg/, "/maxresdefault.jpg") || videos[0].thumbnail)
+      : null);
 
   const handlePlay = (video: PlaylistVideo) => {
     setSelectedVideo(video);
