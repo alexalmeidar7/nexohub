@@ -1176,10 +1176,15 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
     setTimeout(() => {
       setVisibleSection("home");
       setSectionFading(false);
-      // Scroll to catalog section after returning
       setTimeout(() => {
+        const container = contentScrollRef.current;
         const el = document.getElementById("section-content");
-        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+        if (container && el) {
+          const containerRect = container.getBoundingClientRect();
+          const elRect = el.getBoundingClientRect();
+          const offset = elRect.top - containerRect.top + container.scrollTop;
+          container.scrollTo({ top: Math.max(0, offset - 8), behavior: "smooth" });
+        }
       }, 50);
     }, 200);
   };
