@@ -2354,7 +2354,8 @@ export default function PlayerPage() {
             {/* Divider */}
             <div className="hidden sm:block w-px h-5 bg-player-border" />
 
-            {/* Social: Shop + Chat */}
+            {/* Social: Shop + Chat — hidden for catalog */}
+            {!isCatalog && (
             <div className="flex items-center gap-0.5 rounded-lg border border-player-border bg-player-surface/60 px-1 py-0.5">
               <button
                 onClick={() => setShopOpen(!shopOpen)}
@@ -2375,6 +2376,7 @@ export default function PlayerPage() {
                 <MessageSquare size={12} />
               </button>
             </div>
+            )}
           </div>
 
           {/* Next / Schedule — hidden on mobile */}
