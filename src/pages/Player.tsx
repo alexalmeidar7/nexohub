@@ -7,6 +7,7 @@ import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import {
   ChevronUp,
   ChevronDown,
+  ChevronRight,
   Play,
   Pause,
   SkipBack,
@@ -2091,13 +2092,31 @@ export default function PlayerPage() {
               <MarqueeText className="text-white/50 text-xs" text={`♫ ${musicData.titulo} — ${musicData.artista}`} />
             )}
             {isYoutube && selectedVideoId ? (
-              <div className="w-full mt-2 group cursor-pointer relative" onClick={(e) => {
-                const rect = e.currentTarget.getBoundingClientRect();
-                const pct = (e.clientX - rect.left) / rect.width;
-                const seekTime = pct * ytDuration;
-                ytPostMessage("seekTo", [seekTime, true]);
-              }}>
-                <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden group-hover:h-2 transition-all relative">
+              <div className="w-full mt-2 group cursor-pointer relative"
+                onClick={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const pct = (e.clientX - rect.left) / rect.width;
+                  const seekTime = pct * ytDuration;
+                  ytPostMessage("seekTo", [seekTime, true]);
+                }}
+                onMouseMove={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+                  const time = pct * ytDuration;
+                  const tooltip = e.currentTarget.querySelector("[data-seek-tooltip]") as HTMLElement;
+                  if (tooltip) {
+                    tooltip.style.left = `${pct * 100}%`;
+                    tooltip.style.opacity = "1";
+                    tooltip.textContent = fmtTime(time);
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  const tooltip = e.currentTarget.querySelector("[data-seek-tooltip]") as HTMLElement;
+                  if (tooltip) tooltip.style.opacity = "0";
+                }}
+              >
+                <div data-seek-tooltip className="absolute -top-6 text-[10px] font-bold text-white bg-black/90 px-1.5 py-0.5 rounded pointer-events-none -translate-x-1/2 opacity-0 transition-opacity z-10 whitespace-nowrap" />
+                <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden group-hover:h-3 transition-all relative">
                   <div className="h-full rounded-full transition-all duration-300" style={{ width: `${ytProgressPct}%`, backgroundColor: "#e60000" }} />
                 </div>
                 {midrollBreakPoints.map((bp, i) => (
@@ -2116,8 +2135,32 @@ export default function PlayerPage() {
                 ))}
               </div>
             ) : (
-              <div className="w-full h-1 bg-white/10 rounded-full mt-2 overflow-hidden">
-                <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${progress}%`, backgroundColor: "#e60000" }} />
+              <div className="w-full mt-2 group cursor-pointer relative"
+                onMouseMove={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+                  const tooltip = e.currentTarget.querySelector("[data-seek-tooltip]") as HTMLElement;
+                  if (tooltip && currentProg) {
+                    const startParts = currentProg.horario_inicio.split(":").map(Number);
+                    const endParts = currentProg.horario_fim.split(":").map(Number);
+                    const startMin = startParts[0] * 60 + startParts[1];
+                    const endMin = endParts[0] * 60 + endParts[1];
+                    const totalSec = (endMin - startMin) * 60;
+                    const seekSec = pct * totalSec;
+                    tooltip.style.left = `${pct * 100}%`;
+                    tooltip.style.opacity = "1";
+                    tooltip.textContent = fmtTime(seekSec);
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  const tooltip = e.currentTarget.querySelector("[data-seek-tooltip]") as HTMLElement;
+                  if (tooltip) tooltip.style.opacity = "0";
+                }}
+              >
+                <div data-seek-tooltip className="absolute -top-6 text-[10px] font-bold text-white bg-black/90 px-1.5 py-0.5 rounded pointer-events-none -translate-x-1/2 opacity-0 transition-opacity z-10 whitespace-nowrap" />
+                <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden group-hover:h-3 transition-all">
+                  <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${progress}%`, backgroundColor: "#e60000" }} />
+                </div>
               </div>
             )}
             {isYoutube && selectedVideoId ? (
@@ -2379,37 +2422,56 @@ export default function PlayerPage() {
             )}
           </div>
 
-          {/* Next / Schedule — hidden on mobile */}
-          <div className="hidden md:flex pl-3 border-l border-white/10 min-w-0 items-stretch gap-2" style={{ maxWidth: "320px" }}>
-            <div className="min-w-0 flex-1">
-              <span className="text-[10px] font-bold uppercase" style={{ color: "#e60000" }}>A seguir:</span>
-              <div className="text-white text-sm font-medium leading-tight line-clamp-2">
-                {isYoutube ? (nextYtVideo?.title || "Sem vídeo") : (nextProg?.nome || "Sem programação")}
-              </div>
-              {!isYoutube && (
-                <span className="text-[10px] whitespace-nowrap" style={{ color: "#e60000" }}>
-                  {nextProg ? `${nextProg.horario_inicio.slice(0, 5)} - ${nextProg.horario_fim.slice(0, 5)}` : "--:-- - --:--"}
-                </span>
-              )}
-              <div className="mt-0.5">
-                <button onClick={() => setGradeOpen(true)}
-                  className="flex items-center gap-1 text-white text-[8px] font-bold uppercase px-2 py-0.5 rounded-full transition-all"
-                  style={{ backgroundColor: "#e60000", border: "1px solid transparent" }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = "#ed0808"; e.currentTarget.style.backgroundColor = "#000"; }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = "transparent"; e.currentTarget.style.backgroundColor = "#e60000"; }}
-                >
-                  + Grade
-                </button>
+          {/* Next / Schedule — collapsible via red arrow, hidden on mobile */}
+          <div className="hidden md:flex items-stretch relative group/next shrink-0">
+            {/* Red arrow trigger */}
+            <div className="flex items-center pl-2 border-l border-white/10 cursor-pointer">
+              <div className="w-6 h-6 rounded-full flex items-center justify-center transition-all group-hover/next:bg-[#e60000]/20" style={{ color: "#e60000" }}>
+                <ChevronRight size={16} />
               </div>
             </div>
-            {!isYoutube && nextPresenter?.foto && (
-              <div className="relative shrink-0 self-end group overflow-hidden" style={{ width: "80px", height: "100%" }}>
-                <img src={nextPresenter.foto} alt={nextPresenter.nome} title={nextPresenter.nome} className="absolute object-contain object-bottom right-0 bottom-0" style={{ height: "200px", width: "auto", maxWidth: "100%" }} />
-                <span className="absolute left-1/2 -translate-x-1/2 bg-black/90 text-white text-[10px] font-bold px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" style={{ top: "-20px" }}>
-                  {nextPresenter.nome}
-                </span>
+            {/* Expandable "A seguir" panel */}
+            <div
+              className="overflow-hidden transition-all duration-300 ease-in-out flex items-stretch gap-2"
+              style={{ maxWidth: "0", opacity: 0 }}
+              ref={(el) => {
+                if (!el) return;
+                const parent = el.closest(".group\\/next");
+                if (!parent) return;
+                parent.addEventListener("mouseenter", () => { el.style.maxWidth = "320px"; el.style.opacity = "1"; el.style.paddingLeft = "12px"; });
+                parent.addEventListener("mouseleave", () => { el.style.maxWidth = "0"; el.style.opacity = "0"; el.style.paddingLeft = "0"; });
+              }}
+            >
+              <div className="min-w-0 flex-1 whitespace-nowrap">
+                <span className="text-[10px] font-bold uppercase" style={{ color: "#e60000" }}>A seguir:</span>
+                <div className="text-white text-sm font-medium leading-tight line-clamp-2">
+                  {isYoutube ? (nextYtVideo?.title || "Sem vídeo") : (nextProg?.nome || "Sem programação")}
+                </div>
+                {!isYoutube && (
+                  <span className="text-[10px] whitespace-nowrap" style={{ color: "#e60000" }}>
+                    {nextProg ? `${nextProg.horario_inicio.slice(0, 5)} - ${nextProg.horario_fim.slice(0, 5)}` : "--:-- - --:--"}
+                  </span>
+                )}
+                <div className="mt-0.5">
+                  <button onClick={() => setGradeOpen(true)}
+                    className="flex items-center gap-1 text-white text-[8px] font-bold uppercase px-2 py-0.5 rounded-full transition-all"
+                    style={{ backgroundColor: "#e60000", border: "1px solid transparent" }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = "#ed0808"; e.currentTarget.style.backgroundColor = "#000"; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = "transparent"; e.currentTarget.style.backgroundColor = "#e60000"; }}
+                  >
+                    + Grade
+                  </button>
+                </div>
               </div>
-            )}
+              {!isYoutube && nextPresenter?.foto && (
+                <div className="relative shrink-0 self-end group overflow-hidden" style={{ width: "80px", height: "100%" }}>
+                  <img src={nextPresenter.foto} alt={nextPresenter.nome} title={nextPresenter.nome} className="absolute object-contain object-bottom right-0 bottom-0" style={{ height: "200px", width: "auto", maxWidth: "100%" }} />
+                  <span className="absolute left-1/2 -translate-x-1/2 bg-black/90 text-white text-[10px] font-bold px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" style={{ top: "-20px" }}>
+                    {nextPresenter.nome}
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
