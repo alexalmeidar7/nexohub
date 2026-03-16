@@ -66,7 +66,7 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
     const fetchChannels = async () => {
       const { data } = await supabase
         .from("streaming_channels")
-        .select("id, name, cover_url, logo_url, background_url, type, url, catalog_name, classificacao_etaria, horario_inicio, horario_fim, descricao")
+        .select("id, name, cover_url, logo_url, background_url, type, url, catalog_name, classificacao_etaria, horario_inicio, horario_fim, descricao, is_hd, is_stereo")
         .eq("type", "catalog")
         .eq("active", true);
 
