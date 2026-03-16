@@ -423,7 +423,7 @@ function StreamingCard({ channel, currentProgram, nowPlaying, onClick }: {
       onMouseLeave={() => setHovered(false)}
       className="flex-shrink-0 rounded-2xl overflow-hidden relative transition-all duration-500 ease-[cubic-bezier(0.25,0.1,0.25,1)] group cursor-pointer"
       style={{
-        width: "200px",
+        width: "160px",
         aspectRatio: "2/3",
         background: "linear-gradient(145deg, rgba(255,255,255,0.06) 0%, hsl(var(--player-bg)) 100%)",
         transform: hovered ? "translateY(-6px) scale(1.02)" : "none",
@@ -449,7 +449,7 @@ function StreamingCard({ channel, currentProgram, nowPlaying, onClick }: {
 
       {/* Channel logo top-right */}
       {channel.logo_url && (
-        <div className="absolute top-2 right-2 z-[15] w-12 h-8 flex items-center justify-center drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)]">
+        <div className="absolute top-2 right-2 z-[15] w-10 h-7 flex items-center justify-center">
           <img src={channel.logo_url} alt="" className="max-w-full max-h-full object-contain" />
         </div>
       )}
@@ -1150,7 +1150,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                   <section className="mb-8">
                     <Skeleton className="h-5 w-44 bg-white/10 mb-3" />
                     <div className="flex gap-3">
-                      {[1, 2, 3].map(i => <Skeleton key={i} className="flex-shrink-0 rounded-xl bg-white/8" style={{ width: 200, aspectRatio: "2/3" }} />)}
+                      {[1, 2, 3].map(i => <Skeleton key={i} className="flex-shrink-0 rounded-xl bg-white/8" style={{ width: 160, aspectRatio: "2/3" }} />)}
                     </div>
                   </section>
                 ) : streamingChannels.length > 0 && (
