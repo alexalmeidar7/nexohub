@@ -1,8 +1,8 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { ChevronLeft, Play, Calendar, Film } from "lucide-react";
+import { ChevronLeft, ChevronRight, Play, Film } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface Channel {
@@ -14,6 +14,7 @@ interface Channel {
   type: string;
   url?: string;
   catalog_name?: string;
+  descricao?: string;
 }
 
 interface PlaylistVideo {
@@ -29,10 +30,13 @@ export default function PlayerCatalog() {
   const { userSlug } = useParams();
   const [searchParams] = useSearchParams();
   const catalogName = searchParams.get("catalog") || "";
+  const activeVideoId = searchParams.get("vid") || "";
 
   const [channels, setChannels] = useState<Channel[]>([]);
   const [videos, setVideos] = useState<PlaylistVideo[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedVideo, setSelectedVideo] = useState<PlaylistVideo | null>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   // Fetch channels for this catalog group
   useEffect(() => {
@@ -66,9 +70,12 @@ export default function PlayerCatalog() {
           }
         } catch {}
       }
-      // Sort newest first
       allVideos.sort((a, b) => new Date(b.published).getTime() - new Date(a.published).getTime());
       setVideos(allVideos);
+      if (allVideos.length > 0) {
+        const active = activeVideoId ? allVideos.find(v => v.videoId === activeVideoId) : null;
+        setSelectedVideo(active || allVideos[0]);
+      }
       setLoading(false);
     };
     fetchVideos();
@@ -78,11 +85,12 @@ export default function PlayerCatalog() {
   const logoUrl = primaryChannel?.background_url || primaryChannel?.logo_url;
   const coverUrl = primaryChannel?.cover_url;
 
-  const goToPlayer = (videoId: string) => {
+  const goToPlayer = (video: PlaylistVideo) => {
+    setSelectedVideo(video);
     if (!primaryChannel) return;
     const params = new URLSearchParams();
     params.set("ch", primaryChannel.id);
-    params.set("vid", videoId);
+    params.set("vid", video.videoId);
     const qs = `?${params.toString()}`;
     if (userSlug) navigate(`/user/${userSlug}/nexohub/player/watch${qs}`);
     else navigate(`/user/nexohub/player/watch${qs}`);
@@ -93,133 +101,167 @@ export default function PlayerCatalog() {
     else navigate(`/user/nexohub/player`);
   };
 
+  const scrollPlaylist = (dir: "left" | "right") => {
+    if (!scrollRef.current) return;
+    const amount = scrollRef.current.clientWidth * 0.75;
+    scrollRef.current.scrollBy({ left: dir === "left" ? -amount : amount, behavior: "smooth" });
+  };
+
   return (
-    <div className="min-h-screen" style={{ background: "hsl(var(--player-bg))" }}>
-      {/* Hero header with background */}
-      <div className="relative w-full overflow-hidden" style={{ height: "clamp(280px, 40vh, 420px)" }}>
-        {/* Background image */}
+    <div className="h-screen flex flex-col overflow-hidden" style={{ background: "hsl(var(--player-bg))" }}>
+
+      {/* ─── HERO: cover image background with logo + description ─── */}
+      <div className="relative flex-1 min-h-0 w-full overflow-hidden">
+        {/* Background cover */}
         {coverUrl && (
           <img
             src={coverUrl}
             alt=""
-            className="absolute inset-0 w-full h-full object-cover opacity-30 blur-sm scale-105"
+            className="absolute inset-0 w-full h-full object-cover"
           />
         )}
+        {/* If no cover, dark bg */}
+        {!coverUrl && (
+          <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, hsl(220 60% 12%) 0%, hsl(220 50% 20%) 100%)" }} />
+        )}
+
         {/* Gradient overlays */}
-        <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, hsla(var(--player-bg) / 0.4) 0%, hsla(var(--player-bg) / 0.8) 60%, hsl(var(--player-bg)) 100%)" }} />
-        <div className="absolute inset-0" style={{ background: "linear-gradient(to right, hsla(var(--player-bg) / 0.9) 0%, transparent 50%)" }} />
+        <div className="absolute inset-0" style={{ background: "linear-gradient(to right, hsla(var(--player-bg) / 0.85) 0%, hsla(var(--player-bg) / 0.3) 50%, transparent 100%)" }} />
+        <div className="absolute inset-0" style={{ background: "linear-gradient(to top, hsl(var(--player-bg)) 0%, transparent 40%)" }} />
 
-        {/* Content */}
-        <div className="relative z-10 h-full flex flex-col justify-end px-8 sm:px-12 pb-8">
-          {/* Back button */}
-          <button
-            onClick={goBack}
-            className="absolute top-6 left-6 sm:left-10 flex items-center gap-2 text-white/60 hover:text-white transition-colors text-sm"
-          >
-            <ChevronLeft className="h-5 w-5" />
-            Voltar
-          </button>
+        {/* Back button */}
+        <button
+          onClick={goBack}
+          className="absolute top-6 left-6 sm:left-10 z-20 flex items-center gap-2 text-white/60 hover:text-white transition-colors text-sm"
+        >
+          <ChevronLeft className="h-5 w-5" />
+          Voltar
+        </button>
 
-          {/* Logo */}
-          {logoUrl && (
+        {/* Content: logo + description, bottom-left */}
+        <div className="absolute bottom-8 left-8 sm:left-12 z-10 max-w-lg flex flex-col gap-3">
+          {logoUrl ? (
             <img
               src={logoUrl}
               alt={catalogName}
-              className="h-16 sm:h-20 object-contain mb-4"
-              style={{ filter: "drop-shadow(0 4px 20px rgba(0,0,0,0.5))" }}
+              className="h-20 sm:h-28 object-contain object-left"
+              style={{ filter: "drop-shadow(0 4px 24px rgba(0,0,0,0.6))" }}
             />
-          )}
-          {!logoUrl && (
-            <h1 className="text-3xl sm:text-4xl font-black text-white mb-2 tracking-tight">{catalogName}</h1>
+          ) : (
+            <h1 className="text-4xl sm:text-5xl font-black text-white tracking-tight leading-tight" style={{ textShadow: "0 2px 20px rgba(0,0,0,0.6)" }}>
+              {catalogName}
+            </h1>
           )}
 
           {/* Description */}
-          <p className="text-sm text-white/60 max-w-xl leading-relaxed">
+          <p className="text-sm sm:text-base text-white/70 leading-relaxed line-clamp-3" style={{ textShadow: "0 1px 8px rgba(0,0,0,0.5)" }}>
             {primaryChannel?.name || catalogName}
           </p>
 
           {/* Stats */}
-          <div className="flex items-center gap-4 mt-3 text-xs text-white/40">
+          <div className="flex items-center gap-4 text-xs text-white/40">
             <span className="flex items-center gap-1.5">
               <Film className="h-3.5 w-3.5" />
               {videos.length} vídeos
             </span>
-            {videos.length > 0 && (
-              <span className="flex items-center gap-1.5">
-                <Calendar className="h-3.5 w-3.5" />
-                Atualizado em {new Date(videos[0].published).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })}
-              </span>
-            )}
           </div>
         </div>
       </div>
 
-      {/* Video grid */}
-      <div className="px-8 sm:px-12 pb-12 -mt-4">
-        {loading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-            {Array.from({ length: 12 }).map((_, i) => (
-              <Skeleton key={i} className="rounded-xl bg-white/8" style={{ aspectRatio: "16/9" }} />
-            ))}
-          </div>
-        ) : videos.length === 0 ? (
-          <div className="w-full h-40 rounded-xl flex items-center justify-center text-sm" style={{ background: "hsla(var(--player-surface))", color: "hsla(var(--player-muted-foreground))" }}>
-            Nenhum vídeo disponível
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-            {videos.map((video) => (
-              <button
-                key={video.videoId}
-                onClick={() => goToPlayer(video.videoId)}
-                className="group rounded-xl overflow-hidden relative text-left transition-all duration-300 cursor-pointer"
-                style={{
-                  background: "linear-gradient(145deg, rgba(255,255,255,0.06) 0%, hsl(var(--player-bg)) 100%)",
-                  border: "1px solid rgba(255,255,255,0.06)",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = "hsl(var(--player-accent))";
-                  e.currentTarget.style.boxShadow = "0 0 16px 2px hsla(var(--player-accent) / 0.4)";
-                  e.currentTarget.style.transform = "translateY(-4px)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)";
-                  e.currentTarget.style.boxShadow = "none";
-                  e.currentTarget.style.transform = "translateY(0)";
-                }}
-              >
-                {/* Thumbnail */}
-                <div className="relative" style={{ aspectRatio: "16/9" }}>
+      {/* ─── PLAYLIST BAR: horizontal scrollable strip at the bottom ─── */}
+      <div
+        className="relative w-full shrink-0"
+        style={{
+          height: "clamp(140px, 22vh, 200px)",
+          background: "linear-gradient(to top, hsla(var(--player-accent) / 0.25) 0%, hsla(var(--player-accent) / 0.08) 100%)",
+          borderTop: "1px solid hsla(var(--player-accent) / 0.3)",
+        }}
+      >
+        {/* Scroll arrows */}
+        <button
+          onClick={() => scrollPlaylist("left")}
+          className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full flex items-center justify-center bg-black/50 text-white/70 hover:text-white hover:bg-black/70 transition-colors backdrop-blur-sm"
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </button>
+        <button
+          onClick={() => scrollPlaylist("right")}
+          className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full flex items-center justify-center bg-black/50 text-white/70 hover:text-white hover:bg-black/70 transition-colors backdrop-blur-sm"
+        >
+          <ChevronRight className="h-4 w-4" />
+        </button>
+
+        {/* Scrollable content */}
+        <div
+          ref={scrollRef}
+          className="flex items-center gap-3 h-full px-12 overflow-x-auto scrollbar-hide"
+          style={{ scrollbarWidth: "none" }}
+        >
+          {loading ? (
+            Array.from({ length: 8 }).map((_, i) => (
+              <Skeleton
+                key={i}
+                className="shrink-0 rounded-lg bg-white/10"
+                style={{ width: 160, height: 90 }}
+              />
+            ))
+          ) : videos.length === 0 ? (
+            <p className="text-sm text-white/40 mx-auto">Nenhum vídeo disponível</p>
+          ) : (
+            videos.map((video) => {
+              const isSelected = selectedVideo?.videoId === video.videoId;
+              return (
+                <button
+                  key={video.videoId}
+                  onClick={() => goToPlayer(video)}
+                  className="group shrink-0 rounded-lg overflow-hidden relative transition-all duration-300 cursor-pointer"
+                  style={{
+                    width: 160,
+                    height: 90,
+                    outline: isSelected ? "2px solid hsl(var(--player-accent))" : "1px solid rgba(255,255,255,0.1)",
+                    outlineOffset: -1,
+                    boxShadow: isSelected ? "0 0 16px 2px hsla(var(--player-accent) / 0.5)" : "none",
+                    opacity: isSelected ? 1 : 0.7,
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isSelected) {
+                      e.currentTarget.style.opacity = "1";
+                      e.currentTarget.style.outline = "2px solid rgba(255,255,255,0.4)";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isSelected) {
+                      e.currentTarget.style.opacity = "0.7";
+                      e.currentTarget.style.outline = "1px solid rgba(255,255,255,0.1)";
+                    }
+                  }}
+                >
                   <img
                     src={video.thumbnail?.replace(/\/(hq|mq|sd)default\.jpg/, "/maxresdefault.jpg") || video.thumbnail}
                     alt={video.title}
                     className="w-full h-full object-cover"
                     onError={(e) => { (e.target as HTMLImageElement).src = video.thumbnail; }}
                   />
-                  {/* Play overlay */}
-                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+
+                  {/* Play icon overlay */}
+                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                     <div
-                      className="w-11 h-11 rounded-full backdrop-blur-md flex items-center justify-center"
-                      style={{ background: "hsla(var(--player-accent) / 0.85)", boxShadow: "0 6px 24px hsla(var(--player-accent) / 0.5)" }}
+                      className="w-8 h-8 rounded-full backdrop-blur-md flex items-center justify-center"
+                      style={{ background: "hsla(var(--player-accent) / 0.85)" }}
                     >
-                      <Play className="h-4.5 w-4.5 text-white fill-white" />
+                      <Play className="h-3.5 w-3.5 text-white fill-white" />
                     </div>
                   </div>
-                </div>
 
-                {/* Info */}
-                <div className="p-3">
-                  <p className="text-xs font-semibold text-white leading-tight line-clamp-2">{video.title}</p>
-                  {video.published && (
-                    <p className="text-[10px] text-white/40 mt-1.5">
-                      {new Date(video.published).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" })}
-                    </p>
-                  )}
-                </div>
-              </button>
-            ))}
-          </div>
-        )}
+                  {/* Title tooltip on bottom */}
+                  <div className="absolute bottom-0 left-0 right-0 p-1.5 bg-gradient-to-t from-black/80 to-transparent">
+                    <p className="text-[10px] text-white leading-tight line-clamp-2 font-medium">{video.title}</p>
+                  </div>
+                </button>
+              );
+            })
+          )}
+        </div>
       </div>
     </div>
   );
