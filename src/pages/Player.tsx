@@ -829,7 +829,6 @@ export default function PlayerPage() {
           videoId,
           title: canal.name || "Vídeo",
           thumbnail: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
-          published: new Date().toISOString(),
         }]);
         setSelectedVideoId(videoId);
         setPlaying(true);
