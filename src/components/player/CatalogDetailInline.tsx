@@ -339,7 +339,7 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
             <img
               src={logoUrl}
               alt={catalogName}
-              className="h-36 sm:h-52 lg:h-60 object-contain object-left"
+              className="h-44 sm:h-64 lg:h-[19rem] object-contain object-left"
               style={{ filter: "drop-shadow(0 4px 30px rgba(0,0,0,0.7))" }}
             />
           ) : (
