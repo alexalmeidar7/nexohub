@@ -458,9 +458,9 @@ function StreamingCard({ channel, currentProgram, nowPlaying, onClick }: {
       )}
 
       {/* Channel logo top-right */}
-      {channel.logo_url && (
+      {channel.background_url && (
         <div className="absolute top-2 right-2 z-[15] w-10 h-7 flex items-center justify-center">
-          <img src={channel.logo_url} alt="" className="max-w-full max-h-full object-contain" />
+          <img src={channel.background_url} alt="" className="max-w-full max-h-full object-contain" />
         </div>
       )}
 
