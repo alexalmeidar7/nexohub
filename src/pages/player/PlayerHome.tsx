@@ -1145,6 +1145,8 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                     nextProgram={nextProgram}
                     nowPlaying={nowPlaying}
                     channelName={channelName}
+                    channelIsHd={streamingChannels[0]?.is_hd ?? false}
+                    channelIsStereo={streamingChannels[0]?.is_stereo ?? false}
                     onPlay={() => goToPlayer(streamingChannels[0]?.id)}
                     onGrade={() => setShowGrade(true)}
                   />
