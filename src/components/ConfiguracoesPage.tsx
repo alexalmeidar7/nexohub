@@ -300,14 +300,20 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
     setCanalMode(isCatalog ? "catalog" : "live");
     setCanalForm({ numero_canal: String(c.numero_canal), name: c.name, logo_url: c.logo_url, cover_url: c.cover_url, background_url: c.background_url || "", url: c.url, type: isCatalog ? "audio_live" : c.type, catalog_name: c.catalog_name || "", is_hd: c.is_hd, is_stereo: c.is_stereo, classificacao_etaria: c.classificacao_etaria || "L" });
     setEditingCanal(c.id);
+    // Restore description from saved channel data
+    setVideoDescription(c.descricao || "");
     // Restore catalog-specific fields
     if (isCatalog) {
       const isIndividual = !c.url || !c.url.includes("youtube.com/playlist");
       setCatalogContentMode(isIndividual ? "individual" : "playlist");
       setVideoCoverUrl(c.cover_url || "");
       setVideoThumbUrl(c.logo_url || "");
-      setVideoDescription(c.background_url ? "" : "");
       setNewCatalogMode(false);
+    }
+    // Try to match a linked program by horario
+    if (c.horario_inicio && c.horario_fim) {
+      const matchedProg = programas.find(p => p.horario_inicio === c.horario_inicio && p.horario_fim === c.horario_fim);
+      if (matchedProg) setSelectedProgramaId(matchedProg.id);
     }
   };
 
