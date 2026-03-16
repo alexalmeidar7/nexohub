@@ -13,9 +13,52 @@ interface Props {
   onEnded: () => void;
 }
 
-function extractYoutubeId(url: string): string | null {
-  const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([a-zA-Z0-9_-]{11})/);
-  return match ? match[1] : null;
+function extractYoutubeId(rawUrl: string): string | null {
+  const input = rawUrl?.trim();
+  if (!input) return null;
+
+  const isVideoId = (value: string) => /^[a-zA-Z0-9_-]{11}$/.test(value);
+
+  try {
+    const parsed = new URL(input);
+    const host = parsed.hostname.replace(/^www\./, "").toLowerCase();
+
+    if (host === "youtu.be") {
+      const id = parsed.pathname.split("/").filter(Boolean)[0] || "";
+      return isVideoId(id) ? id : null;
+    }
+
+    if (host.endsWith("youtube.com") || host.endsWith("youtube-nocookie.com")) {
+      const byQuery = parsed.searchParams.get("v") || "";
+      if (isVideoId(byQuery)) return byQuery;
+
+      const parts = parsed.pathname.split("/").filter(Boolean);
+      const markerIndex = parts.findIndex((part) => ["embed", "shorts", "live", "v"].includes(part));
+      const byPath = markerIndex >= 0 ? parts[markerIndex + 1] || "" : "";
+      if (isVideoId(byPath)) return byPath;
+    }
+  } catch {
+    // fallback regex below
+  }
+
+  const fallbackMatch = input.match(/(?:youtu\.be\/|youtube(?:-nocookie)?\.com\/(?:watch\?.*v=|embed\/|shorts\/|live\/|v\/))([a-zA-Z0-9_-]{11})/);
+  return fallbackMatch ? fallbackMatch[1] : null;
+}
+
+function getYoutubeErrorMessage(code?: number): string {
+  switch (code) {
+    case 2:
+      return "Link do YouTube inválido.";
+    case 5:
+      return "Falha no player HTML5 do YouTube.";
+    case 100:
+      return "Vídeo do YouTube não encontrado ou privado.";
+    case 101:
+    case 150:
+      return "Este vídeo do YouTube não permite incorporação.";
+    default:
+      return "Não foi possível reproduzir este vídeo do YouTube.";
+  }
 }
 
 export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLinkUrl, prerollMediaType, prerollYoutubeUrl, onSkip, onEnded }: Props) {
