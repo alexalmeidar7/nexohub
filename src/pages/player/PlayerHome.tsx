@@ -436,9 +436,9 @@ function StreamingCard({ channel, currentProgram, nowPlaying, onClick }: {
         width: "160px",
         aspectRatio: "2/3",
         background: "linear-gradient(145deg, rgba(255,255,255,0.06) 0%, hsl(var(--player-bg)) 100%)",
-        transform: hovered ? "translateY(-6px) scale(1.02)" : "none",
-        boxShadow: hovered ? "0 20px 60px -15px rgba(0,0,0,0.7), 0 0 40px -10px hsla(var(--player-accent) / 0.25)" : "0 4px 20px -8px rgba(0,0,0,0.4)",
-        border: hovered ? "1px solid hsla(var(--player-accent) / 0.4)" : "1px solid rgba(255,255,255,0.06)",
+        transform: "none",
+        boxShadow: "0 4px 20px -8px rgba(0,0,0,0.4)",
+        border: hovered ? "2px solid hsl(var(--player-accent))" : "1px solid rgba(255,255,255,0.06)",
       }}
     >
       {/* Cover image */}
