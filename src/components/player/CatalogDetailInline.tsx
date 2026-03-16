@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Play, Film, Calendar, Clock } from "lucide-react";
+import { Play, Film, Calendar, Clock, Plus, Minus } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface Channel {
@@ -356,27 +356,18 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
           {programa?.descricao && (
             <div className="max-w-md">
               <p
-                className={`text-[13px] text-white/45 leading-relaxed ${descExpanded ? "" : "line-clamp-2"}`}
+                className={`text-[13px] text-white/45 leading-relaxed inline ${descExpanded ? "" : "line-clamp-2"}`}
                 style={{ textShadow: "0 1px 8px rgba(0,0,0,0.5)" }}
               >
                 {programa.descricao}
-                {!descExpanded && (
-                  <button
-                    onClick={() => setDescExpanded(true)}
-                    className="inline ml-1 text-white/70 hover:text-white font-bold transition-colors"
-                  >
-                    +
-                  </button>
-                )}
               </p>
-              {descExpanded && (
-                <button
-                  onClick={() => setDescExpanded(false)}
-                  className="text-[11px] text-white/50 hover:text-white/70 mt-1 transition-colors"
-                >
-                  ver menos
-                </button>
-              )}
+              <button
+                onClick={() => setDescExpanded(prev => !prev)}
+                className="inline-flex items-center justify-center ml-1.5 w-5 h-5 rounded-full border border-white/25 text-white/60 hover:text-white hover:border-white/50 transition-all duration-200 align-middle"
+                title={descExpanded ? "Ver menos" : "Ver mais"}
+              >
+                {descExpanded ? <Minus className="h-3 w-3" /> : <Plus className="h-3 w-3" />}
+              </button>
             </div>
           )}
 
