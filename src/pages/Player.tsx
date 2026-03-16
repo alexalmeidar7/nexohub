@@ -7,6 +7,7 @@ import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import {
   ChevronUp,
   ChevronDown,
+  ChevronLeft,
   ChevronRight,
   Play,
   Pause,
