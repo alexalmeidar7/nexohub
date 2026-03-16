@@ -56,6 +56,9 @@ interface Canal {
   is_hd: boolean;
   is_stereo: boolean;
   classificacao_etaria: string;
+  horario_inicio: string;
+  horario_fim: string;
+  descricao: string;
 }
 
 /* ── Styled input helper ── */
@@ -159,6 +162,9 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
         catalog_name: d.catalog_name || "",
         is_hd: d.is_hd || false, is_stereo: d.is_stereo || false,
         classificacao_etaria: d.classificacao_etaria || "L",
+        horario_inicio: d.horario_inicio || "",
+        horario_fim: d.horario_fim || "",
+        descricao: d.descricao || "",
       })));
     }
     setLoadingCanais(false);
@@ -246,6 +252,8 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
       if (!canalForm.name || !canalForm.url) { toast.error("Preencha Nome e URL."); return; }
     }
     const selectedProg = programas.find(p => p.id === selectedProgramaId);
+    // When editing, preserve existing channel values if no program is selected
+    const existingCanal = editingCanal ? canais.find(c => c.id === editingCanal) : null;
     const payload: any = {
       name: canalMode === "catalog" ? (canalForm.name || canalForm.catalog_name) : canalForm.name,
       logo_url: (canalMode === "catalog" && catalogContentMode === "individual" && videoThumbUrl) ? videoThumbUrl : canalForm.logo_url,
@@ -256,9 +264,9 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
       numero_canal: canalForm.numero_canal,
       is_hd: canalForm.is_hd, is_stereo: canalForm.is_stereo,
       classificacao_etaria: canalForm.classificacao_etaria,
-      horario_inicio: selectedProg?.horario_inicio || "",
-      horario_fim: selectedProg?.horario_fim || "",
-      descricao: videoDescription || selectedProg?.descricao || "",
+      horario_inicio: selectedProg?.horario_inicio || existingCanal?.horario_inicio || "",
+      horario_fim: selectedProg?.horario_fim || existingCanal?.horario_fim || "",
+      descricao: videoDescription || selectedProg?.descricao || existingCanal?.descricao || "",
     };
     setSavingCanal(true);
     if (editingCanal) {
@@ -292,14 +300,20 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
     setCanalMode(isCatalog ? "catalog" : "live");
     setCanalForm({ numero_canal: String(c.numero_canal), name: c.name, logo_url: c.logo_url, cover_url: c.cover_url, background_url: c.background_url || "", url: c.url, type: isCatalog ? "audio_live" : c.type, catalog_name: c.catalog_name || "", is_hd: c.is_hd, is_stereo: c.is_stereo, classificacao_etaria: c.classificacao_etaria || "L" });
     setEditingCanal(c.id);
+    // Restore description from saved channel data
+    setVideoDescription(c.descricao || "");
     // Restore catalog-specific fields
     if (isCatalog) {
       const isIndividual = !c.url || !c.url.includes("youtube.com/playlist");
       setCatalogContentMode(isIndividual ? "individual" : "playlist");
       setVideoCoverUrl(c.cover_url || "");
       setVideoThumbUrl(c.logo_url || "");
-      setVideoDescription(c.background_url ? "" : "");
       setNewCatalogMode(false);
+    }
+    // Try to match a linked program by horario
+    if (c.horario_inicio && c.horario_fim) {
+      const matchedProg = programas.find(p => p.horario_inicio === c.horario_inicio && p.horario_fim === c.horario_fim);
+      if (matchedProg) setSelectedProgramaId(matchedProg.id);
     }
   };
 
