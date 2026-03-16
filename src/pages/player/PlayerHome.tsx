@@ -691,6 +691,7 @@ function TrendingCard({ item, idx, channels, onClick }: {
         events: {
           onReady: (e: any) => {
             e.target.playVideo();
+            setVideoReady(true);
             setTimeout(() => fadeInAudio(), 300);
           },
         },
