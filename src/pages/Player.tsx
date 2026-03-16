@@ -1928,8 +1928,8 @@ export default function PlayerPage() {
         />
       )}
 
-      {/* Buffering overlay */}
-      {streamStalled && playing && (
+      {/* Buffering overlay — hidden for catalog channels */}
+      {streamStalled && playing && !isCatalog && (
         <div className="absolute inset-0 flex flex-col items-center justify-center z-20 bg-black/60 gap-4">
           <Loader2 className="animate-spin" size={56} style={{ color: "#d30707" }} />
           <span className="text-white text-sm font-bold tracking-wide uppercase animate-pulse">Sintonizando canal...</span>
@@ -2018,8 +2018,10 @@ export default function PlayerPage() {
         >
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-1 sm:gap-0 rounded-2xl border border-white/10 px-2 sm:px-5 py-2 sm:py-3 backdrop-blur-xl" style={{ backgroundColor: "rgba(0, 0, 0, 0.5)", boxShadow: "0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1)" }}>
 
-          {/* Row 1 on mobile: Channel + Play + Volume */}
-          <div className="flex items-center gap-2 sm:gap-3 sm:pr-5 sm:border-r border-white/10 shrink-0">
+           {/* Row 1 on mobile: Channel + Play + Volume */}
+           <div className="flex items-center gap-2 sm:gap-3 sm:pr-5 sm:border-r border-white/10 shrink-0">
+            {/* Channel nav arrows — hidden for catalog */}
+            {!isCatalog && (
             <div className="flex flex-col items-center gap-0.5 sm:gap-1">
               {liveChannels.length > 1 && (
                 <button onClick={() => navigateChannel(-1)} className="text-white/60 hover:text-white hover:bg-[#e60000] rounded px-1.5 py-1 sm:px-2 sm:py-2 transition-all" title="Canal anterior"><ChevronUp size={14} /></button>
@@ -2036,6 +2038,7 @@ export default function PlayerPage() {
                 <button onClick={() => navigateChannel(1)} className="text-white/60 hover:text-white hover:bg-[#e60000] rounded px-1.5 py-1 sm:px-2 sm:py-2 transition-all" title="Próximo canal"><ChevronDown size={14} /></button>
               )}
             </div>
+            )}
             {canal?.background_url && canal.background_url.trim() !== "" ? (
               <img src={canal.background_url} alt="" className="w-12 h-12 sm:w-20 sm:h-20 rounded-lg object-contain" />
             ) : canal?.logo_url && canal.logo_url.trim() !== "" ? (
@@ -2043,9 +2046,29 @@ export default function PlayerPage() {
             ) : (
               <div className="w-12 h-12 sm:w-20 sm:h-20 rounded-lg bg-white/10 flex items-center justify-center text-white text-sm sm:text-lg font-bold">{canal?.numero_canal || "?"}</div>
             )}
-            <button onClick={handlePlayCanal} className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-[#e60000] flex items-center justify-center transition-all hover:bg-[#e60000]/20" title={playing ? "Pausar" : "Reproduzir"}>
-              {playing ? <Pause size={14} color="#e60000" /> : <Play size={14} color="#e60000" fill="#e60000" />}
-            </button>
+
+            {/* Catalog: prev + play/pause + next next to logo */}
+            {isCatalog && selectedVideoId && (
+              <div className="flex items-center gap-1">
+                <button onClick={ytPrevVideo} className="text-white/60 hover:text-white transition-colors rounded-md p-1" title="Vídeo anterior"><SkipBack size={15} /></button>
+                <button onClick={ytTogglePlay} className="w-8 h-8 rounded-full border-2 border-[#e60000] flex items-center justify-center transition-all hover:bg-[#e60000]/20" title={ytPlaying ? "Pausar" : "Reproduzir"}>
+                  {ytPlaying ? <Pause size={14} color="#e60000" /> : <Play size={14} color="#e60000" fill="#e60000" />}
+                </button>
+                <button onClick={ytNextVideo} className="text-white/60 hover:text-white transition-colors rounded-md p-1" title="Próximo vídeo"><SkipForward size={15} /></button>
+              </div>
+            )}
+            {isCatalog && !selectedVideoId && (
+              <button onClick={handlePlayCanal} className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-[#e60000] flex items-center justify-center transition-all hover:bg-[#e60000]/20" title="Reproduzir">
+                <Play size={14} color="#e60000" fill="#e60000" />
+              </button>
+            )}
+
+            {/* Non-catalog: original play/pause */}
+            {!isCatalog && (
+              <button onClick={handlePlayCanal} className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-[#e60000] flex items-center justify-center transition-all hover:bg-[#e60000]/20" title={playing ? "Pausar" : "Reproduzir"}>
+                {playing ? <Pause size={14} color="#e60000" /> : <Play size={14} color="#e60000" fill="#e60000" />}
+              </button>
+            )}
 
             {/* Program info inline on mobile */}
             <div className="flex-1 min-w-0 sm:hidden">
@@ -2124,15 +2147,17 @@ export default function PlayerPage() {
           {/* Controls */}
           <div className="flex items-center gap-1.5 px-1 sm:px-3 sm:border-l border-player-border shrink-0 flex-wrap justify-center sm:justify-start">
 
-            {/* Home button */}
-            <button
-              onClick={handleHomeClick}
-              className="rounded-lg border border-player-border bg-player-surface/80 p-1.5 text-player-muted-foreground hover:text-player-foreground hover:bg-player-surface-hover transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-player-accent"
-              title="Voltar ao Hub"
-              aria-label="Voltar ao Hub"
-            >
-              <Home size={15} />
-            </button>
+            {/* Home button — hidden for catalog */}
+            {!isCatalog && (
+              <button
+                onClick={handleHomeClick}
+                className="rounded-lg border border-player-border bg-player-surface/80 p-1.5 text-player-muted-foreground hover:text-player-foreground hover:bg-player-surface-hover transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-player-accent"
+                title="Voltar ao Hub"
+                aria-label="Voltar ao Hub"
+              >
+                <Home size={15} />
+              </button>
+            )}
 
             {/* Volume */}
             <div className="relative flex items-center" onMouseEnter={showVolume} onMouseLeave={hideVolume}>
@@ -2253,7 +2278,8 @@ export default function PlayerPage() {
 
             {/* Playback & view controls */}
             <div className="flex items-center gap-0.5 rounded-lg border border-player-border bg-player-surface/60 px-1 py-0.5">
-              {isYoutube && (
+              {/* YouTube (non-catalog) controls: home, prev, play, next, playlist */}
+              {isYoutube && !isCatalog && (
                 <button
                   onClick={handleYtHome}
                   className={`rounded-md w-7 h-7 flex items-center justify-center transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-player-accent ${!selectedVideoId ? "bg-player-accent text-player-foreground" : "text-player-muted-foreground hover:text-player-foreground"}`}
@@ -2264,7 +2290,7 @@ export default function PlayerPage() {
                 </button>
               )}
 
-              {isYoutube && selectedVideoId && (
+              {isYoutube && !isCatalog && selectedVideoId && (
                 <>
                   <button onClick={ytPrevVideo} className="text-player-muted-foreground hover:text-player-foreground transition-colors rounded-md p-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-player-accent" title="Vídeo anterior" aria-label="Vídeo anterior">
                     <SkipBack size={13} />
@@ -2278,7 +2304,7 @@ export default function PlayerPage() {
                 </>
               )}
 
-              {isYoutube && (
+              {isYoutube && !isCatalog && (
                 <button
                   onClick={() => setSidebarOpen(!sidebarOpen)}
                   className={`rounded-md w-7 h-7 flex items-center justify-center transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-player-accent ${sidebarOpen ? "bg-player-accent text-player-foreground" : "text-player-muted-foreground hover:text-player-foreground"}`}
@@ -2328,7 +2354,8 @@ export default function PlayerPage() {
             {/* Divider */}
             <div className="hidden sm:block w-px h-5 bg-player-border" />
 
-            {/* Social: Shop + Chat */}
+            {/* Social: Shop + Chat — hidden for catalog */}
+            {!isCatalog && (
             <div className="flex items-center gap-0.5 rounded-lg border border-player-border bg-player-surface/60 px-1 py-0.5">
               <button
                 onClick={() => setShopOpen(!shopOpen)}
@@ -2349,6 +2376,7 @@ export default function PlayerPage() {
                 <MessageSquare size={12} />
               </button>
             </div>
+            )}
           </div>
 
           {/* Next / Schedule — hidden on mobile */}
