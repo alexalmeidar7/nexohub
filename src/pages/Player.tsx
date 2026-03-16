@@ -195,7 +195,11 @@ function useBufferingDetection(videoRef: React.RefObject<HTMLVideoElement | null
   const [buffering, setBuffering] = useState(false);
 
   useEffect(() => {
-    const elements = [videoRef.current, audioRef.current].filter(Boolean) as HTMLMediaElement[];
+    const video = videoRef.current;
+    const audio = audioRef.current;
+    const elements = [video, audio].filter(Boolean) as HTMLMediaElement[];
+    if (elements.length === 0) return;
+
     const onWaiting = () => setBuffering(true);
     const onReady = () => setBuffering(false);
     
@@ -211,7 +215,7 @@ function useBufferingDetection(videoRef: React.RefObject<HTMLVideoElement | null
         el.removeEventListener("canplay", onReady);
       });
     };
-  }, []);
+  }, [videoRef, audioRef]);
 
   return { buffering, setBuffering };
 }
@@ -262,16 +266,9 @@ export default function PlayerPage() {
   const { user, loading: authLoading, signOut } = useAuth();
   const userId = user?.id ?? null;
 
-  // Diagnostic: log auth/user changes and tab visibility
-  useEffect(() => {
-    console.log("[PLAYER-DIAG] Auth/user state changed", { userId, authLoading, userEmail: user?.email });
-  }, [userId, authLoading, user]);
+  // Diagnostic logs — disabled in production
+  // useEffect(() => { console.log("[PLAYER-DIAG] Auth/user state changed", { userId, authLoading }); }, [userId, authLoading]);
 
-  useEffect(() => {
-    const onVis = () => console.log("[PLAYER-DIAG] visibilitychange →", document.visibilityState, { userId, authLoading });
-    document.addEventListener("visibilitychange", onVis);
-    return () => document.removeEventListener("visibilitychange", onVis);
-  }, [userId, authLoading]);
   const [publicUserId, setPublicUserId] = useState<string | null>(null);
   const publicBootstrapRef = useRef<{ slug: string | null; loaded: boolean }>({ slug: null, loaded: false });
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -563,16 +560,13 @@ export default function PlayerPage() {
   useEffect(() => {
     let cancelled = false;
     const slug = userSlug ?? null;
-    console.log("[PLAYER-DIAG] Main useEffect fired", { isPublicMode, userId, authLoading, slug, bootstrapState: { ...publicBootstrapRef.current } });
 
     // PUBLIC MODE: fetch via edge function (bootstrap only once per slug)
     if (isPublicMode) {
       const alreadyBootstrapped = publicBootstrapRef.current.loaded && publicBootstrapRef.current.slug === slug;
       if (alreadyBootstrapped) {
-        console.log("[PLAYER-DIAG] Public bootstrap SKIPPED (already loaded)");
         return () => { cancelled = true; };
       }
-      console.log("[PLAYER-DIAG] Public bootstrap STARTING for slug:", slug);
 
       if (!slug) {
         setCanais([]);
@@ -642,9 +636,8 @@ export default function PlayerPage() {
     publicBootstrapRef.current = { slug: null, loaded: false };
 
     // AUTHENTICATED MODE (original logic)
-    if (authLoading) { console.log("[PLAYER-DIAG] Auth still loading, waiting..."); setLoadingStatus("Autenticando..."); return; }
-    if (!userId) { console.log("[PLAYER-DIAG] No userId, clearing canais"); setCanais([]); setLoading(false); return; }
-    console.log("[PLAYER-DIAG] Authenticated fetch starting for userId:", userId);
+    if (authLoading) { setLoadingStatus("Autenticando..."); return; }
+    if (!userId) { setCanais([]); setLoading(false); return; }
 
     const fetchAll = async () => {
       setLoading(true);
@@ -1079,9 +1072,11 @@ export default function PlayerPage() {
   );
 
   // Detect stream stall and auto-reconnect — conservative approach for live streams
+  const streamStalledRef = useRef(false);
   useEffect(() => {
-    if (!playing || !canal || canal.type === "youtube") {
+    if (!playing || !canal || canal.type === "youtube" || canal.type === "catalog") {
       setStreamStalled(false);
+      streamStalledRef.current = false;
       if (stallTimerRef.current) clearTimeout(stallTimerRef.current);
       return;
     }
@@ -1096,6 +1091,7 @@ export default function PlayerPage() {
       if (reconnectAttempts >= maxReconnects) return;
       reconnectAttempts++;
       setStreamStalled(true);
+      streamStalledRef.current = true;
       setTimeout(() => {
         if (canal) playStream(canal.url, canal.type);
       }, 3000 * reconnectAttempts);
@@ -1103,8 +1099,9 @@ export default function PlayerPage() {
 
     const onTimeUpdate = () => {
       lastTimeUpdate = Date.now();
-      if (streamStalled) {
+      if (streamStalledRef.current) {
         setStreamStalled(false);
+        streamStalledRef.current = false;
         reconnectAttempts = 0;
       }
     };
@@ -1112,19 +1109,17 @@ export default function PlayerPage() {
     const onPlaying = () => {
       lastTimeUpdate = Date.now();
       setStreamStalled(false);
+      streamStalledRef.current = false;
       reconnectAttempts = 0;
       if (stallTimerRef.current) clearTimeout(stallTimerRef.current);
     };
 
     const onError = () => {
-      // Only reconnect if no timeupdate for 10s (real failure, not transient)
       if (Date.now() - lastTimeUpdate > 10000) {
         tryReconnect();
       }
     };
 
-    // Health check: only reconnect if no timeupdate for 15+ seconds (real dead stream)
-    // Skip check while tab is hidden — browsers throttle events in background tabs
     const healthCheck = setInterval(() => {
       if (!playing || canal?.type === "youtube") return;
       if (document.hidden) { lastTimeUpdate = Date.now(); return; }
@@ -1135,7 +1130,6 @@ export default function PlayerPage() {
       }
     }, 10000);
 
-    // Reset timer when tab becomes visible so we don't false-trigger a reconnect
     const onVisible = () => { if (document.visibilityState === "visible") lastTimeUpdate = Date.now(); };
     document.addEventListener("visibilitychange", onVisible);
 
@@ -1151,7 +1145,7 @@ export default function PlayerPage() {
       if (stallTimerRef.current) clearTimeout(stallTimerRef.current);
       clearInterval(healthCheck);
     };
-  }, [playing, canal, playStream, streamStalled]);
+  }, [playing, canal, playStream]);
 
   useEffect(() => {
     if (!prerollDone) return;
@@ -1613,9 +1607,9 @@ export default function PlayerPage() {
   // Cleanup on unmount
   useEffect(() => { return () => { if (hlsRef.current) hlsRef.current.destroy(); }; }, []);
 
-  // Periodic clock tick to re-compute currentProg every 10s
+  // Periodic clock tick to re-compute currentProg every 30s (reduced from 10s)
   useEffect(() => {
-    const interval = setInterval(() => setClock(c => c + 1), 10000);
+    const interval = setInterval(() => setClock(c => c + 1), 30000);
     return () => clearInterval(interval);
   }, []);
 
@@ -2503,17 +2497,9 @@ export default function PlayerPage() {
                 <ChevronRight size={16} />
               </div>
             </div>
-            {/* Expandable "A seguir" panel */}
+            {/* Expandable "A seguir" panel — uses CSS group-hover instead of imperative listeners */}
             <div
-              className="overflow-hidden transition-all duration-300 ease-in-out flex items-stretch gap-2"
-              style={{ maxWidth: "0", opacity: 0 }}
-              ref={(el) => {
-                if (!el) return;
-                const parent = el.closest(".group\\/next");
-                if (!parent) return;
-                parent.addEventListener("mouseenter", () => { el.style.maxWidth = "320px"; el.style.opacity = "1"; el.style.paddingLeft = "12px"; });
-                parent.addEventListener("mouseleave", () => { el.style.maxWidth = "0"; el.style.opacity = "0"; el.style.paddingLeft = "0"; });
-              }}
+              className="overflow-hidden transition-all duration-300 ease-in-out flex items-stretch gap-2 max-w-0 opacity-0 group-hover/next:max-w-[320px] group-hover/next:opacity-100 group-hover/next:pl-3"
             >
               <div className="min-w-0 flex-1" style={{ maxWidth: "200px" }}>
                 <span className="text-[10px] font-bold uppercase" style={{ color: "#e60000" }}>A seguir:</span>
