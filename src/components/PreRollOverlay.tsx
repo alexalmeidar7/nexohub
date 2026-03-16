@@ -127,26 +127,30 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
 
   // Track time for YouTube with stall/error detection
   useEffect(() => {
-    if (!isYoutube || !ytId) return;
+    if (!showYoutubePlayer || !ytId) return;
     ytDestroyedRef.current = false;
 
     const fallbackTimer = hasFallbackVideo ? null : setTimeout(() => onEndedRef.current(), 120000);
 
-    // Detect YouTube stall (captcha, region block, autoplay blocked, etc.)
     let progressDetected = false;
+
+    const failYoutubePlayback = (message: string) => {
+      if (pollRef.current) clearInterval(pollRef.current);
+      try {
+        ytPlayerRef.current?.destroy();
+        ytDestroyedRef.current = true;
+      } catch {}
+      setCurrentTime(0);
+      setDuration(0);
+      setYtErrorMessage(message);
+      setYtFailed(true);
+    };
+
     const stallTimer = setTimeout(() => {
       if (!progressDetected) {
-        // Destroy the YT player before switching to fallback
-        if (pollRef.current) clearInterval(pollRef.current);
-        try { ytPlayerRef.current?.destroy(); ytDestroyedRef.current = true; } catch {}
-        setCurrentTime(0);
-        setDuration(0);
-        setYtFailed(true);
-        if (!hasFallbackVideo) {
-          setTimeout(() => onEndedRef.current(), 3000);
-        }
+        failYoutubePlayback("Não foi possível iniciar o vídeo do YouTube.");
       }
-    }, 8000);
+    }, 15000);
 
     const initPlayer = () => {
       if (ytDestroyedRef.current) return;
@@ -186,15 +190,8 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
             if (event.data === 1) progressDetected = true;
             if (event.data === 0) onEndedRef.current();
           },
-          onError: () => {
-            if (pollRef.current) clearInterval(pollRef.current);
-            try { ytPlayerRef.current?.destroy(); ytDestroyedRef.current = true; } catch {}
-            setCurrentTime(0);
-            setDuration(0);
-            setYtFailed(true);
-            if (!hasFallbackVideo) {
-              setTimeout(() => onEndedRef.current(), 2000);
-            }
+          onError: (event: any) => {
+            failYoutubePlayback(getYoutubeErrorMessage(event?.data));
           },
         },
       });
@@ -220,7 +217,7 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
         try { ytPlayerRef.current?.destroy(); } catch {}
       }
     };
-  }, [isYoutube, ytId, hasFallbackVideo]);
+  }, [showYoutubePlayer, ytId, hasFallbackVideo]);
 
   const canSkip = countdown <= 0;
 
