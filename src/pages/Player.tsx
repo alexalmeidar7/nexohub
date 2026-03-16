@@ -1768,15 +1768,33 @@ export default function PlayerPage() {
       {/* Content wrapper with fade transition */}
       <div className={`transition-opacity duration-400 ease-in-out ${pageFadeOut ? "opacity-0" : "opacity-100"}`}>
 
-      {/* Catalog: Back button — top-left corner */}
+      {/* Catalog: Back button — top-left, styled like control bar */}
       {isCatalog && (
-        <button
-          onClick={handleHomeClick}
-          className="absolute top-5 left-5 z-[60] flex items-center gap-1.5 text-white/50 hover:text-white text-xs font-medium transition-colors"
-        >
-          <ChevronLeft size={16} />
-          <span>Voltar</span>
-        </button>
+        <>
+          {/* Top hover zone to trigger visibility */}
+          <div
+            className="absolute top-0 left-0 right-0 z-[59] h-16"
+            onMouseEnter={showBar}
+            onMouseLeave={hideBar}
+          />
+          <div
+            className="absolute top-4 left-[calc(10%+8px)] z-[60] transition-all duration-400 ease-in-out"
+            style={{
+              opacity: barVisible ? 1 : 0,
+              transform: barVisible ? "translateY(0)" : "translateY(-20px)",
+              pointerEvents: barVisible ? "auto" : "none",
+            }}
+          >
+            <button
+              onClick={handleHomeClick}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl text-white/70 hover:text-white text-xs font-medium transition-all backdrop-blur-xl border border-white/10"
+              style={{ backgroundColor: "rgba(0, 0, 0, 0.5)", boxShadow: "0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1)" }}
+            >
+              <ChevronLeft size={14} />
+              Voltar
+            </button>
+          </div>
+        </>
       )}
       {/* Pre-Roll Overlay */}
       {((prerollUrl || (prerollMediaType === "youtube" && prerollYoutubeUrl)) && (!prerollDone || prerollShowing)) && (
