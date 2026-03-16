@@ -16,6 +16,8 @@ interface Channel {
   horario_inicio?: string;
   horario_fim?: string;
   descricao?: string;
+  is_hd?: boolean | null;
+  is_stereo?: boolean | null;
 }
 
 interface PlaylistVideo {
