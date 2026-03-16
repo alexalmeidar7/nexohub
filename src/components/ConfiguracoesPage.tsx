@@ -546,11 +546,13 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
               <label className="flex items-center gap-2.5 cursor-pointer group" style={{ color: "#0d0446" }}>
                 <input type="checkbox" checked={canalForm.is_hd} onChange={(e) => setCanalForm(p => ({ ...p, is_hd: e.target.checked }))}
                   className="w-4 h-4 rounded" style={{ accentColor: "#268ffa" }} />
-                <span className="text-sm font-semibold group-hover:opacity-80 transition-opacity">HD</span>
+                <img src="/images/icon-fullhd.png" alt="FULL HD" className="h-4 opacity-80 group-hover:opacity-100 transition-opacity" />
+                <span className="text-sm font-semibold group-hover:opacity-80 transition-opacity">FULL HD</span>
               </label>
               <label className="flex items-center gap-2.5 cursor-pointer group" style={{ color: "#0d0446" }}>
                 <input type="checkbox" checked={canalForm.is_stereo} onChange={(e) => setCanalForm(p => ({ ...p, is_stereo: e.target.checked }))}
                   className="w-4 h-4 rounded" style={{ accentColor: "#268ffa" }} />
+                <img src="/images/icon-stereo.png" alt="Stereo" className="h-4 opacity-80 group-hover:opacity-100 transition-opacity" />
                 <span className="text-sm font-semibold group-hover:opacity-80 transition-opacity">Áudio Estéreo</span>
               </label>
             </div>
