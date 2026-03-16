@@ -239,12 +239,20 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
       }
       // Filter out future-dated and sort (compare date-only, ignoring time)
       const todayStr = new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
-      const validVideos = allVideos.filter(v => {
-        const pubDate = v.published?.slice(0, 10) || "";
-        return pubDate <= todayStr;
-      });
-      validVideos.sort((a, b) => new Date(b.published).getTime() - new Date(a.published).getTime());
-      setVideos(validVideos);
+      // Deduplicate by videoId to show all videos individually (no grouping)
+      const seenIds = new Set<string>();
+      const uniqueVideos: PlaylistVideo[] = [];
+      for (const v of allVideos) {
+        if (!seenIds.has(v.videoId)) {
+          seenIds.add(v.videoId);
+          const pubDate = v.published?.slice(0, 10) || "";
+          if (pubDate <= todayStr) {
+            uniqueVideos.push(v);
+          }
+        }
+      }
+      uniqueVideos.sort((a, b) => new Date(b.published).getTime() - new Date(a.published).getTime());
+      setVideos(uniqueVideos);
       // Don't auto-select any video on initial load
       setLoading(false);
     };
@@ -482,11 +490,11 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
         <div
           className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none"
           style={{
-            background: "rgba(20, 60, 140, 0.35)",
+            background: "rgba(0, 0, 0, 0.85)",
             backdropFilter: "blur(28px) saturate(1.6)",
             WebkitBackdropFilter: "blur(28px) saturate(1.6)",
-            border: "1px solid rgba(100, 160, 255, 0.2)",
-            boxShadow: "0 8px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08)",
+            border: "1px solid rgba(255, 255, 255, 0.1)",
+            boxShadow: "0 8px 40px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.05)",
           }}
         />
 
@@ -498,13 +506,13 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
           {/* Auto-scroll hover zones */}
           <div
             className="absolute left-0 top-0 bottom-0 w-16 z-10 cursor-w-resize rounded-l-2xl overflow-hidden"
-            style={{ background: "linear-gradient(to right, rgba(10,30,80,0.5), transparent)" }}
+            style={{ background: "linear-gradient(to right, rgba(0,0,0,0.6), transparent)" }}
             onMouseEnter={() => startAutoScroll("left")}
             onMouseLeave={stopAutoScroll}
           />
           <div
             className="absolute right-0 top-0 bottom-0 w-16 z-10 cursor-e-resize rounded-r-2xl overflow-hidden"
-            style={{ background: "linear-gradient(to left, rgba(10,30,80,0.5), transparent)" }}
+            style={{ background: "linear-gradient(to left, rgba(0,0,0,0.6), transparent)" }}
             onMouseEnter={() => startAutoScroll("right")}
             onMouseLeave={stopAutoScroll}
           />
