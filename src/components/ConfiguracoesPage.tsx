@@ -127,7 +127,12 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
   const [selectedProgramaId, setSelectedProgramaId] = useState("");
 
   useEffect(() => {
-    if (user) getEmpresaConfig(user.id).then(c => { setConfig(c); setLoading(false); });
+    if (user) {
+      getEmpresaConfig(user.id).then(c => { setConfig(c); setLoading(false); });
+      supabase.from("programas").select("id, nome, descricao, horario_inicio, horario_fim, classificacao_etaria").eq("user_id", user.id).eq("ativo", true).order("nome").then(({ data }) => {
+        if (data) setProgramas(data.map(p => ({ id: p.id, nome: p.nome, descricao: p.descricao || "", horario_inicio: p.horario_inicio, horario_fim: p.horario_fim, classificacao_etaria: p.classificacao_etaria || "L" })));
+      });
+    }
     loadCanais();
   }, []);
 
