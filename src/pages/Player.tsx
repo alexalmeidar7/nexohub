@@ -1076,9 +1076,11 @@ export default function PlayerPage() {
   );
 
   // Detect stream stall and auto-reconnect — conservative approach for live streams
+  const streamStalledRef = useRef(false);
   useEffect(() => {
-    if (!playing || !canal || canal.type === "youtube") {
+    if (!playing || !canal || canal.type === "youtube" || canal.type === "catalog") {
       setStreamStalled(false);
+      streamStalledRef.current = false;
       if (stallTimerRef.current) clearTimeout(stallTimerRef.current);
       return;
     }
@@ -1093,6 +1095,7 @@ export default function PlayerPage() {
       if (reconnectAttempts >= maxReconnects) return;
       reconnectAttempts++;
       setStreamStalled(true);
+      streamStalledRef.current = true;
       setTimeout(() => {
         if (canal) playStream(canal.url, canal.type);
       }, 3000 * reconnectAttempts);
@@ -1100,8 +1103,9 @@ export default function PlayerPage() {
 
     const onTimeUpdate = () => {
       lastTimeUpdate = Date.now();
-      if (streamStalled) {
+      if (streamStalledRef.current) {
         setStreamStalled(false);
+        streamStalledRef.current = false;
         reconnectAttempts = 0;
       }
     };
@@ -1109,19 +1113,17 @@ export default function PlayerPage() {
     const onPlaying = () => {
       lastTimeUpdate = Date.now();
       setStreamStalled(false);
+      streamStalledRef.current = false;
       reconnectAttempts = 0;
       if (stallTimerRef.current) clearTimeout(stallTimerRef.current);
     };
 
     const onError = () => {
-      // Only reconnect if no timeupdate for 10s (real failure, not transient)
       if (Date.now() - lastTimeUpdate > 10000) {
         tryReconnect();
       }
     };
 
-    // Health check: only reconnect if no timeupdate for 15+ seconds (real dead stream)
-    // Skip check while tab is hidden — browsers throttle events in background tabs
     const healthCheck = setInterval(() => {
       if (!playing || canal?.type === "youtube") return;
       if (document.hidden) { lastTimeUpdate = Date.now(); return; }
@@ -1132,7 +1134,6 @@ export default function PlayerPage() {
       }
     }, 10000);
 
-    // Reset timer when tab becomes visible so we don't false-trigger a reconnect
     const onVisible = () => { if (document.visibilityState === "visible") lastTimeUpdate = Date.now(); };
     document.addEventListener("visibilitychange", onVisible);
 
@@ -1148,7 +1149,7 @@ export default function PlayerPage() {
       if (stallTimerRef.current) clearTimeout(stallTimerRef.current);
       clearInterval(healthCheck);
     };
-  }, [playing, canal, playStream, streamStalled]);
+  }, [playing, canal, playStream]);
 
   useEffect(() => {
     if (!prerollDone) return;
