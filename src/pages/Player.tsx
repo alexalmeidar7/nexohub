@@ -607,10 +607,9 @@ export default function PlayerPage() {
           if (data.empresa?.logo) setEmpresaLogo(data.empresa.logo);
 
           const now = new Date();
-          const today = DAY_MAP_FULL[now.getDay()];
           const todayStr = now.toISOString().slice(0, 10);
           const prerolls = (data.prerolls || []).filter((p: any) => {
-            if (p.dias_semana && p.dias_semana.length > 0 && !p.dias_semana.includes(today)) return false;
+            if (!matchesCampaignDay(p.dias_semana, now)) return false;
             if (p.data_inicial && todayStr < p.data_inicial) return false;
             if (p.data_final && todayStr > p.data_final) return false;
             return true;
