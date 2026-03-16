@@ -2422,37 +2422,56 @@ export default function PlayerPage() {
             )}
           </div>
 
-          {/* Next / Schedule — hidden on mobile */}
-          <div className="hidden md:flex pl-3 border-l border-white/10 min-w-0 items-stretch gap-2" style={{ maxWidth: "320px" }}>
-            <div className="min-w-0 flex-1">
-              <span className="text-[10px] font-bold uppercase" style={{ color: "#e60000" }}>A seguir:</span>
-              <div className="text-white text-sm font-medium leading-tight line-clamp-2">
-                {isYoutube ? (nextYtVideo?.title || "Sem vídeo") : (nextProg?.nome || "Sem programação")}
-              </div>
-              {!isYoutube && (
-                <span className="text-[10px] whitespace-nowrap" style={{ color: "#e60000" }}>
-                  {nextProg ? `${nextProg.horario_inicio.slice(0, 5)} - ${nextProg.horario_fim.slice(0, 5)}` : "--:-- - --:--"}
-                </span>
-              )}
-              <div className="mt-0.5">
-                <button onClick={() => setGradeOpen(true)}
-                  className="flex items-center gap-1 text-white text-[8px] font-bold uppercase px-2 py-0.5 rounded-full transition-all"
-                  style={{ backgroundColor: "#e60000", border: "1px solid transparent" }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = "#ed0808"; e.currentTarget.style.backgroundColor = "#000"; }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = "transparent"; e.currentTarget.style.backgroundColor = "#e60000"; }}
-                >
-                  + Grade
-                </button>
+          {/* Next / Schedule — collapsible via red arrow, hidden on mobile */}
+          <div className="hidden md:flex items-stretch relative group/next shrink-0">
+            {/* Red arrow trigger */}
+            <div className="flex items-center pl-2 border-l border-white/10 cursor-pointer">
+              <div className="w-6 h-6 rounded-full flex items-center justify-center transition-all group-hover/next:bg-[#e60000]/20" style={{ color: "#e60000" }}>
+                <ChevronRight size={16} />
               </div>
             </div>
-            {!isYoutube && nextPresenter?.foto && (
-              <div className="relative shrink-0 self-end group overflow-hidden" style={{ width: "80px", height: "100%" }}>
-                <img src={nextPresenter.foto} alt={nextPresenter.nome} title={nextPresenter.nome} className="absolute object-contain object-bottom right-0 bottom-0" style={{ height: "200px", width: "auto", maxWidth: "100%" }} />
-                <span className="absolute left-1/2 -translate-x-1/2 bg-black/90 text-white text-[10px] font-bold px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" style={{ top: "-20px" }}>
-                  {nextPresenter.nome}
-                </span>
+            {/* Expandable "A seguir" panel */}
+            <div
+              className="overflow-hidden transition-all duration-300 ease-in-out flex items-stretch gap-2"
+              style={{ maxWidth: "0", opacity: 0 }}
+              ref={(el) => {
+                if (!el) return;
+                const parent = el.closest(".group\\/next");
+                if (!parent) return;
+                parent.addEventListener("mouseenter", () => { el.style.maxWidth = "320px"; el.style.opacity = "1"; el.style.paddingLeft = "12px"; });
+                parent.addEventListener("mouseleave", () => { el.style.maxWidth = "0"; el.style.opacity = "0"; el.style.paddingLeft = "0"; });
+              }}
+            >
+              <div className="min-w-0 flex-1 whitespace-nowrap">
+                <span className="text-[10px] font-bold uppercase" style={{ color: "#e60000" }}>A seguir:</span>
+                <div className="text-white text-sm font-medium leading-tight line-clamp-2">
+                  {isYoutube ? (nextYtVideo?.title || "Sem vídeo") : (nextProg?.nome || "Sem programação")}
+                </div>
+                {!isYoutube && (
+                  <span className="text-[10px] whitespace-nowrap" style={{ color: "#e60000" }}>
+                    {nextProg ? `${nextProg.horario_inicio.slice(0, 5)} - ${nextProg.horario_fim.slice(0, 5)}` : "--:-- - --:--"}
+                  </span>
+                )}
+                <div className="mt-0.5">
+                  <button onClick={() => setGradeOpen(true)}
+                    className="flex items-center gap-1 text-white text-[8px] font-bold uppercase px-2 py-0.5 rounded-full transition-all"
+                    style={{ backgroundColor: "#e60000", border: "1px solid transparent" }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = "#ed0808"; e.currentTarget.style.backgroundColor = "#000"; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = "transparent"; e.currentTarget.style.backgroundColor = "#e60000"; }}
+                  >
+                    + Grade
+                  </button>
+                </div>
               </div>
-            )}
+              {!isYoutube && nextPresenter?.foto && (
+                <div className="relative shrink-0 self-end group overflow-hidden" style={{ width: "80px", height: "100%" }}>
+                  <img src={nextPresenter.foto} alt={nextPresenter.nome} title={nextPresenter.nome} className="absolute object-contain object-bottom right-0 bottom-0" style={{ height: "200px", width: "auto", maxWidth: "100%" }} />
+                  <span className="absolute left-1/2 -translate-x-1/2 bg-black/90 text-white text-[10px] font-bold px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" style={{ top: "-20px" }}>
+                    {nextPresenter.nome}
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
