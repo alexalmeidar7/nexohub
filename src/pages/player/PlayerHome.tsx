@@ -747,8 +747,10 @@ function TrendingCard({ item, idx, channels, onClick }: {
       {hovered && (
         <div className="absolute top-0 bottom-0 right-0 z-[2] flex flex-col justify-end" style={{ left: "150px" }}>
           {showVideo ? (
-            <div className="absolute inset-0 animate-fade-in pointer-events-none">
-              <div className="yt-host w-full h-full" />
+            <div className="absolute inset-0 animate-fade-in pointer-events-none overflow-hidden">
+              <div className="yt-host w-full h-full [&_iframe]:pointer-events-none [&_iframe]:border-none" />
+              {/* Overlay to block YouTube UI and hide residual branding */}
+              <div className="absolute inset-0 z-[1]" />
             </div>
           ) : coverSrc ? (
             <img src={coverSrc} alt="" className="absolute inset-0 w-full h-full object-cover opacity-30 blur-sm" />
