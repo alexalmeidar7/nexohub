@@ -439,8 +439,3 @@ table:not([data-no-row-hover]) tbody tr:hover {
   position: relative;
   overflow: hidden;
 }
-/* Scale the iframe slightly to crop out YouTube's top/bottom gradient bars */
-.yt-host iframe {
-  transform: scale(1.15);
-  transform-origin: center center;
-}
