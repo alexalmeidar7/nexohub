@@ -229,13 +229,27 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
         if (!ch.url) continue;
         const plMatch = ch.url.match(/[?&]list=([a-zA-Z0-9_-]+)/);
         const playlistId = plMatch?.[1];
-        if (!playlistId) continue;
-        try {
-          const { data, error } = await supabase.functions.invoke("youtube-playlist", { body: { playlistId } });
-          if (!error && data?.videos) {
-            allVideos.push(...data.videos);
+        if (playlistId) {
+          // Fetch from YouTube playlist
+          try {
+            const { data, error } = await supabase.functions.invoke("youtube-playlist", { body: { playlistId } });
+            if (!error && data?.videos) {
+              allVideos.push(...data.videos);
+            }
+          } catch {}
+        } else {
+          // Handle individual video URLs (watch?v=XXXX)
+          const vidMatch = ch.url.match(/[?&]v=([a-zA-Z0-9_-]+)/);
+          const videoId = vidMatch?.[1];
+          if (videoId) {
+            allVideos.push({
+              videoId,
+              title: ch.name || "Vídeo",
+              thumbnail: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
+              published: ch.created_at || new Date().toISOString(),
+            });
           }
-        } catch {}
+        }
       }
       // Filter out future-dated and sort (compare date-only, ignoring time)
       const todayStr = new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
