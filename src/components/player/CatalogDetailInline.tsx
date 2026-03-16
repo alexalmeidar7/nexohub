@@ -12,6 +12,10 @@ interface Channel {
   type: string;
   url?: string;
   catalog_name?: string;
+  classificacao_etaria?: string;
+  horario_inicio?: string;
+  horario_fim?: string;
+  descricao?: string;
 }
 
 interface PlaylistVideo {
@@ -58,7 +62,7 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
     const fetchChannels = async () => {
       const { data } = await supabase
         .from("streaming_channels")
-        .select("id, name, cover_url, logo_url, background_url, type, url, catalog_name")
+        .select("id, name, cover_url, logo_url, background_url, type, url, catalog_name, classificacao_etaria, horario_inicio, horario_fim, descricao")
         .eq("type", "catalog")
         .eq("active", true);
 
@@ -68,20 +72,23 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
     fetchChannels();
   }, [catalogName]);
 
-  // Fetch matching program info
+  const primaryChannel = channels[0];
+
+  // Build program info from channel data (saved during catalog registration)
   useEffect(() => {
-    const fetchPrograma = async () => {
-      const { data } = await supabase
-        .from("programas")
-        .select("nome, descricao, horario_inicio, horario_fim, classificacao_etaria, selo")
-        .eq("ativo", true)
-        .ilike("nome", catalogName);
-      if (data && data.length > 0) {
-        setPrograma(data[0] as ProgramaInfo);
-      }
-    };
-    fetchPrograma();
-  }, [catalogName]);
+    if (!primaryChannel) return;
+    const ch = primaryChannel;
+    if (ch.horario_inicio || ch.descricao || ch.classificacao_etaria) {
+      setPrograma({
+        nome: ch.name,
+        descricao: ch.descricao || "",
+        horario_inicio: ch.horario_inicio || "",
+        horario_fim: ch.horario_fim || "",
+        classificacao_etaria: ch.classificacao_etaria || "L",
+        selo: "",
+      });
+    }
+  }, [channels]);
 
   // Fetch playlist videos
   useEffect(() => {
@@ -112,7 +119,6 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
     fetchVideos();
   }, [channels]);
 
-  const primaryChannel = channels[0];
   const logoUrl = primaryChannel?.background_url || primaryChannel?.logo_url;
 
   // Hero background: prioritize catalog's registered thumbnail (logo_url = Thumb),

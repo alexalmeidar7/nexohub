@@ -245,6 +245,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
     } else {
       if (!canalForm.name || !canalForm.url) { toast.error("Preencha Nome e URL."); return; }
     }
+    const selectedProg = programas.find(p => p.id === selectedProgramaId);
     const payload: any = {
       name: canalMode === "catalog" ? (canalForm.name || canalForm.catalog_name) : canalForm.name,
       logo_url: (canalMode === "catalog" && catalogContentMode === "individual" && videoThumbUrl) ? videoThumbUrl : canalForm.logo_url,
@@ -255,6 +256,9 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
       numero_canal: canalForm.numero_canal,
       is_hd: canalForm.is_hd, is_stereo: canalForm.is_stereo,
       classificacao_etaria: canalForm.classificacao_etaria,
+      horario_inicio: selectedProg?.horario_inicio || "",
+      horario_fim: selectedProg?.horario_fim || "",
+      descricao: videoDescription || selectedProg?.descricao || "",
     };
     setSavingCanal(true);
     if (editingCanal) {
@@ -590,10 +594,15 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
                     onChange={(e) => {
                       const id = e.target.value;
                       setSelectedProgramaId(id);
-                      if (id) {
+                       if (id) {
                         const prog = programas.find(p => p.id === id);
                         if (prog) {
-                          setCanalForm(p => ({ ...p, classificacao_etaria: prog.classificacao_etaria || "L" }));
+                          setCanalForm(p => ({
+                            ...p,
+                            classificacao_etaria: prog.classificacao_etaria || "L",
+                            name: p.name || prog.nome,
+                          }));
+                          setVideoDescription(prog.descricao || "");
                         }
                       }
                     }}

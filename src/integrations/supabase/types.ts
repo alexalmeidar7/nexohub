@@ -871,6 +871,9 @@ export type Database = {
           classificacao_etaria: string | null
           cover_url: string | null
           created_at: string
+          descricao: string | null
+          horario_fim: string | null
+          horario_inicio: string | null
           id: string
           is_hd: boolean | null
           is_stereo: boolean | null
@@ -889,6 +892,9 @@ export type Database = {
           classificacao_etaria?: string | null
           cover_url?: string | null
           created_at?: string
+          descricao?: string | null
+          horario_fim?: string | null
+          horario_inicio?: string | null
           id?: string
           is_hd?: boolean | null
           is_stereo?: boolean | null
@@ -907,6 +913,9 @@ export type Database = {
           classificacao_etaria?: string | null
           cover_url?: string | null
           created_at?: string
+          descricao?: string | null
+          horario_fim?: string | null
+          horario_inicio?: string | null
           id?: string
           is_hd?: boolean | null
           is_stereo?: boolean | null
