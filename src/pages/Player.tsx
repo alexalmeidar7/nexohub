@@ -2016,6 +2016,7 @@ export default function PlayerPage() {
         <div className="absolute left-0 right-0 bottom-2 sm:bottom-5 mx-auto transition-all duration-400 ease-in-out"
           style={{ width: "80%", paddingLeft: "8px", paddingRight: "8px", opacity: barVisible ? 1 : 0, transform: barVisible ? "translateY(0)" : "translateY(20px)", pointerEvents: barVisible ? "auto" : "none" }}
           onClick={(e) => e.stopPropagation()}
+        >
         {/* Catalog: Back button above control bar */}
         {isCatalog && (
           <button
