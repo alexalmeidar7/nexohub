@@ -1171,7 +1171,7 @@ export default function PlayerPage() {
     if (!first) return;
 
     setCurrentIndex(startIndex);
-    if (first.type === "youtube") {
+    if (first.type === "youtube" || first.type === "catalog") {
       setPlaying(true);
       setBuffering(false);
       setSelectedVideoId(null);
