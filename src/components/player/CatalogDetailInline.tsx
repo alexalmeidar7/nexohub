@@ -58,6 +58,7 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
   const [selectedVideo, setSelectedVideo] = useState<PlaylistVideo | null>(null);
   const [programa, setPrograma] = useState<ProgramaInfo | null>(null);
   const [hoveredVideoId, setHoveredVideoId] = useState<string | null>(null);
+  const [descExpanded, setDescExpanded] = useState(false);
   const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
