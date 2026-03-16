@@ -166,6 +166,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
         horario_inicio: d.horario_inicio || "",
         horario_fim: d.horario_fim || "",
         descricao: d.descricao || "",
+        estudio: d.estudio || "",
       })));
     }
     setLoadingCanais(false);
