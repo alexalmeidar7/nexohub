@@ -66,10 +66,14 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [ytFailed, setYtFailed] = useState(false);
+  const [ytErrorMessage, setYtErrorMessage] = useState<string | null>(null);
   const isYoutube = prerollMediaType === "youtube" && !!prerollYoutubeUrl;
   const ytId = isYoutube ? extractYoutubeId(prerollYoutubeUrl!) : null;
   const hasFallbackVideo = Boolean(prerollUrl && prerollUrl.trim() !== "");
-  const shouldUseNativeVideo = !isYoutube || !ytId || (ytFailed && hasFallbackVideo);
+  const hasValidYoutube = isYoutube && !!ytId;
+  const showYoutubePlayer = hasValidYoutube && !ytFailed;
+  const shouldUseNativeVideo = !isYoutube || (!showYoutubePlayer && hasFallbackVideo);
+  const showFailureState = isYoutube && !showYoutubePlayer && !hasFallbackVideo;
   const ytPlayerRef = useRef<any>(null);
   const pollRef = useRef<ReturnType<typeof setInterval>>();
   const onEndedRef = useRef(onEnded);
