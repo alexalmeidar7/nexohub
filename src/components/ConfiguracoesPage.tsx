@@ -162,6 +162,9 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
         catalog_name: d.catalog_name || "",
         is_hd: d.is_hd || false, is_stereo: d.is_stereo || false,
         classificacao_etaria: d.classificacao_etaria || "L",
+        horario_inicio: d.horario_inicio || "",
+        horario_fim: d.horario_fim || "",
+        descricao: d.descricao || "",
       })));
     }
     setLoadingCanais(false);
