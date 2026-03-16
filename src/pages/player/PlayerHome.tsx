@@ -703,7 +703,8 @@ function TrendingCard({ item, idx, channels, onClick }: {
         <img
           src={coverSrc}
           alt={item.title}
-          className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ${showVideo ? "opacity-0 scale-110 blur-md" : "opacity-100"} group-hover:scale-105`}
+          className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ${showVideo ? "opacity-0 scale-110 blur-md" : "opacity-100"}`}
+          style={{ transform: hovered && !showVideo ? "scaleX(0.92)" : undefined, transition: "transform 0.5s cubic-bezier(0.25,0.1,0.25,1)" }}
         />
       ) : (
         <div className="absolute inset-0 w-full h-full flex items-center justify-center" style={{ background: "linear-gradient(160deg, rgba(255,255,255,0.08) 0%, hsl(var(--player-bg)) 100%)" }}>
