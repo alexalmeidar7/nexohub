@@ -506,7 +506,7 @@ function StreamingCard({ channel, currentProgram, nowPlaying, onClick }: {
 }
 
 /* ─── Content Row (horizontal scroll with arrows + scroll fade) ─── */
-function ContentRow({ title, children }: { title: React.ReactNode; children: React.ReactNode }) {
+function ContentRow({ title, children, scrollRoot }: { title: React.ReactNode; children: React.ReactNode; scrollRoot?: React.RefObject<HTMLDivElement> }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const sectionRef = useRef<HTMLElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -533,16 +533,20 @@ function ContentRow({ title, children }: { title: React.ReactNode; children: Rea
   // Intersection-based fade/scale as section scrolls out of view
   useEffect(() => {
     const el = sectionRef.current;
+    const root = scrollRoot?.current || null;
     if (!el) return;
     const obs = new IntersectionObserver(
       ([entry]) => {
-        setVisibility(Math.max(entry.intersectionRatio, 0.3));
+        setVisibility(Math.max(entry.intersectionRatio, 0.15));
       },
-      { threshold: Array.from({ length: 21 }, (_, i) => i / 20) }
+      {
+        root,
+        threshold: Array.from({ length: 21 }, (_, i) => i / 20),
+      }
     );
     obs.observe(el);
     return () => obs.disconnect();
-  }, []);
+  }, [scrollRoot]);
 
   const scroll = (dir: "left" | "right") => {
     scrollRef.current?.scrollBy({ left: dir === "left" ? -400 : 400, behavior: "smooth" });
