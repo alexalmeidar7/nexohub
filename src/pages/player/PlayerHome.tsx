@@ -47,6 +47,8 @@ function HeroBanner({
   nextProgram,
   nowPlaying,
   channelName,
+  channelIsHd,
+  channelIsStereo,
   onPlay,
   onGrade,
 }: {
@@ -54,6 +56,8 @@ function HeroBanner({
   nextProgram?: Programa;
   nowPlaying?: { musica: string; artista: string } | null;
   channelName?: string;
+  channelIsHd?: boolean;
+  channelIsStereo?: boolean;
   onPlay: () => void;
   onGrade: () => void;
 }) {
