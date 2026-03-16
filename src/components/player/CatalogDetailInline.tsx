@@ -463,7 +463,7 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
                   Assistir
                 </button>
               )}
-            </>
+            </div>
           )}
         </div>
       </div>
