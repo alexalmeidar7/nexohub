@@ -804,11 +804,9 @@ function TrendingCard({ item, idx, channels, onClick }: {
           </div>
         </>
       )}
-          <div className="w-12 h-12 rounded-full backdrop-blur-md flex items-center justify-center shadow-2xl" style={{ background: "hsla(var(--player-accent) / 0.85)", boxShadow: "0 8px 32px hsla(var(--player-accent) / 0.5)" }}>
-            <Play className="h-5 w-5 text-white fill-white" />
-          </div>
-        </div>
-      )}
+    </div>
+  );
+}
     </div>
   );
 }
