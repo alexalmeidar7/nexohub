@@ -2092,13 +2092,31 @@ export default function PlayerPage() {
               <MarqueeText className="text-white/50 text-xs" text={`♫ ${musicData.titulo} — ${musicData.artista}`} />
             )}
             {isYoutube && selectedVideoId ? (
-              <div className="w-full mt-2 group cursor-pointer relative" onClick={(e) => {
-                const rect = e.currentTarget.getBoundingClientRect();
-                const pct = (e.clientX - rect.left) / rect.width;
-                const seekTime = pct * ytDuration;
-                ytPostMessage("seekTo", [seekTime, true]);
-              }}>
-                <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden group-hover:h-2 transition-all relative">
+              <div className="w-full mt-2 group cursor-pointer relative"
+                onClick={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const pct = (e.clientX - rect.left) / rect.width;
+                  const seekTime = pct * ytDuration;
+                  ytPostMessage("seekTo", [seekTime, true]);
+                }}
+                onMouseMove={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+                  const time = pct * ytDuration;
+                  const tooltip = e.currentTarget.querySelector("[data-seek-tooltip]") as HTMLElement;
+                  if (tooltip) {
+                    tooltip.style.left = `${pct * 100}%`;
+                    tooltip.style.opacity = "1";
+                    tooltip.textContent = fmtTime(time);
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  const tooltip = e.currentTarget.querySelector("[data-seek-tooltip]") as HTMLElement;
+                  if (tooltip) tooltip.style.opacity = "0";
+                }}
+              >
+                <div data-seek-tooltip className="absolute -top-6 text-[10px] font-bold text-white bg-black/90 px-1.5 py-0.5 rounded pointer-events-none -translate-x-1/2 opacity-0 transition-opacity z-10 whitespace-nowrap" />
+                <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden group-hover:h-3 transition-all relative">
                   <div className="h-full rounded-full transition-all duration-300" style={{ width: `${ytProgressPct}%`, backgroundColor: "#e60000" }} />
                 </div>
                 {midrollBreakPoints.map((bp, i) => (
@@ -2117,8 +2135,32 @@ export default function PlayerPage() {
                 ))}
               </div>
             ) : (
-              <div className="w-full h-1 bg-white/10 rounded-full mt-2 overflow-hidden">
-                <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${progress}%`, backgroundColor: "#e60000" }} />
+              <div className="w-full mt-2 group cursor-pointer relative"
+                onMouseMove={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+                  const tooltip = e.currentTarget.querySelector("[data-seek-tooltip]") as HTMLElement;
+                  if (tooltip && currentProg) {
+                    const startParts = currentProg.horario_inicio.split(":").map(Number);
+                    const endParts = currentProg.horario_fim.split(":").map(Number);
+                    const startMin = startParts[0] * 60 + startParts[1];
+                    const endMin = endParts[0] * 60 + endParts[1];
+                    const totalSec = (endMin - startMin) * 60;
+                    const seekSec = pct * totalSec;
+                    tooltip.style.left = `${pct * 100}%`;
+                    tooltip.style.opacity = "1";
+                    tooltip.textContent = fmtTime(seekSec);
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  const tooltip = e.currentTarget.querySelector("[data-seek-tooltip]") as HTMLElement;
+                  if (tooltip) tooltip.style.opacity = "0";
+                }}
+              >
+                <div data-seek-tooltip className="absolute -top-6 text-[10px] font-bold text-white bg-black/90 px-1.5 py-0.5 rounded pointer-events-none -translate-x-1/2 opacity-0 transition-opacity z-10 whitespace-nowrap" />
+                <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden group-hover:h-3 transition-all">
+                  <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${progress}%`, backgroundColor: "#e60000" }} />
+                </div>
               </div>
             )}
             {isYoutube && selectedVideoId ? (
