@@ -1460,7 +1460,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                         return (
                           <CatalogCard
                             key={groupName}
-                            image={primary.logo_url || primary.cover_url}
+                            image={primary.cover_url || primary.logo_url}
                             title={groupName}
                             subtitle={videoCount > 0 ? `${videoCount} vídeos` : undefined}
                             logoUrl={primary.background_url || primary.logo_url}
