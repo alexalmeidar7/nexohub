@@ -482,11 +482,11 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
         <div
           className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none"
           style={{
-            background: "rgba(20, 60, 140, 0.35)",
+            background: "rgba(0, 0, 0, 0.85)",
             backdropFilter: "blur(28px) saturate(1.6)",
             WebkitBackdropFilter: "blur(28px) saturate(1.6)",
-            border: "1px solid rgba(100, 160, 255, 0.2)",
-            boxShadow: "0 8px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08)",
+            border: "1px solid rgba(255, 255, 255, 0.1)",
+            boxShadow: "0 8px 40px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.05)",
           }}
         />
 
