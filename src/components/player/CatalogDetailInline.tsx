@@ -55,6 +55,8 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
   const [loading, setLoading] = useState(true);
   const [selectedVideo, setSelectedVideo] = useState<PlaylistVideo | null>(null);
   const [programa, setPrograma] = useState<ProgramaInfo | null>(null);
+  const [hoveredVideoId, setHoveredVideoId] = useState<string | null>(null);
+  const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Fetch channels for this catalog group
