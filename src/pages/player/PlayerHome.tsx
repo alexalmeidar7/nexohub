@@ -1215,8 +1215,8 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       />
 
       {/* Main content */}
-      <div ref={contentScrollRef} className="flex-1 ml-[52px] overflow-y-auto h-full">
-        <div className="transition-all duration-500 ease-in-out" style={{ opacity: sectionFading ? 0 : 1, transform: sectionFading ? "translateY(12px)" : "translateY(0)" }}>
+      <div ref={contentScrollRef} className={`flex-1 ml-[52px] h-full ${visibleSection === "catalog-detail" ? "overflow-hidden" : "overflow-y-auto"}`}>
+        <div className={`transition-all duration-500 ease-in-out ${visibleSection === "catalog-detail" ? "h-full" : ""}`} style={{ opacity: sectionFading ? 0 : 1, transform: sectionFading ? "translateY(12px)" : "translateY(0)" }}>
 
           {visibleSection === "home" && (
             <>
