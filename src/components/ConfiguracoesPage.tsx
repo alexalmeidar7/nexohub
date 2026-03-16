@@ -608,9 +608,9 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
                     >
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-base">🔗</span>
-                        <span>Criar por URL de Playlist</span>
+                        <span style={{ color: catalogContentMode === "playlist" ? "#ffffff" : "#0d0446" }}>Criar por URL de Playlist</span>
                       </div>
-                      <p className="text-[10px] opacity-70 ml-7">Importa automaticamente todos os vídeos da playlist</p>
+                      <p className="text-[10px] ml-7" style={{ color: catalogContentMode === "playlist" ? "rgba(255,255,255,0.85)" : "rgba(13,4,70,0.5)" }}>Importa automaticamente todos os vídeos da playlist</p>
                     </button>
                     <button
                       onClick={() => setCatalogContentMode("individual")}
