@@ -65,6 +65,7 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
   // Track time for YouTube with stall/error detection
   useEffect(() => {
     if (!isYoutube || !ytId) return;
+    ytDestroyedRef.current = false;
 
     const fallbackTimer = hasFallbackVideo ? null : setTimeout(() => onEndedRef.current(), 120000);
 
@@ -72,6 +73,11 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
     let progressDetected = false;
     const stallTimer = setTimeout(() => {
       if (!progressDetected) {
+        // Destroy the YT player before switching to fallback
+        if (pollRef.current) clearInterval(pollRef.current);
+        try { ytPlayerRef.current?.destroy(); ytDestroyedRef.current = true; } catch {}
+        setCurrentTime(0);
+        setDuration(0);
         setYtFailed(true);
         if (!hasFallbackVideo) {
           setTimeout(() => onEndedRef.current(), 3000);
@@ -80,6 +86,7 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
     }, 8000);
 
     const initPlayer = () => {
+      if (ytDestroyedRef.current) return;
       ytPlayerRef.current = new (window as any).YT.Player("preroll-yt-player", {
         videoId: ytId,
         playerVars: {
@@ -102,6 +109,7 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
             } catch {}
 
             pollRef.current = setInterval(() => {
+              if (ytDestroyedRef.current) return;
               try {
                 const p = ytPlayerRef.current;
                 const t = p?.getCurrentTime?.() || 0;
@@ -116,6 +124,10 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
             if (event.data === 0) onEndedRef.current();
           },
           onError: () => {
+            if (pollRef.current) clearInterval(pollRef.current);
+            try { ytPlayerRef.current?.destroy(); ytDestroyedRef.current = true; } catch {}
+            setCurrentTime(0);
+            setDuration(0);
             setYtFailed(true);
             if (!hasFallbackVideo) {
               setTimeout(() => onEndedRef.current(), 2000);
@@ -141,7 +153,9 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
       if (fallbackTimer) clearTimeout(fallbackTimer);
       clearTimeout(stallTimer);
       if (pollRef.current) clearInterval(pollRef.current);
-      try { ytPlayerRef.current?.destroy(); } catch {}
+      if (!ytDestroyedRef.current) {
+        try { ytPlayerRef.current?.destroy(); } catch {}
+      }
     };
   }, [isYoutube, ytId, hasFallbackVideo]);
 
