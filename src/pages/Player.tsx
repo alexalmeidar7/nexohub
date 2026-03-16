@@ -1607,9 +1607,9 @@ export default function PlayerPage() {
   // Cleanup on unmount
   useEffect(() => { return () => { if (hlsRef.current) hlsRef.current.destroy(); }; }, []);
 
-  // Periodic clock tick to re-compute currentProg every 10s
+  // Periodic clock tick to re-compute currentProg every 30s (reduced from 10s)
   useEffect(() => {
-    const interval = setInterval(() => setClock(c => c + 1), 10000);
+    const interval = setInterval(() => setClock(c => c + 1), 30000);
     return () => clearInterval(interval);
   }, []);
 
