@@ -2422,8 +2422,8 @@ export default function PlayerPage() {
             )}
           </div>
 
-          {/* Next / Schedule — collapsible via red arrow, hidden on mobile */}
-          <div className="hidden md:flex items-stretch relative group/next shrink-0">
+          {/* Next / Schedule — collapsible via red arrow, pushed to far right, hidden on mobile */}
+          <div className="hidden md:flex items-stretch relative group/next shrink-0 ml-auto">
             {/* Red arrow trigger */}
             <div className="flex items-center pl-2 border-l border-white/10 cursor-pointer">
               <div className="w-6 h-6 rounded-full flex items-center justify-center transition-all group-hover/next:bg-[#e60000]/20" style={{ color: "#e60000" }}>
