@@ -426,11 +426,10 @@ function StreamingCard({ channel, currentProgram, nowPlaying, onClick }: {
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
   }, [hovered, frames.length]);
 
-  return (
-    const cardHeight = 240; // 160 * 3/2
-    const expandedWidth = hovered && isVideo && frames.length > 0 ? 160 + Math.round(cardHeight * 16 / 9) : 160;
+  const cardHeight = 240;
+  const expandedWidth = hovered && isVideo && frames.length > 0 ? 160 + Math.round(cardHeight * 16 / 9) : 160;
 
-    return (
+  return (
     <button
       onClick={onClick}
       onMouseEnter={() => setHovered(true)}
