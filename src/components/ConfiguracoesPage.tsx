@@ -128,6 +128,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
   const [savedCatalogs, setSavedCatalogs] = useState<string[]>([]);
   const [videoCoverUrl, setVideoCoverUrl] = useState("");
   const [videoThumbUrl, setVideoThumbUrl] = useState("");
+  const [videoDescription, setVideoDescription] = useState("");
 
   useEffect(() => {
     if (user) {
