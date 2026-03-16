@@ -41,7 +41,7 @@ interface PlaylistVideo {
   published: string;
 }
 
-type Section = "home" | "streaming" | "content" | "shop";
+type Section = "home" | "streaming" | "content" | "shop" | "catalog-detail";
 
 /* ─── Hero Banner Carousel ─── */
 function HeroBanner({
