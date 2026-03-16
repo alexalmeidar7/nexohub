@@ -12,7 +12,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
-import { useLayoutColors } from "@/hooks/useLayoutColors";
+import { useLayoutColors, defaultLayoutColors } from "@/hooks/useLayoutColors";
 
 // Lazy-load all tab pages for faster initial render
 const ApresentadorForm = lazy(() => import("./ApresentadorForm"));
@@ -305,21 +305,28 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     return <DashboardSkeleton />;
   }
 
+  // Determine the base background from layout settings
+  const layoutBg = (() => {
+    if (layoutColors.homeBgType === "image" && layoutColors.homeBgImage) {
+      return { backgroundImage: `url(${layoutColors.homeBgImage})`, backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat" } as React.CSSProperties;
+    }
+    if (layoutColors.homeBgColor && layoutColors.homeBgColor !== defaultLayoutColors.homeBgColor) {
+      return { backgroundColor: layoutColors.homeBgColor } as React.CSSProperties;
+    }
+    // Default: vivid red → black gradient (top-right → bottom-left)
+    return { background: "linear-gradient(to bottom left, #be0101, #000000)" } as React.CSSProperties;
+  })();
+
   return (
     <div className="h-screen flex flex-col animate-fade-in overflow-hidden relative" style={{ backgroundColor: "#000000" }}>
-      {/* Background layers with fade transition */}
-      {empresa.backgroundUrl && (
-        <div
-          className="absolute inset-0 z-0 transition-opacity duration-1000"
-          style={{
-            backgroundImage: `url(${empresa.backgroundUrl})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-            backgroundRepeat: "no-repeat",
-            opacity: onAirThumb ? 0 : 1,
-          }}
-        />
-      )}
+      {/* Base background layer (layout settings or default gradient) */}
+      <div
+        className="absolute inset-0 z-0 transition-opacity duration-1000"
+        style={{
+          ...layoutBg,
+          opacity: onAirThumb ? 0 : 1,
+        }}
+      />
       {onAirThumb && (
         <div
           key={onAirThumb}
