@@ -1432,6 +1432,21 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
             </div>
           )}
 
+          {visibleSection === "catalog-detail" && activeCatalog && (
+            <Suspense fallback={
+              <div className="flex flex-col h-full">
+                <Skeleton className="flex-1 bg-white/5" />
+                <Skeleton className="h-[200px] bg-white/3" />
+              </div>
+            }>
+              <CatalogDetailInline
+                catalogName={activeCatalog}
+                onBack={goBackFromCatalog}
+                onPlayVideo={(chId, vidId) => goToPlayer(chId, vidId)}
+              />
+            </Suspense>
+          )}
+
           {visibleSection === "shop" && (
             <div className="px-6 sm:px-10 pt-8 pb-8">
               <h1 className="text-2xl font-bold mb-6 text-white">Loja</h1>
