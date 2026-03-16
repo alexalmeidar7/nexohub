@@ -929,6 +929,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   const [nowPlaying, setNowPlaying] = useState<{ musica: string; artista: string } | null>(null);
   const [shopProducts, setShopProducts] = useState<any[]>([]);
   const [showGrade, setShowGrade] = useState(false);
+  const contentScrollRef = useRef<HTMLDivElement>(null);
 
   const [miniPlayerData, setMiniPlayerData] = useState<MiniPlayerData | null>(() => loadMiniPlayerData());
 
