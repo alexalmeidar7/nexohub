@@ -514,16 +514,34 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
                       <div className="flex gap-2">
                         <StyledInput value={canalForm.catalog_name} onChange={(e) => setCanalForm(p => ({ ...p, catalog_name: e.target.value }))} placeholder="Nome do novo catálogo" />
                         {!editingCanal && (
-                          <button onClick={() => { setNewCatalogMode(false); setCanalForm(p => ({ ...p, catalog_name: "" })); }}
-                            className="px-3 py-1.5 text-xs font-bold rounded-full transition-all shrink-0"
-                            style={{ backgroundColor: "rgba(13,4,70,0.08)", color: "#0d0446" }}
-                          >
-                            Voltar
-                          </button>
+                          <>
+                            <button onClick={() => {
+                              if (!canalForm.catalog_name.trim()) { toast.error("Digite o nome do catálogo."); return; }
+                              if (!savedCatalogs.includes(canalForm.catalog_name.trim())) {
+                                setSavedCatalogs(prev => [...prev, canalForm.catalog_name.trim()]);
+                              }
+                              toast.success("Catálogo salvo na lista!");
+                              setNewCatalogMode(false);
+                            }}
+                              className="px-3 py-1.5 text-xs font-bold rounded-full transition-all shrink-0 whitespace-nowrap flex items-center gap-1"
+                              style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#ffffff", border: "none" }}
+                            >
+                              <Save size={12} /> Salvar Catálogo
+                            </button>
+                            <button onClick={() => { setNewCatalogMode(false); setCanalForm(p => ({ ...p, catalog_name: "" })); }}
+                              className="px-3 py-1.5 text-xs font-bold rounded-full transition-all shrink-0"
+                              style={{ backgroundColor: "rgba(13,4,70,0.08)", color: "#0d0446" }}
+                            >
+                              Voltar
+                            </button>
+                          </>
                         )}
                       </div>
                     ) : (() => {
-                      const existingCatalogs = [...new Set(canais.filter(c => c.type === "catalog" && c.catalog_name).map(c => c.catalog_name))];
+                      const existingCatalogs = [...new Set([
+                        ...canais.filter(c => c.type === "catalog" && c.catalog_name).map(c => c.catalog_name),
+                        ...savedCatalogs,
+                      ])];
                       return (
                         <div className="flex gap-2">
                           <select
