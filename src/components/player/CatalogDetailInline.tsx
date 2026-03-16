@@ -246,7 +246,7 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
               videoId,
               title: ch.name || "Vídeo",
               thumbnail: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
-              published: ch.created_at || new Date().toISOString(),
+              published: new Date().toISOString(),
             });
           }
         }
