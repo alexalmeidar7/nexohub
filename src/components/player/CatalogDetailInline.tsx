@@ -432,7 +432,7 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
                 <div
                   key={video.videoId}
                   className="shrink-0 relative"
-                  onMouseEnter={() => handleCardMouseEnter(video.videoId)}
+                  onMouseEnter={(e) => handleCardMouseEnter(video, e.currentTarget)}
                   onMouseLeave={handleCardMouseLeave}
                 >
                   {/* Expanded preview popup — appears above card */}
