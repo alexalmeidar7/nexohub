@@ -1173,7 +1173,15 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   const goBackFromCatalog = () => {
     setActiveCatalog(null);
     setSectionFading(true);
-    setTimeout(() => { setVisibleSection("content"); setSectionFading(false); }, 200);
+    setTimeout(() => {
+      setVisibleSection("home");
+      setSectionFading(false);
+      // Scroll to catalog section after returning
+      setTimeout(() => {
+        const el = document.getElementById("section-content");
+        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 50);
+    }, 200);
   };
 
   const handleSectionChange = useCallback((section: Section) => {
