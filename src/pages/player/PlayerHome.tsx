@@ -1387,18 +1387,6 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                   </div>
                 ) : (() => {
                   const trendingItems: { id: string; image: string | null; title: string; subtitle?: string; type: "live" | "catalog"; channelId: string; videoId?: string; logoUrl?: string | null }[] = [];
-                  
-                  streamingChannels.forEach(ch => {
-                    trendingItems.push({
-                      id: `live-${ch.id}`,
-                      image: ch.cover_url || ch.logo_url,
-                      title: ch.name,
-                      subtitle: "Ao vivo",
-                      type: "live",
-                      channelId: ch.id,
-                      logoUrl: ch.background_url || ch.logo_url,
-                    });
-                  });
 
                   Object.values(playlistVideos).flat().slice(0, 8).forEach(v => {
                     const ch = catalogChannels.find(c => playlistVideos[c.id]?.some(pv => pv.videoId === v.videoId));
