@@ -1,9 +1,10 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { ChevronLeft, ChevronRight, Play, Film } from "lucide-react";
+import { ChevronLeft, ChevronRight, Play, Film, Home, Radio, ShoppingBag, Calendar } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import PlayerSidebar from "@/components/player/PlayerSidebar";
 
 interface Channel {
   id: string;
@@ -14,7 +15,6 @@ interface Channel {
   type: string;
   url?: string;
   catalog_name?: string;
-  descricao?: string;
 }
 
 interface PlaylistVideo {
@@ -25,7 +25,7 @@ interface PlaylistVideo {
 }
 
 export default function PlayerCatalog() {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const { userSlug } = useParams();
   const [searchParams] = useSearchParams();
@@ -36,7 +36,18 @@ export default function PlayerCatalog() {
   const [videos, setVideos] = useState<PlaylistVideo[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedVideo, setSelectedVideo] = useState<PlaylistVideo | null>(null);
+  const [profileName, setProfileName] = useState("");
+  const [profileAvatar, setProfileAvatar] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Fetch profile
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("profiles").select("nome, avatar_url").eq("user_id", user.id).single().then(({ data }) => {
+      if (data?.nome) setProfileName(data.nome);
+      setProfileAvatar(data?.avatar_url && data.avatar_url.trim() !== '' ? data.avatar_url : '/avatars/usr-default.png');
+    });
+  }, [user]);
 
   // Fetch channels for this catalog group
   useEffect(() => {
@@ -85,7 +96,7 @@ export default function PlayerCatalog() {
   const logoUrl = primaryChannel?.background_url || primaryChannel?.logo_url;
   const coverUrl = primaryChannel?.cover_url;
 
-  const goToPlayer = (video: PlaylistVideo) => {
+  const goToPlayer = useCallback((video: PlaylistVideo) => {
     setSelectedVideo(video);
     if (!primaryChannel) return;
     const params = new URLSearchParams();
@@ -94,12 +105,14 @@ export default function PlayerCatalog() {
     const qs = `?${params.toString()}`;
     if (userSlug) navigate(`/user/${userSlug}/nexohub/player/watch${qs}`);
     else navigate(`/user/nexohub/player/watch${qs}`);
-  };
+  }, [primaryChannel, userSlug, navigate]);
 
   const goBack = () => {
     if (userSlug) navigate(`/user/${userSlug}/nexohub/player`);
     else navigate(`/user/nexohub/player`);
   };
+
+  const handleSignOut = async () => { await signOut(); navigate("/user/nexohub/player"); };
 
   const scrollPlaylist = (dir: "left" | "right") => {
     if (!scrollRef.current) return;
@@ -107,160 +120,217 @@ export default function PlayerCatalog() {
     scrollRef.current.scrollBy({ left: dir === "left" ? -amount : amount, behavior: "smooth" });
   };
 
+  // Sidebar items — navigate back to hub sections
+  const sidebarItems = [
+    { icon: Home, label: "Home", key: "home", action: () => goBack() },
+    { icon: Radio, label: "Streaming", key: "streaming", action: () => goBack() },
+    { icon: Film, label: "Catálogo", key: "content", action: () => goBack() },
+    ...(user ? [{ icon: ShoppingBag, label: "Loja", key: "shop", action: () => goBack() }] : []),
+  ];
+
   return (
-    <div className="h-screen flex flex-col overflow-hidden" style={{ background: "hsl(var(--player-bg))" }}>
+    <div className="fixed inset-0 text-white flex" style={{ background: "hsl(var(--player-bg))" }}>
+      {/* Sidebar */}
+      <PlayerSidebar
+        items={sidebarItems}
+        activeKey="content"
+        avatarUrl={profileAvatar}
+        userName={profileName || "Visitante"}
+        showLogout={!!user}
+        onLogout={handleSignOut}
+      />
 
-      {/* ─── HERO: cover image background with logo + description ─── */}
-      <div className="relative flex-1 min-h-0 w-full overflow-hidden">
-        {/* Background cover */}
-        {coverUrl && (
-          <img
-            src={coverUrl}
-            alt=""
-            className="absolute inset-0 w-full h-full object-cover"
-          />
-        )}
-        {/* If no cover, dark bg */}
-        {!coverUrl && (
-          <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, hsl(220 60% 12%) 0%, hsl(220 50% 20%) 100%)" }} />
-        )}
+      {/* Main content — to the right of sidebar */}
+      <div className="flex-1 ml-[52px] flex flex-col h-full overflow-hidden">
 
-        {/* Gradient overlays */}
-        <div className="absolute inset-0" style={{ background: "linear-gradient(to right, hsla(var(--player-bg) / 0.85) 0%, hsla(var(--player-bg) / 0.3) 50%, transparent 100%)" }} />
-        <div className="absolute inset-0" style={{ background: "linear-gradient(to top, hsl(var(--player-bg)) 0%, transparent 40%)" }} />
-
-        {/* Back button */}
-        <button
-          onClick={goBack}
-          className="absolute top-6 left-6 sm:left-10 z-20 flex items-center gap-2 text-white/60 hover:text-white transition-colors text-sm"
-        >
-          <ChevronLeft className="h-5 w-5" />
-          Voltar
-        </button>
-
-        {/* Content: logo + description, bottom-left */}
-        <div className="absolute bottom-8 left-8 sm:left-12 z-10 max-w-lg flex flex-col gap-3">
-          {logoUrl ? (
-            <img
-              src={logoUrl}
-              alt={catalogName}
-              className="h-20 sm:h-28 object-contain object-left"
-              style={{ filter: "drop-shadow(0 4px 24px rgba(0,0,0,0.6))" }}
-            />
+        {/* ─── HERO: full-width cinematic cover ─── */}
+        <div className="relative flex-1 min-h-0 w-full overflow-hidden">
+          {/* Background cover */}
+          {coverUrl ? (
+            <img src={coverUrl} alt="" className="absolute inset-0 w-full h-full object-cover" />
           ) : (
-            <h1 className="text-4xl sm:text-5xl font-black text-white tracking-tight leading-tight" style={{ textShadow: "0 2px 20px rgba(0,0,0,0.6)" }}>
-              {catalogName}
-            </h1>
+            <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, hsl(var(--player-bg)) 0%, hsl(220 50% 15%) 50%, hsl(var(--player-bg)) 100%)" }} />
           )}
 
-          {/* Description */}
-          <p className="text-sm sm:text-base text-white/70 leading-relaxed line-clamp-3" style={{ textShadow: "0 1px 8px rgba(0,0,0,0.5)" }}>
-            {primaryChannel?.name || catalogName}
-          </p>
+          {/* Gradient overlays for readability */}
+          <div className="absolute inset-0" style={{ background: "linear-gradient(to right, hsl(var(--player-bg)) 0%, hsla(var(--player-bg) / 0.7) 35%, hsla(var(--player-bg) / 0.2) 65%, transparent 100%)" }} />
+          <div className="absolute inset-0" style={{ background: "linear-gradient(to top, hsl(var(--player-bg)) 0%, hsla(var(--player-bg) / 0.6) 30%, transparent 60%)" }} />
+          {/* Subtle top vignette */}
+          <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, hsla(var(--player-bg) / 0.4) 0%, transparent 20%)" }} />
 
-          {/* Stats */}
-          <div className="flex items-center gap-4 text-xs text-white/40">
-            <span className="flex items-center gap-1.5">
-              <Film className="h-3.5 w-3.5" />
-              {videos.length} vídeos
-            </span>
+          {/* Back button */}
+          <button
+            onClick={goBack}
+            className="absolute top-6 left-6 z-20 flex items-center gap-2 text-white/50 hover:text-white transition-colors text-xs font-medium tracking-wide uppercase"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            Voltar
+          </button>
+
+          {/* Content: logo + description, bottom-left */}
+          <div className="absolute bottom-10 left-8 sm:left-12 z-10 max-w-xl flex flex-col gap-4">
+            {logoUrl ? (
+              <img
+                src={logoUrl}
+                alt={catalogName}
+                className="h-20 sm:h-28 lg:h-32 object-contain object-left"
+                style={{ filter: "drop-shadow(0 4px 30px rgba(0,0,0,0.7))" }}
+              />
+            ) : (
+              <h1
+                className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-none"
+                style={{ textShadow: "0 4px 30px rgba(0,0,0,0.7)" }}
+              >
+                {catalogName}
+              </h1>
+            )}
+
+            {/* Description */}
+            <p className="text-sm sm:text-base text-white/60 leading-relaxed max-w-md" style={{ textShadow: "0 1px 10px rgba(0,0,0,0.5)" }}>
+              {primaryChannel?.name || catalogName}
+            </p>
+
+            {/* Meta info */}
+            <div className="flex items-center gap-5 text-xs text-white/35 font-medium">
+              <span className="flex items-center gap-1.5">
+                <Film className="h-3.5 w-3.5" />
+                {loading ? "..." : videos.length} vídeos
+              </span>
+              {videos.length > 0 && (
+                <span className="flex items-center gap-1.5">
+                  <Calendar className="h-3.5 w-3.5" />
+                  Atualizado em {new Date(videos[0].published).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })}
+                </span>
+              )}
+            </div>
+
+            {/* Play first video CTA */}
+            {!loading && videos.length > 0 && (
+              <button
+                onClick={() => goToPlayer(videos[0])}
+                className="flex items-center gap-2.5 px-6 py-3 rounded-xl text-sm font-bold transition-all duration-300 w-fit mt-1"
+                style={{
+                  background: "linear-gradient(135deg, hsl(var(--player-accent)), hsl(var(--player-accent-hover)))",
+                  boxShadow: "0 4px 20px hsla(var(--player-accent) / 0.4)",
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.04)"; e.currentTarget.style.boxShadow = "0 6px 28px hsla(var(--player-accent) / 0.6)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "0 4px 20px hsla(var(--player-accent) / 0.4)"; }}
+              >
+                <Play className="h-4 w-4 fill-white" />
+                Assistir
+              </button>
+            )}
           </div>
         </div>
-      </div>
 
-      {/* ─── PLAYLIST BAR: horizontal scrollable strip at the bottom ─── */}
-      <div
-        className="relative w-full shrink-0"
-        style={{
-          height: "clamp(140px, 22vh, 200px)",
-          background: "linear-gradient(to top, hsla(var(--player-accent) / 0.25) 0%, hsla(var(--player-accent) / 0.08) 100%)",
-          borderTop: "1px solid hsla(var(--player-accent) / 0.3)",
-        }}
-      >
-        {/* Scroll arrows */}
-        <button
-          onClick={() => scrollPlaylist("left")}
-          className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full flex items-center justify-center bg-black/50 text-white/70 hover:text-white hover:bg-black/70 transition-colors backdrop-blur-sm"
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </button>
-        <button
-          onClick={() => scrollPlaylist("right")}
-          className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full flex items-center justify-center bg-black/50 text-white/70 hover:text-white hover:bg-black/70 transition-colors backdrop-blur-sm"
-        >
-          <ChevronRight className="h-4 w-4" />
-        </button>
-
-        {/* Scrollable content */}
+        {/* ─── PLAYLIST BAR: horizontal scrollable strip at the bottom ─── */}
         <div
-          ref={scrollRef}
-          className="flex items-center gap-3 h-full px-12 overflow-x-auto scrollbar-hide"
-          style={{ scrollbarWidth: "none" }}
+          className="relative w-full shrink-0"
+          style={{
+            height: "clamp(150px, 24vh, 220px)",
+            background: "linear-gradient(to top, hsla(var(--player-bg) / 0.98) 0%, hsla(var(--player-bg) / 0.92) 100%)",
+            borderTop: "1px solid rgba(255,255,255,0.06)",
+          }}
         >
-          {loading ? (
-            Array.from({ length: 8 }).map((_, i) => (
-              <Skeleton
-                key={i}
-                className="shrink-0 rounded-lg bg-white/10"
-                style={{ width: 160, height: 90 }}
-              />
-            ))
-          ) : videos.length === 0 ? (
-            <p className="text-sm text-white/40 mx-auto">Nenhum vídeo disponível</p>
-          ) : (
-            videos.map((video) => {
-              const isSelected = selectedVideo?.videoId === video.videoId;
-              return (
-                <button
-                  key={video.videoId}
-                  onClick={() => goToPlayer(video)}
-                  className="group shrink-0 rounded-lg overflow-hidden relative transition-all duration-300 cursor-pointer"
-                  style={{
-                    width: 160,
-                    height: 90,
-                    outline: isSelected ? "2px solid hsl(var(--player-accent))" : "1px solid rgba(255,255,255,0.1)",
-                    outlineOffset: -1,
-                    boxShadow: isSelected ? "0 0 16px 2px hsla(var(--player-accent) / 0.5)" : "none",
-                    opacity: isSelected ? 1 : 0.7,
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isSelected) {
-                      e.currentTarget.style.opacity = "1";
-                      e.currentTarget.style.outline = "2px solid rgba(255,255,255,0.4)";
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isSelected) {
-                      e.currentTarget.style.opacity = "0.7";
-                      e.currentTarget.style.outline = "1px solid rgba(255,255,255,0.1)";
-                    }
-                  }}
-                >
-                  <img
-                    src={video.thumbnail?.replace(/\/(hq|mq|sd)default\.jpg/, "/maxresdefault.jpg") || video.thumbnail}
-                    alt={video.title}
-                    className="w-full h-full object-cover"
-                    onError={(e) => { (e.target as HTMLImageElement).src = video.thumbnail; }}
-                  />
+          {/* Section label */}
+          <div className="absolute top-3 left-12 z-10 text-[11px] uppercase tracking-widest font-semibold text-white/30">
+            Playlist
+          </div>
 
-                  {/* Play icon overlay */}
-                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+          {/* Scroll arrows */}
+          <button
+            onClick={() => scrollPlaylist("left")}
+            className="absolute left-1 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full flex items-center justify-center text-white/40 hover:text-white transition-colors"
+            style={{ background: "hsla(var(--player-bg) / 0.8)", backdropFilter: "blur(8px)" }}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+          <button
+            onClick={() => scrollPlaylist("right")}
+            className="absolute right-1 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full flex items-center justify-center text-white/40 hover:text-white transition-colors"
+            style={{ background: "hsla(var(--player-bg) / 0.8)", backdropFilter: "blur(8px)" }}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+
+          {/* Edge fade masks */}
+          <div className="absolute left-0 top-0 bottom-0 w-10 z-[5] pointer-events-none" style={{ background: "linear-gradient(to right, hsl(var(--player-bg)), transparent)" }} />
+          <div className="absolute right-0 top-0 bottom-0 w-10 z-[5] pointer-events-none" style={{ background: "linear-gradient(to left, hsl(var(--player-bg)), transparent)" }} />
+
+          {/* Scrollable content */}
+          <div
+            ref={scrollRef}
+            className="flex items-end gap-3 h-full px-12 pb-4 pt-8 overflow-x-auto"
+            style={{ scrollbarWidth: "none" }}
+          >
+            {loading ? (
+              Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="shrink-0 flex flex-col gap-2">
+                  <Skeleton className="rounded-xl bg-white/8" style={{ width: 180, height: 101 }} />
+                  <Skeleton className="h-3 w-28 bg-white/6 rounded" />
+                </div>
+              ))
+            ) : videos.length === 0 ? (
+              <p className="text-sm text-white/30 mx-auto">Nenhum vídeo disponível</p>
+            ) : (
+              videos.map((video) => {
+                const isSelected = selectedVideo?.videoId === video.videoId;
+                return (
+                  <button
+                    key={video.videoId}
+                    onClick={() => goToPlayer(video)}
+                    className="group shrink-0 flex flex-col gap-1.5 transition-all duration-300 cursor-pointer"
+                    style={{ opacity: isSelected ? 1 : 0.6 }}
+                    onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.opacity = "1"; }}
+                    onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.opacity = "0.6"; }}
+                  >
+                    {/* Thumbnail */}
                     <div
-                      className="w-8 h-8 rounded-full backdrop-blur-md flex items-center justify-center"
-                      style={{ background: "hsla(var(--player-accent) / 0.85)" }}
+                      className="relative rounded-xl overflow-hidden transition-all duration-300"
+                      style={{
+                        width: isSelected ? 200 : 170,
+                        aspectRatio: "16/9",
+                        outline: isSelected ? "2px solid hsl(var(--player-accent))" : "1px solid rgba(255,255,255,0.08)",
+                        outlineOffset: -1,
+                        boxShadow: isSelected ? "0 0 20px 3px hsla(var(--player-accent) / 0.4)" : "0 4px 12px rgba(0,0,0,0.3)",
+                      }}
                     >
-                      <Play className="h-3.5 w-3.5 text-white fill-white" />
+                      <img
+                        src={video.thumbnail?.replace(/\/(hq|mq|sd)default\.jpg/, "/maxresdefault.jpg") || video.thumbnail}
+                        alt={video.title}
+                        className="w-full h-full object-cover"
+                        onError={(e) => { (e.target as HTMLImageElement).src = video.thumbnail; }}
+                      />
+                      {/* Play overlay */}
+                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                        <div
+                          className="w-9 h-9 rounded-full backdrop-blur-md flex items-center justify-center"
+                          style={{ background: "hsla(var(--player-accent) / 0.9)", boxShadow: "0 4px 16px hsla(var(--player-accent) / 0.5)" }}
+                        >
+                          <Play className="h-4 w-4 text-white fill-white" />
+                        </div>
+                      </div>
+                      {/* Now playing indicator */}
+                      {isSelected && (
+                        <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded text-[8px] uppercase tracking-wider font-bold text-white" style={{ background: "hsl(var(--player-accent))" }}>
+                          Atual
+                        </div>
+                      )}
                     </div>
-                  </div>
-
-                  {/* Title tooltip on bottom */}
-                  <div className="absolute bottom-0 left-0 right-0 p-1.5 bg-gradient-to-t from-black/80 to-transparent">
-                    <p className="text-[10px] text-white leading-tight line-clamp-2 font-medium">{video.title}</p>
-                  </div>
-                </button>
-              );
-            })
-          )}
+                    {/* Title */}
+                    <p className={`text-[11px] leading-tight line-clamp-2 text-left max-w-[170px] ${isSelected ? "text-white font-semibold" : "text-white/50 font-medium"}`}>
+                      {video.title}
+                    </p>
+                    {video.published && (
+                      <p className="text-[9px] text-white/25 text-left">
+                        {new Date(video.published).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" })}
+                      </p>
+                    )}
+                  </button>
+                );
+              })
+            )}
+          </div>
         </div>
       </div>
     </div>
