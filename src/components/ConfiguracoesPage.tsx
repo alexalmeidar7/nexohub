@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Save, Loader2, ChevronDown, ChevronUp, Plus, Trash2, Upload, Pencil, X, CheckCircle, Settings, Tv, ImageIcon, Palette } from "lucide-react";
+import { Save, Loader2, ChevronDown, ChevronUp, Plus, Trash2, Upload, Pencil, X, CheckCircle, Settings, Tv, ImageIcon, Palette, Link2 } from "lucide-react";
 import { lazy, Suspense } from "react";
 const LayoutCustomizer = lazy(() => import("./LayoutCustomizer"));
 import { supabase } from "@/integrations/supabase/client";
