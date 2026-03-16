@@ -58,6 +58,8 @@ const App = () => (
             <Route path="/user/:userSlug/nexohub/player" element={<PlayerHub />} />
             <Route path="/user/nexohub/player/watch" element={<PlayerPage />} />
             <Route path="/user/:userSlug/nexohub/player/watch" element={<PlayerPage />} />
+            <Route path="/user/nexohub/player/catalog" element={<PlayerCatalog />} />
+            <Route path="/user/:userSlug/nexohub/player/catalog" element={<PlayerCatalog />} />
             <Route path="/user/nexohub/player/app" element={<PlayerApp />} />
             <Route path="/user/:userSlug/nexohub/player/app" element={<PlayerApp />} />
 
