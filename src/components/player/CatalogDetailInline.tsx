@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Play, Film, Calendar, Clock } from "lucide-react";
+import { Play, Film, Calendar, Clock, Plus, Minus } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface Channel {
