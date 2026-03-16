@@ -1187,9 +1187,9 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
 
   const sidebarItems = [
     { icon: Home, label: "Home", key: "home", action: () => handleSectionChange("home") },
-    { icon: Radio, label: "Streaming", key: "streaming", action: () => handleSectionChange("streaming") },
-    { icon: Film, label: "Catálogo", key: "content", action: () => handleSectionChange("content") },
-    ...(user ? [{ icon: ShoppingBag, label: "Loja", key: "shop", action: () => handleSectionChange("shop") }] : []),
+    { icon: Radio, label: "Streaming", key: "streaming", action: () => { setActiveCatalog(null); handleSectionChange("streaming"); } },
+    { icon: Film, label: "Catálogo", key: "content", action: () => { setActiveCatalog(null); handleSectionChange("content"); } },
+    ...(user ? [{ icon: ShoppingBag, label: "Loja", key: "shop", action: () => { setActiveCatalog(null); handleSectionChange("shop"); } }] : []),
   ];
 
   // Hero channel = first streaming channel
