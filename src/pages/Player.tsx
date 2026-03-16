@@ -2018,16 +2018,6 @@ export default function PlayerPage() {
           style={{ width: "80%", paddingLeft: "8px", paddingRight: "8px", opacity: barVisible ? 1 : 0, transform: barVisible ? "translateY(0)" : "translateY(20px)", pointerEvents: barVisible ? "auto" : "none" }}
           onClick={(e) => e.stopPropagation()}
         >
-        {/* Catalog: Back button above control bar */}
-        {isCatalog && (
-          <button
-            onClick={handleHomeClick}
-            className="flex items-center gap-1.5 mb-2 text-white/60 hover:text-white text-xs font-medium transition-colors"
-          >
-            <ChevronLeft size={14} />
-            <span>Voltar ao catálogo</span>
-          </button>
-        )}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-1 sm:gap-0 rounded-2xl border border-white/10 px-2 sm:px-5 py-2 sm:py-3 backdrop-blur-xl" style={{ backgroundColor: "rgba(0, 0, 0, 0.5)", boxShadow: "0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1)" }}>
 
            {/* Row 1 on mobile: Channel + Play + Volume */}
