@@ -1384,7 +1384,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                 Object.entries(catalogGroups).map(([groupName, items]) => {
                   const groupVideos = items.flatMap(item => (playlistVideos[item.id] || []).map(v => ({ ...v, channel: item })));
                   return (
-                    <ContentRow key={groupName} title={groupName}>
+                    <ContentRow key={groupName} title={groupName} scrollRoot={contentScrollRef}>
                       {groupVideos.length > 0 ? (
                         groupVideos.map(({ channel, ...video }) => (
                           <CatalogCard
