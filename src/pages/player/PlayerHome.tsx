@@ -1178,8 +1178,14 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
     if (videoId) params.set("vid", videoId);
     const qs = params.toString() ? `?${params.toString()}` : "";
     setTimeout(() => {
-      if (userSlug) navigate(`/user/${userSlug}/nexohub/player/watch${qs}`);
-      else navigate(`/user/nexohub/player/watch${qs}`);
+      const watchPath = userSlug ? `/user/${userSlug}/nexohub/player/watch` : "/user/nexohub/player/watch";
+      const fromPath = `${location.pathname}${location.search}`;
+      navigate(`${watchPath}${qs}`, {
+        state: {
+          fromPath,
+          fromCatalog: activeCatalog,
+        },
+      });
     }, 400);
   };
 
