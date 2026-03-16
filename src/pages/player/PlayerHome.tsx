@@ -710,6 +710,9 @@ function TrendingCard({ item, idx, channels, onClick }: {
 
   const coverSrc = item.image;
 
+  const cardHeight = 225;
+  const expandedWidth = hovered ? 150 + Math.round(cardHeight * 16 / 9) : 150;
+
   return (
     <div
       ref={containerRef}
@@ -718,36 +721,54 @@ function TrendingCard({ item, idx, channels, onClick }: {
       onMouseLeave={handleMouseLeave}
       className="flex-shrink-0 rounded-2xl overflow-hidden relative group cursor-pointer"
       style={{
-        width: showVideo ? `${150 + Math.round(225 * 16 / 9)}px` : "150px",
-        height: "225px",
+        width: `${expandedWidth}px`,
+        height: `${cardHeight}px`,
         background: "linear-gradient(145deg, rgba(255,255,255,0.06) 0%, hsl(var(--player-bg)) 100%)",
-        zIndex: showVideo ? 20 : hovered ? 10 : 1,
-        transform: hovered && !showVideo ? "translateY(-6px) scale(1.03)" : "translateY(0) scale(1)",
+        zIndex: hovered ? 20 : 1,
         boxShadow: hovered
           ? "0 8px 30px -4px hsla(var(--player-accent) / 0.45), 0 0 0 1.5px hsl(var(--player-accent))"
           : "0 4px 12px -4px rgba(0,0,0,0.3)",
         border: hovered ? "1.5px solid hsl(var(--player-accent))" : "1px solid rgba(255,255,255,0.06)",
-        transition: "transform 0.4s cubic-bezier(0.25,0.1,0.25,1), box-shadow 0.4s ease, border 0.3s ease",
+        transition: "width 0.5s cubic-bezier(0.25,0.1,0.25,1), box-shadow 0.4s ease, border 0.3s ease",
       }}
     >
-      {/* Cover image */}
-      {coverSrc ? (
-        <img
-          src={coverSrc}
-          alt={item.title}
-          className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ${showVideo ? "opacity-0 scale-110 blur-md" : "opacity-100"}`}
-        />
-      ) : (
-        <div className="absolute inset-0 w-full h-full flex items-center justify-center" style={{ background: "linear-gradient(160deg, rgba(255,255,255,0.08) 0%, hsl(var(--player-bg)) 100%)" }}>
-          <TrendingUp className="h-10 w-10" style={{ color: "hsl(var(--player-accent))", opacity: 0.3 }} />
-        </div>
-      )}
+      {/* Cover image – pinned to left 150px */}
+      <div className="absolute top-0 left-0 bottom-0" style={{ width: "150px" }}>
+        {coverSrc ? (
+          <img src={coverSrc} alt={item.title} className="w-full h-full object-cover" />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center" style={{ background: "linear-gradient(160deg, rgba(255,255,255,0.08) 0%, hsl(var(--player-bg)) 100%)" }}>
+            <TrendingUp className="h-10 w-10" style={{ color: "hsl(var(--player-accent))", opacity: 0.3 }} />
+          </div>
+        )}
+      </div>
 
-      {/* YouTube player container */}
-      {showVideo && (
-        <div className="absolute inset-[-8px] z-[2] animate-fade-in pointer-events-none">
-          <div className="yt-host w-full h-full" style={{ transform: "scale(1.06)" }} />
-          <div className="absolute inset-0" />
+      {/* Expanded right area – video preview or info */}
+      {hovered && (
+        <div className="absolute top-0 bottom-0 right-0 z-[2] flex flex-col justify-end" style={{ left: "150px" }}>
+          {showVideo ? (
+            <div className="absolute inset-0 animate-fade-in pointer-events-none">
+              <div className="yt-host w-full h-full" />
+            </div>
+          ) : coverSrc ? (
+            <img src={coverSrc} alt="" className="absolute inset-0 w-full h-full object-cover opacity-30 blur-sm" />
+          ) : null}
+          <div className="relative z-[3] p-3" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 60%, transparent 100%)" }}>
+            <p className="text-xs font-bold text-white leading-tight line-clamp-2">{item.title}</p>
+            {item.subtitle && <p className="text-[10px] text-white/50 mt-1 font-medium">{item.subtitle}</p>}
+            {item.type === "catalog" && (
+              <p className="text-[9px] text-white/40 mt-1.5 uppercase tracking-wider font-semibold flex items-center gap-1">
+                <Play className="h-3 w-3 fill-current" style={{ color: "hsl(var(--player-accent))" }} />
+                Assistir agora
+              </p>
+            )}
+            {item.type === "live" && (
+              <p className="text-[9px] mt-1.5 uppercase tracking-wider font-bold flex items-center gap-1" style={{ color: "hsl(var(--player-accent))" }}>
+                <span className="inline-block w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: "hsl(var(--player-accent))" }} />
+                ao vivo
+              </p>
+            )}
+          </div>
         </div>
       )}
 
@@ -759,34 +780,29 @@ function TrendingCard({ item, idx, channels, onClick }: {
         {idx + 1}
       </div>
 
-      {/* Channel/Catalog logo - top right, no shadow */}
+      {/* Channel/Catalog logo - top right */}
       {item.logoUrl && (
-        <div className={`absolute z-[15] flex items-center justify-center transition-all duration-500 ${showVideo ? "top-3 right-3 w-20 h-12" : "top-2 right-2 w-14 h-10"}`}>
+        <div className="absolute top-2 right-2 z-[15] w-14 h-10 flex items-center justify-center">
           <img src={item.logoUrl} alt="" className="max-w-full max-h-full object-contain" />
         </div>
       )}
 
       {/* Live badge */}
-      {item.type === "live" && !item.logoUrl && (
+      {item.type === "live" && !item.logoUrl && !hovered && (
         <span className="absolute top-2 right-2 z-10 text-[9px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded text-white" style={{ backgroundColor: "hsl(var(--player-accent))", opacity: 0.9 }}>
           live
         </span>
       )}
 
-      {/* Gradient + title */}
-      <div className="absolute inset-0 z-[3] pointer-events-none" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 40%, transparent 70%)" }} />
-      <div className="absolute bottom-0 left-0 right-0 p-3.5 z-[4] text-left pointer-events-none">
-        <p className="text-xs font-bold text-white leading-tight line-clamp-2 drop-shadow-lg">{item.title}</p>
-        {item.subtitle && <p className="text-[10px] text-white/50 mt-1 font-medium">{item.subtitle}</p>}
-      </div>
-
-      {/* Play overlay */}
-      {!showVideo && (
-        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 z-[5] pointer-events-none">
-          <div className="w-12 h-12 rounded-full backdrop-blur-md flex items-center justify-center shadow-2xl" style={{ background: "hsla(var(--player-accent) / 0.85)", boxShadow: "0 8px 32px hsla(var(--player-accent) / 0.5)" }}>
-            <Play className="h-5 w-5 text-white fill-white" />
+      {/* Gradient + title (only when not expanded) */}
+      {!hovered && (
+        <>
+          <div className="absolute inset-0 z-[3] pointer-events-none" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 40%, transparent 70%)" }} />
+          <div className="absolute bottom-0 left-0 right-0 p-3.5 z-[4] text-left pointer-events-none">
+            <p className="text-xs font-bold text-white leading-tight line-clamp-2 drop-shadow-lg">{item.title}</p>
+            {item.subtitle && <p className="text-[10px] text-white/50 mt-1 font-medium">{item.subtitle}</p>}
           </div>
-        </div>
+        </>
       )}
     </div>
   );
