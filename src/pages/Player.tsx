@@ -431,7 +431,7 @@ export default function PlayerPage() {
   const [prerollLinkUrl, setPrerollLinkUrl] = useState<string | null>(null);
   const [prerollMediaType, setPrerollMediaType] = useState<string>("video");
   const [prerollYoutubeUrl, setPrerollYoutubeUrl] = useState<string | null>(null);
-  const [prerollDone, setPrerollDone] = useState(true); // Pre-roll disabled for now
+  const [prerollDone, setPrerollDone] = useState(!requestedChannelId); // Pre-roll enabled for catalog/deep-link channels
   const [prerollShowing, setPrerollShowing] = useState(false);
   const prerollVideoRef = useRef<HTMLVideoElement>(null);
   const prerollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -1171,7 +1171,7 @@ export default function PlayerPage() {
     if (!first) return;
 
     setCurrentIndex(startIndex);
-    if (first.type === "youtube") {
+    if (first.type === "youtube" || first.type === "catalog") {
       setPlaying(true);
       setBuffering(false);
       setSelectedVideoId(null);
