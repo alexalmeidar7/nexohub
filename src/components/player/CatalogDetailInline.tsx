@@ -239,12 +239,20 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
       }
       // Filter out future-dated and sort (compare date-only, ignoring time)
       const todayStr = new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
-      const validVideos = allVideos.filter(v => {
-        const pubDate = v.published?.slice(0, 10) || "";
-        return pubDate <= todayStr;
-      });
-      validVideos.sort((a, b) => new Date(b.published).getTime() - new Date(a.published).getTime());
-      setVideos(validVideos);
+      // Deduplicate by videoId to show all videos individually (no grouping)
+      const seenIds = new Set<string>();
+      const uniqueVideos: PlaylistVideo[] = [];
+      for (const v of allVideos) {
+        if (!seenIds.has(v.videoId)) {
+          seenIds.add(v.videoId);
+          const pubDate = v.published?.slice(0, 10) || "";
+          if (pubDate <= todayStr) {
+            uniqueVideos.push(v);
+          }
+        }
+      }
+      uniqueVideos.sort((a, b) => new Date(b.published).getTime() - new Date(a.published).getTime());
+      setVideos(uniqueVideos);
       // Don't auto-select any video on initial load
       setLoading(false);
     };
