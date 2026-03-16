@@ -95,7 +95,7 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
   };
 
   return (
-    <div className="flex flex-col h-full overflow-hidden animate-fade-in">
+    <div className="flex flex-col h-full overflow-hidden animate-fade-in" data-catalog={catalogName}>
       {/* ─── HERO: full-width cinematic cover ─── */}
       <div className="relative flex-1 min-h-0 w-full overflow-hidden">
         {/* Background cover — uses catalog thumbnail */}
