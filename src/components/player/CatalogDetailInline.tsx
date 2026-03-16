@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { ChevronLeft, ChevronRight, Play, Film, Calendar } from "lucide-react";
+import { ChevronLeft, ChevronRight, Play, Film, Calendar, Clock, Shield } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface Channel {
@@ -21,17 +21,36 @@ interface PlaylistVideo {
   published: string;
 }
 
+interface ProgramaInfo {
+  nome: string;
+  descricao: string;
+  horario_inicio: string;
+  horario_fim: string;
+  classificacao_etaria: string;
+  selo: string;
+}
+
 interface CatalogDetailInlineProps {
   catalogName: string;
   onBack: () => void;
   onPlayVideo: (channelId: string, videoId: string) => void;
 }
 
+const ratingColors: Record<string, { bg: string; text: string }> = {
+  L: { bg: "#00a651", text: "#fff" },
+  "10": { bg: "#0095da", text: "#fff" },
+  "12": { bg: "#f7d117", text: "#000" },
+  "14": { bg: "#f58220", text: "#fff" },
+  "16": { bg: "#e2203a", text: "#fff" },
+  "18": { bg: "#1d1d1b", text: "#fff" },
+};
+
 export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }: CatalogDetailInlineProps) {
   const [channels, setChannels] = useState<Channel[]>([]);
   const [videos, setVideos] = useState<PlaylistVideo[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedVideo, setSelectedVideo] = useState<PlaylistVideo | null>(null);
+  const [programa, setPrograma] = useState<ProgramaInfo | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Fetch channels for this catalog group
@@ -47,6 +66,21 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
       setChannels(filtered);
     };
     fetchChannels();
+  }, [catalogName]);
+
+  // Fetch matching program info
+  useEffect(() => {
+    const fetchPrograma = async () => {
+      const { data } = await supabase
+        .from("programas")
+        .select("nome, descricao, horario_inicio, horario_fim, classificacao_etaria, selo")
+        .eq("ativo", true)
+        .ilike("nome", catalogName);
+      if (data && data.length > 0) {
+        setPrograma(data[0] as ProgramaInfo);
+      }
+    };
+    fetchPrograma();
   }, [catalogName]);
 
   // Fetch playlist videos
@@ -77,8 +111,11 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
 
   const primaryChannel = channels[0];
   const logoUrl = primaryChannel?.background_url || primaryChannel?.logo_url;
-  // Use first video's maxres thumbnail as hero background
-  const heroBackground = primaryChannel?.cover_url
+
+  // Hero background: prioritize catalog's registered thumbnail (logo_url = Thumb),
+  // then cover_url, then first video thumbnail as last fallback
+  const heroBackground = primaryChannel?.logo_url
+    || primaryChannel?.cover_url
     || (videos.length > 0
       ? (videos[0].thumbnail?.replace(/\/(hq|mq|sd)default\.jpg/, "/maxresdefault.jpg") || videos[0].thumbnail)
       : null);
@@ -95,11 +132,14 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
     scrollRef.current.scrollBy({ left: dir === "left" ? -amount : amount, behavior: "smooth" });
   };
 
+  const rating = programa?.classificacao_etaria || "L";
+  const ratingStyle = ratingColors[rating] || ratingColors["L"];
+
   return (
     <div className="flex flex-col h-full overflow-hidden animate-fade-in" data-catalog={catalogName}>
       {/* ─── HERO: full-width cinematic cover ─── */}
       <div className="relative flex-1 min-h-[280px] sm:min-h-[340px] w-full overflow-hidden">
-        {/* Background cover — uses catalog thumbnail */}
+        {/* Background cover — uses catalog registered thumbnail */}
         {heroBackground ? (
           <img
             src={heroBackground}
@@ -125,8 +165,8 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
           Voltar
         </button>
 
-        {/* Content: logo + description, bottom-left */}
-        <div className="absolute bottom-10 left-8 sm:left-12 z-10 max-w-xl flex flex-col gap-4">
+        {/* Content: logo + program info, bottom-left */}
+        <div className="absolute bottom-10 left-8 sm:left-12 z-10 max-w-xl flex flex-col gap-3">
           {logoUrl ? (
             <img
               src={logoUrl}
@@ -143,22 +183,48 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
             </h1>
           )}
 
-          <p className="text-sm sm:text-base text-white/60 leading-relaxed max-w-md" style={{ textShadow: "0 1px 10px rgba(0,0,0,0.5)" }}>
+          <p className="text-sm sm:text-base text-white/70 font-medium leading-relaxed" style={{ textShadow: "0 1px 10px rgba(0,0,0,0.5)" }}>
             {primaryChannel?.name || catalogName}
           </p>
 
-          <div className="flex items-center gap-5 text-xs text-white/35 font-medium">
-            <span className="flex items-center gap-1.5">
+          {/* Program metadata: rating + schedule + description */}
+          <div className="flex items-center gap-3 flex-wrap">
+            {/* Age rating badge */}
+            <span
+              className="inline-flex items-center justify-center rounded font-black text-[11px] leading-none min-w-[26px] h-[22px] px-1.5"
+              style={{ backgroundColor: ratingStyle.bg, color: ratingStyle.text }}
+            >
+              {rating === "L" ? "L" : rating}
+            </span>
+
+            {/* Schedule */}
+            {programa && (
+              <span className="flex items-center gap-1.5 text-xs text-white/50 font-medium">
+                <Clock className="h-3.5 w-3.5 text-white/40" />
+                {programa.horario_inicio} – {programa.horario_fim}
+              </span>
+            )}
+
+            {/* Video count */}
+            <span className="flex items-center gap-1.5 text-xs text-white/35 font-medium">
               <Film className="h-3.5 w-3.5" />
               {loading ? "..." : videos.length} vídeos
             </span>
+
             {videos.length > 0 && (
-              <span className="flex items-center gap-1.5">
+              <span className="flex items-center gap-1.5 text-xs text-white/35 font-medium">
                 <Calendar className="h-3.5 w-3.5" />
                 Atualizado em {new Date(videos[0].published).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })}
               </span>
             )}
           </div>
+
+          {/* Program description */}
+          {programa?.descricao && (
+            <p className="text-[13px] text-white/45 leading-relaxed max-w-md line-clamp-2" style={{ textShadow: "0 1px 8px rgba(0,0,0,0.5)" }}>
+              {programa.descricao}
+            </p>
+          )}
 
           {!loading && videos.length > 0 && (
             <button
