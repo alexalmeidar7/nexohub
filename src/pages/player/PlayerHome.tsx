@@ -437,7 +437,7 @@ function StreamingCard({ channel, currentProgram, nowPlaying, onClick }: {
         aspectRatio: "2/3",
         background: "linear-gradient(145deg, rgba(255,255,255,0.06) 0%, hsl(var(--player-bg)) 100%)",
         transform: "none",
-        boxShadow: "0 4px 20px -8px rgba(0,0,0,0.4)",
+        boxShadow: hovered ? "0 0 12px 2px hsla(var(--player-accent) / 0.5)" : "none",
         border: hovered ? "2px solid hsl(var(--player-accent))" : "1px solid rgba(255,255,255,0.06)",
       }}
     >
@@ -687,7 +687,7 @@ function TrendingCard({ item, idx, channels, onClick }: {
         background: "linear-gradient(145deg, rgba(255,255,255,0.06) 0%, hsl(var(--player-bg)) 100%)",
         zIndex: showVideo ? 20 : 1,
         transform: "none",
-        boxShadow: "0 4px 20px -8px rgba(0,0,0,0.4)",
+        boxShadow: hovered ? "0 0 12px 2px hsla(var(--player-accent) / 0.5)" : "none",
         border: hovered ? "2px solid hsl(var(--player-accent))" : "1px solid rgba(255,255,255,0.06)",
       }}
     >
@@ -769,10 +769,12 @@ function CatalogCard({ image, title, subtitle, logoUrl, onClick }: { image?: str
       onMouseEnter={(e) => {
         e.currentTarget.style.borderColor = "hsl(var(--player-accent))";
         e.currentTarget.style.borderWidth = "2px";
+        e.currentTarget.style.boxShadow = "0 0 12px 2px hsla(var(--player-accent) / 0.5)";
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)";
         e.currentTarget.style.borderWidth = "1px";
+        e.currentTarget.style.boxShadow = "none";
       }}
     >
       {image ? (
@@ -822,10 +824,12 @@ function HistoryCard({ item, onClick }: { item: { channel_name: string; channel_
       onMouseEnter={(e) => {
         e.currentTarget.style.borderColor = "hsl(var(--player-accent))";
         e.currentTarget.style.borderWidth = "2px";
+        e.currentTarget.style.boxShadow = "0 0 12px 2px hsla(var(--player-accent) / 0.5)";
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)";
         e.currentTarget.style.borderWidth = "1px";
+        e.currentTarget.style.boxShadow = "none";
       }}
     >
       {item.channel_cover_url ? (
