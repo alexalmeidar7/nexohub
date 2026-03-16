@@ -363,7 +363,7 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
               <Skeleton className="h-11 w-36 rounded-xl bg-white/8" />
             </div>
           ) : (
-            <>
+            <div className="animate-fade-in" key="content-hero">
               {logoUrl ? (
                 <img
                   src={logoUrl}
