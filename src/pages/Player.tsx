@@ -1767,6 +1767,17 @@ export default function PlayerPage() {
 
       {/* Content wrapper with fade transition */}
       <div className={`transition-opacity duration-400 ease-in-out ${pageFadeOut ? "opacity-0" : "opacity-100"}`}>
+
+      {/* Catalog: Back button — top-left corner */}
+      {isCatalog && (
+        <button
+          onClick={handleHomeClick}
+          className="absolute top-5 left-5 z-[60] flex items-center gap-1.5 text-white/50 hover:text-white text-xs font-medium transition-colors"
+        >
+          <ChevronLeft size={16} />
+          <span>Voltar</span>
+        </button>
+      )}
       {/* Pre-Roll Overlay */}
       {((prerollUrl || (prerollMediaType === "youtube" && prerollYoutubeUrl)) && (!prerollDone || prerollShowing)) && (
         <PreRollOverlay
