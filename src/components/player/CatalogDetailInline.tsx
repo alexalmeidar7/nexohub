@@ -111,7 +111,7 @@ function HoverPreviewPopup({ video, x, y }: { video: PlaylistVideo; x: number; y
           boxShadow: "0 16px 50px rgba(0,0,0,0.7), 0 0 40px hsla(var(--player-accent) / 0.15)",
         }}
       >
-        {/* Video area — scaled up to crop YouTube UI chrome */}
+        {/* Video area — gentle crop to hide YouTube top bar only */}
         <div className="relative w-full overflow-hidden" style={{ aspectRatio: "16/9", background: "#000" }}>
           {!videoReady && (
             <div className="absolute inset-0 flex items-center justify-center z-10">
@@ -120,20 +120,27 @@ function HoverPreviewPopup({ video, x, y }: { video: PlaylistVideo; x: number; y
           )}
           <iframe
             ref={iframeRef}
-            src={`https://www.youtube.com/embed/${video.videoId}?autoplay=1&mute=1&start=1800&controls=0&showinfo=0&modestbranding=1&rel=0&iv_load_policy=3&disablekb=1&fs=0&loop=1&playlist=${video.videoId}&end=1810&enablejsapi=1&origin=${window.location.origin}`}
+            src={`https://www.youtube.com/embed/${video.videoId}?autoplay=1&mute=1&start=1800&controls=0&showinfo=0&modestbranding=1&rel=0&iv_load_policy=3&disablekb=1&fs=0&loop=1&playlist=${video.videoId}&end=1810&enablejsapi=1&origin=${window.location.origin}&widget_referrer=${window.location.origin}`}
             className="absolute"
             style={{
               border: 0,
               opacity: videoReady ? 1 : 0,
               transition: "opacity 0.8s ease-in-out",
-              /* Scale up 20% to crop YouTube title bar and bottom controls */
-              top: "-10%",
-              left: "-10%",
-              width: "120%",
-              height: "120%",
+              top: "-5%",
+              left: 0,
+              width: "100%",
+              height: "110%",
             }}
             allow="autoplay; encrypted-media"
             title={video.title}
+            onLoad={() => {
+              // Send listening handshake so postMessage commands work
+              try {
+                iframeRef.current?.contentWindow?.postMessage(
+                  JSON.stringify({ event: "listening" }), "*"
+                );
+              } catch {}
+            }}
           />
         </div>
 
