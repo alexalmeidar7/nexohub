@@ -1186,7 +1186,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   const handleSignOut = async () => { await signOut(); navigate("/user/nexohub/player"); };
 
   const sidebarItems = [
-    { icon: Home, label: "Home", key: "home", action: () => handleSectionChange("home") },
+    { icon: Home, label: "Home", key: "home", action: () => { setActiveCatalog(null); handleSectionChange("home"); } },
     { icon: Radio, label: "Streaming", key: "streaming", action: () => { setActiveCatalog(null); handleSectionChange("streaming"); } },
     { icon: Film, label: "Catálogo", key: "content", action: () => { setActiveCatalog(null); handleSectionChange("content"); } },
     ...(user ? [{ icon: ShoppingBag, label: "Loja", key: "shop", action: () => { setActiveCatalog(null); handleSectionChange("shop"); } }] : []),
