@@ -103,7 +103,7 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
       }
       allVideos.sort((a, b) => new Date(b.published).getTime() - new Date(a.published).getTime());
       setVideos(allVideos);
-      if (allVideos.length > 0) setSelectedVideo(allVideos[0]);
+      // Don't auto-select any video on initial load
       setLoading(false);
     };
     fetchVideos();
