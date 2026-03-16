@@ -128,8 +128,9 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
   }, []);
 
   const loadCanais = async () => {
+    if (!user) return;
     setLoadingCanais(true);
-    const { data } = await supabase.from("streaming_channels").select("*").order("numero_canal", { ascending: true });
+    const { data } = await supabase.from("streaming_channels").select("*").eq("user_id", user.id).order("numero_canal", { ascending: true });
     if (data) {
       const seen = new Map<string, string>();
       const dupeIds: string[] = [];
@@ -243,9 +244,10 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
     };
     setSavingCanal(true);
     if (editingCanal) {
-      const { error } = await supabase.from("streaming_channels").update(payload).eq("id", editingCanal);
+      const { error, data: updatedRows } = await supabase.from("streaming_channels").update(payload).eq("id", editingCanal).eq("user_id", user.id).select("id");
       setSavingCanal(false);
-      if (error) { toast.error("Erro ao atualizar."); }
+      if (error) { toast.error("Erro ao atualizar: " + error.message); }
+      else if (!updatedRows || updatedRows.length === 0) { toast.error("Não foi possível atualizar. Verifique as permissões."); }
       else { toast.success("Atualizado!"); resetCanalForm(); loadCanais(); }
     } else {
       const { error } = await supabase.from("streaming_channels").insert([{ ...payload, user_id: user.id }]);
