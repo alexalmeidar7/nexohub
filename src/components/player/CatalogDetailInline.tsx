@@ -101,8 +101,11 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
           }
         } catch {}
       }
-      allVideos.sort((a, b) => new Date(b.published).getTime() - new Date(a.published).getTime());
-      setVideos(allVideos);
+      // Filter out future-dated and sort
+      const now = new Date();
+      const validVideos = allVideos.filter(v => new Date(v.published) <= now);
+      validVideos.sort((a, b) => new Date(b.published).getTime() - new Date(a.published).getTime());
+      setVideos(validVideos);
       // Don't auto-select any video on initial load
       setLoading(false);
     };
