@@ -92,6 +92,22 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
     return () => clearInterval(t);
   }, [countdown]);
 
+  useEffect(() => {
+    if (isYoutube && !ytId) {
+      setYtErrorMessage("Link do YouTube inválido ou não suportado.");
+      return;
+    }
+    if (!ytFailed) {
+      setYtErrorMessage(null);
+    }
+  }, [isYoutube, ytId, ytFailed]);
+
+  useEffect(() => {
+    if (!showFailureState) return;
+    const t = setTimeout(() => onEndedRef.current(), 3000);
+    return () => clearTimeout(t);
+  }, [showFailureState]);
+
   // Track time for native video
   useEffect(() => {
     if (!shouldUseNativeVideo) return;
