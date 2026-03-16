@@ -1165,12 +1165,15 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   };
 
   const goToCatalog = (catalogName: string) => {
-    setFadeOut(true);
-    const qs = `?catalog=${encodeURIComponent(catalogName)}`;
-    setTimeout(() => {
-      if (userSlug) navigate(`/user/${userSlug}/nexohub/player/catalog${qs}`);
-      else navigate(`/user/nexohub/player/catalog${qs}`);
-    }, 400);
+    setActiveCatalog(catalogName);
+    setSectionFading(true);
+    setTimeout(() => { setVisibleSection("catalog-detail"); setSectionFading(false); }, 200);
+  };
+
+  const goBackFromCatalog = () => {
+    setActiveCatalog(null);
+    setSectionFading(true);
+    setTimeout(() => { setVisibleSection("content"); setSectionFading(false); }, 200);
   };
 
   const handleSectionChange = useCallback((section: Section) => {
