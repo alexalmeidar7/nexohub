@@ -1393,7 +1393,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                     if (ch) {
                       trendingItems.push({
                         id: `cat-${v.videoId}`,
-                        image: v.thumbnail?.replace(/\/(hq|mq|sd)default\.jpg/, '/maxresdefault.jpg') || v.thumbnail,
+                        image: ch.cover_url || v.thumbnail?.replace(/\/(hq|mq|sd)default\.jpg/, '/maxresdefault.jpg') || v.thumbnail,
                         title: v.title,
                         subtitle: v.published ? new Date(v.published).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" }) : undefined,
                         type: "catalog",
