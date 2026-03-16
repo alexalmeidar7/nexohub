@@ -1,6 +1,6 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { ChevronLeft, ChevronRight, Play, Film, Calendar, Clock, Shield } from "lucide-react";
+import { ChevronLeft, Play, Film, Calendar, Clock } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface Channel {
