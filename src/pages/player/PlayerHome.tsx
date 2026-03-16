@@ -1269,7 +1269,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                   if (trendingItems.length === 0) return null;
 
                   return (
-                    <ContentRow title={
+                    <ContentRow scrollRoot={contentScrollRef} title={
                       <span className="flex items-center gap-2">
                         <Flame className="h-5 w-5" style={{ color: "hsl(var(--player-accent))" }} />
                         Em Alta
