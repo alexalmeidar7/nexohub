@@ -250,7 +250,7 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
         className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 rounded-2xl overflow-hidden"
         style={{
           width: "90%",
-          height: "clamp(160px, 26vh, 240px)",
+          height: "clamp(120px, 18vh, 170px)",
           background: "rgba(20, 60, 140, 0.35)",
           backdropFilter: "blur(28px) saturate(1.6)",
           WebkitBackdropFilter: "blur(28px) saturate(1.6)",
@@ -258,18 +258,6 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
           boxShadow: "0 8px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08)",
         }}
       >
-        {/* Label */}
-        <div className="absolute top-3.5 left-12 z-10 flex items-center gap-2">
-          <div className="w-1 h-4 rounded-full" style={{ background: "hsl(var(--player-accent))" }} />
-          <span className="text-[11px] uppercase tracking-[0.2em] font-bold text-white/50">
-            Playlist
-          </span>
-          {!loading && videos.length > 0 && (
-            <span className="text-[10px] text-white/25 font-medium ml-1">
-              {videos.length} vídeos
-            </span>
-          )}
-        </div>
 
         {/* Scroll arrows — glass buttons */}
         <button
