@@ -334,7 +334,7 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
         <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, hsla(var(--player-bg) / 0.4) 0%, transparent 20%)" }} />
 
         {/* Content: logo + program info, bottom-left */}
-        <div className="absolute bottom-[clamp(220px,35vh,340px)] left-8 sm:left-12 z-10 max-w-xl flex flex-col gap-3">
+        <div className="absolute top-[clamp(20px,4vh,60px)] left-8 sm:left-12 z-10 max-w-xl flex flex-col gap-3">
           {logoUrl ? (
             <img
               src={logoUrl}
