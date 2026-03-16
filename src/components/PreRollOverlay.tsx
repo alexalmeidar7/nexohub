@@ -25,6 +25,9 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
   const [ytFailed, setYtFailed] = useState(false);
   const isYoutube = prerollMediaType === "youtube" && prerollYoutubeUrl;
   const ytId = isYoutube ? extractYoutubeId(prerollYoutubeUrl!) : null;
+  const hasFallbackVideo = Boolean(prerollUrl);
+  const useVideoFallback = Boolean(isYoutube && ytFailed && hasFallbackVideo);
+  const shouldUseNativeVideo = !isYoutube || !ytId || useVideoFallback;
   const ytPlayerRef = useRef<any>(null);
   const pollRef = useRef<ReturnType<typeof setInterval>>();
   const onEndedRef = useRef(onEnded);
