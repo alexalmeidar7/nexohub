@@ -1179,7 +1179,9 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
     const qs = params.toString() ? `?${params.toString()}` : "";
     setTimeout(() => {
       const watchPath = userSlug ? `/user/${userSlug}/nexohub/player/watch` : "/user/nexohub/player/watch";
-      const fromPath = `${location.pathname}${location.search}`;
+      const fromParams = new URLSearchParams(location.search);
+      if (activeCatalog) fromParams.set("catalog", activeCatalog);
+      const fromPath = `${location.pathname}${fromParams.toString() ? `?${fromParams.toString()}` : ""}`;
       navigate(`${watchPath}${qs}`, {
         state: {
           fromPath,
