@@ -76,6 +76,7 @@ interface Canal {
   cover_url: string;
   background_url: string;
   catalog_name?: string;
+  estudio?: string;
 }
 
 interface Programa {
@@ -1618,7 +1619,14 @@ export default function PlayerPage() {
     return () => clearInterval(interval);
   }, []);
 
-  const currentProg = getCurrentProgram(programas);
+  // Filter programs by the current channel's estudio (if set)
+  const filteredProgramas = useMemo(() => {
+    if (!canal?.estudio) return programas;
+    const filtered = programas.filter(p => p.estudio === canal.estudio);
+    return filtered.length > 0 ? filtered : programas;
+  }, [programas, canal?.estudio]);
+
+  const currentProg = getCurrentProgram(filteredProgramas);
   const prevProgIdRef = useRef<string | null>(null);
   useEffect(() => {
     if (currentProg?.id !== prevProgIdRef.current) {
@@ -1630,7 +1638,7 @@ export default function PlayerPage() {
   // Music recording is handled by the monitor-music edge function (cron job)
   // No client-side insertion needed
 
-  const nextProg = getNextProgram(programas, currentProg);
+  const nextProg = getNextProgram(filteredProgramas, currentProg);
   const progress = getProgramProgress(currentProg);
   const currentPresenter = useMemo(() => {
     if (!currentProg?.apresentador_id) return null;

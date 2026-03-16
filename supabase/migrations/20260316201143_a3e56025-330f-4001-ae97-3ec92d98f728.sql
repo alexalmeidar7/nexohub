@@ -1,0 +1,1 @@
+ALTER TABLE public.streaming_channels ADD COLUMN IF NOT EXISTS estudio text DEFAULT '';

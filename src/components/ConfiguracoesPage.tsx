@@ -59,6 +59,7 @@ interface Canal {
   horario_inicio: string;
   horario_fim: string;
   descricao: string;
+  estudio: string;
 }
 
 /* ── Styled input helper ── */
@@ -121,12 +122,12 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
   const [canais, setCanais] = useState<Canal[]>([]);
   const [loadingCanais, setLoadingCanais] = useState(true);
   const [canalMode, setCanalMode] = useState<"live" | "catalog">("live");
-  const [canalForm, setCanalForm] = useState({ numero_canal: "", name: "", logo_url: "", cover_url: "", background_url: "", url: "", type: "audio_live", catalog_name: "", is_hd: false, is_stereo: false, classificacao_etaria: "L" });
+  const [canalForm, setCanalForm] = useState({ numero_canal: "", name: "", logo_url: "", cover_url: "", background_url: "", url: "", type: "audio_live", catalog_name: "", is_hd: false, is_stereo: false, classificacao_etaria: "L", estudio: "" });
   const [savingCanal, setSavingCanal] = useState(false);
   const [editingCanal, setEditingCanal] = useState<string | null>(null);
   const [catalogContentMode, setCatalogContentMode] = useState<"playlist" | "individual">("playlist");
   const [newCatalogMode, setNewCatalogMode] = useState(false);
-  const [programas, setProgramas] = useState<{ id: string; nome: string; descricao: string; horario_inicio: string; horario_fim: string; classificacao_etaria: string }[]>([]);
+  const [programas, setProgramas] = useState<{ id: string; nome: string; descricao: string; horario_inicio: string; horario_fim: string; classificacao_etaria: string; estudio: string }[]>([]);
   const [selectedProgramaId, setSelectedProgramaId] = useState("");
   const [savedCatalogs, setSavedCatalogs] = useState<string[]>([]);
   const [videoCoverUrl, setVideoCoverUrl] = useState("");
@@ -136,8 +137,8 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
   useEffect(() => {
     if (user) {
       getEmpresaConfig(user.id).then(c => { setConfig(c); setLoading(false); });
-      supabase.from("programas").select("id, nome, descricao, horario_inicio, horario_fim, classificacao_etaria").eq("user_id", user.id).eq("ativo", true).order("nome").then(({ data }) => {
-        if (data) setProgramas(data.map(p => ({ id: p.id, nome: p.nome, descricao: p.descricao || "", horario_inicio: p.horario_inicio, horario_fim: p.horario_fim, classificacao_etaria: p.classificacao_etaria || "L" })));
+      supabase.from("programas").select("id, nome, descricao, horario_inicio, horario_fim, classificacao_etaria, estudio").eq("user_id", user.id).eq("ativo", true).order("nome").then(({ data }) => {
+        if (data) setProgramas(data.map(p => ({ id: p.id, nome: p.nome, descricao: p.descricao || "", horario_inicio: p.horario_inicio, horario_fim: p.horario_fim, classificacao_etaria: p.classificacao_etaria || "L", estudio: (p as any).estudio || "" })));
       });
     }
     loadCanais();
@@ -165,6 +166,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
         horario_inicio: d.horario_inicio || "",
         horario_fim: d.horario_fim || "",
         descricao: d.descricao || "",
+        estudio: d.estudio || "",
       })));
     }
     setLoadingCanais(false);
@@ -267,6 +269,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
       horario_inicio: selectedProg?.horario_inicio || existingCanal?.horario_inicio || "",
       horario_fim: selectedProg?.horario_fim || existingCanal?.horario_fim || "",
       descricao: videoDescription || selectedProg?.descricao || existingCanal?.descricao || "",
+      estudio: canalForm.estudio || existingCanal?.estudio || "",
     };
     setSavingCanal(true);
     if (editingCanal) {
@@ -284,7 +287,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
   };
 
   const resetCanalForm = () => {
-    setCanalForm({ numero_canal: "", name: "", logo_url: "", cover_url: "", background_url: "", url: "", type: "audio_live", catalog_name: "", is_hd: false, is_stereo: false, classificacao_etaria: "L" });
+    setCanalForm({ numero_canal: "", name: "", logo_url: "", cover_url: "", background_url: "", url: "", type: "audio_live", catalog_name: "", is_hd: false, is_stereo: false, classificacao_etaria: "L", estudio: "" });
     setCanalMode("live");
     setEditingCanal(null);
     setCatalogContentMode("playlist");
@@ -298,7 +301,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
   const handleEditCanal = (c: Canal) => {
     const isCatalog = c.type === "catalog";
     setCanalMode(isCatalog ? "catalog" : "live");
-    setCanalForm({ numero_canal: String(c.numero_canal), name: c.name, logo_url: c.logo_url, cover_url: c.cover_url, background_url: c.background_url || "", url: c.url, type: isCatalog ? "audio_live" : c.type, catalog_name: c.catalog_name || "", is_hd: c.is_hd, is_stereo: c.is_stereo, classificacao_etaria: c.classificacao_etaria || "L" });
+    setCanalForm({ numero_canal: String(c.numero_canal), name: c.name, logo_url: c.logo_url, cover_url: c.cover_url, background_url: c.background_url || "", url: c.url, type: isCatalog ? "audio_live" : c.type, catalog_name: c.catalog_name || "", is_hd: c.is_hd, is_stereo: c.is_stereo, classificacao_etaria: c.classificacao_etaria || "L", estudio: c.estudio || "" });
     setEditingCanal(c.id);
     // Restore description from saved channel data
     setVideoDescription(c.descricao || "");
@@ -519,6 +522,20 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
                 <div className="space-y-1.5">
                   <label className="block text-[11px] font-semibold" style={{ color: "#0d0446" }}>Nome do Canal</label>
                   <StyledInput value={canalForm.name} onChange={(e) => setCanalForm(p => ({ ...p, name: e.target.value }))} placeholder="Ex: Rádio FM" />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="block text-[11px] font-semibold" style={{ color: "#0d0446" }}>Estúdio</label>
+                  <select
+                    value={canalForm.estudio}
+                    onChange={(e) => setCanalForm(p => ({ ...p, estudio: e.target.value }))}
+                    className="w-full px-4 py-2 text-sm font-medium appearance-none cursor-pointer"
+                    style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "20px", border: "2px solid #0d0446" }}
+                  >
+                    <option value="">Nenhum</option>
+                    {Array.from(new Set(programas.map(p => p.estudio).filter(Boolean))).sort().map(e => (
+                      <option key={e} value={e}>{e}</option>
+                    ))}
+                  </select>
                 </div>
                 <div className="space-y-1.5 sm:col-span-3">
                   <label className="block text-[11px] font-semibold" style={{ color: "#0d0446" }}>URL do Streaming</label>
