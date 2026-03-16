@@ -1219,7 +1219,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                     </div>
                   </section>
                 ) : streamingChannels.length > 0 && (
-                  <ContentRow title="Canais ao Vivo">
+                  <ContentRow title="Canais ao Vivo" scrollRoot={contentScrollRef}>
                     {streamingChannels.map(ch => (
                       <StreamingCard
                         key={ch.id}
