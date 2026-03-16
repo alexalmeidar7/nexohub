@@ -491,6 +491,7 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
             })
           )}
         </div>
+        </div>
       </div>
     </div>
   );
