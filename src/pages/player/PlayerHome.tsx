@@ -813,17 +813,18 @@ function HistoryCard({ item, onClick }: { item: { channel_name: string; channel_
   return (
     <button
       onClick={onClick}
-      className="flex-shrink-0 rounded-2xl overflow-hidden relative transition-all duration-300 group cursor-pointer"
+      className="flex-shrink-0 rounded-2xl overflow-hidden relative transition-all duration-500 ease-[cubic-bezier(0.25,0.1,0.25,1)] group cursor-pointer"
       style={{
-        width: "200px",
-        aspectRatio: "16/9",
+        width: "160px",
+        aspectRatio: "2/3",
+        background: "linear-gradient(145deg, rgba(255,255,255,0.06) 0%, hsl(var(--player-bg)) 100%)",
         border: "1px solid rgba(255,255,255,0.06)",
         boxShadow: "0 4px 20px -8px rgba(0,0,0,0.4)",
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.transform = "translateY(-4px) scale(1.02)";
-        e.currentTarget.style.boxShadow = "0 16px 48px -12px rgba(0,0,0,0.6)";
-        e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)";
+        e.currentTarget.style.transform = "translateY(-6px) scale(1.02)";
+        e.currentTarget.style.boxShadow = "0 20px 60px -15px rgba(0,0,0,0.7), 0 0 40px -10px hsla(var(--player-accent) / 0.25)";
+        e.currentTarget.style.borderColor = "hsla(var(--player-accent) / 0.4)";
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.transform = "";
@@ -832,19 +833,29 @@ function HistoryCard({ item, onClick }: { item: { channel_name: string; channel_
       }}
     >
       {item.channel_cover_url ? (
-        <img src={item.channel_cover_url} alt={item.channel_name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+        <img src={item.channel_cover_url} alt={item.channel_name} className="absolute inset-0 w-full h-full object-cover transition-all duration-700 group-hover:scale-105" />
       ) : item.channel_logo_url ? (
-        <div className="w-full h-full flex items-center justify-center" style={{ background: "linear-gradient(160deg, rgba(255,255,255,0.05) 0%, hsl(var(--player-bg)) 100%)" }}>
+        <div className="absolute inset-0 w-full h-full flex items-center justify-center" style={{ background: "linear-gradient(160deg, rgba(255,255,255,0.05) 0%, hsl(var(--player-bg)) 100%)" }}>
           <img src={item.channel_logo_url} alt={item.channel_name} className="h-12 w-auto object-contain" />
         </div>
       ) : (
-        <div className="w-full h-full flex items-center justify-center" style={{ background: "linear-gradient(160deg, hsla(var(--player-accent) / 0.1) 0%, hsl(var(--player-bg)) 100%)" }}>
-          <Radio className="h-8 w-8 text-white/15" />
+        <div className="absolute inset-0 w-full h-full flex items-center justify-center" style={{ background: "linear-gradient(160deg, hsla(var(--player-accent) / 0.1) 0%, hsl(var(--player-bg)) 100%)" }}>
+          <Radio className="h-10 w-10 text-white/15" />
         </div>
       )}
-      <div className="absolute bottom-0 left-0 right-0 px-3 pb-2.5 pt-10" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.9) 20%, transparent)" }}>
-        <p className="text-xs font-bold text-white truncate">{item.channel_name}</p>
-        <p className="text-[10px] text-white/40 flex items-center gap-1.5 mt-0.5">
+
+      {/* Play overlay */}
+      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 z-[5] pointer-events-none">
+        <div className="w-12 h-12 rounded-full backdrop-blur-md flex items-center justify-center shadow-2xl" style={{ background: "hsla(var(--player-accent) / 0.85)", boxShadow: "0 8px 32px hsla(var(--player-accent) / 0.5)" }}>
+          <Play className="h-5 w-5 text-white fill-white" />
+        </div>
+      </div>
+
+      {/* Gradient + info */}
+      <div className="absolute inset-0 z-[3] pointer-events-none" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 40%, transparent 70%)" }} />
+      <div className="absolute bottom-0 left-0 right-0 p-3 z-[4] text-left pointer-events-none">
+        <p className="text-xs font-bold text-white truncate drop-shadow-lg">{item.channel_name}</p>
+        <p className="text-[9px] text-white/50 flex items-center gap-1 mt-1">
           <Clock className="h-2.5 w-2.5" />
           {new Date(item.watched_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
         </p>
