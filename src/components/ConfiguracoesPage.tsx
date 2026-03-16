@@ -590,10 +590,15 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
                     onChange={(e) => {
                       const id = e.target.value;
                       setSelectedProgramaId(id);
-                      if (id) {
+                       if (id) {
                         const prog = programas.find(p => p.id === id);
                         if (prog) {
-                          setCanalForm(p => ({ ...p, classificacao_etaria: prog.classificacao_etaria || "L" }));
+                          setCanalForm(p => ({
+                            ...p,
+                            classificacao_etaria: prog.classificacao_etaria || "L",
+                            name: p.name || prog.nome,
+                          }));
+                          setVideoDescription(prog.descricao || "");
                         }
                       }
                     }}
