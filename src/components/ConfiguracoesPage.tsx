@@ -624,9 +624,9 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
                     >
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-base">📹</span>
-                        <span>Cadastrar Vídeos Individualmente</span>
+                        <span style={{ color: catalogContentMode === "individual" ? "#ffffff" : "#0d0446" }}>Cadastrar Vídeos Individualmente</span>
                       </div>
-                      <p className="text-[10px] opacity-70 ml-7">Adicione vídeos um a um com capas personalizadas</p>
+                      <p className="text-[10px] ml-7" style={{ color: catalogContentMode === "individual" ? "rgba(255,255,255,0.85)" : "rgba(13,4,70,0.5)" }}>Adicione vídeos um a um com capas personalizadas</p>
                     </button>
                   </div>
                 </div>
