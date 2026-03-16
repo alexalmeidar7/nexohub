@@ -714,7 +714,8 @@ function TrendingCard({ item, idx, channels, onClick }: {
   const coverSrc = item.image;
 
   const cardHeight = 225;
-  const expandedWidth = hovered ? 150 + Math.round(cardHeight * 16 / 9) : 150;
+  const videoWidth = Math.round(cardHeight * 16 / 9); // 400px — true 16:9
+  const expandedWidth = hovered ? 150 + videoWidth : 150;
 
   return (
     <div
