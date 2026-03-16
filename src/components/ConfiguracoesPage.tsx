@@ -272,6 +272,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
     setEditingCanal(null);
     setCatalogContentMode("playlist");
     setNewCatalogMode(false);
+    setSelectedProgramaId("");
   };
 
   const handleEditCanal = (c: Canal) => {
