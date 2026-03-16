@@ -8,6 +8,7 @@ import { loadMiniPlayerData, clearMiniPlayerData, type MiniPlayerData } from "@/
 import PlayerSidebar from "@/components/player/PlayerSidebar";
 const MiniPlayerWidget = lazy(() => import("@/components/player/MiniPlayerWidget"));
 const PlayerGradeDialog = lazy(() => import("@/components/player/PlayerGradeDialog"));
+const CatalogDetailInline = lazy(() => import("@/components/player/CatalogDetailInline"));
 
 interface Channel {
   id: string;
@@ -41,7 +42,7 @@ interface PlaylistVideo {
   published: string;
 }
 
-type Section = "home" | "streaming" | "content" | "shop";
+type Section = "home" | "streaming" | "content" | "shop" | "catalog-detail";
 
 /* ─── Hero Banner Carousel ─── */
 function HeroBanner({
@@ -956,6 +957,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   const [nowPlaying, setNowPlaying] = useState<{ musica: string; artista: string } | null>(null);
   const [shopProducts, setShopProducts] = useState<any[]>([]);
   const [showGrade, setShowGrade] = useState(false);
+  const [activeCatalog, setActiveCatalog] = useState<string | null>(null);
   const contentScrollRef = useRef<HTMLDivElement>(null);
 
   const [miniPlayerData, setMiniPlayerData] = useState<MiniPlayerData | null>(() => loadMiniPlayerData());
@@ -1163,12 +1165,15 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   };
 
   const goToCatalog = (catalogName: string) => {
-    setFadeOut(true);
-    const qs = `?catalog=${encodeURIComponent(catalogName)}`;
-    setTimeout(() => {
-      if (userSlug) navigate(`/user/${userSlug}/nexohub/player/catalog${qs}`);
-      else navigate(`/user/nexohub/player/catalog${qs}`);
-    }, 400);
+    setActiveCatalog(catalogName);
+    setSectionFading(true);
+    setTimeout(() => { setVisibleSection("catalog-detail"); setSectionFading(false); }, 200);
+  };
+
+  const goBackFromCatalog = () => {
+    setActiveCatalog(null);
+    setSectionFading(true);
+    setTimeout(() => { setVisibleSection("content"); setSectionFading(false); }, 200);
   };
 
   const handleSectionChange = useCallback((section: Section) => {
@@ -1181,10 +1186,10 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   const handleSignOut = async () => { await signOut(); navigate("/user/nexohub/player"); };
 
   const sidebarItems = [
-    { icon: Home, label: "Home", key: "home", action: () => handleSectionChange("home") },
-    { icon: Radio, label: "Streaming", key: "streaming", action: () => handleSectionChange("streaming") },
-    { icon: Film, label: "Catálogo", key: "content", action: () => handleSectionChange("content") },
-    ...(user ? [{ icon: ShoppingBag, label: "Loja", key: "shop", action: () => handleSectionChange("shop") }] : []),
+    { icon: Home, label: "Home", key: "home", action: () => { setActiveCatalog(null); handleSectionChange("home"); } },
+    { icon: Radio, label: "Streaming", key: "streaming", action: () => { setActiveCatalog(null); handleSectionChange("streaming"); } },
+    { icon: Film, label: "Catálogo", key: "content", action: () => { setActiveCatalog(null); handleSectionChange("content"); } },
+    ...(user ? [{ icon: ShoppingBag, label: "Loja", key: "shop", action: () => { setActiveCatalog(null); handleSectionChange("shop"); } }] : []),
   ];
 
   // Hero channel = first streaming channel
@@ -1199,7 +1204,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       {/* Sidebar */}
       <PlayerSidebar
         items={sidebarItems}
-        activeKey={activeSection}
+        activeKey={visibleSection === "catalog-detail" ? "content" : activeSection}
         avatarUrl={profileAvatar}
         userName={userName}
         showLogout={!!user}
@@ -1210,8 +1215,8 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       />
 
       {/* Main content */}
-      <div ref={contentScrollRef} className="flex-1 ml-[52px] overflow-y-auto h-full">
-        <div className="transition-all duration-500 ease-in-out" style={{ opacity: sectionFading ? 0 : 1, transform: sectionFading ? "translateY(12px)" : "translateY(0)" }}>
+      <div ref={contentScrollRef} className={`flex-1 ml-[52px] h-full ${visibleSection === "catalog-detail" ? "overflow-hidden" : "overflow-y-auto"}`}>
+        <div className={`transition-all duration-500 ease-in-out ${visibleSection === "catalog-detail" ? "h-full" : ""}`} style={{ opacity: sectionFading ? 0 : 1, transform: sectionFading ? "translateY(12px)" : "translateY(0)" }}>
 
           {visibleSection === "home" && (
             <>
@@ -1425,6 +1430,21 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                 </div>
               )}
             </div>
+          )}
+
+          {visibleSection === "catalog-detail" && activeCatalog && (
+            <Suspense fallback={
+              <div className="flex flex-col h-full">
+                <Skeleton className="flex-1 bg-white/5" />
+                <Skeleton className="h-[200px] bg-white/3" />
+              </div>
+            }>
+              <CatalogDetailInline
+                catalogName={activeCatalog}
+                onBack={goBackFromCatalog}
+                onPlayVideo={(chId, vidId) => goToPlayer(chId, vidId)}
+              />
+            </Suspense>
           )}
 
           {visibleSection === "shop" && (
