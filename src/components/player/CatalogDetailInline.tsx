@@ -335,112 +335,135 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
 
         {/* Content: logo + program info, bottom-left */}
         <div className="absolute top-[clamp(20px,4vh,60px)] left-8 sm:left-12 z-10 max-w-xl flex flex-col gap-3">
-          {logoUrl ? (
-            <img
-              src={logoUrl}
-              alt={catalogName}
-              className="h-44 sm:h-64 lg:h-[19rem] object-contain object-left"
-              style={{ filter: "drop-shadow(0 4px 30px rgba(0,0,0,0.7))" }}
-            />
-          ) : (
-            <h1
-              className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-none"
-              style={{ textShadow: "0 4px 30px rgba(0,0,0,0.7)" }}
-            >
-              {catalogName}
-            </h1>
-          )}
-
-          <p className="text-sm sm:text-base text-white/70 font-medium leading-relaxed" style={{ textShadow: "0 1px 10px rgba(0,0,0,0.5)" }}>
-            {primaryChannel?.name || catalogName}
-          </p>
-
-          {/* Program metadata: rating + schedule + description */}
-          <div className="flex items-center gap-3 flex-wrap">
-            {/* Age rating badge */}
-            <span
-              className="inline-flex items-center justify-center rounded font-black text-[11px] leading-none min-w-[26px] h-[22px] px-1.5"
-              style={{ backgroundColor: ratingStyle.bg, color: ratingStyle.text }}
-            >
-              {rating === "L" ? "L" : rating}
-            </span>
-
-            {/* Schedule */}
-            {programa && (
-              <span className="flex items-center gap-1.5 text-xs text-white/50 font-medium">
-                <Clock className="h-3.5 w-3.5 text-white/40" />
-                {programa.horario_inicio} – {programa.horario_fim}
-              </span>
-            )}
-
-            {/* Video count */}
-            <span className="flex items-center gap-1.5 text-xs text-white/35 font-medium">
-              <Film className="h-3.5 w-3.5" />
-              {loading ? "..." : videos.length} vídeos
-            </span>
-
-            {videos.length > 0 && (
-              <span className="flex items-center gap-1.5 text-xs text-white/35 font-medium">
-                <Calendar className="h-3.5 w-3.5" />
-                Atualizado em {new Date(videos[0].published).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })}
-              </span>
-            )}
-          </div>
-
-          {/* Program description with expand */}
-          {programa?.descricao && (
-            <div className="max-w-md relative">
-              <div
-                className="overflow-hidden transition-all duration-500 ease-in-out"
-                style={{
-                  maxHeight: descExpanded ? "500px" : "42px",
-                }}
-              >
-                <p
-                  className="text-[13px] text-white/45 leading-relaxed"
-                  style={{ textShadow: "0 1px 8px rgba(0,0,0,0.5)" }}
-                >
-                  {programa.descricao}
-                </p>
+          {loading ? (
+            /* ── Skeleton loader for hero content ── */
+            <div className="flex flex-col gap-4 animate-pulse">
+              {/* Logo skeleton */}
+              <Skeleton className="h-44 sm:h-64 lg:h-[19rem] w-64 sm:w-80 lg:w-96 rounded-xl bg-white/8" />
+              {/* Title skeleton */}
+              <Skeleton className="h-6 w-52 rounded bg-white/8" />
+              {/* Metadata row skeleton */}
+              <div className="flex items-center gap-3">
+                <Skeleton className="h-[22px] w-[26px] rounded bg-white/8" />
+                <Skeleton className="h-4 w-32 rounded bg-white/6" />
+                <Skeleton className="h-4 w-20 rounded bg-white/6" />
+                <Skeleton className="h-4 w-40 rounded bg-white/6" />
               </div>
-              <button
-                onClick={() => setDescExpanded(prev => !prev)}
-                className="inline-flex items-center justify-center mt-1.5 w-5 h-5 rounded-full border border-white/25 text-white/60 hover:text-white hover:border-white/50 transition-all duration-300"
-                title={descExpanded ? "Ver menos" : "Ver mais"}
-              >
-                <span className="transition-transform duration-300" style={{ transform: descExpanded ? "rotate(180deg)" : "rotate(0)" }}>
-                  {descExpanded ? <Minus className="h-3 w-3" /> : <Plus className="h-3 w-3" />}
-                </span>
-              </button>
+              {/* Description skeleton */}
+              <div className="flex flex-col gap-1.5 max-w-md">
+                <Skeleton className="h-3.5 w-full rounded bg-white/6" />
+                <Skeleton className="h-3.5 w-3/4 rounded bg-white/6" />
+              </div>
+              {/* Badges skeleton */}
+              <div className="flex items-center gap-2">
+                <Skeleton className="h-5 w-20 rounded bg-white/6" />
+                <Skeleton className="h-5 w-16 rounded bg-white/6" />
+              </div>
+              {/* Button skeleton */}
+              <Skeleton className="h-11 w-36 rounded-xl bg-white/8" />
             </div>
-          )}
+          ) : (
+            <>
+              {logoUrl ? (
+                <img
+                  src={logoUrl}
+                  alt={catalogName}
+                  className="h-44 sm:h-64 lg:h-[19rem] object-contain object-left"
+                  style={{ filter: "drop-shadow(0 4px 30px rgba(0,0,0,0.7))" }}
+                />
+              ) : (
+                <h1
+                  className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-none"
+                  style={{ textShadow: "0 4px 30px rgba(0,0,0,0.7)" }}
+                >
+                  {catalogName}
+                </h1>
+              )}
 
-          {/* HD / Stereo icons */}
-          <div className="flex items-center gap-2">
-            {primaryChannel?.is_hd && (
-              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wide text-white/40 border border-white/15">
-                <span className="text-[8px] font-black">1080p</span> FULL HD
-              </span>
-            )}
-            {primaryChannel?.is_stereo && (
-              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wide text-white/40 border border-white/15">
-                STEREO
-              </span>
-            )}
-          </div>
+              <p className="text-sm sm:text-base text-white/70 font-medium leading-relaxed" style={{ textShadow: "0 1px 10px rgba(0,0,0,0.5)" }}>
+                {primaryChannel?.name || catalogName}
+              </p>
 
-          {!loading && videos.length > 0 && (
-            <button
-              onClick={() => handlePlay(videos[0])}
-              className="flex items-center gap-2.5 px-6 py-3 rounded-xl text-sm font-bold transition-all duration-300 w-fit mt-1 hover:scale-[1.04]"
-              style={{
-                background: "linear-gradient(135deg, hsl(var(--player-accent)), hsl(var(--player-accent-hover)))",
-                boxShadow: "0 4px 20px hsla(var(--player-accent) / 0.4)",
-              }}
-            >
-              <Play className="h-4 w-4 fill-white" />
-              Assistir
-            </button>
+              {/* Program metadata: rating + schedule + description */}
+              <div className="flex items-center gap-3 flex-wrap">
+                <span
+                  className="inline-flex items-center justify-center rounded font-black text-[11px] leading-none min-w-[26px] h-[22px] px-1.5"
+                  style={{ backgroundColor: ratingStyle.bg, color: ratingStyle.text }}
+                >
+                  {rating === "L" ? "L" : rating}
+                </span>
+                {programa && (
+                  <span className="flex items-center gap-1.5 text-xs text-white/50 font-medium">
+                    <Clock className="h-3.5 w-3.5 text-white/40" />
+                    {programa.horario_inicio} – {programa.horario_fim}
+                  </span>
+                )}
+                <span className="flex items-center gap-1.5 text-xs text-white/35 font-medium">
+                  <Film className="h-3.5 w-3.5" />
+                  {videos.length} vídeos
+                </span>
+                {videos.length > 0 && (
+                  <span className="flex items-center gap-1.5 text-xs text-white/35 font-medium">
+                    <Calendar className="h-3.5 w-3.5" />
+                    Atualizado em {new Date(videos[0].published).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })}
+                  </span>
+                )}
+              </div>
+
+              {/* Program description with expand */}
+              {programa?.descricao && (
+                <div className="max-w-md relative">
+                  <div
+                    className="overflow-hidden transition-all duration-500 ease-in-out"
+                    style={{ maxHeight: descExpanded ? "500px" : "42px" }}
+                  >
+                    <p
+                      className="text-[13px] text-white/45 leading-relaxed"
+                      style={{ textShadow: "0 1px 8px rgba(0,0,0,0.5)" }}
+                    >
+                      {programa.descricao}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setDescExpanded(prev => !prev)}
+                    className="inline-flex items-center justify-center mt-1.5 w-5 h-5 rounded-full border border-white/25 text-white/60 hover:text-white hover:border-white/50 transition-all duration-300"
+                    title={descExpanded ? "Ver menos" : "Ver mais"}
+                  >
+                    <span className="transition-transform duration-300" style={{ transform: descExpanded ? "rotate(180deg)" : "rotate(0)" }}>
+                      {descExpanded ? <Minus className="h-3 w-3" /> : <Plus className="h-3 w-3" />}
+                    </span>
+                  </button>
+                </div>
+              )}
+
+              {/* HD / Stereo icons */}
+              <div className="flex items-center gap-2">
+                {primaryChannel?.is_hd && (
+                  <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wide text-white/40 border border-white/15">
+                    <span className="text-[8px] font-black">1080p</span> FULL HD
+                  </span>
+                )}
+                {primaryChannel?.is_stereo && (
+                  <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wide text-white/40 border border-white/15">
+                    STEREO
+                  </span>
+                )}
+              </div>
+
+              {videos.length > 0 && (
+                <button
+                  onClick={() => handlePlay(videos[0])}
+                  className="flex items-center gap-2.5 px-6 py-3 rounded-xl text-sm font-bold transition-all duration-300 w-fit mt-1 hover:scale-[1.04]"
+                  style={{
+                    background: "linear-gradient(135deg, hsl(var(--player-accent)), hsl(var(--player-accent-hover)))",
+                    boxShadow: "0 4px 20px hsla(var(--player-accent) / 0.4)",
+                  }}
+                >
+                  <Play className="h-4 w-4 fill-white" />
+                  Assistir
+                </button>
+              )}
+            </>
           )}
         </div>
       </div>
