@@ -1,0 +1,1 @@
+UPDATE streaming_channels SET user_id = 'd17e65af-e407-466f-9b60-b55c43399513' WHERE id IN ('01ab620d-2132-4f65-bf96-2dfa9ee40fee', '63d808c1-f51f-4e81-9fc1-fd075a6f6445', 'af955a83-c67a-4a01-bd77-d1d502643135');
