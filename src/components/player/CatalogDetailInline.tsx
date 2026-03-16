@@ -242,16 +242,17 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
         </div>
       </div>
 
-      {/* ─── PLAYLIST BAR — glassmorphism ─── */}
+      {/* ─── PLAYLIST BAR — floating blue glass ─── */}
       <div
-        className="relative w-full shrink-0"
+        className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 rounded-2xl overflow-hidden"
         style={{
+          width: "90%",
           height: "clamp(160px, 26vh, 240px)",
-          background: "rgba(0, 0, 0, 0.45)",
-          backdropFilter: "blur(24px) saturate(1.4)",
-          WebkitBackdropFilter: "blur(24px) saturate(1.4)",
-          borderTop: "1px solid rgba(255,255,255,0.1)",
-          boxShadow: "0 -8px 32px rgba(0,0,0,0.4)",
+          background: "rgba(20, 60, 140, 0.35)",
+          backdropFilter: "blur(28px) saturate(1.6)",
+          WebkitBackdropFilter: "blur(28px) saturate(1.6)",
+          border: "1px solid rgba(100, 160, 255, 0.2)",
+          boxShadow: "0 8px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08)",
         }}
       >
         {/* Label */}
