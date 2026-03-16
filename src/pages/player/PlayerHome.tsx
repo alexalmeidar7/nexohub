@@ -1398,29 +1398,22 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                   Nenhum conteúdo disponível
                 </div>
               ) : (
-                Object.entries(catalogGroups).map(([groupName, items]) => {
-                  const groupVideos = items.flatMap(item => (playlistVideos[item.id] || []).map(v => ({ ...v, channel: item })));
-                  return (
-                    <ContentRow key={groupName} title={groupName} scrollRoot={contentScrollRef}>
-                      {groupVideos.length > 0 ? (
-                        groupVideos.map(({ channel, ...video }) => (
-                          <CatalogCard
-                            key={video.videoId}
-                            image={channel.cover_url || video.thumbnail}
-                            title={video.title}
-                            subtitle={video.published ? new Date(video.published).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" }) : undefined}
-                            logoUrl={channel.background_url || channel.logo_url}
-                            onClick={() => goToPlayer(channel.id, video.videoId)}
-                          />
-                        ))
-                      ) : (
-                        items.map(item => (
-                          <CatalogCard key={item.id} image={item.cover_url} title={item.name} logoUrl={item.background_url || item.logo_url} onClick={() => goToPlayer(item.id)} />
-                        ))
-                      )}
-                    </ContentRow>
-                  );
-                })
+                <div className="flex flex-wrap gap-4">
+                  {Object.entries(catalogGroups).map(([groupName, items]) => {
+                    const primary = items[0];
+                    const videoCount = items.reduce((sum, item) => sum + (playlistVideos[item.id]?.length || 0), 0);
+                    return (
+                      <CatalogCard
+                        key={groupName}
+                        image={primary.cover_url}
+                        title={groupName}
+                        subtitle={videoCount > 0 ? `${videoCount} vídeos` : undefined}
+                        logoUrl={primary.background_url || primary.logo_url}
+                        onClick={() => goToCatalog(groupName)}
+                      />
+                    );
+                  })}
+                </div>
               )}
             </div>
           )}
