@@ -269,6 +269,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
       horario_inicio: selectedProg?.horario_inicio || existingCanal?.horario_inicio || "",
       horario_fim: selectedProg?.horario_fim || existingCanal?.horario_fim || "",
       descricao: videoDescription || selectedProg?.descricao || existingCanal?.descricao || "",
+      estudio: canalForm.estudio || existingCanal?.estudio || "",
     };
     setSavingCanal(true);
     if (editingCanal) {
