@@ -75,6 +75,7 @@ interface Canal {
   active: boolean;
   cover_url: string;
   background_url: string;
+  catalog_name?: string;
 }
 
 interface Programa {
@@ -1786,7 +1787,12 @@ export default function PlayerPage() {
             }}
           >
             <button
-              onClick={handleHomeClick}
+              onClick={() => {
+                const catalogName = canal?.catalog_name || canal?.name || "Catálogo";
+                const basePath = userSlug ? `/user/${userSlug}/nexohub/player` : "/user/nexohub/player";
+                setPageFadeOut(true);
+                setTimeout(() => navigate(`${basePath}?step=home&catalog=${encodeURIComponent(catalogName)}`), 400);
+              }}
               className="flex items-center gap-2 px-4 py-2 rounded-xl text-white/70 hover:text-white text-xs font-medium transition-all backdrop-blur-xl border border-white/10"
               style={{ backgroundColor: "rgba(0, 0, 0, 0.5)", boxShadow: "0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1)" }}
             >
