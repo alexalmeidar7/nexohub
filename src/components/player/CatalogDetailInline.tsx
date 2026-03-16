@@ -164,8 +164,8 @@ function HoverPreviewPopup({ video, x, y }: { video: PlaylistVideo; x: number; y
       <div
         className="absolute left-1/2 -translate-x-1/2 -bottom-1.5 w-3.5 h-3.5 rotate-45"
         style={{
-          background: "rgba(10, 35, 90, 0.7)",
-          border: "1px solid rgba(100, 160, 255, 0.2)",
+          background: "rgba(150, 1, 1, 0.85)",
+          border: "1px solid rgba(255, 80, 80, 0.3)",
           borderTop: "none",
           borderLeft: "none",
         }}
