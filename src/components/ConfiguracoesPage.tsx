@@ -247,7 +247,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
       const { error, data: updatedRows } = await supabase.from("streaming_channels").update(payload).eq("id", editingCanal).eq("user_id", user.id).select("id");
       setSavingCanal(false);
       if (error) { toast.error("Erro ao atualizar: " + error.message); }
-      else if (count === 0) { toast.error("Não foi possível atualizar. Verifique as permissões."); }
+      else if (!updatedRows || updatedRows.length === 0) { toast.error("Não foi possível atualizar. Verifique as permissões."); }
       else { toast.success("Atualizado!"); resetCanalForm(); loadCanais(); }
     } else {
       const { error } = await supabase.from("streaming_channels").insert([{ ...payload, user_id: user.id }]);
