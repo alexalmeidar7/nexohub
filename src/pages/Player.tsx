@@ -1891,8 +1891,8 @@ export default function PlayerPage() {
         <div className="absolute inset-x-0 bottom-0 z-[1]" style={{ height: "200px", background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%)" }} />
       )}
 
-      {/* YouTube: Horizontal playlist — shown on home by default OR when sidebarOpen */}
-      {isYoutube && (isYtHome || sidebarOpen) && (
+      {/* YouTube: Horizontal playlist — shown on home by default OR when sidebarOpen, hidden for single-video catalogs */}
+      {isYoutube && youtubeVideos.length > 1 && (isYtHome || sidebarOpen) && (
         <div className="absolute left-0 right-0 z-[25] mx-auto" style={{ bottom: "155px", maxWidth: "1400px", paddingLeft: "20px", paddingRight: "20px" }}>
           <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "transparent", border: "none", boxShadow: "none" }}>
             <div className="flex items-center justify-between px-5 py-3 border-b border-white/10">
