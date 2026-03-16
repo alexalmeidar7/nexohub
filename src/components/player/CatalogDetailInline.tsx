@@ -437,7 +437,7 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
               )}
 
               {/* HD / Stereo icons */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 mt-4">
                 {primaryChannel?.is_hd && (
                   <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wide text-white/40 border border-white/15">
                     <span className="text-[8px] font-black">1080p</span> FULL HD
@@ -453,14 +453,15 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
               {videos.length > 0 && (
                 <button
                   onClick={() => handlePlay(videos[0])}
-                  className="flex items-center gap-2.5 px-6 py-3 rounded-xl text-sm font-bold transition-all duration-300 w-fit mt-1 hover:scale-[1.04]"
+                  className="group relative flex items-center gap-3 px-7 py-3.5 rounded-full text-sm font-bold tracking-wide transition-all duration-300 w-fit mt-5 hover:scale-[1.05] text-player-foreground overflow-hidden"
                   style={{
                     background: "linear-gradient(135deg, hsl(var(--player-accent)), hsl(var(--player-accent-hover)))",
-                    boxShadow: "0 4px 20px hsla(var(--player-accent) / 0.4)",
+                    boxShadow: "0 6px 24px hsla(var(--player-accent) / 0.5), inset 0 1px 0 rgba(255,255,255,0.15)",
                   }}
                 >
-                  <Play className="h-4 w-4 fill-white" />
-                  Assistir
+                  <span className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+                  <Play className="h-4 w-4 fill-current relative z-10" />
+                  <span className="relative z-10">Assistir</span>
                 </button>
               )}
             </div>
