@@ -75,6 +75,7 @@ interface Canal {
   active: boolean;
   cover_url: string;
   background_url: string;
+  catalog_name?: string;
 }
 
 interface Programa {
