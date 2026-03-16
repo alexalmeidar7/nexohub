@@ -603,6 +603,7 @@ function TrendingCard({ item, idx, channels, onClick }: {
 }) {
   const [hovered, setHovered] = useState(false);
   const [showVideo, setShowVideo] = useState(false);
+  const [videoReady, setVideoReady] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const stopTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const playerRef = useRef<any>(null);
@@ -656,6 +657,7 @@ function TrendingCard({ item, idx, channels, onClick }: {
     fadeOutAudio();
     setTimeout(() => {
       setShowVideo(false);
+      setVideoReady(false);
       setHovered(false);
       if (playerRef.current?.destroy) { playerRef.current.destroy(); playerRef.current = null; }
     }, 400);
@@ -689,6 +691,7 @@ function TrendingCard({ item, idx, channels, onClick }: {
         events: {
           onReady: (e: any) => {
             e.target.playVideo();
+            setVideoReady(true);
             setTimeout(() => fadeInAudio(), 300);
           },
         },
@@ -747,9 +750,13 @@ function TrendingCard({ item, idx, channels, onClick }: {
       {hovered && (
         <div className="absolute top-0 bottom-0 right-0 z-[2] flex flex-col justify-end" style={{ left: "150px" }}>
           {showVideo ? (
-            <div className="absolute inset-0 animate-fade-in pointer-events-none overflow-hidden">
-              <div className="yt-host w-full h-full [&_iframe]:pointer-events-none [&_iframe]:border-none" />
-              {/* Overlay to block YouTube UI and hide residual branding */}
+            <div className="absolute inset-0 pointer-events-none overflow-hidden">
+              {!videoReady && (
+                <div className="absolute inset-0 z-[2] flex items-center justify-center" style={{ background: "hsl(var(--player-bg))" }}>
+                  <div className="w-8 h-8 rounded-full border-2 border-transparent animate-spin" style={{ borderTopColor: "hsl(var(--player-accent))", borderRightColor: "hsl(var(--player-accent) / 0.3)" }} />
+                </div>
+              )}
+              <div className={`yt-host w-full h-full [&_iframe]:pointer-events-none [&_iframe]:border-none transition-opacity duration-500 ${videoReady ? "opacity-100" : "opacity-0"}`} />
               <div className="absolute inset-0 z-[1]" />
             </div>
           ) : coverSrc ? (
