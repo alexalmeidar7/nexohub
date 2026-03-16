@@ -758,17 +758,18 @@ function CatalogCard({ image, title, subtitle, logoUrl, onClick }: { image?: str
   return (
     <button
       onClick={onClick}
-      className="flex-shrink-0 rounded-2xl overflow-hidden relative transition-all duration-300 group cursor-pointer"
+      className="flex-shrink-0 rounded-2xl overflow-hidden relative transition-all duration-500 ease-[cubic-bezier(0.25,0.1,0.25,1)] group cursor-pointer"
       style={{
-        width: "220px",
-        aspectRatio: "16/9",
+        width: "160px",
+        aspectRatio: "2/3",
+        background: "linear-gradient(145deg, rgba(255,255,255,0.06) 0%, hsl(var(--player-bg)) 100%)",
         border: "1px solid rgba(255,255,255,0.06)",
         boxShadow: "0 4px 20px -8px rgba(0,0,0,0.4)",
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.transform = "translateY(-4px) scale(1.02)";
-        e.currentTarget.style.boxShadow = "0 16px 48px -12px rgba(0,0,0,0.6)";
-        e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)";
+        e.currentTarget.style.transform = "translateY(-6px) scale(1.02)";
+        e.currentTarget.style.boxShadow = "0 20px 60px -15px rgba(0,0,0,0.7), 0 0 40px -10px hsla(var(--player-accent) / 0.25)";
+        e.currentTarget.style.borderColor = "hsla(var(--player-accent) / 0.4)";
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.transform = "";
@@ -777,29 +778,32 @@ function CatalogCard({ image, title, subtitle, logoUrl, onClick }: { image?: str
       }}
     >
       {image ? (
-        <img src={image} alt={title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+        <img src={image} alt={title} className="absolute inset-0 w-full h-full object-cover transition-all duration-700 group-hover:scale-105" />
       ) : (
-        <div className="w-full h-full flex items-center justify-center" style={{ background: "linear-gradient(160deg, rgba(255,255,255,0.08) 0%, hsl(var(--player-bg)) 100%)" }}>
-          <Film className="h-8 w-8 text-white/15" />
+        <div className="absolute inset-0 w-full h-full flex items-center justify-center" style={{ background: "linear-gradient(160deg, rgba(255,255,255,0.08) 0%, hsl(var(--player-bg)) 100%)" }}>
+          <Film className="h-10 w-10 text-white/15" />
         </div>
       )}
 
       {/* Channel logo top-right */}
       {logoUrl && (
-        <div className="absolute top-2 right-2 z-10 w-8 h-5 flex items-center justify-center drop-shadow-[0_2px_4px_rgba(0,0,0,0.7)]">
+        <div className="absolute top-2 right-2 z-[15] w-10 h-7 flex items-center justify-center">
           <img src={logoUrl} alt="" className="max-w-full max-h-full object-contain" />
         </div>
       )}
 
       {/* Play overlay */}
-      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 z-[2]">
-        <div className="w-10 h-10 rounded-full backdrop-blur-md flex items-center justify-center" style={{ background: "hsla(var(--player-accent) / 0.8)", boxShadow: "0 4px 20px hsla(var(--player-accent) / 0.4)" }}>
-          <Play className="h-4 w-4 text-white fill-white" />
+      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 z-[5] pointer-events-none">
+        <div className="w-12 h-12 rounded-full backdrop-blur-md flex items-center justify-center shadow-2xl" style={{ background: "hsla(var(--player-accent) / 0.85)", boxShadow: "0 8px 32px hsla(var(--player-accent) / 0.5)" }}>
+          <Play className="h-5 w-5 text-white fill-white" />
         </div>
       </div>
-      <div className="absolute bottom-0 left-0 right-0 z-10 px-3 pb-2.5 pt-10" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.9) 10%, transparent)" }}>
-        <p className="text-[10px] font-bold text-white line-clamp-2 text-left mb-0.5">{title}</p>
-        {subtitle && <p className="text-[9px] text-white/40 text-left">{subtitle}</p>}
+
+      {/* Gradient + info */}
+      <div className="absolute inset-0 z-[3] pointer-events-none" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 40%, transparent 70%)" }} />
+      <div className="absolute bottom-0 left-0 right-0 p-3 z-[4] text-left pointer-events-none">
+        <p className="text-[10px] font-bold text-white line-clamp-2 leading-tight drop-shadow-lg">{title}</p>
+        {subtitle && <p className="text-[9px] text-white/50 mt-1 font-medium">{subtitle}</p>}
       </div>
     </button>
   );
@@ -809,17 +813,18 @@ function HistoryCard({ item, onClick }: { item: { channel_name: string; channel_
   return (
     <button
       onClick={onClick}
-      className="flex-shrink-0 rounded-2xl overflow-hidden relative transition-all duration-300 group cursor-pointer"
+      className="flex-shrink-0 rounded-2xl overflow-hidden relative transition-all duration-500 ease-[cubic-bezier(0.25,0.1,0.25,1)] group cursor-pointer"
       style={{
-        width: "200px",
-        aspectRatio: "16/9",
+        width: "160px",
+        aspectRatio: "2/3",
+        background: "linear-gradient(145deg, rgba(255,255,255,0.06) 0%, hsl(var(--player-bg)) 100%)",
         border: "1px solid rgba(255,255,255,0.06)",
         boxShadow: "0 4px 20px -8px rgba(0,0,0,0.4)",
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.transform = "translateY(-4px) scale(1.02)";
-        e.currentTarget.style.boxShadow = "0 16px 48px -12px rgba(0,0,0,0.6)";
-        e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)";
+        e.currentTarget.style.transform = "translateY(-6px) scale(1.02)";
+        e.currentTarget.style.boxShadow = "0 20px 60px -15px rgba(0,0,0,0.7), 0 0 40px -10px hsla(var(--player-accent) / 0.25)";
+        e.currentTarget.style.borderColor = "hsla(var(--player-accent) / 0.4)";
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.transform = "";
@@ -828,19 +833,29 @@ function HistoryCard({ item, onClick }: { item: { channel_name: string; channel_
       }}
     >
       {item.channel_cover_url ? (
-        <img src={item.channel_cover_url} alt={item.channel_name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+        <img src={item.channel_cover_url} alt={item.channel_name} className="absolute inset-0 w-full h-full object-cover transition-all duration-700 group-hover:scale-105" />
       ) : item.channel_logo_url ? (
-        <div className="w-full h-full flex items-center justify-center" style={{ background: "linear-gradient(160deg, rgba(255,255,255,0.05) 0%, hsl(var(--player-bg)) 100%)" }}>
+        <div className="absolute inset-0 w-full h-full flex items-center justify-center" style={{ background: "linear-gradient(160deg, rgba(255,255,255,0.05) 0%, hsl(var(--player-bg)) 100%)" }}>
           <img src={item.channel_logo_url} alt={item.channel_name} className="h-12 w-auto object-contain" />
         </div>
       ) : (
-        <div className="w-full h-full flex items-center justify-center" style={{ background: "linear-gradient(160deg, hsla(var(--player-accent) / 0.1) 0%, hsl(var(--player-bg)) 100%)" }}>
-          <Radio className="h-8 w-8 text-white/15" />
+        <div className="absolute inset-0 w-full h-full flex items-center justify-center" style={{ background: "linear-gradient(160deg, hsla(var(--player-accent) / 0.1) 0%, hsl(var(--player-bg)) 100%)" }}>
+          <Radio className="h-10 w-10 text-white/15" />
         </div>
       )}
-      <div className="absolute bottom-0 left-0 right-0 px-3 pb-2.5 pt-10" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.9) 20%, transparent)" }}>
-        <p className="text-xs font-bold text-white truncate">{item.channel_name}</p>
-        <p className="text-[10px] text-white/40 flex items-center gap-1.5 mt-0.5">
+
+      {/* Play overlay */}
+      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 z-[5] pointer-events-none">
+        <div className="w-12 h-12 rounded-full backdrop-blur-md flex items-center justify-center shadow-2xl" style={{ background: "hsla(var(--player-accent) / 0.85)", boxShadow: "0 8px 32px hsla(var(--player-accent) / 0.5)" }}>
+          <Play className="h-5 w-5 text-white fill-white" />
+        </div>
+      </div>
+
+      {/* Gradient + info */}
+      <div className="absolute inset-0 z-[3] pointer-events-none" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 40%, transparent 70%)" }} />
+      <div className="absolute bottom-0 left-0 right-0 p-3 z-[4] text-left pointer-events-none">
+        <p className="text-xs font-bold text-white truncate drop-shadow-lg">{item.channel_name}</p>
+        <p className="text-[9px] text-white/50 flex items-center gap-1 mt-1">
           <Clock className="h-2.5 w-2.5" />
           {new Date(item.watched_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
         </p>
@@ -1286,15 +1301,15 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
             <div className="px-6 sm:px-10 pt-8 pb-8">
               <h1 className="text-2xl font-bold mb-6 text-white">Canais ao Vivo</h1>
               {!dataLoaded ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {[1, 2, 3, 4].map(i => <Skeleton key={i} className="w-full rounded-xl bg-white/8" style={{ aspectRatio: "16/9" }} />)}
+                <div className="flex flex-wrap gap-3">
+                  {[1, 2, 3, 4].map(i => <Skeleton key={i} className="flex-shrink-0 rounded-xl bg-white/8" style={{ width: 160, aspectRatio: "2/3" }} />)}
                 </div>
               ) : streamingChannels.length === 0 ? (
                 <div className="w-full h-40 rounded-xl bg-player-surface border border-player-border flex items-center justify-center text-player-muted-foreground text-sm">
                   Nenhum canal ao vivo disponível
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="flex flex-wrap gap-3">
                   {streamingChannels.map(ch => (
                     <StreamingCard
                       key={ch.id}
@@ -1313,8 +1328,8 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
             <div className="px-6 sm:px-10 pt-8 pb-8">
               <h1 className="text-2xl font-bold mb-6 text-white">Catálogo</h1>
               {!dataLoaded ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                  {[1, 2, 3, 4].map(i => <Skeleton key={i} className="w-full rounded-xl bg-white/8" style={{ aspectRatio: "16/9" }} />)}
+                <div className="flex flex-wrap gap-3">
+                  {[1, 2, 3, 4].map(i => <Skeleton key={i} className="flex-shrink-0 rounded-xl bg-white/8" style={{ width: 160, aspectRatio: "2/3" }} />)}
                 </div>
               ) : catalogChannels.length === 0 ? (
                 <div className="w-full h-40 rounded-xl bg-player-surface border border-player-border flex items-center justify-center text-player-muted-foreground text-sm">
