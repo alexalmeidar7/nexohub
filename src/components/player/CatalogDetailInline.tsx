@@ -58,6 +58,7 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
   const [selectedVideo, setSelectedVideo] = useState<PlaylistVideo | null>(null);
   const [programa, setPrograma] = useState<ProgramaInfo | null>(null);
   const [hoveredVideoId, setHoveredVideoId] = useState<string | null>(null);
+  const [hoverPreview, setHoverPreview] = useState<{ video: PlaylistVideo; x: number; y: number } | null>(null);
   const [descExpanded, setDescExpanded] = useState(false);
   const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -140,10 +141,21 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
     onPlayVideo(primaryChannel.id, video.videoId);
   };
 
-  const handleCardMouseEnter = useCallback((videoId: string) => {
+  const handleCardMouseEnter = useCallback((video: PlaylistVideo, target: HTMLElement) => {
+    if (hoverTimerRef.current) {
+      clearTimeout(hoverTimerRef.current);
+      hoverTimerRef.current = null;
+    }
+
+    const rect = target.getBoundingClientRect();
     hoverTimerRef.current = setTimeout(() => {
-      setHoveredVideoId(videoId);
-    }, 400);
+      setHoveredVideoId(video.videoId);
+      setHoverPreview({
+        video,
+        x: rect.left + rect.width / 2,
+        y: rect.top - 12,
+      });
+    }, 280);
   }, []);
 
   const handleCardMouseLeave = useCallback(() => {
@@ -152,6 +164,7 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
       hoverTimerRef.current = null;
     }
     setHoveredVideoId(null);
+    setHoverPreview(null);
   }, []);
 
   const scrollAnimRef = useRef<number | null>(null);
@@ -342,11 +355,65 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
             onMouseLeave={stopAutoScroll}
           />
 
+          {hoverPreview && (
+            <div
+              className="fixed z-[70] pointer-events-none"
+              style={{
+                left: hoverPreview.x,
+                top: hoverPreview.y,
+                width: 260,
+                transform: "translate(-50%, -100%) scale(1)",
+                transformOrigin: "bottom center",
+                opacity: 1,
+                transition: "all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)",
+              }}
+            >
+              <div
+                className="rounded-2xl overflow-hidden"
+                style={{
+                  background: "rgba(15, 50, 120, 0.55)",
+                  backdropFilter: "blur(24px) saturate(1.5)",
+                  WebkitBackdropFilter: "blur(24px) saturate(1.5)",
+                  border: "1px solid rgba(100, 160, 255, 0.25)",
+                  boxShadow: "0 12px 40px rgba(0,0,0,0.6), 0 0 30px hsla(var(--player-accent) / 0.2)",
+                }}
+              >
+                <div className="relative w-full" style={{ aspectRatio: "16/9" }}>
+                  <iframe
+                    src={`https://www.youtube.com/embed/${hoverPreview.video.videoId}?autoplay=1&mute=1&start=1800&controls=0&showinfo=0&modestbranding=1&rel=0&loop=1&playlist=${hoverPreview.video.videoId}&end=1810`}
+                    className="absolute inset-0 w-full h-full"
+                    style={{ border: 0 }}
+                    allow="autoplay; encrypted-media"
+                    title={hoverPreview.video.title}
+                  />
+                  <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(15,50,120,0.7) 0%, transparent 40%)" }} />
+                </div>
+                <div className="px-3 py-2.5">
+                  <p className="text-xs font-semibold text-white leading-snug line-clamp-2">{hoverPreview.video.title}</p>
+                  {hoverPreview.video.published && (
+                    <p className="text-[10px] text-white/40 mt-1">
+                      {new Date(hoverPreview.video.published).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" })}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <div
+                className="absolute left-1/2 -translate-x-1/2 -bottom-2 w-4 h-4 rotate-45"
+                style={{
+                  background: "rgba(15, 50, 120, 0.55)",
+                  border: "1px solid rgba(100, 160, 255, 0.25)",
+                  borderTop: "none",
+                  borderLeft: "none",
+                }}
+              />
+            </div>
+          )}
+
           {/* Scrollable content — clips horizontally, overflows vertically for popups */}
           <div
             ref={scrollRef}
             className="flex items-center gap-3.5 h-full px-8 pb-3 pt-3 scrollbar-hide"
-            style={{ scrollBehavior: "smooth", overflowX: "auto", overflowY: "visible" }}
+            style={{ scrollBehavior: "smooth", overflowX: "auto", overflowY: "hidden" }}
           >
           {loading ? (
             Array.from({ length: 8 }).map((_, i) => (
@@ -365,81 +432,9 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
                 <div
                   key={video.videoId}
                   className="shrink-0 relative"
-                  onMouseEnter={() => handleCardMouseEnter(video.videoId)}
+                  onMouseEnter={(e) => handleCardMouseEnter(video, e.currentTarget)}
                   onMouseLeave={handleCardMouseLeave}
                 >
-                  {/* Expanded preview popup — appears above card */}
-                  <div
-                    className="absolute bottom-full left-1/2 mb-3 z-30 pointer-events-none"
-                    style={{
-                      transform: `translateX(-50%) scale(${isHovered ? 1 : 0.85})`,
-                      opacity: isHovered ? 1 : 0,
-                      transition: "all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)",
-                      width: 260,
-                      transformOrigin: "bottom center",
-                    }}
-                  >
-                    <div
-                      className="rounded-2xl overflow-hidden pointer-events-auto"
-                      style={{
-                        background: "rgba(15, 50, 120, 0.55)",
-                        backdropFilter: "blur(24px) saturate(1.5)",
-                        WebkitBackdropFilter: "blur(24px) saturate(1.5)",
-                        border: "1px solid rgba(100, 160, 255, 0.25)",
-                        boxShadow: "0 12px 40px rgba(0,0,0,0.6), 0 0 30px hsla(var(--player-accent) / 0.2)",
-                      }}
-                    >
-                      {/* Video preview */}
-                      <div className="relative w-full" style={{ aspectRatio: "16/9" }}>
-                        {isHovered ? (
-                          <iframe
-                            src={`https://www.youtube.com/embed/${video.videoId}?autoplay=1&mute=1&start=1800&controls=0&showinfo=0&modestbranding=1&rel=0&loop=1&playlist=${video.videoId}&end=1810`}
-                            className="absolute inset-0 w-full h-full"
-                            style={{ border: 0 }}
-                            allow="autoplay; encrypted-media"
-                            title={video.title}
-                          />
-                        ) : (
-                          <img
-                            src={video.thumbnail?.replace(/\/(hq|mq|sd)default\.jpg/, "/maxresdefault.jpg") || video.thumbnail}
-                            alt={video.title}
-                            className="w-full h-full object-cover"
-                          />
-                        )}
-                        <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(to top, rgba(15,50,120,0.7) 0%, transparent 40%)" }} />
-                      </div>
-                      {/* Info */}
-                      <div className="px-3 py-2.5">
-                        <p className="text-xs font-semibold text-white leading-snug line-clamp-2">{video.title}</p>
-                        {video.published && (
-                          <p className="text-[10px] text-white/40 mt-1">
-                            {new Date(video.published).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" })}
-                          </p>
-                        )}
-                        <button
-                          onClick={() => handlePlay(video)}
-                          className="mt-2 mx-auto flex items-center justify-center w-9 h-9 rounded-full transition-transform duration-200 hover:scale-110"
-                          style={{
-                            background: "hsl(var(--player-accent))",
-                            boxShadow: "0 4px 16px hsla(var(--player-accent) / 0.5)",
-                          }}
-                        >
-                          <Play className="h-4 w-4 text-white fill-white" />
-                        </button>
-                      </div>
-                    </div>
-                    {/* Arrow pointing down */}
-                    <div
-                      className="absolute left-1/2 -translate-x-1/2 -bottom-2 w-4 h-4 rotate-45"
-                      style={{
-                        background: "rgba(15, 50, 120, 0.55)",
-                        border: "1px solid rgba(100, 160, 255, 0.25)",
-                        borderTop: "none",
-                        borderLeft: "none",
-                      }}
-                    />
-                  </div>
-
                   {/* Base card (thumbnail) */}
                   <button
                     onClick={() => handlePlay(video)}
