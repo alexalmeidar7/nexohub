@@ -1177,11 +1177,33 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   };
 
   const handleSectionChange = useCallback((section: Section) => {
-    if (section === activeSection && visibleSection === section) return;
+    // If we're in catalog-detail, go back to main view first
+    if (visibleSection === "catalog-detail") {
+      setActiveCatalog(null);
+      setSectionFading(true);
+      setTimeout(() => {
+        setVisibleSection("home");
+        setSectionFading(false);
+        // After returning to home, scroll to the section
+        setTimeout(() => {
+          const el = document.getElementById(`section-${section}`);
+          if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 50);
+      }, 200);
+      setActiveSection(section);
+      return;
+    }
+
     setActiveSection(section);
-    setSectionFading(true);
-    setTimeout(() => { setVisibleSection(section); setSectionFading(false); }, 200);
-  }, [activeSection, visibleSection]);
+
+    if (section === "home") {
+      // Scroll to top
+      contentScrollRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+    } else {
+      const el = document.getElementById(`section-${section}`);
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [visibleSection]);
 
   const handleSignOut = async () => { await signOut(); navigate("/user/nexohub/player"); };
 
