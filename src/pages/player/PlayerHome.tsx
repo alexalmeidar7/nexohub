@@ -1299,7 +1299,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                             key={item.id}
                             image={item.cover_url}
                             title={item.name}
-                            logoUrl={item.logo_url}
+                            logoUrl={item.background_url || item.logo_url}
                             onClick={() => goToPlayer(item.id)}
                           />
                         ))
