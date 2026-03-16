@@ -676,7 +676,8 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
                     <div className="space-y-1.5">
                       <label className="block text-[11px] font-semibold" style={{ color: "#0d0446" }}>Descrição do Vídeo</label>
                       <textarea
-                        value={canalForm.classificacao_etaria === "L" ? "" : ""}
+                        value={videoDescription}
+                        onChange={(e) => setVideoDescription(e.target.value)}
                         rows={3}
                         placeholder="Descreva o conteúdo do vídeo..."
                         className="w-full px-4 py-2 outline-none transition-colors text-sm resize-none"
