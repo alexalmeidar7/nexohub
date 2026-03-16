@@ -125,6 +125,9 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
   const [newCatalogMode, setNewCatalogMode] = useState(false);
   const [programas, setProgramas] = useState<{ id: string; nome: string; descricao: string; horario_inicio: string; horario_fim: string; classificacao_etaria: string }[]>([]);
   const [selectedProgramaId, setSelectedProgramaId] = useState("");
+  const [savedCatalogs, setSavedCatalogs] = useState<string[]>([]);
+  const [videoCoverUrl, setVideoCoverUrl] = useState("");
+  const [videoThumbUrl, setVideoThumbUrl] = useState("");
 
   useEffect(() => {
     if (user) {
@@ -243,7 +246,8 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
     }
     const payload: any = {
       name: canalMode === "catalog" ? (canalForm.name || canalForm.catalog_name) : canalForm.name,
-      logo_url: canalForm.logo_url, cover_url: canalForm.cover_url,
+      logo_url: (canalMode === "catalog" && catalogContentMode === "individual" && videoThumbUrl) ? videoThumbUrl : canalForm.logo_url,
+      cover_url: (canalMode === "catalog" && catalogContentMode === "individual" && videoCoverUrl) ? videoCoverUrl : canalForm.cover_url,
       background_url: canalForm.background_url,
       url: canalForm.url, type: canalMode === "catalog" ? "catalog" : canalForm.type,
       catalog_name: canalMode === "catalog" ? canalForm.catalog_name : "",
@@ -273,6 +277,8 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
     setCatalogContentMode("playlist");
     setNewCatalogMode(false);
     setSelectedProgramaId("");
+    setVideoCoverUrl("");
+    setVideoThumbUrl("");
   };
 
   const handleEditCanal = (c: Canal) => {
@@ -509,16 +515,34 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
                       <div className="flex gap-2">
                         <StyledInput value={canalForm.catalog_name} onChange={(e) => setCanalForm(p => ({ ...p, catalog_name: e.target.value }))} placeholder="Nome do novo catálogo" />
                         {!editingCanal && (
-                          <button onClick={() => { setNewCatalogMode(false); setCanalForm(p => ({ ...p, catalog_name: "" })); }}
-                            className="px-3 py-1.5 text-xs font-bold rounded-full transition-all shrink-0"
-                            style={{ backgroundColor: "rgba(13,4,70,0.08)", color: "#0d0446" }}
-                          >
-                            Voltar
-                          </button>
+                          <>
+                            <button onClick={() => {
+                              if (!canalForm.catalog_name.trim()) { toast.error("Digite o nome do catálogo."); return; }
+                              if (!savedCatalogs.includes(canalForm.catalog_name.trim())) {
+                                setSavedCatalogs(prev => [...prev, canalForm.catalog_name.trim()]);
+                              }
+                              toast.success("Catálogo salvo na lista!");
+                              setNewCatalogMode(false);
+                            }}
+                              className="px-3 py-1.5 text-xs font-bold rounded-full transition-all shrink-0 whitespace-nowrap flex items-center gap-1"
+                              style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#ffffff", border: "none" }}
+                            >
+                              <Save size={12} /> Salvar Catálogo
+                            </button>
+                            <button onClick={() => { setNewCatalogMode(false); setCanalForm(p => ({ ...p, catalog_name: "" })); }}
+                              className="px-3 py-1.5 text-xs font-bold rounded-full transition-all shrink-0"
+                              style={{ backgroundColor: "rgba(13,4,70,0.08)", color: "#0d0446" }}
+                            >
+                              Voltar
+                            </button>
+                          </>
                         )}
                       </div>
                     ) : (() => {
-                      const existingCatalogs = [...new Set(canais.filter(c => c.type === "catalog" && c.catalog_name).map(c => c.catalog_name))];
+                      const existingCatalogs = [...new Set([
+                        ...canais.filter(c => c.type === "catalog" && c.catalog_name).map(c => c.catalog_name),
+                        ...savedCatalogs,
+                      ])];
                       return (
                         <div className="flex gap-2">
                           <select
@@ -647,6 +671,45 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
                     <div className="space-y-1.5">
                       <label className="block text-[11px] font-semibold" style={{ color: "#0d0446" }}>Nome do Programa/Vídeo</label>
                       <StyledInput value={canalForm.name} onChange={(e) => setCanalForm(p => ({ ...p, name: e.target.value }))} placeholder="Ex: Episódio 01 - Título" />
+                    </div>
+                    {/* Upload de imagens do vídeo individual */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                      {([
+                        { url: videoCoverUrl, setUrl: setVideoCoverUrl, label: "Capa do Vídeo", hint: "1080 × 1920", folder: "video-cover" },
+                        { url: videoThumbUrl, setUrl: setVideoThumbUrl, label: "Thumbnail do Vídeo", hint: "1920 × 1080", folder: "video-thumb" },
+                      ] as const).map(img => (
+                        <div key={img.folder} className="flex flex-col items-center gap-2.5 p-4 rounded-xl transition-all hover:shadow-md" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.08)" }}>
+                          {img.url ? (
+                            <img src={img.url} alt={img.label} className="w-full h-24 rounded-xl object-contain" style={{ border: "1px solid rgba(13,4,70,0.08)" }} />
+                          ) : (
+                            <div className="w-full h-24 rounded-xl flex flex-col items-center justify-center gap-1" style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "2px dashed rgba(13,4,70,0.12)" }}>
+                              <Upload size={20} style={{ color: "rgba(13,4,70,0.2)" }} />
+                              <span className="text-[9px]" style={{ color: "rgba(13,4,70,0.3)" }}>Arraste ou clique</span>
+                            </div>
+                          )}
+                          <span className="text-xs font-bold text-center" style={{ color: "#0d0446" }}>{img.label}</span>
+                          <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ color: "rgba(13,4,70,0.5)", backgroundColor: "rgba(13,4,70,0.05)" }}>{img.hint}</span>
+                          <button onClick={() => {
+                            const input = document.createElement("input");
+                            input.type = "file"; input.accept = "image/*";
+                            input.onchange = async (e) => {
+                              const file = (e.target as HTMLInputElement).files?.[0];
+                              if (!file) return;
+                              toast.info("Enviando imagem...");
+                              const url = await uploadToStorage(file, img.folder);
+                              if (url) img.setUrl(url);
+                            };
+                            input.click();
+                          }}
+                            className="w-full px-3 py-1.5 font-bold transition-all text-xs flex items-center justify-center gap-1 rounded-full"
+                            style={btnSecondary}
+                            onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#0d0446"; e.currentTarget.style.color = "#ffffff"; }}
+                            onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#ffffff"; e.currentTarget.style.color = "#0d0446"; }}
+                          >
+                            <Upload size={10} /> {img.url ? "Trocar" : "Upload"}
+                          </button>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 )}
