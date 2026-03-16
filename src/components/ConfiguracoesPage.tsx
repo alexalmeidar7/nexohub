@@ -671,6 +671,45 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
                       <label className="block text-[11px] font-semibold" style={{ color: "#0d0446" }}>Nome do Programa/Vídeo</label>
                       <StyledInput value={canalForm.name} onChange={(e) => setCanalForm(p => ({ ...p, name: e.target.value }))} placeholder="Ex: Episódio 01 - Título" />
                     </div>
+                    {/* Upload de imagens do vídeo individual */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                      {([
+                        { url: videoCoverUrl, setUrl: setVideoCoverUrl, label: "Capa do Vídeo", hint: "1080 × 1920", folder: "video-cover" },
+                        { url: videoThumbUrl, setUrl: setVideoThumbUrl, label: "Thumbnail do Vídeo", hint: "1920 × 1080", folder: "video-thumb" },
+                      ] as const).map(img => (
+                        <div key={img.folder} className="flex flex-col items-center gap-2.5 p-4 rounded-xl transition-all hover:shadow-md" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.08)" }}>
+                          {img.url ? (
+                            <img src={img.url} alt={img.label} className="w-full h-24 rounded-xl object-contain" style={{ border: "1px solid rgba(13,4,70,0.08)" }} />
+                          ) : (
+                            <div className="w-full h-24 rounded-xl flex flex-col items-center justify-center gap-1" style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "2px dashed rgba(13,4,70,0.12)" }}>
+                              <Upload size={20} style={{ color: "rgba(13,4,70,0.2)" }} />
+                              <span className="text-[9px]" style={{ color: "rgba(13,4,70,0.3)" }}>Arraste ou clique</span>
+                            </div>
+                          )}
+                          <span className="text-xs font-bold text-center" style={{ color: "#0d0446" }}>{img.label}</span>
+                          <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ color: "rgba(13,4,70,0.5)", backgroundColor: "rgba(13,4,70,0.05)" }}>{img.hint}</span>
+                          <button onClick={() => {
+                            const input = document.createElement("input");
+                            input.type = "file"; input.accept = "image/*";
+                            input.onchange = async (e) => {
+                              const file = (e.target as HTMLInputElement).files?.[0];
+                              if (!file) return;
+                              toast.info("Enviando imagem...");
+                              const url = await uploadToStorage(file, img.folder);
+                              if (url) img.setUrl(url);
+                            };
+                            input.click();
+                          }}
+                            className="w-full px-3 py-1.5 font-bold transition-all text-xs flex items-center justify-center gap-1 rounded-full"
+                            style={btnSecondary}
+                            onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#0d0446"; e.currentTarget.style.color = "#ffffff"; }}
+                            onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#ffffff"; e.currentTarget.style.color = "#0d0446"; }}
+                          >
+                            <Upload size={10} /> {img.url ? "Trocar" : "Upload"}
+                          </button>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
