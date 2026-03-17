@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Loader2, Trash2, Plus, Pencil, Check, X, Upload, ChevronDown, RotateCcw } from "lucide-react";
@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { compressImage } from "@/lib/imageCompressor";
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "@/components/ui/carousel";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import XmlLinkRow from "./XmlLinkRow";
 
 interface Logo {
   id: string;
@@ -212,6 +213,17 @@ export default function LogosPatrocinadoresPage() {
     }))
     .filter((g) => g.logos.length > 0);
 
+  const logosXmlContent = useMemo(() => {
+    if (grouped.length === 0) return "";
+    const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const items = grouped.map(({ programa, logos: gl }) =>
+      `  <programa>\n    <nome>${esc(programa.nome)}</nome>\n${gl.map(l =>
+        `    <logo>\n      <nome_logo>${esc(l.nome || "")}</nome_logo>\n      <url>${esc(l.logo_url)}</url>\n      <data_final>${l.data_final}</data_final>\n    </logo>`
+      ).join("\n")}\n  </programa>`
+    ).join("\n");
+    return `<?xml version="1.0" encoding="UTF-8"?>\n<logos_patrocinadores>\n${items}\n</logos_patrocinadores>`;
+  }, [grouped]);
+
   if (loading) {
     return <ModulePageSkeleton />;
   }
@@ -221,12 +233,15 @@ export default function LogosPatrocinadoresPage() {
       <div className="rounded-2xl" style={{ background: "#d9e9fa", boxShadow: "0 8px 32px rgba(13,4,70,0.12)", padding: "20px" }}>
         {/* Header */}
         <div className="flex items-center gap-3 mb-5">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(13,4,70,0.08)" }}>
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "rgba(13,4,70,0.08)" }}>
             <Upload size={20} style={{ color: "#0d0446" }} />
           </div>
-          <div>
+          <div className="shrink-0">
             <h3 className="text-base font-bold" style={{ color: "#0d0446" }}>Logos de Patrocinadores</h3>
             <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.5)" }}>Gerencie as logos vinculadas aos programas</p>
+          </div>
+          <div className="flex-1 ml-4">
+            {logosXmlContent && <XmlLinkRow label="XML LOGOS" xmlContent={logosXmlContent} dark />}
           </div>
         </div>
 
