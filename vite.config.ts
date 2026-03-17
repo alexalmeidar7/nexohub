@@ -26,7 +26,6 @@ export default defineConfig(({ mode }) => ({
     rollupOptions: {
       output: {
         manualChunks: {
-          vendor: ["react", "react-dom", "react-router-dom"],
           supabase: ["@supabase/supabase-js"],
           ui: ["lucide-react", "@radix-ui/react-tooltip", "@radix-ui/react-dialog"],
         },
