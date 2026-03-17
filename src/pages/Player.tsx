@@ -395,7 +395,7 @@ export default function PlayerPage() {
   const isVideo = canal?.type === "video" || canal?.type === "video_live";
   const isAutoplayChannel = useCallback((c?: Canal | null) => normalizeChannelNumber(c?.numero_canal) === "991-1", []);
   const autoPlayedRef = useRef(false);
-  const [showHomeConfirm, setShowHomeConfirm] = useState(false);
+  
   const is991Channel = normalizeChannelNumber(canal?.numero_canal) === "991-1" || normalizeChannelNumber(canal?.numero_canal) === "991-2" || isCatalog;
 
   const handleHomeClick = useCallback(() => {
