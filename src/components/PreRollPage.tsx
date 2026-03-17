@@ -13,6 +13,7 @@ import { CalendarIcon } from "lucide-react";
 
 interface PreRoll {
   id: string;
+  nome: string;
   video_url: string;
   dias_semana: string[];
   horario_inicio: string;
@@ -26,6 +27,8 @@ interface PreRoll {
   link_url: string | null;
   data_inicial: string | null;
   data_final: string | null;
+  views_count: number;
+  clicks_count: number;
 }
 
 const DIAS = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
