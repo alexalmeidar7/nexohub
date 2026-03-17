@@ -149,9 +149,18 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
     const fallbackTimer = hasFallbackVideo ? null : setTimeout(() => onEndedRef.current(), 120000);
 
     let progressDetected = false;
+    let unmuteInterval: ReturnType<typeof setInterval> | null = null;
+
+    const enforceYoutubeAudio = (player: any) => {
+      try {
+        player?.unMute?.();
+        player?.setVolume?.(100);
+      } catch {}
+    };
 
     const failYoutubePlayback = (message: string) => {
       if (pollRef.current) clearInterval(pollRef.current);
+      if (unmuteInterval) clearInterval(unmuteInterval);
       try {
         ytPlayerRef.current?.destroy();
         ytDestroyedRef.current = true;
