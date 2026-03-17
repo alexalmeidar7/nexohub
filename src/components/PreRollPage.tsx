@@ -82,6 +82,7 @@ export default function PreRollPage() {
   };
 
   const resetForm = () => {
+    setNome(""); setActiveField(true);
     setMediaType("video"); setVideoFile(null); setVideoPreview(""); setYoutubeUrl("");
     setDiasSemana([]); setHorarioInicio("00:00"); setHorarioFim("23:59");
     setPriority("1"); setLinkUrl(""); setDataInicial(new Date()); setDataFinal(undefined); setEditId(null);
