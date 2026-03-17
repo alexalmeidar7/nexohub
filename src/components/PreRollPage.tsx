@@ -39,6 +39,8 @@ export default function PreRollPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
+  const [nome, setNome] = useState("");
+  const [activeField, setActiveField] = useState(true);
   const [mediaType, setMediaType] = useState<"video" | "youtube">("video");
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [videoPreview, setVideoPreview] = useState("");
