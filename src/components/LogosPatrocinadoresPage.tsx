@@ -290,9 +290,16 @@ export default function LogosPatrocinadoresPage() {
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="rounded-xl overflow-hidden mb-5" style={{ backgroundColor: "#ffffff", boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}>
-          <div className="px-4 py-2.5" style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)" }}>
-            <h3 className="text-sm font-bold" style={{ color: "#ffffff" }}>➕ Nova Logo de Patrocinador</h3>
+        <form ref={formRef} onSubmit={handleSubmit} className="rounded-xl overflow-hidden mb-5" style={{ backgroundColor: "#ffffff", boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}>
+          <div className="px-4 py-2.5 flex items-center justify-between" style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)" }}>
+            <h3 className="text-sm font-bold" style={{ color: "#ffffff" }}>
+              {editingFullId ? "✏️ Editar Logo de Patrocinador" : "➕ Nova Logo de Patrocinador"}
+            </h3>
+            {editingFullId && (
+              <button type="button" onClick={resetForm} className="text-[10px] text-white/70 hover:text-white transition-colors">
+                Cancelar edição
+              </button>
+            )}
           </div>
           <div className="p-5">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
