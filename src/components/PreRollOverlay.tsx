@@ -344,19 +344,21 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
               {formatTime(currentTime)} / {formatTime(duration)}
             </span>
           )}
-          <button
-            onClick={canSkip ? onSkip : undefined}
-            className={`flex items-center gap-1 px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
-              canSkip
-                ? "cursor-pointer hover:brightness-110"
-                : "cursor-not-allowed opacity-80"
-            }`}
-            style={{ backgroundColor: "hsl(0 100% 40%)", color: "white" }}
-            disabled={!canSkip}
-          >
-            pular{!canSkip && ` ${countdown}s`}
-            {canSkip && <span className="ml-0.5">›</span>}
-          </button>
+          {!hideSkip && (
+            <button
+              onClick={canSkip ? onSkip : undefined}
+              className={`flex items-center gap-1 px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
+                canSkip
+                  ? "cursor-pointer hover:brightness-110"
+                  : "cursor-not-allowed opacity-80"
+              }`}
+              style={{ backgroundColor: "hsl(0 100% 40%)", color: "white" }}
+              disabled={!canSkip}
+            >
+              pular{!canSkip && ` ${countdown}s`}
+              {canSkip && <span className="ml-0.5">›</span>}
+            </button>
+          )}
         </div>
 
         {/* Widget QR Code — canto inferior esquerdo */}

@@ -1894,6 +1894,7 @@ export default function PlayerPage() {
           prerollYoutubeUrl={midrollPreroll.youtubeUrl}
           onSkip={handleMidrollEnd}
           onEnded={handleMidrollEnd}
+          hideSkip={isCatalog}
         />
       )}
 
