@@ -444,6 +444,9 @@ export default function PlayerPage() {
   const [prerollLinkUrl, setPrerollLinkUrl] = useState<string | null>(null);
   const [prerollMediaType, setPrerollMediaType] = useState<string>("video");
   const [prerollYoutubeUrl, setPrerollYoutubeUrl] = useState<string | null>(null);
+  const [prerollBackgroundUrl, setPrerollBackgroundUrl] = useState<string | null>(null);
+  const [prerollAspectRatio, setPrerollAspectRatio] = useState<string>("16:9");
+  const [prerollVideoPosition, setPrerollVideoPosition] = useState<string>("center");
   const [prerollDone, setPrerollDone] = useState(!requestedChannelId); // Pre-roll enabled for catalog/deep-link channels
   const [prerollShowing, setPrerollShowing] = useState(false);
   const prerollVideoRef = useRef<HTMLVideoElement>(null);
