@@ -291,10 +291,11 @@ export default function PreRollOverlay({
         style={{
           aspectRatio: prerollAspectRatio === "9:16" ? "9 / 16" : "16 / 9",
           ...(prerollAspectRatio === "9:16"
-            ? { height: "100%", maxHeight: "calc(100vh - 4rem)" }
+            ? { height: "80%", maxHeight: "calc(100vh - 8rem)" }
             : { width: "100%", maxWidth: "72rem" }),
           backgroundColor: "hsl(0 0% 0%)",
           borderRadius: "2rem",
+          border: "3px solid hsla(0, 0%, 100%, 0.15)",
         }}
       >
         {/* Vídeo / YouTube */}
