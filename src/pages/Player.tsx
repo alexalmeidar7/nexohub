@@ -1750,12 +1750,11 @@ export default function PlayerPage() {
             if (!user) return;
             const now = new Date();
             const ct = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-            const today = ["dom", "seg", "ter", "qua", "qui", "sex", "sab"][now.getDay()];
             const todayStr = now.toISOString().slice(0, 10);
             const { data } = await supabase.from("comercial_preroll").select("*").eq("user_id", user.id).eq("active", true).lte("horario_inicio", ct).gte("horario_fim", ct).order("priority", { ascending: true });
             if (data && data.length > 0) {
               const matching = data.filter((p: any) => {
-                if (p.dias_semana && p.dias_semana.length > 0 && !p.dias_semana.includes(today)) return false;
+                if (!matchesCampaignDay(p.dias_semana, now)) return false;
                 if (p.data_inicial && todayStr < p.data_inicial) return false;
                 if (p.data_final && todayStr > p.data_final) return false;
                 return true;
