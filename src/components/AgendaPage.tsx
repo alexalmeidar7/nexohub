@@ -159,11 +159,6 @@ export default function AgendaPage() {
       const now = new Date();
       const timeMin = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString();
       const timeMax = new Date(now.getFullYear(), now.getMonth() + 3, 0).toISOString();
-      const { data, error } = await supabase.functions.invoke("google-calendar-events", {
-        body: null,
-        headers: {},
-      });
-      // Use GET with query params via fetch
       const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
       const res = await fetch(
         `https://${projectId}.supabase.co/functions/v1/google-calendar-events?timeMin=${encodeURIComponent(timeMin)}&timeMax=${encodeURIComponent(timeMax)}`,
