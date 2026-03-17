@@ -260,8 +260,8 @@ export default function LogosPatrocinadoresPage() {
   const logosXmlContent = useMemo(() => {
     if (grouped.length === 0) return "";
     const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-    const items = grouped.map(({ programa, logos: gl }) =>
-      `  <programa>\n    <nome>${esc(programa.nome)}</nome>\n${gl.map(l =>
+    const items = grouped.map(({ programa, logos: gl }, idx) =>
+      `  <programa id="programa ${idx + 1}">\n    <nome>${esc(programa.nome)}</nome>\n${gl.map(l =>
         `    <logo>\n      <nome>${esc(l.nome)}</nome>\n      <url>${esc(l.logo_url)}</url>\n    </logo>`
       ).join("\n")}\n  </programa>`
     ).join("\n");
