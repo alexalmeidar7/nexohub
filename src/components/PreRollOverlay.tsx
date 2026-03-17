@@ -224,7 +224,10 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
             }, 500);
           },
           onStateChange: (event: any) => {
-            if (event.data === 1) progressDetected = true;
+            if (event.data === 1) {
+              progressDetected = true;
+              enforceYoutubeAudio(event?.target);
+            }
             if (event.data === 0) onEndedRef.current();
           },
           onError: (event: any) => {
