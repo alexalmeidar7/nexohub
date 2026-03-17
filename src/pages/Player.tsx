@@ -1787,8 +1787,17 @@ export default function PlayerPage() {
     setMidrollActive(false);
     setMidrollPreroll(null);
     ytPostMessage("seekTo", [midrollResumeTime, true]);
-    setTimeout(() => ytPostMessage("playVideo"), 300);
-  }, [ytPostMessage, midrollResumeTime]);
+    ytPostMessage("setVolume", [0]);
+    setTimeout(() => ytPostMessage("playVideo"), 100);
+    // Fade-in: gradually restore video and volume over 2s
+    setMidrollFading("in");
+    setTimeout(() => ytPostMessage("setVolume", [Math.round(volume * 0.3)]), 400);
+    setTimeout(() => ytPostMessage("setVolume", [Math.round(volume * 0.6)]), 1000);
+    setTimeout(() => {
+      ytPostMessage("setVolume", [volume]);
+      setMidrollFading(null);
+    }, 2000);
+  }, [ytPostMessage, midrollResumeTime, volume]);
 
   const handleYtHome = useCallback(() => {
     if (selectedVideoId) {
