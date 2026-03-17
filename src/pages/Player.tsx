@@ -1514,12 +1514,17 @@ export default function PlayerPage() {
 
   useEffect(() => {
     if (!isYoutube || !selectedVideoId) return;
-    const timer = setTimeout(() => {
+    // Unmute shortly after embed starts (it starts muted for autoplay compliance)
+    const unmuteTimer = setTimeout(() => {
+      ytPostMessage("unMute");
+      ytPostMessage("setVolume", [volume]);
+    }, 800);
+    const syncTimer = setTimeout(() => {
       ytPostMessage("setVolume", [volume]);
       if (muted) ytPostMessage("mute");
       else ytPostMessage("unMute");
     }, 1500);
-    return () => clearTimeout(timer);
+    return () => { clearTimeout(unmuteTimer); clearTimeout(syncTimer); };
   }, [volume, muted, isYoutube, selectedVideoId, ytPostMessage]);
 
   // Listen for YouTube player state messages to track currentTime/duration
@@ -1917,7 +1922,7 @@ export default function PlayerPage() {
             ref={ytIframeRef}
             className="absolute pointer-events-none"
             style={{ width: "100%", height: "100%", top: "0", left: "0", border: "none" }}
-            src={`https://www.youtube.com/embed/${selectedVideoId}?autoplay=1&mute=0&controls=0&showinfo=0&rel=0&modestbranding=1&enablejsapi=1&playsinline=1&iv_load_policy=3&disablekb=1&vq=hd1080&origin=${window.location.origin}`}
+            src={`https://www.youtube.com/embed/${selectedVideoId}?autoplay=1&mute=1&controls=0&showinfo=0&rel=0&modestbranding=1&enablejsapi=1&playsinline=1&iv_load_policy=3&disablekb=1&vq=hd1080&origin=${window.location.origin}`}
             allow="autoplay; encrypted-media"
           />
           {/* Transparent overlay to block YouTube controls on pause */}
