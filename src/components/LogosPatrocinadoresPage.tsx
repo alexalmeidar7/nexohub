@@ -324,84 +324,9 @@ export default function LogosPatrocinadoresPage() {
           </div>
         </form>
 
-        {/* Active Logos - Collapsible */}
-        <Collapsible open={cadastroOpen} onOpenChange={setCadastroOpen}>
-          <div className="rounded-xl overflow-hidden mb-5" style={{ backgroundColor: "#ffffff", boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}
-            onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}
-          >
-            <CollapsibleTrigger asChild>
-              <button className="w-full px-4 py-2.5 flex items-center justify-between cursor-pointer" style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)" }}>
-                <h3 className="text-sm font-bold" style={{ color: "#ffffff" }}>📋 Logos por Programa</h3>
-                <ChevronDown size={16} className={`text-white transition-transform duration-200 ${cadastroOpen ? "rotate-180" : ""}`} />
-              </button>
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-              {grouped.length === 0 ? (
-                <p className="text-sm py-8 text-center" style={{ color: "rgba(13,4,70,0.4)" }}>Nenhuma logo ativa cadastrada.</p>
-              ) : (
-                <div className="p-4 space-y-5">
-                  {grouped.map(({ programa, logos: gLogos }) => (
-                    <div key={programa.id} className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(13,4,70,0.08)" }}>
-                      <div className="px-4 py-2 font-semibold text-xs" style={{ backgroundColor: "rgba(13,4,70,0.04)", color: "#0d0446" }}>
-                        {programa.nome}
-                      </div>
-                      <div className="p-3 sm:p-4 px-4 sm:px-10" style={{ backgroundColor: "#ffffff" }}>
-                        <Carousel opts={{ align: "start" }} className="w-full">
-                          <CarouselContent>
-                            {gLogos.map((logo) => {
-                              const diasRestantes = Math.ceil((new Date(logo.data_final + "T23:59:59").getTime() - Date.now()) / 86400000);
-                              const isEditing = editingLogoId === logo.id;
-                              return (
-                                <CarouselItem key={logo.id} className="basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5">
-                                  <div className="space-y-2 text-center">
-                                    <div className="relative group">
-                                      <img src={logo.logo_url} alt={logo.nome} className="w-full aspect-square rounded-lg object-contain" style={{ border: "1px solid rgba(13,4,70,0.08)", backgroundColor: "#0d0446" }} />
-                                      <button onClick={() => handleSoftDelete(logo.id)}
-                                        className="absolute top-1 right-1 bg-red-500/80 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <Trash2 size={12} />
-                                      </button>
-                                    </div>
-                                    {logo.nome && (
-                                      <p className="text-[11px] font-semibold truncate" style={{ color: "#0d0446" }}>{logo.nome}</p>
-                                    )}
-                                    <span className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full ${diasRestantes <= 7 ? "bg-red-100 text-red-600" : "bg-green-100 text-green-700"}`}>
-                                      {diasRestantes > 0 ? `${diasRestantes}d restantes` : "Expirando"}
-                                    </span>
-                                    {isEditing ? (
-                                      <div className="flex items-center gap-1">
-                                        <input type="date" value={editDate} onChange={(e) => setEditDate(e.target.value)} className="h-7 text-[10px] px-1 rounded" style={{ border: "1px solid #0d0446", color: "#0d0446" }} />
-                                        <button onClick={saveEditDate} style={{ color: "#22c55e" }}><Check size={14} /></button>
-                                        <button onClick={() => setEditingLogoId(null)} style={{ color: "#dc2626" }}><X size={14} /></button>
-                                      </div>
-                                    ) : (
-                                      <button onClick={() => startEditDate(logo)} className="text-[10px] flex items-center gap-1 mx-auto transition-colors"
-                                        style={{ color: "rgba(13,4,70,0.4)" }}
-                                        onMouseEnter={e => { e.currentTarget.style.color = "#2dbef3"; }}
-                                        onMouseLeave={e => { e.currentTarget.style.color = "rgba(13,4,70,0.4)"; }}
-                                      >
-                                        <Pencil size={10} /> Editar validade
-                                      </button>
-                                    )}
-                                  </div>
-                                </CarouselItem>
-                              );
-                            })}
-                          </CarouselContent>
-                          <CarouselPrevious className="hidden sm:flex" />
-                          <CarouselNext className="hidden sm:flex" />
-                        </Carousel>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CollapsibleContent>
-          </div>
-        </Collapsible>
-
-        {/* Excluded Logos - Collapsible */}
+        {/* Excluded Logos - right after form */}
         <Collapsible open={excluidasOpen} onOpenChange={setExcluidasOpen}>
-          <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}>
+          <div className="rounded-xl overflow-hidden mb-5" style={{ backgroundColor: "#ffffff", boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}>
             <CollapsibleTrigger asChild>
               <button className="w-full px-4 py-2.5 flex items-center justify-between cursor-pointer" style={{ background: "linear-gradient(135deg, #6b7280, #4b5563)" }}>
                 <h3 className="text-sm font-bold flex items-center gap-2" style={{ color: "#ffffff" }}>
@@ -419,7 +344,7 @@ export default function LogosPatrocinadoresPage() {
               ) : (
                 <div className="p-4">
                   <p className="text-[10px] mb-3" style={{ color: "rgba(13,4,70,0.5)" }}>
-                    Arraste uma logo para a seção "Logos por Programa" para restaurá-la, ou clique no botão de restaurar.
+                    Arraste uma logo para um programa para restaurá-la, ou clique no botão de restaurar.
                     <br />Logos excluídas são mantidas por até 180 dias.
                   </p>
                   <div className="flex flex-wrap gap-3">
@@ -454,6 +379,70 @@ export default function LogosPatrocinadoresPage() {
             </CollapsibleContent>
           </div>
         </Collapsible>
+
+        {/* Each program as its own collapsible section */}
+        {grouped.map(({ programa, logos: gLogos }) => (
+          <Collapsible key={programa.id} defaultOpen>
+            <div className="rounded-xl overflow-hidden mb-4" style={{ backgroundColor: "#ffffff", boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}
+              onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}
+            >
+              <CollapsibleTrigger asChild>
+                <button className="w-full px-4 py-2.5 flex items-center justify-between cursor-pointer" style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)" }}>
+                  <h3 className="text-sm font-bold" style={{ color: "#ffffff" }}>{programa.nome}</h3>
+                  <ChevronDown size={16} className="text-white transition-transform duration-200" />
+                </button>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="p-3 sm:p-4 px-4 sm:px-10">
+                  <Carousel opts={{ align: "start" }} className="w-full">
+                    <CarouselContent>
+                      {gLogos.map((logo) => {
+                        const diasRestantes = Math.ceil((new Date(logo.data_final + "T23:59:59").getTime() - Date.now()) / 86400000);
+                        const isEditing = editingLogoId === logo.id;
+                        return (
+                          <CarouselItem key={logo.id} className="basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5">
+                            <div className="space-y-2 text-center">
+                              <div className="relative group">
+                                <img src={logo.logo_url} alt={logo.nome} className="w-full aspect-square rounded-lg object-contain" style={{ border: "1px solid rgba(13,4,70,0.08)", backgroundColor: "#0d0446" }} />
+                                <button onClick={() => handleSoftDelete(logo.id)}
+                                  className="absolute top-1 right-1 bg-red-500/80 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <Trash2 size={12} />
+                                </button>
+                              </div>
+                              {logo.nome && (
+                                <p className="text-[11px] font-semibold truncate" style={{ color: "#0d0446" }}>{logo.nome}</p>
+                              )}
+                              <span className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full ${diasRestantes <= 7 ? "bg-red-100 text-red-600" : "bg-green-100 text-green-700"}`}>
+                                {diasRestantes > 0 ? `${diasRestantes}d restantes` : "Expirando"}
+                              </span>
+                              {isEditing ? (
+                                <div className="flex items-center gap-1">
+                                  <input type="date" value={editDate} onChange={(e) => setEditDate(e.target.value)} className="h-7 text-[10px] px-1 rounded" style={{ border: "1px solid #0d0446", color: "#0d0446" }} />
+                                  <button onClick={saveEditDate} style={{ color: "#22c55e" }}><Check size={14} /></button>
+                                  <button onClick={() => setEditingLogoId(null)} style={{ color: "#dc2626" }}><X size={14} /></button>
+                                </div>
+                              ) : (
+                                <button onClick={() => startEditDate(logo)} className="text-[10px] flex items-center gap-1 mx-auto transition-colors"
+                                  style={{ color: "rgba(13,4,70,0.4)" }}
+                                  onMouseEnter={e => { e.currentTarget.style.color = "#2dbef3"; }}
+                                  onMouseLeave={e => { e.currentTarget.style.color = "rgba(13,4,70,0.4)"; }}
+                                >
+                                  <Pencil size={10} /> Editar validade
+                                </button>
+                              )}
+                            </div>
+                          </CarouselItem>
+                        );
+                      })}
+                    </CarouselContent>
+                    <CarouselPrevious className="hidden sm:flex" />
+                    <CarouselNext className="hidden sm:flex" />
+                  </Carousel>
+                </div>
+              </CollapsibleContent>
+            </div>
+          </Collapsible>
+        ))}
       </div>
     </div>
   );
