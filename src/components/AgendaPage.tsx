@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { CalendarIcon, Plus, Trash2, MapPin, Users, Instagram, Pencil, X, AlertTriangle, History } from "lucide-react";
+import { CalendarIcon, Plus, Trash2, MapPin, Users, Instagram, Pencil, X, AlertTriangle, History, Globe, ExternalLink, Unlink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
@@ -22,6 +22,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
+
+interface GoogleCalendarEvent {
+  id: string;
+  summary: string;
+  description: string;
+  location: string;
+  start: string;
+  end: string;
+  htmlLink: string;
+}
 
 interface Programa {
   id: string;
@@ -72,7 +83,8 @@ const prioridadeColors: Record<string, string> = {
 };
 
 export default function AgendaPage() {
-  const { user } = useAuth();
+  const { user, session } = useAuth();
+  const { toast } = useToast();
   const [programas, setProgramas] = useState<Programa[]>([]);
   const [eventos, setEventos] = useState<Evento[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
@@ -93,6 +105,9 @@ export default function AgendaPage() {
   ]);
 
   const [loadingData, setLoadingData] = useState(true);
+  const [googleConnected, setGoogleConnected] = useState(false);
+  const [googleEvents, setGoogleEvents] = useState<GoogleCalendarEvent[]>([]);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const estudios = Array.from(new Set(programas.map(p => p.estudio).filter(Boolean)));
 
   const fetchProgramas = useCallback(async () => {
@@ -137,6 +152,72 @@ export default function AgendaPage() {
     setEventos(enriched);
   }, [user]);
 
+  const fetchGoogleEvents = useCallback(async () => {
+    if (!session?.access_token) return;
+    setGoogleLoading(true);
+    try {
+      const now = new Date();
+      const timeMin = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString();
+      const timeMax = new Date(now.getFullYear(), now.getMonth() + 3, 0).toISOString();
+      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+      const res = await fetch(
+        `https://${projectId}.supabase.co/functions/v1/google-calendar-events?timeMin=${encodeURIComponent(timeMin)}&timeMax=${encodeURIComponent(timeMax)}`,
+        {
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          },
+        }
+      );
+      const result = await res.json();
+      setGoogleConnected(result.connected || false);
+      setGoogleEvents(result.events || []);
+    } catch (err) {
+      console.error("Error fetching Google Calendar events:", err);
+    } finally {
+      setGoogleLoading(false);
+    }
+  }, [session?.access_token]);
+
+  const connectGoogleCalendar = async () => {
+    if (!session?.access_token) return;
+    try {
+      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+      const res = await fetch(
+        `https://${projectId}.supabase.co/functions/v1/google-calendar-auth`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      const data = await res.json();
+      if (data.url) {
+        const popup = window.open(data.url, "google-auth", "width=600,height=700");
+        // Poll for popup close
+        const interval = setInterval(() => {
+          if (popup?.closed) {
+            clearInterval(interval);
+            fetchGoogleEvents();
+          }
+        }, 1000);
+      }
+    } catch (err) {
+      toast({ title: "Erro ao conectar Google Calendar", variant: "destructive" });
+    }
+  };
+
+  const disconnectGoogleCalendar = async () => {
+    if (!user) return;
+    await supabase.from("google_calendar_tokens").delete().eq("user_id", user.id);
+    setGoogleConnected(false);
+    setGoogleEvents([]);
+    toast({ title: "Google Calendar desconectado" });
+  };
+
   useEffect(() => {
     const loadAll = async () => {
       setLoadingData(true);
@@ -145,7 +226,8 @@ export default function AgendaPage() {
     };
     loadAll();
     fetchEventos();
-  }, [fetchProgramas, fetchEventos]);
+    fetchGoogleEvents();
+  }, [fetchProgramas, fetchEventos, fetchGoogleEvents]);
 
   const addParticipante = () => {
     setFormParticipantes([...formParticipantes, { nome: "", instagram: "" }]);
@@ -471,6 +553,32 @@ export default function AgendaPage() {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            {/* Google Calendar Connect/Disconnect */}
+            {googleConnected ? (
+              <div className="flex items-center gap-1.5">
+                <span className="flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full" style={{ backgroundColor: "rgba(52,168,83,0.12)", color: "#34A853" }}>
+                  <Globe size={11} /> Google conectado
+                </span>
+                <button
+                  type="button"
+                  onClick={disconnectGoogleCalendar}
+                  className="flex items-center gap-1 text-[10px] px-2 py-1 rounded-full transition-all hover:bg-red-50"
+                  style={{ color: "#ef4444" }}
+                  title="Desconectar Google Calendar"
+                >
+                  <Unlink size={11} />
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={connectGoogleCalendar}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold transition-all rounded-full hover:shadow-md"
+                style={{ backgroundColor: "#ffffff", color: "#34A853", border: "1.5px solid #34A853" }}
+              >
+                <Globe size={12} /> Conectar Google Calendar
+              </button>
+            )}
             {locais.length > 0 && (
               <Select value={filterLocal} onValueChange={setFilterLocal}>
                 <SelectTrigger className="w-[160px] h-8 text-xs [&>span]:text-white" style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "20px", border: "none" }}>
@@ -709,16 +817,70 @@ export default function AgendaPage() {
                   {filterLocal !== "todos" && ` • ${filterLocal}`}
                 </span>
                 <span className="text-[9px] font-normal px-2 py-0.5 rounded-full" style={{ backgroundColor: "rgba(255,255,255,0.15)" }}>
-                  {filteredEventos.length} evento{filteredEventos.length !== 1 ? "s" : ""}
+                  {(() => {
+                    const googleForDay = googleEvents.filter(ge => {
+                      if (!selectedDate) return true;
+                      const geDate = ge.start.substring(0, 10);
+                      return geDate === format(selectedDate, "yyyy-MM-dd");
+                    });
+                    const totalCount = filteredEventos.length + googleForDay.length;
+                    return totalCount;
+                  })()} evento{(filteredEventos.length + googleEvents.filter(ge => !selectedDate || ge.start.substring(0, 10) === format(selectedDate!, "yyyy-MM-dd")).length) !== 1 ? "s" : ""}
                 </span>
               </div>
               <div className="p-3 space-y-2">
-                {filteredEventos.length === 0 ? (
+                {filteredEventos.map((evt) => renderEventCard(evt))}
+
+                {/* Google Calendar Events */}
+                {googleEvents
+                  .filter(ge => {
+                    if (!selectedDate) return true;
+                    const geDate = ge.start.substring(0, 10);
+                    return geDate === format(selectedDate, "yyyy-MM-dd");
+                  })
+                  .map(ge => (
+                    <div
+                      key={`google-${ge.id}`}
+                      className="rounded-xl p-4 space-y-2"
+                      style={{ backgroundColor: "#ffffff", border: "1px solid rgba(52,168,83,0.2)", borderLeft: "4px solid #34A853" }}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h5 className="font-semibold" style={{ color: "#0d0446" }}>{ge.summary}</h5>
+                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: "rgba(52,168,83,0.12)", color: "#34A853" }}>
+                              Google
+                            </span>
+                          </div>
+                          <p className="text-xs" style={{ color: "rgba(13,4,70,0.5)" }}>
+                            <Globe size={12} className="inline mr-1" style={{ color: "#34A853" }} />
+                            {ge.start.includes("T")
+                              ? format(new Date(ge.start), "dd/MM/yyyy HH:mm")
+                              : format(new Date(ge.start + "T12:00:00"), "dd/MM/yyyy")}
+                            {ge.end && ge.end.includes("T") && ` - ${format(new Date(ge.end), "HH:mm")}`}
+                          </p>
+                          {ge.location && (
+                            <p className="text-xs" style={{ color: "rgba(13,4,70,0.5)" }}>
+                              <MapPin size={12} className="inline mr-1" />{ge.location}
+                            </p>
+                          )}
+                          {ge.description && (
+                            <p className="text-sm mt-1 line-clamp-2" style={{ color: "#0d0446" }}>{ge.description}</p>
+                          )}
+                        </div>
+                        {ge.htmlLink && (
+                          <a href={ge.htmlLink} target="_blank" rel="noopener noreferrer" className="shrink-0 p-1.5 rounded-lg hover:bg-gray-50 transition-colors">
+                            <ExternalLink size={14} style={{ color: "#34A853" }} />
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+
+                {filteredEventos.length === 0 && googleEvents.filter(ge => !selectedDate || ge.start.substring(0, 10) === format(selectedDate!, "yyyy-MM-dd")).length === 0 && (
                   <p className="text-sm py-8 text-center" style={{ color: "rgba(13,4,70,0.4)" }}>
                     Nenhum evento encontrado para esta data.
                   </p>
-                ) : (
-                  filteredEventos.map((evt) => renderEventCard(evt))
                 )}
               </div>
             </div>
