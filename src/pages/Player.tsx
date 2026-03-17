@@ -136,6 +136,44 @@ const matchesCampaignDay = (diasSemana: string[] | null | undefined, now: Date) 
 
 const normalizeChannelNumber = (num?: string | null) => (num || "").replace(/\s+/g, "").toLowerCase();
 
+const YOUTUBE_VIDEO_ID_RE = /^[a-zA-Z0-9_-]{11}$/;
+
+const normalizeYoutubeVideoId = (value?: string | null) => {
+  const raw = (value || "").trim();
+  if (!raw) return null;
+  if (YOUTUBE_VIDEO_ID_RE.test(raw)) return raw;
+  const match = raw.match(/[a-zA-Z0-9_-]{11}/);
+  return match?.[0] || null;
+};
+
+const extractYoutubeVideoId = (input?: string | null) => {
+  const raw = (input || "").trim();
+  if (!raw) return null;
+  const direct = normalizeYoutubeVideoId(raw);
+  if (direct) return direct;
+
+  try {
+    const parsed = new URL(raw);
+    const host = parsed.hostname.replace(/^www\./, "").toLowerCase();
+    const byQuery = normalizeYoutubeVideoId(parsed.searchParams.get("v"));
+    if (byQuery) return byQuery;
+
+    if (host === "youtu.be") {
+      return normalizeYoutubeVideoId(parsed.pathname.split("/").filter(Boolean)[0] || "");
+    }
+
+    const parts = parsed.pathname.split("/").filter(Boolean);
+    const markerIdx = parts.findIndex((p) => ["embed", "shorts", "live", "v"].includes(p));
+    if (markerIdx >= 0) {
+      return normalizeYoutubeVideoId(parts[markerIdx + 1] || "");
+    }
+  } catch {
+    // ignore and fallback below
+  }
+
+  return normalizeYoutubeVideoId(raw);
+};
+
 function getCurrentProgram(programas: Programa[]): Programa | null {
   const now = new Date();
   const todayShort = DAY_MAP_SHORT[now.getDay()];
