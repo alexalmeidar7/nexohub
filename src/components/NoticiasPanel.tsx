@@ -731,164 +731,6 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
       <div className="flex gap-4">
         {/* LEFT COLUMN */}
         <div className="space-y-4" style={{ width: (jornalConfig || wizardOpen) ? "50%" : "100%" }}>
-          {/* Cotações marquee */}
-          <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.06)", width: (jornalConfig || wizardOpen) ? "100%" : "50%", boxShadow: "0 2px 10px rgba(13,4,70,0.05)" }}>
-            <div className="px-3 py-2.5 font-bold text-xs tracking-wide text-white flex items-center justify-between" style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)" }}>
-              <span style={{ color: "#ffffff" }}>💹 Cotações - Bolsas e Moedas</span>
-              <button onClick={() => toggleBox('cotacoes')} className="p-0.5 rounded hover:bg-white/20 transition-colors">
-                {collapsedBoxes['cotacoes'] ? <ChevronDown size={12} /> : <ChevronUp size={12} />}
-              </button>
-            </div>
-            {!collapsedBoxes['cotacoes'] && (
-              <div className="p-2 overflow-hidden">
-                {loadingCotacoes ? (
-                  <div className="animate-pulse flex gap-2 overflow-hidden">
-                    {Array.from({ length: 8 }).map((_, i) => (
-                      <div key={i} className="rounded-md px-3 py-2 shrink-0 flex items-center gap-2" style={{ backgroundColor: "rgba(13,4,70,0.04)" }}>
-                        <div className="h-2.5 w-14 rounded bg-[#0d0446]/10" />
-                        <div className="h-2.5 w-10 rounded bg-[#0d0446]/5" />
-                      </div>
-                    ))}
-                  </div>
-                ) : cotacoes.length === 0 ? (
-                  <p className="text-xs" style={{ color: "rgba(13,4,70,0.5)" }}>Cotações indisponíveis</p>
-                ) : (
-                  <div className="relative overflow-hidden">
-                    <style>{`
-                      @keyframes cotacoes-scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
-                      .cotacoes-marquee { display: flex; gap: 8px; animation: cotacoes-scroll 30s linear infinite; width: max-content; }
-                      .cotacoes-marquee:hover { animation-play-state: paused; }
-                    `}</style>
-                    <div className="cotacoes-marquee">
-                      {[...cotacoes, ...cotacoes].map((c, i) => (
-                        <div key={`${c.name}-${i}`} onClick={() => addToBlocoEconomia(c)}
-                          className="rounded-md px-2 py-1.5 flex items-center gap-1.5 text-[10px] shrink-0 transition-colors"
-                          style={{ backgroundColor: c.direction === "down" ? "rgba(239,68,68,0.15)" : c.direction === "up" ? "rgba(34,197,94,0.15)" : "rgba(13,4,70,0.04)", cursor: "copy" }}
-                          title="Clique para adicionar ao Bloco de Economia"
-                        >
-                          <span className="font-semibold whitespace-nowrap" style={{ color: "#0d0446" }}>{c.name}</span>
-                          <span className="whitespace-nowrap" style={{ color: "#0d0446" }}>{c.value}</span>
-                          <span className={`flex items-center gap-0.5 whitespace-nowrap font-semibold ${c.direction === "up" ? "text-green-600" : c.direction === "down" ? "text-red-600" : ""}`}
-                            style={c.direction === "neutral" ? { color: "rgba(13,4,70,0.4)" } : undefined}>
-                            {c.direction === "up" ? <TrendingUp size={9} /> : c.direction === "down" ? <TrendingDown size={9} /> : <Minus size={9} />}
-                            {c.change}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Mini Previsão do Tempo */}
-          <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.06)", width: (jornalConfig || wizardOpen) ? "100%" : "50%", boxShadow: "0 2px 10px rgba(13,4,70,0.05)" }}
-            draggable={!!miniWeather}
-            onDragStart={(e) => {
-              if (!miniWeather) return;
-              const text = weatherAiDesc || `Previsão do tempo para ${miniWeather.city}: ${miniWeather.temp}°C, mín ${miniWeather.min}° máx ${miniWeather.max}°, umidade ${miniWeather.humidity}%. ${miniWeatherLabel(miniWeather.code)}.`;
-              e.dataTransfer.setData("text/plain", JSON.stringify({
-                type: "previsao_tempo",
-                city: miniWeather.city,
-                text,
-              }));
-            }}
-          >
-            <div className="px-3 py-2.5 font-bold text-xs tracking-wide text-white flex items-center justify-between cursor-grab" style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)" }}>
-              <span className="flex items-center gap-1.5" style={{ color: "#ffffff" }}>
-                <GripVertical size={12} className="opacity-60" />
-                <CloudSun size={12} />
-                Previsão do Tempo
-              </span>
-              <button onClick={() => toggleBox('miniWeather')} className="p-0.5 rounded hover:bg-white/20 transition-colors">
-                {collapsedBoxes['miniWeather'] ? <ChevronDown size={12} /> : <ChevronUp size={12} />}
-              </button>
-            </div>
-            {!collapsedBoxes['miniWeather'] && (
-              <div className="p-3">
-                {loadingWeather ? (
-                  <div className="flex items-center gap-2">
-                    <Skeleton className="h-8 w-8 rounded-full" />
-                    <div className="space-y-1">
-                      <Skeleton className="h-3 w-24" />
-                      <Skeleton className="h-2 w-16" />
-                    </div>
-                  </div>
-                ) : !miniWeather ? (
-                  <p className="text-xs" style={{ color: "rgba(13,4,70,0.5)" }}>Nenhuma cidade principal cadastrada. Defina em Previsão do Tempo.</p>
-                ) : (
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-4">
-                      <div className="text-center">
-                        <span className="text-2xl font-bold" style={{ color: "#2ec1f7" }}>{miniWeather.temp}°C</span>
-                      </div>
-                      <div className="flex-1 space-y-0.5">
-                        <p className="text-xs font-bold" style={{ color: "#0d0446" }}>{miniWeather.city}</p>
-                        <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.6)" }}>{miniWeatherLabel(miniWeather.code)}</p>
-                        <div className="flex items-center gap-3 text-[10px]" style={{ color: "rgba(13,4,70,0.5)" }}>
-                          <span className="flex items-center gap-0.5"><Thermometer size={9} /> Mín {miniWeather.min}° · Máx {miniWeather.max}°</span>
-                          <span className="flex items-center gap-0.5"><Droplets size={9} /> {miniWeather.humidity}%</span>
-                        </div>
-                      </div>
-                    </div>
-                    {loadingWeatherAi ? (
-                      <div className="flex items-center gap-1.5 text-[10px]" style={{ color: "rgba(13,4,70,0.4)" }}>
-                        <Loader2 size={10} className="animate-spin" /> Gerando descrição...
-                      </div>
-                    ) : weatherAiDesc && (
-                      <p className="text-[10px] leading-relaxed rounded-md px-2 py-1.5" style={{ color: "#0d0446", backgroundColor: "rgba(46,193,247,0.06)", border: "1px solid rgba(46,193,247,0.15)" }}>
-                        {weatherAiDesc}
-                      </p>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Bloco de Economia */}
-          {blocoEconomia.length > 0 && (
-            <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.06)", width: (jornalConfig || wizardOpen) ? "100%" : "50%", boxShadow: "0 2px 10px rgba(13,4,70,0.05)" }}
-              draggable
-              onDragStart={(e) => {
-                e.dataTransfer.setData("text/plain", JSON.stringify({
-                  type: "bloco_economia",
-                  items: blocoEconomia.map(c => ({ name: c.name, value: c.value, change: c.change, direction: c.direction }))
-                }));
-              }}
-            >
-              <div className="px-3 py-2.5 font-bold text-xs tracking-wide text-white flex items-center justify-between cursor-grab" style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)" }}>
-                <span className="flex items-center gap-1.5">
-                  <GripVertical size={12} className="opacity-60" />
-                  <span style={{ color: "#ffffff" }}>📊 Bloco de Economia</span>
-                </span>
-                <button onClick={() => toggleBox('blocoEconomia')} className="p-0.5 rounded hover:bg-white/20 transition-colors">
-                  {collapsedBoxes['blocoEconomia'] ? <ChevronDown size={12} /> : <ChevronUp size={12} />}
-                </button>
-              </div>
-              {!collapsedBoxes['blocoEconomia'] && (
-                <div className="divide-y" style={{ borderColor: "rgba(13,4,70,0.04)" }}>
-                  {blocoEconomia.map((c) => (
-                    <div key={c.name} className="flex items-center gap-2 px-3 py-1.5 text-[11px] hover:bg-gray-50">
-                      <span className="font-semibold" style={{ color: "#0d0446" }}>{c.name}</span>
-                      <span style={{ color: "#0d0446" }}>{c.value}</span>
-                      <span className={`flex items-center gap-0.5 font-semibold ${c.direction === "up" ? "text-green-600" : c.direction === "down" ? "text-red-600" : ""}`}
-                        style={c.direction === "neutral" ? { color: "rgba(13,4,70,0.4)" } : undefined}>
-                        {c.direction === "up" ? <TrendingUp size={9} /> : c.direction === "down" ? <TrendingDown size={9} /> : <Minus size={9} />}
-                        {c.change}
-                      </span>
-                      <button onClick={() => removeFromBlocoEconomia(c.name)}
-                        className="ml-auto p-0.5 rounded hover:bg-red-50 transition-colors" title="Remover">
-                        <Trash2 size={11} className="text-red-400 hover:text-red-600" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
           {/* News Portals Accordion */}
           <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.06)", width: (jornalConfig || wizardOpen) ? "100%" : "50%", boxShadow: "0 2px 10px rgba(13,4,70,0.05)" }}>
             <div className="px-3 py-2.5 font-bold text-xs tracking-wide text-white flex items-center justify-between" style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)" }}>
@@ -989,6 +831,164 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
               )
             )}
           </div>
+
+          {/* Mini Previsão do Tempo */}
+          <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.06)", width: (jornalConfig || wizardOpen) ? "100%" : "50%", boxShadow: "0 2px 10px rgba(13,4,70,0.05)" }}
+            draggable={!!miniWeather}
+            onDragStart={(e) => {
+              if (!miniWeather) return;
+              const text = weatherAiDesc || `Previsão do tempo para ${miniWeather.city}: ${miniWeather.temp}°C, mín ${miniWeather.min}° máx ${miniWeather.max}°, umidade ${miniWeather.humidity}%. ${miniWeatherLabel(miniWeather.code)}.`;
+              e.dataTransfer.setData("text/plain", JSON.stringify({
+                type: "previsao_tempo",
+                city: miniWeather.city,
+                text,
+              }));
+            }}
+          >
+            <div className="px-3 py-2.5 font-bold text-xs tracking-wide text-white flex items-center justify-between cursor-grab" style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)" }}>
+              <span className="flex items-center gap-1.5" style={{ color: "#ffffff" }}>
+                <GripVertical size={12} className="opacity-60" />
+                <CloudSun size={12} />
+                Previsão do Tempo
+              </span>
+              <button onClick={() => toggleBox('miniWeather')} className="p-0.5 rounded hover:bg-white/20 transition-colors">
+                {collapsedBoxes['miniWeather'] ? <ChevronDown size={12} /> : <ChevronUp size={12} />}
+              </button>
+            </div>
+            {!collapsedBoxes['miniWeather'] && (
+              <div className="p-3">
+                {loadingWeather ? (
+                  <div className="flex items-center gap-2">
+                    <Skeleton className="h-8 w-8 rounded-full" />
+                    <div className="space-y-1">
+                      <Skeleton className="h-3 w-24" />
+                      <Skeleton className="h-2 w-16" />
+                    </div>
+                  </div>
+                ) : !miniWeather ? (
+                  <p className="text-xs" style={{ color: "rgba(13,4,70,0.5)" }}>Nenhuma cidade principal cadastrada. Defina em Previsão do Tempo.</p>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-4">
+                      <div className="text-center">
+                        <span className="text-2xl font-bold" style={{ color: "#2ec1f7" }}>{miniWeather.temp}°C</span>
+                      </div>
+                      <div className="flex-1 space-y-0.5">
+                        <p className="text-xs font-bold" style={{ color: "#0d0446" }}>{miniWeather.city}</p>
+                        <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.6)" }}>{miniWeatherLabel(miniWeather.code)}</p>
+                        <div className="flex items-center gap-3 text-[10px]" style={{ color: "rgba(13,4,70,0.5)" }}>
+                          <span className="flex items-center gap-0.5"><Thermometer size={9} /> Mín {miniWeather.min}° · Máx {miniWeather.max}°</span>
+                          <span className="flex items-center gap-0.5"><Droplets size={9} /> {miniWeather.humidity}%</span>
+                        </div>
+                      </div>
+                    </div>
+                    {loadingWeatherAi ? (
+                      <div className="flex items-center gap-1.5 text-[10px]" style={{ color: "rgba(13,4,70,0.4)" }}>
+                        <Loader2 size={10} className="animate-spin" /> Gerando descrição...
+                      </div>
+                    ) : weatherAiDesc && (
+                      <p className="text-[10px] leading-relaxed rounded-md px-2 py-1.5" style={{ color: "#0d0446", backgroundColor: "rgba(46,193,247,0.06)", border: "1px solid rgba(46,193,247,0.15)" }}>
+                        {weatherAiDesc}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Cotações marquee */}
+          <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.06)", width: (jornalConfig || wizardOpen) ? "100%" : "50%", boxShadow: "0 2px 10px rgba(13,4,70,0.05)" }}>
+            <div className="px-3 py-2.5 font-bold text-xs tracking-wide text-white flex items-center justify-between" style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)" }}>
+              <span style={{ color: "#ffffff" }}>💹 Cotações - Bolsas e Moedas</span>
+              <button onClick={() => toggleBox('cotacoes')} className="p-0.5 rounded hover:bg-white/20 transition-colors">
+                {collapsedBoxes['cotacoes'] ? <ChevronDown size={12} /> : <ChevronUp size={12} />}
+              </button>
+            </div>
+            {!collapsedBoxes['cotacoes'] && (
+              <div className="p-2 overflow-hidden">
+                {loadingCotacoes ? (
+                  <div className="animate-pulse flex gap-2 overflow-hidden">
+                    {Array.from({ length: 8 }).map((_, i) => (
+                      <div key={i} className="rounded-md px-3 py-2 shrink-0 flex items-center gap-2" style={{ backgroundColor: "rgba(13,4,70,0.04)" }}>
+                        <div className="h-2.5 w-14 rounded bg-[#0d0446]/10" />
+                        <div className="h-2.5 w-10 rounded bg-[#0d0446]/5" />
+                      </div>
+                    ))}
+                  </div>
+                ) : cotacoes.length === 0 ? (
+                  <p className="text-xs" style={{ color: "rgba(13,4,70,0.5)" }}>Cotações indisponíveis</p>
+                ) : (
+                  <div className="relative overflow-hidden">
+                    <style>{`
+                      @keyframes cotacoes-scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+                      .cotacoes-marquee { display: flex; gap: 8px; animation: cotacoes-scroll 30s linear infinite; width: max-content; }
+                      .cotacoes-marquee:hover { animation-play-state: paused; }
+                    `}</style>
+                    <div className="cotacoes-marquee">
+                      {[...cotacoes, ...cotacoes].map((c, i) => (
+                        <div key={`${c.name}-${i}`} onClick={() => addToBlocoEconomia(c)}
+                          className="rounded-md px-2 py-1.5 flex items-center gap-1.5 text-[10px] shrink-0 transition-colors"
+                          style={{ backgroundColor: c.direction === "down" ? "rgba(239,68,68,0.15)" : c.direction === "up" ? "rgba(34,197,94,0.15)" : "rgba(13,4,70,0.04)", cursor: "copy" }}
+                          title="Clique para adicionar ao Bloco de Economia"
+                        >
+                          <span className="font-semibold whitespace-nowrap" style={{ color: "#0d0446" }}>{c.name}</span>
+                          <span className="whitespace-nowrap" style={{ color: "#0d0446" }}>{c.value}</span>
+                          <span className={`flex items-center gap-0.5 whitespace-nowrap font-semibold ${c.direction === "up" ? "text-green-600" : c.direction === "down" ? "text-red-600" : ""}`}
+                            style={c.direction === "neutral" ? { color: "rgba(13,4,70,0.4)" } : undefined}>
+                            {c.direction === "up" ? <TrendingUp size={9} /> : c.direction === "down" ? <TrendingDown size={9} /> : <Minus size={9} />}
+                            {c.change}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Bloco de Economia */}
+          {blocoEconomia.length > 0 && (
+            <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.06)", width: (jornalConfig || wizardOpen) ? "100%" : "50%", boxShadow: "0 2px 10px rgba(13,4,70,0.05)" }}
+              draggable
+              onDragStart={(e) => {
+                e.dataTransfer.setData("text/plain", JSON.stringify({
+                  type: "bloco_economia",
+                  items: blocoEconomia.map(c => ({ name: c.name, value: c.value, change: c.change, direction: c.direction }))
+                }));
+              }}
+            >
+              <div className="px-3 py-2.5 font-bold text-xs tracking-wide text-white flex items-center justify-between cursor-grab" style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)" }}>
+                <span className="flex items-center gap-1.5">
+                  <GripVertical size={12} className="opacity-60" />
+                  <span style={{ color: "#ffffff" }}>📊 Bloco de Economia</span>
+                </span>
+                <button onClick={() => toggleBox('blocoEconomia')} className="p-0.5 rounded hover:bg-white/20 transition-colors">
+                  {collapsedBoxes['blocoEconomia'] ? <ChevronDown size={12} /> : <ChevronUp size={12} />}
+                </button>
+              </div>
+              {!collapsedBoxes['blocoEconomia'] && (
+                <div className="divide-y" style={{ borderColor: "rgba(13,4,70,0.04)" }}>
+                  {blocoEconomia.map((c) => (
+                    <div key={c.name} className="flex items-center gap-2 px-3 py-1.5 text-[11px] hover:bg-gray-50">
+                      <span className="font-semibold" style={{ color: "#0d0446" }}>{c.name}</span>
+                      <span style={{ color: "#0d0446" }}>{c.value}</span>
+                      <span className={`flex items-center gap-0.5 font-semibold ${c.direction === "up" ? "text-green-600" : c.direction === "down" ? "text-red-600" : ""}`}
+                        style={c.direction === "neutral" ? { color: "rgba(13,4,70,0.4)" } : undefined}>
+                        {c.direction === "up" ? <TrendingUp size={9} /> : c.direction === "down" ? <TrendingDown size={9} /> : <Minus size={9} />}
+                        {c.change}
+                      </span>
+                      <button onClick={() => removeFromBlocoEconomia(c.name)}
+                        className="ml-auto p-0.5 rounded hover:bg-red-50 transition-colors" title="Remover">
+                        <Trash2 size={11} className="text-red-400 hover:text-red-600" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Sites Adicionados Box */}
           {customSites.length > 0 && (
