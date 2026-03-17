@@ -1525,7 +1525,9 @@ export default function PlayerPage() {
   }, [navigateChannel, volume, handleVolumeChangeWithOsd, toggleMuteWithOsd, handlePlayCanal]);
 
   const handleSelectVideo = useCallback((videoId: string) => {
-    setSelectedVideoId(videoId);
+    const normalizedId = normalizeYoutubeVideoId(videoId);
+    if (!normalizedId) return;
+    setSelectedVideoId(normalizedId);
     setPlaying(true);
     setBuffering(false);
     setSidebarOpen(false);
