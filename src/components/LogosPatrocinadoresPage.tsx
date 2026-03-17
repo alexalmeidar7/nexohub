@@ -101,8 +101,36 @@ export default function LogosPatrocinadoresPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !programaId || !dataFinal || pendingFiles.length === 0) {
-      toast({ title: "Preencha todos os campos e adicione pelo menos uma logo.", variant: "destructive" });
+    if (!user || !programaId || !dataFinal) {
+      toast({ title: "Preencha todos os campos obrigatórios.", variant: "destructive" });
+      return;
+    }
+
+    // Edit mode: update existing logo
+    if (editingFullId) {
+      setSaving(true);
+      try {
+        const updateData: any = { programa_id: programaId, data_final: dataFinal, nome: nomeLogo };
+        // If new file uploaded, replace image
+        if (pendingFiles.length > 0) {
+          updateData.logo_url = await uploadLogo(pendingFiles[0].file);
+        }
+        const { error } = await supabase.from("logos_patrocinadores").update(updateData).eq("id", editingFullId);
+        if (error) throw error;
+        toast({ title: "Logo atualizada com sucesso!" });
+        resetForm();
+        await loadData();
+      } catch (err: any) {
+        toast({ title: "Erro ao atualizar", description: err.message, variant: "destructive" });
+      } finally {
+        setSaving(false);
+      }
+      return;
+    }
+
+    // Create mode
+    if (pendingFiles.length === 0) {
+      toast({ title: "Adicione pelo menos uma logo.", variant: "destructive" });
       return;
     }
     setSaving(true);
@@ -135,6 +163,18 @@ export default function LogosPatrocinadoresPage() {
     setDataFinal("");
     setNomeLogo("");
     setPendingFiles([]);
+    setExistingLogoUrl(null);
+    setEditingFullId(null);
+  };
+
+  const startFullEdit = (logo: Logo) => {
+    setEditingFullId(logo.id);
+    setNomeLogo(logo.nome || "");
+    setProgramaId(logo.programa_id);
+    setDataFinal(logo.data_final);
+    setExistingLogoUrl(logo.logo_url);
+    setPendingFiles([]);
+    formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   const handleSoftDelete = async (id: string) => {
