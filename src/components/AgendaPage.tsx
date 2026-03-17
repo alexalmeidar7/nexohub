@@ -584,6 +584,28 @@ export default function AgendaPage() {
                 <Globe size={12} /> Conectar Google Calendar
               </button>
             )}
+            {locais.length > 0 && (
+              <Select value={filterLocal} onValueChange={setFilterLocal}>
+                <SelectTrigger className="w-[160px] h-8 text-xs [&>span]:text-white" style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "20px", border: "none" }}>
+                  <MapPin size={12} className="mr-1 text-white" />
+                  <SelectValue placeholder="Filtrar por local" />
+                </SelectTrigger>
+                <SelectContent style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "12px" }}>
+                  <SelectItem value="todos" className="text-white focus:bg-[#268ffa] focus:text-white">Todos os locais</SelectItem>
+                  {locais.map((l) => (
+                    <SelectItem key={l} value={l} className="text-white focus:bg-[#268ffa] focus:text-white">{l}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+            <button type="button" onClick={openNewDialog}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold transition-all rounded-full"
+              style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#ffffff", border: "none" }}
+              onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 4px 15px rgba(38,143,250,0.4)"; }}
+              onMouseLeave={e => { e.currentTarget.style.boxShadow = "none"; }}
+            >
+              <Plus size={14} /> Novo Evento
+            </button>
           </div>
         </div>
 
