@@ -152,6 +152,77 @@ export default function AgendaPage() {
     setEventos(enriched);
   }, [user]);
 
+  const fetchGoogleEvents = useCallback(async () => {
+    if (!session?.access_token) return;
+    setGoogleLoading(true);
+    try {
+      const now = new Date();
+      const timeMin = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString();
+      const timeMax = new Date(now.getFullYear(), now.getMonth() + 3, 0).toISOString();
+      const { data, error } = await supabase.functions.invoke("google-calendar-events", {
+        body: null,
+        headers: {},
+      });
+      // Use GET with query params via fetch
+      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+      const res = await fetch(
+        `https://${projectId}.supabase.co/functions/v1/google-calendar-events?timeMin=${encodeURIComponent(timeMin)}&timeMax=${encodeURIComponent(timeMax)}`,
+        {
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          },
+        }
+      );
+      const result = await res.json();
+      setGoogleConnected(result.connected || false);
+      setGoogleEvents(result.events || []);
+    } catch (err) {
+      console.error("Error fetching Google Calendar events:", err);
+    } finally {
+      setGoogleLoading(false);
+    }
+  }, [session?.access_token]);
+
+  const connectGoogleCalendar = async () => {
+    if (!session?.access_token) return;
+    try {
+      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+      const res = await fetch(
+        `https://${projectId}.supabase.co/functions/v1/google-calendar-auth`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      const data = await res.json();
+      if (data.url) {
+        const popup = window.open(data.url, "google-auth", "width=600,height=700");
+        // Poll for popup close
+        const interval = setInterval(() => {
+          if (popup?.closed) {
+            clearInterval(interval);
+            fetchGoogleEvents();
+          }
+        }, 1000);
+      }
+    } catch (err) {
+      toast({ title: "Erro ao conectar Google Calendar", variant: "destructive" });
+    }
+  };
+
+  const disconnectGoogleCalendar = async () => {
+    if (!user) return;
+    await supabase.from("google_calendar_tokens").delete().eq("user_id", user.id);
+    setGoogleConnected(false);
+    setGoogleEvents([]);
+    toast({ title: "Google Calendar desconectado" });
+  };
+
   useEffect(() => {
     const loadAll = async () => {
       setLoadingData(true);
@@ -160,7 +231,8 @@ export default function AgendaPage() {
     };
     loadAll();
     fetchEventos();
-  }, [fetchProgramas, fetchEventos]);
+    fetchGoogleEvents();
+  }, [fetchProgramas, fetchEventos, fetchGoogleEvents]);
 
   const addParticipante = () => {
     setFormParticipantes([...formParticipantes, { nome: "", instagram: "" }]);
