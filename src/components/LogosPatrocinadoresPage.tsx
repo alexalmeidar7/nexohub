@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Loader2, Trash2, Plus, Pencil, Check, X, Upload, ChevronDown, RotateCcw, Search } from "lucide-react";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import { useToast } from "@/hooks/use-toast";
-import { compressImage } from "@/lib/imageCompressor";
+
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "@/components/ui/carousel";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import XmlLinkRow from "./XmlLinkRow";
@@ -90,10 +90,10 @@ export default function LogosPatrocinadoresPage() {
   };
 
   const uploadLogo = async (file: File): Promise<string> => {
-    const compressed = await compressImage(file);
-    const ext = compressed.name.split(".").pop();
+    // Keep original PNG format — do NOT compress to webp for sponsor logos
+    const ext = file.name.split(".").pop() || "png";
     const path = `logos/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-    const { error } = await supabase.storage.from("comercial").upload(path, compressed, { upsert: true });
+    const { error } = await supabase.storage.from("comercial").upload(path, file, { upsert: true, contentType: file.type });
     if (error) throw error;
     const { data } = supabase.storage.from("comercial").getPublicUrl(path);
     return data.publicUrl;
@@ -262,7 +262,7 @@ export default function LogosPatrocinadoresPage() {
     const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     const items = grouped.map(({ programa, logos: gl }) =>
       `  <programa>\n    <nome>${esc(programa.nome)}</nome>\n${gl.map(l =>
-        `    <logo>${esc(l.logo_url)}</logo>`
+        `    <logo>\n      <nome>${esc(l.nome)}</nome>\n      <url>${esc(l.logo_url)}</url>\n    </logo>`
       ).join("\n")}\n  </programa>`
     ).join("\n");
     return `<?xml version="1.0" encoding="UTF-8"?>\n<logos_patrocinadores>\n${items}\n</logos_patrocinadores>`;
