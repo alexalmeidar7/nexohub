@@ -104,6 +104,7 @@ export default function PreRollPage() {
       let videoUrl = "";
       if (mediaType === "video" && videoFile) videoUrl = await uploadVideo(videoFile);
       const payload: any = {
+        nome, active: activeField,
         dias_semana: diasSemana, horario_inicio: horarioInicio, horario_fim: horarioFim,
         priority: parseInt(priority) || 1, link_url: linkUrl, media_type: mediaType,
         youtube_url: mediaType === "youtube" ? youtubeUrl : "",
