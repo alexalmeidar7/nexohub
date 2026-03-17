@@ -403,7 +403,8 @@ export default function LogosPatrocinadoresPage() {
                     })}
                   </div>
                 </div>
-              )}
+                );
+              })()}
             </CollapsibleContent>
           </div>
         </Collapsible>
