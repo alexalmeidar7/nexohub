@@ -838,43 +838,61 @@ export default function PlayerPage() {
 
   // Fetch YouTube playlist videos OR handle individual video URLs
   useEffect(() => {
-    if (!isYoutube || !canal?.url) { setYoutubeVideos([]); setSelectedVideoId(null); return; }
-    const plMatch = canal.url.match(/[?&]list=([a-zA-Z0-9_-]+)/);
-    if (plMatch) {
-      // Playlist mode
-      supabase.functions.invoke("youtube-playlist", { body: { playlistId: plMatch[1] } }).then(({ data }) => {
-        if (data?.videos) {
-          const sorted = [...data.videos].sort((a: any, b: any) => {
+    if (!isYoutube || !canal?.url) {
+      setYoutubeVideos([]);
+      setSelectedVideoId(null);
+      return;
+    }
+
+    const playlistId = canal.url.match(/[?&]list=([a-zA-Z0-9_-]+)/)?.[1] || null;
+
+    if (playlistId) {
+      supabase.functions.invoke("youtube-playlist", { body: { playlistId } }).then(({ data }) => {
+        if (!data?.videos) return;
+
+        const sorted = [...data.videos]
+          .map((video: any) => ({
+            ...video,
+            videoId: normalizeYoutubeVideoId(video.videoId),
+          }))
+          .filter((video: any) => !!video.videoId)
+          .sort((a: any, b: any) => {
             if (a.published && b.published) return new Date(b.published).getTime() - new Date(a.published).getTime();
             return 0;
           });
-          setYoutubeVideos(sorted);
-          // Auto-select video from ?vid= param (catalog deep link)
-          if (requestedVideoId && data.videos.some((v: any) => v.videoId === requestedVideoId)) {
-            setSelectedVideoId(requestedVideoId);
-            setPlaying(true);
-            setBuffering(false);
-            setYtPlaying(true);
-          }
+
+        setYoutubeVideos(sorted as YoutubeVideo[]);
+
+        const requestedId = normalizeYoutubeVideoId(requestedVideoId);
+        if (requestedId && sorted.some((v: any) => v.videoId === requestedId)) {
+          setSelectedVideoId(requestedId);
+          setPlaying(true);
+          setBuffering(false);
+          setYtPlaying(true);
         }
       });
-    } else {
-      // Individual video mode — extract video ID from watch?v= URL
-      const vidMatch = canal.url.match(/[?&]v=([a-zA-Z0-9_-]+)/);
-      if (vidMatch) {
-        const videoId = vidMatch[1];
-        setYoutubeVideos([{
-          videoId,
-          title: canal.name || "Vídeo",
-          thumbnail: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
-        }]);
-        setSelectedVideoId(videoId);
-        setPlaying(true);
-        setBuffering(false);
-        setYtPlaying(true);
-      }
+      return;
     }
-  }, [canal?.url, isYoutube]);
+
+    const videoId = extractYoutubeVideoId(canal.url);
+    if (!videoId) {
+      setYoutubeVideos([]);
+      setSelectedVideoId(null);
+      return;
+    }
+
+    setYoutubeVideos([
+      {
+        videoId,
+        title: canal.name || "Vídeo",
+        thumbnail: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
+      },
+    ]);
+    setSelectedVideoId(videoId);
+    setPlaying(true);
+    setBuffering(false);
+    setYtPlaying(true);
+  }, [canal?.url, isYoutube, requestedVideoId]);
 
   // Sync music data directly from XML
   const coverCacheRef = useRef<Record<string, string>>({});
