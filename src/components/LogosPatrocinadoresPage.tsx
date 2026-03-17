@@ -213,6 +213,17 @@ export default function LogosPatrocinadoresPage() {
     }))
     .filter((g) => g.logos.length > 0);
 
+  const logosXmlContent = useMemo(() => {
+    if (grouped.length === 0) return "";
+    const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const items = grouped.map(({ programa, logos: gl }) =>
+      `  <programa>\n    <nome>${esc(programa.nome)}</nome>\n${gl.map(l =>
+        `    <logo>\n      <nome_logo>${esc(l.nome || "")}</nome_logo>\n      <url>${esc(l.logo_url)}</url>\n      <data_final>${l.data_final}</data_final>\n    </logo>`
+      ).join("\n")}\n  </programa>`
+    ).join("\n");
+    return `<?xml version="1.0" encoding="UTF-8"?>\n<logos_patrocinadores>\n${items}\n</logos_patrocinadores>`;
+  }, [grouped]);
+
   if (loading) {
     return <ModulePageSkeleton />;
   }
