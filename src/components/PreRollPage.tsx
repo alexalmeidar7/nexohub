@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Loader2, Trash2, Pencil, Plus, Film } from "lucide-react";
+import { Loader2, Trash2, Pencil, Plus, Film, Eye, MousePointerClick } from "lucide-react";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import { toast } from "@/components/ui/use-toast";
 import { format } from "date-fns";
@@ -13,6 +13,7 @@ import { CalendarIcon } from "lucide-react";
 
 interface PreRoll {
   id: string;
+  nome: string;
   video_url: string;
   dias_semana: string[];
   horario_inicio: string;
@@ -26,6 +27,8 @@ interface PreRoll {
   link_url: string | null;
   data_inicial: string | null;
   data_final: string | null;
+  views_count: number;
+  clicks_count: number;
 }
 
 const DIAS = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
@@ -36,6 +39,8 @@ export default function PreRollPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
+  const [nome, setNome] = useState("");
+  const [activeField, setActiveField] = useState(true);
   const [mediaType, setMediaType] = useState<"video" | "youtube">("video");
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [videoPreview, setVideoPreview] = useState("");
@@ -77,6 +82,7 @@ export default function PreRollPage() {
   };
 
   const resetForm = () => {
+    setNome(""); setActiveField(true);
     setMediaType("video"); setVideoFile(null); setVideoPreview(""); setYoutubeUrl("");
     setDiasSemana([]); setHorarioInicio("00:00"); setHorarioFim("23:59");
     setPriority("1"); setLinkUrl(""); setDataInicial(new Date()); setDataFinal(undefined); setEditId(null);
@@ -98,6 +104,7 @@ export default function PreRollPage() {
       let videoUrl = "";
       if (mediaType === "video" && videoFile) videoUrl = await uploadVideo(videoFile);
       const payload: any = {
+        nome, active: activeField,
         dias_semana: diasSemana, horario_inicio: horarioInicio, horario_fim: horarioFim,
         priority: parseInt(priority) || 1, link_url: linkUrl, media_type: mediaType,
         youtube_url: mediaType === "youtube" ? youtubeUrl : "",
@@ -122,7 +129,8 @@ export default function PreRollPage() {
   };
 
   const startEdit = (p: PreRoll) => {
-    setEditId(p.id); setMediaType((p.media_type as "video" | "youtube") || "video");
+    setEditId(p.id); setNome(p.nome || ""); setActiveField(p.active);
+    setMediaType((p.media_type as "video" | "youtube") || "video");
     setDiasSemana(p.dias_semana || []); setHorarioInicio(p.horario_inicio); setHorarioFim(p.horario_fim);
     setPriority(String(p.priority)); setLinkUrl(p.link_url || ""); setYoutubeUrl(p.youtube_url || "");
     setVideoPreview(p.media_type === "video" ? p.video_url : ""); setVideoFile(null);
@@ -185,6 +193,24 @@ export default function PreRollPage() {
           </div>
 
           <div className="p-5 space-y-4">
+            {/* Nome */}
+            <div>
+              <label className="text-xs font-semibold block mb-1" style={{ color: "#0d0446" }}>Nome do Pré-Roll</label>
+              <input type="text" placeholder="Ex: Campanha Black Friday" value={nome} onChange={(e) => setNome(e.target.value)}
+                className="w-full px-4 py-1.5 text-sm outline-none transition-colors" style={inputStyle}
+                onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
+                onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
+              />
+            </div>
+
+            {/* Active checkbox */}
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" checked={activeField} onChange={(e) => setActiveField(e.target.checked)}
+                className="w-4 h-4 rounded" style={{ accentColor: "#0d0446" }} />
+              <span className="text-xs font-semibold" style={{ color: "#0d0446" }}>Ativo</span>
+              <span className="text-[10px]" style={{ color: "rgba(13,4,70,0.4)" }}>— Desmarque para salvar como inativo</span>
+            </label>
+
             {/* Media type */}
             <div>
               <label className="text-xs font-semibold block mb-2" style={{ color: "#0d0446" }}>Tipo de Mídia</label>
@@ -354,7 +380,10 @@ export default function PreRollPage() {
                       <video src={p.video_url} className="w-28 h-16 object-cover rounded-lg" muted />
                     )}
                     <div className="flex-1 min-w-0">
-                      <div className="text-xs font-bold" style={{ color: "#0d0446" }}>
+                      {p.nome && (
+                        <div className="text-xs font-bold truncate" style={{ color: "#0d0446" }}>{p.nome}</div>
+                      )}
+                      <div className="text-xs font-bold" style={{ color: p.nome ? "rgba(13,4,70,0.6)" : "#0d0446" }}>
                         {p.horario_inicio} - {p.horario_fim}
                         <span className="ml-2 text-[10px] font-normal" style={{ color: "rgba(13,4,70,0.4)" }}>
                           {p.media_type === "youtube" ? "YouTube" : "Vídeo"}
@@ -371,6 +400,14 @@ export default function PreRollPage() {
                           {p.data_final && format(new Date(p.data_final + "T00:00:00"), "dd/MM/yyyy")}
                         </div>
                       )}
+                      <div className="flex items-center gap-3 mt-1">
+                        <span className="flex items-center gap-1 text-[10px]" style={{ color: "rgba(13,4,70,0.5)" }}>
+                          <Eye size={11} /> {p.views_count || 0} visualizações
+                        </span>
+                        <span className="flex items-center gap-1 text-[10px]" style={{ color: "rgba(13,4,70,0.5)" }}>
+                          <MousePointerClick size={11} /> {p.clicks_count || 0} cliques
+                        </span>
+                      </div>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       <span className="text-[10px] px-3 py-1 rounded-full font-bold" style={status.color}>

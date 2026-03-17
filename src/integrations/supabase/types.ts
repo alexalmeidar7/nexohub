@@ -224,6 +224,7 @@ export type Database = {
       comercial_preroll: {
         Row: {
           active: boolean
+          clicks_count: number
           created_at: string
           data_final: string | null
           data_inicial: string | null
@@ -233,15 +234,18 @@ export type Database = {
           id: string
           link_url: string | null
           media_type: string
+          nome: string
           priority: number
           skip_enabled: boolean
           updated_at: string
           user_id: string
           video_url: string
+          views_count: number
           youtube_url: string | null
         }
         Insert: {
           active?: boolean
+          clicks_count?: number
           created_at?: string
           data_final?: string | null
           data_inicial?: string | null
@@ -251,15 +255,18 @@ export type Database = {
           id?: string
           link_url?: string | null
           media_type?: string
+          nome?: string
           priority?: number
           skip_enabled?: boolean
           updated_at?: string
           user_id: string
           video_url?: string
+          views_count?: number
           youtube_url?: string | null
         }
         Update: {
           active?: boolean
+          clicks_count?: number
           created_at?: string
           data_final?: string | null
           data_inicial?: string | null
@@ -269,11 +276,13 @@ export type Database = {
           id?: string
           link_url?: string | null
           media_type?: string
+          nome?: string
           priority?: number
           skip_enabled?: boolean
           updated_at?: string
           user_id?: string
           video_url?: string
+          views_count?: number
           youtube_url?: string | null
         }
         Relationships: []
