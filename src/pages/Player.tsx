@@ -1734,40 +1734,49 @@ export default function PlayerPage() {
       // Trigger within 2-second window
       if (Math.abs(ytCurrentTime - bp) < 2) {
         midrollTriggeredRef.current.add(bpIdx);
-        // Pause YouTube and show mid-roll
-        ytPostMessage("pauseVideo");
         setMidrollResumeTime(ytCurrentTime);
-        setMidrollActive(true);
-        // Fetch a preroll to show
-        (async () => {
-          if (!user) return;
-          const now = new Date();
-          const ct = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-          const today = ["dom", "seg", "ter", "qua", "qui", "sex", "sab"][now.getDay()];
-          const todayStr = now.toISOString().slice(0, 10);
-          const { data } = await supabase.from("comercial_preroll").select("*").eq("user_id", user.id).eq("active", true).lte("horario_inicio", ct).gte("horario_fim", ct).order("priority", { ascending: true });
-          if (data && data.length > 0) {
-            const matching = data.filter((p: any) => {
-              if (p.dias_semana && p.dias_semana.length > 0 && !p.dias_semana.includes(today)) return false;
-              if (p.data_inicial && todayStr < p.data_inicial) return false;
-              if (p.data_final && todayStr > p.data_final) return false;
-              return true;
-            });
-            if (matching.length > 0) {
-              const selected = matching[Math.floor(Math.random() * matching.length)];
-              setMidrollPreroll({
-                url: selected.video_url,
-                linkUrl: (selected as any).link_url || null,
-                mediaType: (selected as any).media_type || "video",
-                youtubeUrl: (selected as any).youtube_url || null,
+        // Start fade-out, then pause and show mid-roll after 2s
+        setMidrollFading("out");
+        // Gradually lower YouTube volume during fade-out
+        ytPostMessage("setVolume", [50]);
+        setTimeout(() => ytPostMessage("setVolume", [20]), 800);
+        setTimeout(() => ytPostMessage("setVolume", [0]), 1500);
+        setTimeout(() => {
+          ytPostMessage("pauseVideo");
+          setMidrollFading(null);
+          setMidrollActive(true);
+          // Fetch a preroll to show
+          (async () => {
+            if (!user) return;
+            const now = new Date();
+            const ct = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+            const today = ["dom", "seg", "ter", "qua", "qui", "sex", "sab"][now.getDay()];
+            const todayStr = now.toISOString().slice(0, 10);
+            const { data } = await supabase.from("comercial_preroll").select("*").eq("user_id", user.id).eq("active", true).lte("horario_inicio", ct).gte("horario_fim", ct).order("priority", { ascending: true });
+            if (data && data.length > 0) {
+              const matching = data.filter((p: any) => {
+                if (p.dias_semana && p.dias_semana.length > 0 && !p.dias_semana.includes(today)) return false;
+                if (p.data_inicial && todayStr < p.data_inicial) return false;
+                if (p.data_final && todayStr > p.data_final) return false;
+                return true;
               });
-              return;
+              if (matching.length > 0) {
+                const selected = matching[Math.floor(Math.random() * matching.length)];
+                setMidrollPreroll({
+                  url: selected.video_url,
+                  linkUrl: (selected as any).link_url || null,
+                  mediaType: (selected as any).media_type || "video",
+                  youtubeUrl: (selected as any).youtube_url || null,
+                });
+                return;
+              }
             }
-          }
-          // No preroll found, resume immediately
-          setMidrollActive(false);
-          ytPostMessage("playVideo");
-        })();
+            // No preroll found, resume immediately
+            setMidrollActive(false);
+            ytPostMessage("setVolume", [volume]);
+            ytPostMessage("playVideo");
+          })();
+        }, 2000);
         break;
       }
     }
