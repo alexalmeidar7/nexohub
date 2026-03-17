@@ -893,9 +893,19 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
           <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.06)", width: (jornalConfig || wizardOpen) ? "100%" : "50%", boxShadow: "0 2px 10px rgba(13,4,70,0.05)" }}>
             <div className="px-3 py-2.5 font-bold text-xs tracking-wide text-white flex items-center justify-between" style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)" }}>
               <span style={{ color: "#ffffff" }}>📰 Portais de Notícias</span>
-              <button onClick={() => toggleBox('portais')} className="p-0.5 rounded hover:bg-white/20 transition-colors">
-                {collapsedBoxes['portais'] ? <ChevronDown size={12} /> : <ChevronUp size={12} />}
-              </button>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setReorderMode(r => !r)}
+                  className="px-2 py-0.5 rounded text-[9px] font-semibold transition-colors"
+                  style={{ backgroundColor: reorderMode ? "#2ec1f7" : "rgba(255,255,255,0.15)", color: reorderMode ? "#0d0446" : "#ffffff" }}
+                  title="Reordenar portais"
+                >
+                  {reorderMode ? "✓ Salvar ordem" : "⇅ Reordenar"}
+                </button>
+                <button onClick={() => toggleBox('portais')} className="p-0.5 rounded hover:bg-white/20 transition-colors">
+                  {collapsedBoxes['portais'] ? <ChevronDown size={12} /> : <ChevronUp size={12} />}
+                </button>
+              </div>
             </div>
             {!collapsedBoxes['portais'] && (
               loading ? (
@@ -908,9 +918,27 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
                     </div>
                   ))}
                 </div>
+              ) : reorderMode ? (
+                <div className="p-1 space-y-0.5">
+                  {orderedPortals.map((portal, idx) => (
+                    <div key={portal.name} className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold" style={{ color: "#0d0446", backgroundColor: idx % 2 === 0 ? "#ffffff" : "#f8f8fc" }}>
+                      <span className="text-[10px] font-bold w-5 text-center" style={{ color: "#2ec1f7" }}>{idx + 1}</span>
+                      <Newspaper size={12} style={{ color: "#2ec1f7" }} />
+                      <span className="flex-1">{portal.name}</span>
+                      <button onClick={() => movePortal(idx, "up")} disabled={idx === 0}
+                        className="p-0.5 rounded hover:bg-blue-50 disabled:opacity-20 transition-opacity">
+                        <ArrowUp size={12} style={{ color: "#0d0446" }} />
+                      </button>
+                      <button onClick={() => movePortal(idx, "down")} disabled={idx === orderedPortals.length - 1}
+                        className="p-0.5 rounded hover:bg-blue-50 disabled:opacity-20 transition-opacity">
+                        <ArrowDown size={12} style={{ color: "#0d0446" }} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
               ) : (
                 <Accordion type="multiple" className="w-full">
-                  {DEFAULT_PORTALS.map(portal => {
+                  {orderedPortals.map(portal => {
                     const news = newsByPortal[portal.name] || [];
                     return (
                       <AccordionItem key={portal.name} value={portal.name} className="border-b-0" style={{ borderBottom: "1px solid rgba(13,4,70,0.06)" }}>
