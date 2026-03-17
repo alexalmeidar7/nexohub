@@ -2252,7 +2252,7 @@ export default function PlayerPage() {
                 {midrollBreakPoints.map((bp, i) => (
                   <div
                     key={i}
-                    className="absolute top-0 w-[3px] rounded-full bg-white"
+                    className="absolute top-0 w-[6px] rounded-full bg-white"
                     style={{
                       left: `${(bp / ytDuration) * 100}%`,
                       height: "100%",
