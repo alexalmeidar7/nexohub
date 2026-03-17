@@ -457,6 +457,7 @@ export default function PlayerPage() {
   const [midrollResumeTime, setMidrollResumeTime] = useState(0);
   const midrollTriggeredRef = useRef<Set<number>>(new Set());
   const [midrollPreroll, setMidrollPreroll] = useState<{ url: string; linkUrl: string | null; mediaType: string; youtubeUrl: string | null } | null>(null);
+  const [midrollFading, setMidrollFading] = useState<"out" | "in" | null>(null);
 
   // Unified buffering detection
   const { buffering, setBuffering } = useBufferingDetection(videoRef, audioRef);
@@ -1733,40 +1734,49 @@ export default function PlayerPage() {
       // Trigger within 2-second window
       if (Math.abs(ytCurrentTime - bp) < 2) {
         midrollTriggeredRef.current.add(bpIdx);
-        // Pause YouTube and show mid-roll
-        ytPostMessage("pauseVideo");
         setMidrollResumeTime(ytCurrentTime);
-        setMidrollActive(true);
-        // Fetch a preroll to show
-        (async () => {
-          if (!user) return;
-          const now = new Date();
-          const ct = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-          const today = ["dom", "seg", "ter", "qua", "qui", "sex", "sab"][now.getDay()];
-          const todayStr = now.toISOString().slice(0, 10);
-          const { data } = await supabase.from("comercial_preroll").select("*").eq("user_id", user.id).eq("active", true).lte("horario_inicio", ct).gte("horario_fim", ct).order("priority", { ascending: true });
-          if (data && data.length > 0) {
-            const matching = data.filter((p: any) => {
-              if (p.dias_semana && p.dias_semana.length > 0 && !p.dias_semana.includes(today)) return false;
-              if (p.data_inicial && todayStr < p.data_inicial) return false;
-              if (p.data_final && todayStr > p.data_final) return false;
-              return true;
-            });
-            if (matching.length > 0) {
-              const selected = matching[Math.floor(Math.random() * matching.length)];
-              setMidrollPreroll({
-                url: selected.video_url,
-                linkUrl: (selected as any).link_url || null,
-                mediaType: (selected as any).media_type || "video",
-                youtubeUrl: (selected as any).youtube_url || null,
+        // Start fade-out, then pause and show mid-roll after 2s
+        setMidrollFading("out");
+        // Gradually lower YouTube volume during fade-out
+        ytPostMessage("setVolume", [50]);
+        setTimeout(() => ytPostMessage("setVolume", [20]), 800);
+        setTimeout(() => ytPostMessage("setVolume", [0]), 1500);
+        setTimeout(() => {
+          ytPostMessage("pauseVideo");
+          setMidrollFading(null);
+          setMidrollActive(true);
+          // Fetch a preroll to show
+          (async () => {
+            if (!user) return;
+            const now = new Date();
+            const ct = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+            const today = ["dom", "seg", "ter", "qua", "qui", "sex", "sab"][now.getDay()];
+            const todayStr = now.toISOString().slice(0, 10);
+            const { data } = await supabase.from("comercial_preroll").select("*").eq("user_id", user.id).eq("active", true).lte("horario_inicio", ct).gte("horario_fim", ct).order("priority", { ascending: true });
+            if (data && data.length > 0) {
+              const matching = data.filter((p: any) => {
+                if (p.dias_semana && p.dias_semana.length > 0 && !p.dias_semana.includes(today)) return false;
+                if (p.data_inicial && todayStr < p.data_inicial) return false;
+                if (p.data_final && todayStr > p.data_final) return false;
+                return true;
               });
-              return;
+              if (matching.length > 0) {
+                const selected = matching[Math.floor(Math.random() * matching.length)];
+                setMidrollPreroll({
+                  url: selected.video_url,
+                  linkUrl: (selected as any).link_url || null,
+                  mediaType: (selected as any).media_type || "video",
+                  youtubeUrl: (selected as any).youtube_url || null,
+                });
+                return;
+              }
             }
-          }
-          // No preroll found, resume immediately
-          setMidrollActive(false);
-          ytPostMessage("playVideo");
-        })();
+            // No preroll found, resume immediately
+            setMidrollActive(false);
+            ytPostMessage("setVolume", [volume]);
+            ytPostMessage("playVideo");
+          })();
+        }, 2000);
         break;
       }
     }
@@ -1777,8 +1787,17 @@ export default function PlayerPage() {
     setMidrollActive(false);
     setMidrollPreroll(null);
     ytPostMessage("seekTo", [midrollResumeTime, true]);
-    setTimeout(() => ytPostMessage("playVideo"), 300);
-  }, [ytPostMessage, midrollResumeTime]);
+    ytPostMessage("setVolume", [0]);
+    setTimeout(() => ytPostMessage("playVideo"), 100);
+    // Fade-in: gradually restore video and volume over 2s
+    setMidrollFading("in");
+    setTimeout(() => ytPostMessage("setVolume", [Math.round(volume * 0.3)]), 400);
+    setTimeout(() => ytPostMessage("setVolume", [Math.round(volume * 0.6)]), 1000);
+    setTimeout(() => {
+      ytPostMessage("setVolume", [volume]);
+      setMidrollFading(null);
+    }, 2000);
+  }, [ytPostMessage, midrollResumeTime, volume]);
 
   const handleYtHome = useCallback(() => {
     if (selectedVideoId) {
@@ -1922,7 +1941,11 @@ export default function PlayerPage() {
           <iframe
             ref={ytIframeRef}
             className="absolute pointer-events-none"
-            style={{ width: "100%", height: "100%", top: "0", left: "0", border: "none" }}
+            style={{
+              width: "100%", height: "100%", top: "0", left: "0", border: "none",
+              transition: "opacity 2s ease-in-out",
+              opacity: midrollFading === "out" ? 0 : 1,
+            }}
             src={`https://www.youtube.com/embed/${selectedVideoId}?autoplay=1&mute=1&controls=0&showinfo=0&rel=0&modestbranding=1&enablejsapi=1&playsinline=1&iv_load_policy=3&disablekb=1&vq=hd1080&origin=${window.location.origin}`}
             allow="autoplay; encrypted-media"
           />
