@@ -62,7 +62,7 @@ function getYoutubeErrorMessage(code?: number): string {
   }
 }
 
-export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLinkUrl, prerollMediaType, prerollYoutubeUrl, onSkip, onEnded }: Props) {
+export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLinkUrl, prerollMediaType, prerollYoutubeUrl, onSkip, onEnded, hideSkip }: Props) {
   const [countdown, setCountdown] = useState(SKIP_DELAY);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
