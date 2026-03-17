@@ -358,7 +358,7 @@ export default function LogosPatrocinadoresPage() {
                       <img src={existingLogoUrl} alt="" className="w-20 h-20 rounded-lg object-contain" style={{ border: "1px solid rgba(13,4,70,0.1)", backgroundColor: "#0d0446" }} />
                       <span className="text-[8px] text-center block mt-0.5" style={{ color: "rgba(13,4,70,0.4)" }}>Atual</span>
                     </div>
-                  )
+                  )}
                   {pendingFiles.map((pf, idx) => (
                     <div key={idx} className="relative group">
                       <img src={pf.preview} alt="" className="w-20 h-20 rounded-lg object-contain" style={{ border: "1px solid rgba(13,4,70,0.1)", backgroundColor: "repeating-conic-gradient(#ddd 0% 25%,transparent 0% 50%) 0 0/20px 20px" }} />
