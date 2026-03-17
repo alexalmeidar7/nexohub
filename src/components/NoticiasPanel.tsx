@@ -59,6 +59,16 @@ const DEFAULT_PORTALS: Portal[] = [
   { name: "R7", rssUrl: "https://noticias.r7.com/feed.xml" },
   { name: "Estadão", rssUrl: "https://www.estadao.com.br/arc/outboundfeeds/rss/?outputType=xml" },
   { name: "Gazeta do Povo", rssUrl: "https://www.gazetadopovo.com.br/feed/rss/" },
+  { name: "Portal 6", rssUrl: "https://portal6.com.br/feed/" },
+  { name: "Mais Goiás", rssUrl: "https://www.maisgoias.com.br/feed/" },
+  { name: "O Popular", rssUrl: "https://opopular.com.br/feed/" },
+  { name: "A Redação", rssUrl: "https://www.aredacao.com.br/feed" },
+  { name: "O Hoje", rssUrl: "https://ohoje.com/feed/" },
+  { name: "Jornal Opção", rssUrl: "https://www.jornalopcao.com.br/feed/" },
+  { name: "Diário de Goiás", rssUrl: "https://diariodegoias.com.br/feed/" },
+  { name: "Agência Brasil", rssUrl: "https://agenciabrasil.ebc.com.br/rss/ultimasnoticias/feed.xml" },
+  { name: "Metrópoles", rssUrl: "https://www.metropoles.com/feed" },
+  { name: "Isto É", rssUrl: "https://istoe.com.br/feed/" },
 ];
 
 const PROXY = "https://api.allorigins.win/raw?url=";
