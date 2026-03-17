@@ -380,7 +380,10 @@ export default function PreRollPage() {
                       <video src={p.video_url} className="w-28 h-16 object-cover rounded-lg" muted />
                     )}
                     <div className="flex-1 min-w-0">
-                      <div className="text-xs font-bold" style={{ color: "#0d0446" }}>
+                      {p.nome && (
+                        <div className="text-xs font-bold truncate" style={{ color: "#0d0446" }}>{p.nome}</div>
+                      )}
+                      <div className="text-xs font-bold" style={{ color: p.nome ? "rgba(13,4,70,0.6)" : "#0d0446" }}>
                         {p.horario_inicio} - {p.horario_fim}
                         <span className="ml-2 text-[10px] font-normal" style={{ color: "rgba(13,4,70,0.4)" }}>
                           {p.media_type === "youtube" ? "YouTube" : "Vídeo"}
@@ -397,6 +400,14 @@ export default function PreRollPage() {
                           {p.data_final && format(new Date(p.data_final + "T00:00:00"), "dd/MM/yyyy")}
                         </div>
                       )}
+                      <div className="flex items-center gap-3 mt-1">
+                        <span className="flex items-center gap-1 text-[10px]" style={{ color: "rgba(13,4,70,0.5)" }}>
+                          <Eye size={11} /> {p.views_count || 0} visualizações
+                        </span>
+                        <span className="flex items-center gap-1 text-[10px]" style={{ color: "rgba(13,4,70,0.5)" }}>
+                          <MousePointerClick size={11} /> {p.clicks_count || 0} cliques
+                        </span>
+                      </div>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       <span className="text-[10px] px-3 py-1 rounded-full font-bold" style={status.color}>
