@@ -367,7 +367,7 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
             href={prerollLinkUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="absolute bottom-6 left-6 z-10 flex flex-col items-center justify-center p-3 rounded-xl transition-transform hover:scale-105"
+            className="absolute top-6 left-6 z-10 flex flex-col items-center justify-center p-3 rounded-xl transition-transform hover:scale-105"
             style={{ backgroundColor: "hsl(0 100% 40%)" }}
           >
             <div className="bg-white rounded-md p-2 w-20 h-20 flex items-center justify-center">
