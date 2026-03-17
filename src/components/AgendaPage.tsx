@@ -822,16 +822,70 @@ export default function AgendaPage() {
                   {filterLocal !== "todos" && ` • ${filterLocal}`}
                 </span>
                 <span className="text-[9px] font-normal px-2 py-0.5 rounded-full" style={{ backgroundColor: "rgba(255,255,255,0.15)" }}>
-                  {filteredEventos.length} evento{filteredEventos.length !== 1 ? "s" : ""}
+                  {(() => {
+                    const googleForDay = googleEvents.filter(ge => {
+                      if (!selectedDate) return true;
+                      const geDate = ge.start.substring(0, 10);
+                      return geDate === format(selectedDate, "yyyy-MM-dd");
+                    });
+                    const totalCount = filteredEventos.length + googleForDay.length;
+                    return totalCount;
+                  })()} evento{(filteredEventos.length + googleEvents.filter(ge => !selectedDate || ge.start.substring(0, 10) === format(selectedDate!, "yyyy-MM-dd")).length) !== 1 ? "s" : ""}
                 </span>
               </div>
               <div className="p-3 space-y-2">
-                {filteredEventos.length === 0 ? (
+                {filteredEventos.map((evt) => renderEventCard(evt))}
+
+                {/* Google Calendar Events */}
+                {googleEvents
+                  .filter(ge => {
+                    if (!selectedDate) return true;
+                    const geDate = ge.start.substring(0, 10);
+                    return geDate === format(selectedDate, "yyyy-MM-dd");
+                  })
+                  .map(ge => (
+                    <div
+                      key={`google-${ge.id}`}
+                      className="rounded-xl p-4 space-y-2"
+                      style={{ backgroundColor: "#ffffff", border: "1px solid rgba(52,168,83,0.2)", borderLeft: "4px solid #34A853" }}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h5 className="font-semibold" style={{ color: "#0d0446" }}>{ge.summary}</h5>
+                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: "rgba(52,168,83,0.12)", color: "#34A853" }}>
+                              Google
+                            </span>
+                          </div>
+                          <p className="text-xs" style={{ color: "rgba(13,4,70,0.5)" }}>
+                            <Globe size={12} className="inline mr-1" style={{ color: "#34A853" }} />
+                            {ge.start.includes("T")
+                              ? format(new Date(ge.start), "dd/MM/yyyy HH:mm")
+                              : format(new Date(ge.start + "T12:00:00"), "dd/MM/yyyy")}
+                            {ge.end && ge.end.includes("T") && ` - ${format(new Date(ge.end), "HH:mm")}`}
+                          </p>
+                          {ge.location && (
+                            <p className="text-xs" style={{ color: "rgba(13,4,70,0.5)" }}>
+                              <MapPin size={12} className="inline mr-1" />{ge.location}
+                            </p>
+                          )}
+                          {ge.description && (
+                            <p className="text-sm mt-1 line-clamp-2" style={{ color: "#0d0446" }}>{ge.description}</p>
+                          )}
+                        </div>
+                        {ge.htmlLink && (
+                          <a href={ge.htmlLink} target="_blank" rel="noopener noreferrer" className="shrink-0 p-1.5 rounded-lg hover:bg-gray-50 transition-colors">
+                            <ExternalLink size={14} style={{ color: "#34A853" }} />
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+
+                {filteredEventos.length === 0 && googleEvents.filter(ge => !selectedDate || ge.start.substring(0, 10) === format(selectedDate!, "yyyy-MM-dd")).length === 0 && (
                   <p className="text-sm py-8 text-center" style={{ color: "rgba(13,4,70,0.4)" }}>
                     Nenhum evento encontrado para esta data.
                   </p>
-                ) : (
-                  filteredEventos.map((evt) => renderEventCard(evt))
                 )}
               </div>
             </div>
