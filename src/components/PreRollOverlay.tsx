@@ -108,22 +108,38 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
     return () => clearTimeout(t);
   }, [showFailureState]);
 
-  // Track time for native video
+  // Track time for native video + force audio
   useEffect(() => {
     if (!shouldUseNativeVideo) return;
     const video = prerollVideoRef.current;
     if (!video) return;
+
+    const enforceNativeAudio = () => {
+      video.defaultMuted = false;
+      video.muted = false;
+      if (video.volume === 0) video.volume = 1;
+    };
+
     const onTime = () => setCurrentTime(video.currentTime);
     const onDur = () => setDuration(video.duration || 0);
+    const onCanPlay = () => {
+      enforceNativeAudio();
+      video.play().catch(() => {});
+    };
+
+    enforceNativeAudio();
     video.addEventListener("timeupdate", onTime);
     video.addEventListener("loadedmetadata", onDur);
     video.addEventListener("durationchange", onDur);
+    video.addEventListener("canplay", onCanPlay);
+
     return () => {
       video.removeEventListener("timeupdate", onTime);
       video.removeEventListener("loadedmetadata", onDur);
       video.removeEventListener("durationchange", onDur);
+      video.removeEventListener("canplay", onCanPlay);
     };
-  }, [shouldUseNativeVideo, prerollVideoRef]);
+  }, [shouldUseNativeVideo, prerollVideoRef, prerollUrl]);
 
   // Track time for YouTube with stall/error detection
   useEffect(() => {
@@ -133,9 +149,18 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
     const fallbackTimer = hasFallbackVideo ? null : setTimeout(() => onEndedRef.current(), 120000);
 
     let progressDetected = false;
+    let unmuteInterval: ReturnType<typeof setInterval> | null = null;
+
+    const enforceYoutubeAudio = (player: any) => {
+      try {
+        player?.unMute?.();
+        player?.setVolume?.(100);
+      } catch {}
+    };
 
     const failYoutubePlayback = (message: string) => {
       if (pollRef.current) clearInterval(pollRef.current);
+      if (unmuteInterval) clearInterval(unmuteInterval);
       try {
         ytPlayerRef.current?.destroy();
         ytDestroyedRef.current = true;
@@ -171,10 +196,21 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
         events: {
           onReady: (event: any) => {
             try {
-              event?.target?.unMute?.();
-              event?.target?.setVolume?.(100);
+              enforceYoutubeAudio(event?.target);
               event?.target?.playVideo?.();
             } catch {}
+
+            let attempts = 0;
+            unmuteInterval = setInterval(() => {
+              attempts += 1;
+              if (ytDestroyedRef.current) return;
+              const p = ytPlayerRef.current;
+              enforceYoutubeAudio(p);
+              if (attempts >= 20) {
+                if (unmuteInterval) clearInterval(unmuteInterval);
+                unmuteInterval = null;
+              }
+            }, 250);
 
             pollRef.current = setInterval(() => {
               if (ytDestroyedRef.current) return;
@@ -188,7 +224,10 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
             }, 500);
           },
           onStateChange: (event: any) => {
-            if (event.data === 1) progressDetected = true;
+            if (event.data === 1) {
+              progressDetected = true;
+              enforceYoutubeAudio(event?.target);
+            }
             if (event.data === 0) onEndedRef.current();
           },
           onError: (event: any) => {
@@ -213,6 +252,7 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
     return () => {
       if (fallbackTimer) clearTimeout(fallbackTimer);
       clearTimeout(stallTimer);
+      if (unmuteInterval) clearInterval(unmuteInterval);
       if (pollRef.current) clearInterval(pollRef.current);
       if (!ytDestroyedRef.current) {
         try { ytPlayerRef.current?.destroy(); } catch {}
@@ -224,7 +264,7 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
 
   return (
     <div
-      className="absolute inset-0 z-[35] flex items-center justify-center p-8"
+      className="absolute inset-0 z-[70] flex items-center justify-center p-8"
       style={{
         background: "linear-gradient(to bottom right, hsl(0 100% 50%), hsl(0 0% 0%) 40%)",
       }}
