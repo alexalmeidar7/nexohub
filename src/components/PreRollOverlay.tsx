@@ -11,6 +11,7 @@ interface Props {
   prerollYoutubeUrl?: string | null;
   onSkip: () => void;
   onEnded: () => void;
+  hideSkip?: boolean;
 }
 
 function extractYoutubeId(rawUrl: string): string | null {
