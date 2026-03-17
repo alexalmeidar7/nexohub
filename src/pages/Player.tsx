@@ -2080,7 +2080,8 @@ export default function PlayerPage() {
         </div>
       </div>
 
-      {/* Control bar hover zone */}
+      {/* Control bar hover zone — hidden during pre-roll */}
+      {!isPrerollVisible && !midrollActive && (
       <div className="absolute left-0 right-0 bottom-0 z-50" style={{ height: "140px" }} onMouseEnter={showBar} onMouseLeave={hideBar}
         onClick={() => setBarVisible(v => !v)}
       >
