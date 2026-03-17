@@ -171,7 +171,8 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
         events: {
           onReady: (event: any) => {
             try {
-              event?.target?.mute?.();
+              event?.target?.unMute?.();
+              event?.target?.setVolume?.(100);
               event?.target?.playVideo?.();
             } catch {}
 
