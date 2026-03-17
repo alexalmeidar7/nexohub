@@ -2540,6 +2540,7 @@ export default function PlayerPage() {
         </div>
       </div>
       </div>
+      )}
 
       {chatOpen && (
         <Suspense fallback={<div className="fixed z-[55] w-[290px] rounded-2xl border border-white/10 flex items-center justify-center" style={{ backgroundColor: "rgba(10,10,10,0.95)", bottom: shopOpen ? "460px" : "165px", right: "20px", height: "400px" }}><Loader2 className="animate-spin text-white" size={24} /></div>}>
