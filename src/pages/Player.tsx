@@ -136,6 +136,15 @@ const matchesCampaignDay = (diasSemana: string[] | null | undefined, now: Date) 
 
 const normalizeChannelNumber = (num?: string | null) => (num || "").replace(/\s+/g, "").toLowerCase();
 
+const normalizeLivePlaylistUrl = (url: string, type: string) => {
+  const isLiveMedia = type === "video_live" || type === "audio_live";
+  if (!isLiveMedia || !url.includes(".m3u8")) return url;
+
+  // Some providers rotate `chunklist_w*.m3u8`; forcing the stable master playlist
+  // prevents stale chunklist locks and reduces green/pixelated live playback.
+  return url.replace(/\/chunklist_w\d+\.m3u8(\?.*)?$/i, "/playlist.m3u8");
+};
+
 const YOUTUBE_VIDEO_ID_RE = /^[a-zA-Z0-9_-]{11}$/;
 
 const normalizeYoutubeVideoId = (value?: string | null) => {
