@@ -49,6 +49,7 @@ export default function LogosPatrocinadoresPage() {
 
   const [cadastroOpen, setCadastroOpen] = useState(true);
   const [excluidasOpen, setExcluidasOpen] = useState(false);
+  const [excluidasSearch, setExcluidasSearch] = useState("");
 
   const dragItem = useRef<Logo | null>(null);
 
