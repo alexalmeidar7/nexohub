@@ -307,7 +307,7 @@ export default function LogosPatrocinadoresPage() {
                 <div>
                   <label className="block text-xs mb-1" style={{ color: "#0d0446", fontWeight: 600 }}>Nome *</label>
                   <input type="text" value={nomeLogo} onChange={(e) => setNomeLogo(e.target.value)} placeholder="Ex: Patrocinador X"
-                    className="w-full px-4 py-1.5 text-sm outline-none"
+                    className="w-full px-4 py-1.5 text-sm outline-none uppercase font-bold"
                     style={inputStyle}
                     onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
                     onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
