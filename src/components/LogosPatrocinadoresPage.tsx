@@ -233,12 +233,15 @@ export default function LogosPatrocinadoresPage() {
       <div className="rounded-2xl" style={{ background: "#d9e9fa", boxShadow: "0 8px 32px rgba(13,4,70,0.12)", padding: "20px" }}>
         {/* Header */}
         <div className="flex items-center gap-3 mb-5">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(13,4,70,0.08)" }}>
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "rgba(13,4,70,0.08)" }}>
             <Upload size={20} style={{ color: "#0d0446" }} />
           </div>
-          <div>
+          <div className="shrink-0">
             <h3 className="text-base font-bold" style={{ color: "#0d0446" }}>Logos de Patrocinadores</h3>
             <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.5)" }}>Gerencie as logos vinculadas aos programas</p>
+          </div>
+          <div className="flex-1 ml-4">
+            {logosXmlContent && <XmlLinkRow label="XML LOGOS" xmlContent={logosXmlContent} dark />}
           </div>
         </div>
 
