@@ -996,8 +996,9 @@ export default function PlayerPage() {
         videoRef.current.play().catch(() => {});
       }
 
-      const freshUrl = url.includes("?") ? `${url}&_t=${Date.now()}` : `${url}?_t=${Date.now()}`;
-      const useHls = url.includes(".m3u8");
+      const normalizedUrl = normalizeLivePlaylistUrl(url, type);
+      const freshUrl = normalizedUrl.includes("?") ? `${normalizedUrl}&_t=${Date.now()}` : `${normalizedUrl}?_t=${Date.now()}`;
+      const useHls = normalizedUrl.includes(".m3u8");
       let Hls: typeof HlsType | null = null;
       if (useHls) Hls = await getHls();
 
