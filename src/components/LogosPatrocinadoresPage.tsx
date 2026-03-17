@@ -422,41 +422,32 @@ export default function LogosPatrocinadoresPage() {
                     Arraste uma logo para a seção "Logos por Programa" para restaurá-la, ou clique no botão de restaurar.
                     <br />Logos excluídas são mantidas por até 180 dias.
                   </p>
-                  <div className="space-y-4">
-                    {groupedExcluded.map(({ programa, logos: gLogos }) => (
-                      <div key={programa.id} className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(13,4,70,0.08)" }}>
-                        <div className="px-4 py-2 font-semibold text-xs" style={{ backgroundColor: "rgba(107,114,128,0.08)", color: "#6b7280" }}>
-                          {programa.nome}
+                  <div className="flex flex-wrap gap-3">
+                    {excludedLogos.map((logo) => {
+                      const diasRestantes = logo.excluido_at ? Math.max(0, 180 - Math.ceil((Date.now() - new Date(logo.excluido_at).getTime()) / 86400000)) : 0;
+                      return (
+                        <div key={logo.id} className="w-24 space-y-1 text-center opacity-70 hover:opacity-100 transition-opacity cursor-grab"
+                          draggable
+                          onDragStart={() => handleDragStart(logo)}
+                        >
+                          <div className="relative group">
+                            <img src={logo.logo_url} alt={logo.nome} className="w-full aspect-square rounded-lg object-contain p-1" style={{ border: "1px solid rgba(107,114,128,0.2)", backgroundColor: "#0d0446", filter: "grayscale(50%)" }} />
+                            <div className="absolute inset-0 rounded-lg flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity" style={{ backgroundColor: "rgba(0,0,0,0.4)" }}>
+                              <button onClick={() => handleRestore(logo)} className="bg-green-500 text-white rounded-full w-7 h-7 flex items-center justify-center" title="Restaurar">
+                                <RotateCcw size={13} />
+                              </button>
+                              <button onClick={() => handlePermanentDelete(logo.id)} className="bg-red-500 text-white rounded-full w-7 h-7 flex items-center justify-center" title="Excluir permanentemente">
+                                <Trash2 size={13} />
+                              </button>
+                            </div>
+                          </div>
+                          {logo.nome && (
+                            <p className="text-[10px] font-semibold truncate" style={{ color: "#6b7280" }}>{logo.nome}</p>
+                          )}
+                          <span className="text-[9px] block" style={{ color: "#9ca3af" }}>{diasRestantes}d para expirar</span>
                         </div>
-                        <div className="p-3 flex flex-wrap gap-3" style={{ backgroundColor: "#ffffff" }}>
-                          {gLogos.map((logo) => {
-                            const diasRestantes = logo.excluido_at ? Math.max(0, 180 - Math.ceil((Date.now() - new Date(logo.excluido_at).getTime()) / 86400000)) : 0;
-                            return (
-                              <div key={logo.id} className="w-24 space-y-1 text-center opacity-70 hover:opacity-100 transition-opacity cursor-grab"
-                                draggable
-                                onDragStart={() => handleDragStart(logo)}
-                              >
-                                <div className="relative group">
-                                  <img src={logo.logo_url} alt={logo.nome} className="w-full aspect-square rounded-lg object-contain" style={{ border: "1px solid rgba(107,114,128,0.2)", backgroundColor: "#e5e7eb", filter: "grayscale(50%)" }} />
-                                  <div className="absolute inset-0 rounded-lg flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity" style={{ backgroundColor: "rgba(0,0,0,0.4)" }}>
-                                    <button onClick={() => handleRestore(logo)} className="bg-green-500 text-white rounded-full w-7 h-7 flex items-center justify-center" title="Restaurar">
-                                      <RotateCcw size={13} />
-                                    </button>
-                                    <button onClick={() => handlePermanentDelete(logo.id)} className="bg-red-500 text-white rounded-full w-7 h-7 flex items-center justify-center" title="Excluir permanentemente">
-                                      <Trash2 size={13} />
-                                    </button>
-                                  </div>
-                                </div>
-                                {logo.nome && (
-                                  <p className="text-[10px] font-semibold truncate" style={{ color: "#6b7280" }}>{logo.nome}</p>
-                                )}
-                                <span className="text-[9px] block" style={{ color: "#9ca3af" }}>{diasRestantes}d para expirar</span>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               )}
