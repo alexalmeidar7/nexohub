@@ -224,6 +224,8 @@ export type Database = {
       comercial_preroll: {
         Row: {
           active: boolean
+          aspect_ratio: string
+          background_url: string | null
           clicks_count: number
           created_at: string
           data_final: string | null
@@ -239,12 +241,15 @@ export type Database = {
           skip_enabled: boolean
           updated_at: string
           user_id: string
+          video_position: string
           video_url: string
           views_count: number
           youtube_url: string | null
         }
         Insert: {
           active?: boolean
+          aspect_ratio?: string
+          background_url?: string | null
           clicks_count?: number
           created_at?: string
           data_final?: string | null
@@ -260,12 +265,15 @@ export type Database = {
           skip_enabled?: boolean
           updated_at?: string
           user_id: string
+          video_position?: string
           video_url?: string
           views_count?: number
           youtube_url?: string | null
         }
         Update: {
           active?: boolean
+          aspect_ratio?: string
+          background_url?: string | null
           clicks_count?: number
           created_at?: string
           data_final?: string | null
@@ -281,6 +289,7 @@ export type Database = {
           skip_enabled?: boolean
           updated_at?: string
           user_id?: string
+          video_position?: string
           video_url?: string
           views_count?: number
           youtube_url?: string | null

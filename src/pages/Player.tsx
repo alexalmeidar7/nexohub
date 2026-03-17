@@ -444,6 +444,9 @@ export default function PlayerPage() {
   const [prerollLinkUrl, setPrerollLinkUrl] = useState<string | null>(null);
   const [prerollMediaType, setPrerollMediaType] = useState<string>("video");
   const [prerollYoutubeUrl, setPrerollYoutubeUrl] = useState<string | null>(null);
+  const [prerollBackgroundUrl, setPrerollBackgroundUrl] = useState<string | null>(null);
+  const [prerollAspectRatio, setPrerollAspectRatio] = useState<string>("16:9");
+  const [prerollVideoPosition, setPrerollVideoPosition] = useState<string>("center");
   const [prerollDone, setPrerollDone] = useState(!requestedChannelId); // Pre-roll enabled for catalog/deep-link channels
   const [prerollShowing, setPrerollShowing] = useState(false);
   const prerollVideoRef = useRef<HTMLVideoElement>(null);
@@ -631,6 +634,9 @@ export default function PlayerPage() {
             setPrerollLinkUrl(selected.link_url || null);
             setPrerollMediaType(selected.media_type || "video");
             setPrerollYoutubeUrl(selected.youtube_url || null);
+            setPrerollBackgroundUrl((selected as any).background_url || null);
+            setPrerollAspectRatio((selected as any).aspect_ratio || "16:9");
+            setPrerollVideoPosition((selected as any).video_position || "center");
           } else {
             setPrerollDone(true);
           }
@@ -709,6 +715,9 @@ export default function PlayerPage() {
             setPrerollLinkUrl((selected as any).link_url || null);
             setPrerollMediaType((selected as any).media_type || "video");
             setPrerollYoutubeUrl((selected as any).youtube_url || null);
+            setPrerollBackgroundUrl((selected as any).background_url || null);
+            setPrerollAspectRatio((selected as any).aspect_ratio || "16:9");
+            setPrerollVideoPosition((selected as any).video_position || "center");
           } else {
             setPrerollDone(true);
           }
@@ -1230,6 +1239,9 @@ export default function PlayerPage() {
         setPrerollLinkUrl((selected as any).link_url || null);
         setPrerollMediaType((selected as any).media_type || "video");
         setPrerollYoutubeUrl((selected as any).youtube_url || null);
+        setPrerollBackgroundUrl((selected as any).background_url || null);
+        setPrerollAspectRatio((selected as any).aspect_ratio || "16:9");
+        setPrerollVideoPosition((selected as any).video_position || "center");
         setPrerollShowing(true);
       }
     }
@@ -1897,8 +1909,11 @@ export default function PlayerPage() {
           prerollLinkUrl={prerollLinkUrl}
           prerollMediaType={prerollMediaType}
           prerollYoutubeUrl={prerollYoutubeUrl}
-          onSkip={() => { setPrerollDone(true); setPrerollShowing(false); setPrerollUrl(null); setPrerollLinkUrl(null); setPrerollMediaType("video"); setPrerollYoutubeUrl(null); }}
-          onEnded={() => { setPrerollDone(true); setPrerollShowing(false); setPrerollUrl(null); setPrerollMediaType("video"); setPrerollYoutubeUrl(null); }}
+          prerollBackgroundUrl={prerollBackgroundUrl}
+          prerollAspectRatio={prerollAspectRatio}
+          prerollVideoPosition={prerollVideoPosition}
+          onSkip={() => { setPrerollDone(true); setPrerollShowing(false); setPrerollUrl(null); setPrerollLinkUrl(null); setPrerollMediaType("video"); setPrerollYoutubeUrl(null); setPrerollBackgroundUrl(null); setPrerollAspectRatio("16:9"); setPrerollVideoPosition("center"); }}
+          onEnded={() => { setPrerollDone(true); setPrerollShowing(false); setPrerollUrl(null); setPrerollMediaType("video"); setPrerollYoutubeUrl(null); setPrerollBackgroundUrl(null); setPrerollAspectRatio("16:9"); setPrerollVideoPosition("center"); }}
         />
       )}
 

@@ -9,6 +9,9 @@ interface Props {
   prerollLinkUrl: string | null;
   prerollMediaType?: string;
   prerollYoutubeUrl?: string | null;
+  prerollBackgroundUrl?: string | null;
+  prerollAspectRatio?: string;
+  prerollVideoPosition?: string;
   onSkip: () => void;
   onEnded: () => void;
   hideSkip?: boolean;
@@ -62,7 +65,11 @@ function getYoutubeErrorMessage(code?: number): string {
   }
 }
 
-export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLinkUrl, prerollMediaType, prerollYoutubeUrl, onSkip, onEnded, hideSkip }: Props) {
+export default function PreRollOverlay({
+  prerollUrl, prerollVideoRef, prerollLinkUrl, prerollMediaType, prerollYoutubeUrl,
+  prerollBackgroundUrl, prerollAspectRatio = "16:9", prerollVideoPosition = "center",
+  onSkip, onEnded, hideSkip,
+}: Props) {
   const [countdown, setCountdown] = useState(SKIP_DELAY);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -80,6 +87,8 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
   const onEndedRef = useRef(onEnded);
   onEndedRef.current = onEnded;
   const ytDestroyedRef = useRef(false);
+
+  const hasCustomBg = Boolean(prerollBackgroundUrl && prerollBackgroundUrl.trim() !== "");
 
   const formatTime = (s: number) => {
     const m = Math.floor(s / 60);
@@ -263,19 +272,27 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
 
   const canSkip = countdown <= 0;
 
+  const containerJustify = prerollVideoPosition === "left" ? "flex-start"
+    : prerollVideoPosition === "right" ? "flex-end" : "center";
+
   return (
     <div
-      className="absolute inset-0 z-[70] flex items-center justify-center p-8"
+      className="absolute inset-0 z-[70] flex items-center p-8"
       style={{
-        background: "linear-gradient(to bottom right, hsl(0 100% 50%), hsl(0 0% 0%) 40%)",
+        background: hasCustomBg
+          ? `url(${prerollBackgroundUrl}) center/cover no-repeat`
+          : "linear-gradient(to bottom right, hsl(0 100% 50%), hsl(0 0% 0%) 40%)",
+        justifyContent: containerJustify,
       }}
     >
-      {/* Sidebar and avatar are rendered by Player.tsx persistently */}
-      {/* Container principal — aspect-video */}
+      {/* Container principal */}
       <div
-        className="relative w-full max-w-6xl shadow-2xl overflow-hidden"
+        className="relative shadow-2xl overflow-hidden"
         style={{
-          aspectRatio: "16 / 9",
+          aspectRatio: prerollAspectRatio === "9:16" ? "9 / 16" : "16 / 9",
+          ...(prerollAspectRatio === "9:16"
+            ? { height: "100%", maxHeight: "calc(100vh - 4rem)" }
+            : { width: "100%", maxWidth: "72rem" }),
           backgroundColor: "hsl(0 0% 0%)",
           borderRadius: "2rem",
         }}
@@ -283,7 +300,6 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
         {/* Vídeo / YouTube */}
         {showYoutubePlayer ? (
           <>
-            {/* YouTube player container — slightly oversized to crop YouTube UI */}
             <div
               className="absolute z-[1]"
               style={{
@@ -295,7 +311,6 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
             >
               <div id="preroll-yt-player" className="w-full h-full" />
             </div>
-            {/* Transparent overlay to block interaction with YouTube */}
             <div className="absolute inset-0 z-[2]" />
           </>
         ) : shouldUseNativeVideo ? (
@@ -335,7 +350,6 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
 
         {/* Botão Pular + Tempo — canto superior direito */}
         <div className="absolute top-6 right-6 z-10 flex items-center gap-3">
-          {/* Tempo percorrido / total */}
           {duration > 0 && !ytFailed && (
             <span
               className="text-xs font-mono px-3 py-1.5 rounded-full"
@@ -361,7 +375,7 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
           )}
         </div>
 
-        {/* Widget QR Code — canto inferior esquerdo */}
+        {/* Widget QR Code — canto superior esquerdo */}
         {prerollLinkUrl && (
           <a
             href={prerollLinkUrl}
