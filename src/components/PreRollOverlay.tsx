@@ -252,6 +252,7 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
     return () => {
       if (fallbackTimer) clearTimeout(fallbackTimer);
       clearTimeout(stallTimer);
+      if (unmuteInterval) clearInterval(unmuteInterval);
       if (pollRef.current) clearInterval(pollRef.current);
       if (!ytDestroyedRef.current) {
         try { ytPlayerRef.current?.destroy(); } catch {}
