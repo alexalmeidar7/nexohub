@@ -1909,8 +1909,11 @@ export default function PlayerPage() {
           prerollLinkUrl={prerollLinkUrl}
           prerollMediaType={prerollMediaType}
           prerollYoutubeUrl={prerollYoutubeUrl}
-          onSkip={() => { setPrerollDone(true); setPrerollShowing(false); setPrerollUrl(null); setPrerollLinkUrl(null); setPrerollMediaType("video"); setPrerollYoutubeUrl(null); }}
-          onEnded={() => { setPrerollDone(true); setPrerollShowing(false); setPrerollUrl(null); setPrerollMediaType("video"); setPrerollYoutubeUrl(null); }}
+          prerollBackgroundUrl={prerollBackgroundUrl}
+          prerollAspectRatio={prerollAspectRatio}
+          prerollVideoPosition={prerollVideoPosition}
+          onSkip={() => { setPrerollDone(true); setPrerollShowing(false); setPrerollUrl(null); setPrerollLinkUrl(null); setPrerollMediaType("video"); setPrerollYoutubeUrl(null); setPrerollBackgroundUrl(null); setPrerollAspectRatio("16:9"); setPrerollVideoPosition("center"); }}
+          onEnded={() => { setPrerollDone(true); setPrerollShowing(false); setPrerollUrl(null); setPrerollMediaType("video"); setPrerollYoutubeUrl(null); setPrerollBackgroundUrl(null); setPrerollAspectRatio("16:9"); setPrerollVideoPosition("center"); }}
         />
       )}
 
