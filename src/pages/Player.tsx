@@ -457,6 +457,7 @@ export default function PlayerPage() {
   const [midrollResumeTime, setMidrollResumeTime] = useState(0);
   const midrollTriggeredRef = useRef<Set<number>>(new Set());
   const [midrollPreroll, setMidrollPreroll] = useState<{ url: string; linkUrl: string | null; mediaType: string; youtubeUrl: string | null } | null>(null);
+  const [midrollFading, setMidrollFading] = useState<"out" | "in" | null>(null);
 
   // Unified buffering detection
   const { buffering, setBuffering } = useBufferingDetection(videoRef, audioRef);
