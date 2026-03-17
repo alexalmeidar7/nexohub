@@ -90,10 +90,10 @@ export default function LogosPatrocinadoresPage() {
   };
 
   const uploadLogo = async (file: File): Promise<string> => {
-    const compressed = await compressImage(file);
-    const ext = compressed.name.split(".").pop();
+    // Keep original PNG format — do NOT compress to webp for sponsor logos
+    const ext = file.name.split(".").pop() || "png";
     const path = `logos/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-    const { error } = await supabase.storage.from("comercial").upload(path, compressed, { upsert: true });
+    const { error } = await supabase.storage.from("comercial").upload(path, file, { upsert: true, contentType: file.type });
     if (error) throw error;
     const { data } = supabase.storage.from("comercial").getPublicUrl(path);
     return data.publicUrl;
