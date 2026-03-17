@@ -43,15 +43,18 @@ export default function LogosPatrocinadoresPage() {
   const [dataFinal, setDataFinal] = useState("");
   const [nomeLogo, setNomeLogo] = useState("");
   const [pendingFiles, setPendingFiles] = useState<{ file: File; preview: string }[]>([]);
+  const [existingLogoUrl, setExistingLogoUrl] = useState<string | null>(null);
 
   const [editingLogoId, setEditingLogoId] = useState<string | null>(null);
   const [editDate, setEditDate] = useState("");
+  const [editingFullId, setEditingFullId] = useState<string | null>(null);
 
   const [cadastroOpen, setCadastroOpen] = useState(true);
   const [excluidasOpen, setExcluidasOpen] = useState(false);
   const [excluidasSearch, setExcluidasSearch] = useState("");
 
   const dragItem = useRef<Logo | null>(null);
+  const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
     if (user) loadData();
@@ -98,8 +101,36 @@ export default function LogosPatrocinadoresPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !programaId || !dataFinal || pendingFiles.length === 0) {
-      toast({ title: "Preencha todos os campos e adicione pelo menos uma logo.", variant: "destructive" });
+    if (!user || !programaId || !dataFinal) {
+      toast({ title: "Preencha todos os campos obrigatórios.", variant: "destructive" });
+      return;
+    }
+
+    // Edit mode: update existing logo
+    if (editingFullId) {
+      setSaving(true);
+      try {
+        const updateData: any = { programa_id: programaId, data_final: dataFinal, nome: nomeLogo };
+        // If new file uploaded, replace image
+        if (pendingFiles.length > 0) {
+          updateData.logo_url = await uploadLogo(pendingFiles[0].file);
+        }
+        const { error } = await supabase.from("logos_patrocinadores").update(updateData).eq("id", editingFullId);
+        if (error) throw error;
+        toast({ title: "Logo atualizada com sucesso!" });
+        resetForm();
+        await loadData();
+      } catch (err: any) {
+        toast({ title: "Erro ao atualizar", description: err.message, variant: "destructive" });
+      } finally {
+        setSaving(false);
+      }
+      return;
+    }
+
+    // Create mode
+    if (pendingFiles.length === 0) {
+      toast({ title: "Adicione pelo menos uma logo.", variant: "destructive" });
       return;
     }
     setSaving(true);
@@ -132,6 +163,18 @@ export default function LogosPatrocinadoresPage() {
     setDataFinal("");
     setNomeLogo("");
     setPendingFiles([]);
+    setExistingLogoUrl(null);
+    setEditingFullId(null);
+  };
+
+  const startFullEdit = (logo: Logo) => {
+    setEditingFullId(logo.id);
+    setNomeLogo(logo.nome || "");
+    setProgramaId(logo.programa_id);
+    setDataFinal(logo.data_final);
+    setExistingLogoUrl(logo.logo_url);
+    setPendingFiles([]);
+    formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   const handleSoftDelete = async (id: string) => {
@@ -247,9 +290,16 @@ export default function LogosPatrocinadoresPage() {
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="rounded-xl overflow-hidden mb-5" style={{ backgroundColor: "#ffffff", boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}>
-          <div className="px-4 py-2.5" style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)" }}>
-            <h3 className="text-sm font-bold" style={{ color: "#ffffff" }}>➕ Nova Logo de Patrocinador</h3>
+        <form ref={formRef} onSubmit={handleSubmit} className="rounded-xl overflow-hidden mb-5" style={{ backgroundColor: "#ffffff", boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}>
+          <div className="px-4 py-2.5 flex items-center justify-between" style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)" }}>
+            <h3 className="text-sm font-bold" style={{ color: "#ffffff" }}>
+              {editingFullId ? "✏️ Editar Logo de Patrocinador" : "➕ Nova Logo de Patrocinador"}
+            </h3>
+            {editingFullId && (
+              <button type="button" onClick={resetForm} className="text-[10px] text-white/70 hover:text-white transition-colors">
+                Cancelar edição
+              </button>
+            )}
           </div>
           <div className="p-5">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -294,15 +344,21 @@ export default function LogosPatrocinadoresPage() {
                   onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 4px 15px rgba(38,143,250,0.4)"; }}
                   onMouseLeave={e => { e.currentTarget.style.boxShadow = "none"; }}
                 >
-                  {saving ? <><Loader2 className="animate-spin" size={14} /> Salvando...</> : `Salvar ${pendingFiles.length} logo(s)`}
+                  {saving ? <><Loader2 className="animate-spin" size={14} /> Salvando...</> : editingFullId ? "Atualizar Logo" : `Salvar ${pendingFiles.length} logo(s)`}
                 </button>
               </div>
 
               <div className="space-y-3">
                 <label className="block text-xs mb-1" style={{ color: "#0d0446", fontWeight: 600 }}>
-                  Logos * <span className="font-normal" style={{ color: "rgba(13,4,70,0.5)" }}>(1080×1080, fundo transparente)</span>
+                  Logo {editingFullId ? "" : "*"} <span className="font-normal" style={{ color: "rgba(13,4,70,0.5)" }}>(1080×1080, fundo transparente)</span>
                 </label>
                 <div className="flex flex-wrap gap-3">
+                  {existingLogoUrl && pendingFiles.length === 0 && (
+                    <div className="relative group">
+                      <img src={existingLogoUrl} alt="" className="w-20 h-20 rounded-lg object-contain" style={{ border: "1px solid rgba(13,4,70,0.1)", backgroundColor: "#0d0446" }} />
+                      <span className="text-[8px] text-center block mt-0.5" style={{ color: "rgba(13,4,70,0.4)" }}>Atual</span>
+                    </div>
+                  )}
                   {pendingFiles.map((pf, idx) => (
                     <div key={idx} className="relative group">
                       <img src={pf.preview} alt="" className="w-20 h-20 rounded-lg object-contain" style={{ border: "1px solid rgba(13,4,70,0.1)", backgroundColor: "repeating-conic-gradient(#ddd 0% 25%,transparent 0% 50%) 0 0/20px 20px" }} />
@@ -444,21 +500,13 @@ export default function LogosPatrocinadoresPage() {
                               <span className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full ${diasRestantes <= 7 ? "bg-red-100 text-red-600" : "bg-green-100 text-green-700"}`}>
                                 {diasRestantes > 0 ? `${diasRestantes}d restantes` : "Expirando"}
                               </span>
-                              {isEditing ? (
-                                <div className="flex items-center gap-1">
-                                  <input type="date" value={editDate} onChange={(e) => setEditDate(e.target.value)} className="h-7 text-[10px] px-1 rounded" style={{ border: "1px solid #0d0446", color: "#0d0446" }} />
-                                  <button onClick={saveEditDate} style={{ color: "#22c55e" }}><Check size={14} /></button>
-                                  <button onClick={() => setEditingLogoId(null)} style={{ color: "#dc2626" }}><X size={14} /></button>
-                                </div>
-                              ) : (
-                                <button onClick={() => startEditDate(logo)} className="text-[10px] flex items-center gap-1 mx-auto transition-colors"
-                                  style={{ color: "rgba(13,4,70,0.4)" }}
-                                  onMouseEnter={e => { e.currentTarget.style.color = "#2dbef3"; }}
-                                  onMouseLeave={e => { e.currentTarget.style.color = "rgba(13,4,70,0.4)"; }}
-                                >
-                                  <Pencil size={10} /> Editar validade
-                                </button>
-                              )}
+                              <button onClick={() => startFullEdit(logo)} className="text-[10px] flex items-center gap-1 mx-auto transition-colors"
+                                style={{ color: "rgba(13,4,70,0.4)" }}
+                                onMouseEnter={e => { e.currentTarget.style.color = "#2dbef3"; }}
+                                onMouseLeave={e => { e.currentTarget.style.color = "rgba(13,4,70,0.4)"; }}
+                              >
+                                <Pencil size={10} /> Editar
+                              </button>
                             </div>
                           </CarouselItem>
                         );
