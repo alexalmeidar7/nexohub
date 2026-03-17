@@ -1,11 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Loader2, Trash2, Plus, Pencil, Check, X, CheckCircle, Upload } from "lucide-react";
+import { Loader2, Trash2, Plus, Pencil, Check, X, Upload, ChevronDown, RotateCcw } from "lucide-react";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import { useToast } from "@/hooks/use-toast";
 import { compressImage } from "@/lib/imageCompressor";
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "@/components/ui/carousel";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface Logo {
   id: string;
@@ -14,6 +15,9 @@ interface Logo {
   data_final: string;
   ativo: boolean;
   created_at: string;
+  nome: string;
+  excluido: boolean;
+  excluido_at: string | null;
 }
 
 interface Programa {
@@ -24,23 +28,28 @@ interface Programa {
 const inputStyle: React.CSSProperties = {
   backgroundColor: "#ffffff", border: "1px solid #0d0446", color: "#0d0446", borderRadius: "20px",
 };
-const btnPrimary: React.CSSProperties = { backgroundColor: "#0d0446", color: "#ffffff", border: "2px solid #0d0446", borderRadius: "20px" };
-const btnSecondary: React.CSSProperties = { backgroundColor: "#ffffff", color: "#0d0446", border: "2px solid #0d0446", borderRadius: "20px" };
 
 export default function LogosPatrocinadoresPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [logos, setLogos] = useState<Logo[]>([]);
+  const [excludedLogos, setExcludedLogos] = useState<Logo[]>([]);
   const [programas, setProgramas] = useState<Programa[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   const [programaId, setProgramaId] = useState("");
   const [dataFinal, setDataFinal] = useState("");
+  const [nomeLogo, setNomeLogo] = useState("");
   const [pendingFiles, setPendingFiles] = useState<{ file: File; preview: string }[]>([]);
 
   const [editingLogoId, setEditingLogoId] = useState<string | null>(null);
   const [editDate, setEditDate] = useState("");
+
+  const [cadastroOpen, setCadastroOpen] = useState(true);
+  const [excluidasOpen, setExcluidasOpen] = useState(false);
+
+  const dragItem = useRef<Logo | null>(null);
 
   useEffect(() => {
     if (user) loadData();
@@ -54,7 +63,12 @@ export default function LogosPatrocinadoresPage() {
       supabase.from("programas").select("id, nome").eq("user_id", user.id).eq("ativo", true),
     ]);
 
-    setLogos(lData || []);
+    const all = (lData || []) as Logo[];
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - 180);
+
+    setLogos(all.filter((l) => !l.excluido));
+    setExcludedLogos(all.filter((l) => l.excluido && l.excluido_at && new Date(l.excluido_at) > cutoff));
     setProgramas(pData || []);
     setLoading(false);
   };
@@ -96,6 +110,7 @@ export default function LogosPatrocinadoresPage() {
           programa_id: programaId,
           logo_url,
           data_final: dataFinal,
+          nome: nomeLogo,
         });
         if (error) throw error;
       }
@@ -113,10 +128,31 @@ export default function LogosPatrocinadoresPage() {
   const resetForm = () => {
     setProgramaId("");
     setDataFinal("");
+    setNomeLogo("");
     setPendingFiles([]);
   };
 
-  const handleDelete = async (id: string) => {
+  const handleSoftDelete = async (id: string) => {
+    const { error } = await supabase.from("logos_patrocinadores").update({ excluido: true, excluido_at: new Date().toISOString(), ativo: false }).eq("id", id);
+    if (error) {
+      toast({ title: "Erro ao excluir", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Logo movida para Excluídas" });
+    }
+    await loadData();
+  };
+
+  const handleRestore = async (logo: Logo) => {
+    const { error } = await supabase.from("logos_patrocinadores").update({ excluido: false, excluido_at: null, ativo: true }).eq("id", logo.id);
+    if (error) {
+      toast({ title: "Erro ao restaurar", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Logo restaurada com sucesso!" });
+    }
+    await loadData();
+  };
+
+  const handlePermanentDelete = async (id: string) => {
     await supabase.from("logos_patrocinadores").delete().eq("id", id);
     await loadData();
   };
@@ -139,10 +175,40 @@ export default function LogosPatrocinadoresPage() {
     await loadData();
   };
 
+  // Drag handlers for restoring excluded logos
+  const handleDragStart = (logo: Logo) => {
+    dragItem.current = logo;
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.currentTarget.classList.add("ring-2", "ring-blue-400");
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.currentTarget.classList.remove("ring-2", "ring-blue-400");
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.currentTarget.classList.remove("ring-2", "ring-blue-400");
+    if (dragItem.current && dragItem.current.excluido) {
+      await handleRestore(dragItem.current);
+      dragItem.current = null;
+    }
+  };
+
   const grouped = programas
     .map((p) => ({
       programa: p,
       logos: logos.filter((l) => l.programa_id === p.id && l.ativo),
+    }))
+    .filter((g) => g.logos.length > 0);
+
+  const groupedExcluded = programas
+    .map((p) => ({
+      programa: p,
+      logos: excludedLogos.filter((l) => l.programa_id === p.id),
     }))
     .filter((g) => g.logos.length > 0);
 
@@ -172,6 +238,15 @@ export default function LogosPatrocinadoresPage() {
           <div className="p-5">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-4">
+                <div>
+                  <label className="block text-xs mb-1" style={{ color: "#0d0446", fontWeight: 600 }}>Nome *</label>
+                  <input type="text" value={nomeLogo} onChange={(e) => setNomeLogo(e.target.value)} placeholder="Ex: Patrocinador X"
+                    className="w-full px-4 py-1.5 text-sm outline-none"
+                    style={inputStyle}
+                    onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
+                    onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
+                  />
+                </div>
                 <div>
                   <label className="block text-xs mb-1" style={{ color: "#0d0446", fontWeight: 600 }}>Programa *</label>
                   <select value={programaId} onChange={(e) => setProgramaId(e.target.value)}
@@ -234,69 +309,145 @@ export default function LogosPatrocinadoresPage() {
           </div>
         </form>
 
-        {/* List */}
-        <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}>
-          <div className="px-4 py-2.5" style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)" }}>
-            <h3 className="text-sm font-bold" style={{ color: "#ffffff" }}>📋 Logos por Programa</h3>
-          </div>
-
-          {grouped.length === 0 ? (
-            <p className="text-sm py-8 text-center" style={{ color: "rgba(13,4,70,0.4)" }}>Nenhuma logo ativa cadastrada.</p>
-          ) : (
-            <div className="p-4 space-y-5">
-              {grouped.map(({ programa, logos: gLogos }) => (
-                <div key={programa.id} className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(13,4,70,0.08)" }}>
-                  <div className="px-4 py-2 font-semibold text-xs" style={{ backgroundColor: "rgba(13,4,70,0.04)", color: "#0d0446" }}>
-                    {programa.nome}
-                  </div>
-                  <div className="p-3 sm:p-4 px-4 sm:px-10" style={{ backgroundColor: "#ffffff" }}>
-                    <Carousel opts={{ align: "start" }} className="w-full">
-                      <CarouselContent>
-                        {gLogos.map((logo) => {
-                          const diasRestantes = Math.ceil((new Date(logo.data_final + "T23:59:59").getTime() - Date.now()) / 86400000);
-                          const isEditing = editingLogoId === logo.id;
-                          return (
-                            <CarouselItem key={logo.id} className="basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5">
-                              <div className="space-y-2 text-center">
-                                <div className="relative group">
-                                  <img src={logo.logo_url} alt="" className="w-full aspect-square rounded-lg object-contain" style={{ border: "1px solid rgba(13,4,70,0.08)", backgroundColor: "#0d0446" }} />
-                                  <button onClick={() => handleDelete(logo.id)}
-                                    className="absolute top-1 right-1 bg-red-500/80 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <Trash2 size={12} />
-                                  </button>
-                                </div>
-                                <span className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full ${diasRestantes <= 7 ? "bg-red-100 text-red-600" : "bg-green-100 text-green-700"}`}>
-                                  {diasRestantes > 0 ? `${diasRestantes}d restantes` : "Expirando"}
-                                </span>
-                                {isEditing ? (
-                                  <div className="flex items-center gap-1">
-                                    <input type="date" value={editDate} onChange={(e) => setEditDate(e.target.value)} className="h-7 text-[10px] px-1 rounded" style={{ border: "1px solid #0d0446", color: "#0d0446" }} />
-                                    <button onClick={saveEditDate} style={{ color: "#22c55e" }}><Check size={14} /></button>
-                                    <button onClick={() => setEditingLogoId(null)} style={{ color: "#dc2626" }}><X size={14} /></button>
+        {/* Active Logos - Collapsible */}
+        <Collapsible open={cadastroOpen} onOpenChange={setCadastroOpen}>
+          <div className="rounded-xl overflow-hidden mb-5" style={{ backgroundColor: "#ffffff", boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}
+            onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}
+          >
+            <CollapsibleTrigger asChild>
+              <button className="w-full px-4 py-2.5 flex items-center justify-between cursor-pointer" style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)" }}>
+                <h3 className="text-sm font-bold" style={{ color: "#ffffff" }}>📋 Logos por Programa</h3>
+                <ChevronDown size={16} className={`text-white transition-transform duration-200 ${cadastroOpen ? "rotate-180" : ""}`} />
+              </button>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              {grouped.length === 0 ? (
+                <p className="text-sm py-8 text-center" style={{ color: "rgba(13,4,70,0.4)" }}>Nenhuma logo ativa cadastrada.</p>
+              ) : (
+                <div className="p-4 space-y-5">
+                  {grouped.map(({ programa, logos: gLogos }) => (
+                    <div key={programa.id} className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(13,4,70,0.08)" }}>
+                      <div className="px-4 py-2 font-semibold text-xs" style={{ backgroundColor: "rgba(13,4,70,0.04)", color: "#0d0446" }}>
+                        {programa.nome}
+                      </div>
+                      <div className="p-3 sm:p-4 px-4 sm:px-10" style={{ backgroundColor: "#ffffff" }}>
+                        <Carousel opts={{ align: "start" }} className="w-full">
+                          <CarouselContent>
+                            {gLogos.map((logo) => {
+                              const diasRestantes = Math.ceil((new Date(logo.data_final + "T23:59:59").getTime() - Date.now()) / 86400000);
+                              const isEditing = editingLogoId === logo.id;
+                              return (
+                                <CarouselItem key={logo.id} className="basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5">
+                                  <div className="space-y-2 text-center">
+                                    <div className="relative group">
+                                      <img src={logo.logo_url} alt={logo.nome} className="w-full aspect-square rounded-lg object-contain" style={{ border: "1px solid rgba(13,4,70,0.08)", backgroundColor: "#0d0446" }} />
+                                      <button onClick={() => handleSoftDelete(logo.id)}
+                                        className="absolute top-1 right-1 bg-red-500/80 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <Trash2 size={12} />
+                                      </button>
+                                    </div>
+                                    {logo.nome && (
+                                      <p className="text-[11px] font-semibold truncate" style={{ color: "#0d0446" }}>{logo.nome}</p>
+                                    )}
+                                    <span className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full ${diasRestantes <= 7 ? "bg-red-100 text-red-600" : "bg-green-100 text-green-700"}`}>
+                                      {diasRestantes > 0 ? `${diasRestantes}d restantes` : "Expirando"}
+                                    </span>
+                                    {isEditing ? (
+                                      <div className="flex items-center gap-1">
+                                        <input type="date" value={editDate} onChange={(e) => setEditDate(e.target.value)} className="h-7 text-[10px] px-1 rounded" style={{ border: "1px solid #0d0446", color: "#0d0446" }} />
+                                        <button onClick={saveEditDate} style={{ color: "#22c55e" }}><Check size={14} /></button>
+                                        <button onClick={() => setEditingLogoId(null)} style={{ color: "#dc2626" }}><X size={14} /></button>
+                                      </div>
+                                    ) : (
+                                      <button onClick={() => startEditDate(logo)} className="text-[10px] flex items-center gap-1 mx-auto transition-colors"
+                                        style={{ color: "rgba(13,4,70,0.4)" }}
+                                        onMouseEnter={e => { e.currentTarget.style.color = "#2dbef3"; }}
+                                        onMouseLeave={e => { e.currentTarget.style.color = "rgba(13,4,70,0.4)"; }}
+                                      >
+                                        <Pencil size={10} /> Editar validade
+                                      </button>
+                                    )}
                                   </div>
-                                ) : (
-                                  <button onClick={() => startEditDate(logo)} className="text-[10px] flex items-center gap-1 mx-auto transition-colors"
-                                    style={{ color: "rgba(13,4,70,0.4)" }}
-                                    onMouseEnter={e => { e.currentTarget.style.color = "#2dbef3"; }}
-                                    onMouseLeave={e => { e.currentTarget.style.color = "rgba(13,4,70,0.4)"; }}
-                                  >
-                                    <Pencil size={10} /> Editar validade
-                                  </button>
+                                </CarouselItem>
+                              );
+                            })}
+                          </CarouselContent>
+                          <CarouselPrevious className="hidden sm:flex" />
+                          <CarouselNext className="hidden sm:flex" />
+                        </Carousel>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CollapsibleContent>
+          </div>
+        </Collapsible>
+
+        {/* Excluded Logos - Collapsible */}
+        <Collapsible open={excluidasOpen} onOpenChange={setExcluidasOpen}>
+          <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}>
+            <CollapsibleTrigger asChild>
+              <button className="w-full px-4 py-2.5 flex items-center justify-between cursor-pointer" style={{ background: "linear-gradient(135deg, #6b7280, #4b5563)" }}>
+                <h3 className="text-sm font-bold flex items-center gap-2" style={{ color: "#ffffff" }}>
+                  🗑️ Logos Excluídas
+                  {excludedLogos.length > 0 && (
+                    <span className="text-[10px] font-normal bg-white/20 px-2 py-0.5 rounded-full">{excludedLogos.length}</span>
+                  )}
+                </h3>
+                <ChevronDown size={16} className={`text-white transition-transform duration-200 ${excluidasOpen ? "rotate-180" : ""}`} />
+              </button>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              {excludedLogos.length === 0 ? (
+                <p className="text-sm py-8 text-center" style={{ color: "rgba(13,4,70,0.4)" }}>Nenhuma logo excluída.</p>
+              ) : (
+                <div className="p-4">
+                  <p className="text-[10px] mb-3" style={{ color: "rgba(13,4,70,0.5)" }}>
+                    Arraste uma logo para a seção "Logos por Programa" para restaurá-la, ou clique no botão de restaurar.
+                    <br />Logos excluídas são mantidas por até 180 dias.
+                  </p>
+                  <div className="space-y-4">
+                    {groupedExcluded.map(({ programa, logos: gLogos }) => (
+                      <div key={programa.id} className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(13,4,70,0.08)" }}>
+                        <div className="px-4 py-2 font-semibold text-xs" style={{ backgroundColor: "rgba(107,114,128,0.08)", color: "#6b7280" }}>
+                          {programa.nome}
+                        </div>
+                        <div className="p-3 flex flex-wrap gap-3" style={{ backgroundColor: "#ffffff" }}>
+                          {gLogos.map((logo) => {
+                            const diasRestantes = logo.excluido_at ? Math.max(0, 180 - Math.ceil((Date.now() - new Date(logo.excluido_at).getTime()) / 86400000)) : 0;
+                            return (
+                              <div key={logo.id} className="w-24 space-y-1 text-center opacity-70 hover:opacity-100 transition-opacity cursor-grab"
+                                draggable
+                                onDragStart={() => handleDragStart(logo)}
+                              >
+                                <div className="relative group">
+                                  <img src={logo.logo_url} alt={logo.nome} className="w-full aspect-square rounded-lg object-contain" style={{ border: "1px solid rgba(107,114,128,0.2)", backgroundColor: "#e5e7eb", filter: "grayscale(50%)" }} />
+                                  <div className="absolute inset-0 rounded-lg flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity" style={{ backgroundColor: "rgba(0,0,0,0.4)" }}>
+                                    <button onClick={() => handleRestore(logo)} className="bg-green-500 text-white rounded-full w-7 h-7 flex items-center justify-center" title="Restaurar">
+                                      <RotateCcw size={13} />
+                                    </button>
+                                    <button onClick={() => handlePermanentDelete(logo.id)} className="bg-red-500 text-white rounded-full w-7 h-7 flex items-center justify-center" title="Excluir permanentemente">
+                                      <Trash2 size={13} />
+                                    </button>
+                                  </div>
+                                </div>
+                                {logo.nome && (
+                                  <p className="text-[10px] font-semibold truncate" style={{ color: "#6b7280" }}>{logo.nome}</p>
                                 )}
+                                <span className="text-[9px] block" style={{ color: "#9ca3af" }}>{diasRestantes}d para expirar</span>
                               </div>
-                            </CarouselItem>
-                          );
-                        })}
-                      </CarouselContent>
-                      <CarouselPrevious className="hidden sm:flex" />
-                      <CarouselNext className="hidden sm:flex" />
-                    </Carousel>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
+              )}
+            </CollapsibleContent>
+          </div>
+        </Collapsible>
       </div>
     </div>
   );
