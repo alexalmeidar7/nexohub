@@ -715,6 +715,9 @@ export default function PlayerPage() {
             setPrerollLinkUrl((selected as any).link_url || null);
             setPrerollMediaType((selected as any).media_type || "video");
             setPrerollYoutubeUrl((selected as any).youtube_url || null);
+            setPrerollBackgroundUrl((selected as any).background_url || null);
+            setPrerollAspectRatio((selected as any).aspect_ratio || "16:9");
+            setPrerollVideoPosition((selected as any).video_position || "center");
           } else {
             setPrerollDone(true);
           }
