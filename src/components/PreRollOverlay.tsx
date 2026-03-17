@@ -196,10 +196,21 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
         events: {
           onReady: (event: any) => {
             try {
-              event?.target?.unMute?.();
-              event?.target?.setVolume?.(100);
+              enforceYoutubeAudio(event?.target);
               event?.target?.playVideo?.();
             } catch {}
+
+            let attempts = 0;
+            unmuteInterval = setInterval(() => {
+              attempts += 1;
+              if (ytDestroyedRef.current) return;
+              const p = ytPlayerRef.current;
+              enforceYoutubeAudio(p);
+              if (attempts >= 20) {
+                if (unmuteInterval) clearInterval(unmuteInterval);
+                unmuteInterval = null;
+              }
+            }, 250);
 
             pollRef.current = setInterval(() => {
               if (ytDestroyedRef.current) return;
