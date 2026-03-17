@@ -27,7 +27,6 @@ export default defineConfig(({ mode }) => ({
       output: {
         manualChunks: {
           supabase: ["@supabase/supabase-js"],
-          ui: ["lucide-react", "@radix-ui/react-tooltip", "@radix-ui/react-dialog"],
         },
       },
     },
