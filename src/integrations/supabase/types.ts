@@ -406,8 +406,11 @@ export type Database = {
           ativo: boolean
           created_at: string
           data_final: string
+          excluido: boolean
+          excluido_at: string | null
           id: string
           logo_url: string
+          nome: string
           programa_id: string
           user_id: string
         }
@@ -415,8 +418,11 @@ export type Database = {
           ativo?: boolean
           created_at?: string
           data_final: string
+          excluido?: boolean
+          excluido_at?: string | null
           id?: string
           logo_url?: string
+          nome?: string
           programa_id: string
           user_id: string
         }
@@ -424,8 +430,11 @@ export type Database = {
           ativo?: boolean
           created_at?: string
           data_final?: string
+          excluido?: boolean
+          excluido_at?: string | null
           id?: string
           logo_url?: string
+          nome?: string
           programa_id?: string
           user_id?: string
         }
