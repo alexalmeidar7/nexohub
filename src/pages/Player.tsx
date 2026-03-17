@@ -1146,7 +1146,7 @@ export default function PlayerPage() {
     if (!mediaEl) return;
 
     let reconnectAttempts = 0;
-    const maxReconnects = 5;
+    const maxReconnects = 8;
     let lastTimeUpdate = Date.now();
 
     const tryReconnect = () => {
@@ -1154,9 +1154,11 @@ export default function PlayerPage() {
       reconnectAttempts++;
       setStreamStalled(true);
       streamStalledRef.current = true;
+      // Faster initial retry (1.5s), then scale up more gently
+      const delay = Math.min(1500 * reconnectAttempts, 8000);
       setTimeout(() => {
         if (canal) playStream(canal.url, canal.type);
-      }, 3000 * reconnectAttempts);
+      }, delay);
     };
 
     const onTimeUpdate = () => {
