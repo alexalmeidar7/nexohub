@@ -43,15 +43,18 @@ export default function LogosPatrocinadoresPage() {
   const [dataFinal, setDataFinal] = useState("");
   const [nomeLogo, setNomeLogo] = useState("");
   const [pendingFiles, setPendingFiles] = useState<{ file: File; preview: string }[]>([]);
+  const [existingLogoUrl, setExistingLogoUrl] = useState<string | null>(null);
 
   const [editingLogoId, setEditingLogoId] = useState<string | null>(null);
   const [editDate, setEditDate] = useState("");
+  const [editingFullId, setEditingFullId] = useState<string | null>(null);
 
   const [cadastroOpen, setCadastroOpen] = useState(true);
   const [excluidasOpen, setExcluidasOpen] = useState(false);
   const [excluidasSearch, setExcluidasSearch] = useState("");
 
   const dragItem = useRef<Logo | null>(null);
+  const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
     if (user) loadData();
