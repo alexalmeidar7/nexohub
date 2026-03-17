@@ -108,22 +108,38 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
     return () => clearTimeout(t);
   }, [showFailureState]);
 
-  // Track time for native video
+  // Track time for native video + force audio
   useEffect(() => {
     if (!shouldUseNativeVideo) return;
     const video = prerollVideoRef.current;
     if (!video) return;
+
+    const enforceNativeAudio = () => {
+      video.defaultMuted = false;
+      video.muted = false;
+      if (video.volume === 0) video.volume = 1;
+    };
+
     const onTime = () => setCurrentTime(video.currentTime);
     const onDur = () => setDuration(video.duration || 0);
+    const onCanPlay = () => {
+      enforceNativeAudio();
+      video.play().catch(() => {});
+    };
+
+    enforceNativeAudio();
     video.addEventListener("timeupdate", onTime);
     video.addEventListener("loadedmetadata", onDur);
     video.addEventListener("durationchange", onDur);
+    video.addEventListener("canplay", onCanPlay);
+
     return () => {
       video.removeEventListener("timeupdate", onTime);
       video.removeEventListener("loadedmetadata", onDur);
       video.removeEventListener("durationchange", onDur);
+      video.removeEventListener("canplay", onCanPlay);
     };
-  }, [shouldUseNativeVideo, prerollVideoRef]);
+  }, [shouldUseNativeVideo, prerollVideoRef, prerollUrl]);
 
   // Track time for YouTube with stall/error detection
   useEffect(() => {
