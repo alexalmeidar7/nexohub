@@ -399,35 +399,6 @@ export default function PlayerPage() {
   const is991Channel = normalizeChannelNumber(canal?.numero_canal) === "991-1" || normalizeChannelNumber(canal?.numero_canal) === "991-2" || isCatalog;
 
   const handleHomeClick = useCallback(() => {
-    if (is991Channel && playing) {
-      setShowHomeConfirm(true);
-    } else {
-      setPageFadeOut(true);
-      setTimeout(() => navigate(playerHomePath), 400);
-    }
-  }, [is991Channel, playing, playerHomePath, navigate]);
-
-  const handleHomeConfirmYes = useCallback(() => {
-    setShowHomeConfirm(false);
-    if (canal) {
-      // IMPORTANT: unlock audio element synchronously in user gesture context
-      unlockAndPrepareMiniAudio(canal.url);
-      saveMiniPlayerData({
-        url: canal.url,
-        name: canal.name,
-        channelId: canal.id,
-        type: canal.type,
-        logoUrl: canal.logo_url || undefined,
-        musicTitle: musicData?.titulo || undefined,
-        musicArtist: musicData?.artista || undefined,
-      });
-    }
-    setPageFadeOut(true);
-    setTimeout(() => navigate(playerHomePath), 400);
-  }, [canal, musicData, playerHomePath, navigate]);
-
-  const handleHomeConfirmNo = useCallback(() => {
-    setShowHomeConfirm(false);
     clearMiniPlayerData();
     if (hlsRef.current) {
       hlsRef.current.destroy();
