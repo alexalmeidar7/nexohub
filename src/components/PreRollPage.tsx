@@ -129,7 +129,8 @@ export default function PreRollPage() {
   };
 
   const startEdit = (p: PreRoll) => {
-    setEditId(p.id); setMediaType((p.media_type as "video" | "youtube") || "video");
+    setEditId(p.id); setNome(p.nome || ""); setActiveField(p.active);
+    setMediaType((p.media_type as "video" | "youtube") || "video");
     setDiasSemana(p.dias_semana || []); setHorarioInicio(p.horario_inicio); setHorarioFim(p.horario_fim);
     setPriority(String(p.priority)); setLinkUrl(p.link_url || ""); setYoutubeUrl(p.youtube_url || "");
     setVideoPreview(p.media_type === "video" ? p.video_url : ""); setVideoFile(null);
