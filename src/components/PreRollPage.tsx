@@ -193,6 +193,24 @@ export default function PreRollPage() {
           </div>
 
           <div className="p-5 space-y-4">
+            {/* Nome */}
+            <div>
+              <label className="text-xs font-semibold block mb-1" style={{ color: "#0d0446" }}>Nome do Pré-Roll</label>
+              <input type="text" placeholder="Ex: Campanha Black Friday" value={nome} onChange={(e) => setNome(e.target.value)}
+                className="w-full px-4 py-1.5 text-sm outline-none transition-colors" style={inputStyle}
+                onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
+                onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
+              />
+            </div>
+
+            {/* Active checkbox */}
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" checked={activeField} onChange={(e) => setActiveField(e.target.checked)}
+                className="w-4 h-4 rounded" style={{ accentColor: "#0d0446" }} />
+              <span className="text-xs font-semibold" style={{ color: "#0d0446" }}>Ativo</span>
+              <span className="text-[10px]" style={{ color: "rgba(13,4,70,0.4)" }}>— Desmarque para salvar como inativo</span>
+            </label>
+
             {/* Media type */}
             <div>
               <label className="text-xs font-semibold block mb-2" style={{ color: "#0d0446" }}>Tipo de Mídia</label>
