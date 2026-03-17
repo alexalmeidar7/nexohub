@@ -268,6 +268,20 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
   const [noticiaAvulsaUrl, setNoticiaAvulsaUrl] = useState("");
   const [noticiasAvulsas, setNoticiasAvulsas] = useState<NewsItem[]>([]);
   const [loadingAvulsa, setLoadingAvulsa] = useState(false);
+  const [portalOrder, setPortalOrder] = useState<string[]>(() => DEFAULT_PORTALS.map(p => p.name));
+  const [reorderMode, setReorderMode] = useState(false);
+
+  const orderedPortals = portalOrder.map(name => DEFAULT_PORTALS.find(p => p.name === name)).filter(Boolean) as Portal[];
+
+  const movePortal = useCallback((index: number, direction: "up" | "down") => {
+    setPortalOrder(prev => {
+      const arr = [...prev];
+      const target = direction === "up" ? index - 1 : index + 1;
+      if (target < 0 || target >= arr.length) return prev;
+      [arr[index], arr[target]] = [arr[target], arr[index]];
+      return arr;
+    });
+  }, []);
   const [collapsedBoxes, setCollapsedBoxes] = useState<Record<string, boolean>>({});
   const [readingPopup, setReadingPopup] = useState<NewsItem | null>(null);
   const [loadingReading, setLoadingReading] = useState(false);
