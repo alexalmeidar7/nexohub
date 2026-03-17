@@ -105,6 +105,9 @@ export default function AgendaPage() {
   ]);
 
   const [loadingData, setLoadingData] = useState(true);
+  const [googleConnected, setGoogleConnected] = useState(false);
+  const [googleEvents, setGoogleEvents] = useState<GoogleCalendarEvent[]>([]);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const estudios = Array.from(new Set(programas.map(p => p.estudio).filter(Boolean)));
 
   const fetchProgramas = useCallback(async () => {
