@@ -1514,12 +1514,17 @@ export default function PlayerPage() {
 
   useEffect(() => {
     if (!isYoutube || !selectedVideoId) return;
-    const timer = setTimeout(() => {
+    // Unmute shortly after embed starts (it starts muted for autoplay compliance)
+    const unmuteTimer = setTimeout(() => {
+      ytPostMessage("unMute");
+      ytPostMessage("setVolume", [volume]);
+    }, 800);
+    const syncTimer = setTimeout(() => {
       ytPostMessage("setVolume", [volume]);
       if (muted) ytPostMessage("mute");
       else ytPostMessage("unMute");
     }, 1500);
-    return () => clearTimeout(timer);
+    return () => { clearTimeout(unmuteTimer); clearTimeout(syncTimer); };
   }, [volume, muted, isYoutube, selectedVideoId, ytPostMessage]);
 
   // Listen for YouTube player state messages to track currentTime/duration
