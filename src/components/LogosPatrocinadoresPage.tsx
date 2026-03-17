@@ -500,21 +500,13 @@ export default function LogosPatrocinadoresPage() {
                               <span className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full ${diasRestantes <= 7 ? "bg-red-100 text-red-600" : "bg-green-100 text-green-700"}`}>
                                 {diasRestantes > 0 ? `${diasRestantes}d restantes` : "Expirando"}
                               </span>
-                              {isEditing ? (
-                                <div className="flex items-center gap-1">
-                                  <input type="date" value={editDate} onChange={(e) => setEditDate(e.target.value)} className="h-7 text-[10px] px-1 rounded" style={{ border: "1px solid #0d0446", color: "#0d0446" }} />
-                                  <button onClick={saveEditDate} style={{ color: "#22c55e" }}><Check size={14} /></button>
-                                  <button onClick={() => setEditingLogoId(null)} style={{ color: "#dc2626" }}><X size={14} /></button>
-                                </div>
-                              ) : (
-                                <button onClick={() => startEditDate(logo)} className="text-[10px] flex items-center gap-1 mx-auto transition-colors"
-                                  style={{ color: "rgba(13,4,70,0.4)" }}
-                                  onMouseEnter={e => { e.currentTarget.style.color = "#2dbef3"; }}
-                                  onMouseLeave={e => { e.currentTarget.style.color = "rgba(13,4,70,0.4)"; }}
-                                >
-                                  <Pencil size={10} /> Editar validade
-                                </button>
-                              )}
+                              <button onClick={() => startFullEdit(logo)} className="text-[10px] flex items-center gap-1 mx-auto transition-colors"
+                                style={{ color: "rgba(13,4,70,0.4)" }}
+                                onMouseEnter={e => { e.currentTarget.style.color = "#2dbef3"; }}
+                                onMouseLeave={e => { e.currentTarget.style.color = "rgba(13,4,70,0.4)"; }}
+                              >
+                                <Pencil size={10} /> Editar
+                              </button>
                             </div>
                           </CarouselItem>
                         );
