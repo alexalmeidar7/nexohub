@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Loader2, Trash2, Plus, Pencil, Check, X, Upload, ChevronDown, RotateCcw } from "lucide-react";
+import { Loader2, Trash2, Plus, Pencil, Check, X, Upload, ChevronDown, RotateCcw, Search } from "lucide-react";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import { useToast } from "@/hooks/use-toast";
 import { compressImage } from "@/lib/imageCompressor";
@@ -49,6 +49,7 @@ export default function LogosPatrocinadoresPage() {
 
   const [cadastroOpen, setCadastroOpen] = useState(true);
   const [excluidasOpen, setExcluidasOpen] = useState(false);
+  const [excluidasSearch, setExcluidasSearch] = useState("");
 
   const dragItem = useRef<Logo | null>(null);
 
@@ -335,20 +336,47 @@ export default function LogosPatrocinadoresPage() {
                     <span className="text-[10px] font-normal bg-white/20 px-2 py-0.5 rounded-full">{excludedLogos.length}</span>
                   )}
                 </h3>
-                <ChevronDown size={16} className={`text-white transition-transform duration-200 ${excluidasOpen ? "rotate-180" : ""}`} />
+                <div className="flex items-center gap-2">
+                  {excluidasOpen && (
+                    <div onClick={(e) => e.stopPropagation()}>
+                      <div className="relative">
+                        <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-white/50" />
+                        <input
+                          type="text"
+                          value={excluidasSearch}
+                          onChange={(e) => setExcluidasSearch(e.target.value)}
+                          placeholder="Buscar logo..."
+                          className="pl-7 pr-3 py-1 text-[11px] rounded-full outline-none w-40"
+                          style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "#ffffff", border: "1px solid rgba(255,255,255,0.25)" }}
+                          onFocus={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.5)"; }}
+                          onBlur={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.25)"; }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                  <ChevronDown size={16} className={`text-white transition-transform duration-200 ${excluidasOpen ? "rotate-180" : ""}`} />
+                </div>
               </button>
             </CollapsibleTrigger>
             <CollapsibleContent>
-              {excludedLogos.length === 0 ? (
-                <p className="text-sm py-8 text-center" style={{ color: "rgba(13,4,70,0.4)" }}>Nenhuma logo excluída.</p>
-              ) : (
+              {(() => {
+                const filtered = excludedLogos.filter((l) => {
+                  if (!excluidasSearch) return true;
+                  const q = excluidasSearch.toLowerCase();
+                  return (l.nome || "").toLowerCase().includes(q);
+                });
+                return filtered.length === 0 ? (
+                  <p className="text-sm py-8 text-center" style={{ color: "rgba(13,4,70,0.4)" }}>
+                    {excludedLogos.length === 0 ? "Nenhuma logo excluída." : "Nenhuma logo encontrada."}
+                  </p>
+                ) : (
                 <div className="p-4">
                   <p className="text-[10px] mb-3" style={{ color: "rgba(13,4,70,0.5)" }}>
                     Arraste uma logo para um programa para restaurá-la, ou clique no botão de restaurar.
                     <br />Logos excluídas são mantidas por até 180 dias.
                   </p>
                   <div className="flex flex-wrap gap-3">
-                    {excludedLogos.map((logo) => {
+                    {filtered.map((logo) => {
                       const diasRestantes = logo.excluido_at ? Math.max(0, 180 - Math.ceil((Date.now() - new Date(logo.excluido_at).getTime()) / 86400000)) : 0;
                       return (
                         <div key={logo.id} className="w-24 space-y-1 text-center opacity-70 hover:opacity-100 transition-opacity cursor-grab"
@@ -375,7 +403,8 @@ export default function LogosPatrocinadoresPage() {
                     })}
                   </div>
                 </div>
-              )}
+                );
+              })()}
             </CollapsibleContent>
           </div>
         </Collapsible>
