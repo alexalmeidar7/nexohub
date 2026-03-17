@@ -264,7 +264,7 @@ export default function PreRollOverlay({ prerollUrl, prerollVideoRef, prerollLin
 
   return (
     <div
-      className="absolute inset-0 z-[35] flex items-center justify-center p-8"
+      className="absolute inset-0 z-[70] flex items-center justify-center p-8"
       style={{
         background: "linear-gradient(to bottom right, hsl(0 100% 50%), hsl(0 0% 0%) 40%)",
       }}
