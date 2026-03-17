@@ -136,6 +136,44 @@ const matchesCampaignDay = (diasSemana: string[] | null | undefined, now: Date) 
 
 const normalizeChannelNumber = (num?: string | null) => (num || "").replace(/\s+/g, "").toLowerCase();
 
+const YOUTUBE_VIDEO_ID_RE = /^[a-zA-Z0-9_-]{11}$/;
+
+const normalizeYoutubeVideoId = (value?: string | null) => {
+  const raw = (value || "").trim();
+  if (!raw) return null;
+  if (YOUTUBE_VIDEO_ID_RE.test(raw)) return raw;
+  const match = raw.match(/[a-zA-Z0-9_-]{11}/);
+  return match?.[0] || null;
+};
+
+const extractYoutubeVideoId = (input?: string | null) => {
+  const raw = (input || "").trim();
+  if (!raw) return null;
+  const direct = normalizeYoutubeVideoId(raw);
+  if (direct) return direct;
+
+  try {
+    const parsed = new URL(raw);
+    const host = parsed.hostname.replace(/^www\./, "").toLowerCase();
+    const byQuery = normalizeYoutubeVideoId(parsed.searchParams.get("v"));
+    if (byQuery) return byQuery;
+
+    if (host === "youtu.be") {
+      return normalizeYoutubeVideoId(parsed.pathname.split("/").filter(Boolean)[0] || "");
+    }
+
+    const parts = parsed.pathname.split("/").filter(Boolean);
+    const markerIdx = parts.findIndex((p) => ["embed", "shorts", "live", "v"].includes(p));
+    if (markerIdx >= 0) {
+      return normalizeYoutubeVideoId(parts[markerIdx + 1] || "");
+    }
+  } catch {
+    // ignore and fallback below
+  }
+
+  return normalizeYoutubeVideoId(raw);
+};
+
 function getCurrentProgram(programas: Programa[]): Programa | null {
   const now = new Date();
   const todayShort = DAY_MAP_SHORT[now.getDay()];
@@ -800,43 +838,61 @@ export default function PlayerPage() {
 
   // Fetch YouTube playlist videos OR handle individual video URLs
   useEffect(() => {
-    if (!isYoutube || !canal?.url) { setYoutubeVideos([]); setSelectedVideoId(null); return; }
-    const plMatch = canal.url.match(/[?&]list=([a-zA-Z0-9_-]+)/);
-    if (plMatch) {
-      // Playlist mode
-      supabase.functions.invoke("youtube-playlist", { body: { playlistId: plMatch[1] } }).then(({ data }) => {
-        if (data?.videos) {
-          const sorted = [...data.videos].sort((a: any, b: any) => {
+    if (!isYoutube || !canal?.url) {
+      setYoutubeVideos([]);
+      setSelectedVideoId(null);
+      return;
+    }
+
+    const playlistId = canal.url.match(/[?&]list=([a-zA-Z0-9_-]+)/)?.[1] || null;
+
+    if (playlistId) {
+      supabase.functions.invoke("youtube-playlist", { body: { playlistId } }).then(({ data }) => {
+        if (!data?.videos) return;
+
+        const sorted = [...data.videos]
+          .map((video: any) => ({
+            ...video,
+            videoId: normalizeYoutubeVideoId(video.videoId),
+          }))
+          .filter((video: any) => !!video.videoId)
+          .sort((a: any, b: any) => {
             if (a.published && b.published) return new Date(b.published).getTime() - new Date(a.published).getTime();
             return 0;
           });
-          setYoutubeVideos(sorted);
-          // Auto-select video from ?vid= param (catalog deep link)
-          if (requestedVideoId && data.videos.some((v: any) => v.videoId === requestedVideoId)) {
-            setSelectedVideoId(requestedVideoId);
-            setPlaying(true);
-            setBuffering(false);
-            setYtPlaying(true);
-          }
+
+        setYoutubeVideos(sorted as YoutubeVideo[]);
+
+        const requestedId = normalizeYoutubeVideoId(requestedVideoId);
+        if (requestedId && sorted.some((v: any) => v.videoId === requestedId)) {
+          setSelectedVideoId(requestedId);
+          setPlaying(true);
+          setBuffering(false);
+          setYtPlaying(true);
         }
       });
-    } else {
-      // Individual video mode — extract video ID from watch?v= URL
-      const vidMatch = canal.url.match(/[?&]v=([a-zA-Z0-9_-]+)/);
-      if (vidMatch) {
-        const videoId = vidMatch[1];
-        setYoutubeVideos([{
-          videoId,
-          title: canal.name || "Vídeo",
-          thumbnail: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
-        }]);
-        setSelectedVideoId(videoId);
-        setPlaying(true);
-        setBuffering(false);
-        setYtPlaying(true);
-      }
+      return;
     }
-  }, [canal?.url, isYoutube]);
+
+    const videoId = extractYoutubeVideoId(canal.url);
+    if (!videoId) {
+      setYoutubeVideos([]);
+      setSelectedVideoId(null);
+      return;
+    }
+
+    setYoutubeVideos([
+      {
+        videoId,
+        title: canal.name || "Vídeo",
+        thumbnail: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
+      },
+    ]);
+    setSelectedVideoId(videoId);
+    setPlaying(true);
+    setBuffering(false);
+    setYtPlaying(true);
+  }, [canal?.url, isYoutube, requestedVideoId]);
 
   // Sync music data directly from XML
   const coverCacheRef = useRef<Record<string, string>>({});
@@ -1469,7 +1525,9 @@ export default function PlayerPage() {
   }, [navigateChannel, volume, handleVolumeChangeWithOsd, toggleMuteWithOsd, handlePlayCanal]);
 
   const handleSelectVideo = useCallback((videoId: string) => {
-    setSelectedVideoId(videoId);
+    const normalizedId = normalizeYoutubeVideoId(videoId);
+    if (!normalizedId) return;
+    setSelectedVideoId(normalizedId);
     setPlaying(true);
     setBuffering(false);
     setSidebarOpen(false);
@@ -1888,7 +1946,7 @@ export default function PlayerPage() {
             ref={ytIframeRef}
             className="absolute pointer-events-none"
             style={{ width: "100%", height: "100%", top: "0", left: "0", border: "none" }}
-            src={`https://www.youtube.com/embed/${selectedVideoId}?autoplay=1&mute=0&controls=0&loop=1&playlist=${selectedVideoId}&showinfo=0&rel=0&modestbranding=1&enablejsapi=1&vq=hd1080&origin=${window.location.origin}`}
+            src={`https://www.youtube.com/embed/${selectedVideoId}?autoplay=1&mute=0&controls=0&showinfo=0&rel=0&modestbranding=1&enablejsapi=1&playsinline=1&iv_load_policy=3&disablekb=1&vq=hd1080&origin=${window.location.origin}`}
             allow="autoplay; encrypted-media"
           />
           {/* Transparent overlay to block YouTube controls on pause */}
