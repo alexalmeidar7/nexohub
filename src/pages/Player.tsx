@@ -1039,19 +1039,23 @@ export default function PlayerPage() {
             capLevelToPlayerSize: false,
             startLevel: -1,
             autoStartLoad: true,
-            maxBufferLength: 20,
-            maxMaxBufferLength: 40,
-            maxBufferSize: 30 * 1000 * 1000,
+            maxBufferLength: 40,
+            maxMaxBufferLength: 90,
+            maxBufferSize: 60 * 1000 * 1000,
             maxBufferHole: 0.5,
+            liveSyncDurationCount: 3,
+            liveMaxLatencyDurationCount: 8,
+            liveDurationInfinity: true,
+            liveBackBufferLength: 30,
             abrEwmaDefaultEstimate: 3000000,
             abrBandWidthUpFactor: 0.7,
             abrBandWidthFactor: 0.95,
-            fragLoadingMaxRetry: 6,
-            fragLoadingMaxRetryTimeout: 10000,
-            fragLoadingRetryDelay: 1000,
-            manifestLoadingMaxRetry: 4,
-            levelLoadingMaxRetry: 4,
-            backBufferLength: 15,
+            fragLoadingMaxRetry: 10,
+            fragLoadingMaxRetryTimeout: 20000,
+            fragLoadingRetryDelay: 500,
+            manifestLoadingMaxRetry: 6,
+            levelLoadingMaxRetry: 6,
+            backBufferLength: 30,
             appendErrorMaxRetry: 5,
             xhrSetup: (xhr: XMLHttpRequest) => {
               xhr.withCredentials = false;
@@ -1068,39 +1072,55 @@ export default function PlayerPage() {
                 index: i,
               }));
               setHlsLevels(levels);
+              // Let ABR pick the best level based on actual bandwidth
               setHlsCurrentLevel(-1);
-              if (data.levels.length > 1) {
-                hls.currentLevel = data.levels.length - 1;
-                setHlsCurrentLevel(data.levels.length - 1);
-              }
             }
             video.play().then(() => setBuffering(false)).catch(() => {});
           });
           hls.on(Hls.Events.FRAG_BUFFERED, () => setBuffering(false));
           let mediaErrorRecoveries = 0;
+          let networkRetries = 0;
           hls.on(Hls.Events.ERROR, (_event, data) => {
-            if (data.fatal) {
-              console.warn("HLS fatal error:", data.type, data.details);
-              if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
-                hls.startLoad();
-              } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
-                mediaErrorRecoveries++;
-                if (mediaErrorRecoveries <= 2) {
-                  hls.recoverMediaError();
-                } else {
-                  // Too many media errors — full restart
-                  console.warn("Too many media errors, restarting HLS");
-                  hls.destroy();
-                  hlsRef.current = null;
-                  setTimeout(() => {
-                    playStream(url, type);
-                  }, 2000);
+            if (!data.fatal) {
+              // Non-fatal: nudge player forward if stuck behind live edge
+              if (data.details === "bufferStalledError" && video.readyState >= 2) {
+                const buffered = video.buffered;
+                if (buffered.length > 0) {
+                  const end = buffered.end(buffered.length - 1);
+                  if (end - video.currentTime > 2) {
+                    console.log("Nudging video to buffered edge", { from: video.currentTime, to: end - 0.5 });
+                    video.currentTime = end - 0.5;
+                  }
                 }
+              }
+              return;
+            }
+            console.warn("HLS fatal error:", data.type, data.details);
+            if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+              networkRetries++;
+              if (networkRetries <= 5) {
+                console.log("HLS network recovery attempt", networkRetries);
+                hls.startLoad();
               } else {
+                console.warn("Too many network errors, full restart");
                 hls.destroy();
                 hlsRef.current = null;
-                setStreamStalled(true);
+                setTimeout(() => playStream(url, type), 1500);
               }
+            } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+              mediaErrorRecoveries++;
+              if (mediaErrorRecoveries <= 3) {
+                hls.recoverMediaError();
+              } else {
+                console.warn("Too many media errors, restarting HLS");
+                hls.destroy();
+                hlsRef.current = null;
+                setTimeout(() => playStream(url, type), 1500);
+              }
+            } else {
+              hls.destroy();
+              hlsRef.current = null;
+              setStreamStalled(true);
             }
           });
         } else {
@@ -1126,7 +1146,7 @@ export default function PlayerPage() {
     if (!mediaEl) return;
 
     let reconnectAttempts = 0;
-    const maxReconnects = 5;
+    const maxReconnects = 8;
     let lastTimeUpdate = Date.now();
 
     const tryReconnect = () => {
@@ -1134,9 +1154,11 @@ export default function PlayerPage() {
       reconnectAttempts++;
       setStreamStalled(true);
       streamStalledRef.current = true;
+      // Faster initial retry (1.5s), then scale up more gently
+      const delay = Math.min(1500 * reconnectAttempts, 8000);
       setTimeout(() => {
         if (canal) playStream(canal.url, canal.type);
-      }, 3000 * reconnectAttempts);
+      }, delay);
     };
 
     const onTimeUpdate = () => {
