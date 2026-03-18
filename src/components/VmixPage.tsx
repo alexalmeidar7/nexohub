@@ -1119,7 +1119,7 @@ export default function VmixPage() {
                       style={{ backgroundColor: headerBg }}
                       onContextMenu={e => { e.preventDefault(); setMinimizedInputs(prev => ({ ...prev, [input.number]: false })); }}
                     >
-                      <span className="text-[8px] font-bold" style={{ color: isActive ? "#ff6b6b" : isPreview ? "#6be68c" : "#999" }}>{input.number}</span>
+                      <span className="text-[8px] font-bold" style={{ color: isActive ? "#ff6b6b" : isPreview ? "#ccc" : "#777" }}>{input.number}</span>
                     </div>
                     <div className="flex-1 flex items-center justify-center" style={{ writingMode: "vertical-rl", textOrientation: "mixed" }}>
                       <span className="text-[8px] font-bold text-white/50 truncate" style={{ maxHeight: 90 }}>{input.title}</span>
