@@ -595,6 +595,33 @@ export type Database = {
         }
         Relationships: []
       }
+      preset_commands: {
+        Row: {
+          commands: Json
+          created_at: string
+          id: string
+          programa_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          commands?: Json
+          created_at?: string
+          id?: string
+          programa_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          commands?: Json
+          created_at?: string
+          id?: string
+          programa_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null

@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import logoMixControl from "@/assets/logo-mixcontrol.png";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
+import PresetCommandEditor from "./PresetCommandEditor";
 
 interface VmixInput {
   key: string;
@@ -146,6 +147,7 @@ export default function VmixPage() {
   });
   const [capturingShortcut, setCapturingShortcut] = useState<string | null>(null);
    const [activePreset, setActivePreset] = useState<string | null>(null);
+  const [editingPresetId, setEditingPresetId] = useState<string | null>(null);
   const [connectionMode, setConnectionMode] = useState<"direct" | "proxy">(() => {
     try { return (localStorage.getItem("vmix_conn_mode") as "direct" | "proxy") || "direct"; }
     catch { return "direct"; }
@@ -2000,10 +2002,26 @@ export default function VmixPage() {
                             backgroundColor: isActive ? "#dc2626" : "#2a2a30",
                             border: isActive ? "2px solid #ef4444" : progOnAir ? "2px solid #22c55e" : "2px solid #333338",
                           }}
-                          onClick={() => {
+                          onClick={async () => {
                             setActivePreset(prog.id);
-                            sendCommand("ScriptStart", prog.nome);
-                            toast({ title: `Preset: ${prog.nome}`, description: "Comando enviado ao vMix." });
+                            // Try to run saved preset commands first
+                            const { data: presetData } = await (supabase.from("preset_commands" as any) as any)
+                              .select("commands")
+                              .eq("user_id", user?.id)
+                              .eq("programa_id", prog.id)
+                              .maybeSingle();
+                            if (presetData?.commands && Array.isArray(presetData.commands) && presetData.commands.length > 0) {
+                              for (const cmd of presetData.commands as any[]) {
+                                let value = cmd.value;
+                                if (cmd.extraValue) value = value ? `${value},${cmd.extraValue}` : cmd.extraValue;
+                                await sendCommand(cmd.fn, cmd.input, value);
+                                await new Promise(r => setTimeout(r, 400));
+                              }
+                              toast({ title: `Preset: ${prog.nome}`, description: `${presetData.commands.length} ação(ões) executada(s).` });
+                            } else {
+                              sendCommand("ScriptStart", prog.nome);
+                              toast({ title: `Preset: ${prog.nome}`, description: "Comando enviado ao vMix." });
+                            }
                           }}
                         >
                           {/* Schedule badge */}
@@ -2043,10 +2061,10 @@ export default function VmixPage() {
                               >▶</button>
                             )}
                             <button
-                              onClick={(e) => { e.stopPropagation(); toast({ title: `Editar: ${prog.nome}`, description: "Abra o painel principal para editar este programa." }); }}
+                              onClick={(e) => { e.stopPropagation(); setEditingPresetId(prog.id); }}
                               className="w-5 h-5 rounded flex items-center justify-center hover:bg-white/20 transition-colors"
                               style={{ color: "#ccc" }}
-                              title="Editar"
+                              title="Editar ações"
                             ><Wand2 size={10} /></button>
                             <button
                               onClick={(e) => { e.stopPropagation(); setProgramas(prev => prev.filter(p => p.id !== prog.id)); }}
@@ -2261,6 +2279,31 @@ export default function VmixPage() {
           </>
         )}
       </div>
+      {/* Preset Command Editor */}
+      {editingPresetId && (() => {
+        const prog = programas.find(p => p.id === editingPresetId);
+        if (!prog || !user) return null;
+        return (
+          <PresetCommandEditor
+            open={true}
+            onClose={() => setEditingPresetId(null)}
+            programaId={prog.id}
+            programaNome={prog.nome}
+            programaHorario={`${prog.horario_inicio?.slice(0,5) || ""} – ${prog.horario_fim?.slice(0,5) || ""}`}
+            userId={user.id}
+            inputs={inputs}
+            onRunCommands={async (cmds) => {
+              for (const cmd of cmds) {
+                let value = cmd.value;
+                if (cmd.extraValue) value = value ? `${value},${cmd.extraValue}` : cmd.extraValue;
+                await sendCommand(cmd.fn, cmd.input, value);
+                await new Promise(r => setTimeout(r, 400));
+              }
+              toast({ title: "Teste concluído", description: `${cmds.length} ação(ões) executada(s).` });
+            }}
+          />
+        );
+      })()}
     </div>
   );
 }
