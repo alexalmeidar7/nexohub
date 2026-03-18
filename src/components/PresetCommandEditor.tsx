@@ -153,15 +153,39 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
   };
 
   const generateScript = () => {
-    return commands.map(cmd => {
+    return commands.map((cmd, i) => {
       const inputLabel = cmd.input || "";
-      let line = cmd.fn === commands[0]?.fn && commands.indexOf(cmd) === 0
-        ? `${cmd.fn}(${inputLabel}` : `*${cmd.fn}(${inputLabel}`;
+      let line = i === 0 ? `${cmd.fn}(${inputLabel}` : `*${cmd.fn}(${inputLabel}`;
       if (cmd.value) line += `, ${cmd.value}`;
       if (cmd.extraValue) line += `, ${cmd.extraValue}`;
       line += ")";
       return line;
     }).join("\n");
+  };
+
+  const parseScript = (script: string) => {
+    const lines = script.split("\n").map(l => l.trim()).filter(Boolean);
+    const parsed: PresetCommand[] = [];
+    for (const line of lines) {
+      const clean = line.replace(/^\*/, "");
+      const match = clean.match(/^(\w+)\(([^)]*)\)$/);
+      if (!match) continue;
+      const fn = match[1];
+      const def = getCommandDef(fn);
+      if (!def) continue;
+      const args = match[2].split(",").map(a => a.trim());
+      const cmd: PresetCommand = { id: crypto.randomUUID(), fn };
+      if (def.params.includes("input") && args[0]) cmd.input = args[0];
+      if (def.params.includes("value") && args[1]) cmd.value = args[1];
+      if (def.params.includes("extra") && args[2]) cmd.extraValue = args[2];
+      parsed.push(cmd);
+    }
+    if (parsed.length > 0) {
+      setCommands(parsed);
+      toast({ title: "Script importado", description: `${parsed.length} comando(s) importados.` });
+    } else {
+      toast({ title: "Erro ao importar", description: "Nenhum comando válido encontrado no script.", variant: "destructive" });
+    }
   };
 
   if (!open) return null;
