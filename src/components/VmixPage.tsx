@@ -1182,15 +1182,29 @@ export default function VmixPage() {
       <div className="flex items-stretch gap-[1px] rounded-xl overflow-hidden" style={{ backgroundColor: "#111114", boxShadow: "0 4px 20px #00000060" }}>
         {/* Preview */}
         <div className="relative flex-1 flex flex-col" style={{ backgroundColor: "#18181c", minHeight: 200 }}>
-          <div className="flex items-center gap-2 px-3 py-2" style={{ borderBottom: "1px solid #ffffff06", backgroundColor: "#ffffff04" }}>
+           <div className="flex items-center gap-2 px-3 py-2" style={{ borderBottom: "1px solid #ffffff06", backgroundColor: "#ffffff04" }}>
             <span className="text-[9px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-sm" style={{ backgroundColor: "#555", color: "#fff", letterSpacing: "0.15em" }}>Preview</span>
             {renderInputSelect(previewInput, (val) => {
               sendCommand("PreviewInput", val);
               setPreviewInput(val);
             })}
+            <button
+              onClick={() => setUseIframeMonitor(prev => !prev)}
+              className="ml-auto text-[8px] px-1.5 py-0.5 rounded transition-all"
+              style={{
+                backgroundColor: useIframeMonitor ? "#22c55e20" : "#ffffff08",
+                color: useIframeMonitor ? "#22c55e" : "#666",
+                border: `1px solid ${useIframeMonitor ? "#22c55e40" : "#ffffff10"}`,
+              }}
+              title={useIframeMonitor ? "Desativar iframe do vMix Web Controller" : "Ativar iframe do vMix Web Controller (vídeo ao vivo)"}
+            >
+              {useIframeMonitor ? "🔴 LIVE" : "⬛ IFRAME"}
+            </button>
           </div>
           <div className="flex-1 flex items-center justify-center overflow-hidden" style={{ aspectRatio: "16/9" }}>
-            {previewInput && savedUrl ? (
+            {useIframeMonitor && savedUrl ? (
+              <VmixIframe className="w-full h-full" />
+            ) : previewInput && savedUrl ? (
               <ThumbnailImg inputNumber={previewInput} width={640} height={360} className="w-full h-full object-contain" alt="Preview" />
             ) : (
               <div className="w-full h-full relative flex flex-col">
