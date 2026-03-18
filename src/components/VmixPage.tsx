@@ -197,7 +197,13 @@ export default function VmixPage() {
     localStorage.setItem(`vmix_url_${user.id}`, trimmed);
 
     // Auto-detect best mode
-    if (isPrivateIp(trimmed) && connectionMode === "proxy") {
+    if (isPrivateIp(trimmed) && window.isSecureContext) {
+      // On HTTPS, direct HTTP to local IP is blocked — prefer proxy
+      if (connectionMode === "direct") {
+        setConnectionMode("proxy");
+        toast({ title: "Modo alterado para Proxy", description: "IP local em HTTPS: modo Proxy é mais compatível." });
+      }
+    } else if (isPrivateIp(trimmed) && connectionMode === "proxy") {
       setConnectionMode("direct");
       toast({ title: "Modo alterado para Direto", description: "IP local detectado. Usando conexão direta do navegador." });
     } else if (!isPrivateIp(trimmed) && connectionMode === "direct") {
@@ -301,11 +307,8 @@ export default function VmixPage() {
       }
     }
 
-    // Test Proxy (only for non-local IPs)
-    if (isLocal) {
-      result.proxyResult = "skipped";
-      result.proxyError = "IP local — proxy na nuvem não alcança";
-    } else {
+    // Test Proxy
+    {
       try {
         const text = await vmixProxyFetch("/api/");
         result.proxyResult = text.includes("<vmix>") || text.includes("<inputs>") || text.includes("version") ? "ok" : "fail";
@@ -350,17 +353,7 @@ export default function VmixPage() {
   const connectToVmix = useCallback(async () => {
     if (!savedUrl) return;
 
-    const isLocalUrl = isPrivateIp(savedUrl);
-    const effectiveMode: "direct" | "proxy" =
-      connectionMode === "proxy" && isLocalUrl ? "direct" : connectionMode;
-
-    if (connectionMode === "proxy" && isLocalUrl) {
-      setConnectionMode("direct");
-      toast({
-        title: "IP local detectado",
-        description: "Mudamos para 'Direto' automaticamente para testar conexão na rede local.",
-      });
-    }
+    const effectiveMode = connectionMode;
 
     setConnecting(true);
     try {
@@ -400,16 +393,15 @@ export default function VmixPage() {
     } catch (err) {
       setConnected(false);
       const message = err instanceof Error ? err.message : "Verifique se o vMix Web Controller está ativo.";
+      const isLocal = isPrivateIp(savedUrl);
       const isMixedOrCorsLikely =
         effectiveMode === "direct" &&
-        isLocalUrl &&
+        isLocal &&
         /failed to fetch|networkerror|mixed content|cors/i.test(message);
 
-      const hint = effectiveMode === "proxy" && isLocalUrl
-        ? " IP local detectado — troque para o modo 'Direto'."
-        : isMixedOrCorsLikely
-        ? " No modo Direto (rede local), permita 'Conteúdo inseguro' para este site no navegador e tente novamente."
-        : effectiveMode === "direct" && !isLocalUrl
+      const hint = isMixedOrCorsLikely
+        ? " No modo Direto (rede local), permita 'Conteúdo inseguro' para este site no navegador, ou tente o modo 'Proxy'."
+        : effectiveMode === "direct" && !isLocal
         ? " IP público detectado — tente o modo 'Proxy'."
         : "";
 
