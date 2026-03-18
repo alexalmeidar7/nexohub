@@ -1288,7 +1288,7 @@ export default function VmixPage() {
                           <button
                             onClick={(e) => { e.stopPropagation(); toast({ title: `Editar: ${prog.nome}`, description: "Abra o painel principal para editar este programa." }); }}
                             className="w-4 h-4 rounded-full flex items-center justify-center"
-                            style={{ backgroundColor: "#268ffa", color: "#fff" }}
+                            style={{ backgroundColor: "#555", color: "#fff" }}
                             title="Editar"
                           ><Wand2 size={8} /></button>
                           <button
