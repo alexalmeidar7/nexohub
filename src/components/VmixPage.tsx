@@ -569,6 +569,17 @@ export default function VmixPage() {
     toast({ title: "Cena executada", description: `"${scene.name}" concluída.` });
   };
 
+  // Extract machine names from existing NDI inputs to suggest common sources
+  const detectedMachines = useMemo(() => {
+    const machines = new Set<string>();
+    ndiInputs.forEach(inp => {
+      // NDI titles are like "NDI DESKTOP-HL0UDPD (vMix - Output 1)"
+      const match = inp.title.match(/^(?:NDI\s+)?([A-Z0-9_-]+)\s*\(/i);
+      if (match) machines.add(match[1]);
+    });
+    return Array.from(machines);
+  }, [ndiInputs]);
+
   const scanNdiSources = useCallback(async () => {
     if (!savedUrl || !connected) {
       setNdiSources([]);
@@ -576,34 +587,47 @@ export default function VmixPage() {
     }
     setNdiScanning(true);
     try {
-      const xmlText = await vmixFetch("/api/");
-      const parser = new DOMParser();
-      const xml = parser.parseFromString(xmlText, "text/xml");
-      // vMix exposes NDI sources in the XML under <ndisources> or we parse from available inputs
-      const ndiSourceEls = xml.querySelectorAll("ndisource");
-      const sources: string[] = [];
-      ndiSourceEls.forEach(el => {
-        const name = el.textContent?.trim();
-        if (name) sources.push(name);
+      // Refresh inputs first
+      await connectToVmix();
+
+      // vMix HTTP API does NOT expose NDI discovery (it uses mDNS).
+      // Instead, we suggest common NDI source names based on detected machine names.
+      const machines = new Set<string>();
+      inputs.forEach(inp => {
+        if (inp.type === "NDI" || inp.title.toLowerCase().includes("ndi")) {
+          const match = inp.title.match(/^(?:NDI\s+)?([A-Z0-9_-]+)\s*\(/i);
+          if (match) machines.add(match[1]);
+        }
       });
-      // Also try to find NDI sources from the XML root element attributes or child elements
-      if (sources.length === 0) {
-        // Fallback: try fetching NDI sources list via vMix function
-        try {
-          const ndiXml = await vmixFetch("/api/?Function=NDISources");
-          // Parse response for any source names
-          const ndiDoc = new DOMParser().parseFromString(ndiXml, "text/xml");
-          ndiDoc.querySelectorAll("source, ndisource, item").forEach(el => {
-            const name = el.textContent?.trim() || el.getAttribute("name")?.trim();
-            if (name) sources.push(name);
-          });
-        } catch { /* NDISources endpoint may not exist */ }
+
+      const suggestions: string[] = [];
+      const machineList = Array.from(machines);
+
+      if (machineList.length > 0) {
+        for (const machine of machineList) {
+          // Common vMix NDI outputs
+          suggestions.push(
+            `${machine} (vMix - Output 1)`,
+            `${machine} (vMix - Output 2)`,
+            `${machine} (vMix - Output 3)`,
+            `${machine} (vMix - Output 4)`,
+            `${machine} (vMix Video)`,
+            `${machine} (vMix Audio - Master)`,
+            `${machine} (vMix Audio - Headphones)`,
+          );
+          // Common GPU capture sources
+          suggestions.push(
+            `${machine} (Radeon RX 460 Series 1)`,
+            `${machine} (Radeon RX 460 Series 2)`,
+          );
+        }
       }
-      setNdiSources(sources);
-      if (sources.length === 0) {
-        toast({ title: "Busca NDI", description: "Nenhuma fonte NDI encontrada na rede. Verifique se o NDI Tools está ativo." });
+
+      setNdiSources(suggestions);
+      if (suggestions.length === 0) {
+        toast({ title: "Busca NDI", description: "Nenhum input NDI no vMix para detectar máquinas. Adicione manualmente." });
       } else {
-        toast({ title: "Fontes NDI encontradas", description: `${sources.length} fonte(s) detectada(s).` });
+        toast({ title: `${machineList.length} máquina(s) detectada(s)`, description: `${suggestions.length} fontes NDI sugeridas com base nos inputs existentes.` });
       }
     } catch {
       setNdiSources([]);
@@ -611,7 +635,7 @@ export default function VmixPage() {
     } finally {
       setNdiScanning(false);
     }
-  }, [savedUrl, connected, vmixFetch, toast]);
+  }, [savedUrl, connected, inputs, connectToVmix, toast]);
 
   // Auto-scan NDI when entering the NDI tab
   useEffect(() => {
