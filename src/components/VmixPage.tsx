@@ -863,9 +863,9 @@ export default function VmixPage() {
   ];
 
   return (
-    <div className="space-y-0 max-w-full" style={{ color: "#e0e0e0" }}>
-      {/* ── IP bar + action buttons ── */}
-      <div className="flex items-center gap-3 py-3 flex-wrap">
+    <div className="space-y-3 max-w-full" style={{ color: "#e0e0e0" }}>
+      {/* ── URL + Salvar + Conectado section ── */}
+      <div className="flex items-center gap-3 p-3 rounded-xl flex-wrap" style={{ backgroundColor: "#1a1a2e", border: "1px solid #ffffff08" }}>
         <div className="flex gap-2 items-center flex-1 flex-wrap">
           <input
             type="text"
