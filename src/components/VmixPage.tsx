@@ -1043,17 +1043,18 @@ export default function VmixPage() {
                       key={prog.id}
                       onClick={() => {
                         setActivePreset(prog.id);
-                        // Send ScriptStart with program name as preset trigger
                         sendCommand("ScriptStart", prog.nome);
                         toast({ title: `Preset: ${prog.nome}`, description: "Comando enviado ao vMix." });
                       }}
-                      className="px-5 py-3 rounded-lg text-xs font-black uppercase tracking-wider transition-all hover:brightness-125"
+                      className="px-5 py-3 rounded-lg text-xs font-black uppercase tracking-wider transition-all duration-200 hover:scale-[1.03]"
                       style={{
-                        backgroundColor: activePreset === prog.id ? "#ea580c" : "#c2410c50",
-                        color: activePreset === prog.id ? "#fff" : "#fb923c",
-                        border: activePreset === prog.id ? "2px solid #fb923c" : "2px solid #c2410c40",
+                        backgroundColor: activePreset === prog.id ? "#1e3a4a" : "#3a3520",
+                        color: activePreset === prog.id ? "#fff" : "#c8b87a",
+                        border: activePreset === prog.id ? "2px solid #2d5a6a" : "2px solid #4a4530",
                         minWidth: 100,
                       }}
+                      onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = activePreset === prog.id ? "0 0 20px #1e3a4a80" : "0 0 16px #3a352060"; }}
+                      onMouseLeave={e => { (e.target as HTMLElement).style.boxShadow = "none"; }}
                     >
                       {prog.nome}
                     </button>
