@@ -909,11 +909,9 @@ export default function VmixPage() {
 
       {/* ── Top Bar ── */}
       <div className="flex items-center justify-between px-4 py-2 rounded-t-xl" style={{ backgroundColor: "#111118" }}>
+        {/* Left: Clock + GO LIVE / RECORD */}
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: "#22c55e" }} />
-            <span className="text-xs font-bold text-white/80">vMix Control</span>
-          </div>
+          <span className="text-sm font-mono font-bold tracking-wider" style={{ color: "#22c55e" }}>{clock}</span>
           <div className="flex items-center gap-2">
             <button
               onClick={() => sendCommand(streaming ? "StopStreaming" : "StartStreaming")}
@@ -935,6 +933,11 @@ export default function VmixPage() {
             </button>
           </div>
         </div>
+        {/* Center: Logo */}
+        <div className="absolute left-1/2 -translate-x-1/2">
+          <img src={logoMixControl} alt="Mix Control" className="h-5" />
+        </div>
+        {/* Right: Refresh */}
         <div className="flex items-center gap-3">
           <button onClick={() => connectToVmix()} className="text-white/40 hover:text-white transition-colors" title="Atualizar">
             <RefreshCw size={14} />
