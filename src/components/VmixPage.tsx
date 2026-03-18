@@ -149,6 +149,11 @@ export default function VmixPage() {
     loadUrl();
   }, [user]);
 
+  // Persist connection mode
+  useEffect(() => {
+    localStorage.setItem("vmix_conn_mode", connectionMode);
+  }, [connectionMode]);
+
   const saveUrl = async () => {
     if (!user || !vmixUrl.trim()) return;
     const trimmed = vmixUrl.trim();
@@ -165,19 +170,54 @@ export default function VmixPage() {
     }
     setSavedUrl(trimmed);
     localStorage.setItem(`vmix_url_${user.id}`, trimmed);
+
+    // Auto-detect best mode
+    if (isPrivateIp(trimmed) && connectionMode === "proxy") {
+      setConnectionMode("direct");
+      toast({ title: "Modo alterado para Direto", description: "IP local detectado. Usando conexão direta do navegador." });
+    } else if (!isPrivateIp(trimmed) && connectionMode === "direct") {
+      setConnectionMode("proxy");
+      toast({ title: "Modo alterado para Proxy", description: "IP público detectado. Usando conexão via proxy." });
+    }
     toast({ title: "Configuração salva", description: "URL e credenciais do vMix salvas." });
   };
 
-  const vmixProxy = useCallback(async (path: string): Promise<string> => {
+  // Direct fetch to vMix (browser → vMix, no edge function)
+  const vmixDirectFetch = useCallback(async (path: string): Promise<string> => {
+    if (!savedUrl) throw new Error("URL não configurada");
+    const baseUrl = savedUrl.replace(/\/+$/, "");
+    const targetUrl = baseUrl + path;
+    const headers: Record<string, string> = {
+      "Accept": "application/xml, text/xml, text/html, */*",
+    };
+    if (vmixUser) {
+      headers["Authorization"] = `Basic ${btoa(`${vmixUser}:${vmixPass || ""}`)}`;
+    }
+    const response = await fetch(targetUrl, {
+      method: "GET",
+      headers,
+      signal: AbortSignal.timeout(10000),
+    });
+    return await response.text();
+  }, [savedUrl, vmixUser, vmixPass]);
+
+  // Proxy fetch via Edge Function (browser → cloud → vMix)
+  const vmixProxyFetch = useCallback(async (path: string): Promise<string> => {
     const { data, error } = await supabase.functions.invoke("vmix-proxy", {
       body: { path },
     });
     if (error) throw new Error(error.message || "Proxy error");
-    // data can be a string (XML) or parsed object
     if (typeof data === "string") return data;
-    // If the runtime auto-parsed as JSON, stringify it back
     return typeof data === "object" ? JSON.stringify(data) : String(data);
   }, []);
+
+  // Unified fetch that uses the selected mode
+  const vmixFetch = useCallback(async (path: string): Promise<string> => {
+    if (connectionMode === "direct") {
+      return vmixDirectFetch(path);
+    }
+    return vmixProxyFetch(path);
+  }, [connectionMode, vmixDirectFetch, vmixProxyFetch]);
 
   const connectToVmix = useCallback(async () => {
     if (!savedUrl) return;
