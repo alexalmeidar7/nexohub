@@ -933,10 +933,6 @@ export default function VmixPage() {
             </button>
           </div>
         </div>
-        {/* Center: Logo */}
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-          <img src={logoMixControl} alt="Mix Control" className="h-6" />
-        </div>
         {/* Right: Refresh */}
         <div className="flex items-center gap-3">
           <button onClick={() => connectToVmix()} className="text-white/40 hover:text-white transition-colors" title="Atualizar">
