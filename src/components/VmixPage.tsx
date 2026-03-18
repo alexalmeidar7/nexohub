@@ -914,10 +914,10 @@ export default function VmixPage() {
             onClick={() => sendCommand(streaming ? "StopStreaming" : "StartStreaming")}
             className="px-4 py-1.5 rounded text-xs font-bold uppercase tracking-wider transition-all duration-200 hover:scale-[1.03]"
             style={{
-              backgroundColor: streaming ? "#6b1010" : "#3a3a3a",
-              color: streaming ? "#fff" : "#ccc",
+              backgroundColor: streaming ? "#6b1010" : "#2a2a30",
+              color: streaming ? "#fff" : "#aaa",
               boxShadow: streaming ? "0 0 16px #6b101060" : "none",
-              border: `1px solid ${streaming ? "#8b2020" : "#555"}`,
+              border: `1px solid ${streaming ? "#8b2020" : "#3a3a40"}`,
             }}
           >
             {streaming ? "● LIVE" : "GO LIVE"}
