@@ -116,7 +116,8 @@ export default function VmixPage() {
       });
   }, [user]);
 
-
+  useEffect(() => {
+    if (!user) return;
     const loadUrl = async () => {
       const { data } = await supabase
         .from("user_settings")
