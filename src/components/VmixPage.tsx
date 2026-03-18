@@ -575,12 +575,15 @@ export default function VmixPage() {
   const controlBtn = (label: string, onClick: () => void, bg: string, active = false) => (
     <button
       onClick={onClick}
-      className="px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all hover:brightness-110"
+      className="px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all duration-200 hover:scale-[1.03]"
       style={{
         backgroundColor: active ? bg : bg + "30",
         color: active ? "#fff" : bg,
         boxShadow: active ? `0 0 16px ${bg}40` : "none",
+        border: `1px solid ${active ? bg : bg + "40"}`,
       }}
+      onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = `0 0 20px ${bg}50`; }}
+      onMouseLeave={e => { (e.target as HTMLElement).style.boxShadow = active ? `0 0 16px ${bg}40` : "none"; }}
     >
       {label}
     </button>
@@ -883,14 +886,20 @@ export default function VmixPage() {
             className="w-64 px-4 py-2 rounded-lg text-sm outline-none"
             style={{ backgroundColor: "#2a2a2a", color: "#fff", border: "1px solid #ffffff15" }}
           />
-          <button onClick={saveUrl} className="px-4 py-2 rounded-lg text-xs font-bold text-white" style={{ background: "linear-gradient(135deg,#268ffa,#2dbef3)" }}>
+          <button onClick={saveUrl} className="px-4 py-2 rounded-lg text-xs font-bold text-white transition-all duration-200 hover:scale-[1.03]"
+            style={{ backgroundColor: "#3a3a3a", border: "1px solid #555" }}
+            onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = "0 0 14px #3a3a3a60"; }}
+            onMouseLeave={e => { (e.target as HTMLElement).style.boxShadow = "none"; }}
+          >
             Salvar
           </button>
           <button
             onClick={connectToVmix}
             disabled={connecting}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold text-white"
-            style={{ backgroundColor: "#22c55e", opacity: connecting ? 0.6 : 1 }}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold text-white transition-all duration-200 hover:scale-[1.03]"
+            style={{ backgroundColor: "#2d5016", opacity: connecting ? 0.6 : 1, border: "1px solid #3d6a20" }}
+            onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = "0 0 16px #2d501660"; }}
+            onMouseLeave={e => { (e.target as HTMLElement).style.boxShadow = "none"; }}
           >
             {connecting ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle size={14} />}
             Conectado
@@ -899,8 +908,10 @@ export default function VmixPage() {
         <div className="flex gap-2">
           <button
             onClick={() => { setActiveTab("scenes"); createNewScene(); }}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold text-white transition-all hover:brightness-110"
-            style={{ backgroundColor: "#8b5cf6" }}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold text-white transition-all duration-200 hover:scale-[1.03]"
+            style={{ backgroundColor: "#1e3a4a", border: "1px solid #2d5a6a" }}
+            onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = "0 0 16px #1e3a4a60"; }}
+            onMouseLeave={e => { (e.target as HTMLElement).style.boxShadow = "none"; }}
           >
             <Plus size={13} /> Criar Cena
           </button>
@@ -911,22 +922,31 @@ export default function VmixPage() {
       <div className="relative flex items-center justify-between px-4 py-2 rounded-t-xl" style={{ backgroundColor: "#111118" }}>
         {/* Left: GO LIVE / RECORD */}
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-2">
+           <div className="flex items-center gap-2">
             <button
               onClick={() => sendCommand(streaming ? "StopStreaming" : "StartStreaming")}
-              className="px-4 py-1.5 rounded text-xs font-bold uppercase tracking-wider transition-all"
+              className="px-4 py-1.5 rounded text-xs font-bold uppercase tracking-wider transition-all duration-200 hover:scale-[1.03]"
               style={{
-                backgroundColor: streaming ? "#dc2626" : "#333",
-                color: streaming ? "#fff" : "#aaa",
-                boxShadow: streaming ? "0 0 12px #dc262680" : "none",
+                backgroundColor: streaming ? "#6b1010" : "#3a3a3a",
+                color: streaming ? "#fff" : "#ccc",
+                boxShadow: streaming ? "0 0 16px #6b101060" : "none",
+                border: `1px solid ${streaming ? "#8b2020" : "#555"}`,
               }}
+              onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = streaming ? "0 0 24px #6b101080" : "0 0 16px #3a3a3a60"; }}
+              onMouseLeave={e => { (e.target as HTMLElement).style.boxShadow = streaming ? "0 0 16px #6b101060" : "none"; }}
             >
               {streaming ? "● LIVE" : "GO LIVE"}
             </button>
             <button
               onClick={() => sendCommand(recording ? "StopRecording" : "StartRecording")}
-              className="px-4 py-1.5 rounded text-xs font-bold uppercase tracking-wider"
-              style={{ backgroundColor: recording ? "#dc2626" : "#333", color: recording ? "#fff" : "#aaa" }}
+              className="px-4 py-1.5 rounded text-xs font-bold uppercase tracking-wider transition-all duration-200 hover:scale-[1.03]"
+              style={{
+                backgroundColor: recording ? "#6b1010" : "#3a3a3a",
+                color: recording ? "#fff" : "#ccc",
+                border: `1px solid ${recording ? "#8b2020" : "#555"}`,
+              }}
+              onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = "0 0 16px #3a3a3a60"; }}
+              onMouseLeave={e => { (e.target as HTMLElement).style.boxShadow = "none"; }}
             >
               {recording ? "● REC" : "RECORD"}
             </button>
@@ -1001,10 +1021,11 @@ export default function VmixPage() {
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className="flex items-center gap-1.5 px-5 py-2.5 text-xs font-bold uppercase tracking-wider transition-all"
+            className="flex items-center gap-1.5 px-5 py-2.5 text-xs font-bold uppercase tracking-wider transition-all duration-200 hover:scale-[1.03]"
             style={{
-              backgroundColor: activeTab === tab.key ? "#dc2626" : "transparent",
+              backgroundColor: activeTab === tab.key ? "#6b1010" : "transparent",
               color: activeTab === tab.key ? "#fff" : "#666",
+              boxShadow: activeTab === tab.key ? "0 0 12px #6b101040" : "none",
             }}
           >
             {tab.icon} {tab.label}
@@ -1031,17 +1052,18 @@ export default function VmixPage() {
                       key={prog.id}
                       onClick={() => {
                         setActivePreset(prog.id);
-                        // Send ScriptStart with program name as preset trigger
                         sendCommand("ScriptStart", prog.nome);
                         toast({ title: `Preset: ${prog.nome}`, description: "Comando enviado ao vMix." });
                       }}
-                      className="px-5 py-3 rounded-lg text-xs font-black uppercase tracking-wider transition-all hover:brightness-125"
+                      className="px-5 py-3 rounded-lg text-xs font-black uppercase tracking-wider transition-all duration-200 hover:scale-[1.03]"
                       style={{
-                        backgroundColor: activePreset === prog.id ? "#ea580c" : "#c2410c50",
-                        color: activePreset === prog.id ? "#fff" : "#fb923c",
-                        border: activePreset === prog.id ? "2px solid #fb923c" : "2px solid #c2410c40",
+                        backgroundColor: activePreset === prog.id ? "#1e3a4a" : "#3a3520",
+                        color: activePreset === prog.id ? "#fff" : "#c8b87a",
+                        border: activePreset === prog.id ? "2px solid #2d5a6a" : "2px solid #4a4530",
                         minWidth: 100,
                       }}
+                      onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = activePreset === prog.id ? "0 0 20px #1e3a4a80" : "0 0 16px #3a352060"; }}
+                      onMouseLeave={e => { (e.target as HTMLElement).style.boxShadow = "none"; }}
                     >
                       {prog.nome}
                     </button>
@@ -1078,34 +1100,40 @@ export default function VmixPage() {
                 <div className="flex flex-wrap gap-2">
                   <button
                     onClick={() => sendCommand(streaming ? "StopStreaming" : "StartStreaming")}
-                    className="px-5 py-3 rounded-lg text-xs font-black uppercase tracking-wider transition-all"
+                    className="px-5 py-3 rounded-lg text-xs font-black uppercase tracking-wider transition-all duration-200 hover:scale-[1.03]"
                     style={{
-                      backgroundColor: streaming ? "#eab308" : "#eab30840",
-                      color: streaming ? "#000" : "#eab308",
-                      border: streaming ? "2px solid #facc15" : "2px solid #eab30830",
+                      backgroundColor: streaming ? "#2d5016" : "#2d501640",
+                      color: streaming ? "#fff" : "#7ab648",
+                      border: streaming ? "2px solid #3d6a20" : "2px solid #2d501630",
                     }}
+                    onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = "0 0 18px #2d501660"; }}
+                    onMouseLeave={e => { (e.target as HTMLElement).style.boxShadow = "none"; }}
                   >
                     {streaming ? "● STREAMING 1" : "STREAMING 1"}
                   </button>
                   <button
                     onClick={() => sendCommand(streaming ? "StopStreaming" : "StartStreaming")}
-                    className="px-5 py-3 rounded-lg text-xs font-black uppercase tracking-wider transition-all"
+                    className="px-5 py-3 rounded-lg text-xs font-black uppercase tracking-wider transition-all duration-200 hover:scale-[1.03]"
                     style={{
-                      backgroundColor: "#eab30840",
-                      color: "#eab308",
-                      border: "2px solid #eab30830",
+                      backgroundColor: "#2d501640",
+                      color: "#7ab648",
+                      border: "2px solid #2d501630",
                     }}
+                    onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = "0 0 18px #2d501660"; }}
+                    onMouseLeave={e => { (e.target as HTMLElement).style.boxShadow = "none"; }}
                   >
                     STREAMING 2
                   </button>
                   <button
                     onClick={() => sendCommand(recording ? "StopRecording" : "StartRecording")}
-                    className="px-5 py-3 rounded-lg text-xs font-black uppercase tracking-wider transition-all"
+                    className="px-5 py-3 rounded-lg text-xs font-black uppercase tracking-wider transition-all duration-200 hover:scale-[1.03]"
                     style={{
-                      backgroundColor: recording ? "#dc2626" : "#eab30840",
-                      color: recording ? "#fff" : "#eab308",
-                      border: recording ? "2px solid #dc2626" : "2px solid #eab30830",
+                      backgroundColor: recording ? "#6b1010" : "#6b101040",
+                      color: recording ? "#fff" : "#c84040",
+                      border: recording ? "2px solid #8b2020" : "2px solid #6b101030",
                     }}
+                    onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = "0 0 18px #6b101060"; }}
+                    onMouseLeave={e => { (e.target as HTMLElement).style.boxShadow = "none"; }}
                   >
                     {recording ? "● REC" : "REC"}
                   </button>
@@ -1128,13 +1156,15 @@ export default function VmixPage() {
                       <button
                         key={input.key || input.number}
                         onClick={() => sendCommand("Cut", input.number)}
-                        className="px-5 py-3 rounded-lg text-xs font-black uppercase tracking-wider transition-all hover:brightness-125"
+                        className="px-5 py-3 rounded-lg text-xs font-black uppercase tracking-wider transition-all duration-200 hover:scale-[1.03]"
                         style={{
-                          backgroundColor: isActive ? "#3b82f6" : isPreview ? "#22c55e40" : "#3b82f640",
-                          color: isActive ? "#fff" : isPreview ? "#22c55e" : "#60a5fa",
-                          border: isActive ? "2px solid #60a5fa" : isPreview ? "2px solid #22c55e" : "2px solid #3b82f630",
+                          backgroundColor: isActive ? "#1e3a4a" : isPreview ? "#2d501640" : "#3a3a3a",
+                          color: isActive ? "#fff" : isPreview ? "#7ab648" : "#ccc",
+                          border: isActive ? "2px solid #2d5a6a" : isPreview ? "2px solid #2d5016" : "2px solid #555",
                           minWidth: 60,
                         }}
+                        onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = isActive ? "0 0 20px #1e3a4a80" : "0 0 16px #3a3a3a60"; }}
+                        onMouseLeave={e => { (e.target as HTMLElement).style.boxShadow = "none"; }}
                       >
                         {input.title.length > 10 ? input.title.substring(0, 10) : input.title}
                       </button>
@@ -1148,17 +1178,17 @@ export default function VmixPage() {
             </div>
 
             {/* ── Transições & Overlays ── */}
-            {sectionBox("Transições", <Camera size={14} style={{ color: "#dc2626" }} />, (
+            {sectionBox("Transições", <Camera size={14} style={{ color: "#6b1010" }} />, (
               <div className="flex flex-wrap gap-2">
-                {controlBtn("CUT", () => sendCommand("Cut"), "#dc2626", true)}
-                {controlBtn("FADE", () => sendCommand("Fade", undefined, "1000"), "#f59e0b")}
-                {controlBtn("FTB", () => sendCommand("FadeToBlack"), "#6b7280")}
-                {controlBtn("STINGER 1", () => sendCommand("Stinger1"), "#8b5cf6")}
-                {controlBtn("STINGER 2", () => sendCommand("Stinger2"), "#8b5cf6")}
+                {controlBtn("CUT", () => sendCommand("Cut"), "#6b1010", true)}
+                {controlBtn("FADE", () => sendCommand("Fade", undefined, "1000"), "#3a3a3a")}
+                {controlBtn("FTB", () => sendCommand("FadeToBlack"), "#3a3a3a")}
+                {controlBtn("STINGER 1", () => sendCommand("Stinger1"), "#1e3a4a")}
+                {controlBtn("STINGER 2", () => sendCommand("Stinger2"), "#1e3a4a")}
               </div>
-            ), "#dc2626")}
+            ), "#6b1010")}
 
-            {sectionBox("Overlays / GFX", <Layers size={14} style={{ color: "#22c55e" }} />, (
+            {sectionBox("Overlays / GFX", <Layers size={14} style={{ color: "#2d5016" }} />, (
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {[1, 2, 3, 4].map(n => (
                   <div key={n} className="flex flex-col gap-1.5">
@@ -1166,15 +1196,19 @@ export default function VmixPage() {
                     <div className="flex gap-1">
                       <button
                         onClick={() => sendCommand(`OverlayInput${n}`, "1")}
-                        className="flex-1 px-2 py-2 rounded-lg text-[10px] font-bold"
-                        style={{ backgroundColor: "#22c55e30", color: "#22c55e" }}
+                        className="flex-1 px-2 py-2 rounded-lg text-[10px] font-bold transition-all duration-200 hover:scale-[1.03]"
+                        style={{ backgroundColor: "#2d501640", color: "#7ab648", border: "1px solid #2d501630" }}
+                        onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = "0 0 14px #2d501660"; }}
+                        onMouseLeave={e => { (e.target as HTMLElement).style.boxShadow = "none"; }}
                       >
                         ON
                       </button>
                       <button
                         onClick={() => sendCommand(`OverlayInput${n}Off`)}
-                        className="flex-1 px-2 py-2 rounded-lg text-[10px] font-bold"
-                        style={{ backgroundColor: "#ffffff08", color: "#888" }}
+                        className="flex-1 px-2 py-2 rounded-lg text-[10px] font-bold transition-all duration-200 hover:scale-[1.03]"
+                        style={{ backgroundColor: "#3a3a3a30", color: "#888", border: "1px solid #3a3a3a30" }}
+                        onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = "0 0 14px #3a3a3a40"; }}
+                        onMouseLeave={e => { (e.target as HTMLElement).style.boxShadow = "none"; }}
                       >
                         OFF
                       </button>
@@ -1182,7 +1216,7 @@ export default function VmixPage() {
                   </div>
                 ))}
               </div>
-            ), "#22c55e")}
+            ), "#2d5016")}
           </>
         )}
 
