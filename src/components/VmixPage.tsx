@@ -387,16 +387,15 @@ export default function VmixPage() {
     } catch (err) {
       setConnected(false);
       const message = err instanceof Error ? err.message : "Verifique se o vMix Web Controller está ativo.";
+      const isLocal = isPrivateIp(savedUrl);
       const isMixedOrCorsLikely =
         effectiveMode === "direct" &&
-        isLocalUrl &&
+        isLocal &&
         /failed to fetch|networkerror|mixed content|cors/i.test(message);
 
-      const hint = effectiveMode === "proxy" && isLocalUrl
-        ? " IP local detectado — troque para o modo 'Direto'."
-        : isMixedOrCorsLikely
-        ? " No modo Direto (rede local), permita 'Conteúdo inseguro' para este site no navegador e tente novamente."
-        : effectiveMode === "direct" && !isLocalUrl
+      const hint = isMixedOrCorsLikely
+        ? " No modo Direto (rede local), permita 'Conteúdo inseguro' para este site no navegador, ou tente o modo 'Proxy'."
+        : effectiveMode === "direct" && !isLocal
         ? " IP público detectado — tente o modo 'Proxy'."
         : "";
 
