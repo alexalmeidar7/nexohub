@@ -1335,7 +1335,7 @@ export default function VmixPage() {
                     onClick={addNdiInput}
                     disabled={!ndiUrl.trim()}
                     className="flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-xs font-bold text-white transition-all disabled:opacity-40"
-                    style={{ backgroundColor: "#f59e0b" }}
+                    style={{ backgroundColor: "#dc2626" }}
                   >
                     <Plus size={13} /> Adicionar
                   </button>
