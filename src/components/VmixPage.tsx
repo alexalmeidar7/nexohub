@@ -894,9 +894,6 @@ export default function VmixPage() {
       }
       return <MjpegPlayer src={streamUrl} className="w-full h-full" />;
     }
-    if (useIframeMonitor && savedUrl) {
-      return <VmixIframe className="w-full h-full" type={type} />;
-    }
     return null;
   };
 
