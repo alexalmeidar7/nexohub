@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import Hls from "hls.js";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -145,10 +146,20 @@ export default function VmixPage() {
     } catch { return {}; }
   });
   const [capturingShortcut, setCapturingShortcut] = useState<string | null>(null);
-  const [activePreset, setActivePreset] = useState<string | null>(null);
+   const [activePreset, setActivePreset] = useState<string | null>(null);
   const [connectionMode, setConnectionMode] = useState<"direct" | "proxy">(() => {
     try { return (localStorage.getItem("vmix_conn_mode") as "direct" | "proxy") || "direct"; }
     catch { return "direct"; }
+  });
+  // HLS stream URLs per input (for NDI live preview)
+  const [inputHlsUrls, setInputHlsUrls] = useState<Record<string, string>>(() => {
+    try { const s = localStorage.getItem("vmix_input_hls"); return s ? JSON.parse(s) : {}; } catch { return {}; }
+  });
+  const [editingHlsInput, setEditingHlsInput] = useState<string | null>(null);
+  const [hlsTempUrl, setHlsTempUrl] = useState("");
+  // iframe-based monitor preview
+  const [useIframeMonitor, setUseIframeMonitor] = useState<boolean>(() => {
+    try { return localStorage.getItem("vmix_iframe_monitor") === "true"; } catch { return false; }
   });
 
   // Programas from DB
@@ -202,6 +213,16 @@ export default function VmixPage() {
     localStorage.setItem("vmix_input_shortcuts", JSON.stringify(inputShortcuts));
   }, [inputShortcuts]);
 
+
+  // Persist HLS URLs
+  useEffect(() => {
+    localStorage.setItem("vmix_input_hls", JSON.stringify(inputHlsUrls));
+  }, [inputHlsUrls]);
+
+  // Persist iframe monitor preference
+  useEffect(() => {
+    localStorage.setItem("vmix_iframe_monitor", String(useIframeMonitor));
+  }, [useIframeMonitor]);
 
   // Load programas from DB
   useEffect(() => {
@@ -732,11 +753,52 @@ export default function VmixPage() {
     </select>
   );
 
-   // Visual placeholder for input (no live thumbnails — SnapshotInput saves to disk)
+   // HLS Video Player component for NDI inputs with configured stream URLs
+  const HlsPlayer = ({ src, className = "" }: { src: string; className?: string }) => {
+    const videoRef = useRef<HTMLVideoElement>(null);
+    useEffect(() => {
+      const video = videoRef.current;
+      if (!video || !src) return;
+      let hls: Hls | null = null;
+      if (src.includes(".m3u8") && Hls.isSupported()) {
+        hls = new Hls({ enableWorker: false, lowLatencyMode: true });
+        hls.loadSource(src);
+        hls.attachMedia(video);
+        hls.on(Hls.Events.MANIFEST_PARSED, () => { video.play().catch(() => {}); });
+      } else {
+        video.src = src;
+        video.play().catch(() => {});
+      }
+      return () => { hls?.destroy(); };
+    }, [src]);
+    return <video ref={videoRef} className={className} muted autoPlay playsInline style={{ objectFit: "contain", backgroundColor: "#000" }} />;
+  };
+
+  // vMix Web Controller iframe for live monitors
+  const VmixIframe = ({ className = "" }: { className?: string }) => {
+    if (!savedUrl) return null;
+    const iframeSrc = savedUrl.replace(/\/+$/, "");
+    return (
+      <iframe
+        src={iframeSrc}
+        className={className}
+        style={{ border: "none", width: "100%", height: "100%", backgroundColor: "#000" }}
+        allow="autoplay"
+        sandbox="allow-scripts allow-same-origin"
+      />
+    );
+  };
+
+  // Visual placeholder for input (no live thumbnails — SnapshotInput saves to disk)
   const ThumbnailImg = ({ inputNumber, className = "", alt = "" }: { inputNumber: string; width?: number; height?: number; className?: string; alt?: string }) => {
     const inp = inputs.find(i => i.number === inputNumber);
     const bgColor = inp ? getInputColor(inp.type) : "#1e1e24";
     const label = inp ? inp.type : "Input";
+    const hlsUrl = inputHlsUrls[inputNumber];
+    // If this input has an HLS URL configured, show the video player
+    if (hlsUrl) {
+      return <HlsPlayer src={hlsUrl} className={className} />;
+    }
     return (
       <div className={`flex flex-col items-center justify-center ${className}`} style={{ backgroundColor: bgColor }}>
         <span className="text-[10px] font-bold text-white/50 uppercase tracking-wider">{label}</span>
@@ -1120,15 +1182,29 @@ export default function VmixPage() {
       <div className="flex items-stretch gap-[1px] rounded-xl overflow-hidden" style={{ backgroundColor: "#111114", boxShadow: "0 4px 20px #00000060" }}>
         {/* Preview */}
         <div className="relative flex-1 flex flex-col" style={{ backgroundColor: "#18181c", minHeight: 200 }}>
-          <div className="flex items-center gap-2 px-3 py-2" style={{ borderBottom: "1px solid #ffffff06", backgroundColor: "#ffffff04" }}>
+           <div className="flex items-center gap-2 px-3 py-2" style={{ borderBottom: "1px solid #ffffff06", backgroundColor: "#ffffff04" }}>
             <span className="text-[9px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-sm" style={{ backgroundColor: "#555", color: "#fff", letterSpacing: "0.15em" }}>Preview</span>
             {renderInputSelect(previewInput, (val) => {
               sendCommand("PreviewInput", val);
               setPreviewInput(val);
             })}
+            <button
+              onClick={() => setUseIframeMonitor(prev => !prev)}
+              className="ml-auto text-[8px] px-1.5 py-0.5 rounded transition-all"
+              style={{
+                backgroundColor: useIframeMonitor ? "#22c55e20" : "#ffffff08",
+                color: useIframeMonitor ? "#22c55e" : "#666",
+                border: `1px solid ${useIframeMonitor ? "#22c55e40" : "#ffffff10"}`,
+              }}
+              title={useIframeMonitor ? "Desativar iframe do vMix Web Controller" : "Ativar iframe do vMix Web Controller (vídeo ao vivo)"}
+            >
+              {useIframeMonitor ? "🔴 LIVE" : "⬛ IFRAME"}
+            </button>
           </div>
           <div className="flex-1 flex items-center justify-center overflow-hidden" style={{ aspectRatio: "16/9" }}>
-            {previewInput && savedUrl ? (
+            {useIframeMonitor && savedUrl ? (
+              <VmixIframe className="w-full h-full" />
+            ) : previewInput && savedUrl ? (
               <ThumbnailImg inputNumber={previewInput} width={640} height={360} className="w-full h-full object-contain" alt="Preview" />
             ) : (
               <div className="w-full h-full relative flex flex-col">
@@ -1363,14 +1439,73 @@ export default function VmixPage() {
                       {capturingShortcut === input.number ? "⌨ ..." : inputShortcuts[input.number] || "⌨"}
                     </button>
                   </div>
-                  <div className="relative" style={{ aspectRatio: "3/2", backgroundColor: "#111114" }}>
+                   <div className="relative" style={{ aspectRatio: "3/2", backgroundColor: "#111114" }}>
                     <ThumbnailImg inputNumber={input.number} className="w-full h-full object-contain" alt={input.title} />
                     {isNdi && (
-                      <div className="absolute top-1 left-1">
+                      <div className="absolute top-1 left-1 flex gap-1">
                         <span className="text-[7px] font-bold px-1 rounded" style={{ backgroundColor: "#22c55e30", color: "#22c55e", border: "1px solid #22c55e40" }}>NDI</span>
+                        {inputHlsUrls[input.number] && (
+                          <span className="text-[7px] font-bold px-1 rounded animate-pulse" style={{ backgroundColor: "#dc262630", color: "#dc2626", border: "1px solid #dc262640" }}>LIVE</span>
+                        )}
                       </div>
                     )}
+                    {/* HLS URL config button for NDI inputs */}
+                    {isNdi && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEditingHlsInput(editingHlsInput === input.number ? null : input.number);
+                          setHlsTempUrl(inputHlsUrls[input.number] || "");
+                        }}
+                        className="absolute bottom-1 right-1 text-[7px] px-1 py-0.5 rounded transition-all"
+                        style={{
+                          backgroundColor: inputHlsUrls[input.number] ? "#22c55e20" : "#ffffff10",
+                          color: inputHlsUrls[input.number] ? "#22c55e" : "#888",
+                          border: `1px solid ${inputHlsUrls[input.number] ? "#22c55e30" : "#ffffff15"}`,
+                        }}
+                        title="Configurar URL de stream HLS para este input"
+                      >
+                        {inputHlsUrls[input.number] ? "📡" : "🔗 HLS"}
+                      </button>
+                    )}
                   </div>
+                  {/* HLS URL editor inline */}
+                  {editingHlsInput === input.number && (
+                    <div className="flex gap-1 px-1.5 py-1.5" style={{ backgroundColor: "#111114", borderTop: "1px solid #ffffff08" }} onClick={e => e.stopPropagation()}>
+                      <input
+                        type="text"
+                        value={hlsTempUrl}
+                        onChange={e => setHlsTempUrl(e.target.value)}
+                        placeholder="URL HLS (.m3u8) ou vídeo"
+                        className="flex-1 text-[9px] px-1.5 py-1 rounded outline-none"
+                        style={{ backgroundColor: "#1a1a20", color: "#ccc", border: "1px solid #333" }}
+                        onKeyDown={e => {
+                          if (e.key === "Enter") {
+                            setInputHlsUrls(prev => hlsTempUrl.trim() ? { ...prev, [input.number]: hlsTempUrl.trim() } : (() => { const c = { ...prev }; delete c[input.number]; return c; })());
+                            setEditingHlsInput(null);
+                          }
+                        }}
+                      />
+                      <button
+                        onClick={() => {
+                          setInputHlsUrls(prev => hlsTempUrl.trim() ? { ...prev, [input.number]: hlsTempUrl.trim() } : (() => { const c = { ...prev }; delete c[input.number]; return c; })());
+                          setEditingHlsInput(null);
+                        }}
+                        className="text-[8px] px-1.5 rounded"
+                        style={{ backgroundColor: "#22c55e20", color: "#22c55e", border: "1px solid #22c55e30" }}
+                      >✓</button>
+                      {inputHlsUrls[input.number] && (
+                        <button
+                          onClick={() => {
+                            setInputHlsUrls(prev => { const c = { ...prev }; delete c[input.number]; return c; });
+                            setEditingHlsInput(null);
+                          }}
+                          className="text-[8px] px-1.5 rounded"
+                          style={{ backgroundColor: "#dc262620", color: "#dc2626", border: "1px solid #dc262630" }}
+                        >✕</button>
+                      )}
+                    </div>
+                  )}
                 </div>
               );
             })}
