@@ -2110,7 +2110,15 @@ export default function VmixPage() {
                             </div>
                           )}
 
-                          {/* Days of week */}
+                          {/* Studio badge */}
+                          {prog.estudio && (
+                            <div className="absolute top-1.5 right-1.5 z-[2]">
+                              <span className="text-[6px] font-bold uppercase tracking-wider px-1 py-[1px] rounded"
+                                style={{ backgroundColor: prog.estudio.toLowerCase().includes("fm") ? "#3b82f630" : "#8b5cf630", color: prog.estudio.toLowerCase().includes("fm") ? "#3b82f6" : "#8b5cf6" }}
+                              >{prog.estudio.toLowerCase().includes("fm") ? "FM" : prog.estudio.toLowerCase().includes("podcast") ? "PODCAST" : prog.estudio}</span>
+                            </div>
+                          )}
+
                           {prog.dias_semana && prog.dias_semana.length > 0 && (
                             <div className="absolute bottom-1.5 left-1.5 flex items-center gap-[2px] z-[1]">
                               {["dom","seg","ter","qua","qui","sex","sáb"].map((d, i) => {
