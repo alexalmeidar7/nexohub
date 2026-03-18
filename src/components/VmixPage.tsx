@@ -70,6 +70,7 @@ interface Programa {
   horario_fim: string;
   dias_semana: string[] | null;
   estudio: string | null;
+  apresentador_foto?: string | null;
 }
 
 // Helper to detect private/local IPs
@@ -249,12 +250,12 @@ export default function VmixPage() {
     if (!user) return;
     supabase
       .from("programas")
-      .select("id, nome, ativo, horario_inicio, horario_fim, dias_semana, estudio")
+      .select("id, nome, ativo, horario_inicio, horario_fim, dias_semana, estudio, apresentadores(foto)")
       .eq("user_id", user.id)
       .eq("ativo", true)
       .order("horario_inicio")
       .then(({ data }) => {
-        if (data) setProgramas(data);
+        if (data) setProgramas(data.map((p: any) => ({ ...p, apresentador_foto: p.apresentadores?.foto || null })));
       });
   }, [user]);
 
@@ -2134,6 +2135,15 @@ export default function VmixPage() {
                             }
                           }}
                         >
+                          {/* Presenter photo background */}
+                          {prog.apresentador_foto && (
+                            <img
+                              src={prog.apresentador_foto}
+                              alt=""
+                              className="absolute inset-0 w-full h-full object-cover object-right pointer-events-none"
+                              style={{ opacity: 0.4, filter: "grayscale(100%)", maskImage: "linear-gradient(to left, black 40%, transparent 100%)", WebkitMaskImage: "linear-gradient(to left, black 40%, transparent 100%)" }}
+                            />
+                          )}
                           {/* Schedule badge */}
                           {startTime && (
                             <div className="absolute top-1.5 left-1.5 flex items-center gap-0.5 px-1.5 py-0.5 rounded" style={{ backgroundColor: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)", zIndex: 2 }}>
