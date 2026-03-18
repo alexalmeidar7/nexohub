@@ -479,9 +479,6 @@ export default function VmixPage() {
           </button>
         </div>
       </div>
-          </button>
-        </div>
-      </div>
 
       {/* ── Preview / Program Monitors ── */}
       <div className="grid grid-cols-2 gap-[2px]" style={{ backgroundColor: "#0a0a12" }}>
