@@ -680,7 +680,11 @@ export default function VmixPage() {
               </div>
             ), "#22c55e")}
           </>
-        )
+        )}
+
+        {/* ══ SCENES TAB ══ */}
+        {activeTab === "scenes" && (
+          <>
             {!editingScene ? (
               <>
                 <div className="flex items-center justify-between mb-3">
