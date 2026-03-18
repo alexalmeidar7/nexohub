@@ -909,39 +909,43 @@ export default function VmixPage() {
           </button>
         </div>
         {/* GO LIVE / RECORD section */}
-        <div className="group/live flex items-center gap-2 px-3 py-1.5 rounded-lg" style={{ backgroundColor: "#1a1a1f", border: "1px solid #ffffff08", boxShadow: "0 2px 8px #00000040" }}>
-          <button
-            onClick={() => sendCommand(streaming ? "StopStreaming" : "StartStreaming")}
-            className="px-4 py-1.5 rounded text-xs font-bold uppercase tracking-wider transition-all duration-200 hover:scale-[1.03]"
-            style={{
-              backgroundColor: streaming ? "#6b1010" : "#2a2a30",
-              color: streaming ? "#fff" : "#aaa",
-              boxShadow: streaming ? "0 0 16px #6b101060" : "none",
-              border: `1px solid ${streaming ? "#8b2020" : "#3a3a40"}`,
-            }}
-          >
-            {streaming ? "● LIVE" : "GO LIVE"}
-          </button>
-          <div className="flex items-center gap-1 max-w-0 overflow-hidden opacity-0 transition-all duration-200 group-hover/live:max-w-[300px] group-hover/live:opacity-100">
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg" style={{ backgroundColor: "#1a1a1f", border: "1px solid #ffffff08", boxShadow: "0 2px 8px #00000040" }}>
+          {/* GO LIVE group */}
+          <div className="group/live flex items-center gap-1">
             <button
-              onClick={() => sendCommand("StartStreaming")}
-              className="px-3 py-1.5 rounded text-[10px] font-bold uppercase tracking-wider transition-all duration-200 hover:scale-[1.05] whitespace-nowrap"
-              style={{ backgroundColor: "#333338", color: "#ccc", border: "1px solid #444448" }}
-              onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = "0 0 14px #33333860"; }}
-              onMouseLeave={e => { (e.target as HTMLElement).style.boxShadow = "none"; }}
+              onClick={() => sendCommand(streaming ? "StopStreaming" : "StartStreaming")}
+              className="px-4 py-1.5 rounded text-xs font-bold uppercase tracking-wider transition-all duration-200 hover:scale-[1.03]"
+              style={{
+                backgroundColor: streaming ? "#6b1010" : "#2a2a30",
+                color: streaming ? "#fff" : "#aaa",
+                boxShadow: streaming ? "0 0 16px #6b101060" : "none",
+                border: `1px solid ${streaming ? "#8b2020" : "#3a3a40"}`,
+              }}
             >
-              STREAMING 1
+              {streaming ? "● LIVE" : "GO LIVE"}
             </button>
-            <button
-              onClick={() => sendCommand("StartStreaming")}
-              className="px-3 py-1.5 rounded text-[10px] font-bold uppercase tracking-wider transition-all duration-200 hover:scale-[1.05] whitespace-nowrap"
-              style={{ backgroundColor: "#333338", color: "#ccc", border: "1px solid #444448" }}
-              onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = "0 0 14px #33333860"; }}
-              onMouseLeave={e => { (e.target as HTMLElement).style.boxShadow = "none"; }}
-            >
-              STREAMING 2
-            </button>
+            <div className="flex items-center gap-1 max-w-0 overflow-hidden opacity-0 transition-all duration-200 group-hover/live:max-w-[300px] group-hover/live:opacity-100">
+              <button
+                onClick={() => sendCommand("StartStreaming")}
+                className="px-3 py-1.5 rounded text-[10px] font-bold uppercase tracking-wider transition-all duration-200 hover:scale-[1.05] whitespace-nowrap"
+                style={{ backgroundColor: "#333338", color: "#ccc", border: "1px solid #444448" }}
+                onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = "0 0 14px #33333860"; }}
+                onMouseLeave={e => { (e.target as HTMLElement).style.boxShadow = "none"; }}
+              >
+                STREAMING 1
+              </button>
+              <button
+                onClick={() => sendCommand("StartStreaming")}
+                className="px-3 py-1.5 rounded text-[10px] font-bold uppercase tracking-wider transition-all duration-200 hover:scale-[1.05] whitespace-nowrap"
+                style={{ backgroundColor: "#333338", color: "#ccc", border: "1px solid #444448" }}
+                onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = "0 0 14px #33333860"; }}
+                onMouseLeave={e => { (e.target as HTMLElement).style.boxShadow = "none"; }}
+              >
+                STREAMING 2
+              </button>
+            </div>
           </div>
+          {/* RECORD button (independent) */}
           <button
             onClick={() => sendCommand(recording ? "StopRecording" : "StartRecording")}
             className="px-4 py-1.5 rounded text-xs font-bold uppercase tracking-wider transition-all duration-200 hover:scale-[1.03]"
