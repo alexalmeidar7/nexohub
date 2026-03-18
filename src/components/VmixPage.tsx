@@ -1871,6 +1871,42 @@ export default function VmixPage() {
                 <li>O formato padrão é: <code className="bg-white/5 px-1 rounded text-white/50">NOME-PC (Nome da Fonte)</code></li>
               </ul>
             ), "#777")}
+
+            {sectionBox("📡 Preview ao Vivo — Como Configurar", <Monitor size={14} style={{ color: "#3b82f6" }} />, (
+              <div className="space-y-4 text-[11px] text-white/50">
+                <p className="text-white/70 font-semibold">O vMix não fornece thumbnails via API HTTP. Use uma das opções abaixo para obter preview ao vivo:</p>
+
+                <div className="rounded-lg p-3 space-y-2" style={{ backgroundColor: "#ffffff04", border: "1px solid #ffffff08" }}>
+                  <p className="text-white/80 font-bold text-xs">🟢 Opção 1: vmix-snapshot-proxy (Recomendado)</p>
+                  <p>Instale o <a href="https://github.com/jeffmikels/vmix-snapshot-proxy" target="_blank" rel="noopener noreferrer" className="underline" style={{ color: "#3b82f6" }}>vmix-snapshot-proxy</a> no PC do vMix.</p>
+                  <p>Ele cria thumbnails JPEG automaticamente e serve na porta 8098.</p>
+                  <p className="text-white/60">URLs para usar nos monitores:</p>
+                  <code className="block text-[10px] px-2 py-1 rounded" style={{ backgroundColor: "#000", color: "#22c55e" }}>
+                    http://192.168.x.x:8098/1.jpg (Input 1)<br/>
+                    http://192.168.x.x:8098/2.jpg (Input 2)
+                  </code>
+                  <p className="text-white/40">Cole a URL no botão 📡 do Preview/Output. A imagem atualiza a cada 500ms.</p>
+                </div>
+
+                <div className="rounded-lg p-3 space-y-2" style={{ backgroundColor: "#ffffff04", border: "1px solid #ffffff08" }}>
+                  <p className="text-white/80 font-bold text-xs">🔵 Opção 2: NDI Tools HX Camera</p>
+                  <p>Instale o <strong className="text-white/70">NDI Tools</strong> (gratuito) → use o <strong className="text-white/70">NDI HX Camera</strong> ou <strong className="text-white/70">NDI Webcam Input</strong>.</p>
+                  <p>No vMix, ative o output NDI (Settings → Outputs → NDI). Use um conversor NDI→HLS como:</p>
+                  <ul className="list-disc list-inside ml-2 space-y-1">
+                    <li><strong className="text-white/70">MediaMTX</strong> — converte NDI para HLS automaticamente</li>
+                    <li><strong className="text-white/70">OBS Studio</strong> — recebe NDI via plugin e re-streama como HLS</li>
+                  </ul>
+                  <p className="text-white/40">Cole a URL .m3u8 no botão 📡 ou no botão 🔗 HLS dos inputs NDI.</p>
+                </div>
+
+                <div className="rounded-lg p-3 space-y-2" style={{ backgroundColor: "#ffffff04", border: "1px solid #ffffff08" }}>
+                  <p className="text-white/80 font-bold text-xs">⬛ Opção 3: Iframe do vMix Web Controller</p>
+                  <p>Clique no botão <strong className="text-white/70">⬛ IFRAME</strong> no cabeçalho do Preview.</p>
+                  <p>Embutirá o painel web do vMix ({savedUrl || "http://ip:8088"}) diretamente no monitor.</p>
+                  <p className="text-white/40">Funciona apenas em modo Direto (mesma rede) e requer "Conteúdo inseguro" permitido no navegador.</p>
+                </div>
+              </div>
+            ), "#3b82f6")}
           </>
         )}
       </div>
