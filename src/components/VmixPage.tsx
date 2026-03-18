@@ -1028,57 +1028,6 @@ export default function VmixPage() {
         {/* ══ CONTROLS TAB ══ */}
         {activeTab === "controls" && (
           <>
-            {/* ── Programas Preset ── */}
-            <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a2e", border: "1px solid #ffffff08" }}>
-              <div className="flex items-center gap-2 px-4 py-2.5" style={{ backgroundColor: "#c2410c18", borderBottom: "1px solid #ffffff08" }}>
-                <Radio size={14} style={{ color: "#ea580c" }} />
-                <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#ea580c" }}>programas preset</span>
-              </div>
-              <div className="p-4">
-                <div className="flex flex-wrap gap-2">
-                  {programas.map(prog => (
-                    <button
-                      key={prog.id}
-                      onClick={() => {
-                        setActivePreset(prog.id);
-                        sendCommand("ScriptStart", prog.nome);
-                        toast({ title: `Preset: ${prog.nome}`, description: "Comando enviado ao vMix." });
-                      }}
-                      className="px-5 py-3 rounded-lg text-xs font-black uppercase tracking-wider transition-all duration-200 hover:scale-[1.03]"
-                      style={{
-                        backgroundColor: activePreset === prog.id ? "#1e3a4a" : "#3a3520",
-                        color: activePreset === prog.id ? "#fff" : "#c8b87a",
-                        border: activePreset === prog.id ? "2px solid #2d5a6a" : "2px solid #4a4530",
-                        minWidth: 100,
-                      }}
-                      onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = activePreset === prog.id ? "0 0 20px #1e3a4a80" : "0 0 16px #3a352060"; }}
-                      onMouseLeave={e => { (e.target as HTMLElement).style.boxShadow = "none"; }}
-                    >
-                      {prog.nome}
-                    </button>
-                  ))}
-                  {programas.length === 0 && (
-                    <p className="text-[11px] text-white/30 py-4">Nenhum programa cadastrado. Cadastre programas no painel principal.</p>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* ── Grade Programação ── */}
-            {programas.length > 0 && (
-              <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a2e", border: "1px solid #ffffff08" }}>
-                <div className="flex items-center gap-2 px-4 py-2.5" style={{ backgroundColor: "#22c55e18", borderBottom: "1px solid #ffffff08" }}>
-                  <Eye size={14} style={{ color: "#22c55e" }} />
-                  <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#22c55e" }}>grade programação</span>
-                </div>
-                <div className="px-4 py-3">
-                  <p className="text-xs text-white/60">
-                    {programas.length} programa(s) ativo(s) disponíveis como preset
-                  </p>
-                </div>
-              </div>
-            )}
-
             {/* ── Streaming ── */}
             <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a2e", border: "1px solid #ffffff08" }}>
               <div className="flex items-center gap-2 px-4 py-2.5" style={{ backgroundColor: "#eab30818", borderBottom: "1px solid #ffffff08" }}>
@@ -1212,6 +1161,57 @@ export default function VmixPage() {
         {/* ══ SCENES TAB ══ */}
         {activeTab === "scenes" && (
           <>
+            {/* ── Programas Preset ── */}
+            <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a2e", border: "1px solid #ffffff08" }}>
+              <div className="flex items-center gap-2 px-4 py-2.5" style={{ backgroundColor: "#c2410c18", borderBottom: "1px solid #ffffff08" }}>
+                <Radio size={14} style={{ color: "#ea580c" }} />
+                <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#ea580c" }}>programas preset</span>
+              </div>
+              <div className="p-4">
+                <div className="flex flex-wrap gap-2">
+                  {programas.map(prog => (
+                    <button
+                      key={prog.id}
+                      onClick={() => {
+                        setActivePreset(prog.id);
+                        sendCommand("ScriptStart", prog.nome);
+                        toast({ title: `Preset: ${prog.nome}`, description: "Comando enviado ao vMix." });
+                      }}
+                      className="px-5 py-3 rounded-lg text-xs font-black uppercase tracking-wider transition-all duration-200 hover:scale-[1.03]"
+                      style={{
+                        backgroundColor: activePreset === prog.id ? "#1e3a4a" : "#3a3520",
+                        color: activePreset === prog.id ? "#fff" : "#c8b87a",
+                        border: activePreset === prog.id ? "2px solid #2d5a6a" : "2px solid #4a4530",
+                        minWidth: 100,
+                      }}
+                      onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = activePreset === prog.id ? "0 0 20px #1e3a4a80" : "0 0 16px #3a352060"; }}
+                      onMouseLeave={e => { (e.target as HTMLElement).style.boxShadow = "none"; }}
+                    >
+                      {prog.nome}
+                    </button>
+                  ))}
+                  {programas.length === 0 && (
+                    <p className="text-[11px] text-white/30 py-4">Nenhum programa cadastrado. Cadastre programas no painel principal.</p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* ── Grade Programação ── */}
+            {programas.length > 0 && (
+              <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a2e", border: "1px solid #ffffff08" }}>
+                <div className="flex items-center gap-2 px-4 py-2.5" style={{ backgroundColor: "#22c55e18", borderBottom: "1px solid #ffffff08" }}>
+                  <Eye size={14} style={{ color: "#22c55e" }} />
+                  <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#22c55e" }}>grade programação</span>
+                </div>
+                <div className="px-4 py-3">
+                  <p className="text-xs text-white/60">
+                    {programas.length} programa(s) ativo(s) disponíveis como preset
+                  </p>
+                </div>
+              </div>
+            )}
+
             {!editingScene ? (
               <>
                 <div className="flex items-center justify-between mb-3">
