@@ -909,7 +909,7 @@ export default function VmixPage() {
           </button>
         </div>
         {/* GO LIVE / RECORD section */}
-        <div className="group/live flex items-center gap-2 px-3 py-1.5 rounded-lg" style={{ background: "linear-gradient(135deg, #13131d 0%, #1a1a2e 100%)", border: "1px solid #ffffff0a", boxShadow: "0 2px 8px #00000040" }}>
+        <div className="group/live flex items-center gap-2 px-3 py-1.5 rounded-lg" style={{ backgroundColor: "#1a1a1f", border: "1px solid #ffffff08", boxShadow: "0 2px 8px #00000040" }}>
           <button
             onClick={() => sendCommand(streaming ? "StopStreaming" : "StartStreaming")}
             className="px-4 py-1.5 rounded text-xs font-bold uppercase tracking-wider transition-all duration-200 hover:scale-[1.03]"
