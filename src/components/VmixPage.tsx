@@ -1183,201 +1183,135 @@ export default function VmixPage() {
         )}
 
         {/* ══ SCENES TAB ══ */}
-        {activeTab === "scenes" && (
-          <>
-            {/* ── Programas Preset ── */}
-            <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a2e", border: "1px solid #ffffff08" }}>
-              <div className="flex items-center gap-2 px-4 py-2.5" style={{ backgroundColor: "#c2410c18", borderBottom: "1px solid #ffffff08" }}>
-                <Radio size={14} style={{ color: "#ea580c" }} />
-                <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#ea580c" }}>programas preset</span>
-              </div>
-              <div className="p-4">
-                <div className="flex flex-wrap gap-2">
-                  {programas.map(prog => (
-                    <button
-                      key={prog.id}
-                      onClick={() => {
-                        setActivePreset(prog.id);
-                        sendCommand("ScriptStart", prog.nome);
-                        toast({ title: `Preset: ${prog.nome}`, description: "Comando enviado ao vMix." });
-                      }}
-                      className="px-5 py-3 rounded-lg text-xs font-black uppercase tracking-wider transition-all duration-200 hover:scale-[1.03]"
-                      style={{
-                        backgroundColor: activePreset === prog.id ? "#1e3a4a" : "#3a3520",
-                        color: activePreset === prog.id ? "#fff" : "#c8b87a",
-                        border: activePreset === prog.id ? "2px solid #2d5a6a" : "2px solid #4a4530",
-                        minWidth: 100,
-                      }}
-                      onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = activePreset === prog.id ? "0 0 20px #1e3a4a80" : "0 0 16px #3a352060"; }}
-                      onMouseLeave={e => { (e.target as HTMLElement).style.boxShadow = "none"; }}
-                    >
-                      {prog.nome}
-                    </button>
-                  ))}
-                  {programas.length === 0 && (
-                    <p className="text-[11px] text-white/30 py-4">Nenhum programa cadastrado. Cadastre programas no painel principal.</p>
-                  )}
-                </div>
-              </div>
-            </div>
+        {activeTab === "scenes" && (() => {
+          const diasMap: Record<string, number> = { dom: 0, seg: 1, ter: 2, qua: 3, qui: 4, sex: 5, sab: 6 };
+          const now = new Date();
+          const nowMinutes = now.getHours() * 60 + now.getMinutes();
+          const todayDow = now.getDay();
 
-            {/* ── Grade Programação ── */}
-            {programas.length > 0 && (
-              <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a2e", border: "1px solid #ffffff08" }}>
-                <div className="flex items-center gap-2 px-4 py-2.5" style={{ backgroundColor: "#22c55e18", borderBottom: "1px solid #ffffff08" }}>
-                  <Eye size={14} style={{ color: "#22c55e" }} />
-                  <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#22c55e" }}>grade programação</span>
-                </div>
-                <div className="px-4 py-3">
-                  <p className="text-xs text-white/60">
-                    {programas.length} programa(s) ativo(s) disponíveis como preset
-                  </p>
-                </div>
-              </div>
-            )}
+          const todayPrograms = programas.filter(p => {
+            if (!p.dias_semana || p.dias_semana.length === 0) return true;
+            return p.dias_semana.some(d => diasMap[d.toLowerCase()] === todayDow);
+          }).sort((a, b) => {
+            const toMin = (t: string) => { const [h, m] = t.split(":").map(Number); return h * 60 + (m || 0); };
+            return toMin(a.horario_inicio) - toMin(b.horario_inicio);
+          });
 
-            {!editingScene ? (
-              <>
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-bold text-white/80">Cenas Salvas</h3>
-                  <button onClick={createNewScene} className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold text-white" style={{ background: "linear-gradient(135deg,#268ffa,#2dbef3)" }}>
-                    <Plus size={13} /> Nova Cena
-                  </button>
-                </div>
-                {scenes.length === 0 && (
-                  <div className="text-center py-12">
-                    <Wand2 size={32} className="mx-auto mb-3 text-white/15" />
-                    <p className="text-xs text-white/30">Nenhuma cena criada ainda</p>
-                    <p className="text-[10px] text-white/20 mt-1">Crie cenas para executar vários comandos em sequência</p>
+          const onAir = todayPrograms.find(p => {
+            const toMin = (t: string) => { const [h, m] = t.split(":").map(Number); return h * 60 + (m || 0); };
+            return nowMinutes >= toMin(p.horario_inicio) && nowMinutes < toMin(p.horario_fim);
+          });
+
+          const upcoming = todayPrograms.filter(p => {
+            const toMin = (t: string) => { const [h, m] = t.split(":").map(Number); return h * 60 + (m || 0); };
+            return toMin(p.horario_inicio) > nowMinutes;
+          }).slice(0, 4);
+
+          return (
+            <>
+              {/* ── Programa no Ar + Próximos ── */}
+              <div className="flex gap-3 items-stretch">
+                <div className="flex-1 rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a2e", border: "1px solid #dc262640" }}>
+                  <div className="flex items-center gap-2 px-4 py-2" style={{ backgroundColor: "#dc262620", borderBottom: "1px solid #ffffff08" }}>
+                    <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                    <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#dc2626" }}>No Ar</span>
                   </div>
-                )}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {scenes.map(scene => (
-                    <div key={scene.id} className="rounded-xl p-4" style={{ backgroundColor: "#1a1a2e", border: "1px solid #ffffff08" }}>
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="text-xs font-bold text-white/80">{scene.name}</h4>
-                        <div className="flex gap-1">
-                          <button onClick={() => setEditingScene({ ...scene })} className="p-1.5 rounded text-white/30 hover:text-white" style={{ backgroundColor: "#ffffff08" }}>
-                            <Wand2 size={11} />
-                          </button>
-                          <button onClick={() => deleteScene(scene.id)} className="p-1.5 rounded text-red-400/50 hover:text-red-400" style={{ backgroundColor: "#ffffff08" }}>
-                            <Trash2 size={11} />
-                          </button>
+                  <div className="p-4">
+                    {onAir ? (
+                      <div>
+                        <p className="text-sm font-bold text-white">{onAir.nome}</p>
+                        <p className="text-[10px] text-white/40 mt-1">{onAir.horario_inicio} – {onAir.horario_fim}</p>
+                      </div>
+                    ) : (
+                      <p className="text-[11px] text-white/30">Nenhum programa no ar agora</p>
+                    )}
+                  </div>
+                </div>
+                <div className="flex-1 rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a2e", border: "1px solid #ffffff08" }}>
+                  <div className="flex items-center gap-2 px-4 py-2" style={{ backgroundColor: "#22c55e18", borderBottom: "1px solid #ffffff08" }}>
+                    <Eye size={12} style={{ color: "#22c55e" }} />
+                    <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#22c55e" }}>A Seguir</span>
+                  </div>
+                  <div className="p-3 space-y-1.5">
+                    {upcoming.length > 0 ? upcoming.map(p => (
+                      <div key={p.id} className="flex items-center justify-between px-2 py-1 rounded" style={{ backgroundColor: "#ffffff06" }}>
+                        <span className="text-[10px] font-medium text-white/70 truncate">{p.nome}</span>
+                        <span className="text-[9px] text-white/30 ml-2 whitespace-nowrap">{p.horario_inicio}</span>
+                      </div>
+                    )) : (
+                      <p className="text-[10px] text-white/30">Nenhum programa a seguir</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* ── Programas Preset ── */}
+              <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a2e", border: "1px solid #ffffff08" }}>
+                <div className="flex items-center gap-2 px-4 py-2.5" style={{ backgroundColor: "#c2410c18", borderBottom: "1px solid #ffffff08" }}>
+                  <Radio size={14} style={{ color: "#ea580c" }} />
+                  <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#ea580c" }}>programas preset</span>
+                </div>
+                <div className="p-4">
+                  <div className="flex flex-wrap gap-2">
+                    {programas.map((prog, idx) => (
+                      <div key={prog.id} className="group/preset relative">
+                        <button
+                          onClick={() => {
+                            setActivePreset(prog.id);
+                            sendCommand("ScriptStart", prog.nome);
+                            toast({ title: `Preset: ${prog.nome}`, description: "Comando enviado ao vMix." });
+                          }}
+                          className="px-5 py-3 rounded-lg text-xs font-black uppercase tracking-wider transition-all duration-200 hover:scale-[1.03]"
+                          style={{
+                            backgroundColor: activePreset === prog.id ? "#1e3a4a" : "#3a3520",
+                            color: activePreset === prog.id ? "#fff" : "#c8b87a",
+                            border: activePreset === prog.id ? "2px solid #2d5a6a" : "2px solid #4a4530",
+                            minWidth: 100,
+                          }}
+                        >
+                          {prog.nome}
+                        </button>
+                        <div className="absolute -top-1 -right-1 flex gap-0.5 opacity-0 group-hover/preset:opacity-100 transition-opacity z-10">
+                          {idx > 0 && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); const arr = [...programas]; [arr[idx - 1], arr[idx]] = [arr[idx], arr[idx - 1]]; setProgramas(arr); }}
+                              className="w-4 h-4 rounded-full flex items-center justify-center text-[8px]"
+                              style={{ backgroundColor: "#555", color: "#fff" }}
+                              title="Mover para esquerda"
+                            >◀</button>
+                          )}
+                          {idx < programas.length - 1 && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); const arr = [...programas]; [arr[idx], arr[idx + 1]] = [arr[idx + 1], arr[idx]]; setProgramas(arr); }}
+                              className="w-4 h-4 rounded-full flex items-center justify-center text-[8px]"
+                              style={{ backgroundColor: "#555", color: "#fff" }}
+                              title="Mover para direita"
+                            >▶</button>
+                          )}
+                          <button
+                            onClick={(e) => { e.stopPropagation(); toast({ title: `Editar: ${prog.nome}`, description: "Abra o painel principal para editar este programa." }); }}
+                            className="w-4 h-4 rounded-full flex items-center justify-center"
+                            style={{ backgroundColor: "#268ffa", color: "#fff" }}
+                            title="Editar"
+                          ><Wand2 size={8} /></button>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setProgramas(prev => prev.filter(p => p.id !== prog.id)); }}
+                            className="w-4 h-4 rounded-full flex items-center justify-center"
+                            style={{ backgroundColor: "#dc2626", color: "#fff" }}
+                            title="Excluir"
+                          ><Trash2 size={8} /></button>
                         </div>
                       </div>
-                      <p className="text-[10px] text-white/30 mb-3">{scene.commands.length} comando(s)</p>
-                      <div className="flex flex-wrap gap-1 mb-3">
-                        {scene.commands.map((cmd, i) => (
-                          <span key={cmd.id} className="text-[9px] px-1.5 py-0.5 rounded font-medium" style={{ backgroundColor: "#ffffff08", color: "#fff8" }}>
-                            {i + 1}. {cmd.fn}
-                          </span>
-                        ))}
-                      </div>
-                      <button
-                        onClick={() => runScene(scene)}
-                        disabled={runningScene === scene.id}
-                        className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-bold text-white transition-all"
-                        style={{ backgroundColor: runningScene === scene.id ? "#f59e0b" : "#22c55e", opacity: runningScene === scene.id ? 0.7 : 1 }}
-                      >
-                        {runningScene === scene.id ? <Loader2 size={12} className="animate-spin" /> : <Play size={12} />}
-                        {runningScene === scene.id ? "Executando..." : "Executar"}
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </>
-            ) : (
-              /* Scene Editor */
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-bold text-white/80">{editingScene.name || "Nova Cena"}</h3>
-                  <div className="flex gap-2">
-                    <button onClick={() => setEditingScene(null)} className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white/50" style={{ backgroundColor: "#ffffff08" }}>
-                      Cancelar
-                    </button>
-                    <button onClick={saveScene} className="px-4 py-1.5 rounded-lg text-xs font-bold text-white" style={{ background: "linear-gradient(135deg,#22c55e,#16a34a)" }}>
-                      Salvar Cena
-                    </button>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="text-[10px] font-semibold text-white/40 mb-1 block">Nome da Cena</label>
-                  <input
-                    type="text"
-                    value={editingScene.name}
-                    onChange={e => setEditingScene({ ...editingScene, name: e.target.value })}
-                    placeholder="Ex: Abertura do Programa"
-                    maxLength={100}
-                    className="w-full px-3 py-2 rounded-lg text-sm outline-none"
-                    style={{ backgroundColor: "#111", color: "#fff", border: "1px solid #ffffff15" }}
-                  />
-                </div>
-
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="text-[10px] font-semibold text-white/40">Comandos (executados em sequência)</label>
-                    <button onClick={addCommandToScene} className="flex items-center gap-1 px-2 py-1 rounded text-[10px] font-bold text-white" style={{ backgroundColor: "#268ffa" }}>
-                      <Plus size={10} /> Comando
-                    </button>
-                  </div>
-
-                  {editingScene.commands.length === 0 && (
-                    <p className="text-[11px] text-white/20 text-center py-6">Adicione comandos para esta cena</p>
-                  )}
-
-                  <div className="space-y-2">
-                    {editingScene.commands.map((cmd, idx) => (
-                      <div key={cmd.id} className="flex items-center gap-2 p-3 rounded-lg" style={{ backgroundColor: "#1a1a2e", border: "1px solid #ffffff08" }}>
-                        <span className="text-[10px] font-bold text-white/30 w-5">{idx + 1}</span>
-                        <select
-                          value={cmd.fn}
-                          onChange={e => {
-                            const opt = COMMAND_OPTIONS.find(o => o.value === e.target.value);
-                            updateSceneCommand(cmd.id, { fn: e.target.value, label: opt?.label || e.target.value });
-                          }}
-                          className="flex-1 px-2 py-1.5 rounded text-xs outline-none"
-                          style={{ backgroundColor: "#111", color: "#fff", border: "1px solid #ffffff15" }}
-                        >
-                          {(() => {
-                            const groups: Record<string, typeof COMMAND_OPTIONS> = {};
-                            COMMAND_OPTIONS.forEach(o => { (groups[o.category] ??= []).push(o); });
-                            return Object.entries(groups).map(([cat, opts]) => (
-                              <optgroup key={cat} label={cat}>
-                                {opts.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                              </optgroup>
-                            ));
-                          })()}
-                        </select>
-                        <input
-                          type="text"
-                          value={cmd.input || ""}
-                          onChange={e => updateSceneCommand(cmd.id, { input: e.target.value })}
-                          placeholder="Input"
-                          maxLength={50}
-                          className="w-16 px-2 py-1.5 rounded text-xs outline-none"
-                          style={{ backgroundColor: "#111", color: "#fff", border: "1px solid #ffffff15" }}
-                        />
-                        <input
-                          type="text"
-                          value={cmd.value || ""}
-                          onChange={e => updateSceneCommand(cmd.id, { value: e.target.value })}
-                          placeholder="Valor"
-                          maxLength={200}
-                          className="w-16 px-2 py-1.5 rounded text-xs outline-none"
-                          style={{ backgroundColor: "#111", color: "#fff", border: "1px solid #ffffff15" }}
-                        />
-                        <button onClick={() => removeSceneCommand(cmd.id)} className="p-1.5 rounded text-red-400/50 hover:text-red-400" style={{ backgroundColor: "#ffffff08" }}>
-                          <Trash2 size={11} />
-                        </button>
-                      </div>
                     ))}
+                    {programas.length === 0 && (
+                      <p className="text-[11px] text-white/30 py-4">Nenhum programa cadastrado.</p>
+                    )}
                   </div>
                 </div>
               </div>
-            )}
-          </>
-        )}
+            </>
+          );
+        })()}
 
         {/* ══ NDI TAB ══ */}
         {activeTab === "ndi" && (
