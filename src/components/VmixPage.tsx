@@ -579,7 +579,7 @@ export default function VmixPage() {
   );
 
   // ── Not connected ──
-  if (!connected) {
+  if (!effectiveConnected) {
     return (
       <div className="space-y-0">
         {/* Inline warning banner for iframe + local HTTP */}
