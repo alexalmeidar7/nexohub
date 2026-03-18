@@ -257,7 +257,7 @@ export default function VmixPage() {
     const loadUrl = async () => {
       const { data } = await supabase
         .from("user_settings")
-        .select("vmix_url, vmix_user, vmix_pass")
+        .select("vmix_url, vmix_user, vmix_pass, vmix_shortcuts")
         .eq("user_id", user.id)
         .maybeSingle();
       if (data?.vmix_url) {
@@ -266,6 +266,9 @@ export default function VmixPage() {
       }
       if (data?.vmix_user) setVmixUser(data.vmix_user);
       if (data?.vmix_pass) setVmixPass(data.vmix_pass);
+      if (data?.vmix_shortcuts && typeof data.vmix_shortcuts === "object") {
+        setInputShortcuts(data.vmix_shortcuts as Record<string, string>);
+      }
       setLoading(false);
     };
     loadUrl();
