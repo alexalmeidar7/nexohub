@@ -575,12 +575,15 @@ export default function VmixPage() {
   const controlBtn = (label: string, onClick: () => void, bg: string, active = false) => (
     <button
       onClick={onClick}
-      className="px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all hover:brightness-110"
+      className="px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all duration-200 hover:scale-[1.03]"
       style={{
         backgroundColor: active ? bg : bg + "30",
         color: active ? "#fff" : bg,
         boxShadow: active ? `0 0 16px ${bg}40` : "none",
+        border: `1px solid ${active ? bg : bg + "40"}`,
       }}
+      onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = `0 0 20px ${bg}50`; }}
+      onMouseLeave={e => { (e.target as HTMLElement).style.boxShadow = active ? `0 0 16px ${bg}40` : "none"; }}
     >
       {label}
     </button>
