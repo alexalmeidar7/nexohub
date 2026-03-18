@@ -963,15 +963,33 @@ export default function VmixPage() {
       {/* ── Preview / Transitions / Output ── */}
       <div className="flex items-stretch gap-[2px] rounded-xl overflow-hidden" style={{ backgroundColor: "#0a0a12" }}>
         {/* Preview */}
-        <div className="relative flex-1" style={{ backgroundColor: "#111118", minHeight: 140 }}>
-          <div className="absolute top-2 left-3 z-10">
+        <div className="relative flex-1 flex flex-col" style={{ backgroundColor: "#111118", minHeight: 180 }}>
+          <div className="flex items-center gap-2 px-3 py-1.5" style={{ borderBottom: "1px solid #ffffff08" }}>
             <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded" style={{ backgroundColor: "#22c55e", color: "#000" }}>Preview</span>
+            <select
+              value={previewInput || ""}
+              onChange={e => { sendCommand("PreviewInput", e.target.value); setPreviewInput(e.target.value); }}
+              className="flex-1 text-[10px] rounded px-2 py-1 border-none outline-none"
+              style={{ backgroundColor: "#1a1a28", color: "#ccc" }}
+            >
+              <option value="">— Selecione —</option>
+              {inputs.map(inp => (
+                <option key={inp.key || inp.number} value={inp.number}>{inp.number} – {inp.title}</option>
+              ))}
+            </select>
           </div>
-          <div className="flex items-center justify-center h-full px-6 py-8">
-            <div className="text-center">
-              <p className="text-white/90 font-bold text-base">{previewInputObj?.title || "—"}</p>
-              <p className="text-[10px] text-white/40 mt-1">Input {previewInput || "—"}</p>
-            </div>
+          <div className="flex-1 flex items-center justify-center overflow-hidden">
+            {previewInput && savedUrl ? (
+              <img
+                src={`${savedUrl}/api/?Function=SnapshotInput&Input=${previewInput}&Width=640&Height=360&_t=${Date.now()}`}
+                alt="Preview"
+                className="w-full h-full object-contain"
+                style={{ imageRendering: "auto" }}
+                onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
+              />
+            ) : (
+              <p className="text-[10px] text-white/30">Sem sinal</p>
+            )}
           </div>
         </div>
         {/* Transitions */}
