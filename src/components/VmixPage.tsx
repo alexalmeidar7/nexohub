@@ -150,6 +150,7 @@ export default function VmixPage() {
   const [capturingShortcut, setCapturingShortcut] = useState<string | null>(null);
    const [activePreset, setActivePreset] = useState<string | null>(null);
   const [editingPresetId, setEditingPresetId] = useState<string | null>(null);
+  const [dragPresetIdx, setDragPresetIdx] = useState<number | null>(null);
   const [connectionMode, setConnectionMode] = useState<"direct" | "proxy">(() => {
     try { return (localStorage.getItem("vmix_conn_mode") as "direct" | "proxy") || "direct"; }
     catch { return "direct"; }
@@ -2088,6 +2089,7 @@ export default function VmixPage() {
                       const progOnAir = isProgramForToday(prog) && isNowInProgram(prog);
                       const startTime = prog.horario_inicio?.slice(0, 5) || "";
                       const endTime = prog.horario_fim?.slice(0, 5) || "";
+                      const globalIdx = programas.findIndex(p => p.id === prog.id);
                       return (
                         <div
                           key={prog.id}
@@ -2096,7 +2098,20 @@ export default function VmixPage() {
                             aspectRatio: "3/2",
                             backgroundColor: isActive ? "#dc2626" : "#2a2a30",
                             border: isActive ? "2px solid #ef4444" : progOnAir ? "2px solid #22c55e" : "2px solid #333338",
+                            opacity: dragPresetIdx === globalIdx ? 0.4 : 1,
                           }}
+                          onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; }}
+                          onDrop={(e) => {
+                            e.preventDefault();
+                            if (dragPresetIdx === null || dragPresetIdx === globalIdx) return;
+                            const arr = [...programas];
+                            const [moved] = arr.splice(dragPresetIdx, 1);
+                            arr.splice(globalIdx, 0, moved);
+                            setProgramas(arr);
+                            localStorage.setItem("vmix_preset_order", JSON.stringify(arr.map(p => p.id)));
+                            setDragPresetIdx(null);
+                          }}
+                          onDragEnd={() => setDragPresetIdx(null)}
                           onClick={async () => {
                             setActivePreset(prog.id);
                             // Try to run saved preset commands first
@@ -2130,7 +2145,14 @@ export default function VmixPage() {
                           )}
                           {/* Schedule badge */}
                           {startTime && (
-                            <div className="absolute top-1.5 left-1.5 flex items-center gap-0.5 px-1.5 py-0.5 rounded" style={{ backgroundColor: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)", zIndex: 2 }}>
+                            <div
+                              draggable
+                              onDragStart={(e) => { e.stopPropagation(); setDragPresetIdx(globalIdx); e.dataTransfer.effectAllowed = "move"; }}
+                              className="absolute top-1.5 left-1.5 flex items-center gap-0.5 px-1.5 py-0.5 rounded cursor-grab active:cursor-grabbing"
+                              style={{ backgroundColor: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)", zIndex: 2 }}
+                              title="Arraste para reposicionar"
+                            >
+                              <GripVertical size={7} style={{ color: "#666" }} />
                               <Clock size={8} style={{ color: progOnAir ? "#22c55e" : "#888" }} />
                               <span className="text-[7px] font-bold tabular-nums" style={{ color: progOnAir ? "#22c55e" : "#999" }}>{startTime} - {endTime}</span>
                             </div>
