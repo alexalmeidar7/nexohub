@@ -1341,7 +1341,7 @@ export default function VmixPage() {
                   </button>
                 </div>
               </div>
-            ), "#f59e0b")}
+            ), "#888")}
 
             {sectionBox("Inputs NDI Atuais", <Wifi size={14} style={{ color: "#22c55e" }} />, (
               <div className="space-y-1.5">
