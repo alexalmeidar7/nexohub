@@ -1953,15 +1953,27 @@ export default function VmixPage() {
                       <div>
                         <p className="text-sm font-bold text-white">{onAir.nome}</p>
                         <p className="text-[10px] text-white/40 mt-1">{onAir.horario_inicio} – {onAir.horario_fim}</p>
-                        {/* Countdown to end */}
                         {(() => {
-                          const remaining = minutesUntilEnd(onAir);
-                          const rh = Math.floor(remaining / 60);
-                          const rm = remaining % 60;
+                          const remSec = secondsUntilEnd(onAir);
+                          const totalSec = programDurationSec(onAir);
+                          const elapsedSec = totalSec - remSec;
+                          const progress = totalSec > 0 ? Math.min(100, (elapsedSec / totalSec) * 100) : 0;
+                          const rh = Math.floor(remSec / 3600);
+                          const rm = Math.floor((remSec % 3600) / 60);
+                          const rs = remSec % 60;
+                          const timeStr = rh > 0
+                            ? `${String(rh).padStart(2, "0")}:${String(rm).padStart(2, "0")}:${String(rs).padStart(2, "0")}`
+                            : `${String(rm).padStart(2, "0")}:${String(rs).padStart(2, "0")}`;
                           return (
-                            <p className="text-[10px] mt-2 font-mono font-bold" style={{ color: remaining <= 5 ? "#dc2626" : "#888" }}>
-                              {remaining <= 0 ? "Encerrando..." : `Termina em ${rh > 0 ? `${rh}h ` : ""}${rm}min`}
-                            </p>
+                            <div className="mt-3">
+                              <p className="text-center text-base font-mono font-black tracking-wider mb-1.5" style={{ color: remSec <= 300 ? "#dc2626" : "#fff" }}>
+                                {remSec <= 0 ? "00:00" : timeStr}
+                              </p>
+                              <div className="w-full h-2.5 rounded-full overflow-hidden" style={{ backgroundColor: "#333" }}>
+                                <div className="h-full rounded-full transition-all duration-1000 ease-linear" style={{ width: `${progress}%`, backgroundColor: "#dc2626" }} />
+                              </div>
+                              <p className="text-[9px] text-white/30 mt-1 text-right font-mono">{Math.round(progress)}%</p>
+                            </div>
                           );
                         })()}
                       </div>
