@@ -120,6 +120,7 @@ function formatKeyName(e: KeyboardEvent): string {
 }
 
 export default function VmixPage() {
+  const { user } = useAuth();
   const { toast } = useToast();
   const [vmixUrl, setVmixUrl] = useState("");
   const [vmixUser, setVmixUser] = useState("");
