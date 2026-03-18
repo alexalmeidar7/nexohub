@@ -1329,7 +1329,7 @@ export default function VmixPage() {
                     placeholder="Ex: STUDIO-PC (Camera 1)"
                     maxLength={200}
                     className="flex-1 px-3 py-2.5 rounded-lg text-sm outline-none"
-                    style={{ backgroundColor: "#111", color: "#fff", border: "1px solid #ffffff15" }}
+                    style={{ backgroundColor: "#111114", color: "#fff", border: "1px solid #ffffff10" }}
                   />
                   <button
                     onClick={addNdiInput}
