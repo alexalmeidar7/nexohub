@@ -134,6 +134,7 @@ export default function VmixPage() {
   }
   const [diagRunning, setDiagRunning] = useState(false);
   const [diagResult, setDiagResult] = useState<DiagResult | null>(null);
+  const connectToVmixRef = useRef<(() => Promise<void>) | null>(null);
 
   // Persist scenes
   useEffect(() => {
