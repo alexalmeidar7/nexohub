@@ -419,7 +419,9 @@ export default function VmixPage() {
     }
   }, [savedUrl, toast, vmixFetch, connectionMode]);
 
-  const sendCommand = async (fn: string, input?: string, value?: string) => {
+  // Keep ref in sync for diagnostic auto-connect
+  useEffect(() => { connectToVmixRef.current = connectToVmix; }, [connectToVmix]);
+
     if (!savedUrl) return;
     try {
       let path = `/api/?Function=${encodeURIComponent(fn)}`;
