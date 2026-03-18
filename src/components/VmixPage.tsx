@@ -948,6 +948,26 @@ export default function VmixPage() {
       }
       return <MjpegPlayer src={streamUrl} className="w-full h-full" />;
     }
+    // When connected, show input info placeholder instead of SMPTE bars
+    const inputNum = type === "preview" ? previewInput : activeInput;
+    if (connected && inputNum) {
+      const inp = inputs.find(i => i.number === inputNum);
+      const bgColor = inp ? getInputColor(inp.type) : "#1e1e24";
+      return (
+        <div className="w-full h-full flex flex-col items-center justify-center relative" style={{ backgroundColor: bgColor }}>
+          <div className="text-center space-y-1">
+            <span className="text-[11px] font-bold text-white/70 uppercase tracking-wider">{inp?.type || "Input"}</span>
+            <p className="text-[13px] font-semibold text-white/90 max-w-[80%] mx-auto truncate">{inp?.title || `Input ${inputNum}`}</p>
+            <p className="text-[9px] text-white/40">Input {inputNum} • {inp?.state || "—"}</p>
+          </div>
+          <div className="absolute bottom-2 left-0 right-0 flex justify-center">
+            <span className="text-[8px] px-2 py-0.5 rounded" style={{ backgroundColor: "rgba(0,0,0,0.5)", color: "#888" }}>
+              📡 Configure URL de stream para preview ao vivo
+            </span>
+          </div>
+        </div>
+      );
+    }
     return null;
   };
 
