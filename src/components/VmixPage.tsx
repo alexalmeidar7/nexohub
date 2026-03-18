@@ -446,22 +446,6 @@ export default function VmixPage() {
               className="w-64 px-4 py-2 rounded-lg text-sm outline-none"
               style={{ backgroundColor: "#2a2a2a", color: "#fff", border: "1px solid #ffffff15" }}
             />
-            <input
-              type="text"
-              value={vmixUser}
-              onChange={e => setVmixUser(e.target.value)}
-              placeholder="Usuário (ex: admin)"
-              className="w-36 px-3 py-2 rounded-lg text-sm outline-none"
-              style={{ backgroundColor: "#2a2a2a", color: "#fff", border: "1px solid #ffffff15" }}
-            />
-            <input
-              type="password"
-              value={vmixPass}
-              onChange={e => setVmixPass(e.target.value)}
-              placeholder="Senha"
-              className="w-28 px-3 py-2 rounded-lg text-sm outline-none"
-              style={{ backgroundColor: "#2a2a2a", color: "#fff", border: "1px solid #ffffff15" }}
-            />
             <button onClick={saveUrl} className="px-4 py-2 rounded-lg text-xs font-bold text-white" style={{ background: "linear-gradient(135deg,#268ffa,#2dbef3)" }}>
               Salvar
             </button>
@@ -566,22 +550,6 @@ export default function VmixPage() {
             onChange={e => setVmixUrl(e.target.value)}
             placeholder="http://SEU_IP_PUBLICO:8088"
             className="w-64 px-4 py-2 rounded-lg text-sm outline-none"
-            style={{ backgroundColor: "#2a2a2a", color: "#fff", border: "1px solid #ffffff15" }}
-          />
-          <input
-            type="text"
-            value={vmixUser}
-            onChange={e => setVmixUser(e.target.value)}
-            placeholder="Usuário"
-            className="w-28 px-3 py-2 rounded-lg text-sm outline-none"
-            style={{ backgroundColor: "#2a2a2a", color: "#fff", border: "1px solid #ffffff15" }}
-          />
-          <input
-            type="password"
-            value={vmixPass}
-            onChange={e => setVmixPass(e.target.value)}
-            placeholder="Senha"
-            className="w-24 px-3 py-2 rounded-lg text-sm outline-none"
             style={{ backgroundColor: "#2a2a2a", color: "#fff", border: "1px solid #ffffff15" }}
           />
           <button onClick={saveUrl} className="px-4 py-2 rounded-lg text-xs font-bold text-white" style={{ background: "linear-gradient(135deg,#268ffa,#2dbef3)" }}>
