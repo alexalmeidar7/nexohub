@@ -908,7 +908,7 @@ export default function VmixPage() {
       </div>
 
       {/* ── Top Bar ── */}
-      <div className="flex items-center justify-between px-4 py-2 rounded-t-xl" style={{ backgroundColor: "#111118" }}>
+      <div className="relative flex items-center justify-between px-4 py-2 rounded-t-xl" style={{ backgroundColor: "#111118" }}>
         {/* Left: Clock + GO LIVE / RECORD */}
         <div className="flex items-center gap-4">
           <span className="text-sm font-mono font-bold tracking-wider" style={{ color: "#22c55e" }}>{clock}</span>
