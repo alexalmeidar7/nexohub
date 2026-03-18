@@ -1224,10 +1224,10 @@ export default function VmixPage() {
                     )}
                   </div>
                 </div>
-                <div className="flex-1 rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a2e", border: "1px solid #ffffff08" }}>
-                  <div className="flex items-center gap-2 px-4 py-2" style={{ backgroundColor: "#22c55e18", borderBottom: "1px solid #ffffff08" }}>
-                    <Eye size={12} style={{ color: "#22c55e" }} />
-                    <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#22c55e" }}>A Seguir</span>
+                <div className="flex-1 rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a1f", border: "1px solid #ffffff08" }}>
+                  <div className="flex items-center gap-2 px-4 py-2" style={{ backgroundColor: "#ffffff06", borderBottom: "1px solid #ffffff08" }}>
+                    <Eye size={12} style={{ color: "#888" }} />
+                    <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#999" }}>A Seguir</span>
                   </div>
                   <div className="p-3 space-y-1.5">
                     {upcoming.length > 0 ? upcoming.map(p => (
