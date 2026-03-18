@@ -4,7 +4,6 @@ import { LogOut, Loader2 } from "lucide-react";
 import VmixPage from "@/components/VmixPage";
 import type { User } from "@supabase/supabase-js";
 import logoMixControl from "@/assets/logo-mixcontrol.png";
-import type { User } from "@supabase/supabase-js";
 
 export default function VmixControl() {
   const [user, setUser] = useState<User | null>(null);
