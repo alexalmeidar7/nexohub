@@ -875,18 +875,19 @@ export default function VmixPage() {
 
   return (
     <div className="space-y-3 max-w-full" style={{ color: "#e0e0e0" }}>
-      {/* ── URL + Salvar + Conectado section ── */}
-      <div className="flex items-center gap-3 p-3 rounded-xl flex-wrap" style={{ backgroundColor: "#111118", border: "1px solid #ffffff08" }}>
-        <div className="flex gap-2 items-center flex-1 flex-wrap">
+      {/* ── URL + GO LIVE / RECORD row ── */}
+      <div className="flex items-center gap-2 flex-wrap">
+        {/* URL section */}
+        <div className="flex items-center gap-2 px-3 py-2 rounded-xl" style={{ backgroundColor: "#111118", border: "1px solid #ffffff08" }}>
           <input
             type="text"
             value={vmixUrl}
             onChange={e => setVmixUrl(e.target.value)}
             placeholder="http://SEU_IP_PUBLICO:8088"
-            className="w-64 px-4 py-2 rounded-lg text-sm outline-none"
+            className="w-52 px-3 py-1.5 rounded-lg text-xs outline-none"
             style={{ backgroundColor: "#2a2a2a", color: "#fff", border: "1px solid #ffffff15" }}
           />
-          <button onClick={saveUrl} className="px-4 py-2 rounded-lg text-xs font-bold text-white transition-all duration-200 hover:scale-[1.03]"
+          <button onClick={saveUrl} className="px-3 py-1.5 rounded-lg text-[10px] font-bold text-white transition-all duration-200 hover:scale-[1.03]"
             style={{ backgroundColor: "#3a3a3a", border: "1px solid #555" }}
             onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = "0 0 14px #3a3a3a60"; }}
             onMouseLeave={e => { (e.target as HTMLElement).style.boxShadow = "none"; }}
@@ -896,53 +897,44 @@ export default function VmixPage() {
           <button
             onClick={connectToVmix}
             disabled={connecting}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold text-white transition-all duration-200 hover:scale-[1.03]"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold text-white transition-all duration-200 hover:scale-[1.03]"
             style={{ backgroundColor: "#2d5016", opacity: connecting ? 0.6 : 1, border: "1px solid #3d6a20" }}
             onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = "0 0 16px #2d501660"; }}
             onMouseLeave={e => { (e.target as HTMLElement).style.boxShadow = "none"; }}
           >
-            {connecting ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle size={14} />}
+            {connecting ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle size={12} />}
             Conectado
           </button>
         </div>
-      </div>
-
-      {/* ── Top Bar ── */}
-      <div className="relative flex items-center justify-between px-4 py-2 rounded-t-xl" style={{ backgroundColor: "#111118" }}>
-        {/* Left: GO LIVE / RECORD */}
-        <div className="flex items-center gap-2">
-           <div className="flex items-center gap-2">
-            <button
-              onClick={() => sendCommand(streaming ? "StopStreaming" : "StartStreaming")}
-              className="px-4 py-1.5 rounded text-xs font-bold uppercase tracking-wider transition-all duration-200 hover:scale-[1.03]"
-              style={{
-                backgroundColor: streaming ? "#6b1010" : "#3a3a3a",
-                color: streaming ? "#fff" : "#ccc",
-                boxShadow: streaming ? "0 0 16px #6b101060" : "none",
-                border: `1px solid ${streaming ? "#8b2020" : "#555"}`,
-              }}
-              onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = streaming ? "0 0 24px #6b101080" : "0 0 16px #3a3a3a60"; }}
-              onMouseLeave={e => { (e.target as HTMLElement).style.boxShadow = streaming ? "0 0 16px #6b101060" : "none"; }}
-            >
-              {streaming ? "● LIVE" : "GO LIVE"}
-            </button>
-            <button
-              onClick={() => sendCommand(recording ? "StopRecording" : "StartRecording")}
-              className="px-4 py-1.5 rounded text-xs font-bold uppercase tracking-wider transition-all duration-200 hover:scale-[1.03]"
-              style={{
-                backgroundColor: recording ? "#6b1010" : "#3a3a3a",
-                color: recording ? "#fff" : "#ccc",
-                border: `1px solid ${recording ? "#8b2020" : "#555"}`,
-              }}
-              onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = "0 0 16px #3a3a3a60"; }}
-              onMouseLeave={e => { (e.target as HTMLElement).style.boxShadow = "none"; }}
-            >
-              {recording ? "● REC" : "RECORD"}
-            </button>
-          </div>
-        </div>
-        {/* Right: Refresh */}
-        <div className="flex items-center gap-3">
+        {/* GO LIVE / RECORD section */}
+        <div className="flex items-center gap-2 px-3 py-2 rounded-xl" style={{ backgroundColor: "#111118", border: "1px solid #ffffff08" }}>
+          <button
+            onClick={() => sendCommand(streaming ? "StopStreaming" : "StartStreaming")}
+            className="px-4 py-1.5 rounded text-xs font-bold uppercase tracking-wider transition-all duration-200 hover:scale-[1.03]"
+            style={{
+              backgroundColor: streaming ? "#6b1010" : "#3a3a3a",
+              color: streaming ? "#fff" : "#ccc",
+              boxShadow: streaming ? "0 0 16px #6b101060" : "none",
+              border: `1px solid ${streaming ? "#8b2020" : "#555"}`,
+            }}
+            onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = streaming ? "0 0 24px #6b101080" : "0 0 16px #3a3a3a60"; }}
+            onMouseLeave={e => { (e.target as HTMLElement).style.boxShadow = streaming ? "0 0 16px #6b101060" : "none"; }}
+          >
+            {streaming ? "● LIVE" : "GO LIVE"}
+          </button>
+          <button
+            onClick={() => sendCommand(recording ? "StopRecording" : "StartRecording")}
+            className="px-4 py-1.5 rounded text-xs font-bold uppercase tracking-wider transition-all duration-200 hover:scale-[1.03]"
+            style={{
+              backgroundColor: recording ? "#6b1010" : "#3a3a3a",
+              color: recording ? "#fff" : "#ccc",
+              border: `1px solid ${recording ? "#8b2020" : "#555"}`,
+            }}
+            onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = "0 0 16px #3a3a3a60"; }}
+            onMouseLeave={e => { (e.target as HTMLElement).style.boxShadow = "none"; }}
+          >
+            {recording ? "● REC" : "RECORD"}
+          </button>
           <button onClick={() => connectToVmix()} className="text-white/40 hover:text-white transition-colors" title="Atualizar">
             <RefreshCw size={14} />
           </button>
