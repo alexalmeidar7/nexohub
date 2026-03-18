@@ -1249,59 +1249,70 @@ export default function VmixPage() {
                   <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#999" }}>programas preset</span>
                 </div>
                 <div className="p-4">
-                  <div className="flex flex-wrap gap-2">
-                    {programas.map((prog, idx) => (
-                      <div key={prog.id} className="group/preset relative">
-                        <button
+                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">
+                    {programas.map((prog, idx) => {
+                      const isActive = activePreset === prog.id;
+                      return (
+                        <div
+                          key={prog.id}
+                          className="group/preset relative rounded-lg overflow-hidden cursor-pointer transition-all duration-200 hover:scale-[1.03]"
+                          style={{
+                            aspectRatio: "3/2",
+                            backgroundColor: isActive ? "#dc2626" : "#2a2a30",
+                            border: isActive ? "2px solid #ef4444" : "2px solid #333338",
+                          }}
                           onClick={() => {
                             setActivePreset(prog.id);
                             sendCommand("ScriptStart", prog.nome);
                             toast({ title: `Preset: ${prog.nome}`, description: "Comando enviado ao vMix." });
                           }}
-                          className="px-5 py-3 rounded-lg text-xs font-black uppercase tracking-wider transition-all duration-200 hover:scale-[1.03]"
-                          style={{
-                            backgroundColor: activePreset === prog.id ? "#dc2626" : "#2a2a30",
-                            color: activePreset === prog.id ? "#fff" : "#bbb",
-                            border: activePreset === prog.id ? "2px solid #ef4444" : "2px solid #3a3a40",
-                            minWidth: 100,
-                          }}
                         >
-                          {prog.nome}
-                        </button>
-                        <div className="absolute -top-1 -right-1 flex gap-0.5 opacity-0 group-hover/preset:opacity-100 transition-opacity z-10">
-                          {idx > 0 && (
+                          {/* Label */}
+                          <div className="absolute inset-0 flex items-center justify-center p-2">
+                            <span className="text-[10px] font-black uppercase tracking-wider text-center leading-tight"
+                              style={{ color: isActive ? "#fff" : "#ccc" }}
+                            >{prog.nome}</span>
+                          </div>
+
+                          {/* Hover actions bar */}
+                          <div
+                            className="absolute bottom-0 left-0 right-0 flex items-center justify-center gap-1 py-1.5 opacity-0 group-hover/preset:opacity-100 transition-all duration-200 translate-y-full group-hover/preset:translate-y-0"
+                            style={{ backgroundColor: "rgba(0,0,0,0.75)", backdropFilter: "blur(4px)" }}
+                          >
+                            {idx > 0 && (
+                              <button
+                                onClick={(e) => { e.stopPropagation(); const arr = [...programas]; [arr[idx - 1], arr[idx]] = [arr[idx], arr[idx - 1]]; setProgramas(arr); }}
+                                className="w-5 h-5 rounded flex items-center justify-center text-[9px] hover:bg-white/20 transition-colors"
+                                style={{ color: "#ccc" }}
+                                title="Mover para esquerda"
+                              >◀</button>
+                            )}
+                            {idx < programas.length - 1 && (
+                              <button
+                                onClick={(e) => { e.stopPropagation(); const arr = [...programas]; [arr[idx], arr[idx + 1]] = [arr[idx + 1], arr[idx]]; setProgramas(arr); }}
+                                className="w-5 h-5 rounded flex items-center justify-center text-[9px] hover:bg-white/20 transition-colors"
+                                style={{ color: "#ccc" }}
+                                title="Mover para direita"
+                              >▶</button>
+                            )}
                             <button
-                              onClick={(e) => { e.stopPropagation(); const arr = [...programas]; [arr[idx - 1], arr[idx]] = [arr[idx], arr[idx - 1]]; setProgramas(arr); }}
-                              className="w-4 h-4 rounded-full flex items-center justify-center text-[8px]"
-                              style={{ backgroundColor: "#555", color: "#fff" }}
-                              title="Mover para esquerda"
-                            >◀</button>
-                          )}
-                          {idx < programas.length - 1 && (
+                              onClick={(e) => { e.stopPropagation(); toast({ title: `Editar: ${prog.nome}`, description: "Abra o painel principal para editar este programa." }); }}
+                              className="w-5 h-5 rounded flex items-center justify-center hover:bg-white/20 transition-colors"
+                              style={{ color: "#ccc" }}
+                              title="Editar"
+                            ><Wand2 size={10} /></button>
                             <button
-                              onClick={(e) => { e.stopPropagation(); const arr = [...programas]; [arr[idx], arr[idx + 1]] = [arr[idx + 1], arr[idx]]; setProgramas(arr); }}
-                              className="w-4 h-4 rounded-full flex items-center justify-center text-[8px]"
-                              style={{ backgroundColor: "#555", color: "#fff" }}
-                              title="Mover para direita"
-                            >▶</button>
-                          )}
-                          <button
-                            onClick={(e) => { e.stopPropagation(); toast({ title: `Editar: ${prog.nome}`, description: "Abra o painel principal para editar este programa." }); }}
-                            className="w-4 h-4 rounded-full flex items-center justify-center"
-                            style={{ backgroundColor: "#555", color: "#fff" }}
-                            title="Editar"
-                          ><Wand2 size={8} /></button>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); setProgramas(prev => prev.filter(p => p.id !== prog.id)); }}
-                            className="w-4 h-4 rounded-full flex items-center justify-center"
-                            style={{ backgroundColor: "#dc2626", color: "#fff" }}
-                            title="Excluir"
-                          ><Trash2 size={8} /></button>
+                              onClick={(e) => { e.stopPropagation(); setProgramas(prev => prev.filter(p => p.id !== prog.id)); }}
+                              className="w-5 h-5 rounded flex items-center justify-center hover:bg-red-500/40 transition-colors"
+                              style={{ color: "#f87171" }}
+                              title="Excluir"
+                            ><Trash2 size={10} /></button>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                     {programas.length === 0 && (
-                      <p className="text-[11px] text-white/30 py-4">Nenhum programa cadastrado.</p>
+                      <p className="text-[11px] text-white/30 py-4 col-span-full">Nenhum programa cadastrado.</p>
                     )}
                   </div>
                 </div>
