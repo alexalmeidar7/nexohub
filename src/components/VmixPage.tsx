@@ -683,7 +683,8 @@ export default function VmixPage() {
 
   // ── Demo mode: show connected UI with mock data in preview ──
   const isEmbeddedPreview = window.self !== window.top;
-  const [demoMode, setDemoMode] = useState(false);
+   const [demoMode, setDemoMode] = useState(false);
+  const effectiveConnected = connected || demoMode;
 
   useEffect(() => {
     if (!loading && !connected && isEmbeddedPreview) {
@@ -703,8 +704,6 @@ export default function VmixPage() {
       }
     }
   }, [loading, connected, isEmbeddedPreview]);
-
-  const effectiveConnected = connected || demoMode;
 
   // Keyboard shortcut listener (must be after effectiveConnected)
   useEffect(() => {
