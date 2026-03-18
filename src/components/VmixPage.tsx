@@ -123,13 +123,15 @@ export default function VmixPage() {
     const loadUrl = async () => {
       const { data } = await supabase
         .from("user_settings")
-        .select("vmix_url")
+        .select("vmix_url, vmix_user, vmix_pass")
         .eq("user_id", user.id)
         .maybeSingle();
       if (data?.vmix_url) {
         setVmixUrl(data.vmix_url);
         setSavedUrl(data.vmix_url);
       }
+      if (data?.vmix_user) setVmixUser(data.vmix_user);
+      if (data?.vmix_pass) setVmixPass(data.vmix_pass);
       setLoading(false);
     };
     loadUrl();
