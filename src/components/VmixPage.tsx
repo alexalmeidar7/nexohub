@@ -879,40 +879,37 @@ export default function VmixPage() {
   ];
 
   return (
-    <div className="space-y-3 max-w-full" style={{ color: "#e0e0e0" }}>
+    <div className="space-y-2 max-w-full" style={{ color: "#e0e0e0" }}>
       {/* ── URL + GO LIVE / RECORD row ── */}
       <div className="flex items-center gap-2 flex-wrap">
         {/* URL section */}
-        <div className="flex items-center gap-2 px-3 py-2 rounded-xl" style={{ backgroundColor: "#111118", border: "1px solid #ffffff08" }}>
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg" style={{ background: "linear-gradient(135deg, #13131d 0%, #1a1a2e 100%)", border: "1px solid #ffffff0a", boxShadow: "0 2px 8px #00000040" }}>
+          <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: connected ? "#22c55e" : "#666", boxShadow: connected ? "0 0 6px #22c55e60" : "none" }} />
           <input
             type="text"
             value={vmixUrl}
             onChange={e => setVmixUrl(e.target.value)}
             placeholder="http://SEU_IP_PUBLICO:8088"
-            className="w-52 px-3 py-1.5 rounded-lg text-xs outline-none"
-            style={{ backgroundColor: "#2a2a2a", color: "#fff", border: "1px solid #ffffff15" }}
+            className="w-52 px-3 py-1.5 rounded text-xs outline-none transition-all focus:ring-1 focus:ring-white/10"
+            style={{ backgroundColor: "#0a0a14", color: "#fff", border: "1px solid #ffffff10" }}
           />
-          <button onClick={saveUrl} className="px-3 py-1.5 rounded-lg text-[10px] font-bold text-white transition-all duration-200 hover:scale-[1.03]"
-            style={{ backgroundColor: "#3a3a3a", border: "1px solid #555" }}
-            onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = "0 0 14px #3a3a3a60"; }}
-            onMouseLeave={e => { (e.target as HTMLElement).style.boxShadow = "none"; }}
+          <button onClick={saveUrl} className="px-3 py-1.5 rounded text-[10px] font-bold text-white/70 hover:text-white transition-all duration-200 hover:scale-[1.02]"
+            style={{ backgroundColor: "#ffffff08", border: "1px solid #ffffff10" }}
           >
             Salvar
           </button>
           <button
             onClick={connectToVmix}
             disabled={connecting}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold text-white transition-all duration-200 hover:scale-[1.03]"
-            style={{ backgroundColor: "#2d5016", opacity: connecting ? 0.6 : 1, border: "1px solid #3d6a20" }}
-            onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = "0 0 16px #2d501660"; }}
-            onMouseLeave={e => { (e.target as HTMLElement).style.boxShadow = "none"; }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded text-[10px] font-bold text-white/70 hover:text-white transition-all duration-200"
+            style={{ backgroundColor: connected ? "#22c55e18" : "#ffffff08", border: `1px solid ${connected ? "#22c55e30" : "#ffffff10"}` }}
           >
-            {connecting ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle size={12} />}
-            Conectado
+            {connecting ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle size={12} style={{ color: connected ? "#22c55e" : "#666" }} />}
+            {connected ? "Conectado" : "Conectar"}
           </button>
         </div>
         {/* GO LIVE / RECORD section */}
-        <div className="group/live flex items-center gap-2 px-3 py-2 rounded-xl" style={{ backgroundColor: "#111118", border: "1px solid #ffffff08" }}>
+        <div className="group/live flex items-center gap-2 px-3 py-1.5 rounded-lg" style={{ background: "linear-gradient(135deg, #13131d 0%, #1a1a2e 100%)", border: "1px solid #ffffff0a", boxShadow: "0 2px 8px #00000040" }}>
           <button
             onClick={() => sendCommand(streaming ? "StopStreaming" : "StartStreaming")}
             className="px-4 py-1.5 rounded text-xs font-bold uppercase tracking-wider transition-all duration-200 hover:scale-[1.03]"
@@ -965,11 +962,11 @@ export default function VmixPage() {
       </div>
 
       {/* ── Preview / Transitions / Output ── */}
-      <div className="flex items-stretch gap-[2px] rounded-xl overflow-hidden" style={{ backgroundColor: "#0a0a12" }}>
+      <div className="flex items-stretch gap-[1px] rounded-xl overflow-hidden" style={{ background: "linear-gradient(180deg, #0d0d18 0%, #080812 100%)", boxShadow: "0 4px 20px #00000060" }}>
         {/* Preview */}
-        <div className="relative flex-1 flex flex-col" style={{ backgroundColor: "#111118", minHeight: 180 }}>
-          <div className="flex items-center gap-2 px-3 py-1.5" style={{ borderBottom: "1px solid #ffffff08" }}>
-            <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded" style={{ backgroundColor: "#22c55e", color: "#000" }}>Preview</span>
+        <div className="relative flex-1 flex flex-col" style={{ background: "linear-gradient(180deg, #12121e 0%, #0e0e18 100%)", minHeight: 200 }}>
+          <div className="flex items-center gap-2 px-3 py-2" style={{ borderBottom: "1px solid #ffffff06", background: "#ffffff03" }}>
+            <span className="text-[9px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-sm" style={{ backgroundColor: "#22c55e", color: "#000", letterSpacing: "0.15em" }}>Preview</span>
             <select
               value={previewInput || ""}
               onChange={e => { sendCommand("PreviewInput", e.target.value); setPreviewInput(e.target.value); }}
@@ -997,7 +994,7 @@ export default function VmixPage() {
           </div>
         </div>
         {/* Transitions */}
-        <div className="flex flex-col items-center justify-center gap-1.5 px-3 py-2" style={{ backgroundColor: "#111118", minWidth: 80 }}>
+        <div className="flex flex-col items-center justify-center gap-1.5 px-3 py-3" style={{ background: "linear-gradient(180deg, #15152a 0%, #0e0e1a 100%)", minWidth: 84 }}>
           {[
             { label: "CUT", fn: "Cut", active: true },
             { label: "FADE", fn: "Fade", value: "1000" },
@@ -1046,9 +1043,9 @@ export default function VmixPage() {
           </div>
         </div>
         {/* Output */}
-        <div className="relative flex-1 flex flex-col" style={{ backgroundColor: "#111118", minHeight: 180 }}>
-          <div className="flex items-center gap-2 px-3 py-1.5" style={{ borderBottom: "1px solid #ffffff08" }}>
-            <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded" style={{ backgroundColor: "#dc2626", color: "#fff" }}>Output</span>
+        <div className="relative flex-1 flex flex-col" style={{ background: "linear-gradient(180deg, #12121e 0%, #0e0e18 100%)", minHeight: 200 }}>
+          <div className="flex items-center gap-2 px-3 py-2" style={{ borderBottom: "1px solid #ffffff06", background: "#ffffff03" }}>
+            <span className="text-[9px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-sm" style={{ backgroundColor: "#dc2626", color: "#fff", letterSpacing: "0.15em" }}>Output</span>
             <select
               value={activeInput || ""}
               onChange={e => { sendCommand("ActiveInput", e.target.value); setActiveInput(e.target.value); }}
@@ -1079,25 +1076,25 @@ export default function VmixPage() {
 
 
       {/* ── Tab Bar ── */}
-      <div className="flex" style={{ backgroundColor: "#111118" }}>
+      <div className="flex rounded-t-xl overflow-hidden" style={{ background: "linear-gradient(180deg, #13131f 0%, #0f0f1a 100%)", borderBottom: "1px solid #ffffff06" }}>
         {tabs.map(tab => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className="flex items-center gap-1.5 px-5 py-2.5 text-xs font-bold uppercase tracking-wider transition-all duration-200 hover:scale-[1.03]"
+            className="relative flex items-center gap-1.5 px-6 py-3 text-[11px] font-bold uppercase tracking-widest transition-all duration-300"
             style={{
-              backgroundColor: activeTab === tab.key ? "#6b1010" : "transparent",
-              color: activeTab === tab.key ? "#fff" : "#666",
-              boxShadow: activeTab === tab.key ? "0 0 12px #6b101040" : "none",
+              color: activeTab === tab.key ? "#fff" : "#555",
+              background: activeTab === tab.key ? "linear-gradient(180deg, #1a1a2e 0%, #15152a 100%)" : "transparent",
             }}
           >
+            {activeTab === tab.key && <div className="absolute top-0 left-0 right-0 h-[2px]" style={{ background: "linear-gradient(90deg, #dc2626, #ef4444)" }} />}
             {tab.icon} {tab.label}
           </button>
         ))}
       </div>
 
       {/* ── Tab Content ── */}
-      <div className="rounded-b-xl p-4 space-y-4" style={{ backgroundColor: "#15151f", minHeight: 300 }}>
+      <div className="rounded-b-xl p-5 space-y-4" style={{ background: "linear-gradient(180deg, #15152a 0%, #111120 100%)", minHeight: 300, borderTop: "none" }}>
 
         {/* ══ CONTROLS TAB ══ */}
         {activeTab === "controls" && (
