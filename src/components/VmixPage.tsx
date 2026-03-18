@@ -706,6 +706,37 @@ function formatKeyName(e: KeyboardEvent): string {
 
   const effectiveConnected = connected || demoMode;
 
+  // Keyboard shortcut listener (must be after effectiveConnected)
+  useEffect(() => {
+    if (!effectiveConnected) return;
+    const handler = (e: KeyboardEvent) => {
+      // Don't capture if user is typing in an input/textarea
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+
+      // If capturing a shortcut for an input, record it
+      if (capturingShortcut) {
+        e.preventDefault();
+        e.stopPropagation();
+        const keyName = formatKeyName(e);
+        setInputShortcuts(prev => ({ ...prev, [capturingShortcut]: keyName }));
+        setCapturingShortcut(null);
+        return;
+      }
+      // Otherwise, check if the pressed key matches a shortcut
+      const keyName = formatKeyName(e);
+      const matchedInput = Object.entries(inputShortcuts).find(([_, shortcut]) => shortcut === keyName);
+      if (matchedInput) {
+        e.preventDefault();
+        const inputNum = matchedInput[0];
+        sendCommand("PreviewInput", inputNum);
+        setPreviewInput(inputNum);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [effectiveConnected, capturingShortcut, inputShortcuts]);
+
   if (loading) return <ModulePageSkeleton />;
 
   const hasLocalHttpUrl = savedUrl && isPrivateIp(savedUrl) && isInsecureHttpUrl(savedUrl);
