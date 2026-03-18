@@ -1774,7 +1774,7 @@ export default function VmixPage() {
                         type="text"
                         value={hlsTempUrl}
                         onChange={e => setHlsTempUrl(e.target.value)}
-                        placeholder="URL HLS (.m3u8) ou vídeo"
+                        placeholder="URL do stream (HLS .m3u8, MJPEG, ou JPEG)"
                         className="flex-1 text-[9px] px-1.5 py-1 rounded outline-none"
                         style={{ backgroundColor: "#1a1a20", color: "#ccc", border: "1px solid #333" }}
                         onKeyDown={e => {
