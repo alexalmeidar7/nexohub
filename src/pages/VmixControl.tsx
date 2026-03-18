@@ -12,6 +12,12 @@ export default function VmixControl() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [signing, setSigning] = useState(false);
+  const [clock, setClock] = useState(() => new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
+
+  useEffect(() => {
+    const id = setInterval(() => setClock(new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })), 1000);
+    return () => clearInterval(id);
+  }, []);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
