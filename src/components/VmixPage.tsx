@@ -615,7 +615,6 @@ export default function VmixPage() {
             </div>
           </div>
         )}
-        )}
         {/* URL input + action buttons row */}
         <div className="flex items-center gap-3 px-0 py-3 flex-wrap">
           <div className="flex gap-2 items-center flex-1 flex-wrap">
