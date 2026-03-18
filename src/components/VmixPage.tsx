@@ -572,13 +572,14 @@ export default function VmixPage() {
   // Extract machine names from existing NDI inputs to suggest common sources
   const detectedMachines = useMemo(() => {
     const machines = new Set<string>();
-    ndiInputs.forEach(inp => {
-      // NDI titles are like "NDI DESKTOP-HL0UDPD (vMix - Output 1)"
-      const match = inp.title.match(/^(?:NDI\s+)?([A-Z0-9_-]+)\s*\(/i);
-      if (match) machines.add(match[1]);
+    inputs.forEach(inp => {
+      if (inp.type === "NDI" || inp.title.toLowerCase().includes("ndi")) {
+        const match = inp.title.match(/^(?:NDI\s+)?([A-Z0-9_-]+)\s*\(/i);
+        if (match) machines.add(match[1]);
+      }
     });
     return Array.from(machines);
-  }, [ndiInputs]);
+  }, [inputs]);
 
   const scanNdiSources = useCallback(async () => {
     if (!savedUrl || !connected) {
