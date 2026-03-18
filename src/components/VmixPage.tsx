@@ -471,9 +471,6 @@ export default function VmixPage() {
             {connecting ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle size={14} />}
             Conectado
           </button>
-              </ol>
-            </div>
-          </div>
         </div>
         <div className="flex gap-2">
           <button
