@@ -147,6 +147,7 @@ export default function VmixPage() {
   });
   const [capturingShortcut, setCapturingShortcut] = useState<string | null>(null);
    const [activePreset, setActivePreset] = useState<string | null>(null);
+  const [editingPresetId, setEditingPresetId] = useState<string | null>(null);
   const [connectionMode, setConnectionMode] = useState<"direct" | "proxy">(() => {
     try { return (localStorage.getItem("vmix_conn_mode") as "direct" | "proxy") || "direct"; }
     catch { return "direct"; }
