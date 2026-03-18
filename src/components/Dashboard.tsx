@@ -284,6 +284,11 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       setHoveredMenu(null);
       return;
     }
+    if (parentLabel === "vmix" && child.label === "vmix control") {
+      window.open("/tp-externo", "_blank"); // placeholder — will update with actual vMix control URL
+      setHoveredMenu(null);
+      return;
+    }
     if (child.page) {
       setCurrentPage(child.page);
       setMobileMenuOpen(false);
