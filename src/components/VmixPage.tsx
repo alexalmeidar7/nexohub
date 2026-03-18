@@ -5,7 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   Monitor, Radio, Disc, RefreshCw, Loader2, CheckCircle, XCircle,
   ExternalLink, Volume2, VolumeX, Play, Square, Camera, Tv,
-  Layers, Wand2, Plus, Trash2, GripVertical, Send, Eye, Wifi
+  Layers, Wand2, Plus, Trash2, GripVertical, Send, Eye, Wifi, HelpCircle
 } from "lucide-react";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 
