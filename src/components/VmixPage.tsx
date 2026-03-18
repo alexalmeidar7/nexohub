@@ -1936,7 +1936,16 @@ export default function VmixPage() {
                     </div>
                   )}
                   {!ndiScanning && connected && ndiSources.length === 0 && (
-                    <p className="text-[10px] text-white/30 text-center py-3">Nenhuma fonte NDI detectada. Use o campo abaixo para adicionar manualmente.</p>
+                    <div className="text-center py-3 space-y-1">
+                      <p className="text-[10px] text-white/40">
+                        {detectedMachines.length === 0
+                          ? "Nenhum input NDI no vMix. Adicione um manualmente para detectar a máquina."
+                          : "Clique em \"Buscar\" para sugerir fontes NDI disponíveis."}
+                      </p>
+                      <p className="text-[9px] text-white/25">
+                        ℹ A descoberta NDI usa mDNS (indisponível no browser). As sugestões são baseadas nos inputs NDI já conectados.
+                      </p>
+                    </div>
                   )}
                 </div>
 
