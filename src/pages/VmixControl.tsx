@@ -115,7 +115,7 @@ export default function VmixControl() {
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#191919" }}>
       <header className="relative flex items-center justify-between px-6 py-3" style={{ backgroundColor: "#242424" }}>
-        <div />
+        <span className="text-sm font-mono font-bold tracking-wider" style={{ color: "#22c55e" }}>{clock}</span>
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
           <img src={logoMixControl} alt="Mix Control" className="h-5" />
         </div>
