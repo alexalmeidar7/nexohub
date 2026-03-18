@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Monitor, LogOut, Loader2 } from "lucide-react";
+import { LogOut, Loader2 } from "lucide-react";
 import VmixPage from "@/components/VmixPage";
+import type { User } from "@supabase/supabase-js";
+import logoMixControl from "@/assets/logo-mixcontrol.png";
 import type { User } from "@supabase/supabase-js";
 
 export default function VmixControl() {
