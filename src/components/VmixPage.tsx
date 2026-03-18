@@ -1749,25 +1749,23 @@ export default function VmixPage() {
                         )}
                       </div>
                     )}
-                    {/* HLS URL config button for NDI inputs */}
-                    {isNdi && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setEditingHlsInput(editingHlsInput === input.number ? null : input.number);
-                          setHlsTempUrl(inputHlsUrls[input.number] || "");
-                        }}
-                        className="absolute bottom-1 right-1 text-[7px] px-1 py-0.5 rounded transition-all"
-                        style={{
-                          backgroundColor: inputHlsUrls[input.number] ? "#22c55e20" : "#ffffff10",
-                          color: inputHlsUrls[input.number] ? "#22c55e" : "#888",
-                          border: `1px solid ${inputHlsUrls[input.number] ? "#22c55e30" : "#ffffff15"}`,
-                        }}
-                        title="Configurar URL de stream HLS para este input"
-                      >
-                        {inputHlsUrls[input.number] ? "📡" : "🔗 HLS"}
-                      </button>
-                    )}
+                    {/* Stream URL config button for all inputs */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditingHlsInput(editingHlsInput === input.number ? null : input.number);
+                        setHlsTempUrl(inputHlsUrls[input.number] || "");
+                      }}
+                      className="absolute bottom-1 right-1 text-[7px] px-1 py-0.5 rounded transition-all"
+                      style={{
+                        backgroundColor: inputHlsUrls[input.number] ? "#22c55e20" : "#ffffff10",
+                        color: inputHlsUrls[input.number] ? "#22c55e" : "#888",
+                        border: `1px solid ${inputHlsUrls[input.number] ? "#22c55e30" : "#ffffff15"}`,
+                      }}
+                      title="Configurar URL de stream (HLS/MJPEG/JPEG)"
+                    >
+                      {inputHlsUrls[input.number] ? "📡" : "🔗 Stream"}
+                    </button>
                   </div>
                   {/* HLS URL editor inline */}
                   {editingHlsInput === input.number && (
