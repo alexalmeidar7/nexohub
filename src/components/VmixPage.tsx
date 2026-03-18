@@ -567,11 +567,11 @@ export default function VmixPage() {
   const previewDomain = window.location.origin;
 
   // ── Styles ──
-  const sectionBox = (title: string, icon: React.ReactNode, children: React.ReactNode, color = "#268ffa") => (
-    <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a2e", border: "1px solid #ffffff08" }}>
-      <div className="flex items-center gap-2 px-4 py-2.5" style={{ backgroundColor: color + "18", borderBottom: "1px solid #ffffff08" }}>
+  const sectionBox = (title: string, icon: React.ReactNode, children: React.ReactNode, _color = "#888") => (
+    <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a1f", border: "1px solid #ffffff08" }}>
+      <div className="flex items-center gap-2 px-4 py-2.5" style={{ backgroundColor: "#ffffff06", borderBottom: "1px solid #ffffff08" }}>
         {icon}
-        <span className="text-xs font-bold uppercase tracking-wider" style={{ color }}>{title}</span>
+        <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#999" }}>{title}</span>
       </div>
       <div className="p-4">{children}</div>
     </div>
@@ -883,7 +883,7 @@ export default function VmixPage() {
       {/* ── URL + GO LIVE / RECORD row ── */}
       <div className="flex items-center gap-2 flex-wrap">
         {/* URL section */}
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg" style={{ background: "linear-gradient(135deg, #13131d 0%, #1a1a2e 100%)", border: "1px solid #ffffff0a", boxShadow: "0 2px 8px #00000040" }}>
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg" style={{ backgroundColor: "#1a1a1f", border: "1px solid #ffffff08", boxShadow: "0 2px 8px #00000040" }}>
           <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: connected ? "#22c55e" : "#666", boxShadow: connected ? "0 0 6px #22c55e60" : "none" }} />
           <input
             type="text"
@@ -891,7 +891,7 @@ export default function VmixPage() {
             onChange={e => setVmixUrl(e.target.value)}
             placeholder="http://SEU_IP_PUBLICO:8088"
             className="w-52 px-3 py-1.5 rounded text-xs outline-none transition-all focus:ring-1 focus:ring-white/10"
-            style={{ backgroundColor: "#0a0a14", color: "#fff", border: "1px solid #ffffff10" }}
+            style={{ backgroundColor: "#111114", color: "#fff", border: "1px solid #ffffff10" }}
           />
           <button onClick={saveUrl} className="px-3 py-1.5 rounded text-[10px] font-bold text-white/70 hover:text-white transition-all duration-200 hover:scale-[1.02]"
             style={{ backgroundColor: "#ffffff08", border: "1px solid #ffffff10" }}
@@ -909,15 +909,15 @@ export default function VmixPage() {
           </button>
         </div>
         {/* GO LIVE / RECORD section */}
-        <div className="group/live flex items-center gap-2 px-3 py-1.5 rounded-lg" style={{ background: "linear-gradient(135deg, #13131d 0%, #1a1a2e 100%)", border: "1px solid #ffffff0a", boxShadow: "0 2px 8px #00000040" }}>
+        <div className="group/live flex items-center gap-2 px-3 py-1.5 rounded-lg" style={{ backgroundColor: "#1a1a1f", border: "1px solid #ffffff08", boxShadow: "0 2px 8px #00000040" }}>
           <button
             onClick={() => sendCommand(streaming ? "StopStreaming" : "StartStreaming")}
             className="px-4 py-1.5 rounded text-xs font-bold uppercase tracking-wider transition-all duration-200 hover:scale-[1.03]"
             style={{
-              backgroundColor: streaming ? "#6b1010" : "#3a3a3a",
-              color: streaming ? "#fff" : "#ccc",
+              backgroundColor: streaming ? "#6b1010" : "#2a2a30",
+              color: streaming ? "#fff" : "#aaa",
               boxShadow: streaming ? "0 0 16px #6b101060" : "none",
-              border: `1px solid ${streaming ? "#8b2020" : "#555"}`,
+              border: `1px solid ${streaming ? "#8b2020" : "#3a3a40"}`,
             }}
           >
             {streaming ? "● LIVE" : "GO LIVE"}
@@ -926,8 +926,8 @@ export default function VmixPage() {
             <button
               onClick={() => sendCommand("StartStreaming")}
               className="px-3 py-1.5 rounded text-[10px] font-bold uppercase tracking-wider transition-all duration-200 hover:scale-[1.05] whitespace-nowrap"
-              style={{ backgroundColor: "#2d5016", color: "#7ab648", border: "1px solid #3d6a20" }}
-              onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = "0 0 14px #2d501660"; }}
+              style={{ backgroundColor: "#333338", color: "#ccc", border: "1px solid #444448" }}
+              onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = "0 0 14px #33333860"; }}
               onMouseLeave={e => { (e.target as HTMLElement).style.boxShadow = "none"; }}
             >
               STREAMING 1
@@ -935,8 +935,8 @@ export default function VmixPage() {
             <button
               onClick={() => sendCommand("StartStreaming")}
               className="px-3 py-1.5 rounded text-[10px] font-bold uppercase tracking-wider transition-all duration-200 hover:scale-[1.05] whitespace-nowrap"
-              style={{ backgroundColor: "#2d5016", color: "#7ab648", border: "1px solid #3d6a20" }}
-              onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = "0 0 14px #2d501660"; }}
+              style={{ backgroundColor: "#333338", color: "#ccc", border: "1px solid #444448" }}
+              onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = "0 0 14px #33333860"; }}
               onMouseLeave={e => { (e.target as HTMLElement).style.boxShadow = "none"; }}
             >
               STREAMING 2
@@ -946,9 +946,9 @@ export default function VmixPage() {
             onClick={() => sendCommand(recording ? "StopRecording" : "StartRecording")}
             className="px-4 py-1.5 rounded text-xs font-bold uppercase tracking-wider transition-all duration-200 hover:scale-[1.03]"
             style={{
-              backgroundColor: recording ? "#6b1010" : "#3a3a3a",
-              color: recording ? "#fff" : "#ccc",
-              border: `1px solid ${recording ? "#8b2020" : "#555"}`,
+              backgroundColor: recording ? "#6b1010" : "#2a2a30",
+              color: recording ? "#fff" : "#aaa",
+              border: `1px solid ${recording ? "#8b2020" : "#3a3a40"}`,
             }}
             onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = "0 0 16px #3a3a3a60"; }}
             onMouseLeave={e => { (e.target as HTMLElement).style.boxShadow = "none"; }}
@@ -962,16 +962,16 @@ export default function VmixPage() {
       </div>
 
       {/* ── Preview / Transitions / Output ── */}
-      <div className="flex items-stretch gap-[1px] rounded-xl overflow-hidden" style={{ background: "linear-gradient(180deg, #0d0d18 0%, #080812 100%)", boxShadow: "0 4px 20px #00000060" }}>
+      <div className="flex items-stretch gap-[1px] rounded-xl overflow-hidden" style={{ backgroundColor: "#111114", boxShadow: "0 4px 20px #00000060" }}>
         {/* Preview */}
-        <div className="relative flex-1 flex flex-col" style={{ background: "linear-gradient(180deg, #12121e 0%, #0e0e18 100%)", minHeight: 200 }}>
-          <div className="flex items-center gap-2 px-3 py-2" style={{ borderBottom: "1px solid #ffffff06", background: "#ffffff03" }}>
-            <span className="text-[9px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-sm" style={{ backgroundColor: "#22c55e", color: "#000", letterSpacing: "0.15em" }}>Preview</span>
+        <div className="relative flex-1 flex flex-col" style={{ backgroundColor: "#18181c", minHeight: 200 }}>
+          <div className="flex items-center gap-2 px-3 py-2" style={{ borderBottom: "1px solid #ffffff06", backgroundColor: "#ffffff04" }}>
+            <span className="text-[9px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-sm" style={{ backgroundColor: "#555", color: "#fff", letterSpacing: "0.15em" }}>Preview</span>
             <select
               value={previewInput || ""}
               onChange={e => { sendCommand("PreviewInput", e.target.value); setPreviewInput(e.target.value); }}
               className="flex-1 text-[10px] rounded px-2 py-1 border-none outline-none"
-              style={{ backgroundColor: "#1a1a28", color: "#ccc" }}
+              style={{ backgroundColor: "#222228", color: "#ccc" }}
             >
               <option value="">— Selecione —</option>
               {inputs.map(inp => (
@@ -994,7 +994,7 @@ export default function VmixPage() {
           </div>
         </div>
         {/* Transitions */}
-        <div className="flex flex-col items-center justify-center gap-1.5 px-3 py-3" style={{ background: "linear-gradient(180deg, #15152a 0%, #0e0e1a 100%)", minWidth: 84 }}>
+        <div className="flex flex-col items-center justify-center gap-1.5 px-3 py-3" style={{ backgroundColor: "#1c1c22", minWidth: 84 }}>
           {[
             { label: "CUT", fn: "Cut", active: true },
             { label: "FADE", fn: "Fade", value: "1000" },
@@ -1005,11 +1005,11 @@ export default function VmixPage() {
               onClick={() => sendCommand(t.fn, undefined, t.value)}
               className="w-full px-2 py-1.5 rounded text-[9px] font-bold uppercase tracking-wider transition-all duration-200 hover:scale-[1.05]"
               style={{
-                backgroundColor: t.active ? "#6b1010" : "#3a3a3a",
-                color: t.active ? "#fff" : "#ccc",
-                border: `1px solid ${t.active ? "#8b2020" : "#555"}`,
+                backgroundColor: t.active ? "#6b1010" : "#2a2a30",
+                color: t.active ? "#fff" : "#aaa",
+                border: `1px solid ${t.active ? "#8b2020" : "#3a3a40"}`,
               }}
-              onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = `0 0 14px ${t.active ? "#6b101060" : "#3a3a3a60"}`; }}
+              onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = `0 0 14px ${t.active ? "#6b101060" : "#2a2a3060"}`; }}
               onMouseLeave={e => { (e.target as HTMLElement).style.boxShadow = "none"; }}
             >
               {t.label}
@@ -1043,14 +1043,14 @@ export default function VmixPage() {
           </div>
         </div>
         {/* Output */}
-        <div className="relative flex-1 flex flex-col" style={{ background: "linear-gradient(180deg, #12121e 0%, #0e0e18 100%)", minHeight: 200 }}>
-          <div className="flex items-center gap-2 px-3 py-2" style={{ borderBottom: "1px solid #ffffff06", background: "#ffffff03" }}>
+        <div className="relative flex-1 flex flex-col" style={{ backgroundColor: "#18181c", minHeight: 200 }}>
+          <div className="flex items-center gap-2 px-3 py-2" style={{ borderBottom: "1px solid #ffffff06", backgroundColor: "#ffffff04" }}>
             <span className="text-[9px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-sm" style={{ backgroundColor: "#dc2626", color: "#fff", letterSpacing: "0.15em" }}>Output</span>
             <select
               value={activeInput || ""}
               onChange={e => { sendCommand("ActiveInput", e.target.value); setActiveInput(e.target.value); }}
               className="flex-1 text-[10px] rounded px-2 py-1 border-none outline-none"
-              style={{ backgroundColor: "#1a1a28", color: "#ccc" }}
+              style={{ backgroundColor: "#222228", color: "#ccc" }}
             >
               <option value="">— Selecione —</option>
               {inputs.map(inp => (
@@ -1076,7 +1076,7 @@ export default function VmixPage() {
 
 
       {/* ── Tab Bar ── */}
-      <div className="flex rounded-t-xl overflow-hidden" style={{ background: "linear-gradient(180deg, #13131f 0%, #0f0f1a 100%)", borderBottom: "1px solid #ffffff06" }}>
+      <div className="flex rounded-t-xl overflow-hidden" style={{ backgroundColor: "#18181c", borderBottom: "1px solid #ffffff06" }}>
         {tabs.map(tab => (
           <button
             key={tab.key}
@@ -1084,17 +1084,17 @@ export default function VmixPage() {
             className="relative flex items-center gap-1.5 px-6 py-3 text-[11px] font-bold uppercase tracking-widest transition-all duration-300"
             style={{
               color: activeTab === tab.key ? "#fff" : "#555",
-              background: activeTab === tab.key ? "linear-gradient(180deg, #1a1a2e 0%, #15152a 100%)" : "transparent",
+              backgroundColor: activeTab === tab.key ? "#222228" : "transparent",
             }}
           >
-            {activeTab === tab.key && <div className="absolute top-0 left-0 right-0 h-[2px]" style={{ background: "linear-gradient(90deg, #dc2626, #ef4444)" }} />}
+            {activeTab === tab.key && <div className="absolute top-0 left-0 right-0 h-[2px]" style={{ backgroundColor: "#dc2626" }} />}
             {tab.icon} {tab.label}
           </button>
         ))}
       </div>
 
       {/* ── Tab Content ── */}
-      <div className="rounded-b-xl p-5 space-y-4" style={{ background: "linear-gradient(180deg, #15152a 0%, #111120 100%)", minHeight: 300, borderTop: "none" }}>
+      <div className="rounded-b-xl p-5 space-y-4" style={{ backgroundColor: "#1a1a1f", minHeight: 300 }}>
 
         {/* ══ CONTROLS TAB ══ */}
         {activeTab === "controls" && (
@@ -1103,15 +1103,15 @@ export default function VmixPage() {
               const isActive = activeInput === input.number;
               const isPreview = previewInput === input.number;
               const isMin = minimizedInputs[input.number];
-              const borderColor = isActive ? "#dc2626" : isPreview ? "#22c55e" : "#444";
-              const headerBg = isActive ? "#dc262640" : isPreview ? "#22c55e30" : "#2a2a38";
+              const borderColor = isActive ? "#dc2626" : isPreview ? "#777" : "#333338";
+              const headerBg = isActive ? "#dc262630" : isPreview ? "#ffffff10" : "#222228";
 
               if (isMin) {
                 return (
                   <div
                     key={input.key || input.number}
                     className="flex flex-col items-center rounded-lg overflow-hidden cursor-pointer transition-all duration-200 hover:brightness-110"
-                    style={{ backgroundColor: "#1a1a28", border: `2px solid ${borderColor}`, width: 32, minHeight: 120 }}
+                    style={{ backgroundColor: "#1a1a1f", border: `2px solid ${borderColor}`, width: 32, minHeight: 120 }}
                     onClick={() => setMinimizedInputs(prev => ({ ...prev, [input.number]: false }))}
                   >
                     <div
@@ -1119,7 +1119,7 @@ export default function VmixPage() {
                       style={{ backgroundColor: headerBg }}
                       onContextMenu={e => { e.preventDefault(); setMinimizedInputs(prev => ({ ...prev, [input.number]: false })); }}
                     >
-                      <span className="text-[8px] font-bold" style={{ color: isActive ? "#ff6b6b" : isPreview ? "#6be68c" : "#999" }}>{input.number}</span>
+                      <span className="text-[8px] font-bold" style={{ color: isActive ? "#ff6b6b" : isPreview ? "#ccc" : "#777" }}>{input.number}</span>
                     </div>
                     <div className="flex-1 flex items-center justify-center" style={{ writingMode: "vertical-rl", textOrientation: "mixed" }}>
                       <span className="text-[8px] font-bold text-white/50 truncate" style={{ maxHeight: 90 }}>{input.title}</span>
@@ -1132,7 +1132,7 @@ export default function VmixPage() {
                 <div
                   key={input.key || input.number}
                   className="rounded-lg overflow-hidden transition-all duration-200 hover:brightness-110 cursor-pointer"
-                  style={{ backgroundColor: "#1a1a28", border: `2px solid ${borderColor}`, width: 180 }}
+                  style={{ backgroundColor: "#1a1a1f", border: `2px solid ${borderColor}`, width: 180 }}
                   onClick={() => sendCommand("Cut", input.number)}
                 >
                   <div
@@ -1141,12 +1141,12 @@ export default function VmixPage() {
                     onContextMenu={e => { e.preventDefault(); setMinimizedInputs(prev => ({ ...prev, [input.number]: true })); }}
                   >
                     <span className="text-[9px] font-bold px-1 rounded" style={{
-                      backgroundColor: isActive ? "#dc2626" : isPreview ? "#22c55e" : "#444",
-                      color: isActive || isPreview ? "#fff" : "#aaa",
+                      backgroundColor: isActive ? "#dc2626" : isPreview ? "#555" : "#333338",
+                      color: isActive || isPreview ? "#fff" : "#888",
                     }}>{input.number}</span>
-                    <span className="text-[10px] font-bold truncate" style={{ color: isActive ? "#ff6b6b" : isPreview ? "#6be68c" : "#ccc" }}>{input.title}</span>
+                    <span className="text-[10px] font-bold truncate" style={{ color: isActive ? "#ff6b6b" : isPreview ? "#ddd" : "#999" }}>{input.title}</span>
                   </div>
-                  <div className="relative" style={{ aspectRatio: "3/2", backgroundColor: "#0a0a12" }}>
+                  <div className="relative" style={{ aspectRatio: "3/2", backgroundColor: "#111114" }}>
                     {savedUrl ? (
                       <img
                         src={`${savedUrl}/api/?Function=SnapshotInput&Input=${input.number}&Width=360&Height=240&_t=${Date.now()}`}
@@ -1166,7 +1166,7 @@ export default function VmixPage() {
                     )}
                     {isPreview && !isActive && (
                       <div className="absolute top-1 right-1">
-                        <span className="text-[8px] font-bold px-1 rounded" style={{ backgroundColor: "#22c55e", color: "#000" }}>PVW</span>
+                        <span className="text-[8px] font-bold px-1 rounded" style={{ backgroundColor: "#555", color: "#fff" }}>PVW</span>
                       </div>
                     )}
                   </div>
@@ -1208,7 +1208,7 @@ export default function VmixPage() {
             <>
               {/* ── Programa no Ar + Próximos ── */}
               <div className="flex gap-3 items-stretch">
-                <div className="flex-1 rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a2e", border: "1px solid #dc262640" }}>
+                <div className="flex-1 rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a1f", border: "1px solid #dc262640" }}>
                   <div className="flex items-center gap-2 px-4 py-2" style={{ backgroundColor: "#dc262620", borderBottom: "1px solid #ffffff08" }}>
                     <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
                     <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#dc2626" }}>No Ar</span>
@@ -1224,10 +1224,10 @@ export default function VmixPage() {
                     )}
                   </div>
                 </div>
-                <div className="flex-1 rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a2e", border: "1px solid #ffffff08" }}>
-                  <div className="flex items-center gap-2 px-4 py-2" style={{ backgroundColor: "#22c55e18", borderBottom: "1px solid #ffffff08" }}>
-                    <Eye size={12} style={{ color: "#22c55e" }} />
-                    <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#22c55e" }}>A Seguir</span>
+                <div className="flex-1 rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a1f", border: "1px solid #ffffff08" }}>
+                  <div className="flex items-center gap-2 px-4 py-2" style={{ backgroundColor: "#ffffff06", borderBottom: "1px solid #ffffff08" }}>
+                    <Eye size={12} style={{ color: "#888" }} />
+                    <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#999" }}>A Seguir</span>
                   </div>
                   <div className="p-3 space-y-1.5">
                     {upcoming.length > 0 ? upcoming.map(p => (
@@ -1243,10 +1243,10 @@ export default function VmixPage() {
               </div>
 
               {/* ── Programas Preset ── */}
-              <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a2e", border: "1px solid #ffffff08" }}>
-                <div className="flex items-center gap-2 px-4 py-2.5" style={{ backgroundColor: "#c2410c18", borderBottom: "1px solid #ffffff08" }}>
-                  <Radio size={14} style={{ color: "#ea580c" }} />
-                  <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#ea580c" }}>programas preset</span>
+              <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a1f", border: "1px solid #ffffff08" }}>
+                <div className="flex items-center gap-2 px-4 py-2.5" style={{ backgroundColor: "#ffffff06", borderBottom: "1px solid #ffffff08" }}>
+                  <Radio size={14} style={{ color: "#999" }} />
+                  <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#999" }}>programas preset</span>
                 </div>
                 <div className="p-4">
                   <div className="flex flex-wrap gap-2">
@@ -1260,9 +1260,9 @@ export default function VmixPage() {
                           }}
                           className="px-5 py-3 rounded-lg text-xs font-black uppercase tracking-wider transition-all duration-200 hover:scale-[1.03]"
                           style={{
-                            backgroundColor: activePreset === prog.id ? "#1e3a4a" : "#3a3520",
-                            color: activePreset === prog.id ? "#fff" : "#c8b87a",
-                            border: activePreset === prog.id ? "2px solid #2d5a6a" : "2px solid #4a4530",
+                            backgroundColor: activePreset === prog.id ? "#dc2626" : "#2a2a30",
+                            color: activePreset === prog.id ? "#fff" : "#bbb",
+                            border: activePreset === prog.id ? "2px solid #ef4444" : "2px solid #3a3a40",
                             minWidth: 100,
                           }}
                         >
@@ -1288,7 +1288,7 @@ export default function VmixPage() {
                           <button
                             onClick={(e) => { e.stopPropagation(); toast({ title: `Editar: ${prog.nome}`, description: "Abra o painel principal para editar este programa." }); }}
                             className="w-4 h-4 rounded-full flex items-center justify-center"
-                            style={{ backgroundColor: "#268ffa", color: "#fff" }}
+                            style={{ backgroundColor: "#555", color: "#fff" }}
                             title="Editar"
                           ><Wand2 size={8} /></button>
                           <button
@@ -1313,7 +1313,7 @@ export default function VmixPage() {
         {/* ══ NDI TAB ══ */}
         {activeTab === "ndi" && (
           <>
-            {sectionBox("Adicionar Fonte NDI", <Tv size={14} style={{ color: "#f59e0b" }} />, (
+            {sectionBox("Adicionar Fonte NDI", <Tv size={14} style={{ color: "#999" }} />, (
               <div className="space-y-3">
                 <p className="text-[11px] text-white/40">
                   Insira o nome ou endereço da fonte NDI disponível na rede para adicioná-la como input no vMix.
@@ -1329,50 +1329,50 @@ export default function VmixPage() {
                     placeholder="Ex: STUDIO-PC (Camera 1)"
                     maxLength={200}
                     className="flex-1 px-3 py-2.5 rounded-lg text-sm outline-none"
-                    style={{ backgroundColor: "#111", color: "#fff", border: "1px solid #ffffff15" }}
+                    style={{ backgroundColor: "#111114", color: "#fff", border: "1px solid #ffffff10" }}
                   />
                   <button
                     onClick={addNdiInput}
                     disabled={!ndiUrl.trim()}
                     className="flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-xs font-bold text-white transition-all disabled:opacity-40"
-                    style={{ backgroundColor: "#f59e0b" }}
+                    style={{ backgroundColor: "#dc2626" }}
                   >
                     <Plus size={13} /> Adicionar
                   </button>
                 </div>
               </div>
-            ), "#f59e0b")}
+            ), "#888")}
 
-            {sectionBox("Inputs NDI Atuais", <Wifi size={14} style={{ color: "#22c55e" }} />, (
+            {sectionBox("Inputs NDI Atuais", <Wifi size={14} style={{ color: "#999" }} />, (
               <div className="space-y-1.5">
                 {inputs.filter(i => i.type === "NDI" || i.title.toLowerCase().includes("ndi")).length === 0 ? (
                   <p className="text-[11px] text-white/30 text-center py-6">Nenhum input NDI encontrado no vMix</p>
                 ) : (
                   inputs.filter(i => i.type === "NDI" || i.title.toLowerCase().includes("ndi")).map(input => (
                     <div key={input.key} className="flex items-center gap-3 px-3 py-2.5 rounded-lg" style={{ backgroundColor: "#ffffff06" }}>
-                      <Tv size={14} className="text-yellow-400/60" />
+                      <Tv size={14} className="text-white/40" />
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-semibold text-white/80 truncate">{input.title}</p>
                         <p className="text-[9px] text-white/30">Input {input.number} • {input.state}</p>
                       </div>
                       <div className="flex gap-1">
-                        <button onClick={() => sendCommand("PreviewInput", input.number)} className="px-2 py-1 rounded text-[9px] font-bold" style={{ backgroundColor: "#22c55e20", color: "#22c55e" }}>PRV</button>
+                        <button onClick={() => sendCommand("PreviewInput", input.number)} className="px-2 py-1 rounded text-[9px] font-bold" style={{ backgroundColor: "#ffffff10", color: "#bbb" }}>PRV</button>
                         <button onClick={() => sendCommand("Cut", input.number)} className="px-2 py-1 rounded text-[9px] font-bold" style={{ backgroundColor: "#dc262620", color: "#dc2626" }}>PGM</button>
                       </div>
                     </div>
                   ))
                 )}
               </div>
-            ), "#22c55e")}
+            ), "#888")}
 
-            {sectionBox("Dicas NDI", <Eye size={14} style={{ color: "#a855f7" }} />, (
+            {sectionBox("Dicas NDI", <Eye size={14} style={{ color: "#777" }} />, (
               <ul className="text-[11px] space-y-1.5 text-white/40 list-disc list-inside">
                 <li>Certifique-se de que o <strong className="text-white/60">NDI Tools</strong> está instalado na rede</li>
                 <li>A fonte NDI precisa estar transmitindo na mesma sub-rede</li>
                 <li>Use o <strong className="text-white/60">NDI Studio Monitor</strong> para verificar fontes disponíveis</li>
                 <li>O formato padrão é: <code className="bg-white/5 px-1 rounded text-white/50">NOME-PC (Nome da Fonte)</code></li>
               </ul>
-            ), "#a855f7")}
+            ), "#777")}
           </>
         )}
       </div>
