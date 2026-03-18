@@ -280,7 +280,7 @@ export default function LogosPatrocinadoresPage() {
             <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.5)" }}>Gerencie as logos vinculadas aos programas</p>
           </div>
           <div className="flex-1 ml-4">
-            {logosXmlContent && <XmlLinkRow label="XML LOGOS" xmlContent={logosXmlContent} dark />}
+            {logosXmlUrl && <XmlLinkRow label="XML LOGOS" permanentUrl={logosXmlUrl} dark />}
           </div>
         </div>
 
