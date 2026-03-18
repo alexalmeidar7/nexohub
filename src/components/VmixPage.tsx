@@ -1010,14 +1010,23 @@ export default function VmixPage() {
     const bgColor = inp ? getInputColor(inp.type) : "#1e1e24";
     const label = inp ? inp.type : "Input";
     const hlsUrl = inputHlsUrls[inputNumber];
-    // If this input has an HLS URL configured, show the video player
+    const isNdi = inp && (inp.type === "NDI" || inp.title.toLowerCase().includes("ndi"));
+    // If this input has an HLS/MJPEG URL configured, show the video player
     if (hlsUrl) {
-      return <HlsPlayer src={hlsUrl} className={className} />;
+      if (hlsUrl.includes(".m3u8")) {
+        return <HlsPlayer src={hlsUrl} className={className} />;
+      }
+      return <MjpegPlayer src={hlsUrl} className={className} />;
     }
     return (
       <div className={`flex flex-col items-center justify-center ${className}`} style={{ backgroundColor: bgColor }}>
         <span className="text-[10px] font-bold text-white/50 uppercase tracking-wider">{label}</span>
         <span className="text-[9px] text-white/30 mt-0.5">Input {inputNumber}</span>
+        {isNdi && (
+          <span className="text-[7px] text-white/20 mt-1 px-1.5 py-0.5 rounded" style={{ backgroundColor: "rgba(0,0,0,0.3)" }}>
+            Clique 🔗 HLS para stream
+          </span>
+        )}
       </div>
     );
   };
