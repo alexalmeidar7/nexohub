@@ -1132,7 +1132,7 @@ export default function VmixPage() {
                 <div
                   key={input.key || input.number}
                   className="rounded-lg overflow-hidden transition-all duration-200 hover:brightness-110 cursor-pointer"
-                  style={{ backgroundColor: "#1a1a28", border: `2px solid ${borderColor}`, width: 180 }}
+                  style={{ backgroundColor: "#1a1a1f", border: `2px solid ${borderColor}`, width: 180 }}
                   onClick={() => sendCommand("Cut", input.number)}
                 >
                   <div
