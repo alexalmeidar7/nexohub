@@ -223,7 +223,7 @@ export default function VmixPage() {
     if (!savedUrl) return;
     setConnecting(true);
     try {
-      const xmlText = await vmixProxy("/api/");
+      const xmlText = await vmixFetch("/api/");
       const parser = new DOMParser();
       const xml = parser.parseFromString(xmlText, "text/xml");
 
