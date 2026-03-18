@@ -1313,7 +1313,7 @@ export default function VmixPage() {
         {/* ══ NDI TAB ══ */}
         {activeTab === "ndi" && (
           <>
-            {sectionBox("Adicionar Fonte NDI", <Tv size={14} style={{ color: "#f59e0b" }} />, (
+            {sectionBox("Adicionar Fonte NDI", <Tv size={14} style={{ color: "#999" }} />, (
               <div className="space-y-3">
                 <p className="text-[11px] text-white/40">
                   Insira o nome ou endereço da fonte NDI disponível na rede para adicioná-la como input no vMix.
