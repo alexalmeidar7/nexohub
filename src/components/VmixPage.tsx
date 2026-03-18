@@ -2061,10 +2061,10 @@ export default function VmixPage() {
                               >▶</button>
                             )}
                             <button
-                              onClick={(e) => { e.stopPropagation(); toast({ title: `Editar: ${prog.nome}`, description: "Abra o painel principal para editar este programa." }); }}
+                              onClick={(e) => { e.stopPropagation(); setEditingPresetId(prog.id); }}
                               className="w-5 h-5 rounded flex items-center justify-center hover:bg-white/20 transition-colors"
                               style={{ color: "#ccc" }}
-                              title="Editar"
+                              title="Editar ações"
                             ><Wand2 size={10} /></button>
                             <button
                               onClick={(e) => { e.stopPropagation(); setProgramas(prev => prev.filter(p => p.id !== prog.id)); }}
