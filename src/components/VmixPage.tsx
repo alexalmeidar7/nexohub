@@ -2279,6 +2279,31 @@ export default function VmixPage() {
           </>
         )}
       </div>
+      {/* Preset Command Editor */}
+      {editingPresetId && (() => {
+        const prog = programas.find(p => p.id === editingPresetId);
+        if (!prog || !user) return null;
+        return (
+          <PresetCommandEditor
+            open={true}
+            onClose={() => setEditingPresetId(null)}
+            programaId={prog.id}
+            programaNome={prog.nome}
+            programaHorario={`${prog.horario_inicio?.slice(0,5) || ""} – ${prog.horario_fim?.slice(0,5) || ""}`}
+            userId={user.id}
+            inputs={inputs}
+            onRunCommands={async (cmds) => {
+              for (const cmd of cmds) {
+                let value = cmd.value;
+                if (cmd.extraValue) value = value ? `${value},${cmd.extraValue}` : cmd.extraValue;
+                await sendCommand(cmd.fn, cmd.input, value);
+                await new Promise(r => setTimeout(r, 400));
+              }
+              toast({ title: "Teste concluído", description: `${cmds.length} ação(ões) executada(s).` });
+            }}
+          />
+        );
+      })()}
     </div>
   );
 }
