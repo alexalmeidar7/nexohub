@@ -785,7 +785,7 @@ export default function VmixPage() {
     return <video ref={videoRef} className={className} muted autoPlay playsInline style={{ objectFit: "contain", backgroundColor: "#000" }} />;
   };
 
-  // vMix Web Controller iframe for live monitors
+   // vMix Web Controller iframe for live monitors
   const VmixIframe = ({ className = "" }: { className?: string }) => {
     if (!savedUrl) return null;
     const iframeSrc = savedUrl.replace(/\/+$/, "");
@@ -798,6 +798,55 @@ export default function VmixPage() {
         sandbox="allow-scripts allow-same-origin"
       />
     );
+  };
+
+  // MJPEG/JPEG rapid-refresh image component (for vmix-snapshot-proxy, NDI HX Camera, etc.)
+  const MjpegPlayer = ({ src, className = "" }: { src: string; className?: string }) => {
+    const [imgSrc, setImgSrc] = useState(src);
+    const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    useEffect(() => {
+      if (!src) return;
+      // If it looks like an MJPEG stream (contains /stream or is multipart), use as-is
+      // Otherwise, refresh the image every 500ms with cache-busting
+      const isMjpeg = /stream|mjpeg|motion/i.test(src);
+      if (isMjpeg) {
+        setImgSrc(src);
+        return;
+      }
+      // JPEG rapid refresh
+      const update = () => setImgSrc(`${src}${src.includes("?") ? "&" : "?"}_t=${Date.now()}`);
+      update();
+      intervalRef.current = setInterval(update, 500);
+      return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
+    }, [src]);
+    return (
+      <img
+        src={imgSrc}
+        className={className}
+        style={{ objectFit: "contain", backgroundColor: "#000" }}
+        alt="Monitor"
+        onError={() => {}}
+      />
+    );
+  };
+
+  // Monitor content renderer: stream URL > iframe > thumbnail > SMPTE bars
+  const MonitorContent = ({ type, inputNumber }: { type: "preview" | "output"; inputNumber: string | null }) => {
+    const streamUrl = monitorStreamUrls[type];
+    if (streamUrl) {
+      // Detect type: HLS (.m3u8), MJPEG, or JPEG
+      if (streamUrl.includes(".m3u8")) {
+        return <HlsPlayer src={streamUrl} className="w-full h-full" />;
+      }
+      return <MjpegPlayer src={streamUrl} className="w-full h-full" />;
+    }
+    if (useIframeMonitor && savedUrl) {
+      return <VmixIframe className="w-full h-full" />;
+    }
+    if (inputNumber && savedUrl) {
+      return <ThumbnailImg inputNumber={inputNumber} width={640} height={360} className="w-full h-full object-contain" alt={type} />;
+    }
+    return null;
   };
 
   // Visual placeholder for input (no live thumbnails — SnapshotInput saves to disk)
