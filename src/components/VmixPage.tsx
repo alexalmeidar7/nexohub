@@ -962,7 +962,7 @@ export default function VmixPage() {
       </div>
 
       {/* ── Preview / Transitions / Output ── */}
-      <div className="flex items-stretch gap-[2px] rounded-xl overflow-hidden" style={{ backgroundColor: "#0a0a12" }}>
+      <div className="flex items-stretch gap-[1px] rounded-xl overflow-hidden" style={{ background: "linear-gradient(180deg, #0d0d18 0%, #080812 100%)", boxShadow: "0 4px 20px #00000060" }}>
         {/* Preview */}
         <div className="relative flex-1 flex flex-col" style={{ backgroundColor: "#111118", minHeight: 180 }}>
           <div className="flex items-center gap-2 px-3 py-1.5" style={{ borderBottom: "1px solid #ffffff08" }}>
