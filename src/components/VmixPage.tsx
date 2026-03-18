@@ -891,7 +891,7 @@ export default function VmixPage() {
             onChange={e => setVmixUrl(e.target.value)}
             placeholder="http://SEU_IP_PUBLICO:8088"
             className="w-52 px-3 py-1.5 rounded text-xs outline-none transition-all focus:ring-1 focus:ring-white/10"
-            style={{ backgroundColor: "#0a0a14", color: "#fff", border: "1px solid #ffffff10" }}
+            style={{ backgroundColor: "#111114", color: "#fff", border: "1px solid #ffffff10" }}
           />
           <button onClick={saveUrl} className="px-3 py-1.5 rounded text-[10px] font-bold text-white/70 hover:text-white transition-all duration-200 hover:scale-[1.02]"
             style={{ backgroundColor: "#ffffff08", border: "1px solid #ffffff10" }}
