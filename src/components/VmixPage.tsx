@@ -2039,29 +2039,61 @@ export default function VmixPage() {
                 </div>
                 <div className="p-4 space-y-4">
                   {(() => {
-                    const sorted = [...programas].sort((a, b) => {
-                      const studioOrder = (s: string | null) => {
-                        if (!s) return 2;
-                        const l = s.toLowerCase();
-                        if (l.includes("fm")) return 0;
-                        if (l.includes("podcast")) return 1;
-                        return 2;
-                      };
-                      const diff = studioOrder(a.estudio) - studioOrder(b.estudio);
-                      if (diff !== 0) return diff;
-                      return (a.horario_inicio || "").localeCompare(b.horario_inicio || "");
-                    });
-                    const groups: Record<string, typeof sorted> = {};
-                    for (const p of sorted) {
-                      const key = p.estudio || "Sem Estúdio";
-                      if (!groups[key]) groups[key] = [];
-                      groups[key].push(p);
+                    const dayOrder: Record<string, number> = { "seg": 0, "ter": 1, "qua": 2, "qui": 3, "sex": 4, "sáb": 5, "sab": 5, "dom": 6 };
+                    const dayLabels: Record<string, string> = { "seg": "Segunda", "ter": "Terça", "qua": "Quarta", "qui": "Quinta", "sex": "Sexta", "sáb": "Sábado", "sab": "Sábado", "dom": "Domingo" };
+                    const normDay = (d: string) => d.toLowerCase().replace(/[-.,]/g, "").trim().slice(0, 3);
+
+                    // Build entries: [dayKey, program] for each day a program airs
+                    const entries: { day: string; dayIdx: number; prog: typeof programas[0] }[] = [];
+                    for (const p of programas) {
+                      if (p.dias_semana && p.dias_semana.length > 0) {
+                        for (const d of p.dias_semana) {
+                          const n = normDay(d);
+                          entries.push({ day: n, dayIdx: dayOrder[n] ?? 7, prog: p });
+                        }
+                      } else {
+                        // No days set — show in all days, put at end
+                        entries.push({ day: "todos", dayIdx: -1, prog: p });
+                      }
                     }
-                    return Object.entries(groups).map(([studio, progs]) => (
-                      <div key={studio}>
+
+                    // Sort: by day index, then by horario_inicio
+                    entries.sort((a, b) => {
+                      if (a.dayIdx !== b.dayIdx) return a.dayIdx - b.dayIdx;
+                      return (a.prog.horario_inicio || "").localeCompare(b.prog.horario_inicio || "");
+                    });
+
+                    // Group by day
+                    const groups: { key: string; label: string; progs: typeof programas }[] = [];
+                    const seen = new Set<string>();
+                    // First add "todos" (no specific day)
+                    const todosProgs = entries.filter(e => e.day === "todos").map(e => e.prog);
+                    if (todosProgs.length > 0) {
+                      groups.push({ key: "todos", label: "Todos os dias", progs: todosProgs });
+                    }
+                    // Then by day order
+                    for (const e of entries) {
+                      if (e.day === "todos") continue;
+                      const gKey = e.day;
+                      if (!seen.has(gKey)) {
+                        seen.add(gKey);
+                        const dayProgs = entries.filter(x => x.day === gKey).map(x => x.prog);
+                        // Dedupe within day
+                        const unique = dayProgs.filter((p, i) => dayProgs.findIndex(x => x.id === p.id) === i);
+                        groups.push({ key: gKey, label: dayLabels[gKey] || gKey, progs: unique });
+                      }
+                    }
+
+                    // If no groups, show all flat
+                    if (groups.length === 0 && programas.length > 0) {
+                      groups.push({ key: "all", label: "Programas", progs: [...programas].sort((a, b) => (a.horario_inicio || "").localeCompare(b.horario_inicio || "")) });
+                    }
+
+                    return groups.map(({ key, label, progs }) => (
+                      <div key={key}>
                         <div className="flex items-center gap-2 mb-2">
-                          <span className="text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded" style={{ backgroundColor: studio.toLowerCase().includes("fm") ? "#3b82f620" : studio.toLowerCase().includes("podcast") ? "#8b5cf620" : "#ffffff08", color: studio.toLowerCase().includes("fm") ? "#3b82f6" : studio.toLowerCase().includes("podcast") ? "#8b5cf6" : "#888" }}>
-                            {studio}
+                          <span className="text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded" style={{ backgroundColor: "#ffffff08", color: "#999" }}>
+                            📅 {label}
                           </span>
                           <div className="flex-1 h-px" style={{ backgroundColor: "#ffffff08" }} />
                         </div>
