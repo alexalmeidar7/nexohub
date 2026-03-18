@@ -1094,7 +1094,9 @@ export type Database = {
           music_xml_url: string | null
           updated_at: string
           user_id: string
+          vmix_pass: string | null
           vmix_url: string | null
+          vmix_user: string | null
           weather_city: string | null
           weather_lat: number | null
           weather_lon: number | null
@@ -1105,7 +1107,9 @@ export type Database = {
           music_xml_url?: string | null
           updated_at?: string
           user_id: string
+          vmix_pass?: string | null
           vmix_url?: string | null
+          vmix_user?: string | null
           weather_city?: string | null
           weather_lat?: number | null
           weather_lon?: number | null
@@ -1116,7 +1120,9 @@ export type Database = {
           music_xml_url?: string | null
           updated_at?: string
           user_id?: string
+          vmix_pass?: string | null
           vmix_url?: string | null
+          vmix_user?: string | null
           weather_city?: string | null
           weather_lat?: number | null
           weather_lon?: number | null
