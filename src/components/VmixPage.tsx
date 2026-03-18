@@ -2145,7 +2145,14 @@ export default function VmixPage() {
                           )}
                           {/* Schedule badge */}
                           {startTime && (
-                            <div className="absolute top-1.5 left-1.5 flex items-center gap-0.5 px-1.5 py-0.5 rounded" style={{ backgroundColor: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)", zIndex: 2 }}>
+                            <div
+                              draggable
+                              onDragStart={(e) => { e.stopPropagation(); setDragPresetIdx(globalIdx); e.dataTransfer.effectAllowed = "move"; }}
+                              className="absolute top-1.5 left-1.5 flex items-center gap-0.5 px-1.5 py-0.5 rounded cursor-grab active:cursor-grabbing"
+                              style={{ backgroundColor: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)", zIndex: 2 }}
+                              title="Arraste para reposicionar"
+                            >
+                              <GripVertical size={7} style={{ color: "#666" }} />
                               <Clock size={8} style={{ color: progOnAir ? "#22c55e" : "#888" }} />
                               <span className="text-[7px] font-bold tabular-nums" style={{ color: progOnAir ? "#22c55e" : "#999" }}>{startTime} - {endTime}</span>
                             </div>
