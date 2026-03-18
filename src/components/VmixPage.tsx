@@ -255,7 +255,7 @@ export default function VmixPage() {
       if (recordingEl) setRecording(recordingEl.textContent === "True");
 
       setConnected(true);
-      toast({ title: "Conectado!", description: `${parsedInputs.length} inputs encontrados.` });
+      toast({ title: "Conectado!", description: `${parsedInputs.length} inputs (modo ${connectionMode === "direct" ? "direto" : "proxy"}).` });
     } catch {
       setConnected(false);
       toast({ title: "Erro de conexão", description: "Verifique se o vMix Web Controller está ativo e acessível.", variant: "destructive" });
