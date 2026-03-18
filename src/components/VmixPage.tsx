@@ -227,8 +227,13 @@ export default function VmixPage() {
 
   // Persist iframe monitor preference
   useEffect(() => {
-    localStorage.setItem("vmix_iframe_monitor", String(useIframeMonitor));
+     localStorage.setItem("vmix_iframe_monitor", String(useIframeMonitor));
   }, [useIframeMonitor]);
+
+  // Persist monitor stream URLs
+  useEffect(() => {
+    localStorage.setItem("vmix_monitor_streams", JSON.stringify(monitorStreamUrls));
+  }, [monitorStreamUrls]);
 
   // Load programas from DB
   useEffect(() => {
