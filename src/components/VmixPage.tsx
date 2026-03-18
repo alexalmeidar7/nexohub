@@ -753,11 +753,52 @@ export default function VmixPage() {
     </select>
   );
 
-   // Visual placeholder for input (no live thumbnails — SnapshotInput saves to disk)
+   // HLS Video Player component for NDI inputs with configured stream URLs
+  const HlsPlayer = ({ src, className = "" }: { src: string; className?: string }) => {
+    const videoRef = useRef<HTMLVideoElement>(null);
+    useEffect(() => {
+      const video = videoRef.current;
+      if (!video || !src) return;
+      let hls: Hls | null = null;
+      if (src.includes(".m3u8") && Hls.isSupported()) {
+        hls = new Hls({ enableWorker: false, lowLatencyMode: true });
+        hls.loadSource(src);
+        hls.attachMedia(video);
+        hls.on(Hls.Events.MANIFEST_PARSED, () => { video.play().catch(() => {}); });
+      } else {
+        video.src = src;
+        video.play().catch(() => {});
+      }
+      return () => { hls?.destroy(); };
+    }, [src]);
+    return <video ref={videoRef} className={className} muted autoPlay playsInline style={{ objectFit: "contain", backgroundColor: "#000" }} />;
+  };
+
+  // vMix Web Controller iframe for live monitors
+  const VmixIframe = ({ className = "" }: { className?: string }) => {
+    if (!savedUrl) return null;
+    const iframeSrc = savedUrl.replace(/\/+$/, "");
+    return (
+      <iframe
+        src={iframeSrc}
+        className={className}
+        style={{ border: "none", width: "100%", height: "100%", backgroundColor: "#000" }}
+        allow="autoplay"
+        sandbox="allow-scripts allow-same-origin"
+      />
+    );
+  };
+
+  // Visual placeholder for input (no live thumbnails — SnapshotInput saves to disk)
   const ThumbnailImg = ({ inputNumber, className = "", alt = "" }: { inputNumber: string; width?: number; height?: number; className?: string; alt?: string }) => {
     const inp = inputs.find(i => i.number === inputNumber);
     const bgColor = inp ? getInputColor(inp.type) : "#1e1e24";
     const label = inp ? inp.type : "Input";
+    const hlsUrl = inputHlsUrls[inputNumber];
+    // If this input has an HLS URL configured, show the video player
+    if (hlsUrl) {
+      return <HlsPlayer src={hlsUrl} className={className} />;
+    }
     return (
       <div className={`flex flex-col items-center justify-center ${className}`} style={{ backgroundColor: bgColor }}>
         <span className="text-[10px] font-bold text-white/50 uppercase tracking-wider">{label}</span>
