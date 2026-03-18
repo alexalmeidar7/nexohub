@@ -258,11 +258,17 @@ export default function VmixPage() {
       toast({ title: "Conectado!", description: `${parsedInputs.length} inputs (modo ${connectionMode === "direct" ? "direto" : "proxy"}).` });
     } catch {
       setConnected(false);
-      toast({ title: "Erro de conexão", description: "Verifique se o vMix Web Controller está ativo e acessível.", variant: "destructive" });
+      const isLocal = isPrivateIp(savedUrl);
+      const hint = connectionMode === "proxy" && isLocal
+        ? " IP local detectado — tente o modo 'Direto'."
+        : connectionMode === "direct" && !isLocal
+        ? " IP público detectado — tente o modo 'Proxy'."
+        : "";
+      toast({ title: "Erro de conexão", description: `Verifique se o vMix Web Controller está ativo.${hint}`, variant: "destructive" });
     } finally {
       setConnecting(false);
     }
-  }, [savedUrl, toast, vmixProxy]);
+  }, [savedUrl, toast, vmixFetch, connectionMode]);
 
   const sendCommand = async (fn: string, input?: string, value?: string) => {
     if (!savedUrl) return;
