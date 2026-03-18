@@ -907,33 +907,31 @@ export default function VmixPage() {
         </div>
       </div>
 
-      {/* ── Clock row ── */}
-      <div className="flex items-center justify-center py-1.5" style={{ backgroundColor: "#0a0a12" }}>
-        <span className="text-xs font-mono font-bold tracking-widest" style={{ color: "#22c55e" }}>{clock}</span>
-      </div>
-
       {/* ── Top Bar ── */}
-      <div className="relative flex items-center justify-between px-4 py-2" style={{ backgroundColor: "#111118" }}>
-        {/* Left: GO LIVE / RECORD */}
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => sendCommand(streaming ? "StopStreaming" : "StartStreaming")}
-            className="px-4 py-1.5 rounded text-xs font-bold uppercase tracking-wider transition-all"
-            style={{
-              backgroundColor: streaming ? "#dc2626" : "#333",
-              color: streaming ? "#fff" : "#aaa",
-              boxShadow: streaming ? "0 0 12px #dc262680" : "none",
-            }}
-          >
-            {streaming ? "● LIVE" : "GO LIVE"}
-          </button>
-          <button
-            onClick={() => sendCommand(recording ? "StopRecording" : "StartRecording")}
-            className="px-4 py-1.5 rounded text-xs font-bold uppercase tracking-wider"
-            style={{ backgroundColor: recording ? "#dc2626" : "#333", color: recording ? "#fff" : "#aaa" }}
-          >
-            {recording ? "● REC" : "RECORD"}
-          </button>
+      <div className="relative flex items-center justify-between px-4 py-2 rounded-t-xl" style={{ backgroundColor: "#111118" }}>
+        {/* Left: Clock + GO LIVE / RECORD */}
+        <div className="flex items-center gap-4">
+          <span className="text-sm font-mono font-bold tracking-wider" style={{ color: "#22c55e" }}>{clock}</span>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => sendCommand(streaming ? "StopStreaming" : "StartStreaming")}
+              className="px-4 py-1.5 rounded text-xs font-bold uppercase tracking-wider transition-all"
+              style={{
+                backgroundColor: streaming ? "#dc2626" : "#333",
+                color: streaming ? "#fff" : "#aaa",
+                boxShadow: streaming ? "0 0 12px #dc262680" : "none",
+              }}
+            >
+              {streaming ? "● LIVE" : "GO LIVE"}
+            </button>
+            <button
+              onClick={() => sendCommand(recording ? "StopRecording" : "StartRecording")}
+              className="px-4 py-1.5 rounded text-xs font-bold uppercase tracking-wider"
+              style={{ backgroundColor: recording ? "#dc2626" : "#333", color: recording ? "#fff" : "#aaa" }}
+            >
+              {recording ? "● REC" : "RECORD"}
+            </button>
+          </div>
         </div>
         {/* Center: Logo */}
         <div className="absolute left-1/2 -translate-x-1/2">
