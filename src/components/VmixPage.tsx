@@ -892,22 +892,19 @@ export default function VmixPage() {
     );
   };
 
-  // Monitor content renderer: stream URL > iframe > thumbnail > SMPTE bars
+  // Monitor content renderer: stream URL > iframe > thumbnail > null (falls through to SMPTE bars)
   const MonitorContent = ({ type, inputNumber }: { type: "preview" | "output"; inputNumber: string | null }) => {
     const streamUrl = monitorStreamUrls[type];
     if (streamUrl) {
-      // Detect type: HLS (.m3u8), MJPEG, or JPEG
       if (streamUrl.includes(".m3u8")) {
         return <HlsPlayer src={streamUrl} className="w-full h-full" />;
       }
       return <MjpegPlayer src={streamUrl} className="w-full h-full" />;
     }
     if (useIframeMonitor && savedUrl) {
-      return <VmixIframe className="w-full h-full" />;
+      return <VmixIframe className="w-full h-full" type={type} />;
     }
-    if (inputNumber && savedUrl) {
-      return <ThumbnailImg inputNumber={inputNumber} width={640} height={360} className="w-full h-full object-contain" alt={type} />;
-    }
+    // No live preview available — return null to show SMPTE bars
     return null;
   };
 
