@@ -1379,39 +1379,69 @@ export default function VmixPage() {
           <div className="flex items-center gap-2 px-3 py-2" style={{ borderBottom: "1px solid #ffffff06", backgroundColor: "#ffffff04" }}>
             <span className="text-[9px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-sm" style={{ backgroundColor: "#dc2626", color: "#fff", letterSpacing: "0.15em" }}>Output</span>
             {renderInputSelect(activeInput, (val) => {
-              // Use Cut to switch the active (program/output) input
               sendCommand("Cut", val);
               setActiveInput(val);
             })}
+            <button
+              onClick={() => {
+                setEditingMonitorStream(editingMonitorStream === "output" ? null : "output");
+                setMonitorStreamTemp(monitorStreamUrls.output);
+              }}
+              className="ml-auto text-[8px] px-1.5 py-0.5 rounded transition-all"
+              style={{
+                backgroundColor: monitorStreamUrls.output ? "#3b82f620" : "#ffffff08",
+                color: monitorStreamUrls.output ? "#3b82f6" : "#666",
+                border: `1px solid ${monitorStreamUrls.output ? "#3b82f640" : "#ffffff10"}`,
+              }}
+              title="Configurar URL de stream (MJPEG/HLS)"
+            >
+              📡
+            </button>
           </div>
+          {editingMonitorStream === "output" && (
+            <div className="flex gap-1 px-2 py-1.5" style={{ backgroundColor: "#111114", borderBottom: "1px solid #ffffff08" }}>
+              <input
+                type="text"
+                value={monitorStreamTemp}
+                onChange={e => setMonitorStreamTemp(e.target.value)}
+                placeholder="URL do stream (MJPEG, HLS .m3u8, ou JPEG)"
+                className="flex-1 text-[9px] px-2 py-1 rounded outline-none"
+                style={{ backgroundColor: "#1a1a20", color: "#ccc", border: "1px solid #333" }}
+                onKeyDown={e => { if (e.key === "Enter") { setMonitorStreamUrls(prev => ({ ...prev, output: monitorStreamTemp.trim() })); setEditingMonitorStream(null); } }}
+              />
+              <button onClick={() => { setMonitorStreamUrls(prev => ({ ...prev, output: monitorStreamTemp.trim() })); setEditingMonitorStream(null); }} className="text-[8px] px-1.5 rounded" style={{ backgroundColor: "#22c55e20", color: "#22c55e", border: "1px solid #22c55e30" }}>✓</button>
+              {monitorStreamUrls.output && <button onClick={() => { setMonitorStreamUrls(prev => ({ ...prev, output: "" })); setEditingMonitorStream(null); }} className="text-[8px] px-1.5 rounded" style={{ backgroundColor: "#dc262620", color: "#dc2626", border: "1px solid #dc262630" }}>✕</button>}
+            </div>
+          )}
           <div className="flex-1 flex items-center justify-center overflow-hidden" style={{ aspectRatio: "16/9" }}>
-            {activeInput && savedUrl ? (
-              <ThumbnailImg inputNumber={activeInput} width={640} height={360} className="w-full h-full object-contain" alt="Output" />
-            ) : (
-              <div className="w-full h-full relative flex flex-col">
-                {/* SMPTE color bars */}
-                <div className="flex flex-1">
-                  {["#c0c0c0","#c0c000","#00c0c0","#00c000","#c000c0","#c00000","#0000c0"].map((c,i) => (
-                    <div key={i} className="flex-1" style={{ backgroundColor: c }} />
-                  ))}
+            {(() => {
+              const content = <MonitorContent type="output" inputNumber={activeInput} />;
+              if (content) return content;
+              return (
+                <div className="w-full h-full relative flex flex-col">
+                  <div className="flex flex-1">
+                    {["#c0c0c0","#c0c000","#00c0c0","#00c000","#c000c0","#c00000","#0000c0"].map((c,i) => (
+                      <div key={i} className="flex-1" style={{ backgroundColor: c }} />
+                    ))}
+                  </div>
+                  <div className="flex" style={{ height: "8%" }}>
+                    {["#0000c0","#131313","#c000c0","#131313","#00c0c0","#131313","#c0c0c0"].map((c,i) => (
+                      <div key={i} className="flex-1" style={{ backgroundColor: c }} />
+                    ))}
+                  </div>
+                  <div className="flex" style={{ height: "8%" }}>
+                    {["#00214c","#fff","#32006a","#131313","#131313","#131313","#131313"].map((c,i) => (
+                      <div key={i} className="flex-1" style={{ backgroundColor: c }} />
+                    ))}
+                  </div>
+                  <div className="tv-static absolute inset-0" />
+                  <div className="tv-scanlines absolute inset-0" />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded" style={{ backgroundColor: "rgba(0,0,0,0.6)", color: "#dc2626" }}>PGM — Sem sinal</span>
+                  </div>
                 </div>
-                <div className="flex" style={{ height: "8%" }}>
-                  {["#0000c0","#131313","#c000c0","#131313","#00c0c0","#131313","#c0c0c0"].map((c,i) => (
-                    <div key={i} className="flex-1" style={{ backgroundColor: c }} />
-                  ))}
-                </div>
-                <div className="flex" style={{ height: "8%" }}>
-                  {["#00214c","#fff","#32006a","#131313","#131313","#131313","#131313"].map((c,i) => (
-                    <div key={i} className="flex-1" style={{ backgroundColor: c }} />
-                  ))}
-                </div>
-                <div className="tv-static absolute inset-0" />
-                <div className="tv-scanlines absolute inset-0" />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded" style={{ backgroundColor: "rgba(0,0,0,0.6)", color: "#dc2626" }}>PGM — Sem sinal</span>
-                </div>
-              </div>
-            )}
+              );
+            })()}
           </div>
         </div>
       </div>
