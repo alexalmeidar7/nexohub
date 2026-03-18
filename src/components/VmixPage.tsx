@@ -935,8 +935,8 @@ export default function VmixPage() {
             <button
               onClick={() => sendCommand("StartStreaming")}
               className="px-3 py-1.5 rounded text-[10px] font-bold uppercase tracking-wider transition-all duration-200 hover:scale-[1.05] whitespace-nowrap"
-              style={{ backgroundColor: "#2d5016", color: "#7ab648", border: "1px solid #3d6a20" }}
-              onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = "0 0 14px #2d501660"; }}
+              style={{ backgroundColor: "#333338", color: "#ccc", border: "1px solid #444448" }}
+              onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = "0 0 14px #33333860"; }}
               onMouseLeave={e => { (e.target as HTMLElement).style.boxShadow = "none"; }}
             >
               STREAMING 2
