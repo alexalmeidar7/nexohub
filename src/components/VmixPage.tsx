@@ -559,6 +559,23 @@ export default function VmixPage() {
   if (!connected) {
     return (
       <div className="space-y-0">
+        {/* Inline warning banner for iframe + local HTTP */}
+        {showNewTabBanner && (
+          <div className="rounded-xl p-4 mb-3 flex flex-col sm:flex-row items-start sm:items-center gap-3" style={{ backgroundColor: "#f59e0b15", border: "1px solid #f59e0b40" }}>
+            <AlertTriangle size={18} style={{ color: "#f59e0b", flexShrink: 0 }} />
+            <div className="flex-1 text-[11px] leading-relaxed" style={{ color: "#fbbf24" }}>
+              <strong>Preview HTTPS bloqueia HTTP local.</strong> Para conectar ao vMix ({savedUrl}), abra em nova aba e permita "Conteúdo não seguro" nas configurações do site.
+            </div>
+            <button
+              onClick={() => window.open("/vmix-control", "_blank", "noopener,noreferrer")}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-[11px] font-bold text-white whitespace-nowrap transition-all hover:brightness-110"
+              style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)" }}
+            >
+              <ExternalLink size={13} />
+              Abrir em nova aba
+            </button>
+          </div>
+        )}
         {/* URL input + action buttons row */}
         <div className="flex items-center gap-3 px-0 py-3 flex-wrap">
           <div className="flex gap-2 items-center flex-1 flex-wrap">
