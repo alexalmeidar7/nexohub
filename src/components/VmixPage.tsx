@@ -69,6 +69,8 @@ export default function VmixPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [vmixUrl, setVmixUrl] = useState("");
+  const [vmixUser, setVmixUser] = useState("");
+  const [vmixPass, setVmixPass] = useState("");
   const [savedUrl, setSavedUrl] = useState("");
   const [connected, setConnected] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -121,13 +123,15 @@ export default function VmixPage() {
     const loadUrl = async () => {
       const { data } = await supabase
         .from("user_settings")
-        .select("vmix_url")
+        .select("vmix_url, vmix_user, vmix_pass")
         .eq("user_id", user.id)
         .maybeSingle();
       if (data?.vmix_url) {
         setVmixUrl(data.vmix_url);
         setSavedUrl(data.vmix_url);
       }
+      if (data?.vmix_user) setVmixUser(data.vmix_user);
+      if (data?.vmix_pass) setVmixPass(data.vmix_pass);
       setLoading(false);
     };
     loadUrl();
@@ -141,14 +145,15 @@ export default function VmixPage() {
       .select("id")
       .eq("user_id", user.id)
       .maybeSingle();
+    const payload = { vmix_url: trimmed, vmix_user: vmixUser.trim(), vmix_pass: vmixPass };
     if (existing) {
-      await supabase.from("user_settings").update({ vmix_url: trimmed }).eq("user_id", user.id);
+      await supabase.from("user_settings").update(payload).eq("user_id", user.id);
     } else {
-      await supabase.from("user_settings").insert({ user_id: user.id, vmix_url: trimmed });
+      await supabase.from("user_settings").insert({ user_id: user.id, ...payload });
     }
     setSavedUrl(trimmed);
     localStorage.setItem(`vmix_url_${user.id}`, trimmed);
-    toast({ title: "URL salva", description: "Endereço do vMix salvo com sucesso." });
+    toast({ title: "Configuração salva", description: "URL e credenciais do vMix salvas." });
   };
 
   const vmixProxy = useCallback(async (path: string): Promise<string> => {
@@ -330,14 +335,30 @@ export default function VmixPage() {
     return (
       <div className="space-y-0">
         {/* URL input + action buttons row */}
-        <div className="flex items-center gap-3 px-0 py-3">
-          <div className="flex gap-2 items-center flex-1">
+        <div className="flex items-center gap-3 px-0 py-3 flex-wrap">
+          <div className="flex gap-2 items-center flex-1 flex-wrap">
             <input
               type="text"
               value={vmixUrl}
               onChange={e => setVmixUrl(e.target.value)}
-              placeholder="http://192.168.1.100:8088"
+              placeholder="http://SEU_IP_PUBLICO:8088"
               className="w-64 px-4 py-2 rounded-lg text-sm outline-none"
+              style={{ backgroundColor: "#2a2a2a", color: "#fff", border: "1px solid #ffffff15" }}
+            />
+            <input
+              type="text"
+              value={vmixUser}
+              onChange={e => setVmixUser(e.target.value)}
+              placeholder="Usuário (ex: admin)"
+              className="w-36 px-3 py-2 rounded-lg text-sm outline-none"
+              style={{ backgroundColor: "#2a2a2a", color: "#fff", border: "1px solid #ffffff15" }}
+            />
+            <input
+              type="password"
+              value={vmixPass}
+              onChange={e => setVmixPass(e.target.value)}
+              placeholder="Senha"
+              className="w-28 px-3 py-2 rounded-lg text-sm outline-none"
               style={{ backgroundColor: "#2a2a2a", color: "#fff", border: "1px solid #ffffff15" }}
             />
             <button onClick={saveUrl} className="px-4 py-2 rounded-lg text-xs font-bold text-white" style={{ background: "linear-gradient(135deg,#268ffa,#2dbef3)" }}>
@@ -358,17 +379,27 @@ export default function VmixPage() {
                   <button className="p-1.5 rounded-lg text-white/30 hover:text-white/60 transition-colors">
                     <HelpCircle size={14} />
                   </button>
-                  <div className="absolute left-0 top-full mt-2 w-64 p-3 rounded-lg text-[11px] text-white/70 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50"
+                  <div className="absolute left-0 top-full mt-2 w-80 p-4 rounded-lg text-[11px] text-white/70 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50"
                     style={{ backgroundColor: "#2a2a3a", border: "1px solid #ffffff15", boxShadow: "0 8px 24px rgba(0,0,0,0.5)" }}
                   >
-                    <p className="font-bold text-white/90 mb-2">Como configurar:</p>
-                    <ol className="space-y-1 list-decimal list-inside text-white/50">
-                      <li>Abra o vMix no computador de transmissão</li>
-                      <li>Vá em <strong className="text-white/70">Settings → Web Controller</strong> e ative</li>
-                      <li>Anote o IP e porta exibidos</li>
-                      <li>Cole acima, salve e clique em "Conectar"</li>
-                      <li>Os dispositivos precisam estar na mesma rede</li>
+                    <p className="font-bold text-white/90 mb-2">Como conectar (redirecionamento de porta):</p>
+                    <ol className="space-y-1.5 list-decimal list-inside text-white/50">
+                      <li>No vMix: <strong className="text-white/70">Settings → Web Controller</strong> → Habilitar (porta 8088)</li>
+                      <li>No roteador: acesse o painel admin (geralmente 192.168.1.1)</li>
+                      <li>Em <strong className="text-white/70">Redirecionamento de Porta / Port Forwarding</strong>:</li>
                     </ol>
+                    <div className="ml-4 mt-1 mb-2 p-2 rounded text-[10px]" style={{ backgroundColor: "#1a1a2e" }}>
+                      <p>Porta externa: <strong className="text-white/80">8088</strong></p>
+                      <p>IP interno: <strong className="text-white/80">192.168.x.x</strong> (IP do PC com vMix)</p>
+                      <p>Porta interna: <strong className="text-white/80">8088</strong></p>
+                      <p>Protocolo: <strong className="text-white/80">TCP</strong></p>
+                    </div>
+                    <ol className="space-y-1.5 list-decimal list-inside text-white/50" start={4}>
+                      <li>Descubra seu IP público em <strong className="text-white/70">whatismyip.com</strong></li>
+                      <li>Cole aqui: <strong className="text-white/70">http://SEU_IP_PUBLICO:8088</strong></li>
+                      <li>Se o vMix tiver "Enhanced Security", preencha usuário e senha</li>
+                    </ol>
+                    <p className="mt-2 text-white/30 text-[10px]">💡 Dica: use um serviço de DNS dinâmico (No-IP, DuckDNS) se seu IP muda com frequência.</p>
                   </div>
                 </div>
               </>
@@ -384,7 +415,7 @@ export default function VmixPage() {
             </button>
           </div>
         </div>
-        <p className="text-xs text-white/20 py-8 text-center">Configure o IP acima e conecte ao vMix Web Controller</p>
+        <p className="text-xs text-white/20 py-8 text-center">Configure o IP público acima e conecte ao vMix Web Controller</p>
       </div>
     );
   }
@@ -402,14 +433,30 @@ export default function VmixPage() {
   return (
     <div className="space-y-0 max-w-full" style={{ color: "#e0e0e0" }}>
       {/* ── IP bar + action buttons ── */}
-      <div className="flex items-center gap-3 py-3">
-        <div className="flex gap-2 items-center flex-1">
+      <div className="flex items-center gap-3 py-3 flex-wrap">
+        <div className="flex gap-2 items-center flex-1 flex-wrap">
           <input
             type="text"
             value={vmixUrl}
             onChange={e => setVmixUrl(e.target.value)}
-            placeholder="http://192.168.1.100:8088"
+            placeholder="http://SEU_IP_PUBLICO:8088"
             className="w-64 px-4 py-2 rounded-lg text-sm outline-none"
+            style={{ backgroundColor: "#2a2a2a", color: "#fff", border: "1px solid #ffffff15" }}
+          />
+          <input
+            type="text"
+            value={vmixUser}
+            onChange={e => setVmixUser(e.target.value)}
+            placeholder="Usuário"
+            className="w-28 px-3 py-2 rounded-lg text-sm outline-none"
+            style={{ backgroundColor: "#2a2a2a", color: "#fff", border: "1px solid #ffffff15" }}
+          />
+          <input
+            type="password"
+            value={vmixPass}
+            onChange={e => setVmixPass(e.target.value)}
+            placeholder="Senha"
+            className="w-24 px-3 py-2 rounded-lg text-sm outline-none"
             style={{ backgroundColor: "#2a2a2a", color: "#fff", border: "1px solid #ffffff15" }}
           />
           <button onClick={saveUrl} className="px-4 py-2 rounded-lg text-xs font-bold text-white" style={{ background: "linear-gradient(135deg,#268ffa,#2dbef3)" }}>
@@ -424,22 +471,6 @@ export default function VmixPage() {
             {connecting ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle size={14} />}
             Conectado
           </button>
-          <div className="relative group">
-            <button className="p-1.5 rounded-lg text-white/30 hover:text-white/60 transition-colors">
-              <HelpCircle size={14} />
-            </button>
-            <div className="absolute left-0 top-full mt-2 w-64 p-3 rounded-lg text-[11px] text-white/70 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50"
-              style={{ backgroundColor: "#2a2a3a", border: "1px solid #ffffff15", boxShadow: "0 8px 24px rgba(0,0,0,0.5)" }}
-            >
-              <p className="font-bold text-white/90 mb-2">Como configurar:</p>
-              <ol className="space-y-1 list-decimal list-inside text-white/50">
-                <li>Abra o vMix no computador</li>
-                <li>Settings → Web Controller</li>
-                <li>Anote o IP e porta</li>
-                <li>Cole, salve e conecte</li>
-              </ol>
-            </div>
-          </div>
         </div>
         <div className="flex gap-2">
           <button
