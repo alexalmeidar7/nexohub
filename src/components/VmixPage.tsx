@@ -433,14 +433,30 @@ export default function VmixPage() {
   return (
     <div className="space-y-0 max-w-full" style={{ color: "#e0e0e0" }}>
       {/* ── IP bar + action buttons ── */}
-      <div className="flex items-center gap-3 py-3">
-        <div className="flex gap-2 items-center flex-1">
+      <div className="flex items-center gap-3 py-3 flex-wrap">
+        <div className="flex gap-2 items-center flex-1 flex-wrap">
           <input
             type="text"
             value={vmixUrl}
             onChange={e => setVmixUrl(e.target.value)}
-            placeholder="http://192.168.1.100:8088"
+            placeholder="http://SEU_IP_PUBLICO:8088"
             className="w-64 px-4 py-2 rounded-lg text-sm outline-none"
+            style={{ backgroundColor: "#2a2a2a", color: "#fff", border: "1px solid #ffffff15" }}
+          />
+          <input
+            type="text"
+            value={vmixUser}
+            onChange={e => setVmixUser(e.target.value)}
+            placeholder="Usuário"
+            className="w-28 px-3 py-2 rounded-lg text-sm outline-none"
+            style={{ backgroundColor: "#2a2a2a", color: "#fff", border: "1px solid #ffffff15" }}
+          />
+          <input
+            type="password"
+            value={vmixPass}
+            onChange={e => setVmixPass(e.target.value)}
+            placeholder="Senha"
+            className="w-24 px-3 py-2 rounded-lg text-sm outline-none"
             style={{ backgroundColor: "#2a2a2a", color: "#fff", border: "1px solid #ffffff15" }}
           />
           <button onClick={saveUrl} className="px-4 py-2 rounded-lg text-xs font-bold text-white" style={{ background: "linear-gradient(135deg,#268ffa,#2dbef3)" }}>
@@ -455,19 +471,6 @@ export default function VmixPage() {
             {connecting ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle size={14} />}
             Conectado
           </button>
-          <div className="relative group">
-            <button className="p-1.5 rounded-lg text-white/30 hover:text-white/60 transition-colors">
-              <HelpCircle size={14} />
-            </button>
-            <div className="absolute left-0 top-full mt-2 w-64 p-3 rounded-lg text-[11px] text-white/70 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50"
-              style={{ backgroundColor: "#2a2a3a", border: "1px solid #ffffff15", boxShadow: "0 8px 24px rgba(0,0,0,0.5)" }}
-            >
-              <p className="font-bold text-white/90 mb-2">Como configurar:</p>
-              <ol className="space-y-1 list-decimal list-inside text-white/50">
-                <li>Abra o vMix no computador</li>
-                <li>Settings → Web Controller</li>
-                <li>Anote o IP e porta</li>
-                <li>Cole, salve e conecte</li>
               </ol>
             </div>
           </div>
