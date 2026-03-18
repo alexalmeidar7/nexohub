@@ -2089,6 +2089,7 @@ export default function VmixPage() {
                       const progOnAir = isProgramForToday(prog) && isNowInProgram(prog);
                       const startTime = prog.horario_inicio?.slice(0, 5) || "";
                       const endTime = prog.horario_fim?.slice(0, 5) || "";
+                      const globalIdx = programas.findIndex(p => p.id === prog.id);
                       return (
                         <div
                           key={prog.id}
@@ -2097,7 +2098,20 @@ export default function VmixPage() {
                             aspectRatio: "3/2",
                             backgroundColor: isActive ? "#dc2626" : "#2a2a30",
                             border: isActive ? "2px solid #ef4444" : progOnAir ? "2px solid #22c55e" : "2px solid #333338",
+                            opacity: dragPresetIdx === globalIdx ? 0.4 : 1,
                           }}
+                          onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; }}
+                          onDrop={(e) => {
+                            e.preventDefault();
+                            if (dragPresetIdx === null || dragPresetIdx === globalIdx) return;
+                            const arr = [...programas];
+                            const [moved] = arr.splice(dragPresetIdx, 1);
+                            arr.splice(globalIdx, 0, moved);
+                            setProgramas(arr);
+                            localStorage.setItem("vmix_preset_order", JSON.stringify(arr.map(p => p.id)));
+                            setDragPresetIdx(null);
+                          }}
+                          onDragEnd={() => setDragPresetIdx(null)}
                           onClick={async () => {
                             setActivePreset(prog.id);
                             // Try to run saved preset commands first
