@@ -70,6 +70,7 @@ interface Programa {
   horario_fim: string;
   dias_semana: string[] | null;
   estudio: string | null;
+  apresentador_foto?: string | null;
 }
 
 // Helper to detect private/local IPs
