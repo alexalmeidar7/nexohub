@@ -6,8 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   Monitor, Radio, Disc, RefreshCw, Loader2, CheckCircle, XCircle,
   ExternalLink, Volume2, VolumeX, Play, Square, Camera, Tv,
-  Layers, Wand2, Plus, Trash2, GripVertical, Send, Eye, Wifi, HelpCircle, Activity, AlertTriangle, Shield
-
+  Layers, Wand2, Plus, Trash2, GripVertical, Send, Eye, Wifi, HelpCircle, Activity, AlertTriangle, Shield, Clock
 } from "lucide-react";
 import logoMixControl from "@/assets/logo-mixcontrol.png";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
@@ -1971,14 +1970,17 @@ export default function VmixPage() {
                   <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">
                     {programas.map((prog, idx) => {
                       const isActive = activePreset === prog.id;
+                      const progOnAir = isProgramForToday(prog) && isNowInProgram(prog);
+                      const startTime = prog.horario_inicio?.slice(0, 5) || "";
+                      const endTime = prog.horario_fim?.slice(0, 5) || "";
                       return (
                         <div
                           key={prog.id}
-                          className="group/preset relative rounded-lg overflow-hidden cursor-pointer transition-all duration-200 hover:scale-[1.03]"
+                          className={`group/preset relative rounded-lg overflow-hidden cursor-pointer transition-all duration-200 hover:scale-[1.03]${progOnAir ? " vmix-preset-onair" : ""}`}
                           style={{
                             aspectRatio: "3/2",
                             backgroundColor: isActive ? "#dc2626" : "#2a2a30",
-                            border: isActive ? "2px solid #ef4444" : "2px solid #333338",
+                            border: isActive ? "2px solid #ef4444" : progOnAir ? "2px solid #22c55e" : "2px solid #333338",
                           }}
                           onClick={() => {
                             setActivePreset(prog.id);
@@ -1986,8 +1988,16 @@ export default function VmixPage() {
                             toast({ title: `Preset: ${prog.nome}`, description: "Comando enviado ao vMix." });
                           }}
                         >
+                          {/* Schedule badge */}
+                          {startTime && (
+                            <div className="absolute top-1.5 left-1.5 flex items-center gap-0.5 px-1.5 py-0.5 rounded" style={{ backgroundColor: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)", zIndex: 2 }}>
+                              <Clock size={8} style={{ color: progOnAir ? "#22c55e" : "#888" }} />
+                              <span className="text-[7px] font-bold tabular-nums" style={{ color: progOnAir ? "#22c55e" : "#999" }}>{startTime} - {endTime}</span>
+                            </div>
+                          )}
+
                           {/* Label */}
-                          <div className="absolute inset-0 flex items-center justify-center p-2">
+                          <div className="absolute inset-0 flex items-center justify-center p-2 pt-5">
                             <span className="text-[10px] font-black uppercase tracking-wider text-center leading-tight"
                               style={{ color: isActive ? "#fff" : "#ccc" }}
                             >{prog.nome}</span>
