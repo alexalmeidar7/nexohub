@@ -85,8 +85,41 @@ function isInsecureHttpUrl(url: string): boolean {
     return false;
   }
 }
+// Format keyboard event to a readable key name, distinguishing numpad from top-row numbers
+function formatKeyName(e: KeyboardEvent): string {
+  const parts: string[] = [];
+  if (e.ctrlKey) parts.push("Ctrl");
+  if (e.altKey) parts.push("Alt");
+  if (e.shiftKey) parts.push("Shift");
 
-export default function VmixPage() {
+  const { code, key } = e;
+
+  // Distinguish numpad numbers from top-row numbers
+  if (code.startsWith("Numpad")) {
+    const numpadKey = code.replace("Numpad", "");
+    const numpadLabels: Record<string, string> = {
+      "0": "Num 0", "1": "Num 1", "2": "Num 2", "3": "Num 3", "4": "Num 4",
+      "5": "Num 5", "6": "Num 6", "7": "Num 7", "8": "Num 8", "9": "Num 9",
+      "Decimal": "Num .", "Add": "Num +", "Subtract": "Num -",
+      "Multiply": "Num *", "Divide": "Num /", "Enter": "Num Enter",
+    };
+    parts.push(numpadLabels[numpadKey] || `Num ${numpadKey}`);
+  } else if (code.startsWith("Digit")) {
+    parts.push(code.replace("Digit", ""));
+  } else if (code.startsWith("Key")) {
+    parts.push(code.replace("Key", "").toUpperCase());
+  } else if (key === " ") {
+    parts.push("Space");
+  } else if (["Control", "Alt", "Shift", "Meta"].includes(key)) {
+    // Don't add modifier-only keys
+  } else {
+    parts.push(key.length === 1 ? key.toUpperCase() : key);
+  }
+
+  return parts.join(" + ");
+}
+
+
   const { user } = useAuth();
   const { toast } = useToast();
   const [vmixUrl, setVmixUrl] = useState("");
