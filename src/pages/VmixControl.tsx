@@ -115,7 +115,10 @@ export default function VmixControl() {
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#191919" }}>
       <header className="relative flex items-center justify-between px-6 py-3" style={{ backgroundColor: "#242424" }}>
-        <span className="text-sm font-mono font-bold tracking-wider" style={{ color: "#22c55e" }}>{clock}</span>
+        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg" style={{ backgroundColor: "#1a1a1a", border: "1px solid #333", boxShadow: "inset 0 1px 3px rgba(0,0,0,0.5)" }}>
+          <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: "#dc2626" }} />
+          <span className="text-base font-mono font-bold tracking-[0.25em] tabular-nums" style={{ color: "#22c55e", textShadow: "0 0 8px rgba(34,197,94,0.4)" }}>{clock}</span>
+        </div>
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
           <img src={logoMixControl} alt="Mix Control" className="h-5" />
         </div>
