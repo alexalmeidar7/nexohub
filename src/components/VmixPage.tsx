@@ -65,6 +65,14 @@ interface Programa {
   ativo: boolean;
 }
 
+// Helper to detect private/local IPs
+function isPrivateIp(url: string): boolean {
+  try {
+    const hostname = new URL(url).hostname;
+    return /^(10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|127\.|localhost)/i.test(hostname);
+  } catch { return false; }
+}
+
 export default function VmixPage() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -82,6 +90,10 @@ export default function VmixPage() {
   const [recording, setRecording] = useState(false);
   const [activeTab, setActiveTab] = useState<"controls" | "scenes" | "ndi">("controls");
   const [activePreset, setActivePreset] = useState<string | null>(null);
+  const [connectionMode, setConnectionMode] = useState<"direct" | "proxy">(() => {
+    try { return (localStorage.getItem("vmix_conn_mode") as "direct" | "proxy") || "direct"; }
+    catch { return "direct"; }
+  });
 
   // Programas from DB
   const [programas, setProgramas] = useState<Programa[]>([]);
