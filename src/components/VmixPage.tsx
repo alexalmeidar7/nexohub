@@ -797,6 +797,12 @@ export default function VmixPage() {
   }, [loading, connected, isEmbeddedPreview]);
 
   // Keyboard shortcut listener (must be after effectiveConnected)
+  // Refs for stable keyboard handler
+  const sendCommandRef = useRef(sendCommand);
+  sendCommandRef.current = sendCommand;
+  const inputShortcutsRef = useRef(inputShortcuts);
+  inputShortcutsRef.current = inputShortcuts;
+
   useEffect(() => {
     if (!effectiveConnected) return;
     const handler = (e: KeyboardEvent) => {
@@ -813,19 +819,19 @@ export default function VmixPage() {
         setCapturingShortcut(null);
         return;
       }
-      // Otherwise, check if the pressed key matches a shortcut
+      // Otherwise, check if the pressed key matches a shortcut → send to PREVIEW only
       const keyName = formatKeyName(e);
-      const matchedInput = Object.entries(inputShortcuts).find(([_, shortcut]) => shortcut === keyName);
+      const matchedInput = Object.entries(inputShortcutsRef.current).find(([_, shortcut]) => shortcut === keyName);
       if (matchedInput) {
         e.preventDefault();
         const inputNum = matchedInput[0];
-        sendCommand("PreviewInput", inputNum);
+        sendCommandRef.current("PreviewInput", inputNum);
         setPreviewInput(inputNum);
       }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [effectiveConnected, capturingShortcut, inputShortcuts]);
+  }, [effectiveConnected, capturingShortcut]);
 
   if (loading) return <ModulePageSkeleton />;
 
