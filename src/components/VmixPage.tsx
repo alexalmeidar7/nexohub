@@ -394,6 +394,57 @@ export default function VmixPage() {
 
   return (
     <div className="space-y-0 max-w-full" style={{ color: "#e0e0e0" }}>
+      {/* ── IP bar + action buttons ── */}
+      <div className="flex items-center gap-3 py-3">
+        <div className="flex gap-2 items-center flex-1">
+          <input
+            type="text"
+            value={vmixUrl}
+            onChange={e => setVmixUrl(e.target.value)}
+            placeholder="http://192.168.1.100:8088"
+            className="w-64 px-4 py-2 rounded-lg text-sm outline-none"
+            style={{ backgroundColor: "#2a2a2a", color: "#fff", border: "1px solid #ffffff15" }}
+          />
+          <button onClick={saveUrl} className="px-4 py-2 rounded-lg text-xs font-bold text-white" style={{ background: "linear-gradient(135deg,#268ffa,#2dbef3)" }}>
+            Salvar
+          </button>
+          <button
+            onClick={connectToVmix}
+            disabled={connecting}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold text-white"
+            style={{ backgroundColor: "#22c55e", opacity: connecting ? 0.6 : 1 }}
+          >
+            {connecting ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle size={14} />}
+            Conectado
+          </button>
+          <div className="relative group">
+            <button className="p-1.5 rounded-lg text-white/30 hover:text-white/60 transition-colors">
+              <HelpCircle size={14} />
+            </button>
+            <div className="absolute left-0 top-full mt-2 w-64 p-3 rounded-lg text-[11px] text-white/70 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50"
+              style={{ backgroundColor: "#2a2a3a", border: "1px solid #ffffff15", boxShadow: "0 8px 24px rgba(0,0,0,0.5)" }}
+            >
+              <p className="font-bold text-white/90 mb-2">Como configurar:</p>
+              <ol className="space-y-1 list-decimal list-inside text-white/50">
+                <li>Abra o vMix no computador</li>
+                <li>Settings → Web Controller</li>
+                <li>Anote o IP e porta</li>
+                <li>Cole, salve e conecte</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={() => { setActiveTab("scenes"); createNewScene(); }}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold text-white transition-all hover:brightness-110"
+            style={{ backgroundColor: "#8b5cf6" }}
+          >
+            <Plus size={13} /> Criar Cena
+          </button>
+        </div>
+      </div>
+
       {/* ── Top Bar ── */}
       <div className="flex items-center justify-between px-4 py-2 rounded-t-xl" style={{ backgroundColor: "#111118" }}>
         <div className="flex items-center gap-4">
@@ -426,8 +477,8 @@ export default function VmixPage() {
           <button onClick={() => connectToVmix()} className="text-white/40 hover:text-white transition-colors" title="Atualizar">
             <RefreshCw size={14} />
           </button>
-          <button onClick={() => window.open(savedUrl, "_blank")} className="text-white/40 hover:text-white transition-colors" title="Abrir Externo">
-            <ExternalLink size={14} />
+        </div>
+      </div>
           </button>
         </div>
       </div>
