@@ -1141,10 +1141,10 @@ export default function VmixPage() {
                     onContextMenu={e => { e.preventDefault(); setMinimizedInputs(prev => ({ ...prev, [input.number]: true })); }}
                   >
                     <span className="text-[9px] font-bold px-1 rounded" style={{
-                      backgroundColor: isActive ? "#dc2626" : isPreview ? "#22c55e" : "#444",
-                      color: isActive || isPreview ? "#fff" : "#aaa",
+                      backgroundColor: isActive ? "#dc2626" : isPreview ? "#555" : "#333338",
+                      color: isActive || isPreview ? "#fff" : "#888",
                     }}>{input.number}</span>
-                    <span className="text-[10px] font-bold truncate" style={{ color: isActive ? "#ff6b6b" : isPreview ? "#6be68c" : "#ccc" }}>{input.title}</span>
+                    <span className="text-[10px] font-bold truncate" style={{ color: isActive ? "#ff6b6b" : isPreview ? "#ddd" : "#999" }}>{input.title}</span>
                   </div>
                   <div className="relative" style={{ aspectRatio: "3/2", backgroundColor: "#0a0a12" }}>
                     {savedUrl ? (
