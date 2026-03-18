@@ -320,82 +320,13 @@ export default function VmixPage() {
     return vmixProxyFetch(path);
   }, [connectionMode, vmixDirectFetch, vmixProxyFetch]);
 
-  // Build thumbnail URL for an input (direct mode only; proxy uses blob URLs)
-  const getThumbnailUrl = useCallback((inputNumber: string, width = 360, height = 240): string | null => {
-    if (!savedUrl || connectionMode === "proxy") return null;
-    return `${savedUrl.replace(/\/+$/, "")}/api/?Function=SnapshotInput&Input=${encodeURIComponent(inputNumber)}&Width=${width}&Height=${height}&_t=${thumbTs}`;
-  }, [savedUrl, connectionMode, thumbTs]);
-
-  // Fetch thumbnails via proxy (for proxy mode)
-  useEffect(() => {
-    if (!connected || connectionMode !== "proxy" || inputs.length === 0) return;
-
-    const fetchThumbs = async () => {
-      const inputNumbers = [
-        ...(previewInput ? [previewInput] : []),
-        ...(activeInput ? [activeInput] : []),
-        ...inputs.slice(0, 12).map(i => i.number),
-      ];
-      const unique = [...new Set(inputNumbers)];
-
-      for (const num of unique) {
-        try {
-          const path = `/api/?Function=SnapshotInput&Input=${encodeURIComponent(num)}&Width=360&Height=240`;
-          // For proxy, we fetch the raw response
-          const { data: session } = await supabase.auth.getSession();
-          const token = session?.session?.access_token;
-          if (!token) continue;
-
-          const res = await fetch(
-            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/vmix-proxy`,
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`,
-                "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-              },
-              body: JSON.stringify({ path }),
-            }
-          );
-
-          if (!res.ok) continue;
-
-          const contentType = res.headers.get("content-type") || "";
-          if (contentType.includes("image")) {
-            const blob = await res.blob();
-            const url = URL.createObjectURL(blob);
-            setThumbBlobs(prev => {
-              // Revoke old blob
-              if (prev[num]) URL.revokeObjectURL(prev[num]);
-              return { ...prev, [num]: url };
-            });
-          }
-        } catch {
-          // ignore thumbnail fetch errors
-        }
-      }
-    };
-
-    fetchThumbs();
-    const id = setInterval(fetchThumbs, 3000);
-    return () => clearInterval(id);
-  }, [connected, connectionMode, inputs, previewInput, activeInput, thumbTs]);
-
-  // Cleanup blob URLs on unmount
-  useEffect(() => {
-    return () => {
-      Object.values(thumbBlobs).forEach(url => URL.revokeObjectURL(url));
-    };
-  }, []);
-
-  // Get thumbnail for a given input (works in both modes)
-  const getThumbSrc = useCallback((inputNumber: string, width = 360, height = 240): string | null => {
-    if (connectionMode === "proxy") {
-      return thumbBlobs[inputNumber] || null;
-    }
-    return getThumbnailUrl(inputNumber, width, height);
-  }, [connectionMode, thumbBlobs, getThumbnailUrl]);
+   // ── Input type visual placeholders (SnapshotInput removed — it saves to disk on vMix!) ──
+  const inputTypeColors: Record<string, string> = {
+    Capture: "#1a3a5c", Camera: "#1a3a5c", NDI: "#1c4a2e",
+    Video: "#3a1a5c", Image: "#5c3a1a", GT: "#4a4a1a",
+    Blank: "#1a1a1a", Colour: "#1a1a1a", Audio: "#5c1a3a", Virtual: "#1a4a4a",
+  };
+  const getInputColor = (type: string): string => inputTypeColors[type] || "#1e1e24";
 
   // ── Diagnostic function ──
   const runDiagnostic = useCallback(async () => {
