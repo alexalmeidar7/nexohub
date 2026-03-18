@@ -47,8 +47,7 @@ export default function XmlLinkRow({ label, xmlContent, dark, compact }: XmlLink
           .getPublicUrl(fileName);
 
         if (urlData?.publicUrl) {
-          // Add cache-buster to force fresh content
-          setPermanentUrl(urlData.publicUrl + "?t=" + Date.now());
+          setPermanentUrl(urlData.publicUrl);
         }
       } catch (err) {
         console.error("Upload XML error:", err);
