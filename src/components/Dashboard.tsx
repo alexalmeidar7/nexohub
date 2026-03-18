@@ -254,7 +254,13 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
   const handleMenuClick = (item: MenuItem) => {
     if (item.label === "vmix control") {
-      window.open("/vmix-control", "_blank");
+      const vmixUrl = user ? localStorage.getItem(`vmix_url_${user.id}`) : null;
+      if (vmixUrl) {
+        window.open(vmixUrl, "_blank");
+      } else {
+        toast({ title: "URL não configurada", description: "Configure a URL do vMix Web Controller primeiro na página de configurações." });
+        setCurrentPage("vmix");
+      }
       return;
     }
     if (item.children) {
