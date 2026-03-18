@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -134,6 +134,7 @@ export default function VmixPage() {
   }
   const [diagRunning, setDiagRunning] = useState(false);
   const [diagResult, setDiagResult] = useState<DiagResult | null>(null);
+  const connectToVmixRef = useRef<(() => Promise<void>) | null>(null);
 
   // Persist scenes
   useEffect(() => {
@@ -316,11 +317,14 @@ export default function VmixPage() {
       }
     }
 
-    // Recommendation
+    // Recommendation + Auto-fix
+    let autoFixMode: "direct" | "proxy" | null = null;
     if (result.directResult === "ok") {
-      result.recommendation = "✅ Use o modo DIRETO. Conexão funcionando!";
+      result.recommendation = "✅ Modo DIRETO funcionando! Conectando automaticamente...";
+      autoFixMode = "direct";
     } else if (result.proxyResult === "ok") {
-      result.recommendation = "✅ Use o modo PROXY. Conexão funcionando via nuvem!";
+      result.recommendation = "✅ Modo PROXY funcionando! Conectando automaticamente...";
+      autoFixMode = "proxy";
     } else if (isLocal && result.mixedContentBlocked) {
       result.recommendation = "⚠️ O navegador bloqueia HTTP dentro de HTTPS (Mixed Content). Nas configurações do Chrome para este site, permita 'Conteúdo inseguro', ou acesse pelo IP local diretamente no navegador: " + savedUrl;
     } else if (isLocal) {
@@ -331,7 +335,17 @@ export default function VmixPage() {
 
     setDiagResult(result);
     setDiagRunning(false);
-  }, [savedUrl, vmixDirectFetch, vmixProxyFetch]);
+
+    // Auto-fix: switch mode and connect
+    if (autoFixMode) {
+      setConnectionMode(autoFixMode);
+      toast({ title: `Modo alterado para ${autoFixMode === "direct" ? "Direto" : "Proxy"}`, description: "Conectando automaticamente..." });
+      // Small delay to let state update, then connect
+      setTimeout(() => {
+        connectToVmixRef.current?.();
+      }, 300);
+    }
+  }, [savedUrl, vmixDirectFetch, vmixProxyFetch, toast]);
 
   const connectToVmix = useCallback(async () => {
     if (!savedUrl) return;
@@ -404,6 +418,9 @@ export default function VmixPage() {
       setConnecting(false);
     }
   }, [savedUrl, toast, vmixFetch, connectionMode]);
+
+  // Keep ref in sync for diagnostic auto-connect
+  useEffect(() => { connectToVmixRef.current = connectToVmix; }, [connectToVmix]);
 
   const sendCommand = async (fn: string, input?: string, value?: string) => {
     if (!savedUrl) return;
@@ -626,7 +643,7 @@ export default function VmixPage() {
               style={{ backgroundColor: "#f59e0b" }}
             >
               {diagRunning ? <Loader2 size={14} className="animate-spin" /> : <Activity size={14} />}
-              {diagRunning ? "Diagnosticando..." : "🔍 Diagnóstico Automático"}
+              {diagRunning ? "Diagnosticando..." : "🔧 Corrigir Conexão"}
             </button>
 
             {diagResult && (
@@ -715,23 +732,22 @@ export default function VmixPage() {
                   </p>
                 </div>
 
-                {/* Auto-switch mode if one works */}
-                {diagResult.directResult === "ok" && connectionMode !== "direct" && (
-                  <button
-                    onClick={() => { setConnectionMode("direct"); toast({ title: "Modo alterado para Direto" }); }}
-                    className="w-full py-2 rounded-lg text-xs font-bold text-white"
-                    style={{ backgroundColor: "#22c55e" }}
-                  >
-                    Usar modo Direto (funcionando) e Conectar
-                  </button>
+                {/* Auto-connect status */}
+                {(diagResult.directResult === "ok" || diagResult.proxyResult === "ok") && (
+                  <div className="flex items-center gap-2 rounded-lg p-2.5" style={{ backgroundColor: "#22c55e10", border: "1px solid #22c55e30" }}>
+                    <Loader2 size={14} className="animate-spin" style={{ color: "#22c55e" }} />
+                    <span className="text-[11px] font-bold" style={{ color: "#22c55e" }}>Conectando automaticamente no modo {diagResult.directResult === "ok" ? "Direto" : "Proxy"}...</span>
+                  </div>
                 )}
-                {diagResult.proxyResult === "ok" && connectionMode !== "proxy" && diagResult.directResult !== "ok" && (
+
+                {/* Retry button when nothing works */}
+                {diagResult.directResult !== "ok" && diagResult.proxyResult !== "ok" && (
                   <button
-                    onClick={() => { setConnectionMode("proxy"); toast({ title: "Modo alterado para Proxy" }); }}
+                    onClick={runDiagnostic}
                     className="w-full py-2 rounded-lg text-xs font-bold text-white"
-                    style={{ backgroundColor: "#268ffa" }}
+                    style={{ backgroundColor: "#f59e0b" }}
                   >
-                    Usar modo Proxy (funcionando) e Conectar
+                    🔄 Tentar novamente
                   </button>
                 )}
               </div>
