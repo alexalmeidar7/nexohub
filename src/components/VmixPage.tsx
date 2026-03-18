@@ -321,67 +321,54 @@ export default function VmixPage() {
   // ── Not connected ──
   if (!connected) {
     return (
-      <div className="max-w-2xl mx-auto space-y-5">
-        <div className="flex items-center gap-3 px-5 py-4 rounded-xl" style={{ background: "linear-gradient(135deg,#111,#1e1e2e)" }}>
-          <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: "linear-gradient(135deg,#dc2626,#f43f5e)" }}>
-            <Monitor size={20} className="text-white" />
+      <div className="max-w-2xl mx-auto space-y-0">
+        {/* URL input directly below top bar */}
+        <div className="rounded-xl p-4 space-y-3" style={{ backgroundColor: "#242424" }}>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={vmixUrl}
+              onChange={e => setVmixUrl(e.target.value)}
+              placeholder="http://192.168.1.100:8088"
+              className="flex-1 px-4 py-2.5 rounded-lg text-sm outline-none"
+              style={{ backgroundColor: "#111", color: "#fff", border: "1px solid #ffffff15" }}
+            />
+            <button onClick={saveUrl} className="px-5 py-2.5 rounded-lg text-sm font-bold text-white" style={{ background: "linear-gradient(135deg,#268ffa,#2dbef3)" }}>
+              Salvar
+            </button>
           </div>
-          <div>
-            <h3 className="font-bold text-sm text-white">vMix Control</h3>
-            <p className="text-[11px] text-white/50">Configure a conexão com o Web Controller</p>
-          </div>
-        </div>
-
-        {sectionBox("Endereço do Web Controller", <Wifi size={14} style={{ color: "#268ffa" }} />, (
-          <div className="space-y-3">
-            <p className="text-[11px] text-white/40">
-              Insira o IP e porta do vMix Web Controller (ex: <code className="text-white/60 bg-white/5 px-1 rounded">http://192.168.1.100:8088</code>)
-            </p>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={vmixUrl}
-                onChange={e => setVmixUrl(e.target.value)}
-                placeholder="http://192.168.1.100:8088"
-                className="flex-1 px-4 py-2.5 rounded-lg text-sm outline-none"
-                style={{ backgroundColor: "#111", color: "#fff", border: "1px solid #ffffff15" }}
-              />
-              <button onClick={saveUrl} className="px-5 py-2.5 rounded-lg text-sm font-bold text-white" style={{ background: "linear-gradient(135deg,#268ffa,#2dbef3)" }}>
-                Salvar
+          {savedUrl && (
+            <div className="flex gap-2 items-center">
+              <button
+                onClick={connectToVmix}
+                disabled={connecting}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-bold text-white"
+                style={{ backgroundColor: "#22c55e", opacity: connecting ? 0.6 : 1 }}
+              >
+                {connecting ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+                {connecting ? "Conectando..." : "Conectar"}
               </button>
-            </div>
-            {savedUrl && (
-              <div className="flex gap-2 pt-1">
-                <button
-                  onClick={connectToVmix}
-                  disabled={connecting}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-bold text-white"
-                  style={{ backgroundColor: "#22c55e", opacity: connecting ? 0.6 : 1 }}
-                >
-                  {connecting ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
-                  {connecting ? "Conectando..." : "Conectar"}
+              {/* Help tooltip */}
+              <div className="relative group">
+                <button className="p-2 rounded-lg text-white/30 hover:text-white/60 transition-colors">
+                  <HelpCircle size={16} />
                 </button>
-                <button
-                  onClick={() => window.open(savedUrl, "_blank")}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold text-white/60 hover:text-white"
-                  style={{ backgroundColor: "#ffffff08" }}
+                <div className="absolute left-0 top-full mt-2 w-64 p-3 rounded-lg text-[11px] text-white/70 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50"
+                  style={{ backgroundColor: "#2a2a3a", border: "1px solid #ffffff15", boxShadow: "0 8px 24px rgba(0,0,0,0.5)" }}
                 >
-                  <ExternalLink size={14} /> Abrir Externo
-                </button>
+                  <p className="font-bold text-white/90 mb-2">Como configurar:</p>
+                  <ol className="space-y-1 list-decimal list-inside text-white/50">
+                    <li>Abra o vMix no computador de transmissão</li>
+                    <li>Vá em <strong className="text-white/70">Settings → Web Controller</strong> e ative</li>
+                    <li>Anote o IP e porta exibidos</li>
+                    <li>Cole acima, salve e clique em "Conectar"</li>
+                    <li>Os dispositivos precisam estar na mesma rede</li>
+                  </ol>
+                </div>
               </div>
-            )}
-          </div>
-        ))}
-
-        {sectionBox("Como configurar", <Eye size={14} style={{ color: "#a855f7" }} />, (
-          <ol className="text-[11px] space-y-1.5 list-decimal list-inside text-white/50">
-            <li>Abra o vMix no computador de transmissão</li>
-            <li>Vá em <strong className="text-white/70">Settings → Web Controller</strong> e ative</li>
-            <li>Anote o IP e porta exibidos</li>
-            <li>Cole acima, salve e clique em "Conectar"</li>
-            <li>Os dispositivos precisam estar na mesma rede</li>
-          </ol>
-        ), "#a855f7")}
+            </div>
+          )}
+        </div>
       </div>
     );
   }
