@@ -157,10 +157,16 @@ export default function VmixPage() {
   });
   const [editingHlsInput, setEditingHlsInput] = useState<string | null>(null);
   const [hlsTempUrl, setHlsTempUrl] = useState("");
-  // iframe-based monitor preview
+   // iframe-based monitor preview
   const [useIframeMonitor, setUseIframeMonitor] = useState<boolean>(() => {
     try { return localStorage.getItem("vmix_iframe_monitor") === "true"; } catch { return false; }
   });
+  // Monitor stream URLs (MJPEG/JPEG/HLS for Preview and Output)
+  const [monitorStreamUrls, setMonitorStreamUrls] = useState<{ preview: string; output: string }>(() => {
+    try { const s = localStorage.getItem("vmix_monitor_streams"); return s ? JSON.parse(s) : { preview: "", output: "" }; } catch { return { preview: "", output: "" }; }
+  });
+  const [editingMonitorStream, setEditingMonitorStream] = useState<"preview" | "output" | null>(null);
+  const [monitorStreamTemp, setMonitorStreamTemp] = useState("");
 
   // Programas from DB
   const [programas, setProgramas] = useState<Programa[]>([]);
@@ -221,8 +227,13 @@ export default function VmixPage() {
 
   // Persist iframe monitor preference
   useEffect(() => {
-    localStorage.setItem("vmix_iframe_monitor", String(useIframeMonitor));
+     localStorage.setItem("vmix_iframe_monitor", String(useIframeMonitor));
   }, [useIframeMonitor]);
+
+  // Persist monitor stream URLs
+  useEffect(() => {
+    localStorage.setItem("vmix_monitor_streams", JSON.stringify(monitorStreamUrls));
+  }, [monitorStreamUrls]);
 
   // Load programas from DB
   useEffect(() => {
@@ -774,7 +785,7 @@ export default function VmixPage() {
     return <video ref={videoRef} className={className} muted autoPlay playsInline style={{ objectFit: "contain", backgroundColor: "#000" }} />;
   };
 
-  // vMix Web Controller iframe for live monitors
+   // vMix Web Controller iframe for live monitors
   const VmixIframe = ({ className = "" }: { className?: string }) => {
     if (!savedUrl) return null;
     const iframeSrc = savedUrl.replace(/\/+$/, "");
@@ -787,6 +798,55 @@ export default function VmixPage() {
         sandbox="allow-scripts allow-same-origin"
       />
     );
+  };
+
+  // MJPEG/JPEG rapid-refresh image component (for vmix-snapshot-proxy, NDI HX Camera, etc.)
+  const MjpegPlayer = ({ src, className = "" }: { src: string; className?: string }) => {
+    const [imgSrc, setImgSrc] = useState(src);
+    const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    useEffect(() => {
+      if (!src) return;
+      // If it looks like an MJPEG stream (contains /stream or is multipart), use as-is
+      // Otherwise, refresh the image every 500ms with cache-busting
+      const isMjpeg = /stream|mjpeg|motion/i.test(src);
+      if (isMjpeg) {
+        setImgSrc(src);
+        return;
+      }
+      // JPEG rapid refresh
+      const update = () => setImgSrc(`${src}${src.includes("?") ? "&" : "?"}_t=${Date.now()}`);
+      update();
+      intervalRef.current = setInterval(update, 500);
+      return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
+    }, [src]);
+    return (
+      <img
+        src={imgSrc}
+        className={className}
+        style={{ objectFit: "contain", backgroundColor: "#000" }}
+        alt="Monitor"
+        onError={() => {}}
+      />
+    );
+  };
+
+  // Monitor content renderer: stream URL > iframe > thumbnail > SMPTE bars
+  const MonitorContent = ({ type, inputNumber }: { type: "preview" | "output"; inputNumber: string | null }) => {
+    const streamUrl = monitorStreamUrls[type];
+    if (streamUrl) {
+      // Detect type: HLS (.m3u8), MJPEG, or JPEG
+      if (streamUrl.includes(".m3u8")) {
+        return <HlsPlayer src={streamUrl} className="w-full h-full" />;
+      }
+      return <MjpegPlayer src={streamUrl} className="w-full h-full" />;
+    }
+    if (useIframeMonitor && savedUrl) {
+      return <VmixIframe className="w-full h-full" />;
+    }
+    if (inputNumber && savedUrl) {
+      return <ThumbnailImg inputNumber={inputNumber} width={640} height={360} className="w-full h-full object-contain" alt={type} />;
+    }
+    return null;
   };
 
   // Visual placeholder for input (no live thumbnails — SnapshotInput saves to disk)
@@ -1188,49 +1248,81 @@ export default function VmixPage() {
               sendCommand("PreviewInput", val);
               setPreviewInput(val);
             })}
-            <button
-              onClick={() => setUseIframeMonitor(prev => !prev)}
-              className="ml-auto text-[8px] px-1.5 py-0.5 rounded transition-all"
-              style={{
-                backgroundColor: useIframeMonitor ? "#22c55e20" : "#ffffff08",
-                color: useIframeMonitor ? "#22c55e" : "#666",
-                border: `1px solid ${useIframeMonitor ? "#22c55e40" : "#ffffff10"}`,
-              }}
-              title={useIframeMonitor ? "Desativar iframe do vMix Web Controller" : "Ativar iframe do vMix Web Controller (vídeo ao vivo)"}
-            >
-              {useIframeMonitor ? "🔴 LIVE" : "⬛ IFRAME"}
-            </button>
+            <div className="ml-auto flex gap-1">
+              <button
+                onClick={() => setUseIframeMonitor(prev => !prev)}
+                className="text-[8px] px-1.5 py-0.5 rounded transition-all"
+                style={{
+                  backgroundColor: useIframeMonitor ? "#22c55e20" : "#ffffff08",
+                  color: useIframeMonitor ? "#22c55e" : "#666",
+                  border: `1px solid ${useIframeMonitor ? "#22c55e40" : "#ffffff10"}`,
+                }}
+                title="Iframe do vMix Web Controller"
+              >
+                {useIframeMonitor ? "🔴 LIVE" : "⬛ IFRAME"}
+              </button>
+              <button
+                onClick={() => {
+                  setEditingMonitorStream(editingMonitorStream === "preview" ? null : "preview");
+                  setMonitorStreamTemp(monitorStreamUrls.preview);
+                }}
+                className="text-[8px] px-1.5 py-0.5 rounded transition-all"
+                style={{
+                  backgroundColor: monitorStreamUrls.preview ? "#3b82f620" : "#ffffff08",
+                  color: monitorStreamUrls.preview ? "#3b82f6" : "#666",
+                  border: `1px solid ${monitorStreamUrls.preview ? "#3b82f640" : "#ffffff10"}`,
+                }}
+                title="Configurar URL de stream (MJPEG/HLS)"
+              >
+                📡
+              </button>
+            </div>
           </div>
+          {/* Stream URL editor */}
+          {editingMonitorStream === "preview" && (
+            <div className="flex gap-1 px-2 py-1.5" style={{ backgroundColor: "#111114", borderBottom: "1px solid #ffffff08" }}>
+              <input
+                type="text"
+                value={monitorStreamTemp}
+                onChange={e => setMonitorStreamTemp(e.target.value)}
+                placeholder="URL do stream (MJPEG, HLS .m3u8, ou JPEG)"
+                className="flex-1 text-[9px] px-2 py-1 rounded outline-none"
+                style={{ backgroundColor: "#1a1a20", color: "#ccc", border: "1px solid #333" }}
+                onKeyDown={e => { if (e.key === "Enter") { setMonitorStreamUrls(prev => ({ ...prev, preview: monitorStreamTemp.trim() })); setEditingMonitorStream(null); } }}
+              />
+              <button onClick={() => { setMonitorStreamUrls(prev => ({ ...prev, preview: monitorStreamTemp.trim() })); setEditingMonitorStream(null); }} className="text-[8px] px-1.5 rounded" style={{ backgroundColor: "#22c55e20", color: "#22c55e", border: "1px solid #22c55e30" }}>✓</button>
+              {monitorStreamUrls.preview && <button onClick={() => { setMonitorStreamUrls(prev => ({ ...prev, preview: "" })); setEditingMonitorStream(null); }} className="text-[8px] px-1.5 rounded" style={{ backgroundColor: "#dc262620", color: "#dc2626", border: "1px solid #dc262630" }}>✕</button>}
+            </div>
+          )}
           <div className="flex-1 flex items-center justify-center overflow-hidden" style={{ aspectRatio: "16/9" }}>
-            {useIframeMonitor && savedUrl ? (
-              <VmixIframe className="w-full h-full" />
-            ) : previewInput && savedUrl ? (
-              <ThumbnailImg inputNumber={previewInput} width={640} height={360} className="w-full h-full object-contain" alt="Preview" />
-            ) : (
-              <div className="w-full h-full relative flex flex-col">
-                {/* SMPTE color bars */}
-                <div className="flex flex-1">
-                  {["#c0c0c0","#c0c000","#00c0c0","#00c000","#c000c0","#c00000","#0000c0"].map((c,i) => (
-                    <div key={i} className="flex-1" style={{ backgroundColor: c }} />
-                  ))}
+            {(() => {
+              const content = <MonitorContent type="preview" inputNumber={previewInput} />;
+              if (content) return content;
+              return (
+                <div className="w-full h-full relative flex flex-col">
+                  <div className="flex flex-1">
+                    {["#c0c0c0","#c0c000","#00c0c0","#00c000","#c000c0","#c00000","#0000c0"].map((c,i) => (
+                      <div key={i} className="flex-1" style={{ backgroundColor: c }} />
+                    ))}
+                  </div>
+                  <div className="flex" style={{ height: "8%" }}>
+                    {["#0000c0","#131313","#c000c0","#131313","#00c0c0","#131313","#c0c0c0"].map((c,i) => (
+                      <div key={i} className="flex-1" style={{ backgroundColor: c }} />
+                    ))}
+                  </div>
+                  <div className="flex" style={{ height: "8%" }}>
+                    {["#00214c","#fff","#32006a","#131313","#131313","#131313","#131313"].map((c,i) => (
+                      <div key={i} className="flex-1" style={{ backgroundColor: c }} />
+                    ))}
+                  </div>
+                  <div className="tv-static absolute inset-0" />
+                  <div className="tv-scanlines absolute inset-0" />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded" style={{ backgroundColor: "rgba(0,0,0,0.6)", color: "#888" }}>PVW — Sem sinal</span>
+                  </div>
                 </div>
-                <div className="flex" style={{ height: "8%" }}>
-                  {["#0000c0","#131313","#c000c0","#131313","#00c0c0","#131313","#c0c0c0"].map((c,i) => (
-                    <div key={i} className="flex-1" style={{ backgroundColor: c }} />
-                  ))}
-                </div>
-                <div className="flex" style={{ height: "8%" }}>
-                  {["#00214c","#fff","#32006a","#131313","#131313","#131313","#131313"].map((c,i) => (
-                    <div key={i} className="flex-1" style={{ backgroundColor: c }} />
-                  ))}
-                </div>
-                <div className="tv-static absolute inset-0" />
-                <div className="tv-scanlines absolute inset-0" />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded" style={{ backgroundColor: "rgba(0,0,0,0.6)", color: "#888" }}>PVW — Sem sinal</span>
-                </div>
-              </div>
-            )}
+              );
+            })()}
           </div>
         </div>
         {/* Transitions */}
@@ -1287,39 +1379,69 @@ export default function VmixPage() {
           <div className="flex items-center gap-2 px-3 py-2" style={{ borderBottom: "1px solid #ffffff06", backgroundColor: "#ffffff04" }}>
             <span className="text-[9px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-sm" style={{ backgroundColor: "#dc2626", color: "#fff", letterSpacing: "0.15em" }}>Output</span>
             {renderInputSelect(activeInput, (val) => {
-              // Use Cut to switch the active (program/output) input
               sendCommand("Cut", val);
               setActiveInput(val);
             })}
+            <button
+              onClick={() => {
+                setEditingMonitorStream(editingMonitorStream === "output" ? null : "output");
+                setMonitorStreamTemp(monitorStreamUrls.output);
+              }}
+              className="ml-auto text-[8px] px-1.5 py-0.5 rounded transition-all"
+              style={{
+                backgroundColor: monitorStreamUrls.output ? "#3b82f620" : "#ffffff08",
+                color: monitorStreamUrls.output ? "#3b82f6" : "#666",
+                border: `1px solid ${monitorStreamUrls.output ? "#3b82f640" : "#ffffff10"}`,
+              }}
+              title="Configurar URL de stream (MJPEG/HLS)"
+            >
+              📡
+            </button>
           </div>
+          {editingMonitorStream === "output" && (
+            <div className="flex gap-1 px-2 py-1.5" style={{ backgroundColor: "#111114", borderBottom: "1px solid #ffffff08" }}>
+              <input
+                type="text"
+                value={monitorStreamTemp}
+                onChange={e => setMonitorStreamTemp(e.target.value)}
+                placeholder="URL do stream (MJPEG, HLS .m3u8, ou JPEG)"
+                className="flex-1 text-[9px] px-2 py-1 rounded outline-none"
+                style={{ backgroundColor: "#1a1a20", color: "#ccc", border: "1px solid #333" }}
+                onKeyDown={e => { if (e.key === "Enter") { setMonitorStreamUrls(prev => ({ ...prev, output: monitorStreamTemp.trim() })); setEditingMonitorStream(null); } }}
+              />
+              <button onClick={() => { setMonitorStreamUrls(prev => ({ ...prev, output: monitorStreamTemp.trim() })); setEditingMonitorStream(null); }} className="text-[8px] px-1.5 rounded" style={{ backgroundColor: "#22c55e20", color: "#22c55e", border: "1px solid #22c55e30" }}>✓</button>
+              {monitorStreamUrls.output && <button onClick={() => { setMonitorStreamUrls(prev => ({ ...prev, output: "" })); setEditingMonitorStream(null); }} className="text-[8px] px-1.5 rounded" style={{ backgroundColor: "#dc262620", color: "#dc2626", border: "1px solid #dc262630" }}>✕</button>}
+            </div>
+          )}
           <div className="flex-1 flex items-center justify-center overflow-hidden" style={{ aspectRatio: "16/9" }}>
-            {activeInput && savedUrl ? (
-              <ThumbnailImg inputNumber={activeInput} width={640} height={360} className="w-full h-full object-contain" alt="Output" />
-            ) : (
-              <div className="w-full h-full relative flex flex-col">
-                {/* SMPTE color bars */}
-                <div className="flex flex-1">
-                  {["#c0c0c0","#c0c000","#00c0c0","#00c000","#c000c0","#c00000","#0000c0"].map((c,i) => (
-                    <div key={i} className="flex-1" style={{ backgroundColor: c }} />
-                  ))}
+            {(() => {
+              const content = <MonitorContent type="output" inputNumber={activeInput} />;
+              if (content) return content;
+              return (
+                <div className="w-full h-full relative flex flex-col">
+                  <div className="flex flex-1">
+                    {["#c0c0c0","#c0c000","#00c0c0","#00c000","#c000c0","#c00000","#0000c0"].map((c,i) => (
+                      <div key={i} className="flex-1" style={{ backgroundColor: c }} />
+                    ))}
+                  </div>
+                  <div className="flex" style={{ height: "8%" }}>
+                    {["#0000c0","#131313","#c000c0","#131313","#00c0c0","#131313","#c0c0c0"].map((c,i) => (
+                      <div key={i} className="flex-1" style={{ backgroundColor: c }} />
+                    ))}
+                  </div>
+                  <div className="flex" style={{ height: "8%" }}>
+                    {["#00214c","#fff","#32006a","#131313","#131313","#131313","#131313"].map((c,i) => (
+                      <div key={i} className="flex-1" style={{ backgroundColor: c }} />
+                    ))}
+                  </div>
+                  <div className="tv-static absolute inset-0" />
+                  <div className="tv-scanlines absolute inset-0" />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded" style={{ backgroundColor: "rgba(0,0,0,0.6)", color: "#dc2626" }}>PGM — Sem sinal</span>
+                  </div>
                 </div>
-                <div className="flex" style={{ height: "8%" }}>
-                  {["#0000c0","#131313","#c000c0","#131313","#00c0c0","#131313","#c0c0c0"].map((c,i) => (
-                    <div key={i} className="flex-1" style={{ backgroundColor: c }} />
-                  ))}
-                </div>
-                <div className="flex" style={{ height: "8%" }}>
-                  {["#00214c","#fff","#32006a","#131313","#131313","#131313","#131313"].map((c,i) => (
-                    <div key={i} className="flex-1" style={{ backgroundColor: c }} />
-                  ))}
-                </div>
-                <div className="tv-static absolute inset-0" />
-                <div className="tv-scanlines absolute inset-0" />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded" style={{ backgroundColor: "rgba(0,0,0,0.6)", color: "#dc2626" }}>PGM — Sem sinal</span>
-                </div>
-              </div>
-            )}
+              );
+            })()}
           </div>
         </div>
       </div>
@@ -1749,6 +1871,42 @@ export default function VmixPage() {
                 <li>O formato padrão é: <code className="bg-white/5 px-1 rounded text-white/50">NOME-PC (Nome da Fonte)</code></li>
               </ul>
             ), "#777")}
+
+            {sectionBox("📡 Preview ao Vivo — Como Configurar", <Monitor size={14} style={{ color: "#3b82f6" }} />, (
+              <div className="space-y-4 text-[11px] text-white/50">
+                <p className="text-white/70 font-semibold">O vMix não fornece thumbnails via API HTTP. Use uma das opções abaixo para obter preview ao vivo:</p>
+
+                <div className="rounded-lg p-3 space-y-2" style={{ backgroundColor: "#ffffff04", border: "1px solid #ffffff08" }}>
+                  <p className="text-white/80 font-bold text-xs">🟢 Opção 1: vmix-snapshot-proxy (Recomendado)</p>
+                  <p>Instale o <a href="https://github.com/jeffmikels/vmix-snapshot-proxy" target="_blank" rel="noopener noreferrer" className="underline" style={{ color: "#3b82f6" }}>vmix-snapshot-proxy</a> no PC do vMix.</p>
+                  <p>Ele cria thumbnails JPEG automaticamente e serve na porta 8098.</p>
+                  <p className="text-white/60">URLs para usar nos monitores:</p>
+                  <code className="block text-[10px] px-2 py-1 rounded" style={{ backgroundColor: "#000", color: "#22c55e" }}>
+                    http://192.168.x.x:8098/1.jpg (Input 1)<br/>
+                    http://192.168.x.x:8098/2.jpg (Input 2)
+                  </code>
+                  <p className="text-white/40">Cole a URL no botão 📡 do Preview/Output. A imagem atualiza a cada 500ms.</p>
+                </div>
+
+                <div className="rounded-lg p-3 space-y-2" style={{ backgroundColor: "#ffffff04", border: "1px solid #ffffff08" }}>
+                  <p className="text-white/80 font-bold text-xs">🔵 Opção 2: NDI Tools HX Camera</p>
+                  <p>Instale o <strong className="text-white/70">NDI Tools</strong> (gratuito) → use o <strong className="text-white/70">NDI HX Camera</strong> ou <strong className="text-white/70">NDI Webcam Input</strong>.</p>
+                  <p>No vMix, ative o output NDI (Settings → Outputs → NDI). Use um conversor NDI→HLS como:</p>
+                  <ul className="list-disc list-inside ml-2 space-y-1">
+                    <li><strong className="text-white/70">MediaMTX</strong> — converte NDI para HLS automaticamente</li>
+                    <li><strong className="text-white/70">OBS Studio</strong> — recebe NDI via plugin e re-streama como HLS</li>
+                  </ul>
+                  <p className="text-white/40">Cole a URL .m3u8 no botão 📡 ou no botão 🔗 HLS dos inputs NDI.</p>
+                </div>
+
+                <div className="rounded-lg p-3 space-y-2" style={{ backgroundColor: "#ffffff04", border: "1px solid #ffffff08" }}>
+                  <p className="text-white/80 font-bold text-xs">⬛ Opção 3: Iframe do vMix Web Controller</p>
+                  <p>Clique no botão <strong className="text-white/70">⬛ IFRAME</strong> no cabeçalho do Preview.</p>
+                  <p>Embutirá o painel web do vMix ({savedUrl || "http://ip:8088"}) diretamente no monitor.</p>
+                  <p className="text-white/40">Funciona apenas em modo Direto (mesma rede) e requer "Conteúdo inseguro" permitido no navegador.</p>
+                </div>
+              </div>
+            ), "#3b82f6")}
           </>
         )}
       </div>
