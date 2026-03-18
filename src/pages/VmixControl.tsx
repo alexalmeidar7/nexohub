@@ -56,11 +56,9 @@ export default function VmixControl() {
           style={{ backgroundColor: "#ffffff", boxShadow: "0 8px 40px rgba(0,0,0,0.3)" }}
         >
           <div className="flex flex-col items-center gap-2 mb-2">
-            <div className="w-14 h-14 rounded-full flex items-center justify-center" style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)" }}>
-              <Monitor className="text-white" size={28} />
-            </div>
-            <h1 className="text-xl font-bold" style={{ color: "#0d0446" }}>vMix Control</h1>
+            <img src={logoMixControl} alt="Mix Control" className="h-8" />
             <p className="text-xs" style={{ color: "#6b7280" }}>Faça login para acessar o controle</p>
+          </div>
           </div>
 
           {error && (
