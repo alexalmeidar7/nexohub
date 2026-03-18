@@ -528,7 +528,10 @@ export default function VmixPage() {
   // ── Detect iframe + local HTTP → show inline warning ──
   const isEmbeddedPreview = window.self !== window.top;
   const hasLocalHttpUrl = savedUrl && isPrivateIp(savedUrl) && isInsecureHttpUrl(savedUrl);
-  const showNewTabBanner = isEmbeddedPreview && hasLocalHttpUrl;
+  const showNewTabBanner = isEmbeddedPreview && hasLocalHttpUrl && window.isSecureContext;
+
+  // Get the preview domain URL for instructions
+  const previewDomain = window.location.origin;
 
   // ── Styles ──
   const sectionBox = (title: string, icon: React.ReactNode, children: React.ReactNode, color = "#268ffa") => (
@@ -561,20 +564,57 @@ export default function VmixPage() {
       <div className="space-y-0">
         {/* Inline warning banner for iframe + local HTTP */}
         {showNewTabBanner && (
-          <div className="rounded-xl p-4 mb-3 flex flex-col sm:flex-row items-start sm:items-center gap-3" style={{ backgroundColor: "#f59e0b15", border: "1px solid #f59e0b40" }}>
-            <AlertTriangle size={18} style={{ color: "#f59e0b", flexShrink: 0 }} />
-            <div className="flex-1 text-[11px] leading-relaxed" style={{ color: "#fbbf24" }}>
-              <strong>Preview HTTPS bloqueia HTTP local.</strong> Para conectar ao vMix ({savedUrl}), abra em nova aba e permita "Conteúdo não seguro" nas configurações do site.
+          <div className="rounded-xl p-4 mb-3 space-y-3" style={{ backgroundColor: "#f59e0b10", border: "1px solid #f59e0b40" }}>
+            <div className="flex items-start gap-3">
+              <AlertTriangle size={18} style={{ color: "#f59e0b", flexShrink: 0, marginTop: 2 }} />
+              <div className="flex-1">
+                <p className="text-xs font-bold mb-2" style={{ color: "#fbbf24" }}>
+                  ⚠️ Habilite "Conteúdo não seguro" para este domínio
+                </p>
+                <p className="text-[11px] leading-relaxed mb-3" style={{ color: "#ffffff80" }}>
+                  O preview roda em HTTPS e bloqueia requisições HTTP para IPs locais ({savedUrl}). 
+                  Siga os passos abaixo <strong style={{ color: "#fff" }}>uma única vez</strong> para permitir a conexão:
+                </p>
+                <div className="rounded-lg p-3 space-y-2" style={{ backgroundColor: "#ffffff06", border: "1px solid #ffffff10" }}>
+                  <div className="flex items-start gap-2">
+                    <span className="text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#f59e0b", color: "#000" }}>1</span>
+                    <p className="text-[11px]" style={{ color: "#ffffff90" }}>
+                      Abra esta URL em uma aba separada (apenas para configurar):
+                      <button
+                        onClick={() => {
+                          window.open(previewDomain + "/vmix-control", "_blank", "noopener,noreferrer");
+                        }}
+                        className="ml-1.5 inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-bold transition-all hover:brightness-110"
+                        style={{ backgroundColor: "#268ffa30", color: "#268ffa", border: "1px solid #268ffa40" }}
+                      >
+                        <ExternalLink size={10} />
+                        {previewDomain.replace("https://", "").slice(0, 30)}...
+                      </button>
+                    </p>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#f59e0b", color: "#000" }}>2</span>
+                    <p className="text-[11px]" style={{ color: "#ffffff90" }}>
+                      Na barra de endereço, clique no ícone <strong style={{ color: "#fff" }}>🔒 cadeado</strong> (ou ícone de ajuste) → <strong style={{ color: "#fff" }}>Configurações do site</strong>
+                    </p>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#f59e0b", color: "#000" }}>3</span>
+                    <p className="text-[11px]" style={{ color: "#ffffff90" }}>
+                      Encontre <strong style={{ color: "#fff" }}>Conteúdo não seguro</strong> → mude para <strong style={{ color: "#22c55e" }}>Permitir</strong>
+                    </p>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#f59e0b", color: "#000" }}>4</span>
+                    <p className="text-[11px]" style={{ color: "#ffffff90" }}>
+                      <strong style={{ color: "#fff" }}>Feche a aba</strong> e volte aqui. Clique <strong style={{ color: "#22c55e" }}>Conectar</strong> — agora vai funcionar! ✅
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
-            <button
-              onClick={() => window.open("/vmix-control", "_blank", "noopener,noreferrer")}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-[11px] font-bold text-white whitespace-nowrap transition-all hover:brightness-110"
-              style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)" }}
-            >
-              <ExternalLink size={13} />
-              Abrir em nova aba
-            </button>
           </div>
+        )}
         )}
         {/* URL input + action buttons row */}
         <div className="flex items-center gap-3 px-0 py-3 flex-wrap">
