@@ -424,6 +424,31 @@ export default function VmixPage() {
             </button>
             {savedUrl && (
               <>
+                {/* Connection mode toggle */}
+                <div className="flex items-center rounded-lg overflow-hidden" style={{ border: "1px solid #ffffff15" }}>
+                  <button
+                    onClick={() => setConnectionMode("direct")}
+                    className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider transition-all"
+                    style={{
+                      backgroundColor: connectionMode === "direct" ? "#22c55e30" : "transparent",
+                      color: connectionMode === "direct" ? "#22c55e" : "#ffffff40",
+                    }}
+                    title="Conexão direta do navegador ao vMix (rede local)"
+                  >
+                    Direto
+                  </button>
+                  <button
+                    onClick={() => setConnectionMode("proxy")}
+                    className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider transition-all"
+                    style={{
+                      backgroundColor: connectionMode === "proxy" ? "#268ffa30" : "transparent",
+                      color: connectionMode === "proxy" ? "#268ffa" : "#ffffff40",
+                    }}
+                    title="Conexão via proxy na nuvem (IP público necessário)"
+                  >
+                    Proxy
+                  </button>
+                </div>
                 <button
                   onClick={connectToVmix}
                   disabled={connecting}
