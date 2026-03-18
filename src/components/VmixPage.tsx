@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import logoMixControl from "@/assets/logo-mixcontrol.png";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
+import PresetCommandEditor from "./PresetCommandEditor";
 
 interface VmixInput {
   key: string;
