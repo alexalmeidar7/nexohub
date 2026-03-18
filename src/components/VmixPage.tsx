@@ -732,24 +732,16 @@ export default function VmixPage() {
     </select>
   );
 
-  // Thumbnail component that works in both modes
-  const ThumbnailImg = ({ inputNumber, width = 360, height = 240, className = "", alt = "" }: { inputNumber: string; width?: number; height?: number; className?: string; alt?: string }) => {
-    const src = getThumbSrc(inputNumber, width, height);
-    if (!src) {
-      return (
-        <div className={`flex items-center justify-center ${className}`} style={{ backgroundColor: "#111114" }}>
-          <span className="text-[10px] text-white/20">Sem preview</span>
-        </div>
-      );
-    }
+   // Visual placeholder for input (no live thumbnails — SnapshotInput saves to disk)
+  const ThumbnailImg = ({ inputNumber, className = "", alt = "" }: { inputNumber: string; width?: number; height?: number; className?: string; alt?: string }) => {
+    const inp = inputs.find(i => i.number === inputNumber);
+    const bgColor = inp ? getInputColor(inp.type) : "#1e1e24";
+    const label = inp ? inp.type : "Input";
     return (
-      <img
-        src={src}
-        alt={alt}
-        className={className}
-        style={{ imageRendering: "auto" }}
-        onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
-      />
+      <div className={`flex flex-col items-center justify-center ${className}`} style={{ backgroundColor: bgColor }}>
+        <span className="text-[10px] font-bold text-white/50 uppercase tracking-wider">{label}</span>
+        <span className="text-[9px] text-white/30 mt-0.5">Input {inputNumber}</span>
+      </div>
     );
   };
 
