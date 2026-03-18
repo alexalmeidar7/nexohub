@@ -1010,34 +1010,6 @@ export default function VmixPage() {
         </div>
       </div>
 
-      {/* ── Input Thumbnails ── */}
-      <div className="flex gap-[2px] overflow-x-auto py-1 px-1" style={{ backgroundColor: "#0a0a12" }}>
-        {inputs.map((input) => {
-          const isActive = activeInput === input.number;
-          const isPreview = previewInput === input.number;
-          return (
-            <button
-              key={input.key || input.number}
-              onClick={() => sendCommand("PreviewInput", input.number)}
-              className="flex-shrink-0 rounded-lg p-2 transition-all text-left"
-              style={{
-                width: 120,
-                backgroundColor: "#1a1a28",
-                border: isActive ? "2px solid #dc2626" : isPreview ? "2px solid #22c55e" : "2px solid transparent",
-              }}
-            >
-              <div className="flex items-center gap-1 mb-1">
-                <span className="text-[9px] font-bold px-1 rounded" style={{
-                  backgroundColor: isActive ? "#dc2626" : isPreview ? "#22c55e" : "#333",
-                  color: isActive || isPreview ? "#fff" : "#888",
-                }}>{input.number}</span>
-                {isActive && <span className="text-[8px] text-red-400 font-bold">●</span>}
-              </div>
-              <p className="text-[10px] font-medium text-white/70 truncate">{input.title}</p>
-            </button>
-          );
-        })}
-      </div>
 
       {/* ── Tab Bar ── */}
       <div className="flex" style={{ backgroundColor: "#111118" }}>
