@@ -1974,78 +1974,58 @@ export default function VmixPage() {
 
           return (
             <>
-              {/* ── Programa no Ar + Próximos ── */}
-              <div className="flex gap-3 items-stretch">
-                <div className="flex-1 rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a1f", border: "1px solid #dc262640" }}>
-                  <div className="flex items-center gap-2 px-4 py-2" style={{ backgroundColor: "#dc262620", borderBottom: "1px solid #ffffff08" }}>
+              {/* ── Programa no Ar + A Seguir (compact) ── */}
+              <div className="flex gap-2 items-center">
+                {/* NO AR */}
+                <div className="flex-1 flex items-center gap-3 rounded-lg px-3 py-2" style={{ backgroundColor: "#1a1a1f", border: "1px solid #dc262640" }}>
+                  <div className="flex items-center gap-1.5 shrink-0">
                     <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                    <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#dc2626" }}>No Ar</span>
+                    <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: "#dc2626" }}>No Ar</span>
                   </div>
-                  <div className="p-4">
-                    {onAir ? (
-                      <div>
-                        <p className="text-sm font-bold text-white">{onAir.nome}</p>
-                        <p className="text-[10px] text-white/40 mt-1">{onAir.horario_inicio} – {onAir.horario_fim}</p>
-                        {(() => {
-                          const remSec = secondsUntilEnd(onAir);
-                          const totalSec = programDurationSec(onAir);
-                          const elapsedSec = totalSec - remSec;
-                          const progress = totalSec > 0 ? Math.min(100, (elapsedSec / totalSec) * 100) : 0;
-                          const rh = Math.floor(remSec / 3600);
-                          const rm = Math.floor((remSec % 3600) / 60);
-                          const rs = remSec % 60;
-                          const timeStr = rh > 0
-                            ? `${String(rh).padStart(2, "0")}:${String(rm).padStart(2, "0")}:${String(rs).padStart(2, "0")}`
-                            : `${String(rm).padStart(2, "0")}:${String(rs).padStart(2, "0")}`;
-                          return (
-                            <div className="mt-3">
-                              <p className="text-center text-base font-mono font-black tracking-wider mb-1.5" style={{ color: remSec <= 300 ? "#dc2626" : "#fff" }}>
-                                {remSec <= 0 ? "00:00" : timeStr}
-                              </p>
-                              <div className="w-full h-2.5 rounded-full overflow-hidden" style={{ backgroundColor: "#333" }}>
-                                <div className="h-full rounded-full transition-all duration-1000 ease-linear" style={{ width: `${progress}%`, backgroundColor: "#dc2626" }} />
-                              </div>
-                              <p className="text-[9px] text-white/30 mt-1 text-right font-mono">{Math.round(progress)}%</p>
+                  {onAir ? (
+                    <>
+                      <span className="text-[11px] font-bold text-white truncate shrink-0 max-w-[140px]">{onAir.nome}</span>
+                      <span className="text-[9px] text-white/40 shrink-0">{onAir.horario_inicio?.slice(0,5)} – {onAir.horario_fim?.slice(0,5)}</span>
+                      {(() => {
+                        const remSec = secondsUntilEnd(onAir);
+                        const totalSec = programDurationSec(onAir);
+                        const elapsedSec = totalSec - remSec;
+                        const progress = totalSec > 0 ? Math.min(100, (elapsedSec / totalSec) * 100) : 0;
+                        const rh = Math.floor(remSec / 3600);
+                        const rm = Math.floor((remSec % 3600) / 60);
+                        const rs = remSec % 60;
+                        const timeStr = rh > 0
+                          ? `${String(rh).padStart(2, "0")}:${String(rm).padStart(2, "0")}:${String(rs).padStart(2, "0")}`
+                          : `${String(rm).padStart(2, "0")}:${String(rs).padStart(2, "0")}`;
+                        return (
+                          <div className="flex-1 flex items-center gap-2 min-w-0">
+                            <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ backgroundColor: "#333" }}>
+                              <div className="h-full rounded-full transition-all duration-1000 ease-linear" style={{ width: `${progress}%`, backgroundColor: "#dc2626" }} />
                             </div>
-                          );
-                        })()}
-                      </div>
-                    ) : upcoming.length > 0 ? (
-                      <div>
-                        <p className="text-[10px] text-white/40 uppercase tracking-wider mb-1">Próximo</p>
-                        <p className="text-sm font-bold text-white">{upcoming[0].nome}</p>
-                        <p className="text-[10px] text-white/40 mt-1">{upcoming[0].horario_inicio} – {upcoming[0].horario_fim}</p>
-                        {(() => {
-                          const remaining = minutesUntilStart(upcoming[0]);
-                          const rh = Math.floor(remaining / 60);
-                          const rm = remaining % 60;
-                          return (
-                            <p className="text-[10px] mt-2 font-mono font-bold" style={{ color: "#f59e0b" }}>
-                              Começa em {rh > 0 ? `${rh}h ` : ""}{rm}min
-                            </p>
-                          );
-                        })()}
-                      </div>
-                    ) : (
-                      <p className="text-[11px] text-white/30">Nenhum programa programado</p>
-                    )}
-                  </div>
+                            <span className="text-[11px] font-mono font-black tracking-wider shrink-0" style={{ color: remSec <= 300 ? "#dc2626" : "#fff" }}>
+                              {remSec <= 0 ? "00:00" : timeStr}
+                            </span>
+                          </div>
+                        );
+                      })()}
+                    </>
+                  ) : (
+                    <span className="text-[10px] text-white/30">Nenhum programa no ar</span>
+                  )}
                 </div>
-                <div className="flex-1 rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a1f", border: "1px solid #ffffff08" }}>
-                  <div className="flex items-center gap-2 px-4 py-2" style={{ backgroundColor: "#ffffff06", borderBottom: "1px solid #ffffff08" }}>
-                    <Eye size={12} style={{ color: "#888" }} />
-                    <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#999" }}>A Seguir</span>
-                  </div>
-                  <div className="p-3 space-y-1.5">
-                    {upcoming.length > 0 ? upcoming.map(p => (
-                      <div key={p.id} className="flex items-center justify-between px-2 py-1 rounded" style={{ backgroundColor: "#ffffff06" }}>
-                        <span className="text-[10px] font-medium text-white/70 truncate">{p.nome}</span>
-                        <span className="text-[9px] text-white/30 ml-2 whitespace-nowrap">{p.horario_inicio}</span>
-                      </div>
-                    )) : (
-                      <p className="text-[10px] text-white/30">Nenhum programa a seguir</p>
-                    )}
-                  </div>
+
+                {/* A SEGUIR - only 1 program */}
+                <div className="shrink-0 flex items-center gap-2 rounded-lg px-3 py-2" style={{ backgroundColor: "#1a1a1f", border: "1px solid #ffffff08" }}>
+                  <Eye size={10} style={{ color: "#666" }} />
+                  <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: "#666" }}>A seguir</span>
+                  {upcoming.length > 0 ? (
+                    <>
+                      <span className="text-[10px] font-medium text-white/70 truncate max-w-[120px]">{upcoming[0].nome}</span>
+                      <span className="text-[9px] text-white/30">{upcoming[0].horario_inicio?.slice(0,5)}</span>
+                    </>
+                  ) : (
+                    <span className="text-[9px] text-white/30">—</span>
+                  )}
                 </div>
               </div>
 
