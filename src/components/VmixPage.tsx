@@ -1321,7 +1321,7 @@ export default function VmixPage() {
                 }}
                 title="Iframe do vMix Web Controller"
               >
-                {useIframeMonitor ? "🔴 LIVE" : "⬛ IFRAME"}
+                {useIframeMonitor ? "● WEB" : "⬛ WEB"}
               </button>
               <button
                 onClick={() => {
