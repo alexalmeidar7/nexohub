@@ -249,7 +249,7 @@ export default function VmixPage() {
     if (!user) return;
     supabase
       .from("programas")
-      .select("id, nome, ativo, horario_inicio, horario_fim, dias_semana")
+      .select("id, nome, ativo, horario_inicio, horario_fim, dias_semana, estudio")
       .eq("user_id", user.id)
       .eq("ativo", true)
       .order("horario_inicio")
