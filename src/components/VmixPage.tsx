@@ -523,14 +523,34 @@ export default function VmixPage() {
     setScenes(prev => prev.filter(s => s.id !== id));
   };
 
+  // ── Demo mode: show connected UI with mock data in preview ──
+  const isEmbeddedPreview = window.self !== window.top;
+  const [demoMode, setDemoMode] = useState(false);
+
+  useEffect(() => {
+    if (!loading && !connected && isEmbeddedPreview) {
+      setDemoMode(true);
+      // Set mock data so the connected UI renders fully
+      if (inputs.length === 0) {
+        setInputs([
+          { key: "1", number: "1", title: "Blank", type: "Blank", state: "Paused" },
+          { key: "2", number: "2", title: "Blank", type: "Blank", state: "Paused" },
+        ]);
+        setActiveInput("1");
+        setPreviewInput("1");
+        setSavedUrl(savedUrl || "http://192.168.100.6:8088");
+        setVmixUrl(vmixUrl || "http://192.168.100.6:8088");
+      }
+    }
+  }, [loading, connected, isEmbeddedPreview]);
+
+  const effectiveConnected = connected || demoMode;
+
   if (loading) return <ModulePageSkeleton />;
 
-  // ── Detect iframe + local HTTP → show inline warning ──
-  const isEmbeddedPreview = window.self !== window.top;
   const hasLocalHttpUrl = savedUrl && isPrivateIp(savedUrl) && isInsecureHttpUrl(savedUrl);
-  const showNewTabBanner = isEmbeddedPreview && hasLocalHttpUrl && window.isSecureContext;
+  const showNewTabBanner = isEmbeddedPreview && hasLocalHttpUrl && window.isSecureContext && !demoMode;
 
-  // Get the preview domain URL for instructions
   const previewDomain = window.location.origin;
 
   // ── Styles ──
@@ -559,7 +579,7 @@ export default function VmixPage() {
   );
 
   // ── Not connected ──
-  if (!connected) {
+  if (!effectiveConnected) {
     return (
       <div className="space-y-0">
         {/* Inline warning banner for iframe + local HTTP */}
