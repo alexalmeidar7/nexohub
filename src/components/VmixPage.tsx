@@ -732,23 +732,22 @@ export default function VmixPage() {
                   </p>
                 </div>
 
-                {/* Auto-switch mode if one works */}
-                {diagResult.directResult === "ok" && connectionMode !== "direct" && (
-                  <button
-                    onClick={() => { setConnectionMode("direct"); toast({ title: "Modo alterado para Direto" }); }}
-                    className="w-full py-2 rounded-lg text-xs font-bold text-white"
-                    style={{ backgroundColor: "#22c55e" }}
-                  >
-                    Usar modo Direto (funcionando) e Conectar
-                  </button>
+                {/* Auto-connect status */}
+                {(diagResult.directResult === "ok" || diagResult.proxyResult === "ok") && (
+                  <div className="flex items-center gap-2 rounded-lg p-2.5" style={{ backgroundColor: "#22c55e10", border: "1px solid #22c55e30" }}>
+                    <Loader2 size={14} className="animate-spin" style={{ color: "#22c55e" }} />
+                    <span className="text-[11px] font-bold" style={{ color: "#22c55e" }}>Conectando automaticamente no modo {diagResult.directResult === "ok" ? "Direto" : "Proxy"}...</span>
+                  </div>
                 )}
-                {diagResult.proxyResult === "ok" && connectionMode !== "proxy" && diagResult.directResult !== "ok" && (
+
+                {/* Retry button when nothing works */}
+                {diagResult.directResult !== "ok" && diagResult.proxyResult !== "ok" && (
                   <button
-                    onClick={() => { setConnectionMode("proxy"); toast({ title: "Modo alterado para Proxy" }); }}
+                    onClick={runDiagnostic}
                     className="w-full py-2 rounded-lg text-xs font-bold text-white"
-                    style={{ backgroundColor: "#268ffa" }}
+                    style={{ backgroundColor: "#f59e0b" }}
                   >
-                    Usar modo Proxy (funcionando) e Conectar
+                    🔄 Tentar novamente
                   </button>
                 )}
               </div>
