@@ -111,13 +111,10 @@ export default function VmixControl() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#ffffff" }}>
-      <header className="flex items-center justify-between px-6 py-3" style={{ backgroundColor: "#0d0446" }}>
+    <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#191919" }}>
+      <header className="flex items-center justify-between px-6 py-3" style={{ backgroundColor: "#242424" }}>
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)" }}>
-            <Monitor className="text-white" size={16} />
-          </div>
-          <span className="text-white font-bold text-sm">vMix Control</span>
+          <img src={logoMixControl} alt="Mix Control" className="h-7" />
         </div>
         <div className="flex items-center gap-3">
           <span className="text-white/60 text-xs">{user.email}</span>
@@ -126,7 +123,7 @@ export default function VmixControl() {
           </button>
         </div>
       </header>
-      <main className="flex-1 p-6" style={{ backgroundColor: "#f8f9fc" }}>
+      <main className="flex-1 p-6" style={{ backgroundColor: "#191919" }}>
         <VmixPage />
       </main>
     </div>
