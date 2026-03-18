@@ -210,6 +210,7 @@ export default function VmixPage() {
   const [diagRunning, setDiagRunning] = useState(false);
   const [diagResult, setDiagResult] = useState<DiagResult | null>(null);
   const connectToVmixRef = useRef<(() => Promise<void>) | null>(null);
+  const ndiAutoScanDoneRef = useRef(false);
 
   // Persist scenes
   useEffect(() => {
@@ -586,49 +587,36 @@ export default function VmixPage() {
       setNdiSources([]);
       return;
     }
+
     setNdiScanning(true);
     try {
-      // Refresh inputs first
-      await connectToVmix();
-
-      // vMix HTTP API does NOT expose NDI discovery (it uses mDNS).
-      // Instead, we suggest common NDI source names based on detected machine names.
-      const machines = new Set<string>();
-      inputs.forEach(inp => {
-        if (inp.type === "NDI" || inp.title.toLowerCase().includes("ndi")) {
-          const match = inp.title.match(/^(?:NDI\s+)?([A-Z0-9_-]+)\s*\(/i);
-          if (match) machines.add(match[1]);
-        }
-      });
-
+      // IMPORTANT: vMix HTTP API does not expose live NDI network discovery (mDNS-only).
+      // We build suggestions from machine names already seen in current NDI inputs.
+      const machineList = [...detectedMachines];
       const suggestions: string[] = [];
-      const machineList = Array.from(machines);
 
-      if (machineList.length > 0) {
-        for (const machine of machineList) {
-          // Common vMix NDI outputs
-          suggestions.push(
-            `${machine} (vMix - Output 1)`,
-            `${machine} (vMix - Output 2)`,
-            `${machine} (vMix - Output 3)`,
-            `${machine} (vMix - Output 4)`,
-            `${machine} (vMix Video)`,
-            `${machine} (vMix Audio - Master)`,
-            `${machine} (vMix Audio - Headphones)`,
-          );
-          // Common GPU capture sources
-          suggestions.push(
-            `${machine} (Radeon RX 460 Series 1)`,
-            `${machine} (Radeon RX 460 Series 2)`,
-          );
-        }
+      for (const machine of machineList) {
+        suggestions.push(
+          `${machine} (vMix - Output 1)`,
+          `${machine} (vMix - Output 2)`,
+          `${machine} (vMix - Output 3)`,
+          `${machine} (vMix - Output 4)`,
+          `${machine} (vMix Video)`,
+          `${machine} (vMix Audio - Master)`,
+          `${machine} (vMix Audio - Headphones)`,
+          `${machine} (Radeon RX 460 Series 1)`,
+          `${machine} (Radeon RX 460 Series 2)`,
+        );
       }
 
-      setNdiSources(suggestions);
-      if (suggestions.length === 0) {
-        toast({ title: "Busca NDI", description: "Nenhum input NDI no vMix para detectar máquinas. Adicione manualmente." });
-      } else {
-        toast({ title: `${machineList.length} máquina(s) detectada(s)`, description: `${suggestions.length} fontes NDI sugeridas com base nos inputs existentes.` });
+      const uniqueSuggestions = Array.from(new Set(suggestions));
+      setNdiSources(uniqueSuggestions);
+
+      if (uniqueSuggestions.length === 0) {
+        toast({
+          title: "Busca NDI",
+          description: "Nenhum host NDI detectado nos inputs atuais. Adicione uma fonte manual para iniciar a detecção assistida.",
+        });
       }
     } catch {
       setNdiSources([]);
@@ -636,12 +624,20 @@ export default function VmixPage() {
     } finally {
       setNdiScanning(false);
     }
-  }, [savedUrl, connected, inputs, connectToVmix, toast]);
+  }, [savedUrl, connected, detectedMachines, toast]);
 
-  // Auto-scan NDI when entering the NDI tab
+  // Auto-scan only once when entering NDI tab to avoid re-trigger loop
   useEffect(() => {
     if (activeTab === "ndi" && connected) {
-      scanNdiSources();
+      if (!ndiAutoScanDoneRef.current) {
+        ndiAutoScanDoneRef.current = true;
+        scanNdiSources();
+      }
+      return;
+    }
+
+    if (activeTab !== "ndi") {
+      ndiAutoScanDoneRef.current = false;
     }
   }, [activeTab, connected, scanNdiSources]);
 
