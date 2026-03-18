@@ -158,12 +158,15 @@ export default function VmixPage() {
   const [editingHlsInput, setEditingHlsInput] = useState<string | null>(null);
   const [hlsTempUrl, setHlsTempUrl] = useState("");
    // Monitor stream URLs (MJPEG/JPEG/HLS for Preview and Output)
-  // Monitor stream URLs (MJPEG/JPEG/HLS for Preview and Output)
   const [monitorStreamUrls, setMonitorStreamUrls] = useState<{ preview: string; output: string }>(() => {
     try { const s = localStorage.getItem("vmix_monitor_streams"); return s ? JSON.parse(s) : { preview: "", output: "" }; } catch { return { preview: "", output: "" }; }
   });
   const [editingMonitorStream, setEditingMonitorStream] = useState<"preview" | "output" | null>(null);
   const [monitorStreamTemp, setMonitorStreamTemp] = useState("");
+  // Iframe monitor mode (uses vMix Web Controller)
+  const [monitorIframeMode, setMonitorIframeMode] = useState<{ preview: boolean; output: boolean }>(() => {
+    try { const s = localStorage.getItem("vmix_monitor_iframe"); return s ? JSON.parse(s) : { preview: false, output: false }; } catch { return { preview: false, output: false }; }
+  });
 
   // Programas from DB
   const [programas, setProgramas] = useState<Programa[]>([]);
@@ -227,11 +230,14 @@ export default function VmixPage() {
   }, [inputHlsUrls]);
 
   // Persist monitor stream URLs
-
-  // Persist monitor stream URLs
   useEffect(() => {
     localStorage.setItem("vmix_monitor_streams", JSON.stringify(monitorStreamUrls));
   }, [monitorStreamUrls]);
+
+  // Persist monitor iframe mode
+  useEffect(() => {
+    localStorage.setItem("vmix_monitor_iframe", JSON.stringify(monitorIframeMode));
+  }, [monitorIframeMode]);
 
   // Load programas from DB
   useEffect(() => {
@@ -956,7 +962,26 @@ export default function VmixPage() {
       }
       return <MjpegPlayer src={streamUrl} className="w-full h-full" />;
     }
-    // When connected, show input info placeholder instead of SMPTE bars
+    // Iframe mode — embed vMix Web Controller
+    if (monitorIframeMode[type] && savedUrl) {
+      const baseUrl = savedUrl.replace(/\/+$/, "");
+      return (
+        <div className="w-full h-full relative" style={{ backgroundColor: "#000" }}>
+          <iframe
+            src={baseUrl}
+            className="w-full h-full border-0"
+            style={{ opacity: 1, transition: "opacity 0.5s" }}
+            onLoad={e => { (e.target as HTMLIFrameElement).style.opacity = "1"; }}
+            allow="autoplay"
+            sandbox="allow-scripts allow-same-origin"
+          />
+          <div className="absolute top-1 right-1 px-1.5 py-0.5 rounded text-[7px] font-bold uppercase" style={{ backgroundColor: "rgba(0,0,0,0.7)", color: "#3b82f6" }}>
+            IFRAME
+          </div>
+        </div>
+      );
+    }
+    // When connected, show input info placeholder
     const inputNum = type === "preview" ? previewInput : activeInput;
     if (connected && inputNum) {
       const inp = inputs.find(i => i.number === inputNum);
@@ -970,7 +995,7 @@ export default function VmixPage() {
           </div>
           <div className="absolute bottom-2 left-0 right-0 flex justify-center">
             <span className="text-[8px] px-2 py-0.5 rounded" style={{ backgroundColor: "rgba(0,0,0,0.5)", color: "#888" }}>
-              📡 Configure URL de stream para preview ao vivo
+              📡 URL de stream ou ⬛ Iframe para preview ao vivo
             </span>
           </div>
         </div>
@@ -985,14 +1010,23 @@ export default function VmixPage() {
     const bgColor = inp ? getInputColor(inp.type) : "#1e1e24";
     const label = inp ? inp.type : "Input";
     const hlsUrl = inputHlsUrls[inputNumber];
-    // If this input has an HLS URL configured, show the video player
+    const isNdi = inp && (inp.type === "NDI" || inp.title.toLowerCase().includes("ndi"));
+    // If this input has an HLS/MJPEG URL configured, show the video player
     if (hlsUrl) {
-      return <HlsPlayer src={hlsUrl} className={className} />;
+      if (hlsUrl.includes(".m3u8")) {
+        return <HlsPlayer src={hlsUrl} className={className} />;
+      }
+      return <MjpegPlayer src={hlsUrl} className={className} />;
     }
     return (
       <div className={`flex flex-col items-center justify-center ${className}`} style={{ backgroundColor: bgColor }}>
         <span className="text-[10px] font-bold text-white/50 uppercase tracking-wider">{label}</span>
         <span className="text-[9px] text-white/30 mt-0.5">Input {inputNumber}</span>
+        {isNdi && (
+          <span className="text-[7px] text-white/20 mt-1 px-1.5 py-0.5 rounded" style={{ backgroundColor: "rgba(0,0,0,0.3)" }}>
+            Clique 🔗 HLS para stream
+          </span>
+        )}
       </div>
     );
   };
@@ -1381,6 +1415,22 @@ export default function VmixPage() {
             <div className="ml-auto flex gap-1">
               <button
                 onClick={() => {
+                  setMonitorIframeMode(prev => ({ ...prev, preview: !prev.preview }));
+                  if (!monitorIframeMode.preview) setMonitorStreamUrls(prev => ({ ...prev, preview: "" }));
+                }}
+                className="text-[8px] px-1.5 py-0.5 rounded transition-all"
+                style={{
+                  backgroundColor: monitorIframeMode.preview ? "#3b82f620" : "#ffffff08",
+                  color: monitorIframeMode.preview ? "#3b82f6" : "#666",
+                  border: `1px solid ${monitorIframeMode.preview ? "#3b82f640" : "#ffffff10"}`,
+                }}
+                title="Modo Iframe (vMix Web Controller)"
+              >
+                ⬛
+              </button>
+              <button
+                onClick={() => {
+                  if (monitorIframeMode.preview) setMonitorIframeMode(prev => ({ ...prev, preview: false }));
                   setEditingMonitorStream(editingMonitorStream === "preview" ? null : "preview");
                   setMonitorStreamTemp(monitorStreamUrls.preview);
                 }}
@@ -1496,21 +1546,39 @@ export default function VmixPage() {
               sendCommand("Cut", val);
               setActiveInput(val);
             })}
-            <button
-              onClick={() => {
-                setEditingMonitorStream(editingMonitorStream === "output" ? null : "output");
-                setMonitorStreamTemp(monitorStreamUrls.output);
-              }}
-              className="ml-auto text-[8px] px-1.5 py-0.5 rounded transition-all"
-              style={{
-                backgroundColor: monitorStreamUrls.output ? "#3b82f620" : "#ffffff08",
-                color: monitorStreamUrls.output ? "#3b82f6" : "#666",
-                border: `1px solid ${monitorStreamUrls.output ? "#3b82f640" : "#ffffff10"}`,
-              }}
-              title="Configurar URL de stream (MJPEG/HLS)"
-            >
-              📡
-            </button>
+            <div className="ml-auto flex gap-1">
+              <button
+                onClick={() => {
+                  setMonitorIframeMode(prev => ({ ...prev, output: !prev.output }));
+                  if (!monitorIframeMode.output) setMonitorStreamUrls(prev => ({ ...prev, output: "" }));
+                }}
+                className="text-[8px] px-1.5 py-0.5 rounded transition-all"
+                style={{
+                  backgroundColor: monitorIframeMode.output ? "#3b82f620" : "#ffffff08",
+                  color: monitorIframeMode.output ? "#3b82f6" : "#666",
+                  border: `1px solid ${monitorIframeMode.output ? "#3b82f640" : "#ffffff10"}`,
+                }}
+                title="Modo Iframe (vMix Web Controller)"
+              >
+                ⬛
+              </button>
+              <button
+                onClick={() => {
+                  if (monitorIframeMode.output) setMonitorIframeMode(prev => ({ ...prev, output: false }));
+                  setEditingMonitorStream(editingMonitorStream === "output" ? null : "output");
+                  setMonitorStreamTemp(monitorStreamUrls.output);
+                }}
+                className="text-[8px] px-1.5 py-0.5 rounded transition-all"
+                style={{
+                  backgroundColor: monitorStreamUrls.output ? "#3b82f620" : "#ffffff08",
+                  color: monitorStreamUrls.output ? "#3b82f6" : "#666",
+                  border: `1px solid ${monitorStreamUrls.output ? "#3b82f640" : "#ffffff10"}`,
+                }}
+                title="Configurar URL de stream (MJPEG/HLS)"
+              >
+                📡
+              </button>
+            </div>
           </div>
           {editingMonitorStream === "output" && (
             <div className="flex gap-1 px-2 py-1.5" style={{ backgroundColor: "#111114", borderBottom: "1px solid #ffffff08" }}>
@@ -1681,25 +1749,23 @@ export default function VmixPage() {
                         )}
                       </div>
                     )}
-                    {/* HLS URL config button for NDI inputs */}
-                    {isNdi && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setEditingHlsInput(editingHlsInput === input.number ? null : input.number);
-                          setHlsTempUrl(inputHlsUrls[input.number] || "");
-                        }}
-                        className="absolute bottom-1 right-1 text-[7px] px-1 py-0.5 rounded transition-all"
-                        style={{
-                          backgroundColor: inputHlsUrls[input.number] ? "#22c55e20" : "#ffffff10",
-                          color: inputHlsUrls[input.number] ? "#22c55e" : "#888",
-                          border: `1px solid ${inputHlsUrls[input.number] ? "#22c55e30" : "#ffffff15"}`,
-                        }}
-                        title="Configurar URL de stream HLS para este input"
-                      >
-                        {inputHlsUrls[input.number] ? "📡" : "🔗 HLS"}
-                      </button>
-                    )}
+                    {/* Stream URL config button for all inputs */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditingHlsInput(editingHlsInput === input.number ? null : input.number);
+                        setHlsTempUrl(inputHlsUrls[input.number] || "");
+                      }}
+                      className="absolute bottom-1 right-1 text-[7px] px-1 py-0.5 rounded transition-all"
+                      style={{
+                        backgroundColor: inputHlsUrls[input.number] ? "#22c55e20" : "#ffffff10",
+                        color: inputHlsUrls[input.number] ? "#22c55e" : "#888",
+                        border: `1px solid ${inputHlsUrls[input.number] ? "#22c55e30" : "#ffffff15"}`,
+                      }}
+                      title="Configurar URL de stream (HLS/MJPEG/JPEG)"
+                    >
+                      {inputHlsUrls[input.number] ? "📡" : "🔗 Stream"}
+                    </button>
                   </div>
                   {/* HLS URL editor inline */}
                   {editingHlsInput === input.number && (
@@ -1708,7 +1774,7 @@ export default function VmixPage() {
                         type="text"
                         value={hlsTempUrl}
                         onChange={e => setHlsTempUrl(e.target.value)}
-                        placeholder="URL HLS (.m3u8) ou vídeo"
+                        placeholder="URL do stream (HLS .m3u8, MJPEG, ou JPEG)"
                         className="flex-1 text-[9px] px-1.5 py-1 rounded outline-none"
                         style={{ backgroundColor: "#1a1a20", color: "#ccc", border: "1px solid #333" }}
                         onKeyDown={e => {
