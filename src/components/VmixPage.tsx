@@ -1076,7 +1076,7 @@ export default function VmixPage() {
 
 
       {/* ── Tab Bar ── */}
-      <div className="flex rounded-t-xl overflow-hidden" style={{ background: "linear-gradient(180deg, #13131f 0%, #0f0f1a 100%)", borderBottom: "1px solid #ffffff06" }}>
+      <div className="flex rounded-t-xl overflow-hidden" style={{ backgroundColor: "#18181c", borderBottom: "1px solid #ffffff06" }}>
         {tabs.map(tab => (
           <button
             key={tab.key}
@@ -1084,17 +1084,17 @@ export default function VmixPage() {
             className="relative flex items-center gap-1.5 px-6 py-3 text-[11px] font-bold uppercase tracking-widest transition-all duration-300"
             style={{
               color: activeTab === tab.key ? "#fff" : "#555",
-              background: activeTab === tab.key ? "linear-gradient(180deg, #1a1a2e 0%, #15152a 100%)" : "transparent",
+              backgroundColor: activeTab === tab.key ? "#222228" : "transparent",
             }}
           >
-            {activeTab === tab.key && <div className="absolute top-0 left-0 right-0 h-[2px]" style={{ background: "linear-gradient(90deg, #dc2626, #ef4444)" }} />}
+            {activeTab === tab.key && <div className="absolute top-0 left-0 right-0 h-[2px]" style={{ backgroundColor: "#dc2626" }} />}
             {tab.icon} {tab.label}
           </button>
         ))}
       </div>
 
       {/* ── Tab Content ── */}
-      <div className="rounded-b-xl p-5 space-y-4" style={{ background: "linear-gradient(180deg, #15152a 0%, #111120 100%)", minHeight: 300, borderTop: "none" }}>
+      <div className="rounded-b-xl p-5 space-y-4" style={{ backgroundColor: "#1a1a1f", minHeight: 300 }}>
 
         {/* ══ CONTROLS TAB ══ */}
         {activeTab === "controls" && (
