@@ -941,9 +941,10 @@ export default function VmixPage() {
         </div>
       </div>
 
-      {/* ── Preview / Program Monitors ── */}
-      <div className="grid grid-cols-2 gap-[2px]" style={{ backgroundColor: "#0a0a12" }}>
-        <div className="relative" style={{ backgroundColor: "#111118", minHeight: 140 }}>
+      {/* ── Preview / Transitions / Output ── */}
+      <div className="flex items-stretch gap-[2px] rounded-xl overflow-hidden" style={{ backgroundColor: "#0a0a12" }}>
+        {/* Preview */}
+        <div className="relative flex-1" style={{ backgroundColor: "#111118", minHeight: 140 }}>
           <div className="absolute top-2 left-3 z-10">
             <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded" style={{ backgroundColor: "#22c55e", color: "#000" }}>Preview</span>
           </div>
@@ -954,7 +955,31 @@ export default function VmixPage() {
             </div>
           </div>
         </div>
-        <div className="relative" style={{ backgroundColor: "#111118", minHeight: 140 }}>
+        {/* Transitions */}
+        <div className="flex flex-col items-center justify-center gap-1.5 px-3 py-2" style={{ backgroundColor: "#111118", minWidth: 80 }}>
+          {[
+            { label: "CUT", fn: "Cut", active: true },
+            { label: "FADE", fn: "Fade", value: "1000" },
+            { label: "FTB", fn: "FadeToBlack" },
+          ].map(t => (
+            <button
+              key={t.label}
+              onClick={() => sendCommand(t.fn, undefined, t.value)}
+              className="w-full px-2 py-1.5 rounded text-[9px] font-bold uppercase tracking-wider transition-all duration-200 hover:scale-[1.05]"
+              style={{
+                backgroundColor: t.active ? "#6b1010" : "#3a3a3a",
+                color: t.active ? "#fff" : "#ccc",
+                border: `1px solid ${t.active ? "#8b2020" : "#555"}`,
+              }}
+              onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = `0 0 14px ${t.active ? "#6b101060" : "#3a3a3a60"}`; }}
+              onMouseLeave={e => { (e.target as HTMLElement).style.boxShadow = "none"; }}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+        {/* Output */}
+        <div className="relative flex-1" style={{ backgroundColor: "#111118", minHeight: 140 }}>
           <div className="absolute top-2 left-3 z-10">
             <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded" style={{ backgroundColor: "#dc2626", color: "#fff" }}>Output</span>
           </div>
@@ -1107,16 +1132,8 @@ export default function VmixPage() {
               </div>
             </div>
 
-            {/* ── Transições & Overlays ── */}
-            {sectionBox("Transições", <Camera size={14} style={{ color: "#6b1010" }} />, (
-              <div className="flex flex-wrap gap-2">
-                {controlBtn("CUT", () => sendCommand("Cut"), "#6b1010", true)}
-                {controlBtn("FADE", () => sendCommand("Fade", undefined, "1000"), "#3a3a3a")}
-                {controlBtn("FTB", () => sendCommand("FadeToBlack"), "#3a3a3a")}
-                {controlBtn("STINGER 1", () => sendCommand("Stinger1"), "#1e3a4a")}
-                {controlBtn("STINGER 2", () => sendCommand("Stinger2"), "#1e3a4a")}
-              </div>
-            ), "#6b1010")}
+
+
 
             {sectionBox("Overlays / GFX", <Layers size={14} style={{ color: "#2d5016" }} />, (
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
