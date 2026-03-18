@@ -1869,13 +1869,16 @@ export default function VmixPage() {
             weekday: "short",
             hour: "2-digit",
             minute: "2-digit",
+            second: "2-digit",
             hour12: false,
           }).formatToParts(now);
 
           const weekdayLabel = nowParts.find(p => p.type === "weekday")?.value ?? "";
           const hour = Number(nowParts.find(p => p.type === "hour")?.value ?? "0");
           const minute = Number(nowParts.find(p => p.type === "minute")?.value ?? "0");
+          const second = Number(nowParts.find(p => p.type === "second")?.value ?? "0");
           const nowMinutes = hour * 60 + minute;
+          const nowSeconds = hour * 3600 + minute * 60 + second;
           const todayDow = weekdayMap[normalizeWeekday(weekdayLabel)] ?? now.getDay();
 
           const isProgramForToday = (p: Programa) => {
