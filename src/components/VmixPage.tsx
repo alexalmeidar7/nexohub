@@ -59,6 +59,12 @@ const COMMAND_OPTIONS = [
   { value: "SetText", label: "Definir Texto (Title)", category: "Título" },
 ];
 
+interface Programa {
+  id: string;
+  nome: string;
+  ativo: boolean;
+}
+
 export default function VmixPage() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -73,6 +79,10 @@ export default function VmixPage() {
   const [streaming, setStreaming] = useState(false);
   const [recording, setRecording] = useState(false);
   const [activeTab, setActiveTab] = useState<"controls" | "scenes" | "ndi">("controls");
+  const [activePreset, setActivePreset] = useState<string | null>(null);
+
+  // Programas from DB
+  const [programas, setProgramas] = useState<Programa[]>([]);
 
   // Scenes state
   const [scenes, setScenes] = useState<VmixScene[]>(() => {
