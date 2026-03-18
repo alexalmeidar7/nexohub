@@ -83,12 +83,7 @@ const sidebarMenu: MenuItem[] = [
       { icon: FileText, label: "propostas comerciais", page: "propostas" },
     ]
   },
-  {
-    icon: Monitor, label: "vmix", children: [
-      { icon: Settings, label: "configurações vmix", page: "vmix" },
-      { icon: ExternalLink, label: "vmix control", page: undefined as unknown as Page },
-    ]
-  },
+  { icon: Monitor, label: "vmix control", page: "vmix" },
   {
     icon: Wrench, label: "ferramentas", children: [
       { icon: Tag, label: "tela promo", page: undefined as unknown as Page },
@@ -107,7 +102,7 @@ const menuToModuleKey: Record<string, string> = {
   "agenda": "agenda",
   "player": "player",
   "comercial": "comercial",
-  "vmix": "vmix",
+  "vmix control": "vmix",
   "ferramentas": "ferramentas",
 };
 
@@ -281,17 +276,6 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     }
     if (parentLabel === "ferramentas" && child.label === "abrir TP externo") {
       window.open("/tp-externo", "_blank");
-      setHoveredMenu(null);
-      return;
-    }
-    if (parentLabel === "vmix" && child.label === "vmix control") {
-      const vmixUrl = localStorage.getItem(`vmix_url_${user?.id}`);
-      if (vmixUrl) {
-        window.open(vmixUrl, "_blank");
-      } else {
-        setCurrentPage("vmix");
-        alert("Configure e salve a URL do vMix Web Controller primeiro.");
-      }
       setHoveredMenu(null);
       return;
     }
