@@ -567,11 +567,11 @@ export default function VmixPage() {
   const previewDomain = window.location.origin;
 
   // ── Styles ──
-  const sectionBox = (title: string, icon: React.ReactNode, children: React.ReactNode, color = "#268ffa") => (
-    <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a2e", border: "1px solid #ffffff08" }}>
-      <div className="flex items-center gap-2 px-4 py-2.5" style={{ backgroundColor: color + "18", borderBottom: "1px solid #ffffff08" }}>
+  const sectionBox = (title: string, icon: React.ReactNode, children: React.ReactNode, _color = "#888") => (
+    <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a1f", border: "1px solid #ffffff08" }}>
+      <div className="flex items-center gap-2 px-4 py-2.5" style={{ backgroundColor: "#ffffff06", borderBottom: "1px solid #ffffff08" }}>
         {icon}
-        <span className="text-xs font-bold uppercase tracking-wider" style={{ color }}>{title}</span>
+        <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#999" }}>{title}</span>
       </div>
       <div className="p-4">{children}</div>
     </div>
