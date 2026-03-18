@@ -104,6 +104,14 @@ export default function VmixPage() {
   const [overlays, setOverlays] = useState<Record<number, boolean>>({ 1: false, 2: false, 3: false, 4: false });
   const [minimizedInputs, setMinimizedInputs] = useState<Record<string, boolean>>({});
   const [activeTab, setActiveTab] = useState<"controls" | "scenes" | "ndi">("controls");
+  // Keyboard shortcuts per input (persisted in localStorage)
+  const [inputShortcuts, setInputShortcuts] = useState<Record<string, string>>(() => {
+    try {
+      const saved = localStorage.getItem("vmix_input_shortcuts");
+      return saved ? JSON.parse(saved) : {};
+    } catch { return {}; }
+  });
+  const [capturingShortcut, setCapturingShortcut] = useState<string | null>(null);
   const [activePreset, setActivePreset] = useState<string | null>(null);
   const [connectionMode, setConnectionMode] = useState<"direct" | "proxy">(() => {
     try { return (localStorage.getItem("vmix_conn_mode") as "direct" | "proxy") || "direct"; }
