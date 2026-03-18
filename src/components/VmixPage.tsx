@@ -1866,31 +1866,83 @@ export default function VmixPage() {
         {activeTab === "ndi" && (
           <>
             {sectionBox("Adicionar Fonte NDI", <Tv size={14} style={{ color: "#999" }} />, (
-              <div className="space-y-3">
-                <p className="text-[11px] text-white/40">
-                  Insira o nome ou endereço da fonte NDI disponível na rede para adicioná-la como input no vMix.
-                </p>
-                <p className="text-[10px] text-white/25">
-                  Formato: <code className="bg-white/5 px-1 rounded text-white/50">NOME-PC (Fonte)</code> ou IP direto
-                </p>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={ndiUrl}
-                    onChange={e => setNdiUrl(e.target.value)}
-                    placeholder="Ex: STUDIO-PC (Camera 1)"
-                    maxLength={200}
-                    className="flex-1 px-3 py-2.5 rounded-lg text-sm outline-none"
-                    style={{ backgroundColor: "#111114", color: "#fff", border: "1px solid #ffffff10" }}
-                  />
-                  <button
-                    onClick={addNdiInput}
-                    disabled={!ndiUrl.trim()}
-                    className="flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-xs font-bold text-white transition-all disabled:opacity-40"
-                    style={{ backgroundColor: "#dc2626" }}
-                  >
-                    <Plus size={13} /> Adicionar
-                  </button>
+              <div className="space-y-4">
+                {/* Auto-discovered NDI sources */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[11px] text-white/60 font-semibold">Fontes NDI na Rede</p>
+                    <button
+                      onClick={scanNdiSources}
+                      disabled={ndiScanning || !connected}
+                      className="flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-bold transition-all disabled:opacity-40"
+                      style={{ backgroundColor: "#ffffff10", color: "#3b82f6" }}
+                    >
+                      {ndiScanning ? <Loader2 size={10} className="animate-spin" /> : <RefreshCw size={10} />}
+                      {ndiScanning ? "Buscando..." : "Buscar"}
+                    </button>
+                  </div>
+                  {!connected && (
+                    <p className="text-[10px] text-yellow-500/70">⚠ Conecte ao vMix para buscar fontes NDI.</p>
+                  )}
+                  {ndiScanning && (
+                    <div className="flex items-center gap-2 py-4 justify-center">
+                      <Loader2 size={16} className="animate-spin text-blue-400" />
+                      <span className="text-[11px] text-white/40">Buscando fontes NDI na rede...</span>
+                    </div>
+                  )}
+                  {!ndiScanning && ndiSources.length > 0 && (
+                    <div className="space-y-1.5">
+                      {ndiSources.map((source, idx) => {
+                        const alreadyAdded = ndiInputs.some(i => i.title.includes(source));
+                        return (
+                          <div key={idx} className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ backgroundColor: "#ffffff06", border: "1px solid #ffffff08" }}>
+                            <Activity size={12} style={{ color: alreadyAdded ? "#22c55e" : "#3b82f6" }} />
+                            <span className="flex-1 text-[11px] text-white/70 truncate">{source}</span>
+                            {alreadyAdded ? (
+                              <span className="text-[9px] text-green-500/60 font-bold px-2">JÁ ADICIONADO</span>
+                            ) : (
+                              <button
+                                onClick={() => addNdiInput(source)}
+                                className="flex items-center gap-1 px-2.5 py-1 rounded-md text-[9px] font-bold text-white transition-all hover:brightness-110"
+                                style={{ backgroundColor: "#dc2626" }}
+                              >
+                                <Plus size={10} /> Adicionar
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                  {!ndiScanning && connected && ndiSources.length === 0 && (
+                    <p className="text-[10px] text-white/30 text-center py-3">Nenhuma fonte NDI detectada. Use o campo abaixo para adicionar manualmente.</p>
+                  )}
+                </div>
+
+                {/* Manual input */}
+                <div className="space-y-2 pt-2" style={{ borderTop: "1px solid #ffffff08" }}>
+                  <p className="text-[10px] text-white/40">
+                    Adicionar manualmente — Formato: <code className="bg-white/5 px-1 rounded text-white/50">NOME-PC (Fonte)</code> ou IP direto
+                  </p>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={ndiUrl}
+                      onChange={e => setNdiUrl(e.target.value)}
+                      placeholder="Ex: STUDIO-PC (Camera 1)"
+                      maxLength={200}
+                      className="flex-1 px-3 py-2.5 rounded-lg text-sm outline-none"
+                      style={{ backgroundColor: "#111114", color: "#fff", border: "1px solid #ffffff10" }}
+                    />
+                    <button
+                      onClick={() => addNdiInput()}
+                      disabled={!ndiUrl.trim()}
+                      className="flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-xs font-bold text-white transition-all disabled:opacity-40"
+                      style={{ backgroundColor: "#dc2626" }}
+                    >
+                      <Plus size={13} /> Adicionar
+                    </button>
+                  </div>
                 </div>
               </div>
             ), "#888")}
