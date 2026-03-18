@@ -1402,7 +1402,7 @@ export default function VmixPage() {
                   }}
                 >
                   <div
-                    className="flex items-center gap-1.5 px-2 py-1"
+                    className="flex items-center gap-1 px-2 py-1"
                     style={{ backgroundColor: headerBg }}
                     onContextMenu={e => { e.preventDefault(); setMinimizedInputs(prev => ({ ...prev, [input.number]: true })); }}
                   >
@@ -1410,23 +1410,48 @@ export default function VmixPage() {
                       backgroundColor: isActive ? "#dc2626" : isPreview ? "#555" : "#333338",
                       color: isActive || isPreview ? "#fff" : "#888",
                     }}>{input.number}</span>
-                    <span className="text-[10px] font-bold truncate" style={{ color: isActive ? "#ff6b6b" : isPreview ? "#ddd" : "#999" }}>
+                    <span className="text-[10px] font-bold truncate flex-1 min-w-0" style={{ color: isActive ? "#ff6b6b" : isPreview ? "#ddd" : "#999" }}>
                       {isNdi && <span style={{ color: "#22c55e" }}>● </span>}
                       {input.title}
                     </span>
+                    {/* PGM / PVW badge in header */}
+                    {isActive && (
+                      <span className="text-[7px] font-black px-1.5 py-0.5 rounded flex-shrink-0 animate-pulse" style={{ backgroundColor: "#dc2626", color: "#fff", letterSpacing: "0.05em" }}>PGM</span>
+                    )}
+                    {isPreview && !isActive && (
+                      <span className="text-[7px] font-black px-1.5 py-0.5 rounded flex-shrink-0" style={{ backgroundColor: "#555", color: "#fff", letterSpacing: "0.05em" }}>PVW</span>
+                    )}
+                    {/* Keyboard shortcut badge/capture */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setCapturingShortcut(capturingShortcut === input.number ? null : input.number);
+                      }}
+                      onContextMenu={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        // Right-click to clear shortcut
+                        setInputShortcuts(prev => {
+                          const copy = { ...prev };
+                          delete copy[input.number];
+                          return copy;
+                        });
+                      }}
+                      className="text-[7px] font-mono font-bold px-1.5 py-0.5 rounded flex-shrink-0 transition-all"
+                      style={{
+                        backgroundColor: capturingShortcut === input.number ? "#f59e0b30" : inputShortcuts[input.number] ? "#ffffff10" : "#ffffff06",
+                        color: capturingShortcut === input.number ? "#f59e0b" : inputShortcuts[input.number] ? "#aaa" : "#555",
+                        border: `1px solid ${capturingShortcut === input.number ? "#f59e0b40" : "#ffffff08"}`,
+                        minWidth: 20,
+                        textAlign: "center",
+                      }}
+                      title={capturingShortcut === input.number ? "Pressione uma tecla..." : inputShortcuts[input.number] ? `Atalho: ${inputShortcuts[input.number]} (clique direito para limpar)` : "Clique para definir atalho"}
+                    >
+                      {capturingShortcut === input.number ? "⌨ ..." : inputShortcuts[input.number] || "⌨"}
+                    </button>
                   </div>
                   <div className="relative" style={{ aspectRatio: "3/2", backgroundColor: "#111114" }}>
                     <ThumbnailImg inputNumber={input.number} className="w-full h-full object-contain" alt={input.title} />
-                    {isActive && (
-                      <div className="absolute top-1 right-1">
-                        <span className="text-[8px] font-bold px-1 rounded" style={{ backgroundColor: "#dc2626", color: "#fff" }}>PGM</span>
-                      </div>
-                    )}
-                    {isPreview && !isActive && (
-                      <div className="absolute top-1 right-1">
-                        <span className="text-[8px] font-bold px-1 rounded" style={{ backgroundColor: "#555", color: "#fff" }}>PVW</span>
-                      </div>
-                    )}
                     {isNdi && (
                       <div className="absolute top-1 left-1">
                         <span className="text-[7px] font-bold px-1 rounded" style={{ backgroundColor: "#22c55e30", color: "#22c55e", border: "1px solid #22c55e40" }}>NDI</span>
