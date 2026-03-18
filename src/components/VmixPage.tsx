@@ -1821,28 +1821,80 @@ export default function VmixPage() {
 
         {/* ══ SCENES TAB ══ */}
         {activeTab === "scenes" && (() => {
-          const diasMap: Record<string, number> = { dom: 0, seg: 1, ter: 2, qua: 3, qui: 4, sex: 5, sab: 6 };
+          const normalizeWeekday = (value: string) =>
+            value
+              .normalize("NFD")
+              .replace(/[\u0300-\u036f]/g, "")
+              .replace(/\./g, "")
+              .trim()
+              .toLowerCase();
+
+          const weekdayMap: Record<string, number> = {
+            domingo: 0, dom: 0,
+            segunda: 1, seg: 1,
+            terca: 2, ter: 2,
+            quarta: 3, qua: 3,
+            quinta: 4, qui: 4,
+            sexta: 5, sex: 5,
+            sabado: 6, sab: 6,
+          };
+
+          const toMin = (t: string) => {
+            const [h, m] = t.split(":").map(Number);
+            return (h || 0) * 60 + (m || 0);
+          };
+
           const now = new Date();
-          const nowMinutes = now.getHours() * 60 + now.getMinutes();
-          const todayDow = now.getDay();
+          const nowParts = new Intl.DateTimeFormat("pt-BR", {
+            timeZone: "America/Sao_Paulo",
+            weekday: "short",
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false,
+          }).formatToParts(now);
 
-          const todayPrograms = programas.filter(p => {
+          const weekdayLabel = nowParts.find(p => p.type === "weekday")?.value ?? "";
+          const hour = Number(nowParts.find(p => p.type === "hour")?.value ?? "0");
+          const minute = Number(nowParts.find(p => p.type === "minute")?.value ?? "0");
+          const nowMinutes = hour * 60 + minute;
+          const todayDow = weekdayMap[normalizeWeekday(weekdayLabel)] ?? now.getDay();
+
+          const isProgramForToday = (p: Programa) => {
             if (!p.dias_semana || p.dias_semana.length === 0) return true;
-            return p.dias_semana.some(d => diasMap[d.toLowerCase()] === todayDow);
-          }).sort((a, b) => {
-            const toMin = (t: string) => { const [h, m] = t.split(":").map(Number); return h * 60 + (m || 0); };
-            return toMin(a.horario_inicio) - toMin(b.horario_inicio);
-          });
+            return p.dias_semana.some(d => weekdayMap[normalizeWeekday(d)] === todayDow);
+          };
 
-          const onAir = todayPrograms.find(p => {
-            const toMin = (t: string) => { const [h, m] = t.split(":").map(Number); return h * 60 + (m || 0); };
-            return nowMinutes >= toMin(p.horario_inicio) && nowMinutes < toMin(p.horario_fim);
-          });
+          const isNowInProgram = (p: Programa) => {
+            const start = toMin(p.horario_inicio);
+            const end = toMin(p.horario_fim);
+            if (start <= end) return nowMinutes >= start && nowMinutes < end;
+            return nowMinutes >= start || nowMinutes < end;
+          };
 
-          const upcoming = todayPrograms.filter(p => {
-            const toMin = (t: string) => { const [h, m] = t.split(":").map(Number); return h * 60 + (m || 0); };
-            return toMin(p.horario_inicio) > nowMinutes;
-          }).slice(0, 4);
+          const minutesUntilStart = (p: Programa) => {
+            const start = toMin(p.horario_inicio);
+            return start >= nowMinutes ? start - nowMinutes : start + 1440 - nowMinutes;
+          };
+
+          const minutesUntilEnd = (p: Programa) => {
+            const start = toMin(p.horario_inicio);
+            const end = toMin(p.horario_fim);
+            const crossesMidnight = end <= start;
+            const normalizedNow = crossesMidnight && nowMinutes < start ? nowMinutes + 1440 : nowMinutes;
+            const normalizedEnd = crossesMidnight ? end + 1440 : end;
+            return Math.max(0, normalizedEnd - normalizedNow);
+          };
+
+          const todayPrograms = programas
+            .filter(isProgramForToday)
+            .sort((a, b) => toMin(a.horario_inicio) - toMin(b.horario_inicio));
+
+          const onAir = todayPrograms.find(isNowInProgram);
+
+          const upcoming = todayPrograms
+            .filter(p => !isNowInProgram(p))
+            .sort((a, b) => minutesUntilStart(a) - minutesUntilStart(b))
+            .slice(0, 4);
 
           return (
             <>
@@ -1860,8 +1912,7 @@ export default function VmixPage() {
                         <p className="text-[10px] text-white/40 mt-1">{onAir.horario_inicio} – {onAir.horario_fim}</p>
                         {/* Countdown to end */}
                         {(() => {
-                          const toMin = (t: string) => { const [h, m] = t.split(":").map(Number); return h * 60 + (m || 0); };
-                          const remaining = toMin(onAir.horario_fim) - nowMinutes;
+                          const remaining = minutesUntilEnd(onAir);
                           const rh = Math.floor(remaining / 60);
                           const rm = remaining % 60;
                           return (
@@ -1877,8 +1928,7 @@ export default function VmixPage() {
                         <p className="text-sm font-bold text-white">{upcoming[0].nome}</p>
                         <p className="text-[10px] text-white/40 mt-1">{upcoming[0].horario_inicio} – {upcoming[0].horario_fim}</p>
                         {(() => {
-                          const toMin = (t: string) => { const [h, m] = t.split(":").map(Number); return h * 60 + (m || 0); };
-                          const remaining = toMin(upcoming[0].horario_inicio) - nowMinutes;
+                          const remaining = minutesUntilStart(upcoming[0]);
                           const rh = Math.floor(remaining / 60);
                           const rm = remaining % 60;
                           return (
