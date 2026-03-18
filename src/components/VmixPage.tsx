@@ -983,7 +983,7 @@ export default function VmixPage() {
               ))}
             </select>
           </div>
-          <div className="flex-1 flex items-center justify-center overflow-hidden">
+          <div className="flex-1 flex items-center justify-center overflow-hidden" style={{ aspectRatio: "16/9" }}>
             {previewInput && savedUrl ? (
               <img
                 src={`${savedUrl}/api/?Function=SnapshotInput&Input=${previewInput}&Width=640&Height=360&_t=${Date.now()}`}
@@ -993,7 +993,27 @@ export default function VmixPage() {
                 onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
               />
             ) : (
-              <p className="text-[10px] text-white/30">Sem sinal</p>
+              <div className="w-full h-full relative flex flex-col">
+                {/* SMPTE color bars */}
+                <div className="flex flex-1">
+                  {["#c0c0c0","#c0c000","#00c0c0","#00c000","#c000c0","#c00000","#0000c0"].map((c,i) => (
+                    <div key={i} className="flex-1" style={{ backgroundColor: c }} />
+                  ))}
+                </div>
+                <div className="flex" style={{ height: "8%" }}>
+                  {["#0000c0","#131313","#c000c0","#131313","#00c0c0","#131313","#c0c0c0"].map((c,i) => (
+                    <div key={i} className="flex-1" style={{ backgroundColor: c }} />
+                  ))}
+                </div>
+                <div className="flex" style={{ height: "8%" }}>
+                  {["#00214c","#fff","#32006a","#131313","#131313","#131313","#131313"].map((c,i) => (
+                    <div key={i} className="flex-1" style={{ backgroundColor: c }} />
+                  ))}
+                </div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded" style={{ backgroundColor: "rgba(0,0,0,0.6)", color: "#888" }}>PVW — Sem sinal</span>
+                </div>
+              </div>
             )}
           </div>
         </div>
