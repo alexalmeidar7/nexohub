@@ -1166,7 +1166,7 @@ export default function VmixPage() {
                     )}
                     {isPreview && !isActive && (
                       <div className="absolute top-1 right-1">
-                        <span className="text-[8px] font-bold px-1 rounded" style={{ backgroundColor: "#22c55e", color: "#000" }}>PVW</span>
+                        <span className="text-[8px] font-bold px-1 rounded" style={{ backgroundColor: "#555", color: "#fff" }}>PVW</span>
                       </div>
                     )}
                   </div>
