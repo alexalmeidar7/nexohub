@@ -643,7 +643,7 @@ export default function VmixPage() {
               style={{ backgroundColor: "#f59e0b" }}
             >
               {diagRunning ? <Loader2 size={14} className="animate-spin" /> : <Activity size={14} />}
-              {diagRunning ? "Diagnosticando..." : "🔍 Diagnóstico Automático"}
+              {diagRunning ? "Diagnosticando..." : "🔧 Corrigir Conexão"}
             </button>
 
             {diagResult && (
