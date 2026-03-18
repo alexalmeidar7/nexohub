@@ -1869,13 +1869,16 @@ export default function VmixPage() {
             weekday: "short",
             hour: "2-digit",
             minute: "2-digit",
+            second: "2-digit",
             hour12: false,
           }).formatToParts(now);
 
           const weekdayLabel = nowParts.find(p => p.type === "weekday")?.value ?? "";
           const hour = Number(nowParts.find(p => p.type === "hour")?.value ?? "0");
           const minute = Number(nowParts.find(p => p.type === "minute")?.value ?? "0");
+          const second = Number(nowParts.find(p => p.type === "second")?.value ?? "0");
           const nowMinutes = hour * 60 + minute;
+          const nowSeconds = hour * 3600 + minute * 60 + second;
           const todayDow = weekdayMap[normalizeWeekday(weekdayLabel)] ?? now.getDay();
 
           const isProgramForToday = (p: Programa) => {
@@ -1904,6 +1907,27 @@ export default function VmixPage() {
             return Math.max(0, normalizedEnd - normalizedNow);
           };
 
+          const toSec = (t: string) => {
+            const [h, m] = t.split(":").map(Number);
+            return (h || 0) * 3600 + (m || 0) * 60;
+          };
+
+          const secondsUntilEnd = (p: Programa) => {
+            const startS = toSec(p.horario_inicio);
+            const endS = toSec(p.horario_fim);
+            const crossesMidnight = endS <= startS;
+            const nNow = crossesMidnight && nowSeconds < startS ? nowSeconds + 86400 : nowSeconds;
+            const nEnd = crossesMidnight ? endS + 86400 : endS;
+            return Math.max(0, nEnd - nNow);
+          };
+
+          const programDurationSec = (p: Programa) => {
+            const startS = toSec(p.horario_inicio);
+            const endS = toSec(p.horario_fim);
+            if (endS > startS) return endS - startS;
+            return 86400 - startS + endS;
+          };
+
           const todayPrograms = programas
             .filter(isProgramForToday)
             .sort((a, b) => toMin(a.horario_inicio) - toMin(b.horario_inicio));
@@ -1929,15 +1953,27 @@ export default function VmixPage() {
                       <div>
                         <p className="text-sm font-bold text-white">{onAir.nome}</p>
                         <p className="text-[10px] text-white/40 mt-1">{onAir.horario_inicio} – {onAir.horario_fim}</p>
-                        {/* Countdown to end */}
                         {(() => {
-                          const remaining = minutesUntilEnd(onAir);
-                          const rh = Math.floor(remaining / 60);
-                          const rm = remaining % 60;
+                          const remSec = secondsUntilEnd(onAir);
+                          const totalSec = programDurationSec(onAir);
+                          const elapsedSec = totalSec - remSec;
+                          const progress = totalSec > 0 ? Math.min(100, (elapsedSec / totalSec) * 100) : 0;
+                          const rh = Math.floor(remSec / 3600);
+                          const rm = Math.floor((remSec % 3600) / 60);
+                          const rs = remSec % 60;
+                          const timeStr = rh > 0
+                            ? `${String(rh).padStart(2, "0")}:${String(rm).padStart(2, "0")}:${String(rs).padStart(2, "0")}`
+                            : `${String(rm).padStart(2, "0")}:${String(rs).padStart(2, "0")}`;
                           return (
-                            <p className="text-[10px] mt-2 font-mono font-bold" style={{ color: remaining <= 5 ? "#dc2626" : "#888" }}>
-                              {remaining <= 0 ? "Encerrando..." : `Termina em ${rh > 0 ? `${rh}h ` : ""}${rm}min`}
-                            </p>
+                            <div className="mt-3">
+                              <p className="text-center text-base font-mono font-black tracking-wider mb-1.5" style={{ color: remSec <= 300 ? "#dc2626" : "#fff" }}>
+                                {remSec <= 0 ? "00:00" : timeStr}
+                              </p>
+                              <div className="w-full h-2.5 rounded-full overflow-hidden" style={{ backgroundColor: "#333" }}>
+                                <div className="h-full rounded-full transition-all duration-1000 ease-linear" style={{ width: `${progress}%`, backgroundColor: "#dc2626" }} />
+                              </div>
+                              <p className="text-[9px] text-white/30 mt-1 text-right font-mono">{Math.round(progress)}%</p>
+                            </div>
                           );
                         })()}
                       </div>
