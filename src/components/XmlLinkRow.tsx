@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 
 interface XmlLinkRowProps {
   label: string;
-  xmlContent: string;
+  xmlContent?: string;
+  permanentUrl?: string;
   dark?: boolean;
   compact?: boolean;
 }
@@ -16,14 +17,22 @@ function sanitizeFileName(label: string): string {
     .replace(/[^a-z0-9\-]/g, "") + ".xml";
 }
 
-export default function XmlLinkRow({ label, xmlContent, dark, compact }: XmlLinkRowProps) {
+export default function XmlLinkRow({ label, xmlContent, permanentUrl: externalUrl, dark, compact }: XmlLinkRowProps) {
   const [copied, setCopied] = useState(false);
-  const [permanentUrl, setPermanentUrl] = useState<string>("");
+  const [url, setUrl] = useState<string>(externalUrl || "");
   const [uploading, setUploading] = useState(false);
   const lastContentRef = useRef<string>("");
 
+  // If permanentUrl is provided, use it directly (no upload needed)
   useEffect(() => {
-    if (!xmlContent || xmlContent === lastContentRef.current) return;
+    if (externalUrl) {
+      setUrl(externalUrl);
+    }
+  }, [externalUrl]);
+
+  // Legacy: upload xmlContent to storage if no permanentUrl
+  useEffect(() => {
+    if (externalUrl || !xmlContent || xmlContent === lastContentRef.current) return;
     lastContentRef.current = xmlContent;
 
     const upload = async () => {
@@ -47,7 +56,7 @@ export default function XmlLinkRow({ label, xmlContent, dark, compact }: XmlLink
           .getPublicUrl(fileName);
 
         if (urlData?.publicUrl) {
-          setPermanentUrl(urlData.publicUrl);
+          setUrl(urlData.publicUrl);
         }
       } catch (err) {
         console.error("Upload XML error:", err);
@@ -56,13 +65,15 @@ export default function XmlLinkRow({ label, xmlContent, dark, compact }: XmlLink
     };
 
     upload();
-  }, [xmlContent, label]);
+  }, [xmlContent, label, externalUrl]);
 
-  if (!xmlContent) return null;
+  const ready = !!externalUrl || (!uploading && !!url);
+
+  if (!xmlContent && !externalUrl) return null;
 
   const copy = () => {
-    if (!permanentUrl) return;
-    navigator.clipboard.writeText(permanentUrl);
+    if (!url) return;
+    navigator.clipboard.writeText(url);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -76,7 +87,7 @@ export default function XmlLinkRow({ label, xmlContent, dark, compact }: XmlLink
         <div className="flex items-center gap-2">
           <Code2 size={14} className="shrink-0" style={{ color: "#268ffa" }} />
           <span className="text-[10px] text-white/70 font-bold whitespace-nowrap">{label}</span>
-          {uploading ? (
+          {!ready ? (
             <Loader2 size={12} className="shrink-0 animate-spin text-white/40 ml-auto" />
           ) : copied ? (
             <Check size={12} className="shrink-0 text-green-400 ml-auto" />
@@ -85,7 +96,7 @@ export default function XmlLinkRow({ label, xmlContent, dark, compact }: XmlLink
           )}
         </div>
         <p className="text-[8px] font-mono text-white/40 truncate mt-0.5 pl-5">
-          {uploading ? "Enviando..." : permanentUrl || "Gerando link..."}
+          {!ready ? "Gerando link..." : url}
         </p>
       </div>
     );
@@ -105,9 +116,9 @@ export default function XmlLinkRow({ label, xmlContent, dark, compact }: XmlLink
       <Code2 size={18} style={dark ? { color: "#2ec1f7" } : undefined} className={dark ? "shrink-0" : "text-primary shrink-0"} />
       <span style={dark ? { color: "#ffffff" } : undefined} className={`text-xs font-bold whitespace-nowrap ${!dark ? "text-foreground" : ""}`}>{label}</span>
       <span style={dark ? { color: "#ffffff" } : undefined} className={`text-[10px] truncate flex-1 font-mono ${!dark ? "text-muted-foreground" : ""}`}>
-        {uploading ? "Enviando..." : permanentUrl || "Gerando link..."}
+        {!ready ? "Gerando link..." : url}
       </span>
-      {uploading ? (
+      {!ready ? (
         <Loader2 size={16} style={dark ? { color: "#2ec1f7" } : undefined} className={`shrink-0 animate-spin ${dark ? "" : "text-muted-foreground"}`} />
       ) : copied ? (
         <Check size={16} className={dark ? "text-green-400 shrink-0" : "text-primary shrink-0"} />
