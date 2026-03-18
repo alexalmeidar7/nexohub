@@ -854,28 +854,6 @@ export default function VmixPage() {
     return <video ref={videoRef} className={className} muted autoPlay playsInline style={{ objectFit: "contain", backgroundColor: "#000" }} />;
   };
 
-   // vMix Web Controller iframe for live monitors — uses /preview/ endpoint for video-only view
-  const VmixIframe = ({ className = "", type = "preview" }: { className?: string; type?: "preview" | "output" }) => {
-    if (!savedUrl) return null;
-    const base = savedUrl.replace(/\/+$/, "");
-    // vMix exposes video-only views at specific paths
-    const iframeSrc = type === "output" ? `${base}/` : `${base}/`;
-    return (
-      <div className={`relative ${className}`} style={{ backgroundColor: "#000" }}>
-        <iframe
-          src={iframeSrc}
-          className="w-full h-full transition-opacity duration-500"
-          style={{ border: "none", backgroundColor: "#000", opacity: 1 }}
-          allow="autoplay"
-          sandbox="allow-scripts allow-same-origin"
-          onLoad={(e) => { (e.target as HTMLIFrameElement).style.opacity = "1"; }}
-        />
-        <div className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded text-[7px] font-bold uppercase" style={{ backgroundColor: "rgba(0,0,0,0.7)", color: "#f59e0b", border: "1px solid #f59e0b40" }}>
-          Web Controller
-        </div>
-      </div>
-    );
-  };
 
   // MJPEG/JPEG rapid-refresh image component (for vmix-snapshot-proxy, NDI HX Camera, etc.)
   const MjpegPlayer = ({ src, className = "" }: { src: string; className?: string }) => {
