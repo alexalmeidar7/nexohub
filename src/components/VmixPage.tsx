@@ -192,6 +192,8 @@ export default function VmixPage() {
 
   // NDI state
   const [ndiUrl, setNdiUrl] = useState("");
+  const [ndiSources, setNdiSources] = useState<string[]>([]);
+  const [ndiScanning, setNdiScanning] = useState(false);
 
   // Diagnostic state
   interface DiagResult {
@@ -567,13 +569,65 @@ export default function VmixPage() {
     toast({ title: "Cena executada", description: `"${scene.name}" concluída.` });
   };
 
-  const addNdiInput = async () => {
-    if (!savedUrl || !ndiUrl.trim()) return;
+  const scanNdiSources = useCallback(async () => {
+    if (!savedUrl || !connected) {
+      setNdiSources([]);
+      return;
+    }
+    setNdiScanning(true);
     try {
-      await vmixFetch(`/api/?Function=AddInput&Value=NDI|${encodeURIComponent(ndiUrl.trim())}`);
-      setNdiUrl("");
+      const xmlText = await vmixFetch("/api/");
+      const parser = new DOMParser();
+      const xml = parser.parseFromString(xmlText, "text/xml");
+      // vMix exposes NDI sources in the XML under <ndisources> or we parse from available inputs
+      const ndiSourceEls = xml.querySelectorAll("ndisource");
+      const sources: string[] = [];
+      ndiSourceEls.forEach(el => {
+        const name = el.textContent?.trim();
+        if (name) sources.push(name);
+      });
+      // Also try to find NDI sources from the XML root element attributes or child elements
+      if (sources.length === 0) {
+        // Fallback: try fetching NDI sources list via vMix function
+        try {
+          const ndiXml = await vmixFetch("/api/?Function=NDISources");
+          // Parse response for any source names
+          const ndiDoc = new DOMParser().parseFromString(ndiXml, "text/xml");
+          ndiDoc.querySelectorAll("source, ndisource, item").forEach(el => {
+            const name = el.textContent?.trim() || el.getAttribute("name")?.trim();
+            if (name) sources.push(name);
+          });
+        } catch { /* NDISources endpoint may not exist */ }
+      }
+      setNdiSources(sources);
+      if (sources.length === 0) {
+        toast({ title: "Busca NDI", description: "Nenhuma fonte NDI encontrada na rede. Verifique se o NDI Tools está ativo." });
+      } else {
+        toast({ title: "Fontes NDI encontradas", description: `${sources.length} fonte(s) detectada(s).` });
+      }
+    } catch {
+      setNdiSources([]);
+      toast({ title: "Erro", description: "Falha ao buscar fontes NDI.", variant: "destructive" });
+    } finally {
+      setNdiScanning(false);
+    }
+  }, [savedUrl, connected, vmixFetch, toast]);
+
+  // Auto-scan NDI when entering the NDI tab
+  useEffect(() => {
+    if (activeTab === "ndi" && connected) {
+      scanNdiSources();
+    }
+  }, [activeTab, connected, scanNdiSources]);
+
+  const addNdiInput = async (source?: string) => {
+    const ndiName = source || ndiUrl.trim();
+    if (!savedUrl || !ndiName) return;
+    try {
+      await vmixFetch(`/api/?Function=AddInput&Value=NDI|${encodeURIComponent(ndiName)}`);
+      if (!source) setNdiUrl("");
       setTimeout(() => connectToVmix(), 500);
-      toast({ title: "NDI adicionado", description: "Fonte NDI adicionada como input." });
+      toast({ title: "NDI adicionado", description: `Fonte "${ndiName}" adicionada como input.` });
     } catch {
       toast({ title: "Erro", description: "Falha ao adicionar fonte NDI.", variant: "destructive" });
     }
@@ -1812,31 +1866,83 @@ export default function VmixPage() {
         {activeTab === "ndi" && (
           <>
             {sectionBox("Adicionar Fonte NDI", <Tv size={14} style={{ color: "#999" }} />, (
-              <div className="space-y-3">
-                <p className="text-[11px] text-white/40">
-                  Insira o nome ou endereço da fonte NDI disponível na rede para adicioná-la como input no vMix.
-                </p>
-                <p className="text-[10px] text-white/25">
-                  Formato: <code className="bg-white/5 px-1 rounded text-white/50">NOME-PC (Fonte)</code> ou IP direto
-                </p>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={ndiUrl}
-                    onChange={e => setNdiUrl(e.target.value)}
-                    placeholder="Ex: STUDIO-PC (Camera 1)"
-                    maxLength={200}
-                    className="flex-1 px-3 py-2.5 rounded-lg text-sm outline-none"
-                    style={{ backgroundColor: "#111114", color: "#fff", border: "1px solid #ffffff10" }}
-                  />
-                  <button
-                    onClick={addNdiInput}
-                    disabled={!ndiUrl.trim()}
-                    className="flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-xs font-bold text-white transition-all disabled:opacity-40"
-                    style={{ backgroundColor: "#dc2626" }}
-                  >
-                    <Plus size={13} /> Adicionar
-                  </button>
+              <div className="space-y-4">
+                {/* Auto-discovered NDI sources */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[11px] text-white/60 font-semibold">Fontes NDI na Rede</p>
+                    <button
+                      onClick={scanNdiSources}
+                      disabled={ndiScanning || !connected}
+                      className="flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-bold transition-all disabled:opacity-40"
+                      style={{ backgroundColor: "#ffffff10", color: "#3b82f6" }}
+                    >
+                      {ndiScanning ? <Loader2 size={10} className="animate-spin" /> : <RefreshCw size={10} />}
+                      {ndiScanning ? "Buscando..." : "Buscar"}
+                    </button>
+                  </div>
+                  {!connected && (
+                    <p className="text-[10px] text-yellow-500/70">⚠ Conecte ao vMix para buscar fontes NDI.</p>
+                  )}
+                  {ndiScanning && (
+                    <div className="flex items-center gap-2 py-4 justify-center">
+                      <Loader2 size={16} className="animate-spin text-blue-400" />
+                      <span className="text-[11px] text-white/40">Buscando fontes NDI na rede...</span>
+                    </div>
+                  )}
+                  {!ndiScanning && ndiSources.length > 0 && (
+                    <div className="space-y-1.5">
+                      {ndiSources.map((source, idx) => {
+                        const alreadyAdded = ndiInputs.some(i => i.title.includes(source));
+                        return (
+                          <div key={idx} className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ backgroundColor: "#ffffff06", border: "1px solid #ffffff08" }}>
+                            <Activity size={12} style={{ color: alreadyAdded ? "#22c55e" : "#3b82f6" }} />
+                            <span className="flex-1 text-[11px] text-white/70 truncate">{source}</span>
+                            {alreadyAdded ? (
+                              <span className="text-[9px] text-green-500/60 font-bold px-2">JÁ ADICIONADO</span>
+                            ) : (
+                              <button
+                                onClick={() => addNdiInput(source)}
+                                className="flex items-center gap-1 px-2.5 py-1 rounded-md text-[9px] font-bold text-white transition-all hover:brightness-110"
+                                style={{ backgroundColor: "#dc2626" }}
+                              >
+                                <Plus size={10} /> Adicionar
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                  {!ndiScanning && connected && ndiSources.length === 0 && (
+                    <p className="text-[10px] text-white/30 text-center py-3">Nenhuma fonte NDI detectada. Use o campo abaixo para adicionar manualmente.</p>
+                  )}
+                </div>
+
+                {/* Manual input */}
+                <div className="space-y-2 pt-2" style={{ borderTop: "1px solid #ffffff08" }}>
+                  <p className="text-[10px] text-white/40">
+                    Adicionar manualmente — Formato: <code className="bg-white/5 px-1 rounded text-white/50">NOME-PC (Fonte)</code> ou IP direto
+                  </p>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={ndiUrl}
+                      onChange={e => setNdiUrl(e.target.value)}
+                      placeholder="Ex: STUDIO-PC (Camera 1)"
+                      maxLength={200}
+                      className="flex-1 px-3 py-2.5 rounded-lg text-sm outline-none"
+                      style={{ backgroundColor: "#111114", color: "#fff", border: "1px solid #ffffff10" }}
+                    />
+                    <button
+                      onClick={() => addNdiInput()}
+                      disabled={!ndiUrl.trim()}
+                      className="flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-xs font-bold text-white transition-all disabled:opacity-40"
+                      style={{ backgroundColor: "#dc2626" }}
+                    >
+                      <Plus size={13} /> Adicionar
+                    </button>
+                  </div>
                 </div>
               </div>
             ), "#888")}
