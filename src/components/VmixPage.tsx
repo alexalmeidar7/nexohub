@@ -145,14 +145,15 @@ export default function VmixPage() {
       .select("id")
       .eq("user_id", user.id)
       .maybeSingle();
+    const payload = { vmix_url: trimmed, vmix_user: vmixUser.trim(), vmix_pass: vmixPass };
     if (existing) {
-      await supabase.from("user_settings").update({ vmix_url: trimmed }).eq("user_id", user.id);
+      await supabase.from("user_settings").update(payload).eq("user_id", user.id);
     } else {
-      await supabase.from("user_settings").insert({ user_id: user.id, vmix_url: trimmed });
+      await supabase.from("user_settings").insert({ user_id: user.id, ...payload });
     }
     setSavedUrl(trimmed);
     localStorage.setItem(`vmix_url_${user.id}`, trimmed);
-    toast({ title: "URL salva", description: "Endereço do vMix salvo com sucesso." });
+    toast({ title: "Configuração salva", description: "URL e credenciais do vMix salvas." });
   };
 
   const vmixProxy = useCallback(async (path: string): Promise<string> => {
