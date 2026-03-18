@@ -1468,34 +1468,30 @@ export default function VmixPage() {
             </div>
           )}
           <div className="flex-1 flex items-center justify-center overflow-hidden" style={{ aspectRatio: "16/9" }}>
-            {(() => {
-              const content = <MonitorContent type="output" inputNumber={activeInput} />;
-              if (content) return content;
-              return (
-                <div className="w-full h-full relative flex flex-col">
-                  <div className="flex flex-1">
-                    {["#c0c0c0","#c0c000","#00c0c0","#00c000","#c000c0","#c00000","#0000c0"].map((c,i) => (
-                      <div key={i} className="flex-1" style={{ backgroundColor: c }} />
-                    ))}
-                  </div>
-                  <div className="flex" style={{ height: "8%" }}>
-                    {["#0000c0","#131313","#c000c0","#131313","#00c0c0","#131313","#c0c0c0"].map((c,i) => (
-                      <div key={i} className="flex-1" style={{ backgroundColor: c }} />
-                    ))}
-                  </div>
-                  <div className="flex" style={{ height: "8%" }}>
-                    {["#00214c","#fff","#32006a","#131313","#131313","#131313","#131313"].map((c,i) => (
-                      <div key={i} className="flex-1" style={{ backgroundColor: c }} />
-                    ))}
-                  </div>
-                  <div className="tv-static absolute inset-0" />
-                  <div className="tv-scanlines absolute inset-0" />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded" style={{ backgroundColor: "rgba(0,0,0,0.6)", color: "#dc2626" }}>PGM — Sem sinal</span>
-                  </div>
+            {getMonitorContent("output") || (
+              <div className="w-full h-full relative flex flex-col">
+                <div className="flex flex-1">
+                  {["#c0c0c0","#c0c000","#00c0c0","#00c000","#c000c0","#c00000","#0000c0"].map((c,i) => (
+                    <div key={i} className="flex-1" style={{ backgroundColor: c }} />
+                  ))}
                 </div>
-              );
-            })()}
+                <div className="flex" style={{ height: "8%" }}>
+                  {["#0000c0","#131313","#c000c0","#131313","#00c0c0","#131313","#c0c0c0"].map((c,i) => (
+                    <div key={i} className="flex-1" style={{ backgroundColor: c }} />
+                  ))}
+                </div>
+                <div className="flex" style={{ height: "8%" }}>
+                  {["#00214c","#fff","#32006a","#131313","#131313","#131313","#131313"].map((c,i) => (
+                    <div key={i} className="flex-1" style={{ backgroundColor: c }} />
+                  ))}
+                </div>
+                <div className="tv-static absolute inset-0" />
+                <div className="tv-scanlines absolute inset-0" />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded" style={{ backgroundColor: "rgba(0,0,0,0.6)", color: "#dc2626" }}>PGM — Sem sinal</span>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
