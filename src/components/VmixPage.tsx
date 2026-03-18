@@ -1406,6 +1406,22 @@ export default function VmixPage() {
             <div className="ml-auto flex gap-1">
               <button
                 onClick={() => {
+                  setMonitorIframeMode(prev => ({ ...prev, preview: !prev.preview }));
+                  if (!monitorIframeMode.preview) setMonitorStreamUrls(prev => ({ ...prev, preview: "" }));
+                }}
+                className="text-[8px] px-1.5 py-0.5 rounded transition-all"
+                style={{
+                  backgroundColor: monitorIframeMode.preview ? "#3b82f620" : "#ffffff08",
+                  color: monitorIframeMode.preview ? "#3b82f6" : "#666",
+                  border: `1px solid ${monitorIframeMode.preview ? "#3b82f640" : "#ffffff10"}`,
+                }}
+                title="Modo Iframe (vMix Web Controller)"
+              >
+                ⬛
+              </button>
+              <button
+                onClick={() => {
+                  if (monitorIframeMode.preview) setMonitorIframeMode(prev => ({ ...prev, preview: false }));
                   setEditingMonitorStream(editingMonitorStream === "preview" ? null : "preview");
                   setMonitorStreamTemp(monitorStreamUrls.preview);
                 }}
