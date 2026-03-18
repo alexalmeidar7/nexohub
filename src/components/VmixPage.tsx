@@ -1907,6 +1907,27 @@ export default function VmixPage() {
             return Math.max(0, normalizedEnd - normalizedNow);
           };
 
+          const toSec = (t: string) => {
+            const [h, m] = t.split(":").map(Number);
+            return (h || 0) * 3600 + (m || 0) * 60;
+          };
+
+          const secondsUntilEnd = (p: Programa) => {
+            const startS = toSec(p.horario_inicio);
+            const endS = toSec(p.horario_fim);
+            const crossesMidnight = endS <= startS;
+            const nNow = crossesMidnight && nowSeconds < startS ? nowSeconds + 86400 : nowSeconds;
+            const nEnd = crossesMidnight ? endS + 86400 : endS;
+            return Math.max(0, nEnd - nNow);
+          };
+
+          const programDurationSec = (p: Programa) => {
+            const startS = toSec(p.horario_inicio);
+            const endS = toSec(p.horario_fim);
+            if (endS > startS) return endS - startS;
+            return 86400 - startS + endS;
+          };
+
           const todayPrograms = programas
             .filter(isProgramForToday)
             .sort((a, b) => toMin(a.horario_inicio) - toMin(b.horario_inicio));
