@@ -1262,9 +1262,38 @@ export default function VmixPage() {
                       <div>
                         <p className="text-sm font-bold text-white">{onAir.nome}</p>
                         <p className="text-[10px] text-white/40 mt-1">{onAir.horario_inicio} – {onAir.horario_fim}</p>
+                        {/* Countdown to end */}
+                        {(() => {
+                          const toMin = (t: string) => { const [h, m] = t.split(":").map(Number); return h * 60 + (m || 0); };
+                          const remaining = toMin(onAir.horario_fim) - nowMinutes;
+                          const rh = Math.floor(remaining / 60);
+                          const rm = remaining % 60;
+                          return (
+                            <p className="text-[10px] mt-2 font-mono font-bold" style={{ color: remaining <= 5 ? "#dc2626" : "#888" }}>
+                              {remaining <= 0 ? "Encerrando..." : `Termina em ${rh > 0 ? `${rh}h ` : ""}${rm}min`}
+                            </p>
+                          );
+                        })()}
+                      </div>
+                    ) : upcoming.length > 0 ? (
+                      <div>
+                        <p className="text-[10px] text-white/40 uppercase tracking-wider mb-1">Próximo</p>
+                        <p className="text-sm font-bold text-white">{upcoming[0].nome}</p>
+                        <p className="text-[10px] text-white/40 mt-1">{upcoming[0].horario_inicio} – {upcoming[0].horario_fim}</p>
+                        {(() => {
+                          const toMin = (t: string) => { const [h, m] = t.split(":").map(Number); return h * 60 + (m || 0); };
+                          const remaining = toMin(upcoming[0].horario_inicio) - nowMinutes;
+                          const rh = Math.floor(remaining / 60);
+                          const rm = remaining % 60;
+                          return (
+                            <p className="text-[10px] mt-2 font-mono font-bold" style={{ color: "#f59e0b" }}>
+                              Começa em {rh > 0 ? `${rh}h ` : ""}{rm}min
+                            </p>
+                          );
+                        })()}
                       </div>
                     ) : (
-                      <p className="text-[11px] text-white/30">Nenhum programa no ar agora</p>
+                      <p className="text-[11px] text-white/30">Nenhum programa programado</p>
                     )}
                   </div>
                 </div>
