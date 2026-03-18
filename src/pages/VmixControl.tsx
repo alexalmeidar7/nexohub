@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Monitor, LogOut, Loader2 } from "lucide-react";
+import { LogOut, Loader2 } from "lucide-react";
 import VmixPage from "@/components/VmixPage";
 import type { User } from "@supabase/supabase-js";
+import logoMixControl from "@/assets/logo-mixcontrol.png";
 
 export default function VmixControl() {
   const [user, setUser] = useState<User | null>(null);
@@ -55,10 +56,7 @@ export default function VmixControl() {
           style={{ backgroundColor: "#ffffff", boxShadow: "0 8px 40px rgba(0,0,0,0.3)" }}
         >
           <div className="flex flex-col items-center gap-2 mb-2">
-            <div className="w-14 h-14 rounded-full flex items-center justify-center" style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)" }}>
-              <Monitor className="text-white" size={28} />
-            </div>
-            <h1 className="text-xl font-bold" style={{ color: "#0d0446" }}>vMix Control</h1>
+            <img src={logoMixControl} alt="Mix Control" className="h-8" />
             <p className="text-xs" style={{ color: "#6b7280" }}>Faça login para acessar o controle</p>
           </div>
 
@@ -109,13 +107,10 @@ export default function VmixControl() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#ffffff" }}>
-      <header className="flex items-center justify-between px-6 py-3" style={{ backgroundColor: "#0d0446" }}>
+    <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#191919" }}>
+      <header className="flex items-center justify-between px-6 py-3" style={{ backgroundColor: "#242424" }}>
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)" }}>
-            <Monitor className="text-white" size={16} />
-          </div>
-          <span className="text-white font-bold text-sm">vMix Control</span>
+          <img src={logoMixControl} alt="Mix Control" className="h-7" />
         </div>
         <div className="flex items-center gap-3">
           <span className="text-white/60 text-xs">{user.email}</span>
@@ -124,7 +119,7 @@ export default function VmixControl() {
           </button>
         </div>
       </header>
-      <main className="flex-1 p-6" style={{ backgroundColor: "#f8f9fc" }}>
+      <main className="flex-1 p-6" style={{ backgroundColor: "#191919" }}>
         <VmixPage />
       </main>
     </div>
