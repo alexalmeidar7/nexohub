@@ -1146,7 +1146,7 @@ export default function VmixPage() {
                     }}>{input.number}</span>
                     <span className="text-[10px] font-bold truncate" style={{ color: isActive ? "#ff6b6b" : isPreview ? "#ddd" : "#999" }}>{input.title}</span>
                   </div>
-                  <div className="relative" style={{ aspectRatio: "3/2", backgroundColor: "#0a0a12" }}>
+                  <div className="relative" style={{ aspectRatio: "3/2", backgroundColor: "#111114" }}>
                     {savedUrl ? (
                       <img
                         src={`${savedUrl}/api/?Function=SnapshotInput&Input=${input.number}&Width=360&Height=240&_t=${Date.now()}`}
