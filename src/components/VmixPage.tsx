@@ -543,7 +543,7 @@ export default function VmixPage() {
 
   // ── Keepalive polling — silently refresh vMix state every 5s ──
   const silentRefresh = useCallback(async () => {
-    if (!savedUrl || !connected) return;
+    if (!savedUrl) return;
     try {
       const xmlText = await vmixFetch("/api/");
       const parser = new DOMParser();
@@ -583,14 +583,21 @@ export default function VmixPage() {
           setOverlays(prev => ({ ...prev, [n]: ovInput !== "" && ovInput !== "0" }));
         }
       }
+      // Reset fail counter on success
+      silentFailCountRef.current = 0;
     } catch {
-      // Connection lost — mark disconnected
-      setConnected(false);
+      // Only disconnect after 3 consecutive failures
+      silentFailCountRef.current += 1;
+      if (silentFailCountRef.current >= 3) {
+        setConnected(false);
+        silentFailCountRef.current = 0;
+      }
     }
-  }, [savedUrl, connected, vmixFetch]);
+  }, [savedUrl, vmixFetch]);
 
   useEffect(() => {
     if (!connected || !savedUrl) return;
+    silentFailCountRef.current = 0;
     const id = setInterval(silentRefresh, 5000);
     return () => clearInterval(id);
   }, [connected, savedUrl, silentRefresh]);
