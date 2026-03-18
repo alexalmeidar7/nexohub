@@ -171,16 +171,7 @@ export default function VmixPage() {
     return () => clearInterval(id);
   }, []);
 
-  // Periodic thumbnail refresh timestamp (every 2 seconds instead of on every render)
-  const [thumbTs, setThumbTs] = useState(() => Date.now());
-  useEffect(() => {
-    if (!connected) return;
-    const id = setInterval(() => setThumbTs(Date.now()), 2000);
-    return () => clearInterval(id);
-  }, [connected]);
-
-  // Thumbnail blob URLs for proxy mode
-  const [thumbBlobs, setThumbBlobs] = useState<Record<string, string>>({});
+   // (No thumbnail polling — vMix SnapshotInput saves to disk and triggers save dialogs)
 
   // NDI state
   const [ndiUrl, setNdiUrl] = useState("");
