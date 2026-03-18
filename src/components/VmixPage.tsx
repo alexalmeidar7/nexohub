@@ -525,45 +525,10 @@ export default function VmixPage() {
 
   if (loading) return <ModulePageSkeleton />;
 
-  // ── Detect iframe + local HTTP → show "open in new tab" banner ──
+  // ── Detect iframe + local HTTP → show inline warning ──
   const isEmbeddedPreview = window.self !== window.top;
   const hasLocalHttpUrl = savedUrl && isPrivateIp(savedUrl) && isInsecureHttpUrl(savedUrl);
   const showNewTabBanner = isEmbeddedPreview && hasLocalHttpUrl;
-
-  if (showNewTabBanner && !connected) {
-    return (
-      <div className="flex flex-col items-center justify-center py-16 px-4 text-center space-y-6">
-        <div className="rounded-2xl p-8 max-w-lg w-full space-y-5" style={{ backgroundColor: "#1a1a2e", border: "1px solid #f59e0b40" }}>
-          <div className="flex items-center justify-center gap-3">
-            <AlertTriangle size={28} style={{ color: "#f59e0b" }} />
-            <h2 className="text-lg font-bold" style={{ color: "#f59e0b" }}>Preview bloqueia conexão local</h2>
-          </div>
-          <p className="text-sm leading-relaxed" style={{ color: "#ffffff90" }}>
-            Este preview interno roda em <strong style={{ color: "#fff" }}>HTTPS</strong>, e o navegador bloqueia
-            requisições <strong style={{ color: "#fff" }}>HTTP</strong> para IPs locais
-            (<strong style={{ color: "#fff" }}>{savedUrl}</strong>) por política de <em>Mixed Content</em>.
-          </p>
-          <p className="text-sm leading-relaxed" style={{ color: "#ffffff70" }}>
-            Para conectar ao vMix na rede local, abra esta página em uma <strong style={{ color: "#fff" }}>nova aba</strong> do navegador:
-          </p>
-          <button
-            onClick={() => window.open("/vmix-control", "_blank", "noopener,noreferrer")}
-            className="w-full flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-sm font-bold text-white transition-all hover:brightness-110"
-            style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", boxShadow: "0 4px 20px rgba(38,143,250,0.3)" }}
-          >
-            <ExternalLink size={16} />
-            Abrir /vmix-control em nova aba
-          </button>
-          <div className="rounded-lg p-3 text-left space-y-1.5" style={{ backgroundColor: "#ffffff06", border: "1px solid #ffffff10" }}>
-            <p className="text-[11px] font-bold" style={{ color: "#ffffff60" }}>💡 Na nova aba, se necessário:</p>
-            <p className="text-[10px]" style={{ color: "#ffffff40" }}>
-              Clique no ícone de 🔒 cadeado na barra de endereço → <strong style={{ color: "#ffffff70" }}>Configurações do site</strong> → <strong style={{ color: "#ffffff70" }}>Conteúdo não seguro</strong> → <strong style={{ color: "#22c55e" }}>Permitir</strong>
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   // ── Styles ──
   const sectionBox = (title: string, icon: React.ReactNode, children: React.ReactNode, color = "#268ffa") => (
@@ -594,6 +559,23 @@ export default function VmixPage() {
   if (!connected) {
     return (
       <div className="space-y-0">
+        {/* Inline warning banner for iframe + local HTTP */}
+        {showNewTabBanner && (
+          <div className="rounded-xl p-4 mb-3 flex flex-col sm:flex-row items-start sm:items-center gap-3" style={{ backgroundColor: "#f59e0b15", border: "1px solid #f59e0b40" }}>
+            <AlertTriangle size={18} style={{ color: "#f59e0b", flexShrink: 0 }} />
+            <div className="flex-1 text-[11px] leading-relaxed" style={{ color: "#fbbf24" }}>
+              <strong>Preview HTTPS bloqueia HTTP local.</strong> Para conectar ao vMix ({savedUrl}), abra em nova aba e permita "Conteúdo não seguro" nas configurações do site.
+            </div>
+            <button
+              onClick={() => window.open("/vmix-control", "_blank", "noopener,noreferrer")}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-[11px] font-bold text-white whitespace-nowrap transition-all hover:brightness-110"
+              style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)" }}
+            >
+              <ExternalLink size={13} />
+              Abrir em nova aba
+            </button>
+          </div>
+        )}
         {/* URL input + action buttons row */}
         <div className="flex items-center gap-3 px-0 py-3 flex-wrap">
           <div className="flex gap-2 items-center flex-1 flex-wrap">
