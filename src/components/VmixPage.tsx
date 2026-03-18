@@ -99,6 +99,7 @@ export default function VmixPage() {
   const [streaming, setStreaming] = useState(false);
   const [recording, setRecording] = useState(false);
   const [overlays, setOverlays] = useState<Record<number, boolean>>({ 1: false, 2: false, 3: false, 4: false });
+  const [minimizedInputs, setMinimizedInputs] = useState<Record<string, boolean>>({});
   const [activeTab, setActiveTab] = useState<"controls" | "scenes" | "ndi">("controls");
   const [activePreset, setActivePreset] = useState<string | null>(null);
   const [connectionMode, setConnectionMode] = useState<"direct" | "proxy">(() => {
@@ -1097,26 +1098,79 @@ export default function VmixPage() {
 
         {/* ══ CONTROLS TAB ══ */}
         {activeTab === "controls" && (
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 items-start">
             {inputs.map(input => {
               const isActive = activeInput === input.number;
               const isPreview = previewInput === input.number;
+              const isMin = minimizedInputs[input.number];
+              const borderColor = isActive ? "#dc2626" : isPreview ? "#22c55e" : "#444";
+              const headerBg = isActive ? "#dc262640" : isPreview ? "#22c55e30" : "#2a2a38";
+
+              if (isMin) {
+                return (
+                  <div
+                    key={input.key || input.number}
+                    className="flex flex-col items-center rounded-lg overflow-hidden cursor-pointer transition-all duration-200 hover:brightness-110"
+                    style={{ backgroundColor: "#1a1a28", border: `2px solid ${borderColor}`, width: 32, minHeight: 120 }}
+                    onClick={() => sendCommand("Cut", input.number)}
+                  >
+                    <div
+                      className="w-full flex items-center justify-center py-1"
+                      style={{ backgroundColor: headerBg }}
+                      onContextMenu={e => { e.preventDefault(); setMinimizedInputs(prev => ({ ...prev, [input.number]: false })); }}
+                    >
+                      <span className="text-[8px] font-bold" style={{ color: isActive ? "#ff6b6b" : isPreview ? "#6be68c" : "#999" }}>{input.number}</span>
+                    </div>
+                    <div className="flex-1 flex items-center justify-center" style={{ writingMode: "vertical-rl", textOrientation: "mixed" }}>
+                      <span className="text-[8px] font-bold text-white/50 truncate" style={{ maxHeight: 90 }}>{input.title}</span>
+                    </div>
+                  </div>
+                );
+              }
+
               return (
-                <button
+                <div
                   key={input.key || input.number}
+                  className="rounded-lg overflow-hidden transition-all duration-200 hover:brightness-110 cursor-pointer"
+                  style={{ backgroundColor: "#1a1a28", border: `2px solid ${borderColor}`, width: 180 }}
                   onClick={() => sendCommand("Cut", input.number)}
-                  className="px-5 py-3 rounded-lg text-xs font-black uppercase tracking-wider transition-all duration-200 hover:scale-[1.03]"
-                  style={{
-                    backgroundColor: isActive ? "#1e3a4a" : isPreview ? "#2d501640" : "#3a3a3a",
-                    color: isActive ? "#fff" : isPreview ? "#7ab648" : "#ccc",
-                    border: isActive ? "2px solid #2d5a6a" : isPreview ? "2px solid #2d5016" : "2px solid #555",
-                    minWidth: 60,
-                  }}
-                  onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = isActive ? "0 0 20px #1e3a4a80" : "0 0 16px #3a3a3a60"; }}
-                  onMouseLeave={e => { (e.target as HTMLElement).style.boxShadow = "none"; }}
                 >
-                  {input.title.length > 10 ? input.title.substring(0, 10) : input.title}
-                </button>
+                  <div
+                    className="flex items-center gap-1.5 px-2 py-1"
+                    style={{ backgroundColor: headerBg }}
+                    onContextMenu={e => { e.preventDefault(); setMinimizedInputs(prev => ({ ...prev, [input.number]: true })); }}
+                  >
+                    <span className="text-[9px] font-bold px-1 rounded" style={{
+                      backgroundColor: isActive ? "#dc2626" : isPreview ? "#22c55e" : "#444",
+                      color: isActive || isPreview ? "#fff" : "#aaa",
+                    }}>{input.number}</span>
+                    <span className="text-[10px] font-bold truncate" style={{ color: isActive ? "#ff6b6b" : isPreview ? "#6be68c" : "#ccc" }}>{input.title}</span>
+                  </div>
+                  <div className="relative" style={{ aspectRatio: "3/2", backgroundColor: "#0a0a12" }}>
+                    {savedUrl ? (
+                      <img
+                        src={`${savedUrl}/api/?Function=SnapshotInput&Input=${input.number}&Width=360&Height=240&_t=${Date.now()}`}
+                        alt={input.title}
+                        className="w-full h-full object-contain"
+                        onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <span className="text-[10px] text-white/20">Sem preview</span>
+                      </div>
+                    )}
+                    {isActive && (
+                      <div className="absolute top-1 right-1">
+                        <span className="text-[8px] font-bold px-1 rounded" style={{ backgroundColor: "#dc2626", color: "#fff" }}>PGM</span>
+                      </div>
+                    )}
+                    {isPreview && !isActive && (
+                      <div className="absolute top-1 right-1">
+                        <span className="text-[8px] font-bold px-1 rounded" style={{ backgroundColor: "#22c55e", color: "#000" }}>PVW</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
               );
             })}
             {inputs.length === 0 && (
