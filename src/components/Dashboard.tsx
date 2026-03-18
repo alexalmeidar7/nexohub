@@ -279,17 +279,6 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       setHoveredMenu(null);
       return;
     }
-    if (parentLabel === "vmix" && child.label === "vmix control") {
-      const vmixUrl = localStorage.getItem(`vmix_url_${user?.id}`);
-      if (vmixUrl) {
-        window.open(vmixUrl, "_blank");
-      } else {
-        setCurrentPage("vmix");
-        alert("Configure e salve a URL do vMix Web Controller primeiro.");
-      }
-      setHoveredMenu(null);
-      return;
-    }
     if (child.page) {
       setCurrentPage(child.page);
       setMobileMenuOpen(false);
