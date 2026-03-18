@@ -1132,16 +1132,8 @@ export default function VmixPage() {
               </div>
             </div>
 
-            {/* ── Transições & Overlays ── */}
-            {sectionBox("Transições", <Camera size={14} style={{ color: "#6b1010" }} />, (
-              <div className="flex flex-wrap gap-2">
-                {controlBtn("CUT", () => sendCommand("Cut"), "#6b1010", true)}
-                {controlBtn("FADE", () => sendCommand("Fade", undefined, "1000"), "#3a3a3a")}
-                {controlBtn("FTB", () => sendCommand("FadeToBlack"), "#3a3a3a")}
-                {controlBtn("STINGER 1", () => sendCommand("Stinger1"), "#1e3a4a")}
-                {controlBtn("STINGER 2", () => sendCommand("Stinger2"), "#1e3a4a")}
-              </div>
-            ), "#6b1010")}
+
+
 
             {sectionBox("Overlays / GFX", <Layers size={14} style={{ color: "#2d5016" }} />, (
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
