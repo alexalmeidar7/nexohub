@@ -250,12 +250,12 @@ export default function VmixPage() {
     if (!user) return;
     supabase
       .from("programas")
-      .select("id, nome, ativo, horario_inicio, horario_fim, dias_semana, estudio")
+      .select("id, nome, ativo, horario_inicio, horario_fim, dias_semana, estudio, apresentadores(foto)")
       .eq("user_id", user.id)
       .eq("ativo", true)
       .order("horario_inicio")
       .then(({ data }) => {
-        if (data) setProgramas(data);
+        if (data) setProgramas(data.map((p: any) => ({ ...p, apresentador_foto: p.apresentadores?.foto || null })));
       });
   }, [user]);
 
