@@ -63,24 +63,42 @@ export default function VmixPage() {
   const [streaming, setStreaming] = useState(false);
   const [recording, setRecording] = useState(false);
 
-  // Load saved vMix URL from empresa_config or user_settings
+  // Load saved vMix URL from user_settings in database
   useEffect(() => {
     if (!user) return;
-    // We'll store the vMix URL in user_settings.music_xml_url field temporarily
-    // or better, we use a dedicated approach
-    const stored = localStorage.getItem(`vmix_url_${user.id}`);
-    if (stored) {
-      setVmixUrl(stored);
-      setSavedUrl(stored);
-    }
-    setLoading(false);
+    const loadUrl = async () => {
+      const { data } = await supabase
+        .from("user_settings")
+        .select("vmix_url")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (data?.vmix_url) {
+        setVmixUrl(data.vmix_url);
+        setSavedUrl(data.vmix_url);
+      }
+      setLoading(false);
+    };
+    loadUrl();
   }, [user]);
 
-  const saveUrl = () => {
+  const saveUrl = async () => {
     if (!user || !vmixUrl.trim()) return;
-    localStorage.setItem(`vmix_url_${user.id}`, vmixUrl.trim());
-    setSavedUrl(vmixUrl.trim());
-    toast({ title: "URL salva", description: "Endereço do vMix Web Controller salvo." });
+    const trimmed = vmixUrl.trim();
+    // Upsert into user_settings
+    const { data: existing } = await supabase
+      .from("user_settings")
+      .select("id")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (existing) {
+      await supabase.from("user_settings").update({ vmix_url: trimmed }).eq("user_id", user.id);
+    } else {
+      await supabase.from("user_settings").insert({ user_id: user.id, vmix_url: trimmed });
+    }
+    setSavedUrl(trimmed);
+    // Also keep localStorage for the Dashboard menu quick-open
+    localStorage.setItem(`vmix_url_${user.id}`, trimmed);
+    toast({ title: "URL salva", description: "Endereço do vMix Web Controller salvo no banco de dados." });
   };
 
   const connectToVmix = useCallback(async () => {
