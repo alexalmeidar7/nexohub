@@ -1372,7 +1372,7 @@ export default function VmixPage() {
                 <li>Use o <strong className="text-white/60">NDI Studio Monitor</strong> para verificar fontes disponíveis</li>
                 <li>O formato padrão é: <code className="bg-white/5 px-1 rounded text-white/50">NOME-PC (Nome da Fonte)</code></li>
               </ul>
-            ), "#a855f7")}
+            ), "#777")}
           </>
         )}
       </div>
