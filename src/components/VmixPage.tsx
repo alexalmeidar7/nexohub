@@ -162,7 +162,7 @@ export default function VmixPage() {
       .select("id, nome, ativo, horario_inicio, horario_fim, dias_semana")
       .eq("user_id", user.id)
       .eq("ativo", true)
-      .order("nome")
+      .order("horario_inicio")
       .then(({ data }) => {
         if (data) setProgramas(data);
       });
