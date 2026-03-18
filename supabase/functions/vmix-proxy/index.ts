@@ -74,15 +74,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    if (isPrivateOrLocalUrl(vmixBaseUrl)) {
-      return new Response(
-        JSON.stringify({
-          error:
-            "A URL do vMix está em IP local/privado. No modo Proxy, use IP público (com port forwarding), domínio público ou túnel HTTPS.",
-        }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
+    // Allow local IPs — the proxy will attempt the connection and timeout if unreachable
 
     const { path } = await req.json();
 

@@ -301,11 +301,8 @@ export default function VmixPage() {
       }
     }
 
-    // Test Proxy (only for non-local IPs)
-    if (isLocal) {
-      result.proxyResult = "skipped";
-      result.proxyError = "IP local — proxy na nuvem não alcança";
-    } else {
+    // Test Proxy
+    {
       try {
         const text = await vmixProxyFetch("/api/");
         result.proxyResult = text.includes("<vmix>") || text.includes("<inputs>") || text.includes("version") ? "ok" : "fail";
