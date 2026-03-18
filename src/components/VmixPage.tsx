@@ -1013,10 +1013,11 @@ export default function VmixPage() {
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className="flex items-center gap-1.5 px-5 py-2.5 text-xs font-bold uppercase tracking-wider transition-all"
+            className="flex items-center gap-1.5 px-5 py-2.5 text-xs font-bold uppercase tracking-wider transition-all duration-200 hover:scale-[1.03]"
             style={{
-              backgroundColor: activeTab === tab.key ? "#dc2626" : "transparent",
+              backgroundColor: activeTab === tab.key ? "#6b1010" : "transparent",
               color: activeTab === tab.key ? "#fff" : "#666",
+              boxShadow: activeTab === tab.key ? "0 0 12px #6b101040" : "none",
             }}
           >
             {tab.icon} {tab.label}
