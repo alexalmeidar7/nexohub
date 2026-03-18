@@ -13,7 +13,6 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Authenticate user
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -28,21 +27,21 @@ Deno.serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } }
     );
 
-    const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsErr } = await supabase.auth.getClaims(token);
-    if (claimsErr || !claimsData?.claims) {
+    // Use getUser instead of getClaims (which doesn't exist)
+    const { data: userData, error: userErr } = await supabase.auth.getUser();
+    if (userErr || !userData?.user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const userId = claimsData.claims.sub;
+    const userId = userData.user.id;
 
-    // Get user's vMix URL from DB
+    // Get user's vMix URL and credentials from DB
     const { data: settings } = await supabase
       .from("user_settings")
-      .select("vmix_url")
+      .select("vmix_url, vmix_user, vmix_pass")
       .eq("user_id", userId)
       .maybeSingle();
 
@@ -54,7 +53,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Parse request body
     const { path } = await req.json();
 
     if (!path || typeof path !== "string") {
@@ -64,18 +62,26 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Build full URL: base + path (path already includes query string)
     const targetUrl = vmixBaseUrl.replace(/\/+$/, "") + path;
-
     console.log(`Proxying request to: ${targetUrl}`);
+
+    // Build headers with optional Basic Auth for vMix enhanced security
+    const fetchHeaders: Record<string, string> = {
+      "User-Agent": "Mozilla/5.0 (compatible; VmixProxy/1.0)",
+      Accept: "application/xml, text/xml, text/html, */*",
+    };
+
+    const vmixUser = settings?.vmix_user;
+    const vmixPass = settings?.vmix_pass;
+    if (vmixUser) {
+      const credentials = btoa(`${vmixUser}:${vmixPass || ""}`);
+      fetchHeaders["Authorization"] = `Basic ${credentials}`;
+    }
 
     const response = await fetch(targetUrl, {
       method: "GET",
-      headers: {
-        "User-Agent": "Mozilla/5.0 (compatible; VmixProxy/1.0)",
-        Accept: "application/xml, text/xml, text/html, */*",
-      },
-      signal: AbortSignal.timeout(10000),
+      headers: fetchHeaders,
+      signal: AbortSignal.timeout(15000),
     });
 
     const contentType = response.headers.get("content-type") || "text/plain";
@@ -90,9 +96,15 @@ Deno.serve(async (req) => {
     });
   } catch (error) {
     console.error("vmix-proxy error:", error);
+    const message = error.message || "Proxy error";
+    const isTimeout = message.includes("timed out") || message.includes("timeout");
     return new Response(
-      JSON.stringify({ error: error.message || "Proxy error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      JSON.stringify({ 
+        error: isTimeout 
+          ? "Timeout: não foi possível alcançar o vMix. Verifique se a URL é acessível externamente (redirecionamento de porta no roteador)." 
+          : message 
+      }),
+      { status: isTimeout ? 504 : 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });
