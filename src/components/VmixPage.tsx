@@ -333,7 +333,7 @@ export default function VmixPage() {
     setDiagRunning(false);
   }, [savedUrl, vmixDirectFetch, vmixProxyFetch]);
 
-
+  const connectToVmix = useCallback(async () => {
     if (!savedUrl) return;
 
     const isLocalUrl = isPrivateIp(savedUrl);
