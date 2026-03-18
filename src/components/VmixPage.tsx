@@ -276,7 +276,7 @@ export default function VmixPage() {
       let path = `/api/?Function=${encodeURIComponent(fn)}`;
       if (input) path += `&Input=${encodeURIComponent(input)}`;
       if (value) path += `&Value=${encodeURIComponent(value)}`;
-      await vmixProxy(path);
+      await vmixFetch(path);
       setTimeout(() => connectToVmix(), 300);
     } catch {
       toast({ title: "Erro", description: "Falha ao enviar comando.", variant: "destructive" });
