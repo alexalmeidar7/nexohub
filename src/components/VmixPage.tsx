@@ -1103,8 +1103,8 @@ export default function VmixPage() {
               const isActive = activeInput === input.number;
               const isPreview = previewInput === input.number;
               const isMin = minimizedInputs[input.number];
-              const borderColor = isActive ? "#dc2626" : isPreview ? "#22c55e" : "#444";
-              const headerBg = isActive ? "#dc262640" : isPreview ? "#22c55e30" : "#2a2a38";
+              const borderColor = isActive ? "#dc2626" : isPreview ? "#777" : "#333338";
+              const headerBg = isActive ? "#dc262630" : isPreview ? "#ffffff10" : "#222228";
 
               if (isMin) {
                 return (
