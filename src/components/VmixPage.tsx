@@ -569,13 +569,65 @@ export default function VmixPage() {
     toast({ title: "Cena executada", description: `"${scene.name}" concluída.` });
   };
 
-  const addNdiInput = async () => {
-    if (!savedUrl || !ndiUrl.trim()) return;
+  const scanNdiSources = useCallback(async () => {
+    if (!savedUrl || !connected) {
+      setNdiSources([]);
+      return;
+    }
+    setNdiScanning(true);
     try {
-      await vmixFetch(`/api/?Function=AddInput&Value=NDI|${encodeURIComponent(ndiUrl.trim())}`);
-      setNdiUrl("");
+      const xmlText = await vmixFetch("/api/");
+      const parser = new DOMParser();
+      const xml = parser.parseFromString(xmlText, "text/xml");
+      // vMix exposes NDI sources in the XML under <ndisources> or we parse from available inputs
+      const ndiSourceEls = xml.querySelectorAll("ndisource");
+      const sources: string[] = [];
+      ndiSourceEls.forEach(el => {
+        const name = el.textContent?.trim();
+        if (name) sources.push(name);
+      });
+      // Also try to find NDI sources from the XML root element attributes or child elements
+      if (sources.length === 0) {
+        // Fallback: try fetching NDI sources list via vMix function
+        try {
+          const ndiXml = await vmixFetch("/api/?Function=NDISources");
+          // Parse response for any source names
+          const ndiDoc = new DOMParser().parseFromString(ndiXml, "text/xml");
+          ndiDoc.querySelectorAll("source, ndisource, item").forEach(el => {
+            const name = el.textContent?.trim() || el.getAttribute("name")?.trim();
+            if (name) sources.push(name);
+          });
+        } catch { /* NDISources endpoint may not exist */ }
+      }
+      setNdiSources(sources);
+      if (sources.length === 0) {
+        toast({ title: "Busca NDI", description: "Nenhuma fonte NDI encontrada na rede. Verifique se o NDI Tools está ativo." });
+      } else {
+        toast({ title: "Fontes NDI encontradas", description: `${sources.length} fonte(s) detectada(s).` });
+      }
+    } catch {
+      setNdiSources([]);
+      toast({ title: "Erro", description: "Falha ao buscar fontes NDI.", variant: "destructive" });
+    } finally {
+      setNdiScanning(false);
+    }
+  }, [savedUrl, connected, vmixFetch, toast]);
+
+  // Auto-scan NDI when entering the NDI tab
+  useEffect(() => {
+    if (activeTab === "ndi" && connected) {
+      scanNdiSources();
+    }
+  }, [activeTab, connected, scanNdiSources]);
+
+  const addNdiInput = async (source?: string) => {
+    const ndiName = source || ndiUrl.trim();
+    if (!savedUrl || !ndiName) return;
+    try {
+      await vmixFetch(`/api/?Function=AddInput&Value=NDI|${encodeURIComponent(ndiName)}`);
+      if (!source) setNdiUrl("");
       setTimeout(() => connectToVmix(), 500);
-      toast({ title: "NDI adicionado", description: "Fonte NDI adicionada como input." });
+      toast({ title: "NDI adicionado", description: `Fonte "${ndiName}" adicionada como input.` });
     } catch {
       toast({ title: "Erro", description: "Falha ao adicionar fonte NDI.", variant: "destructive" });
     }
