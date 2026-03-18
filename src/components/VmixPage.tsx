@@ -350,17 +350,7 @@ export default function VmixPage() {
   const connectToVmix = useCallback(async () => {
     if (!savedUrl) return;
 
-    const isLocalUrl = isPrivateIp(savedUrl);
-    const effectiveMode: "direct" | "proxy" =
-      connectionMode === "proxy" && isLocalUrl ? "direct" : connectionMode;
-
-    if (connectionMode === "proxy" && isLocalUrl) {
-      setConnectionMode("direct");
-      toast({
-        title: "IP local detectado",
-        description: "Mudamos para 'Direto' automaticamente para testar conexão na rede local.",
-      });
-    }
+    const effectiveMode = connectionMode;
 
     setConnecting(true);
     try {
