@@ -255,7 +255,23 @@ export default function VmixPage() {
       .eq("ativo", true)
       .order("horario_inicio")
       .then(({ data }) => {
-        if (data) setProgramas(data.map((p: any) => ({ ...p, apresentador_foto: p.apresentadores?.foto || null })));
+        if (data) {
+          const mapped = data.map((p: any) => ({ ...p, apresentador_foto: p.apresentadores?.foto || null }));
+          try {
+            const savedOrder = JSON.parse(localStorage.getItem("vmix_preset_order") || "[]") as string[];
+            if (savedOrder.length > 0) {
+              mapped.sort((a: any, b: any) => {
+                const ai = savedOrder.indexOf(a.id);
+                const bi = savedOrder.indexOf(b.id);
+                if (ai === -1 && bi === -1) return 0;
+                if (ai === -1) return 1;
+                if (bi === -1) return 1;
+                return ai - bi;
+              });
+            }
+          } catch {}
+          setProgramas(mapped);
+        }
       });
   }, [user]);
 
@@ -2108,7 +2124,7 @@ export default function VmixPage() {
                             <img
                               src={prog.apresentador_foto}
                               alt=""
-                              className="absolute inset-0 w-full h-full object-cover object-right pointer-events-none"
+                              className="absolute inset-0 w-full h-full object-contain object-right-bottom pointer-events-none"
                               style={{ opacity: 0.4, filter: "grayscale(100%)", maskImage: "linear-gradient(to left, black 40%, transparent 100%)", WebkitMaskImage: "linear-gradient(to left, black 40%, transparent 100%)" }}
                             />
                           )}
@@ -2159,7 +2175,7 @@ export default function VmixPage() {
                           >
                             {idx > 0 && (
                               <button
-                                onClick={(e) => { e.stopPropagation(); const arr = [...programas]; [arr[idx - 1], arr[idx]] = [arr[idx], arr[idx - 1]]; setProgramas(arr); }}
+                                onClick={(e) => { e.stopPropagation(); const arr = [...programas]; [arr[idx - 1], arr[idx]] = [arr[idx], arr[idx - 1]]; setProgramas(arr); localStorage.setItem("vmix_preset_order", JSON.stringify(arr.map(p => p.id))); }}
                                 className="w-5 h-5 rounded flex items-center justify-center text-[9px] hover:bg-white/20 transition-colors"
                                 style={{ color: "#ccc" }}
                                 title="Mover para esquerda"
@@ -2167,7 +2183,7 @@ export default function VmixPage() {
                             )}
                             {idx < programas.length - 1 && (
                               <button
-                                onClick={(e) => { e.stopPropagation(); const arr = [...programas]; [arr[idx], arr[idx + 1]] = [arr[idx + 1], arr[idx]]; setProgramas(arr); }}
+                                onClick={(e) => { e.stopPropagation(); const arr = [...programas]; [arr[idx], arr[idx + 1]] = [arr[idx + 1], arr[idx]]; setProgramas(arr); localStorage.setItem("vmix_preset_order", JSON.stringify(arr.map(p => p.id))); }}
                                 className="w-5 h-5 rounded flex items-center justify-center text-[9px] hover:bg-white/20 transition-colors"
                                 style={{ color: "#ccc" }}
                                 title="Mover para direita"
