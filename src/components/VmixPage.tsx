@@ -98,6 +98,7 @@ export default function VmixPage() {
   const [previewInput, setPreviewInput] = useState<string | null>(null);
   const [streaming, setStreaming] = useState(false);
   const [recording, setRecording] = useState(false);
+  const [overlays, setOverlays] = useState<Record<number, boolean>>({ 1: false, 2: false, 3: false, 4: false });
   const [activeTab, setActiveTab] = useState<"controls" | "scenes" | "ndi">("controls");
   const [activePreset, setActivePreset] = useState<string | null>(null);
   const [connectionMode, setConnectionMode] = useState<"direct" | "proxy">(() => {
