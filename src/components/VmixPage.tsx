@@ -1005,11 +1005,11 @@ export default function VmixPage() {
               onClick={() => sendCommand(t.fn, undefined, t.value)}
               className="w-full px-2 py-1.5 rounded text-[9px] font-bold uppercase tracking-wider transition-all duration-200 hover:scale-[1.05]"
               style={{
-                backgroundColor: t.active ? "#6b1010" : "#3a3a3a",
-                color: t.active ? "#fff" : "#ccc",
-                border: `1px solid ${t.active ? "#8b2020" : "#555"}`,
+                backgroundColor: t.active ? "#6b1010" : "#2a2a30",
+                color: t.active ? "#fff" : "#aaa",
+                border: `1px solid ${t.active ? "#8b2020" : "#3a3a40"}`,
               }}
-              onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = `0 0 14px ${t.active ? "#6b101060" : "#3a3a3a60"}`; }}
+              onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = `0 0 14px ${t.active ? "#6b101060" : "#2a2a3060"}`; }}
               onMouseLeave={e => { (e.target as HTMLElement).style.boxShadow = "none"; }}
             >
               {t.label}
