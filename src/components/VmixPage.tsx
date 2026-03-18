@@ -65,6 +65,14 @@ interface Programa {
   ativo: boolean;
 }
 
+// Helper to detect private/local IPs
+function isPrivateIp(url: string): boolean {
+  try {
+    const hostname = new URL(url).hostname;
+    return /^(10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|127\.|localhost)/i.test(hostname);
+  } catch { return false; }
+}
+
 export default function VmixPage() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -82,6 +90,10 @@ export default function VmixPage() {
   const [recording, setRecording] = useState(false);
   const [activeTab, setActiveTab] = useState<"controls" | "scenes" | "ndi">("controls");
   const [activePreset, setActivePreset] = useState<string | null>(null);
+  const [connectionMode, setConnectionMode] = useState<"direct" | "proxy">(() => {
+    try { return (localStorage.getItem("vmix_conn_mode") as "direct" | "proxy") || "direct"; }
+    catch { return "direct"; }
+  });
 
   // Programas from DB
   const [programas, setProgramas] = useState<Programa[]>([]);
@@ -137,6 +149,11 @@ export default function VmixPage() {
     loadUrl();
   }, [user]);
 
+  // Persist connection mode
+  useEffect(() => {
+    localStorage.setItem("vmix_conn_mode", connectionMode);
+  }, [connectionMode]);
+
   const saveUrl = async () => {
     if (!user || !vmixUrl.trim()) return;
     const trimmed = vmixUrl.trim();
@@ -153,25 +170,60 @@ export default function VmixPage() {
     }
     setSavedUrl(trimmed);
     localStorage.setItem(`vmix_url_${user.id}`, trimmed);
+
+    // Auto-detect best mode
+    if (isPrivateIp(trimmed) && connectionMode === "proxy") {
+      setConnectionMode("direct");
+      toast({ title: "Modo alterado para Direto", description: "IP local detectado. Usando conexão direta do navegador." });
+    } else if (!isPrivateIp(trimmed) && connectionMode === "direct") {
+      setConnectionMode("proxy");
+      toast({ title: "Modo alterado para Proxy", description: "IP público detectado. Usando conexão via proxy." });
+    }
     toast({ title: "Configuração salva", description: "URL e credenciais do vMix salvas." });
   };
 
-  const vmixProxy = useCallback(async (path: string): Promise<string> => {
+  // Direct fetch to vMix (browser → vMix, no edge function)
+  const vmixDirectFetch = useCallback(async (path: string): Promise<string> => {
+    if (!savedUrl) throw new Error("URL não configurada");
+    const baseUrl = savedUrl.replace(/\/+$/, "");
+    const targetUrl = baseUrl + path;
+    const headers: Record<string, string> = {
+      "Accept": "application/xml, text/xml, text/html, */*",
+    };
+    if (vmixUser) {
+      headers["Authorization"] = `Basic ${btoa(`${vmixUser}:${vmixPass || ""}`)}`;
+    }
+    const response = await fetch(targetUrl, {
+      method: "GET",
+      headers,
+      signal: AbortSignal.timeout(10000),
+    });
+    return await response.text();
+  }, [savedUrl, vmixUser, vmixPass]);
+
+  // Proxy fetch via Edge Function (browser → cloud → vMix)
+  const vmixProxyFetch = useCallback(async (path: string): Promise<string> => {
     const { data, error } = await supabase.functions.invoke("vmix-proxy", {
       body: { path },
     });
     if (error) throw new Error(error.message || "Proxy error");
-    // data can be a string (XML) or parsed object
     if (typeof data === "string") return data;
-    // If the runtime auto-parsed as JSON, stringify it back
     return typeof data === "object" ? JSON.stringify(data) : String(data);
   }, []);
+
+  // Unified fetch that uses the selected mode
+  const vmixFetch = useCallback(async (path: string): Promise<string> => {
+    if (connectionMode === "direct") {
+      return vmixDirectFetch(path);
+    }
+    return vmixProxyFetch(path);
+  }, [connectionMode, vmixDirectFetch, vmixProxyFetch]);
 
   const connectToVmix = useCallback(async () => {
     if (!savedUrl) return;
     setConnecting(true);
     try {
-      const xmlText = await vmixProxy("/api/");
+      const xmlText = await vmixFetch("/api/");
       const parser = new DOMParser();
       const xml = parser.parseFromString(xmlText, "text/xml");
 
@@ -203,14 +255,20 @@ export default function VmixPage() {
       if (recordingEl) setRecording(recordingEl.textContent === "True");
 
       setConnected(true);
-      toast({ title: "Conectado!", description: `${parsedInputs.length} inputs encontrados.` });
+      toast({ title: "Conectado!", description: `${parsedInputs.length} inputs (modo ${connectionMode === "direct" ? "direto" : "proxy"}).` });
     } catch {
       setConnected(false);
-      toast({ title: "Erro de conexão", description: "Verifique se o vMix Web Controller está ativo e acessível.", variant: "destructive" });
+      const isLocal = isPrivateIp(savedUrl);
+      const hint = connectionMode === "proxy" && isLocal
+        ? " IP local detectado — tente o modo 'Direto'."
+        : connectionMode === "direct" && !isLocal
+        ? " IP público detectado — tente o modo 'Proxy'."
+        : "";
+      toast({ title: "Erro de conexão", description: `Verifique se o vMix Web Controller está ativo.${hint}`, variant: "destructive" });
     } finally {
       setConnecting(false);
     }
-  }, [savedUrl, toast, vmixProxy]);
+  }, [savedUrl, toast, vmixFetch, connectionMode]);
 
   const sendCommand = async (fn: string, input?: string, value?: string) => {
     if (!savedUrl) return;
@@ -218,7 +276,7 @@ export default function VmixPage() {
       let path = `/api/?Function=${encodeURIComponent(fn)}`;
       if (input) path += `&Input=${encodeURIComponent(input)}`;
       if (value) path += `&Value=${encodeURIComponent(value)}`;
-      await vmixProxy(path);
+      await vmixFetch(path);
       setTimeout(() => connectToVmix(), 300);
     } catch {
       toast({ title: "Erro", description: "Falha ao enviar comando.", variant: "destructive" });
@@ -238,7 +296,7 @@ export default function VmixPage() {
   const addNdiInput = async () => {
     if (!savedUrl || !ndiUrl.trim()) return;
     try {
-      await vmixProxy(`/api/?Function=AddInput&Value=NDI|${encodeURIComponent(ndiUrl.trim())}`);
+      await vmixFetch(`/api/?Function=AddInput&Value=NDI|${encodeURIComponent(ndiUrl.trim())}`);
       setNdiUrl("");
       setTimeout(() => connectToVmix(), 500);
       toast({ title: "NDI adicionado", description: "Fonte NDI adicionada como input." });
@@ -366,6 +424,31 @@ export default function VmixPage() {
             </button>
             {savedUrl && (
               <>
+                {/* Connection mode toggle */}
+                <div className="flex items-center rounded-lg overflow-hidden" style={{ border: "1px solid #ffffff15" }}>
+                  <button
+                    onClick={() => setConnectionMode("direct")}
+                    className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider transition-all"
+                    style={{
+                      backgroundColor: connectionMode === "direct" ? "#22c55e30" : "transparent",
+                      color: connectionMode === "direct" ? "#22c55e" : "#ffffff40",
+                    }}
+                    title="Conexão direta do navegador ao vMix (rede local)"
+                  >
+                    Direto
+                  </button>
+                  <button
+                    onClick={() => setConnectionMode("proxy")}
+                    className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider transition-all"
+                    style={{
+                      backgroundColor: connectionMode === "proxy" ? "#268ffa30" : "transparent",
+                      color: connectionMode === "proxy" ? "#268ffa" : "#ffffff40",
+                    }}
+                    title="Conexão via proxy na nuvem (IP público necessário)"
+                  >
+                    Proxy
+                  </button>
+                </div>
                 <button
                   onClick={connectToVmix}
                   disabled={connecting}
@@ -379,27 +462,26 @@ export default function VmixPage() {
                   <button className="p-1.5 rounded-lg text-white/30 hover:text-white/60 transition-colors">
                     <HelpCircle size={14} />
                   </button>
-                  <div className="absolute left-0 top-full mt-2 w-80 p-4 rounded-lg text-[11px] text-white/70 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50"
+                  <div className="absolute left-0 top-full mt-2 w-96 p-4 rounded-lg text-[11px] text-white/70 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50"
                     style={{ backgroundColor: "#2a2a3a", border: "1px solid #ffffff15", boxShadow: "0 8px 24px rgba(0,0,0,0.5)" }}
                   >
-                    <p className="font-bold text-white/90 mb-2">Como conectar (redirecionamento de porta):</p>
-                    <ol className="space-y-1.5 list-decimal list-inside text-white/50">
-                      <li>No vMix: <strong className="text-white/70">Settings → Web Controller</strong> → Habilitar (porta 8088)</li>
-                      <li>No roteador: acesse o painel admin (geralmente 192.168.1.1)</li>
-                      <li>Em <strong className="text-white/70">Redirecionamento de Porta / Port Forwarding</strong>:</li>
-                    </ol>
-                    <div className="ml-4 mt-1 mb-2 p-2 rounded text-[10px]" style={{ backgroundColor: "#1a1a2e" }}>
-                      <p>Porta externa: <strong className="text-white/80">8088</strong></p>
-                      <p>IP interno: <strong className="text-white/80">192.168.x.x</strong> (IP do PC com vMix)</p>
-                      <p>Porta interna: <strong className="text-white/80">8088</strong></p>
-                      <p>Protocolo: <strong className="text-white/80">TCP</strong></p>
+                    <p className="font-bold text-white/90 mb-2">Modos de conexão:</p>
+                    <div className="mb-3 p-2 rounded" style={{ backgroundColor: "#22c55e10", border: "1px solid #22c55e30" }}>
+                      <p className="font-bold text-[#22c55e] mb-1">🟢 Modo DIRETO (rede local)</p>
+                      <p className="text-white/50">O navegador conecta diretamente ao vMix. Use o IP local (ex: <strong className="text-white/70">http://192.168.100.6:8088</strong>). Ideal quando você está na mesma rede que o vMix.</p>
                     </div>
-                    <ol className="space-y-1.5 list-decimal list-inside text-white/50" start={4}>
+                    <div className="mb-3 p-2 rounded" style={{ backgroundColor: "#268ffa10", border: "1px solid #268ffa30" }}>
+                      <p className="font-bold text-[#268ffa] mb-1">🔵 Modo PROXY (acesso remoto)</p>
+                      <p className="text-white/50">Conexão via nuvem. Requer IP público com redirecionamento de porta no roteador (ex: <strong className="text-white/70">http://SEU_IP_PUBLICO:8088</strong>).</p>
+                    </div>
+                    <p className="font-bold text-white/90 mb-1">Port Forwarding (modo Proxy):</p>
+                    <ol className="space-y-1 list-decimal list-inside text-white/50 text-[10px]">
+                      <li>No vMix: <strong className="text-white/70">Settings → Web Controller</strong> → porta 8088</li>
+                      <li>No roteador: <strong className="text-white/70">Port Forwarding</strong> → porta 8088 TCP → IP do PC</li>
                       <li>Descubra seu IP público em <strong className="text-white/70">whatismyip.com</strong></li>
-                      <li>Cole aqui: <strong className="text-white/70">http://SEU_IP_PUBLICO:8088</strong></li>
-                      <li>Se o vMix tiver "Enhanced Security", preencha usuário e senha</li>
+                      <li>Cole: <strong className="text-white/70">http://SEU_IP_PUBLICO:8088</strong></li>
                     </ol>
-                    <p className="mt-2 text-white/30 text-[10px]">💡 Dica: use um serviço de DNS dinâmico (No-IP, DuckDNS) se seu IP muda com frequência.</p>
+                    <p className="mt-2 text-white/30 text-[10px]">💡 O modo é detectado automaticamente pelo tipo de IP.</p>
                   </div>
                 </div>
               </>
