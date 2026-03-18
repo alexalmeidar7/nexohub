@@ -157,10 +157,7 @@ export default function VmixPage() {
   });
   const [editingHlsInput, setEditingHlsInput] = useState<string | null>(null);
   const [hlsTempUrl, setHlsTempUrl] = useState("");
-   // iframe-based monitor preview
-  const [useIframeMonitor, setUseIframeMonitor] = useState<boolean>(() => {
-    try { return localStorage.getItem("vmix_iframe_monitor") === "true"; } catch { return false; }
-  });
+   // Monitor stream URLs (MJPEG/JPEG/HLS for Preview and Output)
   // Monitor stream URLs (MJPEG/JPEG/HLS for Preview and Output)
   const [monitorStreamUrls, setMonitorStreamUrls] = useState<{ preview: string; output: string }>(() => {
     try { const s = localStorage.getItem("vmix_monitor_streams"); return s ? JSON.parse(s) : { preview: "", output: "" }; } catch { return { preview: "", output: "" }; }
@@ -228,10 +225,7 @@ export default function VmixPage() {
     localStorage.setItem("vmix_input_hls", JSON.stringify(inputHlsUrls));
   }, [inputHlsUrls]);
 
-  // Persist iframe monitor preference
-  useEffect(() => {
-     localStorage.setItem("vmix_iframe_monitor", String(useIframeMonitor));
-  }, [useIframeMonitor]);
+  // Persist monitor stream URLs
 
   // Persist monitor stream URLs
   useEffect(() => {
@@ -545,6 +539,60 @@ export default function VmixPage() {
 
   // Keep ref in sync for diagnostic auto-connect
   useEffect(() => { connectToVmixRef.current = connectToVmix; }, [connectToVmix]);
+
+  // ── Keepalive polling — silently refresh vMix state every 5s ──
+  const silentRefresh = useCallback(async () => {
+    if (!savedUrl || !connected) return;
+    try {
+      const xmlText = await vmixFetch("/api/");
+      const parser = new DOMParser();
+      const xml = parser.parseFromString(xmlText, "text/xml");
+
+      const inputElements = xml.querySelectorAll("input");
+      const parsedInputs: VmixInput[] = [];
+      inputElements.forEach((el) => {
+        parsedInputs.push({
+          key: el.getAttribute("key") || "",
+          number: el.getAttribute("number") || "",
+          title: el.getAttribute("title") || el.textContent || "",
+          type: el.getAttribute("type") || "",
+          state: el.getAttribute("state") || "Paused",
+          duration: el.getAttribute("duration") || undefined,
+          position: el.getAttribute("position") || undefined,
+          loop: el.getAttribute("loop") || undefined,
+          muted: el.getAttribute("muted") === "True",
+        });
+      });
+      setInputs(parsedInputs);
+
+      const active = xml.querySelector("active");
+      const preview = xml.querySelector("preview");
+      if (active) setActiveInput(active.textContent);
+      if (preview) setPreviewInput(preview.textContent);
+
+      const streamingEl = xml.querySelector("streaming");
+      const recordingEl = xml.querySelector("recording");
+      if (streamingEl) setStreaming(streamingEl.textContent === "True");
+      if (recordingEl) setRecording(recordingEl.textContent === "True");
+
+      for (let n = 1; n <= 4; n++) {
+        const ovEl = xml.querySelector(`overlay[number="${n}"]`);
+        if (ovEl) {
+          const ovInput = ovEl.textContent || ovEl.getAttribute("input") || "";
+          setOverlays(prev => ({ ...prev, [n]: ovInput !== "" && ovInput !== "0" }));
+        }
+      }
+    } catch {
+      // Connection lost — mark disconnected
+      setConnected(false);
+    }
+  }, [savedUrl, connected, vmixFetch]);
+
+  useEffect(() => {
+    if (!connected || !savedUrl) return;
+    const id = setInterval(silentRefresh, 5000);
+    return () => clearInterval(id);
+  }, [connected, savedUrl, silentRefresh]);
 
   const sendCommand = async (fn: string, input?: string, value?: string) => {
     if (!savedUrl) return;
@@ -860,28 +908,6 @@ export default function VmixPage() {
     return <video ref={videoRef} className={className} muted autoPlay playsInline style={{ objectFit: "contain", backgroundColor: "#000" }} />;
   };
 
-   // vMix Web Controller iframe for live monitors — uses /preview/ endpoint for video-only view
-  const VmixIframe = ({ className = "", type = "preview" }: { className?: string; type?: "preview" | "output" }) => {
-    if (!savedUrl) return null;
-    const base = savedUrl.replace(/\/+$/, "");
-    // vMix exposes video-only views at specific paths
-    const iframeSrc = type === "output" ? `${base}/` : `${base}/`;
-    return (
-      <div className={`relative ${className}`} style={{ backgroundColor: "#000" }}>
-        <iframe
-          src={iframeSrc}
-          className="w-full h-full transition-opacity duration-500"
-          style={{ border: "none", backgroundColor: "#000", opacity: 1 }}
-          allow="autoplay"
-          sandbox="allow-scripts allow-same-origin"
-          onLoad={(e) => { (e.target as HTMLIFrameElement).style.opacity = "1"; }}
-        />
-        <div className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded text-[7px] font-bold uppercase" style={{ backgroundColor: "rgba(0,0,0,0.7)", color: "#f59e0b", border: "1px solid #f59e0b40" }}>
-          Web Controller
-        </div>
-      </div>
-    );
-  };
 
   // MJPEG/JPEG rapid-refresh image component (for vmix-snapshot-proxy, NDI HX Camera, etc.)
   const MjpegPlayer = ({ src, className = "" }: { src: string; className?: string }) => {
@@ -922,8 +948,25 @@ export default function VmixPage() {
       }
       return <MjpegPlayer src={streamUrl} className="w-full h-full" />;
     }
-    if (useIframeMonitor && savedUrl) {
-      return <VmixIframe className="w-full h-full" type={type} />;
+    // When connected, show input info placeholder instead of SMPTE bars
+    const inputNum = type === "preview" ? previewInput : activeInput;
+    if (connected && inputNum) {
+      const inp = inputs.find(i => i.number === inputNum);
+      const bgColor = inp ? getInputColor(inp.type) : "#1e1e24";
+      return (
+        <div className="w-full h-full flex flex-col items-center justify-center relative" style={{ backgroundColor: bgColor }}>
+          <div className="text-center space-y-1">
+            <span className="text-[11px] font-bold text-white/70 uppercase tracking-wider">{inp?.type || "Input"}</span>
+            <p className="text-[13px] font-semibold text-white/90 max-w-[80%] mx-auto truncate">{inp?.title || `Input ${inputNum}`}</p>
+            <p className="text-[9px] text-white/40">Input {inputNum} • {inp?.state || "—"}</p>
+          </div>
+          <div className="absolute bottom-2 left-0 right-0 flex justify-center">
+            <span className="text-[8px] px-2 py-0.5 rounded" style={{ backgroundColor: "rgba(0,0,0,0.5)", color: "#888" }}>
+              📡 Configure URL de stream para preview ao vivo
+            </span>
+          </div>
+        </div>
+      );
     }
     return null;
   };
@@ -1328,18 +1371,6 @@ export default function VmixPage() {
               setPreviewInput(val);
             })}
             <div className="ml-auto flex gap-1">
-              <button
-                onClick={() => setUseIframeMonitor(prev => !prev)}
-                className="text-[8px] px-1.5 py-0.5 rounded transition-all"
-                style={{
-                  backgroundColor: useIframeMonitor ? "#22c55e20" : "#ffffff08",
-                  color: useIframeMonitor ? "#22c55e" : "#666",
-                  border: `1px solid ${useIframeMonitor ? "#22c55e40" : "#ffffff10"}`,
-                }}
-                title="Iframe do vMix Web Controller"
-              >
-                {useIframeMonitor ? "● WEB" : "⬛ WEB"}
-              </button>
               <button
                 onClick={() => {
                   setEditingMonitorStream(editingMonitorStream === "preview" ? null : "preview");
