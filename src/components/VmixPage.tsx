@@ -540,6 +540,60 @@ export default function VmixPage() {
   // Keep ref in sync for diagnostic auto-connect
   useEffect(() => { connectToVmixRef.current = connectToVmix; }, [connectToVmix]);
 
+  // ── Keepalive polling — silently refresh vMix state every 5s ──
+  const silentRefresh = useCallback(async () => {
+    if (!savedUrl || !connected) return;
+    try {
+      const xmlText = await vmixFetch("/api/");
+      const parser = new DOMParser();
+      const xml = parser.parseFromString(xmlText, "text/xml");
+
+      const inputElements = xml.querySelectorAll("input");
+      const parsedInputs: VmixInput[] = [];
+      inputElements.forEach((el) => {
+        parsedInputs.push({
+          key: el.getAttribute("key") || "",
+          number: el.getAttribute("number") || "",
+          title: el.getAttribute("title") || el.textContent || "",
+          type: el.getAttribute("type") || "",
+          state: el.getAttribute("state") || "Paused",
+          duration: el.getAttribute("duration") || undefined,
+          position: el.getAttribute("position") || undefined,
+          loop: el.getAttribute("loop") || undefined,
+          muted: el.getAttribute("muted") === "True",
+        });
+      });
+      setInputs(parsedInputs);
+
+      const active = xml.querySelector("active");
+      const preview = xml.querySelector("preview");
+      if (active) setActiveInput(active.textContent);
+      if (preview) setPreviewInput(preview.textContent);
+
+      const streamingEl = xml.querySelector("streaming");
+      const recordingEl = xml.querySelector("recording");
+      if (streamingEl) setStreaming(streamingEl.textContent === "True");
+      if (recordingEl) setRecording(recordingEl.textContent === "True");
+
+      for (let n = 1; n <= 4; n++) {
+        const ovEl = xml.querySelector(`overlay[number="${n}"]`);
+        if (ovEl) {
+          const ovInput = ovEl.textContent || ovEl.getAttribute("input") || "";
+          setOverlays(prev => ({ ...prev, [n]: ovInput !== "" && ovInput !== "0" }));
+        }
+      }
+    } catch {
+      // Connection lost — mark disconnected
+      setConnected(false);
+    }
+  }, [savedUrl, connected, vmixFetch]);
+
+  useEffect(() => {
+    if (!connected || !savedUrl) return;
+    const id = setInterval(silentRefresh, 5000);
+    return () => clearInterval(id);
+  }, [connected, savedUrl, silentRefresh]);
+
   const sendCommand = async (fn: string, input?: string, value?: string) => {
     if (!savedUrl) return;
     try {
