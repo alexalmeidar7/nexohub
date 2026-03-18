@@ -157,10 +157,16 @@ export default function VmixPage() {
   });
   const [editingHlsInput, setEditingHlsInput] = useState<string | null>(null);
   const [hlsTempUrl, setHlsTempUrl] = useState("");
-  // iframe-based monitor preview
+   // iframe-based monitor preview
   const [useIframeMonitor, setUseIframeMonitor] = useState<boolean>(() => {
     try { return localStorage.getItem("vmix_iframe_monitor") === "true"; } catch { return false; }
   });
+  // Monitor stream URLs (MJPEG/JPEG/HLS for Preview and Output)
+  const [monitorStreamUrls, setMonitorStreamUrls] = useState<{ preview: string; output: string }>(() => {
+    try { const s = localStorage.getItem("vmix_monitor_streams"); return s ? JSON.parse(s) : { preview: "", output: "" }; } catch { return { preview: "", output: "" }; }
+  });
+  const [editingMonitorStream, setEditingMonitorStream] = useState<"preview" | "output" | null>(null);
+  const [monitorStreamTemp, setMonitorStreamTemp] = useState("");
 
   // Programas from DB
   const [programas, setProgramas] = useState<Programa[]>([]);
