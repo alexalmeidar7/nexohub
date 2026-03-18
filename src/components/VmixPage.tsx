@@ -69,8 +69,16 @@ interface Programa {
 function isPrivateIp(url: string): boolean {
   try {
     const hostname = new URL(url).hostname;
-    return /^(10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|127\.|localhost)/i.test(hostname);
+    return /^(10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|127\.|169\.254\.|localhost|::1)/i.test(hostname);
   } catch { return false; }
+}
+
+function isInsecureHttpUrl(url: string): boolean {
+  try {
+    return new URL(url).protocol === "http:";
+  } catch {
+    return false;
+  }
 }
 
 export default function VmixPage() {
@@ -206,7 +214,20 @@ export default function VmixPage() {
     const { data, error } = await supabase.functions.invoke("vmix-proxy", {
       body: { path },
     });
-    if (error) throw new Error(error.message || "Proxy error");
+
+    if (error) {
+      let message = error.message || "Proxy error";
+      if (error.context instanceof Response) {
+        try {
+          const payload = await error.context.clone().json();
+          if (payload?.error) message = payload.error;
+        } catch {
+          // ignore JSON parse failures
+        }
+      }
+      throw new Error(message);
+    }
+
     if (typeof data === "string") return data;
     return typeof data === "object" ? JSON.stringify(data) : String(data);
   }, []);
@@ -221,6 +242,27 @@ export default function VmixPage() {
 
   const connectToVmix = useCallback(async () => {
     if (!savedUrl) return;
+
+    if (connectionMode === "proxy" && isPrivateIp(savedUrl)) {
+      setConnected(false);
+      toast({
+        title: "Proxy não alcança IP local",
+        description: "Use IP público (com port forwarding), domínio público ou túnel HTTPS para o vMix.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (connectionMode === "direct" && window.isSecureContext && isInsecureHttpUrl(savedUrl)) {
+      setConnected(false);
+      toast({
+        title: "Conexão direta bloqueada no navegador",
+        description: "App em HTTPS não pode acessar vMix em HTTP (Mixed Content). Use Proxy + URL pública do vMix.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setConnecting(true);
     try {
       const xmlText = await vmixFetch("/api/");
@@ -256,15 +298,16 @@ export default function VmixPage() {
 
       setConnected(true);
       toast({ title: "Conectado!", description: `${parsedInputs.length} inputs (modo ${connectionMode === "direct" ? "direto" : "proxy"}).` });
-    } catch {
+    } catch (err) {
       setConnected(false);
       const isLocal = isPrivateIp(savedUrl);
       const hint = connectionMode === "proxy" && isLocal
-        ? " IP local detectado — tente o modo 'Direto'."
+        ? " IP local detectado — use URL pública no modo Proxy."
         : connectionMode === "direct" && !isLocal
         ? " IP público detectado — tente o modo 'Proxy'."
         : "";
-      toast({ title: "Erro de conexão", description: `Verifique se o vMix Web Controller está ativo.${hint}`, variant: "destructive" });
+      const message = err instanceof Error ? err.message : "Verifique se o vMix Web Controller está ativo.";
+      toast({ title: "Erro de conexão", description: `${message}${hint}`, variant: "destructive" });
     } finally {
       setConnecting(false);
     }
