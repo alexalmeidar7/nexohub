@@ -946,8 +946,8 @@ export default function VmixPage() {
             onClick={() => sendCommand(recording ? "StopRecording" : "StartRecording")}
             className="px-4 py-1.5 rounded text-xs font-bold uppercase tracking-wider transition-all duration-200 hover:scale-[1.03]"
             style={{
-              backgroundColor: recording ? "#6b1010" : "#3a3a3a",
-              color: recording ? "#fff" : "#ccc",
+              backgroundColor: recording ? "#6b1010" : "#2a2a30",
+              color: recording ? "#fff" : "#aaa",
               border: `1px solid ${recording ? "#8b2020" : "#555"}`,
             }}
             onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = "0 0 16px #3a3a3a60"; }}
