@@ -2108,7 +2108,7 @@ export default function VmixPage() {
                             <img
                               src={prog.apresentador_foto}
                               alt=""
-                              className="absolute inset-0 w-full h-full object-cover object-right pointer-events-none"
+                              className="absolute inset-0 w-full h-full object-contain object-right-bottom pointer-events-none"
                               style={{ opacity: 0.4, filter: "grayscale(100%)", maskImage: "linear-gradient(to left, black 40%, transparent 100%)", WebkitMaskImage: "linear-gradient(to left, black 40%, transparent 100%)" }}
                             />
                           )}
