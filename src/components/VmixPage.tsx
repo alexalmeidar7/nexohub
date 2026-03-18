@@ -901,17 +901,15 @@ export default function VmixPage() {
           <button
             onClick={connectToVmix}
             disabled={connecting}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold text-white transition-all duration-200 hover:scale-[1.03]"
-            style={{ backgroundColor: "#2d5016", opacity: connecting ? 0.6 : 1, border: "1px solid #3d6a20" }}
-            onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = "0 0 16px #2d501660"; }}
-            onMouseLeave={e => { (e.target as HTMLElement).style.boxShadow = "none"; }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded text-[10px] font-bold text-white/70 hover:text-white transition-all duration-200"
+            style={{ backgroundColor: connected ? "#22c55e18" : "#ffffff08", border: `1px solid ${connected ? "#22c55e30" : "#ffffff10"}` }}
           >
-            {connecting ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle size={12} />}
-            Conectado
+            {connecting ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle size={12} style={{ color: connected ? "#22c55e" : "#666" }} />}
+            {connected ? "Conectado" : "Conectar"}
           </button>
         </div>
         {/* GO LIVE / RECORD section */}
-        <div className="group/live flex items-center gap-2 px-3 py-2 rounded-xl" style={{ backgroundColor: "#111118", border: "1px solid #ffffff08" }}>
+        <div className="group/live flex items-center gap-2 px-3 py-1.5 rounded-lg" style={{ background: "linear-gradient(135deg, #13131d 0%, #1a1a2e 100%)", border: "1px solid #ffffff0a", boxShadow: "0 2px 8px #00000040" }}>
           <button
             onClick={() => sendCommand(streaming ? "StopStreaming" : "StartStreaming")}
             className="px-4 py-1.5 rounded text-xs font-bold uppercase tracking-wider transition-all duration-200 hover:scale-[1.03]"
