@@ -59,6 +59,12 @@ const COMMAND_OPTIONS = [
   { value: "SetText", label: "Definir Texto (Title)", category: "Título" },
 ];
 
+interface Programa {
+  id: string;
+  nome: string;
+  ativo: boolean;
+}
+
 export default function VmixPage() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -73,6 +79,10 @@ export default function VmixPage() {
   const [streaming, setStreaming] = useState(false);
   const [recording, setRecording] = useState(false);
   const [activeTab, setActiveTab] = useState<"controls" | "scenes" | "ndi">("controls");
+  const [activePreset, setActivePreset] = useState<string | null>(null);
+
+  // Programas from DB
+  const [programas, setProgramas] = useState<Programa[]>([]);
 
   // Scenes state
   const [scenes, setScenes] = useState<VmixScene[]>(() => {
@@ -91,6 +101,20 @@ export default function VmixPage() {
   useEffect(() => {
     localStorage.setItem("vmix_scenes", JSON.stringify(scenes));
   }, [scenes]);
+
+  // Load programas from DB
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("programas")
+      .select("id, nome, ativo")
+      .eq("user_id", user.id)
+      .eq("ativo", true)
+      .order("nome")
+      .then(({ data }) => {
+        if (data) setProgramas(data);
+      });
+  }, [user]);
 
   useEffect(() => {
     if (!user) return;
@@ -490,7 +514,136 @@ export default function VmixPage() {
         {/* ══ CONTROLS TAB ══ */}
         {activeTab === "controls" && (
           <>
-            {/* Transições */}
+            {/* ── Programas Preset ── */}
+            <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a2e", border: "1px solid #ffffff08" }}>
+              <div className="flex items-center gap-2 px-4 py-2.5" style={{ backgroundColor: "#c2410c18", borderBottom: "1px solid #ffffff08" }}>
+                <Radio size={14} style={{ color: "#ea580c" }} />
+                <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#ea580c" }}>programas preset</span>
+              </div>
+              <div className="p-4">
+                <div className="flex flex-wrap gap-2">
+                  {programas.map(prog => (
+                    <button
+                      key={prog.id}
+                      onClick={() => {
+                        setActivePreset(prog.id);
+                        // Send ScriptStart with program name as preset trigger
+                        sendCommand("ScriptStart", prog.nome);
+                        toast({ title: `Preset: ${prog.nome}`, description: "Comando enviado ao vMix." });
+                      }}
+                      className="px-5 py-3 rounded-lg text-xs font-black uppercase tracking-wider transition-all hover:brightness-125"
+                      style={{
+                        backgroundColor: activePreset === prog.id ? "#ea580c" : "#c2410c50",
+                        color: activePreset === prog.id ? "#fff" : "#fb923c",
+                        border: activePreset === prog.id ? "2px solid #fb923c" : "2px solid #c2410c40",
+                        minWidth: 100,
+                      }}
+                    >
+                      {prog.nome}
+                    </button>
+                  ))}
+                  {programas.length === 0 && (
+                    <p className="text-[11px] text-white/30 py-4">Nenhum programa cadastrado. Cadastre programas no painel principal.</p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* ── Grade Programação ── */}
+            {programas.length > 0 && (
+              <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a2e", border: "1px solid #ffffff08" }}>
+                <div className="flex items-center gap-2 px-4 py-2.5" style={{ backgroundColor: "#22c55e18", borderBottom: "1px solid #ffffff08" }}>
+                  <Eye size={14} style={{ color: "#22c55e" }} />
+                  <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#22c55e" }}>grade programação</span>
+                </div>
+                <div className="px-4 py-3">
+                  <p className="text-xs text-white/60">
+                    {programas.length} programa(s) ativo(s) disponíveis como preset
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* ── Streaming ── */}
+            <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a2e", border: "1px solid #ffffff08" }}>
+              <div className="flex items-center gap-2 px-4 py-2.5" style={{ backgroundColor: "#eab30818", borderBottom: "1px solid #ffffff08" }}>
+                <Radio size={14} style={{ color: "#eab308" }} />
+                <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#eab308" }}>streaming</span>
+              </div>
+              <div className="p-4">
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() => sendCommand(streaming ? "StopStreaming" : "StartStreaming")}
+                    className="px-5 py-3 rounded-lg text-xs font-black uppercase tracking-wider transition-all"
+                    style={{
+                      backgroundColor: streaming ? "#eab308" : "#eab30840",
+                      color: streaming ? "#000" : "#eab308",
+                      border: streaming ? "2px solid #facc15" : "2px solid #eab30830",
+                    }}
+                  >
+                    {streaming ? "● STREAMING 1" : "STREAMING 1"}
+                  </button>
+                  <button
+                    onClick={() => sendCommand(streaming ? "StopStreaming" : "StartStreaming")}
+                    className="px-5 py-3 rounded-lg text-xs font-black uppercase tracking-wider transition-all"
+                    style={{
+                      backgroundColor: "#eab30840",
+                      color: "#eab308",
+                      border: "2px solid #eab30830",
+                    }}
+                  >
+                    STREAMING 2
+                  </button>
+                  <button
+                    onClick={() => sendCommand(recording ? "StopRecording" : "StartRecording")}
+                    className="px-5 py-3 rounded-lg text-xs font-black uppercase tracking-wider transition-all"
+                    style={{
+                      backgroundColor: recording ? "#dc2626" : "#eab30840",
+                      color: recording ? "#fff" : "#eab308",
+                      border: recording ? "2px solid #dc2626" : "2px solid #eab30830",
+                    }}
+                  >
+                    {recording ? "● REC" : "REC"}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* ── Inputs ── */}
+            <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a2e", border: "1px solid #ffffff08" }}>
+              <div className="flex items-center gap-2 px-4 py-2.5" style={{ backgroundColor: "#3b82f618", borderBottom: "1px solid #ffffff08" }}>
+                <Monitor size={14} style={{ color: "#3b82f6" }} />
+                <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#3b82f6" }}>inputs</span>
+              </div>
+              <div className="p-4">
+                <div className="flex flex-wrap gap-2">
+                  {inputs.map(input => {
+                    const isActive = activeInput === input.number;
+                    const isPreview = previewInput === input.number;
+                    return (
+                      <button
+                        key={input.key || input.number}
+                        onClick={() => sendCommand("Cut", input.number)}
+                        className="px-5 py-3 rounded-lg text-xs font-black uppercase tracking-wider transition-all hover:brightness-125"
+                        style={{
+                          backgroundColor: isActive ? "#3b82f6" : isPreview ? "#22c55e40" : "#3b82f640",
+                          color: isActive ? "#fff" : isPreview ? "#22c55e" : "#60a5fa",
+                          border: isActive ? "2px solid #60a5fa" : isPreview ? "2px solid #22c55e" : "2px solid #3b82f630",
+                          minWidth: 60,
+                        }}
+                      >
+                        {input.title.length > 10 ? input.title.substring(0, 10) : input.title}
+                      </button>
+                    );
+                  })}
+                  {inputs.length === 0 && (
+                    <p className="text-[11px] text-white/30 py-4">Conecte ao vMix para ver os inputs</p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* ── Transições & Overlays ── */}
             {sectionBox("Transições", <Camera size={14} style={{ color: "#dc2626" }} />, (
               <div className="flex flex-wrap gap-2">
                 {controlBtn("CUT", () => sendCommand("Cut"), "#dc2626", true)}
@@ -501,7 +654,6 @@ export default function VmixPage() {
               </div>
             ), "#dc2626")}
 
-            {/* Overlays */}
             {sectionBox("Overlays / GFX", <Layers size={14} style={{ color: "#22c55e" }} />, (
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {[1, 2, 3, 4].map(n => (
@@ -527,90 +679,6 @@ export default function VmixPage() {
                 ))}
               </div>
             ), "#22c55e")}
-
-            {/* Streaming & Gravação */}
-            {sectionBox("Streaming & Gravação", <Radio size={14} style={{ color: "#f59e0b" }} />, (
-              <div className="grid grid-cols-2 gap-3">
-                <div className="flex items-center justify-between p-3 rounded-lg" style={{ backgroundColor: "#ffffff06" }}>
-                  <div className="flex items-center gap-2">
-                    <Radio size={14} style={{ color: streaming ? "#dc2626" : "#666" }} />
-                    <div>
-                      <p className="text-xs font-bold text-white/80">Streaming</p>
-                      <p className="text-[10px]" style={{ color: streaming ? "#dc2626" : "#666" }}>
-                        {streaming ? "● AO VIVO" : "Offline"}
-                      </p>
-                    </div>
-                  </div>
-                  {controlBtn(streaming ? "PARAR" : "INICIAR", () => sendCommand(streaming ? "StopStreaming" : "StartStreaming"), streaming ? "#dc2626" : "#22c55e", true)}
-                </div>
-                <div className="flex items-center justify-between p-3 rounded-lg" style={{ backgroundColor: "#ffffff06" }}>
-                  <div className="flex items-center gap-2">
-                    <Disc size={14} style={{ color: recording ? "#dc2626" : "#666" }} />
-                    <div>
-                      <p className="text-xs font-bold text-white/80">Gravação</p>
-                      <p className="text-[10px]" style={{ color: recording ? "#dc2626" : "#666" }}>
-                        {recording ? "● Gravando" : "Parado"}
-                      </p>
-                    </div>
-                  </div>
-                  {controlBtn(recording ? "PARAR" : "INICIAR", () => sendCommand(recording ? "StopRecording" : "StartRecording"), recording ? "#dc2626" : "#22c55e", true)}
-                </div>
-              </div>
-            ), "#f59e0b")}
-
-            {/* Áudio */}
-            {sectionBox("Áudio dos Inputs", <Volume2 size={14} style={{ color: "#3b82f6" }} />, (
-              <div className="flex gap-3 overflow-x-auto pb-1">
-                {inputs.map(input => (
-                  <div key={input.key || input.number} className="flex flex-col items-center gap-2 flex-shrink-0" style={{ width: 64 }}>
-                    <div className="relative w-1.5 rounded-full" style={{ height: 90, backgroundColor: "#333" }}>
-                      <div className="absolute bottom-0 w-full rounded-full" style={{ height: input.muted ? 0 : "70%", backgroundColor: input.muted ? "#666" : "#22c55e", transition: "height 0.3s" }} />
-                    </div>
-                    <button
-                      onClick={() => sendCommand(input.muted ? "AudioOn" : "AudioOff", input.number)}
-                      className="p-1.5 rounded"
-                      style={{ backgroundColor: input.muted ? "#dc262630" : "#ffffff08" }}
-                    >
-                      {input.muted ? <VolumeX size={11} className="text-red-400" /> : <Volume2 size={11} className="text-green-400" />}
-                    </button>
-                    <span className="text-[8px] text-white/40 text-center truncate w-full">{input.title}</span>
-                  </div>
-                ))}
-                {inputs.length === 0 && <p className="text-[11px] text-white/30 py-6 w-full text-center">Sem inputs</p>}
-              </div>
-            ), "#3b82f6")}
-
-            {/* Inputs List */}
-            {sectionBox(`Inputs (${inputs.length})`, <Monitor size={14} style={{ color: "#a855f7" }} />, (
-              <div className="space-y-1">
-                {inputs.map(input => {
-                  const isActive = activeInput === input.number;
-                  const isPreview = previewInput === input.number;
-                  return (
-                    <div
-                      key={input.key || input.number}
-                      className="flex items-center gap-3 px-3 py-2 rounded-lg"
-                      style={{
-                        backgroundColor: isActive ? "#dc262612" : isPreview ? "#22c55e0d" : "#ffffff04",
-                        borderLeft: isActive ? "3px solid #dc2626" : isPreview ? "3px solid #22c55e" : "3px solid transparent",
-                      }}
-                    >
-                      <div className="w-6 h-6 rounded flex items-center justify-center text-[10px] font-black text-white" style={{ backgroundColor: isActive ? "#dc2626" : isPreview ? "#22c55e" : "#333" }}>
-                        {input.number}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-[11px] text-white/90 truncate">{input.title}</p>
-                        <p className="text-[9px] text-white/30">{input.type}{isActive && " • PGM"}{isPreview && " • PRV"}</p>
-                      </div>
-                      <div className="flex gap-1">
-                        <button onClick={() => sendCommand("PreviewInput", input.number)} className="px-2 py-1 rounded text-[9px] font-bold" style={{ backgroundColor: isPreview ? "#22c55e" : "#ffffff08", color: isPreview ? "#fff" : "#22c55e" }}>PRV</button>
-                        <button onClick={() => sendCommand("Cut", input.number)} className="px-2 py-1 rounded text-[9px] font-bold" style={{ backgroundColor: isActive ? "#dc2626" : "#ffffff08", color: isActive ? "#fff" : "#dc2626" }}>PGM</button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            ), "#a855f7")}
           </>
         )}
 
