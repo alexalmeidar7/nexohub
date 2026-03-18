@@ -258,7 +258,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       if (vmixUrl) {
         window.open(vmixUrl, "_blank");
       } else {
-        toast({ title: "URL não configurada", description: "Configure a URL do vMix Web Controller primeiro na página de configurações." });
+        alert("Configure e salve a URL do vMix Web Controller primeiro.");
         setCurrentPage("vmix");
       }
       return;
