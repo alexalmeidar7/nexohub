@@ -232,9 +232,10 @@ export default function VmixPage() {
     return typeof data === "object" ? JSON.stringify(data) : String(data);
   }, []);
 
-  // Unified fetch that uses the selected mode
-  const vmixFetch = useCallback(async (path: string): Promise<string> => {
-    if (connectionMode === "direct") {
+  // Unified fetch that uses the selected mode (or an explicit override)
+  const vmixFetch = useCallback(async (path: string, modeOverride?: "direct" | "proxy"): Promise<string> => {
+    const effectiveMode = modeOverride ?? connectionMode;
+    if (effectiveMode === "direct") {
       return vmixDirectFetch(path);
     }
     return vmixProxyFetch(path);
@@ -243,29 +244,21 @@ export default function VmixPage() {
   const connectToVmix = useCallback(async () => {
     if (!savedUrl) return;
 
-    if (connectionMode === "proxy" && isPrivateIp(savedUrl)) {
-      setConnected(false);
-      toast({
-        title: "Proxy não alcança IP local",
-        description: "Use IP público (com port forwarding), domínio público ou túnel HTTPS para o vMix.",
-        variant: "destructive",
-      });
-      return;
-    }
+    const isLocalUrl = isPrivateIp(savedUrl);
+    const effectiveMode: "direct" | "proxy" =
+      connectionMode === "proxy" && isLocalUrl ? "direct" : connectionMode;
 
-    if (connectionMode === "direct" && window.isSecureContext && isInsecureHttpUrl(savedUrl)) {
-      setConnected(false);
+    if (connectionMode === "proxy" && isLocalUrl) {
+      setConnectionMode("direct");
       toast({
-        title: "Conexão direta bloqueada no navegador",
-        description: "App em HTTPS não pode acessar vMix em HTTP (Mixed Content). Use Proxy + URL pública do vMix.",
-        variant: "destructive",
+        title: "IP local detectado",
+        description: "Mudamos para 'Direto' automaticamente para testar conexão na rede local.",
       });
-      return;
     }
 
     setConnecting(true);
     try {
-      const xmlText = await vmixFetch("/api/");
+      const xmlText = await vmixFetch("/api/", effectiveMode);
       const parser = new DOMParser();
       const xml = parser.parseFromString(xmlText, "text/xml");
 
@@ -297,16 +290,23 @@ export default function VmixPage() {
       if (recordingEl) setRecording(recordingEl.textContent === "True");
 
       setConnected(true);
-      toast({ title: "Conectado!", description: `${parsedInputs.length} inputs (modo ${connectionMode === "direct" ? "direto" : "proxy"}).` });
+      toast({ title: "Conectado!", description: `${parsedInputs.length} inputs (modo ${effectiveMode === "direct" ? "direto" : "proxy"}).` });
     } catch (err) {
       setConnected(false);
-      const isLocal = isPrivateIp(savedUrl);
-      const hint = connectionMode === "proxy" && isLocal
-        ? " IP local detectado — use URL pública no modo Proxy."
-        : connectionMode === "direct" && !isLocal
+      const message = err instanceof Error ? err.message : "Verifique se o vMix Web Controller está ativo.";
+      const isMixedOrCorsLikely =
+        effectiveMode === "direct" &&
+        isLocalUrl &&
+        /failed to fetch|networkerror|mixed content|cors/i.test(message);
+
+      const hint = effectiveMode === "proxy" && isLocalUrl
+        ? " IP local detectado — troque para o modo 'Direto'."
+        : isMixedOrCorsLikely
+        ? " No modo Direto (rede local), permita 'Conteúdo inseguro' para este site no navegador e tente novamente."
+        : effectiveMode === "direct" && !isLocalUrl
         ? " IP público detectado — tente o modo 'Proxy'."
         : "";
-      const message = err instanceof Error ? err.message : "Verifique se o vMix Web Controller está ativo.";
+
       toast({ title: "Erro de conexão", description: `${message}${hint}`, variant: "destructive" });
     } finally {
       setConnecting(false);
@@ -505,7 +505,7 @@ export default function VmixPage() {
                     <ol className="space-y-1 list-decimal list-inside text-white/50 text-[10px]">
                       <li>No vMix: <strong className="text-white/70">Settings → Web Controller</strong> → porta 8088</li>
                       <li>No roteador: <strong className="text-white/70">Port Forwarding</strong> → porta 8088 TCP → IP do PC</li>
-                      <li>Descubra seu IP público em <strong className="text-white/70">whatismyip.com</strong></li>
+                      <li>Use o IP WAN exibido no painel do roteador/provedor</li>
                       <li>Cole: <strong className="text-white/70">http://SEU_IP_PUBLICO:8088</strong></li>
                     </ol>
                     <p className="mt-2 text-white/30 text-[10px]">💡 O modo é detectado automaticamente pelo tipo de IP.</p>
@@ -524,7 +524,7 @@ export default function VmixPage() {
             </button>
           </div>
         </div>
-        <p className="text-xs text-white/20 py-8 text-center">Configure o IP público acima e conecte ao vMix Web Controller</p>
+        <p className="text-xs text-white/20 py-8 text-center">Use 'Direto' para rede local (192.168.x.x) ou 'Proxy' com IP público + port forwarding.</p>
       </div>
     );
   }
