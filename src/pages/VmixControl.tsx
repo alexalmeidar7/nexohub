@@ -12,10 +12,22 @@ export default function VmixControl() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [signing, setSigning] = useState(false);
-  const [clock, setClock] = useState(() => new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
+  const [clock, setClock] = useState(() => {
+    const now = new Date();
+    return {
+      time: now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
+      date: now.toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "short" }).replace(/\./g, ""),
+    };
+  });
 
   useEffect(() => {
-    const id = setInterval(() => setClock(new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })), 1000);
+    const id = setInterval(() => {
+      const now = new Date();
+      setClock({
+        time: now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
+        date: now.toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "short" }).replace(/\./g, ""),
+      });
+    }, 1000);
     return () => clearInterval(id);
   }, []);
 
@@ -115,9 +127,12 @@ export default function VmixControl() {
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#191919" }}>
       <header className="relative flex items-center justify-between px-6 py-3" style={{ backgroundColor: "#242424" }}>
-        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg" style={{ backgroundColor: "#1a1a1a", border: "1px solid #333", boxShadow: "inset 0 1px 3px rgba(0,0,0,0.5)" }}>
-          <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: "#dc2626" }} />
-          <span className="text-base font-mono font-bold tracking-[0.25em] tabular-nums" style={{ color: "#22c55e", textShadow: "0 0 8px rgba(34,197,94,0.4)" }}>{clock}</span>
+        <div className="flex items-center gap-3 px-4 py-2 rounded-xl" style={{ backgroundColor: "#111115", border: "1px solid #2a2a30", boxShadow: "inset 0 2px 6px rgba(0,0,0,0.6), 0 0 12px rgba(0,0,0,0.3)" }}>
+          <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: "#dc2626", boxShadow: "0 0 6px #dc262660" }} />
+          <div className="flex flex-col items-end">
+            <span className="text-lg font-mono font-black tracking-[0.3em] tabular-nums leading-none" style={{ color: "#22c55e", textShadow: "0 0 10px rgba(34,197,94,0.5)" }}>{clock.time}</span>
+            <span className="text-[9px] font-medium uppercase tracking-widest mt-0.5" style={{ color: "#666" }}>{clock.date}</span>
+          </div>
         </div>
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
           <img src={logoMixControl} alt="Mix Control" className="h-5" />
