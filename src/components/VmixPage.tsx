@@ -197,7 +197,13 @@ export default function VmixPage() {
     localStorage.setItem(`vmix_url_${user.id}`, trimmed);
 
     // Auto-detect best mode
-    if (isPrivateIp(trimmed) && connectionMode === "proxy") {
+    if (isPrivateIp(trimmed) && window.isSecureContext) {
+      // On HTTPS, direct HTTP to local IP is blocked — prefer proxy
+      if (connectionMode === "direct") {
+        setConnectionMode("proxy");
+        toast({ title: "Modo alterado para Proxy", description: "IP local em HTTPS: modo Proxy é mais compatível." });
+      }
+    } else if (isPrivateIp(trimmed) && connectionMode === "proxy") {
       setConnectionMode("direct");
       toast({ title: "Modo alterado para Direto", description: "IP local detectado. Usando conexão direta do navegador." });
     } else if (!isPrivateIp(trimmed) && connectionMode === "direct") {
