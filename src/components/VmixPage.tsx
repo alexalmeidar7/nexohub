@@ -173,6 +173,38 @@ export default function VmixPage() {
     localStorage.setItem("vmix_scenes", JSON.stringify(scenes));
   }, [scenes]);
 
+  // Persist input shortcuts
+  useEffect(() => {
+    localStorage.setItem("vmix_input_shortcuts", JSON.stringify(inputShortcuts));
+  }, [inputShortcuts]);
+
+  // Keyboard shortcut listener
+  useEffect(() => {
+    if (!effectiveConnected) return;
+    const handler = (e: KeyboardEvent) => {
+      // If capturing a shortcut for an input, record it
+      if (capturingShortcut) {
+        e.preventDefault();
+        e.stopPropagation();
+        const keyName = formatKeyName(e);
+        setInputShortcuts(prev => ({ ...prev, [capturingShortcut]: keyName }));
+        setCapturingShortcut(null);
+        return;
+      }
+      // Otherwise, check if the pressed key matches a shortcut
+      const keyName = formatKeyName(e);
+      const matchedInput = Object.entries(inputShortcuts).find(([_, shortcut]) => shortcut === keyName);
+      if (matchedInput) {
+        e.preventDefault();
+        const inputNum = matchedInput[0];
+        sendCommand("PreviewInput", inputNum);
+        setPreviewInput(inputNum);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [effectiveConnected, capturingShortcut, inputShortcuts]);
+
   // Load programas from DB
   useEffect(() => {
     if (!user) return;
