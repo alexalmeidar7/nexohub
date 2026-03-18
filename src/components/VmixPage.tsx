@@ -1356,7 +1356,7 @@ export default function VmixPage() {
                         <p className="text-[9px] text-white/30">Input {input.number} • {input.state}</p>
                       </div>
                       <div className="flex gap-1">
-                        <button onClick={() => sendCommand("PreviewInput", input.number)} className="px-2 py-1 rounded text-[9px] font-bold" style={{ backgroundColor: "#22c55e20", color: "#22c55e" }}>PRV</button>
+                        <button onClick={() => sendCommand("PreviewInput", input.number)} className="px-2 py-1 rounded text-[9px] font-bold" style={{ backgroundColor: "#ffffff10", color: "#bbb" }}>PRV</button>
                         <button onClick={() => sendCommand("Cut", input.number)} className="px-2 py-1 rounded text-[9px] font-bold" style={{ backgroundColor: "#dc262620", color: "#dc2626" }}>PGM</button>
                       </div>
                     </div>
