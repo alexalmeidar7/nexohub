@@ -118,6 +118,13 @@ export default function VmixPage() {
   const [editingScene, setEditingScene] = useState<VmixScene | null>(null);
   const [runningScene, setRunningScene] = useState<string | null>(null);
 
+  // Live clock
+  const [clock, setClock] = useState(() => new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
+  useEffect(() => {
+    const id = setInterval(() => setClock(new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })), 1000);
+    return () => clearInterval(id);
+  }, []);
+
   // NDI state
   const [ndiUrl, setNdiUrl] = useState("");
 
