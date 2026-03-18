@@ -839,18 +839,26 @@ export default function VmixPage() {
     return <video ref={videoRef} className={className} muted autoPlay playsInline style={{ objectFit: "contain", backgroundColor: "#000" }} />;
   };
 
-   // vMix Web Controller iframe for live monitors
-  const VmixIframe = ({ className = "" }: { className?: string }) => {
+   // vMix Web Controller iframe for live monitors — uses /preview/ endpoint for video-only view
+  const VmixIframe = ({ className = "", type = "preview" }: { className?: string; type?: "preview" | "output" }) => {
     if (!savedUrl) return null;
-    const iframeSrc = savedUrl.replace(/\/+$/, "");
+    const base = savedUrl.replace(/\/+$/, "");
+    // vMix exposes video-only views at specific paths
+    const iframeSrc = type === "output" ? `${base}/` : `${base}/`;
     return (
-      <iframe
-        src={iframeSrc}
-        className={className}
-        style={{ border: "none", width: "100%", height: "100%", backgroundColor: "#000" }}
-        allow="autoplay"
-        sandbox="allow-scripts allow-same-origin"
-      />
+      <div className={`relative ${className}`} style={{ backgroundColor: "#000" }}>
+        <iframe
+          src={iframeSrc}
+          className="w-full h-full transition-opacity duration-500"
+          style={{ border: "none", backgroundColor: "#000", opacity: 1 }}
+          allow="autoplay"
+          sandbox="allow-scripts allow-same-origin"
+          onLoad={(e) => { (e.target as HTMLIFrameElement).style.opacity = "1"; }}
+        />
+        <div className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded text-[7px] font-bold uppercase" style={{ backgroundColor: "rgba(0,0,0,0.7)", color: "#f59e0b", border: "1px solid #f59e0b40" }}>
+          Web Controller
+        </div>
+      </div>
     );
   };
 
@@ -884,21 +892,17 @@ export default function VmixPage() {
     );
   };
 
-  // Monitor content renderer: stream URL > iframe > thumbnail > SMPTE bars
-  const MonitorContent = ({ type, inputNumber }: { type: "preview" | "output"; inputNumber: string | null }) => {
+  // Monitor content helper — returns JSX or null
+  const getMonitorContent = (type: "preview" | "output") => {
     const streamUrl = monitorStreamUrls[type];
     if (streamUrl) {
-      // Detect type: HLS (.m3u8), MJPEG, or JPEG
       if (streamUrl.includes(".m3u8")) {
         return <HlsPlayer src={streamUrl} className="w-full h-full" />;
       }
       return <MjpegPlayer src={streamUrl} className="w-full h-full" />;
     }
     if (useIframeMonitor && savedUrl) {
-      return <VmixIframe className="w-full h-full" />;
-    }
-    if (inputNumber && savedUrl) {
-      return <ThumbnailImg inputNumber={inputNumber} width={640} height={360} className="w-full h-full object-contain" alt={type} />;
+      return <VmixIframe className="w-full h-full" type={type} />;
     }
     return null;
   };
@@ -1313,7 +1317,7 @@ export default function VmixPage() {
                 }}
                 title="Iframe do vMix Web Controller"
               >
-                {useIframeMonitor ? "🔴 LIVE" : "⬛ IFRAME"}
+                {useIframeMonitor ? "● WEB" : "⬛ WEB"}
               </button>
               <button
                 onClick={() => {
@@ -1349,34 +1353,30 @@ export default function VmixPage() {
             </div>
           )}
           <div className="flex-1 flex items-center justify-center overflow-hidden" style={{ aspectRatio: "16/9" }}>
-            {(() => {
-              const content = <MonitorContent type="preview" inputNumber={previewInput} />;
-              if (content) return content;
-              return (
-                <div className="w-full h-full relative flex flex-col">
-                  <div className="flex flex-1">
-                    {["#c0c0c0","#c0c000","#00c0c0","#00c000","#c000c0","#c00000","#0000c0"].map((c,i) => (
-                      <div key={i} className="flex-1" style={{ backgroundColor: c }} />
-                    ))}
-                  </div>
-                  <div className="flex" style={{ height: "8%" }}>
-                    {["#0000c0","#131313","#c000c0","#131313","#00c0c0","#131313","#c0c0c0"].map((c,i) => (
-                      <div key={i} className="flex-1" style={{ backgroundColor: c }} />
-                    ))}
-                  </div>
-                  <div className="flex" style={{ height: "8%" }}>
-                    {["#00214c","#fff","#32006a","#131313","#131313","#131313","#131313"].map((c,i) => (
-                      <div key={i} className="flex-1" style={{ backgroundColor: c }} />
-                    ))}
-                  </div>
-                  <div className="tv-static absolute inset-0" />
-                  <div className="tv-scanlines absolute inset-0" />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded" style={{ backgroundColor: "rgba(0,0,0,0.6)", color: "#888" }}>PVW — Sem sinal</span>
-                  </div>
+            {getMonitorContent("preview") || (
+              <div className="w-full h-full relative flex flex-col">
+                <div className="flex flex-1">
+                  {["#c0c0c0","#c0c000","#00c0c0","#00c000","#c000c0","#c00000","#0000c0"].map((c,i) => (
+                    <div key={i} className="flex-1" style={{ backgroundColor: c }} />
+                  ))}
                 </div>
-              );
-            })()}
+                <div className="flex" style={{ height: "8%" }}>
+                  {["#0000c0","#131313","#c000c0","#131313","#00c0c0","#131313","#c0c0c0"].map((c,i) => (
+                    <div key={i} className="flex-1" style={{ backgroundColor: c }} />
+                  ))}
+                </div>
+                <div className="flex" style={{ height: "8%" }}>
+                  {["#00214c","#fff","#32006a","#131313","#131313","#131313","#131313"].map((c,i) => (
+                    <div key={i} className="flex-1" style={{ backgroundColor: c }} />
+                  ))}
+                </div>
+                <div className="tv-static absolute inset-0" />
+                <div className="tv-scanlines absolute inset-0" />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded" style={{ backgroundColor: "rgba(0,0,0,0.6)", color: "#888" }}>PVW — Sem sinal</span>
+                </div>
+              </div>
+            )}
           </div>
         </div>
         {/* Transitions */}
@@ -1468,34 +1468,30 @@ export default function VmixPage() {
             </div>
           )}
           <div className="flex-1 flex items-center justify-center overflow-hidden" style={{ aspectRatio: "16/9" }}>
-            {(() => {
-              const content = <MonitorContent type="output" inputNumber={activeInput} />;
-              if (content) return content;
-              return (
-                <div className="w-full h-full relative flex flex-col">
-                  <div className="flex flex-1">
-                    {["#c0c0c0","#c0c000","#00c0c0","#00c000","#c000c0","#c00000","#0000c0"].map((c,i) => (
-                      <div key={i} className="flex-1" style={{ backgroundColor: c }} />
-                    ))}
-                  </div>
-                  <div className="flex" style={{ height: "8%" }}>
-                    {["#0000c0","#131313","#c000c0","#131313","#00c0c0","#131313","#c0c0c0"].map((c,i) => (
-                      <div key={i} className="flex-1" style={{ backgroundColor: c }} />
-                    ))}
-                  </div>
-                  <div className="flex" style={{ height: "8%" }}>
-                    {["#00214c","#fff","#32006a","#131313","#131313","#131313","#131313"].map((c,i) => (
-                      <div key={i} className="flex-1" style={{ backgroundColor: c }} />
-                    ))}
-                  </div>
-                  <div className="tv-static absolute inset-0" />
-                  <div className="tv-scanlines absolute inset-0" />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded" style={{ backgroundColor: "rgba(0,0,0,0.6)", color: "#dc2626" }}>PGM — Sem sinal</span>
-                  </div>
+            {getMonitorContent("output") || (
+              <div className="w-full h-full relative flex flex-col">
+                <div className="flex flex-1">
+                  {["#c0c0c0","#c0c000","#00c0c0","#00c000","#c000c0","#c00000","#0000c0"].map((c,i) => (
+                    <div key={i} className="flex-1" style={{ backgroundColor: c }} />
+                  ))}
                 </div>
-              );
-            })()}
+                <div className="flex" style={{ height: "8%" }}>
+                  {["#0000c0","#131313","#c000c0","#131313","#00c0c0","#131313","#c0c0c0"].map((c,i) => (
+                    <div key={i} className="flex-1" style={{ backgroundColor: c }} />
+                  ))}
+                </div>
+                <div className="flex" style={{ height: "8%" }}>
+                  {["#00214c","#fff","#32006a","#131313","#131313","#131313","#131313"].map((c,i) => (
+                    <div key={i} className="flex-1" style={{ backgroundColor: c }} />
+                  ))}
+                </div>
+                <div className="tv-static absolute inset-0" />
+                <div className="tv-scanlines absolute inset-0" />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded" style={{ backgroundColor: "rgba(0,0,0,0.6)", color: "#dc2626" }}>PGM — Sem sinal</span>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
