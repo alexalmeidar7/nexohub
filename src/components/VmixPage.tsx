@@ -296,7 +296,7 @@ export default function VmixPage() {
   const addNdiInput = async () => {
     if (!savedUrl || !ndiUrl.trim()) return;
     try {
-      await vmixProxy(`/api/?Function=AddInput&Value=NDI|${encodeURIComponent(ndiUrl.trim())}`);
+      await vmixFetch(`/api/?Function=AddInput&Value=NDI|${encodeURIComponent(ndiUrl.trim())}`);
       setNdiUrl("");
       setTimeout(() => connectToVmix(), 500);
       toast({ title: "NDI adicionado", description: "Fonte NDI adicionada como input." });
