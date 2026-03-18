@@ -151,14 +151,22 @@ export default function VmixPage() {
     toast({ title: "URL salva", description: "Endereço do vMix salvo com sucesso." });
   };
 
+  const vmixProxy = useCallback(async (path: string): Promise<string> => {
+    const { data, error } = await supabase.functions.invoke("vmix-proxy", {
+      body: { path },
+    });
+    if (error) throw new Error(error.message || "Proxy error");
+    // data can be a string (XML) or parsed object
+    if (typeof data === "string") return data;
+    // If the runtime auto-parsed as JSON, stringify it back
+    return typeof data === "object" ? JSON.stringify(data) : String(data);
+  }, []);
+
   const connectToVmix = useCallback(async () => {
     if (!savedUrl) return;
     setConnecting(true);
     try {
-      const apiUrl = savedUrl.replace(/\/+$/, "") + "/api/";
-      const response = await fetch(apiUrl, { signal: AbortSignal.timeout(5000) });
-      if (!response.ok) throw new Error("Conexão falhou");
-      const xmlText = await response.text();
+      const xmlText = await vmixProxy("/api/");
       const parser = new DOMParser();
       const xml = parser.parseFromString(xmlText, "text/xml");
 
@@ -193,11 +201,11 @@ export default function VmixPage() {
       toast({ title: "Conectado!", description: `${parsedInputs.length} inputs encontrados.` });
     } catch {
       setConnected(false);
-      toast({ title: "Erro de conexão", description: "Verifique se o vMix Web Controller está ativo.", variant: "destructive" });
+      toast({ title: "Erro de conexão", description: "Verifique se o vMix Web Controller está ativo e acessível.", variant: "destructive" });
     } finally {
       setConnecting(false);
     }
-  }, [savedUrl, toast]);
+  }, [savedUrl, toast, vmixProxy]);
 
   const sendCommand = async (fn: string, input?: string, value?: string) => {
     if (!savedUrl) return;
