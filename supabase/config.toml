@@ -41,3 +41,6 @@ verify_jwt = false
 
 [functions.google-calendar-events]
 verify_jwt = false
+
+[functions.serve-xml-logos]
+verify_jwt = false
