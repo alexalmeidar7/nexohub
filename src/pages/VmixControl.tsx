@@ -59,7 +59,6 @@ export default function VmixControl() {
             <img src={logoMixControl} alt="Mix Control" className="h-8" />
             <p className="text-xs" style={{ color: "#6b7280" }}>Faça login para acessar o controle</p>
           </div>
-          </div>
 
           {error && (
             <div className="text-xs text-center font-medium px-3 py-2 rounded-lg" style={{ backgroundColor: "#fee2e2", color: "#dc2626" }}>
