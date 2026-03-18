@@ -83,12 +83,7 @@ const sidebarMenu: MenuItem[] = [
       { icon: FileText, label: "propostas comerciais", page: "propostas" },
     ]
   },
-  {
-    icon: Monitor, label: "vmix", children: [
-      { icon: Settings, label: "configurações vmix", page: "vmix" },
-      { icon: ExternalLink, label: "vmix control", page: undefined as unknown as Page },
-    ]
-  },
+  { icon: Monitor, label: "vmix control", page: "vmix" },
   {
     icon: Wrench, label: "ferramentas", children: [
       { icon: Tag, label: "tela promo", page: undefined as unknown as Page },
