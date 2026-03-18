@@ -230,11 +230,14 @@ export default function VmixPage() {
   }, [inputHlsUrls]);
 
   // Persist monitor stream URLs
-
-  // Persist monitor stream URLs
   useEffect(() => {
     localStorage.setItem("vmix_monitor_streams", JSON.stringify(monitorStreamUrls));
   }, [monitorStreamUrls]);
+
+  // Persist monitor iframe mode
+  useEffect(() => {
+    localStorage.setItem("vmix_monitor_iframe", JSON.stringify(monitorIframeMode));
+  }, [monitorIframeMode]);
 
   // Load programas from DB
   useEffect(() => {
