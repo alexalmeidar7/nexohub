@@ -462,27 +462,26 @@ export default function VmixPage() {
                   <button className="p-1.5 rounded-lg text-white/30 hover:text-white/60 transition-colors">
                     <HelpCircle size={14} />
                   </button>
-                  <div className="absolute left-0 top-full mt-2 w-80 p-4 rounded-lg text-[11px] text-white/70 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50"
+                  <div className="absolute left-0 top-full mt-2 w-96 p-4 rounded-lg text-[11px] text-white/70 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50"
                     style={{ backgroundColor: "#2a2a3a", border: "1px solid #ffffff15", boxShadow: "0 8px 24px rgba(0,0,0,0.5)" }}
                   >
-                    <p className="font-bold text-white/90 mb-2">Como conectar (redirecionamento de porta):</p>
-                    <ol className="space-y-1.5 list-decimal list-inside text-white/50">
-                      <li>No vMix: <strong className="text-white/70">Settings → Web Controller</strong> → Habilitar (porta 8088)</li>
-                      <li>No roteador: acesse o painel admin (geralmente 192.168.1.1)</li>
-                      <li>Em <strong className="text-white/70">Redirecionamento de Porta / Port Forwarding</strong>:</li>
-                    </ol>
-                    <div className="ml-4 mt-1 mb-2 p-2 rounded text-[10px]" style={{ backgroundColor: "#1a1a2e" }}>
-                      <p>Porta externa: <strong className="text-white/80">8088</strong></p>
-                      <p>IP interno: <strong className="text-white/80">192.168.x.x</strong> (IP do PC com vMix)</p>
-                      <p>Porta interna: <strong className="text-white/80">8088</strong></p>
-                      <p>Protocolo: <strong className="text-white/80">TCP</strong></p>
+                    <p className="font-bold text-white/90 mb-2">Modos de conexão:</p>
+                    <div className="mb-3 p-2 rounded" style={{ backgroundColor: "#22c55e10", border: "1px solid #22c55e30" }}>
+                      <p className="font-bold text-[#22c55e] mb-1">🟢 Modo DIRETO (rede local)</p>
+                      <p className="text-white/50">O navegador conecta diretamente ao vMix. Use o IP local (ex: <strong className="text-white/70">http://192.168.100.6:8088</strong>). Ideal quando você está na mesma rede que o vMix.</p>
                     </div>
-                    <ol className="space-y-1.5 list-decimal list-inside text-white/50" start={4}>
+                    <div className="mb-3 p-2 rounded" style={{ backgroundColor: "#268ffa10", border: "1px solid #268ffa30" }}>
+                      <p className="font-bold text-[#268ffa] mb-1">🔵 Modo PROXY (acesso remoto)</p>
+                      <p className="text-white/50">Conexão via nuvem. Requer IP público com redirecionamento de porta no roteador (ex: <strong className="text-white/70">http://SEU_IP_PUBLICO:8088</strong>).</p>
+                    </div>
+                    <p className="font-bold text-white/90 mb-1">Port Forwarding (modo Proxy):</p>
+                    <ol className="space-y-1 list-decimal list-inside text-white/50 text-[10px]">
+                      <li>No vMix: <strong className="text-white/70">Settings → Web Controller</strong> → porta 8088</li>
+                      <li>No roteador: <strong className="text-white/70">Port Forwarding</strong> → porta 8088 TCP → IP do PC</li>
                       <li>Descubra seu IP público em <strong className="text-white/70">whatismyip.com</strong></li>
-                      <li>Cole aqui: <strong className="text-white/70">http://SEU_IP_PUBLICO:8088</strong></li>
-                      <li>Se o vMix tiver "Enhanced Security", preencha usuário e senha</li>
+                      <li>Cole: <strong className="text-white/70">http://SEU_IP_PUBLICO:8088</strong></li>
                     </ol>
-                    <p className="mt-2 text-white/30 text-[10px]">💡 Dica: use um serviço de DNS dinâmico (No-IP, DuckDNS) se seu IP muda com frequência.</p>
+                    <p className="mt-2 text-white/30 text-[10px]">💡 O modo é detectado automaticamente pelo tipo de IP.</p>
                   </div>
                 </div>
               </>
