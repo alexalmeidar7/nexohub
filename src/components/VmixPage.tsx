@@ -2082,8 +2082,25 @@ export default function VmixPage() {
                             </div>
                           )}
 
+                          {/* Days of week */}
+                          {prog.dias_semana && prog.dias_semana.length > 0 && (
+                            <div className="absolute bottom-1.5 left-1.5 flex items-center gap-[2px] z-[1]">
+                              {["dom","seg","ter","qua","qui","sex","sáb"].map((d, i) => {
+                                const active = prog.dias_semana!.some(ds => {
+                                  const n = ds.toLowerCase().replace(/[-.,]/g, "").trim().slice(0, 3);
+                                  return n === d;
+                                });
+                                return (
+                                  <span key={i} className="text-[5px] font-bold uppercase leading-none px-[2px] py-[1px] rounded-sm"
+                                    style={{ backgroundColor: active ? "rgba(255,255,255,0.15)" : "transparent", color: active ? "#fff" : "#555" }}
+                                  >{d[0].toUpperCase()}</span>
+                                );
+                              })}
+                            </div>
+                          )}
+
                           {/* Label */}
-                          <div className="absolute inset-0 flex items-center justify-center p-2 pt-5">
+                          <div className="absolute inset-0 flex items-center justify-center p-2 pt-5 pb-4">
                             <span className="text-[10px] font-black uppercase tracking-wider text-center leading-tight"
                               style={{ color: isActive ? "#fff" : "#ccc" }}
                             >{prog.nome}</span>
