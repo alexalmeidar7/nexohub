@@ -962,7 +962,26 @@ export default function VmixPage() {
       }
       return <MjpegPlayer src={streamUrl} className="w-full h-full" />;
     }
-    // When connected, show input info placeholder instead of SMPTE bars
+    // Iframe mode — embed vMix Web Controller
+    if (monitorIframeMode[type] && savedUrl) {
+      const baseUrl = savedUrl.replace(/\/+$/, "");
+      return (
+        <div className="w-full h-full relative" style={{ backgroundColor: "#000" }}>
+          <iframe
+            src={baseUrl}
+            className="w-full h-full border-0"
+            style={{ opacity: 1, transition: "opacity 0.5s" }}
+            onLoad={e => { (e.target as HTMLIFrameElement).style.opacity = "1"; }}
+            allow="autoplay"
+            sandbox="allow-scripts allow-same-origin"
+          />
+          <div className="absolute top-1 right-1 px-1.5 py-0.5 rounded text-[7px] font-bold uppercase" style={{ backgroundColor: "rgba(0,0,0,0.7)", color: "#3b82f6" }}>
+            IFRAME
+          </div>
+        </div>
+      );
+    }
+    // When connected, show input info placeholder
     const inputNum = type === "preview" ? previewInput : activeInput;
     if (connected && inputNum) {
       const inp = inputs.find(i => i.number === inputNum);
@@ -976,7 +995,7 @@ export default function VmixPage() {
           </div>
           <div className="absolute bottom-2 left-0 right-0 flex justify-center">
             <span className="text-[8px] px-2 py-0.5 rounded" style={{ backgroundColor: "rgba(0,0,0,0.5)", color: "#888" }}>
-              📡 Configure URL de stream para preview ao vivo
+              📡 URL de stream ou ⬛ Iframe para preview ao vivo
             </span>
           </div>
         </div>
