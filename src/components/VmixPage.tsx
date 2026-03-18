@@ -8,6 +8,7 @@ import {
   Layers, Wand2, Plus, Trash2, GripVertical, Send, Eye, Wifi, HelpCircle, Activity, AlertTriangle, Shield
 
 } from "lucide-react";
+import logoMixControl from "@/assets/logo-mixcontrol.png";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 
 interface VmixInput {
@@ -116,6 +117,13 @@ export default function VmixPage() {
   });
   const [editingScene, setEditingScene] = useState<VmixScene | null>(null);
   const [runningScene, setRunningScene] = useState<string | null>(null);
+
+  // Live clock
+  const [clock, setClock] = useState(() => new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
+  useEffect(() => {
+    const id = setInterval(() => setClock(new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })), 1000);
+    return () => clearInterval(id);
+  }, []);
 
   // NDI state
   const [ndiUrl, setNdiUrl] = useState("");
@@ -900,12 +908,10 @@ export default function VmixPage() {
       </div>
 
       {/* ── Top Bar ── */}
-      <div className="flex items-center justify-between px-4 py-2 rounded-t-xl" style={{ backgroundColor: "#111118" }}>
+      <div className="relative flex items-center justify-between px-4 py-2 rounded-t-xl" style={{ backgroundColor: "#111118" }}>
+        {/* Left: Clock + GO LIVE / RECORD */}
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: "#22c55e" }} />
-            <span className="text-xs font-bold text-white/80">vMix Control</span>
-          </div>
+          <span className="text-sm font-mono font-bold tracking-wider" style={{ color: "#22c55e" }}>{clock}</span>
           <div className="flex items-center gap-2">
             <button
               onClick={() => sendCommand(streaming ? "StopStreaming" : "StartStreaming")}
@@ -927,6 +933,11 @@ export default function VmixPage() {
             </button>
           </div>
         </div>
+        {/* Center: Logo */}
+        <div className="absolute left-1/2 -translate-x-1/2">
+          <img src={logoMixControl} alt="Mix Control" className="h-5" />
+        </div>
+        {/* Right: Refresh */}
         <div className="flex items-center gap-3">
           <button onClick={() => connectToVmix()} className="text-white/40 hover:text-white transition-colors" title="Atualizar">
             <RefreshCw size={14} />
