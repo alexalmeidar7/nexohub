@@ -1298,18 +1298,6 @@ export default function VmixPage() {
             })}
             <div className="ml-auto flex gap-1">
               <button
-                onClick={() => setUseIframeMonitor(prev => !prev)}
-                className="text-[8px] px-1.5 py-0.5 rounded transition-all"
-                style={{
-                  backgroundColor: useIframeMonitor ? "#22c55e20" : "#ffffff08",
-                  color: useIframeMonitor ? "#22c55e" : "#666",
-                  border: `1px solid ${useIframeMonitor ? "#22c55e40" : "#ffffff10"}`,
-                }}
-                title="Iframe do vMix Web Controller"
-              >
-                {useIframeMonitor ? "● WEB" : "⬛ WEB"}
-              </button>
-              <button
                 onClick={() => {
                   setEditingMonitorStream(editingMonitorStream === "preview" ? null : "preview");
                   setMonitorStreamTemp(monitorStreamUrls.preview);
