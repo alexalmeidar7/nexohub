@@ -934,8 +934,8 @@ export default function VmixPage() {
           </div>
         </div>
         {/* Center: Logo */}
-        <div className="absolute left-1/2 -translate-x-1/2">
-          <img src={logoMixControl} alt="Mix Control" className="h-5" />
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+          <img src={logoMixControl} alt="Mix Control" className="h-6" />
         </div>
         {/* Right: Refresh */}
         <div className="flex items-center gap-3">
