@@ -948,7 +948,7 @@ export default function VmixPage() {
             style={{
               backgroundColor: recording ? "#6b1010" : "#2a2a30",
               color: recording ? "#fff" : "#aaa",
-              border: `1px solid ${recording ? "#8b2020" : "#555"}`,
+              border: `1px solid ${recording ? "#8b2020" : "#3a3a40"}`,
             }}
             onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = "0 0 16px #3a3a3a60"; }}
             onMouseLeave={e => { (e.target as HTMLElement).style.boxShadow = "none"; }}
