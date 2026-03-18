@@ -285,7 +285,13 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       return;
     }
     if (parentLabel === "vmix" && child.label === "vmix control") {
-      window.open("/tp-externo", "_blank"); // placeholder — will update with actual vMix control URL
+      const vmixUrl = localStorage.getItem(`vmix_url_${user?.id}`);
+      if (vmixUrl) {
+        window.open(vmixUrl, "_blank");
+      } else {
+        setCurrentPage("vmix");
+        toast({ title: "Configure primeiro", description: "Salve a URL do vMix Web Controller nas configurações." });
+      }
       setHoveredMenu(null);
       return;
     }
