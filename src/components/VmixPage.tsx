@@ -1043,8 +1043,8 @@ export default function VmixPage() {
           </div>
         </div>
         {/* Output */}
-        <div className="relative flex-1 flex flex-col" style={{ background: "linear-gradient(180deg, #12121e 0%, #0e0e18 100%)", minHeight: 200 }}>
-          <div className="flex items-center gap-2 px-3 py-2" style={{ borderBottom: "1px solid #ffffff06", background: "#ffffff03" }}>
+        <div className="relative flex-1 flex flex-col" style={{ backgroundColor: "#18181c", minHeight: 200 }}>
+          <div className="flex items-center gap-2 px-3 py-2" style={{ borderBottom: "1px solid #ffffff06", backgroundColor: "#ffffff04" }}>
             <span className="text-[9px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-sm" style={{ backgroundColor: "#dc2626", color: "#fff", letterSpacing: "0.15em" }}>Output</span>
             <select
               value={activeInput || ""}
