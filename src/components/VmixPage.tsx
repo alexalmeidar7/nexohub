@@ -158,12 +158,15 @@ export default function VmixPage() {
   const [editingHlsInput, setEditingHlsInput] = useState<string | null>(null);
   const [hlsTempUrl, setHlsTempUrl] = useState("");
    // Monitor stream URLs (MJPEG/JPEG/HLS for Preview and Output)
-  // Monitor stream URLs (MJPEG/JPEG/HLS for Preview and Output)
   const [monitorStreamUrls, setMonitorStreamUrls] = useState<{ preview: string; output: string }>(() => {
     try { const s = localStorage.getItem("vmix_monitor_streams"); return s ? JSON.parse(s) : { preview: "", output: "" }; } catch { return { preview: "", output: "" }; }
   });
   const [editingMonitorStream, setEditingMonitorStream] = useState<"preview" | "output" | null>(null);
   const [monitorStreamTemp, setMonitorStreamTemp] = useState("");
+  // Iframe monitor mode (uses vMix Web Controller)
+  const [monitorIframeMode, setMonitorIframeMode] = useState<{ preview: boolean; output: boolean }>(() => {
+    try { const s = localStorage.getItem("vmix_monitor_iframe"); return s ? JSON.parse(s) : { preview: false, output: false }; } catch { return { preview: false, output: false }; }
+  });
 
   // Programas from DB
   const [programas, setProgramas] = useState<Programa[]>([]);
