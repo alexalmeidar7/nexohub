@@ -255,7 +255,23 @@ export default function VmixPage() {
       .eq("ativo", true)
       .order("horario_inicio")
       .then(({ data }) => {
-        if (data) setProgramas(data.map((p: any) => ({ ...p, apresentador_foto: p.apresentadores?.foto || null })));
+        if (data) {
+          const mapped = data.map((p: any) => ({ ...p, apresentador_foto: p.apresentadores?.foto || null }));
+          try {
+            const savedOrder = JSON.parse(localStorage.getItem("vmix_preset_order") || "[]") as string[];
+            if (savedOrder.length > 0) {
+              mapped.sort((a: any, b: any) => {
+                const ai = savedOrder.indexOf(a.id);
+                const bi = savedOrder.indexOf(b.id);
+                if (ai === -1 && bi === -1) return 0;
+                if (ai === -1) return 1;
+                if (bi === -1) return 1;
+                return ai - bi;
+              });
+            }
+          } catch {}
+          setProgramas(mapped);
+        }
       });
   }, [user]);
 
