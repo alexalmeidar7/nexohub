@@ -1091,34 +1091,40 @@ export default function VmixPage() {
                 <div className="flex flex-wrap gap-2">
                   <button
                     onClick={() => sendCommand(streaming ? "StopStreaming" : "StartStreaming")}
-                    className="px-5 py-3 rounded-lg text-xs font-black uppercase tracking-wider transition-all"
+                    className="px-5 py-3 rounded-lg text-xs font-black uppercase tracking-wider transition-all duration-200 hover:scale-[1.03]"
                     style={{
-                      backgroundColor: streaming ? "#eab308" : "#eab30840",
-                      color: streaming ? "#000" : "#eab308",
-                      border: streaming ? "2px solid #facc15" : "2px solid #eab30830",
+                      backgroundColor: streaming ? "#2d5016" : "#2d501640",
+                      color: streaming ? "#fff" : "#7ab648",
+                      border: streaming ? "2px solid #3d6a20" : "2px solid #2d501630",
                     }}
+                    onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = "0 0 18px #2d501660"; }}
+                    onMouseLeave={e => { (e.target as HTMLElement).style.boxShadow = "none"; }}
                   >
                     {streaming ? "● STREAMING 1" : "STREAMING 1"}
                   </button>
                   <button
                     onClick={() => sendCommand(streaming ? "StopStreaming" : "StartStreaming")}
-                    className="px-5 py-3 rounded-lg text-xs font-black uppercase tracking-wider transition-all"
+                    className="px-5 py-3 rounded-lg text-xs font-black uppercase tracking-wider transition-all duration-200 hover:scale-[1.03]"
                     style={{
-                      backgroundColor: "#eab30840",
-                      color: "#eab308",
-                      border: "2px solid #eab30830",
+                      backgroundColor: "#2d501640",
+                      color: "#7ab648",
+                      border: "2px solid #2d501630",
                     }}
+                    onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = "0 0 18px #2d501660"; }}
+                    onMouseLeave={e => { (e.target as HTMLElement).style.boxShadow = "none"; }}
                   >
                     STREAMING 2
                   </button>
                   <button
                     onClick={() => sendCommand(recording ? "StopRecording" : "StartRecording")}
-                    className="px-5 py-3 rounded-lg text-xs font-black uppercase tracking-wider transition-all"
+                    className="px-5 py-3 rounded-lg text-xs font-black uppercase tracking-wider transition-all duration-200 hover:scale-[1.03]"
                     style={{
-                      backgroundColor: recording ? "#dc2626" : "#eab30840",
-                      color: recording ? "#fff" : "#eab308",
-                      border: recording ? "2px solid #dc2626" : "2px solid #eab30830",
+                      backgroundColor: recording ? "#6b1010" : "#6b101040",
+                      color: recording ? "#fff" : "#c84040",
+                      border: recording ? "2px solid #8b2020" : "2px solid #6b101030",
                     }}
+                    onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = "0 0 18px #6b101060"; }}
+                    onMouseLeave={e => { (e.target as HTMLElement).style.boxShadow = "none"; }}
                   >
                     {recording ? "● REC" : "REC"}
                   </button>
