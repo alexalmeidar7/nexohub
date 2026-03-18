@@ -257,16 +257,11 @@ export default function LogosPatrocinadoresPage() {
     }))
     .filter((g) => g.logos.length > 0);
 
-  const logosXmlContent = useMemo(() => {
-    if (grouped.length === 0) return "";
-    const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-    const items = grouped.map(({ programa, logos: gl }, idx) =>
-      `  <programa id="programa ${idx + 1}">\n    <nome>${esc(programa.nome)}</nome>\n${gl.map(l =>
-        `    <logo>\n      <nome>${esc(l.nome)}</nome>\n      <url>${esc(l.logo_url)}</url>\n    </logo>`
-      ).join("\n")}\n  </programa>`
-    ).join("\n");
-    return `<?xml version="1.0" encoding="UTF-8"?>\n<logos_patrocinadores>\n${items}\n</logos_patrocinadores>`;
-  }, [grouped]);
+  const logosXmlUrl = useMemo(() => {
+    if (!user?.id) return "";
+    const base = import.meta.env.VITE_SUPABASE_URL || "";
+    return `${base}/functions/v1/serve-xml-logos?user_id=${user.id}`;
+  }, [user?.id]);
 
   if (loading) {
     return <ModulePageSkeleton />;
@@ -285,7 +280,7 @@ export default function LogosPatrocinadoresPage() {
             <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.5)" }}>Gerencie as logos vinculadas aos programas</p>
           </div>
           <div className="flex-1 ml-4">
-            {logosXmlContent && <XmlLinkRow label="XML LOGOS" xmlContent={logosXmlContent} dark />}
+            {logosXmlUrl && <XmlLinkRow label="XML LOGOS" permanentUrl={logosXmlUrl} dark />}
           </div>
         </div>
 
