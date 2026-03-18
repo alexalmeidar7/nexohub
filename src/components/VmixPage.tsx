@@ -1132,39 +1132,6 @@ export default function VmixPage() {
                 </div>
               </div>
             </div>
-
-
-
-
-            {sectionBox("Overlays / GFX", <Layers size={14} style={{ color: "#2d5016" }} />, (
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                {[1, 2, 3, 4].map(n => (
-                  <div key={n} className="flex flex-col gap-1.5">
-                    <span className="text-[10px] font-bold text-white/40 text-center">Overlay {n}</span>
-                    <div className="flex gap-1">
-                      <button
-                        onClick={() => sendCommand(`OverlayInput${n}`, "1")}
-                        className="flex-1 px-2 py-2 rounded-lg text-[10px] font-bold transition-all duration-200 hover:scale-[1.03]"
-                        style={{ backgroundColor: "#2d501640", color: "#7ab648", border: "1px solid #2d501630" }}
-                        onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = "0 0 14px #2d501660"; }}
-                        onMouseLeave={e => { (e.target as HTMLElement).style.boxShadow = "none"; }}
-                      >
-                        ON
-                      </button>
-                      <button
-                        onClick={() => sendCommand(`OverlayInput${n}Off`)}
-                        className="flex-1 px-2 py-2 rounded-lg text-[10px] font-bold transition-all duration-200 hover:scale-[1.03]"
-                        style={{ backgroundColor: "#3a3a3a30", color: "#888", border: "1px solid #3a3a3a30" }}
-                        onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = "0 0 14px #3a3a3a40"; }}
-                        onMouseLeave={e => { (e.target as HTMLElement).style.boxShadow = "none"; }}
-                      >
-                        OFF
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ), "#2d5016")}
           </>
         )}
 
