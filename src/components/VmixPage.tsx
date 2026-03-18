@@ -210,10 +210,10 @@ export default function VmixPage() {
   const sendCommand = async (fn: string, input?: string, value?: string) => {
     if (!savedUrl) return;
     try {
-      let url = `${savedUrl.replace(/\/+$/, "")}/api/?Function=${encodeURIComponent(fn)}`;
-      if (input) url += `&Input=${encodeURIComponent(input)}`;
-      if (value) url += `&Value=${encodeURIComponent(value)}`;
-      await fetch(url);
+      let path = `/api/?Function=${encodeURIComponent(fn)}`;
+      if (input) path += `&Input=${encodeURIComponent(input)}`;
+      if (value) path += `&Value=${encodeURIComponent(value)}`;
+      await vmixProxy(path);
       setTimeout(() => connectToVmix(), 300);
     } catch {
       toast({ title: "Erro", description: "Falha ao enviar comando.", variant: "destructive" });
@@ -233,8 +233,7 @@ export default function VmixPage() {
   const addNdiInput = async () => {
     if (!savedUrl || !ndiUrl.trim()) return;
     try {
-      const url = `${savedUrl.replace(/\/+$/, "")}/api/?Function=AddInput&Value=NDI|${encodeURIComponent(ndiUrl.trim())}`;
-      await fetch(url);
+      await vmixProxy(`/api/?Function=AddInput&Value=NDI|${encodeURIComponent(ndiUrl.trim())}`);
       setNdiUrl("");
       setTimeout(() => connectToVmix(), 500);
       toast({ title: "NDI adicionado", description: "Fonte NDI adicionada como input." });
