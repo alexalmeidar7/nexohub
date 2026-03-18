@@ -1260,9 +1260,9 @@ export default function VmixPage() {
                           }}
                           className="px-5 py-3 rounded-lg text-xs font-black uppercase tracking-wider transition-all duration-200 hover:scale-[1.03]"
                           style={{
-                            backgroundColor: activePreset === prog.id ? "#1e3a4a" : "#3a3520",
-                            color: activePreset === prog.id ? "#fff" : "#c8b87a",
-                            border: activePreset === prog.id ? "2px solid #2d5a6a" : "2px solid #4a4530",
+                            backgroundColor: activePreset === prog.id ? "#dc2626" : "#2a2a30",
+                            color: activePreset === prog.id ? "#fff" : "#bbb",
+                            border: activePreset === prog.id ? "2px solid #ef4444" : "2px solid #3a3a40",
                             minWidth: 100,
                           }}
                         >
