@@ -1010,6 +1010,8 @@ export default function VmixPage() {
                     <div key={i} className="flex-1" style={{ backgroundColor: c }} />
                   ))}
                 </div>
+                <div className="tv-static absolute inset-0" />
+                <div className="tv-scanlines absolute inset-0" />
                 <div className="absolute inset-0 flex items-center justify-center">
                   <span className="text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded" style={{ backgroundColor: "rgba(0,0,0,0.6)", color: "#888" }}>PVW — Sem sinal</span>
                 </div>
@@ -1109,6 +1111,8 @@ export default function VmixPage() {
                     <div key={i} className="flex-1" style={{ backgroundColor: c }} />
                   ))}
                 </div>
+                <div className="tv-static absolute inset-0" />
+                <div className="tv-scanlines absolute inset-0" />
                 <div className="absolute inset-0 flex items-center justify-center">
                   <span className="text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded" style={{ backgroundColor: "rgba(0,0,0,0.6)", color: "#dc2626" }}>PGM — Sem sinal</span>
                 </div>
