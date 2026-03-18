@@ -89,6 +89,7 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
   const [saving, setSaving] = useState(false);
   const [running, setRunning] = useState(false);
   const [showCode, setShowCode] = useState(false);
+  const [pasteValue, setPasteValue] = useState("");
 
   useEffect(() => {
     if (!open) return;
@@ -153,15 +154,39 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
   };
 
   const generateScript = () => {
-    return commands.map(cmd => {
+    return commands.map((cmd, i) => {
       const inputLabel = cmd.input || "";
-      let line = cmd.fn === commands[0]?.fn && commands.indexOf(cmd) === 0
-        ? `${cmd.fn}(${inputLabel}` : `*${cmd.fn}(${inputLabel}`;
+      let line = i === 0 ? `${cmd.fn}(${inputLabel}` : `*${cmd.fn}(${inputLabel}`;
       if (cmd.value) line += `, ${cmd.value}`;
       if (cmd.extraValue) line += `, ${cmd.extraValue}`;
       line += ")";
       return line;
     }).join("\n");
+  };
+
+  const parseScript = (script: string) => {
+    const lines = script.split("\n").map(l => l.trim()).filter(Boolean);
+    const parsed: PresetCommand[] = [];
+    for (const line of lines) {
+      const clean = line.replace(/^\*/, "");
+      const match = clean.match(/^(\w+)\(([^)]*)\)$/);
+      if (!match) continue;
+      const fn = match[1];
+      const def = getCommandDef(fn);
+      if (!def) continue;
+      const args = match[2].split(",").map(a => a.trim());
+      const cmd: PresetCommand = { id: crypto.randomUUID(), fn };
+      if (def.params.includes("input") && args[0]) cmd.input = args[0];
+      if (def.params.includes("value") && args[1]) cmd.value = args[1];
+      if (def.params.includes("extra") && args[2]) cmd.extraValue = args[2];
+      parsed.push(cmd);
+    }
+    if (parsed.length > 0) {
+      setCommands(parsed);
+      toast({ title: "Script importado", description: `${parsed.length} comando(s) importados.` });
+    } else {
+      toast({ title: "Erro ao importar", description: "Nenhum comando válido encontrado no script.", variant: "destructive" });
+    }
   };
 
   if (!open) return null;
@@ -304,23 +329,46 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
           )}
         </div>
 
-        {/* Code preview toggle */}
-        {commands.length > 0 && (
-          <div className="px-4">
+        {/* Code / Paste section */}
+        <div className="px-4 pb-2">
+          <div className="flex items-center gap-2 mb-2">
             <button
               onClick={() => setShowCode(!showCode)}
               className="text-[9px] font-bold uppercase tracking-wider px-2 py-1 rounded transition-colors"
               style={{ color: "#888", backgroundColor: showCode ? "#ffffff10" : "transparent" }}
             >
-              {showCode ? "Ocultar código" : "Ver código do script"}
+              {showCode ? "Ocultar código" : "Ver / Colar código do script"}
             </button>
-            {showCode && (
-              <pre className="mt-2 p-3 rounded-lg text-[10px] font-mono overflow-x-auto" style={{ backgroundColor: "#111118", color: "#22c55e", border: "1px solid #222", whiteSpace: "pre-wrap" }}>
-                {generateScript()}
-              </pre>
-            )}
           </div>
-        )}
+          {showCode && (
+            <div className="space-y-2">
+              {commands.length > 0 && (
+                <pre className="p-3 rounded-lg text-[10px] font-mono overflow-x-auto" style={{ backgroundColor: "#111118", color: "#22c55e", border: "1px solid #222", whiteSpace: "pre-wrap" }}>
+                  {generateScript()}
+                </pre>
+              )}
+              <div className="flex flex-col gap-1">
+                <label className="text-[8px] font-bold uppercase tracking-widest" style={{ color: "#666" }}>Cole o script aqui para importar ações</label>
+                <textarea
+                  value={pasteValue}
+                  onChange={e => setPasteValue(e.target.value)}
+                  rows={4}
+                  className="w-full text-[10px] font-mono px-3 py-2 rounded-lg outline-none resize-none"
+                  style={{ backgroundColor: "#111118", color: "#ccc", border: "1px solid #333" }}
+                  placeholder={"CutDirect(guid, -1)\n*SelectIndex(guid, 6)\n*SetText(guid, 2, Texto)"}
+                />
+                <button
+                  onClick={() => { parseScript(pasteValue); setPasteValue(""); }}
+                  disabled={!pasteValue.trim()}
+                  className="self-start flex items-center gap-1.5 text-[10px] font-bold px-3 py-1.5 rounded-lg transition-all hover:scale-[1.03] disabled:opacity-30"
+                  style={{ backgroundColor: "#8b5cf615", color: "#8b5cf6", border: "1px solid #8b5cf630" }}
+                >
+                  Importar Script
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* Footer */}
         <div className="flex items-center justify-between gap-2 px-5 py-3" style={{ borderTop: "1px solid #ffffff0a", backgroundColor: "#ffffff03" }}>
