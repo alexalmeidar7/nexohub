@@ -876,7 +876,7 @@ export default function VmixPage() {
   return (
     <div className="space-y-3 max-w-full" style={{ color: "#e0e0e0" }}>
       {/* ── URL + Salvar + Conectado section ── */}
-      <div className="flex items-center gap-3 p-3 rounded-xl flex-wrap" style={{ backgroundColor: "#1a1a2e", border: "1px solid #ffffff08" }}>
+      <div className="flex items-center gap-3 p-3 rounded-xl flex-wrap" style={{ backgroundColor: "#111118", border: "1px solid #ffffff08" }}>
         <div className="flex gap-2 items-center flex-1 flex-wrap">
           <input
             type="text"
@@ -903,17 +903,6 @@ export default function VmixPage() {
           >
             {connecting ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle size={14} />}
             Conectado
-          </button>
-        </div>
-        <div className="flex gap-2">
-          <button
-            onClick={() => { setActiveTab("scenes"); createNewScene(); }}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold text-white transition-all duration-200 hover:scale-[1.03]"
-            style={{ backgroundColor: "#1e3a4a", border: "1px solid #2d5a6a" }}
-            onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = "0 0 16px #1e3a4a60"; }}
-            onMouseLeave={e => { (e.target as HTMLElement).style.boxShadow = "none"; }}
-          >
-            <Plus size={13} /> Criar Cena
           </button>
         </div>
       </div>
