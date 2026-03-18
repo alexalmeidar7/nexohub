@@ -1363,7 +1363,7 @@ export default function VmixPage() {
                   ))
                 )}
               </div>
-            ), "#22c55e")}
+            ), "#888")}
 
             {sectionBox("Dicas NDI", <Eye size={14} style={{ color: "#a855f7" }} />, (
               <ul className="text-[11px] space-y-1.5 text-white/40 list-disc list-inside">
