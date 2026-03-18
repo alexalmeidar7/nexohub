@@ -108,9 +108,10 @@ export default function VmixControl() {
 
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#191919" }}>
-      <header className="flex items-center justify-between px-6 py-3" style={{ backgroundColor: "#242424" }}>
-        <div className="flex items-center gap-3">
-          <img src={logoMixControl} alt="Mix Control" className="h-4" />
+      <header className="relative flex items-center justify-between px-6 py-3" style={{ backgroundColor: "#242424" }}>
+        <div />
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+          <img src={logoMixControl} alt="Mix Control" className="h-5" />
         </div>
         <div className="flex items-center gap-3">
           <span className="text-white/60 text-xs">{user.email}</span>
