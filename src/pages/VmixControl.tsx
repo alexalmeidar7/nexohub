@@ -12,10 +12,22 @@ export default function VmixControl() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [signing, setSigning] = useState(false);
-  const [clock, setClock] = useState(() => new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
+  const [clock, setClock] = useState(() => {
+    const now = new Date();
+    return {
+      time: now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
+      date: now.toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "short" }).replace(/\./g, ""),
+    };
+  });
 
   useEffect(() => {
-    const id = setInterval(() => setClock(new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })), 1000);
+    const id = setInterval(() => {
+      const now = new Date();
+      setClock({
+        time: now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
+        date: now.toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "short" }).replace(/\./g, ""),
+      });
+    }, 1000);
     return () => clearInterval(id);
   }, []);
 
