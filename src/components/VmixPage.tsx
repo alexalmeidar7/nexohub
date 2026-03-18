@@ -962,11 +962,11 @@ export default function VmixPage() {
       </div>
 
       {/* ── Preview / Transitions / Output ── */}
-      <div className="flex items-stretch gap-[1px] rounded-xl overflow-hidden" style={{ background: "linear-gradient(180deg, #0d0d18 0%, #080812 100%)", boxShadow: "0 4px 20px #00000060" }}>
+      <div className="flex items-stretch gap-[1px] rounded-xl overflow-hidden" style={{ backgroundColor: "#111114", boxShadow: "0 4px 20px #00000060" }}>
         {/* Preview */}
-        <div className="relative flex-1 flex flex-col" style={{ background: "linear-gradient(180deg, #12121e 0%, #0e0e18 100%)", minHeight: 200 }}>
-          <div className="flex items-center gap-2 px-3 py-2" style={{ borderBottom: "1px solid #ffffff06", background: "#ffffff03" }}>
-            <span className="text-[9px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-sm" style={{ backgroundColor: "#22c55e", color: "#000", letterSpacing: "0.15em" }}>Preview</span>
+        <div className="relative flex-1 flex flex-col" style={{ backgroundColor: "#18181c", minHeight: 200 }}>
+          <div className="flex items-center gap-2 px-3 py-2" style={{ borderBottom: "1px solid #ffffff06", backgroundColor: "#ffffff04" }}>
+            <span className="text-[9px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-sm" style={{ backgroundColor: "#555", color: "#fff", letterSpacing: "0.15em" }}>Preview</span>
             <select
               value={previewInput || ""}
               onChange={e => { sendCommand("PreviewInput", e.target.value); setPreviewInput(e.target.value); }}
