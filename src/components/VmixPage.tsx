@@ -908,20 +908,40 @@ export default function VmixPage() {
         </div>
         {/* GO LIVE / RECORD section */}
         <div className="flex items-center gap-2 px-3 py-2 rounded-xl" style={{ backgroundColor: "#111118", border: "1px solid #ffffff08" }}>
-          <button
-            onClick={() => sendCommand(streaming ? "StopStreaming" : "StartStreaming")}
-            className="px-4 py-1.5 rounded text-xs font-bold uppercase tracking-wider transition-all duration-200 hover:scale-[1.03]"
-            style={{
-              backgroundColor: streaming ? "#6b1010" : "#3a3a3a",
-              color: streaming ? "#fff" : "#ccc",
-              boxShadow: streaming ? "0 0 16px #6b101060" : "none",
-              border: `1px solid ${streaming ? "#8b2020" : "#555"}`,
-            }}
-            onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = streaming ? "0 0 24px #6b101080" : "0 0 16px #3a3a3a60"; }}
-            onMouseLeave={e => { (e.target as HTMLElement).style.boxShadow = streaming ? "0 0 16px #6b101060" : "none"; }}
-          >
-            {streaming ? "● LIVE" : "GO LIVE"}
-          </button>
+          <div className="relative group/live flex items-center">
+            <button
+              onClick={() => sendCommand(streaming ? "StopStreaming" : "StartStreaming")}
+              className="px-4 py-1.5 rounded text-xs font-bold uppercase tracking-wider transition-all duration-200 hover:scale-[1.03]"
+              style={{
+                backgroundColor: streaming ? "#6b1010" : "#3a3a3a",
+                color: streaming ? "#fff" : "#ccc",
+                boxShadow: streaming ? "0 0 16px #6b101060" : "none",
+                border: `1px solid ${streaming ? "#8b2020" : "#555"}`,
+              }}
+            >
+              {streaming ? "● LIVE" : "GO LIVE"}
+            </button>
+            <div className="absolute left-full top-0 ml-1 flex items-center gap-1 opacity-0 scale-x-0 origin-left transition-all duration-200 group-hover/live:opacity-100 group-hover/live:scale-x-100">
+              <button
+                onClick={() => sendCommand("StartStreaming")}
+                className="px-3 py-1.5 rounded text-[10px] font-bold uppercase tracking-wider transition-all duration-200 hover:scale-[1.05] whitespace-nowrap"
+                style={{ backgroundColor: "#2d5016", color: "#7ab648", border: "1px solid #3d6a20" }}
+                onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = "0 0 14px #2d501660"; }}
+                onMouseLeave={e => { (e.target as HTMLElement).style.boxShadow = "none"; }}
+              >
+                STREAMING 1
+              </button>
+              <button
+                onClick={() => sendCommand("StartStreaming")}
+                className="px-3 py-1.5 rounded text-[10px] font-bold uppercase tracking-wider transition-all duration-200 hover:scale-[1.05] whitespace-nowrap"
+                style={{ backgroundColor: "#2d5016", color: "#7ab648", border: "1px solid #3d6a20" }}
+                onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = "0 0 14px #2d501660"; }}
+                onMouseLeave={e => { (e.target as HTMLElement).style.boxShadow = "none"; }}
+              >
+                STREAMING 2
+              </button>
+            </div>
+          </div>
           <button
             onClick={() => sendCommand(recording ? "StopRecording" : "StartRecording")}
             className="px-4 py-1.5 rounded text-xs font-bold uppercase tracking-wider transition-all duration-200 hover:scale-[1.03]"
