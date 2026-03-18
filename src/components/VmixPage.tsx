@@ -316,11 +316,14 @@ export default function VmixPage() {
       }
     }
 
-    // Recommendation
+    // Recommendation + Auto-fix
+    let autoFixMode: "direct" | "proxy" | null = null;
     if (result.directResult === "ok") {
-      result.recommendation = "✅ Use o modo DIRETO. Conexão funcionando!";
+      result.recommendation = "✅ Modo DIRETO funcionando! Conectando automaticamente...";
+      autoFixMode = "direct";
     } else if (result.proxyResult === "ok") {
-      result.recommendation = "✅ Use o modo PROXY. Conexão funcionando via nuvem!";
+      result.recommendation = "✅ Modo PROXY funcionando! Conectando automaticamente...";
+      autoFixMode = "proxy";
     } else if (isLocal && result.mixedContentBlocked) {
       result.recommendation = "⚠️ O navegador bloqueia HTTP dentro de HTTPS (Mixed Content). Nas configurações do Chrome para este site, permita 'Conteúdo inseguro', ou acesse pelo IP local diretamente no navegador: " + savedUrl;
     } else if (isLocal) {
@@ -331,7 +334,17 @@ export default function VmixPage() {
 
     setDiagResult(result);
     setDiagRunning(false);
-  }, [savedUrl, vmixDirectFetch, vmixProxyFetch]);
+
+    // Auto-fix: switch mode and connect
+    if (autoFixMode) {
+      setConnectionMode(autoFixMode);
+      toast({ title: `Modo alterado para ${autoFixMode === "direct" ? "Direto" : "Proxy"}`, description: "Conectando automaticamente..." });
+      // Small delay to let state update, then connect
+      setTimeout(() => {
+        connectToVmixRef.current?.();
+      }, 300);
+    }
+  }, [savedUrl, vmixDirectFetch, vmixProxyFetch, toast]);
 
   const connectToVmix = useCallback(async () => {
     if (!savedUrl) return;
