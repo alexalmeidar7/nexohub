@@ -879,23 +879,22 @@ export default function VmixPage() {
   ];
 
   return (
-    <div className="space-y-3 max-w-full" style={{ color: "#e0e0e0" }}>
+    <div className="space-y-2 max-w-full" style={{ color: "#e0e0e0" }}>
       {/* ── URL + GO LIVE / RECORD row ── */}
       <div className="flex items-center gap-2 flex-wrap">
         {/* URL section */}
-        <div className="flex items-center gap-2 px-3 py-2 rounded-xl" style={{ backgroundColor: "#111118", border: "1px solid #ffffff08" }}>
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg" style={{ background: "linear-gradient(135deg, #13131d 0%, #1a1a2e 100%)", border: "1px solid #ffffff0a", boxShadow: "0 2px 8px #00000040" }}>
+          <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: connected ? "#22c55e" : "#666", boxShadow: connected ? "0 0 6px #22c55e60" : "none" }} />
           <input
             type="text"
             value={vmixUrl}
             onChange={e => setVmixUrl(e.target.value)}
             placeholder="http://SEU_IP_PUBLICO:8088"
-            className="w-52 px-3 py-1.5 rounded-lg text-xs outline-none"
-            style={{ backgroundColor: "#2a2a2a", color: "#fff", border: "1px solid #ffffff15" }}
+            className="w-52 px-3 py-1.5 rounded text-xs outline-none transition-all focus:ring-1 focus:ring-white/10"
+            style={{ backgroundColor: "#0a0a14", color: "#fff", border: "1px solid #ffffff10" }}
           />
-          <button onClick={saveUrl} className="px-3 py-1.5 rounded-lg text-[10px] font-bold text-white transition-all duration-200 hover:scale-[1.03]"
-            style={{ backgroundColor: "#3a3a3a", border: "1px solid #555" }}
-            onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = "0 0 14px #3a3a3a60"; }}
-            onMouseLeave={e => { (e.target as HTMLElement).style.boxShadow = "none"; }}
+          <button onClick={saveUrl} className="px-3 py-1.5 rounded text-[10px] font-bold text-white/70 hover:text-white transition-all duration-200 hover:scale-[1.02]"
+            style={{ backgroundColor: "#ffffff08", border: "1px solid #ffffff10" }}
           >
             Salvar
           </button>
