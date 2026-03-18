@@ -1097,42 +1097,32 @@ export default function VmixPage() {
 
         {/* ══ CONTROLS TAB ══ */}
         {activeTab === "controls" && (
-          <>
-            <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a2e", border: "1px solid #ffffff08" }}>
-              <div className="flex items-center gap-2 px-4 py-2.5" style={{ backgroundColor: "#3b82f618", borderBottom: "1px solid #ffffff08" }}>
-                <Monitor size={14} style={{ color: "#3b82f6" }} />
-                <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#3b82f6" }}>inputs</span>
-              </div>
-              <div className="p-4">
-                <div className="flex flex-wrap gap-2">
-                  {inputs.map(input => {
-                    const isActive = activeInput === input.number;
-                    const isPreview = previewInput === input.number;
-                    return (
-                      <button
-                        key={input.key || input.number}
-                        onClick={() => sendCommand("Cut", input.number)}
-                        className="px-5 py-3 rounded-lg text-xs font-black uppercase tracking-wider transition-all duration-200 hover:scale-[1.03]"
-                        style={{
-                          backgroundColor: isActive ? "#1e3a4a" : isPreview ? "#2d501640" : "#3a3a3a",
-                          color: isActive ? "#fff" : isPreview ? "#7ab648" : "#ccc",
-                          border: isActive ? "2px solid #2d5a6a" : isPreview ? "2px solid #2d5016" : "2px solid #555",
-                          minWidth: 60,
-                        }}
-                        onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = isActive ? "0 0 20px #1e3a4a80" : "0 0 16px #3a3a3a60"; }}
-                        onMouseLeave={e => { (e.target as HTMLElement).style.boxShadow = "none"; }}
-                      >
-                        {input.title.length > 10 ? input.title.substring(0, 10) : input.title}
-                      </button>
-                    );
-                  })}
-                  {inputs.length === 0 && (
-                    <p className="text-[11px] text-white/30 py-4">Conecte ao vMix para ver os inputs</p>
-                  )}
-                </div>
-              </div>
-            </div>
-          </>
+          <div className="flex flex-wrap gap-2">
+            {inputs.map(input => {
+              const isActive = activeInput === input.number;
+              const isPreview = previewInput === input.number;
+              return (
+                <button
+                  key={input.key || input.number}
+                  onClick={() => sendCommand("Cut", input.number)}
+                  className="px-5 py-3 rounded-lg text-xs font-black uppercase tracking-wider transition-all duration-200 hover:scale-[1.03]"
+                  style={{
+                    backgroundColor: isActive ? "#1e3a4a" : isPreview ? "#2d501640" : "#3a3a3a",
+                    color: isActive ? "#fff" : isPreview ? "#7ab648" : "#ccc",
+                    border: isActive ? "2px solid #2d5a6a" : isPreview ? "2px solid #2d5016" : "2px solid #555",
+                    minWidth: 60,
+                  }}
+                  onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = isActive ? "0 0 20px #1e3a4a80" : "0 0 16px #3a3a3a60"; }}
+                  onMouseLeave={e => { (e.target as HTMLElement).style.boxShadow = "none"; }}
+                >
+                  {input.title.length > 10 ? input.title.substring(0, 10) : input.title}
+                </button>
+              );
+            })}
+            {inputs.length === 0 && (
+              <p className="text-[11px] text-white/30 py-4">Conecte ao vMix para ver os inputs</p>
+            )}
+          </div>
         )}
 
         {/* ══ SCENES TAB ══ */}
