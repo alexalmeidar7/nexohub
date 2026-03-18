@@ -996,8 +996,33 @@ export default function VmixPage() {
               {t.label}
             </button>
           ))}
+          <div className="w-full h-px my-1" style={{ backgroundColor: "#ffffff10" }} />
+          <div className="grid grid-cols-2 gap-1 w-full">
+            {[1, 2, 3, 4].map(n => {
+              const isOn = overlays[n];
+              return (
+                <button
+                  key={n}
+                  onClick={() => {
+                    const cmd = isOn ? `OverlayInput${n}Off` : `OverlayInput${n}`;
+                    sendCommand(cmd);
+                    setOverlays(prev => ({ ...prev, [n]: !prev[n] }));
+                  }}
+                  className="flex items-center justify-center rounded text-[9px] font-bold transition-all duration-200 hover:scale-[1.08]"
+                  style={{
+                    width: 30, height: 24,
+                    backgroundColor: isOn ? "#eab308" : "#3a3a3a",
+                    color: isOn ? "#000" : "#999",
+                    border: `1px solid ${isOn ? "#facc15" : "#555"}`,
+                    boxShadow: isOn ? "0 0 10px #eab30840" : "none",
+                  }}
+                >
+                  {n}
+                </button>
+              );
+            })}
+          </div>
         </div>
-        {/* Output */}
         <div className="relative flex-1" style={{ backgroundColor: "#111118", minHeight: 140 }}>
           <div className="absolute top-2 left-3 z-10">
             <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded" style={{ backgroundColor: "#dc2626", color: "#fff" }}>Output</span>
