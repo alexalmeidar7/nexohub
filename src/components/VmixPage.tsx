@@ -120,6 +120,21 @@ export default function VmixPage() {
   // NDI state
   const [ndiUrl, setNdiUrl] = useState("");
 
+  // Diagnostic state
+  interface DiagResult {
+    urlType: "local" | "public" | "invalid";
+    protocol: "http" | "https" | "unknown";
+    isSecureContext: boolean;
+    mixedContentBlocked: boolean;
+    directResult: "ok" | "fail" | "pending" | "skipped";
+    directError: string;
+    proxyResult: "ok" | "fail" | "pending" | "skipped";
+    proxyError: string;
+    recommendation: string;
+  }
+  const [diagRunning, setDiagRunning] = useState(false);
+  const [diagResult, setDiagResult] = useState<DiagResult | null>(null);
+
   // Persist scenes
   useEffect(() => {
     localStorage.setItem("vmix_scenes", JSON.stringify(scenes));
