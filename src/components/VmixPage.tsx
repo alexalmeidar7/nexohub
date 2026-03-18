@@ -971,7 +971,7 @@ export default function VmixPage() {
               value={previewInput || ""}
               onChange={e => { sendCommand("PreviewInput", e.target.value); setPreviewInput(e.target.value); }}
               className="flex-1 text-[10px] rounded px-2 py-1 border-none outline-none"
-              style={{ backgroundColor: "#1a1a28", color: "#ccc" }}
+              style={{ backgroundColor: "#222228", color: "#ccc" }}
             >
               <option value="">— Selecione —</option>
               {inputs.map(inp => (
