@@ -1973,19 +1973,49 @@ export default function VmixPage() {
                 {ndiInputs.length === 0 ? (
                   <p className="text-[11px] text-white/30 text-center py-6">Nenhum input NDI encontrado no vMix</p>
                 ) : (
-                  ndiInputs.map(input => (
-                    <div key={input.key} className="flex items-center gap-3 px-3 py-2.5 rounded-lg" style={{ backgroundColor: "#ffffff06" }}>
-                      <Tv size={14} className="text-white/40" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-semibold text-white/80 truncate">{input.title}</p>
-                        <p className="text-[9px] text-white/30">Input {input.number} • {input.type} • {input.state}</p>
+                  ndiInputs.map(input => {
+                    const isOnline = input.state === "Running";
+                    return (
+                      <div key={input.key} className="flex items-center gap-3 px-3 py-2.5 rounded-lg" style={{ backgroundColor: "#ffffff06" }}>
+                        {/* Online/Offline indicator */}
+                        <div className="flex items-center gap-1.5">
+                          <div
+                            className={`w-2.5 h-2.5 rounded-full ${isOnline ? "animate-pulse" : ""}`}
+                            style={{ backgroundColor: isOnline ? "#22c55e" : "#ef4444", boxShadow: isOnline ? "0 0 6px #22c55e80" : "0 0 4px #ef444440" }}
+                            title={isOnline ? "Online" : "Offline"}
+                          />
+                          <Tv size={14} style={{ color: isOnline ? "#22c55e" : "#ef4444" }} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-semibold text-white/80 truncate">{input.title}</p>
+                          <p className="text-[9px] text-white/30">
+                            Input {input.number} • {input.type} •{" "}
+                            <span style={{ color: isOnline ? "#22c55e" : "#ef4444" }}>{isOnline ? "Online" : "Offline"}</span>
+                          </p>
+                        </div>
+                        <div className="flex gap-1">
+                          <button onClick={() => { sendCommand("PreviewInput", input.number); setPreviewInput(input.number); }} className="px-2 py-1 rounded text-[9px] font-bold" style={{ backgroundColor: "#ffffff10", color: "#bbb" }}>PRV</button>
+                          <button onClick={() => { sendCommand("Cut", input.number); setActiveInput(input.number); }} className="px-2 py-1 rounded text-[9px] font-bold" style={{ backgroundColor: "#dc262620", color: "#dc2626" }}>PGM</button>
+                          <button
+                            onClick={async () => {
+                              try {
+                                await vmixFetch(`/api/?Function=RemoveInput&Input=${encodeURIComponent(input.number)}`);
+                                toast({ title: "Input removido", description: `"${input.title}" removido do vMix.` });
+                                setTimeout(() => connectToVmix(), 500);
+                              } catch {
+                                toast({ title: "Erro", description: "Falha ao remover input.", variant: "destructive" });
+                              }
+                            }}
+                            className="px-2 py-1 rounded text-[9px] font-bold transition-all hover:brightness-125"
+                            style={{ backgroundColor: "#ffffff08", color: "#f87171" }}
+                            title="Remover input"
+                          >
+                            <Trash2 size={11} />
+                          </button>
+                        </div>
                       </div>
-                      <div className="flex gap-1">
-                        <button onClick={() => { sendCommand("PreviewInput", input.number); setPreviewInput(input.number); }} className="px-2 py-1 rounded text-[9px] font-bold" style={{ backgroundColor: "#ffffff10", color: "#bbb" }}>PRV</button>
-                        <button onClick={() => { sendCommand("Cut", input.number); setActiveInput(input.number); }} className="px-2 py-1 rounded text-[9px] font-bold" style={{ backgroundColor: "#dc262620", color: "#dc2626" }}>PGM</button>
-                      </div>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
             ), "#888")}
