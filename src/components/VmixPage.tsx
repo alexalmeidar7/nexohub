@@ -909,12 +909,8 @@ export default function VmixPage() {
 
       {/* ── Top Bar ── */}
       <div className="relative flex items-center justify-between px-4 py-2 rounded-t-xl" style={{ backgroundColor: "#111118" }}>
-        {/* Left: Clock + GO LIVE / RECORD */}
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-1.5 px-3 py-1 rounded-lg" style={{ backgroundColor: "#0a0a12", border: "1px solid #ffffff15", boxShadow: "inset 0 1px 3px rgba(0,0,0,0.5)" }}>
-            <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: "#dc2626" }} />
-            <span className="text-base font-mono font-bold tracking-[0.25em] tabular-nums" style={{ color: "#22c55e", textShadow: "0 0 8px rgba(34,197,94,0.4)" }}>{clock}</span>
-          </div>
+        {/* Left: GO LIVE / RECORD */}
+        <div className="flex items-center gap-2">
           <div className="flex items-center gap-2">
             <button
               onClick={() => sendCommand(streaming ? "StopStreaming" : "StartStreaming")}
