@@ -102,8 +102,21 @@ export default function VmixPage() {
     localStorage.setItem("vmix_scenes", JSON.stringify(scenes));
   }, [scenes]);
 
+  // Load programas from DB
   useEffect(() => {
     if (!user) return;
+    supabase
+      .from("programas")
+      .select("id, nome, ativo")
+      .eq("user_id", user.id)
+      .eq("ativo", true)
+      .order("nome")
+      .then(({ data }) => {
+        if (data) setProgramas(data);
+      });
+  }, [user]);
+
+
     const loadUrl = async () => {
       const { data } = await supabase
         .from("user_settings")
