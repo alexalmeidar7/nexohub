@@ -569,6 +569,18 @@ export default function VmixPage() {
     toast({ title: "Cena executada", description: `"${scene.name}" concluída.` });
   };
 
+  // Extract machine names from existing NDI inputs to suggest common sources
+  const detectedMachines = useMemo(() => {
+    const machines = new Set<string>();
+    inputs.forEach(inp => {
+      if (inp.type === "NDI" || inp.title.toLowerCase().includes("ndi")) {
+        const match = inp.title.match(/^(?:NDI\s+)?([A-Z0-9_-]+)\s*\(/i);
+        if (match) machines.add(match[1]);
+      }
+    });
+    return Array.from(machines);
+  }, [inputs]);
+
   const scanNdiSources = useCallback(async () => {
     if (!savedUrl || !connected) {
       setNdiSources([]);
@@ -576,34 +588,47 @@ export default function VmixPage() {
     }
     setNdiScanning(true);
     try {
-      const xmlText = await vmixFetch("/api/");
-      const parser = new DOMParser();
-      const xml = parser.parseFromString(xmlText, "text/xml");
-      // vMix exposes NDI sources in the XML under <ndisources> or we parse from available inputs
-      const ndiSourceEls = xml.querySelectorAll("ndisource");
-      const sources: string[] = [];
-      ndiSourceEls.forEach(el => {
-        const name = el.textContent?.trim();
-        if (name) sources.push(name);
+      // Refresh inputs first
+      await connectToVmix();
+
+      // vMix HTTP API does NOT expose NDI discovery (it uses mDNS).
+      // Instead, we suggest common NDI source names based on detected machine names.
+      const machines = new Set<string>();
+      inputs.forEach(inp => {
+        if (inp.type === "NDI" || inp.title.toLowerCase().includes("ndi")) {
+          const match = inp.title.match(/^(?:NDI\s+)?([A-Z0-9_-]+)\s*\(/i);
+          if (match) machines.add(match[1]);
+        }
       });
-      // Also try to find NDI sources from the XML root element attributes or child elements
-      if (sources.length === 0) {
-        // Fallback: try fetching NDI sources list via vMix function
-        try {
-          const ndiXml = await vmixFetch("/api/?Function=NDISources");
-          // Parse response for any source names
-          const ndiDoc = new DOMParser().parseFromString(ndiXml, "text/xml");
-          ndiDoc.querySelectorAll("source, ndisource, item").forEach(el => {
-            const name = el.textContent?.trim() || el.getAttribute("name")?.trim();
-            if (name) sources.push(name);
-          });
-        } catch { /* NDISources endpoint may not exist */ }
+
+      const suggestions: string[] = [];
+      const machineList = Array.from(machines);
+
+      if (machineList.length > 0) {
+        for (const machine of machineList) {
+          // Common vMix NDI outputs
+          suggestions.push(
+            `${machine} (vMix - Output 1)`,
+            `${machine} (vMix - Output 2)`,
+            `${machine} (vMix - Output 3)`,
+            `${machine} (vMix - Output 4)`,
+            `${machine} (vMix Video)`,
+            `${machine} (vMix Audio - Master)`,
+            `${machine} (vMix Audio - Headphones)`,
+          );
+          // Common GPU capture sources
+          suggestions.push(
+            `${machine} (Radeon RX 460 Series 1)`,
+            `${machine} (Radeon RX 460 Series 2)`,
+          );
+        }
       }
-      setNdiSources(sources);
-      if (sources.length === 0) {
-        toast({ title: "Busca NDI", description: "Nenhuma fonte NDI encontrada na rede. Verifique se o NDI Tools está ativo." });
+
+      setNdiSources(suggestions);
+      if (suggestions.length === 0) {
+        toast({ title: "Busca NDI", description: "Nenhum input NDI no vMix para detectar máquinas. Adicione manualmente." });
       } else {
-        toast({ title: "Fontes NDI encontradas", description: `${sources.length} fonte(s) detectada(s).` });
+        toast({ title: `${machineList.length} máquina(s) detectada(s)`, description: `${suggestions.length} fontes NDI sugeridas com base nos inputs existentes.` });
       }
     } catch {
       setNdiSources([]);
@@ -611,7 +636,7 @@ export default function VmixPage() {
     } finally {
       setNdiScanning(false);
     }
-  }, [savedUrl, connected, vmixFetch, toast]);
+  }, [savedUrl, connected, inputs, connectToVmix, toast]);
 
   // Auto-scan NDI when entering the NDI tab
   useEffect(() => {
@@ -1911,7 +1936,16 @@ export default function VmixPage() {
                     </div>
                   )}
                   {!ndiScanning && connected && ndiSources.length === 0 && (
-                    <p className="text-[10px] text-white/30 text-center py-3">Nenhuma fonte NDI detectada. Use o campo abaixo para adicionar manualmente.</p>
+                    <div className="text-center py-3 space-y-1">
+                      <p className="text-[10px] text-white/40">
+                        {detectedMachines.length === 0
+                          ? "Nenhum input NDI no vMix. Adicione um manualmente para detectar a máquina."
+                          : "Clique em \"Buscar\" para sugerir fontes NDI disponíveis."}
+                      </p>
+                      <p className="text-[9px] text-white/25">
+                        ℹ A descoberta NDI usa mDNS (indisponível no browser). As sugestões são baseadas nos inputs NDI já conectados.
+                      </p>
+                    </div>
                   )}
                 </div>
 
@@ -1948,19 +1982,49 @@ export default function VmixPage() {
                 {ndiInputs.length === 0 ? (
                   <p className="text-[11px] text-white/30 text-center py-6">Nenhum input NDI encontrado no vMix</p>
                 ) : (
-                  ndiInputs.map(input => (
-                    <div key={input.key} className="flex items-center gap-3 px-3 py-2.5 rounded-lg" style={{ backgroundColor: "#ffffff06" }}>
-                      <Tv size={14} className="text-white/40" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-semibold text-white/80 truncate">{input.title}</p>
-                        <p className="text-[9px] text-white/30">Input {input.number} • {input.type} • {input.state}</p>
+                  ndiInputs.map(input => {
+                    const isOnline = input.state === "Running";
+                    return (
+                      <div key={input.key} className="flex items-center gap-3 px-3 py-2.5 rounded-lg" style={{ backgroundColor: "#ffffff06" }}>
+                        {/* Online/Offline indicator */}
+                        <div className="flex items-center gap-1.5">
+                          <div
+                            className={`w-2.5 h-2.5 rounded-full ${isOnline ? "animate-pulse" : ""}`}
+                            style={{ backgroundColor: isOnline ? "#22c55e" : "#ef4444", boxShadow: isOnline ? "0 0 6px #22c55e80" : "0 0 4px #ef444440" }}
+                            title={isOnline ? "Online" : "Offline"}
+                          />
+                          <Tv size={14} style={{ color: isOnline ? "#22c55e" : "#ef4444" }} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-semibold text-white/80 truncate">{input.title}</p>
+                          <p className="text-[9px] text-white/30">
+                            Input {input.number} • {input.type} •{" "}
+                            <span style={{ color: isOnline ? "#22c55e" : "#ef4444" }}>{isOnline ? "Online" : "Offline"}</span>
+                          </p>
+                        </div>
+                        <div className="flex gap-1">
+                          <button onClick={() => { sendCommand("PreviewInput", input.number); setPreviewInput(input.number); }} className="px-2 py-1 rounded text-[9px] font-bold" style={{ backgroundColor: "#ffffff10", color: "#bbb" }}>PRV</button>
+                          <button onClick={() => { sendCommand("Cut", input.number); setActiveInput(input.number); }} className="px-2 py-1 rounded text-[9px] font-bold" style={{ backgroundColor: "#dc262620", color: "#dc2626" }}>PGM</button>
+                          <button
+                            onClick={async () => {
+                              try {
+                                await vmixFetch(`/api/?Function=RemoveInput&Input=${encodeURIComponent(input.number)}`);
+                                toast({ title: "Input removido", description: `"${input.title}" removido do vMix.` });
+                                setTimeout(() => connectToVmix(), 500);
+                              } catch {
+                                toast({ title: "Erro", description: "Falha ao remover input.", variant: "destructive" });
+                              }
+                            }}
+                            className="px-2 py-1 rounded text-[9px] font-bold transition-all hover:brightness-125"
+                            style={{ backgroundColor: "#ffffff08", color: "#f87171" }}
+                            title="Remover input"
+                          >
+                            <Trash2 size={11} />
+                          </button>
+                        </div>
                       </div>
-                      <div className="flex gap-1">
-                        <button onClick={() => { sendCommand("PreviewInput", input.number); setPreviewInput(input.number); }} className="px-2 py-1 rounded text-[9px] font-bold" style={{ backgroundColor: "#ffffff10", color: "#bbb" }}>PRV</button>
-                        <button onClick={() => { sendCommand("Cut", input.number); setActiveInput(input.number); }} className="px-2 py-1 rounded text-[9px] font-bold" style={{ backgroundColor: "#dc262620", color: "#dc2626" }}>PGM</button>
-                      </div>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
             ), "#888")}
