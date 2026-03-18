@@ -2002,10 +2002,26 @@ export default function VmixPage() {
                             backgroundColor: isActive ? "#dc2626" : "#2a2a30",
                             border: isActive ? "2px solid #ef4444" : progOnAir ? "2px solid #22c55e" : "2px solid #333338",
                           }}
-                          onClick={() => {
+                          onClick={async () => {
                             setActivePreset(prog.id);
-                            sendCommand("ScriptStart", prog.nome);
-                            toast({ title: `Preset: ${prog.nome}`, description: "Comando enviado ao vMix." });
+                            // Try to run saved preset commands first
+                            const { data: presetData } = await (supabase.from("preset_commands" as any) as any)
+                              .select("commands")
+                              .eq("user_id", user?.id)
+                              .eq("programa_id", prog.id)
+                              .maybeSingle();
+                            if (presetData?.commands && Array.isArray(presetData.commands) && presetData.commands.length > 0) {
+                              for (const cmd of presetData.commands as any[]) {
+                                let value = cmd.value;
+                                if (cmd.extraValue) value = value ? `${value},${cmd.extraValue}` : cmd.extraValue;
+                                await sendCommand(cmd.fn, cmd.input, value);
+                                await new Promise(r => setTimeout(r, 400));
+                              }
+                              toast({ title: `Preset: ${prog.nome}`, description: `${presetData.commands.length} ação(ões) executada(s).` });
+                            } else {
+                              sendCommand("ScriptStart", prog.nome);
+                              toast({ title: `Preset: ${prog.nome}`, description: "Comando enviado ao vMix." });
+                            }
                           }}
                         >
                           {/* Schedule badge */}
