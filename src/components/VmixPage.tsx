@@ -1439,14 +1439,73 @@ export default function VmixPage() {
                       {capturingShortcut === input.number ? "⌨ ..." : inputShortcuts[input.number] || "⌨"}
                     </button>
                   </div>
-                  <div className="relative" style={{ aspectRatio: "3/2", backgroundColor: "#111114" }}>
+                   <div className="relative" style={{ aspectRatio: "3/2", backgroundColor: "#111114" }}>
                     <ThumbnailImg inputNumber={input.number} className="w-full h-full object-contain" alt={input.title} />
                     {isNdi && (
-                      <div className="absolute top-1 left-1">
+                      <div className="absolute top-1 left-1 flex gap-1">
                         <span className="text-[7px] font-bold px-1 rounded" style={{ backgroundColor: "#22c55e30", color: "#22c55e", border: "1px solid #22c55e40" }}>NDI</span>
+                        {inputHlsUrls[input.number] && (
+                          <span className="text-[7px] font-bold px-1 rounded animate-pulse" style={{ backgroundColor: "#dc262630", color: "#dc2626", border: "1px solid #dc262640" }}>LIVE</span>
+                        )}
                       </div>
                     )}
+                    {/* HLS URL config button for NDI inputs */}
+                    {isNdi && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEditingHlsInput(editingHlsInput === input.number ? null : input.number);
+                          setHlsTempUrl(inputHlsUrls[input.number] || "");
+                        }}
+                        className="absolute bottom-1 right-1 text-[7px] px-1 py-0.5 rounded transition-all"
+                        style={{
+                          backgroundColor: inputHlsUrls[input.number] ? "#22c55e20" : "#ffffff10",
+                          color: inputHlsUrls[input.number] ? "#22c55e" : "#888",
+                          border: `1px solid ${inputHlsUrls[input.number] ? "#22c55e30" : "#ffffff15"}`,
+                        }}
+                        title="Configurar URL de stream HLS para este input"
+                      >
+                        {inputHlsUrls[input.number] ? "📡" : "🔗 HLS"}
+                      </button>
+                    )}
                   </div>
+                  {/* HLS URL editor inline */}
+                  {editingHlsInput === input.number && (
+                    <div className="flex gap-1 px-1.5 py-1.5" style={{ backgroundColor: "#111114", borderTop: "1px solid #ffffff08" }} onClick={e => e.stopPropagation()}>
+                      <input
+                        type="text"
+                        value={hlsTempUrl}
+                        onChange={e => setHlsTempUrl(e.target.value)}
+                        placeholder="URL HLS (.m3u8) ou vídeo"
+                        className="flex-1 text-[9px] px-1.5 py-1 rounded outline-none"
+                        style={{ backgroundColor: "#1a1a20", color: "#ccc", border: "1px solid #333" }}
+                        onKeyDown={e => {
+                          if (e.key === "Enter") {
+                            setInputHlsUrls(prev => hlsTempUrl.trim() ? { ...prev, [input.number]: hlsTempUrl.trim() } : (() => { const c = { ...prev }; delete c[input.number]; return c; })());
+                            setEditingHlsInput(null);
+                          }
+                        }}
+                      />
+                      <button
+                        onClick={() => {
+                          setInputHlsUrls(prev => hlsTempUrl.trim() ? { ...prev, [input.number]: hlsTempUrl.trim() } : (() => { const c = { ...prev }; delete c[input.number]; return c; })());
+                          setEditingHlsInput(null);
+                        }}
+                        className="text-[8px] px-1.5 rounded"
+                        style={{ backgroundColor: "#22c55e20", color: "#22c55e", border: "1px solid #22c55e30" }}
+                      >✓</button>
+                      {inputHlsUrls[input.number] && (
+                        <button
+                          onClick={() => {
+                            setInputHlsUrls(prev => { const c = { ...prev }; delete c[input.number]; return c; });
+                            setEditingHlsInput(null);
+                          }}
+                          className="text-[8px] px-1.5 rounded"
+                          style={{ backgroundColor: "#dc262620", color: "#dc2626", border: "1px solid #dc262630" }}
+                        >✕</button>
+                      )}
+                    </div>
+                  )}
                 </div>
               );
             })}
