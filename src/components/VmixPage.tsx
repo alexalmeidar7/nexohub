@@ -1147,13 +1147,15 @@ export default function VmixPage() {
                       <button
                         key={input.key || input.number}
                         onClick={() => sendCommand("Cut", input.number)}
-                        className="px-5 py-3 rounded-lg text-xs font-black uppercase tracking-wider transition-all hover:brightness-125"
+                        className="px-5 py-3 rounded-lg text-xs font-black uppercase tracking-wider transition-all duration-200 hover:scale-[1.03]"
                         style={{
-                          backgroundColor: isActive ? "#3b82f6" : isPreview ? "#22c55e40" : "#3b82f640",
-                          color: isActive ? "#fff" : isPreview ? "#22c55e" : "#60a5fa",
-                          border: isActive ? "2px solid #60a5fa" : isPreview ? "2px solid #22c55e" : "2px solid #3b82f630",
+                          backgroundColor: isActive ? "#1e3a4a" : isPreview ? "#2d501640" : "#3a3a3a",
+                          color: isActive ? "#fff" : isPreview ? "#7ab648" : "#ccc",
+                          border: isActive ? "2px solid #2d5a6a" : isPreview ? "2px solid #2d5016" : "2px solid #555",
                           minWidth: 60,
                         }}
+                        onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = isActive ? "0 0 20px #1e3a4a80" : "0 0 16px #3a3a3a60"; }}
+                        onMouseLeave={e => { (e.target as HTMLElement).style.boxShadow = "none"; }}
                       >
                         {input.title.length > 10 ? input.title.substring(0, 10) : input.title}
                       </button>
