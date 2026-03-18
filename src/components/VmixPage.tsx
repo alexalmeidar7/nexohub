@@ -1644,6 +1644,7 @@ export default function VmixPage() {
                 </div>
               </div>
             )}
+          </div>
         </div>
         </div>
         )}
