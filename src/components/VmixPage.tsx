@@ -1243,10 +1243,10 @@ export default function VmixPage() {
               </div>
 
               {/* ── Programas Preset ── */}
-              <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a2e", border: "1px solid #ffffff08" }}>
-                <div className="flex items-center gap-2 px-4 py-2.5" style={{ backgroundColor: "#c2410c18", borderBottom: "1px solid #ffffff08" }}>
-                  <Radio size={14} style={{ color: "#ea580c" }} />
-                  <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#ea580c" }}>programas preset</span>
+              <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a1f", border: "1px solid #ffffff08" }}>
+                <div className="flex items-center gap-2 px-4 py-2.5" style={{ backgroundColor: "#ffffff06", borderBottom: "1px solid #ffffff08" }}>
+                  <Radio size={14} style={{ color: "#999" }} />
+                  <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#999" }}>programas preset</span>
                 </div>
                 <div className="p-4">
                   <div className="flex flex-wrap gap-2">
