@@ -168,6 +168,7 @@ export default function VmixPage() {
   const [monitorIframeMode, setMonitorIframeMode] = useState<{ preview: boolean; output: boolean }>(() => {
     try { const s = localStorage.getItem("vmix_monitor_iframe"); return s ? JSON.parse(s) : { preview: false, output: false }; } catch { return { preview: false, output: false }; }
   });
+  const [monitorsCollapsed, setMonitorsCollapsed] = useState(true);
 
   // Programas from DB
   const [programas, setProgramas] = useState<Programa[]>([]);
