@@ -197,15 +197,9 @@ export default function VmixPage() {
     localStorage.setItem(`vmix_url_${user.id}`, trimmed);
 
     // Auto-detect best mode
-    if (isPrivateIp(trimmed) && window.isSecureContext) {
-      // On HTTPS, direct HTTP to local IP is blocked — prefer proxy
-      if (connectionMode === "direct") {
-        setConnectionMode("proxy");
-        toast({ title: "Modo alterado para Proxy", description: "IP local em HTTPS: modo Proxy é mais compatível." });
-      }
-    } else if (isPrivateIp(trimmed) && connectionMode === "proxy") {
+    if (isPrivateIp(trimmed) && connectionMode === "proxy") {
       setConnectionMode("direct");
-      toast({ title: "Modo alterado para Direto", description: "IP local detectado. Usando conexão direta do navegador." });
+      toast({ title: "Modo alterado para Direto", description: "IP local detectado. Proxy em nuvem não alcança rede local." });
     } else if (!isPrivateIp(trimmed) && connectionMode === "direct") {
       setConnectionMode("proxy");
       toast({ title: "Modo alterado para Proxy", description: "IP público detectado. Usando conexão via proxy." });
@@ -271,10 +265,10 @@ export default function VmixPage() {
     setDiagResult(null);
 
     const isLocal = isPrivateIp(savedUrl);
+    const isEmbeddedPreview = window.self !== window.top;
     let protocol: "http" | "https" | "unknown" = "unknown";
     try { protocol = new URL(savedUrl).protocol === "https:" ? "https" : "http"; } catch {}
     const secureCtx = window.isSecureContext;
-    const mixedBlocked = secureCtx && protocol === "http" && !isLocal; // mixed content for public HTTP
 
     const result: DiagResult = {
       urlType: isLocal ? "local" : "public",
@@ -307,8 +301,11 @@ export default function VmixPage() {
       }
     }
 
-    // Test Proxy
-    {
+    // Test Proxy (somente para URL pública)
+    if (isLocal) {
+      result.proxyResult = "skipped";
+      result.proxyError = "IP local/privado não é acessível pelo proxy em nuvem";
+    } else {
       try {
         const text = await vmixProxyFetch("/api/");
         result.proxyResult = text.includes("<vmix>") || text.includes("<inputs>") || text.includes("version") ? "ok" : "fail";
@@ -329,9 +326,11 @@ export default function VmixPage() {
       result.recommendation = "✅ Modo PROXY funcionando! Conectando automaticamente...";
       autoFixMode = "proxy";
     } else if (isLocal && result.mixedContentBlocked) {
-      result.recommendation = "⚠️ O navegador bloqueia HTTP dentro de HTTPS (Mixed Content). Nas configurações do Chrome para este site, permita 'Conteúdo inseguro', ou acesse pelo IP local diretamente no navegador: " + savedUrl;
+      result.recommendation = isEmbeddedPreview
+        ? "⚠️ O preview interno bloqueia HTTP local. Abra /vmix-control em nova aba e permita 'Conteúdo inseguro' no navegador para esse domínio."
+        : "⚠️ O navegador bloqueia HTTP dentro de HTTPS (Mixed Content). Permita 'Conteúdo inseguro' para este site e tente novamente.";
     } else if (isLocal) {
-      result.recommendation = "⚠️ IP local detectado mas não foi possível conectar. Verifique: 1) vMix Web Controller está ativo (porta 8088)? 2) Você está na mesma rede Wi-Fi/LAN? 3) Firewall do Windows permite a porta 8088?";
+      result.recommendation = "⚠️ IP local detectado. Use modo Direto na mesma rede local; o modo Proxy só funciona com URL pública/túnel.";
     } else {
       result.recommendation = "❌ Nenhum modo conectou. Verifique: 1) Port forwarding configurado no roteador (porta 8088 → IP do PC)? 2) vMix Web Controller ativo? 3) Firewall permite conexões na porta 8088?";
     }
@@ -353,7 +352,25 @@ export default function VmixPage() {
   const connectToVmix = useCallback(async () => {
     if (!savedUrl) return;
 
+    const isLocal = isPrivateIp(savedUrl);
+    const isEmbeddedPreview = window.self !== window.top;
     const effectiveMode = connectionMode;
+
+    if (effectiveMode === "proxy" && isLocal) {
+      setConnected(false);
+      setConnectionMode("direct");
+      toast({
+        title: "Proxy indisponível para IP local",
+        description: isEmbeddedPreview
+          ? "No preview interno, abra /vmix-control em nova aba e use o modo Direto."
+          : "IP local não é acessível pelo proxy em nuvem. Mudamos para Direto automaticamente.",
+        variant: "destructive",
+      });
+      if (isEmbeddedPreview) {
+        window.open("/vmix-control", "_blank", "noopener,noreferrer");
+      }
+      return;
+    }
 
     setConnecting(true);
     try {
@@ -393,14 +410,15 @@ export default function VmixPage() {
     } catch (err) {
       setConnected(false);
       const message = err instanceof Error ? err.message : "Verifique se o vMix Web Controller está ativo.";
-      const isLocal = isPrivateIp(savedUrl);
       const isMixedOrCorsLikely =
         effectiveMode === "direct" &&
         isLocal &&
         /failed to fetch|networkerror|mixed content|cors/i.test(message);
 
       const hint = isMixedOrCorsLikely
-        ? " No modo Direto (rede local), permita 'Conteúdo inseguro' para este site no navegador, ou tente o modo 'Proxy'."
+        ? (isEmbeddedPreview
+          ? " O preview interno bloqueia HTTP local. Abra /vmix-control em nova aba e permita 'Conteúdo inseguro' nesse domínio."
+          : " No modo Direto (rede local), permita 'Conteúdo inseguro' para este site no navegador.")
         : effectiveMode === "direct" && !isLocal
         ? " IP público detectado — tente o modo 'Proxy'."
         : "";

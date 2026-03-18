@@ -74,7 +74,15 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Allow local IPs — the proxy will attempt the connection and timeout if unreachable
+    if (isPrivateOrLocalUrl(vmixBaseUrl)) {
+      return new Response(
+        JSON.stringify({
+          error:
+            "URL local/privada não é acessível no modo Proxy em nuvem. Use modo Direto em rede local ou configure URL pública (port forwarding/túnel HTTPS).",
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
 
     const { path } = await req.json();
 
