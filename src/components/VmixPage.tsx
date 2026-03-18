@@ -551,6 +551,7 @@ export default function VmixPage() {
   const hasLocalHttpUrl = savedUrl && isPrivateIp(savedUrl) && isInsecureHttpUrl(savedUrl);
   const showNewTabBanner = isEmbeddedPreview && hasLocalHttpUrl && window.isSecureContext && !demoMode;
 
+  const previewDomain = window.location.origin;
 
   // ── Styles ──
   const sectionBox = (title: string, icon: React.ReactNode, children: React.ReactNode, color = "#268ffa") => (
