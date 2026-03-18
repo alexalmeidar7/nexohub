@@ -1063,58 +1063,6 @@ export default function VmixPage() {
         {/* ══ CONTROLS TAB ══ */}
         {activeTab === "controls" && (
           <>
-            {/* ── Streaming ── */}
-            <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a2e", border: "1px solid #ffffff08" }}>
-              <div className="flex items-center gap-2 px-4 py-2.5" style={{ backgroundColor: "#eab30818", borderBottom: "1px solid #ffffff08" }}>
-                <Radio size={14} style={{ color: "#eab308" }} />
-                <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#eab308" }}>streaming</span>
-              </div>
-              <div className="p-4">
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    onClick={() => sendCommand(streaming ? "StopStreaming" : "StartStreaming")}
-                    className="px-5 py-3 rounded-lg text-xs font-black uppercase tracking-wider transition-all duration-200 hover:scale-[1.03]"
-                    style={{
-                      backgroundColor: streaming ? "#2d5016" : "#2d501640",
-                      color: streaming ? "#fff" : "#7ab648",
-                      border: streaming ? "2px solid #3d6a20" : "2px solid #2d501630",
-                    }}
-                    onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = "0 0 18px #2d501660"; }}
-                    onMouseLeave={e => { (e.target as HTMLElement).style.boxShadow = "none"; }}
-                  >
-                    {streaming ? "● STREAMING 1" : "STREAMING 1"}
-                  </button>
-                  <button
-                    onClick={() => sendCommand(streaming ? "StopStreaming" : "StartStreaming")}
-                    className="px-5 py-3 rounded-lg text-xs font-black uppercase tracking-wider transition-all duration-200 hover:scale-[1.03]"
-                    style={{
-                      backgroundColor: "#2d501640",
-                      color: "#7ab648",
-                      border: "2px solid #2d501630",
-                    }}
-                    onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = "0 0 18px #2d501660"; }}
-                    onMouseLeave={e => { (e.target as HTMLElement).style.boxShadow = "none"; }}
-                  >
-                    STREAMING 2
-                  </button>
-                  <button
-                    onClick={() => sendCommand(recording ? "StopRecording" : "StartRecording")}
-                    className="px-5 py-3 rounded-lg text-xs font-black uppercase tracking-wider transition-all duration-200 hover:scale-[1.03]"
-                    style={{
-                      backgroundColor: recording ? "#6b1010" : "#6b101040",
-                      color: recording ? "#fff" : "#c84040",
-                      border: recording ? "2px solid #8b2020" : "2px solid #6b101030",
-                    }}
-                    onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = "0 0 18px #6b101060"; }}
-                    onMouseLeave={e => { (e.target as HTMLElement).style.boxShadow = "none"; }}
-                  >
-                    {recording ? "● REC" : "REC"}
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* ── Inputs ── */}
             <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a2e", border: "1px solid #ffffff08" }}>
               <div className="flex items-center gap-2 px-4 py-2.5" style={{ backgroundColor: "#3b82f618", borderBottom: "1px solid #ffffff08" }}>
                 <Monitor size={14} style={{ color: "#3b82f6" }} />
