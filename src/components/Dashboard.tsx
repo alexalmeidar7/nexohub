@@ -254,13 +254,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
   const handleMenuClick = (item: MenuItem) => {
     if (item.label === "vmix control") {
-      const vmixUrl = user ? localStorage.getItem(`vmix_url_${user.id}`) : null;
-      if (vmixUrl) {
-        window.open(vmixUrl, "_blank");
-      } else {
-        alert("Configure e salve a URL do vMix Web Controller primeiro.");
-        setCurrentPage("vmix");
-      }
+      window.open("/vmix-control", "_blank");
       return;
     }
     if (item.children) {
