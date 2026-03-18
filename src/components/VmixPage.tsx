@@ -220,9 +220,11 @@ export default function VmixPage() {
   // Persist input shortcuts
   useEffect(() => {
     localStorage.setItem("vmix_input_shortcuts", JSON.stringify(inputShortcuts));
-  }, [inputShortcuts]);
-
-
+    // Also persist to DB
+    if (user) {
+      supabase.from("user_settings").update({ vmix_shortcuts: inputShortcuts as any }).eq("user_id", user.id);
+    }
+  }, [inputShortcuts, user]);
   // Persist HLS URLs
   useEffect(() => {
     localStorage.setItem("vmix_input_hls", JSON.stringify(inputHlsUrls));
