@@ -1112,7 +1112,7 @@ export default function VmixPage() {
                     key={input.key || input.number}
                     className="flex flex-col items-center rounded-lg overflow-hidden cursor-pointer transition-all duration-200 hover:brightness-110"
                     style={{ backgroundColor: "#1a1a28", border: `2px solid ${borderColor}`, width: 32, minHeight: 120 }}
-                    onClick={() => sendCommand("Cut", input.number)}
+                    onClick={() => setMinimizedInputs(prev => ({ ...prev, [input.number]: false }))}
                   >
                     <div
                       className="w-full flex items-center justify-center py-1"
