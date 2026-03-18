@@ -159,7 +159,7 @@ export default function VmixPage() {
     if (!user) return;
     supabase
       .from("programas")
-      .select("id, nome, ativo")
+      .select("id, nome, ativo, horario_inicio, horario_fim, dias_semana")
       .eq("user_id", user.id)
       .eq("ativo", true)
       .order("nome")
