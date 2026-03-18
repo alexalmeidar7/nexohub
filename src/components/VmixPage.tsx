@@ -616,7 +616,131 @@ export default function VmixPage() {
             </button>
           </div>
         </div>
-        <p className="text-xs text-white/20 py-8 text-center">Use 'Direto' para rede local (192.168.x.x) ou 'Proxy' com IP público + port forwarding.</p>
+        {/* Diagnostic section */}
+        {savedUrl && (
+          <div className="mt-4 space-y-3">
+            <button
+              onClick={runDiagnostic}
+              disabled={diagRunning}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold text-white transition-all hover:brightness-110 disabled:opacity-50"
+              style={{ backgroundColor: "#f59e0b" }}
+            >
+              {diagRunning ? <Loader2 size={14} className="animate-spin" /> : <Activity size={14} />}
+              {diagRunning ? "Diagnosticando..." : "🔍 Diagnóstico Automático"}
+            </button>
+
+            {diagResult && (
+              <div className="rounded-xl p-4 space-y-3" style={{ backgroundColor: "#1a1a2e", border: "1px solid #ffffff08" }}>
+                <div className="flex items-center gap-2 mb-2">
+                  <Activity size={14} style={{ color: "#f59e0b" }} />
+                  <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#f59e0b" }}>Resultado do Diagnóstico</span>
+                </div>
+
+                {/* URL Analysis */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  <div className="rounded-lg p-2.5" style={{ backgroundColor: "#ffffff06" }}>
+                    <p className="text-[9px] font-bold uppercase text-white/30 mb-1">Tipo de IP</p>
+                    <p className="text-xs font-bold" style={{ color: diagResult.urlType === "local" ? "#22c55e" : "#268ffa" }}>
+                      {diagResult.urlType === "local" ? "🏠 Local" : "🌐 Público"}
+                    </p>
+                  </div>
+                  <div className="rounded-lg p-2.5" style={{ backgroundColor: "#ffffff06" }}>
+                    <p className="text-[9px] font-bold uppercase text-white/30 mb-1">Protocolo</p>
+                    <p className="text-xs font-bold" style={{ color: diagResult.protocol === "https" ? "#22c55e" : "#f59e0b" }}>
+                      {diagResult.protocol.toUpperCase()}
+                    </p>
+                  </div>
+                  <div className="rounded-lg p-2.5" style={{ backgroundColor: "#ffffff06" }}>
+                    <p className="text-[9px] font-bold uppercase text-white/30 mb-1">App HTTPS</p>
+                    <p className="text-xs font-bold" style={{ color: diagResult.isSecureContext ? "#f59e0b" : "#22c55e" }}>
+                      {diagResult.isSecureContext ? "⚡ Sim" : "✓ Não"}
+                    </p>
+                  </div>
+                  <div className="rounded-lg p-2.5" style={{ backgroundColor: "#ffffff06" }}>
+                    <p className="text-[9px] font-bold uppercase text-white/30 mb-1">Mixed Content</p>
+                    <p className="text-xs font-bold" style={{ color: diagResult.mixedContentBlocked ? "#dc2626" : "#22c55e" }}>
+                      {diagResult.mixedContentBlocked ? "🚫 Bloqueado" : "✓ OK"}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Connection Tests */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div className="rounded-lg p-3" style={{
+                    backgroundColor: diagResult.directResult === "ok" ? "#22c55e10" : diagResult.directResult === "fail" ? "#dc262610" : "#ffffff06",
+                    border: `1px solid ${diagResult.directResult === "ok" ? "#22c55e30" : diagResult.directResult === "fail" ? "#dc262630" : "#ffffff08"}`,
+                  }}>
+                    <div className="flex items-center gap-2 mb-1">
+                      {diagResult.directResult === "ok" ? <CheckCircle size={14} style={{ color: "#22c55e" }} /> :
+                       diagResult.directResult === "fail" ? <XCircle size={14} style={{ color: "#dc2626" }} /> :
+                       <AlertTriangle size={14} style={{ color: "#ffffff30" }} />}
+                      <span className="text-xs font-bold" style={{
+                        color: diagResult.directResult === "ok" ? "#22c55e" : diagResult.directResult === "fail" ? "#dc2626" : "#ffffff40",
+                      }}>Modo Direto</span>
+                    </div>
+                    {diagResult.directError && (
+                      <p className="text-[10px] text-white/40 mt-1">{diagResult.directError}</p>
+                    )}
+                    {diagResult.directResult === "ok" && (
+                      <p className="text-[10px] text-white/40 mt-1">Conexão direta funcionando!</p>
+                    )}
+                  </div>
+
+                  <div className="rounded-lg p-3" style={{
+                    backgroundColor: diagResult.proxyResult === "ok" ? "#22c55e10" : diagResult.proxyResult === "fail" ? "#dc262610" : "#ffffff06",
+                    border: `1px solid ${diagResult.proxyResult === "ok" ? "#22c55e30" : diagResult.proxyResult === "fail" ? "#dc262630" : "#ffffff08"}`,
+                  }}>
+                    <div className="flex items-center gap-2 mb-1">
+                      {diagResult.proxyResult === "ok" ? <CheckCircle size={14} style={{ color: "#22c55e" }} /> :
+                       diagResult.proxyResult === "fail" ? <XCircle size={14} style={{ color: "#dc2626" }} /> :
+                       diagResult.proxyResult === "skipped" ? <Shield size={14} style={{ color: "#ffffff30" }} /> :
+                       <AlertTriangle size={14} style={{ color: "#ffffff30" }} />}
+                      <span className="text-xs font-bold" style={{
+                        color: diagResult.proxyResult === "ok" ? "#22c55e" : diagResult.proxyResult === "fail" ? "#dc2626" : "#ffffff40",
+                      }}>Modo Proxy</span>
+                    </div>
+                    {diagResult.proxyError && (
+                      <p className="text-[10px] text-white/40 mt-1">{diagResult.proxyError}</p>
+                    )}
+                    {diagResult.proxyResult === "ok" && (
+                      <p className="text-[10px] text-white/40 mt-1">Conexão via proxy funcionando!</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Recommendation */}
+                <div className="rounded-lg p-3" style={{ backgroundColor: "#f59e0b10", border: "1px solid #f59e0b30" }}>
+                  <p className="text-[11px] font-medium" style={{ color: "#fbbf24", lineHeight: 1.6 }}>
+                    {diagResult.recommendation}
+                  </p>
+                </div>
+
+                {/* Auto-switch mode if one works */}
+                {diagResult.directResult === "ok" && connectionMode !== "direct" && (
+                  <button
+                    onClick={() => { setConnectionMode("direct"); toast({ title: "Modo alterado para Direto" }); }}
+                    className="w-full py-2 rounded-lg text-xs font-bold text-white"
+                    style={{ backgroundColor: "#22c55e" }}
+                  >
+                    Usar modo Direto (funcionando) e Conectar
+                  </button>
+                )}
+                {diagResult.proxyResult === "ok" && connectionMode !== "proxy" && diagResult.directResult !== "ok" && (
+                  <button
+                    onClick={() => { setConnectionMode("proxy"); toast({ title: "Modo alterado para Proxy" }); }}
+                    className="w-full py-2 rounded-lg text-xs font-bold text-white"
+                    style={{ backgroundColor: "#268ffa" }}
+                  >
+                    Usar modo Proxy (funcionando) e Conectar
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+        {!diagResult && (
+          <p className="text-xs text-white/20 py-8 text-center">Use 'Direto' para rede local (192.168.x.x) ou 'Proxy' com IP público + port forwarding.</p>
+        )}
       </div>
     );
   }
