@@ -225,10 +225,7 @@ export default function VmixPage() {
     localStorage.setItem("vmix_input_hls", JSON.stringify(inputHlsUrls));
   }, [inputHlsUrls]);
 
-  // Persist iframe monitor preference
-  useEffect(() => {
-     localStorage.setItem("vmix_iframe_monitor", String(useIframeMonitor));
-  }, [useIframeMonitor]);
+  // Persist monitor stream URLs
 
   // Persist monitor stream URLs
   useEffect(() => {
