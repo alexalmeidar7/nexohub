@@ -1343,7 +1343,7 @@ export default function VmixPage() {
               </div>
             ), "#888")}
 
-            {sectionBox("Inputs NDI Atuais", <Wifi size={14} style={{ color: "#22c55e" }} />, (
+            {sectionBox("Inputs NDI Atuais", <Wifi size={14} style={{ color: "#999" }} />, (
               <div className="space-y-1.5">
                 {inputs.filter(i => i.type === "NDI" || i.title.toLowerCase().includes("ndi")).length === 0 ? (
                   <p className="text-[11px] text-white/30 text-center py-6">Nenhum input NDI encontrado no vMix</p>
