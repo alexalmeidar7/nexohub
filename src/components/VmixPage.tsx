@@ -886,14 +886,20 @@ export default function VmixPage() {
             className="w-64 px-4 py-2 rounded-lg text-sm outline-none"
             style={{ backgroundColor: "#2a2a2a", color: "#fff", border: "1px solid #ffffff15" }}
           />
-          <button onClick={saveUrl} className="px-4 py-2 rounded-lg text-xs font-bold text-white" style={{ background: "linear-gradient(135deg,#268ffa,#2dbef3)" }}>
+          <button onClick={saveUrl} className="px-4 py-2 rounded-lg text-xs font-bold text-white transition-all duration-200 hover:scale-[1.03]"
+            style={{ backgroundColor: "#3a3a3a", border: "1px solid #555" }}
+            onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = "0 0 14px #3a3a3a60"; }}
+            onMouseLeave={e => { (e.target as HTMLElement).style.boxShadow = "none"; }}
+          >
             Salvar
           </button>
           <button
             onClick={connectToVmix}
             disabled={connecting}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold text-white"
-            style={{ backgroundColor: "#22c55e", opacity: connecting ? 0.6 : 1 }}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold text-white transition-all duration-200 hover:scale-[1.03]"
+            style={{ backgroundColor: "#2d5016", opacity: connecting ? 0.6 : 1, border: "1px solid #3d6a20" }}
+            onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = "0 0 16px #2d501660"; }}
+            onMouseLeave={e => { (e.target as HTMLElement).style.boxShadow = "none"; }}
           >
             {connecting ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle size={14} />}
             Conectado
@@ -902,8 +908,10 @@ export default function VmixPage() {
         <div className="flex gap-2">
           <button
             onClick={() => { setActiveTab("scenes"); createNewScene(); }}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold text-white transition-all hover:brightness-110"
-            style={{ backgroundColor: "#8b5cf6" }}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold text-white transition-all duration-200 hover:scale-[1.03]"
+            style={{ backgroundColor: "#1e3a4a", border: "1px solid #2d5a6a" }}
+            onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = "0 0 16px #1e3a4a60"; }}
+            onMouseLeave={e => { (e.target as HTMLElement).style.boxShadow = "none"; }}
           >
             <Plus size={13} /> Criar Cena
           </button>
