@@ -65,6 +65,9 @@ interface Programa {
   id: string;
   nome: string;
   ativo: boolean;
+  horario_inicio: string;
+  horario_fim: string;
+  dias_semana: string[] | null;
 }
 
 // Helper to detect private/local IPs
