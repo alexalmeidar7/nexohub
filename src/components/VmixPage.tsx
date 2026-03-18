@@ -257,7 +257,83 @@ export default function VmixPage() {
     return vmixProxyFetch(path);
   }, [connectionMode, vmixDirectFetch, vmixProxyFetch]);
 
-  const connectToVmix = useCallback(async () => {
+  // ── Diagnostic function ──
+  const runDiagnostic = useCallback(async () => {
+    if (!savedUrl) return;
+    setDiagRunning(true);
+    setDiagResult(null);
+
+    const isLocal = isPrivateIp(savedUrl);
+    let protocol: "http" | "https" | "unknown" = "unknown";
+    try { protocol = new URL(savedUrl).protocol === "https:" ? "https" : "http"; } catch {}
+    const secureCtx = window.isSecureContext;
+    const mixedBlocked = secureCtx && protocol === "http" && !isLocal; // mixed content for public HTTP
+
+    const result: DiagResult = {
+      urlType: isLocal ? "local" : "public",
+      protocol,
+      isSecureContext: secureCtx,
+      mixedContentBlocked: false,
+      directResult: "pending",
+      directError: "",
+      proxyResult: "pending",
+      proxyError: "",
+      recommendation: "",
+    };
+
+    // Test Direct
+    try {
+      const text = await vmixDirectFetch("/api/");
+      result.directResult = text.includes("<vmix>") || text.includes("<inputs>") ? "ok" : "fail";
+      if (result.directResult === "fail") result.directError = "Resposta não é XML do vMix";
+    } catch (e) {
+      result.directResult = "fail";
+      const msg = e instanceof Error ? e.message : String(e);
+      result.directError = msg;
+      if (/failed to fetch|networkerror|load failed/i.test(msg)) {
+        if (secureCtx && protocol === "http") {
+          result.mixedContentBlocked = true;
+          result.directError = "Bloqueado por Mixed Content (HTTPS → HTTP)";
+        } else {
+          result.directError = "Rede inacessível ou CORS bloqueado pelo vMix";
+        }
+      }
+    }
+
+    // Test Proxy (only for non-local IPs)
+    if (isLocal) {
+      result.proxyResult = "skipped";
+      result.proxyError = "IP local — proxy na nuvem não alcança";
+    } else {
+      try {
+        const text = await vmixProxyFetch("/api/");
+        result.proxyResult = text.includes("<vmix>") || text.includes("<inputs>") || text.includes("version") ? "ok" : "fail";
+        if (result.proxyResult === "fail") result.proxyError = "Resposta não é XML do vMix";
+      } catch (e) {
+        result.proxyResult = "fail";
+        const msg = e instanceof Error ? e.message : String(e);
+        result.proxyError = msg.length > 120 ? msg.slice(0, 120) + "…" : msg;
+      }
+    }
+
+    // Recommendation
+    if (result.directResult === "ok") {
+      result.recommendation = "✅ Use o modo DIRETO. Conexão funcionando!";
+    } else if (result.proxyResult === "ok") {
+      result.recommendation = "✅ Use o modo PROXY. Conexão funcionando via nuvem!";
+    } else if (isLocal && result.mixedContentBlocked) {
+      result.recommendation = "⚠️ O navegador bloqueia HTTP dentro de HTTPS (Mixed Content). Nas configurações do Chrome para este site, permita 'Conteúdo inseguro', ou acesse pelo IP local diretamente no navegador: " + savedUrl;
+    } else if (isLocal) {
+      result.recommendation = "⚠️ IP local detectado mas não foi possível conectar. Verifique: 1) vMix Web Controller está ativo (porta 8088)? 2) Você está na mesma rede Wi-Fi/LAN? 3) Firewall do Windows permite a porta 8088?";
+    } else {
+      result.recommendation = "❌ Nenhum modo conectou. Verifique: 1) Port forwarding configurado no roteador (porta 8088 → IP do PC)? 2) vMix Web Controller ativo? 3) Firewall permite conexões na porta 8088?";
+    }
+
+    setDiagResult(result);
+    setDiagRunning(false);
+  }, [savedUrl, vmixDirectFetch, vmixProxyFetch]);
+
+
     if (!savedUrl) return;
 
     const isLocalUrl = isPrivateIp(savedUrl);
