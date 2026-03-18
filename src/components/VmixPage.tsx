@@ -69,6 +69,7 @@ interface Programa {
   horario_inicio: string;
   horario_fim: string;
   dias_semana: string[] | null;
+  estudio: string | null;
 }
 
 // Helper to detect private/local IPs
@@ -248,7 +249,7 @@ export default function VmixPage() {
     if (!user) return;
     supabase
       .from("programas")
-      .select("id, nome, ativo, horario_inicio, horario_fim, dias_semana")
+      .select("id, nome, ativo, horario_inicio, horario_fim, dias_semana, estudio")
       .eq("user_id", user.id)
       .eq("ativo", true)
       .order("horario_inicio")
@@ -2036,9 +2037,36 @@ export default function VmixPage() {
                   <Radio size={14} style={{ color: "#999" }} />
                   <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#999" }}>programas preset</span>
                 </div>
-                <div className="p-4">
-                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">
-                    {programas.map((prog, idx) => {
+                <div className="p-4 space-y-4">
+                  {(() => {
+                    const sorted = [...programas].sort((a, b) => {
+                      const studioOrder = (s: string | null) => {
+                        if (!s) return 2;
+                        const l = s.toLowerCase();
+                        if (l.includes("fm")) return 0;
+                        if (l.includes("podcast")) return 1;
+                        return 2;
+                      };
+                      const diff = studioOrder(a.estudio) - studioOrder(b.estudio);
+                      if (diff !== 0) return diff;
+                      return (a.horario_inicio || "").localeCompare(b.horario_inicio || "");
+                    });
+                    const groups: Record<string, typeof sorted> = {};
+                    for (const p of sorted) {
+                      const key = p.estudio || "Sem Estúdio";
+                      if (!groups[key]) groups[key] = [];
+                      groups[key].push(p);
+                    }
+                    return Object.entries(groups).map(([studio, progs]) => (
+                      <div key={studio}>
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded" style={{ backgroundColor: studio.toLowerCase().includes("fm") ? "#3b82f620" : studio.toLowerCase().includes("podcast") ? "#8b5cf620" : "#ffffff08", color: studio.toLowerCase().includes("fm") ? "#3b82f6" : studio.toLowerCase().includes("podcast") ? "#8b5cf6" : "#888" }}>
+                            {studio}
+                          </span>
+                          <div className="flex-1 h-px" style={{ backgroundColor: "#ffffff08" }} />
+                        </div>
+                        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">
+                    {progs.map((prog, idx) => {
                       const isActive = activePreset === prog.id;
                       const progOnAir = isProgramForToday(prog) && isNowInProgram(prog);
                       const startTime = prog.horario_inicio?.slice(0, 5) || "";
@@ -2082,7 +2110,15 @@ export default function VmixPage() {
                             </div>
                           )}
 
-                          {/* Days of week */}
+                          {/* Studio badge */}
+                          {prog.estudio && (
+                            <div className="absolute top-1.5 right-1.5 z-[2]">
+                              <span className="text-[6px] font-bold uppercase tracking-wider px-1 py-[1px] rounded"
+                                style={{ backgroundColor: prog.estudio.toLowerCase().includes("fm") ? "#3b82f630" : "#8b5cf630", color: prog.estudio.toLowerCase().includes("fm") ? "#3b82f6" : "#8b5cf6" }}
+                              >{prog.estudio.toLowerCase().includes("fm") ? "FM" : prog.estudio.toLowerCase().includes("podcast") ? "PODCAST" : prog.estudio}</span>
+                            </div>
+                          )}
+
                           {prog.dias_semana && prog.dias_semana.length > 0 && (
                             <div className="absolute bottom-1.5 left-1.5 flex items-center gap-[2px] z-[1]">
                               {["dom","seg","ter","qua","qui","sex","sáb"].map((d, i) => {
@@ -2143,10 +2179,13 @@ export default function VmixPage() {
                         </div>
                       );
                     })}
+                        </div>
+                      </div>
+                    ));
+                    })()}
                     {programas.length === 0 && (
-                      <p className="text-[11px] text-white/30 py-4 col-span-full">Nenhum programa cadastrado.</p>
+                      <p className="text-[11px] text-white/30 py-4">Nenhum programa cadastrado.</p>
                     )}
-                  </div>
                 </div>
               </div>
             </>
