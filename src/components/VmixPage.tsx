@@ -214,6 +214,16 @@ export default function VmixPage() {
   }, [inputShortcuts]);
 
 
+  // Persist HLS URLs
+  useEffect(() => {
+    localStorage.setItem("vmix_input_hls", JSON.stringify(inputHlsUrls));
+  }, [inputHlsUrls]);
+
+  // Persist iframe monitor preference
+  useEffect(() => {
+    localStorage.setItem("vmix_iframe_monitor", String(useIframeMonitor));
+  }, [useIframeMonitor]);
+
   // Load programas from DB
   useEffect(() => {
     if (!user) return;
