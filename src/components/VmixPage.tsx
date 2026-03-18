@@ -85,6 +85,39 @@ function isInsecureHttpUrl(url: string): boolean {
     return false;
   }
 }
+// Format keyboard event to a readable key name, distinguishing numpad from top-row numbers
+function formatKeyName(e: KeyboardEvent): string {
+  const parts: string[] = [];
+  if (e.ctrlKey) parts.push("Ctrl");
+  if (e.altKey) parts.push("Alt");
+  if (e.shiftKey) parts.push("Shift");
+
+  const { code, key } = e;
+
+  // Distinguish numpad numbers from top-row numbers
+  if (code.startsWith("Numpad")) {
+    const numpadKey = code.replace("Numpad", "");
+    const numpadLabels: Record<string, string> = {
+      "0": "Num 0", "1": "Num 1", "2": "Num 2", "3": "Num 3", "4": "Num 4",
+      "5": "Num 5", "6": "Num 6", "7": "Num 7", "8": "Num 8", "9": "Num 9",
+      "Decimal": "Num .", "Add": "Num +", "Subtract": "Num -",
+      "Multiply": "Num *", "Divide": "Num /", "Enter": "Num Enter",
+    };
+    parts.push(numpadLabels[numpadKey] || `Num ${numpadKey}`);
+  } else if (code.startsWith("Digit")) {
+    parts.push(code.replace("Digit", ""));
+  } else if (code.startsWith("Key")) {
+    parts.push(code.replace("Key", "").toUpperCase());
+  } else if (key === " ") {
+    parts.push("Space");
+  } else if (["Control", "Alt", "Shift", "Meta"].includes(key)) {
+    // Don't add modifier-only keys
+  } else {
+    parts.push(key.length === 1 ? key.toUpperCase() : key);
+  }
+
+  return parts.join(" + ");
+}
 
 export default function VmixPage() {
   const { user } = useAuth();
@@ -104,6 +137,14 @@ export default function VmixPage() {
   const [overlays, setOverlays] = useState<Record<number, boolean>>({ 1: false, 2: false, 3: false, 4: false });
   const [minimizedInputs, setMinimizedInputs] = useState<Record<string, boolean>>({});
   const [activeTab, setActiveTab] = useState<"controls" | "scenes" | "ndi">("controls");
+  // Keyboard shortcuts per input (persisted in localStorage)
+  const [inputShortcuts, setInputShortcuts] = useState<Record<string, string>>(() => {
+    try {
+      const saved = localStorage.getItem("vmix_input_shortcuts");
+      return saved ? JSON.parse(saved) : {};
+    } catch { return {}; }
+  });
+  const [capturingShortcut, setCapturingShortcut] = useState<string | null>(null);
   const [activePreset, setActivePreset] = useState<string | null>(null);
   const [connectionMode, setConnectionMode] = useState<"direct" | "proxy">(() => {
     try { return (localStorage.getItem("vmix_conn_mode") as "direct" | "proxy") || "direct"; }
@@ -164,6 +205,12 @@ export default function VmixPage() {
   useEffect(() => {
     localStorage.setItem("vmix_scenes", JSON.stringify(scenes));
   }, [scenes]);
+
+  // Persist input shortcuts
+  useEffect(() => {
+    localStorage.setItem("vmix_input_shortcuts", JSON.stringify(inputShortcuts));
+  }, [inputShortcuts]);
+
 
   // Load programas from DB
   useEffect(() => {
@@ -658,6 +705,37 @@ export default function VmixPage() {
   }, [loading, connected, isEmbeddedPreview]);
 
   const effectiveConnected = connected || demoMode;
+
+  // Keyboard shortcut listener (must be after effectiveConnected)
+  useEffect(() => {
+    if (!effectiveConnected) return;
+    const handler = (e: KeyboardEvent) => {
+      // Don't capture if user is typing in an input/textarea
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+
+      // If capturing a shortcut for an input, record it
+      if (capturingShortcut) {
+        e.preventDefault();
+        e.stopPropagation();
+        const keyName = formatKeyName(e);
+        setInputShortcuts(prev => ({ ...prev, [capturingShortcut]: keyName }));
+        setCapturingShortcut(null);
+        return;
+      }
+      // Otherwise, check if the pressed key matches a shortcut
+      const keyName = formatKeyName(e);
+      const matchedInput = Object.entries(inputShortcuts).find(([_, shortcut]) => shortcut === keyName);
+      if (matchedInput) {
+        e.preventDefault();
+        const inputNum = matchedInput[0];
+        sendCommand("PreviewInput", inputNum);
+        setPreviewInput(inputNum);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [effectiveConnected, capturingShortcut, inputShortcuts]);
 
   if (loading) return <ModulePageSkeleton />;
 
@@ -1324,7 +1402,7 @@ export default function VmixPage() {
                   }}
                 >
                   <div
-                    className="flex items-center gap-1.5 px-2 py-1"
+                    className="flex items-center gap-1 px-2 py-1"
                     style={{ backgroundColor: headerBg }}
                     onContextMenu={e => { e.preventDefault(); setMinimizedInputs(prev => ({ ...prev, [input.number]: true })); }}
                   >
@@ -1332,23 +1410,48 @@ export default function VmixPage() {
                       backgroundColor: isActive ? "#dc2626" : isPreview ? "#555" : "#333338",
                       color: isActive || isPreview ? "#fff" : "#888",
                     }}>{input.number}</span>
-                    <span className="text-[10px] font-bold truncate" style={{ color: isActive ? "#ff6b6b" : isPreview ? "#ddd" : "#999" }}>
+                    <span className="text-[10px] font-bold truncate flex-1 min-w-0" style={{ color: isActive ? "#ff6b6b" : isPreview ? "#ddd" : "#999" }}>
                       {isNdi && <span style={{ color: "#22c55e" }}>● </span>}
                       {input.title}
                     </span>
+                    {/* PGM / PVW badge in header */}
+                    {isActive && (
+                      <span className="text-[7px] font-black px-1.5 py-0.5 rounded flex-shrink-0 animate-pulse" style={{ backgroundColor: "#dc2626", color: "#fff", letterSpacing: "0.05em" }}>PGM</span>
+                    )}
+                    {isPreview && !isActive && (
+                      <span className="text-[7px] font-black px-1.5 py-0.5 rounded flex-shrink-0" style={{ backgroundColor: "#555", color: "#fff", letterSpacing: "0.05em" }}>PVW</span>
+                    )}
+                    {/* Keyboard shortcut badge/capture */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setCapturingShortcut(capturingShortcut === input.number ? null : input.number);
+                      }}
+                      onContextMenu={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        // Right-click to clear shortcut
+                        setInputShortcuts(prev => {
+                          const copy = { ...prev };
+                          delete copy[input.number];
+                          return copy;
+                        });
+                      }}
+                      className="text-[7px] font-mono font-bold px-1.5 py-0.5 rounded flex-shrink-0 transition-all"
+                      style={{
+                        backgroundColor: capturingShortcut === input.number ? "#f59e0b30" : inputShortcuts[input.number] ? "#ffffff10" : "#ffffff06",
+                        color: capturingShortcut === input.number ? "#f59e0b" : inputShortcuts[input.number] ? "#aaa" : "#555",
+                        border: `1px solid ${capturingShortcut === input.number ? "#f59e0b40" : "#ffffff08"}`,
+                        minWidth: 20,
+                        textAlign: "center",
+                      }}
+                      title={capturingShortcut === input.number ? "Pressione uma tecla..." : inputShortcuts[input.number] ? `Atalho: ${inputShortcuts[input.number]} (clique direito para limpar)` : "Clique para definir atalho"}
+                    >
+                      {capturingShortcut === input.number ? "⌨ ..." : inputShortcuts[input.number] || "⌨"}
+                    </button>
                   </div>
                   <div className="relative" style={{ aspectRatio: "3/2", backgroundColor: "#111114" }}>
                     <ThumbnailImg inputNumber={input.number} className="w-full h-full object-contain" alt={input.title} />
-                    {isActive && (
-                      <div className="absolute top-1 right-1">
-                        <span className="text-[8px] font-bold px-1 rounded" style={{ backgroundColor: "#dc2626", color: "#fff" }}>PGM</span>
-                      </div>
-                    )}
-                    {isPreview && !isActive && (
-                      <div className="absolute top-1 right-1">
-                        <span className="text-[8px] font-bold px-1 rounded" style={{ backgroundColor: "#555", color: "#fff" }}>PVW</span>
-                      </div>
-                    )}
                     {isNdi && (
                       <div className="absolute top-1 left-1">
                         <span className="text-[7px] font-bold px-1 rounded" style={{ backgroundColor: "#22c55e30", color: "#22c55e", border: "1px solid #22c55e40" }}>NDI</span>
