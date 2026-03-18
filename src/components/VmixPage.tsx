@@ -1350,7 +1350,7 @@ export default function VmixPage() {
                 ) : (
                   inputs.filter(i => i.type === "NDI" || i.title.toLowerCase().includes("ndi")).map(input => (
                     <div key={input.key} className="flex items-center gap-3 px-3 py-2.5 rounded-lg" style={{ backgroundColor: "#ffffff06" }}>
-                      <Tv size={14} className="text-yellow-400/60" />
+                      <Tv size={14} className="text-white/40" />
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-semibold text-white/80 truncate">{input.title}</p>
                         <p className="text-[9px] text-white/30">Input {input.number} • {input.state}</p>
