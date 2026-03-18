@@ -130,6 +130,17 @@ export default function VmixPage() {
     return () => clearInterval(id);
   }, []);
 
+  // Periodic thumbnail refresh timestamp (every 2 seconds instead of on every render)
+  const [thumbTs, setThumbTs] = useState(() => Date.now());
+  useEffect(() => {
+    if (!connected) return;
+    const id = setInterval(() => setThumbTs(Date.now()), 2000);
+    return () => clearInterval(id);
+  }, [connected]);
+
+  // Thumbnail blob URLs for proxy mode
+  const [thumbBlobs, setThumbBlobs] = useState<Record<string, string>>({});
+
   // NDI state
   const [ndiUrl, setNdiUrl] = useState("");
 
@@ -270,6 +281,83 @@ export default function VmixPage() {
     }
     return vmixProxyFetch(path);
   }, [connectionMode, vmixDirectFetch, vmixProxyFetch]);
+
+  // Build thumbnail URL for an input (direct mode only; proxy uses blob URLs)
+  const getThumbnailUrl = useCallback((inputNumber: string, width = 360, height = 240): string | null => {
+    if (!savedUrl || connectionMode === "proxy") return null;
+    return `${savedUrl.replace(/\/+$/, "")}/api/?Function=SnapshotInput&Input=${encodeURIComponent(inputNumber)}&Width=${width}&Height=${height}&_t=${thumbTs}`;
+  }, [savedUrl, connectionMode, thumbTs]);
+
+  // Fetch thumbnails via proxy (for proxy mode)
+  useEffect(() => {
+    if (!connected || connectionMode !== "proxy" || inputs.length === 0) return;
+
+    const fetchThumbs = async () => {
+      const inputNumbers = [
+        ...(previewInput ? [previewInput] : []),
+        ...(activeInput ? [activeInput] : []),
+        ...inputs.slice(0, 12).map(i => i.number),
+      ];
+      const unique = [...new Set(inputNumbers)];
+
+      for (const num of unique) {
+        try {
+          const path = `/api/?Function=SnapshotInput&Input=${encodeURIComponent(num)}&Width=360&Height=240`;
+          // For proxy, we fetch the raw response
+          const { data: session } = await supabase.auth.getSession();
+          const token = session?.session?.access_token;
+          if (!token) continue;
+
+          const res = await fetch(
+            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/vmix-proxy`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`,
+                "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+              },
+              body: JSON.stringify({ path }),
+            }
+          );
+
+          if (!res.ok) continue;
+
+          const contentType = res.headers.get("content-type") || "";
+          if (contentType.includes("image")) {
+            const blob = await res.blob();
+            const url = URL.createObjectURL(blob);
+            setThumbBlobs(prev => {
+              // Revoke old blob
+              if (prev[num]) URL.revokeObjectURL(prev[num]);
+              return { ...prev, [num]: url };
+            });
+          }
+        } catch {
+          // ignore thumbnail fetch errors
+        }
+      }
+    };
+
+    fetchThumbs();
+    const id = setInterval(fetchThumbs, 3000);
+    return () => clearInterval(id);
+  }, [connected, connectionMode, inputs, previewInput, activeInput, thumbTs]);
+
+  // Cleanup blob URLs on unmount
+  useEffect(() => {
+    return () => {
+      Object.values(thumbBlobs).forEach(url => URL.revokeObjectURL(url));
+    };
+  }, []);
+
+  // Get thumbnail for a given input (works in both modes)
+  const getThumbSrc = useCallback((inputNumber: string, width = 360, height = 240): string | null => {
+    if (connectionMode === "proxy") {
+      return thumbBlobs[inputNumber] || null;
+    }
+    return getThumbnailUrl(inputNumber, width, height);
+  }, [connectionMode, thumbBlobs, getThumbnailUrl]);
 
   // ── Diagnostic function ──
   const runDiagnostic = useCallback(async () => {
@@ -418,6 +506,15 @@ export default function VmixPage() {
       if (streamingEl) setStreaming(streamingEl.textContent === "True");
       if (recordingEl) setRecording(recordingEl.textContent === "True");
 
+      // Parse overlay states
+      for (let n = 1; n <= 4; n++) {
+        const ovEl = xml.querySelector(`overlay[number="${n}"]`);
+        if (ovEl) {
+          const ovInput = ovEl.textContent || ovEl.getAttribute("input") || "";
+          setOverlays(prev => ({ ...prev, [n]: ovInput !== "" && ovInput !== "0" }));
+        }
+      }
+
       setConnected(true);
       toast({ title: "Conectado!", description: `${parsedInputs.length} inputs (modo ${effectiveMode === "direct" ? "direto" : "proxy"}).` });
     } catch (err) {
@@ -452,6 +549,7 @@ export default function VmixPage() {
       if (input) path += `&Input=${encodeURIComponent(input)}`;
       if (value) path += `&Value=${encodeURIComponent(value)}`;
       await vmixFetch(path);
+      // Refresh state after command
       setTimeout(() => connectToVmix(), 300);
     } catch {
       toast({ title: "Erro", description: "Falha ao enviar comando.", variant: "destructive" });
@@ -546,11 +644,13 @@ export default function VmixPage() {
       // Set mock data so the connected UI renders fully
       if (inputs.length === 0) {
         setInputs([
-          { key: "1", number: "1", title: "Blank", type: "Blank", state: "Paused" },
-          { key: "2", number: "2", title: "Blank", type: "Blank", state: "Paused" },
+          { key: "1", number: "1", title: "Camera 1", type: "Capture", state: "Running" },
+          { key: "2", number: "2", title: "Camera 2", type: "Capture", state: "Running" },
+          { key: "3", number: "3", title: "NDI - Studio PC", type: "NDI", state: "Running" },
+          { key: "4", number: "4", title: "Lower Third", type: "GT", state: "Paused" },
         ]);
         setActiveInput("1");
-        setPreviewInput("1");
+        setPreviewInput("2");
         setSavedUrl(savedUrl || "http://192.168.100.6:8088");
         setVmixUrl(vmixUrl || "http://192.168.100.6:8088");
       }
@@ -565,6 +665,16 @@ export default function VmixPage() {
   const showNewTabBanner = isEmbeddedPreview && hasLocalHttpUrl && window.isSecureContext && !demoMode;
 
   const previewDomain = window.location.origin;
+
+  // Helper: get input label with type indicator
+  const inputLabel = (inp: VmixInput) => {
+    const isNdi = inp.type === "NDI" || inp.title.toLowerCase().includes("ndi");
+    return `${inp.number} – ${isNdi ? "🟢 " : ""}${inp.title}${isNdi ? " (NDI)" : ""}`;
+  };
+
+  // Group inputs for combo: regular inputs and NDI inputs
+  const ndiInputs = inputs.filter(i => i.type === "NDI" || i.title.toLowerCase().includes("ndi"));
+  const regularInputs = inputs.filter(i => i.type !== "NDI" && !i.title.toLowerCase().includes("ndi"));
 
   // ── Styles ──
   const sectionBox = (title: string, icon: React.ReactNode, children: React.ReactNode, _color = "#888") => (
@@ -593,6 +703,56 @@ export default function VmixPage() {
       {label}
     </button>
   );
+
+  // Render the select combo with grouped inputs (regular + NDI)
+  const renderInputSelect = (value: string | null, onChange: (val: string) => void) => (
+    <select
+      value={value || ""}
+      onChange={e => onChange(e.target.value)}
+      className="flex-1 text-[10px] rounded px-2 py-1 border-none outline-none"
+      style={{ backgroundColor: "#222228", color: "#ccc" }}
+    >
+      <option value="">— Selecione —</option>
+      {regularInputs.length > 0 && (
+        <optgroup label="Inputs">
+          {regularInputs.map(inp => (
+            <option key={inp.key || inp.number} value={inp.number}>{inp.number} – {inp.title}</option>
+          ))}
+        </optgroup>
+      )}
+      {ndiInputs.length > 0 && (
+        <optgroup label="NDI Sources">
+          {ndiInputs.map(inp => (
+            <option key={inp.key || inp.number} value={inp.number}>🟢 {inp.number} – {inp.title}</option>
+          ))}
+        </optgroup>
+      )}
+      {regularInputs.length === 0 && ndiInputs.length === 0 && inputs.map(inp => (
+        <option key={inp.key || inp.number} value={inp.number}>{inp.number} – {inp.title}</option>
+      ))}
+    </select>
+  );
+
+  // Thumbnail component that works in both modes
+  const ThumbnailImg = ({ inputNumber, width = 360, height = 240, className = "", alt = "" }: { inputNumber: string; width?: number; height?: number; className?: string; alt?: string }) => {
+    const src = getThumbSrc(inputNumber, width, height);
+    if (!src) {
+      return (
+        <div className={`flex items-center justify-center ${className}`} style={{ backgroundColor: "#111114" }}>
+          <span className="text-[10px] text-white/20">Sem preview</span>
+        </div>
+      );
+    }
+    return (
+      <img
+        src={src}
+        alt={alt}
+        className={className}
+        style={{ imageRendering: "auto" }}
+        onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
+      />
+    );
+  };
 
   // ── Not connected ──
   if (!effectiveConnected) {
@@ -971,27 +1131,14 @@ export default function VmixPage() {
         <div className="relative flex-1 flex flex-col" style={{ backgroundColor: "#18181c", minHeight: 200 }}>
           <div className="flex items-center gap-2 px-3 py-2" style={{ borderBottom: "1px solid #ffffff06", backgroundColor: "#ffffff04" }}>
             <span className="text-[9px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-sm" style={{ backgroundColor: "#555", color: "#fff", letterSpacing: "0.15em" }}>Preview</span>
-            <select
-              value={previewInput || ""}
-              onChange={e => { sendCommand("PreviewInput", e.target.value); setPreviewInput(e.target.value); }}
-              className="flex-1 text-[10px] rounded px-2 py-1 border-none outline-none"
-              style={{ backgroundColor: "#222228", color: "#ccc" }}
-            >
-              <option value="">— Selecione —</option>
-              {inputs.map(inp => (
-                <option key={inp.key || inp.number} value={inp.number}>{inp.number} – {inp.title}</option>
-              ))}
-            </select>
+            {renderInputSelect(previewInput, (val) => {
+              sendCommand("PreviewInput", val);
+              setPreviewInput(val);
+            })}
           </div>
           <div className="flex-1 flex items-center justify-center overflow-hidden" style={{ aspectRatio: "16/9" }}>
             {previewInput && savedUrl ? (
-              <img
-                src={`${savedUrl}/api/?Function=SnapshotInput&Input=${previewInput}&Width=640&Height=360&_t=${Date.now()}`}
-                alt="Preview"
-                className="w-full h-full object-contain"
-                style={{ imageRendering: "auto" }}
-                onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
-              />
+              <ThumbnailImg inputNumber={previewInput} width={640} height={360} className="w-full h-full object-contain" alt="Preview" />
             ) : (
               <div className="w-full h-full relative flex flex-col">
                 {/* SMPTE color bars */}
@@ -1022,7 +1169,7 @@ export default function VmixPage() {
         {/* Transitions */}
         <div className="flex flex-col items-center justify-center gap-1.5 px-3 py-3" style={{ backgroundColor: "#1c1c22", minWidth: 84 }}>
           {[
-            { label: "CUT", fn: "Cut", active: true },
+            { label: "CUT", fn: "Cut" },
             { label: "FADE", fn: "Fade", value: "1000" },
             { label: "FTB", fn: "FadeToBlack" },
           ].map(t => (
@@ -1031,11 +1178,11 @@ export default function VmixPage() {
               onClick={() => sendCommand(t.fn, undefined, t.value)}
               className="w-full px-2 py-1.5 rounded text-[9px] font-bold uppercase tracking-wider transition-all duration-200 hover:scale-[1.05]"
               style={{
-                backgroundColor: t.active ? "#6b1010" : "#2a2a30",
-                color: t.active ? "#fff" : "#aaa",
-                border: `1px solid ${t.active ? "#8b2020" : "#3a3a40"}`,
+                backgroundColor: t.label === "CUT" ? "#6b1010" : "#2a2a30",
+                color: t.label === "CUT" ? "#fff" : "#aaa",
+                border: `1px solid ${t.label === "CUT" ? "#8b2020" : "#3a3a40"}`,
               }}
-              onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = `0 0 14px ${t.active ? "#6b101060" : "#2a2a3060"}`; }}
+              onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = `0 0 14px ${t.label === "CUT" ? "#6b101060" : "#2a2a3060"}`; }}
               onMouseLeave={e => { (e.target as HTMLElement).style.boxShadow = "none"; }}
             >
               {t.label}
@@ -1072,27 +1219,15 @@ export default function VmixPage() {
         <div className="relative flex-1 flex flex-col" style={{ backgroundColor: "#18181c", minHeight: 200 }}>
           <div className="flex items-center gap-2 px-3 py-2" style={{ borderBottom: "1px solid #ffffff06", backgroundColor: "#ffffff04" }}>
             <span className="text-[9px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-sm" style={{ backgroundColor: "#dc2626", color: "#fff", letterSpacing: "0.15em" }}>Output</span>
-            <select
-              value={activeInput || ""}
-              onChange={e => { sendCommand("ActiveInput", e.target.value); setActiveInput(e.target.value); }}
-              className="flex-1 text-[10px] rounded px-2 py-1 border-none outline-none"
-              style={{ backgroundColor: "#222228", color: "#ccc" }}
-            >
-              <option value="">— Selecione —</option>
-              {inputs.map(inp => (
-                <option key={inp.key || inp.number} value={inp.number}>{inp.number} – {inp.title}</option>
-              ))}
-            </select>
+            {renderInputSelect(activeInput, (val) => {
+              // Use Cut to switch the active (program/output) input
+              sendCommand("Cut", val);
+              setActiveInput(val);
+            })}
           </div>
           <div className="flex-1 flex items-center justify-center overflow-hidden" style={{ aspectRatio: "16/9" }}>
             {activeInput && savedUrl ? (
-              <img
-                src={`${savedUrl}/api/?Function=SnapshotInput&Input=${activeInput}&Width=640&Height=360&_t=${Date.now()}`}
-                alt="Output"
-                className="w-full h-full object-contain"
-                style={{ imageRendering: "auto" }}
-                onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
-              />
+              <ThumbnailImg inputNumber={activeInput} width={640} height={360} className="w-full h-full object-contain" alt="Output" />
             ) : (
               <div className="w-full h-full relative flex flex-col">
                 {/* SMPTE color bars */}
@@ -1150,6 +1285,7 @@ export default function VmixPage() {
             {inputs.map(input => {
               const isActive = activeInput === input.number;
               const isPreview = previewInput === input.number;
+              const isNdi = input.type === "NDI" || input.title.toLowerCase().includes("ndi");
               const isMin = minimizedInputs[input.number];
               const borderColor = isActive ? "#dc2626" : isPreview ? "#777" : "#333338";
               const headerBg = isActive ? "#dc262630" : isPreview ? "#ffffff10" : "#222228";
@@ -1181,7 +1317,11 @@ export default function VmixPage() {
                   key={input.key || input.number}
                   className="rounded-lg overflow-hidden transition-all duration-200 hover:brightness-110 cursor-pointer"
                   style={{ backgroundColor: "#1a1a1f", border: `2px solid ${borderColor}`, width: 180 }}
-                  onClick={() => sendCommand("Cut", input.number)}
+                  onClick={() => {
+                    // FIX: Click sends to PREVIEW, not directly to output
+                    sendCommand("PreviewInput", input.number);
+                    setPreviewInput(input.number);
+                  }}
                 >
                   <div
                     className="flex items-center gap-1.5 px-2 py-1"
@@ -1192,21 +1332,13 @@ export default function VmixPage() {
                       backgroundColor: isActive ? "#dc2626" : isPreview ? "#555" : "#333338",
                       color: isActive || isPreview ? "#fff" : "#888",
                     }}>{input.number}</span>
-                    <span className="text-[10px] font-bold truncate" style={{ color: isActive ? "#ff6b6b" : isPreview ? "#ddd" : "#999" }}>{input.title}</span>
+                    <span className="text-[10px] font-bold truncate" style={{ color: isActive ? "#ff6b6b" : isPreview ? "#ddd" : "#999" }}>
+                      {isNdi && <span style={{ color: "#22c55e" }}>● </span>}
+                      {input.title}
+                    </span>
                   </div>
                   <div className="relative" style={{ aspectRatio: "3/2", backgroundColor: "#111114" }}>
-                    {savedUrl ? (
-                      <img
-                        src={`${savedUrl}/api/?Function=SnapshotInput&Input=${input.number}&Width=360&Height=240&_t=${Date.now()}`}
-                        alt={input.title}
-                        className="w-full h-full object-contain"
-                        onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <span className="text-[10px] text-white/20">Sem preview</span>
-                      </div>
-                    )}
+                    <ThumbnailImg inputNumber={input.number} className="w-full h-full object-contain" alt={input.title} />
                     {isActive && (
                       <div className="absolute top-1 right-1">
                         <span className="text-[8px] font-bold px-1 rounded" style={{ backgroundColor: "#dc2626", color: "#fff" }}>PGM</span>
@@ -1215,6 +1347,11 @@ export default function VmixPage() {
                     {isPreview && !isActive && (
                       <div className="absolute top-1 right-1">
                         <span className="text-[8px] font-bold px-1 rounded" style={{ backgroundColor: "#555", color: "#fff" }}>PVW</span>
+                      </div>
+                    )}
+                    {isNdi && (
+                      <div className="absolute top-1 left-1">
+                        <span className="text-[7px] font-bold px-1 rounded" style={{ backgroundColor: "#22c55e30", color: "#22c55e", border: "1px solid #22c55e40" }}>NDI</span>
                       </div>
                     )}
                   </div>
@@ -1433,19 +1570,19 @@ export default function VmixPage() {
 
             {sectionBox("Inputs NDI Atuais", <Wifi size={14} style={{ color: "#999" }} />, (
               <div className="space-y-1.5">
-                {inputs.filter(i => i.type === "NDI" || i.title.toLowerCase().includes("ndi")).length === 0 ? (
+                {ndiInputs.length === 0 ? (
                   <p className="text-[11px] text-white/30 text-center py-6">Nenhum input NDI encontrado no vMix</p>
                 ) : (
-                  inputs.filter(i => i.type === "NDI" || i.title.toLowerCase().includes("ndi")).map(input => (
+                  ndiInputs.map(input => (
                     <div key={input.key} className="flex items-center gap-3 px-3 py-2.5 rounded-lg" style={{ backgroundColor: "#ffffff06" }}>
                       <Tv size={14} className="text-white/40" />
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-semibold text-white/80 truncate">{input.title}</p>
-                        <p className="text-[9px] text-white/30">Input {input.number} • {input.state}</p>
+                        <p className="text-[9px] text-white/30">Input {input.number} • {input.type} • {input.state}</p>
                       </div>
                       <div className="flex gap-1">
-                        <button onClick={() => sendCommand("PreviewInput", input.number)} className="px-2 py-1 rounded text-[9px] font-bold" style={{ backgroundColor: "#ffffff10", color: "#bbb" }}>PRV</button>
-                        <button onClick={() => sendCommand("Cut", input.number)} className="px-2 py-1 rounded text-[9px] font-bold" style={{ backgroundColor: "#dc262620", color: "#dc2626" }}>PGM</button>
+                        <button onClick={() => { sendCommand("PreviewInput", input.number); setPreviewInput(input.number); }} className="px-2 py-1 rounded text-[9px] font-bold" style={{ backgroundColor: "#ffffff10", color: "#bbb" }}>PRV</button>
+                        <button onClick={() => { sendCommand("Cut", input.number); setActiveInput(input.number); }} className="px-2 py-1 rounded text-[9px] font-bold" style={{ backgroundColor: "#dc262620", color: "#dc2626" }}>PGM</button>
                       </div>
                     </div>
                   ))
