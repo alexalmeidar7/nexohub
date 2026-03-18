@@ -8,6 +8,7 @@ import {
   Layers, Wand2, Plus, Trash2, GripVertical, Send, Eye, Wifi, HelpCircle, Activity, AlertTriangle, Shield
 
 } from "lucide-react";
+import logoMixControl from "@/assets/logo-mixcontrol.png";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 
 interface VmixInput {
