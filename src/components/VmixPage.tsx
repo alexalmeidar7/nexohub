@@ -892,8 +892,8 @@ export default function VmixPage() {
     );
   };
 
-  // Monitor content renderer: stream URL > iframe > thumbnail > null (falls through to SMPTE bars)
-  const MonitorContent = ({ type, inputNumber }: { type: "preview" | "output"; inputNumber: string | null }) => {
+  // Monitor content helper — returns JSX or null
+  const getMonitorContent = (type: "preview" | "output") => {
     const streamUrl = monitorStreamUrls[type];
     if (streamUrl) {
       if (streamUrl.includes(".m3u8")) {
@@ -904,7 +904,6 @@ export default function VmixPage() {
     if (useIframeMonitor && savedUrl) {
       return <VmixIframe className="w-full h-full" type={type} />;
     }
-    // No live preview available — return null to show SMPTE bars
     return null;
   };
 
