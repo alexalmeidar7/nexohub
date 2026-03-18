@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   Monitor, Radio, Disc, RefreshCw, Loader2, CheckCircle, XCircle,
   ExternalLink, Volume2, VolumeX, Play, Square, Camera, Tv,
-  Layers, Wand2, Plus, Trash2, GripVertical, Send, Eye, Wifi, HelpCircle, Activity, AlertTriangle, Shield, Clock
+  Layers, Wand2, Plus, Trash2, GripVertical, Send, Eye, Wifi, HelpCircle, Activity, AlertTriangle, Shield, Clock, Keyboard
 } from "lucide-react";
 import logoMixControl from "@/assets/logo-mixcontrol.png";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
@@ -220,9 +220,11 @@ export default function VmixPage() {
   // Persist input shortcuts
   useEffect(() => {
     localStorage.setItem("vmix_input_shortcuts", JSON.stringify(inputShortcuts));
-  }, [inputShortcuts]);
-
-
+    // Also persist to DB
+    if (user) {
+      supabase.from("user_settings").update({ vmix_shortcuts: inputShortcuts as any }).eq("user_id", user.id);
+    }
+  }, [inputShortcuts, user]);
   // Persist HLS URLs
   useEffect(() => {
     localStorage.setItem("vmix_input_hls", JSON.stringify(inputHlsUrls));
@@ -257,7 +259,7 @@ export default function VmixPage() {
     const loadUrl = async () => {
       const { data } = await supabase
         .from("user_settings")
-        .select("vmix_url, vmix_user, vmix_pass")
+        .select("vmix_url, vmix_user, vmix_pass, vmix_shortcuts")
         .eq("user_id", user.id)
         .maybeSingle();
       if (data?.vmix_url) {
@@ -266,6 +268,9 @@ export default function VmixPage() {
       }
       if (data?.vmix_user) setVmixUser(data.vmix_user);
       if (data?.vmix_pass) setVmixPass(data.vmix_pass);
+      if (data?.vmix_shortcuts && typeof data.vmix_shortcuts === "object") {
+        setInputShortcuts(data.vmix_shortcuts as Record<string, string>);
+      }
       setLoading(false);
     };
     loadUrl();
@@ -1716,33 +1721,46 @@ export default function VmixPage() {
                       <span className="text-[7px] font-black px-1.5 py-0.5 rounded flex-shrink-0" style={{ backgroundColor: "#555", color: "#fff", letterSpacing: "0.05em" }}>PVW</span>
                     )}
                     {/* Keyboard shortcut badge/capture */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setCapturingShortcut(capturingShortcut === input.number ? null : input.number);
-                      }}
-                      onContextMenu={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        // Right-click to clear shortcut
-                        setInputShortcuts(prev => {
-                          const copy = { ...prev };
-                          delete copy[input.number];
-                          return copy;
-                        });
-                      }}
-                      className="text-[7px] font-mono font-bold px-1.5 py-0.5 rounded flex-shrink-0 transition-all"
-                      style={{
-                        backgroundColor: capturingShortcut === input.number ? "#f59e0b30" : inputShortcuts[input.number] ? "#ffffff10" : "#ffffff06",
-                        color: capturingShortcut === input.number ? "#f59e0b" : inputShortcuts[input.number] ? "#aaa" : "#555",
-                        border: `1px solid ${capturingShortcut === input.number ? "#f59e0b40" : "#ffffff08"}`,
-                        minWidth: 20,
-                        textAlign: "center",
-                      }}
-                      title={capturingShortcut === input.number ? "Pressione uma tecla..." : inputShortcuts[input.number] ? `Atalho: ${inputShortcuts[input.number]} (clique direito para limpar)` : "Clique para definir atalho"}
-                    >
-                      {capturingShortcut === input.number ? "⌨ ..." : inputShortcuts[input.number] || "⌨"}
-                    </button>
+                    <div className="relative group/shortcut flex-shrink-0">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setCapturingShortcut(capturingShortcut === input.number ? null : input.number);
+                        }}
+                        onContextMenu={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setInputShortcuts(prev => {
+                            const copy = { ...prev };
+                            delete copy[input.number];
+                            return copy;
+                          });
+                        }}
+                        className="text-[7px] font-mono font-bold px-1.5 py-0.5 rounded transition-all"
+                        style={{
+                          backgroundColor: capturingShortcut === input.number ? "#f59e0b30" : inputShortcuts[input.number] ? "#ffffff10" : "#ffffff06",
+                          color: capturingShortcut === input.number ? "#f59e0b" : inputShortcuts[input.number] ? "#aaa" : "#555",
+                          border: `1px solid ${capturingShortcut === input.number ? "#f59e0b40" : "#ffffff08"}`,
+                          minWidth: 20,
+                          textAlign: "center",
+                        }}
+                      >
+                        {capturingShortcut === input.number ? "⌨ ..." : inputShortcuts[input.number] || "⌨"}
+                      </button>
+                      {/* Tooltip on hover */}
+                      {inputShortcuts[input.number] && capturingShortcut !== input.number && (
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 rounded-lg opacity-0 group-hover/shortcut:opacity-100 pointer-events-none transition-opacity duration-200 whitespace-nowrap z-50"
+                          style={{ backgroundColor: "#111118", border: "1px solid #333", boxShadow: "0 4px 20px rgba(0,0,0,0.5)" }}
+                        >
+                          <div className="flex items-center gap-2">
+                            <Keyboard size={14} style={{ color: "#f59e0b" }} />
+                            <span className="text-sm font-mono font-black tracking-wider" style={{ color: "#f59e0b" }}>{inputShortcuts[input.number]}</span>
+                          </div>
+                          <div className="text-[8px] mt-0.5 text-center" style={{ color: "#666" }}>clique direito para limpar</div>
+                          <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0" style={{ borderLeft: "5px solid transparent", borderRight: "5px solid transparent", borderTop: "5px solid #333" }} />
+                        </div>
+                      )}
+                    </div>
                   </div>
                    <div className="relative" style={{ aspectRatio: "3/2", backgroundColor: "#111114" }}>
                     <ThumbnailImg inputNumber={input.number} className="w-full h-full object-contain" alt={input.title} />

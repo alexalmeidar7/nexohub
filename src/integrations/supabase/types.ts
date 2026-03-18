@@ -1095,6 +1095,7 @@ export type Database = {
           updated_at: string
           user_id: string
           vmix_pass: string | null
+          vmix_shortcuts: Json | null
           vmix_url: string | null
           vmix_user: string | null
           weather_city: string | null
@@ -1108,6 +1109,7 @@ export type Database = {
           updated_at?: string
           user_id: string
           vmix_pass?: string | null
+          vmix_shortcuts?: Json | null
           vmix_url?: string | null
           vmix_user?: string | null
           weather_city?: string | null
@@ -1121,6 +1123,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
           vmix_pass?: string | null
+          vmix_shortcuts?: Json | null
           vmix_url?: string | null
           vmix_user?: string | null
           weather_city?: string | null
