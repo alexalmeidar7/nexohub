@@ -69,6 +69,8 @@ export default function VmixPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [vmixUrl, setVmixUrl] = useState("");
+  const [vmixUser, setVmixUser] = useState("");
+  const [vmixPass, setVmixPass] = useState("");
   const [savedUrl, setSavedUrl] = useState("");
   const [connected, setConnected] = useState(false);
   const [loading, setLoading] = useState(true);
