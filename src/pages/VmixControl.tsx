@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { LogOut, Loader2 } from "lucide-react";
+import { LogOut, Loader2, Clock } from "lucide-react";
 import VmixPage from "@/components/VmixPage";
 import type { User } from "@supabase/supabase-js";
 import logoMixControl from "@/assets/logo-mixcontrol.png";
@@ -12,6 +12,12 @@ export default function VmixControl() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [signing, setSigning] = useState(false);
+  const [clock, setClock] = useState(() => new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
+
+  useEffect(() => {
+    const id = setInterval(() => setClock(new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })), 1000);
+    return () => clearInterval(id);
+  }, []);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -109,7 +115,7 @@ export default function VmixControl() {
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#191919" }}>
       <header className="relative flex items-center justify-between px-6 py-3" style={{ backgroundColor: "#242424" }}>
-        <div />
+        <span className="text-sm font-mono font-bold tracking-wider" style={{ color: "#22c55e" }}>{clock}</span>
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
           <img src={logoMixControl} alt="Mix Control" className="h-5" />
         </div>
