@@ -994,7 +994,7 @@ export default function VmixPage() {
           </div>
         </div>
         {/* Transitions */}
-        <div className="flex flex-col items-center justify-center gap-1.5 px-3 py-3" style={{ background: "linear-gradient(180deg, #15152a 0%, #0e0e1a 100%)", minWidth: 84 }}>
+        <div className="flex flex-col items-center justify-center gap-1.5 px-3 py-3" style={{ backgroundColor: "#1c1c22", minWidth: 84 }}>
           {[
             { label: "CUT", fn: "Cut", active: true },
             { label: "FADE", fn: "Fade", value: "1000" },
