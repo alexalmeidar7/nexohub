@@ -2171,10 +2171,13 @@ export default function VmixPage() {
                         </div>
                       );
                     })}
+                        </div>
+                      </div>
+                    ));
+                    })()}
                     {programas.length === 0 && (
-                      <p className="text-[11px] text-white/30 py-4 col-span-full">Nenhum programa cadastrado.</p>
+                      <p className="text-[11px] text-white/30 py-4">Nenhum programa cadastrado.</p>
                     )}
-                  </div>
                 </div>
               </div>
             </>
