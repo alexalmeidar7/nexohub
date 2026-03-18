@@ -69,6 +69,7 @@ interface Programa {
   horario_inicio: string;
   horario_fim: string;
   dias_semana: string[] | null;
+  estudio: string | null;
 }
 
 // Helper to detect private/local IPs
