@@ -2159,7 +2159,7 @@ export default function VmixPage() {
                           >
                             {idx > 0 && (
                               <button
-                                onClick={(e) => { e.stopPropagation(); const arr = [...programas]; [arr[idx - 1], arr[idx]] = [arr[idx], arr[idx - 1]]; setProgramas(arr); }}
+                                onClick={(e) => { e.stopPropagation(); const arr = [...programas]; [arr[idx - 1], arr[idx]] = [arr[idx], arr[idx - 1]]; setProgramas(arr); localStorage.setItem("vmix_preset_order", JSON.stringify(arr.map(p => p.id))); }}
                                 className="w-5 h-5 rounded flex items-center justify-center text-[9px] hover:bg-white/20 transition-colors"
                                 style={{ color: "#ccc" }}
                                 title="Mover para esquerda"
