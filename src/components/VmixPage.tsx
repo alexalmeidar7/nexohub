@@ -1111,7 +1111,7 @@ export default function VmixPage() {
                   <div
                     key={input.key || input.number}
                     className="flex flex-col items-center rounded-lg overflow-hidden cursor-pointer transition-all duration-200 hover:brightness-110"
-                    style={{ backgroundColor: "#1a1a28", border: `2px solid ${borderColor}`, width: 32, minHeight: 120 }}
+                    style={{ backgroundColor: "#1a1a1f", border: `2px solid ${borderColor}`, width: 32, minHeight: 120 }}
                     onClick={() => setMinimizedInputs(prev => ({ ...prev, [input.number]: false }))}
                   >
                     <div
