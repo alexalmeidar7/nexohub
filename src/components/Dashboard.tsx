@@ -83,7 +83,7 @@ const sidebarMenu: MenuItem[] = [
       { icon: FileText, label: "propostas comerciais", page: "propostas" },
     ]
   },
-  { icon: Monitor, label: "vmix control", page: "vmix" },
+  { icon: Monitor, label: "vmix control", page: undefined as unknown as Page },
   {
     icon: Wrench, label: "ferramentas", children: [
       { icon: Tag, label: "tela promo", page: undefined as unknown as Page },
@@ -253,6 +253,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   };
 
   const handleMenuClick = (item: MenuItem) => {
+    if (item.label === "vmix control") {
+      window.open("/vmix-control", "_blank");
+      return;
+    }
     if (item.children) {
       toggleMenu(item.label);
     } else if (item.page) {
