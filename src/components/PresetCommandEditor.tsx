@@ -89,6 +89,7 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
   const [saving, setSaving] = useState(false);
   const [running, setRunning] = useState(false);
   const [showCode, setShowCode] = useState(false);
+  const [pasteValue, setPasteValue] = useState("");
 
   useEffect(() => {
     if (!open) return;
