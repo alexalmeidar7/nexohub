@@ -1208,7 +1208,7 @@ export default function VmixPage() {
             <>
               {/* ── Programa no Ar + Próximos ── */}
               <div className="flex gap-3 items-stretch">
-                <div className="flex-1 rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a2e", border: "1px solid #dc262640" }}>
+                <div className="flex-1 rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a1f", border: "1px solid #dc262640" }}>
                   <div className="flex items-center gap-2 px-4 py-2" style={{ backgroundColor: "#dc262620", borderBottom: "1px solid #ffffff08" }}>
                     <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
                     <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#dc2626" }}>No Ar</span>
