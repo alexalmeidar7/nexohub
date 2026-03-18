@@ -146,10 +146,20 @@ export default function VmixPage() {
     } catch { return {}; }
   });
   const [capturingShortcut, setCapturingShortcut] = useState<string | null>(null);
-  const [activePreset, setActivePreset] = useState<string | null>(null);
+   const [activePreset, setActivePreset] = useState<string | null>(null);
   const [connectionMode, setConnectionMode] = useState<"direct" | "proxy">(() => {
     try { return (localStorage.getItem("vmix_conn_mode") as "direct" | "proxy") || "direct"; }
     catch { return "direct"; }
+  });
+  // HLS stream URLs per input (for NDI live preview)
+  const [inputHlsUrls, setInputHlsUrls] = useState<Record<string, string>>(() => {
+    try { const s = localStorage.getItem("vmix_input_hls"); return s ? JSON.parse(s) : {}; } catch { return {}; }
+  });
+  const [editingHlsInput, setEditingHlsInput] = useState<string | null>(null);
+  const [hlsTempUrl, setHlsTempUrl] = useState("");
+  // iframe-based monitor preview
+  const [useIframeMonitor, setUseIframeMonitor] = useState<boolean>(() => {
+    try { return localStorage.getItem("vmix_iframe_monitor") === "true"; } catch { return false; }
   });
 
   // Programas from DB
