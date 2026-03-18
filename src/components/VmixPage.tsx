@@ -184,19 +184,29 @@ export default function VmixPage() {
             Salvar
           </button>
           {savedUrl && (
-            <button
-              onClick={connectToVmix}
-              disabled={connecting}
-              className="flex items-center gap-2 text-sm font-semibold px-4 py-2.5 rounded-xl transition-all"
-              style={{
-                backgroundColor: connected ? "#22c55e" : "#0d0446",
-                color: "#fff",
-                opacity: connecting ? 0.7 : 1,
-              }}
-            >
-              {connecting ? <Loader2 size={14} className="animate-spin" /> : connected ? <CheckCircle size={14} /> : <RefreshCw size={14} />}
-              {connecting ? "Conectando..." : connected ? "Conectado" : "Conectar"}
-            </button>
+            <>
+              <button
+                onClick={connectToVmix}
+                disabled={connecting}
+                className="flex items-center gap-2 text-sm font-semibold px-4 py-2.5 rounded-xl transition-all"
+                style={{
+                  backgroundColor: connected ? "#22c55e" : "#0d0446",
+                  color: "#fff",
+                  opacity: connecting ? 0.7 : 1,
+                }}
+              >
+                {connecting ? <Loader2 size={14} className="animate-spin" /> : connected ? <CheckCircle size={14} /> : <RefreshCw size={14} />}
+                {connecting ? "Conectando..." : connected ? "Conectado" : "Conectar"}
+              </button>
+              <button
+                onClick={() => window.open(savedUrl, "_blank")}
+                className="flex items-center gap-2 text-sm font-semibold px-4 py-2.5 rounded-xl transition-opacity hover:opacity-90"
+                style={{ backgroundColor: "#6366f1", color: "#fff" }}
+              >
+                <Monitor size={14} />
+                Abrir vMix Externo
+              </button>
+            </>
           )}
         </div>
         {savedUrl && !connected && !connecting && (
