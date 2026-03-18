@@ -1537,21 +1537,39 @@ export default function VmixPage() {
               sendCommand("Cut", val);
               setActiveInput(val);
             })}
-            <button
-              onClick={() => {
-                setEditingMonitorStream(editingMonitorStream === "output" ? null : "output");
-                setMonitorStreamTemp(monitorStreamUrls.output);
-              }}
-              className="ml-auto text-[8px] px-1.5 py-0.5 rounded transition-all"
-              style={{
-                backgroundColor: monitorStreamUrls.output ? "#3b82f620" : "#ffffff08",
-                color: monitorStreamUrls.output ? "#3b82f6" : "#666",
-                border: `1px solid ${monitorStreamUrls.output ? "#3b82f640" : "#ffffff10"}`,
-              }}
-              title="Configurar URL de stream (MJPEG/HLS)"
-            >
-              📡
-            </button>
+            <div className="ml-auto flex gap-1">
+              <button
+                onClick={() => {
+                  setMonitorIframeMode(prev => ({ ...prev, output: !prev.output }));
+                  if (!monitorIframeMode.output) setMonitorStreamUrls(prev => ({ ...prev, output: "" }));
+                }}
+                className="text-[8px] px-1.5 py-0.5 rounded transition-all"
+                style={{
+                  backgroundColor: monitorIframeMode.output ? "#3b82f620" : "#ffffff08",
+                  color: monitorIframeMode.output ? "#3b82f6" : "#666",
+                  border: `1px solid ${monitorIframeMode.output ? "#3b82f640" : "#ffffff10"}`,
+                }}
+                title="Modo Iframe (vMix Web Controller)"
+              >
+                ⬛
+              </button>
+              <button
+                onClick={() => {
+                  if (monitorIframeMode.output) setMonitorIframeMode(prev => ({ ...prev, output: false }));
+                  setEditingMonitorStream(editingMonitorStream === "output" ? null : "output");
+                  setMonitorStreamTemp(monitorStreamUrls.output);
+                }}
+                className="text-[8px] px-1.5 py-0.5 rounded transition-all"
+                style={{
+                  backgroundColor: monitorStreamUrls.output ? "#3b82f620" : "#ffffff08",
+                  color: monitorStreamUrls.output ? "#3b82f6" : "#666",
+                  border: `1px solid ${monitorStreamUrls.output ? "#3b82f640" : "#ffffff10"}`,
+                }}
+                title="Configurar URL de stream (MJPEG/HLS)"
+              >
+                📡
+              </button>
+            </div>
           </div>
           {editingMonitorStream === "output" && (
             <div className="flex gap-1 px-2 py-1.5" style={{ backgroundColor: "#111114", borderBottom: "1px solid #ffffff08" }}>
