@@ -1365,7 +1365,7 @@ export default function VmixPage() {
               </div>
             ), "#888")}
 
-            {sectionBox("Dicas NDI", <Eye size={14} style={{ color: "#a855f7" }} />, (
+            {sectionBox("Dicas NDI", <Eye size={14} style={{ color: "#777" }} />, (
               <ul className="text-[11px] space-y-1.5 text-white/40 list-disc list-inside">
                 <li>Certifique-se de que o <strong className="text-white/60">NDI Tools</strong> está instalado na rede</li>
                 <li>A fonte NDI precisa estar transmitindo na mesma sub-rede</li>
