@@ -561,41 +561,22 @@ export default function MusicaNoAr() {
               </button>
             </div>
 
-            {/* Switch prompt: shown when last source was local */}
-            {showSwitchPrompt && (
-              <div className="rounded-lg p-2.5 flex flex-col gap-2 animate-fade-in" style={{ backgroundColor: "rgba(38,143,250,0.08)", border: "1px solid rgba(38,143,250,0.2)" }}>
-                <p className="text-[10px] font-semibold text-center" style={{ color: "#0d0446" }}>
-                  Deseja mudar para source de XML online?
-                </p>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => {
-                      setShowSwitchPrompt(false);
-                      promptDismissedRef.current = true;
-                      setSourceMode("online");
-                    }}
-                    className="flex-1 py-1.5 rounded-md text-[10px] font-bold"
-                    style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#fff", boxShadow: "0 2px 6px rgba(38,143,250,0.3)" }}
-                  >
-                    Sim
-                  </button>
-                  <button
-                    onClick={() => {
-                      setShowSwitchPrompt(false);
-                      promptDismissedRef.current = true;
-                      setSourceMode("pasta");
-                    }}
-                    className="flex-1 py-1.5 rounded-md text-[10px] font-bold"
-                    style={{ backgroundColor: "rgba(13,4,70,0.06)", color: "rgba(13,4,70,0.6)", border: "1px solid rgba(13,4,70,0.1)" }}
-                  >
-                    Nao
-                  </button>
-                </div>
-              </div>
-            )}
+            {/* Active mode indicator */}
+            <div className="rounded-lg p-2 flex items-center gap-2" style={{
+              backgroundColor: sourceMode === "online" ? "rgba(38,143,250,0.08)" : "rgba(34,197,94,0.08)",
+              border: `1px solid ${sourceMode === "online" ? "rgba(38,143,250,0.2)" : "rgba(34,197,94,0.2)"}`
+            }}>
+              <span className="relative flex h-2 w-2 shrink-0">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: sourceMode === "online" ? "#268ffa" : "#22c55e" }}></span>
+                <span className="relative inline-flex rounded-full h-2 w-2" style={{ backgroundColor: sourceMode === "online" ? "#268ffa" : "#22c55e" }}></span>
+              </span>
+              <span className="text-[9px] font-bold" style={{ color: "#0d0446" }}>
+                {sourceMode === "online" ? "Modo Online ativo" : (localMonitoring ? "Modo Local ativo — monitorando" : "Modo Local — selecione um arquivo")}
+              </span>
+            </div>
 
             {/* Online URL */}
-            {sourceMode === "online" && !showSwitchPrompt && (
+            {sourceMode === "online" && (
               <div>
                 {editingUrl ? (
                   <div className="flex gap-1.5">
@@ -701,26 +682,15 @@ export default function MusicaNoAr() {
                 })()}
 
                 <input ref={fileInputRef} type="file" accept=".xml,application/xml,text/xml" onChange={handleFileSelect} className="hidden" />
-                <button onClick={() => fileInputRef.current?.click()} className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-[10px] font-bold border-2 border-dashed" style={{ borderColor: localFileName ? "#268ffa" : "rgba(13,4,70,0.15)", color: localFileName ? "#268ffa" : "rgba(13,4,70,0.4)" }}>
+                <button onClick={() => fileInputRef.current?.click()} className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-[10px] font-bold border-2 border-dashed" style={{ borderColor: localFileName ? "#22c55e" : "rgba(13,4,70,0.15)", color: localFileName ? "#22c55e" : "rgba(13,4,70,0.4)" }}>
                   <Upload size={12} />
                   {localFileName || "Selecionar .XML"}
                 </button>
 
-                {localFileName && !localSaved && (
-                  <button
-                    onClick={handleSaveLocal}
-                    className="w-full mt-1.5 flex items-center justify-center gap-1.5 py-2 rounded-lg text-[10px] font-bold transition-all"
-                    style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff", boxShadow: "0 2px 6px rgba(34,197,94,0.3)" }}
-                  >
-                    <Save size={12} />
-                    Salvar e Monitorar
-                  </button>
-                )}
-
-                {localFileName && localSaved && (
-                  <div className="mt-1 flex items-center gap-1.5 px-2 py-0.5 rounded text-[8px]" style={{ backgroundColor: "rgba(38,143,250,0.06)", color: "rgba(13,4,70,0.5)" }}>
+                {localMonitoring && localFileName && (
+                  <div className="mt-1.5 flex items-center gap-1.5 px-2 py-1 rounded-lg text-[9px] font-semibold" style={{ backgroundColor: "rgba(34,197,94,0.08)", color: "#16a34a", border: "1px solid rgba(34,197,94,0.2)" }}>
                     <span className="relative flex h-1.5 w-1.5 shrink-0"><span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: "#22c55e" }}></span><span className="relative inline-flex rounded-full h-1.5 w-1.5" style={{ backgroundColor: "#22c55e" }}></span></span>
-                    Monitorando a cada 1s
+                    Monitorando {localFileName} a cada 1s
                   </div>
                 )}
               </div>
@@ -758,11 +728,7 @@ export default function MusicaNoAr() {
                   </table>
                 </div>
               </div>
-            )}
-
-            <p className="text-[8px] text-center uppercase tracking-widest font-semibold" style={{ color: "rgba(13,4,70,0.25)" }}>
-              {sourceMode === "online" ? "Monitorando online" : (localSaved ? "Monitorando local" : "Selecione um arquivo")}
-            </p>
+            )
           </div>
 
           {/* RIGHT - Cover + Song Info with blue progress background */}
