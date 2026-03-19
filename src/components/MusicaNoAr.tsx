@@ -122,6 +122,8 @@ export default function MusicaNoAr() {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const fetchIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const coverCacheRef = useRef<Record<string, string>>({});
+  const [sliderResetting, setSliderResetting] = useState(false);
+  const prevProgressRef = useRef(0);
   const [loadingCover, setLoadingCover] = useState(false);
   const [presenterFallback, setPresenterFallback] = useState<{ nome: string; foto: string } | null>(null);
 
@@ -314,7 +316,19 @@ export default function MusicaNoAr() {
     }
   }, []);
 
-  const progress = music && music.duracao > 0 ? Math.min(100, (elapsed / music.duracao) * 100) : 0;
+  const rawProgress = music && music.duracao > 0 ? Math.min(100, (elapsed / music.duracao) * 100) : 0;
+
+  // Detect when progress resets (music changed or reached end)
+  useEffect(() => {
+    if (prevProgressRef.current > 10 && rawProgress < 5) {
+      setSliderResetting(true);
+      const timer = setTimeout(() => setSliderResetting(false), 600);
+      return () => clearTimeout(timer);
+    }
+    prevProgressRef.current = rawProgress;
+  }, [rawProgress]);
+
+  const progress = sliderResetting ? 0 : rawProgress;
 
   const hasCover = music?.capa && music.capa.length > 0;
   const useFallback = !hasCover && presenterFallback;
@@ -502,10 +516,14 @@ export default function MusicaNoAr() {
           >
             {/* Blue progress fill as background */}
             <div
-              className="absolute inset-0 transition-all duration-500 ease-linear"
+              className="absolute inset-0"
               style={{
                 width: `${progress}%`,
                 background: "linear-gradient(90deg, #0a1a3a, #1a4a8a, #2d8ef3)",
+                transition: sliderResetting
+                  ? "width 0.6s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.6s ease"
+                  : "width 0.5s linear",
+                opacity: sliderResetting ? 0.3 : 1,
               }}
             />
 
