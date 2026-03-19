@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Music, User, Loader2, Pencil, Check, Globe, FolderOpen, Clock, Upload, Save, Monitor } from "lucide-react";
+import { Music, User, Loader2, Pencil, Check, Globe, FolderOpen, Clock, Upload, Monitor } from "lucide-react";
 import XmlLinkRow from "./XmlLinkRow";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -197,46 +197,48 @@ export default function MusicaNoAr() {
   const [loadingCover, setLoadingCover] = useState(false);
   const [presenterFallback, setPresenterFallback] = useState<{ nome: string; foto: string } | null>(null);
 
-  // New state for dual source mode
-  const [sourceMode, setSourceModeState] = useState<"online" | "pasta">(() => {
-    const saved = localStorage.getItem(SOURCE_MODE_KEY);
-    return saved === "pasta" ? "pasta" : "online";
-  });
-  const setSourceMode = (mode: "online" | "pasta") => {
-    setSourceModeState(mode);
-    localStorage.setItem(SOURCE_MODE_KEY, mode);
-  };
+  // Source mode: persisted in DB, loaded on mount
+  const [sourceMode, setSourceModeState] = useState<"online" | "pasta">("online");
+  const [sourceModeLoaded, setSourceModeLoaded] = useState(false);
   const [localFileContent, setLocalFileContent] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const localFileRef = useRef<File | null>(null);
   const localPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [uploadHistory, setUploadHistory] = useState<UploadLogEntry[]>([]);
   const [localFileName, setLocalFileName] = useState<string>("");
-  const [localSaved, setLocalSaved] = useState(false);
+  const [localMonitoring, setLocalMonitoring] = useState(false);
   const [editingDeviceName, setEditingDeviceName] = useState(false);
   const [deviceNameInput, setDeviceNameInput] = useState(() => getDeviceName());
   const [currentDeviceName, setCurrentDeviceName] = useState(() => getDeviceName());
 
-  // Prompt to switch from local to online
-  const [showSwitchPrompt, setShowSwitchPrompt] = useState(false);
-  const promptDismissedRef = useRef(false);
-
-  // On mount: if last source was "pasta", show prompt
-  useEffect(() => {
-    const saved = localStorage.getItem(SOURCE_MODE_KEY);
-    if (saved === "pasta" && !promptDismissedRef.current) {
-      setShowSwitchPrompt(true);
+  // Save source mode to DB + state
+  const setSourceMode = async (mode: "online" | "pasta") => {
+    setSourceModeState(mode);
+    localStorage.setItem(SOURCE_MODE_KEY, mode);
+    // Stop local monitoring when switching to online
+    if (mode === "online") {
+      setLocalMonitoring(false);
+      setLocalFileName("");
+      localFileRef.current = null;
+      setLocalFileContent(null);
     }
-  }, []);
+    if (user) {
+      await supabase.from("user_settings").upsert({
+        user_id: user.id,
+        music_source_mode: mode,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: "user_id" });
+    }
+  };
 
-  // Load URL and history from DB
+  // Load URL, source mode, and history from DB
   useEffect(() => {
     if (!user) return;
     const loadData = async () => {
       const [{ data }, history] = await Promise.all([
         supabase
           .from("user_settings")
-          .select("music_xml_url")
+          .select("music_xml_url, music_source_mode")
           .eq("user_id", user.id)
           .maybeSingle(),
         loadUploadHistoryFromDb(user.id),
@@ -251,6 +253,13 @@ export default function MusicaNoAr() {
           updated_at: new Date().toISOString(),
         }, { onConflict: "user_id" });
       }
+      // Restore saved source mode
+      const savedMode = (data as any)?.music_source_mode;
+      if (savedMode === "pasta" || savedMode === "online") {
+        setSourceModeState(savedMode);
+        localStorage.setItem(SOURCE_MODE_KEY, savedMode);
+      }
+      setSourceModeLoaded(true);
     };
     loadData();
   }, [user]);
@@ -340,7 +349,6 @@ export default function MusicaNoAr() {
       const parsed = parseXmlString(data.content);
       if (parsed) {
         await processMusic(parsed);
-        setUploadHistory(await addUploadLogToDb(user!.id, "online"));
       }
     } catch { }
   }, [xmlUrl, processMusic, sourceMode]);
@@ -381,54 +389,54 @@ export default function MusicaNoAr() {
       const parsed = parseXmlString(text);
       if (parsed) {
         await processMusic(parsed);
-        if (user) setUploadHistory(await addUploadLogToDb(user.id, "pasta", currentDeviceName));
       }
     } catch { }
   }, [processMusic, localFileContent, user, currentDeviceName]);
 
+  // Handle file select: immediately save, upload, and start monitoring
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     localFileRef.current = file;
     setLocalFileName(file.name);
-    setLocalSaved(false);
+
     const text = await readFileWithEncoding(file);
     setLocalFileContent(text);
+
     const parsed = parseXmlString(text);
     if (parsed) {
       await processMusic(parsed);
     }
-  };
 
-  // Save local source: uploads to storage and starts polling
-  const handleSaveLocal = async () => {
-    if (!user || !localFileContent) return;
-    setLocalSaved(true);
-    const utf8Blob = new Blob([new TextEncoder().encode(localFileContent)], { type: "application/xml" });
-    const filePath = `local-xml-${user.id}.xml`;
-    await supabase.storage.from("xml-files").upload(filePath, utf8Blob, { upsert: true, contentType: "application/xml" });
-    const { data: urlData } = supabase.storage.from("xml-files").getPublicUrl(filePath);
-    if (urlData?.publicUrl) {
-      await supabase.from("user_settings").upsert({
-        user_id: user.id,
-        music_xml_url: urlData.publicUrl,
-        updated_at: new Date().toISOString(),
-      }, { onConflict: "user_id" });
-      setXmlUrl(urlData.publicUrl);
+    // Immediately upload to storage and start monitoring
+    if (user) {
+      const utf8Blob = new Blob([new TextEncoder().encode(text)], { type: "application/xml" });
+      const filePath = `local-xml-${user.id}.xml`;
+      await supabase.storage.from("xml-files").upload(filePath, utf8Blob, { upsert: true, contentType: "application/xml" });
+      const { data: urlData } = supabase.storage.from("xml-files").getPublicUrl(filePath);
+      if (urlData?.publicUrl) {
+        await supabase.from("user_settings").upsert({
+          user_id: user.id,
+          music_xml_url: urlData.publicUrl,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: "user_id" });
+        setXmlUrl(urlData.publicUrl);
+      }
+      setUploadHistory(await addUploadLogToDb(user.id, "pasta", currentDeviceName));
     }
-    setUploadHistory(await addUploadLogToDb(user.id, "pasta", currentDeviceName));
+    setLocalMonitoring(true);
   };
 
-  // Start 1s polling only after local is saved
+  // Start 1s polling when local file is selected and monitoring
   useEffect(() => {
-    if (sourceMode !== "pasta" || !localSaved) {
+    if (sourceMode !== "pasta" || !localMonitoring) {
       if (localPollRef.current) clearInterval(localPollRef.current);
       return;
     }
     if (!localFileRef.current) return;
     localPollRef.current = setInterval(readLocalFile, 1000);
     return () => { if (localPollRef.current) clearInterval(localPollRef.current); };
-  }, [sourceMode, localSaved, readLocalFile]);
+  }, [sourceMode, localMonitoring, readLocalFile]);
 
   useEffect(() => {
     if (!music || !startTime) return;
@@ -553,41 +561,22 @@ export default function MusicaNoAr() {
               </button>
             </div>
 
-            {/* Switch prompt: shown when last source was local */}
-            {showSwitchPrompt && (
-              <div className="rounded-lg p-2.5 flex flex-col gap-2 animate-fade-in" style={{ backgroundColor: "rgba(38,143,250,0.08)", border: "1px solid rgba(38,143,250,0.2)" }}>
-                <p className="text-[10px] font-semibold text-center" style={{ color: "#0d0446" }}>
-                  Deseja mudar para source de XML online?
-                </p>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => {
-                      setShowSwitchPrompt(false);
-                      promptDismissedRef.current = true;
-                      setSourceMode("online");
-                    }}
-                    className="flex-1 py-1.5 rounded-md text-[10px] font-bold"
-                    style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#fff", boxShadow: "0 2px 6px rgba(38,143,250,0.3)" }}
-                  >
-                    Sim
-                  </button>
-                  <button
-                    onClick={() => {
-                      setShowSwitchPrompt(false);
-                      promptDismissedRef.current = true;
-                      setSourceMode("pasta");
-                    }}
-                    className="flex-1 py-1.5 rounded-md text-[10px] font-bold"
-                    style={{ backgroundColor: "rgba(13,4,70,0.06)", color: "rgba(13,4,70,0.6)", border: "1px solid rgba(13,4,70,0.1)" }}
-                  >
-                    Nao
-                  </button>
-                </div>
-              </div>
-            )}
+            {/* Active mode indicator */}
+            <div className="rounded-lg p-2 flex items-center gap-2" style={{
+              backgroundColor: sourceMode === "online" ? "rgba(38,143,250,0.08)" : "rgba(34,197,94,0.08)",
+              border: `1px solid ${sourceMode === "online" ? "rgba(38,143,250,0.2)" : "rgba(34,197,94,0.2)"}`
+            }}>
+              <span className="relative flex h-2 w-2 shrink-0">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: sourceMode === "online" ? "#268ffa" : "#22c55e" }}></span>
+                <span className="relative inline-flex rounded-full h-2 w-2" style={{ backgroundColor: sourceMode === "online" ? "#268ffa" : "#22c55e" }}></span>
+              </span>
+              <span className="text-[9px] font-bold" style={{ color: "#0d0446" }}>
+                {sourceMode === "online" ? "Modo Online ativo" : (localMonitoring ? "Modo Local ativo — monitorando" : "Modo Local — selecione um arquivo")}
+              </span>
+            </div>
 
             {/* Online URL */}
-            {sourceMode === "online" && !showSwitchPrompt && (
+            {sourceMode === "online" && (
               <div>
                 {editingUrl ? (
                   <div className="flex gap-1.5">
@@ -693,26 +682,15 @@ export default function MusicaNoAr() {
                 })()}
 
                 <input ref={fileInputRef} type="file" accept=".xml,application/xml,text/xml" onChange={handleFileSelect} className="hidden" />
-                <button onClick={() => fileInputRef.current?.click()} className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-[10px] font-bold border-2 border-dashed" style={{ borderColor: localFileName ? "#268ffa" : "rgba(13,4,70,0.15)", color: localFileName ? "#268ffa" : "rgba(13,4,70,0.4)" }}>
+                <button onClick={() => fileInputRef.current?.click()} className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-[10px] font-bold border-2 border-dashed" style={{ borderColor: localFileName ? "#22c55e" : "rgba(13,4,70,0.15)", color: localFileName ? "#22c55e" : "rgba(13,4,70,0.4)" }}>
                   <Upload size={12} />
                   {localFileName || "Selecionar .XML"}
                 </button>
 
-                {localFileName && !localSaved && (
-                  <button
-                    onClick={handleSaveLocal}
-                    className="w-full mt-1.5 flex items-center justify-center gap-1.5 py-2 rounded-lg text-[10px] font-bold transition-all"
-                    style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff", boxShadow: "0 2px 6px rgba(34,197,94,0.3)" }}
-                  >
-                    <Save size={12} />
-                    Salvar e Monitorar
-                  </button>
-                )}
-
-                {localFileName && localSaved && (
-                  <div className="mt-1 flex items-center gap-1.5 px-2 py-0.5 rounded text-[8px]" style={{ backgroundColor: "rgba(38,143,250,0.06)", color: "rgba(13,4,70,0.5)" }}>
+                {localMonitoring && localFileName && (
+                  <div className="mt-1.5 flex items-center gap-1.5 px-2 py-1 rounded-lg text-[9px] font-semibold" style={{ backgroundColor: "rgba(34,197,94,0.08)", color: "#16a34a", border: "1px solid rgba(34,197,94,0.2)" }}>
                     <span className="relative flex h-1.5 w-1.5 shrink-0"><span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: "#22c55e" }}></span><span className="relative inline-flex rounded-full h-1.5 w-1.5" style={{ backgroundColor: "#22c55e" }}></span></span>
-                    Monitorando a cada 1s
+                    Monitorando {localFileName} a cada 1s
                   </div>
                 )}
               </div>
@@ -751,10 +729,6 @@ export default function MusicaNoAr() {
                 </div>
               </div>
             )}
-
-            <p className="text-[8px] text-center uppercase tracking-widest font-semibold" style={{ color: "rgba(13,4,70,0.25)" }}>
-              {sourceMode === "online" ? "Monitorando online" : (localSaved ? "Monitorando local" : "Selecione um arquivo")}
-            </p>
           </div>
 
           {/* RIGHT - Cover + Song Info with blue progress background */}
