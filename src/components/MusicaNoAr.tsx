@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Music, User, Loader2, Pencil, Check, Globe, FolderOpen, Clock, Upload, Save } from "lucide-react";
+import { Music, User, Loader2, Pencil, Check, Globe, FolderOpen, Clock, Upload, Save, Monitor } from "lucide-react";
 import XmlLinkRow from "./XmlLinkRow";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -18,13 +18,49 @@ interface UploadLogEntry {
   source: "pasta" | "online";
   date: string;
   time: string;
+  deviceName?: string;
 }
 
 const MUSIC_DATA_KEY = "masterview_music_data";
 const MUSIC_START_KEY = "masterview_music_start";
 const UPLOAD_HISTORY_KEY = "masterview_xml_upload_history";
 const SOURCE_MODE_KEY = "masterview_source_mode";
+const DEVICE_NAME_KEY = "masterview_device_name";
+const DEVICE_ID_KEY = "masterview_device_id";
 const DEFAULT_XML_URL = "https://positivafm.com.br/storage/pulsar/positivafm.xml";
+
+/** Get or create a unique device ID for this browser */
+function getDeviceId(): string {
+  let id = localStorage.getItem(DEVICE_ID_KEY);
+  if (!id) {
+    id = crypto.randomUUID().slice(0, 8);
+    localStorage.setItem(DEVICE_ID_KEY, id);
+  }
+  return id;
+}
+
+/** Derive a short device label from userAgent */
+function deriveDeviceName(): string {
+  const ua = navigator.userAgent;
+  let os = "PC";
+  if (ua.includes("Windows")) os = "Windows";
+  else if (ua.includes("Mac")) os = "Mac";
+  else if (ua.includes("Linux")) os = "Linux";
+  else if (ua.includes("Android")) os = "Android";
+  else if (ua.includes("iPhone") || ua.includes("iPad")) os = "iOS";
+
+  let browser = "";
+  if (ua.includes("Chrome") && !ua.includes("Edg")) browser = "Chrome";
+  else if (ua.includes("Firefox")) browser = "Firefox";
+  else if (ua.includes("Safari") && !ua.includes("Chrome")) browser = "Safari";
+  else if (ua.includes("Edg")) browser = "Edge";
+
+  return `${os}${browser ? " - " + browser : ""} (${getDeviceId()})`;
+}
+
+function getDeviceName(): string {
+  return localStorage.getItem(DEVICE_NAME_KEY) || deriveDeviceName();
+}
 
 /** Detect encoding from XML declaration or byte-order, then decode */
 async function readFileWithEncoding(file: File): Promise<string> {
@@ -124,17 +160,21 @@ async function loadUploadHistoryFromDb(userId: string): Promise<UploadLogEntry[]
     if (!data) return [];
     return data.map((row: any) => {
       const d = new Date(row.created_at);
+      // source may contain device name: "pasta|DeviceName" or just "pasta"
+      const [rawSource, deviceName] = (row.source as string).split("|");
       return {
-        source: row.source as "pasta" | "online",
+        source: (rawSource === "pasta" ? "pasta" : "online") as "pasta" | "online",
         date: d.toLocaleDateString("pt-BR"),
         time: d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
+        deviceName: deviceName || undefined,
       };
     });
   } catch { return []; }
 }
 
-async function addUploadLogToDb(userId: string, source: "pasta" | "online"): Promise<UploadLogEntry[]> {
-  await supabase.from("xml_upload_history").insert({ user_id: userId, source });
+async function addUploadLogToDb(userId: string, source: "pasta" | "online", deviceName?: string): Promise<UploadLogEntry[]> {
+  const sourceValue = source === "pasta" && deviceName ? `pasta|${deviceName}` : source;
+  await supabase.from("xml_upload_history").insert({ user_id: userId, source: sourceValue });
   return loadUploadHistoryFromDb(userId);
 }
 
@@ -338,7 +378,7 @@ export default function MusicaNoAr() {
       const parsed = parseXmlString(text);
       if (parsed) {
         await processMusic(parsed);
-        if (user) setUploadHistory(await addUploadLogToDb(user.id, "pasta"));
+        if (user) setUploadHistory(await addUploadLogToDb(user.id, "pasta", getDeviceName()));
       }
     } catch { }
   }, [processMusic, localFileContent, user]);
@@ -373,7 +413,7 @@ export default function MusicaNoAr() {
       }, { onConflict: "user_id" });
       setXmlUrl(urlData.publicUrl);
     }
-    setUploadHistory(await addUploadLogToDb(user.id, "pasta"));
+    setUploadHistory(await addUploadLogToDb(user.id, "pasta", getDeviceName()));
   };
 
   // Start 1s polling only after local is saved
@@ -575,6 +615,37 @@ export default function MusicaNoAr() {
             {/* Local File */}
             {sourceMode === "pasta" && (
               <div>
+                {/* Remote device warning: show if no local file selected and last upload was from a different device */}
+                {!localFileName && (() => {
+                  const lastLocal = uploadHistory.find(e => e.source === "pasta" && e.deviceName);
+                  if (lastLocal && lastLocal.deviceName) {
+                    const currentDevice = getDeviceName();
+                    const isRemote = lastLocal.deviceName !== currentDevice;
+                    return (
+                      <div className="rounded-lg p-2.5 mb-2 flex items-start gap-2" style={{ backgroundColor: isRemote ? "rgba(234,179,8,0.1)" : "rgba(34,197,94,0.08)", border: `1px solid ${isRemote ? "rgba(234,179,8,0.3)" : "rgba(34,197,94,0.2)"}` }}>
+                        <Monitor size={14} className="shrink-0 mt-0.5" style={{ color: isRemote ? "#ca8a04" : "#16a34a" }} />
+                        <div>
+                          <p className="text-[9px] font-semibold leading-tight" style={{ color: "#0d0446" }}>
+                            {isRemote
+                              ? "Arquivo XML sendo carregado localmente em outro computador"
+                              : "Arquivo XML carregado localmente neste computador"
+                            }
+                          </p>
+                          <p className="text-[8px] mt-0.5 font-mono" style={{ color: "rgba(13,4,70,0.5)" }}>
+                            {lastLocal.deviceName}
+                          </p>
+                          {isRemote && (
+                            <p className="text-[8px] mt-1" style={{ color: "rgba(13,4,70,0.4)" }}>
+                              Selecione um arquivo XML neste computador ou mude para o modo Online.
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
+
                 <input ref={fileInputRef} type="file" accept=".xml,application/xml,text/xml" onChange={handleFileSelect} className="hidden" />
                 <button onClick={() => fileInputRef.current?.click()} className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-[10px] font-bold border-2 border-dashed" style={{ borderColor: localFileName ? "#268ffa" : "rgba(13,4,70,0.15)", color: localFileName ? "#268ffa" : "rgba(13,4,70,0.4)" }}>
                   <Upload size={12} />
