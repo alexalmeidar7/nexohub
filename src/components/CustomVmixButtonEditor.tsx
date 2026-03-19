@@ -286,6 +286,28 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
                 />
               </div>
 
+              {/* Color picker */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[9px] font-bold uppercase tracking-widest flex items-center gap-1" style={{ color: "#888" }}>
+                  <Palette size={10} /> Cor do Botão
+                </label>
+                <div className="flex flex-wrap gap-1.5">
+                  {BUTTON_COLORS.map(c => (
+                    <button
+                      key={c.value}
+                      onClick={() => setColor(c.value)}
+                      className="w-6 h-6 rounded-full transition-all hover:scale-110"
+                      style={{
+                        backgroundColor: c.value,
+                        border: color === c.value ? "2px solid #fff" : "2px solid #333",
+                        boxShadow: color === c.value ? `0 0 8px ${c.value}60` : "none",
+                      }}
+                      title={c.label}
+                    />
+                  ))}
+                </div>
+              </div>
+
               {/* Schedule row */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {/* Days */}
