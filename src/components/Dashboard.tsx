@@ -161,16 +161,44 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
   useEffect(() => () => clearMenuLeaveTimer(), [clearMenuLeaveTimer]);
 
-  // Single batched initial load — all queries in parallel
+  // Helper: find current on-air program and fetch only its thumb
+  const findCurrentOnAirThumb = useCallback(async () => {
+    if (!user) return null;
+    // First: lightweight query WITHOUT thumb column
+    const { data } = await supabase
+      .from("programas")
+      .select("id, dias_semana, horario_inicio, horario_fim")
+      .eq("user_id", user.id)
+      .eq("ativo", true);
+    if (!data) return null;
+
+    const now = new Date();
+    const DIAS_MAP: Record<number, string> = { 1: "Segunda", 2: "Terça", 3: "Quarta", 4: "Quinta", 5: "Sexta", 6: "Sábado", 0: "Domingo" };
+    const diaAtual = DIAS_MAP[now.getDay()];
+    const horaAtual = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+    const current = data.find((p: any) =>
+      (p.dias_semana || []).includes(diaAtual) && horaAtual >= p.horario_inicio && horaAtual < p.horario_fim
+    );
+    if (!current) return null;
+
+    // Second: fetch thumb ONLY for the matched program
+    const { data: thumbData } = await supabase
+      .from("programas")
+      .select("thumb")
+      .eq("id", current.id)
+      .maybeSingle();
+    return thumbData?.thumb || null;
+  }, [user]);
+
+  // Single batched initial load — all queries in parallel (NO thumb in batch)
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
 
     const loadAll = async () => {
-      const [modulesRes, empresaRes, thumbRes] = await Promise.all([
+      const [modulesRes, empresaRes] = await Promise.all([
         supabase.from("client_modules").select("module_key, enabled").eq("user_id", user.id),
         supabase.from("empresa_config").select("*").eq("user_id", user.id).maybeSingle(),
-        supabase.from("programas").select("thumb, dias_semana, horario_inicio, horario_fim, ativo").eq("user_id", user.id).eq("ativo", true),
       ]);
 
       if (cancelled) return;
@@ -191,60 +219,40 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       } : ({} as any);
       setEmpresa(cfg);
 
-      // Plan modules (only if plano exists) — fire and forget, don't block
+      // Plan modules — fire and forget
       if (cfg.plano) {
         supabase.from("planos").select("enabled_modules").eq("name", cfg.plano).maybeSingle().then(({ data }) => {
           if (!cancelled && data?.enabled_modules) setPlanModules(new Set(data.enabled_modules));
         });
       }
 
-      // On-air thumb
-      if (thumbRes.data) {
-        const now = new Date();
-        const DIAS_MAP: Record<number, string> = { 1: "Segunda", 2: "Terça", 3: "Quarta", 4: "Quinta", 5: "Sexta", 6: "Sábado", 0: "Domingo" };
-        const diaAtual = DIAS_MAP[now.getDay()];
-        const horaAtual = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-        const current = thumbRes.data.find((p: any) =>
-          (p.dias_semana || []).includes(diaAtual) && horaAtual >= p.horario_inicio && horaAtual < p.horario_fim
-        );
-        const thumb = current?.thumb || null;
+      setInitialLoading(false);
+
+      // Fetch thumb AFTER initial load (non-blocking, only for current program)
+      const thumb = await findCurrentOnAirThumb();
+      if (!cancelled) {
         prevThumbRef.current = thumb;
         setOnAirThumb(thumb);
       }
-
-      setInitialLoading(false);
     };
 
     loadAll();
     return () => { cancelled = true; };
-  }, [user]);
+  }, [user, findCurrentOnAirThumb]);
 
-  // Poll on-air thumb every 30s (after initial load)
+  // Poll on-air thumb every 30s (lightweight: no base64 in batch)
   useEffect(() => {
     if (!user || initialLoading) return;
-    const fetchThumb = async () => {
-      const { data } = await supabase
-        .from("programas")
-        .select("thumb, dias_semana, horario_inicio, horario_fim, ativo")
-        .eq("user_id", user.id)
-        .eq("ativo", true);
-      if (!data) return;
-      const now = new Date();
-      const DIAS_MAP: Record<number, string> = { 1: "Segunda", 2: "Terça", 3: "Quarta", 4: "Quinta", 5: "Sexta", 6: "Sábado", 0: "Domingo" };
-      const diaAtual = DIAS_MAP[now.getDay()];
-      const horaAtual = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-      const current = data.find((p: any) =>
-        (p.dias_semana || []).includes(diaAtual) && horaAtual >= p.horario_inicio && horaAtual < p.horario_fim
-      );
-      const thumb = current?.thumb || null;
+    const poll = async () => {
+      const thumb = await findCurrentOnAirThumb();
       if (thumb !== prevThumbRef.current) {
         prevThumbRef.current = thumb;
         setOnAirThumb(thumb);
       }
     };
-    const interval = setInterval(fetchThumb, 30000);
+    const interval = setInterval(poll, 30000);
     return () => clearInterval(interval);
-  }, [user, initialLoading]);
+  }, [user, initialLoading, findCurrentOnAirThumb]);
 
   const isModuleEnabled = (page: Page): boolean => {
     if (page === "dashboard" || page === "configuracoes" || page === "playerconfig" || page === "cortevideo" || page === "tp") return true;
