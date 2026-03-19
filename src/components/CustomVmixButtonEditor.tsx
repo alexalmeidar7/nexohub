@@ -1,7 +1,43 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, GripVertical, Play, Loader2, X, ChevronDown, ChevronUp, Clock, Tag, Code, Copy, ClipboardPaste } from "lucide-react";
+import { Plus, Trash2, GripVertical, Play, Loader2, X, ChevronDown, ChevronUp, Clock, Tag, Code, Copy, ClipboardPaste, Palette, Music, Radio, Tv, Mic, Volume2, Video, Zap, Star, Sparkles, Clapperboard, Megaphone, Bell, type LucideIcon } from "lucide-react";
+
+const BUTTON_COLORS = [
+  { value: "#f59e0b", label: "Amarelo" },
+  { value: "#3b82f6", label: "Azul" },
+  { value: "#22c55e", label: "Verde" },
+  { value: "#dc2626", label: "Vermelho" },
+  { value: "#8b5cf6", label: "Roxo" },
+  { value: "#ec4899", label: "Rosa" },
+  { value: "#f97316", label: "Laranja" },
+  { value: "#06b6d4", label: "Ciano" },
+  { value: "#64748b", label: "Cinza" },
+  { value: "#ffffff", label: "Branco" },
+];
+
+const ICON_KEYWORDS: [string[], LucideIcon][] = [
+  [["music", "música", "musica", "song", "jingle", "vinheta"], Music],
+  [["radio", "fm", "frequência", "frequencia"], Radio],
+  [["tv", "televisão", "televisao", "monitor", "tela"], Tv],
+  [["mic", "microfone", "voz", "voice", "locutor", "apresentador"], Mic],
+  [["audio", "áudio", "volume", "som", "sound"], Volume2],
+  [["video", "vídeo", "câmera", "camera", "gravação", "gravacao"], Video],
+  [["efeito", "effect", "fx", "flash", "raio", "zap"], Zap],
+  [["star", "estrela", "destaque", "favorito"], Star],
+  [["abertura", "intro", "opening", "start", "início", "inicio"], Clapperboard],
+  [["comercial", "propaganda", "ad", "anúncio", "anuncio", "patrocínio"], Megaphone],
+  [["alerta", "alert", "aviso", "urgente", "notificação"], Bell],
+  [["brilho", "sparkle", "magic", "mágica", "especial"], Sparkles],
+];
+
+export function getIconForName(name: string): LucideIcon {
+  const lower = name.toLowerCase();
+  for (const [keywords, Icon] of ICON_KEYWORDS) {
+    if (keywords.some(k => lower.includes(k))) return Icon;
+  }
+  return Zap;
+}
 
 interface PresetCommand {
   id: string;
@@ -86,6 +122,7 @@ function formatCommandPreview(cmd: PresetCommand, inputs: VmixInput[]): string {
 export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId, inputs, onRunCommands, onSaved }: Props) {
   const { toast } = useToast();
   const [nome, setNome] = useState("");
+  const [color, setColor] = useState("#f59e0b");
   const [diasSemana, setDiasSemana] = useState<string[]>([]);
   const [horario, setHorario] = useState("");
   const [commands, setCommands] = useState<PresetCommand[]>([]);
@@ -106,6 +143,7 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
         .then(({ data }: any) => {
           if (data) {
             setNome(data.nome || "");
+            setColor(data.color || "#f59e0b");
             setDiasSemana(data.dias_semana || []);
             setHorario(data.horario || "");
             setCommands(Array.isArray(data.commands) ? data.commands : []);
@@ -114,6 +152,7 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
         });
     } else {
       setNome("");
+      setColor("#f59e0b");
       setDiasSemana([]);
       setHorario("");
       setCommands([]);
@@ -151,7 +190,7 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
       return;
     }
     setSaving(true);
-    const payload = { nome: nome.trim(), dias_semana: diasSemana, horario, commands };
+    const payload = { nome: nome.trim(), color, dias_semana: diasSemana, horario, commands };
     if (buttonId) {
       await (supabase.from("custom_vmix_buttons" as any) as any).update(payload).eq("id", buttonId);
     } else {
@@ -245,6 +284,28 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
                   style={{ backgroundColor: "#181820", color: "#ccc", border: "1px solid #333" }}
                   placeholder="Ex: Abertura Jornal, Vinheta Comercial..."
                 />
+              </div>
+
+              {/* Color picker */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[9px] font-bold uppercase tracking-widest flex items-center gap-1" style={{ color: "#888" }}>
+                  <Palette size={10} /> Cor do Botão
+                </label>
+                <div className="flex flex-wrap gap-1.5">
+                  {BUTTON_COLORS.map(c => (
+                    <button
+                      key={c.value}
+                      onClick={() => setColor(c.value)}
+                      className="w-6 h-6 rounded-full transition-all hover:scale-110"
+                      style={{
+                        backgroundColor: c.value,
+                        border: color === c.value ? "2px solid #fff" : "2px solid #333",
+                        boxShadow: color === c.value ? `0 0 8px ${c.value}60` : "none",
+                      }}
+                      title={c.label}
+                    />
+                  ))}
+                </div>
               </div>
 
               {/* Schedule row */}
