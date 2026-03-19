@@ -122,6 +122,8 @@ export default function MusicaNoAr() {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const fetchIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const coverCacheRef = useRef<Record<string, string>>({});
+  const [sliderResetting, setSliderResetting] = useState(false);
+  const prevProgressRef = useRef(0);
   const [loadingCover, setLoadingCover] = useState(false);
   const [presenterFallback, setPresenterFallback] = useState<{ nome: string; foto: string } | null>(null);
 
