@@ -887,8 +887,9 @@ export default function PlayerPage() {
   // Sync music data directly from XML
   const coverCacheRef = useRef<Record<string, string>>({});
   const noCoverCacheRef = useRef<Record<string, true>>({});
+  const effectiveUserId = user?.id || publicUserId;
   useEffect(() => {
-    if (!user) return;
+    if (!effectiveUserId) return;
 
 
     const parseXml = (xmlStr: string) => {
@@ -923,7 +924,7 @@ export default function PlayerPage() {
       inFlight = true;
       try {
         if (!cachedXmlUrl) {
-          const { data: settings } = await supabase.from("user_settings").select("music_xml_url").eq("user_id", user.id).maybeSingle();
+          const { data: settings } = await supabase.from("user_settings").select("music_xml_url").eq("user_id", effectiveUserId).maybeSingle();
           cachedXmlUrl = settings?.music_xml_url || null;
         }
         if (!cachedXmlUrl || cancelled) return;
@@ -978,7 +979,7 @@ export default function PlayerPage() {
     fetchAndSync(); // immediate first fetch
     const interval = setInterval(fetchAndSync, 2000);
     return () => { cancelled = true; clearInterval(interval); };
-  }, [user]);
+  }, [effectiveUserId]);
 
   // Play stream
   const playStream = useCallback(
