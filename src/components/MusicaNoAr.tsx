@@ -379,11 +379,13 @@ export default function MusicaNoAr() {
           </span>
         </div>
 
-        {/* Inner Card */}
-        <div className="max-w-md mx-auto rounded-2xl overflow-hidden" style={{ backgroundColor: "#ffffff", boxShadow: "0 4px 20px rgba(13,4,70,0.08)" }}>
-          <div className="p-6">
+        {/* 3-Column Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr_200px] gap-4">
+
+          {/* LEFT COLUMN — XML Config + History */}
+          <div className="rounded-2xl p-4 flex flex-col gap-4" style={{ backgroundColor: "#ffffff", boxShadow: "0 4px 20px rgba(13,4,70,0.08)" }}>
             {/* Source Mode Tabs */}
-            <div className="mb-4">
+            <div>
               <p className="text-[10px] mb-2 font-semibold uppercase tracking-wider" style={{ color: "rgba(13,4,70,0.4)" }}>Origem do XML</p>
               <div className="flex gap-1 rounded-xl p-1" style={{ backgroundColor: "rgba(13,4,70,0.04)" }}>
                 <button
@@ -395,7 +397,7 @@ export default function MusicaNoAr() {
                   }
                 >
                   <Globe size={13} />
-                  Online (URL)
+                  Online
                 </button>
                 <button
                   onClick={() => setSourceMode("pasta")}
@@ -406,14 +408,14 @@ export default function MusicaNoAr() {
                   }
                 >
                   <FolderOpen size={13} />
-                  Arquivo Local
+                  Local
                 </button>
               </div>
             </div>
 
-            {/* Option 1: Online URL */}
+            {/* Online URL */}
             {sourceMode === "online" && (
-              <div className="mb-5">
+              <div>
                 <p className="text-[10px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "rgba(13,4,70,0.4)" }}>URL do XML</p>
                 {editingUrl ? (
                   <div className="flex gap-2">
@@ -436,10 +438,10 @@ export default function MusicaNoAr() {
                   </div>
                 ) : (
                   <div className="flex items-center gap-2">
-                    <p className="text-[11px] truncate px-3 py-1.5 flex-1 rounded-lg" style={{ backgroundColor: "rgba(13,4,70,0.03)", color: "rgba(13,4,70,0.6)", border: "1px solid rgba(13,4,70,0.06)" }}>{xmlUrl}</p>
+                    <p className="text-[10px] truncate px-3 py-1.5 flex-1 rounded-lg" style={{ backgroundColor: "rgba(13,4,70,0.03)", color: "rgba(13,4,70,0.6)", border: "1px solid rgba(13,4,70,0.06)" }}>{xmlUrl}</p>
                     <button
                       onClick={() => { setTempUrl(xmlUrl); setEditingUrl(true); }}
-                      className="w-7 h-7 rounded-lg flex items-center justify-center transition-all"
+                      className="w-7 h-7 rounded-lg flex items-center justify-center transition-all shrink-0"
                       style={{ backgroundColor: "rgba(13,4,70,0.04)" }}
                       onMouseEnter={e => { e.currentTarget.style.backgroundColor = "rgba(38,143,250,0.1)"; }}
                       onMouseLeave={e => { e.currentTarget.style.backgroundColor = "rgba(13,4,70,0.04)"; }}
@@ -451,113 +453,70 @@ export default function MusicaNoAr() {
               </div>
             )}
 
-            {/* Option 2: Local File */}
+            {/* Local File */}
             {sourceMode === "pasta" && (
-              <div className="mb-5">
-                <p className="text-[10px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "rgba(13,4,70,0.4)" }}>Arquivo XML do computador</p>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".xml,application/xml,text/xml"
-                  onChange={handleFileSelect}
-                  className="hidden"
-                />
+              <div>
+                <p className="text-[10px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "rgba(13,4,70,0.4)" }}>Arquivo XML</p>
+                <input ref={fileInputRef} type="file" accept=".xml,application/xml,text/xml" onChange={handleFileSelect} className="hidden" />
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-bold transition-all border-2 border-dashed"
+                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-[11px] font-bold transition-all border-2 border-dashed"
                   style={{ borderColor: localFileName ? "#268ffa" : "rgba(13,4,70,0.15)", color: localFileName ? "#268ffa" : "rgba(13,4,70,0.4)", backgroundColor: localFileName ? "rgba(38,143,250,0.05)" : "rgba(13,4,70,0.02)" }}
                 >
-                  <Upload size={16} />
-                  {localFileName ? localFileName : "Selecionar arquivo .XML"}
+                  <Upload size={14} />
+                  {localFileName || "Selecionar .XML"}
                 </button>
                 {localFileName && (
-                  <div className="mt-2 flex items-center gap-2 px-3 py-1.5 rounded-lg" style={{ backgroundColor: "rgba(38,143,250,0.06)" }}>
+                  <div className="mt-2 flex items-center gap-2 px-2 py-1 rounded-lg" style={{ backgroundColor: "rgba(38,143,250,0.06)" }}>
                     <span className="relative flex h-2 w-2 shrink-0">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: "#22c55e" }}></span>
                       <span className="relative inline-flex rounded-full h-2 w-2" style={{ backgroundColor: "#22c55e" }}></span>
                     </span>
-                    <span className="text-[10px] font-semibold" style={{ color: "rgba(13,4,70,0.5)" }}>
-                      Monitorando alterações no arquivo a cada 2s
-                    </span>
+                    <span className="text-[9px] font-semibold" style={{ color: "rgba(13,4,70,0.5)" }}>Monitorando a cada 2s</span>
                   </div>
                 )}
-                <p className="text-[9px] mt-1.5 italic" style={{ color: "rgba(13,4,70,0.3)" }}>
-                  Mantenha esta aba aberta para atualização contínua do XML local.
-                </p>
+                <p className="text-[8px] mt-1 italic" style={{ color: "rgba(13,4,70,0.3)" }}>Mantenha esta aba aberta.</p>
               </div>
             )}
 
-            {/* Cover Art */}
-            <div className="relative aspect-square mb-6 overflow-hidden rounded-2xl group" style={{ backgroundColor: "rgba(13,4,70,0.03)", boxShadow: "0 4px 20px rgba(13,4,70,0.1)" }}>
-              {loadingCover && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/40 z-10 backdrop-blur-sm rounded-2xl">
-                  <Loader2 className="animate-spin" size={48} style={{ color: "#268ffa" }} />
-                </div>
-              )}
-              {displayCover ? (
-                <img src={displayCover} alt="Capa do Álbum" className="object-cover w-full h-full transition-transform duration-700 group-hover:scale-105" />
-              ) : (
-                <div className="w-full h-full flex flex-col items-center justify-center gap-3" style={{ color: "rgba(13,4,70,0.2)" }}>
-                  <Music size={48} />
-                  <span className="italic text-sm">{music ? "Nenhuma capa encontrada" : "Aguardando leitura..."}</span>
-                </div>
-              )}
-            </div>
-
-            {/* Title & Artist */}
-            <div className="space-y-1.5 text-center mb-5">
-              <h1 className="text-xl font-bold tracking-tight truncate px-2" style={{ color: "#0d0446" }}>{displayTitulo}</h1>
-              <p className="font-semibold flex items-center justify-center gap-1.5 text-sm" style={{ color: "#268ffa" }}>
-                <User size={16} />
-                {displayArtista}
-              </p>
-            </div>
-
-            {/* Progress Bar */}
-            {music && music.duracao > 0 && (
-              <div className="mb-5">
-                <div className="w-full h-2 rounded-full overflow-hidden" style={{ backgroundColor: "rgba(13,4,70,0.06)" }}>
-                  <div className="h-full rounded-full transition-all duration-300" style={{ width: `${progress}%`, background: "linear-gradient(90deg, #268ffa, #2dbef3)" }} />
-                </div>
-                <div className="flex justify-between text-[10px] font-mono mt-1.5" style={{ color: "rgba(13,4,70,0.35)" }}>
-                  <span>{formatTime(elapsed)}</span>
-                  <span>{formatTime(music.duracao)}</span>
-                </div>
-              </div>
-            )}
-
-            {/* XML Link */}
+            {/* XML Output Link */}
             {music && (
               <XmlLinkRow label="XML MUSICA AGORA" xmlContent={`<?xml version="1.0" encoding="UTF-8"?>\n<musica_agora>\n  <titulo>${music.titulo}</titulo>\n  <interprete>${music.artista}</interprete>\n  <capa>${music.capa || ""}</capa>\n</musica_agora>`} dark />
             )}
 
+            {/* XML Structure */}
+            <div className="rounded-xl px-3 py-2" style={{ backgroundColor: "rgba(13,4,70,0.02)", border: "1px solid rgba(13,4,70,0.06)" }}>
+              <p className="text-[9px] mb-1 font-bold uppercase tracking-wider" style={{ color: "rgba(13,4,70,0.35)" }}>Estrutura esperada</p>
+              <pre className="text-[9px] font-mono leading-relaxed" style={{ color: "rgba(13,4,70,0.3)" }}>{`<musica>\n  <nome_musica>...</nome_musica>\n  <nome_interprete>...</nome_interprete>\n  <duracao>03:45</duracao>\n  <capa>https://...</capa>\n</musica>`}</pre>
+            </div>
+
             {/* Upload History */}
             {uploadHistory.length > 0 && (
-              <div className="mt-5">
-                <p className="text-[10px] mb-2 font-semibold uppercase tracking-wider flex items-center gap-1.5" style={{ color: "rgba(13,4,70,0.4)" }}>
-                  <Clock size={11} />
-                  Histórico de uploads (últimos 10)
+              <div>
+                <p className="text-[9px] mb-1.5 font-semibold uppercase tracking-wider flex items-center gap-1.5" style={{ color: "rgba(13,4,70,0.4)" }}>
+                  <Clock size={10} />
+                  Histórico (últimos 10)
                 </p>
                 <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(13,4,70,0.06)" }}>
-                  <table className="w-full text-[10px]">
+                  <table className="w-full text-[9px]">
                     <thead>
                       <tr style={{ backgroundColor: "rgba(13,4,70,0.03)" }}>
-                        <th className="text-left px-3 py-1.5 font-bold uppercase tracking-wider" style={{ color: "rgba(13,4,70,0.4)" }}>Origem</th>
-                        <th className="text-left px-3 py-1.5 font-bold uppercase tracking-wider" style={{ color: "rgba(13,4,70,0.4)" }}>Data</th>
-                        <th className="text-left px-3 py-1.5 font-bold uppercase tracking-wider" style={{ color: "rgba(13,4,70,0.4)" }}>Horário</th>
+                        <th className="text-left px-2 py-1 font-bold uppercase" style={{ color: "rgba(13,4,70,0.4)" }}>Origem</th>
+                        <th className="text-left px-2 py-1 font-bold uppercase" style={{ color: "rgba(13,4,70,0.4)" }}>Data</th>
+                        <th className="text-left px-2 py-1 font-bold uppercase" style={{ color: "rgba(13,4,70,0.4)" }}>Hora</th>
                       </tr>
                     </thead>
                     <tbody>
                       {uploadHistory.map((entry, i) => (
                         <tr key={i} style={{ borderTop: i > 0 ? "1px solid rgba(13,4,70,0.04)" : undefined }}>
-                          <td className="px-3 py-1.5 font-semibold" style={{ color: entry.source === "pasta" ? "#22c55e" : "#268ffa" }}>
+                          <td className="px-2 py-1 font-semibold" style={{ color: entry.source === "pasta" ? "#22c55e" : "#268ffa" }}>
                             <span className="inline-flex items-center gap-1">
-                              {entry.source === "pasta" ? <FolderOpen size={10} /> : <Globe size={10} />}
+                              {entry.source === "pasta" ? <FolderOpen size={9} /> : <Globe size={9} />}
                               {entry.source === "pasta" ? "Pasta" : "Online"}
                             </span>
                           </td>
-                          <td className="px-3 py-1.5 font-mono" style={{ color: "rgba(13,4,70,0.5)" }}>{entry.date}</td>
-                          <td className="px-3 py-1.5 font-mono" style={{ color: "rgba(13,4,70,0.5)" }}>{entry.time}</td>
+                          <td className="px-2 py-1 font-mono" style={{ color: "rgba(13,4,70,0.5)" }}>{entry.date}</td>
+                          <td className="px-2 py-1 font-mono" style={{ color: "rgba(13,4,70,0.5)" }}>{entry.time}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -567,18 +526,89 @@ export default function MusicaNoAr() {
             )}
           </div>
 
-          {/* XML Structure Reference */}
-          <div className="px-6 py-4" style={{ backgroundColor: "rgba(13,4,70,0.02)", borderTop: "1px solid rgba(13,4,70,0.06)" }}>
-            <p className="text-[10px] mb-1.5 font-bold uppercase tracking-wider" style={{ color: "rgba(13,4,70,0.35)" }}>Estrutura esperada do XML</p>
-            <pre className="text-[10px] font-mono leading-relaxed" style={{ color: "rgba(13,4,70,0.3)" }}>{`<musica>\n  <nome_musica>Nome da Música</nome_musica>\n  <nome_interprete>Artista</nome_interprete>\n  <duracao>03:45</duracao>\n  <capa>https://url.jpg</capa>\n</musica>`}</pre>
-          </div>
-        </div>
+          {/* CENTER COLUMN — Title/Artist + Cover */}
+          <div className="flex flex-col items-center">
+            {/* Title & Artist above cover */}
+            <div className="text-center mb-4 w-full">
+              <h1 className="text-2xl font-black tracking-tight truncate" style={{ color: "#0d0446" }}>{displayTitulo}</h1>
+              <p className="font-semibold flex items-center justify-center gap-1.5 text-sm mt-1" style={{ color: "#268ffa" }}>
+                <User size={16} />
+                {displayArtista}
+              </p>
+            </div>
 
-        {/* Monitoring indicator */}
-        <div className="mt-4 flex justify-center">
-          <span className="inline-flex items-center gap-2 px-3 py-1 text-[9px] uppercase tracking-widest font-semibold" style={{ color: "rgba(13,4,70,0.35)" }}>
-            {sourceMode === "online" ? "Monitorando XML online a cada 2 segundos" : "Monitorando arquivo local a cada 2 segundos"}
-          </span>
+            {/* Cover Art */}
+            <div className="relative w-full max-w-sm aspect-square overflow-hidden rounded-2xl group" style={{ backgroundColor: "rgba(13,4,70,0.03)", boxShadow: "0 8px 30px rgba(13,4,70,0.15)" }}>
+              {loadingCover && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/40 z-10 backdrop-blur-sm rounded-2xl">
+                  <Loader2 className="animate-spin" size={48} style={{ color: "#268ffa" }} />
+                </div>
+              )}
+              {displayCover ? (
+                <img src={displayCover} alt="Capa do Álbum" className="object-cover w-full h-full transition-transform duration-700 group-hover:scale-105" />
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center gap-3" style={{ color: "rgba(13,4,70,0.2)" }}>
+                  <Music size={56} />
+                  <span className="italic text-sm">{music ? "Nenhuma capa encontrada" : "Aguardando leitura..."}</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* RIGHT COLUMN — Duration & Progress */}
+          <div className="rounded-2xl p-4 flex flex-col items-center justify-center gap-4" style={{ backgroundColor: "#ffffff", boxShadow: "0 4px 20px rgba(13,4,70,0.08)" }}>
+            <div className="text-center">
+              <p className="text-[10px] font-semibold uppercase tracking-wider mb-2" style={{ color: "rgba(13,4,70,0.4)" }}>Duração</p>
+              <span className="text-3xl font-black font-mono" style={{ color: "#0d0446" }}>
+                {music && music.duracao > 0 ? formatTime(music.duracao) : "--:--"}
+              </span>
+            </div>
+
+            {music && music.duracao > 0 && (
+              <>
+                {/* Circular-ish progress display */}
+                <div className="relative w-28 h-28 flex items-center justify-center">
+                  <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
+                    <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(13,4,70,0.06)" strokeWidth="8" />
+                    <circle
+                      cx="50" cy="50" r="42" fill="none"
+                      stroke="url(#progressGrad)"
+                      strokeWidth="8"
+                      strokeLinecap="round"
+                      strokeDasharray={`${2 * Math.PI * 42}`}
+                      strokeDashoffset={`${2 * Math.PI * 42 * (1 - progress / 100)}`}
+                      className="transition-all duration-300"
+                    />
+                    <defs>
+                      <linearGradient id="progressGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stopColor="#268ffa" />
+                        <stop offset="100%" stopColor="#2dbef3" />
+                      </linearGradient>
+                    </defs>
+                  </svg>
+                  <span className="absolute text-lg font-black font-mono" style={{ color: "#0d0446" }}>
+                    {formatTime(elapsed)}
+                  </span>
+                </div>
+
+                {/* Linear progress bar */}
+                <div className="w-full">
+                  <div className="w-full h-2 rounded-full overflow-hidden" style={{ backgroundColor: "rgba(13,4,70,0.06)" }}>
+                    <div className="h-full rounded-full transition-all duration-300" style={{ width: `${progress}%`, background: "linear-gradient(90deg, #268ffa, #2dbef3)" }} />
+                  </div>
+                  <div className="flex justify-between text-[9px] font-mono mt-1" style={{ color: "rgba(13,4,70,0.35)" }}>
+                    <span>{formatTime(elapsed)}</span>
+                    <span>{formatTime(music.duracao)}</span>
+                  </div>
+                </div>
+              </>
+            )}
+
+            <p className="text-[9px] uppercase tracking-widest font-semibold" style={{ color: "rgba(13,4,70,0.3)" }}>
+              {sourceMode === "online" ? "Monitorando online" : "Monitorando local"}
+            </p>
+          </div>
+
         </div>
       </div>
     </div>
