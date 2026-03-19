@@ -979,7 +979,7 @@ export default function PlayerPage() {
     fetchAndSync(); // immediate first fetch
     const interval = setInterval(fetchAndSync, 2000);
     return () => { cancelled = true; clearInterval(interval); };
-  }, [user]);
+  }, [effectiveUserId]);
 
   // Play stream
   const playStream = useCallback(
