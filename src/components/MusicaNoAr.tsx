@@ -18,6 +18,7 @@ interface UploadLogEntry {
   source: "pasta" | "online";
   date: string;
   time: string;
+  deviceName?: string;
 }
 
 const MUSIC_DATA_KEY = "masterview_music_data";
