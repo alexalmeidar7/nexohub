@@ -494,51 +494,57 @@ export default function MusicaNoAr() {
           </div>
 
           {/* RIGHT — Cover + Song Info + Progress */}
-          <div className="rounded-2xl p-4 flex gap-4" style={{ backgroundColor: "#ffffff", boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}>
-            {/* Cover */}
-            <div className="relative w-40 h-40 shrink-0 overflow-hidden rounded-xl group" style={{ backgroundColor: "rgba(13,4,70,0.03)", boxShadow: "0 4px 16px rgba(13,4,70,0.12)" }}>
-              {loadingCover && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/40 z-10 backdrop-blur-sm rounded-xl">
-                  <Loader2 className="animate-spin" size={28} style={{ color: "#268ffa" }} />
-                </div>
-              )}
-              {displayCover ? (
-                <img src={displayCover} alt="Capa" className="object-cover w-full h-full transition-transform duration-700 group-hover:scale-105" />
-              ) : (
-                <div className="w-full h-full flex flex-col items-center justify-center gap-2" style={{ color: "rgba(13,4,70,0.2)" }}>
-                  <Music size={32} />
-                  <span className="italic text-[10px]">{music ? "Sem capa" : "Aguardando..."}</span>
-                </div>
-              )}
-            </div>
-
-            {/* Song Info + Progress */}
-            <div className="flex-1 flex flex-col justify-between min-w-0">
-              <div>
-                <h1 className="text-lg font-black tracking-tight truncate" style={{ color: "#0d0446" }}>{displayTitulo}</h1>
-                <p className="font-semibold flex items-center gap-1.5 text-xs mt-0.5" style={{ color: "#268ffa" }}>
-                  <User size={13} />
-                  {displayArtista}
-                </p>
+          <div className="rounded-2xl p-4 flex flex-col gap-4" style={{ backgroundColor: "#ffffff", boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}>
+            {/* Animated container — re-mounts on song change */}
+            <div
+              key={`${displayTitulo}-${displayArtista}`}
+              className="flex gap-5 animate-fade-in"
+            >
+              {/* Cover — larger */}
+              <div className="relative w-56 h-56 shrink-0 overflow-hidden rounded-2xl group" style={{ backgroundColor: "rgba(13,4,70,0.03)", boxShadow: "0 8px 24px rgba(13,4,70,0.15)" }}>
+                {loadingCover && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/40 z-10 backdrop-blur-sm rounded-2xl">
+                    <Loader2 className="animate-spin" size={36} style={{ color: "#268ffa" }} />
+                  </div>
+                )}
+                {displayCover ? (
+                  <img src={displayCover} alt="Capa" className="object-cover w-full h-full transition-transform duration-700 group-hover:scale-105" />
+                ) : (
+                  <div className="w-full h-full flex flex-col items-center justify-center gap-2" style={{ color: "rgba(13,4,70,0.2)" }}>
+                    <Music size={40} />
+                    <span className="italic text-xs">{music ? "Sem capa" : "Aguardando..."}</span>
+                  </div>
+                )}
               </div>
 
-              {music && music.duracao > 0 && (
-                <div className="mt-3">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-mono font-bold shrink-0" style={{ color: "#0d0446" }}>{formatTime(elapsed)}</span>
-                    <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ backgroundColor: "rgba(13,4,70,0.06)" }}>
-                      <div className="h-full rounded-full transition-all duration-300" style={{ width: `${progress}%`, background: "linear-gradient(90deg, #268ffa, #2dbef3)" }} />
-                    </div>
-                    <span className="text-[10px] font-mono font-bold shrink-0" style={{ color: "rgba(13,4,70,0.4)" }}>{formatTime(music.duracao)}</span>
-                  </div>
+              {/* Song Info + Progress */}
+              <div className="flex-1 flex flex-col justify-between min-w-0">
+                <div>
+                  <h1 className="text-xl font-black tracking-tight truncate" style={{ color: "#0d0446" }}>{displayTitulo}</h1>
+                  <p className="font-semibold flex items-center gap-1.5 text-sm mt-1" style={{ color: "#268ffa" }}>
+                    <User size={14} />
+                    {displayArtista}
+                  </p>
                 </div>
-              )}
 
-              {music && (
-                <div className="mt-2">
-                  <XmlLinkRow label="XML MUSICA AGORA" xmlContent={`<?xml version="1.0" encoding="UTF-8"?>\n<musica_agora>\n  <titulo>${music.titulo}</titulo>\n  <interprete>${music.artista}</interprete>\n  <capa>${music.capa || ""}</capa>\n</musica_agora>`} dark />
-                </div>
-              )}
+                {music && music.duracao > 0 && (
+                  <div className="mt-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] font-mono font-bold shrink-0" style={{ color: "#0d0446" }}>{formatTime(elapsed)}</span>
+                      <div className="flex-1 h-2.5 rounded-full overflow-hidden" style={{ backgroundColor: "rgba(13,4,70,0.06)" }}>
+                        <div className="h-full rounded-full transition-all duration-300" style={{ width: `${progress}%`, background: "linear-gradient(90deg, #268ffa, #2dbef3)" }} />
+                      </div>
+                      <span className="text-[11px] font-mono font-bold shrink-0" style={{ color: "rgba(13,4,70,0.4)" }}>{formatTime(music.duracao)}</span>
+                    </div>
+                  </div>
+                )}
+
+                {music && (
+                  <div className="mt-3">
+                    <XmlLinkRow label="XML MUSICA AGORA" xmlContent={`<?xml version="1.0" encoding="UTF-8"?>\n<musica_agora>\n  <titulo>${music.titulo}</titulo>\n  <interprete>${music.artista}</interprete>\n  <capa>${music.capa || ""}</capa>\n</musica_agora>`} dark />
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
