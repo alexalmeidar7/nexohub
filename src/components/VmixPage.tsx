@@ -2535,6 +2535,26 @@ export default function VmixPage() {
           />
         );
       })()}
+      {/* Custom Button Editor */}
+      {editingCustomButtonId !== null && user && (
+        <CustomVmixButtonEditor
+          open={true}
+          onClose={() => setEditingCustomButtonId(null)}
+          buttonId={editingCustomButtonId === "new" ? null : editingCustomButtonId}
+          userId={user.id}
+          inputs={inputs}
+          onRunCommands={async (cmds) => {
+            for (const cmd of cmds) {
+              let value = cmd.value;
+              if (cmd.extraValue) value = value ? `${value},${cmd.extraValue}` : cmd.extraValue;
+              await sendCommand(cmd.fn, cmd.input, value);
+              await new Promise(r => setTimeout(r, 400));
+            }
+            toast({ title: "Teste concluído", description: `${cmds.length} ação(ões) executada(s).` });
+          }}
+          onSaved={loadCustomButtons}
+        />
+      )}
     </div>
   );
 }
