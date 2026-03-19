@@ -954,7 +954,7 @@ function useGlobalMusicXmlUpload() {
     // Delay first sync to not compete with initial page load
     const startTimer = setTimeout(uploadMusicXml, 3000);
     const interval = setInterval(uploadMusicXml, 15000);
-    return () => clearInterval(interval);
+    return () => { clearTimeout(startTimer); clearInterval(interval); };
   }, [user]);
 }
 
