@@ -366,16 +366,48 @@ export default function MusicaNoAr() {
     return () => { if (fetchIntervalRef.current) clearInterval(fetchIntervalRef.current); };
   }, [fetchXml, sourceMode]);
 
-  // Local file re-read using FileSystemFileHandle for fresh content
+  // Background sync: upload to storage + log history (non-blocking)
+  const syncingRef = useRef(false);
+  const pendingSyncRef = useRef<string | null>(null);
+
+  const syncToStorage = useCallback(async (text: string) => {
+    if (!user) return;
+    // If already syncing, queue latest
+    if (syncingRef.current) {
+      pendingSyncRef.current = text;
+      return;
+    }
+    syncingRef.current = true;
+    try {
+      const utf8Blob = new Blob([new TextEncoder().encode(text)], { type: "application/xml" });
+      const filePath = `local-xml-${user.id}.xml`;
+      await supabase.storage.from("xml-files").upload(filePath, utf8Blob, { upsert: true, contentType: "application/xml" });
+      const { data: urlData } = supabase.storage.from("xml-files").getPublicUrl(filePath);
+      if (urlData?.publicUrl) {
+        await supabase.from("user_settings").upsert({
+          user_id: user.id,
+          music_xml_url: urlData.publicUrl,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: "user_id" });
+        setXmlUrl(urlData.publicUrl);
+      }
+      setUploadHistory(await addUploadLogToDb(user.id, "pasta", currentDeviceName));
+    } catch { }
+    syncingRef.current = false;
+    // Process queued sync if any
+    const queued = pendingSyncRef.current;
+    pendingSyncRef.current = null;
+    if (queued) syncToStorage(queued);
+  }, [user, currentDeviceName]);
+
+  // Fast local file re-read — updates UI instantly, syncs in background
   const readLocalFile = useCallback(async () => {
     let file: File | null = null;
 
-    // Prefer FileSystemFileHandle (gives fresh content on each read)
     if (fileHandleRef.current) {
       try {
         file = await fileHandleRef.current.getFile();
       } catch {
-        // Permission lost or file deleted
         return;
       }
     } else {
@@ -385,40 +417,26 @@ export default function MusicaNoAr() {
 
     try {
       const text = await readFileWithEncoding(file);
-      // Use ref for comparison to avoid stale closure
       if (text === localFileContentRef.current) return;
       localFileContentRef.current = text;
       setLocalFileContent(text);
-      // Re-encode as UTF-8 for storage
-      const utf8Blob = new Blob([new TextEncoder().encode(text)], { type: "application/xml" });
-      if (user) {
-        const filePath = `local-xml-${user.id}.xml`;
-        await supabase.storage.from("xml-files").upload(filePath, utf8Blob, { upsert: true, contentType: "application/xml" });
-        const { data: urlData } = supabase.storage.from("xml-files").getPublicUrl(filePath);
-        if (urlData?.publicUrl) {
-          await supabase.from("user_settings").upsert({
-            user_id: user.id,
-            music_xml_url: urlData.publicUrl,
-            updated_at: new Date().toISOString(),
-          }, { onConflict: "user_id" });
-          setXmlUrl(urlData.publicUrl);
-        }
-        // Log each local reload to history
-        setUploadHistory(await addUploadLogToDb(user.id, "pasta", currentDeviceName));
-      }
+
+      // Fast path: parse and update UI immediately
       const parsed = parseXmlString(text);
       if (parsed) {
         await processMusic(parsed);
       }
+
+      // Slow path: sync to storage in background (non-blocking)
+      syncToStorage(text);
     } catch { }
-  }, [processMusic, user, currentDeviceName]);
+  }, [processMusic, syncToStorage]);
 
   // Handle file select: use showOpenFilePicker for live re-reads, fallback to input
   const handleFileSelect = async (e?: React.ChangeEvent<HTMLInputElement>) => {
     let file: File | null = null;
     let handle: FileSystemFileHandle | null = null;
 
-    // Try File System Access API first (allows re-reading updated content)
     if ('showOpenFilePicker' in window && !e) {
       try {
         const [h] = await (window as any).showOpenFilePicker({
@@ -428,7 +446,6 @@ export default function MusicaNoAr() {
         handle = h;
         file = await h.getFile();
       } catch {
-        // User cancelled
         return;
       }
     } else if (e) {
@@ -450,22 +467,8 @@ export default function MusicaNoAr() {
       await processMusic(parsed);
     }
 
-    // Immediately upload to storage and start monitoring
-    if (user) {
-      const utf8Blob = new Blob([new TextEncoder().encode(text)], { type: "application/xml" });
-      const filePath = `local-xml-${user.id}.xml`;
-      await supabase.storage.from("xml-files").upload(filePath, utf8Blob, { upsert: true, contentType: "application/xml" });
-      const { data: urlData } = supabase.storage.from("xml-files").getPublicUrl(filePath);
-      if (urlData?.publicUrl) {
-        await supabase.from("user_settings").upsert({
-          user_id: user.id,
-          music_xml_url: urlData.publicUrl,
-          updated_at: new Date().toISOString(),
-        }, { onConflict: "user_id" });
-        setXmlUrl(urlData.publicUrl);
-      }
-      setUploadHistory(await addUploadLogToDb(user.id, "pasta", currentDeviceName));
-    }
+    // Sync initial file in background
+    syncToStorage(text);
     setLocalMonitoring(true);
   };
 
@@ -475,7 +478,7 @@ export default function MusicaNoAr() {
       if (localPollRef.current) clearInterval(localPollRef.current);
       return;
     }
-    if (!localFileRef.current) return;
+    if (!localFileRef.current && !fileHandleRef.current) return;
     localPollRef.current = setInterval(readLocalFile, 1000);
     return () => { if (localPollRef.current) clearInterval(localPollRef.current); };
   }, [sourceMode, localMonitoring, readLocalFile]);
