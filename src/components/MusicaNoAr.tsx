@@ -175,6 +175,7 @@ export default function MusicaNoAr() {
   const localPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [uploadHistory, setUploadHistory] = useState<UploadLogEntry[]>([]);
   const [localFileName, setLocalFileName] = useState<string>("");
+  const [localSaved, setLocalSaved] = useState(false);
 
   // Prompt to switch from local to online
   const [showSwitchPrompt, setShowSwitchPrompt] = useState(false);
