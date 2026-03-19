@@ -2237,6 +2237,82 @@ export default function VmixPage() {
                     )}
                 </div>
               </div>
+
+              {/* ── Botões Feito (Custom Buttons) ── */}
+              <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a1f", border: "1px solid #ffffff08" }}>
+                <div className="flex items-center gap-2 px-4 py-2.5" style={{ backgroundColor: "#ffffff06", borderBottom: "1px solid #ffffff08" }}>
+                  <Wand2 size={14} style={{ color: "#f59e0b" }} />
+                  <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#f59e0b" }}>Feito</span>
+                  <span className="text-[9px] ml-auto" style={{ color: "#555" }}>{customButtons.length} botão(ões)</span>
+                </div>
+                <div className="p-4">
+                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">
+                    {customButtons.map((btn: any) => {
+                      const isBtnActive = activeCustomButton === btn.id;
+                      const hasSchedule = btn.horario && btn.dias_semana?.length > 0;
+                      return (
+                        <div
+                          key={btn.id}
+                          className="group/custom relative rounded-lg overflow-hidden cursor-pointer transition-all duration-200 hover:scale-[1.03]"
+                          style={{
+                            aspectRatio: "3/2",
+                            backgroundColor: isBtnActive ? "#f59e0b" : "#2a2a30",
+                            border: isBtnActive ? "2px solid #f59e0b" : "2px solid #333338",
+                          }}
+                          onClick={async () => {
+                            setActiveCustomButton(btn.id);
+                            if (btn.commands && Array.isArray(btn.commands) && btn.commands.length > 0) {
+                              for (const cmd of btn.commands) {
+                                let cmdVal = cmd.value;
+                                if (cmd.extraValue) cmdVal = cmdVal ? `${cmdVal},${cmd.extraValue}` : cmd.extraValue;
+                                await sendCommand(cmd.fn, cmd.input, cmdVal);
+                                await new Promise(r => setTimeout(r, 400));
+                              }
+                              toast({ title: `Feito: ${btn.nome}`, description: `${btn.commands.length} ação(ões) executada(s).` });
+                            }
+                          }}
+                        >
+                          {hasSchedule && (
+                            <div className="absolute top-1.5 left-1.5 flex items-center gap-0.5 px-1.5 py-0.5 rounded" style={{ backgroundColor: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)", zIndex: 2 }}>
+                              <Clock size={8} style={{ color: "#f59e0b" }} />
+                              <span className="text-[7px] font-bold tabular-nums" style={{ color: "#f59e0b" }}>{btn.horario?.slice(0, 5)}</span>
+                            </div>
+                          )}
+                          {btn.dias_semana && btn.dias_semana.length > 0 && (
+                            <div className="absolute bottom-1.5 left-1.5 flex items-center gap-[2px] z-[1]">
+                              {["dom","seg","ter","qua","qui","sex","sáb"].map((d: string, i: number) => {
+                                const dayOn = (btn.dias_semana as string[]).some((ds: string) => ds.toLowerCase().replace(/[-.,]/g, "").trim().slice(0, 3) === d);
+                                return (
+                                  <span key={i} className="text-[5px] font-bold uppercase leading-none px-[2px] py-[1px] rounded-sm"
+                                    style={{ backgroundColor: dayOn ? "rgba(245,158,11,0.25)" : "transparent", color: dayOn ? "#f59e0b" : "#555" }}
+                                  >{d[0].toUpperCase()}</span>
+                                );
+                              })}
+                            </div>
+                          )}
+                          <div className="absolute inset-0 flex items-center justify-center p-2 pt-5 pb-4">
+                            <span className="text-[10px] font-black uppercase tracking-wider text-center leading-tight" style={{ color: isBtnActive ? "#000" : "#ccc" }}>{btn.nome}</span>
+                          </div>
+                          <div className="absolute bottom-0 left-0 right-0 flex items-center justify-center gap-1 py-1.5 opacity-0 group-hover/custom:opacity-100 transition-all duration-200 translate-y-full group-hover/custom:translate-y-0" style={{ backgroundColor: "rgba(0,0,0,0.75)", backdropFilter: "blur(4px)" }}>
+                            <button onClick={(e) => { e.stopPropagation(); setEditingCustomButtonId(btn.id); }} className="w-5 h-5 rounded flex items-center justify-center hover:bg-white/20 transition-colors" style={{ color: "#ccc" }} title="Editar"><Wand2 size={10} /></button>
+                            <button onClick={async (e) => { e.stopPropagation(); await (supabase.from("custom_vmix_buttons" as any) as any).delete().eq("id", btn.id); loadCustomButtons(); toast({ title: "Botão excluído" }); }} className="w-5 h-5 rounded flex items-center justify-center hover:bg-red-500/40 transition-colors" style={{ color: "#f87171" }} title="Excluir"><Trash2 size={10} /></button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                    <div
+                      className="relative rounded-lg overflow-hidden cursor-pointer transition-all duration-200 hover:scale-[1.03] flex items-center justify-center"
+                      style={{ aspectRatio: "3/2", backgroundColor: "#1e1e26", border: "2px dashed #333338" }}
+                      onClick={() => setEditingCustomButtonId("new")}
+                    >
+                      <div className="flex flex-col items-center gap-1">
+                        <Plus size={16} style={{ color: "#f59e0b" }} />
+                        <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: "#f59e0b" }}>+ Criar</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </>
           );
         })()}
