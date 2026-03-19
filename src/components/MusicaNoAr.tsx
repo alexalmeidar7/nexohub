@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Music, User, Loader2, Pencil, Check } from "lucide-react";
+import { Music, User, Loader2, Pencil, Check, Globe, FolderOpen, Clock, Upload } from "lucide-react";
 import XmlLinkRow from "./XmlLinkRow";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -14,10 +14,16 @@ interface MusicData {
   capa: string;
 }
 
+interface UploadLogEntry {
+  source: "pasta" | "online";
+  date: string;
+  time: string;
+}
+
 const MUSIC_DATA_KEY = "masterview_music_data";
 const MUSIC_START_KEY = "masterview_music_start";
+const UPLOAD_HISTORY_KEY = "masterview_xml_upload_history";
 const DEFAULT_XML_URL = "https://positivafm.com.br/storage/pulsar/positivafm.xml";
-
 
 function parseXmlString(xmlStr: string): MusicData | null {
   try {
@@ -82,6 +88,26 @@ async function fetchCoverFromiTunes(titulo: string, artista: string): Promise<st
   return "";
 }
 
+function getUploadHistory(): UploadLogEntry[] {
+  try {
+    const raw = localStorage.getItem(UPLOAD_HISTORY_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch { return []; }
+}
+
+function addUploadLog(source: "pasta" | "online") {
+  const now = new Date();
+  const entry: UploadLogEntry = {
+    source,
+    date: now.toLocaleDateString("pt-BR"),
+    time: now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
+  };
+  const history = getUploadHistory();
+  history.unshift(entry);
+  localStorage.setItem(UPLOAD_HISTORY_KEY, JSON.stringify(history.slice(0, 10)));
+  return history.slice(0, 10);
+}
+
 export function getMusicData(): { music: MusicData; elapsed: number; finished: boolean } | null {
   try {
     const raw = localStorage.getItem(MUSIC_DATA_KEY);
@@ -109,6 +135,15 @@ export default function MusicaNoAr() {
   const coverCacheRef = useRef<Record<string, string>>({});
   const [loadingCover, setLoadingCover] = useState(false);
   const [presenterFallback, setPresenterFallback] = useState<{ nome: string; foto: string } | null>(null);
+
+  // New state for dual source mode
+  const [sourceMode, setSourceMode] = useState<"online" | "pasta">("online");
+  const [localFileContent, setLocalFileContent] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const localFileRef = useRef<File | null>(null);
+  const localPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [uploadHistory, setUploadHistory] = useState<UploadLogEntry[]>(getUploadHistory());
+  const [localFileName, setLocalFileName] = useState<string>("");
 
   // Load URL from DB
   useEffect(() => {
@@ -206,25 +241,72 @@ export default function MusicaNoAr() {
     }
   }, []);
 
+  // Online fetch
   const fetchXml = useCallback(async () => {
-    if (!xmlUrl.trim()) return;
+    if (sourceMode !== "online" || !xmlUrl.trim()) return;
     try {
       const { data, error } = await supabase.functions.invoke("fetch-rss", {
         body: { url: xmlUrl.trim() },
       });
-
       if (error || !data?.content) return;
-
       const parsed = parseXmlString(data.content);
-      if (parsed) await processMusic(parsed);
+      if (parsed) {
+        await processMusic(parsed);
+        setUploadHistory(addUploadLog("online"));
+      }
     } catch { }
-  }, [xmlUrl, processMusic]);
+  }, [xmlUrl, processMusic, sourceMode]);
 
   useEffect(() => {
+    if (sourceMode !== "online") {
+      if (fetchIntervalRef.current) clearInterval(fetchIntervalRef.current);
+      return;
+    }
     fetchXml();
     fetchIntervalRef.current = setInterval(fetchXml, 2000);
     return () => { if (fetchIntervalRef.current) clearInterval(fetchIntervalRef.current); };
-  }, [fetchXml]);
+  }, [fetchXml, sourceMode]);
+
+  // Local file polling - re-read file every 2s
+  const readLocalFile = useCallback(async () => {
+    const file = localFileRef.current;
+    if (!file) return;
+    try {
+      const text = await file.text();
+      if (text === localFileContent) return; // no change
+      setLocalFileContent(text);
+      const parsed = parseXmlString(text);
+      if (parsed) {
+        await processMusic(parsed);
+        setUploadHistory(addUploadLog("pasta"));
+      }
+    } catch { }
+  }, [processMusic, localFileContent]);
+
+  useEffect(() => {
+    if (sourceMode !== "pasta") {
+      if (localPollRef.current) clearInterval(localPollRef.current);
+      return;
+    }
+    if (!localFileRef.current) return;
+    readLocalFile();
+    localPollRef.current = setInterval(readLocalFile, 2000);
+    return () => { if (localPollRef.current) clearInterval(localPollRef.current); };
+  }, [sourceMode, readLocalFile]);
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    localFileRef.current = file;
+    setLocalFileName(file.name);
+    const text = await file.text();
+    setLocalFileContent(text);
+    const parsed = parseXmlString(text);
+    if (parsed) {
+      await processMusic(parsed);
+      setUploadHistory(addUploadLog("pasta"));
+    }
+  };
 
   useEffect(() => {
     if (!music || !startTime) return;
@@ -311,43 +393,110 @@ export default function MusicaNoAr() {
         {/* Inner Card */}
         <div className="max-w-md mx-auto rounded-2xl overflow-hidden" style={{ backgroundColor: "#ffffff", boxShadow: "0 4px 20px rgba(13,4,70,0.08)" }}>
           <div className="p-6">
-            {/* XML URL */}
-            <div className="mb-5">
-              <p className="text-[10px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "rgba(13,4,70,0.4)" }}>URL do XML</p>
-              {editingUrl ? (
-                <div className="flex gap-2">
-                  <input
-                    value={tempUrl}
-                    onChange={(e) => setTempUrl(e.target.value)}
-                    className="flex-1 text-xs px-3 py-1.5 outline-none transition-colors"
-                    style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "1px solid rgba(13,4,70,0.15)", color: "#0d0446", borderRadius: "12px" }}
-                    onFocus={e => { e.currentTarget.style.borderColor = "#268ffa"; }}
-                    onBlur={e => { e.currentTarget.style.borderColor = "rgba(13,4,70,0.15)"; }}
-                    placeholder="URL do XML"
-                  />
-                  <button
-                    onClick={() => { saveUrl(tempUrl); setEditingUrl(false); }}
-                    className="w-8 h-8 rounded-lg flex items-center justify-center font-bold transition-all"
-                    style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#ffffff" }}
-                  >
-                    <Check size={14} />
-                  </button>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <p className="text-[11px] truncate px-3 py-1.5 flex-1 rounded-lg" style={{ backgroundColor: "rgba(13,4,70,0.03)", color: "rgba(13,4,70,0.6)", border: "1px solid rgba(13,4,70,0.06)" }}>{xmlUrl}</p>
-                  <button
-                    onClick={() => { setTempUrl(xmlUrl); setEditingUrl(true); }}
-                    className="w-7 h-7 rounded-lg flex items-center justify-center transition-all"
-                    style={{ backgroundColor: "rgba(13,4,70,0.04)" }}
-                    onMouseEnter={e => { e.currentTarget.style.backgroundColor = "rgba(38,143,250,0.1)"; }}
-                    onMouseLeave={e => { e.currentTarget.style.backgroundColor = "rgba(13,4,70,0.04)"; }}
-                  >
-                    <Pencil size={12} style={{ color: "#268ffa" }} />
-                  </button>
-                </div>
-              )}
+            {/* Source Mode Tabs */}
+            <div className="mb-4">
+              <p className="text-[10px] mb-2 font-semibold uppercase tracking-wider" style={{ color: "rgba(13,4,70,0.4)" }}>Origem do XML</p>
+              <div className="flex gap-1 rounded-xl p-1" style={{ backgroundColor: "rgba(13,4,70,0.04)" }}>
+                <button
+                  onClick={() => setSourceMode("online")}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-[11px] font-bold transition-all"
+                  style={sourceMode === "online"
+                    ? { background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#fff", boxShadow: "0 2px 8px rgba(38,143,250,0.3)" }
+                    : { color: "rgba(13,4,70,0.4)" }
+                  }
+                >
+                  <Globe size={13} />
+                  Online (URL)
+                </button>
+                <button
+                  onClick={() => setSourceMode("pasta")}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-[11px] font-bold transition-all"
+                  style={sourceMode === "pasta"
+                    ? { background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#fff", boxShadow: "0 2px 8px rgba(38,143,250,0.3)" }
+                    : { color: "rgba(13,4,70,0.4)" }
+                  }
+                >
+                  <FolderOpen size={13} />
+                  Arquivo Local
+                </button>
+              </div>
             </div>
+
+            {/* Option 1: Online URL */}
+            {sourceMode === "online" && (
+              <div className="mb-5">
+                <p className="text-[10px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "rgba(13,4,70,0.4)" }}>URL do XML</p>
+                {editingUrl ? (
+                  <div className="flex gap-2">
+                    <input
+                      value={tempUrl}
+                      onChange={(e) => setTempUrl(e.target.value)}
+                      className="flex-1 text-xs px-3 py-1.5 outline-none transition-colors"
+                      style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "1px solid rgba(13,4,70,0.15)", color: "#0d0446", borderRadius: "12px" }}
+                      onFocus={e => { e.currentTarget.style.borderColor = "#268ffa"; }}
+                      onBlur={e => { e.currentTarget.style.borderColor = "rgba(13,4,70,0.15)"; }}
+                      placeholder="URL do XML"
+                    />
+                    <button
+                      onClick={() => { saveUrl(tempUrl); setEditingUrl(false); }}
+                      className="w-8 h-8 rounded-lg flex items-center justify-center font-bold transition-all"
+                      style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#ffffff" }}
+                    >
+                      <Check size={14} />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <p className="text-[11px] truncate px-3 py-1.5 flex-1 rounded-lg" style={{ backgroundColor: "rgba(13,4,70,0.03)", color: "rgba(13,4,70,0.6)", border: "1px solid rgba(13,4,70,0.06)" }}>{xmlUrl}</p>
+                    <button
+                      onClick={() => { setTempUrl(xmlUrl); setEditingUrl(true); }}
+                      className="w-7 h-7 rounded-lg flex items-center justify-center transition-all"
+                      style={{ backgroundColor: "rgba(13,4,70,0.04)" }}
+                      onMouseEnter={e => { e.currentTarget.style.backgroundColor = "rgba(38,143,250,0.1)"; }}
+                      onMouseLeave={e => { e.currentTarget.style.backgroundColor = "rgba(13,4,70,0.04)"; }}
+                    >
+                      <Pencil size={12} style={{ color: "#268ffa" }} />
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Option 2: Local File */}
+            {sourceMode === "pasta" && (
+              <div className="mb-5">
+                <p className="text-[10px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "rgba(13,4,70,0.4)" }}>Arquivo XML do computador</p>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".xml,application/xml,text/xml"
+                  onChange={handleFileSelect}
+                  className="hidden"
+                />
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-bold transition-all border-2 border-dashed"
+                  style={{ borderColor: localFileName ? "#268ffa" : "rgba(13,4,70,0.15)", color: localFileName ? "#268ffa" : "rgba(13,4,70,0.4)", backgroundColor: localFileName ? "rgba(38,143,250,0.05)" : "rgba(13,4,70,0.02)" }}
+                >
+                  <Upload size={16} />
+                  {localFileName ? localFileName : "Selecionar arquivo .XML"}
+                </button>
+                {localFileName && (
+                  <div className="mt-2 flex items-center gap-2 px-3 py-1.5 rounded-lg" style={{ backgroundColor: "rgba(38,143,250,0.06)" }}>
+                    <span className="relative flex h-2 w-2 shrink-0">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: "#22c55e" }}></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2" style={{ backgroundColor: "#22c55e" }}></span>
+                    </span>
+                    <span className="text-[10px] font-semibold" style={{ color: "rgba(13,4,70,0.5)" }}>
+                      Monitorando alterações no arquivo a cada 2s
+                    </span>
+                  </div>
+                )}
+                <p className="text-[9px] mt-1.5 italic" style={{ color: "rgba(13,4,70,0.3)" }}>
+                  Mantenha esta aba aberta para atualização contínua do XML local.
+                </p>
+              </div>
+            )}
 
             {/* Cover Art */}
             <div className="relative aspect-square mb-6 overflow-hidden rounded-2xl group" style={{ backgroundColor: "rgba(13,4,70,0.03)", boxShadow: "0 4px 20px rgba(13,4,70,0.1)" }}>
@@ -392,6 +541,41 @@ export default function MusicaNoAr() {
             {music && (
               <XmlLinkRow label="XML MUSICA AGORA" xmlContent={`<?xml version="1.0" encoding="UTF-8"?>\n<musica_agora>\n  <titulo>${music.titulo}</titulo>\n  <interprete>${music.artista}</interprete>\n  <capa>${music.capa || ""}</capa>\n</musica_agora>`} dark />
             )}
+
+            {/* Upload History */}
+            {uploadHistory.length > 0 && (
+              <div className="mt-5">
+                <p className="text-[10px] mb-2 font-semibold uppercase tracking-wider flex items-center gap-1.5" style={{ color: "rgba(13,4,70,0.4)" }}>
+                  <Clock size={11} />
+                  Histórico de uploads (últimos 10)
+                </p>
+                <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(13,4,70,0.06)" }}>
+                  <table className="w-full text-[10px]">
+                    <thead>
+                      <tr style={{ backgroundColor: "rgba(13,4,70,0.03)" }}>
+                        <th className="text-left px-3 py-1.5 font-bold uppercase tracking-wider" style={{ color: "rgba(13,4,70,0.4)" }}>Origem</th>
+                        <th className="text-left px-3 py-1.5 font-bold uppercase tracking-wider" style={{ color: "rgba(13,4,70,0.4)" }}>Data</th>
+                        <th className="text-left px-3 py-1.5 font-bold uppercase tracking-wider" style={{ color: "rgba(13,4,70,0.4)" }}>Horário</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {uploadHistory.map((entry, i) => (
+                        <tr key={i} style={{ borderTop: i > 0 ? "1px solid rgba(13,4,70,0.04)" : undefined }}>
+                          <td className="px-3 py-1.5 font-semibold" style={{ color: entry.source === "pasta" ? "#22c55e" : "#268ffa" }}>
+                            <span className="inline-flex items-center gap-1">
+                              {entry.source === "pasta" ? <FolderOpen size={10} /> : <Globe size={10} />}
+                              {entry.source === "pasta" ? "Pasta" : "Online"}
+                            </span>
+                          </td>
+                          <td className="px-3 py-1.5 font-mono" style={{ color: "rgba(13,4,70,0.5)" }}>{entry.date}</td>
+                          <td className="px-3 py-1.5 font-mono" style={{ color: "rgba(13,4,70,0.5)" }}>{entry.time}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* XML Structure Reference */}
@@ -404,7 +588,7 @@ export default function MusicaNoAr() {
         {/* Monitoring indicator */}
         <div className="mt-4 flex justify-center">
           <span className="inline-flex items-center gap-2 px-3 py-1 text-[9px] uppercase tracking-widest font-semibold" style={{ color: "rgba(13,4,70,0.35)" }}>
-            Monitorando XML a cada 2 segundos
+            {sourceMode === "online" ? "Monitorando XML online a cada 2 segundos" : "Monitorando arquivo local a cada 2 segundos"}
           </span>
         </div>
       </div>
