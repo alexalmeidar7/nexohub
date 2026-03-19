@@ -2037,7 +2037,8 @@ export default function VmixPage() {
                 </div>
                 <div className="p-4 space-y-4">
                   {(() => {
-                    const sorted = [...programas].sort((a, b) => {
+                    const hasSavedOrder = (() => { try { return JSON.parse(localStorage.getItem("vmix_preset_order") || "[]").length > 0; } catch { return false; } })();
+                    const ordered = hasSavedOrder ? programas : [...programas].sort((a, b) => {
                       const studioOrder = (s: string | null) => {
                         if (!s) return 2;
                         const l = s.toLowerCase();
@@ -2049,8 +2050,8 @@ export default function VmixPage() {
                       if (diff !== 0) return diff;
                       return (a.horario_inicio || "").localeCompare(b.horario_inicio || "");
                     });
-                    const groups: Record<string, typeof sorted> = {};
-                    for (const p of sorted) {
+                    const groups: Record<string, typeof ordered> = {};
+                    for (const p of ordered) {
                       const key = p.estudio || "Sem Estúdio";
                       if (!groups[key]) groups[key] = [];
                       groups[key].push(p);
@@ -2064,12 +2065,11 @@ export default function VmixPage() {
                           <div className="flex-1 h-px" style={{ backgroundColor: "#ffffff08" }} />
                         </div>
                         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">
-                    {progs.map((prog, idx) => {
+                    {progs.map((prog) => {
                       const isActive = activePreset === prog.id;
                       const progOnAir = isProgramForToday(prog) && isNowInProgram(prog);
                       const startTime = prog.horario_inicio?.slice(0, 5) || "";
                       const endTime = prog.horario_fim?.slice(0, 5) || "";
-                      const globalIdx = programas.findIndex(p => p.id === prog.id);
                       return (
                         <div
                           key={prog.id}
@@ -2078,15 +2078,20 @@ export default function VmixPage() {
                             aspectRatio: "3/2",
                             backgroundColor: isActive ? "#dc2626" : "#2a2a30",
                             border: isActive ? "2px solid #ef4444" : progOnAir ? "2px solid #22c55e" : "2px solid #333338",
-                            opacity: dragPresetIdx === globalIdx ? 0.4 : 1,
+                            opacity: dragPresetIdx !== null && programas[dragPresetIdx]?.id === prog.id ? 0.4 : 1,
                           }}
                           onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; }}
                           onDrop={(e) => {
                             e.preventDefault();
-                            if (dragPresetIdx === null || dragPresetIdx === globalIdx) return;
+                            if (dragPresetIdx === null) return;
+                            const dragId = programas[dragPresetIdx]?.id;
+                            if (!dragId || dragId === prog.id) { setDragPresetIdx(null); return; }
                             const arr = [...programas];
-                            const [moved] = arr.splice(dragPresetIdx, 1);
-                            arr.splice(globalIdx, 0, moved);
+                            const fromIdx = arr.findIndex(p => p.id === dragId);
+                            const toIdx = arr.findIndex(p => p.id === prog.id);
+                            if (fromIdx === -1 || toIdx === -1) { setDragPresetIdx(null); return; }
+                            const [moved] = arr.splice(fromIdx, 1);
+                            arr.splice(toIdx, 0, moved);
                             setProgramas(arr);
                             localStorage.setItem("vmix_preset_order", JSON.stringify(arr.map(p => p.id)));
                             setDragPresetIdx(null);
@@ -2127,7 +2132,7 @@ export default function VmixPage() {
                           {startTime && (
                             <div
                               draggable
-                              onDragStart={(e) => { e.stopPropagation(); setDragPresetIdx(globalIdx); e.dataTransfer.effectAllowed = "move"; }}
+                              onDragStart={(e) => { e.stopPropagation(); const gi = programas.findIndex(p => p.id === prog.id); setDragPresetIdx(gi); e.dataTransfer.effectAllowed = "move"; }}
                               className="absolute top-1.5 left-1.5 flex items-center gap-0.5 px-1.5 py-0.5 rounded cursor-grab active:cursor-grabbing"
                               style={{ backgroundColor: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)", zIndex: 2 }}
                               title="Arraste para reposicionar"
@@ -2175,22 +2180,22 @@ export default function VmixPage() {
                             className="absolute bottom-0 left-0 right-0 flex items-center justify-center gap-1 py-1.5 opacity-0 group-hover/preset:opacity-100 transition-all duration-200 translate-y-full group-hover/preset:translate-y-0"
                             style={{ backgroundColor: "rgba(0,0,0,0.75)", backdropFilter: "blur(4px)" }}
                           >
-                            {idx > 0 && (
+                            {(() => { const gi = programas.findIndex(p => p.id === prog.id); return gi > 0 ? (
                               <button
-                                onClick={(e) => { e.stopPropagation(); const arr = [...programas]; [arr[idx - 1], arr[idx]] = [arr[idx], arr[idx - 1]]; setProgramas(arr); localStorage.setItem("vmix_preset_order", JSON.stringify(arr.map(p => p.id))); }}
+                                onClick={(e) => { e.stopPropagation(); const arr = [...programas]; [arr[gi - 1], arr[gi]] = [arr[gi], arr[gi - 1]]; setProgramas(arr); localStorage.setItem("vmix_preset_order", JSON.stringify(arr.map(p => p.id))); }}
                                 className="w-5 h-5 rounded flex items-center justify-center text-[9px] hover:bg-white/20 transition-colors"
                                 style={{ color: "#ccc" }}
                                 title="Mover para esquerda"
                               >◀</button>
-                            )}
-                            {idx < programas.length - 1 && (
+                            ) : null; })()}
+                            {(() => { const gi = programas.findIndex(p => p.id === prog.id); return gi < programas.length - 1 ? (
                               <button
-                                onClick={(e) => { e.stopPropagation(); const arr = [...programas]; [arr[idx], arr[idx + 1]] = [arr[idx + 1], arr[idx]]; setProgramas(arr); localStorage.setItem("vmix_preset_order", JSON.stringify(arr.map(p => p.id))); }}
+                                onClick={(e) => { e.stopPropagation(); const arr = [...programas]; [arr[gi], arr[gi + 1]] = [arr[gi + 1], arr[gi]]; setProgramas(arr); localStorage.setItem("vmix_preset_order", JSON.stringify(arr.map(p => p.id))); }}
                                 className="w-5 h-5 rounded flex items-center justify-center text-[9px] hover:bg-white/20 transition-colors"
                                 style={{ color: "#ccc" }}
                                 title="Mover para direita"
                               >▶</button>
-                            )}
+                            ) : null; })()}
                             <button
                               onClick={(e) => { e.stopPropagation(); setEditingPresetId(prog.id); }}
                               className="w-5 h-5 rounded flex items-center justify-center hover:bg-white/20 transition-colors"
