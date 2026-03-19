@@ -442,6 +442,7 @@ export default function MusicaNoAr() {
     setLocalFileName(file.name);
 
     const text = await readFileWithEncoding(file);
+    localFileContentRef.current = text;
     setLocalFileContent(text);
 
     const parsed = parseXmlString(text);
