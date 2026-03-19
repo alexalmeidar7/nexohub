@@ -918,12 +918,19 @@ function useGlobalMusicXmlUpload() {
       if (!settings?.music_xml_url) return;
 
       try {
-        const res = await fetch(settings.music_xml_url, { cache: "no-store" });
-        const text = await res.text();
-        if (text === lastContentRef.current) return;
-        lastContentRef.current = text;
+        // Instead of uploading raw source XML, build the XML from processed music data
+        // which includes iTunes cover and presenter fallback
+        const m = getMusicData();
+        const titulo = m?.music?.titulo || "Sem titulo";
+        const interprete = m?.music?.artista || "Desconhecido";
+        const capa = m?.music?.capa || "";
 
-        const file = new Blob([text], { type: "application/xml" });
+        const processedXml = `<?xml version="1.0" encoding="UTF-8"?>\n<musica_agora>\n  <titulo>${titulo}</titulo>\n  <interprete>${interprete}</interprete>\n  <capa>${capa}</capa>\n</musica_agora>`;
+        
+        if (processedXml === lastContentRef.current) return;
+        lastContentRef.current = processedXml;
+
+        const file = new Blob([processedXml], { type: "application/xml" });
         await supabase.storage
           .from("xml-files")
           .upload("musica-agora.xml", file, { upsert: true, contentType: "application/xml" });
