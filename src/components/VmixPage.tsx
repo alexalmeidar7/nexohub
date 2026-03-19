@@ -2180,22 +2180,22 @@ export default function VmixPage() {
                             className="absolute bottom-0 left-0 right-0 flex items-center justify-center gap-1 py-1.5 opacity-0 group-hover/preset:opacity-100 transition-all duration-200 translate-y-full group-hover/preset:translate-y-0"
                             style={{ backgroundColor: "rgba(0,0,0,0.75)", backdropFilter: "blur(4px)" }}
                           >
-                            {idx > 0 && (
+                            {(() => { const gi = programas.findIndex(p => p.id === prog.id); return gi > 0 ? (
                               <button
-                                onClick={(e) => { e.stopPropagation(); const arr = [...programas]; [arr[idx - 1], arr[idx]] = [arr[idx], arr[idx - 1]]; setProgramas(arr); localStorage.setItem("vmix_preset_order", JSON.stringify(arr.map(p => p.id))); }}
+                                onClick={(e) => { e.stopPropagation(); const arr = [...programas]; [arr[gi - 1], arr[gi]] = [arr[gi], arr[gi - 1]]; setProgramas(arr); localStorage.setItem("vmix_preset_order", JSON.stringify(arr.map(p => p.id))); }}
                                 className="w-5 h-5 rounded flex items-center justify-center text-[9px] hover:bg-white/20 transition-colors"
                                 style={{ color: "#ccc" }}
                                 title="Mover para esquerda"
                               >◀</button>
-                            )}
-                            {idx < programas.length - 1 && (
+                            ) : null; })()}
+                            {(() => { const gi = programas.findIndex(p => p.id === prog.id); return gi < programas.length - 1 ? (
                               <button
-                                onClick={(e) => { e.stopPropagation(); const arr = [...programas]; [arr[idx], arr[idx + 1]] = [arr[idx + 1], arr[idx]]; setProgramas(arr); localStorage.setItem("vmix_preset_order", JSON.stringify(arr.map(p => p.id))); }}
+                                onClick={(e) => { e.stopPropagation(); const arr = [...programas]; [arr[gi], arr[gi + 1]] = [arr[gi + 1], arr[gi]]; setProgramas(arr); localStorage.setItem("vmix_preset_order", JSON.stringify(arr.map(p => p.id))); }}
                                 className="w-5 h-5 rounded flex items-center justify-center text-[9px] hover:bg-white/20 transition-colors"
                                 style={{ color: "#ccc" }}
                                 title="Mover para direita"
                               >▶</button>
-                            )}
+                            ) : null; })()}
                             <button
                               onClick={(e) => { e.stopPropagation(); setEditingPresetId(prog.id); }}
                               className="w-5 h-5 rounded flex items-center justify-center hover:bg-white/20 transition-colors"
