@@ -718,7 +718,18 @@ export default function MusicaNoAr() {
                 })()}
 
                 <input ref={fileInputRef} type="file" accept=".xml,application/xml,text/xml" onChange={handleFileSelect} className="hidden" />
-                <button onClick={() => fileInputRef.current?.click()} className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-[10px] font-bold border-2 border-dashed" style={{ borderColor: localFileName ? "#22c55e" : "rgba(13,4,70,0.15)", color: localFileName ? "#22c55e" : "rgba(13,4,70,0.4)" }}>
+                <button
+                  onClick={() => {
+                    // Use showOpenFilePicker if available (enables live re-reads)
+                    if ('showOpenFilePicker' in window) {
+                      handleFileSelect();
+                    } else {
+                      fileInputRef.current?.click();
+                    }
+                  }}
+                  className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-[10px] font-bold border-2 border-dashed"
+                  style={{ borderColor: localFileName ? "#22c55e" : "rgba(13,4,70,0.15)", color: localFileName ? "#22c55e" : "rgba(13,4,70,0.4)" }}
+                >
                   <Upload size={12} />
                   {localFileName || "Selecionar .XML"}
                 </button>
