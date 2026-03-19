@@ -760,7 +760,6 @@ export default function MusicaNoAr() {
                     Monitorando {localFileName} a cada 1s
                   </div>
                 )}
-              </div>
             </div>
 
             {/* Upload History */}
