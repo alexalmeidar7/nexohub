@@ -24,7 +24,42 @@ const MUSIC_DATA_KEY = "masterview_music_data";
 const MUSIC_START_KEY = "masterview_music_start";
 const UPLOAD_HISTORY_KEY = "masterview_xml_upload_history";
 const SOURCE_MODE_KEY = "masterview_source_mode";
+const DEVICE_NAME_KEY = "masterview_device_name";
+const DEVICE_ID_KEY = "masterview_device_id";
 const DEFAULT_XML_URL = "https://positivafm.com.br/storage/pulsar/positivafm.xml";
+
+/** Get or create a unique device ID for this browser */
+function getDeviceId(): string {
+  let id = localStorage.getItem(DEVICE_ID_KEY);
+  if (!id) {
+    id = crypto.randomUUID().slice(0, 8);
+    localStorage.setItem(DEVICE_ID_KEY, id);
+  }
+  return id;
+}
+
+/** Derive a short device label from userAgent */
+function deriveDeviceName(): string {
+  const ua = navigator.userAgent;
+  let os = "PC";
+  if (ua.includes("Windows")) os = "Windows";
+  else if (ua.includes("Mac")) os = "Mac";
+  else if (ua.includes("Linux")) os = "Linux";
+  else if (ua.includes("Android")) os = "Android";
+  else if (ua.includes("iPhone") || ua.includes("iPad")) os = "iOS";
+
+  let browser = "";
+  if (ua.includes("Chrome") && !ua.includes("Edg")) browser = "Chrome";
+  else if (ua.includes("Firefox")) browser = "Firefox";
+  else if (ua.includes("Safari") && !ua.includes("Chrome")) browser = "Safari";
+  else if (ua.includes("Edg")) browser = "Edge";
+
+  return `${os}${browser ? " - " + browser : ""} (${getDeviceId()})`;
+}
+
+function getDeviceName(): string {
+  return localStorage.getItem(DEVICE_NAME_KEY) || deriveDeviceName();
+}
 
 /** Detect encoding from XML declaration or byte-order, then decode */
 async function readFileWithEncoding(file: File): Promise<string> {
