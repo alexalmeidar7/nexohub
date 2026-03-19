@@ -4,6 +4,13 @@ const corsHeaders = {
 };
 
 const FETCH_TIMEOUTS_MS = [8000, 12000] as const;
+const MOJIBAKE_PATTERN = /(Ã.|Â.|â[\u0080-\u00BF]|ðŸ|ï¿½|�)/g;
+const CONTROL_CHAR_PATTERN = /[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g;
+
+type DecodeCandidate = {
+  label: string;
+  text: string;
+};
 
 const fetchWithRetry = async (url: string) => {
   let lastError: unknown = null;
@@ -28,6 +35,70 @@ const fetchWithRetry = async (url: string) => {
   }
 
   throw lastError ?? new Error("Falha ao buscar feed");
+};
+
+const decodeBuffer = (buffer: ArrayBuffer, encoding: string, fatal = false): string | null => {
+  try {
+    return new TextDecoder(encoding, { fatal }).decode(buffer);
+  } catch {
+    return null;
+  }
+};
+
+const scoreDecodedText = (value: string): number => {
+  if (!value) return Number.NEGATIVE_INFINITY;
+
+  const replacementCount = value.match(/\uFFFD/g)?.length ?? 0;
+  const mojibakeCount = value.match(MOJIBAKE_PATTERN)?.length ?? 0;
+  const controlCount = value.match(CONTROL_CHAR_PATTERN)?.length ?? 0;
+
+  return (
+    Math.min(value.length, 1000) * 0.01 -
+    replacementCount * 120 -
+    mojibakeCount * 14 -
+    controlCount * 25
+  );
+};
+
+const pickBestDecodedText = (buffer: ArrayBuffer, contentType: string): string => {
+  const candidates: DecodeCandidate[] = [];
+  const seen = new Set<string>();
+
+  const addCandidate = (label: string, text: string | null) => {
+    if (!text) return;
+    const key = `${label}::${text}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    candidates.push({ label, text });
+  };
+
+  const utf8Lenient = decodeBuffer(buffer, "utf-8", false) ?? "";
+  addCandidate("utf8-lenient", utf8Lenient);
+
+  const charsetMatch = contentType.match(/charset=([^\s;]+)/i);
+  const headerCharset = charsetMatch ? charsetMatch[1].toLowerCase() : "";
+  const xmlEncodingMatch = utf8Lenient.match(/<\?xml[^>]+encoding=["']([^"']+)["']/i);
+  const xmlEncoding = xmlEncodingMatch ? xmlEncodingMatch[1].toLowerCase() : "";
+
+  const declaredEncodings = [...new Set([headerCharset, xmlEncoding].filter(Boolean))];
+
+  for (const encoding of declaredEncodings) {
+    addCandidate(`${encoding}-declared`, decodeBuffer(buffer, encoding, false));
+  }
+
+  addCandidate("utf8-strict", decodeBuffer(buffer, "utf-8", true));
+  addCandidate("windows-1252", decodeBuffer(buffer, "windows-1252", false));
+  addCandidate("iso-8859-1", decodeBuffer(buffer, "iso-8859-1", false));
+
+  if (!candidates.length) {
+    return utf8Lenient;
+  }
+
+  const best = candidates.reduce((winner, candidate) => {
+    return scoreDecodedText(candidate.text) > scoreDecodedText(winner.text) ? candidate : winner;
+  });
+
+  return best.text.replace(/^\uFEFF/, "");
 };
 
 Deno.serve(async (req) => {
@@ -72,44 +143,9 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Handle encoding properly
     const contentType = response.headers.get("content-type") || "";
     const buffer = await response.arrayBuffer();
-
-    const looksLikeMojibake = (value: string) => /Ã.|Â.|â[\u0080-\u00BF]|�/.test(value);
-
-    let text: string;
-
-    // Check if charset is specified in content-type
-    const charsetMatch = contentType.match(/charset=([^\s;]+)/i);
-    const charset = charsetMatch ? charsetMatch[1].toLowerCase() : "";
-
-    if (charset && charset !== "utf-8" && charset !== "utf8") {
-      try {
-        const decoder = new TextDecoder(charset, { fatal: false });
-        text = decoder.decode(buffer);
-      } catch {
-        text = new TextDecoder("utf-8", { fatal: false }).decode(buffer);
-      }
-    } else {
-      const utf8Text = new TextDecoder("utf-8", { fatal: false }).decode(buffer);
-
-      // Check XML declaration for encoding
-      const xmlEncodingMatch = utf8Text.match(/<\?xml[^>]+encoding=["']([^"']+)["']/i);
-      const xmlEncoding = xmlEncodingMatch ? xmlEncodingMatch[1].toLowerCase() : "";
-
-      if (xmlEncoding && xmlEncoding !== "utf-8" && xmlEncoding !== "utf8") {
-        try {
-          const decoder = new TextDecoder(xmlEncoding, { fatal: false });
-          text = decoder.decode(buffer);
-        } catch {
-          text = utf8Text;
-        }
-      } else {
-        const latin1Text = new TextDecoder("iso-8859-1", { fatal: false }).decode(buffer);
-        text = looksLikeMojibake(utf8Text) && !looksLikeMojibake(latin1Text) ? latin1Text : utf8Text;
-      }
-    }
+    const text = pickBestDecodedText(buffer, contentType);
 
     return new Response(JSON.stringify({ content: text, ok: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json; charset=utf-8" },
