@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Music, User, Loader2, Pencil, Check, Globe, FolderOpen, Clock, Upload, Save } from "lucide-react";
+import { Music, User, Loader2, Pencil, Check, Globe, FolderOpen, Clock, Upload, Save, Monitor } from "lucide-react";
 import XmlLinkRow from "./XmlLinkRow";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
