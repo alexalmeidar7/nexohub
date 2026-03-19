@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, GripVertical, Play, Loader2, X, ChevronDown, ChevronUp, Clock, Tag, Code, Copy, ClipboardPaste, Palette, Music, Radio, Tv, Mic, Volume2, Video, Zap, Star, Sparkles, Clapperboard, Megaphone, Bell, type LucideIcon } from "lucide-react";
+import { Plus, Trash2, GripVertical, Play, Loader2, X, ChevronDown, ChevronUp, Clock, Tag, Code, Copy, ClipboardPaste, Palette, Music, Radio, Tv, Mic, Volume2, Video, Zap, Star, Sparkles, Clapperboard, Megaphone, Bell, Timer, Sun, Moon, Cloud, Heart, Settings, Power, SkipForward, Pause, StopCircle, Repeat, Shuffle, Image, Type, Layers, Monitor, Disc, Eye, Lock, Unlock, Send, Download, Upload, Bookmark, Flag, Hash, Globe, Phone, Mail, MessageSquare, Calendar, type LucideIcon } from "lucide-react";
 
 const BUTTON_COLORS = [
   { value: "#f59e0b", label: "Amarelo" },
