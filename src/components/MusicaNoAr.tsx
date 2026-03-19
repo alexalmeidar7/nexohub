@@ -217,6 +217,13 @@ export default function MusicaNoAr() {
   const [lastSource, setLastSource] = useState<"online" | "pasta" | null>(null);
   const [sourceStats, setSourceStats] = useState<{ online: number; pasta: number }>({ online: 0, pasta: 0 });
   const lastSourceRef = useRef<"online" | "pasta" | null>(null);
+  const [showConfig, setShowConfig] = useState(false);
+
+  // Source delay tracking
+  const lastOnlineUpdateRef = useRef<number>(Date.now());
+  const lastLocalUpdateRef = useRef<number>(Date.now());
+  const [onlineDelay, setOnlineDelay] = useState(false);
+  const [localDelay, setLocalDelay] = useState(false);
 
   // Save source mode to DB + state (kept for UI preference, but both always run)
   const setSourceMode = async (mode: "online" | "pasta") => {
