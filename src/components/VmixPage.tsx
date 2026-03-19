@@ -2231,7 +2231,7 @@ export default function VmixPage() {
                 </div>
 
                 {/* Right: Botões de Efeitos */}
-                <div className="rounded-xl overflow-hidden xl:w-[280px]" style={{ backgroundColor: "#1a1a1f", border: "1px solid #ffffff08" }}>
+                <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a1f", border: "1px solid #ffffff08" }}>
                   <div className="flex items-center gap-2 px-4 py-2.5" style={{ backgroundColor: "#ffffff06", borderBottom: "1px solid #ffffff08" }}>
                     <Wand2 size={14} style={{ color: "#f59e0b" }} />
                     <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#f59e0b" }}>botões de efeitos</span>
