@@ -358,95 +358,130 @@ export default function MusicaNoAr() {
 
   return (
     <div className="animate-fade-in">
-      <div className="rounded-2xl overflow-hidden" style={{ background: "#d9e9fa", boxShadow: "0 8px 32px rgba(13,4,70,0.12)", padding: "20px" }}>
-        {/* Header */}
-        <div className="flex items-center justify-between mb-5">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(13,4,70,0.08)" }}>
-              <Music size={20} style={{ color: "#0d0446" }} />
+      <div className="rounded-2xl overflow-hidden" style={{ background: "#d9e9fa", boxShadow: "0 8px 32px rgba(13,4,70,0.12)", padding: "16px" }}>
+        {/* Header compact */}
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "rgba(13,4,70,0.08)" }}>
+              <Music size={16} style={{ color: "#0d0446" }} />
             </div>
             <div>
-              <h3 className="text-base font-bold" style={{ color: "#0d0446" }}>Música no Ar</h3>
-              <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.5)" }}>Monitoramento em tempo real do XML de música</p>
+              <h3 className="text-sm font-bold leading-tight" style={{ color: "#0d0446" }}>Música no Ar</h3>
+              <p className="text-[9px]" style={{ color: "rgba(13,4,70,0.5)" }}>Monitoramento XML em tempo real</p>
             </div>
           </div>
-          <span className="inline-flex items-center gap-2 px-3 py-1.5 text-[9px] uppercase tracking-widest font-bold rounded-full" style={{ backgroundColor: "rgba(38,143,250,0.1)", color: "#268ffa", border: "1px solid rgba(38,143,250,0.2)" }}>
-            <span className="relative flex h-2 w-2">
+          <span className="inline-flex items-center gap-1.5 px-2 py-1 text-[8px] uppercase tracking-widest font-bold rounded-full" style={{ backgroundColor: "rgba(38,143,250,0.1)", color: "#268ffa", border: "1px solid rgba(38,143,250,0.2)" }}>
+            <span className="relative flex h-1.5 w-1.5">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: "#268ffa" }}></span>
-              <span className="relative inline-flex rounded-full h-2 w-2" style={{ backgroundColor: "#268ffa" }}></span>
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5" style={{ backgroundColor: "#268ffa" }}></span>
             </span>
             AO VIVO
           </span>
         </div>
 
-        {/* 3-Column Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr_200px] gap-4">
+        {/* Main 2-column: Cover+Info | XML Config */}
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-3">
 
-          {/* LEFT COLUMN — XML Config + History */}
-          <div className="rounded-2xl p-4 flex flex-col gap-4" style={{ backgroundColor: "#ffffff", boxShadow: "0 4px 20px rgba(13,4,70,0.08)" }}>
-            {/* Source Mode Tabs */}
-            <div>
-              <p className="text-[10px] mb-2 font-semibold uppercase tracking-wider" style={{ color: "rgba(13,4,70,0.4)" }}>Origem do XML</p>
-              <div className="flex gap-1 rounded-xl p-1" style={{ backgroundColor: "rgba(13,4,70,0.04)" }}>
-                <button
-                  onClick={() => setSourceMode("online")}
-                  className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-[11px] font-bold transition-all"
-                  style={sourceMode === "online"
-                    ? { background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#fff", boxShadow: "0 2px 8px rgba(38,143,250,0.3)" }
-                    : { color: "rgba(13,4,70,0.4)" }
-                  }
-                >
-                  <Globe size={13} />
-                  Online
-                </button>
-                <button
-                  onClick={() => setSourceMode("pasta")}
-                  className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-[11px] font-bold transition-all"
-                  style={sourceMode === "pasta"
-                    ? { background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#fff", boxShadow: "0 2px 8px rgba(38,143,250,0.3)" }
-                    : { color: "rgba(13,4,70,0.4)" }
-                  }
-                >
-                  <FolderOpen size={13} />
-                  Local
-                </button>
+          {/* LEFT — Cover + Song Info + Progress */}
+          <div className="rounded-2xl p-4 flex gap-4" style={{ backgroundColor: "#ffffff", boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}>
+            {/* Cover */}
+            <div className="relative w-40 h-40 shrink-0 overflow-hidden rounded-xl group" style={{ backgroundColor: "rgba(13,4,70,0.03)", boxShadow: "0 4px 16px rgba(13,4,70,0.12)" }}>
+              {loadingCover && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/40 z-10 backdrop-blur-sm rounded-xl">
+                  <Loader2 className="animate-spin" size={28} style={{ color: "#268ffa" }} />
+                </div>
+              )}
+              {displayCover ? (
+                <img src={displayCover} alt="Capa" className="object-cover w-full h-full transition-transform duration-700 group-hover:scale-105" />
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center gap-2" style={{ color: "rgba(13,4,70,0.2)" }}>
+                  <Music size={32} />
+                  <span className="italic text-[10px]">{music ? "Sem capa" : "Aguardando..."}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Song Info + Progress */}
+            <div className="flex-1 flex flex-col justify-between min-w-0">
+              <div>
+                <h1 className="text-lg font-black tracking-tight truncate" style={{ color: "#0d0446" }}>{displayTitulo}</h1>
+                <p className="font-semibold flex items-center gap-1.5 text-xs mt-0.5" style={{ color: "#268ffa" }}>
+                  <User size={13} />
+                  {displayArtista}
+                </p>
               </div>
+
+              {music && music.duracao > 0 && (
+                <div className="mt-3">
+                  {/* Progress bar with times */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-mono font-bold shrink-0" style={{ color: "#0d0446" }}>{formatTime(elapsed)}</span>
+                    <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ backgroundColor: "rgba(13,4,70,0.06)" }}>
+                      <div className="h-full rounded-full transition-all duration-300" style={{ width: `${progress}%`, background: "linear-gradient(90deg, #268ffa, #2dbef3)" }} />
+                    </div>
+                    <span className="text-[10px] font-mono font-bold shrink-0" style={{ color: "rgba(13,4,70,0.4)" }}>{formatTime(music.duracao)}</span>
+                  </div>
+                </div>
+              )}
+
+              {/* XML Output */}
+              {music && (
+                <div className="mt-2">
+                  <XmlLinkRow label="XML MUSICA AGORA" xmlContent={`<?xml version="1.0" encoding="UTF-8"?>\n<musica_agora>\n  <titulo>${music.titulo}</titulo>\n  <interprete>${music.artista}</interprete>\n  <capa>${music.capa || ""}</capa>\n</musica_agora>`} dark />
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* RIGHT — XML Config + History */}
+          <div className="rounded-2xl p-3 flex flex-col gap-2" style={{ backgroundColor: "#ffffff", boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}>
+            {/* Source Tabs */}
+            <div className="flex gap-1 rounded-lg p-0.5" style={{ backgroundColor: "rgba(13,4,70,0.04)" }}>
+              <button
+                onClick={() => setSourceMode("online")}
+                className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-md text-[10px] font-bold transition-all"
+                style={sourceMode === "online"
+                  ? { background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#fff", boxShadow: "0 2px 6px rgba(38,143,250,0.3)" }
+                  : { color: "rgba(13,4,70,0.4)" }
+                }
+              >
+                <Globe size={11} /> Online
+              </button>
+              <button
+                onClick={() => setSourceMode("pasta")}
+                className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-md text-[10px] font-bold transition-all"
+                style={sourceMode === "pasta"
+                  ? { background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#fff", boxShadow: "0 2px 6px rgba(38,143,250,0.3)" }
+                  : { color: "rgba(13,4,70,0.4)" }
+                }
+              >
+                <FolderOpen size={11} /> Local
+              </button>
             </div>
 
             {/* Online URL */}
             {sourceMode === "online" && (
               <div>
-                <p className="text-[10px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "rgba(13,4,70,0.4)" }}>URL do XML</p>
                 {editingUrl ? (
-                  <div className="flex gap-2">
+                  <div className="flex gap-1.5">
                     <input
                       value={tempUrl}
                       onChange={(e) => setTempUrl(e.target.value)}
-                      className="flex-1 text-xs px-3 py-1.5 outline-none transition-colors"
-                      style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "1px solid rgba(13,4,70,0.15)", color: "#0d0446", borderRadius: "12px" }}
+                      className="flex-1 text-[10px] px-2 py-1 outline-none"
+                      style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "1px solid rgba(13,4,70,0.15)", color: "#0d0446", borderRadius: "8px" }}
                       onFocus={e => { e.currentTarget.style.borderColor = "#268ffa"; }}
                       onBlur={e => { e.currentTarget.style.borderColor = "rgba(13,4,70,0.15)"; }}
                       placeholder="URL do XML"
                     />
-                    <button
-                      onClick={() => { saveUrl(tempUrl); setEditingUrl(false); }}
-                      className="w-8 h-8 rounded-lg flex items-center justify-center font-bold transition-all"
-                      style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#ffffff" }}
-                    >
-                      <Check size={14} />
+                    <button onClick={() => { saveUrl(tempUrl); setEditingUrl(false); }} className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#fff" }}>
+                      <Check size={12} />
                     </button>
                   </div>
                 ) : (
-                  <div className="flex items-center gap-2">
-                    <p className="text-[10px] truncate px-3 py-1.5 flex-1 rounded-lg" style={{ backgroundColor: "rgba(13,4,70,0.03)", color: "rgba(13,4,70,0.6)", border: "1px solid rgba(13,4,70,0.06)" }}>{xmlUrl}</p>
-                    <button
-                      onClick={() => { setTempUrl(xmlUrl); setEditingUrl(true); }}
-                      className="w-7 h-7 rounded-lg flex items-center justify-center transition-all shrink-0"
-                      style={{ backgroundColor: "rgba(13,4,70,0.04)" }}
-                      onMouseEnter={e => { e.currentTarget.style.backgroundColor = "rgba(38,143,250,0.1)"; }}
-                      onMouseLeave={e => { e.currentTarget.style.backgroundColor = "rgba(13,4,70,0.04)"; }}
-                    >
-                      <Pencil size={12} style={{ color: "#268ffa" }} />
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-[9px] truncate px-2 py-1 flex-1 rounded-lg" style={{ backgroundColor: "rgba(13,4,70,0.03)", color: "rgba(13,4,70,0.6)", border: "1px solid rgba(13,4,70,0.06)" }}>{xmlUrl}</p>
+                    <button onClick={() => { setTempUrl(xmlUrl); setEditingUrl(true); }} className="w-6 h-6 rounded-md flex items-center justify-center shrink-0" style={{ backgroundColor: "rgba(13,4,70,0.04)" }}>
+                      <Pencil size={10} style={{ color: "#268ffa" }} />
                     </button>
                   </div>
                 )}
@@ -456,67 +491,46 @@ export default function MusicaNoAr() {
             {/* Local File */}
             {sourceMode === "pasta" && (
               <div>
-                <p className="text-[10px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "rgba(13,4,70,0.4)" }}>Arquivo XML</p>
                 <input ref={fileInputRef} type="file" accept=".xml,application/xml,text/xml" onChange={handleFileSelect} className="hidden" />
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-[11px] font-bold transition-all border-2 border-dashed"
-                  style={{ borderColor: localFileName ? "#268ffa" : "rgba(13,4,70,0.15)", color: localFileName ? "#268ffa" : "rgba(13,4,70,0.4)", backgroundColor: localFileName ? "rgba(38,143,250,0.05)" : "rgba(13,4,70,0.02)" }}
-                >
-                  <Upload size={14} />
+                <button onClick={() => fileInputRef.current?.click()} className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-[10px] font-bold border-2 border-dashed" style={{ borderColor: localFileName ? "#268ffa" : "rgba(13,4,70,0.15)", color: localFileName ? "#268ffa" : "rgba(13,4,70,0.4)" }}>
+                  <Upload size={12} />
                   {localFileName || "Selecionar .XML"}
                 </button>
                 {localFileName && (
-                  <div className="mt-2 flex items-center gap-2 px-2 py-1 rounded-lg" style={{ backgroundColor: "rgba(38,143,250,0.06)" }}>
-                    <span className="relative flex h-2 w-2 shrink-0">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: "#22c55e" }}></span>
-                      <span className="relative inline-flex rounded-full h-2 w-2" style={{ backgroundColor: "#22c55e" }}></span>
-                    </span>
-                    <span className="text-[9px] font-semibold" style={{ color: "rgba(13,4,70,0.5)" }}>Monitorando a cada 2s</span>
+                  <div className="mt-1 flex items-center gap-1.5 px-2 py-0.5 rounded text-[8px]" style={{ backgroundColor: "rgba(38,143,250,0.06)", color: "rgba(13,4,70,0.5)" }}>
+                    <span className="relative flex h-1.5 w-1.5 shrink-0"><span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: "#22c55e" }}></span><span className="relative inline-flex rounded-full h-1.5 w-1.5" style={{ backgroundColor: "#22c55e" }}></span></span>
+                    Monitorando a cada 2s
                   </div>
                 )}
-                <p className="text-[8px] mt-1 italic" style={{ color: "rgba(13,4,70,0.3)" }}>Mantenha esta aba aberta.</p>
               </div>
             )}
 
-            {/* XML Output Link */}
-            {music && (
-              <XmlLinkRow label="XML MUSICA AGORA" xmlContent={`<?xml version="1.0" encoding="UTF-8"?>\n<musica_agora>\n  <titulo>${music.titulo}</titulo>\n  <interprete>${music.artista}</interprete>\n  <capa>${music.capa || ""}</capa>\n</musica_agora>`} dark />
-            )}
-
-            {/* XML Structure */}
-            <div className="rounded-xl px-3 py-2" style={{ backgroundColor: "rgba(13,4,70,0.02)", border: "1px solid rgba(13,4,70,0.06)" }}>
-              <p className="text-[9px] mb-1 font-bold uppercase tracking-wider" style={{ color: "rgba(13,4,70,0.35)" }}>Estrutura esperada</p>
-              <pre className="text-[9px] font-mono leading-relaxed" style={{ color: "rgba(13,4,70,0.3)" }}>{`<musica>\n  <nome_musica>...</nome_musica>\n  <nome_interprete>...</nome_interprete>\n  <duracao>03:45</duracao>\n  <capa>https://...</capa>\n</musica>`}</pre>
-            </div>
-
-            {/* Upload History */}
+            {/* Upload History — compact scrollable */}
             {uploadHistory.length > 0 && (
-              <div>
-                <p className="text-[9px] mb-1.5 font-semibold uppercase tracking-wider flex items-center gap-1.5" style={{ color: "rgba(13,4,70,0.4)" }}>
-                  <Clock size={10} />
-                  Histórico (últimos 10)
+              <div className="flex-1 min-h-0">
+                <p className="text-[8px] mb-1 font-bold uppercase tracking-wider flex items-center gap-1" style={{ color: "rgba(13,4,70,0.4)" }}>
+                  <Clock size={9} /> Histórico
                 </p>
-                <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(13,4,70,0.06)" }}>
-                  <table className="w-full text-[9px]">
-                    <thead>
+                <div className="rounded-lg overflow-auto max-h-[140px]" style={{ border: "1px solid rgba(13,4,70,0.06)" }}>
+                  <table className="w-full text-[8px]">
+                    <thead className="sticky top-0">
                       <tr style={{ backgroundColor: "rgba(13,4,70,0.03)" }}>
-                        <th className="text-left px-2 py-1 font-bold uppercase" style={{ color: "rgba(13,4,70,0.4)" }}>Origem</th>
-                        <th className="text-left px-2 py-1 font-bold uppercase" style={{ color: "rgba(13,4,70,0.4)" }}>Data</th>
-                        <th className="text-left px-2 py-1 font-bold uppercase" style={{ color: "rgba(13,4,70,0.4)" }}>Hora</th>
+                        <th className="text-left px-1.5 py-0.5 font-bold uppercase" style={{ color: "rgba(13,4,70,0.4)" }}>Origem</th>
+                        <th className="text-left px-1.5 py-0.5 font-bold uppercase" style={{ color: "rgba(13,4,70,0.4)" }}>Data</th>
+                        <th className="text-left px-1.5 py-0.5 font-bold uppercase" style={{ color: "rgba(13,4,70,0.4)" }}>Hora</th>
                       </tr>
                     </thead>
                     <tbody>
                       {uploadHistory.map((entry, i) => (
                         <tr key={i} style={{ borderTop: i > 0 ? "1px solid rgba(13,4,70,0.04)" : undefined }}>
-                          <td className="px-2 py-1 font-semibold" style={{ color: entry.source === "pasta" ? "#22c55e" : "#268ffa" }}>
-                            <span className="inline-flex items-center gap-1">
-                              {entry.source === "pasta" ? <FolderOpen size={9} /> : <Globe size={9} />}
+                          <td className="px-1.5 py-0.5 font-semibold" style={{ color: entry.source === "pasta" ? "#22c55e" : "#268ffa" }}>
+                            <span className="inline-flex items-center gap-0.5">
+                              {entry.source === "pasta" ? <FolderOpen size={8} /> : <Globe size={8} />}
                               {entry.source === "pasta" ? "Pasta" : "Online"}
                             </span>
                           </td>
-                          <td className="px-2 py-1 font-mono" style={{ color: "rgba(13,4,70,0.5)" }}>{entry.date}</td>
-                          <td className="px-2 py-1 font-mono" style={{ color: "rgba(13,4,70,0.5)" }}>{entry.time}</td>
+                          <td className="px-1.5 py-0.5 font-mono" style={{ color: "rgba(13,4,70,0.5)" }}>{entry.date}</td>
+                          <td className="px-1.5 py-0.5 font-mono" style={{ color: "rgba(13,4,70,0.5)" }}>{entry.time}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -524,91 +538,11 @@ export default function MusicaNoAr() {
                 </div>
               </div>
             )}
-          </div>
 
-          {/* CENTER COLUMN — Title/Artist + Cover */}
-          <div className="flex flex-col items-center">
-            {/* Title & Artist above cover */}
-            <div className="text-center mb-4 w-full">
-              <h1 className="text-2xl font-black tracking-tight truncate" style={{ color: "#0d0446" }}>{displayTitulo}</h1>
-              <p className="font-semibold flex items-center justify-center gap-1.5 text-sm mt-1" style={{ color: "#268ffa" }}>
-                <User size={16} />
-                {displayArtista}
-              </p>
-            </div>
-
-            {/* Cover Art */}
-            <div className="relative w-full max-w-sm aspect-square overflow-hidden rounded-2xl group" style={{ backgroundColor: "rgba(13,4,70,0.03)", boxShadow: "0 8px 30px rgba(13,4,70,0.15)" }}>
-              {loadingCover && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/40 z-10 backdrop-blur-sm rounded-2xl">
-                  <Loader2 className="animate-spin" size={48} style={{ color: "#268ffa" }} />
-                </div>
-              )}
-              {displayCover ? (
-                <img src={displayCover} alt="Capa do Álbum" className="object-cover w-full h-full transition-transform duration-700 group-hover:scale-105" />
-              ) : (
-                <div className="w-full h-full flex flex-col items-center justify-center gap-3" style={{ color: "rgba(13,4,70,0.2)" }}>
-                  <Music size={56} />
-                  <span className="italic text-sm">{music ? "Nenhuma capa encontrada" : "Aguardando leitura..."}</span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* RIGHT COLUMN — Duration & Progress */}
-          <div className="rounded-2xl p-4 flex flex-col items-center justify-center gap-4" style={{ backgroundColor: "#ffffff", boxShadow: "0 4px 20px rgba(13,4,70,0.08)" }}>
-            <div className="text-center">
-              <p className="text-[10px] font-semibold uppercase tracking-wider mb-2" style={{ color: "rgba(13,4,70,0.4)" }}>Duração</p>
-              <span className="text-3xl font-black font-mono" style={{ color: "#0d0446" }}>
-                {music && music.duracao > 0 ? formatTime(music.duracao) : "--:--"}
-              </span>
-            </div>
-
-            {music && music.duracao > 0 && (
-              <>
-                {/* Circular-ish progress display */}
-                <div className="relative w-28 h-28 flex items-center justify-center">
-                  <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
-                    <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(13,4,70,0.06)" strokeWidth="8" />
-                    <circle
-                      cx="50" cy="50" r="42" fill="none"
-                      stroke="url(#progressGrad)"
-                      strokeWidth="8"
-                      strokeLinecap="round"
-                      strokeDasharray={`${2 * Math.PI * 42}`}
-                      strokeDashoffset={`${2 * Math.PI * 42 * (1 - progress / 100)}`}
-                      className="transition-all duration-300"
-                    />
-                    <defs>
-                      <linearGradient id="progressGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                        <stop offset="0%" stopColor="#268ffa" />
-                        <stop offset="100%" stopColor="#2dbef3" />
-                      </linearGradient>
-                    </defs>
-                  </svg>
-                  <span className="absolute text-lg font-black font-mono" style={{ color: "#0d0446" }}>
-                    {formatTime(elapsed)}
-                  </span>
-                </div>
-
-                {/* Linear progress bar */}
-                <div className="w-full">
-                  <div className="w-full h-2 rounded-full overflow-hidden" style={{ backgroundColor: "rgba(13,4,70,0.06)" }}>
-                    <div className="h-full rounded-full transition-all duration-300" style={{ width: `${progress}%`, background: "linear-gradient(90deg, #268ffa, #2dbef3)" }} />
-                  </div>
-                  <div className="flex justify-between text-[9px] font-mono mt-1" style={{ color: "rgba(13,4,70,0.35)" }}>
-                    <span>{formatTime(elapsed)}</span>
-                    <span>{formatTime(music.duracao)}</span>
-                  </div>
-                </div>
-              </>
-            )}
-
-            <p className="text-[9px] uppercase tracking-widest font-semibold" style={{ color: "rgba(13,4,70,0.3)" }}>
+            <p className="text-[8px] text-center uppercase tracking-widest font-semibold" style={{ color: "rgba(13,4,70,0.25)" }}>
               {sourceMode === "online" ? "Monitorando online" : "Monitorando local"}
             </p>
           </div>
-
         </div>
       </div>
     </div>
