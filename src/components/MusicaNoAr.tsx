@@ -89,24 +89,29 @@ async function fetchCoverFromiTunes(titulo: string, artista: string): Promise<st
   return "";
 }
 
-function getUploadHistory(): UploadLogEntry[] {
+async function loadUploadHistoryFromDb(userId: string): Promise<UploadLogEntry[]> {
   try {
-    const raw = localStorage.getItem(UPLOAD_HISTORY_KEY);
-    return raw ? JSON.parse(raw) : [];
+    const { data } = await supabase
+      .from("xml_upload_history")
+      .select("source, created_at")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(10);
+    if (!data) return [];
+    return data.map((row: any) => {
+      const d = new Date(row.created_at);
+      return {
+        source: row.source as "pasta" | "online",
+        date: d.toLocaleDateString("pt-BR"),
+        time: d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
+      };
+    });
   } catch { return []; }
 }
 
-function addUploadLog(source: "pasta" | "online") {
-  const now = new Date();
-  const entry: UploadLogEntry = {
-    source,
-    date: now.toLocaleDateString("pt-BR"),
-    time: now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
-  };
-  const history = getUploadHistory();
-  history.unshift(entry);
-  localStorage.setItem(UPLOAD_HISTORY_KEY, JSON.stringify(history.slice(0, 10)));
-  return history.slice(0, 10);
+async function addUploadLogToDb(userId: string, source: "pasta" | "online"): Promise<UploadLogEntry[]> {
+  await supabase.from("xml_upload_history").insert({ user_id: userId, source });
+  return loadUploadHistoryFromDb(userId);
 }
 
 import { getMusicData } from "@/lib/musicData";
