@@ -516,10 +516,14 @@ export default function MusicaNoAr() {
           >
             {/* Blue progress fill as background */}
             <div
-              className="absolute inset-0 transition-all duration-500 ease-linear"
+              className="absolute inset-0"
               style={{
                 width: `${progress}%`,
                 background: "linear-gradient(90deg, #0a1a3a, #1a4a8a, #2d8ef3)",
+                transition: sliderResetting
+                  ? "width 0.6s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.6s ease"
+                  : "width 0.5s linear",
+                opacity: sliderResetting ? 0.3 : 1,
               }}
             />
 
