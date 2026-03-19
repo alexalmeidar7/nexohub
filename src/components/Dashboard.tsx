@@ -918,12 +918,26 @@ function useGlobalMusicXmlUpload() {
       if (!settings?.music_xml_url) return;
 
       try {
-        // Instead of uploading raw source XML, build the XML from processed music data
-        // which includes iTunes cover and presenter fallback
         const m = getMusicData();
         const titulo = m?.music?.titulo || "Sem titulo";
         const interprete = m?.music?.artista || "Desconhecido";
-        const capa = m?.music?.capa || "";
+        let capa = m?.music?.capa || "";
+
+        // If cover is a base64 data URI, upload it as .png and use the public URL
+        if (capa.startsWith("data:image")) {
+          try {
+            const res = await fetch(capa);
+            const blob = await res.blob();
+            const pngBlob = new Blob([blob], { type: "image/png" });
+            await supabase.storage
+              .from("xml-files")
+              .upload("capa-atual.png", pngBlob, { upsert: true, contentType: "image/png" });
+            const { data: urlData } = supabase.storage
+              .from("xml-files")
+              .getPublicUrl("capa-atual.png");
+            capa = urlData?.publicUrl ? `${urlData.publicUrl}?t=${Date.now()}` : capa;
+          } catch {}
+        }
 
         const processedXml = `<?xml version="1.0" encoding="UTF-8"?>\n<musica_agora>\n  <titulo>${titulo}</titulo>\n  <interprete>${interprete}</interprete>\n  <capa>${capa}</capa>\n</musica_agora>`;
         
