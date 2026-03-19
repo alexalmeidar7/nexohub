@@ -2132,7 +2132,7 @@ export default function VmixPage() {
                           {startTime && (
                             <div
                               draggable
-                              onDragStart={(e) => { e.stopPropagation(); setDragPresetIdx(globalIdx); e.dataTransfer.effectAllowed = "move"; }}
+                              onDragStart={(e) => { e.stopPropagation(); const gi = programas.findIndex(p => p.id === prog.id); setDragPresetIdx(gi); e.dataTransfer.effectAllowed = "move"; }}
                               className="absolute top-1.5 left-1.5 flex items-center gap-0.5 px-1.5 py-0.5 rounded cursor-grab active:cursor-grabbing"
                               style={{ backgroundColor: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)", zIndex: 2 }}
                               title="Arraste para reposicionar"
