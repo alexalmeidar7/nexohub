@@ -122,6 +122,7 @@ function formatCommandPreview(cmd: PresetCommand, inputs: VmixInput[]): string {
 export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId, inputs, onRunCommands, onSaved }: Props) {
   const { toast } = useToast();
   const [nome, setNome] = useState("");
+  const [color, setColor] = useState("#f59e0b");
   const [diasSemana, setDiasSemana] = useState<string[]>([]);
   const [horario, setHorario] = useState("");
   const [commands, setCommands] = useState<PresetCommand[]>([]);
