@@ -26,26 +26,53 @@ const UPLOAD_HISTORY_KEY = "masterview_xml_upload_history";
 const SOURCE_MODE_KEY = "masterview_source_mode";
 const DEFAULT_XML_URL = "https://positivafm.com.br/storage/pulsar/positivafm.xml";
 
+/** Detect encoding from XML declaration or byte-order, then decode */
+async function readFileWithEncoding(file: File): Promise<string> {
+  // Read first bytes to detect encoding from XML declaration
+  const headSlice = file.slice(0, 200);
+  const headText = await headSlice.text();
+  const encMatch = headText.match(/encoding=["']([^"']+)["']/i);
+  const declared = encMatch?.[1]?.toLowerCase() || "";
+
+  // Map common XML encodings
+  const latin = ["iso-8859-1", "latin1", "windows-1252", "iso_8859-1"];
+  if (latin.some(e => declared.includes(e))) {
+    const buf = await file.arrayBuffer();
+    return new TextDecoder("windows-1252").decode(buf);
+  }
+  // Default: try UTF-8, fallback to windows-1252 if replacement chars appear
+  const utf8 = await file.text();
+  if (utf8.includes("�") || /Ã[£¡â€]/.test(utf8)) {
+    const buf = await file.arrayBuffer();
+    return new TextDecoder("windows-1252").decode(buf);
+  }
+  return utf8;
+}
+
 function parseXmlString(xmlStr: string): MusicData | null {
   try {
+    // Strip XML declaration to avoid DOMParser encoding conflicts
+    const cleaned = xmlStr.replace(/<\?xml[^?]*\?>\s*/i, "");
     const parser = new DOMParser();
-    const doc = parser.parseFromString(xmlStr, "application/xml");
+    const doc = parser.parseFromString(cleaned, "application/xml");
     const errorNode = doc.querySelector("parsererror");
     if (errorNode) return null;
 
-    const titulo = normalizeMusicText(
+    const rawTitulo =
       doc.querySelector("nome_musica")?.textContent ||
       doc.querySelector("titulo")?.textContent ||
       doc.querySelector("title")?.textContent ||
-      "Sem título"
-    );
-    const artista = normalizeMusicText(
+      "";
+    const rawArtista =
       doc.querySelector("interprete")?.textContent ||
       doc.querySelector("nome_interprete")?.textContent ||
       doc.querySelector("artista")?.textContent ||
       doc.querySelector("artist")?.textContent ||
-      "Desconhecido"
-    );
+      "";
+
+    const titulo = normalizeMusicText(rawTitulo) || "Sem título";
+    const artista = normalizeMusicText(rawArtista) || "Desconhecido";
+
     const duracaoStr =
       doc.querySelector("duracao")?.textContent ||
       doc.querySelector("duration")?.textContent ||
