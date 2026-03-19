@@ -197,7 +197,7 @@ export default function MusicaNoAr() {
   const [loadingCover, setLoadingCover] = useState(false);
   const [presenterFallback, setPresenterFallback] = useState<{ nome: string; foto: string } | null>(null);
 
-  // Source mode: persisted in DB, loaded on mount
+  // Unified mode: both sources always active
   const [sourceMode, setSourceModeState] = useState<"online" | "pasta">("online");
   const [sourceModeLoaded, setSourceModeLoaded] = useState(false);
   const [localFileContent, setLocalFileContent] = useState<string | null>(null);
@@ -213,18 +213,15 @@ export default function MusicaNoAr() {
   const [deviceNameInput, setDeviceNameInput] = useState(() => getDeviceName());
   const [currentDeviceName, setCurrentDeviceName] = useState(() => getDeviceName());
 
-  // Save source mode to DB + state
+  // Unified tracking: which source provided the last update
+  const [lastSource, setLastSource] = useState<"online" | "pasta" | null>(null);
+  const [sourceStats, setSourceStats] = useState<{ online: number; pasta: number }>({ online: 0, pasta: 0 });
+  const lastSourceRef = useRef<"online" | "pasta" | null>(null);
+
+  // Save source mode to DB + state (kept for UI preference, but both always run)
   const setSourceMode = async (mode: "online" | "pasta") => {
     setSourceModeState(mode);
     localStorage.setItem(SOURCE_MODE_KEY, mode);
-    // Stop local monitoring when switching to online
-    if (mode === "online") {
-      setLocalMonitoring(false);
-      setLocalFileName("");
-      localFileRef.current = null;
-      fileHandleRef.current = null;
-      setLocalFileContent(null);
-    }
     if (user) {
       await supabase.from("user_settings").upsert({
         user_id: user.id,
@@ -307,7 +304,7 @@ export default function MusicaNoAr() {
     }, { onConflict: "user_id" });
   };
 
-  const processMusic = useCallback(async (data: MusicData) => {
+  const processMusic = useCallback(async (data: MusicData, source?: "online" | "pasta") => {
     const prevRaw = localStorage.getItem(MUSIC_DATA_KEY);
     const prev: MusicData | null = prevRaw ? JSON.parse(prevRaw) : null;
 
@@ -333,6 +330,12 @@ export default function MusicaNoAr() {
       setMusic(data);
       setStartTime(now);
       setElapsed(0);
+      // Track which source detected the change first
+      if (source) {
+        setLastSource(source);
+        lastSourceRef.current = source;
+        setSourceStats(prev => ({ ...prev, [source]: prev[source] + 1 }));
+      }
     } else {
       if (data.capa && (!prev.capa || prev.capa !== data.capa)) {
         localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify({ ...prev, capa: data.capa }));
@@ -341,9 +344,9 @@ export default function MusicaNoAr() {
     }
   }, []);
 
-  // Online fetch
+  // Online fetch — always active when URL exists (unified mode)
   const fetchXml = useCallback(async () => {
-    if (sourceMode !== "online" || !xmlUrl.trim()) return;
+    if (!xmlUrl.trim()) return;
     try {
       const { data, error } = await supabase.functions.invoke("fetch-rss", {
         body: { url: xmlUrl.trim() },
@@ -351,20 +354,17 @@ export default function MusicaNoAr() {
       if (error || !data?.content) return;
       const parsed = parseXmlString(data.content);
       if (parsed) {
-        await processMusic(parsed);
+        await processMusic(parsed, "online");
       }
     } catch { }
-  }, [xmlUrl, processMusic, sourceMode]);
+  }, [xmlUrl, processMusic]);
 
   useEffect(() => {
-    if (sourceMode !== "online") {
-      if (fetchIntervalRef.current) clearInterval(fetchIntervalRef.current);
-      return;
-    }
+    if (!xmlUrl.trim()) return;
     fetchXml();
     fetchIntervalRef.current = setInterval(fetchXml, 5000);
     return () => { if (fetchIntervalRef.current) clearInterval(fetchIntervalRef.current); };
-  }, [fetchXml, sourceMode]);
+  }, [fetchXml]);
 
   // Background sync: upload to storage + log history (non-blocking)
   const syncingRef = useRef(false);
@@ -436,7 +436,7 @@ export default function MusicaNoAr() {
       const parsed = parseXmlString(text);
       if (parsed) {
         // Fire-and-forget: don't block polling with iTunes cover fetch
-        processMusicRef.current(parsed);
+        processMusicRef.current(parsed, "pasta");
       }
 
       // Background sync (non-blocking)
@@ -474,22 +474,22 @@ export default function MusicaNoAr() {
     setLocalFileContent(text);
 
     const parsed = parseXmlString(text);
-    if (parsed) await processMusic(parsed);
+    if (parsed) await processMusic(parsed, "pasta");
 
     syncToStorage(text);
     setLocalMonitoring(true);
   };
 
-  // Start 1s polling — stable callback, no interval restarts
+  // Local polling — always active when monitoring (unified mode, no sourceMode guard)
   useEffect(() => {
-    if (sourceMode !== "pasta" || !localMonitoring) {
+    if (!localMonitoring) {
       if (localPollRef.current) clearInterval(localPollRef.current);
       return;
     }
     if (!localFileRef.current && !fileHandleRef.current) return;
     localPollRef.current = setInterval(readLocalFile, 1000);
     return () => { if (localPollRef.current) clearInterval(localPollRef.current); };
-  }, [sourceMode, localMonitoring, readLocalFile]);
+  }, [localMonitoring, readLocalFile]);
 
   useEffect(() => {
     if (!music || !startTime) return;
@@ -590,47 +590,49 @@ export default function MusicaNoAr() {
 
           {/* LEFT - XML Config + History */}
           <div className="rounded-2xl p-3 flex flex-col gap-2" style={{ backgroundColor: "#ffffff", boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}>
-            {/* Source Tabs */}
-            <div className="flex gap-1 rounded-lg p-0.5" style={{ backgroundColor: "rgba(13,4,70,0.04)" }}>
-              <button
-                onClick={() => setSourceMode("online")}
-                className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-md text-[10px] font-bold transition-all"
-                style={sourceMode === "online"
-                  ? { background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#fff", boxShadow: "0 2px 6px rgba(38,143,250,0.3)" }
-                  : { color: "rgba(13,4,70,0.4)" }
-                }
-              >
-                <Globe size={11} /> Online
-              </button>
-              <button
-                onClick={() => setSourceMode("pasta")}
-                className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-md text-[10px] font-bold transition-all"
-                style={sourceMode === "pasta"
-                  ? { background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#fff", boxShadow: "0 2px 6px rgba(38,143,250,0.3)" }
-                  : { color: "rgba(13,4,70,0.4)" }
-                }
-              >
-                <FolderOpen size={11} /> Local
-              </button>
-            </div>
-
-            {/* Active mode indicator */}
+            {/* Unified mode indicator */}
             <div className="rounded-lg p-2 flex items-center gap-2" style={{
-              backgroundColor: sourceMode === "online" ? "rgba(38,143,250,0.08)" : "rgba(34,197,94,0.08)",
-              border: `1px solid ${sourceMode === "online" ? "rgba(38,143,250,0.2)" : "rgba(34,197,94,0.2)"}`
+              backgroundColor: "rgba(124,58,237,0.08)",
+              border: "1px solid rgba(124,58,237,0.2)"
             }}>
               <span className="relative flex h-2 w-2 shrink-0">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: sourceMode === "online" ? "#268ffa" : "#22c55e" }}></span>
-                <span className="relative inline-flex rounded-full h-2 w-2" style={{ backgroundColor: sourceMode === "online" ? "#268ffa" : "#22c55e" }}></span>
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: "#7c3aed" }}></span>
+                <span className="relative inline-flex rounded-full h-2 w-2" style={{ backgroundColor: "#7c3aed" }}></span>
               </span>
               <span className="text-[9px] font-bold" style={{ color: "#0d0446" }}>
-                {sourceMode === "online" ? "Modo Online ativo" : (localMonitoring ? "Modo Local ativo — monitorando" : "Modo Local — selecione um arquivo")}
+                Modo Unificado — monitorando ambas as origens
               </span>
             </div>
 
-            {/* Online URL */}
-            {sourceMode === "online" && (
-              <div>
+            {/* Source status badges */}
+            <div className="flex gap-1.5">
+              <div className="flex-1 rounded-lg p-1.5 flex items-center gap-1.5" style={{
+                backgroundColor: lastSource === "online" ? "rgba(38,143,250,0.12)" : "rgba(38,143,250,0.04)",
+                border: `1px solid ${lastSource === "online" ? "rgba(38,143,250,0.3)" : "rgba(38,143,250,0.1)"}`,
+              }}>
+                <Globe size={10} style={{ color: "#268ffa" }} />
+                <span className="text-[8px] font-bold" style={{ color: lastSource === "online" ? "#268ffa" : "rgba(13,4,70,0.4)" }}>
+                  Online {sourceStats.online > 0 ? `(${sourceStats.online}x)` : ""}
+                </span>
+                {lastSource === "online" && <span className="text-[7px] ml-auto font-bold px-1 py-0.5 rounded" style={{ backgroundColor: "rgba(38,143,250,0.15)", color: "#268ffa" }}>ATUAL</span>}
+              </div>
+              <div className="flex-1 rounded-lg p-1.5 flex items-center gap-1.5" style={{
+                backgroundColor: lastSource === "pasta" ? "rgba(34,197,94,0.12)" : "rgba(34,197,94,0.04)",
+                border: `1px solid ${lastSource === "pasta" ? "rgba(34,197,94,0.3)" : "rgba(34,197,94,0.1)"}`,
+              }}>
+                <FolderOpen size={10} style={{ color: "#22c55e" }} />
+                <span className="text-[8px] font-bold" style={{ color: lastSource === "pasta" ? "#22c55e" : "rgba(13,4,70,0.4)" }}>
+                  Local {sourceStats.pasta > 0 ? `(${sourceStats.pasta}x)` : ""}
+                </span>
+                {lastSource === "pasta" && <span className="text-[7px] ml-auto font-bold px-1 py-0.5 rounded" style={{ backgroundColor: "rgba(34,197,94,0.15)", color: "#22c55e" }}>ATUAL</span>}
+              </div>
+            </div>
+
+            {/* Online URL config */}
+            <div>
+              <p className="text-[8px] mb-1 font-bold uppercase tracking-wider flex items-center gap-1" style={{ color: "rgba(13,4,70,0.4)" }}>
+                <Globe size={9} /> Origem Online
+              </p>
                 {editingUrl ? (
                   <div className="flex gap-1.5">
                     <input
@@ -654,12 +656,13 @@ export default function MusicaNoAr() {
                     </button>
                   </div>
                 )}
-              </div>
-            )}
+            </div>
 
             {/* Local File */}
-            {sourceMode === "pasta" && (
-              <div>
+            <div>
+              <p className="text-[8px] mb-1 font-bold uppercase tracking-wider flex items-center gap-1" style={{ color: "rgba(13,4,70,0.4)" }}>
+                <FolderOpen size={9} /> Origem Local
+              </p>
                 {/* Device name editor */}
                 <div className="rounded-lg p-2 mb-2 flex items-center gap-2" style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "1px solid rgba(13,4,70,0.06)" }}>
                   <Monitor size={12} className="shrink-0" style={{ color: "#268ffa" }} />
@@ -757,8 +760,7 @@ export default function MusicaNoAr() {
                     Monitorando {localFileName} a cada 1s
                   </div>
                 )}
-              </div>
-            )}
+            </div>
 
             {/* Upload History */}
             {uploadHistory.length > 0 && (
