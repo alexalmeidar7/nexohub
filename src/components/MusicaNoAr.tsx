@@ -761,7 +761,7 @@ export default function MusicaNoAr() {
                   </div>
                 )}
               </div>
-            )}
+            </div>
 
             {/* Upload History */}
             {uploadHistory.length > 0 && (
