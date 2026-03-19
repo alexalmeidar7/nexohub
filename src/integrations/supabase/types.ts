@@ -322,6 +322,7 @@ export type Database = {
       }
       custom_vmix_buttons: {
         Row: {
+          color: string | null
           commands: Json
           created_at: string
           dias_semana: string[] | null
@@ -332,6 +333,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          color?: string | null
           commands?: Json
           created_at?: string
           dias_semana?: string[] | null
@@ -342,6 +344,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          color?: string | null
           commands?: Json
           created_at?: string
           dias_semana?: string[] | null

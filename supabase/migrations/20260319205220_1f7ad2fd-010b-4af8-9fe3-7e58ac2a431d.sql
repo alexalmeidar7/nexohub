@@ -1,0 +1,1 @@
+ALTER TABLE public.custom_vmix_buttons ADD COLUMN color text DEFAULT '#f59e0b';
