@@ -2242,14 +2242,17 @@ export default function VmixPage() {
                       {customButtons.map((btn: any) => {
                         const isBtnActive = activeCustomButton === btn.id;
                         const hasSchedule = btn.horario && btn.dias_semana?.length > 0;
+                        const btnColor = btn.color || "#f59e0b";
+                        const BtnIcon = getIconForName(btn.nome || "");
+                        const isDark = ["#dc2626","#8b5cf6","#3b82f6","#64748b"].includes(btnColor);
                         return (
                           <div
                             key={btn.id}
                             className="group/custom relative rounded-lg overflow-hidden cursor-pointer transition-all duration-200 hover:scale-[1.03]"
                             style={{
                               aspectRatio: "3/2",
-                              backgroundColor: isBtnActive ? "#f59e0b" : "#2a2a30",
-                              border: isBtnActive ? "2px solid #f59e0b" : "2px solid #333338",
+                              backgroundColor: isBtnActive ? btnColor : "#2a2a30",
+                              border: isBtnActive ? `2px solid ${btnColor}` : "2px solid #333338",
                             }}
                             onClick={async () => {
                               setActiveCustomButton(btn.id);
@@ -2266,8 +2269,8 @@ export default function VmixPage() {
                           >
                             {hasSchedule && (
                               <div className="absolute top-1 left-1 flex items-center gap-0.5 px-1 py-0.5 rounded" style={{ backgroundColor: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)", zIndex: 2 }}>
-                                <Clock size={7} style={{ color: "#f59e0b" }} />
-                                <span className="text-[6px] font-bold tabular-nums" style={{ color: "#f59e0b" }}>{btn.horario?.slice(0, 5)}</span>
+                                <Clock size={7} style={{ color: btnColor }} />
+                                <span className="text-[6px] font-bold tabular-nums" style={{ color: btnColor }}>{btn.horario?.slice(0, 5)}</span>
                               </div>
                             )}
                             {btn.dias_semana && btn.dias_semana.length > 0 && (
@@ -2277,14 +2280,15 @@ export default function VmixPage() {
                                   const dayOn = (btn.dias_semana as string[]).includes(dayLabels[i]);
                                   return (
                                     <span key={i} className="text-[4px] font-bold uppercase leading-none px-[2px] py-[1px] rounded-sm"
-                                      style={{ backgroundColor: dayOn ? "rgba(245,158,11,0.25)" : "transparent", color: dayOn ? "#f59e0b" : "#555" }}
+                                      style={{ backgroundColor: dayOn ? `${btnColor}40` : "transparent", color: dayOn ? btnColor : "#555" }}
                                     >{d}</span>
                                   );
                                 })}
                               </div>
                             )}
-                            <div className="absolute inset-0 flex items-center justify-center p-1.5 pt-4 pb-3">
-                              <span className="text-[9px] font-black uppercase tracking-wider text-center leading-tight" style={{ color: isBtnActive ? "#000" : "#ccc" }}>{btn.nome}</span>
+                            <div className="absolute inset-0 flex flex-col items-center justify-center p-1.5 pt-4 pb-3 gap-1">
+                              <BtnIcon size={16} style={{ color: isBtnActive ? (isDark ? "#fff" : "#000") : btnColor, opacity: 0.8 }} />
+                              <span className="text-[9px] font-black uppercase tracking-wider text-center leading-tight" style={{ color: isBtnActive ? (isDark ? "#fff" : "#000") : "#ccc" }}>{btn.nome}</span>
                             </div>
                             <div className="absolute bottom-0 left-0 right-0 flex items-center justify-center gap-1 py-1 opacity-0 group-hover/custom:opacity-100 transition-all duration-200 translate-y-full group-hover/custom:translate-y-0" style={{ backgroundColor: "rgba(0,0,0,0.75)", backdropFilter: "blur(4px)" }}>
                               <button onClick={(e) => { e.stopPropagation(); setEditingCustomButtonId(btn.id); }} className="w-4 h-4 rounded flex items-center justify-center hover:bg-white/20 transition-colors" style={{ color: "#ccc" }} title="Editar"><Wand2 size={9} /></button>
