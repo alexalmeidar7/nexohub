@@ -924,7 +924,7 @@ export default function PlayerPage() {
       inFlight = true;
       try {
         if (!cachedXmlUrl) {
-          const { data: settings } = await supabase.from("user_settings").select("music_xml_url").eq("user_id", user.id).maybeSingle();
+          const { data: settings } = await supabase.from("user_settings").select("music_xml_url").eq("user_id", effectiveUserId).maybeSingle();
           cachedXmlUrl = settings?.music_xml_url || null;
         }
         if (!cachedXmlUrl || cancelled) return;
