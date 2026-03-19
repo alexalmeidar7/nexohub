@@ -474,7 +474,7 @@ export default function MusicaNoAr() {
     setLocalFileContent(text);
 
     const parsed = parseXmlString(text);
-    if (parsed) await processMusic(parsed);
+    if (parsed) await processMusic(parsed, "pasta");
 
     syncToStorage(text);
     setLocalMonitoring(true);
