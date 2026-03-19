@@ -304,7 +304,7 @@ export default function MusicaNoAr() {
     }, { onConflict: "user_id" });
   };
 
-  const processMusic = useCallback(async (data: MusicData) => {
+  const processMusic = useCallback(async (data: MusicData, source?: "online" | "pasta") => {
     const prevRaw = localStorage.getItem(MUSIC_DATA_KEY);
     const prev: MusicData | null = prevRaw ? JSON.parse(prevRaw) : null;
 
@@ -330,6 +330,12 @@ export default function MusicaNoAr() {
       setMusic(data);
       setStartTime(now);
       setElapsed(0);
+      // Track which source detected the change first
+      if (source) {
+        setLastSource(source);
+        lastSourceRef.current = source;
+        setSourceStats(prev => ({ ...prev, [source]: prev[source] + 1 }));
+      }
     } else {
       if (data.capa && (!prev.capa || prev.capa !== data.capa)) {
         localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify({ ...prev, capa: data.capa }));
