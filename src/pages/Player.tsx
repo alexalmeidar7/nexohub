@@ -1049,11 +1049,15 @@ export default function PlayerPage() {
         } else if (audio.canPlayType("application/vnd.apple.mpegurl")) {
           audio.src = freshUrl;
           audio.load();
-          audio.play().catch((e) => console.warn("Audio play blocked:", e));
+          audio.play().then(() => {
+            if (forceAutoplay && !mutedRef.current) { audio.muted = false; setMuted(false); }
+          }).catch((e) => console.warn("Audio play blocked:", e));
         } else {
           audio.src = freshUrl;
           audio.load();
-          audio.play().catch((e) => console.warn("Audio play blocked:", e));
+          audio.play().then(() => {
+            if (forceAutoplay && !mutedRef.current) { audio.muted = false; setMuted(false); }
+          }).catch((e) => console.warn("Audio play blocked:", e));
         }
       } else {
         if (audioRef.current) { audioRef.current.pause(); audioRef.current.src = ""; }
