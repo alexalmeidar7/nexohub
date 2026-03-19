@@ -553,6 +553,7 @@ export default function MusicaNoAr() {
               </div>
             )}
           </div>
+        </div>
       </div>
 
       {/* XML Output Link — outside the main card */}
