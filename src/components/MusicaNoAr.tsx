@@ -361,7 +361,7 @@ export default function MusicaNoAr() {
       return;
     }
     fetchXml();
-    fetchIntervalRef.current = setInterval(fetchXml, 2000);
+    fetchIntervalRef.current = setInterval(fetchXml, 5000);
     return () => { if (fetchIntervalRef.current) clearInterval(fetchIntervalRef.current); };
   }, [fetchXml, sourceMode]);
 
