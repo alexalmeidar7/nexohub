@@ -197,46 +197,48 @@ export default function MusicaNoAr() {
   const [loadingCover, setLoadingCover] = useState(false);
   const [presenterFallback, setPresenterFallback] = useState<{ nome: string; foto: string } | null>(null);
 
-  // New state for dual source mode
-  const [sourceMode, setSourceModeState] = useState<"online" | "pasta">(() => {
-    const saved = localStorage.getItem(SOURCE_MODE_KEY);
-    return saved === "pasta" ? "pasta" : "online";
-  });
-  const setSourceMode = (mode: "online" | "pasta") => {
-    setSourceModeState(mode);
-    localStorage.setItem(SOURCE_MODE_KEY, mode);
-  };
+  // Source mode: persisted in DB, loaded on mount
+  const [sourceMode, setSourceModeState] = useState<"online" | "pasta">("online");
+  const [sourceModeLoaded, setSourceModeLoaded] = useState(false);
   const [localFileContent, setLocalFileContent] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const localFileRef = useRef<File | null>(null);
   const localPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [uploadHistory, setUploadHistory] = useState<UploadLogEntry[]>([]);
   const [localFileName, setLocalFileName] = useState<string>("");
-  const [localSaved, setLocalSaved] = useState(false);
+  const [localMonitoring, setLocalMonitoring] = useState(false);
   const [editingDeviceName, setEditingDeviceName] = useState(false);
   const [deviceNameInput, setDeviceNameInput] = useState(() => getDeviceName());
   const [currentDeviceName, setCurrentDeviceName] = useState(() => getDeviceName());
 
-  // Prompt to switch from local to online
-  const [showSwitchPrompt, setShowSwitchPrompt] = useState(false);
-  const promptDismissedRef = useRef(false);
-
-  // On mount: if last source was "pasta", show prompt
-  useEffect(() => {
-    const saved = localStorage.getItem(SOURCE_MODE_KEY);
-    if (saved === "pasta" && !promptDismissedRef.current) {
-      setShowSwitchPrompt(true);
+  // Save source mode to DB + state
+  const setSourceMode = async (mode: "online" | "pasta") => {
+    setSourceModeState(mode);
+    localStorage.setItem(SOURCE_MODE_KEY, mode);
+    // Stop local monitoring when switching to online
+    if (mode === "online") {
+      setLocalMonitoring(false);
+      setLocalFileName("");
+      localFileRef.current = null;
+      setLocalFileContent(null);
     }
-  }, []);
+    if (user) {
+      await supabase.from("user_settings").upsert({
+        user_id: user.id,
+        music_source_mode: mode,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: "user_id" });
+    }
+  };
 
-  // Load URL and history from DB
+  // Load URL, source mode, and history from DB
   useEffect(() => {
     if (!user) return;
     const loadData = async () => {
       const [{ data }, history] = await Promise.all([
         supabase
           .from("user_settings")
-          .select("music_xml_url")
+          .select("music_xml_url, music_source_mode")
           .eq("user_id", user.id)
           .maybeSingle(),
         loadUploadHistoryFromDb(user.id),
@@ -251,6 +253,13 @@ export default function MusicaNoAr() {
           updated_at: new Date().toISOString(),
         }, { onConflict: "user_id" });
       }
+      // Restore saved source mode
+      const savedMode = (data as any)?.music_source_mode;
+      if (savedMode === "pasta" || savedMode === "online") {
+        setSourceModeState(savedMode);
+        localStorage.setItem(SOURCE_MODE_KEY, savedMode);
+      }
+      setSourceModeLoaded(true);
     };
     loadData();
   }, [user]);
@@ -340,7 +349,6 @@ export default function MusicaNoAr() {
       const parsed = parseXmlString(data.content);
       if (parsed) {
         await processMusic(parsed);
-        setUploadHistory(await addUploadLogToDb(user!.id, "online"));
       }
     } catch { }
   }, [xmlUrl, processMusic, sourceMode]);
@@ -381,54 +389,54 @@ export default function MusicaNoAr() {
       const parsed = parseXmlString(text);
       if (parsed) {
         await processMusic(parsed);
-        if (user) setUploadHistory(await addUploadLogToDb(user.id, "pasta", currentDeviceName));
       }
     } catch { }
   }, [processMusic, localFileContent, user, currentDeviceName]);
 
+  // Handle file select: immediately save, upload, and start monitoring
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     localFileRef.current = file;
     setLocalFileName(file.name);
-    setLocalSaved(false);
+
     const text = await readFileWithEncoding(file);
     setLocalFileContent(text);
+
     const parsed = parseXmlString(text);
     if (parsed) {
       await processMusic(parsed);
     }
-  };
 
-  // Save local source: uploads to storage and starts polling
-  const handleSaveLocal = async () => {
-    if (!user || !localFileContent) return;
-    setLocalSaved(true);
-    const utf8Blob = new Blob([new TextEncoder().encode(localFileContent)], { type: "application/xml" });
-    const filePath = `local-xml-${user.id}.xml`;
-    await supabase.storage.from("xml-files").upload(filePath, utf8Blob, { upsert: true, contentType: "application/xml" });
-    const { data: urlData } = supabase.storage.from("xml-files").getPublicUrl(filePath);
-    if (urlData?.publicUrl) {
-      await supabase.from("user_settings").upsert({
-        user_id: user.id,
-        music_xml_url: urlData.publicUrl,
-        updated_at: new Date().toISOString(),
-      }, { onConflict: "user_id" });
-      setXmlUrl(urlData.publicUrl);
+    // Immediately upload to storage and start monitoring
+    if (user) {
+      const utf8Blob = new Blob([new TextEncoder().encode(text)], { type: "application/xml" });
+      const filePath = `local-xml-${user.id}.xml`;
+      await supabase.storage.from("xml-files").upload(filePath, utf8Blob, { upsert: true, contentType: "application/xml" });
+      const { data: urlData } = supabase.storage.from("xml-files").getPublicUrl(filePath);
+      if (urlData?.publicUrl) {
+        await supabase.from("user_settings").upsert({
+          user_id: user.id,
+          music_xml_url: urlData.publicUrl,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: "user_id" });
+        setXmlUrl(urlData.publicUrl);
+      }
+      setUploadHistory(await addUploadLogToDb(user.id, "pasta", currentDeviceName));
     }
-    setUploadHistory(await addUploadLogToDb(user.id, "pasta", currentDeviceName));
+    setLocalMonitoring(true);
   };
 
-  // Start 1s polling only after local is saved
+  // Start 1s polling when local file is selected and monitoring
   useEffect(() => {
-    if (sourceMode !== "pasta" || !localSaved) {
+    if (sourceMode !== "pasta" || !localMonitoring) {
       if (localPollRef.current) clearInterval(localPollRef.current);
       return;
     }
     if (!localFileRef.current) return;
     localPollRef.current = setInterval(readLocalFile, 1000);
     return () => { if (localPollRef.current) clearInterval(localPollRef.current); };
-  }, [sourceMode, localSaved, readLocalFile]);
+  }, [sourceMode, localMonitoring, readLocalFile]);
 
   useEffect(() => {
     if (!music || !startTime) return;
