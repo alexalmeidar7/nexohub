@@ -23,6 +23,7 @@ interface UploadLogEntry {
 const MUSIC_DATA_KEY = "masterview_music_data";
 const MUSIC_START_KEY = "masterview_music_start";
 const UPLOAD_HISTORY_KEY = "masterview_xml_upload_history";
+const SOURCE_MODE_KEY = "masterview_source_mode";
 const DEFAULT_XML_URL = "https://positivafm.com.br/storage/pulsar/positivafm.xml";
 
 function parseXmlString(xmlStr: string): MusicData | null {
@@ -128,7 +129,14 @@ export default function MusicaNoAr() {
   const [presenterFallback, setPresenterFallback] = useState<{ nome: string; foto: string } | null>(null);
 
   // New state for dual source mode
-  const [sourceMode, setSourceMode] = useState<"online" | "pasta">("online");
+  const [sourceMode, setSourceModeState] = useState<"online" | "pasta">(() => {
+    const saved = localStorage.getItem(SOURCE_MODE_KEY);
+    return saved === "pasta" ? "pasta" : "online";
+  });
+  const setSourceMode = (mode: "online" | "pasta") => {
+    setSourceModeState(mode);
+    localStorage.setItem(SOURCE_MODE_KEY, mode);
+  };
   const [localFileContent, setLocalFileContent] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const localFileRef = useRef<File | null>(null);
@@ -281,7 +289,7 @@ export default function MusicaNoAr() {
     }
     if (!localFileRef.current) return;
     readLocalFile();
-    localPollRef.current = setInterval(readLocalFile, 2000);
+    localPollRef.current = setInterval(readLocalFile, 1000);
     return () => { if (localPollRef.current) clearInterval(localPollRef.current); };
   }, [sourceMode, readLocalFile]);
 
@@ -462,7 +470,7 @@ export default function MusicaNoAr() {
                 {localFileName && (
                   <div className="mt-1 flex items-center gap-1.5 px-2 py-0.5 rounded text-[8px]" style={{ backgroundColor: "rgba(38,143,250,0.06)", color: "rgba(13,4,70,0.5)" }}>
                     <span className="relative flex h-1.5 w-1.5 shrink-0"><span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: "#22c55e" }}></span><span className="relative inline-flex rounded-full h-1.5 w-1.5" style={{ backgroundColor: "#22c55e" }}></span></span>
-                    Monitorando a cada 2s
+                    Monitorando a cada 1s
                   </div>
                 )}
               </div>
