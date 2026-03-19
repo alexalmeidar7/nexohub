@@ -171,7 +171,7 @@ export default function PromocoesKiosk() {
       const [empresaData, { data: promoData }, { data: progsData }, { data: testData }] = await Promise.all([
         getEmpresaConfig(),
         supabase.from("promocoes").select("*").order("data_inicio"),
-        supabase.from("programas").select("*").eq("ativo", true),
+        supabase.from("programas").select("*").eq("ativo", true).ilike("estudio", "%fm%"),
         supabase.from("testemunhais").select("*"),
       ]);
       setConfig(empresaData);

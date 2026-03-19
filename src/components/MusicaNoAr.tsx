@@ -135,7 +135,7 @@ export default function MusicaNoAr() {
   useEffect(() => {
     const fetchPresenter = async () => {
       const [{ data: progsData }, apresentadores] = await Promise.all([
-        supabase.from("programas").select("*"),
+        supabase.from("programas").select("*").ilike("estudio", "%fm%"),
         getApresentadores(),
       ]);
       if (!progsData) return;

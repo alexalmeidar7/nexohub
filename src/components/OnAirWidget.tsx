@@ -21,7 +21,7 @@ const DIAS_MAP: Record<number, string> = {
 };
 
 async function getProgramas(): Promise<Programa[]> {
-  const { data } = await supabase.from("programas").select("*");
+  const { data } = await supabase.from("programas").select("*").ilike("estudio", "%fm%");
   if (!data) return [];
   return data.map(p => ({
     id: p.id,
