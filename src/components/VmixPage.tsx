@@ -152,6 +152,9 @@ export default function VmixPage() {
    const [activePreset, setActivePreset] = useState<string | null>(null);
   const [editingPresetId, setEditingPresetId] = useState<string | null>(null);
   const [dragPresetIdx, setDragPresetIdx] = useState<number | null>(null);
+  const [customButtons, setCustomButtons] = useState<any[]>([]);
+  const [editingCustomButtonId, setEditingCustomButtonId] = useState<string | null | "new">(null);
+  const [activeCustomButton, setActiveCustomButton] = useState<string | null>(null);
   const [connectionMode, setConnectionMode] = useState<"direct" | "proxy">(() => {
     try { return (localStorage.getItem("vmix_conn_mode") as "direct" | "proxy") || "direct"; }
     catch { return "direct"; }
