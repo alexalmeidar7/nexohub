@@ -436,7 +436,7 @@ export default function MusicaNoAr() {
       const parsed = parseXmlString(text);
       if (parsed) {
         // Fire-and-forget: don't block polling with iTunes cover fetch
-        processMusicRef.current(parsed);
+        processMusicRef.current(parsed, "pasta");
       }
 
       // Background sync (non-blocking)
