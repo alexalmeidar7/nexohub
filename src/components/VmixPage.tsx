@@ -2153,8 +2153,8 @@ export default function VmixPage() {
                                 title="Arraste para reposicionar"
                               >
                                 <GripVertical size={7} style={{ color: "#666" }} />
-                                <Clock size={8} style={{ color: progOnAir ? "#22c55e" : "#888" }} />
-                                <span className="text-[7px] font-bold tabular-nums" style={{ color: progOnAir ? "#22c55e" : "#999" }}>{startTime} - {endTime}</span>
+                                <Clock size={8} style={{ color: progOnAir ? "#fff" : "#888" }} />
+                                <span className="text-[7px] font-bold tabular-nums" style={{ color: progOnAir ? "#fff" : "#999" }}>{startTime} - {endTime}</span>
                               </div>
                             )}
                             {prog.estudio && (
