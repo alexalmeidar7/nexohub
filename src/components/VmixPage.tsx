@@ -280,6 +280,18 @@ export default function VmixPage() {
       });
   }, [user]);
 
+  // Load custom buttons
+  const loadCustomButtons = useCallback(async () => {
+    if (!user) return;
+    const { data } = await (supabase.from("custom_vmix_buttons" as any) as any)
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at");
+    if (data) setCustomButtons(data);
+  }, [user]);
+
+  useEffect(() => { loadCustomButtons(); }, [loadCustomButtons]);
+
   useEffect(() => {
     if (!user) return;
     const loadUrl = async () => {
