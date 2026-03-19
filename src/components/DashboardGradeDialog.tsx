@@ -55,7 +55,7 @@ function DashboardGradeDialog({ open, onOpenChange }: Props) {
     if (!open) return;
     setLoading(true);
     Promise.all([
-      supabase.from("programas").select("*"),
+      supabase.from("programas").select("*").ilike("estudio", "%fm%"),
       getApresentadores(),
     ]).then(([{ data }, aps]) => {
       if (data) {

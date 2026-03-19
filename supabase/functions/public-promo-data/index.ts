@@ -44,7 +44,7 @@ Deno.serve(async (req) => {
     const [empresaRes, promoRes, progsRes, testRes, aprsRes] = await Promise.all([
       supabase.from("empresa_config").select("*").eq("user_id", userId).maybeSingle(),
       supabase.from("promocoes").select("*").eq("user_id", userId).order("data_inicio"),
-      supabase.from("programas").select("*").eq("user_id", userId).eq("ativo", true),
+      supabase.from("programas").select("*").eq("user_id", userId).eq("ativo", true).ilike("estudio", "%fm%"),
       supabase.from("testemunhais").select("*").eq("user_id", userId),
       supabase.from("apresentadores").select("*").eq("user_id", userId).eq("ativo", true),
     ]);
