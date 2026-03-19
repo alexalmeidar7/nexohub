@@ -3,6 +3,22 @@ import { ArrowRight, Loader2, CheckCircle, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import logoNexo from "@/assets/logo-nexo.png";
 
+const AUTH_REQUEST_TIMEOUT_MS = 12000;
+
+const withTimeout = async <T,>(promise: Promise<T>, timeoutMessage: string): Promise<T> => {
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => reject(new Error(timeoutMessage)), AUTH_REQUEST_TIMEOUT_MS);
+  });
+
+  try {
+    return await Promise.race([promise, timeoutPromise]);
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId);
+  }
+};
+
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [pass, setPass] = useState("");
@@ -19,14 +35,28 @@ export default function LoginScreen() {
       setForgotError("Preencha o email.");
       return;
     }
+
     setForgotLoading(true);
     setForgotError("");
-    const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail, {
-      redirectTo: `${window.location.origin}/reset-password`,
-    });
-    if (error) setForgotError(error.message);
-    else setForgotSent(true);
-    setForgotLoading(false);
+
+    try {
+      const { error } = await withTimeout(
+        supabase.auth.resetPasswordForEmail(forgotEmail.trim(), {
+          redirectTo: `${window.location.origin}/reset-password`,
+        }),
+        "Tempo de conexão excedido. Tente novamente."
+      );
+
+      if (error) {
+        setForgotError(error.message);
+      } else {
+        setForgotSent(true);
+      }
+    } catch {
+      setForgotError("Não foi possível conectar ao servidor. Tente novamente.");
+    } finally {
+      setForgotLoading(false);
+    }
   };
 
   const handleSubmit = async () => {
@@ -34,11 +64,28 @@ export default function LoginScreen() {
       setError("Preencha email e senha.");
       return;
     }
+
     setLoading(true);
     setError("");
-    const { error } = await supabase.auth.signInWithPassword({ email, password: pass });
-    if (error) setError(error.message);
-    setLoading(false);
+
+    try {
+      const { error } = await withTimeout(
+        supabase.auth.signInWithPassword({ email: email.trim(), password: pass }),
+        "Tempo de conexão excedido. Tente novamente."
+      );
+
+      if (error) {
+        if (error.message.toLowerCase().includes("invalid login credentials")) {
+          setError("E-mail ou senha inválidos.");
+        } else {
+          setError(error.message);
+        }
+      }
+    } catch {
+      setError("Não foi possível conectar ao servidor. Tente novamente.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const closeForgot = () => {
