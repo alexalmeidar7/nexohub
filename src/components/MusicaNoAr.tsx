@@ -384,7 +384,7 @@ export default function MusicaNoAr() {
         if (user) setUploadHistory(await addUploadLogToDb(user.id, "pasta", currentDeviceName));
       }
     } catch { }
-  }, [processMusic, localFileContent, user]);
+  }, [processMusic, localFileContent, user, currentDeviceName]);
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
