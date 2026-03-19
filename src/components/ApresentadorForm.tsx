@@ -4,6 +4,7 @@ import { Instagram, UserCheck, UserX, Trash2, Pencil, X, Loader2, CheckCircle, U
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { uploadImageToStorage } from "@/lib/uploadImageToStorage";
 import {
   Select,
   SelectContent,
