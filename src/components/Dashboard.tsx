@@ -169,7 +169,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       .from("programas")
       .select("id, dias_semana, horario_inicio, horario_fim")
       .eq("user_id", user.id)
-      .eq("ativo", true);
+      .eq("ativo", true)
+      .ilike("estudio", "%fm%");
     if (!data) return null;
 
     const now = new Date();

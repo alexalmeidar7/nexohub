@@ -4,6 +4,7 @@ import { Instagram, UserCheck, UserX, Trash2, Pencil, X, Loader2, CheckCircle, U
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { uploadImageToStorage } from "@/lib/uploadImageToStorage";
 import {
   Select,
   SelectContent,
@@ -85,13 +86,21 @@ export default function ApresentadorForm() {
 
     const cargoValue = categoria === "Convidado" ? categoria : categoria;
 
+    // Upload photo to storage if it's base64
+    let fotoUrl = showFoto ? foto : "";
+    if (fotoUrl && fotoUrl.startsWith("data:")) {
+      const targetId = editingId || crypto.randomUUID();
+      const path = `apresentadores/${user.id}/${targetId}.webp`;
+      fotoUrl = await uploadImageToStorage(fotoUrl, "empresa-assets", path);
+    }
+
     if (editingId) {
       await supabase.from("apresentadores").update({
         nome: nome.trim(),
         cargo: cargoValue,
         instagram: instagram.trim(),
         whatsapp: whatsapp.replace(/\D/g, "").length > 2 ? whatsapp.trim() : "",
-        foto: showFoto ? foto : "",
+        foto: fotoUrl,
         ativo,
       } as any).eq("id", editingId);
     } else {
@@ -101,7 +110,7 @@ export default function ApresentadorForm() {
         cargo: cargoValue,
         instagram: instagram.trim(),
         whatsapp: whatsapp.replace(/\D/g, "").length > 2 ? whatsapp.trim() : "",
-        foto: showFoto ? foto : "",
+        foto: fotoUrl,
         ativo,
       } as any);
     }
