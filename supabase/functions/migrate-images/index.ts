@@ -15,111 +15,101 @@ function base64ToUint8Array(dataUrl: string): { data: Uint8Array; contentType: s
   return { data: arr, contentType };
 }
 
+async function migrateOne(
+  supabase: any,
+  table: string,
+  id: string,
+  userId: string,
+  column: string,
+  base64Value: string,
+  subFolder: string,
+  nameSuffix: string
+): Promise<string | null> {
+  try {
+    const { data: imgData, contentType } = base64ToUint8Array(base64Value);
+    const ext = contentType.includes("png") ? "png" : "jpg";
+    const path = `${subFolder}/${userId}/${id}${nameSuffix}.${ext}`;
+
+    const { error: upErr } = await supabase.storage
+      .from("empresa-assets")
+      .upload(path, imgData, { upsert: true, contentType, cacheControl: "3600" });
+
+    if (upErr) return `upload error: ${upErr.message}`;
+
+    const { data: urlData } = supabase.storage.from("empresa-assets").getPublicUrl(path);
+    const { error: dbErr } = await supabase.from(table).update({ [column]: urlData.publicUrl }).eq("id", id);
+    if (dbErr) return `db update error: ${dbErr.message}`;
+    return null; // success
+  } catch (e) {
+    return String(e);
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
 
   try {
+    const { table = "all", limit = 5 } = await req.json().catch(() => ({}));
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
     const results: string[] = [];
 
-    // 1. Migrate apresentadores.foto
-    const { data: apresentadores } = await supabase
-      .from("apresentadores")
-      .select("id, user_id, foto, nome")
-      .not("foto", "eq", "")
-      .not("foto", "is", null);
+    // Apresentadores
+    if (table === "all" || table === "apresentadores") {
+      const { data: rows } = await supabase
+        .from("apresentadores")
+        .select("id, user_id, foto, nome")
+        .like("foto", "data:%")
+        .limit(limit);
 
-    let apCount = 0;
-    for (const ap of (apresentadores || [])) {
-      if (!ap.foto || !ap.foto.startsWith("data:")) continue;
-      try {
-        const { data: imgData, contentType } = base64ToUint8Array(ap.foto);
-        const ext = contentType.includes("png") ? "png" : "jpg";
-        const path = `apresentadores/${ap.user_id}/${ap.id}.${ext}`;
-
-        const { error: upErr } = await supabase.storage
-          .from("empresa-assets")
-          .upload(path, imgData, { upsert: true, contentType, cacheControl: "3600" });
-
-        if (upErr) {
-          results.push(`❌ Apresentador ${ap.nome}: ${upErr.message}`);
-          continue;
-        }
-
-        const { data: urlData } = supabase.storage.from("empresa-assets").getPublicUrl(path);
-        const publicUrl = urlData.publicUrl;
-
-        await supabase.from("apresentadores").update({ foto: publicUrl }).eq("id", ap.id);
-        apCount++;
-      } catch (e) {
-        results.push(`❌ Apresentador ${ap.nome}: ${String(e)}`);
+      for (const row of (rows || [])) {
+        const err = await migrateOne(supabase, "apresentadores", row.id, row.user_id, "foto", row.foto, "apresentadores", "");
+        results.push(err ? `❌ Apresentador ${row.nome}: ${err}` : `✅ Apresentador ${row.nome}`);
       }
     }
-    results.push(`✅ Apresentadores migrados: ${apCount}`);
 
-    // 2. Migrate programas.thumb and programas.capa
-    const { data: programas } = await supabase
-      .from("programas")
-      .select("id, user_id, thumb, capa, nome");
+    // Programas thumb
+    if (table === "all" || table === "programas") {
+      const { data: thumbRows } = await supabase
+        .from("programas")
+        .select("id, user_id, thumb, nome")
+        .like("thumb", "data:%")
+        .limit(limit);
 
-    let thumbCount = 0;
-    let capaCount = 0;
-    for (const prog of (programas || [])) {
-      // Thumb
-      if (prog.thumb && prog.thumb.startsWith("data:")) {
-        try {
-          const { data: imgData, contentType } = base64ToUint8Array(prog.thumb);
-          const ext = contentType.includes("png") ? "png" : "jpg";
-          const path = `programas/${prog.user_id}/${prog.id}_thumb.${ext}`;
-
-          const { error: upErr } = await supabase.storage
-            .from("empresa-assets")
-            .upload(path, imgData, { upsert: true, contentType, cacheControl: "3600" });
-
-          if (!upErr) {
-            const { data: urlData } = supabase.storage.from("empresa-assets").getPublicUrl(path);
-            await supabase.from("programas").update({ thumb: urlData.publicUrl }).eq("id", prog.id);
-            thumbCount++;
-          } else {
-            results.push(`❌ Thumb ${prog.nome}: ${upErr.message}`);
-          }
-        } catch (e) {
-          results.push(`❌ Thumb ${prog.nome}: ${String(e)}`);
-        }
+      for (const row of (thumbRows || [])) {
+        const err = await migrateOne(supabase, "programas", row.id, row.user_id, "thumb", row.thumb, "programas", "_thumb");
+        results.push(err ? `❌ Thumb ${row.nome}: ${err}` : `✅ Thumb ${row.nome}`);
       }
 
-      // Capa
-      if (prog.capa && prog.capa.startsWith("data:")) {
-        try {
-          const { data: imgData, contentType } = base64ToUint8Array(prog.capa);
-          const ext = contentType.includes("png") ? "png" : "jpg";
-          const path = `programas/${prog.user_id}/${prog.id}_capa.${ext}`;
+      // Programas capa
+      const { data: capaRows } = await supabase
+        .from("programas")
+        .select("id, user_id, capa, nome")
+        .like("capa", "data:%")
+        .limit(limit);
 
-          const { error: upErr } = await supabase.storage
-            .from("empresa-assets")
-            .upload(path, imgData, { upsert: true, contentType, cacheControl: "3600" });
-
-          if (!upErr) {
-            const { data: urlData } = supabase.storage.from("empresa-assets").getPublicUrl(path);
-            await supabase.from("programas").update({ capa: urlData.publicUrl }).eq("id", prog.id);
-            capaCount++;
-          } else {
-            results.push(`❌ Capa ${prog.nome}: ${upErr.message}`);
-          }
-        } catch (e) {
-          results.push(`❌ Capa ${prog.nome}: ${String(e)}`);
-        }
+      for (const row of (capaRows || [])) {
+        const err = await migrateOne(supabase, "programas", row.id, row.user_id, "capa", row.capa, "programas", "_capa");
+        results.push(err ? `❌ Capa ${row.nome}: ${err}` : `✅ Capa ${row.nome}`);
       }
     }
-    results.push(`✅ Thumbs migradas: ${thumbCount}`);
-    results.push(`✅ Capas migradas: ${capaCount}`);
 
-    return new Response(JSON.stringify({ success: true, results }), {
+    // Check remaining
+    const [{ count: apRemain }, { count: thumbRemain }, { count: capaRemain }] = await Promise.all([
+      supabase.from("apresentadores").select("id", { count: "exact", head: true }).like("foto", "data:%"),
+      supabase.from("programas").select("id", { count: "exact", head: true }).like("thumb", "data:%"),
+      supabase.from("programas").select("id", { count: "exact", head: true }).like("capa", "data:%"),
+    ]);
+
+    return new Response(JSON.stringify({
+      success: true,
+      results,
+      remaining: { apresentadores: apRemain || 0, thumbs: thumbRemain || 0, capas: capaRemain || 0 },
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
