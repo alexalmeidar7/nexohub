@@ -156,7 +156,7 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
       await (supabase.from("custom_vmix_buttons" as any) as any).insert({ ...payload, user_id: userId });
     }
     setSaving(false);
-    toast({ title: "Botão salvo", description: `"${nome}" salvo com ${commands.length} ação(ões).` });
+    toast({ title: "Efeito salvo", description: `"${nome}" salvo com ${commands.length} ação(ões).` });
     onSaved();
     onClose();
   };
