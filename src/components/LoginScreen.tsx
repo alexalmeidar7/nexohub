@@ -3,13 +3,14 @@ import { ArrowRight, Loader2, CheckCircle, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import logoNexo from "@/assets/logo-nexo.png";
 
-const AUTH_REQUEST_TIMEOUT_MS = 12000;
+const AUTH_TIMEOUT_FAST_MS = 12000;
+const AUTH_TIMEOUT_RETRY_MS = 25000;
 
-const withTimeout = async <T,>(promise: Promise<T>, timeoutMessage: string): Promise<T> => {
+const withTimeout = async <T,>(promise: Promise<T>, timeoutMs: number, timeoutMessage: string): Promise<T> => {
   let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
   const timeoutPromise = new Promise<never>((_, reject) => {
-    timeoutId = setTimeout(() => reject(new Error(timeoutMessage)), AUTH_REQUEST_TIMEOUT_MS);
+    timeoutId = setTimeout(() => reject(new Error(timeoutMessage)), timeoutMs);
   });
 
   try {
@@ -17,6 +18,17 @@ const withTimeout = async <T,>(promise: Promise<T>, timeoutMessage: string): Pro
   } finally {
     if (timeoutId) clearTimeout(timeoutId);
   }
+};
+
+const isConnectionLikeError = (value: unknown) => {
+  const message = String((value as { message?: string } | undefined)?.message ?? value ?? "").toLowerCase();
+  return (
+    message.includes("timeout") ||
+    message.includes("failed to fetch") ||
+    message.includes("network") ||
+    message.includes("load failed") ||
+    message.includes("não foi possível conectar")
+  );
 };
 
 export default function LoginScreen() {
@@ -39,21 +51,27 @@ export default function LoginScreen() {
     setForgotLoading(true);
     setForgotError("");
 
-    try {
-      const { error } = await withTimeout(
-        supabase.auth.resetPasswordForEmail(forgotEmail.trim(), {
-          redirectTo: `${window.location.origin}/reset-password`,
-        }),
-        "Tempo de conexão excedido. Tente novamente."
-      );
+    const request = () =>
+      supabase.auth.resetPasswordForEmail(forgotEmail.trim(), {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
 
-      if (error) {
-        setForgotError(error.message);
+    try {
+      const { error } = await withTimeout(request(), AUTH_TIMEOUT_FAST_MS, "Tempo de conexão excedido.");
+      if (error) setForgotError(error.message);
+      else setForgotSent(true);
+    } catch (firstError) {
+      if (!isConnectionLikeError(firstError)) {
+        setForgotError("Não foi possível enviar o link. Tente novamente.");
       } else {
-        setForgotSent(true);
+        try {
+          const { error } = await withTimeout(request(), AUTH_TIMEOUT_RETRY_MS, "Tempo de conexão excedido.");
+          if (error) setForgotError(error.message);
+          else setForgotSent(true);
+        } catch {
+          setForgotError("Servidor ainda iniciando. Aguarde alguns segundos e tente novamente.");
+        }
       }
-    } catch {
-      setForgotError("Não foi possível conectar ao servidor. Tente novamente.");
     } finally {
       setForgotLoading(false);
     }
@@ -68,11 +86,10 @@ export default function LoginScreen() {
     setLoading(true);
     setError("");
 
+    const request = () => supabase.auth.signInWithPassword({ email: email.trim(), password: pass });
+
     try {
-      const { error } = await withTimeout(
-        supabase.auth.signInWithPassword({ email: email.trim(), password: pass }),
-        "Tempo de conexão excedido. Tente novamente."
-      );
+      const { error } = await withTimeout(request(), AUTH_TIMEOUT_FAST_MS, "Tempo de conexão excedido.");
 
       if (error) {
         if (error.message.toLowerCase().includes("invalid login credentials")) {
@@ -81,8 +98,23 @@ export default function LoginScreen() {
           setError(error.message);
         }
       }
-    } catch {
-      setError("Não foi possível conectar ao servidor. Tente novamente.");
+    } catch (firstError) {
+      if (!isConnectionLikeError(firstError)) {
+        setError("Não foi possível autenticar. Tente novamente.");
+      } else {
+        try {
+          const { error } = await withTimeout(request(), AUTH_TIMEOUT_RETRY_MS, "Tempo de conexão excedido.");
+          if (error) {
+            if (error.message.toLowerCase().includes("invalid login credentials")) {
+              setError("E-mail ou senha inválidos.");
+            } else {
+              setError(error.message);
+            }
+          }
+        } catch {
+          setError("Servidor ainda iniciando. Aguarde alguns segundos e tente novamente.");
+        }
+      }
     } finally {
       setLoading(false);
     }
