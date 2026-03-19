@@ -416,7 +416,7 @@ export default function MusicaNoAr() {
       }, { onConflict: "user_id" });
       setXmlUrl(urlData.publicUrl);
     }
-    setUploadHistory(await addUploadLogToDb(user.id, "pasta", getDeviceName()));
+    setUploadHistory(await addUploadLogToDb(user.id, "pasta", currentDeviceName));
   };
 
   // Start 1s polling only after local is saved
