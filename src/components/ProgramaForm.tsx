@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { getApresentadores, type Apresentador } from "./ApresentadorForm";
 import { supabase } from "@/integrations/supabase/client";
+import { uploadProgramImage } from "@/lib/uploadProgramImage";
 import { useAuth } from "@/hooks/useAuth";
 import {
   Select,
@@ -460,6 +461,19 @@ export default function ProgramaForm() {
     setNome(""); setApresentadorId(""); setSelo(""); setCapa(""); setThumb(""); setDiasSemana([]); setHorarioInicio(""); setHorarioFim(""); setEstudio(""); setAtivo(true); setVariavel(false); setDataVariavel(undefined); setDescricao(""); setConflictMsg(""); setEditingId(null); setTipoPrograma(""); setClassificacaoEtaria("");
   };
 
+  // Helper: upload images to storage and return URLs
+  const uploadImages = async (programId: string): Promise<{ thumb: string; capa: string }> => {
+    const [thumbUrl, capaUrl] = await Promise.all([
+      thumb ? uploadProgramImage(thumb, user!.id, programId, "thumb") : Promise.resolve(""),
+      capa ? uploadProgramImage(capa, user!.id, programId, "capa") : Promise.resolve(""),
+    ]);
+    // If any were converted from base64, update the DB record with the URL
+    if ((thumbUrl && thumbUrl !== thumb) || (capaUrl && capaUrl !== capa)) {
+      await supabase.from("programas").update({ thumb: thumbUrl, capa: capaUrl } as any).eq("id", programId);
+    }
+    return { thumb: thumbUrl, capa: capaUrl };
+  };
+
   const handleAdd = async () => {
     if (!nome.trim() || !user) return;
     if (!horarioInicio || !horarioFim) { setConflictMsg("Preencha o horário de início e fim."); return; }
@@ -468,25 +482,27 @@ export default function ProgramaForm() {
 
     if (variavel) {
       if (!dataVariavel) { setConflictMsg("Selecione a data para o programa variável."); return; }
-      // Auto-set diasSemana from date
       const DIAS_MAP_REV: Record<number, string> = { 1: "Segunda", 2: "Terça", 3: "Quarta", 4: "Quinta", 5: "Sexta", 6: "Sábado", 0: "Domingo" };
       const dayOfWeek = DIAS_MAP_REV[dataVariavel.getDay()];
       const dataStr = format(dataVariavel, "yyyy-MM-dd");
 
       setSaving(true);
+      let targetId = editingId;
       if (editingId) {
         await supabase.from("programas").update({
-          nome: nome.trim(), apresentador_id: apresentadorId || null, selo, capa, thumb, dias_semana: [dayOfWeek],
+          nome: nome.trim(), apresentador_id: apresentadorId || null, selo, dias_semana: [dayOfWeek],
           horario_inicio: horarioInicio, horario_fim: horarioFim, estudio: estudio.trim(), ativo, descricao: descricao.trim(),
-           variavel: true, data_variavel: dataStr, classificacao_etaria: classificacaoEtaria || null, tipo_programa: tipoPrograma || null,
+          variavel: true, data_variavel: dataStr, classificacao_etaria: classificacaoEtaria || null, tipo_programa: tipoPrograma || null,
         } as any).eq("id", editingId);
       } else {
-        await supabase.from("programas").insert({
-          user_id: user.id, nome: nome.trim(), apresentador_id: apresentadorId || null, selo, capa, thumb, dias_semana: [dayOfWeek],
+        const { data: inserted } = await supabase.from("programas").insert({
+          user_id: user.id, nome: nome.trim(), apresentador_id: apresentadorId || null, selo, dias_semana: [dayOfWeek],
           horario_inicio: horarioInicio, horario_fim: horarioFim, estudio: estudio.trim(), ativo, descricao: descricao.trim(),
-           variavel: true, data_variavel: dataStr, classificacao_etaria: classificacaoEtaria || null, tipo_programa: tipoPrograma || null,
-        } as any);
+          variavel: true, data_variavel: dataStr, classificacao_etaria: classificacaoEtaria || null, tipo_programa: tipoPrograma || null,
+        } as any).select("id").single();
+        targetId = inserted?.id || null;
       }
+      if (targetId) await uploadImages(targetId);
       await load();
       resetForm();
       setSaving(false);
@@ -497,26 +513,28 @@ export default function ProgramaForm() {
 
     if (diasSemana.length === 0) { setConflictMsg("Selecione ao menos um dia da semana."); return; }
 
-    // Fixed programs: conflict check excluding variable programs
     const fixedProgramas = programas.filter(p => !p.variavel);
     const conflict = checkConflict(fixedProgramas, diasSemana, horarioInicio, horarioFim, estudio.trim(), editingId || undefined);
     if (conflict) { setConflictMsg(`Conflito com "${conflict.nome}" no mesmo estúdio e horário.`); return; }
 
     setSaving(true);
+    let targetId = editingId;
 
     if (editingId) {
       await supabase.from("programas").update({
-        nome: nome.trim(), apresentador_id: apresentadorId || null, selo, capa, thumb, dias_semana: diasSemana,
+        nome: nome.trim(), apresentador_id: apresentadorId || null, selo, dias_semana: diasSemana,
         horario_inicio: horarioInicio, horario_fim: horarioFim, estudio: estudio.trim(), ativo, descricao: descricao.trim(),
         variavel: false, data_variavel: null, classificacao_etaria: classificacaoEtaria || null, tipo_programa: tipoPrograma || null,
       } as any).eq("id", editingId);
     } else {
-      await supabase.from("programas").insert({
-        user_id: user.id, nome: nome.trim(), apresentador_id: apresentadorId || null, selo, capa, thumb, dias_semana: diasSemana,
+      const { data: inserted } = await supabase.from("programas").insert({
+        user_id: user.id, nome: nome.trim(), apresentador_id: apresentadorId || null, selo, dias_semana: diasSemana,
         horario_inicio: horarioInicio, horario_fim: horarioFim, estudio: estudio.trim(), ativo, descricao: descricao.trim(),
         variavel: false, data_variavel: null, classificacao_etaria: classificacaoEtaria || null, tipo_programa: tipoPrograma || null,
-      } as any);
+      } as any).select("id").single();
+      targetId = inserted?.id || null;
     }
+    if (targetId) await uploadImages(targetId);
     await load();
     resetForm();
     setSaving(false);
