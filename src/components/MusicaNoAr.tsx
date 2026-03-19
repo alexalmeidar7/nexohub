@@ -316,7 +316,19 @@ export default function MusicaNoAr() {
     }
   }, []);
 
-  const progress = music && music.duracao > 0 ? Math.min(100, (elapsed / music.duracao) * 100) : 0;
+  const rawProgress = music && music.duracao > 0 ? Math.min(100, (elapsed / music.duracao) * 100) : 0;
+
+  // Detect when progress resets (music changed or reached end)
+  useEffect(() => {
+    if (prevProgressRef.current > 10 && rawProgress < 5) {
+      setSliderResetting(true);
+      const timer = setTimeout(() => setSliderResetting(false), 600);
+      return () => clearTimeout(timer);
+    }
+    prevProgressRef.current = rawProgress;
+  }, [rawProgress]);
+
+  const progress = sliderResetting ? 0 : rawProgress;
 
   const hasCover = music?.capa && music.capa.length > 0;
   const useFallback = !hasCover && presenterFallback;
