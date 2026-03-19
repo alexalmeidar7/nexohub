@@ -473,8 +473,41 @@ export default function MusicaNoAr() {
               </button>
             </div>
 
+            {/* Switch prompt: shown when last source was local */}
+            {showSwitchPrompt && (
+              <div className="rounded-lg p-2.5 flex flex-col gap-2 animate-fade-in" style={{ backgroundColor: "rgba(38,143,250,0.08)", border: "1px solid rgba(38,143,250,0.2)" }}>
+                <p className="text-[10px] font-semibold text-center" style={{ color: "#0d0446" }}>
+                  Deseja mudar para source de XML online?
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      setShowSwitchPrompt(false);
+                      promptDismissedRef.current = true;
+                      setSourceMode("online");
+                    }}
+                    className="flex-1 py-1.5 rounded-md text-[10px] font-bold"
+                    style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#fff", boxShadow: "0 2px 6px rgba(38,143,250,0.3)" }}
+                  >
+                    Sim
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowSwitchPrompt(false);
+                      promptDismissedRef.current = true;
+                      setSourceMode("pasta");
+                    }}
+                    className="flex-1 py-1.5 rounded-md text-[10px] font-bold"
+                    style={{ backgroundColor: "rgba(13,4,70,0.06)", color: "rgba(13,4,70,0.6)", border: "1px solid rgba(13,4,70,0.1)" }}
+                  >
+                    Não
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Online URL */}
-            {sourceMode === "online" && (
+            {sourceMode === "online" && !showSwitchPrompt && (
               <div>
                 {editingUrl ? (
                   <div className="flex gap-1.5">
