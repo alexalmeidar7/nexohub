@@ -1,7 +1,43 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, GripVertical, Play, Loader2, X, ChevronDown, ChevronUp, Clock, Tag, Code, Copy, ClipboardPaste } from "lucide-react";
+import { Plus, Trash2, GripVertical, Play, Loader2, X, ChevronDown, ChevronUp, Clock, Tag, Code, Copy, ClipboardPaste, Palette, Music, Radio, Tv, Mic, Volume2, Video, Zap, Star, Sparkles, Clapperboard, Megaphone, Bell, type LucideIcon } from "lucide-react";
+
+const BUTTON_COLORS = [
+  { value: "#f59e0b", label: "Amarelo" },
+  { value: "#3b82f6", label: "Azul" },
+  { value: "#22c55e", label: "Verde" },
+  { value: "#dc2626", label: "Vermelho" },
+  { value: "#8b5cf6", label: "Roxo" },
+  { value: "#ec4899", label: "Rosa" },
+  { value: "#f97316", label: "Laranja" },
+  { value: "#06b6d4", label: "Ciano" },
+  { value: "#64748b", label: "Cinza" },
+  { value: "#ffffff", label: "Branco" },
+];
+
+const ICON_KEYWORDS: [string[], LucideIcon][] = [
+  [["music", "música", "musica", "song", "jingle", "vinheta"], Music],
+  [["radio", "fm", "frequência", "frequencia"], Radio],
+  [["tv", "televisão", "televisao", "monitor", "tela"], Tv],
+  [["mic", "microfone", "voz", "voice", "locutor", "apresentador"], Mic],
+  [["audio", "áudio", "volume", "som", "sound"], Volume2],
+  [["video", "vídeo", "câmera", "camera", "gravação", "gravacao"], Video],
+  [["efeito", "effect", "fx", "flash", "raio", "zap"], Zap],
+  [["star", "estrela", "destaque", "favorito"], Star],
+  [["abertura", "intro", "opening", "start", "início", "inicio"], Clapperboard],
+  [["comercial", "propaganda", "ad", "anúncio", "anuncio", "patrocínio"], Megaphone],
+  [["alerta", "alert", "aviso", "urgente", "notificação"], Bell],
+  [["brilho", "sparkle", "magic", "mágica", "especial"], Sparkles],
+];
+
+function getIconForName(name: string): LucideIcon {
+  const lower = name.toLowerCase();
+  for (const [keywords, Icon] of ICON_KEYWORDS) {
+    if (keywords.some(k => lower.includes(k))) return Icon;
+  }
+  return Zap;
+}
 
 interface PresetCommand {
   id: string;
