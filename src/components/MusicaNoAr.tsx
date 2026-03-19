@@ -529,20 +529,20 @@ export default function MusicaNoAr() {
 
               {/* Song Info + Progress */}
               <div className="flex-1 flex flex-col justify-between min-w-0">
-                <div>
-                  <h1 className="text-xl font-black tracking-tight truncate" style={{ color: "#0d0446" }}>{displayTitulo}</h1>
-                  <p className="font-semibold flex items-center gap-1.5 text-sm mt-1" style={{ color: "#268ffa" }}>
+                <div className="flex flex-col items-start gap-2">
+                  <span className="inline-block px-3 py-1 rounded-lg bg-white text-xl font-black tracking-tight truncate max-w-full" style={{ color: "#0d0446" }}>{displayTitulo}</span>
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white font-semibold text-sm" style={{ color: "#268ffa" }}>
                     <User size={14} />
                     {displayArtista}
-                  </p>
+                  </span>
                 </div>
 
                 {music && music.duracao > 0 && (
                   <div className="mt-3">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[11px] font-mono font-bold shrink-0" style={{ color: "#0d0446" }}>{formatTime(elapsed)}</span>
-                      <span className="text-[11px] font-mono font-bold shrink-0" style={{ color: "rgba(13,4,70,0.4)" }}>{formatTime(music.duracao)}</span>
-                    </div>
+                    <span className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-white">
+                      <span className="text-[11px] font-mono font-bold" style={{ color: "#0d0446" }}>{formatTime(elapsed)}</span>
+                      <span className="text-[11px] font-mono font-bold" style={{ color: "rgba(13,4,70,0.4)" }}>{formatTime(music.duracao)}</span>
+                    </span>
                   </div>
                 )}
               </div>
