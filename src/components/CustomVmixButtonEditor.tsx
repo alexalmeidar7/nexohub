@@ -169,6 +169,41 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
     setRunning(false);
   };
 
+  const generateScript = (): string => {
+    return commands.map(cmd => {
+      let line = cmd.fn;
+      if (cmd.input) line += ` input=${cmd.input}`;
+      if (cmd.value) line += ` value=${cmd.value}`;
+      if (cmd.extraKey) line += ` extraKey=${cmd.extraKey}`;
+      if (cmd.extraValue) line += ` extra=${cmd.extraValue}`;
+      return line;
+    }).join("\n");
+  };
+
+  const parseScript = (text: string) => {
+    const lines = text.trim().split("\n").filter(l => l.trim());
+    const parsed: PresetCommand[] = lines.map(line => {
+      const parts = line.trim().split(/\s+/);
+      const fn = parts[0] || "CutDirect";
+      const cmd: PresetCommand = { id: crypto.randomUUID(), fn };
+      for (let i = 1; i < parts.length; i++) {
+        const [k, ...v] = parts[i].split("=");
+        const val = v.join("=");
+        if (k === "input") cmd.input = val;
+        else if (k === "value") cmd.value = val;
+        else if (k === "extraKey") cmd.extraKey = val;
+        else if (k === "extra") cmd.extraValue = val;
+      }
+      return cmd;
+    });
+    if (parsed.length > 0) {
+      setCommands(parsed);
+      setPasteValue("");
+      setShowCode(false);
+      toast({ title: "Código importado", description: `${parsed.length} ação(ões) carregada(s).` });
+    }
+  };
+
   if (!open) return null;
 
   return (
