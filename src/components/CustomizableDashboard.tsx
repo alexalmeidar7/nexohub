@@ -996,7 +996,7 @@ function MusicProgramWidget() {
       }
     };
     fetchProgram();
-    const iv = setInterval(fetchProgram, 60000);
+    const iv = setInterval(fetchProgram, 30000);
     return () => clearInterval(iv);
   }, [user]);
 
