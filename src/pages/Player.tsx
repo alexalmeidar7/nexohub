@@ -982,17 +982,25 @@ export default function PlayerPage() {
 
   // Play stream
   const playStream = useCallback(
-    async (url: string, type: string) => {
+    async (url: string, type: string, forceAutoplay?: boolean) => {
       if (hlsRef.current) { hlsRef.current.destroy(); hlsRef.current = null; }
       setBuffering(true);
 
       // Unlock audio/video element synchronously (preserves user gesture context)
+      // For autoplay (no user gesture), start muted to comply with browser policies
       const isAudioType = type === "audio_live" || type === "audio";
       if (isAudioType && audioRef.current) {
         audioRef.current.volume = volumeRef.current / 100;
-        audioRef.current.muted = mutedRef.current;
+        if (forceAutoplay) {
+          audioRef.current.muted = true;
+        } else {
+          audioRef.current.muted = mutedRef.current;
+        }
         audioRef.current.play().catch(() => {});
       } else if (videoRef.current) {
+        if (forceAutoplay) {
+          videoRef.current.muted = true;
+        }
         videoRef.current.play().catch(() => {});
       }
 
