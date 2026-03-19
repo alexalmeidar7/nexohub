@@ -308,7 +308,7 @@ export default function MusicaNoAr() {
     const parsed = parseXmlString(text);
     if (parsed) {
       await processMusic(parsed);
-      setUploadHistory(addUploadLog("pasta"));
+      setUploadHistory(await addUploadLogToDb(user!.id, "pasta"));
     }
   };
 
