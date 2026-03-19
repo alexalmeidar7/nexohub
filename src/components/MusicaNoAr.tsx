@@ -369,10 +369,19 @@ export default function MusicaNoAr() {
   // Background sync: upload to storage + log history (non-blocking)
   const syncingRef = useRef(false);
   const pendingSyncRef = useRef<string | null>(null);
+  const readingRef = useRef(false);
+
+  // Keep stable refs to avoid interval restarts
+  const processMusicRef = useRef(processMusic);
+  processMusicRef.current = processMusic;
+  const userRef = useRef(user);
+  userRef.current = user;
+  const deviceNameRef = useRef(currentDeviceName);
+  deviceNameRef.current = currentDeviceName;
 
   const syncToStorage = useCallback(async (text: string) => {
-    if (!user) return;
-    // If already syncing, queue latest
+    const u = userRef.current;
+    if (!u) return;
     if (syncingRef.current) {
       pendingSyncRef.current = text;
       return;
@@ -380,59 +389,63 @@ export default function MusicaNoAr() {
     syncingRef.current = true;
     try {
       const utf8Blob = new Blob([new TextEncoder().encode(text)], { type: "application/xml" });
-      const filePath = `local-xml-${user.id}.xml`;
+      const filePath = `local-xml-${u.id}.xml`;
       await supabase.storage.from("xml-files").upload(filePath, utf8Blob, { upsert: true, contentType: "application/xml" });
       const { data: urlData } = supabase.storage.from("xml-files").getPublicUrl(filePath);
       if (urlData?.publicUrl) {
         await supabase.from("user_settings").upsert({
-          user_id: user.id,
+          user_id: u.id,
           music_xml_url: urlData.publicUrl,
           updated_at: new Date().toISOString(),
         }, { onConflict: "user_id" });
         setXmlUrl(urlData.publicUrl);
       }
-      setUploadHistory(await addUploadLogToDb(user.id, "pasta", currentDeviceName));
+      setUploadHistory(await addUploadLogToDb(u.id, "pasta", deviceNameRef.current));
     } catch { }
     syncingRef.current = false;
-    // Process queued sync if any
     const queued = pendingSyncRef.current;
     pendingSyncRef.current = null;
     if (queued) syncToStorage(queued);
-  }, [user, currentDeviceName]);
+  }, []); // stable — uses refs
 
-  // Fast local file re-read — updates UI instantly, syncs in background
+  // Fast local file re-read — no await on processMusic, no blocking
   const readLocalFile = useCallback(async () => {
-    let file: File | null = null;
-
-    if (fileHandleRef.current) {
-      try {
-        file = await fileHandleRef.current.getFile();
-      } catch {
-        return;
-      }
-    } else {
-      file = localFileRef.current;
-    }
-    if (!file) return;
+    // Guard: skip if previous read is still in progress
+    if (readingRef.current) return;
+    readingRef.current = true;
 
     try {
+      let file: File | null = null;
+      if (fileHandleRef.current) {
+        try {
+          file = await fileHandleRef.current.getFile();
+        } catch {
+          readingRef.current = false;
+          return;
+        }
+      } else {
+        file = localFileRef.current;
+      }
+      if (!file) { readingRef.current = false; return; }
+
       const text = await readFileWithEncoding(file);
-      if (text === localFileContentRef.current) return;
+      if (text === localFileContentRef.current) { readingRef.current = false; return; }
       localFileContentRef.current = text;
       setLocalFileContent(text);
 
-      // Fast path: parse and update UI immediately
       const parsed = parseXmlString(text);
       if (parsed) {
-        await processMusic(parsed);
+        // Fire-and-forget: don't block polling with iTunes cover fetch
+        processMusicRef.current(parsed);
       }
 
-      // Slow path: sync to storage in background (non-blocking)
+      // Background sync (non-blocking)
       syncToStorage(text);
     } catch { }
-  }, [processMusic, syncToStorage]);
+    readingRef.current = false;
+  }, [syncToStorage]); // stable deps
 
-  // Handle file select: use showOpenFilePicker for live re-reads, fallback to input
+  // Handle file select
   const handleFileSelect = async (e?: React.ChangeEvent<HTMLInputElement>) => {
     let file: File | null = null;
     let handle: FileSystemFileHandle | null = null;
@@ -445,9 +458,7 @@ export default function MusicaNoAr() {
         });
         handle = h;
         file = await h.getFile();
-      } catch {
-        return;
-      }
+      } catch { return; }
     } else if (e) {
       file = e.target.files?.[0] || null;
     }
@@ -463,16 +474,13 @@ export default function MusicaNoAr() {
     setLocalFileContent(text);
 
     const parsed = parseXmlString(text);
-    if (parsed) {
-      await processMusic(parsed);
-    }
+    if (parsed) await processMusic(parsed);
 
-    // Sync initial file in background
     syncToStorage(text);
     setLocalMonitoring(true);
   };
 
-  // Start 1s polling when local file is selected and monitoring
+  // Start 1s polling — stable callback, no interval restarts
   useEffect(() => {
     if (sourceMode !== "pasta" || !localMonitoring) {
       if (localPollRef.current) clearInterval(localPollRef.current);
