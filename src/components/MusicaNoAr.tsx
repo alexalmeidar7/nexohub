@@ -89,24 +89,29 @@ async function fetchCoverFromiTunes(titulo: string, artista: string): Promise<st
   return "";
 }
 
-function getUploadHistory(): UploadLogEntry[] {
+async function loadUploadHistoryFromDb(userId: string): Promise<UploadLogEntry[]> {
   try {
-    const raw = localStorage.getItem(UPLOAD_HISTORY_KEY);
-    return raw ? JSON.parse(raw) : [];
+    const { data } = await supabase
+      .from("xml_upload_history")
+      .select("source, created_at")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(10);
+    if (!data) return [];
+    return data.map((row: any) => {
+      const d = new Date(row.created_at);
+      return {
+        source: row.source as "pasta" | "online",
+        date: d.toLocaleDateString("pt-BR"),
+        time: d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
+      };
+    });
   } catch { return []; }
 }
 
-function addUploadLog(source: "pasta" | "online") {
-  const now = new Date();
-  const entry: UploadLogEntry = {
-    source,
-    date: now.toLocaleDateString("pt-BR"),
-    time: now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
-  };
-  const history = getUploadHistory();
-  history.unshift(entry);
-  localStorage.setItem(UPLOAD_HISTORY_KEY, JSON.stringify(history.slice(0, 10)));
-  return history.slice(0, 10);
+async function addUploadLogToDb(userId: string, source: "pasta" | "online"): Promise<UploadLogEntry[]> {
+  await supabase.from("xml_upload_history").insert({ user_id: userId, source });
+  return loadUploadHistoryFromDb(userId);
 }
 
 import { getMusicData } from "@/lib/musicData";
@@ -141,18 +146,22 @@ export default function MusicaNoAr() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const localFileRef = useRef<File | null>(null);
   const localPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const [uploadHistory, setUploadHistory] = useState<UploadLogEntry[]>(getUploadHistory());
+  const [uploadHistory, setUploadHistory] = useState<UploadLogEntry[]>([]);
   const [localFileName, setLocalFileName] = useState<string>("");
 
-  // Load URL from DB
+  // Load URL and history from DB
   useEffect(() => {
     if (!user) return;
-    const loadUrl = async () => {
-      const { data } = await supabase
-        .from("user_settings")
-        .select("music_xml_url")
-        .eq("user_id", user.id)
-        .maybeSingle();
+    const loadData = async () => {
+      const [{ data }, history] = await Promise.all([
+        supabase
+          .from("user_settings")
+          .select("music_xml_url")
+          .eq("user_id", user.id)
+          .maybeSingle(),
+        loadUploadHistoryFromDb(user.id),
+      ]);
+      setUploadHistory(history);
       if (data?.music_xml_url) {
         setXmlUrl(data.music_xml_url);
       } else {
@@ -163,7 +172,7 @@ export default function MusicaNoAr() {
         }, { onConflict: "user_id" });
       }
     };
-    loadUrl();
+    loadData();
   }, [user]);
 
   useEffect(() => {
@@ -251,7 +260,7 @@ export default function MusicaNoAr() {
       const parsed = parseXmlString(data.content);
       if (parsed) {
         await processMusic(parsed);
-        setUploadHistory(addUploadLog("online"));
+        setUploadHistory(await addUploadLogToDb(user!.id, "online"));
       }
     } catch { }
   }, [xmlUrl, processMusic, sourceMode]);
@@ -267,6 +276,24 @@ export default function MusicaNoAr() {
   }, [fetchXml, sourceMode]);
 
   // Local file polling - re-read file every 2s
+  // Upload local XML to storage so monitor-music cron can use it
+  const uploadLocalXmlToStorage = useCallback(async (xmlText: string) => {
+    if (!user) return;
+    const blob = new Blob([xmlText], { type: "application/xml" });
+    const filePath = `local-xml-${user.id}.xml`;
+    await supabase.storage.from("xml-files").upload(filePath, blob, { upsert: true, contentType: "application/xml" });
+    const { data: urlData } = supabase.storage.from("xml-files").getPublicUrl(filePath);
+    if (urlData?.publicUrl) {
+      // Update music_xml_url so the edge function monitor-music picks it up
+      await supabase.from("user_settings").upsert({
+        user_id: user.id,
+        music_xml_url: urlData.publicUrl,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: "user_id" });
+      setXmlUrl(urlData.publicUrl);
+    }
+  }, [user]);
+
   const readLocalFile = useCallback(async () => {
     const file = localFileRef.current;
     if (!file) return;
@@ -274,13 +301,15 @@ export default function MusicaNoAr() {
       const text = await file.text();
       if (text === localFileContent) return; // no change
       setLocalFileContent(text);
+      // Upload to storage immediately
+      await uploadLocalXmlToStorage(text);
       const parsed = parseXmlString(text);
       if (parsed) {
         await processMusic(parsed);
-        setUploadHistory(addUploadLog("pasta"));
+        setUploadHistory(await addUploadLogToDb(user!.id, "pasta"));
       }
     } catch { }
-  }, [processMusic, localFileContent]);
+  }, [processMusic, localFileContent, uploadLocalXmlToStorage, user]);
 
   useEffect(() => {
     if (sourceMode !== "pasta") {
@@ -300,10 +329,12 @@ export default function MusicaNoAr() {
     setLocalFileName(file.name);
     const text = await file.text();
     setLocalFileContent(text);
+    // Upload to storage immediately
+    await uploadLocalXmlToStorage(text);
     const parsed = parseXmlString(text);
     if (parsed) {
       await processMusic(parsed);
-      setUploadHistory(addUploadLog("pasta"));
+      if (user) setUploadHistory(await addUploadLogToDb(user.id, "pasta"));
     }
   };
 
