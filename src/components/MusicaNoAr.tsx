@@ -160,17 +160,21 @@ async function loadUploadHistoryFromDb(userId: string): Promise<UploadLogEntry[]
     if (!data) return [];
     return data.map((row: any) => {
       const d = new Date(row.created_at);
+      // source may contain device name: "pasta|DeviceName" or just "pasta"
+      const [rawSource, deviceName] = (row.source as string).split("|");
       return {
-        source: row.source as "pasta" | "online",
+        source: (rawSource === "pasta" ? "pasta" : "online") as "pasta" | "online",
         date: d.toLocaleDateString("pt-BR"),
         time: d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
+        deviceName: deviceName || undefined,
       };
     });
   } catch { return []; }
 }
 
-async function addUploadLogToDb(userId: string, source: "pasta" | "online"): Promise<UploadLogEntry[]> {
-  await supabase.from("xml_upload_history").insert({ user_id: userId, source });
+async function addUploadLogToDb(userId: string, source: "pasta" | "online", deviceName?: string): Promise<UploadLogEntry[]> {
+  const sourceValue = source === "pasta" && deviceName ? `pasta|${deviceName}` : source;
+  await supabase.from("xml_upload_history").insert({ user_id: userId, source: sourceValue });
   return loadUploadHistoryFromDb(userId);
 }
 
