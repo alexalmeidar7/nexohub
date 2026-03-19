@@ -2082,7 +2082,7 @@ export default function VmixPage() {
                             </span>
                             <div className="flex-1 h-px" style={{ backgroundColor: "#ffffff08" }} />
                           </div>
-                          <div className="grid grid-cols-3 gap-3">
+                          <div className="grid grid-cols-3 gap-2">
                       {progs.map((prog) => {
                         const isActive = activePreset === prog.id;
                         const progOnAir = isProgramForToday(prog) && isNowInProgram(prog);
