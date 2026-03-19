@@ -329,10 +329,12 @@ export default function MusicaNoAr() {
     setLocalFileName(file.name);
     const text = await file.text();
     setLocalFileContent(text);
+    // Upload to storage immediately
+    await uploadLocalXmlToStorage(text);
     const parsed = parseXmlString(text);
     if (parsed) {
       await processMusic(parsed);
-      setUploadHistory(await addUploadLogToDb(user!.id, "pasta"));
+      if (user) setUploadHistory(await addUploadLogToDb(user.id, "pasta"));
     }
   };
 
