@@ -320,6 +320,39 @@ export type Database = {
         }
         Relationships: []
       }
+      custom_vmix_buttons: {
+        Row: {
+          commands: Json
+          created_at: string
+          dias_semana: string[] | null
+          horario: string | null
+          id: string
+          nome: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          commands?: Json
+          created_at?: string
+          dias_semana?: string[] | null
+          horario?: string | null
+          id?: string
+          nome?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          commands?: Json
+          created_at?: string
+          dias_semana?: string[] | null
+          horario?: string | null
+          id?: string
+          nome?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       empresa_config: {
         Row: {
           ativo: boolean
