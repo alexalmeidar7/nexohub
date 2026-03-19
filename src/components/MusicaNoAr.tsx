@@ -337,44 +337,45 @@ export default function MusicaNoAr() {
     const file = localFileRef.current;
     if (!file) return;
     try {
-      const text = await file.text();
+      const text = await readFileWithEncoding(file);
       if (text === localFileContent) return; // no change
       setLocalFileContent(text);
       // Upload to storage immediately
-      await uploadLocalXmlToStorage(text);
+      // Re-encode as UTF-8 for storage
+      const utf8Blob = new Blob([new TextEncoder().encode(text)], { type: "application/xml" });
+      if (user) {
+        const filePath = `local-xml-${user.id}.xml`;
+        await supabase.storage.from("xml-files").upload(filePath, utf8Blob, { upsert: true, contentType: "application/xml" });
+        const { data: urlData } = supabase.storage.from("xml-files").getPublicUrl(filePath);
+        if (urlData?.publicUrl) {
+          await supabase.from("user_settings").upsert({
+            user_id: user.id,
+            music_xml_url: urlData.publicUrl,
+            updated_at: new Date().toISOString(),
+          }, { onConflict: "user_id" });
+          setXmlUrl(urlData.publicUrl);
+        }
+      }
       const parsed = parseXmlString(text);
       if (parsed) {
         await processMusic(parsed);
-        setUploadHistory(await addUploadLogToDb(user!.id, "pasta"));
+        if (user) setUploadHistory(await addUploadLogToDb(user.id, "pasta"));
       }
     } catch { }
-  }, [processMusic, localFileContent, uploadLocalXmlToStorage, user]);
-
-  useEffect(() => {
-    if (sourceMode !== "pasta") {
-      if (localPollRef.current) clearInterval(localPollRef.current);
-      return;
-    }
-    if (!localFileRef.current) return;
-    readLocalFile();
-    localPollRef.current = setInterval(readLocalFile, 1000);
-    return () => { if (localPollRef.current) clearInterval(localPollRef.current); };
-  }, [sourceMode, readLocalFile]);
+  }, [processMusic, localFileContent, user]);
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     localFileRef.current = file;
     setLocalFileName(file.name);
-    const text = await file.text();
+    const text = await readFileWithEncoding(file);
     setLocalFileContent(text);
-    // Upload to storage immediately
-    await uploadLocalXmlToStorage(text);
     const parsed = parseXmlString(text);
     if (parsed) {
       await processMusic(parsed);
-      if (user) setUploadHistory(await addUploadLogToDb(user.id, "pasta"));
     }
+    // Don't save yet — user must click "Salvar" button
   };
 
   useEffect(() => {
