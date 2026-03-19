@@ -149,15 +149,19 @@ export default function MusicaNoAr() {
   const [uploadHistory, setUploadHistory] = useState<UploadLogEntry[]>([]);
   const [localFileName, setLocalFileName] = useState<string>("");
 
-  // Load URL from DB
+  // Load URL and history from DB
   useEffect(() => {
     if (!user) return;
-    const loadUrl = async () => {
-      const { data } = await supabase
-        .from("user_settings")
-        .select("music_xml_url")
-        .eq("user_id", user.id)
-        .maybeSingle();
+    const loadData = async () => {
+      const [{ data }, history] = await Promise.all([
+        supabase
+          .from("user_settings")
+          .select("music_xml_url")
+          .eq("user_id", user.id)
+          .maybeSingle(),
+        loadUploadHistoryFromDb(user.id),
+      ]);
+      setUploadHistory(history);
       if (data?.music_xml_url) {
         setXmlUrl(data.music_xml_url);
       } else {
@@ -168,7 +172,7 @@ export default function MusicaNoAr() {
         }, { onConflict: "user_id" });
       }
     };
-    loadUrl();
+    loadData();
   }, [user]);
 
   useEffect(() => {
