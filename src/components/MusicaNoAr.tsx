@@ -108,6 +108,7 @@ function addUploadLog(source: "pasta" | "online") {
   return history.slice(0, 10);
 }
 
+import { getMusicData } from "@/lib/musicData";
 export { getMusicData } from "@/lib/musicData";
 
 export default function MusicaNoAr() {
