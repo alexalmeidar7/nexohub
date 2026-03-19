@@ -2095,7 +2095,7 @@ export default function VmixPage() {
                             style={{
                               aspectRatio: "3/2",
                               backgroundColor: isActive ? "#dc2626" : progOnAir ? "#dc2626" : "#2a2a30",
-                              border: isActive ? "2px solid #ef4444" : progOnAir ? "2px solid #ffffff" : "2px solid #333338",
+                              border: isActive ? "2px solid #ef4444" : progOnAir ? "2px solid #dc2626" : "2px solid #333338",
                               opacity: dragPresetIdx !== null && programas[dragPresetIdx]?.id === prog.id ? 0.4 : 1,
                             }}
                             onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; }}
@@ -2153,14 +2153,14 @@ export default function VmixPage() {
                                 title="Arraste para reposicionar"
                               >
                                 <GripVertical size={7} style={{ color: "#666" }} />
-                                <Clock size={8} style={{ color: progOnAir ? "#22c55e" : "#888" }} />
-                                <span className="text-[7px] font-bold tabular-nums" style={{ color: progOnAir ? "#22c55e" : "#999" }}>{startTime} - {endTime}</span>
+                                <Clock size={8} style={{ color: progOnAir ? "#fff" : "#888" }} />
+                                <span className="text-[7px] font-bold tabular-nums" style={{ color: progOnAir ? "#fff" : "#999" }}>{startTime} - {endTime}</span>
                               </div>
                             )}
                             {prog.estudio && (
                               <div className="absolute top-1.5 right-1.5 z-[2]">
                                 <span className="text-[6px] font-bold uppercase tracking-wider px-1 py-[1px] rounded"
-                                  style={{ backgroundColor: prog.estudio.toLowerCase().includes("fm") ? "#3b82f630" : "#8b5cf630", color: prog.estudio.toLowerCase().includes("fm") ? "#3b82f6" : "#8b5cf6" }}
+                                  style={{ backgroundColor: progOnAir ? "#ffffff" : prog.estudio.toLowerCase().includes("fm") ? "#3b82f630" : "#8b5cf630", color: progOnAir ? "#000" : prog.estudio.toLowerCase().includes("fm") ? "#3b82f6" : "#8b5cf6" }}
                                 >{prog.estudio.toLowerCase().includes("fm") ? "FM" : prog.estudio.toLowerCase().includes("podcast") ? "PODCAST" : prog.estudio}</span>
                               </div>
                             )}
