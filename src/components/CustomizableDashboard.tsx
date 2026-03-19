@@ -120,11 +120,11 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
     return () => { cancelled = true; clearInterval(interval); };
   }, [user]);
 
-  // Poll music from localStorage
+  // Poll music from localStorage (masterview_music_data is the canonical key)
   useEffect(() => {
     const pollMusic = () => {
       try {
-        const raw = localStorage.getItem("musicaNoAr");
+        const raw = localStorage.getItem("masterview_music_data");
         if (raw) {
           const parsed = JSON.parse(raw);
           if (parsed.titulo) {
@@ -136,7 +136,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
       setCurrentMusic(null);
     };
     pollMusic();
-    const interval = setInterval(pollMusic, 3000);
+    const interval = setInterval(pollMusic, 2000);
     return () => clearInterval(interval);
   }, []);
 
@@ -996,7 +996,7 @@ function MusicProgramWidget() {
       }
     };
     fetchProgram();
-    const iv = setInterval(fetchProgram, 60000);
+    const iv = setInterval(fetchProgram, 30000);
     return () => clearInterval(iv);
   }, [user]);
 
