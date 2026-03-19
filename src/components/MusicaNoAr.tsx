@@ -494,8 +494,7 @@ export default function MusicaNoAr() {
             </p>
           </div>
 
-          {/* RIGHT — Cover + Song Info + Progress */}
-          <div className="rounded-2xl p-4 flex flex-col gap-4" style={{ backgroundColor: "#ffffff", boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}>
+          {/* RIGHT — Cover as background with overlaid text */}
           <div
             key={`${displayTitulo}-${displayArtista}`}
             className="rounded-2xl overflow-hidden relative animate-fade-in"
@@ -514,12 +513,11 @@ export default function MusicaNoAr() {
               </div>
             )}
 
-            {/* Gradient overlay for readability */}
+            {/* Gradient overlay */}
             <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.4) 100%)" }} />
 
             {/* Content overlay */}
             <div className="relative z-10 p-5 flex flex-col justify-between h-full" style={{ minHeight: "200px" }}>
-              {/* Song title + artist with white background boxes */}
               <div className="flex flex-col items-start gap-2">
                 <span
                   className="inline-block px-3 py-1.5 rounded-lg text-xl font-black tracking-tight"
@@ -536,7 +534,6 @@ export default function MusicaNoAr() {
                 </span>
               </div>
 
-              {/* Progress bar at bottom */}
               {music && music.duracao > 0 && (
                 <div className="mt-auto pt-4">
                   <div className="flex items-center gap-2">
@@ -556,7 +553,6 @@ export default function MusicaNoAr() {
               </div>
             )}
           </div>
-        </div>
       </div>
 
       {/* XML Output Link — outside the main card */}
