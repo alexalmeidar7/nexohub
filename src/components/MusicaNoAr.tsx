@@ -271,7 +271,21 @@ export default function MusicaNoAr() {
     loadData();
   }, [user]);
 
+  // Delay detection: warn if a source hasn't updated in 30s
   useEffect(() => {
+    const checkDelay = setInterval(() => {
+      const now = Date.now();
+      if (xmlUrl.trim() && now - lastOnlineUpdateRef.current > 30000 && sourceStats.online > 0) {
+        setOnlineDelay(true);
+      }
+      if (localMonitoring && now - lastLocalUpdateRef.current > 15000 && sourceStats.pasta > 0) {
+        setLocalDelay(true);
+      }
+    }, 5000);
+    return () => clearInterval(checkDelay);
+  }, [xmlUrl, localMonitoring, sourceStats]);
+
+
     const fetchPresenter = async () => {
       const [{ data: progsData }, apresentadores] = await Promise.all([
         supabase.from("programas").select("*").ilike("estudio", "%fm%"),
