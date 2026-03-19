@@ -1381,15 +1381,25 @@ function DashboardPlayerWidget({ onVideoChange }: { onVideoChange?: (active: boo
   const togglePlay = () => {
     if (!activeChannel) return;
     if (isPlaying) { stopAll(); return; }
-    stopAll();
+    // Stop any previous playback without calling stopAll (which resets isPlaying)
+    destroyHls();
+    if (audioRef.current) { audioRef.current.pause(); }
+    if (videoRef.current) { videoRef.current.pause(); videoRef.current.removeAttribute("src"); videoRef.current.load(); }
+    setShowVideo(false);
+
     if (isVideo) {
       setShowVideo(true);
       setIsPlaying(true);
     } else {
       const audio = audioRef.current;
       if (!audio) return;
+      // Set source and play in user gesture context
       audio.src = activeChannel.url;
-      audio.play().then(() => setIsPlaying(true)).catch(() => {});
+      audio.volume = volume;
+      audio.muted = isMuted;
+      audio.play().then(() => setIsPlaying(true)).catch((err) => {
+        console.warn("Audio play failed:", err);
+      });
     }
   };
 
