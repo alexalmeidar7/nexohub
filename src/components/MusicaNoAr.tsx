@@ -344,9 +344,9 @@ export default function MusicaNoAr() {
     }
   }, []);
 
-  // Online fetch
+  // Online fetch — always active when URL exists (unified mode)
   const fetchXml = useCallback(async () => {
-    if (sourceMode !== "online" || !xmlUrl.trim()) return;
+    if (!xmlUrl.trim()) return;
     try {
       const { data, error } = await supabase.functions.invoke("fetch-rss", {
         body: { url: xmlUrl.trim() },
@@ -354,20 +354,17 @@ export default function MusicaNoAr() {
       if (error || !data?.content) return;
       const parsed = parseXmlString(data.content);
       if (parsed) {
-        await processMusic(parsed);
+        await processMusic(parsed, "online");
       }
     } catch { }
-  }, [xmlUrl, processMusic, sourceMode]);
+  }, [xmlUrl, processMusic]);
 
   useEffect(() => {
-    if (sourceMode !== "online") {
-      if (fetchIntervalRef.current) clearInterval(fetchIntervalRef.current);
-      return;
-    }
+    if (!xmlUrl.trim()) return;
     fetchXml();
     fetchIntervalRef.current = setInterval(fetchXml, 5000);
     return () => { if (fetchIntervalRef.current) clearInterval(fetchIntervalRef.current); };
-  }, [fetchXml, sourceMode]);
+  }, [fetchXml]);
 
   // Background sync: upload to storage + log history (non-blocking)
   const syncingRef = useRef(false);
