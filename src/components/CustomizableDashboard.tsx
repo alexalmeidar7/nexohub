@@ -1297,7 +1297,10 @@ function DashboardPlayerWidget({ onVideoChange }: { onVideoChange?: (active: boo
         if (raw) {
           const d = JSON.parse(raw);
           if (d.titulo) {
-            setCurrentMusic({ titulo: d.titulo, artista: d.artista || "", capa: d.capa || "" });
+            setCurrentMusic(prev => {
+              if (prev?.titulo === d.titulo && prev?.artista === (d.artista || "") && prev?.capa === (d.capa || "")) return prev;
+              return { titulo: d.titulo, artista: d.artista || "", capa: d.capa || "" };
+            });
             return;
           }
         }
@@ -1305,7 +1308,7 @@ function DashboardPlayerWidget({ onVideoChange }: { onVideoChange?: (active: boo
       setCurrentMusic(null);
     };
     poll();
-    const iv = setInterval(poll, 3000);
+    const iv = setInterval(poll, 1500);
     return () => clearInterval(iv);
   }, []);
 
