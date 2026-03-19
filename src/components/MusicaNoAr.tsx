@@ -289,7 +289,7 @@ export default function MusicaNoAr() {
     }
     if (!localFileRef.current) return;
     readLocalFile();
-    localPollRef.current = setInterval(readLocalFile, 2000);
+    localPollRef.current = setInterval(readLocalFile, 1000);
     return () => { if (localPollRef.current) clearInterval(localPollRef.current); };
   }, [sourceMode, readLocalFile]);
 
