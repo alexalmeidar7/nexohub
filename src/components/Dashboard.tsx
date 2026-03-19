@@ -27,7 +27,7 @@ const MusicWidget = lazy(() => import("./MusicWidget"));
 const XmlLinkRow = lazy(() => import("./XmlLinkRow"));
 const ConfiguracoesPage = lazy(() => import("./ConfiguracoesPage"));
 import { getEmpresaConfig } from "./ConfiguracoesPage";
-import { getMusicData } from "./MusicaNoAr";
+import { getMusicData } from "@/lib/musicData";
 const TestemunhaisPage = lazy(() => import("./TestemunhaisPage"));
 const PromocoesPage = lazy(() => import("./PromocoesPage"));
 const LogosPatrocinadoresPage = lazy(() => import("./LogosPatrocinadoresPage"));

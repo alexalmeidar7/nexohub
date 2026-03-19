@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Disc3 } from "lucide-react";
-import { getMusicData } from "./MusicaNoAr";
+import { getMusicData } from "@/lib/musicData";
 
 export default function MusicWidget() {
   const [music, setMusic] = useState<ReturnType<typeof getMusicData>>(null);
