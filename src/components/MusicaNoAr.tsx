@@ -541,9 +541,6 @@ export default function MusicaNoAr() {
                   <div className="mt-3">
                     <div className="flex items-center gap-2">
                       <span className="text-[11px] font-mono font-bold shrink-0" style={{ color: "#0d0446" }}>{formatTime(elapsed)}</span>
-                      <div className="flex-1 h-2.5 rounded-full overflow-hidden" style={{ backgroundColor: "rgba(13,4,70,0.06)" }}>
-                        <div className="h-full rounded-full transition-all duration-300" style={{ width: `${progress}%`, background: "linear-gradient(90deg, #268ffa, #2dbef3)" }} />
-                      </div>
                       <span className="text-[11px] font-mono font-bold shrink-0" style={{ color: "rgba(13,4,70,0.4)" }}>{formatTime(music.duracao)}</span>
                     </div>
                   </div>
