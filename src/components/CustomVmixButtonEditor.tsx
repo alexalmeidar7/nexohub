@@ -17,7 +17,8 @@ const BUTTON_COLORS = [
 ];
 
 const ICON_KEYWORDS: [string[], LucideIcon][] = [
-  [["relógio", "relogio", "clock", "hora", "timer", "tempo", "cronômetro", "cronometro"], Clock],
+  [["previsão", "previsao", "weather", "clima", "meteorologia", "nuvem", "cloud", "chuva", "previsão do tempo"], Cloud],
+  [["relógio", "relogio", "clock", "hora", "timer", "cronômetro", "cronometro"], Clock],
   [["music", "música", "musica", "song", "jingle", "vinheta", "canção", "cancao"], Music],
   [["radio", "fm", "frequência", "frequencia", "sintonia"], Radio],
   [["tv", "televisão", "televisao", "monitor", "tela", "display"], Tv],
