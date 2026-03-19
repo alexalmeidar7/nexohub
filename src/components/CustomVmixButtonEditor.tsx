@@ -31,7 +31,7 @@ const ICON_KEYWORDS: [string[], LucideIcon][] = [
   [["brilho", "sparkle", "magic", "mágica", "especial"], Sparkles],
 ];
 
-function getIconForName(name: string): LucideIcon {
+export function getIconForName(name: string): LucideIcon {
   const lower = name.toLowerCase();
   for (const [keywords, Icon] of ICON_KEYWORDS) {
     if (keywords.some(k => lower.includes(k))) return Icon;
