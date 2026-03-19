@@ -295,7 +295,55 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
               <div className="flex items-center gap-2 pt-2">
                 <span className="text-[9px] font-bold uppercase tracking-widest" style={{ color: "#666" }}>Ações do Botão</span>
                 <div className="flex-1 h-px" style={{ backgroundColor: "#ffffff08" }} />
+                <button
+                  onClick={() => { setShowCode(!showCode); if (!showCode) setPasteValue(""); }}
+                  className="flex items-center gap-1 text-[9px] font-bold px-2 py-1 rounded transition-all hover:bg-white/10"
+                  style={{ color: "#8b5cf6" }}
+                >
+                  <Code size={10} />
+                  {showCode ? "Fechar Código" : "Colar Código"}
+                </button>
               </div>
+
+              {/* Code paste section */}
+              {showCode && (
+                <div className="rounded-lg p-3 space-y-2" style={{ backgroundColor: "#12121a", border: "1px solid #333" }}>
+                  {commands.length > 0 && (
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center justify-between">
+                        <label className="text-[8px] font-bold uppercase tracking-widest" style={{ color: "#666" }}>Código Atual</label>
+                        <button
+                          onClick={() => { navigator.clipboard.writeText(generateScript()); toast({ title: "Copiado!" }); }}
+                          className="flex items-center gap-1 text-[8px] font-bold px-1.5 py-0.5 rounded hover:bg-white/10 transition-colors"
+                          style={{ color: "#8b5cf6" }}
+                        >
+                          <Copy size={8} /> Copiar
+                        </button>
+                      </div>
+                      <pre className="text-[10px] p-2 rounded overflow-x-auto" style={{ backgroundColor: "#0a0a12", color: "#8b5cf6", border: "1px solid #222" }}>{generateScript()}</pre>
+                    </div>
+                  )}
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[8px] font-bold uppercase tracking-widest" style={{ color: "#666" }}>Colar Código</label>
+                    <textarea
+                      value={pasteValue}
+                      onChange={e => setPasteValue(e.target.value)}
+                      rows={4}
+                      className="w-full text-[10px] px-2.5 py-2 rounded-lg outline-none font-mono"
+                      style={{ backgroundColor: "#0a0a12", color: "#ccc", border: "1px solid #333", resize: "vertical" }}
+                      placeholder={"CutDirect input=abc123\nFade input=xyz value=1000\nOverlayInput1 input=abc"}
+                    />
+                    <button
+                      onClick={() => parseScript(pasteValue)}
+                      disabled={!pasteValue.trim()}
+                      className="self-end flex items-center gap-1 text-[9px] font-bold px-3 py-1.5 rounded-lg transition-all hover:scale-[1.03] disabled:opacity-30"
+                      style={{ backgroundColor: "#8b5cf615", color: "#8b5cf6", border: "1px solid #8b5cf630" }}
+                    >
+                      <ClipboardPaste size={10} /> Importar
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* Commands list */}
               {commands.length === 0 ? (
