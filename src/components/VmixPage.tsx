@@ -2046,7 +2046,7 @@ export default function VmixPage() {
               </div>
 
               {/* ── Programas Preset + Botões de Efeitos side by side ── */}
-              <div className="grid grid-cols-1 xl:grid-cols-[1fr_auto] gap-4">
+              <div className="grid grid-cols-1 xl:grid-cols-[1fr_1fr] gap-4">
                 {/* Left: Programas Preset */}
                 <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a1f", border: "1px solid #ffffff08" }}>
                   <div className="flex items-center gap-2 px-4 py-2.5" style={{ backgroundColor: "#ffffff06", borderBottom: "1px solid #ffffff08" }}>
