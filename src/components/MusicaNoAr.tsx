@@ -529,7 +529,7 @@ export default function MusicaNoAr() {
 
             <div className="relative z-10 p-4 flex gap-5">
               {/* Cover image */}
-              <div className="relative w-56 h-56 shrink-0 overflow-hidden rounded-2xl group" style={{ boxShadow: "0 8px 24px rgba(13,4,70,0.15)" }}>
+              <div className="relative w-56 h-56 shrink-0 overflow-hidden rounded-2xl group bg-white" style={{ boxShadow: "0 8px 24px rgba(13,4,70,0.15)" }}>
                 {loadingCover && (
                   <div className="absolute inset-0 flex items-center justify-center bg-black/40 z-10 backdrop-blur-sm rounded-2xl">
                     <Loader2 className="animate-spin" size={36} style={{ color: "#268ffa" }} />
