@@ -1075,9 +1075,9 @@ function useGlobalMusicSync() {
       } catch {}
     };
 
-    // Faster first sync for real-time feel, then regular polling
-    const startTimer = setTimeout(fetchAndSync, 3000);
-    const interval = setInterval(fetchAndSync, 15000);
+    // Fast initial sync, then frequent polling for real-time feel
+    const startTimer = setTimeout(fetchAndSync, 1500);
+    const interval = setInterval(fetchAndSync, 5000);
     return () => { clearTimeout(startTimer); clearInterval(interval); };
   }, [user]);
 }
