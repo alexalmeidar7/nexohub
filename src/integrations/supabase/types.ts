@@ -1118,6 +1118,7 @@ export type Database = {
         Row: {
           dashboard_items: Json | null
           id: string
+          music_source_mode: string
           music_xml_url: string | null
           updated_at: string
           user_id: string
@@ -1132,6 +1133,7 @@ export type Database = {
         Insert: {
           dashboard_items?: Json | null
           id?: string
+          music_source_mode?: string
           music_xml_url?: string | null
           updated_at?: string
           user_id: string
@@ -1146,6 +1148,7 @@ export type Database = {
         Update: {
           dashboard_items?: Json | null
           id?: string
+          music_source_mode?: string
           music_xml_url?: string | null
           updated_at?: string
           user_id?: string

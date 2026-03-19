@@ -1,0 +1,1 @@
+ALTER TABLE public.user_settings ADD COLUMN IF NOT EXISTS music_source_mode text NOT NULL DEFAULT 'online';
