@@ -23,6 +23,7 @@ interface UploadLogEntry {
 const MUSIC_DATA_KEY = "masterview_music_data";
 const MUSIC_START_KEY = "masterview_music_start";
 const UPLOAD_HISTORY_KEY = "masterview_xml_upload_history";
+const SOURCE_MODE_KEY = "masterview_source_mode";
 const DEFAULT_XML_URL = "https://positivafm.com.br/storage/pulsar/positivafm.xml";
 
 function parseXmlString(xmlStr: string): MusicData | null {
