@@ -1015,7 +1015,7 @@ export default function PlayerPage() {
         const audio = audioRef.current;
         if (!audio) return;
         audio.volume = volumeRef.current / 100;
-        audio.muted = mutedRef.current;
+        audio.muted = forceAutoplay ? true : mutedRef.current;
         if (Hls && Hls.isSupported()) {
           const hls = new Hls({
             enableWorker: true,
@@ -1027,7 +1027,16 @@ export default function PlayerPage() {
           hlsRef.current = hls;
           hls.loadSource(freshUrl);
           hls.attachMedia(audio);
-          hls.on(Hls.Events.MANIFEST_PARSED, () => { audio.play().then(() => setBuffering(false)).catch((e) => console.warn("Audio play blocked:", e)); });
+          hls.on(Hls.Events.MANIFEST_PARSED, () => {
+            audio.play().then(() => {
+              setBuffering(false);
+              // Unmute after successful autoplay
+              if (forceAutoplay && !mutedRef.current) {
+                audio.muted = false;
+                setMuted(false);
+              }
+            }).catch((e) => console.warn("Audio play blocked:", e));
+          });
           hls.on(Hls.Events.FRAG_BUFFERED, () => setBuffering(false));
           hls.on(Hls.Events.ERROR, (_event, data) => {
             if (data.fatal) {
