@@ -615,6 +615,37 @@ export default function MusicaNoAr() {
             {/* Local File */}
             {sourceMode === "pasta" && (
               <div>
+                {/* Remote device warning: show if no local file selected and last upload was from a different device */}
+                {!localFileName && (() => {
+                  const lastLocal = uploadHistory.find(e => e.source === "pasta" && e.deviceName);
+                  if (lastLocal && lastLocal.deviceName) {
+                    const currentDevice = getDeviceName();
+                    const isRemote = lastLocal.deviceName !== currentDevice;
+                    return (
+                      <div className="rounded-lg p-2.5 mb-2 flex items-start gap-2" style={{ backgroundColor: isRemote ? "rgba(234,179,8,0.1)" : "rgba(34,197,94,0.08)", border: `1px solid ${isRemote ? "rgba(234,179,8,0.3)" : "rgba(34,197,94,0.2)"}` }}>
+                        <Monitor size={14} className="shrink-0 mt-0.5" style={{ color: isRemote ? "#ca8a04" : "#16a34a" }} />
+                        <div>
+                          <p className="text-[9px] font-semibold leading-tight" style={{ color: "#0d0446" }}>
+                            {isRemote
+                              ? "Arquivo XML sendo carregado localmente em outro computador"
+                              : "Arquivo XML carregado localmente neste computador"
+                            }
+                          </p>
+                          <p className="text-[8px] mt-0.5 font-mono" style={{ color: "rgba(13,4,70,0.5)" }}>
+                            {lastLocal.deviceName}
+                          </p>
+                          {isRemote && (
+                            <p className="text-[8px] mt-1" style={{ color: "rgba(13,4,70,0.4)" }}>
+                              Selecione um arquivo XML neste computador ou mude para o modo Online.
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
+
                 <input ref={fileInputRef} type="file" accept=".xml,application/xml,text/xml" onChange={handleFileSelect} className="hidden" />
                 <button onClick={() => fileInputRef.current?.click()} className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-[10px] font-bold border-2 border-dashed" style={{ borderColor: localFileName ? "#268ffa" : "rgba(13,4,70,0.15)", color: localFileName ? "#268ffa" : "rgba(13,4,70,0.4)" }}>
                   <Upload size={12} />
