@@ -201,6 +201,7 @@ export default function MusicaNoAr() {
   const [sourceMode, setSourceModeState] = useState<"online" | "pasta">("online");
   const [sourceModeLoaded, setSourceModeLoaded] = useState(false);
   const [localFileContent, setLocalFileContent] = useState<string | null>(null);
+  const localFileContentRef = useRef<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const localFileRef = useRef<File | null>(null);
   const fileHandleRef = useRef<FileSystemFileHandle | null>(null);
