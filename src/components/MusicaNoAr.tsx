@@ -494,54 +494,64 @@ export default function MusicaNoAr() {
             </p>
           </div>
 
-          {/* RIGHT — Cover + Song Info + Progress */}
-          <div className="rounded-2xl p-4 flex flex-col gap-4" style={{ backgroundColor: "#ffffff", boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}>
-            {/* Animated container — re-mounts on song change */}
-            <div
-              key={`${displayTitulo}-${displayArtista}`}
-              className="flex gap-5 animate-fade-in"
-            >
-              {/* Cover — larger */}
-              <div className="relative w-56 h-56 shrink-0 overflow-hidden rounded-2xl group" style={{ backgroundColor: "rgba(13,4,70,0.03)", boxShadow: "0 8px 24px rgba(13,4,70,0.15)" }}>
-                {loadingCover && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/40 z-10 backdrop-blur-sm rounded-2xl">
-                    <Loader2 className="animate-spin" size={36} style={{ color: "#268ffa" }} />
-                  </div>
-                )}
-                {displayCover ? (
-                  <img src={displayCover} alt="Capa" className="object-cover w-full h-full transition-transform duration-700 group-hover:scale-105" />
-                ) : (
-                  <div className="w-full h-full flex flex-col items-center justify-center gap-2" style={{ color: "rgba(13,4,70,0.2)" }}>
-                    <Music size={40} />
-                    <span className="italic text-xs">{music ? "Sem capa" : "Aguardando..."}</span>
-                  </div>
-                )}
+          {/* RIGHT — Cover as background with overlaid text */}
+          <div
+            key={`${displayTitulo}-${displayArtista}`}
+            className="rounded-2xl overflow-hidden relative animate-fade-in"
+            style={{ minHeight: "200px", boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}
+          >
+            {/* Cover as full background */}
+            {displayCover ? (
+              <img
+                src={displayCover}
+                alt="Capa"
+                className="absolute inset-0 w-full h-full object-cover transition-transform duration-700"
+              />
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center" style={{ backgroundColor: "rgba(13,4,70,0.05)" }}>
+                <Music size={48} style={{ color: "rgba(13,4,70,0.15)" }} />
+              </div>
+            )}
+
+            {/* Gradient overlay */}
+            <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.4) 100%)" }} />
+
+            {/* Content overlay */}
+            <div className="relative z-10 p-5 flex flex-col justify-between h-full" style={{ minHeight: "200px" }}>
+              <div className="flex flex-col items-start gap-2">
+                <span
+                  className="inline-block px-3 py-1.5 rounded-lg text-xl font-black tracking-tight"
+                  style={{ backgroundColor: "rgba(255,255,255,0.92)", color: "#0d0446", backdropFilter: "blur(8px)" }}
+                >
+                  {displayTitulo}
+                </span>
+                <span
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-sm font-semibold"
+                  style={{ backgroundColor: "rgba(255,255,255,0.88)", color: "#268ffa", backdropFilter: "blur(8px)" }}
+                >
+                  <User size={14} />
+                  {displayArtista}
+                </span>
               </div>
 
-              {/* Song Info + Progress */}
-              <div className="flex-1 flex flex-col justify-between min-w-0">
-                <div>
-                  <h1 className="text-xl font-black tracking-tight truncate" style={{ color: "#0d0446" }}>{displayTitulo}</h1>
-                  <p className="font-semibold flex items-center gap-1.5 text-sm mt-1" style={{ color: "#268ffa" }}>
-                    <User size={14} />
-                    {displayArtista}
-                  </p>
-                </div>
-
-                {music && music.duracao > 0 && (
-                  <div className="mt-3">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[11px] font-mono font-bold shrink-0" style={{ color: "#0d0446" }}>{formatTime(elapsed)}</span>
-                      <div className="flex-1 h-2.5 rounded-full overflow-hidden" style={{ backgroundColor: "rgba(13,4,70,0.06)" }}>
-                        <div className="h-full rounded-full transition-all duration-300" style={{ width: `${progress}%`, background: "linear-gradient(90deg, #268ffa, #2dbef3)" }} />
-                      </div>
-                      <span className="text-[11px] font-mono font-bold shrink-0" style={{ color: "rgba(13,4,70,0.4)" }}>{formatTime(music.duracao)}</span>
+              {music && music.duracao > 0 && (
+                <div className="mt-auto pt-4">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-mono font-bold shrink-0 px-1.5 py-0.5 rounded" style={{ backgroundColor: "rgba(255,255,255,0.85)", color: "#0d0446" }}>{formatTime(elapsed)}</span>
+                    <div className="flex-1 h-2.5 rounded-full overflow-hidden" style={{ backgroundColor: "rgba(255,255,255,0.3)" }}>
+                      <div className="h-full rounded-full transition-all duration-300" style={{ width: `${progress}%`, background: "linear-gradient(90deg, #268ffa, #2dbef3)" }} />
                     </div>
+                    <span className="text-[11px] font-mono font-bold shrink-0 px-1.5 py-0.5 rounded" style={{ backgroundColor: "rgba(255,255,255,0.85)", color: "rgba(13,4,70,0.5)" }}>{formatTime(music.duracao)}</span>
                   </div>
-                )}
-
-              </div>
+                </div>
+              )}
             </div>
+
+            {loadingCover && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/40 z-20 backdrop-blur-sm">
+                <Loader2 className="animate-spin" size={36} style={{ color: "#268ffa" }} />
+              </div>
+            )}
           </div>
         </div>
       </div>
