@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, GripVertical, Play, Loader2, X, ChevronDown, ChevronUp, Clock, Tag, Code, Copy, ClipboardPaste, Palette, Music, Radio, Tv, Mic, Volume2, Video, Zap, Star, Sparkles, Clapperboard, Megaphone, Bell, type LucideIcon } from "lucide-react";
+import { Plus, Trash2, GripVertical, Play, Loader2, X, ChevronDown, ChevronUp, Clock, Tag, Code, Copy, ClipboardPaste, Palette, Music, Radio, Tv, Mic, Volume2, Video, Zap, Star, Sparkles, Clapperboard, Megaphone, Bell, Timer, Sun, Moon, Cloud, Heart, Settings, Power, SkipForward, Pause, StopCircle, Repeat, Shuffle, Image, Type, Layers, Monitor, Disc, Eye, Lock, Unlock, Send, Download, Upload, Bookmark, Flag, Hash, Globe, Phone, Mail, MessageSquare, Calendar, type LucideIcon } from "lucide-react";
 
 const BUTTON_COLORS = [
   { value: "#f59e0b", label: "Amarelo" },
@@ -17,18 +17,50 @@ const BUTTON_COLORS = [
 ];
 
 const ICON_KEYWORDS: [string[], LucideIcon][] = [
-  [["music", "música", "musica", "song", "jingle", "vinheta"], Music],
-  [["radio", "fm", "frequência", "frequencia"], Radio],
-  [["tv", "televisão", "televisao", "monitor", "tela"], Tv],
-  [["mic", "microfone", "voz", "voice", "locutor", "apresentador"], Mic],
+  [["relógio", "relogio", "clock", "hora", "timer", "tempo", "cronômetro", "cronometro"], Clock],
+  [["music", "música", "musica", "song", "jingle", "vinheta", "canção", "cancao"], Music],
+  [["radio", "fm", "frequência", "frequencia", "sintonia"], Radio],
+  [["tv", "televisão", "televisao", "monitor", "tela", "display"], Tv],
+  [["mic", "microfone", "voz", "voice", "locutor", "apresentador", "entrevista"], Mic],
   [["audio", "áudio", "volume", "som", "sound"], Volume2],
-  [["video", "vídeo", "câmera", "camera", "gravação", "gravacao"], Video],
-  [["efeito", "effect", "fx", "flash", "raio", "zap"], Zap],
+  [["video", "vídeo", "câmera", "camera", "gravação", "gravacao", "filmagem"], Video],
+  [["play", "reproduzir", "tocar", "iniciar"], Play],
+  [["pause", "pausar", "pausa"], Pause],
+  [["stop", "parar", "encerrar"], StopCircle],
+  [["skip", "pular", "próximo", "proximo", "avançar", "avancar"], SkipForward],
+  [["repeat", "repetir", "loop", "laço"], Repeat],
+  [["shuffle", "aleatório", "aleatorio", "embaralhar"], Shuffle],
+  [["efeito", "effect", "fx", "flash", "raio", "zap", "transição", "transicao"], Zap],
   [["star", "estrela", "destaque", "favorito"], Star],
   [["abertura", "intro", "opening", "start", "início", "inicio"], Clapperboard],
-  [["comercial", "propaganda", "ad", "anúncio", "anuncio", "patrocínio"], Megaphone],
-  [["alerta", "alert", "aviso", "urgente", "notificação"], Bell],
-  [["brilho", "sparkle", "magic", "mágica", "especial"], Sparkles],
+  [["comercial", "propaganda", "ad", "anúncio", "anuncio", "patrocínio", "patrocinio"], Megaphone],
+  [["alerta", "alert", "aviso", "urgente", "notificação", "notificacao"], Bell],
+  [["brilho", "sparkle", "magic", "mágica", "magica", "especial"], Sparkles],
+  [["sol", "sun", "dia", "claro", "luz"], Sun],
+  [["lua", "moon", "noite", "escuro"], Moon],
+  [["nuvem", "cloud", "clima", "weather"], Cloud],
+  [["coração", "coracao", "heart", "amor", "like", "curtir"], Heart],
+  [["config", "setting", "ajuste", "engrenagem", "preferência", "preferencia"], Settings],
+  [["power", "ligar", "desligar", "on", "off", "energia"], Power],
+  [["imagem", "image", "foto", "picture", "png", "jpg"], Image],
+  [["texto", "text", "título", "titulo", "legenda", "caption", "gráfico", "grafico", "lower"], Type],
+  [["layer", "camada", "overlay", "sobreposição", "sobreposicao"], Layers],
+  [["preview", "visualizar", "olho", "eye", "ver"], Eye],
+  [["lock", "travar", "bloquear", "cadeado"], Lock],
+  [["unlock", "destravar", "desbloquear"], Unlock],
+  [["enviar", "send", "disparar"], Send],
+  [["download", "baixar"], Download],
+  [["upload", "enviar arquivo", "subir"], Upload],
+  [["bookmark", "salvar", "marcar"], Bookmark],
+  [["flag", "bandeira", "sinalizar"], Flag],
+  [["hash", "tag", "número", "numero", "canal"], Hash],
+  [["globe", "internet", "web", "mundo", "global"], Globe],
+  [["phone", "telefone", "celular", "ligar"], Phone],
+  [["mail", "email", "correio", "mensagem"], Mail],
+  [["chat", "conversa", "comentário", "comentario", "whatsapp"], MessageSquare],
+  [["agenda", "calendar", "calendário", "calendario", "evento", "programação", "programacao", "grade"], Calendar],
+  [["disco", "disc", "cd", "dvd", "vinil"], Disc],
+  [["monitor", "screen", "pc", "computador"], Monitor],
 ];
 
 export function getIconForName(name: string): LucideIcon {
@@ -36,7 +68,7 @@ export function getIconForName(name: string): LucideIcon {
   for (const [keywords, Icon] of ICON_KEYWORDS) {
     if (keywords.some(k => lower.includes(k))) return Icon;
   }
-  return Zap;
+  return Sparkles;
 }
 
 interface PresetCommand {
