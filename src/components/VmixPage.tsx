@@ -11,6 +11,7 @@ import {
 import logoMixControl from "@/assets/logo-mixcontrol.png";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import PresetCommandEditor from "./PresetCommandEditor";
+import CustomVmixButtonEditor from "./CustomVmixButtonEditor";
 
 interface VmixInput {
   key: string;
