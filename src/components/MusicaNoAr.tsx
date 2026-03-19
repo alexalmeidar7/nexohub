@@ -656,12 +656,13 @@ export default function MusicaNoAr() {
                     </button>
                   </div>
                 )}
-              </div>
-            )}
+            </div>
 
             {/* Local File */}
-            {sourceMode === "pasta" && (
-              <div>
+            <div>
+              <p className="text-[8px] mb-1 font-bold uppercase tracking-wider flex items-center gap-1" style={{ color: "rgba(13,4,70,0.4)" }}>
+                <FolderOpen size={9} /> Origem Local
+              </p>
                 {/* Device name editor */}
                 <div className="rounded-lg p-2 mb-2 flex items-center gap-2" style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "1px solid rgba(13,4,70,0.06)" }}>
                   <Monitor size={12} className="shrink-0" style={{ color: "#268ffa" }} />
