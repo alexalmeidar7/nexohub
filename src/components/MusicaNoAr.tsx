@@ -221,6 +221,7 @@ export default function MusicaNoAr() {
       setLocalMonitoring(false);
       setLocalFileName("");
       localFileRef.current = null;
+      fileHandleRef.current = null;
       setLocalFileContent(null);
     }
     if (user) {
