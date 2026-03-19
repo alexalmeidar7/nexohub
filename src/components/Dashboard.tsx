@@ -1066,9 +1066,9 @@ function useGlobalMusicSync() {
       } catch {}
     };
 
-    // Delay first sync to avoid competing with initial page load
-    const startTimer = setTimeout(fetchAndSync, 5000);
-    const interval = setInterval(fetchAndSync, 30000);
+    // Delay first sync significantly to avoid competing with initial page load
+    const startTimer = setTimeout(fetchAndSync, 10000);
+    const interval = setInterval(fetchAndSync, 45000);
     return () => { clearTimeout(startTimer); clearInterval(interval); };
   }, [user]);
 }
