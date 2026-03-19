@@ -728,7 +728,7 @@ export default function MusicaNoAr() {
                   </table>
                 </div>
               </div>
-            )
+            )}
           </div>
 
           {/* RIGHT - Cover + Song Info with blue progress background */}
