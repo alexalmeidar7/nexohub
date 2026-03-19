@@ -544,11 +544,6 @@ export default function MusicaNoAr() {
                   </div>
                 )}
 
-                {music && (
-                  <div className="mt-3">
-                    <XmlLinkRow label="XML MUSICA AGORA" xmlContent={`<?xml version="1.0" encoding="UTF-8"?>\n<musica_agora>\n  <titulo>${music.titulo}</titulo>\n  <interprete>${music.artista}</interprete>\n  <capa>${music.capa || ""}</capa>\n</musica_agora>`} dark />
-                  </div>
-                )}
               </div>
             </div>
           </div>
