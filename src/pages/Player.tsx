@@ -887,8 +887,9 @@ export default function PlayerPage() {
   // Sync music data directly from XML
   const coverCacheRef = useRef<Record<string, string>>({});
   const noCoverCacheRef = useRef<Record<string, true>>({});
+  const effectiveUserId = user?.id || publicUserId;
   useEffect(() => {
-    if (!user) return;
+    if (!effectiveUserId) return;
 
 
     const parseXml = (xmlStr: string) => {
