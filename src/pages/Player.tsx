@@ -982,17 +982,25 @@ export default function PlayerPage() {
 
   // Play stream
   const playStream = useCallback(
-    async (url: string, type: string) => {
+    async (url: string, type: string, forceAutoplay?: boolean) => {
       if (hlsRef.current) { hlsRef.current.destroy(); hlsRef.current = null; }
       setBuffering(true);
 
       // Unlock audio/video element synchronously (preserves user gesture context)
+      // For autoplay (no user gesture), start muted to comply with browser policies
       const isAudioType = type === "audio_live" || type === "audio";
       if (isAudioType && audioRef.current) {
         audioRef.current.volume = volumeRef.current / 100;
-        audioRef.current.muted = mutedRef.current;
+        if (forceAutoplay) {
+          audioRef.current.muted = true;
+        } else {
+          audioRef.current.muted = mutedRef.current;
+        }
         audioRef.current.play().catch(() => {});
       } else if (videoRef.current) {
+        if (forceAutoplay) {
+          videoRef.current.muted = true;
+        }
         videoRef.current.play().catch(() => {});
       }
 
@@ -1007,7 +1015,7 @@ export default function PlayerPage() {
         const audio = audioRef.current;
         if (!audio) return;
         audio.volume = volumeRef.current / 100;
-        audio.muted = mutedRef.current;
+        audio.muted = forceAutoplay ? true : mutedRef.current;
         if (Hls && Hls.isSupported()) {
           const hls = new Hls({
             enableWorker: true,
@@ -1019,7 +1027,16 @@ export default function PlayerPage() {
           hlsRef.current = hls;
           hls.loadSource(freshUrl);
           hls.attachMedia(audio);
-          hls.on(Hls.Events.MANIFEST_PARSED, () => { audio.play().then(() => setBuffering(false)).catch((e) => console.warn("Audio play blocked:", e)); });
+          hls.on(Hls.Events.MANIFEST_PARSED, () => {
+            audio.play().then(() => {
+              setBuffering(false);
+              // Unmute after successful autoplay
+              if (forceAutoplay && !mutedRef.current) {
+                audio.muted = false;
+                setMuted(false);
+              }
+            }).catch((e) => console.warn("Audio play blocked:", e));
+          });
           hls.on(Hls.Events.FRAG_BUFFERED, () => setBuffering(false));
           hls.on(Hls.Events.ERROR, (_event, data) => {
             if (data.fatal) {
@@ -1032,11 +1049,15 @@ export default function PlayerPage() {
         } else if (audio.canPlayType("application/vnd.apple.mpegurl")) {
           audio.src = freshUrl;
           audio.load();
-          audio.play().catch((e) => console.warn("Audio play blocked:", e));
+          audio.play().then(() => {
+            if (forceAutoplay && !mutedRef.current) { audio.muted = false; setMuted(false); }
+          }).catch((e) => console.warn("Audio play blocked:", e));
         } else {
           audio.src = freshUrl;
           audio.load();
-          audio.play().catch((e) => console.warn("Audio play blocked:", e));
+          audio.play().then(() => {
+            if (forceAutoplay && !mutedRef.current) { audio.muted = false; setMuted(false); }
+          }).catch((e) => console.warn("Audio play blocked:", e));
         }
       } else {
         if (audioRef.current) { audioRef.current.pause(); audioRef.current.src = ""; }
@@ -1245,7 +1266,7 @@ export default function PlayerPage() {
       setSelectedVideoId(null);
       setSidebarOpen(false);
     } else {
-      setTimeout(() => playStream(first.url, first.type), 120);
+      setTimeout(() => playStream(first.url, first.type, true), 120);
     }
   }, [canais, playing, playStream, prerollDone, isAutoplayChannel, requestedChannelId]);
 
