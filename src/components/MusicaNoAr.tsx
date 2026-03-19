@@ -480,16 +480,16 @@ export default function MusicaNoAr() {
     setLocalMonitoring(true);
   };
 
-  // Start 1s polling — stable callback, no interval restarts
+  // Local polling — always active when monitoring (unified mode, no sourceMode guard)
   useEffect(() => {
-    if (sourceMode !== "pasta" || !localMonitoring) {
+    if (!localMonitoring) {
       if (localPollRef.current) clearInterval(localPollRef.current);
       return;
     }
     if (!localFileRef.current && !fileHandleRef.current) return;
     localPollRef.current = setInterval(readLocalFile, 1000);
     return () => { if (localPollRef.current) clearInterval(localPollRef.current); };
-  }, [sourceMode, localMonitoring, readLocalFile]);
+  }, [localMonitoring, readLocalFile]);
 
   useEffect(() => {
     if (!music || !startTime) return;
