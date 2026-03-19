@@ -92,6 +92,8 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [running, setRunning] = useState(false);
+  const [showCode, setShowCode] = useState(false);
+  const [pasteValue, setPasteValue] = useState("");
 
   useEffect(() => {
     if (!open) return;
