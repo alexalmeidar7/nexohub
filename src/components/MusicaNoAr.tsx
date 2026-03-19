@@ -470,7 +470,7 @@ export default function MusicaNoAr() {
                 {localFileName && (
                   <div className="mt-1 flex items-center gap-1.5 px-2 py-0.5 rounded text-[8px]" style={{ backgroundColor: "rgba(38,143,250,0.06)", color: "rgba(13,4,70,0.5)" }}>
                     <span className="relative flex h-1.5 w-1.5 shrink-0"><span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: "#22c55e" }}></span><span className="relative inline-flex rounded-full h-1.5 w-1.5" style={{ backgroundColor: "#22c55e" }}></span></span>
-                    Monitorando a cada 2s
+                    Monitorando a cada 1s
                   </div>
                 )}
               </div>
