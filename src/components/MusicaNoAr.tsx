@@ -149,6 +149,18 @@ export default function MusicaNoAr() {
   const [uploadHistory, setUploadHistory] = useState<UploadLogEntry[]>([]);
   const [localFileName, setLocalFileName] = useState<string>("");
 
+  // Prompt to switch from local to online
+  const [showSwitchPrompt, setShowSwitchPrompt] = useState(false);
+  const promptDismissedRef = useRef(false);
+
+  // On mount: if last source was "pasta", show prompt
+  useEffect(() => {
+    const saved = localStorage.getItem(SOURCE_MODE_KEY);
+    if (saved === "pasta" && !promptDismissedRef.current) {
+      setShowSwitchPrompt(true);
+    }
+  }, []);
+
   // Load URL and history from DB
   useEffect(() => {
     if (!user) return;
