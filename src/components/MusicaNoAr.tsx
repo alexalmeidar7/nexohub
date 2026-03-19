@@ -213,6 +213,9 @@ export default function MusicaNoAr() {
   const [uploadHistory, setUploadHistory] = useState<UploadLogEntry[]>([]);
   const [localFileName, setLocalFileName] = useState<string>("");
   const [localSaved, setLocalSaved] = useState(false);
+  const [editingDeviceName, setEditingDeviceName] = useState(false);
+  const [deviceNameInput, setDeviceNameInput] = useState(() => getDeviceName());
+  const [currentDeviceName, setCurrentDeviceName] = useState(() => getDeviceName());
 
   // Prompt to switch from local to online
   const [showSwitchPrompt, setShowSwitchPrompt] = useState(false);
