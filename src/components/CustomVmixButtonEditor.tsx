@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, GripVertical, Play, Loader2, X, ChevronDown, ChevronUp, Clock, Tag } from "lucide-react";
+import { Plus, Trash2, GripVertical, Play, Loader2, X, ChevronDown, ChevronUp, Clock, Tag, Code, Copy, ClipboardPaste } from "lucide-react";
 
 interface PresetCommand {
   id: string;
@@ -92,6 +92,8 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [running, setRunning] = useState(false);
+  const [showCode, setShowCode] = useState(false);
+  const [pasteValue, setPasteValue] = useState("");
 
   useEffect(() => {
     if (!open) return;
@@ -165,6 +167,41 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
     setRunning(true);
     await onRunCommands(commands);
     setRunning(false);
+  };
+
+  const generateScript = (): string => {
+    return commands.map(cmd => {
+      let line = cmd.fn;
+      if (cmd.input) line += ` input=${cmd.input}`;
+      if (cmd.value) line += ` value=${cmd.value}`;
+      if (cmd.extraKey) line += ` extraKey=${cmd.extraKey}`;
+      if (cmd.extraValue) line += ` extra=${cmd.extraValue}`;
+      return line;
+    }).join("\n");
+  };
+
+  const parseScript = (text: string) => {
+    const lines = text.trim().split("\n").filter(l => l.trim());
+    const parsed: PresetCommand[] = lines.map(line => {
+      const parts = line.trim().split(/\s+/);
+      const fn = parts[0] || "CutDirect";
+      const cmd: PresetCommand = { id: crypto.randomUUID(), fn };
+      for (let i = 1; i < parts.length; i++) {
+        const [k, ...v] = parts[i].split("=");
+        const val = v.join("=");
+        if (k === "input") cmd.input = val;
+        else if (k === "value") cmd.value = val;
+        else if (k === "extraKey") cmd.extraKey = val;
+        else if (k === "extra") cmd.extraValue = val;
+      }
+      return cmd;
+    });
+    if (parsed.length > 0) {
+      setCommands(parsed);
+      setPasteValue("");
+      setShowCode(false);
+      toast({ title: "Código importado", description: `${parsed.length} ação(ões) carregada(s).` });
+    }
   };
 
   if (!open) return null;
@@ -258,7 +295,55 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
               <div className="flex items-center gap-2 pt-2">
                 <span className="text-[9px] font-bold uppercase tracking-widest" style={{ color: "#666" }}>Ações do Botão</span>
                 <div className="flex-1 h-px" style={{ backgroundColor: "#ffffff08" }} />
+                <button
+                  onClick={() => { setShowCode(!showCode); if (!showCode) setPasteValue(""); }}
+                  className="flex items-center gap-1 text-[9px] font-bold px-2 py-1 rounded transition-all hover:bg-white/10"
+                  style={{ color: "#8b5cf6" }}
+                >
+                  <Code size={10} />
+                  {showCode ? "Fechar Código" : "Colar Código"}
+                </button>
               </div>
+
+              {/* Code paste section */}
+              {showCode && (
+                <div className="rounded-lg p-3 space-y-2" style={{ backgroundColor: "#12121a", border: "1px solid #333" }}>
+                  {commands.length > 0 && (
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center justify-between">
+                        <label className="text-[8px] font-bold uppercase tracking-widest" style={{ color: "#666" }}>Código Atual</label>
+                        <button
+                          onClick={() => { navigator.clipboard.writeText(generateScript()); toast({ title: "Copiado!" }); }}
+                          className="flex items-center gap-1 text-[8px] font-bold px-1.5 py-0.5 rounded hover:bg-white/10 transition-colors"
+                          style={{ color: "#8b5cf6" }}
+                        >
+                          <Copy size={8} /> Copiar
+                        </button>
+                      </div>
+                      <pre className="text-[10px] p-2 rounded overflow-x-auto" style={{ backgroundColor: "#0a0a12", color: "#8b5cf6", border: "1px solid #222" }}>{generateScript()}</pre>
+                    </div>
+                  )}
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[8px] font-bold uppercase tracking-widest" style={{ color: "#666" }}>Colar Código</label>
+                    <textarea
+                      value={pasteValue}
+                      onChange={e => setPasteValue(e.target.value)}
+                      rows={4}
+                      className="w-full text-[10px] px-2.5 py-2 rounded-lg outline-none font-mono"
+                      style={{ backgroundColor: "#0a0a12", color: "#ccc", border: "1px solid #333", resize: "vertical" }}
+                      placeholder={"CutDirect input=abc123\nFade input=xyz value=1000\nOverlayInput1 input=abc"}
+                    />
+                    <button
+                      onClick={() => parseScript(pasteValue)}
+                      disabled={!pasteValue.trim()}
+                      className="self-end flex items-center gap-1 text-[9px] font-bold px-3 py-1.5 rounded-lg transition-all hover:scale-[1.03] disabled:opacity-30"
+                      style={{ backgroundColor: "#8b5cf615", color: "#8b5cf6", border: "1px solid #8b5cf630" }}
+                    >
+                      <ClipboardPaste size={10} /> Importar
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* Commands list */}
               {commands.length === 0 ? (
