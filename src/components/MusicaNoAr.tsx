@@ -380,7 +380,7 @@ export default function MusicaNoAr() {
         </div>
 
         {/* Main 2-column: Cover+Info | XML Config */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-3">
+        <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-3">
 
           {/* LEFT — Cover + Song Info + Progress */}
           <div className="rounded-2xl p-4 flex gap-4" style={{ backgroundColor: "#ffffff", boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}>
