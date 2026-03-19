@@ -276,6 +276,24 @@ export default function MusicaNoAr() {
   }, [fetchXml, sourceMode]);
 
   // Local file polling - re-read file every 2s
+  // Upload local XML to storage so monitor-music cron can use it
+  const uploadLocalXmlToStorage = useCallback(async (xmlText: string) => {
+    if (!user) return;
+    const blob = new Blob([xmlText], { type: "application/xml" });
+    const filePath = `local-xml-${user.id}.xml`;
+    await supabase.storage.from("xml-files").upload(filePath, blob, { upsert: true, contentType: "application/xml" });
+    const { data: urlData } = supabase.storage.from("xml-files").getPublicUrl(filePath);
+    if (urlData?.publicUrl) {
+      // Update music_xml_url so the edge function monitor-music picks it up
+      await supabase.from("user_settings").upsert({
+        user_id: user.id,
+        music_xml_url: urlData.publicUrl,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: "user_id" });
+      setXmlUrl(urlData.publicUrl);
+    }
+  }, [user]);
+
   const readLocalFile = useCallback(async () => {
     const file = localFileRef.current;
     if (!file) return;
@@ -283,13 +301,15 @@ export default function MusicaNoAr() {
       const text = await file.text();
       if (text === localFileContent) return; // no change
       setLocalFileContent(text);
+      // Upload to storage immediately
+      await uploadLocalXmlToStorage(text);
       const parsed = parseXmlString(text);
       if (parsed) {
         await processMusic(parsed);
         setUploadHistory(await addUploadLogToDb(user!.id, "pasta"));
       }
     } catch { }
-  }, [processMusic, localFileContent]);
+  }, [processMusic, localFileContent, uploadLocalXmlToStorage, user]);
 
   useEffect(() => {
     if (sourceMode !== "pasta") {
