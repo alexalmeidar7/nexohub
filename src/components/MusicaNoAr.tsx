@@ -129,7 +129,14 @@ export default function MusicaNoAr() {
   const [presenterFallback, setPresenterFallback] = useState<{ nome: string; foto: string } | null>(null);
 
   // New state for dual source mode
-  const [sourceMode, setSourceMode] = useState<"online" | "pasta">("online");
+  const [sourceMode, setSourceModeState] = useState<"online" | "pasta">(() => {
+    const saved = localStorage.getItem(SOURCE_MODE_KEY);
+    return saved === "pasta" ? "pasta" : "online";
+  });
+  const setSourceMode = (mode: "online" | "pasta") => {
+    setSourceModeState(mode);
+    localStorage.setItem(SOURCE_MODE_KEY, mode);
+  };
   const [localFileContent, setLocalFileContent] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const localFileRef = useRef<File | null>(null);
