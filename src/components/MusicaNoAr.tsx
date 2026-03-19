@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Music, User, Loader2, Pencil, Check, Globe, FolderOpen, Clock, Upload } from "lucide-react";
+import { Music, User, Loader2, Pencil, Check, Globe, FolderOpen, Clock, Upload, Save } from "lucide-react";
 import XmlLinkRow from "./XmlLinkRow";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -28,21 +28,18 @@ const DEFAULT_XML_URL = "https://positivafm.com.br/storage/pulsar/positivafm.xml
 
 /** Detect encoding from XML declaration or byte-order, then decode */
 async function readFileWithEncoding(file: File): Promise<string> {
-  // Read first bytes to detect encoding from XML declaration
   const headSlice = file.slice(0, 200);
   const headText = await headSlice.text();
   const encMatch = headText.match(/encoding=["']([^"']+)["']/i);
   const declared = encMatch?.[1]?.toLowerCase() || "";
 
-  // Map common XML encodings
   const latin = ["iso-8859-1", "latin1", "windows-1252", "iso_8859-1"];
   if (latin.some(e => declared.includes(e))) {
     const buf = await file.arrayBuffer();
     return new TextDecoder("windows-1252").decode(buf);
   }
-  // Default: try UTF-8, fallback to windows-1252 if replacement chars appear
   const utf8 = await file.text();
-  if (utf8.includes("�") || /Ã[£¡â€]/.test(utf8)) {
+  if (utf8.includes("\uFFFD") || /\u00C3[\u00A0-\u00BF]/.test(utf8)) {
     const buf = await file.arrayBuffer();
     return new TextDecoder("windows-1252").decode(buf);
   }
@@ -70,7 +67,7 @@ function parseXmlString(xmlStr: string): MusicData | null {
       doc.querySelector("artist")?.textContent ||
       "";
 
-    const titulo = normalizeMusicText(rawTitulo) || "Sem título";
+    const titulo = normalizeMusicText(rawTitulo) || "Sem titulo";
     const artista = normalizeMusicText(rawArtista) || "Desconhecido";
 
     const duracaoStr =
@@ -315,33 +312,14 @@ export default function MusicaNoAr() {
     return () => { if (fetchIntervalRef.current) clearInterval(fetchIntervalRef.current); };
   }, [fetchXml, sourceMode]);
 
-  // Local file polling - re-read file every 2s
-  // Upload local XML to storage so monitor-music cron can use it
-  const uploadLocalXmlToStorage = useCallback(async (xmlText: string) => {
-    if (!user) return;
-    const blob = new Blob([xmlText], { type: "application/xml" });
-    const filePath = `local-xml-${user.id}.xml`;
-    await supabase.storage.from("xml-files").upload(filePath, blob, { upsert: true, contentType: "application/xml" });
-    const { data: urlData } = supabase.storage.from("xml-files").getPublicUrl(filePath);
-    if (urlData?.publicUrl) {
-      // Update music_xml_url so the edge function monitor-music picks it up
-      await supabase.from("user_settings").upsert({
-        user_id: user.id,
-        music_xml_url: urlData.publicUrl,
-        updated_at: new Date().toISOString(),
-      }, { onConflict: "user_id" });
-      setXmlUrl(urlData.publicUrl);
-    }
-  }, [user]);
-
+  // Local file re-read + upload to storage
   const readLocalFile = useCallback(async () => {
     const file = localFileRef.current;
     if (!file) return;
     try {
       const text = await readFileWithEncoding(file);
-      if (text === localFileContent) return; // no change
+      if (text === localFileContent) return;
       setLocalFileContent(text);
-      // Upload to storage immediately
       // Re-encode as UTF-8 for storage
       const utf8Blob = new Blob([new TextEncoder().encode(text)], { type: "application/xml" });
       if (user) {
@@ -370,14 +348,44 @@ export default function MusicaNoAr() {
     if (!file) return;
     localFileRef.current = file;
     setLocalFileName(file.name);
+    setLocalSaved(false);
     const text = await readFileWithEncoding(file);
     setLocalFileContent(text);
     const parsed = parseXmlString(text);
     if (parsed) {
       await processMusic(parsed);
     }
-    // Don't save yet — user must click "Salvar" button
   };
+
+  // Save local source: uploads to storage and starts polling
+  const handleSaveLocal = async () => {
+    if (!user || !localFileContent) return;
+    setLocalSaved(true);
+    const utf8Blob = new Blob([new TextEncoder().encode(localFileContent)], { type: "application/xml" });
+    const filePath = `local-xml-${user.id}.xml`;
+    await supabase.storage.from("xml-files").upload(filePath, utf8Blob, { upsert: true, contentType: "application/xml" });
+    const { data: urlData } = supabase.storage.from("xml-files").getPublicUrl(filePath);
+    if (urlData?.publicUrl) {
+      await supabase.from("user_settings").upsert({
+        user_id: user.id,
+        music_xml_url: urlData.publicUrl,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: "user_id" });
+      setXmlUrl(urlData.publicUrl);
+    }
+    setUploadHistory(await addUploadLogToDb(user.id, "pasta"));
+  };
+
+  // Start 1s polling only after local is saved
+  useEffect(() => {
+    if (sourceMode !== "pasta" || !localSaved) {
+      if (localPollRef.current) clearInterval(localPollRef.current);
+      return;
+    }
+    if (!localFileRef.current) return;
+    localPollRef.current = setInterval(readLocalFile, 1000);
+    return () => { if (localPollRef.current) clearInterval(localPollRef.current); };
+  }, [sourceMode, localSaved, readLocalFile]);
 
   useEffect(() => {
     if (!music || !startTime) return;
@@ -413,7 +421,7 @@ export default function MusicaNoAr() {
   const hasCover = music?.capa && music.capa.length > 0;
   const useFallback = !hasCover && presenterFallback;
   const displayTitulo = useFallback ? presenterFallback!.nome : (music?.titulo || "Aguardando leitura...");
-  const displayArtista = useFallback ? "no ar agora" : (music?.artista || "Intérprete");
+  const displayArtista = useFallback ? "no ar agora" : (music?.artista || "Interprete");
   const displayCover = useFallback ? presenterFallback!.foto : (music?.capa || "");
 
   if (!music && !presenterFallback) {
@@ -460,7 +468,7 @@ export default function MusicaNoAr() {
               <Music size={16} style={{ color: "#0d0446" }} />
             </div>
             <div>
-              <h3 className="text-sm font-bold leading-tight" style={{ color: "#0d0446" }}>Música no Ar</h3>
+              <h3 className="text-sm font-bold leading-tight" style={{ color: "#0d0446" }}>Musica no Ar</h3>
               <p className="text-[9px]" style={{ color: "rgba(13,4,70,0.5)" }}>Monitoramento XML em tempo real</p>
             </div>
           </div>
@@ -476,7 +484,7 @@ export default function MusicaNoAr() {
         {/* Main 2-column: Cover+Info | XML Config */}
         <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-3">
 
-          {/* LEFT — XML Config + History */}
+          {/* LEFT - XML Config + History */}
           <div className="rounded-2xl p-3 flex flex-col gap-2" style={{ backgroundColor: "#ffffff", boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}>
             {/* Source Tabs */}
             <div className="flex gap-1 rounded-lg p-0.5" style={{ backgroundColor: "rgba(13,4,70,0.04)" }}>
@@ -529,7 +537,7 @@ export default function MusicaNoAr() {
                     className="flex-1 py-1.5 rounded-md text-[10px] font-bold"
                     style={{ backgroundColor: "rgba(13,4,70,0.06)", color: "rgba(13,4,70,0.6)", border: "1px solid rgba(13,4,70,0.1)" }}
                   >
-                    Não
+                    Nao
                   </button>
                 </div>
               </div>
@@ -572,7 +580,20 @@ export default function MusicaNoAr() {
                   <Upload size={12} />
                   {localFileName || "Selecionar .XML"}
                 </button>
-                {localFileName && (
+
+                {/* Save button - appears after file is selected */}
+                {localFileName && !localSaved && (
+                  <button
+                    onClick={handleSaveLocal}
+                    className="w-full mt-1.5 flex items-center justify-center gap-1.5 py-2 rounded-lg text-[10px] font-bold transition-all"
+                    style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff", boxShadow: "0 2px 6px rgba(34,197,94,0.3)" }}
+                  >
+                    <Save size={12} />
+                    Salvar e Monitorar
+                  </button>
+                )}
+
+                {localFileName && localSaved && (
                   <div className="mt-1 flex items-center gap-1.5 px-2 py-0.5 rounded text-[8px]" style={{ backgroundColor: "rgba(38,143,250,0.06)", color: "rgba(13,4,70,0.5)" }}>
                     <span className="relative flex h-1.5 w-1.5 shrink-0"><span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: "#22c55e" }}></span><span className="relative inline-flex rounded-full h-1.5 w-1.5" style={{ backgroundColor: "#22c55e" }}></span></span>
                     Monitorando a cada 1s
@@ -585,7 +606,7 @@ export default function MusicaNoAr() {
             {uploadHistory.length > 0 && (
               <div className="flex-1 min-h-0">
                 <p className="text-[8px] mb-1 font-bold uppercase tracking-wider flex items-center gap-1" style={{ color: "rgba(13,4,70,0.4)" }}>
-                  <Clock size={9} /> Histórico
+                  <Clock size={9} /> Historico
                 </p>
                 <div className="rounded-lg overflow-auto max-h-[140px]" style={{ border: "1px solid rgba(13,4,70,0.06)" }}>
                   <table className="w-full text-[8px]">
@@ -615,13 +636,12 @@ export default function MusicaNoAr() {
               </div>
             )}
 
-
             <p className="text-[8px] text-center uppercase tracking-widest font-semibold" style={{ color: "rgba(13,4,70,0.25)" }}>
-              {sourceMode === "online" ? "Monitorando online" : "Monitorando local"}
+              {sourceMode === "online" ? "Monitorando online" : (localSaved ? "Monitorando local" : "Selecione um arquivo")}
             </p>
           </div>
 
-          {/* RIGHT — Cover + Song Info with blue progress background */}
+          {/* RIGHT - Cover + Song Info with blue progress background */}
           <div
             key={`${displayTitulo}-${displayArtista}`}
             className="rounded-2xl overflow-hidden relative animate-fade-in"
@@ -682,7 +702,7 @@ export default function MusicaNoAr() {
         </div>
       </div>
 
-      {/* XML Output Link — outside the main card */}
+      {/* XML Output Link - outside the main card */}
       {music && (
         <div className="mt-3">
           <XmlLinkRow label="XML MUSICA AGORA" xmlContent={`<?xml version="1.0" encoding="UTF-8"?>\n<musica_agora>\n  <titulo>${displayTitulo}</titulo>\n  <interprete>${displayArtista}</interprete>\n  <capa>${displayCover || ""}</capa>\n</musica_agora>`} dark />
