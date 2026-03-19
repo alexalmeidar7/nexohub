@@ -256,7 +256,7 @@ export default function MusicaNoAr() {
       const parsed = parseXmlString(data.content);
       if (parsed) {
         await processMusic(parsed);
-        setUploadHistory(addUploadLog("online"));
+        setUploadHistory(await addUploadLogToDb(user!.id, "online"));
       }
     } catch { }
   }, [xmlUrl, processMusic, sourceMode]);
