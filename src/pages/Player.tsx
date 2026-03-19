@@ -1262,7 +1262,7 @@ export default function PlayerPage() {
       setSelectedVideoId(null);
       setSidebarOpen(false);
     } else {
-      setTimeout(() => playStream(first.url, first.type), 120);
+      setTimeout(() => playStream(first.url, first.type, true), 120);
     }
   }, [canais, playing, playStream, prerollDone, isAutoplayChannel, requestedChannelId]);
 
