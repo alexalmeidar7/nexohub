@@ -2236,8 +2236,8 @@ export default function VmixPage() {
                     <Wand2 size={14} style={{ color: "#f59e0b" }} />
                     <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#f59e0b" }}>botões de efeitos</span>
                   </div>
-                  <div className="p-3">
-                    <div className="grid grid-cols-2 gap-2">
+                  <div className="p-4 space-y-4">
+                    <div className="grid grid-cols-3 gap-2">
                       {customButtons.map((btn: any) => {
                         const isBtnActive = activeCustomButton === btn.id;
                         const hasSchedule = btn.horario && btn.dias_semana?.length > 0;
