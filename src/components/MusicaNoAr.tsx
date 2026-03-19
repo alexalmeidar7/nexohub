@@ -213,6 +213,9 @@ export default function MusicaNoAr() {
   const [uploadHistory, setUploadHistory] = useState<UploadLogEntry[]>([]);
   const [localFileName, setLocalFileName] = useState<string>("");
   const [localSaved, setLocalSaved] = useState(false);
+  const [editingDeviceName, setEditingDeviceName] = useState(false);
+  const [deviceNameInput, setDeviceNameInput] = useState(() => getDeviceName());
+  const [currentDeviceName, setCurrentDeviceName] = useState(() => getDeviceName());
 
   // Prompt to switch from local to online
   const [showSwitchPrompt, setShowSwitchPrompt] = useState(false);
@@ -378,10 +381,10 @@ export default function MusicaNoAr() {
       const parsed = parseXmlString(text);
       if (parsed) {
         await processMusic(parsed);
-        if (user) setUploadHistory(await addUploadLogToDb(user.id, "pasta", getDeviceName()));
+        if (user) setUploadHistory(await addUploadLogToDb(user.id, "pasta", currentDeviceName));
       }
     } catch { }
-  }, [processMusic, localFileContent, user]);
+  }, [processMusic, localFileContent, user, currentDeviceName]);
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -413,7 +416,7 @@ export default function MusicaNoAr() {
       }, { onConflict: "user_id" });
       setXmlUrl(urlData.publicUrl);
     }
-    setUploadHistory(await addUploadLogToDb(user.id, "pasta", getDeviceName()));
+    setUploadHistory(await addUploadLogToDb(user.id, "pasta", currentDeviceName));
   };
 
   // Start 1s polling only after local is saved
@@ -615,33 +618,76 @@ export default function MusicaNoAr() {
             {/* Local File */}
             {sourceMode === "pasta" && (
               <div>
-                {/* Remote device warning: show if no local file selected and last upload was from a different device */}
+                {/* Device name editor */}
+                <div className="rounded-lg p-2 mb-2 flex items-center gap-2" style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "1px solid rgba(13,4,70,0.06)" }}>
+                  <Monitor size={12} className="shrink-0" style={{ color: "#268ffa" }} />
+                  {editingDeviceName ? (
+                    <div className="flex-1 flex gap-1">
+                      <input
+                        value={deviceNameInput}
+                        onChange={e => setDeviceNameInput(e.target.value)}
+                        className="flex-1 text-[9px] px-1.5 py-0.5 rounded outline-none"
+                        style={{ backgroundColor: "#fff", border: "1px solid #268ffa", color: "#0d0446" }}
+                        autoFocus
+                        onKeyDown={e => {
+                          if (e.key === "Enter") {
+                            localStorage.setItem(DEVICE_NAME_KEY, deviceNameInput);
+                            setCurrentDeviceName(deviceNameInput);
+                            setEditingDeviceName(false);
+                          }
+                        }}
+                      />
+                      <button
+                        onClick={() => {
+                          localStorage.setItem(DEVICE_NAME_KEY, deviceNameInput);
+                          setCurrentDeviceName(deviceNameInput);
+                          setEditingDeviceName(false);
+                        }}
+                        className="w-5 h-5 rounded flex items-center justify-center"
+                        style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#fff" }}
+                      >
+                        <Check size={10} />
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <span className="flex-1 text-[9px] font-semibold truncate" style={{ color: "#0d0446" }}>
+                        {currentDeviceName}
+                      </span>
+                      <button
+                        onClick={() => { setDeviceNameInput(currentDeviceName); setEditingDeviceName(true); }}
+                        className="w-5 h-5 rounded flex items-center justify-center shrink-0"
+                        style={{ backgroundColor: "rgba(13,4,70,0.04)" }}
+                      >
+                        <Pencil size={9} style={{ color: "#268ffa" }} />
+                      </button>
+                    </>
+                  )}
+                </div>
+
+                {/* Remote device warning */}
                 {!localFileName && (() => {
                   const lastLocal = uploadHistory.find(e => e.source === "pasta" && e.deviceName);
                   if (lastLocal && lastLocal.deviceName) {
-                    const currentDevice = getDeviceName();
-                    const isRemote = lastLocal.deviceName !== currentDevice;
-                    return (
-                      <div className="rounded-lg p-2.5 mb-2 flex items-start gap-2" style={{ backgroundColor: isRemote ? "rgba(234,179,8,0.1)" : "rgba(34,197,94,0.08)", border: `1px solid ${isRemote ? "rgba(234,179,8,0.3)" : "rgba(34,197,94,0.2)"}` }}>
-                        <Monitor size={14} className="shrink-0 mt-0.5" style={{ color: isRemote ? "#ca8a04" : "#16a34a" }} />
-                        <div>
-                          <p className="text-[9px] font-semibold leading-tight" style={{ color: "#0d0446" }}>
-                            {isRemote
-                              ? "Arquivo XML sendo carregado localmente em outro computador"
-                              : "Arquivo XML carregado localmente neste computador"
-                            }
-                          </p>
-                          <p className="text-[8px] mt-0.5 font-mono" style={{ color: "rgba(13,4,70,0.5)" }}>
-                            {lastLocal.deviceName}
-                          </p>
-                          {isRemote && (
+                    const isRemote = lastLocal.deviceName !== currentDeviceName;
+                    if (isRemote) {
+                      return (
+                        <div className="rounded-lg p-2.5 mb-2 flex items-start gap-2" style={{ backgroundColor: "rgba(234,179,8,0.1)", border: "1px solid rgba(234,179,8,0.3)" }}>
+                          <Monitor size={14} className="shrink-0 mt-0.5" style={{ color: "#ca8a04" }} />
+                          <div>
+                            <p className="text-[9px] font-semibold leading-tight" style={{ color: "#0d0446" }}>
+                              Arquivo XML sendo carregado localmente em outro computador
+                            </p>
+                            <p className="text-[8px] mt-0.5 font-mono" style={{ color: "rgba(13,4,70,0.5)" }}>
+                              {lastLocal.deviceName}
+                            </p>
                             <p className="text-[8px] mt-1" style={{ color: "rgba(13,4,70,0.4)" }}>
                               Selecione um arquivo XML neste computador ou mude para o modo Online.
                             </p>
-                          )}
+                          </div>
                         </div>
-                      </div>
-                    );
+                      );
+                    }
                   }
                   return null;
                 })()}
@@ -652,7 +698,6 @@ export default function MusicaNoAr() {
                   {localFileName || "Selecionar .XML"}
                 </button>
 
-                {/* Save button - appears after file is selected */}
                 {localFileName && !localSaved && (
                   <button
                     onClick={handleSaveLocal}
