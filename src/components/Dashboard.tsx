@@ -161,25 +161,80 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
   useEffect(() => () => clearMenuLeaveTimer(), [clearMenuLeaveTimer]);
 
-  // Poll current on-air program thumb every 30s
+  // Single batched initial load — all queries in parallel
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
+
+    const loadAll = async () => {
+      const [modulesRes, empresaRes, thumbRes] = await Promise.all([
+        supabase.from("client_modules").select("module_key, enabled").eq("user_id", user.id),
+        supabase.from("empresa_config").select("*").eq("user_id", user.id).maybeSingle(),
+        supabase.from("programas").select("thumb, dias_semana, horario_inicio, horario_fim, ativo").eq("user_id", user.id).eq("ativo", true),
+      ]);
+
+      if (cancelled) return;
+
+      // Modules
+      if (modulesRes.data && modulesRes.data.length > 0) {
+        setEnabledModules(new Set(modulesRes.data.filter((m: any) => m.enabled).map((m: any) => m.module_key)));
+      }
+
+      // Empresa config
+      const d = empresaRes.data;
+      const cfg = d ? {
+        nome: d.nome || "", logo: d.logo || "", backgroundUrl: d.background_url || "",
+        endereco: d.endereco || "", telefoneComercial: d.telefone_comercial || "",
+        telefoneParticipacao: d.telefone_participacao || "", site: d.site || "",
+        instagram: d.instagram || "", facebook: d.facebook || "", youtube: d.youtube || "",
+        plano: d.plano || "",
+      } : ({} as any);
+      setEmpresa(cfg);
+
+      // Plan modules (only if plano exists) — fire and forget, don't block
+      if (cfg.plano) {
+        supabase.from("planos").select("enabled_modules").eq("name", cfg.plano).maybeSingle().then(({ data }) => {
+          if (!cancelled && data?.enabled_modules) setPlanModules(new Set(data.enabled_modules));
+        });
+      }
+
+      // On-air thumb
+      if (thumbRes.data) {
+        const now = new Date();
+        const DIAS_MAP: Record<number, string> = { 1: "Segunda", 2: "Terça", 3: "Quarta", 4: "Quinta", 5: "Sexta", 6: "Sábado", 0: "Domingo" };
+        const diaAtual = DIAS_MAP[now.getDay()];
+        const horaAtual = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+        const current = thumbRes.data.find((p: any) =>
+          (p.dias_semana || []).includes(diaAtual) && horaAtual >= p.horario_inicio && horaAtual < p.horario_fim
+        );
+        const thumb = current?.thumb || null;
+        prevThumbRef.current = thumb;
+        setOnAirThumb(thumb);
+      }
+
+      setInitialLoading(false);
+    };
+
+    loadAll();
+    return () => { cancelled = true; };
+  }, [user]);
+
+  // Poll on-air thumb every 30s (after initial load)
+  useEffect(() => {
+    if (!user || initialLoading) return;
     const fetchThumb = async () => {
       const { data } = await supabase
         .from("programas")
         .select("thumb, dias_semana, horario_inicio, horario_fim, ativo")
         .eq("user_id", user.id)
         .eq("ativo", true);
-      if (cancelled || !data) return;
+      if (!data) return;
       const now = new Date();
       const DIAS_MAP: Record<number, string> = { 1: "Segunda", 2: "Terça", 3: "Quarta", 4: "Quinta", 5: "Sexta", 6: "Sábado", 0: "Domingo" };
       const diaAtual = DIAS_MAP[now.getDay()];
       const horaAtual = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-      const current = data.find(p =>
-        (p.dias_semana || []).includes(diaAtual) &&
-        horaAtual >= p.horario_inicio &&
-        horaAtual < p.horario_fim
+      const current = data.find((p: any) =>
+        (p.dias_semana || []).includes(diaAtual) && horaAtual >= p.horario_inicio && horaAtual < p.horario_fim
       );
       const thumb = current?.thumb || null;
       if (thumb !== prevThumbRef.current) {
@@ -187,39 +242,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         setOnAirThumb(thumb);
       }
     };
-    fetchThumb();
     const interval = setInterval(fetchThumb, 30000);
-    return () => { cancelled = true; clearInterval(interval); };
-  }, [user]);
-
-  useEffect(() => {
-    if (!user) return;
-    Promise.all([
-      supabase
-        .from("client_modules")
-        .select("module_key, enabled")
-        .eq("user_id", user.id)
-        .then(({ data }) => {
-          if (data && data.length > 0) {
-            const enabled = new Set(data.filter((m: any) => m.enabled).map((m: any) => m.module_key));
-            setEnabledModules(enabled);
-          } else {
-            setEnabledModules(null);
-          }
-        }),
-      getEmpresaConfig(user.id).then(cfg => {
-        setEmpresa(cfg);
-        // Load plan modules
-        if (cfg.plano) {
-          supabase.from("planos").select("enabled_modules").eq("name", cfg.plano).maybeSingle().then(({ data }) => {
-            if (data?.enabled_modules) {
-              setPlanModules(new Set(data.enabled_modules));
-            }
-          });
-        }
-      }),
-    ]).finally(() => setInitialLoading(false));
-  }, [user]);
+    return () => clearInterval(interval);
+  }, [user, initialLoading]);
 
   const isModuleEnabled = (page: Page): boolean => {
     if (page === "dashboard" || page === "configuracoes" || page === "playerconfig" || page === "cortevideo" || page === "tp") return true;
@@ -951,9 +976,9 @@ function useGlobalMusicXmlUpload() {
       } catch {}
     };
 
-    // Delay first sync to not compete with initial page load
-    const startTimer = setTimeout(uploadMusicXml, 3000);
-    const interval = setInterval(uploadMusicXml, 15000);
+    // Delay first sync significantly to not compete with initial page load
+    const startTimer = setTimeout(uploadMusicXml, 8000);
+    const interval = setInterval(uploadMusicXml, 20000);
     return () => { clearTimeout(startTimer); clearInterval(interval); };
   }, [user]);
 }
@@ -1041,9 +1066,9 @@ function useGlobalMusicSync() {
       } catch {}
     };
 
-    // Delay first sync to avoid competing with initial page load
-    const startTimer = setTimeout(fetchAndSync, 5000);
-    const interval = setInterval(fetchAndSync, 30000);
+    // Delay first sync significantly to avoid competing with initial page load
+    const startTimer = setTimeout(fetchAndSync, 10000);
+    const interval = setInterval(fetchAndSync, 45000);
     return () => { clearTimeout(startTimer); clearInterval(interval); };
   }, [user]);
 }
