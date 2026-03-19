@@ -2160,7 +2160,7 @@ export default function VmixPage() {
                             {prog.estudio && (
                               <div className="absolute top-1.5 right-1.5 z-[2]">
                                 <span className="text-[6px] font-bold uppercase tracking-wider px-1 py-[1px] rounded"
-                                  style={{ backgroundColor: prog.estudio.toLowerCase().includes("fm") ? "#3b82f630" : "#8b5cf630", color: prog.estudio.toLowerCase().includes("fm") ? "#3b82f6" : "#8b5cf6" }}
+                                  style={{ backgroundColor: progOnAir ? "#ffffff" : prog.estudio.toLowerCase().includes("fm") ? "#3b82f630" : "#8b5cf630", color: progOnAir ? "#000" : prog.estudio.toLowerCase().includes("fm") ? "#3b82f6" : "#8b5cf6" }}
                                 >{prog.estudio.toLowerCase().includes("fm") ? "FM" : prog.estudio.toLowerCase().includes("podcast") ? "PODCAST" : prog.estudio}</span>
                               </div>
                             )}
