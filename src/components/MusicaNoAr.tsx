@@ -197,7 +197,7 @@ export default function MusicaNoAr() {
   const [loadingCover, setLoadingCover] = useState(false);
   const [presenterFallback, setPresenterFallback] = useState<{ nome: string; foto: string } | null>(null);
 
-  // Source mode: persisted in DB, loaded on mount
+  // Unified mode: both sources always active
   const [sourceMode, setSourceModeState] = useState<"online" | "pasta">("online");
   const [sourceModeLoaded, setSourceModeLoaded] = useState(false);
   const [localFileContent, setLocalFileContent] = useState<string | null>(null);
@@ -213,18 +213,15 @@ export default function MusicaNoAr() {
   const [deviceNameInput, setDeviceNameInput] = useState(() => getDeviceName());
   const [currentDeviceName, setCurrentDeviceName] = useState(() => getDeviceName());
 
-  // Save source mode to DB + state
+  // Unified tracking: which source provided the last update
+  const [lastSource, setLastSource] = useState<"online" | "pasta" | null>(null);
+  const [sourceStats, setSourceStats] = useState<{ online: number; pasta: number }>({ online: 0, pasta: 0 });
+  const lastSourceRef = useRef<"online" | "pasta" | null>(null);
+
+  // Save source mode to DB + state (kept for UI preference, but both always run)
   const setSourceMode = async (mode: "online" | "pasta") => {
     setSourceModeState(mode);
     localStorage.setItem(SOURCE_MODE_KEY, mode);
-    // Stop local monitoring when switching to online
-    if (mode === "online") {
-      setLocalMonitoring(false);
-      setLocalFileName("");
-      localFileRef.current = null;
-      fileHandleRef.current = null;
-      setLocalFileContent(null);
-    }
     if (user) {
       await supabase.from("user_settings").upsert({
         user_id: user.id,
