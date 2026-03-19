@@ -146,7 +146,7 @@ export default function MusicaNoAr() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const localFileRef = useRef<File | null>(null);
   const localPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const [uploadHistory, setUploadHistory] = useState<UploadLogEntry[]>(getUploadHistory());
+  const [uploadHistory, setUploadHistory] = useState<UploadLogEntry[]>([]);
   const [localFileName, setLocalFileName] = useState<string>("");
 
   // Load URL from DB
