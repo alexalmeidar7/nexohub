@@ -2094,8 +2094,8 @@ export default function VmixPage() {
                             className={`group/preset relative rounded-lg overflow-hidden cursor-pointer transition-all duration-200 hover:scale-[1.03]${progOnAir ? " vmix-preset-onair" : ""}`}
                             style={{
                               aspectRatio: "3/2",
-                              backgroundColor: isActive ? "#dc2626" : "#2a2a30",
-                              border: isActive ? "2px solid #ef4444" : progOnAir ? "2px solid #22c55e" : "2px solid #333338",
+                              backgroundColor: isActive ? "#dc2626" : progOnAir ? "#dc2626" : "#2a2a30",
+                              border: isActive ? "2px solid #ef4444" : progOnAir ? "2px solid #ffffff" : "2px solid #333338",
                               opacity: dragPresetIdx !== null && programas[dragPresetIdx]?.id === prog.id ? 0.4 : 1,
                             }}
                             onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; }}
