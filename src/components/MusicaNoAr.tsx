@@ -505,7 +505,7 @@ export default function MusicaNoAr() {
               className="absolute inset-0 transition-all duration-500 ease-linear"
               style={{
                 width: `${progress}%`,
-                background: "linear-gradient(90deg, rgba(13,4,70,0.25), rgba(30,80,180,0.35))",
+                background: "linear-gradient(90deg, #0a1a3a, #1a4a8a, #2d8ef3)",
               }}
             />
 
