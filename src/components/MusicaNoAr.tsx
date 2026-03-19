@@ -285,7 +285,7 @@ export default function MusicaNoAr() {
     return () => clearInterval(checkDelay);
   }, [xmlUrl, localMonitoring, sourceStats]);
 
-
+  useEffect(() => {
     const fetchPresenter = async () => {
       const [{ data: progsData }, apresentadores] = await Promise.all([
         supabase.from("programas").select("*").ilike("estudio", "%fm%"),
