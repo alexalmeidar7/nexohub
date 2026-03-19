@@ -590,47 +590,49 @@ export default function MusicaNoAr() {
 
           {/* LEFT - XML Config + History */}
           <div className="rounded-2xl p-3 flex flex-col gap-2" style={{ backgroundColor: "#ffffff", boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}>
-            {/* Source Tabs */}
-            <div className="flex gap-1 rounded-lg p-0.5" style={{ backgroundColor: "rgba(13,4,70,0.04)" }}>
-              <button
-                onClick={() => setSourceMode("online")}
-                className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-md text-[10px] font-bold transition-all"
-                style={sourceMode === "online"
-                  ? { background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#fff", boxShadow: "0 2px 6px rgba(38,143,250,0.3)" }
-                  : { color: "rgba(13,4,70,0.4)" }
-                }
-              >
-                <Globe size={11} /> Online
-              </button>
-              <button
-                onClick={() => setSourceMode("pasta")}
-                className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-md text-[10px] font-bold transition-all"
-                style={sourceMode === "pasta"
-                  ? { background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#fff", boxShadow: "0 2px 6px rgba(38,143,250,0.3)" }
-                  : { color: "rgba(13,4,70,0.4)" }
-                }
-              >
-                <FolderOpen size={11} /> Local
-              </button>
-            </div>
-
-            {/* Active mode indicator */}
+            {/* Unified mode indicator */}
             <div className="rounded-lg p-2 flex items-center gap-2" style={{
-              backgroundColor: sourceMode === "online" ? "rgba(38,143,250,0.08)" : "rgba(34,197,94,0.08)",
-              border: `1px solid ${sourceMode === "online" ? "rgba(38,143,250,0.2)" : "rgba(34,197,94,0.2)"}`
+              backgroundColor: "rgba(124,58,237,0.08)",
+              border: "1px solid rgba(124,58,237,0.2)"
             }}>
               <span className="relative flex h-2 w-2 shrink-0">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: sourceMode === "online" ? "#268ffa" : "#22c55e" }}></span>
-                <span className="relative inline-flex rounded-full h-2 w-2" style={{ backgroundColor: sourceMode === "online" ? "#268ffa" : "#22c55e" }}></span>
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: "#7c3aed" }}></span>
+                <span className="relative inline-flex rounded-full h-2 w-2" style={{ backgroundColor: "#7c3aed" }}></span>
               </span>
               <span className="text-[9px] font-bold" style={{ color: "#0d0446" }}>
-                {sourceMode === "online" ? "Modo Online ativo" : (localMonitoring ? "Modo Local ativo — monitorando" : "Modo Local — selecione um arquivo")}
+                Modo Unificado — monitorando ambas as origens
               </span>
             </div>
 
-            {/* Online URL */}
-            {sourceMode === "online" && (
-              <div>
+            {/* Source status badges */}
+            <div className="flex gap-1.5">
+              <div className="flex-1 rounded-lg p-1.5 flex items-center gap-1.5" style={{
+                backgroundColor: lastSource === "online" ? "rgba(38,143,250,0.12)" : "rgba(38,143,250,0.04)",
+                border: `1px solid ${lastSource === "online" ? "rgba(38,143,250,0.3)" : "rgba(38,143,250,0.1)"}`,
+              }}>
+                <Globe size={10} style={{ color: "#268ffa" }} />
+                <span className="text-[8px] font-bold" style={{ color: lastSource === "online" ? "#268ffa" : "rgba(13,4,70,0.4)" }}>
+                  Online {sourceStats.online > 0 ? `(${sourceStats.online}x)` : ""}
+                </span>
+                {lastSource === "online" && <span className="text-[7px] ml-auto font-bold px-1 py-0.5 rounded" style={{ backgroundColor: "rgba(38,143,250,0.15)", color: "#268ffa" }}>ATUAL</span>}
+              </div>
+              <div className="flex-1 rounded-lg p-1.5 flex items-center gap-1.5" style={{
+                backgroundColor: lastSource === "pasta" ? "rgba(34,197,94,0.12)" : "rgba(34,197,94,0.04)",
+                border: `1px solid ${lastSource === "pasta" ? "rgba(34,197,94,0.3)" : "rgba(34,197,94,0.1)"}`,
+              }}>
+                <FolderOpen size={10} style={{ color: "#22c55e" }} />
+                <span className="text-[8px] font-bold" style={{ color: lastSource === "pasta" ? "#22c55e" : "rgba(13,4,70,0.4)" }}>
+                  Local {sourceStats.pasta > 0 ? `(${sourceStats.pasta}x)` : ""}
+                </span>
+                {lastSource === "pasta" && <span className="text-[7px] ml-auto font-bold px-1 py-0.5 rounded" style={{ backgroundColor: "rgba(34,197,94,0.15)", color: "#22c55e" }}>ATUAL</span>}
+              </div>
+            </div>
+
+            {/* Online URL config */}
+            <div>
+              <p className="text-[8px] mb-1 font-bold uppercase tracking-wider flex items-center gap-1" style={{ color: "rgba(13,4,70,0.4)" }}>
+                <Globe size={9} /> Origem Online
+              </p>
                 {editingUrl ? (
                   <div className="flex gap-1.5">
                     <input
