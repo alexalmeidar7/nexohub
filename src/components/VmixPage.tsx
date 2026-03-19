@@ -2095,7 +2095,7 @@ export default function VmixPage() {
                             style={{
                               aspectRatio: "3/2",
                               backgroundColor: isActive ? "#dc2626" : progOnAir ? "#dc2626" : "#2a2a30",
-                              border: isActive ? "2px solid #ef4444" : progOnAir ? "2px solid #ffffff" : "2px solid #333338",
+                              border: isActive ? "2px solid #ef4444" : progOnAir ? "2px solid #dc2626" : "2px solid #333338",
                               opacity: dragPresetIdx !== null && programas[dragPresetIdx]?.id === prog.id ? 0.4 : 1,
                             }}
                             onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; }}
