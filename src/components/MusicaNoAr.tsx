@@ -201,6 +201,7 @@ export default function MusicaNoAr() {
   const [sourceMode, setSourceModeState] = useState<"online" | "pasta">("online");
   const [sourceModeLoaded, setSourceModeLoaded] = useState(false);
   const [localFileContent, setLocalFileContent] = useState<string | null>(null);
+  const localFileContentRef = useRef<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const localFileRef = useRef<File | null>(null);
   const fileHandleRef = useRef<FileSystemFileHandle | null>(null);
@@ -384,7 +385,9 @@ export default function MusicaNoAr() {
 
     try {
       const text = await readFileWithEncoding(file);
-      if (text === localFileContent) return;
+      // Use ref for comparison to avoid stale closure
+      if (text === localFileContentRef.current) return;
+      localFileContentRef.current = text;
       setLocalFileContent(text);
       // Re-encode as UTF-8 for storage
       const utf8Blob = new Blob([new TextEncoder().encode(text)], { type: "application/xml" });
@@ -400,13 +403,15 @@ export default function MusicaNoAr() {
           }, { onConflict: "user_id" });
           setXmlUrl(urlData.publicUrl);
         }
+        // Log each local reload to history
+        setUploadHistory(await addUploadLogToDb(user.id, "pasta", currentDeviceName));
       }
       const parsed = parseXmlString(text);
       if (parsed) {
         await processMusic(parsed);
       }
     } catch { }
-  }, [processMusic, localFileContent, user]);
+  }, [processMusic, user, currentDeviceName]);
 
   // Handle file select: use showOpenFilePicker for live re-reads, fallback to input
   const handleFileSelect = async (e?: React.ChangeEvent<HTMLInputElement>) => {
@@ -437,6 +442,7 @@ export default function MusicaNoAr() {
     setLocalFileName(file.name);
 
     const text = await readFileWithEncoding(file);
+    localFileContentRef.current = text;
     setLocalFileContent(text);
 
     const parsed = parseXmlString(text);
