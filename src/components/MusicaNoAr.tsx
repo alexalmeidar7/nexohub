@@ -203,6 +203,7 @@ export default function MusicaNoAr() {
   const [localFileContent, setLocalFileContent] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const localFileRef = useRef<File | null>(null);
+  const fileHandleRef = useRef<FileSystemFileHandle | null>(null);
   const localPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [uploadHistory, setUploadHistory] = useState<UploadLogEntry[]>([]);
   const [localFileName, setLocalFileName] = useState<string>("");
@@ -220,6 +221,7 @@ export default function MusicaNoAr() {
       setLocalMonitoring(false);
       setLocalFileName("");
       localFileRef.current = null;
+      fileHandleRef.current = null;
       setLocalFileContent(null);
     }
     if (user) {
@@ -363,10 +365,23 @@ export default function MusicaNoAr() {
     return () => { if (fetchIntervalRef.current) clearInterval(fetchIntervalRef.current); };
   }, [fetchXml, sourceMode]);
 
-  // Local file re-read + upload to storage
+  // Local file re-read using FileSystemFileHandle for fresh content
   const readLocalFile = useCallback(async () => {
-    const file = localFileRef.current;
+    let file: File | null = null;
+
+    // Prefer FileSystemFileHandle (gives fresh content on each read)
+    if (fileHandleRef.current) {
+      try {
+        file = await fileHandleRef.current.getFile();
+      } catch {
+        // Permission lost or file deleted
+        return;
+      }
+    } else {
+      file = localFileRef.current;
+    }
     if (!file) return;
+
     try {
       const text = await readFileWithEncoding(file);
       if (text === localFileContent) return;
@@ -391,12 +406,33 @@ export default function MusicaNoAr() {
         await processMusic(parsed);
       }
     } catch { }
-  }, [processMusic, localFileContent, user, currentDeviceName]);
+  }, [processMusic, localFileContent, user]);
 
-  // Handle file select: immediately save, upload, and start monitoring
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  // Handle file select: use showOpenFilePicker for live re-reads, fallback to input
+  const handleFileSelect = async (e?: React.ChangeEvent<HTMLInputElement>) => {
+    let file: File | null = null;
+    let handle: FileSystemFileHandle | null = null;
+
+    // Try File System Access API first (allows re-reading updated content)
+    if ('showOpenFilePicker' in window && !e) {
+      try {
+        const [h] = await (window as any).showOpenFilePicker({
+          types: [{ description: 'XML', accept: { 'application/xml': ['.xml'] } }],
+          multiple: false,
+        });
+        handle = h;
+        file = await h.getFile();
+      } catch {
+        // User cancelled
+        return;
+      }
+    } else if (e) {
+      file = e.target.files?.[0] || null;
+    }
+
     if (!file) return;
+
+    fileHandleRef.current = handle;
     localFileRef.current = file;
     setLocalFileName(file.name);
 
@@ -682,7 +718,18 @@ export default function MusicaNoAr() {
                 })()}
 
                 <input ref={fileInputRef} type="file" accept=".xml,application/xml,text/xml" onChange={handleFileSelect} className="hidden" />
-                <button onClick={() => fileInputRef.current?.click()} className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-[10px] font-bold border-2 border-dashed" style={{ borderColor: localFileName ? "#22c55e" : "rgba(13,4,70,0.15)", color: localFileName ? "#22c55e" : "rgba(13,4,70,0.4)" }}>
+                <button
+                  onClick={() => {
+                    // Use showOpenFilePicker if available (enables live re-reads)
+                    if ('showOpenFilePicker' in window) {
+                      handleFileSelect();
+                    } else {
+                      fileInputRef.current?.click();
+                    }
+                  }}
+                  className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-[10px] font-bold border-2 border-dashed"
+                  style={{ borderColor: localFileName ? "#22c55e" : "rgba(13,4,70,0.15)", color: localFileName ? "#22c55e" : "rgba(13,4,70,0.4)" }}
+                >
                   <Upload size={12} />
                   {localFileName || "Selecionar .XML"}
                 </button>
