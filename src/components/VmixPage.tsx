@@ -2045,269 +2045,263 @@ export default function VmixPage() {
                 </div>
               </div>
 
-              {/* ── Programas Preset ── */}
-              <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a1f", border: "1px solid #ffffff08" }}>
-                <div className="flex items-center gap-2 px-4 py-2.5" style={{ backgroundColor: "#ffffff06", borderBottom: "1px solid #ffffff08" }}>
-                  <Radio size={14} style={{ color: "#999" }} />
-                  <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#999" }}>programas preset</span>
-                </div>
-                <div className="p-4 space-y-4">
-                  {(() => {
-                    const hasSavedOrder = (() => { try { return JSON.parse(localStorage.getItem("vmix_preset_order") || "[]").length > 0; } catch { return false; } })();
-                    const ordered = hasSavedOrder ? programas : [...programas].sort((a, b) => {
-                      const studioOrder = (s: string | null) => {
-                        if (!s) return 2;
-                        const l = s.toLowerCase();
-                        if (l.includes("fm")) return 0;
-                        if (l.includes("podcast")) return 1;
-                        return 2;
-                      };
-                      const diff = studioOrder(a.estudio) - studioOrder(b.estudio);
-                      if (diff !== 0) return diff;
-                      return (a.horario_inicio || "").localeCompare(b.horario_inicio || "");
-                    });
-                    const groups: Record<string, typeof ordered> = {};
-                    for (const p of ordered) {
-                      const key = p.estudio || "Sem Estúdio";
-                      if (!groups[key]) groups[key] = [];
-                      groups[key].push(p);
-                    }
-                    return Object.entries(groups).map(([studio, progs]) => (
-                      <div key={studio}>
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded" style={{ backgroundColor: studio.toLowerCase().includes("fm") ? "#3b82f620" : studio.toLowerCase().includes("podcast") ? "#8b5cf620" : "#ffffff08", color: studio.toLowerCase().includes("fm") ? "#3b82f6" : studio.toLowerCase().includes("podcast") ? "#8b5cf6" : "#888" }}>
-                            {studio}
-                          </span>
-                          <div className="flex-1 h-px" style={{ backgroundColor: "#ffffff08" }} />
-                        </div>
-                        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">
-                    {progs.map((prog) => {
-                      const isActive = activePreset === prog.id;
-                      const progOnAir = isProgramForToday(prog) && isNowInProgram(prog);
-                      const startTime = prog.horario_inicio?.slice(0, 5) || "";
-                      const endTime = prog.horario_fim?.slice(0, 5) || "";
-                      return (
-                        <div
-                          key={prog.id}
-                          className={`group/preset relative rounded-lg overflow-hidden cursor-pointer transition-all duration-200 hover:scale-[1.03]${progOnAir ? " vmix-preset-onair" : ""}`}
-                          style={{
-                            aspectRatio: "3/2",
-                            backgroundColor: isActive ? "#dc2626" : "#2a2a30",
-                            border: isActive ? "2px solid #ef4444" : progOnAir ? "2px solid #22c55e" : "2px solid #333338",
-                            opacity: dragPresetIdx !== null && programas[dragPresetIdx]?.id === prog.id ? 0.4 : 1,
-                          }}
-                          onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; }}
-                          onDrop={(e) => {
-                            e.preventDefault();
-                            if (dragPresetIdx === null) return;
-                            const dragId = programas[dragPresetIdx]?.id;
-                            if (!dragId || dragId === prog.id) { setDragPresetIdx(null); return; }
-                            const arr = [...programas];
-                            const fromIdx = arr.findIndex(p => p.id === dragId);
-                            const toIdx = arr.findIndex(p => p.id === prog.id);
-                            if (fromIdx === -1 || toIdx === -1) { setDragPresetIdx(null); return; }
-                            const [moved] = arr.splice(fromIdx, 1);
-                            arr.splice(toIdx, 0, moved);
-                            setProgramas(arr);
-                            localStorage.setItem("vmix_preset_order", JSON.stringify(arr.map(p => p.id)));
-                            setDragPresetIdx(null);
-                          }}
-                          onDragEnd={() => setDragPresetIdx(null)}
-                          onClick={async () => {
-                            setActivePreset(prog.id);
-                            // Try to run saved preset commands first
-                            const { data: presetData } = await (supabase.from("preset_commands" as any) as any)
-                              .select("commands")
-                              .eq("user_id", user?.id)
-                              .eq("programa_id", prog.id)
-                              .maybeSingle();
-                            if (presetData?.commands && Array.isArray(presetData.commands) && presetData.commands.length > 0) {
-                              for (const cmd of presetData.commands as any[]) {
-                                let value = cmd.value;
-                                if (cmd.extraValue) value = value ? `${value},${cmd.extraValue}` : cmd.extraValue;
-                                await sendCommand(cmd.fn, cmd.input, value);
-                                await new Promise(r => setTimeout(r, 400));
-                              }
-                              toast({ title: `Preset: ${prog.nome}`, description: `${presetData.commands.length} ação(ões) executada(s).` });
-                            } else {
-                              sendCommand("ScriptStart", prog.nome);
-                              toast({ title: `Preset: ${prog.nome}`, description: "Comando enviado ao vMix." });
-                            }
-                          }}
-                        >
-                          {/* Presenter photo background */}
-                          {prog.apresentador_foto && (
-                            <img
-                              src={prog.apresentador_foto}
-                              alt=""
-                              className="absolute inset-0 w-full h-full object-contain object-right-bottom pointer-events-none"
-                              style={{ opacity: 0.4, filter: "grayscale(100%)", maskImage: "linear-gradient(to left, black 40%, transparent 100%)", WebkitMaskImage: "linear-gradient(to left, black 40%, transparent 100%)" }}
-                            />
-                          )}
-                          {/* Schedule badge */}
-                          {startTime && (
-                            <div
-                              draggable
-                              onDragStart={(e) => { e.stopPropagation(); const gi = programas.findIndex(p => p.id === prog.id); setDragPresetIdx(gi); e.dataTransfer.effectAllowed = "move"; }}
-                              className="absolute top-1.5 left-1.5 flex items-center gap-0.5 px-1.5 py-0.5 rounded cursor-grab active:cursor-grabbing"
-                              style={{ backgroundColor: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)", zIndex: 2 }}
-                              title="Arraste para reposicionar"
-                            >
-                              <GripVertical size={7} style={{ color: "#666" }} />
-                              <Clock size={8} style={{ color: progOnAir ? "#22c55e" : "#888" }} />
-                              <span className="text-[7px] font-bold tabular-nums" style={{ color: progOnAir ? "#22c55e" : "#999" }}>{startTime} - {endTime}</span>
-                            </div>
-                          )}
-
-                          {/* Studio badge */}
-                          {prog.estudio && (
-                            <div className="absolute top-1.5 right-1.5 z-[2]">
-                              <span className="text-[6px] font-bold uppercase tracking-wider px-1 py-[1px] rounded"
-                                style={{ backgroundColor: prog.estudio.toLowerCase().includes("fm") ? "#3b82f630" : "#8b5cf630", color: prog.estudio.toLowerCase().includes("fm") ? "#3b82f6" : "#8b5cf6" }}
-                              >{prog.estudio.toLowerCase().includes("fm") ? "FM" : prog.estudio.toLowerCase().includes("podcast") ? "PODCAST" : prog.estudio}</span>
-                            </div>
-                          )}
-
-                          {prog.dias_semana && prog.dias_semana.length > 0 && (
-                            <div className="absolute bottom-1.5 left-1.5 flex items-center gap-[2px] z-[1]">
-                              {["dom","seg","ter","qua","qui","sex","sáb"].map((d, i) => {
-                                const active = prog.dias_semana!.some(ds => {
-                                  const n = ds.toLowerCase().replace(/[-.,]/g, "").trim().slice(0, 3);
-                                  return n === d;
-                                });
-                                return (
-                                  <span key={i} className="text-[5px] font-bold uppercase leading-none px-[2px] py-[1px] rounded-sm"
-                                    style={{ backgroundColor: active ? "rgba(255,255,255,0.15)" : "transparent", color: active ? "#fff" : "#555" }}
-                                  >{d[0].toUpperCase()}</span>
-                                );
-                              })}
-                            </div>
-                          )}
-
-                          {/* Label */}
-                          <div className="absolute inset-0 flex items-center justify-center p-2 pt-5 pb-4">
-                            <span className="text-[10px] font-black uppercase tracking-wider text-center leading-tight"
-                              style={{ color: isActive ? "#fff" : "#ccc" }}
-                            >{prog.nome}</span>
+              {/* ── Programas Preset + Botões de Efeitos side by side ── */}
+              <div className="grid grid-cols-1 xl:grid-cols-[1fr_auto] gap-4">
+                {/* Left: Programas Preset */}
+                <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a1f", border: "1px solid #ffffff08" }}>
+                  <div className="flex items-center gap-2 px-4 py-2.5" style={{ backgroundColor: "#ffffff06", borderBottom: "1px solid #ffffff08" }}>
+                    <Radio size={14} style={{ color: "#999" }} />
+                    <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#999" }}>programas preset</span>
+                  </div>
+                  <div className="p-4 space-y-4">
+                    {(() => {
+                      const hasSavedOrder = (() => { try { return JSON.parse(localStorage.getItem("vmix_preset_order") || "[]").length > 0; } catch { return false; } })();
+                      const ordered = hasSavedOrder ? programas : [...programas].sort((a, b) => {
+                        const studioOrder = (s: string | null) => {
+                          if (!s) return 2;
+                          const l = s.toLowerCase();
+                          if (l.includes("fm")) return 0;
+                          if (l.includes("podcast")) return 1;
+                          return 2;
+                        };
+                        const diff = studioOrder(a.estudio) - studioOrder(b.estudio);
+                        if (diff !== 0) return diff;
+                        return (a.horario_inicio || "").localeCompare(b.horario_inicio || "");
+                      });
+                      const groups: Record<string, typeof ordered> = {};
+                      for (const p of ordered) {
+                        const key = p.estudio || "Sem Estúdio";
+                        if (!groups[key]) groups[key] = [];
+                        groups[key].push(p);
+                      }
+                      return Object.entries(groups).map(([studio, progs]) => (
+                        <div key={studio}>
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded" style={{ backgroundColor: studio.toLowerCase().includes("fm") ? "#3b82f620" : studio.toLowerCase().includes("podcast") ? "#8b5cf620" : "#ffffff08", color: studio.toLowerCase().includes("fm") ? "#3b82f6" : studio.toLowerCase().includes("podcast") ? "#8b5cf6" : "#888" }}>
+                              {studio}
+                            </span>
+                            <div className="flex-1 h-px" style={{ backgroundColor: "#ffffff08" }} />
                           </div>
-
-                          {/* Hover actions bar */}
+                          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">
+                      {progs.map((prog) => {
+                        const isActive = activePreset === prog.id;
+                        const progOnAir = isProgramForToday(prog) && isNowInProgram(prog);
+                        const startTime = prog.horario_inicio?.slice(0, 5) || "";
+                        const endTime = prog.horario_fim?.slice(0, 5) || "";
+                        return (
                           <div
-                            className="absolute bottom-0 left-0 right-0 flex items-center justify-center gap-1 py-1.5 opacity-0 group-hover/preset:opacity-100 transition-all duration-200 translate-y-full group-hover/preset:translate-y-0"
-                            style={{ backgroundColor: "rgba(0,0,0,0.75)", backdropFilter: "blur(4px)" }}
-                          >
-                            {(() => { const gi = programas.findIndex(p => p.id === prog.id); return gi > 0 ? (
-                              <button
-                                onClick={(e) => { e.stopPropagation(); const arr = [...programas]; [arr[gi - 1], arr[gi]] = [arr[gi], arr[gi - 1]]; setProgramas(arr); localStorage.setItem("vmix_preset_order", JSON.stringify(arr.map(p => p.id))); }}
-                                className="w-5 h-5 rounded flex items-center justify-center text-[9px] hover:bg-white/20 transition-colors"
-                                style={{ color: "#ccc" }}
-                                title="Mover para esquerda"
-                              >◀</button>
-                            ) : null; })()}
-                            {(() => { const gi = programas.findIndex(p => p.id === prog.id); return gi < programas.length - 1 ? (
-                              <button
-                                onClick={(e) => { e.stopPropagation(); const arr = [...programas]; [arr[gi], arr[gi + 1]] = [arr[gi + 1], arr[gi]]; setProgramas(arr); localStorage.setItem("vmix_preset_order", JSON.stringify(arr.map(p => p.id))); }}
-                                className="w-5 h-5 rounded flex items-center justify-center text-[9px] hover:bg-white/20 transition-colors"
-                                style={{ color: "#ccc" }}
-                                title="Mover para direita"
-                              >▶</button>
-                            ) : null; })()}
-                            <button
-                              onClick={(e) => { e.stopPropagation(); setEditingPresetId(prog.id); }}
-                              className="w-5 h-5 rounded flex items-center justify-center hover:bg-white/20 transition-colors"
-                              style={{ color: "#ccc" }}
-                              title="Editar ações"
-                            ><Wand2 size={10} /></button>
-                            <button
-                              onClick={(e) => { e.stopPropagation(); setProgramas(prev => prev.filter(p => p.id !== prog.id)); }}
-                              className="w-5 h-5 rounded flex items-center justify-center hover:bg-red-500/40 transition-colors"
-                              style={{ color: "#f87171" }}
-                              title="Excluir"
-                            ><Trash2 size={10} /></button>
-                          </div>
-                        </div>
-                      );
-                    })}
-                        </div>
-                      </div>
-                    ));
-                    })()}
-                    {programas.length === 0 && (
-                      <p className="text-[11px] text-white/30 py-4">Nenhum programa cadastrado.</p>
-                    )}
-                </div>
-              </div>
-
-              {/* ── Botões Feito (Custom Buttons) ── */}
-              <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a1f", border: "1px solid #ffffff08" }}>
-                <div className="flex items-center gap-2 px-4 py-2.5" style={{ backgroundColor: "#ffffff06", borderBottom: "1px solid #ffffff08" }}>
-                  <Wand2 size={14} style={{ color: "#f59e0b" }} />
-                  <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#f59e0b" }}>Feito</span>
-                  <span className="text-[9px] ml-auto" style={{ color: "#555" }}>{customButtons.length} botão(ões)</span>
-                </div>
-                <div className="p-4">
-                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">
-                    {customButtons.map((btn: any) => {
-                      const isBtnActive = activeCustomButton === btn.id;
-                      const hasSchedule = btn.horario && btn.dias_semana?.length > 0;
-                      return (
-                        <div
-                          key={btn.id}
-                          className="group/custom relative rounded-lg overflow-hidden cursor-pointer transition-all duration-200 hover:scale-[1.03]"
-                          style={{
-                            aspectRatio: "3/2",
-                            backgroundColor: isBtnActive ? "#f59e0b" : "#2a2a30",
-                            border: isBtnActive ? "2px solid #f59e0b" : "2px solid #333338",
-                          }}
-                          onClick={async () => {
-                            setActiveCustomButton(btn.id);
-                            if (btn.commands && Array.isArray(btn.commands) && btn.commands.length > 0) {
-                              for (const cmd of btn.commands) {
-                                let cmdVal = cmd.value;
-                                if (cmd.extraValue) cmdVal = cmdVal ? `${cmdVal},${cmd.extraValue}` : cmd.extraValue;
-                                await sendCommand(cmd.fn, cmd.input, cmdVal);
-                                await new Promise(r => setTimeout(r, 400));
+                            key={prog.id}
+                            className={`group/preset relative rounded-lg overflow-hidden cursor-pointer transition-all duration-200 hover:scale-[1.03]${progOnAir ? " vmix-preset-onair" : ""}`}
+                            style={{
+                              aspectRatio: "3/2",
+                              backgroundColor: isActive ? "#dc2626" : "#2a2a30",
+                              border: isActive ? "2px solid #ef4444" : progOnAir ? "2px solid #22c55e" : "2px solid #333338",
+                              opacity: dragPresetIdx !== null && programas[dragPresetIdx]?.id === prog.id ? 0.4 : 1,
+                            }}
+                            onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; }}
+                            onDrop={(e) => {
+                              e.preventDefault();
+                              if (dragPresetIdx === null) return;
+                              const dragId = programas[dragPresetIdx]?.id;
+                              if (!dragId || dragId === prog.id) { setDragPresetIdx(null); return; }
+                              const arr = [...programas];
+                              const fromIdx = arr.findIndex(p => p.id === dragId);
+                              const toIdx = arr.findIndex(p => p.id === prog.id);
+                              if (fromIdx === -1 || toIdx === -1) { setDragPresetIdx(null); return; }
+                              const [moved] = arr.splice(fromIdx, 1);
+                              arr.splice(toIdx, 0, moved);
+                              setProgramas(arr);
+                              localStorage.setItem("vmix_preset_order", JSON.stringify(arr.map(p => p.id)));
+                              setDragPresetIdx(null);
+                            }}
+                            onDragEnd={() => setDragPresetIdx(null)}
+                            onClick={async () => {
+                              setActivePreset(prog.id);
+                              const { data: presetData } = await (supabase.from("preset_commands" as any) as any)
+                                .select("commands")
+                                .eq("user_id", user?.id)
+                                .eq("programa_id", prog.id)
+                                .maybeSingle();
+                              if (presetData?.commands && Array.isArray(presetData.commands) && presetData.commands.length > 0) {
+                                for (const cmd of presetData.commands as any[]) {
+                                  let value = cmd.value;
+                                  if (cmd.extraValue) value = value ? `${value},${cmd.extraValue}` : cmd.extraValue;
+                                  await sendCommand(cmd.fn, cmd.input, value);
+                                  await new Promise(r => setTimeout(r, 400));
+                                }
+                                toast({ title: `Preset: ${prog.nome}`, description: `${presetData.commands.length} ação(ões) executada(s).` });
+                              } else {
+                                sendCommand("ScriptStart", prog.nome);
+                                toast({ title: `Preset: ${prog.nome}`, description: "Comando enviado ao vMix." });
                               }
-                              toast({ title: `Feito: ${btn.nome}`, description: `${btn.commands.length} ação(ões) executada(s).` });
-                            }
-                          }}
-                        >
-                          {hasSchedule && (
-                            <div className="absolute top-1.5 left-1.5 flex items-center gap-0.5 px-1.5 py-0.5 rounded" style={{ backgroundColor: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)", zIndex: 2 }}>
-                              <Clock size={8} style={{ color: "#f59e0b" }} />
-                              <span className="text-[7px] font-bold tabular-nums" style={{ color: "#f59e0b" }}>{btn.horario?.slice(0, 5)}</span>
+                            }}
+                          >
+                            {prog.apresentador_foto && (
+                              <img
+                                src={prog.apresentador_foto}
+                                alt=""
+                                className="absolute inset-0 w-full h-full object-contain object-right-bottom pointer-events-none"
+                                style={{ opacity: 0.4, filter: "grayscale(100%)", maskImage: "linear-gradient(to left, black 40%, transparent 100%)", WebkitMaskImage: "linear-gradient(to left, black 40%, transparent 100%)" }}
+                              />
+                            )}
+                            {startTime && (
+                              <div
+                                draggable
+                                onDragStart={(e) => { e.stopPropagation(); const gi = programas.findIndex(p => p.id === prog.id); setDragPresetIdx(gi); e.dataTransfer.effectAllowed = "move"; }}
+                                className="absolute top-1.5 left-1.5 flex items-center gap-0.5 px-1.5 py-0.5 rounded cursor-grab active:cursor-grabbing"
+                                style={{ backgroundColor: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)", zIndex: 2 }}
+                                title="Arraste para reposicionar"
+                              >
+                                <GripVertical size={7} style={{ color: "#666" }} />
+                                <Clock size={8} style={{ color: progOnAir ? "#22c55e" : "#888" }} />
+                                <span className="text-[7px] font-bold tabular-nums" style={{ color: progOnAir ? "#22c55e" : "#999" }}>{startTime} - {endTime}</span>
+                              </div>
+                            )}
+                            {prog.estudio && (
+                              <div className="absolute top-1.5 right-1.5 z-[2]">
+                                <span className="text-[6px] font-bold uppercase tracking-wider px-1 py-[1px] rounded"
+                                  style={{ backgroundColor: prog.estudio.toLowerCase().includes("fm") ? "#3b82f630" : "#8b5cf630", color: prog.estudio.toLowerCase().includes("fm") ? "#3b82f6" : "#8b5cf6" }}
+                                >{prog.estudio.toLowerCase().includes("fm") ? "FM" : prog.estudio.toLowerCase().includes("podcast") ? "PODCAST" : prog.estudio}</span>
+                              </div>
+                            )}
+                            {prog.dias_semana && prog.dias_semana.length > 0 && (
+                              <div className="absolute bottom-1.5 left-1.5 flex items-center gap-[2px] z-[1]">
+                                {["dom","seg","ter","qua","qui","sex","sáb"].map((d, i) => {
+                                  const active = prog.dias_semana!.some(ds => {
+                                    const n = ds.toLowerCase().replace(/[-.,]/g, "").trim().slice(0, 3);
+                                    return n === d;
+                                  });
+                                  return (
+                                    <span key={i} className="text-[5px] font-bold uppercase leading-none px-[2px] py-[1px] rounded-sm"
+                                      style={{ backgroundColor: active ? "rgba(255,255,255,0.15)" : "transparent", color: active ? "#fff" : "#555" }}
+                                    >{d[0].toUpperCase()}</span>
+                                  );
+                                })}
+                              </div>
+                            )}
+                            <div className="absolute inset-0 flex items-center justify-center p-2 pt-5 pb-4">
+                              <span className="text-[10px] font-black uppercase tracking-wider text-center leading-tight"
+                                style={{ color: isActive ? "#fff" : "#ccc" }}
+                              >{prog.nome}</span>
                             </div>
-                          )}
-                          {btn.dias_semana && btn.dias_semana.length > 0 && (
-                            <div className="absolute bottom-1.5 left-1.5 flex items-center gap-[2px] z-[1]">
-                              {["dom","seg","ter","qua","qui","sex","sáb"].map((d: string, i: number) => {
-                                const dayOn = (btn.dias_semana as string[]).some((ds: string) => ds.toLowerCase().replace(/[-.,]/g, "").trim().slice(0, 3) === d);
-                                return (
-                                  <span key={i} className="text-[5px] font-bold uppercase leading-none px-[2px] py-[1px] rounded-sm"
-                                    style={{ backgroundColor: dayOn ? "rgba(245,158,11,0.25)" : "transparent", color: dayOn ? "#f59e0b" : "#555" }}
-                                  >{d[0].toUpperCase()}</span>
-                                );
-                              })}
+                            <div
+                              className="absolute bottom-0 left-0 right-0 flex items-center justify-center gap-1 py-1.5 opacity-0 group-hover/preset:opacity-100 transition-all duration-200 translate-y-full group-hover/preset:translate-y-0"
+                              style={{ backgroundColor: "rgba(0,0,0,0.75)", backdropFilter: "blur(4px)" }}
+                            >
+                              {(() => { const gi = programas.findIndex(p => p.id === prog.id); return gi > 0 ? (
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); const arr = [...programas]; [arr[gi - 1], arr[gi]] = [arr[gi], arr[gi - 1]]; setProgramas(arr); localStorage.setItem("vmix_preset_order", JSON.stringify(arr.map(p => p.id))); }}
+                                  className="w-5 h-5 rounded flex items-center justify-center text-[9px] hover:bg-white/20 transition-colors"
+                                  style={{ color: "#ccc" }}
+                                  title="Mover para esquerda"
+                                >◀</button>
+                              ) : null; })()}
+                              {(() => { const gi = programas.findIndex(p => p.id === prog.id); return gi < programas.length - 1 ? (
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); const arr = [...programas]; [arr[gi], arr[gi + 1]] = [arr[gi + 1], arr[gi]]; setProgramas(arr); localStorage.setItem("vmix_preset_order", JSON.stringify(arr.map(p => p.id))); }}
+                                  className="w-5 h-5 rounded flex items-center justify-center text-[9px] hover:bg-white/20 transition-colors"
+                                  style={{ color: "#ccc" }}
+                                  title="Mover para direita"
+                                >▶</button>
+                              ) : null; })()}
+                              <button
+                                onClick={(e) => { e.stopPropagation(); setEditingPresetId(prog.id); }}
+                                className="w-5 h-5 rounded flex items-center justify-center hover:bg-white/20 transition-colors"
+                                style={{ color: "#ccc" }}
+                                title="Editar ações"
+                              ><Wand2 size={10} /></button>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); setProgramas(prev => prev.filter(p => p.id !== prog.id)); }}
+                                className="w-5 h-5 rounded flex items-center justify-center hover:bg-red-500/40 transition-colors"
+                                style={{ color: "#f87171" }}
+                                title="Excluir"
+                              ><Trash2 size={10} /></button>
                             </div>
-                          )}
-                          <div className="absolute inset-0 flex items-center justify-center p-2 pt-5 pb-4">
-                            <span className="text-[10px] font-black uppercase tracking-wider text-center leading-tight" style={{ color: isBtnActive ? "#000" : "#ccc" }}>{btn.nome}</span>
                           </div>
-                          <div className="absolute bottom-0 left-0 right-0 flex items-center justify-center gap-1 py-1.5 opacity-0 group-hover/custom:opacity-100 transition-all duration-200 translate-y-full group-hover/custom:translate-y-0" style={{ backgroundColor: "rgba(0,0,0,0.75)", backdropFilter: "blur(4px)" }}>
-                            <button onClick={(e) => { e.stopPropagation(); setEditingCustomButtonId(btn.id); }} className="w-5 h-5 rounded flex items-center justify-center hover:bg-white/20 transition-colors" style={{ color: "#ccc" }} title="Editar"><Wand2 size={10} /></button>
-                            <button onClick={async (e) => { e.stopPropagation(); await (supabase.from("custom_vmix_buttons" as any) as any).delete().eq("id", btn.id); loadCustomButtons(); toast({ title: "Botão excluído" }); }} className="w-5 h-5 rounded flex items-center justify-center hover:bg-red-500/40 transition-colors" style={{ color: "#f87171" }} title="Excluir"><Trash2 size={10} /></button>
+                        );
+                      })}
                           </div>
                         </div>
-                      );
-                    })}
-                    <div
-                      className="relative rounded-lg overflow-hidden cursor-pointer transition-all duration-200 hover:scale-[1.03] flex items-center justify-center"
-                      style={{ aspectRatio: "3/2", backgroundColor: "#1e1e26", border: "2px dashed #333338" }}
-                      onClick={() => setEditingCustomButtonId("new")}
-                    >
-                      <div className="flex flex-col items-center gap-1">
-                        <Plus size={16} style={{ color: "#f59e0b" }} />
-                        <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: "#f59e0b" }}>+ Criar</span>
+                      ));
+                      })()}
+                      {programas.length === 0 && (
+                        <p className="text-[11px] text-white/30 py-4">Nenhum programa cadastrado.</p>
+                      )}
+                  </div>
+                </div>
+
+                {/* Right: Botões de Efeitos */}
+                <div className="rounded-xl overflow-hidden xl:w-[280px]" style={{ backgroundColor: "#1a1a1f", border: "1px solid #ffffff08" }}>
+                  <div className="flex items-center gap-2 px-4 py-2.5" style={{ backgroundColor: "#ffffff06", borderBottom: "1px solid #ffffff08" }}>
+                    <Wand2 size={14} style={{ color: "#f59e0b" }} />
+                    <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#f59e0b" }}>botões de efeitos</span>
+                  </div>
+                  <div className="p-3">
+                    <div className="grid grid-cols-2 gap-2">
+                      {customButtons.map((btn: any) => {
+                        const isBtnActive = activeCustomButton === btn.id;
+                        const hasSchedule = btn.horario && btn.dias_semana?.length > 0;
+                        return (
+                          <div
+                            key={btn.id}
+                            className="group/custom relative rounded-lg overflow-hidden cursor-pointer transition-all duration-200 hover:scale-[1.03]"
+                            style={{
+                              aspectRatio: "3/2",
+                              backgroundColor: isBtnActive ? "#f59e0b" : "#2a2a30",
+                              border: isBtnActive ? "2px solid #f59e0b" : "2px solid #333338",
+                            }}
+                            onClick={async () => {
+                              setActiveCustomButton(btn.id);
+                              if (btn.commands && Array.isArray(btn.commands) && btn.commands.length > 0) {
+                                for (const cmd of btn.commands) {
+                                  let cmdVal = cmd.value;
+                                  if (cmd.extraValue) cmdVal = cmdVal ? `${cmdVal},${cmd.extraValue}` : cmd.extraValue;
+                                  await sendCommand(cmd.fn, cmd.input, cmdVal);
+                                  await new Promise(r => setTimeout(r, 400));
+                                }
+                                toast({ title: `Efeito: ${btn.nome}`, description: `${btn.commands.length} ação(ões) executada(s).` });
+                              }
+                            }}
+                          >
+                            {hasSchedule && (
+                              <div className="absolute top-1 left-1 flex items-center gap-0.5 px-1 py-0.5 rounded" style={{ backgroundColor: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)", zIndex: 2 }}>
+                                <Clock size={7} style={{ color: "#f59e0b" }} />
+                                <span className="text-[6px] font-bold tabular-nums" style={{ color: "#f59e0b" }}>{btn.horario?.slice(0, 5)}</span>
+                              </div>
+                            )}
+                            {btn.dias_semana && btn.dias_semana.length > 0 && (
+                              <div className="absolute bottom-1 left-1 flex items-center gap-[1px] z-[1]">
+                                {["D","S","T","Q","Q","S","S"].map((d: string, i: number) => {
+                                  const dayLabels = ["Domingo","Segunda","Terça","Quarta","Quinta","Sexta","Sábado"];
+                                  const dayOn = (btn.dias_semana as string[]).includes(dayLabels[i]);
+                                  return (
+                                    <span key={i} className="text-[4px] font-bold uppercase leading-none px-[2px] py-[1px] rounded-sm"
+                                      style={{ backgroundColor: dayOn ? "rgba(245,158,11,0.25)" : "transparent", color: dayOn ? "#f59e0b" : "#555" }}
+                                    >{d}</span>
+                                  );
+                                })}
+                              </div>
+                            )}
+                            <div className="absolute inset-0 flex items-center justify-center p-1.5 pt-4 pb-3">
+                              <span className="text-[9px] font-black uppercase tracking-wider text-center leading-tight" style={{ color: isBtnActive ? "#000" : "#ccc" }}>{btn.nome}</span>
+                            </div>
+                            <div className="absolute bottom-0 left-0 right-0 flex items-center justify-center gap-1 py-1 opacity-0 group-hover/custom:opacity-100 transition-all duration-200 translate-y-full group-hover/custom:translate-y-0" style={{ backgroundColor: "rgba(0,0,0,0.75)", backdropFilter: "blur(4px)" }}>
+                              <button onClick={(e) => { e.stopPropagation(); setEditingCustomButtonId(btn.id); }} className="w-4 h-4 rounded flex items-center justify-center hover:bg-white/20 transition-colors" style={{ color: "#ccc" }} title="Editar"><Wand2 size={9} /></button>
+                              <button onClick={async (e) => { e.stopPropagation(); await (supabase.from("custom_vmix_buttons" as any) as any).delete().eq("id", btn.id); loadCustomButtons(); toast({ title: "Botão excluído" }); }} className="w-4 h-4 rounded flex items-center justify-center hover:bg-red-500/40 transition-colors" style={{ color: "#f87171" }} title="Excluir"><Trash2 size={9} /></button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                      {/* + Criar */}
+                      <div
+                        className="relative rounded-lg overflow-hidden cursor-pointer transition-all duration-200 hover:scale-[1.03] flex items-center justify-center"
+                        style={{ aspectRatio: "3/2", backgroundColor: "#1e1e26", border: "2px dashed #333338" }}
+                        onClick={() => setEditingCustomButtonId("new")}
+                      >
+                        <div className="flex flex-col items-center gap-0.5">
+                          <Plus size={14} style={{ color: "#f59e0b" }} />
+                          <span className="text-[8px] font-bold uppercase tracking-wider" style={{ color: "#f59e0b" }}>+ Criar</span>
+                        </div>
                       </div>
                     </div>
                   </div>
