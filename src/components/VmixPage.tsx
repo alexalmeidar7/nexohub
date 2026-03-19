@@ -2244,15 +2244,21 @@ export default function VmixPage() {
                         const hasSchedule = btn.horario && btn.dias_semana?.length > 0;
                         const btnColor = btn.color || "#f59e0b";
                         const BtnIcon = getIconForName(btn.nome || "");
-                        const isDark = ["#dc2626","#8b5cf6","#3b82f6","#64748b"].includes(btnColor);
+                        // Compute text color based on background luminance
+                        const hex = btnColor.replace("#", "");
+                        const r = parseInt(hex.substring(0, 2), 16) / 255;
+                        const g = parseInt(hex.substring(2, 4), 16) / 255;
+                        const b = parseInt(hex.substring(4, 6), 16) / 255;
+                        const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
+                        const textColor = luminance > 0.5 ? "#000000" : "#ffffff";
                         return (
                           <div
                             key={btn.id}
                             className="group/custom relative rounded-lg overflow-hidden cursor-pointer transition-all duration-200 hover:scale-[1.03]"
                             style={{
                               aspectRatio: "3/2",
-                              backgroundColor: isBtnActive ? btnColor : "#2a2a30",
-                              border: isBtnActive ? `2px solid ${btnColor}` : "2px solid #333338",
+                              backgroundColor: btnColor,
+                              border: isBtnActive ? `2px solid ${textColor}` : `2px solid ${btnColor}`,
                             }}
                             onClick={async () => {
                               setActiveCustomButton(btn.id);
@@ -2261,16 +2267,16 @@ export default function VmixPage() {
                                   let cmdVal = cmd.value;
                                   if (cmd.extraValue) cmdVal = cmdVal ? `${cmdVal},${cmd.extraValue}` : cmd.extraValue;
                                   await sendCommand(cmd.fn, cmd.input, cmdVal);
-                                  await new Promise(r => setTimeout(r, 400));
+                                  await new Promise(r2 => setTimeout(r2, 400));
                                 }
                                 toast({ title: `Efeito: ${btn.nome}`, description: `${btn.commands.length} ação(ões) executada(s).` });
                               }
                             }}
                           >
                             {hasSchedule && (
-                              <div className="absolute top-1 left-1 flex items-center gap-0.5 px-1 py-0.5 rounded" style={{ backgroundColor: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)", zIndex: 2 }}>
-                                <Clock size={7} style={{ color: btnColor }} />
-                                <span className="text-[6px] font-bold tabular-nums" style={{ color: btnColor }}>{btn.horario?.slice(0, 5)}</span>
+                              <div className="absolute top-1 left-1 flex items-center gap-0.5 px-1 py-0.5 rounded" style={{ backgroundColor: "rgba(0,0,0,0.4)", backdropFilter: "blur(4px)", zIndex: 2 }}>
+                                <Clock size={7} style={{ color: "#fff" }} />
+                                <span className="text-[6px] font-bold tabular-nums" style={{ color: "#fff" }}>{btn.horario?.slice(0, 5)}</span>
                               </div>
                             )}
                             {btn.dias_semana && btn.dias_semana.length > 0 && (
@@ -2280,15 +2286,15 @@ export default function VmixPage() {
                                   const dayOn = (btn.dias_semana as string[]).includes(dayLabels[i]);
                                   return (
                                     <span key={i} className="text-[4px] font-bold uppercase leading-none px-[2px] py-[1px] rounded-sm"
-                                      style={{ backgroundColor: dayOn ? `${btnColor}40` : "transparent", color: dayOn ? btnColor : "#555" }}
+                                      style={{ backgroundColor: dayOn ? `${textColor}25` : "transparent", color: dayOn ? textColor : `${textColor}50` }}
                                     >{d}</span>
                                   );
                                 })}
                               </div>
                             )}
                             <div className="absolute inset-0 flex flex-col items-center justify-center p-1.5 pt-4 pb-3 gap-1">
-                              <BtnIcon size={16} style={{ color: isBtnActive ? (isDark ? "#fff" : "#000") : btnColor, opacity: 0.8 }} />
-                              <span className="text-[9px] font-black uppercase tracking-wider text-center leading-tight" style={{ color: isBtnActive ? (isDark ? "#fff" : "#000") : "#ccc" }}>{btn.nome}</span>
+                              <BtnIcon size={16} style={{ color: textColor, opacity: 0.85 }} />
+                              <span className="text-[9px] font-black uppercase tracking-wider text-center leading-tight" style={{ color: textColor }}>{btn.nome}</span>
                             </div>
                             <div className="absolute bottom-0 left-0 right-0 flex items-center justify-center gap-1 py-1 opacity-0 group-hover/custom:opacity-100 transition-all duration-200 translate-y-full group-hover/custom:translate-y-0" style={{ backgroundColor: "rgba(0,0,0,0.75)", backdropFilter: "blur(4px)" }}>
                               <button onClick={(e) => { e.stopPropagation(); setEditingCustomButtonId(btn.id); }} className="w-4 h-4 rounded flex items-center justify-center hover:bg-white/20 transition-colors" style={{ color: "#ccc" }} title="Editar"><Wand2 size={9} /></button>
