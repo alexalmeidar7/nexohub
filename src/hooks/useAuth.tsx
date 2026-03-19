@@ -30,6 +30,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let mounted = true;
 
+    // Safety timeout: if loading takes more than 8s, stop loading
+    const timeout = setTimeout(() => {
+      if (mounted && loading) {
+        console.warn("Auth loading timeout - forcing load complete");
+        setLoading(false);
+      }
+    }, 8000);
+
     const updateAuth = async (newSession: Session | null) => {
       if (!mounted) return;
 
@@ -37,7 +45,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const newId = newUser?.id ?? null;
 
       // Only update user state if the user ID actually changed
-      // This prevents re-renders from token refreshes when switching tabs
       if (newId !== prevUserIdRef.current) {
         prevUserIdRef.current = newId;
         setUser(newUser);
@@ -50,30 +57,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      const { data, error } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", newUser.id);
+      try {
+        const { data, error } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", newUser.id);
 
-      if (!mounted) return;
+        if (!mounted) return;
 
-      if (!error && data && data.length > 0) {
-        const isAdmin = data.some((r: any) => r.role === "admin");
-        setRole(isAdmin ? "admin" : "user");
-      } else {
-        setRole("user");
+        if (!error && data && data.length > 0) {
+          const isAdmin = data.some((r: any) => r.role === "admin");
+          setRole(isAdmin ? "admin" : "user");
+        } else {
+          setRole("user");
+        }
+      } catch {
+        if (mounted) setRole("user");
       }
-      setLoading(false);
+      if (mounted) setLoading(false);
     };
 
-    // Set up auth state listener FIRST (non-async callback to avoid deadlocks)
+    // Set up auth state listener FIRST
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       void updateAuth(session);
     });
 
-    // Then restore initial session from storage (deterministic bootstrap)
+    // Then restore initial session from storage
     supabase.auth.getSession().then(({ data: { session }, error }) => {
       if (error && !session) {
         prevUserIdRef.current = null;
@@ -85,10 +96,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       void updateAuth(session);
+    }).catch(() => {
+      if (mounted) {
+        setLoading(false);
+      }
     });
 
     return () => {
       mounted = false;
+      clearTimeout(timeout);
       subscription.unsubscribe();
     };
   }, []);
