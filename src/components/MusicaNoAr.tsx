@@ -461,7 +461,11 @@ export default function MusicaNoAr() {
       if (fileHandleRef.current) {
         try {
           file = await fileHandleRef.current.getFile();
-        } catch {
+        } catch (err: any) {
+          localFailCountRef.current++;
+          if (localFailCountRef.current >= 5) {
+            setLocalError(`Erro ao acessar arquivo local (${err?.message || "permissão negada"})`);
+          }
           readingRef.current = false;
           return;
         }
@@ -471,6 +475,13 @@ export default function MusicaNoAr() {
       if (!file) { readingRef.current = false; return; }
 
       const text = await readFileWithEncoding(file);
+      
+      // Success — reset health trackers
+      localFailCountRef.current = 0;
+      lastLocalSuccessRef.current = Date.now();
+      setLocalDelay(false);
+      setLocalError(null);
+
       if (text === localFileContentRef.current) { readingRef.current = false; return; }
       localFileContentRef.current = text;
       setLocalFileContent(text);
