@@ -219,11 +219,15 @@ export default function MusicaNoAr() {
   const lastSourceRef = useRef<"online" | "pasta" | null>(null);
   const [showConfig, setShowConfig] = useState(false);
 
-  // Source delay tracking
-  const lastOnlineUpdateRef = useRef<number>(Date.now());
-  const lastLocalUpdateRef = useRef<number>(Date.now());
+  // Source health tracking — tracks last SUCCESSFUL response (not song change)
+  const lastOnlineSuccessRef = useRef<number>(Date.now());
+  const lastLocalSuccessRef = useRef<number>(Date.now());
   const [onlineDelay, setOnlineDelay] = useState(false);
   const [localDelay, setLocalDelay] = useState(false);
+  const [onlineError, setOnlineError] = useState<string | null>(null);
+  const [localError, setLocalError] = useState<string | null>(null);
+  const onlineFailCountRef = useRef(0);
+  const localFailCountRef = useRef(0);
 
   // Save source mode to DB + state (kept for UI preference, but both always run)
   const setSourceMode = async (mode: "online" | "pasta") => {
@@ -271,19 +275,19 @@ export default function MusicaNoAr() {
     loadData();
   }, [user]);
 
-  // Delay detection: warn if a source hasn't updated in 30s
+  // Delay detection: warn if a source hasn't responded successfully
   useEffect(() => {
     const checkDelay = setInterval(() => {
       const now = Date.now();
-      if (xmlUrl.trim() && now - lastOnlineUpdateRef.current > 30000 && sourceStats.online > 0) {
+      if (xmlUrl.trim() && now - lastOnlineSuccessRef.current > 30000) {
         setOnlineDelay(true);
       }
-      if (localMonitoring && now - lastLocalUpdateRef.current > 15000 && sourceStats.pasta > 0) {
+      if (localMonitoring && now - lastLocalSuccessRef.current > 15000) {
         setLocalDelay(true);
       }
     }, 5000);
     return () => clearInterval(checkDelay);
-  }, [xmlUrl, localMonitoring, sourceStats]);
+  }, [xmlUrl, localMonitoring]);
 
   useEffect(() => {
     const fetchPresenter = async () => {
@@ -356,8 +360,6 @@ export default function MusicaNoAr() {
         setLastSource(source);
         lastSourceRef.current = source;
         setSourceStats(prev => ({ ...prev, [source]: prev[source] + 1 }));
-        if (source === "online") { lastOnlineUpdateRef.current = Date.now(); setOnlineDelay(false); }
-        if (source === "pasta") { lastLocalUpdateRef.current = Date.now(); setLocalDelay(false); }
       }
     } else {
       if (data.capa && (!prev.capa || prev.capa !== data.capa)) {
@@ -374,12 +376,29 @@ export default function MusicaNoAr() {
       const { data, error } = await supabase.functions.invoke("fetch-rss", {
         body: { url: xmlUrl.trim() },
       });
-      if (error || !data?.content) return;
+      if (error || !data?.content) {
+        onlineFailCountRef.current++;
+        if (onlineFailCountRef.current >= 3) {
+          setOnlineError(`Falha ao buscar XML online (${onlineFailCountRef.current} tentativas)`);
+        }
+        return;
+      }
+      // Success — reset health trackers
+      onlineFailCountRef.current = 0;
+      lastOnlineSuccessRef.current = Date.now();
+      setOnlineDelay(false);
+      setOnlineError(null);
+
       const parsed = parseXmlString(data.content);
       if (parsed) {
         await processMusic(parsed, "online");
       }
-    } catch { }
+    } catch (err: any) {
+      onlineFailCountRef.current++;
+      if (onlineFailCountRef.current >= 3) {
+        setOnlineError(`Erro de rede: ${err?.message || "conexão recusada"}`);
+      }
+    }
   }, [xmlUrl, processMusic]);
 
   useEffect(() => {
@@ -442,7 +461,11 @@ export default function MusicaNoAr() {
       if (fileHandleRef.current) {
         try {
           file = await fileHandleRef.current.getFile();
-        } catch {
+        } catch (err: any) {
+          localFailCountRef.current++;
+          if (localFailCountRef.current >= 5) {
+            setLocalError(`Erro ao acessar arquivo local (${err?.message || "permissão negada"})`);
+          }
           readingRef.current = false;
           return;
         }
@@ -452,6 +475,13 @@ export default function MusicaNoAr() {
       if (!file) { readingRef.current = false; return; }
 
       const text = await readFileWithEncoding(file);
+      
+      // Success — reset health trackers
+      localFailCountRef.current = 0;
+      lastLocalSuccessRef.current = Date.now();
+      setLocalDelay(false);
+      setLocalError(null);
+
       if (text === localFileContentRef.current) { readingRef.current = false; return; }
       localFileContentRef.current = text;
       setLocalFileContent(text);
@@ -629,19 +659,31 @@ export default function MusicaNoAr() {
           </div>
         </div>
 
-        {/* Delay warnings */}
-        {(onlineDelay || localDelay) && (
-          <div className="px-4 pb-2 flex gap-2">
-            {onlineDelay && (
+        {/* Delay & error warnings */}
+        {(onlineDelay || localDelay || onlineError || localError) && (
+          <div className="px-4 pb-2 flex flex-col gap-1.5">
+            {onlineError && (
               <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[9px] font-semibold" style={{ backgroundColor: "rgba(239,68,68,0.08)", color: "#dc2626", border: "1px solid rgba(239,68,68,0.2)" }}>
                 <AlertTriangle size={11} />
-                Origem Online sem atualizar há mais de 30s
+                <span>⚠ Online: {onlineError}</span>
               </div>
             )}
-            {localDelay && (
+            {!onlineError && onlineDelay && (
+              <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[9px] font-semibold" style={{ backgroundColor: "rgba(234,179,8,0.08)", color: "#ca8a04", border: "1px solid rgba(234,179,8,0.2)" }}>
+                <AlertTriangle size={11} />
+                Origem Online sem resposta há mais de 30s
+              </div>
+            )}
+            {localError && (
               <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[9px] font-semibold" style={{ backgroundColor: "rgba(239,68,68,0.08)", color: "#dc2626", border: "1px solid rgba(239,68,68,0.2)" }}>
                 <AlertTriangle size={11} />
-                Origem Local sem atualizar há mais de 15s
+                <span>⚠ Local: {localError}</span>
+              </div>
+            )}
+            {!localError && localDelay && (
+              <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[9px] font-semibold" style={{ backgroundColor: "rgba(234,179,8,0.08)", color: "#ca8a04", border: "1px solid rgba(234,179,8,0.2)" }}>
+                <AlertTriangle size={11} />
+                Origem Local sem resposta há mais de 15s
               </div>
             )}
           </div>
