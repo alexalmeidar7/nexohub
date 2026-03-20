@@ -275,19 +275,19 @@ export default function MusicaNoAr() {
     loadData();
   }, [user]);
 
-  // Delay detection: warn if a source hasn't updated in 30s
+  // Delay detection: warn if a source hasn't responded successfully
   useEffect(() => {
     const checkDelay = setInterval(() => {
       const now = Date.now();
-      if (xmlUrl.trim() && now - lastOnlineUpdateRef.current > 30000 && sourceStats.online > 0) {
+      if (xmlUrl.trim() && now - lastOnlineSuccessRef.current > 30000) {
         setOnlineDelay(true);
       }
-      if (localMonitoring && now - lastLocalUpdateRef.current > 15000 && sourceStats.pasta > 0) {
+      if (localMonitoring && now - lastLocalSuccessRef.current > 15000) {
         setLocalDelay(true);
       }
     }, 5000);
     return () => clearInterval(checkDelay);
-  }, [xmlUrl, localMonitoring, sourceStats]);
+  }, [xmlUrl, localMonitoring]);
 
   useEffect(() => {
     const fetchPresenter = async () => {
