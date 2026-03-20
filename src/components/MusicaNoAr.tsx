@@ -360,8 +360,6 @@ export default function MusicaNoAr() {
         setLastSource(source);
         lastSourceRef.current = source;
         setSourceStats(prev => ({ ...prev, [source]: prev[source] + 1 }));
-        if (source === "online") { lastOnlineUpdateRef.current = Date.now(); setOnlineDelay(false); }
-        if (source === "pasta") { lastLocalUpdateRef.current = Date.now(); setLocalDelay(false); }
       }
     } else {
       if (data.capa && (!prev.capa || prev.capa !== data.capa)) {
