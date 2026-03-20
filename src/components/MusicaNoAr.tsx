@@ -567,11 +567,16 @@ export default function MusicaNoAr() {
 
   const progress = sliderResetting ? 0 : rawProgress;
 
+  const isBreak = !!(music && (
+    music.titulo.toUpperCase().trim() === "BREAK" ||
+    music.artista.toUpperCase().trim() === "BREAK"
+  ));
+
   const hasCover = music?.capa && music.capa.length > 0;
-  const useFallback = !hasCover && presenterFallback;
-  const displayTitulo = useFallback ? presenterFallback!.nome : (music?.titulo || "Aguardando leitura...");
-  const displayArtista = useFallback ? "no ar agora" : (music?.artista || "Interprete");
-  const displayCover = useFallback ? presenterFallback!.foto : (music?.capa || "");
+  const useFallback = !isBreak && !hasCover && presenterFallback;
+  const displayTitulo = isBreak ? "Intervalo" : (useFallback ? presenterFallback!.nome : (music?.titulo || "Aguardando leitura..."));
+  const displayArtista = isBreak ? "" : (useFallback ? "no ar agora" : (music?.artista || "Interprete"));
+  const displayCover = isBreak ? null : (useFallback ? presenterFallback!.foto : (music?.capa || ""));
 
   if (!music && !presenterFallback) {
     return (
@@ -711,12 +716,16 @@ export default function MusicaNoAr() {
             <div className="relative z-10 p-4 flex gap-4 items-center">
               {/* Cover image */}
               <div className="relative w-36 h-36 lg:w-44 lg:h-44 shrink-0 overflow-hidden rounded-xl group" style={{ boxShadow: "0 8px 24px rgba(0,0,0,0.3)" }}>
-                {loadingCover && (
+                {loadingCover && !isBreak && (
                   <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-10 backdrop-blur-sm rounded-xl">
                     <Loader2 className="animate-spin" size={28} style={{ color: "#268ffa" }} />
                   </div>
                 )}
-                {displayCover ? (
+                {isBreak ? (
+                  <div className="w-full h-full flex items-center justify-center" style={{ background: "linear-gradient(135deg, #dc2626 0%, #7f1d1d 100%)" }}>
+                    <span className="text-white font-black text-lg tracking-wider uppercase animate-pulse">Intervalo</span>
+                  </div>
+                ) : displayCover ? (
                   <img src={displayCover} alt="Capa" className="object-cover w-full h-full transition-transform duration-700 group-hover:scale-105" />
                 ) : (
                   <div className="w-full h-full flex flex-col items-center justify-center gap-2" style={{ backgroundColor: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.2)" }}>
