@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Music, User, Loader2, Pencil, Check, Globe, FolderOpen, Clock, Upload, Monitor } from "lucide-react";
+import { Music, User, Loader2, Pencil, Check, Globe, FolderOpen, Clock, Upload, Monitor, ChevronDown, ChevronUp, AlertTriangle } from "lucide-react";
 import XmlLinkRow from "./XmlLinkRow";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -217,6 +217,13 @@ export default function MusicaNoAr() {
   const [lastSource, setLastSource] = useState<"online" | "pasta" | null>(null);
   const [sourceStats, setSourceStats] = useState<{ online: number; pasta: number }>({ online: 0, pasta: 0 });
   const lastSourceRef = useRef<"online" | "pasta" | null>(null);
+  const [showConfig, setShowConfig] = useState(false);
+
+  // Source delay tracking
+  const lastOnlineUpdateRef = useRef<number>(Date.now());
+  const lastLocalUpdateRef = useRef<number>(Date.now());
+  const [onlineDelay, setOnlineDelay] = useState(false);
+  const [localDelay, setLocalDelay] = useState(false);
 
   // Save source mode to DB + state (kept for UI preference, but both always run)
   const setSourceMode = async (mode: "online" | "pasta") => {
@@ -263,6 +270,20 @@ export default function MusicaNoAr() {
     };
     loadData();
   }, [user]);
+
+  // Delay detection: warn if a source hasn't updated in 30s
+  useEffect(() => {
+    const checkDelay = setInterval(() => {
+      const now = Date.now();
+      if (xmlUrl.trim() && now - lastOnlineUpdateRef.current > 30000 && sourceStats.online > 0) {
+        setOnlineDelay(true);
+      }
+      if (localMonitoring && now - lastLocalUpdateRef.current > 15000 && sourceStats.pasta > 0) {
+        setLocalDelay(true);
+      }
+    }, 5000);
+    return () => clearInterval(checkDelay);
+  }, [xmlUrl, localMonitoring, sourceStats]);
 
   useEffect(() => {
     const fetchPresenter = async () => {
@@ -335,6 +356,8 @@ export default function MusicaNoAr() {
         setLastSource(source);
         lastSourceRef.current = source;
         setSourceStats(prev => ({ ...prev, [source]: prev[source] + 1 }));
+        if (source === "online") { lastOnlineUpdateRef.current = Date.now(); setOnlineDelay(false); }
+        if (source === "pasta") { lastLocalUpdateRef.current = Date.now(); setLocalDelay(false); }
       }
     } else {
       if (data.capa && (!prev.capa || prev.capa !== data.capa)) {
@@ -531,29 +554,20 @@ export default function MusicaNoAr() {
   if (!music && !presenterFallback) {
     return (
       <div className="animate-pulse">
-        <div className="rounded-2xl overflow-hidden" style={{ background: "#d9e9fa", boxShadow: "0 8px 32px rgba(13,4,70,0.12)", padding: "20px" }}>
-          <div className="flex items-center gap-3 mb-5">
+        <div className="rounded-2xl overflow-hidden p-5" style={{ background: "#d9e9fa", boxShadow: "0 8px 32px rgba(13,4,70,0.12)" }}>
+          <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(13,4,70,0.08)" }}>
               <Music size={20} style={{ color: "#0d0446" }} />
             </div>
-            <div>
-              <div className="h-5 w-32 rounded bg-[#0d0446]/10 mb-1" />
-              <div className="h-3 w-48 rounded bg-[#0d0446]/5" />
-            </div>
+            <div className="h-5 w-32 rounded bg-[#0d0446]/10" />
           </div>
-          <div className="max-w-md mx-auto rounded-2xl overflow-hidden" style={{ backgroundColor: "#ffffff", boxShadow: "0 4px 20px rgba(13,4,70,0.08)" }}>
-            <div className="p-6">
-              <div className="h-3 w-16 rounded bg-[#0d0446]/8 mb-2" />
-              <div className="h-8 w-full rounded-full bg-[#0d0446]/5 mb-6" />
-              <div className="aspect-square rounded-2xl bg-[#0d0446]/5 mb-6" />
-              <div className="space-y-3 flex flex-col items-center mb-4">
+          <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "#ffffff" }}>
+            <div className="flex gap-4 p-4">
+              <div className="w-40 h-40 rounded-xl bg-[#0d0446]/5 shrink-0" />
+              <div className="flex-1 space-y-3 py-2">
                 <div className="h-6 w-48 rounded bg-[#0d0446]/10" />
                 <div className="h-4 w-32 rounded bg-[#268ffa]/15" />
-              </div>
-              <div className="h-2 w-full rounded-full bg-[#0d0446]/5 mb-2" />
-              <div className="flex justify-between">
-                <div className="h-2.5 w-10 rounded bg-[#0d0446]/5" />
-                <div className="h-2.5 w-10 rounded bg-[#0d0446]/5" />
+                <div className="h-2 w-full rounded-full bg-[#0d0446]/5 mt-8" />
               </div>
             </div>
           </div>
@@ -562,109 +576,221 @@ export default function MusicaNoAr() {
     );
   }
 
+  const preferredSource = sourceStats.online >= sourceStats.pasta ? "online" : "pasta";
+
   return (
-    <div className="animate-fade-in">
-      <div className="rounded-2xl overflow-hidden" style={{ background: "#d9e9fa", boxShadow: "0 8px 32px rgba(13,4,70,0.12)", padding: "16px" }}>
-        {/* Header compact */}
-        <div className="flex items-center justify-between mb-3">
+    <div className="animate-fade-in space-y-3">
+      {/* ═══ MAIN MUSIC CARD ═══ */}
+      <div className="rounded-2xl overflow-hidden" style={{ background: "#d9e9fa", boxShadow: "0 8px 32px rgba(13,4,70,0.12)" }}>
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 pt-3 pb-2">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "rgba(13,4,70,0.08)" }}>
               <Music size={16} style={{ color: "#0d0446" }} />
             </div>
             <div>
-              <h3 className="text-sm font-bold leading-tight" style={{ color: "#0d0446" }}>Musica no Ar</h3>
-              <p className="text-[9px]" style={{ color: "rgba(13,4,70,0.5)" }}>Monitoramento XML em tempo real</p>
+              <h3 className="text-sm font-bold leading-tight" style={{ color: "#0d0446" }}>Música no Ar</h3>
+              <div className="flex items-center gap-2 mt-0.5">
+                <span className="text-[8px] font-semibold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: "rgba(124,58,237,0.1)", color: "#7c3aed" }}>MODO UNIFICADO</span>
+                <span className="text-[8px]" style={{ color: "rgba(13,4,70,0.4)" }}>
+                  Preferência: <strong style={{ color: preferredSource === "online" ? "#268ffa" : "#22c55e" }}>{preferredSource === "online" ? "Online" : "Local"}</strong>
+                  {` (${sourceStats.online + sourceStats.pasta} atualizações)`}
+                </span>
+              </div>
             </div>
           </div>
-          <span className="inline-flex items-center gap-1.5 px-2 py-1 text-[8px] uppercase tracking-widest font-bold rounded-full" style={{ backgroundColor: "rgba(38,143,250,0.1)", color: "#268ffa", border: "1px solid rgba(38,143,250,0.2)" }}>
-            <span className="relative flex h-1.5 w-1.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: "#268ffa" }}></span>
-              <span className="relative inline-flex rounded-full h-1.5 w-1.5" style={{ backgroundColor: "#268ffa" }}></span>
+          <div className="flex items-center gap-2">
+            {/* Source mini-badges */}
+            <div className="flex gap-1">
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[7px] font-bold" style={{
+                backgroundColor: lastSource === "online" ? "rgba(38,143,250,0.15)" : "rgba(38,143,250,0.05)",
+                color: lastSource === "online" ? "#268ffa" : "rgba(13,4,70,0.3)",
+                border: `1px solid ${lastSource === "online" ? "rgba(38,143,250,0.3)" : "transparent"}`,
+              }}>
+                <Globe size={8} /> Online
+                {lastSource === "online" && <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: "#268ffa" }} />}
+              </span>
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[7px] font-bold" style={{
+                backgroundColor: lastSource === "pasta" ? "rgba(34,197,94,0.15)" : "rgba(34,197,94,0.05)",
+                color: lastSource === "pasta" ? "#22c55e" : "rgba(13,4,70,0.3)",
+                border: `1px solid ${lastSource === "pasta" ? "rgba(34,197,94,0.3)" : "transparent"}`,
+              }}>
+                <FolderOpen size={8} /> Local
+                {lastSource === "pasta" && <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: "#22c55e" }} />}
+              </span>
+            </div>
+            <span className="inline-flex items-center gap-1.5 px-2 py-1 text-[8px] uppercase tracking-widest font-bold rounded-full" style={{ backgroundColor: "rgba(38,143,250,0.1)", color: "#268ffa", border: "1px solid rgba(38,143,250,0.2)" }}>
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: "#268ffa" }} />
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5" style={{ backgroundColor: "#268ffa" }} />
+              </span>
+              AO VIVO
             </span>
-            AO VIVO
-          </span>
+          </div>
         </div>
 
-        {/* Main 2-column: Cover+Info | XML Config */}
-        <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-3">
+        {/* Delay warnings */}
+        {(onlineDelay || localDelay) && (
+          <div className="px-4 pb-2 flex gap-2">
+            {onlineDelay && (
+              <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[9px] font-semibold" style={{ backgroundColor: "rgba(239,68,68,0.08)", color: "#dc2626", border: "1px solid rgba(239,68,68,0.2)" }}>
+                <AlertTriangle size={11} />
+                Origem Online sem atualizar há mais de 30s
+              </div>
+            )}
+            {localDelay && (
+              <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[9px] font-semibold" style={{ backgroundColor: "rgba(239,68,68,0.08)", color: "#dc2626", border: "1px solid rgba(239,68,68,0.2)" }}>
+                <AlertTriangle size={11} />
+                Origem Local sem atualizar há mais de 15s
+              </div>
+            )}
+          </div>
+        )}
 
-          {/* LEFT - XML Config + History */}
-          <div className="rounded-2xl p-3 flex flex-col gap-2" style={{ backgroundColor: "#ffffff", boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}>
-            {/* Unified mode indicator */}
-            <div className="rounded-lg p-2 flex items-center gap-2" style={{
-              backgroundColor: "rgba(124,58,237,0.08)",
-              border: "1px solid rgba(124,58,237,0.2)"
-            }}>
-              <span className="relative flex h-2 w-2 shrink-0">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: "#7c3aed" }}></span>
-                <span className="relative inline-flex rounded-full h-2 w-2" style={{ backgroundColor: "#7c3aed" }}></span>
-              </span>
-              <span className="text-[9px] font-bold" style={{ color: "#0d0446" }}>
-                Modo Unificado — monitorando ambas as origens
-              </span>
+        {/* Song display with gradient progress */}
+        <div className="px-4 pb-4">
+          <div
+            key={`${displayTitulo}-${displayArtista}`}
+            className="rounded-2xl overflow-hidden relative animate-fade-in"
+            style={{ backgroundColor: "#0a1a3a", boxShadow: "0 4px 20px rgba(0,0,0,0.2)" }}
+          >
+            {/* Gradient progress fill */}
+            <div
+              className="absolute inset-0 rounded-2xl"
+              style={{
+                width: `${progress}%`,
+                background: "linear-gradient(90deg, #0a1a3a 0%, #1a3a7a 30%, #268ffa 70%, #2dbef3 100%)",
+                transition: sliderResetting
+                  ? "width 0.6s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.6s ease"
+                  : "width 0.5s linear",
+                opacity: sliderResetting ? 0.3 : 1,
+              }}
+            />
+            {/* Shimmer overlay on progress */}
+            <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none" style={{ width: `${progress}%` }}>
+              <div className="absolute inset-0" style={{
+                background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.06) 50%, transparent 100%)",
+                animation: "player-shimmer 3s ease-in-out infinite",
+              }} />
             </div>
 
-            {/* Source status badges */}
-            <div className="flex gap-1.5">
-              <div className="flex-1 rounded-lg p-1.5 flex items-center gap-1.5" style={{
-                backgroundColor: lastSource === "online" ? "rgba(38,143,250,0.12)" : "rgba(38,143,250,0.04)",
-                border: `1px solid ${lastSource === "online" ? "rgba(38,143,250,0.3)" : "rgba(38,143,250,0.1)"}`,
-              }}>
-                <Globe size={10} style={{ color: "#268ffa" }} />
-                <span className="text-[8px] font-bold" style={{ color: lastSource === "online" ? "#268ffa" : "rgba(13,4,70,0.4)" }}>
-                  Online {sourceStats.online > 0 ? `(${sourceStats.online}x)` : ""}
-                </span>
-                {lastSource === "online" && <span className="text-[7px] ml-auto font-bold px-1 py-0.5 rounded" style={{ backgroundColor: "rgba(38,143,250,0.15)", color: "#268ffa" }}>ATUAL</span>}
+            <div className="relative z-10 p-4 flex gap-4 items-center">
+              {/* Cover image */}
+              <div className="relative w-36 h-36 lg:w-44 lg:h-44 shrink-0 overflow-hidden rounded-xl group" style={{ boxShadow: "0 8px 24px rgba(0,0,0,0.3)" }}>
+                {loadingCover && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-10 backdrop-blur-sm rounded-xl">
+                    <Loader2 className="animate-spin" size={28} style={{ color: "#268ffa" }} />
+                  </div>
+                )}
+                {displayCover ? (
+                  <img src={displayCover} alt="Capa" className="object-cover w-full h-full transition-transform duration-700 group-hover:scale-105" />
+                ) : (
+                  <div className="w-full h-full flex flex-col items-center justify-center gap-2" style={{ backgroundColor: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.2)" }}>
+                    <Music size={36} />
+                    <span className="italic text-[10px]">{music ? "Sem capa" : "Aguardando..."}</span>
+                  </div>
+                )}
               </div>
-              <div className="flex-1 rounded-lg p-1.5 flex items-center gap-1.5" style={{
-                backgroundColor: lastSource === "pasta" ? "rgba(34,197,94,0.12)" : "rgba(34,197,94,0.04)",
-                border: `1px solid ${lastSource === "pasta" ? "rgba(34,197,94,0.3)" : "rgba(34,197,94,0.1)"}`,
-              }}>
-                <FolderOpen size={10} style={{ color: "#22c55e" }} />
-                <span className="text-[8px] font-bold" style={{ color: lastSource === "pasta" ? "#22c55e" : "rgba(13,4,70,0.4)" }}>
-                  Local {sourceStats.pasta > 0 ? `(${sourceStats.pasta}x)` : ""}
+
+              {/* Song Info */}
+              <div className="flex-1 flex flex-col justify-center min-w-0 gap-2">
+                <h2 className="text-lg lg:text-xl font-black tracking-tight truncate" style={{ color: "#ffffff" }}>
+                  {displayTitulo}
+                </h2>
+                <span className="inline-flex items-center gap-1.5 text-sm font-semibold" style={{ color: "rgba(255,255,255,0.65)" }}>
+                  <User size={14} />
+                  {displayArtista}
                 </span>
-                {lastSource === "pasta" && <span className="text-[7px] ml-auto font-bold px-1 py-0.5 rounded" style={{ backgroundColor: "rgba(34,197,94,0.15)", color: "#22c55e" }}>ATUAL</span>}
+
+                {music && music.duracao > 0 && (
+                  <div className="mt-2 space-y-1.5">
+                    {/* Progress bar (thin) */}
+                    <div className="w-full h-1 rounded-full overflow-hidden" style={{ backgroundColor: "rgba(255,255,255,0.1)" }}>
+                      <div
+                        className="h-full rounded-full"
+                        style={{
+                          width: `${progress}%`,
+                          backgroundColor: "rgba(255,255,255,0.5)",
+                          transition: sliderResetting ? "width 0.6s ease" : "width 0.5s linear",
+                        }}
+                      />
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-[10px] font-mono font-bold" style={{ color: "rgba(255,255,255,0.7)" }}>{formatTime(elapsed)}</span>
+                      <span className="text-[10px] font-mono font-bold" style={{ color: "rgba(255,255,255,0.35)" }}>{formatTime(music.duracao)}</span>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
+          </div>
+        </div>
+      </div>
 
-            {/* Online URL config */}
-            <div>
-              <p className="text-[8px] mb-1 font-bold uppercase tracking-wider flex items-center gap-1" style={{ color: "rgba(13,4,70,0.4)" }}>
-                <Globe size={9} /> Origem Online
-              </p>
+      {/* ═══ COLLAPSIBLE CONFIG SECTION ═══ */}
+      <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "#ffffff", boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}>
+        <button
+          onClick={() => setShowConfig(!showConfig)}
+          className="w-full flex items-center justify-between px-4 py-3 text-left"
+          style={{ borderBottom: showConfig ? "1px solid rgba(13,4,70,0.06)" : "none" }}
+        >
+          <span className="text-xs font-bold flex items-center gap-2" style={{ color: "#0d0446" }}>
+            <Monitor size={14} style={{ color: "#268ffa" }} />
+            Configuração das Origens
+            {localMonitoring && (
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: "#22c55e" }} />
+                <span className="relative inline-flex rounded-full h-2 w-2" style={{ backgroundColor: "#22c55e" }} />
+              </span>
+            )}
+          </span>
+          {showConfig ? <ChevronUp size={16} style={{ color: "rgba(13,4,70,0.3)" }} /> : <ChevronDown size={16} style={{ color: "rgba(13,4,70,0.3)" }} />}
+        </button>
+
+        {showConfig && (
+          <div className="p-4 space-y-4">
+            {/* Two columns: Online | Local */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Online */}
+              <div className="space-y-2">
+                <p className="text-[9px] font-bold uppercase tracking-wider flex items-center gap-1.5" style={{ color: "rgba(13,4,70,0.5)" }}>
+                  <Globe size={10} style={{ color: "#268ffa" }} /> Origem Online
+                  <span className="text-[8px] font-normal ml-auto" style={{ color: "#268ffa" }}>{sourceStats.online}x atualizações</span>
+                </p>
                 {editingUrl ? (
                   <div className="flex gap-1.5">
                     <input
                       value={tempUrl}
                       onChange={(e) => setTempUrl(e.target.value)}
-                      className="flex-1 text-[10px] px-2 py-1 outline-none"
-                      style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "1px solid rgba(13,4,70,0.15)", color: "#0d0446", borderRadius: "8px" }}
+                      className="flex-1 text-[10px] px-2.5 py-1.5 outline-none rounded-lg"
+                      style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "1px solid rgba(13,4,70,0.15)", color: "#0d0446" }}
                       onFocus={e => { e.currentTarget.style.borderColor = "#268ffa"; }}
                       onBlur={e => { e.currentTarget.style.borderColor = "rgba(13,4,70,0.15)"; }}
                       placeholder="URL do XML"
                     />
-                    <button onClick={() => { saveUrl(tempUrl); setEditingUrl(false); }} className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#fff" }}>
-                      <Check size={12} />
+                    <button onClick={() => { saveUrl(tempUrl); setEditingUrl(false); }} className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#fff" }}>
+                      <Check size={13} />
                     </button>
                   </div>
                 ) : (
                   <div className="flex items-center gap-1.5">
-                    <p className="text-[9px] truncate px-2 py-1 flex-1 rounded-lg" style={{ backgroundColor: "rgba(13,4,70,0.03)", color: "rgba(13,4,70,0.6)", border: "1px solid rgba(13,4,70,0.06)" }}>{xmlUrl}</p>
-                    <button onClick={() => { setTempUrl(xmlUrl); setEditingUrl(true); }} className="w-6 h-6 rounded-md flex items-center justify-center shrink-0" style={{ backgroundColor: "rgba(13,4,70,0.04)" }}>
-                      <Pencil size={10} style={{ color: "#268ffa" }} />
+                    <p className="text-[9px] truncate px-2.5 py-1.5 flex-1 rounded-lg" style={{ backgroundColor: "rgba(13,4,70,0.03)", color: "rgba(13,4,70,0.6)", border: "1px solid rgba(13,4,70,0.06)" }}>{xmlUrl}</p>
+                    <button onClick={() => { setTempUrl(xmlUrl); setEditingUrl(true); }} className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: "rgba(13,4,70,0.04)" }}>
+                      <Pencil size={11} style={{ color: "#268ffa" }} />
                     </button>
                   </div>
                 )}
-            </div>
+              </div>
 
-            {/* Local File */}
-            <div>
-              <p className="text-[8px] mb-1 font-bold uppercase tracking-wider flex items-center gap-1" style={{ color: "rgba(13,4,70,0.4)" }}>
-                <FolderOpen size={9} /> Origem Local
-              </p>
-                {/* Device name editor */}
-                <div className="rounded-lg p-2 mb-2 flex items-center gap-2" style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "1px solid rgba(13,4,70,0.06)" }}>
+              {/* Local */}
+              <div className="space-y-2">
+                <p className="text-[9px] font-bold uppercase tracking-wider flex items-center gap-1.5" style={{ color: "rgba(13,4,70,0.5)" }}>
+                  <FolderOpen size={10} style={{ color: "#22c55e" }} /> Origem Local
+                  <span className="text-[8px] font-normal ml-auto" style={{ color: "#22c55e" }}>{sourceStats.pasta}x atualizações</span>
+                </p>
+
+                {/* Device name */}
+                <div className="rounded-lg p-2 flex items-center gap-2" style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "1px solid rgba(13,4,70,0.06)" }}>
                   <Monitor size={12} className="shrink-0" style={{ color: "#268ffa" }} />
                   {editingDeviceName ? (
                     <div className="flex-1 flex gap-1">
@@ -713,26 +839,17 @@ export default function MusicaNoAr() {
                 {/* Remote device warning */}
                 {!localFileName && (() => {
                   const lastLocal = uploadHistory.find(e => e.source === "pasta" && e.deviceName);
-                  if (lastLocal && lastLocal.deviceName) {
-                    const isRemote = lastLocal.deviceName !== currentDeviceName;
-                    if (isRemote) {
-                      return (
-                        <div className="rounded-lg p-2.5 mb-2 flex items-start gap-2" style={{ backgroundColor: "rgba(234,179,8,0.1)", border: "1px solid rgba(234,179,8,0.3)" }}>
-                          <Monitor size={14} className="shrink-0 mt-0.5" style={{ color: "#ca8a04" }} />
-                          <div>
-                            <p className="text-[9px] font-semibold leading-tight" style={{ color: "#0d0446" }}>
-                              Arquivo XML sendo carregado localmente em outro computador
-                            </p>
-                            <p className="text-[8px] mt-0.5 font-mono" style={{ color: "rgba(13,4,70,0.5)" }}>
-                              {lastLocal.deviceName}
-                            </p>
-                            <p className="text-[8px] mt-1" style={{ color: "rgba(13,4,70,0.4)" }}>
-                              Selecione um arquivo XML neste computador ou mude para o modo Online.
-                            </p>
-                          </div>
+                  if (lastLocal?.deviceName && lastLocal.deviceName !== currentDeviceName) {
+                    return (
+                      <div className="rounded-lg p-2 flex items-start gap-2" style={{ backgroundColor: "rgba(234,179,8,0.1)", border: "1px solid rgba(234,179,8,0.3)" }}>
+                        <Monitor size={12} className="shrink-0 mt-0.5" style={{ color: "#ca8a04" }} />
+                        <div>
+                          <p className="text-[9px] font-semibold" style={{ color: "#0d0446" }}>
+                            XML carregado em outro computador: <span className="font-mono" style={{ color: "rgba(13,4,70,0.5)" }}>{lastLocal.deviceName}</span>
+                          </p>
                         </div>
-                      );
-                    }
+                      </div>
+                    );
                   }
                   return null;
                 })()}
@@ -740,14 +857,13 @@ export default function MusicaNoAr() {
                 <input ref={fileInputRef} type="file" accept=".xml,application/xml,text/xml" onChange={handleFileSelect} className="hidden" />
                 <button
                   onClick={() => {
-                    // Use showOpenFilePicker if available (enables live re-reads)
                     if ('showOpenFilePicker' in window) {
                       handleFileSelect();
                     } else {
                       fileInputRef.current?.click();
                     }
                   }}
-                  className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-[10px] font-bold border-2 border-dashed"
+                  className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-[10px] font-bold border-2 border-dashed transition-colors"
                   style={{ borderColor: localFileName ? "#22c55e" : "rgba(13,4,70,0.15)", color: localFileName ? "#22c55e" : "rgba(13,4,70,0.4)" }}
                 >
                   <Upload size={12} />
@@ -755,39 +871,43 @@ export default function MusicaNoAr() {
                 </button>
 
                 {localMonitoring && localFileName && (
-                  <div className="mt-1.5 flex items-center gap-1.5 px-2 py-1 rounded-lg text-[9px] font-semibold" style={{ backgroundColor: "rgba(34,197,94,0.08)", color: "#16a34a", border: "1px solid rgba(34,197,94,0.2)" }}>
-                    <span className="relative flex h-1.5 w-1.5 shrink-0"><span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: "#22c55e" }}></span><span className="relative inline-flex rounded-full h-1.5 w-1.5" style={{ backgroundColor: "#22c55e" }}></span></span>
+                  <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-[9px] font-semibold" style={{ backgroundColor: "rgba(34,197,94,0.08)", color: "#16a34a", border: "1px solid rgba(34,197,94,0.2)" }}>
+                    <span className="relative flex h-1.5 w-1.5 shrink-0">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: "#22c55e" }} />
+                      <span className="relative inline-flex rounded-full h-1.5 w-1.5" style={{ backgroundColor: "#22c55e" }} />
+                    </span>
                     Monitorando {localFileName} a cada 1s
                   </div>
                 )}
+              </div>
             </div>
 
             {/* Upload History */}
             {uploadHistory.length > 0 && (
-              <div className="flex-1 min-h-0">
-                <p className="text-[8px] mb-1 font-bold uppercase tracking-wider flex items-center gap-1" style={{ color: "rgba(13,4,70,0.4)" }}>
-                  <Clock size={9} /> Historico
+              <div>
+                <p className="text-[9px] mb-1.5 font-bold uppercase tracking-wider flex items-center gap-1" style={{ color: "rgba(13,4,70,0.4)" }}>
+                  <Clock size={9} /> Histórico de atualizações
                 </p>
-                <div className="rounded-lg overflow-auto max-h-[140px]" style={{ border: "1px solid rgba(13,4,70,0.06)" }}>
-                  <table className="w-full text-[8px]">
+                <div className="rounded-lg overflow-auto max-h-[120px]" style={{ border: "1px solid rgba(13,4,70,0.06)" }}>
+                  <table className="w-full text-[9px]">
                     <thead className="sticky top-0">
                       <tr style={{ backgroundColor: "rgba(13,4,70,0.03)" }}>
-                        <th className="text-left px-1.5 py-0.5 font-bold uppercase" style={{ color: "rgba(13,4,70,0.4)" }}>Origem</th>
-                        <th className="text-left px-1.5 py-0.5 font-bold uppercase" style={{ color: "rgba(13,4,70,0.4)" }}>Data</th>
-                        <th className="text-left px-1.5 py-0.5 font-bold uppercase" style={{ color: "rgba(13,4,70,0.4)" }}>Hora</th>
+                        <th className="text-left px-2 py-1 font-bold uppercase" style={{ color: "rgba(13,4,70,0.4)" }}>Origem</th>
+                        <th className="text-left px-2 py-1 font-bold uppercase" style={{ color: "rgba(13,4,70,0.4)" }}>Data</th>
+                        <th className="text-left px-2 py-1 font-bold uppercase" style={{ color: "rgba(13,4,70,0.4)" }}>Hora</th>
                       </tr>
                     </thead>
                     <tbody>
                       {uploadHistory.map((entry, i) => (
                         <tr key={i} style={{ borderTop: i > 0 ? "1px solid rgba(13,4,70,0.04)" : undefined }}>
-                          <td className="px-1.5 py-0.5 font-semibold" style={{ color: entry.source === "pasta" ? "#22c55e" : "#268ffa" }}>
-                            <span className="inline-flex items-center gap-0.5">
-                              {entry.source === "pasta" ? <FolderOpen size={8} /> : <Globe size={8} />}
+                          <td className="px-2 py-1 font-semibold" style={{ color: entry.source === "pasta" ? "#22c55e" : "#268ffa" }}>
+                            <span className="inline-flex items-center gap-1">
+                              {entry.source === "pasta" ? <FolderOpen size={9} /> : <Globe size={9} />}
                               {entry.source === "pasta" ? "Pasta" : "Online"}
                             </span>
                           </td>
-                          <td className="px-1.5 py-0.5 font-mono" style={{ color: "rgba(13,4,70,0.5)" }}>{entry.date}</td>
-                          <td className="px-1.5 py-0.5 font-mono" style={{ color: "rgba(13,4,70,0.5)" }}>{entry.time}</td>
+                          <td className="px-2 py-1 font-mono" style={{ color: "rgba(13,4,70,0.5)" }}>{entry.date}</td>
+                          <td className="px-2 py-1 font-mono" style={{ color: "rgba(13,4,70,0.5)" }}>{entry.time}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -796,73 +916,12 @@ export default function MusicaNoAr() {
               </div>
             )}
           </div>
-
-          {/* RIGHT - Cover + Song Info with blue progress background */}
-          <div
-            key={`${displayTitulo}-${displayArtista}`}
-            className="rounded-2xl overflow-hidden relative animate-fade-in"
-            style={{ backgroundColor: "#ffffff", boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}
-          >
-            {/* Blue progress fill as background */}
-            <div
-              className="absolute inset-0"
-              style={{
-                width: `${progress}%`,
-                background: "linear-gradient(90deg, #0a1a3a, #1a4a8a, #2d8ef3)",
-                transition: sliderResetting
-                  ? "width 0.6s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.6s ease"
-                  : "width 0.5s linear",
-                opacity: sliderResetting ? 0.3 : 1,
-              }}
-            />
-
-            <div className="relative z-10 p-4 flex gap-5">
-              {/* Cover image */}
-              <div className="relative w-56 h-56 shrink-0 overflow-hidden rounded-2xl group bg-white" style={{ boxShadow: "0 8px 24px rgba(13,4,70,0.15)" }}>
-                {loadingCover && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/40 z-10 backdrop-blur-sm rounded-2xl">
-                    <Loader2 className="animate-spin" size={36} style={{ color: "#268ffa" }} />
-                  </div>
-                )}
-                {displayCover ? (
-                  <img src={displayCover} alt="Capa" className="object-cover w-full h-full transition-transform duration-700 group-hover:scale-105" />
-                ) : (
-                  <div className="w-full h-full flex flex-col items-center justify-center gap-2" style={{ backgroundColor: "rgba(13,4,70,0.03)", color: "rgba(13,4,70,0.2)" }}>
-                    <Music size={40} />
-                    <span className="italic text-xs">{music ? "Sem capa" : "Aguardando..."}</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Song Info + Progress */}
-              <div className="flex-1 flex flex-col justify-between min-w-0">
-                <div className="flex flex-col items-start gap-2">
-                  <span className="inline-block px-3 py-1 rounded-lg bg-white text-xl font-black tracking-tight truncate max-w-full" style={{ color: "#0d0446" }}>{displayTitulo}</span>
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white font-semibold text-sm" style={{ color: "#268ffa" }}>
-                    <User size={14} />
-                    {displayArtista}
-                  </span>
-                </div>
-
-                {music && music.duracao > 0 && (
-                  <div className="mt-3">
-                    <span className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-white">
-                      <span className="text-[11px] font-mono font-bold" style={{ color: "#0d0446" }}>{formatTime(elapsed)}</span>
-                      <span className="text-[11px] font-mono font-bold" style={{ color: "rgba(13,4,70,0.4)" }}>{formatTime(music.duracao)}</span>
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
+        )}
       </div>
 
-      {/* XML Output Link - outside the main card */}
+      {/* XML Output Link */}
       {music && (
-        <div className="mt-3">
-          <XmlLinkRow label="XML MUSICA AGORA" xmlContent={`<?xml version="1.0" encoding="UTF-8"?>\n<musica_agora>\n  <titulo>${displayTitulo}</titulo>\n  <interprete>${displayArtista}</interprete>\n  <capa>${displayCover || ""}</capa>\n</musica_agora>`} dark />
-        </div>
+        <XmlLinkRow label="XML MUSICA AGORA" xmlContent={`<?xml version="1.0" encoding="UTF-8"?>\n<musica_agora>\n  <titulo>${displayTitulo}</titulo>\n  <interprete>${displayArtista}</interprete>\n  <capa>${displayCover || ""}</capa>\n</musica_agora>`} dark />
       )}
     </div>
   );
