@@ -567,11 +567,16 @@ export default function MusicaNoAr() {
 
   const progress = sliderResetting ? 0 : rawProgress;
 
+  const isBreak = !!(music && (
+    music.titulo.toUpperCase().trim() === "BREAK" ||
+    music.artista.toUpperCase().trim() === "BREAK"
+  ));
+
   const hasCover = music?.capa && music.capa.length > 0;
-  const useFallback = !hasCover && presenterFallback;
-  const displayTitulo = useFallback ? presenterFallback!.nome : (music?.titulo || "Aguardando leitura...");
-  const displayArtista = useFallback ? "no ar agora" : (music?.artista || "Interprete");
-  const displayCover = useFallback ? presenterFallback!.foto : (music?.capa || "");
+  const useFallback = !isBreak && !hasCover && presenterFallback;
+  const displayTitulo = isBreak ? "Intervalo" : (useFallback ? presenterFallback!.nome : (music?.titulo || "Aguardando leitura..."));
+  const displayArtista = isBreak ? "" : (useFallback ? "no ar agora" : (music?.artista || "Interprete"));
+  const displayCover = isBreak ? null : (useFallback ? presenterFallback!.foto : (music?.capa || ""));
 
   if (!music && !presenterFallback) {
     return (
