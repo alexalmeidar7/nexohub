@@ -926,6 +926,3 @@ export default function MusicaNoAr() {
     </div>
   );
 }
-    </div>
-  );
-}
