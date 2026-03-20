@@ -376,12 +376,29 @@ export default function MusicaNoAr() {
       const { data, error } = await supabase.functions.invoke("fetch-rss", {
         body: { url: xmlUrl.trim() },
       });
-      if (error || !data?.content) return;
+      if (error || !data?.content) {
+        onlineFailCountRef.current++;
+        if (onlineFailCountRef.current >= 3) {
+          setOnlineError(`Falha ao buscar XML online (${onlineFailCountRef.current} tentativas)`);
+        }
+        return;
+      }
+      // Success — reset health trackers
+      onlineFailCountRef.current = 0;
+      lastOnlineSuccessRef.current = Date.now();
+      setOnlineDelay(false);
+      setOnlineError(null);
+
       const parsed = parseXmlString(data.content);
       if (parsed) {
         await processMusic(parsed, "online");
       }
-    } catch { }
+    } catch (err: any) {
+      onlineFailCountRef.current++;
+      if (onlineFailCountRef.current >= 3) {
+        setOnlineError(`Erro de rede: ${err?.message || "conexão recusada"}`);
+      }
+    }
   }, [xmlUrl, processMusic]);
 
   useEffect(() => {
