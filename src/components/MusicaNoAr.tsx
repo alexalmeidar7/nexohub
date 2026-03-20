@@ -433,15 +433,7 @@ export default function MusicaNoAr() {
       const utf8Blob = new Blob([new TextEncoder().encode(text)], { type: "application/xml" });
       const filePath = `local-xml-${u.id}.xml`;
       await supabase.storage.from("xml-files").upload(filePath, utf8Blob, { upsert: true, contentType: "application/xml" });
-      const { data: urlData } = supabase.storage.from("xml-files").getPublicUrl(filePath);
-      if (urlData?.publicUrl) {
-        await supabase.from("user_settings").upsert({
-          user_id: u.id,
-          music_xml_url: urlData.publicUrl,
-          updated_at: new Date().toISOString(),
-        }, { onConflict: "user_id" });
-        setXmlUrl(urlData.publicUrl);
-      }
+      // Do NOT overwrite music_xml_url — the online URL is independent from local sync
       setUploadHistory(await addUploadLogToDb(u.id, "pasta", deviceNameRef.current));
     } catch { }
     syncingRef.current = false;
