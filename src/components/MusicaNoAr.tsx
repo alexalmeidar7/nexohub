@@ -219,11 +219,15 @@ export default function MusicaNoAr() {
   const lastSourceRef = useRef<"online" | "pasta" | null>(null);
   const [showConfig, setShowConfig] = useState(false);
 
-  // Source delay tracking
-  const lastOnlineUpdateRef = useRef<number>(Date.now());
-  const lastLocalUpdateRef = useRef<number>(Date.now());
+  // Source health tracking — tracks last SUCCESSFUL response (not song change)
+  const lastOnlineSuccessRef = useRef<number>(Date.now());
+  const lastLocalSuccessRef = useRef<number>(Date.now());
   const [onlineDelay, setOnlineDelay] = useState(false);
   const [localDelay, setLocalDelay] = useState(false);
+  const [onlineError, setOnlineError] = useState<string | null>(null);
+  const [localError, setLocalError] = useState<string | null>(null);
+  const onlineFailCountRef = useRef(0);
+  const localFailCountRef = useRef(0);
 
   // Save source mode to DB + state (kept for UI preference, but both always run)
   const setSourceMode = async (mode: "online" | "pasta") => {
