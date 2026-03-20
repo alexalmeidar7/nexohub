@@ -256,7 +256,19 @@ export default function MusicaNoAr() {
       ]);
       setUploadHistory(history);
       if (data?.music_xml_url) {
-        setXmlUrl(data.music_xml_url);
+        // Ignore storage URLs that were incorrectly saved as the origin URL
+        const isStorageUrl = data.music_xml_url.includes("/storage/v1/object/") || data.music_xml_url.includes("/xml-files/local-xml-");
+        if (!isStorageUrl) {
+          setXmlUrl(data.music_xml_url);
+        } else {
+          // Clean up: reset to default since the stored value is a local sync URL
+          setXmlUrl(DEFAULT_XML_URL);
+          await supabase.from("user_settings").upsert({
+            user_id: user.id,
+            music_xml_url: DEFAULT_XML_URL,
+            updated_at: new Date().toISOString(),
+          }, { onConflict: "user_id" });
+        }
       } else {
         await supabase.from("user_settings").upsert({
           user_id: user.id,
