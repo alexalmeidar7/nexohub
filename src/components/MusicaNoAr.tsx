@@ -616,6 +616,7 @@ export default function MusicaNoAr() {
   }
 
   const preferredSource = sourceStats.online >= sourceStats.pasta ? "online" : "pasta";
+  const bothActive = !!(xmlUrl.trim() && localMonitoring);
 
   return (
     <div className="animate-fade-in space-y-3">
@@ -631,32 +632,54 @@ export default function MusicaNoAr() {
               <h3 className="text-sm font-bold leading-tight" style={{ color: "#0d0446" }}>Música no Ar</h3>
               <div className="flex items-center gap-2 mt-0.5">
                 <span className="text-[8px] font-semibold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: "rgba(124,58,237,0.1)", color: "#7c3aed" }}>MODO UNIFICADO</span>
+                {bothActive && (
+                  <span className="inline-flex items-center gap-1 text-[7px] font-bold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: "rgba(34,197,94,0.12)", color: "#16a34a", border: "1px solid rgba(34,197,94,0.25)" }}>
+                    <span className="relative flex h-1.5 w-1.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-60" style={{ backgroundColor: "#22c55e" }} />
+                      <span className="relative inline-flex rounded-full h-1.5 w-1.5" style={{ backgroundColor: "#22c55e" }} />
+                    </span>
+                    DUAL
+                  </span>
+                )}
                 <span className="text-[8px]" style={{ color: "rgba(13,4,70,0.4)" }}>
-                  Preferência: <strong style={{ color: preferredSource === "online" ? "#268ffa" : "#22c55e" }}>{preferredSource === "online" ? "Online" : "Local"}</strong>
-                  {` (${sourceStats.online + sourceStats.pasta} atualizações)`}
+                  {`${sourceStats.online + sourceStats.pasta} atualizações`}
                 </span>
               </div>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {/* Source mini-badges */}
+            {/* Source mini-badges — active source gets green highlight */}
             <div className="flex gap-1">
-              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[7px] font-bold" style={{
-                backgroundColor: lastSource === "online" ? "rgba(38,143,250,0.15)" : "rgba(38,143,250,0.05)",
-                color: lastSource === "online" ? "#268ffa" : "rgba(13,4,70,0.3)",
-                border: `1px solid ${lastSource === "online" ? "rgba(38,143,250,0.3)" : "transparent"}`,
-              }}>
-                <Globe size={8} /> Online
-                {lastSource === "online" && <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: "#268ffa" }} />}
-              </span>
-              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[7px] font-bold" style={{
-                backgroundColor: lastSource === "pasta" ? "rgba(34,197,94,0.15)" : "rgba(34,197,94,0.05)",
-                color: lastSource === "pasta" ? "#22c55e" : "rgba(13,4,70,0.3)",
-                border: `1px solid ${lastSource === "pasta" ? "rgba(34,197,94,0.3)" : "transparent"}`,
-              }}>
-                <FolderOpen size={8} /> Local
-                {lastSource === "pasta" && <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: "#22c55e" }} />}
-              </span>
+              {(() => {
+                const isOnlineActive = lastSource === "online";
+                const isOnlinePreferred = preferredSource === "online";
+                const onlineColor = isOnlineActive ? "#22c55e" : isOnlinePreferred ? "#268ffa" : "rgba(13,4,70,0.3)";
+                const onlineBg = isOnlineActive ? "rgba(34,197,94,0.15)" : isOnlinePreferred ? "rgba(38,143,250,0.08)" : "rgba(38,143,250,0.03)";
+                const onlineBorder = isOnlineActive ? "rgba(34,197,94,0.35)" : "transparent";
+                return (
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[7px] font-bold" style={{
+                    backgroundColor: onlineBg, color: onlineColor, border: `1px solid ${onlineBorder}`,
+                  }}>
+                    <Globe size={8} /> Online
+                    {isOnlineActive && <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: "#22c55e" }} />}
+                  </span>
+                );
+              })()}
+              {(() => {
+                const isLocalActive = lastSource === "pasta";
+                const isLocalPreferred = preferredSource === "pasta";
+                const localColor = isLocalActive ? "#22c55e" : isLocalPreferred ? "#268ffa" : "rgba(13,4,70,0.3)";
+                const localBg = isLocalActive ? "rgba(34,197,94,0.15)" : isLocalPreferred ? "rgba(38,143,250,0.08)" : "rgba(34,197,94,0.03)";
+                const localBorder = isLocalActive ? "rgba(34,197,94,0.35)" : "transparent";
+                return (
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[7px] font-bold" style={{
+                    backgroundColor: localBg, color: localColor, border: `1px solid ${localBorder}`,
+                  }}>
+                    <FolderOpen size={8} /> Local
+                    {isLocalActive && <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: "#22c55e" }} />}
+                  </span>
+                );
+              })()}
             </div>
             <span className="inline-flex items-center gap-1.5 px-2 py-1 text-[8px] uppercase tracking-widest font-bold rounded-full" style={{ backgroundColor: "rgba(38,143,250,0.1)", color: "#268ffa", border: "1px solid rgba(38,143,250,0.2)" }}>
               <span className="relative flex h-1.5 w-1.5">
