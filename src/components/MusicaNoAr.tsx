@@ -659,19 +659,31 @@ export default function MusicaNoAr() {
           </div>
         </div>
 
-        {/* Delay warnings */}
-        {(onlineDelay || localDelay) && (
-          <div className="px-4 pb-2 flex gap-2">
-            {onlineDelay && (
+        {/* Delay & error warnings */}
+        {(onlineDelay || localDelay || onlineError || localError) && (
+          <div className="px-4 pb-2 flex flex-col gap-1.5">
+            {onlineError && (
               <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[9px] font-semibold" style={{ backgroundColor: "rgba(239,68,68,0.08)", color: "#dc2626", border: "1px solid rgba(239,68,68,0.2)" }}>
                 <AlertTriangle size={11} />
-                Origem Online sem atualizar há mais de 30s
+                <span>⚠ Online: {onlineError}</span>
               </div>
             )}
-            {localDelay && (
+            {!onlineError && onlineDelay && (
+              <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[9px] font-semibold" style={{ backgroundColor: "rgba(234,179,8,0.08)", color: "#ca8a04", border: "1px solid rgba(234,179,8,0.2)" }}>
+                <AlertTriangle size={11} />
+                Origem Online sem resposta há mais de 30s
+              </div>
+            )}
+            {localError && (
               <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[9px] font-semibold" style={{ backgroundColor: "rgba(239,68,68,0.08)", color: "#dc2626", border: "1px solid rgba(239,68,68,0.2)" }}>
                 <AlertTriangle size={11} />
-                Origem Local sem atualizar há mais de 15s
+                <span>⚠ Local: {localError}</span>
+              </div>
+            )}
+            {!localError && localDelay && (
+              <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[9px] font-semibold" style={{ backgroundColor: "rgba(234,179,8,0.08)", color: "#ca8a04", border: "1px solid rgba(234,179,8,0.2)" }}>
+                <AlertTriangle size={11} />
+                Origem Local sem resposta há mais de 15s
               </div>
             )}
           </div>
