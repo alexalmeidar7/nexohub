@@ -537,9 +537,10 @@ export default function ProgramaForm() {
       } as any).eq("id", editingId);
     } else {
       const { data: inserted } = await supabase.from("programas").insert({
-        user_id: user.id, nome: nome.trim(), apresentador_id: apresentadorId || null, selo, dias_semana: diasSemana,
+        user_id: user.id, nome: nome.trim(), apresentador_id: apresentadoresIds[0] || apresentadorId || null, selo, dias_semana: diasSemana,
         horario_inicio: horarioInicio, horario_fim: horarioFim, estudio: estudio.trim(), ativo, descricao: descricao.trim(),
         variavel: false, data_variavel: null, classificacao_etaria: classificacaoEtaria || null, tipo_programa: tipoPrograma || null,
+        apresentadores_ids: apresentadoresIds,
       } as any).select("id").single();
       targetId = inserted?.id || null;
     }
