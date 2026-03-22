@@ -706,6 +706,7 @@ export type Database = {
       programas: {
         Row: {
           apresentador_id: string | null
+          apresentadores_ids: string[] | null
           ativo: boolean
           capa: string | null
           classificacao_etaria: string | null
@@ -726,6 +727,7 @@ export type Database = {
         }
         Insert: {
           apresentador_id?: string | null
+          apresentadores_ids?: string[] | null
           ativo?: boolean
           capa?: string | null
           classificacao_etaria?: string | null
@@ -746,6 +748,7 @@ export type Database = {
         }
         Update: {
           apresentador_id?: string | null
+          apresentadores_ids?: string[] | null
           ativo?: boolean
           capa?: string | null
           classificacao_etaria?: string | null
