@@ -224,11 +224,14 @@ function GradeBody({ gradeSlots, diasSemana, diaAtual, currentTimeStr, getProgra
                     <div className="text-[9px] mt-0.5" style={{ color: isOnAir ? "rgba(255,255,255,0.8)" : "rgba(13,4,70,0.4)" }}>
                       {prog.horarioInicio.slice(0, 5)} - {prog.horarioFim.slice(0, 5)}
                     </div>
-                    {presenterName && (
-                      <div className="text-[9px] font-semibold mt-0.5" style={{ color: isOnAir ? "rgba(255,255,255,0.9)" : "rgba(13,4,70,0.6)" }}>
-                        {presenterName}
-                      </div>
-                    )}
+                    {(() => {
+                      const names = getPresenterNames(prog);
+                      return names ? (
+                        <div className="text-[9px] font-semibold mt-0.5" style={{ color: isOnAir ? "rgba(255,255,255,0.9)" : "rgba(13,4,70,0.6)" }}>
+                          {names}
+                        </div>
+                      ) : null;
+                    })()}
                     <button
                       onClick={(e) => { e.stopPropagation(); setDetailProg(prog); }}
                       className="mt-1.5 px-2.5 py-0.5 rounded-md text-[8px] font-bold flex items-center gap-1 transition-all opacity-70 group-hover:opacity-100"
