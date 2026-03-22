@@ -391,16 +391,7 @@ export default function ProgramaForm() {
 
   useEffect(() => { load(); }, []);
 
-  // Auto-scroll to current on-air program
-  useEffect(() => {
-    if (loadingData || !gradeRef.current) return;
-    const n = new Date();
-    const currentSlotIndex = n.getHours() * 2 + (n.getMinutes() >= 30 ? 1 : 0);
-    const rows = gradeRef.current.querySelectorAll("tbody tr");
-    if (rows[currentSlotIndex]) {
-      rows[currentSlotIndex].scrollIntoView({ block: "center", behavior: "smooth" });
-    }
-  }, [loadingData, programas]);
+  // Auto-scroll disabled per user request
 
   // Position the time needle using proportional tbody height
   useEffect(() => {
