@@ -745,17 +745,19 @@ export default function ProgramaForm() {
               </Select>
             </div>
             <div>
-              <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "#0d0446" }}>Apresentador</label>
+              <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "#0d0446" }}>Apresentadores</label>
               <Popover open={apresentadorComboOpen} onOpenChange={setApresentadorComboOpen}>
                 <PopoverTrigger asChild>
                   <button
-                    className="w-full h-9 flex items-center justify-between px-4 text-sm rounded-xl"
+                    className="w-full min-h-[36px] flex items-center justify-between px-4 text-sm rounded-xl gap-2"
                     style={{ backgroundColor: "rgba(255,255,255,0.6)", color: "#0d0446", border: "1px solid rgba(13,4,70,0.15)" }}
                   >
-                    <span style={{ color: "#0d0446" }}>
-                      {apresentadorId ? (apresentadores.find(a => a.id === apresentadorId)?.nome || "Selecionar") : "Selecionar Apresentador"}
+                    <span className="flex-1 text-left truncate" style={{ color: "#0d0446" }}>
+                      {apresentadoresIds.length > 0
+                        ? apresentadoresIds.map(id => apresentadores.find(a => a.id === id)?.nome).filter(Boolean).join(", ")
+                        : "Selecionar Apresentadores"}
                     </span>
-                    <ChevronsUpDown size={14} className="opacity-60" />
+                    <ChevronsUpDown size={14} className="opacity-60 shrink-0" />
                   </button>
                 </PopoverTrigger>
                 <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
@@ -764,13 +766,13 @@ export default function ProgramaForm() {
                     <CommandList>
                       <CommandEmpty className="py-4 text-center text-sm">Nenhum encontrado.</CommandEmpty>
                       <CommandGroup>
-                        <CommandItem value="__none__" onSelect={() => { setApresentadorId(""); setApresentadorComboOpen(false); }}>
-                          <Check size={14} className={cn("mr-2", !apresentadorId ? "opacity-100" : "opacity-0")} />
+                        <CommandItem value="__clear__" onSelect={() => { setApresentadoresIds([]); setApresentadorId(""); }}>
+                          <Check size={14} className={cn("mr-2", apresentadoresIds.length === 0 ? "opacity-100" : "opacity-0")} />
                           Nenhum
                         </CommandItem>
                         {apresentadores.filter(a => a.ativo && a.cargo?.toLowerCase() !== "convidado").map(a => (
-                          <CommandItem key={a.id} value={a.nome} onSelect={() => { setApresentadorId(a.id); setApresentadorComboOpen(false); }}>
-                            <Check size={14} className={cn("mr-2", apresentadorId === a.id ? "opacity-100" : "opacity-0")} />
+                          <CommandItem key={a.id} value={a.nome} onSelect={() => toggleApresentador(a.id)}>
+                            <Check size={14} className={cn("mr-2", apresentadoresIds.includes(a.id) ? "opacity-100" : "opacity-0")} />
                             {a.nome}
                           </CommandItem>
                         ))}
@@ -779,6 +781,22 @@ export default function ProgramaForm() {
                   </Command>
                 </PopoverContent>
               </Popover>
+              {apresentadoresIds.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-1.5">
+                  {apresentadoresIds.map(id => {
+                    const ap = apresentadores.find(a => a.id === id);
+                    if (!ap) return null;
+                    return (
+                      <span key={id} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold" style={{ backgroundColor: "rgba(38,143,250,0.1)", color: "#268ffa" }}>
+                        {ap.nome}
+                        <button onClick={() => toggleApresentador(id)} className="hover:opacity-60">
+                          <X size={10} />
+                        </button>
+                      </span>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
 
