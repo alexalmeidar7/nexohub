@@ -289,7 +289,9 @@ export default function ProgramaForm() {
   const { user } = useAuth();
   const [nome, setNome] = useState("");
   const [apresentadorId, setApresentadorId] = useState("");
+  const [apresentadoresIds, setApresentadoresIds] = useState<string[]>([]);
   const [selo, setSelo] = useState("");
+  const formRef = useRef<HTMLDivElement>(null);
   const [capa, setCapa] = useState("");
   const [thumb, setThumb] = useState("");
   const [diasSemana, setDiasSemana] = useState<string[]>([]);
