@@ -496,9 +496,10 @@ export default function ProgramaForm() {
       let targetId = editingId;
       if (editingId) {
         await supabase.from("programas").update({
-          nome: nome.trim(), apresentador_id: apresentadorId || null, selo, dias_semana: [dayOfWeek],
+          nome: nome.trim(), apresentador_id: apresentadoresIds[0] || apresentadorId || null, selo, dias_semana: [dayOfWeek],
           horario_inicio: horarioInicio, horario_fim: horarioFim, estudio: estudio.trim(), ativo, descricao: descricao.trim(),
           variavel: true, data_variavel: dataStr, classificacao_etaria: classificacaoEtaria || null, tipo_programa: tipoPrograma || null,
+          apresentadores_ids: apresentadoresIds,
         } as any).eq("id", editingId);
       } else {
         const { data: inserted } = await supabase.from("programas").insert({
