@@ -75,6 +75,7 @@ interface Programa {
   id: string;
   nome: string;
   apresentadorId: string;
+  apresentadoresIds: string[];
   selo: string;
   capa: string;
   thumb: string;
@@ -99,6 +100,7 @@ async function getProgramas(): Promise<Programa[]> {
     id: p.id,
     nome: p.nome,
     apresentadorId: p.apresentador_id || "",
+    apresentadoresIds: (p as any).apresentadores_ids || [],
     selo: p.selo || "",
     capa: (p as any).capa || "",
     thumb: (p as any).thumb || "",
@@ -173,6 +175,11 @@ function GradeBody({ gradeSlots, diasSemana, diaAtual, currentTimeStr, getProgra
     return ap ? ap.nome : null;
   };
 
+  const getPresenterNames = (prog: Programa) => {
+    const ids = prog.apresentadoresIds?.length > 0 ? prog.apresentadoresIds : (prog.apresentadorId ? [prog.apresentadorId] : []);
+    return ids.map(id => apresentadores.find(a => a.id === id)?.nome).filter(Boolean).join(", ");
+  };
+
   const getPresenter = (apresentadorId: string) => {
     if (!apresentadorId) return null;
     return apresentadores.find(a => a.id === apresentadorId) || null;
@@ -217,11 +224,14 @@ function GradeBody({ gradeSlots, diasSemana, diaAtual, currentTimeStr, getProgra
                     <div className="text-[9px] mt-0.5" style={{ color: isOnAir ? "rgba(255,255,255,0.8)" : "rgba(13,4,70,0.4)" }}>
                       {prog.horarioInicio.slice(0, 5)} - {prog.horarioFim.slice(0, 5)}
                     </div>
-                    {presenterName && (
-                      <div className="text-[9px] font-semibold mt-0.5" style={{ color: isOnAir ? "rgba(255,255,255,0.9)" : "rgba(13,4,70,0.6)" }}>
-                        {presenterName}
-                      </div>
-                    )}
+                    {(() => {
+                      const names = getPresenterNames(prog);
+                      return names ? (
+                        <div className="text-[9px] font-semibold mt-0.5" style={{ color: isOnAir ? "rgba(255,255,255,0.9)" : "rgba(13,4,70,0.6)" }}>
+                          {names}
+                        </div>
+                      ) : null;
+                    })()}
                     <button
                       onClick={(e) => { e.stopPropagation(); setDetailProg(prog); }}
                       className="mt-1.5 px-2.5 py-0.5 rounded-md text-[8px] font-bold flex items-center gap-1 transition-all opacity-70 group-hover:opacity-100"
@@ -279,7 +289,9 @@ export default function ProgramaForm() {
   const { user } = useAuth();
   const [nome, setNome] = useState("");
   const [apresentadorId, setApresentadorId] = useState("");
+  const [apresentadoresIds, setApresentadoresIds] = useState<string[]>([]);
   const [selo, setSelo] = useState("");
+  const formRef = useRef<HTMLDivElement>(null);
   const [capa, setCapa] = useState("");
   const [thumb, setThumb] = useState("");
   const [diasSemana, setDiasSemana] = useState<string[]>([]);
@@ -332,6 +344,9 @@ export default function ProgramaForm() {
   };
 
   const [apresentadorComboOpen, setApresentadorComboOpen] = useState(false);
+  const toggleApresentador = (id: string) => {
+    setApresentadoresIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  };
 
   // Grade filter
   const [gradeEstudioFilter, setGradeEstudioFilter] = useState("todos");
@@ -376,16 +391,7 @@ export default function ProgramaForm() {
 
   useEffect(() => { load(); }, []);
 
-  // Auto-scroll to current on-air program
-  useEffect(() => {
-    if (loadingData || !gradeRef.current) return;
-    const n = new Date();
-    const currentSlotIndex = n.getHours() * 2 + (n.getMinutes() >= 30 ? 1 : 0);
-    const rows = gradeRef.current.querySelectorAll("tbody tr");
-    if (rows[currentSlotIndex]) {
-      rows[currentSlotIndex].scrollIntoView({ block: "center", behavior: "smooth" });
-    }
-  }, [loadingData, programas]);
+  // Auto-scroll disabled per user request
 
   // Position the time needle using proportional tbody height
   useEffect(() => {
@@ -458,7 +464,7 @@ export default function ProgramaForm() {
   };
 
   const resetForm = () => {
-    setNome(""); setApresentadorId(""); setSelo(""); setCapa(""); setThumb(""); setDiasSemana([]); setHorarioInicio(""); setHorarioFim(""); setEstudio(""); setAtivo(true); setVariavel(false); setDataVariavel(undefined); setDescricao(""); setConflictMsg(""); setEditingId(null); setTipoPrograma(""); setClassificacaoEtaria("");
+    setNome(""); setApresentadorId(""); setApresentadoresIds([]); setSelo(""); setCapa(""); setThumb(""); setDiasSemana([]); setHorarioInicio(""); setHorarioFim(""); setEstudio(""); setAtivo(true); setVariavel(false); setDataVariavel(undefined); setDescricao(""); setConflictMsg(""); setEditingId(null); setTipoPrograma(""); setClassificacaoEtaria("");
   };
 
   // Helper: upload images to storage and return URLs
@@ -490,15 +496,17 @@ export default function ProgramaForm() {
       let targetId = editingId;
       if (editingId) {
         await supabase.from("programas").update({
-          nome: nome.trim(), apresentador_id: apresentadorId || null, selo, dias_semana: [dayOfWeek],
+          nome: nome.trim(), apresentador_id: apresentadoresIds[0] || apresentadorId || null, selo, dias_semana: [dayOfWeek],
           horario_inicio: horarioInicio, horario_fim: horarioFim, estudio: estudio.trim(), ativo, descricao: descricao.trim(),
           variavel: true, data_variavel: dataStr, classificacao_etaria: classificacaoEtaria || null, tipo_programa: tipoPrograma || null,
+          apresentadores_ids: apresentadoresIds,
         } as any).eq("id", editingId);
       } else {
         const { data: inserted } = await supabase.from("programas").insert({
-          user_id: user.id, nome: nome.trim(), apresentador_id: apresentadorId || null, selo, dias_semana: [dayOfWeek],
+          user_id: user.id, nome: nome.trim(), apresentador_id: apresentadoresIds[0] || apresentadorId || null, selo, dias_semana: [dayOfWeek],
           horario_inicio: horarioInicio, horario_fim: horarioFim, estudio: estudio.trim(), ativo, descricao: descricao.trim(),
           variavel: true, data_variavel: dataStr, classificacao_etaria: classificacaoEtaria || null, tipo_programa: tipoPrograma || null,
+          apresentadores_ids: apresentadoresIds,
         } as any).select("id").single();
         targetId = inserted?.id || null;
       }
@@ -522,15 +530,17 @@ export default function ProgramaForm() {
 
     if (editingId) {
       await supabase.from("programas").update({
-        nome: nome.trim(), apresentador_id: apresentadorId || null, selo, dias_semana: diasSemana,
+        nome: nome.trim(), apresentador_id: apresentadoresIds[0] || apresentadorId || null, selo, dias_semana: diasSemana,
         horario_inicio: horarioInicio, horario_fim: horarioFim, estudio: estudio.trim(), ativo, descricao: descricao.trim(),
         variavel: false, data_variavel: null, classificacao_etaria: classificacaoEtaria || null, tipo_programa: tipoPrograma || null,
+        apresentadores_ids: apresentadoresIds,
       } as any).eq("id", editingId);
     } else {
       const { data: inserted } = await supabase.from("programas").insert({
-        user_id: user.id, nome: nome.trim(), apresentador_id: apresentadorId || null, selo, dias_semana: diasSemana,
+        user_id: user.id, nome: nome.trim(), apresentador_id: apresentadoresIds[0] || apresentadorId || null, selo, dias_semana: diasSemana,
         horario_inicio: horarioInicio, horario_fim: horarioFim, estudio: estudio.trim(), ativo, descricao: descricao.trim(),
         variavel: false, data_variavel: null, classificacao_etaria: classificacaoEtaria || null, tipo_programa: tipoPrograma || null,
+        apresentadores_ids: apresentadoresIds,
       } as any).select("id").single();
       targetId = inserted?.id || null;
     }
@@ -543,13 +553,17 @@ export default function ProgramaForm() {
   };
 
   const startEdit = (p: Programa) => {
-    setEditingId(p.id); setNome(p.nome); setApresentadorId(p.apresentadorId); setSelo(p.selo); setCapa(p.capa); setThumb(p.thumb);
+    setEditingId(p.id); setNome(p.nome); setApresentadorId(p.apresentadorId);
+    setApresentadoresIds(p.apresentadoresIds?.length > 0 ? p.apresentadoresIds : (p.apresentadorId ? [p.apresentadorId] : []));
+    setSelo(p.selo); setCapa(p.capa); setThumb(p.thumb);
     setDiasSemana(p.diasSemana); setHorarioInicio(p.horarioInicio); setHorarioFim(p.horarioFim);
     setEstudio(p.estudio); setAtivo(p.ativo); setVariavel(p.variavel); setDescricao(p.descricao);
     setDataVariavel(p.dataVariavel ? new Date(p.dataVariavel + "T12:00:00") : undefined);
     setClassificacaoEtaria(p.classificacaoEtaria || "");
     setTipoPrograma(p.tipoPrograma || "");
     setConflictMsg("");
+    // Scroll to form
+    setTimeout(() => formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
   };
 
   const removePrograma = async (id: string) => {
@@ -571,6 +585,11 @@ export default function ProgramaForm() {
   };
 
   const getApresentadorNome = (id: string) => apresentadores.find(a => a.id === id)?.nome || "—";
+  const getApresentadoresNomes = (p: Programa) => {
+    const ids = p.apresentadoresIds?.length > 0 ? p.apresentadoresIds : (p.apresentadorId ? [p.apresentadorId] : []);
+    const names = ids.map(id => apresentadores.find(a => a.id === id)?.nome).filter(Boolean);
+    return names.length > 0 ? names.join(", ") : "—";
+  };
 
   // Build grade de programação
   const gradeSlots = useMemo(() => {
@@ -640,7 +659,7 @@ export default function ProgramaForm() {
   return (
     <div className="animate-fade-in space-y-6">
       {/* Form Card */}
-      <div className="rounded-2xl overflow-hidden" style={{ background: "#d9e9fa", boxShadow: "0 8px 32px rgba(13,4,70,0.15)" }}>
+      <div ref={formRef} className="rounded-2xl overflow-hidden" style={{ background: "#d9e9fa", boxShadow: "0 8px 32px rgba(13,4,70,0.15)" }}>
         {/* Form Header */}
         <div className="flex items-center gap-3 px-6 py-4" style={{ borderBottom: "1px solid rgba(13,4,70,0.1)" }}>
           <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(45,191,244,0.15)" }}>
@@ -726,17 +745,19 @@ export default function ProgramaForm() {
               </Select>
             </div>
             <div>
-              <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "#0d0446" }}>Apresentador</label>
+              <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "#0d0446" }}>Apresentadores</label>
               <Popover open={apresentadorComboOpen} onOpenChange={setApresentadorComboOpen}>
                 <PopoverTrigger asChild>
                   <button
-                    className="w-full h-9 flex items-center justify-between px-4 text-sm rounded-xl"
+                    className="w-full min-h-[36px] flex items-center justify-between px-4 text-sm rounded-xl gap-2"
                     style={{ backgroundColor: "rgba(255,255,255,0.6)", color: "#0d0446", border: "1px solid rgba(13,4,70,0.15)" }}
                   >
-                    <span style={{ color: "#0d0446" }}>
-                      {apresentadorId ? (apresentadores.find(a => a.id === apresentadorId)?.nome || "Selecionar") : "Selecionar Apresentador"}
+                    <span className="flex-1 text-left truncate" style={{ color: "#0d0446" }}>
+                      {apresentadoresIds.length > 0
+                        ? apresentadoresIds.map(id => apresentadores.find(a => a.id === id)?.nome).filter(Boolean).join(", ")
+                        : "Selecionar Apresentadores"}
                     </span>
-                    <ChevronsUpDown size={14} className="opacity-60" />
+                    <ChevronsUpDown size={14} className="opacity-60 shrink-0" />
                   </button>
                 </PopoverTrigger>
                 <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
@@ -745,13 +766,13 @@ export default function ProgramaForm() {
                     <CommandList>
                       <CommandEmpty className="py-4 text-center text-sm">Nenhum encontrado.</CommandEmpty>
                       <CommandGroup>
-                        <CommandItem value="__none__" onSelect={() => { setApresentadorId(""); setApresentadorComboOpen(false); }}>
-                          <Check size={14} className={cn("mr-2", !apresentadorId ? "opacity-100" : "opacity-0")} />
+                        <CommandItem value="__clear__" onSelect={() => { setApresentadoresIds([]); setApresentadorId(""); }}>
+                          <Check size={14} className={cn("mr-2", apresentadoresIds.length === 0 ? "opacity-100" : "opacity-0")} />
                           Nenhum
                         </CommandItem>
                         {apresentadores.filter(a => a.ativo && a.cargo?.toLowerCase() !== "convidado").map(a => (
-                          <CommandItem key={a.id} value={a.nome} onSelect={() => { setApresentadorId(a.id); setApresentadorComboOpen(false); }}>
-                            <Check size={14} className={cn("mr-2", apresentadorId === a.id ? "opacity-100" : "opacity-0")} />
+                          <CommandItem key={a.id} value={a.nome} onSelect={() => toggleApresentador(a.id)}>
+                            <Check size={14} className={cn("mr-2", apresentadoresIds.includes(a.id) ? "opacity-100" : "opacity-0")} />
                             {a.nome}
                           </CommandItem>
                         ))}
@@ -760,6 +781,22 @@ export default function ProgramaForm() {
                   </Command>
                 </PopoverContent>
               </Popover>
+              {apresentadoresIds.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-1.5">
+                  {apresentadoresIds.map(id => {
+                    const ap = apresentadores.find(a => a.id === id);
+                    if (!ap) return null;
+                    return (
+                      <span key={id} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold" style={{ backgroundColor: "rgba(38,143,250,0.1)", color: "#268ffa" }}>
+                        {ap.nome}
+                        <button onClick={() => toggleApresentador(id)} className="hover:opacity-60">
+                          <X size={10} />
+                        </button>
+                      </span>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
 
@@ -1191,7 +1228,7 @@ export default function ProgramaForm() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-[11px] font-medium" style={{ color: "rgba(13,4,70,0.7)" }}>
-                      {getApresentadorNome(p.apresentadorId) || <span style={{ color: "rgba(13,4,70,0.3)" }}>—</span>}
+                      {getApresentadoresNomes(p) !== "—" ? getApresentadoresNomes(p) : <span style={{ color: "rgba(13,4,70,0.3)" }}>—</span>}
                     </td>
                     <td className="px-4 py-3 text-center">
                       <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold" style={{
