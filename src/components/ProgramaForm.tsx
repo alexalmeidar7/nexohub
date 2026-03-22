@@ -75,6 +75,7 @@ interface Programa {
   id: string;
   nome: string;
   apresentadorId: string;
+  apresentadoresIds: string[];
   selo: string;
   capa: string;
   thumb: string;
