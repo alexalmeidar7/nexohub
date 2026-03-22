@@ -590,10 +590,10 @@ ${perguntaActions}
     }
 
     // Preenche o editor com a estrutura padrão após render
+    setRoteiroTexto(defaultContent);
     setTimeout(() => {
       if (editorRef.current) {
         editorRef.current.innerHTML = defaultContent;
-        setRoteiroTexto(defaultContent);
       }
     }, 100);
   };

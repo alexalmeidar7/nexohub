@@ -1228,7 +1228,7 @@ export default function ProgramaForm() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-[11px] font-medium" style={{ color: "rgba(13,4,70,0.7)" }}>
-                      {getApresentadorNome(p.apresentadorId) || <span style={{ color: "rgba(13,4,70,0.3)" }}>—</span>}
+                      {getApresentadoresNomes(p) !== "—" ? getApresentadoresNomes(p) : <span style={{ color: "rgba(13,4,70,0.3)" }}>—</span>}
                     </td>
                     <td className="px-4 py-3 text-center">
                       <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold" style={{

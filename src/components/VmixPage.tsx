@@ -1144,7 +1144,7 @@ export default function VmixPage() {
               type="text"
               value={vmixUrl}
               onChange={e => setVmixUrl(e.target.value)}
-              placeholder="http://SEU_IP_PUBLICO:8088"
+              placeholder="http://192.168.x.x:8088"
               className="w-64 px-4 py-2 rounded-lg text-sm outline-none"
               style={{ backgroundColor: "#2a2a2a", color: "#fff", border: "1px solid #ffffff15" }}
             />
@@ -1153,31 +1153,6 @@ export default function VmixPage() {
             </button>
             {savedUrl && (
               <>
-                {/* Connection mode toggle */}
-                <div className="flex items-center rounded-lg overflow-hidden" style={{ border: "1px solid #ffffff15" }}>
-                  <button
-                    onClick={() => setConnectionMode("direct")}
-                    className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider transition-all"
-                    style={{
-                      backgroundColor: connectionMode === "direct" ? "#22c55e30" : "transparent",
-                      color: connectionMode === "direct" ? "#22c55e" : "#ffffff40",
-                    }}
-                    title="Conexão direta do navegador ao vMix (rede local)"
-                  >
-                    Direto
-                  </button>
-                  <button
-                    onClick={() => setConnectionMode("proxy")}
-                    className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider transition-all"
-                    style={{
-                      backgroundColor: connectionMode === "proxy" ? "#268ffa30" : "transparent",
-                      color: connectionMode === "proxy" ? "#268ffa" : "#ffffff40",
-                    }}
-                    title="Conexão via proxy na nuvem (IP público necessário)"
-                  >
-                    Proxy
-                  </button>
-                </div>
                 <button
                   onClick={connectToVmix}
                   disabled={connecting}
@@ -1191,39 +1166,19 @@ export default function VmixPage() {
                   <button className="p-1.5 rounded-lg text-white/30 hover:text-white/60 transition-colors">
                     <HelpCircle size={14} />
                   </button>
-                  <div className="absolute left-0 top-full mt-2 w-96 p-4 rounded-lg text-[11px] text-white/70 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50"
+                  <div className="absolute left-0 top-full mt-2 w-80 p-4 rounded-lg text-[11px] text-white/70 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50"
                     style={{ backgroundColor: "#2a2a3a", border: "1px solid #ffffff15", boxShadow: "0 8px 24px rgba(0,0,0,0.5)" }}
                   >
-                    <p className="font-bold text-white/90 mb-2">Modos de conexão:</p>
+                    <p className="font-bold text-white/90 mb-2">Conexão Direta:</p>
                     <div className="mb-3 p-2 rounded" style={{ backgroundColor: "#22c55e10", border: "1px solid #22c55e30" }}>
-                      <p className="font-bold text-[#22c55e] mb-1">🟢 Modo DIRETO (rede local)</p>
-                      <p className="text-white/50">O navegador conecta diretamente ao vMix. Use o IP local (ex: <strong className="text-white/70">http://192.168.100.6:8088</strong>). Ideal quando você está na mesma rede que o vMix.</p>
+                      <p className="font-bold text-[#22c55e] mb-1">🟢 Rede Local</p>
+                      <p className="text-white/50">Use o IP local do computador com vMix (ex: <strong className="text-white/70">http://192.168.x.x:8088</strong>).</p>
                     </div>
-                    <div className="mb-3 p-2 rounded" style={{ backgroundColor: "#268ffa10", border: "1px solid #268ffa30" }}>
-                      <p className="font-bold text-[#268ffa] mb-1">🔵 Modo PROXY (acesso remoto)</p>
-                      <p className="text-white/50">Conexão via nuvem. Requer IP público com redirecionamento de porta no roteador (ex: <strong className="text-white/70">http://SEU_IP_PUBLICO:8088</strong>).</p>
-                    </div>
-                    <p className="font-bold text-white/90 mb-1">Port Forwarding (modo Proxy):</p>
-                    <ol className="space-y-1 list-decimal list-inside text-white/50 text-[10px]">
-                      <li>No vMix: <strong className="text-white/70">Settings → Web Controller</strong> → porta 8088</li>
-                      <li>No roteador: <strong className="text-white/70">Port Forwarding</strong> → porta 8088 TCP → IP do PC</li>
-                      <li>Use o IP WAN exibido no painel do roteador/provedor</li>
-                      <li>Cole: <strong className="text-white/70">http://SEU_IP_PUBLICO:8088</strong></li>
-                    </ol>
-                    <p className="mt-2 text-white/30 text-[10px]">💡 O modo é detectado automaticamente pelo tipo de IP.</p>
+                    <p className="text-white/30 text-[10px]">💡 Certifique-se de estar na mesma rede que o vMix.</p>
                   </div>
                 </div>
               </>
             )}
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => { setActiveTab("scenes"); createNewScene(); }}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold text-white transition-all hover:brightness-110"
-              style={{ backgroundColor: "#8b5cf6" }}
-            >
-              <Plus size={13} /> Criar Cena
-            </button>
           </div>
         </div>
         {/* Diagnostic section */}
