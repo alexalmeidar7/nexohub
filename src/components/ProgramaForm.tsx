@@ -585,6 +585,11 @@ export default function ProgramaForm() {
   };
 
   const getApresentadorNome = (id: string) => apresentadores.find(a => a.id === id)?.nome || "—";
+  const getApresentadoresNomes = (p: Programa) => {
+    const ids = p.apresentadoresIds?.length > 0 ? p.apresentadoresIds : (p.apresentadorId ? [p.apresentadorId] : []);
+    const names = ids.map(id => apresentadores.find(a => a.id === id)?.nome).filter(Boolean);
+    return names.length > 0 ? names.join(", ") : "—";
+  };
 
   // Build grade de programação
   const gradeSlots = useMemo(() => {
