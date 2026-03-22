@@ -100,6 +100,7 @@ async function getProgramas(): Promise<Programa[]> {
     id: p.id,
     nome: p.nome,
     apresentadorId: p.apresentador_id || "",
+    apresentadoresIds: (p as any).apresentadores_ids || [],
     selo: p.selo || "",
     capa: (p as any).capa || "",
     thumb: (p as any).thumb || "",
