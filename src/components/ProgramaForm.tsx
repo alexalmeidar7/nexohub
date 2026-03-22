@@ -344,6 +344,9 @@ export default function ProgramaForm() {
   };
 
   const [apresentadorComboOpen, setApresentadorComboOpen] = useState(false);
+  const toggleApresentador = (id: string) => {
+    setApresentadoresIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  };
 
   // Grade filter
   const [gradeEstudioFilter, setGradeEstudioFilter] = useState("todos");
