@@ -1238,7 +1238,7 @@ function DashboardWeatherWidget() {
           )}
         </div>
       ) : (
-        <p className="text-black/30 text-xs">Configure uma cidade no módulo Previsão do Tempo</p>
+        <p className="text-xs" style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.3 }}>Configure uma cidade no módulo Previsão do Tempo</p>
       )}
     </div>
   );
