@@ -475,32 +475,6 @@ export default function AgendaPage() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {/* Google Calendar Connect/Disconnect */}
-            {googleConnected ? (
-              <div className="flex items-center gap-1.5">
-                <span className="flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full" style={{ backgroundColor: "rgba(52,168,83,0.12)", color: "#34A853" }}>
-                  <Globe size={11} /> Google conectado
-                </span>
-                <button
-                  type="button"
-                  onClick={disconnectGoogleCalendar}
-                  className="flex items-center gap-1 text-[10px] px-2 py-1 rounded-full transition-all hover:bg-red-50"
-                  style={{ color: "#ef4444" }}
-                  title="Desconectar Google Calendar"
-                >
-                  <Unlink size={11} />
-                </button>
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={connectGoogleCalendar}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold transition-all rounded-full hover:shadow-md"
-                style={{ backgroundColor: "#ffffff", color: "#34A853", border: "1.5px solid #34A853" }}
-              >
-                <Globe size={12} /> Conectar Google Calendar
-              </button>
-            )}
             {locais.length > 0 && (
               <Select value={filterLocal} onValueChange={setFilterLocal}>
                 <SelectTrigger className="w-[160px] h-8 text-xs [&>span]:text-white" style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "20px", border: "none" }}>
