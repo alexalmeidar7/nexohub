@@ -316,7 +316,7 @@ export default function AudioDualCard({
                         transform: historyOpen ? "translateX(0)" : "translateX(20px)",
                         transition: `all 0.3s ease ${i * 0.04}s`,
                       }}
-                      onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "hsla(0,80%,45%,0.15)"; }}
+                      onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "hsla(var(--player-accent) / 0.15)"; }}
                       onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "hsla(0,0%,100%,0.03)"; }}
                     >
                       {/* Time badge */}
