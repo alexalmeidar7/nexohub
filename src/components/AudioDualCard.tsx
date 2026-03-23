@@ -424,7 +424,7 @@ export default function AudioDualCard({
                 <button
                   onClick={() => setHistoryOpen(o => !o)}
                   className="absolute top-3 right-3 z-[5] w-7 h-7 rounded-full flex items-center justify-center transition-all hover:scale-110 active:scale-95"
-                  style={{ backgroundColor: "hsl(0 80% 45%)" }}
+                  style={{ backgroundColor: "hsl(var(--player-accent))" }}
                 >
                   {historyOpen ? <X size={14} className="text-white" /> : <Plus size={14} className="text-white" />}
                 </button>
