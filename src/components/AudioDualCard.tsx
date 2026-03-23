@@ -357,7 +357,7 @@ export default function AudioDualCard({
           <div
             className={`relative w-full ${isMobile ? "aspect-[4/3]" : "aspect-square"} rounded-3xl overflow-hidden`}
             style={{
-              backgroundColor: isSemTitulo ? "#880000" : "hsl(0 0% 5%)",
+              backgroundColor: isSemTitulo ? "var(--layout-widget-bg-hex, #555)" : "hsl(0 0% 5%)",
               transform: isMobile ? "none" : (historyOpen ? "translateX(-25%) scale(0.96)" : "translateX(0%) scale(1)"),
               boxShadow: historyOpen && !isMobile
                 ? "0 25px 60px hsla(0, 0%, 0%, 0.5), 0 0 0 1px hsla(0, 0%, 100%, 0.05)"
