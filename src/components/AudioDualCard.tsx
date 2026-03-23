@@ -272,14 +272,14 @@ export default function AudioDualCard({
             transform: "translateY(-50%)",
             zIndex: 3,
             height: "85%",
-            background: "linear-gradient(135deg, rgba(20,20,20,0.95) 0%, rgba(40,10,10,0.95) 100%)",
+            background: "linear-gradient(135deg, rgba(20,20,20,0.95) 0%, rgba(30,30,30,0.95) 100%)",
             boxShadow: historyOpen 
-              ? "0 25px 60px hsla(0,0%,0%,0.6), 0 0 0 1px hsla(0,80%,45%,0.3), inset 0 1px 0 hsla(0,0%,100%,0.1)" 
+              ? "0 25px 60px hsla(0,0%,0%,0.6), 0 0 0 1px hsla(var(--player-accent) / 0.3), inset 0 1px 0 hsla(0,0%,100%,0.1)" 
               : "none",
             opacity: historyOpen ? 1 : 0,
             transition: "all 0.5s cubic-bezier(0.22, 1, 0.36, 1)",
             pointerEvents: historyOpen ? "auto" : "none",
-            border: "1px solid hsla(0,80%,45%,0.2)",
+            border: "1px solid hsla(var(--player-accent) / 0.2)",
           }}
         >
           <div className="flex flex-col h-full p-4">
