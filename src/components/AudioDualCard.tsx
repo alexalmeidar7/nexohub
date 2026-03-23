@@ -482,8 +482,8 @@ export default function AudioDualCard({
                       size={isMobile ? 16 : 20}
                       className="transition-colors"
                       style={{
-                        color: liked ? "hsl(0 80% 50%)" : "white",
-                        fill: liked ? "hsl(0 80% 50%)" : "none",
+                        color: liked ? "hsl(var(--player-accent))" : "white",
+                        fill: liked ? "hsl(var(--player-accent))" : "none",
                       }}
                     />
                   </button>
