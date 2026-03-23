@@ -217,7 +217,7 @@ export default function MusicaNoAr() {
   const [lastSource, setLastSource] = useState<"online" | "pasta" | null>(null);
   const [sourceStats, setSourceStats] = useState<{ online: number; pasta: number }>({ online: 0, pasta: 0 });
   const lastSourceRef = useRef<"online" | "pasta" | null>(null);
-  const [showConfig, setShowConfig] = useState(false);
+  const [showConfig, setShowConfig] = useState(true);
 
   // Source health tracking — tracks last SUCCESSFUL response (not song change)
   const lastOnlineSuccessRef = useRef<number>(Date.now());

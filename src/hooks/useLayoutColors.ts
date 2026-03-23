@@ -18,15 +18,15 @@ export interface LayoutColors {
 
 export const defaultLayoutColors: LayoutColors = {
   pageBg: "#ffffff",
-  pageText: "#0d0446",
-  headerBg: "#0d0446",
+  pageText: "#1a1a1a",
+  headerBg: "#1a1a1a",
   headerText: "#ffffff",
-  buttonBg: "#be0101",
+  buttonBg: "#333333",
   buttonText: "#ffffff",
-  linkColor: "#2dbef3",
-  accentColor: "#be0101",
+  linkColor: "#555555",
+  accentColor: "#444444",
   homeBgType: "color",
-  homeBgColor: "#0d0446",
+  homeBgColor: "#1a1a1a",
   homeBgImage: "",
 };
 

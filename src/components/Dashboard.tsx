@@ -234,8 +234,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       // Fetch thumb AFTER initial load (non-blocking, only for current program)
       const thumb = await findCurrentOnAirThumb();
       if (!cancelled) {
-        prevThumbRef.current = thumb;
-        setOnAirThumb(thumb);
+        // Fallback: use empresa background image if no program thumb
+        const finalThumb = thumb || cfg.backgroundUrl || null;
+        prevThumbRef.current = finalThumb;
+        setOnAirThumb(finalThumb);
       }
     };
 
