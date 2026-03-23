@@ -446,7 +446,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                 >
                   <div
                     className="flex items-center gap-1.5 px-4 py-2.5 cursor-grab active:cursor-grabbing flex-shrink-0"
-                    style={{ borderBottom: item.widgetType === "player" ? "1px solid rgba(255,255,255,0.06)" : "1px solid rgba(0,0,0,0.06)" }}
+                    style={{ borderBottom: `1px solid color-mix(in srgb, var(--layout-border-color, #333) 20%, transparent)` }}
                     draggable
                     onDragStart={(e) => { e.stopPropagation(); handleDragStart(item.id); }}
                   >
