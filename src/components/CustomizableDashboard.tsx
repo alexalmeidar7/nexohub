@@ -340,8 +340,8 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
               onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.15)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.5)"; }}
               onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.08)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.25)"; }}
             >
-              <Plus size={16} className="text-white/40 mb-1" />
-              <span className="text-white/40 text-[9px] font-semibold">Adicionar</span>
+              <Plus size={16} className="mb-1" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.4 }} />
+              <span className="text-[9px] font-semibold" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.4 }}>Adicionar</span>
             </div>
           </div>
         </div>
