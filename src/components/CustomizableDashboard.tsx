@@ -459,9 +459,9 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                     <button
                       onClick={() => removeItem(item.id)}
                       className="w-5 h-5 rounded-md flex items-center justify-center"
-                      style={{ border: item.widgetType === "player" ? "1px solid rgba(255,255,255,0.15)" : "1px solid rgba(0,0,0,0.15)" }}
+                      style={{ border: `1px solid color-mix(in srgb, var(--layout-border-color, #333) 30%, transparent)` }}
                     >
-                      <X size={9} className={item.widgetType === "player" ? "text-white/40" : "text-black/40"} />
+                      <X size={9} style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.4 }} />
                     </button>
                   </div>
                   <div className="p-4 flex-1 overflow-y-auto overflow-x-hidden widget-scroll">
