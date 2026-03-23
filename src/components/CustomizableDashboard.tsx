@@ -1019,8 +1019,8 @@ function MusicProgramWidget() {
   return (
     <div>
       <div className="flex items-center gap-2 mb-3">
-        <Music size={14} className="text-[#be0101]" />
-        <p className="text-black font-bold text-sm">No Ar</p>
+        <Music size={14} style={{ color: "var(--layout-icon-color, #888)" }} />
+        <p className="font-bold text-sm" style={{ color: "var(--layout-widget-text, #fff)" }}>No Ar</p>
       </div>
 
       {/* Current Program */}
