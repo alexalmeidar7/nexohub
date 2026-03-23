@@ -220,7 +220,7 @@ export default function AudioDualCard({
                         target="_blank"
                         rel="noopener noreferrer"
                         className={`flex items-center gap-2.5 rounded-lg transition-all hover:brightness-125 active:scale-95 focus:outline-none focus:ring-2 focus:ring-white/70 ${isTV ? "px-5 py-3.5" : "px-3.5 py-2"}`}
-                        style={{ backgroundColor: "hsl(0 80% 40%)" }}
+                        style={{ backgroundColor: "hsl(var(--player-accent))" }}
                       >
                         <span className="shrink-0 text-white"><WhatsAppIcon size={isTV ? 22 : 16} /></span>
                         <span className={`text-white font-semibold whitespace-nowrap ${isTV ? "text-base" : "text-xs"}`}>WhatsApp do Estúdio</span>
