@@ -63,7 +63,7 @@ export default function PreRollPage() {
   // New fields
   const [backgroundFile, setBackgroundFile] = useState<File | null>(null);
   const [backgroundPreview, setBackgroundPreview] = useState("");
-  const [aspectRatio, setAspectRatio] = useState<"16:9" | "9:16">("16:9");
+  const [aspectRatio, setAspectRatio] = useState<"16:9" | "9:16" | "full">("16:9");
   const [videoPosition, setVideoPosition] = useState<"center" | "left" | "right">("center");
   const [showPreview, setShowPreview] = useState(false);
   const [isMidroll, setIsMidroll] = useState(false);
