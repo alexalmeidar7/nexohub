@@ -1035,20 +1035,20 @@ function MusicProgramWidget() {
           )}
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5">
-              <Radio size={10} className="text-red-500 animate-pulse flex-shrink-0" />
-              <p className="text-black text-xs font-bold truncate">{currentProgram.nome}</p>
+              <Radio size={10} className="animate-pulse flex-shrink-0" style={{ color: "var(--layout-button-bg, #333)" }} />
+              <p className="text-xs font-bold truncate" style={{ color: "var(--layout-widget-text, #fff)" }}>{currentProgram.nome}</p>
             </div>
             {apresentador?.nome && (
-              <p className="text-black/50 text-[10px] truncate">{apresentador.nome}</p>
+              <p className="text-[10px] truncate" style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.5 }}>{apresentador.nome}</p>
             )}
             <div className="flex items-center gap-2 mt-1.5">
-              <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(0,0,0,0.08)" }}>
+              <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: `color-mix(in srgb, var(--layout-widget-text, #fff) 8%, transparent)` }}>
                 <div
                   className="h-full rounded-full transition-all duration-1000"
-                  style={{ width: `${progressPercent}%`, background: "linear-gradient(90deg, #960101, #be0101)" }}
+                  style={{ width: `${progressPercent}%`, background: `linear-gradient(90deg, var(--layout-accent-color, #444), var(--layout-button-bg, #333))` }}
                 />
               </div>
-              <span className="text-[8px] text-black/40 font-semibold flex-shrink-0">
+              <span className="text-[8px] font-semibold flex-shrink-0" style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.4 }}>
                 {currentProgram.horario_inicio} — {currentProgram.horario_fim}
               </span>
             </div>
