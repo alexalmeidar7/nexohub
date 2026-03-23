@@ -1285,11 +1285,11 @@ function DashboardCalendar({ selected, onSelect, eventDates, month, onMonthChang
       }}
       modifiers={{ hasEvent: eventDates }}
       modifiersStyles={{
-        hasEvent: { backgroundColor: "var(--layout-button-bg, #333333)", fontWeight: "bold", color: "#fff", borderRadius: "50%" },
+        hasEvent: { backgroundColor: "var(--layout-button-bg, #333333)", fontWeight: "bold", color: "var(--layout-button-text, #fff)", borderRadius: "50%" },
       }}
       styles={{
-        day: { color: "#ffffff", fontSize: "14px" },
-        head_cell: { color: "rgba(255,255,255,0.5)", fontSize: "10px", padding: 0 },
+        day: { color: "var(--layout-widget-text, #ffffff)", fontSize: "14px" },
+        head_cell: { color: "var(--layout-widget-text, #ffffff)", opacity: 0.5, fontSize: "10px", padding: 0 },
       }}
     />
   );
