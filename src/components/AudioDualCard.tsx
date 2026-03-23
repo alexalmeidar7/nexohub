@@ -411,7 +411,7 @@ export default function AudioDualCard({
                   <Suspense fallback={null}>
                     <div className="absolute inset-x-0 bottom-0 z-[2]" style={{ height: "60%" }}>
                       <div className="relative w-full h-full">
-                        <AudioSpectrum audioElement={audioElement ?? null} barColor="#a10a0b" />
+                        <AudioSpectrum audioElement={audioElement ?? null} barColor="var(--layout-accent-hex, #888)" />
                       </div>
                     </div>
                   </Suspense>
