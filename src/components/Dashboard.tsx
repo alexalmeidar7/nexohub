@@ -389,7 +389,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="p-2 rounded-lg" style={{ backgroundColor: "rgba(0,0,0,0.4)" }}>
           {mobileMenuOpen ? <X size={20} className="text-white" /> : <Menu size={20} className="text-white" />}
         </button>
-        <h1 className="text-white font-bold text-lg truncate flex-1 ml-3">{empresa.nome || "Dashboard"}</h1>
+        <h1 className="font-bold text-lg truncate flex-1 ml-3" style={{ color: layoutColors.navText }}>{empresa.nome || "Dashboard"}</h1>
         <button
           onClick={onLogout}
           className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold transition-all mr-2"
