@@ -71,7 +71,6 @@ export function useLayoutColors() {
     return () => window.removeEventListener("layout-colors-updated", handler);
   }, [fetchColors]);
 
-  // Apply as CSS custom properties
   useEffect(() => {
     const root = document.documentElement;
     root.style.setProperty("--layout-page-bg", colors.pageBg);
