@@ -367,7 +367,7 @@ export default function AudioDualCard({
           >
           {isSemTitulo ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center rounded-3xl overflow-hidden">
-              <div className="absolute inset-0" style={{ background: "radial-gradient(circle at center, hsla(0,70%,20%,0.4) 0%, transparent 70%)" }} />
+              <div className="absolute inset-0" style={{ background: "radial-gradient(circle at center, hsla(var(--player-accent) / 0.4) 0%, transparent 70%)" }} />
               <Suspense fallback={null}>
                 <div className="absolute inset-0 z-[2]">
                   <div className="relative w-full h-full">
