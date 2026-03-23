@@ -1205,9 +1205,9 @@ function DashboardWeatherWidget() {
   return (
     <div>
       <div className="flex items-center gap-2 mb-3">
-        <CloudSun size={14} className="text-[#be0101]" />
-        <p className="text-black font-bold text-sm">Previsão do Tempo</p>
-        {weather && <span className="text-black/40 text-[9px] ml-auto">{weather.city}</span>}
+        <CloudSun size={14} style={{ color: "var(--layout-icon-color, #888)" }} />
+        <p className="font-bold text-sm" style={{ color: "var(--layout-widget-text, #fff)" }}>Previsão do Tempo</p>
+        {weather && <span className="text-[9px] ml-auto" style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.4 }}>{weather.city}</span>}
       </div>
       {weather ? (
         <div key={`wx-${weatherKey}`} className="flex gap-3 animate-fade-in">
