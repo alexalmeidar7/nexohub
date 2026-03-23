@@ -272,7 +272,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
       {/* Section: Atalhos */}
       {items.filter(i => i.type === "link").length > 0 && (
         <div className="mb-6">
-          <p className="text-white/70 text-[10px] font-bold uppercase tracking-[0.15em] mb-3 animate-fade-in">Atalhos rápidos</p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.15em] mb-3 animate-fade-in" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.7 }}>Atalhos rápidos</p>
           <div className="flex flex-wrap gap-2 sm:gap-3">
             {items.filter(i => i.type === "link").map(item => {
               const Icon = getIcon(item.linkIcon || "Link2");
@@ -293,29 +293,29 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                     className={`w-[70px] h-[70px] sm:w-[90px] sm:h-[90px] rounded-2xl flex flex-col items-center pt-[14px] sm:pt-[18px] transition-all hover:scale-[1.06] hover:shadow-lg`}
                     style={{
                       background: isDragOver
-                        ? "linear-gradient(145deg, #be0101, #960101)"
-                        : "linear-gradient(135deg, #960101, #be0101)",
+                        ? `linear-gradient(145deg, var(--layout-button-bg, #333), var(--layout-accent-color, #444))`
+                        : `linear-gradient(135deg, var(--layout-accent-color, #444), var(--layout-button-bg, #333))`,
                       backdropFilter: "blur(12px)",
                       WebkitBackdropFilter: "blur(12px)",
-                      border: isDragOver ? "2px solid #be0101" : "1px solid rgba(255,255,255,0.25)",
-                      boxShadow: "0 4px 15px rgba(150,1,1,0.35), inset 0 1px 0 rgba(255,255,255,0.15)",
+                      border: isDragOver ? `2px solid var(--layout-button-bg, #333)` : `1px solid color-mix(in srgb, var(--layout-button-text, #fff) 25%, transparent)`,
+                      boxShadow: `0 4px 15px color-mix(in srgb, var(--layout-button-bg, #333) 35%, transparent), inset 0 1px 0 rgba(255,255,255,0.15)`,
                     }}
                     onMouseEnter={e => {
-                      e.currentTarget.style.boxShadow = "0 8px 25px rgba(150,1,1,0.5), inset 0 1px 0 rgba(255,255,255,0.2)";
-                      e.currentTarget.style.background = "linear-gradient(135deg, #be0101, #d40101)";
+                      e.currentTarget.style.boxShadow = `0 8px 25px color-mix(in srgb, var(--layout-button-bg, #333) 50%, transparent), inset 0 1px 0 rgba(255,255,255,0.2)`;
+                      e.currentTarget.style.background = `linear-gradient(135deg, var(--layout-button-bg, #333), color-mix(in srgb, var(--layout-button-bg, #333) 80%, white))`;
                     }}
                     onMouseLeave={e => {
                       e.currentTarget.style.background = isDragOver
-                        ? "linear-gradient(145deg, #be0101, #960101)"
-                        : "linear-gradient(135deg, #960101, #be0101)";
-                      e.currentTarget.style.boxShadow = "0 4px 15px rgba(150,1,1,0.35), inset 0 1px 0 rgba(255,255,255,0.15)";
+                        ? `linear-gradient(145deg, var(--layout-button-bg, #333), var(--layout-accent-color, #444))`
+                        : `linear-gradient(135deg, var(--layout-accent-color, #444), var(--layout-button-bg, #333))`;
+                      e.currentTarget.style.boxShadow = `0 4px 15px color-mix(in srgb, var(--layout-button-bg, #333) 35%, transparent), inset 0 1px 0 rgba(255,255,255,0.15)`;
                     }}
                   >
                     <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "rgba(255,255,255,0.2)" }}>
-                      <Icon size={16} className="text-white sm:hidden" /><Icon size={18} className="text-white hidden sm:block" />
+                      <Icon size={16} className="sm:hidden" style={{ color: "var(--layout-button-text, #fff)" }} /><Icon size={18} className="hidden sm:block" style={{ color: "var(--layout-button-text, #fff)" }} />
                     </div>
-                    <span className="text-white text-[9px] font-semibold text-center leading-tight px-1.5 max-w-full truncate mt-1.5">{item.linkLabel}</span>
-                    {item.linkExternal && <ExternalLink size={7} className="text-white/40 absolute bottom-1.5 right-1.5" />}
+                    <span className="text-[9px] font-semibold text-center leading-tight px-1.5 max-w-full truncate mt-1.5" style={{ color: "var(--layout-button-text, #fff)" }}>{item.linkLabel}</span>
+                    {item.linkExternal && <ExternalLink size={7} className="absolute bottom-1.5 right-1.5" style={{ color: "var(--layout-button-text, #fff)", opacity: 0.4 }} />}
                   </div>
                   <button
                     onClick={(e) => { e.stopPropagation(); removeItem(item.id); }}
@@ -340,8 +340,8 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
               onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.15)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.5)"; }}
               onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.08)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.25)"; }}
             >
-              <Plus size={16} className="text-white/40 mb-1" />
-              <span className="text-white/40 text-[9px] font-semibold">Adicionar</span>
+              <Plus size={16} className="mb-1" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.4 }} />
+              <span className="text-[9px] font-semibold" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.4 }}>Adicionar</span>
             </div>
           </div>
         </div>
@@ -366,7 +366,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                 <Circle size={8} fill="#ff0000" color="#ff0000" className="animate-pulse" />
                 <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#ff0000" }}>Ao Vivo</span>
               </div>
-              <span className="text-white/50 text-[10px]">
+              <span className="text-[10px]" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.5 }}>
                 {onAirProgram.horario_inicio} — {onAirProgram.horario_fim}
               </span>
               {onAirProgram.classificacao_etaria && (
@@ -389,22 +389,22 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
 
             {/* Descrição */}
             {onAirProgram.descricao && (
-              <p className="text-white text-[11px] leading-relaxed line-clamp-2 sm:line-clamp-3 mb-2" style={{ maxWidth: 400 }}>{onAirProgram.descricao}</p>
+              <p className="text-[11px] leading-relaxed line-clamp-2 sm:line-clamp-3 mb-2" style={{ maxWidth: 400, color: "var(--layout-nav-text, #fff)" }}>{onAirProgram.descricao}</p>
             )}
 
             {/* Apresentador */}
             {onAirProgram.apresentador_nome && (
               <div className="flex items-center gap-1.5 mb-1.5">
-                <User size={12} style={{ color: "#be0101" }} />
-                <span className="text-white text-[11px] font-semibold">{onAirProgram.apresentador_nome}</span>
+                <User size={12} style={{ color: "var(--layout-icon-color, #888)" }} />
+                <span className="text-[11px] font-semibold" style={{ color: "var(--layout-nav-text, #fff)" }}>{onAirProgram.apresentador_nome}</span>
               </div>
             )}
 
             {/* Música tocando */}
             {currentMusic && (
               <div className="flex items-center gap-1.5">
-                <Music size={12} style={{ color: "#be0101" }} />
-                <span className="text-white text-[11px]">
+                <Music size={12} style={{ color: "var(--layout-icon-color, #888)" }} />
+                <span className="text-[11px]" style={{ color: "var(--layout-nav-text, #fff)" }}>
                   {currentMusic.titulo}{currentMusic.artista ? ` — ${currentMusic.artista}` : ""}
                 </span>
               </div>
@@ -420,7 +420,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
 
       {items.filter(i => i.type === "widget").length > 0 && (
         <div className="mb-2">
-          <p className="text-white/70 text-[10px] font-bold uppercase tracking-[0.15em] mb-3 animate-fade-in">Widgets</p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.15em] mb-3 animate-fade-in" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.7 }}>Widgets</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
             {items.filter(i => i.type === "widget").map(item => {
               const isDragging = draggedId === item.id;
@@ -430,8 +430,8 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                   key={item.id}
                   className={`relative group rounded-2xl animate-fade-in flex flex-col ${isDragging ? "opacity-40 scale-95" : ""}`}
                   style={{
-                    background: item.widgetType === "player" ? "#0a0a0a" : "#ffffff",
-                    border: isDragOver ? "2px solid #be0101" : item.widgetType === "player" ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(0,0,0,0.08)",
+                    background: item.widgetType === "player" ? "#0a0a0a" : "var(--layout-widget-bg, #1a1a1a)",
+                    border: isDragOver ? `2px solid var(--layout-button-bg, #333)` : item.widgetType === "player" ? "1px solid rgba(255,255,255,0.08)" : `1px solid color-mix(in srgb, var(--layout-border-color, #333) 30%, transparent)`,
                     boxShadow: item.widgetType === "player" ? "0 4px 20px rgba(0,0,0,0.4)" : "0 2px 12px rgba(0,0,0,0.06)",
                     minHeight: item.widgetType === "agenda" ? "200px" : "150px",
                     maxHeight: item.widgetType === "agenda" ? "240px" : "none",
@@ -446,12 +446,12 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                 >
                   <div
                     className="flex items-center gap-1.5 px-4 py-2.5 cursor-grab active:cursor-grabbing flex-shrink-0"
-                    style={{ borderBottom: item.widgetType === "player" ? "1px solid rgba(255,255,255,0.06)" : "1px solid rgba(0,0,0,0.06)" }}
+                    style={{ borderBottom: `1px solid color-mix(in srgb, var(--layout-border-color, #333) 20%, transparent)` }}
                     draggable
                     onDragStart={(e) => { e.stopPropagation(); handleDragStart(item.id); }}
                   >
-                    <GripVertical size={10} className={item.widgetType === "player" ? "text-white/20" : "text-black/20"} />
-                    <span className={`text-[9px] font-bold uppercase tracking-[0.15em] ${item.widgetType === "player" ? "text-white/40" : "text-black/40"}`}>
+                    <GripVertical size={10} style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.2 }} />
+                    <span className="text-[9px] font-bold uppercase tracking-[0.15em]" style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.4 }}>
                       {item.widgetType === "agenda" ? "Agenda" : item.widgetType === "musica" ? "No Ar" : item.widgetType === "weather" ? "Tempo" : item.widgetType === "player" ? "Player" : "Estatísticas"}
                     </span>
                   </div>
@@ -459,13 +459,13 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                     <button
                       onClick={() => removeItem(item.id)}
                       className="w-5 h-5 rounded-md flex items-center justify-center"
-                      style={{ border: item.widgetType === "player" ? "1px solid rgba(255,255,255,0.15)" : "1px solid rgba(0,0,0,0.15)" }}
+                      style={{ border: `1px solid color-mix(in srgb, var(--layout-border-color, #333) 30%, transparent)` }}
                     >
-                      <X size={9} className={item.widgetType === "player" ? "text-white/40" : "text-black/40"} />
+                      <X size={9} style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.4 }} />
                     </button>
                   </div>
                   <div className="p-4 flex-1 overflow-y-auto overflow-x-hidden widget-scroll">
-                    <Suspense fallback={<Loader2 className="animate-spin text-[#be0101]/40" size={18} />}>
+                    <Suspense fallback={<Loader2 className="animate-spin" size={18} style={{ color: "var(--layout-icon-color, #888)", opacity: 0.4 }} />}>
                       {item.widgetType === "agenda" && <DashboardAgendaWidget onNavigate={onNavigate} />}
                       {item.widgetType === "musica" && <MusicProgramWidget />}
                       {item.widgetType === "stats" && <StatsWidget />}
@@ -487,14 +487,14 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
             onClick={() => { setShowAddDialog(true); setAddStep("choose"); }}
             className="w-[70px] h-[70px] sm:w-[90px] sm:h-[90px] rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all hover:scale-[1.06]"
             style={{
-              background: "rgba(255,255,255,0.08)",
-              border: "1.5px dashed rgba(255,255,255,0.25)",
+              background: "color-mix(in srgb, var(--layout-nav-text, #fff) 8%, transparent)",
+              border: "1.5px dashed color-mix(in srgb, var(--layout-nav-text, #fff) 25%, transparent)",
             }}
-            onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.15)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.5)"; }}
-            onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.08)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.25)"; }}
+            onMouseEnter={e => { e.currentTarget.style.background = "color-mix(in srgb, var(--layout-nav-text, #fff) 15%, transparent)"; e.currentTarget.style.borderColor = "color-mix(in srgb, var(--layout-nav-text, #fff) 50%, transparent)"; }}
+            onMouseLeave={e => { e.currentTarget.style.background = "color-mix(in srgb, var(--layout-nav-text, #fff) 8%, transparent)"; e.currentTarget.style.borderColor = "color-mix(in srgb, var(--layout-nav-text, #fff) 25%, transparent)"; }}
           >
-            <Plus size={16} className="text-white/40 mb-1" />
-            <span className="text-white/40 text-[9px] font-semibold">Adicionar</span>
+            <Plus size={16} className="mb-1" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.4 }} />
+            <span className="text-[9px] font-semibold" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.4 }}>Adicionar</span>
           </div>
         </div>
       )}
@@ -502,15 +502,15 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
       {/* Empty state */}
       {items.length === 0 && (
         <div className="flex-1 flex flex-col items-center justify-center text-center py-20 animate-fade-in">
-          <div className="w-20 h-20 rounded-2xl flex items-center justify-center mb-5" style={{ background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.15)", boxShadow: "0 4px 20px rgba(0,0,0,0.1)" }}>
-            <Plus size={28} className="text-white/60" />
+          <div className="w-20 h-20 rounded-2xl flex items-center justify-center mb-5" style={{ background: "color-mix(in srgb, var(--layout-nav-text, #fff) 12%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-nav-text, #fff) 15%, transparent)", boxShadow: "0 4px 20px rgba(0,0,0,0.1)" }}>
+            <Plus size={28} style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.6 }} />
           </div>
-          <p className="text-white/60 text-sm font-bold mb-1">Área de trabalho vazia</p>
-          <p className="text-white/30 text-xs mb-5 max-w-xs">Adicione atalhos e widgets para personalizar seu painel</p>
+          <p className="text-sm font-bold mb-1" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.6 }}>Área de trabalho vazia</p>
+          <p className="text-xs mb-5 max-w-xs" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.3 }}>Adicione atalhos e widgets para personalizar seu painel</p>
           <button
             onClick={() => { setShowAddDialog(true); setAddStep("choose"); }}
             className="px-6 py-2.5 rounded-xl text-xs font-bold transition-all hover:scale-[1.03]"
-            style={{ background: "linear-gradient(135deg, #960101, #be0101)", color: "#fff", boxShadow: "0 4px 16px rgba(150,1,1,0.25)" }}
+            style={{ background: `linear-gradient(135deg, var(--layout-accent-color, #444), var(--layout-button-bg, #333))`, color: "var(--layout-button-text, #fff)", boxShadow: `0 4px 16px color-mix(in srgb, var(--layout-button-bg, #333) 25%, transparent)` }}
           >
             <Plus size={12} className="inline mr-1.5" /> Começar a personalizar
           </button>
@@ -532,10 +532,10 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
             onClick={e => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-white font-bold text-base">
+              <h3 className="font-bold text-base" style={{ color: "var(--layout-nav-text, #fff)" }}>
                 {addStep === "choose" ? "O que deseja adicionar?" : addStep === "link" ? "Escolha um atalho" : "Escolha um widget"}
               </h3>
-              <button onClick={() => { setShowAddDialog(false); setAddStep("choose"); }} className="text-white/40 hover:text-white">
+              <button onClick={() => { setShowAddDialog(false); setAddStep("choose"); }} className="hover:opacity-70" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.4 }}>
                 <X size={18} />
               </button>
             </div>
@@ -546,30 +546,30 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                   onClick={() => setAddStep("link")}
                   className="flex flex-col items-center gap-3 p-5 rounded-xl transition-all"
                   style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}
-                  onMouseEnter={e => { e.currentTarget.style.background = "rgba(190,1,1,0.15)"; e.currentTarget.style.borderColor = "rgba(190,1,1,0.4)"; }}
+                  onMouseEnter={e => { e.currentTarget.style.background = `color-mix(in srgb, var(--layout-button-bg, #333) 15%, transparent)`; e.currentTarget.style.borderColor = `color-mix(in srgb, var(--layout-button-bg, #333) 40%, transparent)`; }}
                   onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"; }}
                 >
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: "linear-gradient(135deg, #960101, #be0101)" }}>
-                    <Link2 size={20} className="text-white" />
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: `linear-gradient(135deg, var(--layout-accent-color, #444), var(--layout-button-bg, #333))` }}>
+                    <Link2 size={20} style={{ color: "var(--layout-button-text, #fff)" }} />
                   </div>
                   <div className="text-center">
-                    <p className="text-white font-semibold text-sm">Botão com Link</p>
-                    <p className="text-white/40 text-[10px] mt-0.5">Atalho para um módulo</p>
+                    <p className="font-semibold text-sm" style={{ color: "var(--layout-nav-text, #fff)" }}>Botão com Link</p>
+                    <p className="text-[10px] mt-0.5" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.4 }}>Atalho para um módulo</p>
                   </div>
                 </button>
                 <button
                   onClick={() => setAddStep("widget")}
                   className="flex flex-col items-center gap-3 p-5 rounded-xl transition-all"
                   style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}
-                  onMouseEnter={e => { e.currentTarget.style.background = "rgba(190,1,1,0.15)"; e.currentTarget.style.borderColor = "rgba(190,1,1,0.4)"; }}
+                  onMouseEnter={e => { e.currentTarget.style.background = `color-mix(in srgb, var(--layout-button-bg, #333) 15%, transparent)`; e.currentTarget.style.borderColor = `color-mix(in srgb, var(--layout-button-bg, #333) 40%, transparent)`; }}
                   onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"; }}
                 >
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: "linear-gradient(135deg, #960101, #be0101)" }}>
-                    <BarChart3 size={20} className="text-white" />
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: `linear-gradient(135deg, var(--layout-accent-color, #444), var(--layout-button-bg, #333))` }}>
+                    <BarChart3 size={20} style={{ color: "var(--layout-button-text, #fff)" }} />
                   </div>
                   <div className="text-center">
-                    <p className="text-white font-semibold text-sm">Widget</p>
-                    <p className="text-white/40 text-[10px] mt-0.5">Dados em tempo real</p>
+                    <p className="font-semibold text-sm" style={{ color: "var(--layout-nav-text, #fff)" }}>Widget</p>
+                    <p className="text-[10px] mt-0.5" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.4 }}>Dados em tempo real</p>
                   </div>
                 </button>
               </div>
@@ -594,7 +594,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                         opacity: exists ? 0.4 : 1,
                         color: "#fff",
                       }}
-                      onMouseEnter={e => { if (!exists) { e.currentTarget.style.background = "rgba(190,1,1,0.15)"; } }}
+                      onMouseEnter={e => { if (!exists) { e.currentTarget.style.background = `color-mix(in srgb, var(--layout-button-bg, #333) 15%, transparent)`; } }}
                       onMouseLeave={e => { e.currentTarget.style.background = exists ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.06)"; }}
                     >
                       <Icon size={16} />
@@ -623,15 +623,15 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                         opacity: exists ? 0.4 : 1,
                         color: "#fff",
                       }}
-                      onMouseEnter={e => { if (!exists) { e.currentTarget.style.background = "rgba(190,1,1,0.15)"; } }}
+                      onMouseEnter={e => { if (!exists) { e.currentTarget.style.background = `color-mix(in srgb, var(--layout-button-bg, #333) 15%, transparent)`; } }}
                       onMouseLeave={e => { e.currentTarget.style.background = exists ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.06)"; }}
                     >
-                      <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: "linear-gradient(135deg, #960101, #be0101)" }}>
-                        {opt.type === "agenda" && <CalendarDays size={14} className="text-white" />}
-                        {opt.type === "musica" && <Music size={14} className="text-white" />}
-                        {opt.type === "stats" && <BarChart3 size={14} className="text-white" />}
-                        {opt.type === "weather" && <CloudSun size={14} className="text-white" />}
-                        {opt.type === "player" && <Radio size={14} className="text-white" />}
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: `linear-gradient(135deg, var(--layout-accent-color, #444), var(--layout-button-bg, #333))` }}>
+                        {opt.type === "agenda" && <CalendarDays size={14} style={{ color: "var(--layout-button-text, #fff)" }} />}
+                        {opt.type === "musica" && <Music size={14} style={{ color: "var(--layout-button-text, #fff)" }} />}
+                        {opt.type === "stats" && <BarChart3 size={14} style={{ color: "var(--layout-button-text, #fff)" }} />}
+                        {opt.type === "weather" && <CloudSun size={14} style={{ color: "var(--layout-button-text, #fff)" }} />}
+                        {opt.type === "player" && <Radio size={14} style={{ color: "var(--layout-button-text, #fff)" }} />}
                       </div>
                       <div>
                         <p className="font-semibold">{opt.label}</p>
@@ -1019,36 +1019,36 @@ function MusicProgramWidget() {
   return (
     <div>
       <div className="flex items-center gap-2 mb-3">
-        <Music size={14} className="text-[#be0101]" />
-        <p className="text-black font-bold text-sm">No Ar</p>
+        <Music size={14} style={{ color: "var(--layout-icon-color, #888)" }} />
+        <p className="font-bold text-sm" style={{ color: "var(--layout-widget-text, #fff)" }}>No Ar</p>
       </div>
 
       {/* Current Program */}
       {currentProgram && (
-        <div key={`prog-${programKey}`} className="flex items-center gap-3 mb-3 px-3 py-2.5 rounded-xl animate-fade-in" style={{ background: "rgba(190,1,1,0.06)" }}>
+        <div key={`prog-${programKey}`} className="flex items-center gap-3 mb-3 px-3 py-2.5 rounded-xl animate-fade-in" style={{ background: `color-mix(in srgb, var(--layout-button-bg, #333) 6%, transparent)` }}>
           {apresentador?.foto ? (
-            <img src={apresentador.foto} alt="" className="w-10 h-10 rounded-full object-cover flex-shrink-0 border-2 border-[#be0101]/30" />
+            <img src={apresentador.foto} alt="" className="w-10 h-10 rounded-full object-cover flex-shrink-0" style={{ border: `2px solid color-mix(in srgb, var(--layout-button-bg, #333) 30%, transparent)` }} />
           ) : (
-            <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "rgba(190,1,1,0.15)" }}>
-              <Mic2 size={14} className="text-[#be0101]" />
+            <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: `color-mix(in srgb, var(--layout-button-bg, #333) 15%, transparent)` }}>
+              <Mic2 size={14} style={{ color: "var(--layout-icon-color, #888)" }} />
             </div>
           )}
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5">
-              <Radio size={10} className="text-red-500 animate-pulse flex-shrink-0" />
-              <p className="text-black text-xs font-bold truncate">{currentProgram.nome}</p>
+              <Radio size={10} className="animate-pulse flex-shrink-0" style={{ color: "var(--layout-button-bg, #333)" }} />
+              <p className="text-xs font-bold truncate" style={{ color: "var(--layout-widget-text, #fff)" }}>{currentProgram.nome}</p>
             </div>
             {apresentador?.nome && (
-              <p className="text-black/50 text-[10px] truncate">{apresentador.nome}</p>
+              <p className="text-[10px] truncate" style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.5 }}>{apresentador.nome}</p>
             )}
             <div className="flex items-center gap-2 mt-1.5">
-              <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(0,0,0,0.08)" }}>
+              <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: `color-mix(in srgb, var(--layout-widget-text, #fff) 8%, transparent)` }}>
                 <div
                   className="h-full rounded-full transition-all duration-1000"
-                  style={{ width: `${progressPercent}%`, background: "linear-gradient(90deg, #960101, #be0101)" }}
+                  style={{ width: `${progressPercent}%`, background: `linear-gradient(90deg, var(--layout-accent-color, #444), var(--layout-button-bg, #333))` }}
                 />
               </div>
-              <span className="text-[8px] text-black/40 font-semibold flex-shrink-0">
+              <span className="text-[8px] font-semibold flex-shrink-0" style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.4 }}>
                 {currentProgram.horario_inicio} — {currentProgram.horario_fim}
               </span>
             </div>
@@ -1063,12 +1063,12 @@ function MusicProgramWidget() {
             <img src={music.capa} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
           )}
           <div className="min-w-0">
-            <p className="text-black text-xs font-semibold truncate">{music.titulo}</p>
-            <p className="text-black/50 text-[10px] truncate">{music.artista}</p>
+            <p className="text-xs font-semibold truncate" style={{ color: "var(--layout-widget-text, #fff)" }}>{music.titulo}</p>
+            <p className="text-[10px] truncate" style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.5 }}>{music.artista}</p>
           </div>
         </div>
       ) : !currentProgram ? (
-        <p className="text-black/30 text-xs">Sem programa no momento</p>
+        <p className="text-xs" style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.3 }}>Sem programa no momento</p>
       ) : null}
     </div>
   );
@@ -1094,17 +1094,17 @@ function StatsWidget() {
   return (
     <div>
       <div className="flex items-center gap-2 mb-3">
-        <BarChart3 size={14} className="text-[#be0101]" />
-        <p className="text-black font-bold text-sm">Dados Estatísticos</p>
+        <BarChart3 size={14} style={{ color: "var(--layout-icon-color, #888)" }} />
+        <p className="font-bold text-sm" style={{ color: "var(--layout-widget-text, #fff)" }}>Dados Estatísticos</p>
       </div>
       <div className="grid grid-cols-2 gap-3">
-        <div className="px-3 py-3 rounded-xl text-center" style={{ background: "rgba(190,1,1,0.06)" }}>
-          <p className="text-2xl font-bold text-black">{prerollCount}</p>
-          <p className="text-black/40 text-[10px] mt-0.5">Pre-rolls Ativos</p>
+        <div className="px-3 py-3 rounded-xl text-center" style={{ background: `color-mix(in srgb, var(--layout-button-bg, #333) 6%, transparent)` }}>
+          <p className="text-2xl font-bold" style={{ color: "var(--layout-widget-text, #fff)" }}>{prerollCount}</p>
+          <p className="text-[10px] mt-0.5" style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.4 }}>Pre-rolls Ativos</p>
         </div>
-        <div className="px-3 py-3 rounded-xl text-center" style={{ background: "rgba(190,1,1,0.06)" }}>
-          <p className="text-2xl font-bold text-black">{channelCount}</p>
-          <p className="text-black/40 text-[10px] mt-0.5">Canais Ativos</p>
+        <div className="px-3 py-3 rounded-xl text-center" style={{ background: `color-mix(in srgb, var(--layout-button-bg, #333) 6%, transparent)` }}>
+          <p className="text-2xl font-bold" style={{ color: "var(--layout-widget-text, #fff)" }}>{channelCount}</p>
+          <p className="text-[10px] mt-0.5" style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.4 }}>Canais Ativos</p>
         </div>
       </div>
     </div>
@@ -1205,40 +1205,40 @@ function DashboardWeatherWidget() {
   return (
     <div>
       <div className="flex items-center gap-2 mb-3">
-        <CloudSun size={14} className="text-[#be0101]" />
-        <p className="text-black font-bold text-sm">Previsão do Tempo</p>
-        {weather && <span className="text-black/40 text-[9px] ml-auto">{weather.city}</span>}
+        <CloudSun size={14} style={{ color: "var(--layout-icon-color, #888)" }} />
+        <p className="font-bold text-sm" style={{ color: "var(--layout-widget-text, #fff)" }}>Previsão do Tempo</p>
+        {weather && <span className="text-[9px] ml-auto" style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.4 }}>{weather.city}</span>}
       </div>
       {weather ? (
         <div key={`wx-${weatherKey}`} className="flex gap-3 animate-fade-in">
           {/* Hoje */}
-          <div className="flex-1 flex items-center gap-2 px-3 py-2.5 rounded-lg" style={{ background: "rgba(190,1,1,0.05)" }}>
+          <div className="flex-1 flex items-center gap-2 px-3 py-2.5 rounded-lg" style={{ background: `color-mix(in srgb, var(--layout-button-bg, #333) 5%, transparent)` }}>
             <div className="flex-shrink-0">
               {WeatherIconComp && <WeatherIconComp code={weather.current.weatherCode} size={40} />}
             </div>
             <div className="min-w-0">
-              <p className="text-[9px] font-bold uppercase text-black/50">Hoje</p>
-              <p className="text-2xl font-bold text-[#be0101] leading-none">{weather.current.temp}°</p>
-              <p className="text-black/50 text-[9px] mt-0.5">↑{weather.current.tempMax}° ↓{weather.current.tempMin}°</p>
+              <p className="text-[9px] font-bold uppercase" style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.5 }}>Hoje</p>
+              <p className="text-2xl font-bold leading-none" style={{ color: "var(--layout-button-bg, #333)" }}>{weather.current.temp}°</p>
+              <p className="text-[9px] mt-0.5" style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.5 }}>↑{weather.current.tempMax}° ↓{weather.current.tempMin}°</p>
             </div>
           </div>
 
           {/* Amanhã */}
           {weather.tomorrow && (
-            <div className="flex-1 flex items-center gap-2 px-3 py-2.5 rounded-lg" style={{ background: "rgba(190,1,1,0.05)" }}>
+            <div className="flex-1 flex items-center gap-2 px-3 py-2.5 rounded-lg" style={{ background: `color-mix(in srgb, var(--layout-button-bg, #333) 5%, transparent)` }}>
               <div className="flex-shrink-0">
                 {WeatherIconComp && <WeatherIconComp code={weather.tomorrow.weatherCode} size={32} forceDay />}
               </div>
               <div className="min-w-0">
-                <p className="text-[9px] font-bold uppercase text-black/50">Amanhã</p>
-                <p className="text-sm font-bold text-black leading-none">{weather.tomorrow.tempMax}° / {weather.tomorrow.tempMin}°</p>
-                <p className="text-black/40 text-[9px] mt-0.5">{getLabel(weather.tomorrow.weatherCode)}</p>
+                <p className="text-[9px] font-bold uppercase" style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.5 }}>Amanhã</p>
+                <p className="text-sm font-bold leading-none" style={{ color: "var(--layout-widget-text, #fff)" }}>{weather.tomorrow.tempMax}° / {weather.tomorrow.tempMin}°</p>
+                <p className="text-[9px] mt-0.5" style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.4 }}>{getLabel(weather.tomorrow.weatherCode)}</p>
               </div>
             </div>
           )}
         </div>
       ) : (
-        <p className="text-black/30 text-xs">Configure uma cidade no módulo Previsão do Tempo</p>
+        <p className="text-xs" style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.3 }}>Configure uma cidade no módulo Previsão do Tempo</p>
       )}
     </div>
   );
