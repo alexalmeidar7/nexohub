@@ -652,6 +652,9 @@ export default function PreRollPage() {
                         {p.horario_inicio} - {p.horario_fim}
                         <span className="ml-2 text-[10px] font-normal" style={{ color: "rgba(13,4,70,0.4)" }}>
                           {p.media_type === "youtube" ? "YouTube" : "Vídeo"} • {p.aspect_ratio || "16:9"}
+                          {(p as any).is_midroll && (
+                            <span className="ml-1 px-1.5 py-0.5 rounded text-[9px] font-bold" style={{ backgroundColor: "rgba(38,143,250,0.15)", color: "#268ffa" }}>Mid-Roll</span>
+                          )}
                         </span>
                       </div>
                       <div className="text-[10px]" style={{ color: "rgba(13,4,70,0.5)" }}>
