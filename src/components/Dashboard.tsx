@@ -446,7 +446,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                               aria-label={child.label}
                               role="menuitem"
                             >
-                              <ChildIcon size={12} className={childActive ? "" : "text-white"} style={childActive ? { color: layoutColors.buttonBg } : {}} />
+                              <ChildIcon size={12} style={{ color: childActive ? layoutColors.iconColor : layoutColors.navText }} />
                               <span>{child.label}</span>
                             </button>
                           );
