@@ -1217,9 +1217,9 @@ function DashboardWeatherWidget() {
               {WeatherIconComp && <WeatherIconComp code={weather.current.weatherCode} size={40} />}
             </div>
             <div className="min-w-0">
-              <p className="text-[9px] font-bold uppercase text-black/50">Hoje</p>
-              <p className="text-2xl font-bold text-[#be0101] leading-none">{weather.current.temp}°</p>
-              <p className="text-black/50 text-[9px] mt-0.5">↑{weather.current.tempMax}° ↓{weather.current.tempMin}°</p>
+              <p className="text-[9px] font-bold uppercase" style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.5 }}>Hoje</p>
+              <p className="text-2xl font-bold leading-none" style={{ color: "var(--layout-button-bg, #333)" }}>{weather.current.temp}°</p>
+              <p className="text-[9px] mt-0.5" style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.5 }}>↑{weather.current.tempMax}° ↓{weather.current.tempMin}°</p>
             </div>
           </div>
 
