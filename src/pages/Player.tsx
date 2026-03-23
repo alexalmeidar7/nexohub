@@ -1815,7 +1815,7 @@ export default function PlayerPage() {
           ytPostMessage("pauseVideo");
           setMidrollFading(null);
           setMidrollActive(true);
-          // Fetch a preroll to show
+          // Fetch mid-rolls to show (prefer is_midroll=true, up to 3)
           (async () => {
             if (!user) return;
             const now = new Date();
@@ -1829,14 +1829,22 @@ export default function PlayerPage() {
                 if (p.data_final && todayStr > p.data_final) return false;
                 return true;
               });
-              if (matching.length > 0) {
-                const selected = matching[Math.floor(Math.random() * matching.length)];
-                setMidrollPreroll({
-                  url: selected.video_url,
-                  linkUrl: (selected as any).link_url || null,
-                  mediaType: (selected as any).media_type || "video",
-                  youtubeUrl: (selected as any).youtube_url || null,
-                });
+              // Prefer mid-rolls; fallback to any preroll
+              const midrolls = matching.filter((p: any) => p.is_midroll);
+              const pool = midrolls.length > 0 ? midrolls : matching;
+              if (pool.length > 0) {
+                // Shuffle and pick up to 3
+                const shuffled = [...pool].sort(() => Math.random() - 0.5).slice(0, 3);
+                const queue = shuffled.map((s: any) => ({
+                  url: s.video_url,
+                  linkUrl: s.link_url || null,
+                  mediaType: s.media_type || "video",
+                  youtubeUrl: s.youtube_url || null,
+                }));
+                setMidrollQueue(queue);
+                setMidrollTotal(queue.length);
+                setMidrollIndex(0);
+                setMidrollPreroll(queue[0]);
                 return;
               }
             }
@@ -1851,10 +1859,21 @@ export default function PlayerPage() {
     }
   }, [ytCurrentTime, isYoutube, selectedVideoId, midrollActive, midrollBreakPoints, user, ytPostMessage]);
 
-  // Handle mid-roll end/skip
+  // Handle mid-roll end/skip — advance queue or resume video
   const handleMidrollEnd = useCallback(() => {
+    const nextIdx = midrollIndex + 1;
+    if (nextIdx < midrollQueue.length) {
+      // Play next ad in queue
+      setMidrollIndex(nextIdx);
+      setMidrollPreroll(midrollQueue[nextIdx]);
+      return;
+    }
+    // All ads done — resume video
     setMidrollActive(false);
     setMidrollPreroll(null);
+    setMidrollQueue([]);
+    setMidrollIndex(0);
+    setMidrollTotal(0);
     ytPostMessage("seekTo", [midrollResumeTime, true]);
     ytPostMessage("setVolume", [0]);
     setTimeout(() => ytPostMessage("playVideo"), 100);
@@ -1866,7 +1885,7 @@ export default function PlayerPage() {
       ytPostMessage("setVolume", [volume]);
       setMidrollFading(null);
     }, 2000);
-  }, [ytPostMessage, midrollResumeTime, volume]);
+  }, [ytPostMessage, midrollResumeTime, volume, midrollIndex, midrollQueue]);
 
   const handleYtHome = useCallback(() => {
     if (selectedVideoId) {
