@@ -553,8 +553,8 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                     <Link2 size={20} style={{ color: "var(--layout-button-text, #fff)" }} />
                   </div>
                   <div className="text-center">
-                    <p className="text-white font-semibold text-sm">Botão com Link</p>
-                    <p className="text-white/40 text-[10px] mt-0.5">Atalho para um módulo</p>
+                    <p className="font-semibold text-sm" style={{ color: "var(--layout-nav-text, #fff)" }}>Botão com Link</p>
+                    <p className="text-[10px] mt-0.5" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.4 }}>Atalho para um módulo</p>
                   </div>
                 </button>
                 <button
