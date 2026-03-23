@@ -289,8 +289,9 @@ export default function LogosPatrocinadoresPage() {
             <h3 className="text-base font-bold" style={{ color: "#0d0446" }}>Logos de Patrocinadores</h3>
             <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.5)" }}>Gerencie as logos vinculadas aos programas</p>
           </div>
-          <div className="flex-1 ml-4">
+          <div className="flex-1 ml-4 space-y-1">
             {logosXmlUrl && <XmlLinkRow label="XML LOGOS" permanentUrl={logosXmlUrl} dark />}
+            {logosAllXmlContent && <XmlLinkRow label="LOGOS ALL" xmlContent={logosAllXmlContent} dark />}
           </div>
         </div>
 
