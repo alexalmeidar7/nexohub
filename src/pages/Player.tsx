@@ -2286,21 +2286,21 @@ export default function PlayerPage() {
               <div className="flex items-center gap-1">
                 <button onClick={ytPrevVideo} className="text-white/60 hover:text-white transition-colors rounded-md p-1" title="Vídeo anterior"><SkipBack size={15} /></button>
                 <button onClick={ytTogglePlay} className="w-8 h-8 rounded-full border-2 border-player-accent flex items-center justify-center transition-all hover:bg-player-accent/20" title={ytPlaying ? "Pausar" : "Reproduzir"}>
-                  {ytPlaying ? <Pause size={14} color="hsl(var(--player-accent))" /> : <Play size={14} color="hsl(var(--player-accent))" fill="hsl(var(--player-accent))" />}
+                  {ytPlaying ? <Pause size={14} className="text-player-accent" /> : <Play size={14} className="text-player-accent" className="fill-player-accent" />}
                 </button>
                 <button onClick={ytNextVideo} className="text-white/60 hover:text-white transition-colors rounded-md p-1" title="Próximo vídeo"><SkipForward size={15} /></button>
               </div>
             )}
             {isCatalog && !selectedVideoId && (
               <button onClick={handlePlayCanal} className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-player-accent flex items-center justify-center transition-all hover:bg-player-accent/20" title="Reproduzir">
-                <Play size={14} color="hsl(var(--player-accent))" fill="hsl(var(--player-accent))" />
+                <Play size={14} className="text-player-accent" className="fill-player-accent" />
               </button>
             )}
 
             {/* Non-catalog: original play/pause */}
             {!isCatalog && (
               <button onClick={handlePlayCanal} className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-player-accent flex items-center justify-center transition-all hover:bg-player-accent/20" title={playing ? "Pausar" : "Reproduzir"}>
-                {playing ? <Pause size={14} color="hsl(var(--player-accent))" /> : <Play size={14} color="hsl(var(--player-accent))" fill="hsl(var(--player-accent))" />}
+                {playing ? <Pause size={14} className="text-player-accent" /> : <Play size={14} className="text-player-accent" className="fill-player-accent" />}
               </button>
             )}
 
@@ -2493,8 +2493,8 @@ export default function PlayerPage() {
                     <Heart
                       key={h.id}
                       size={12 + Math.random() * 6}
-                      fill="hsl(var(--player-accent))"
-                      color="hsl(var(--player-accent))"
+                      className="fill-player-accent"
+                      className="text-player-accent"
                       className="absolute pointer-events-none"
                       style={{ left: `calc(50% + ${h.x}px)`, bottom: "100%", opacity: 0, animation: `floatHeart 1.2s ease-out ${h.delay}s forwards` }}
                     />
