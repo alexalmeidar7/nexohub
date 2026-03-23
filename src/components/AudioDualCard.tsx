@@ -435,13 +435,13 @@ export default function AudioDualCard({
                 <div
                   className="absolute inset-0 z-[6] rounded-3xl overflow-hidden backdrop-blur-xl flex flex-col"
                   style={{
-                    background: "linear-gradient(135deg, rgba(20,20,20,0.95) 0%, rgba(40,10,10,0.95) 100%)",
-                    border: "1px solid hsla(0,80%,45%,0.2)",
+                    background: "linear-gradient(135deg, rgba(20,20,20,0.95) 0%, rgba(30,30,30,0.95) 100%)",
+                    border: "1px solid hsla(var(--player-accent) / 0.2)",
                   }}
                 >
-                  <div className="flex items-center gap-2 p-3 pb-2" style={{ borderBottom: "1px solid hsla(0,80%,45%,0.2)" }}>
-                    <div className="w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: "hsla(0,80%,45%,0.2)" }}>
-                      <Music size={12} style={{ color: "#a10a0b" }} />
+                  <div className="flex items-center gap-2 p-3 pb-2" style={{ borderBottom: "1px solid hsla(var(--player-accent) / 0.2)" }}>
+                    <div className="w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: "hsla(var(--player-accent) / 0.2)" }}>
+                      <Music size={12} style={{ color: "hsl(var(--player-accent))" }} />
                     </div>
                     <span className="font-bold text-xs text-white flex-1">Últimas Tocadas</span>
                     <button onClick={() => setHistoryOpen(false)} className="w-6 h-6 rounded-full flex items-center justify-center hover:bg-white/10 active:scale-95">
