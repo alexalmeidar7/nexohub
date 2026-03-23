@@ -111,7 +111,7 @@ export default function PreRollPage() {
     setMediaType("video"); setVideoFile(null); setVideoPreview(""); setYoutubeUrl("");
     setDiasSemana([]); setHorarioInicio("00:00"); setHorarioFim("23:59");
     setPriority("1"); setLinkUrl(""); setDataInicial(new Date()); setDataFinal(undefined); setEditId(null);
-    setBackgroundFile(null); setBackgroundPreview(""); setAspectRatio("16:9"); setVideoPosition("center"); setShowPreview(false);
+    setBackgroundFile(null); setBackgroundPreview(""); setAspectRatio("16:9"); setVideoPosition("center"); setShowPreview(false); setIsMidroll(false);
   };
 
   const extractYoutubeId = (url: string): string | null => {
