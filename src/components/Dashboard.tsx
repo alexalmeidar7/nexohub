@@ -1282,14 +1282,14 @@ function DashboardCalendar({ selected, onSelect, eventDates, month, onMonthChang
         head_cell: "flex-1 text-center font-medium",
         row: "flex w-full",
         cell: "flex-1 text-center p-0",
-        day: "h-[24px] w-[24px] p-0 font-normal text-[14px] mx-auto flex items-center justify-center rounded-full hover:!bg-[#e05050] hover:text-white transition-colors",
+        day: "h-[24px] w-[24px] p-0 font-normal text-[14px] mx-auto flex items-center justify-center rounded-full hover:text-white transition-colors",
         day_selected: "!bg-[#0d0446] !text-white",
-        day_today: "font-bold text-[#be0101]",
+        day_today: "font-bold",
         day_outside: "opacity-30",
       }}
       modifiers={{ hasEvent: eventDates }}
       modifiersStyles={{
-        hasEvent: { backgroundColor: "#be0101", fontWeight: "bold", color: "#fff", borderRadius: "50%" },
+        hasEvent: { backgroundColor: "var(--layout-button-bg, #333333)", fontWeight: "bold", color: "#fff", borderRadius: "50%" },
       }}
       styles={{
         day: { color: "#ffffff", fontSize: "14px" },
