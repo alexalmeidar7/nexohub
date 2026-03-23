@@ -535,7 +535,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
               <h3 className="font-bold text-base" style={{ color: "var(--layout-nav-text, #fff)" }}>
                 {addStep === "choose" ? "O que deseja adicionar?" : addStep === "link" ? "Escolha um atalho" : "Escolha um widget"}
               </h3>
-              <button onClick={() => { setShowAddDialog(false); setAddStep("choose"); }} className="text-white/40 hover:text-white">
+              <button onClick={() => { setShowAddDialog(false); setAddStep("choose"); }} className="hover:opacity-70" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.4 }}>
                 <X size={18} />
               </button>
             </div>
