@@ -395,8 +395,8 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
             {/* Apresentador */}
             {onAirProgram.apresentador_nome && (
               <div className="flex items-center gap-1.5 mb-1.5">
-                <User size={12} style={{ color: "#be0101" }} />
-                <span className="text-white text-[11px] font-semibold">{onAirProgram.apresentador_nome}</span>
+                <User size={12} style={{ color: "var(--layout-icon-color, #888)" }} />
+                <span className="text-[11px] font-semibold" style={{ color: "var(--layout-nav-text, #fff)" }}>{onAirProgram.apresentador_nome}</span>
               </div>
             )}
 
