@@ -206,7 +206,7 @@ export default function AudioDualCard({
                         data-menu-item
                         onClick={onOpenChat}
                         className={`flex items-center gap-2.5 rounded-lg transition-all hover:brightness-125 active:scale-95 text-left focus:outline-none focus:ring-2 focus:ring-white/70 ${isTV ? "px-5 py-3.5" : "px-3.5 py-2"}`}
-                        style={{ backgroundColor: "hsl(0 80% 40%)" }}
+                        style={{ backgroundColor: "hsl(var(--player-accent))" }}
                       >
                         <MessageCircle size={isTV ? 22 : 16} className="text-white shrink-0" />
                         <span className={`text-white font-semibold whitespace-nowrap ${isTV ? "text-base" : "text-xs"}`}>Chat ao Vivo</span>
