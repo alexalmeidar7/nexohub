@@ -623,15 +623,15 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                         opacity: exists ? 0.4 : 1,
                         color: "#fff",
                       }}
-                      onMouseEnter={e => { if (!exists) { e.currentTarget.style.background = "rgba(190,1,1,0.15)"; } }}
+                      onMouseEnter={e => { if (!exists) { e.currentTarget.style.background = `color-mix(in srgb, var(--layout-button-bg, #333) 15%, transparent)`; } }}
                       onMouseLeave={e => { e.currentTarget.style.background = exists ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.06)"; }}
                     >
-                      <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: "linear-gradient(135deg, #960101, #be0101)" }}>
-                        {opt.type === "agenda" && <CalendarDays size={14} className="text-white" />}
-                        {opt.type === "musica" && <Music size={14} className="text-white" />}
-                        {opt.type === "stats" && <BarChart3 size={14} className="text-white" />}
-                        {opt.type === "weather" && <CloudSun size={14} className="text-white" />}
-                        {opt.type === "player" && <Radio size={14} className="text-white" />}
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: `linear-gradient(135deg, var(--layout-accent-color, #444), var(--layout-button-bg, #333))` }}>
+                        {opt.type === "agenda" && <CalendarDays size={14} style={{ color: "var(--layout-button-text, #fff)" }} />}
+                        {opt.type === "musica" && <Music size={14} style={{ color: "var(--layout-button-text, #fff)" }} />}
+                        {opt.type === "stats" && <BarChart3 size={14} style={{ color: "var(--layout-button-text, #fff)" }} />}
+                        {opt.type === "weather" && <CloudSun size={14} style={{ color: "var(--layout-button-text, #fff)" }} />}
+                        {opt.type === "player" && <Radio size={14} style={{ color: "var(--layout-button-text, #fff)" }} />}
                       </div>
                       <div>
                         <p className="font-semibold">{opt.label}</p>
