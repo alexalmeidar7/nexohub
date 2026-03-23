@@ -383,7 +383,10 @@ export default function MusicaNoAr() {
 
   // Online fetch — always active when URL exists (unified mode)
   const fetchXml = useCallback(async () => {
-    if (!xmlUrl.trim()) return;
+    const trimmed = xmlUrl.trim();
+    if (!trimmed) return;
+    // Validate URL before calling edge function
+    try { new URL(trimmed); } catch { return; }
     try {
       const { data, error } = await supabase.functions.invoke("fetch-rss", {
         body: { url: xmlUrl.trim() },
