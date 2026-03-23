@@ -188,7 +188,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       .select("thumb")
       .eq("id", current.id)
       .maybeSingle();
-    return thumbData?.thumb || null;
+    // Fallback to empresa background if no program thumb
+    if (thumbData?.thumb) return thumbData.thumb;
+    return null;
   }, [user]);
 
   // Single batched initial load — all queries in parallel (NO thumb in batch)
