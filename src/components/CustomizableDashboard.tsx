@@ -532,7 +532,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
             onClick={e => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-white font-bold text-base">
+              <h3 className="font-bold text-base" style={{ color: "var(--layout-nav-text, #fff)" }}>
                 {addStep === "choose" ? "O que deseja adicionar?" : addStep === "link" ? "Escolha um atalho" : "Escolha um widget"}
               </h3>
               <button onClick={() => { setShowAddDialog(false); setAddStep("choose"); }} className="text-white/40 hover:text-white">
