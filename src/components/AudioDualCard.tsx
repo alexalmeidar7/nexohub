@@ -383,7 +383,7 @@ export default function AudioDualCard({
                   <Suspense fallback={null}>
                     <div className="absolute inset-0 z-[2]">
                       <div className="relative w-full h-full">
-                        <AudioSpectrum audioElement={audioElement ?? null} barColor="#a10a0b" />
+                        <AudioSpectrum audioElement={audioElement ?? null} barColor="var(--layout-accent-hex, #888)" />
                       </div>
                     </div>
                   </Suspense>
