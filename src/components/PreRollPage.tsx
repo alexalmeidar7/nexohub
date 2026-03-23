@@ -172,7 +172,7 @@ export default function PreRollPage() {
     setDataInicial(p.data_inicial ? new Date(p.data_inicial + "T00:00:00") : undefined);
     setDataFinal(p.data_final ? new Date(p.data_final + "T00:00:00") : undefined);
     setBackgroundPreview(p.background_url || ""); setBackgroundFile(null);
-    setAspectRatio((p.aspect_ratio as "16:9" | "9:16") || "16:9");
+    setAspectRatio((p.aspect_ratio as "16:9" | "9:16" | "full") || "16:9");
     setVideoPosition((p.video_position as "center" | "left" | "right") || "center");
     setShowPreview(false);
     setIsMidroll((p as any).is_midroll || false);
