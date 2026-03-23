@@ -89,6 +89,12 @@ interface LayoutColors {
   buttonText: string;
   linkColor: string;
   accentColor: string;
+  navBg: string;
+  navText: string;
+  widgetBg: string;
+  widgetText: string;
+  iconColor: string;
+  borderColor: string;
   homeBgType: "color" | "image";
   homeBgColor: string;
   homeBgImage: string;
@@ -103,6 +109,12 @@ const defaultColors: LayoutColors = {
   buttonText: "#ffffff",
   linkColor: "#555555",
   accentColor: "#444444",
+  navBg: "#000000",
+  navText: "#ffffff",
+  widgetBg: "#1a1a1a",
+  widgetText: "#ffffff",
+  iconColor: "#888888",
+  borderColor: "#333333",
   homeBgType: "color",
   homeBgColor: "#1a1a1a",
   homeBgImage: "",
@@ -117,6 +129,12 @@ const colorLabels: Record<string, string> = {
   buttonText: "Texto dos Botões",
   linkColor: "Cor dos Links",
   accentColor: "Cor de Destaque",
+  navBg: "Fundo da Navegação",
+  navText: "Texto da Navegação",
+  widgetBg: "Fundo dos Widgets",
+  widgetText: "Texto dos Widgets",
+  iconColor: "Cor dos Ícones",
+  borderColor: "Cor das Bordas",
 };
 
 function ColorInput({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
