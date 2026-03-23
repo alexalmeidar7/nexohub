@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Music, User, Loader2, Pencil, Check, Globe, FolderOpen, Clock, Upload, Monitor, ChevronDown, ChevronUp, AlertTriangle } from "lucide-react";
+import { Music, User, Loader2, Check, Globe, FolderOpen, Clock, Upload, Monitor, ChevronDown, ChevronUp, AlertTriangle } from "lucide-react";
 import XmlLinkRow from "./XmlLinkRow";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -21,6 +21,8 @@ interface UploadLogEntry {
   deviceName?: string;
 }
 
+type SourceMode = "online" | "pasta" | "both" | "none";
+
 const MUSIC_DATA_KEY = "masterview_music_data";
 const MUSIC_START_KEY = "masterview_music_start";
 const UPLOAD_HISTORY_KEY = "masterview_xml_upload_history";
@@ -28,6 +30,24 @@ const SOURCE_MODE_KEY = "masterview_source_mode";
 const DEVICE_NAME_KEY = "masterview_device_name";
 const DEVICE_ID_KEY = "masterview_device_id";
 const DEFAULT_XML_URL = "https://positivafm.com.br/storage/pulsar/positivafm.xml";
+
+function isValidXmlUrl(value: string): boolean {
+  const trimmed = value.trim();
+  if (!trimmed) return false;
+  try {
+    const parsed = new URL(trimmed);
+    return parsed.pathname.toLowerCase().endsWith(".xml");
+  } catch {
+    return false;
+  }
+}
+
+function buildSourceMode(onlineEnabled: boolean, localEnabled: boolean): SourceMode {
+  if (onlineEnabled && localEnabled) return "both";
+  if (onlineEnabled) return "online";
+  if (localEnabled) return "pasta";
+  return "none";
+}
 
 /** Get or create a unique device ID for this browser */
 function getDeviceId(): string {
@@ -184,8 +204,6 @@ export { getMusicData } from "@/lib/musicData";
 export default function MusicaNoAr() {
   const { user } = useAuth();
   const [xmlUrl, setXmlUrl] = useState(DEFAULT_XML_URL);
-  const [editingUrl, setEditingUrl] = useState(false);
-  const [tempUrl, setTempUrl] = useState("");
   const [music, setMusic] = useState<MusicData | null>(null);
   const [elapsed, setElapsed] = useState(0);
   const [startTime, setStartTime] = useState<number | null>(null);
@@ -197,8 +215,7 @@ export default function MusicaNoAr() {
   const [loadingCover, setLoadingCover] = useState(false);
   const [presenterFallback, setPresenterFallback] = useState<{ nome: string; foto: string } | null>(null);
 
-  // Unified mode: both sources always active
-  const [sourceMode, setSourceModeState] = useState<"online" | "pasta">("online");
+  const [sourceMode, setSourceModeState] = useState<SourceMode>("online");
   const [sourceModeLoaded, setSourceModeLoaded] = useState(false);
   const [localFileContent, setLocalFileContent] = useState<string | null>(null);
   const localFileContentRef = useRef<string | null>(null);
@@ -229,8 +246,12 @@ export default function MusicaNoAr() {
   const onlineFailCountRef = useRef(0);
   const localFailCountRef = useRef(0);
 
-  // Save source mode to DB + state (kept for UI preference, but both always run)
-  const setSourceMode = async (mode: "online" | "pasta") => {
+  const hasValidOnlineUrl = isValidXmlUrl(xmlUrl);
+  const hasValidLocalSource = !!localFileName;
+  const isOnlineSelected = sourceMode === "online" || sourceMode === "both";
+  const isLocalSelected = sourceMode === "pasta" || sourceMode === "both";
+
+  const setSourceMode = async (mode: SourceMode) => {
     setSourceModeState(mode);
     localStorage.setItem(SOURCE_MODE_KEY, mode);
     if (user) {
@@ -255,7 +276,7 @@ export default function MusicaNoAr() {
         loadUploadHistoryFromDb(user.id),
       ]);
       setUploadHistory(history);
-      if (data?.music_xml_url) {
+      if (typeof data?.music_xml_url === "string") {
         // Ignore storage URLs that were incorrectly saved as the origin URL
         const isStorageUrl = data.music_xml_url.includes("/storage/v1/object/") || data.music_xml_url.includes("/xml-files/local-xml-");
         if (!isStorageUrl) {
@@ -278,7 +299,7 @@ export default function MusicaNoAr() {
       }
       // Restore saved source mode
       const savedMode = (data as any)?.music_source_mode;
-      if (savedMode === "pasta" || savedMode === "online") {
+      if (savedMode === "pasta" || savedMode === "online" || savedMode === "both" || savedMode === "none") {
         setSourceModeState(savedMode);
         localStorage.setItem(SOURCE_MODE_KEY, savedMode);
       }
@@ -287,19 +308,32 @@ export default function MusicaNoAr() {
     loadData();
   }, [user]);
 
+  useEffect(() => {
+    if (!sourceModeLoaded) return;
+
+    const normalizedMode = buildSourceMode(
+      hasValidOnlineUrl && isOnlineSelected,
+      hasValidLocalSource && isLocalSelected,
+    );
+
+    if (normalizedMode !== sourceMode) {
+      void setSourceMode(normalizedMode);
+    }
+  }, [hasValidOnlineUrl, hasValidLocalSource, isLocalSelected, isOnlineSelected, sourceMode, sourceModeLoaded]);
+
   // Delay detection: warn if a source hasn't responded successfully
   useEffect(() => {
     const checkDelay = setInterval(() => {
       const now = Date.now();
-      if (xmlUrl.trim() && now - lastOnlineSuccessRef.current > 30000) {
+      if (isOnlineSelected && hasValidOnlineUrl && now - lastOnlineSuccessRef.current > 30000) {
         setOnlineDelay(true);
       }
-      if (localMonitoring && now - lastLocalSuccessRef.current > 15000) {
+      if (isLocalSelected && localMonitoring && now - lastLocalSuccessRef.current > 15000) {
         setLocalDelay(true);
       }
     }, 5000);
     return () => clearInterval(checkDelay);
-  }, [xmlUrl, localMonitoring]);
+  }, [hasValidOnlineUrl, isOnlineSelected, isLocalSelected, localMonitoring]);
 
   useEffect(() => {
     const fetchPresenter = async () => {
@@ -333,10 +367,16 @@ export default function MusicaNoAr() {
 
   const saveUrl = async (url: string) => {
     if (!user) return;
-    setXmlUrl(url);
+    const trimmed = url.trim();
+    if (trimmed && !isValidXmlUrl(trimmed)) {
+      setOnlineError("Informe uma URL válida terminando em .xml");
+      return;
+    }
+    setOnlineError(null);
+    setXmlUrl(trimmed);
     await supabase.from("user_settings").upsert({
       user_id: user.id,
-      music_xml_url: url,
+      music_xml_url: trimmed,
       updated_at: new Date().toISOString(),
     }, { onConflict: "user_id" });
   };
@@ -383,10 +423,10 @@ export default function MusicaNoAr() {
 
   // Online fetch — always active when URL exists (unified mode)
   const fetchXml = useCallback(async () => {
+    if (!isOnlineSelected) return;
     const trimmed = xmlUrl.trim();
     if (!trimmed) return;
-    // Validate URL before calling edge function
-    try { new URL(trimmed); } catch { return; }
+    if (!isValidXmlUrl(trimmed)) return;
     try {
       const { data, error } = await supabase.functions.invoke("fetch-rss", {
         body: { url: xmlUrl.trim() },
@@ -414,14 +454,14 @@ export default function MusicaNoAr() {
         setOnlineError(`Erro de rede: ${err?.message || "conexão recusada"}`);
       }
     }
-  }, [xmlUrl, processMusic]);
+  }, [isOnlineSelected, xmlUrl, processMusic]);
 
   useEffect(() => {
-    if (!xmlUrl.trim()) return;
+    if (!isOnlineSelected || !hasValidOnlineUrl) return;
     fetchXml();
     fetchIntervalRef.current = setInterval(fetchXml, 5000);
     return () => { if (fetchIntervalRef.current) clearInterval(fetchIntervalRef.current); };
-  }, [fetchXml]);
+  }, [fetchXml, hasValidOnlineUrl, isOnlineSelected]);
 
   // Background sync: upload to storage + log history (non-blocking)
   const syncingRef = useRef(false);
@@ -540,16 +580,16 @@ export default function MusicaNoAr() {
     setLocalMonitoring(true);
   };
 
-  // Local polling — always active when monitoring (unified mode, no sourceMode guard)
+  // Local polling — active only when local source is selected
   useEffect(() => {
-    if (!localMonitoring) {
+    if (!localMonitoring || !isLocalSelected) {
       if (localPollRef.current) clearInterval(localPollRef.current);
       return;
     }
     if (!localFileRef.current && !fileHandleRef.current) return;
     localPollRef.current = setInterval(readLocalFile, 1000);
     return () => { if (localPollRef.current) clearInterval(localPollRef.current); };
-  }, [localMonitoring, readLocalFile]);
+  }, [isLocalSelected, localMonitoring, readLocalFile]);
 
   useEffect(() => {
     if (!music || !startTime) return;
@@ -581,6 +621,18 @@ export default function MusicaNoAr() {
   }, [rawProgress]);
 
   const progress = sliderResetting ? 0 : rawProgress;
+
+  const toggleOnlineSource = () => {
+    if (!hasValidOnlineUrl) return;
+    const nextMode = buildSourceMode(!isOnlineSelected, isLocalSelected);
+    void setSourceMode(nextMode);
+  };
+
+  const toggleLocalSource = () => {
+    if (!hasValidLocalSource) return;
+    const nextMode = buildSourceMode(isOnlineSelected, !isLocalSelected);
+    void setSourceMode(nextMode);
+  };
 
   const isBreak = !!(music && (
     music.titulo.toUpperCase().trim() === "BREAK" ||
@@ -619,7 +671,7 @@ export default function MusicaNoAr() {
   }
 
   const preferredSource = sourceStats.online >= sourceStats.pasta ? "online" : "pasta";
-  const bothActive = !!(xmlUrl.trim() && localMonitoring);
+  const bothActive = isOnlineSelected && isLocalSelected;
 
   return (
     <div className="animate-fade-in space-y-3">
@@ -838,41 +890,45 @@ export default function MusicaNoAr() {
                 <div className="flex gap-1.5">
                   <div className="flex-1 flex items-center gap-2 px-3 py-2 rounded-lg" style={{ backgroundColor: "#ffffff", border: "1px solid #c5d9f2" }}>
                     <Globe size={14} style={{ color: "#7c8db5" }} />
-                    {editingUrl ? (
-                      <input
-                        value={tempUrl}
-                        onChange={(e) => setTempUrl(e.target.value)}
-                        className="flex-1 text-xs outline-none bg-transparent"
-                        style={{ color: "#0d0446" }}
-                        placeholder="URL do XML"
-                        autoFocus
-                      />
-                    ) : (
-                      <span className="flex-1 text-xs truncate" style={{ color: xmlUrl === DEFAULT_XML_URL ? "#7c8db5" : "#0d0446" }}>{xmlUrl}</span>
-                    )}
+                    <input
+                      value={xmlUrl}
+                      onChange={(e) => {
+                        const nextValue = e.target.value;
+                        setXmlUrl(nextValue);
+                        if (!nextValue.trim() || isValidXmlUrl(nextValue)) {
+                          setOnlineError(null);
+                        }
+                      }}
+                      className="flex-1 text-xs outline-none bg-transparent"
+                      style={{ color: "#0d0446" }}
+                      placeholder="Cole ou digite uma URL .xml"
+                    />
                   </div>
-                  {editingUrl ? (
-                    <button onClick={() => { saveUrl(tempUrl); setEditingUrl(false); }} className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: "#0d0446", color: "#ffffff" }}>
-                      <Check size={16} />
-                    </button>
-                  ) : (
-                    <button onClick={() => { setTempUrl(xmlUrl); setEditingUrl(true); }} className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: "#0d0446", color: "#ffffff" }}>
-                      <Pencil size={14} />
-                    </button>
-                  )}
-                  <label className="flex items-center gap-1.5 px-3 py-2 rounded-lg cursor-pointer select-none shrink-0" style={{ backgroundColor: "#0d0446", color: "#ffffff" }}>
+                  <button onClick={() => void saveUrl(xmlUrl)} className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: "#0d0446", color: "#ffffff" }}>
+                    <Check size={16} />
+                  </button>
+                  <label
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg select-none shrink-0 text-white"
+                    style={{
+                      backgroundColor: "#0d0446",
+                      color: "hsl(0 0% 100%)",
+                      opacity: hasValidOnlineUrl ? 1 : 0.45,
+                      cursor: hasValidOnlineUrl ? "pointer" : "not-allowed",
+                    }}
+                  >
                     <input
                       type="checkbox"
-                      checked={sourceMode === "online"}
-                      onChange={() => setSourceMode(sourceMode === "online" ? "pasta" : "online")}
+                      checked={isOnlineSelected}
+                      onChange={toggleOnlineSource}
+                      disabled={!hasValidOnlineUrl}
                       className="w-3.5 h-3.5 accent-white"
                     />
-                    <span className="text-[10px] font-bold whitespace-nowrap">LER SOMENTE ESSA</span>
+                    <span className="text-[10px] font-bold whitespace-nowrap text-white">LER SOMENTE ESSA</span>
                   </label>
                 </div>
 
                 {/* Status bar */}
-                {lastSource === "online" ? (
+                {isOnlineSelected && lastSource === "online" ? (
                   <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: "linear-gradient(90deg, #22c55e 0%, #4ade80 100%)", color: "#ffffff" }}>
                     <span className="relative flex h-2 w-2">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 bg-white" />
@@ -895,8 +951,16 @@ export default function MusicaNoAr() {
               </div>
 
               {/* ── CENTER DIVIDER ── */}
-              <div className="flex flex-col items-center justify-center px-3" style={{ minWidth: 100 }}>
-                <div className={`rounded-xl px-3 py-4 flex flex-col items-center gap-2 ${bothActive ? "animate-pulse" : ""}`} style={{ backgroundColor: "#0d0446", color: "#ffffff" }}>
+                <div className="flex flex-col items-center justify-center px-3" style={{ minWidth: 100 }}>
+                  <div
+                    className={`rounded-xl px-3 py-4 flex flex-col items-center gap-2 ${bothActive ? "music-dual-monitor-blink" : ""}`}
+                    style={{
+                      background: bothActive
+                        ? "linear-gradient(135deg, hsl(142 72% 26%) 0%, hsl(142 72% 42%) 100%)"
+                        : "hsl(246 69% 16%)",
+                      color: "hsl(0 0% 100%)",
+                    }}
+                  >
                   <span className="text-[9px] font-black uppercase tracking-wider text-center leading-tight">Monitorar<br/>os dois<br/>Sources</span>
                   <span className="text-lg">↔</span>
                 </div>
@@ -923,14 +987,23 @@ export default function MusicaNoAr() {
                   >
                     <Upload size={14} />
                   </button>
-                  <label className="flex items-center gap-1.5 px-3 py-2 rounded-lg cursor-pointer select-none shrink-0" style={{ backgroundColor: "#0d0446", color: "#ffffff" }}>
+                  <label
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg select-none shrink-0 text-white"
+                    style={{
+                      backgroundColor: "#0d0446",
+                      color: "hsl(0 0% 100%)",
+                      opacity: hasValidLocalSource ? 1 : 0.45,
+                      cursor: hasValidLocalSource ? "pointer" : "not-allowed",
+                    }}
+                  >
                     <input
                       type="checkbox"
-                      checked={sourceMode === "pasta"}
-                      onChange={() => setSourceMode(sourceMode === "pasta" ? "online" : "pasta")}
+                      checked={isLocalSelected}
+                      onChange={toggleLocalSource}
+                      disabled={!hasValidLocalSource}
                       className="w-3.5 h-3.5 accent-white"
                     />
-                    <span className="text-[10px] font-bold whitespace-nowrap">LER SOMENTE ESSA</span>
+                    <span className="text-[10px] font-bold whitespace-nowrap text-white">LER SOMENTE ESSA</span>
                   </label>
                 </div>
 
@@ -944,7 +1017,7 @@ export default function MusicaNoAr() {
                 )}
 
                 {/* Status bar */}
-                {lastSource === "pasta" ? (
+                {isLocalSelected && lastSource === "pasta" ? (
                   <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: "linear-gradient(90deg, #22c55e 0%, #4ade80 100%)", color: "#ffffff" }}>
                     <span className="relative flex h-2 w-2">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 bg-white" />
