@@ -65,6 +65,9 @@ function analyzeContrast(colors: LayoutColors): ContrastIssue[] {
     { label: "Texto dos botões sobre fundo dos botões", textKey: "buttonText", textColor: colors.buttonText, bgColor: colors.buttonBg },
     { label: "Links sobre fundo da página", textKey: "linkColor", textColor: colors.linkColor, bgColor: colors.pageBg },
     { label: "Cor de destaque sobre fundo da página", textKey: "accentColor", textColor: colors.accentColor, bgColor: colors.pageBg },
+    { label: "Texto da navegação sobre fundo da navegação", textKey: "navText", textColor: colors.navText, bgColor: colors.navBg },
+    { label: "Texto dos widgets sobre fundo dos widgets", textKey: "widgetText", textColor: colors.widgetText, bgColor: colors.widgetBg },
+    { label: "Ícones sobre fundo dos widgets", textKey: "iconColor", textColor: colors.iconColor, bgColor: colors.widgetBg },
   ];
   for (const pair of pairs) {
     if (!/^#[0-9a-fA-F]{6}$/.test(pair.textColor) || !/^#[0-9a-fA-F]{6}$/.test(pair.bgColor)) continue;
