@@ -1025,12 +1025,12 @@ function MusicProgramWidget() {
 
       {/* Current Program */}
       {currentProgram && (
-        <div key={`prog-${programKey}`} className="flex items-center gap-3 mb-3 px-3 py-2.5 rounded-xl animate-fade-in" style={{ background: "rgba(190,1,1,0.06)" }}>
+        <div key={`prog-${programKey}`} className="flex items-center gap-3 mb-3 px-3 py-2.5 rounded-xl animate-fade-in" style={{ background: `color-mix(in srgb, var(--layout-button-bg, #333) 6%, transparent)` }}>
           {apresentador?.foto ? (
-            <img src={apresentador.foto} alt="" className="w-10 h-10 rounded-full object-cover flex-shrink-0 border-2 border-[#be0101]/30" />
+            <img src={apresentador.foto} alt="" className="w-10 h-10 rounded-full object-cover flex-shrink-0" style={{ border: `2px solid color-mix(in srgb, var(--layout-button-bg, #333) 30%, transparent)` }} />
           ) : (
-            <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "rgba(190,1,1,0.15)" }}>
-              <Mic2 size={14} className="text-[#be0101]" />
+            <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: `color-mix(in srgb, var(--layout-button-bg, #333) 15%, transparent)` }}>
+              <Mic2 size={14} style={{ color: "var(--layout-icon-color, #888)" }} />
             </div>
           )}
           <div className="min-w-0 flex-1">
