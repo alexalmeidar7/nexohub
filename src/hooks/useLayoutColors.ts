@@ -129,19 +129,28 @@ export function useLayoutColors() {
     const accentHsl = hexToHsl(colors.accentColor);
     if (accentHsl) {
       root.style.setProperty("--player-accent", accentHsl);
-      // Darker hover variant
       const hoverHsl = hexToHsl(colors.accentColor, -7);
       if (hoverHsl) root.style.setProperty("--player-accent-hover", hoverHsl);
       root.style.setProperty("--player-accent-soft", accentHsl);
     }
 
-    // Update player glow/bg from homeBgColor
+    // Update player bg from homeBgColor
     const bgHsl = hexToHsl(colors.homeBgColor);
     if (bgHsl) {
       root.style.setProperty("--player-bg", bgHsl);
     }
 
-    // Update header gradient for modules (roteiro, etc.)
+    // Player glow: CSS gradient instead of image, using accent + bg colors
+    const glowGradient = `radial-gradient(ellipse at 30% 50%, ${colors.accentColor}33 0%, ${colors.homeBgColor} 60%, ${colors.navBg} 100%)`;
+    root.style.setProperty("--player-glow", glowGradient);
+    root.style.setProperty("--player-glow-corner", glowGradient);
+
+    // Widget bg for presenter card, etc.
+    root.style.setProperty("--layout-widget-bg-hex", colors.widgetBg);
+    root.style.setProperty("--layout-accent-hex", colors.accentColor);
+    root.style.setProperty("--layout-button-bg-hex", colors.buttonBg);
+
+    // Header HSL for module headers
     const headerHsl = hexToHsl(colors.headerBg);
     if (headerHsl) {
       root.style.setProperty("--layout-header-hsl", headerHsl);
