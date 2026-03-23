@@ -188,7 +188,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       .select("thumb")
       .eq("id", current.id)
       .maybeSingle();
-    return thumbData?.thumb || null;
+    // Fallback to empresa background if no program thumb
+    if (thumbData?.thumb) return thumbData.thumb;
+    return null;
   }, [user]);
 
   // Single batched initial load — all queries in parallel (NO thumb in batch)
@@ -232,8 +234,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       // Fetch thumb AFTER initial load (non-blocking, only for current program)
       const thumb = await findCurrentOnAirThumb();
       if (!cancelled) {
-        prevThumbRef.current = thumb;
-        setOnAirThumb(thumb);
+        // Fallback: use empresa background image if no program thumb
+        const finalThumb = thumb || cfg.backgroundUrl || null;
+        prevThumbRef.current = finalThumb;
+        setOnAirThumb(finalThumb);
       }
     };
 
@@ -349,10 +353,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       return { backgroundImage: `url(${layoutColors.homeBgImage})`, backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat" } as React.CSSProperties;
     }
     if (layoutColors.homeBgColor && layoutColors.homeBgColor !== defaultLayoutColors.homeBgColor) {
-      return { backgroundColor: layoutColors.homeBgColor } as React.CSSProperties;
+      return { background: `linear-gradient(135deg, ${layoutColors.homeBgColor} 0%, #000000 100%)` } as React.CSSProperties;
     }
-    // Default: vivid red → black gradient (top-right → bottom-left)
-    return { background: "linear-gradient(to bottom left, #be0101, #000000)" } as React.CSSProperties;
+    // Default: grayscale gradient
+    return { background: "linear-gradient(135deg, #333333 0%, #000000 100%)" } as React.CSSProperties;
   })();
 
   return (

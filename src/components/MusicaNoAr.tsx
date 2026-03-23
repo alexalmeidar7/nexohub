@@ -217,7 +217,7 @@ export default function MusicaNoAr() {
   const [lastSource, setLastSource] = useState<"online" | "pasta" | null>(null);
   const [sourceStats, setSourceStats] = useState<{ online: number; pasta: number }>({ online: 0, pasta: 0 });
   const lastSourceRef = useRef<"online" | "pasta" | null>(null);
-  const [showConfig, setShowConfig] = useState(false);
+  const [showConfig, setShowConfig] = useState(true);
 
   // Source health tracking — tracks last SUCCESSFUL response (not song change)
   const lastOnlineSuccessRef = useRef<number>(Date.now());
@@ -830,6 +830,20 @@ export default function MusicaNoAr() {
 
         {showConfig && (
           <div className="p-4 space-y-4">
+            {/* Dual source indicator */}
+            {bothActive && (
+              <div className="flex items-center justify-center gap-2 py-2 rounded-xl animate-pulse" style={{ backgroundColor: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.25)" }}>
+                <span className="relative flex h-2.5 w-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: "#22c55e" }} />
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5" style={{ backgroundColor: "#22c55e" }} />
+                </span>
+                <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#16a34a" }}>Monitorando os dois sources</span>
+                <span className="relative flex h-2.5 w-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: "#22c55e" }} />
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5" style={{ backgroundColor: "#22c55e" }} />
+                </span>
+              </div>
+            )}
             {/* Two columns: Online | Local */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Online */}

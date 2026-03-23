@@ -263,6 +263,16 @@ export default function LogosPatrocinadoresPage() {
     return `${base}/functions/v1/serve-xml-logos?user_id=${user.id}`;
   }, [user?.id]);
 
+  // LOGOS ALL: flat list of all active logos (no program grouping)
+  const logosAllXmlContent = useMemo(() => {
+    if (!logos.length) return "";
+    const entries = logos.filter(l => l.ativo).map(l => {
+      const progName = programas.find(p => p.id === l.programa_id)?.nome || "Sem programa";
+      return `  <logo>\n    <cliente>${(l.nome || "").replace(/&/g, "&amp;").replace(/</g, "&lt;")}</cliente>\n    <url>${l.logo_url}</url>\n  </logo>`;
+    });
+    return `<?xml version="1.0" encoding="UTF-8"?>\n<logos_all>\n${entries.join("\n")}\n</logos_all>`;
+  }, [logos, programas]);
+
   if (loading) {
     return <ModulePageSkeleton />;
   }
@@ -279,8 +289,9 @@ export default function LogosPatrocinadoresPage() {
             <h3 className="text-base font-bold" style={{ color: "#0d0446" }}>Logos de Patrocinadores</h3>
             <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.5)" }}>Gerencie as logos vinculadas aos programas</p>
           </div>
-          <div className="flex-1 ml-4">
+          <div className="flex-1 ml-4 space-y-1">
             {logosXmlUrl && <XmlLinkRow label="XML LOGOS" permanentUrl={logosXmlUrl} dark />}
+            {logosAllXmlContent && <XmlLinkRow label="LOGOS ALL" xmlContent={logosAllXmlContent} dark />}
           </div>
         </div>
 

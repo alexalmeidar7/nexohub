@@ -63,7 +63,7 @@ export default function PreRollPage() {
   // New fields
   const [backgroundFile, setBackgroundFile] = useState<File | null>(null);
   const [backgroundPreview, setBackgroundPreview] = useState("");
-  const [aspectRatio, setAspectRatio] = useState<"16:9" | "9:16">("16:9");
+  const [aspectRatio, setAspectRatio] = useState<"16:9" | "9:16" | "full">("16:9");
   const [videoPosition, setVideoPosition] = useState<"center" | "left" | "right">("center");
   const [showPreview, setShowPreview] = useState(false);
   const [isMidroll, setIsMidroll] = useState(false);
@@ -172,7 +172,7 @@ export default function PreRollPage() {
     setDataInicial(p.data_inicial ? new Date(p.data_inicial + "T00:00:00") : undefined);
     setDataFinal(p.data_final ? new Date(p.data_final + "T00:00:00") : undefined);
     setBackgroundPreview(p.background_url || ""); setBackgroundFile(null);
-    setAspectRatio((p.aspect_ratio as "16:9" | "9:16") || "16:9");
+    setAspectRatio((p.aspect_ratio as "16:9" | "9:16" | "full") || "16:9");
     setVideoPosition((p.video_position as "center" | "left" | "right") || "center");
     setShowPreview(false);
     setIsMidroll((p as any).is_midroll || false);
@@ -324,7 +324,7 @@ export default function PreRollPage() {
               <div>
                 <label className="text-xs font-semibold block mb-2" style={{ color: "#0d0446" }}>Proporção do Vídeo</label>
                 <div className="flex gap-3">
-                  {(["16:9", "9:16"] as const).map((ratio) => (
+                  {(["16:9", "9:16", "full"] as const).map((ratio) => (
                     <button key={ratio} type="button" onClick={() => setAspectRatio(ratio)}
                       className="flex flex-col items-center gap-1.5 p-3 rounded-xl transition-all"
                       style={{
@@ -335,13 +335,15 @@ export default function PreRollPage() {
                       <div
                         className="rounded"
                         style={{
-                          width: ratio === "16:9" ? 48 : 24,
-                          height: ratio === "16:9" ? 27 : 42,
+                          width: ratio === "16:9" ? 48 : ratio === "9:16" ? 24 : 48,
+                          height: ratio === "16:9" ? 27 : ratio === "9:16" ? 42 : 32,
                           backgroundColor: aspectRatio === ratio ? "#0d0446" : "rgba(13,4,70,0.15)",
                           transition: "background-color 0.2s",
                         }}
                       />
-                      <span className="text-[10px] font-bold" style={{ color: aspectRatio === ratio ? "#0d0446" : "rgba(13,4,70,0.4)" }}>{ratio}</span>
+                      <span className="text-[10px] font-bold" style={{ color: aspectRatio === ratio ? "#0d0446" : "rgba(13,4,70,0.4)" }}>
+                        {ratio === "full" ? "Full" : ratio}
+                      </span>
                     </button>
                   ))}
                 </div>
