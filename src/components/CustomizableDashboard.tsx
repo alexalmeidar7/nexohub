@@ -403,8 +403,8 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
             {/* Música tocando */}
             {currentMusic && (
               <div className="flex items-center gap-1.5">
-                <Music size={12} style={{ color: "#be0101" }} />
-                <span className="text-white text-[11px]">
+                <Music size={12} style={{ color: "var(--layout-icon-color, #888)" }} />
+                <span className="text-[11px]" style={{ color: "var(--layout-nav-text, #fff)" }}>
                   {currentMusic.titulo}{currentMusic.artista ? ` — ${currentMusic.artista}` : ""}
                 </span>
               </div>
