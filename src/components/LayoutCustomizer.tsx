@@ -65,6 +65,9 @@ function analyzeContrast(colors: LayoutColors): ContrastIssue[] {
     { label: "Texto dos botões sobre fundo dos botões", textKey: "buttonText", textColor: colors.buttonText, bgColor: colors.buttonBg },
     { label: "Links sobre fundo da página", textKey: "linkColor", textColor: colors.linkColor, bgColor: colors.pageBg },
     { label: "Cor de destaque sobre fundo da página", textKey: "accentColor", textColor: colors.accentColor, bgColor: colors.pageBg },
+    { label: "Texto da navegação sobre fundo da navegação", textKey: "navText", textColor: colors.navText, bgColor: colors.navBg },
+    { label: "Texto dos widgets sobre fundo dos widgets", textKey: "widgetText", textColor: colors.widgetText, bgColor: colors.widgetBg },
+    { label: "Ícones sobre fundo dos widgets", textKey: "iconColor", textColor: colors.iconColor, bgColor: colors.widgetBg },
   ];
   for (const pair of pairs) {
     if (!/^#[0-9a-fA-F]{6}$/.test(pair.textColor) || !/^#[0-9a-fA-F]{6}$/.test(pair.bgColor)) continue;
@@ -89,6 +92,12 @@ interface LayoutColors {
   buttonText: string;
   linkColor: string;
   accentColor: string;
+  navBg: string;
+  navText: string;
+  widgetBg: string;
+  widgetText: string;
+  iconColor: string;
+  borderColor: string;
   homeBgType: "color" | "image";
   homeBgColor: string;
   homeBgImage: string;
@@ -103,6 +112,12 @@ const defaultColors: LayoutColors = {
   buttonText: "#ffffff",
   linkColor: "#555555",
   accentColor: "#444444",
+  navBg: "#000000",
+  navText: "#ffffff",
+  widgetBg: "#1a1a1a",
+  widgetText: "#ffffff",
+  iconColor: "#888888",
+  borderColor: "#333333",
   homeBgType: "color",
   homeBgColor: "#1a1a1a",
   homeBgImage: "",
@@ -117,6 +132,12 @@ const colorLabels: Record<string, string> = {
   buttonText: "Texto dos Botões",
   linkColor: "Cor dos Links",
   accentColor: "Cor de Destaque",
+  navBg: "Fundo da Navegação",
+  navText: "Texto da Navegação",
+  widgetBg: "Fundo dos Widgets",
+  widgetText: "Texto dos Widgets",
+  iconColor: "Cor dos Ícones",
+  borderColor: "Cor das Bordas",
 };
 
 function ColorInput({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {

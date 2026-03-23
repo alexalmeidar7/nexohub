@@ -11,6 +11,12 @@ export interface LayoutColors {
   buttonText: string;
   linkColor: string;
   accentColor: string;
+  navBg: string;
+  navText: string;
+  widgetBg: string;
+  widgetText: string;
+  iconColor: string;
+  borderColor: string;
   homeBgType: "color" | "image";
   homeBgColor: string;
   homeBgImage: string;
@@ -25,6 +31,12 @@ export const defaultLayoutColors: LayoutColors = {
   buttonText: "#ffffff",
   linkColor: "#555555",
   accentColor: "#444444",
+  navBg: "#000000",
+  navText: "#ffffff",
+  widgetBg: "#1a1a1a",
+  widgetText: "#ffffff",
+  iconColor: "#888888",
+  borderColor: "#333333",
   homeBgType: "color",
   homeBgColor: "#1a1a1a",
   homeBgImage: "",
@@ -81,6 +93,12 @@ export function useLayoutColors() {
     root.style.setProperty("--layout-button-text", colors.buttonText);
     root.style.setProperty("--layout-link-color", colors.linkColor);
     root.style.setProperty("--layout-accent-color", colors.accentColor);
+    root.style.setProperty("--layout-nav-bg", colors.navBg);
+    root.style.setProperty("--layout-nav-text", colors.navText);
+    root.style.setProperty("--layout-widget-bg", colors.widgetBg);
+    root.style.setProperty("--layout-widget-text", colors.widgetText);
+    root.style.setProperty("--layout-icon-color", colors.iconColor);
+    root.style.setProperty("--layout-border-color", colors.borderColor);
     root.style.setProperty("--layout-home-bg-color", colors.homeBgColor);
   }, [colors]);
 

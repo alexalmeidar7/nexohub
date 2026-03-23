@@ -389,13 +389,13 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="p-2 rounded-lg" style={{ backgroundColor: "rgba(0,0,0,0.4)" }}>
           {mobileMenuOpen ? <X size={20} className="text-white" /> : <Menu size={20} className="text-white" />}
         </button>
-        <h1 className="text-white font-bold text-lg truncate flex-1 ml-3">{empresa.nome || "Dashboard"}</h1>
+        <h1 className="font-bold text-lg truncate flex-1 ml-3" style={{ color: layoutColors.navText }}>{empresa.nome || "Dashboard"}</h1>
         <button
           onClick={onLogout}
           className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold transition-all mr-2"
-          style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "#ffffff" }}
+          style={{ backgroundColor: `${layoutColors.navText}26`, color: layoutColors.navText }}
           onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#dc2626"; }}
-          onMouseLeave={e => { e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.15)"; }}
+          onMouseLeave={e => { e.currentTarget.style.backgroundColor = `${layoutColors.navText}26`; }}
         >
           <LogOut size={10} /> Sair
         </button>
@@ -405,7 +405,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       {/* Mobile menu overlay */}
       {mobileMenuOpen && (
         <div className="lg:hidden fixed inset-0 z-50 flex">
-          <div className="w-[280px] flex flex-col h-full overflow-y-auto" style={{ background: "rgba(0, 0, 0, 0.45)", backdropFilter: "blur(32px) saturate(1.5)", WebkitBackdropFilter: "blur(32px) saturate(1.5)", borderRight: "1px solid rgba(255,255,255,0.1)" }}>
+          <div className="w-[280px] flex flex-col h-full overflow-y-auto" style={{ background: `${layoutColors.navBg}73`, backdropFilter: "blur(32px) saturate(1.5)", WebkitBackdropFilter: "blur(32px) saturate(1.5)", borderRight: `1px solid ${layoutColors.borderColor}1a` }}>
             <div className="flex items-center justify-between px-4 pt-3 pb-2">
               <img src={seloNexohub} alt="NexoHUB" className="h-4" />
               <button onClick={() => setMobileMenuOpen(false)} className="p-1.5 rounded-full" style={{ backgroundColor: layoutColors.buttonBg }}>
@@ -431,7 +431,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                       aria-label={item.label}
                       role="menuitem"
                     >
-                      <Icon size={16} className={active ? "" : "text-white"} style={active ? { color: layoutColors.buttonBg } : {}} />
+                      <Icon size={16} style={{ color: active ? layoutColors.iconColor : layoutColors.navText }} />
                       <span className="flex-1 text-left">{item.label}</span>
                       {item.children && (expanded ? <ChevronUp size={12} className="text-white/30" /> : <ChevronDown size={12} className="text-white/30" />)}
                     </button>
@@ -446,7 +446,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                               aria-label={child.label}
                               role="menuitem"
                             >
-                              <ChildIcon size={12} className={childActive ? "" : "text-white"} style={childActive ? { color: layoutColors.buttonBg } : {}} />
+                              <ChildIcon size={12} style={{ color: childActive ? layoutColors.iconColor : layoutColors.navText }} />
                               <span>{child.label}</span>
                             </button>
                           );
@@ -457,13 +457,13 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 );
               })}
             </nav>
-            <div className="px-4 py-4 border-t border-white/10">
+            <div className="px-4 py-4" style={{ borderTop: `1px solid ${layoutColors.borderColor}1a` }}>
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style={{ backgroundColor: layoutColors.buttonBg }}>
+                <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0" style={{ backgroundColor: layoutColors.buttonBg, color: layoutColors.buttonText }}>
                   {empresa.nome ? empresa.nome.charAt(0).toUpperCase() : "U"}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-white text-xs font-bold truncate">{empresa.nome || "Empresa"}</p>
+                  <p className="text-xs font-bold truncate" style={{ color: layoutColors.navText }}>{empresa.nome || "Empresa"}</p>
                   <button onClick={onLogout} className="text-[10px] underline hover:opacity-70 mt-0.5" style={{ color: layoutColors.buttonBg }}>sair</button>
                 </div>
               </div>
@@ -479,11 +479,11 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         <div
           className="flex items-center px-2 lg:px-2 xl:px-5 py-2 xl:py-2.5 flex-shrink min-w-0"
           style={{
-            background: "rgba(0, 0, 0, 0.85)",
+            background: `${layoutColors.navBg}d9`,
             backdropFilter: "blur(20px) saturate(1.6)",
             WebkitBackdropFilter: "blur(20px) saturate(1.6)",
             borderRadius: "16px",
-            border: "1px solid rgba(255,255,255,0.1)",
+            border: `1px solid ${layoutColors.borderColor}33`,
             boxShadow: "0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.06)",
           }}
         >
@@ -528,11 +528,11 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                       }}
                       className="flex items-center gap-1 xl:gap-1.5 text-[11px] font-semibold py-1.5 lg:py-1 px-1.5 lg:px-2 xl:px-1.5 rounded-lg transition-all whitespace-nowrap"
                       style={{
-                        color: active ? "#ffffff" : "rgba(255,255,255,0.6)",
+                        color: active ? layoutColors.navText : `${layoutColors.navText}99`,
                         backgroundColor: active ? `${layoutColors.buttonBg}59` : "transparent",
                       }}
-                      onMouseEnter={e => { if (!active) { e.currentTarget.style.color = "#ffffff"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.08)"; } }}
-                      onMouseLeave={e => { if (!active) { e.currentTarget.style.color = "rgba(255,255,255,0.6)"; e.currentTarget.style.backgroundColor = "transparent"; } }}
+                      onMouseEnter={e => { if (!active) { e.currentTarget.style.color = layoutColors.navText; e.currentTarget.style.backgroundColor = `${layoutColors.navText}14`; } }}
+                      onMouseLeave={e => { if (!active) { e.currentTarget.style.color = `${layoutColors.navText}99`; e.currentTarget.style.backgroundColor = "transparent"; } }}
                     >
                       <Icon size={14} className="flex-shrink-0" />
                       <span className="hidden xl:inline">{item.label}</span>
@@ -548,10 +548,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                     <div
                       className="rounded-xl py-1.5 min-w-[180px]"
                       style={{
-                        background: "rgba(0, 0, 0, 0.80)",
+                        background: `${layoutColors.navBg}cc`,
                         backdropFilter: "blur(24px) saturate(1.4)",
                         WebkitBackdropFilter: "blur(24px) saturate(1.4)",
-                        border: "1px solid rgba(255,255,255,0.08)",
+                        border: `1px solid ${layoutColors.borderColor}22`,
                         boxShadow: "0 12px 32px rgba(0,0,0,0.5)",
                       }}
                     >
@@ -560,9 +560,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                           key={child.label}
                           onClick={() => handleChildClick(child, item.label)}
                           className="w-full text-left px-4 py-2 text-[11px] transition-all rounded-lg mx-0"
-                          style={{ color: child.page && currentPage === child.page ? layoutColors.buttonBg : "rgba(255,255,255,0.8)" }}
-                          onMouseEnter={e => { if (!(child.page && currentPage === child.page)) { e.currentTarget.style.color = layoutColors.buttonBg; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.05)"; } }}
-                          onMouseLeave={e => { if (!(child.page && currentPage === child.page)) { e.currentTarget.style.color = "rgba(255,255,255,0.8)"; e.currentTarget.style.backgroundColor = "transparent"; } }}
+                          style={{ color: child.page && currentPage === child.page ? layoutColors.buttonBg : `${layoutColors.navText}cc` }}
+                          onMouseEnter={e => { if (!(child.page && currentPage === child.page)) { e.currentTarget.style.color = layoutColors.buttonBg; e.currentTarget.style.backgroundColor = `${layoutColors.navText}0d`; } }}
+                          onMouseLeave={e => { if (!(child.page && currentPage === child.page)) { e.currentTarget.style.color = `${layoutColors.navText}cc`; e.currentTarget.style.backgroundColor = "transparent"; } }}
                         >
                           {child.label}
                         </button>
@@ -585,11 +585,11 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               <button
                 onClick={() => setCurrentPage("configuracoes")}
                 className="w-8 h-8 rounded-full flex items-center justify-center transition-all"
-                style={{ backgroundColor: "rgba(255,255,255,0.1)" }}
-                onMouseEnter={e => { e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.2)"; }}
-                onMouseLeave={e => { e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.1)"; }}
+                style={{ backgroundColor: `${layoutColors.navText}1a` }}
+                onMouseEnter={e => { e.currentTarget.style.backgroundColor = `${layoutColors.navText}33`; }}
+                onMouseLeave={e => { e.currentTarget.style.backgroundColor = `${layoutColors.navText}1a`; }}
               >
-                <Settings size={14} className="text-white/70" />
+                <Settings size={14} style={{ color: `${layoutColors.navText}b3` }} />
               </button>
             </TooltipTrigger>
             <TooltipContent side="bottom"><p className="text-xs">Configurações</p></TooltipContent>
@@ -609,8 +609,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
       {/* Company name below menu */}
       <div className="hidden lg:block px-4 xl:px-8 pt-2 relative z-[50]">
-        <h1 className="font-bold text-white text-base xl:text-lg leading-tight truncate">{empresa.nome || "Dashboard"}</h1>
-        <p className="text-[10px] truncate" style={{ color: "rgba(255,255,255,0.4)" }}>{user?.email || ""}</p>
+        <h1 className="font-bold text-base xl:text-lg leading-tight truncate" style={{ color: layoutColors.navText }}>{empresa.nome || "Dashboard"}</h1>
+        <p className="text-[10px] truncate" style={{ color: `${layoutColors.navText}66` }}>{user?.email || ""}</p>
       </div>
 
       <div className="flex gap-4 lg:gap-[30px] pt-3 flex-1 min-h-0 px-3 sm:px-4 lg:px-4 xl:px-8 relative z-[1]">
@@ -630,7 +630,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               >
                 <ChevronUp size={14} className="rotate-[-90deg]" /> Voltar
               </button>
-              <span className="text-white font-semibold text-sm">{pageTitle[currentPage]}</span>
+              <span style={{ color: layoutColors.navText }} className="font-semibold text-sm">{pageTitle[currentPage]}</span>
             </div>
           )}
           <div className={`flex-1 overflow-y-auto overflow-x-hidden rounded-xl lg:rounded-2xl ${currentPage !== "dashboard" ? "mv-content-area" : ""}`} style={currentPage === "dashboard" ? {} : { padding: "0.75rem" }}>
@@ -663,7 +663,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       {/* === FOOTER === */}
       <footer className="flex flex-col items-center gap-1 px-4 pb-3 pt-3 relative z-[1]">
         <img src={logoFooter} alt="Nexo" className="h-5 opacity-80" />
-        <span className="text-white/60 text-[10px]">Copyrighted 2026 - Todos os direitos reservados.</span>
+        <span className="text-[10px]" style={{ color: `${layoutColors.navText}99` }}>Copyrighted 2026 - Todos os direitos reservados.</span>
       </footer>
     </div>
   );
@@ -787,19 +787,13 @@ function DashboardHome({ empresa, onNavigate }: { empresa: import("./Configuraco
             draggedId === widget.id ? "opacity-50 scale-95" : ""
           } ${dragOverId === widget.id ? "ring-2" : ""}`}
            style={{
-             ...(widget.bg === "glass-dark" ? {
-               background: "rgba(12, 4, 65, 0.6)",
-               backdropFilter: "blur(24px) saturate(1.4)",
-               WebkitBackdropFilter: "blur(24px) saturate(1.4)",
-               boxShadow: "0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1)",
-               border: "1px solid rgba(255,255,255,0.12)",
-             } : {
-               background: "rgba(255, 255, 255, 0.12)",
-               backdropFilter: "blur(24px) saturate(1.4)",
-               WebkitBackdropFilter: "blur(24px) saturate(1.4)",
-               boxShadow: "0 8px 32px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.15)",
-               border: "1px solid rgba(255,255,255,0.15)",
-             }),
+             background: widget.bg === "glass-dark"
+               ? "color-mix(in srgb, var(--layout-widget-bg, #1a1a1a) 60%, transparent)"
+               : "color-mix(in srgb, var(--layout-widget-bg, #1a1a1a) 20%, transparent)",
+             backdropFilter: "blur(24px) saturate(1.4)",
+             WebkitBackdropFilter: "blur(24px) saturate(1.4)",
+             boxShadow: "0 8px 32px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.1)",
+             border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)",
            }}
           onDragOver={(e) => handleDragOver(e, widget.id)}
           onDrop={(e) => handleDrop(e, widget.id)}
@@ -833,9 +827,9 @@ function ServerClock() {
 
   return (
     <div className="text-right">
-      <span className="font-light text-white tracking-wider inline-flex items-start" style={{ fontFamily: "Poppins, sans-serif", fontSize: "45px", lineHeight: 1.1 }}>
+      <span className="font-light tracking-wider inline-flex items-start" style={{ fontFamily: "Poppins, sans-serif", fontSize: "45px", lineHeight: 1.1, color: "var(--layout-nav-text, #ffffff)" }}>
         {hours}
-        <span className="font-light text-white/70 inline-block" style={{ fontSize: "18px", width: "28px", textAlign: "left", marginTop: "4px" }}>{seconds}</span>
+        <span className="font-light inline-block" style={{ fontSize: "18px", width: "28px", textAlign: "left", marginTop: "4px", color: "var(--layout-nav-text, #ffffff)", opacity: 0.7 }}>{seconds}</span>
       </span>
     </div>
   );
@@ -1120,11 +1114,11 @@ function ComercialWidgets() {
   return (
     <div>
       <div className="flex items-center justify-between mb-2">
-        <p className="text-xs font-bold text-white">🏆 Patrocinadores Ativos</p>
-        <span className="text-[10px] font-semibold text-white/70">no ar</span>
+        <p className="text-xs font-bold" style={{ color: "var(--layout-widget-text, #ffffff)" }}>🏆 Patrocinadores Ativos</p>
+        <span className="text-[10px] font-semibold" style={{ color: "var(--layout-widget-text, #ffffff)", opacity: 0.7 }}>no ar</span>
       </div>
-      <p className="text-3xl font-bold text-white">{totalLogos}</p>
-      <p className="text-[10px] mt-1 text-white/50">logos vinculadas a programas</p>
+      <p className="text-3xl font-bold" style={{ color: "var(--layout-widget-text, #ffffff)" }}>{totalLogos}</p>
+      <p className="text-[10px] mt-1" style={{ color: "var(--layout-widget-text, #ffffff)", opacity: 0.5 }}>logos vinculadas a programas</p>
     </div>
   );
 }
@@ -1226,7 +1220,7 @@ function DashboardAgenda() {
       {/* Header: icon + AGENDA + month nav */}
       <div className="flex items-center gap-1.5 mb-1">
         <CalendarDays size={14} style={{ color: "var(--layout-button-bg, #333333)" }} />
-        <span className="font-bold text-xs uppercase tracking-wide text-white">Agenda</span>
+        <span className="font-bold text-xs uppercase tracking-wide" style={{ color: "var(--layout-widget-text, #ffffff)" }}>Agenda</span>
         <div className="flex items-center gap-1 ml-auto">
           <button onClick={prevMonth} className="w-4 h-4 flex items-center justify-center rounded hover:opacity-70">
             <ChevronDown size={10} className="rotate-90" style={{ color: "var(--layout-button-bg, #333333)" }} />
@@ -1247,7 +1241,7 @@ function DashboardAgenda() {
       {dayEvents.length > 0 && (
         <div className="mt-1 space-y-1 overflow-y-auto flex-1 scrollbar-hide">
           {dayEvents.map((evt: any) => (
-            <div key={evt.id} className="rounded-lg px-2 py-1 text-[10px]" style={{ backgroundColor: "var(--layout-button-bg, #333333)", color: "#fff" }}>
+            <div key={evt.id} className="rounded-lg px-2 py-1 text-[10px]" style={{ backgroundColor: "var(--layout-button-bg, #333333)", color: "var(--layout-button-text, #fff)" }}>
               <p className="font-semibold">{evt.programa?.nome || "Evento"}</p>
               {evt.programa && <p className="opacity-70">{evt.programa.horario_inicio} - {evt.programa.horario_fim}</p>}
             </div>
@@ -1291,11 +1285,11 @@ function DashboardCalendar({ selected, onSelect, eventDates, month, onMonthChang
       }}
       modifiers={{ hasEvent: eventDates }}
       modifiersStyles={{
-        hasEvent: { backgroundColor: "var(--layout-button-bg, #333333)", fontWeight: "bold", color: "#fff", borderRadius: "50%" },
+        hasEvent: { backgroundColor: "var(--layout-button-bg, #333333)", fontWeight: "bold", color: "var(--layout-button-text, #fff)", borderRadius: "50%" },
       }}
       styles={{
-        day: { color: "#ffffff", fontSize: "14px" },
-        head_cell: { color: "rgba(255,255,255,0.5)", fontSize: "10px", padding: 0 },
+        day: { color: "var(--layout-widget-text, #ffffff)", fontSize: "14px" },
+        head_cell: { color: "var(--layout-widget-text, #ffffff)", opacity: 0.5, fontSize: "10px", padding: 0 },
       }}
     />
   );
