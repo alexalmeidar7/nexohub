@@ -464,7 +464,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-white text-xs font-bold truncate">{empresa.nome || "Empresa"}</p>
-                  <button onClick={onLogout} className="text-[10px] underline hover:opacity-70 mt-0.5" style={{ color: "#be0101" }}>sair</button>
+                  <button onClick={onLogout} className="text-[10px] underline hover:opacity-70 mt-0.5" style={{ color: layoutColors.buttonBg }}>sair</button>
                 </div>
               </div>
             </div>
