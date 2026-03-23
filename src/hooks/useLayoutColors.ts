@@ -100,6 +100,28 @@ export function useLayoutColors() {
     root.style.setProperty("--layout-icon-color", colors.iconColor);
     root.style.setProperty("--layout-border-color", colors.borderColor);
     root.style.setProperty("--layout-home-bg-color", colors.homeBgColor);
+
+    // Also update player CSS vars from accent color
+    const accentHsl = hexToHsl(colors.accentColor);
+    if (accentHsl) {
+      root.style.setProperty("--player-accent", accentHsl);
+      // Darker hover variant
+      const hoverHsl = hexToHsl(colors.accentColor, -7);
+      if (hoverHsl) root.style.setProperty("--player-accent-hover", hoverHsl);
+      root.style.setProperty("--player-accent-soft", accentHsl);
+    }
+
+    // Update player glow/bg from homeBgColor
+    const bgHsl = hexToHsl(colors.homeBgColor);
+    if (bgHsl) {
+      root.style.setProperty("--player-bg", bgHsl);
+    }
+
+    // Update header gradient for modules (roteiro, etc.)
+    const headerHsl = hexToHsl(colors.headerBg);
+    if (headerHsl) {
+      root.style.setProperty("--layout-header-hsl", headerHsl);
+    }
   }, [colors]);
 
   return colors;
