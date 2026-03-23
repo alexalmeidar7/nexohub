@@ -141,6 +141,7 @@ export default function PreRollPage() {
         data_final: dataFinal ? format(dataFinal, "yyyy-MM-dd") : null,
         aspect_ratio: aspectRatio,
         video_position: videoPosition,
+        is_midroll: isMidroll,
       };
       if (bgUrl !== undefined) payload.background_url = bgUrl;
 
