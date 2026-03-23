@@ -324,7 +324,7 @@ export default function PreRollPage() {
               <div>
                 <label className="text-xs font-semibold block mb-2" style={{ color: "#0d0446" }}>Proporção do Vídeo</label>
                 <div className="flex gap-3">
-                  {(["16:9", "9:16"] as const).map((ratio) => (
+                  {(["16:9", "9:16", "full"] as const).map((ratio) => (
                     <button key={ratio} type="button" onClick={() => setAspectRatio(ratio)}
                       className="flex flex-col items-center gap-1.5 p-3 rounded-xl transition-all"
                       style={{
@@ -335,13 +335,15 @@ export default function PreRollPage() {
                       <div
                         className="rounded"
                         style={{
-                          width: ratio === "16:9" ? 48 : 24,
-                          height: ratio === "16:9" ? 27 : 42,
+                          width: ratio === "16:9" ? 48 : ratio === "9:16" ? 24 : 48,
+                          height: ratio === "16:9" ? 27 : ratio === "9:16" ? 42 : 32,
                           backgroundColor: aspectRatio === ratio ? "#0d0446" : "rgba(13,4,70,0.15)",
                           transition: "background-color 0.2s",
                         }}
                       />
-                      <span className="text-[10px] font-bold" style={{ color: aspectRatio === ratio ? "#0d0446" : "rgba(13,4,70,0.4)" }}>{ratio}</span>
+                      <span className="text-[10px] font-bold" style={{ color: aspectRatio === ratio ? "#0d0446" : "rgba(13,4,70,0.4)" }}>
+                        {ratio === "full" ? "Full" : ratio}
+                      </span>
                     </button>
                   ))}
                 </div>
