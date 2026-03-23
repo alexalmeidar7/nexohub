@@ -2493,9 +2493,7 @@ export default function PlayerPage() {
                     <Heart
                       key={h.id}
                       size={12 + Math.random() * 6}
-                      className="fill-player-accent"
-                      className="text-player-accent"
-                      className="absolute pointer-events-none"
+                      className="absolute pointer-events-none fill-player-accent text-player-accent"
                       style={{ left: `calc(50% + ${h.x}px)`, bottom: "100%", opacity: 0, animation: `floatHeart 1.2s ease-out ${h.delay}s forwards` }}
                     />
                   ))}
