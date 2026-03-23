@@ -73,7 +73,7 @@ const prioridadeColors: Record<string, string> = {
 };
 
 export default function AgendaPage() {
-  const { user, session } = useAuth();
+  const { user } = useAuth();
   const { toast } = useToast();
   const [programas, setProgramas] = useState<Programa[]>([]);
   const [eventos, setEventos] = useState<Evento[]>([]);
