@@ -267,7 +267,7 @@ export default function WelcomeScreen({ userName, avatarUrl, onContinue }: Welco
             <div>
               <Label className="text-player-muted-foreground text-xs">Sexo</Label>
               <Select value={profile.sexo} onValueChange={v => setProfile(p => ({ ...p, sexo: v }))}>
-                <SelectTrigger className="rounded-full bg-player-card border-player-border text-black text-[14px] focus:border-[#e10000] focus:ring-[#e10000]">
+                <SelectTrigger className="rounded-full bg-player-card border-player-border text-black text-[14px] focus:border-player-accent focus:ring-player-accent">
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent className="bg-[#e10000] border-[#e10000] text-white text-[14px]">
