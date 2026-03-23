@@ -293,22 +293,22 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                     className={`w-[70px] h-[70px] sm:w-[90px] sm:h-[90px] rounded-2xl flex flex-col items-center pt-[14px] sm:pt-[18px] transition-all hover:scale-[1.06] hover:shadow-lg`}
                     style={{
                       background: isDragOver
-                        ? "linear-gradient(145deg, #be0101, #960101)"
-                        : "linear-gradient(135deg, #960101, #be0101)",
+                        ? `linear-gradient(145deg, var(--layout-button-bg, #333), var(--layout-accent-color, #444))`
+                        : `linear-gradient(135deg, var(--layout-accent-color, #444), var(--layout-button-bg, #333))`,
                       backdropFilter: "blur(12px)",
                       WebkitBackdropFilter: "blur(12px)",
-                      border: isDragOver ? "2px solid #be0101" : "1px solid rgba(255,255,255,0.25)",
-                      boxShadow: "0 4px 15px rgba(150,1,1,0.35), inset 0 1px 0 rgba(255,255,255,0.15)",
+                      border: isDragOver ? `2px solid var(--layout-button-bg, #333)` : `1px solid color-mix(in srgb, var(--layout-button-text, #fff) 25%, transparent)`,
+                      boxShadow: `0 4px 15px color-mix(in srgb, var(--layout-button-bg, #333) 35%, transparent), inset 0 1px 0 rgba(255,255,255,0.15)`,
                     }}
                     onMouseEnter={e => {
-                      e.currentTarget.style.boxShadow = "0 8px 25px rgba(150,1,1,0.5), inset 0 1px 0 rgba(255,255,255,0.2)";
-                      e.currentTarget.style.background = "linear-gradient(135deg, #be0101, #d40101)";
+                      e.currentTarget.style.boxShadow = `0 8px 25px color-mix(in srgb, var(--layout-button-bg, #333) 50%, transparent), inset 0 1px 0 rgba(255,255,255,0.2)`;
+                      e.currentTarget.style.background = `linear-gradient(135deg, var(--layout-button-bg, #333), color-mix(in srgb, var(--layout-button-bg, #333) 80%, white))`;
                     }}
                     onMouseLeave={e => {
                       e.currentTarget.style.background = isDragOver
-                        ? "linear-gradient(145deg, #be0101, #960101)"
-                        : "linear-gradient(135deg, #960101, #be0101)";
-                      e.currentTarget.style.boxShadow = "0 4px 15px rgba(150,1,1,0.35), inset 0 1px 0 rgba(255,255,255,0.15)";
+                        ? `linear-gradient(145deg, var(--layout-button-bg, #333), var(--layout-accent-color, #444))`
+                        : `linear-gradient(135deg, var(--layout-accent-color, #444), var(--layout-button-bg, #333))`;
+                      e.currentTarget.style.boxShadow = `0 4px 15px color-mix(in srgb, var(--layout-button-bg, #333) 35%, transparent), inset 0 1px 0 rgba(255,255,255,0.15)`;
                     }}
                   >
                     <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "rgba(255,255,255,0.2)" }}>
