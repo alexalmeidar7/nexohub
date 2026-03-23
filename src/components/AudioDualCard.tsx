@@ -455,7 +455,7 @@ export default function AudioDualCard({
                       <div className="flex flex-col gap-1">
                         {recentSongs.map((song) => (
                           <div key={song.id} className="flex items-center gap-2 py-1.5 px-2 rounded-lg" style={{ backgroundColor: "hsla(0,0%,100%,0.03)" }}>
-                            <div className="shrink-0 px-1.5 py-0.5 rounded" style={{ backgroundColor: "hsla(0,80%,45%,0.2)" }}>
+                            <div className="shrink-0 px-1.5 py-0.5 rounded" style={{ backgroundColor: "hsla(var(--player-accent) / 0.2)" }}>
                               <span className="text-[9px] font-mono font-bold text-white">{song.horario?.slice(0, 5)}</span>
                             </div>
                             <div className="flex-1 min-w-0">
