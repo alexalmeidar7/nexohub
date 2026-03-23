@@ -225,7 +225,7 @@ export default function WelcomeScreen({ userName, avatarUrl, onContinue }: Welco
               <Input
                 value={profile.email}
                 onChange={e => setProfile(p => ({ ...p, email: e.target.value }))}
-                className="rounded-full bg-player-card border-player-border text-black text-[14px] focus:border-[#e10000] focus:ring-[#e10000]"
+                className="rounded-full bg-player-card border-player-border text-black text-[14px] focus:border-player-accent focus:ring-player-accent"
                 disabled
               />
             </div>
