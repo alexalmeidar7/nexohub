@@ -260,7 +260,7 @@ export default function WelcomeScreen({ userName, avatarUrl, onContinue }: Welco
               <Input
                 value={profile.whatsapp}
                 onChange={e => setProfile(p => ({ ...p, whatsapp: e.target.value }))}
-                className="rounded-full bg-player-card border-player-border text-black text-[14px] focus:border-[#e10000] focus:ring-[#e10000]"
+                className="rounded-full bg-player-card border-player-border text-black text-[14px] focus:border-player-accent focus:ring-player-accent"
                 placeholder="+55 11 99999-9999"
               />
             </div>
