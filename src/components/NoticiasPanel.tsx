@@ -728,7 +728,7 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
       )}
 
       {/* Main two-column layout: Left (Cotações + Portais) | Right (Jornal Builder) */}
-      <div className="flex gap-4">
+      <div className="flex gap-4" style={{ alignItems: "flex-start" }}>
         {/* LEFT COLUMN */}
         <div className="space-y-4" style={{ width: (jornalConfig || wizardOpen) ? "50%" : "100%" }}>
           {/* News Portals Accordion */}
