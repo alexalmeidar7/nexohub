@@ -1220,7 +1220,7 @@ function DashboardAgenda() {
       {/* Header: icon + AGENDA + month nav */}
       <div className="flex items-center gap-1.5 mb-1">
         <CalendarDays size={14} style={{ color: "var(--layout-button-bg, #333333)" }} />
-        <span className="font-bold text-xs uppercase tracking-wide text-white">Agenda</span>
+        <span className="font-bold text-xs uppercase tracking-wide" style={{ color: "var(--layout-widget-text, #ffffff)" }}>Agenda</span>
         <div className="flex items-center gap-1 ml-auto">
           <button onClick={prevMonth} className="w-4 h-4 flex items-center justify-center rounded hover:opacity-70">
             <ChevronDown size={10} className="rotate-90" style={{ color: "var(--layout-button-bg, #333333)" }} />
