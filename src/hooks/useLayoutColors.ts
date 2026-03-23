@@ -38,7 +38,7 @@ export function useLayoutColors() {
   const { user } = useAuth();
   const [colors, setColors] = useState<LayoutColors>(defaultLayoutColors);
 
-  useEffect(() => {
+  const fetchColors = useCallback(() => {
     if (!user) return;
     supabase
       .from("user_settings")
@@ -59,6 +59,17 @@ export function useLayoutColors() {
         }
       });
   }, [user]);
+
+  useEffect(() => {
+    fetchColors();
+  }, [fetchColors]);
+
+  // Listen for custom event dispatched by LayoutCustomizer after save
+  useEffect(() => {
+    const handler = () => fetchColors();
+    window.addEventListener("layout-colors-updated", handler);
+    return () => window.removeEventListener("layout-colors-updated", handler);
+  }, [fetchColors]);
 
   // Apply as CSS custom properties
   useEffect(() => {
