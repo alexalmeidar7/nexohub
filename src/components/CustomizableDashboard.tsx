@@ -1063,12 +1063,12 @@ function MusicProgramWidget() {
             <img src={music.capa} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
           )}
           <div className="min-w-0">
-            <p className="text-black text-xs font-semibold truncate">{music.titulo}</p>
-            <p className="text-black/50 text-[10px] truncate">{music.artista}</p>
+            <p className="text-xs font-semibold truncate" style={{ color: "var(--layout-widget-text, #fff)" }}>{music.titulo}</p>
+            <p className="text-[10px] truncate" style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.5 }}>{music.artista}</p>
           </div>
         </div>
       ) : !currentProgram ? (
-        <p className="text-black/30 text-xs">Sem programa no momento</p>
+        <p className="text-xs" style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.3 }}>Sem programa no momento</p>
       ) : null}
     </div>
   );
