@@ -502,15 +502,15 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
       {/* Empty state */}
       {items.length === 0 && (
         <div className="flex-1 flex flex-col items-center justify-center text-center py-20 animate-fade-in">
-          <div className="w-20 h-20 rounded-2xl flex items-center justify-center mb-5" style={{ background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.15)", boxShadow: "0 4px 20px rgba(0,0,0,0.1)" }}>
-            <Plus size={28} className="text-white/60" />
+          <div className="w-20 h-20 rounded-2xl flex items-center justify-center mb-5" style={{ background: "color-mix(in srgb, var(--layout-nav-text, #fff) 12%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-nav-text, #fff) 15%, transparent)", boxShadow: "0 4px 20px rgba(0,0,0,0.1)" }}>
+            <Plus size={28} style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.6 }} />
           </div>
-          <p className="text-white/60 text-sm font-bold mb-1">Área de trabalho vazia</p>
-          <p className="text-white/30 text-xs mb-5 max-w-xs">Adicione atalhos e widgets para personalizar seu painel</p>
+          <p className="text-sm font-bold mb-1" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.6 }}>Área de trabalho vazia</p>
+          <p className="text-xs mb-5 max-w-xs" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.3 }}>Adicione atalhos e widgets para personalizar seu painel</p>
           <button
             onClick={() => { setShowAddDialog(true); setAddStep("choose"); }}
             className="px-6 py-2.5 rounded-xl text-xs font-bold transition-all hover:scale-[1.03]"
-            style={{ background: "linear-gradient(135deg, #960101, #be0101)", color: "#fff", boxShadow: "0 4px 16px rgba(150,1,1,0.25)" }}
+            style={{ background: `linear-gradient(135deg, var(--layout-accent-color, #444), var(--layout-button-bg, #333))`, color: "var(--layout-button-text, #fff)", boxShadow: `0 4px 16px color-mix(in srgb, var(--layout-button-bg, #333) 25%, transparent)` }}
           >
             <Plus size={12} className="inline mr-1.5" /> Começar a personalizar
           </button>
