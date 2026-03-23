@@ -630,7 +630,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               >
                 <ChevronUp size={14} className="rotate-[-90deg]" /> Voltar
               </button>
-              <span className="text-white font-semibold text-sm">{pageTitle[currentPage]}</span>
+              <span style={{ color: layoutColors.navText }} className="font-semibold text-sm">{pageTitle[currentPage]}</span>
             </div>
           )}
           <div className={`flex-1 overflow-y-auto overflow-x-hidden rounded-xl lg:rounded-2xl ${currentPage !== "dashboard" ? "mv-content-area" : ""}`} style={currentPage === "dashboard" ? {} : { padding: "0.75rem" }}>
