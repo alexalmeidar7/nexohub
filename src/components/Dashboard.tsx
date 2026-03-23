@@ -459,7 +459,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             </nav>
             <div className="px-4 py-4 border-t border-white/10">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style={{ backgroundColor: "#be0101" }}>
+                <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style={{ backgroundColor: layoutColors.buttonBg }}>
                   {empresa.nome ? empresa.nome.charAt(0).toUpperCase() : "U"}
                 </div>
                 <div className="min-w-0 flex-1">
