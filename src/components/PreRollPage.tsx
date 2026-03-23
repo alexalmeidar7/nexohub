@@ -175,6 +175,7 @@ export default function PreRollPage() {
     setAspectRatio((p.aspect_ratio as "16:9" | "9:16") || "16:9");
     setVideoPosition((p.video_position as "center" | "left" | "right") || "center");
     setShowPreview(false);
+    setIsMidroll((p as any).is_midroll || false);
   };
 
   const handleDelete = async (id: string) => {
