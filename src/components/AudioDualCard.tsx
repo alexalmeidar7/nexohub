@@ -301,7 +301,7 @@ export default function AudioDualCard({
             </div>
             
             {/* Song list */}
-            <div className="flex-1 min-h-0 overflow-y-auto pr-1" style={{ scrollbarWidth: "thin", scrollbarColor: "#a10a0b transparent" }}>
+            <div className="flex-1 min-h-0 overflow-y-auto pr-1" style={{ scrollbarWidth: "thin", scrollbarColor: "hsl(var(--player-accent)) transparent" }}>
               {recentSongs.length === 0 ? (
                 <p className="text-xs text-center mt-8 text-white/30">Nenhuma música registrada</p>
               ) : (
