@@ -785,19 +785,21 @@ function DashboardHome({ empresa, onNavigate }: { empresa: import("./Configuraco
           key={widget.id}
           className={`dashboard-widget-card rounded-2xl p-3 lg:p-4 flex-shrink-0 overflow-hidden relative ${
             draggedId === widget.id ? "opacity-50 scale-95" : ""
-          } ${dragOverId === widget.id ? "ring-2 ring-[#be0101]" : ""}`}
-           style={widget.bg === "glass-dark" ? {
-             background: "rgba(12, 4, 65, 0.6)",
-             backdropFilter: "blur(24px) saturate(1.4)",
-             WebkitBackdropFilter: "blur(24px) saturate(1.4)",
-             boxShadow: "0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1)",
-             border: "1px solid rgba(255,255,255,0.12)",
-           } : {
-             background: "rgba(255, 255, 255, 0.12)",
-             backdropFilter: "blur(24px) saturate(1.4)",
-             WebkitBackdropFilter: "blur(24px) saturate(1.4)",
-             boxShadow: "0 8px 32px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.15)",
-             border: "1px solid rgba(255,255,255,0.15)",
+          } ${dragOverId === widget.id ? "ring-2" : ""}`}
+           style={{
+             ...(widget.bg === "glass-dark" ? {
+               background: "rgba(12, 4, 65, 0.6)",
+               backdropFilter: "blur(24px) saturate(1.4)",
+               WebkitBackdropFilter: "blur(24px) saturate(1.4)",
+               boxShadow: "0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1)",
+               border: "1px solid rgba(255,255,255,0.12)",
+             } : {
+               background: "rgba(255, 255, 255, 0.12)",
+               backdropFilter: "blur(24px) saturate(1.4)",
+               WebkitBackdropFilter: "blur(24px) saturate(1.4)",
+               boxShadow: "0 8px 32px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.15)",
+               border: "1px solid rgba(255,255,255,0.15)",
+             }),
            }}
           onDragOver={(e) => handleDragOver(e, widget.id)}
           onDrop={(e) => handleDrop(e, widget.id)}
@@ -1107,7 +1109,7 @@ function ComercialWidgets() {
   if (loading) return (
     <div className="animate-pulse">
       <div className="flex items-center gap-1.5 mb-2">
-        <div className="w-3.5 h-3.5 rounded bg-[#be0101]/20" />
+        <div className="w-3.5 h-3.5 rounded" style={{ backgroundColor: "var(--layout-button-bg, #333333)", opacity: 0.2 }} />
         <div className="w-28 h-3 rounded bg-white/10" />
       </div>
       <div className="w-12 h-8 rounded bg-white/10 mb-1" />
@@ -1206,7 +1208,7 @@ function DashboardAgenda() {
           ))}
         </div>
         <div className="mt-1 space-y-1">
-          <div className="h-6 rounded-lg bg-[#be0101]/15" />
+          <div className="h-6 rounded-lg" style={{ backgroundColor: "var(--layout-button-bg, #333333)", opacity: 0.15 }} />
         </div>
       </div>
     );
@@ -1223,15 +1225,15 @@ function DashboardAgenda() {
     <div className="flex flex-col h-full overflow-hidden">
       {/* Header: icon + AGENDA + month nav */}
       <div className="flex items-center gap-1.5 mb-1">
-        <CalendarDays size={14} style={{ color: "#be0101" }} />
+        <CalendarDays size={14} style={{ color: "var(--layout-button-bg, #333333)" }} />
         <span className="font-bold text-xs uppercase tracking-wide text-white">Agenda</span>
         <div className="flex items-center gap-1 ml-auto">
           <button onClick={prevMonth} className="w-4 h-4 flex items-center justify-center rounded hover:opacity-70">
-            <ChevronDown size={10} className="rotate-90" style={{ color: "#be0101" }} />
+            <ChevronDown size={10} className="rotate-90" style={{ color: "var(--layout-button-bg, #333333)" }} />
           </button>
-          <span className="text-[9px] font-semibold capitalize" style={{ color: "#be0101", minWidth: "55px", textAlign: "center" }}>{monthLabel}</span>
+          <span className="text-[9px] font-semibold capitalize" style={{ color: "var(--layout-button-bg, #333333)", minWidth: "55px", textAlign: "center" }}>{monthLabel}</span>
           <button onClick={nextMonth} className="w-4 h-4 flex items-center justify-center rounded hover:opacity-70">
-            <ChevronDown size={10} className="-rotate-90" style={{ color: "#be0101" }} />
+            <ChevronDown size={10} className="-rotate-90" style={{ color: "var(--layout-button-bg, #333333)" }} />
           </button>
         </div>
       </div>
@@ -1245,7 +1247,7 @@ function DashboardAgenda() {
       {dayEvents.length > 0 && (
         <div className="mt-1 space-y-1 overflow-y-auto flex-1 scrollbar-hide">
           {dayEvents.map((evt: any) => (
-            <div key={evt.id} className="rounded-lg px-2 py-1 text-[10px]" style={{ backgroundColor: "#be0101", color: "#fff" }}>
+            <div key={evt.id} className="rounded-lg px-2 py-1 text-[10px]" style={{ backgroundColor: "var(--layout-button-bg, #333333)", color: "#fff" }}>
               <p className="font-semibold">{evt.programa?.nome || "Evento"}</p>
               {evt.programa && <p className="opacity-70">{evt.programa.horario_inicio} - {evt.programa.horario_fim}</p>}
             </div>
@@ -1282,14 +1284,14 @@ function DashboardCalendar({ selected, onSelect, eventDates, month, onMonthChang
         head_cell: "flex-1 text-center font-medium",
         row: "flex w-full",
         cell: "flex-1 text-center p-0",
-        day: "h-[24px] w-[24px] p-0 font-normal text-[14px] mx-auto flex items-center justify-center rounded-full hover:!bg-[#e05050] hover:text-white transition-colors",
+        day: "h-[24px] w-[24px] p-0 font-normal text-[14px] mx-auto flex items-center justify-center rounded-full hover:text-white transition-colors",
         day_selected: "!bg-[#0d0446] !text-white",
-        day_today: "font-bold text-[#be0101]",
+        day_today: "font-bold",
         day_outside: "opacity-30",
       }}
       modifiers={{ hasEvent: eventDates }}
       modifiersStyles={{
-        hasEvent: { backgroundColor: "#be0101", fontWeight: "bold", color: "#fff", borderRadius: "50%" },
+        hasEvent: { backgroundColor: "var(--layout-button-bg, #333333)", fontWeight: "bold", color: "#fff", borderRadius: "50%" },
       }}
       styles={{
         day: { color: "#ffffff", fontSize: "14px" },
