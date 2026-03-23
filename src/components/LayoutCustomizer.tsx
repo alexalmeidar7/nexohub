@@ -140,6 +140,50 @@ const colorLabels: Record<string, string> = {
   borderColor: "Cor das Bordas",
 };
 
+type DashboardSettingsPayload = Record<string, any> & {
+  items?: unknown[];
+  layout_colors?: Partial<LayoutColors>;
+};
+
+const NUMERIC_KEY_REGEX = /^\d+$/;
+
+function normalizeDashboardSettingsPayload(raw: unknown): DashboardSettingsPayload {
+  if (Array.isArray(raw)) {
+    return { items: raw };
+  }
+
+  if (raw && typeof raw === "object") {
+    const payload = { ...(raw as Record<string, any>) };
+    const numericKeys = Object.keys(payload)
+      .filter((key) => NUMERIC_KEY_REGEX.test(key))
+      .sort((a, b) => Number(a) - Number(b));
+
+    if (!Array.isArray(payload.items) && numericKeys.length > 0) {
+      payload.items = numericKeys.map((key) => payload[key]).filter(Boolean);
+    }
+
+    numericKeys.forEach((key) => {
+      delete payload[key];
+    });
+
+    return payload as DashboardSettingsPayload;
+  }
+
+  return {};
+}
+
+function extractLayoutColors(raw: unknown): LayoutColors | null {
+  const payload = normalizeDashboardSettingsPayload(raw);
+  if (!payload.layout_colors || typeof payload.layout_colors !== "object" || Array.isArray(payload.layout_colors)) {
+    return null;
+  }
+
+  return {
+    ...defaultColors,
+    ...payload.layout_colors,
+  };
+}
+
 function ColorInput({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
   const [inputVal, setInputVal] = useState(value);
 
@@ -193,13 +237,34 @@ export default function LayoutCustomizer() {
 
   useEffect(() => {
     if (!user) return;
-    supabase.from("user_settings").select("dashboard_items").eq("user_id", user.id).maybeSingle().then(({ data }) => {
-      if (data?.dashboard_items && typeof data.dashboard_items === "object" && (data.dashboard_items as any).layout_colors) {
-        const loaded = { ...defaultColors, ...(data.dashboard_items as any).layout_colors };
-        setColors(loaded);
-        originalRef.current = loaded;
+    let active = true;
+
+    const loadColors = async () => {
+      const { data, error } = await supabase
+        .from("user_settings")
+        .select("dashboard_items")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (!active) return;
+
+      if (error) {
+        console.error("Erro ao carregar layout_colors:", error);
+        return;
       }
-    });
+
+      const loaded = extractLayoutColors(data?.dashboard_items);
+      if (!loaded) return;
+
+      setColors(loaded);
+      originalRef.current = loaded;
+    };
+
+    void loadColors();
+
+    return () => {
+      active = false;
+    };
   }, [user]);
 
   const updateColor = (key: keyof LayoutColors, value: string) => {
@@ -207,21 +272,51 @@ export default function LayoutCustomizer() {
     setHasChanges(true);
   };
 
-  const persistColors = async (c: LayoutColors) => {
-    if (!user) return;
-    const { data: existing } = await supabase.from("user_settings").select("dashboard_items").eq("user_id", user.id).maybeSingle();
-    const current = (existing?.dashboard_items && typeof existing.dashboard_items === "object") ? existing.dashboard_items as Record<string, any> : {};
-    await supabase.from("user_settings").upsert([{
-      user_id: user.id,
-      dashboard_items: { ...current, layout_colors: c } as any,
-      updated_at: new Date().toISOString(),
-    }], { onConflict: "user_id" });
+  const persistColors = async (c: LayoutColors): Promise<boolean> => {
+    if (!user) return false;
+
+    try {
+      const { data: existing, error: readError } = await supabase
+        .from("user_settings")
+        .select("dashboard_items")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (readError) throw readError;
+
+      const current = normalizeDashboardSettingsPayload(existing?.dashboard_items);
+      const payload: DashboardSettingsPayload = {
+        ...current,
+        layout_colors: c,
+      };
+
+      const { error: writeError } = await supabase
+        .from("user_settings")
+        .upsert(
+          [{
+            user_id: user.id,
+            dashboard_items: payload as any,
+            updated_at: new Date().toISOString(),
+          }],
+          { onConflict: "user_id" }
+        );
+
+      if (writeError) throw writeError;
+
+      return true;
+    } catch (error) {
+      console.error("Erro ao salvar layout_colors:", error);
+      toast.error("Não foi possível salvar as cores. Tente novamente.");
+      return false;
+    }
   };
 
   const handleSave = async () => {
     setSaving(true);
-    await persistColors(colors);
+    const saved = await persistColors(colors);
     setSaving(false);
+    if (!saved) return;
+
     toast.success("Layout salvo com sucesso!");
     originalRef.current = colors;
     setHasChanges(false);
@@ -232,8 +327,10 @@ export default function LayoutCustomizer() {
   const resetColors = async () => {
     setColors(defaultColors);
     setSaving(true);
-    await persistColors(defaultColors);
+    const saved = await persistColors(defaultColors);
     setSaving(false);
+    if (!saved) return;
+
     toast.success("Cores restauradas ao padrão.");
     originalRef.current = defaultColors;
     setHasChanges(false);
