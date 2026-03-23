@@ -1230,9 +1230,9 @@ function DashboardWeatherWidget() {
                 {WeatherIconComp && <WeatherIconComp code={weather.tomorrow.weatherCode} size={32} forceDay />}
               </div>
               <div className="min-w-0">
-                <p className="text-[9px] font-bold uppercase text-black/50">Amanhã</p>
-                <p className="text-sm font-bold text-black leading-none">{weather.tomorrow.tempMax}° / {weather.tomorrow.tempMin}°</p>
-                <p className="text-black/40 text-[9px] mt-0.5">{getLabel(weather.tomorrow.weatherCode)}</p>
+                <p className="text-[9px] font-bold uppercase" style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.5 }}>Amanhã</p>
+                <p className="text-sm font-bold leading-none" style={{ color: "var(--layout-widget-text, #fff)" }}>{weather.tomorrow.tempMax}° / {weather.tomorrow.tempMin}°</p>
+                <p className="text-[9px] mt-0.5" style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.4 }}>{getLabel(weather.tomorrow.weatherCode)}</p>
               </div>
             </div>
           )}
