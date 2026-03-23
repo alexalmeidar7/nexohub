@@ -561,11 +561,11 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                   onClick={() => setAddStep("widget")}
                   className="flex flex-col items-center gap-3 p-5 rounded-xl transition-all"
                   style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}
-                  onMouseEnter={e => { e.currentTarget.style.background = "rgba(190,1,1,0.15)"; e.currentTarget.style.borderColor = "rgba(190,1,1,0.4)"; }}
+                  onMouseEnter={e => { e.currentTarget.style.background = `color-mix(in srgb, var(--layout-button-bg, #333) 15%, transparent)`; e.currentTarget.style.borderColor = `color-mix(in srgb, var(--layout-button-bg, #333) 40%, transparent)`; }}
                   onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"; }}
                 >
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: "linear-gradient(135deg, #960101, #be0101)" }}>
-                    <BarChart3 size={20} className="text-white" />
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: `linear-gradient(135deg, var(--layout-accent-color, #444), var(--layout-button-bg, #333))` }}>
+                    <BarChart3 size={20} style={{ color: "var(--layout-button-text, #fff)" }} />
                   </div>
                   <div className="text-center">
                     <p className="text-white font-semibold text-sm">Widget</p>
