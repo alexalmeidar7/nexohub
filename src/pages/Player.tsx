@@ -1994,18 +1994,28 @@ export default function PlayerPage() {
         />
       )}
 
-      {/* Mid-Roll Overlay */}
+      {/* Mid-Roll Overlay — fullscreen centered */}
       {midrollActive && midrollPreroll && (
-        <PreRollOverlay
-          prerollUrl={midrollPreroll.url}
-          prerollVideoRef={prerollVideoRef}
-          prerollLinkUrl={midrollPreroll.linkUrl}
-          prerollMediaType={midrollPreroll.mediaType}
-          prerollYoutubeUrl={midrollPreroll.youtubeUrl}
-          onSkip={handleMidrollEnd}
-          onEnded={handleMidrollEnd}
-          hideSkip={isCatalog}
-        />
+        <div className="absolute inset-0 z-[60] flex items-center justify-center" style={{ backgroundColor: "#000" }}>
+          {/* Counter badge */}
+          {midrollTotal > 1 && (
+            <div className="absolute top-4 left-4 z-[70] flex items-center gap-2">
+              <span className="px-3 py-1.5 rounded-full text-xs font-bold" style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "#fff", backdropFilter: "blur(8px)" }}>
+                📺 Anúncio {midrollIndex + 1}/{midrollTotal}
+              </span>
+            </div>
+          )}
+          <PreRollOverlay
+            prerollUrl={midrollPreroll.url}
+            prerollVideoRef={prerollVideoRef}
+            prerollLinkUrl={midrollPreroll.linkUrl}
+            prerollMediaType={midrollPreroll.mediaType}
+            prerollYoutubeUrl={midrollPreroll.youtubeUrl}
+            onSkip={handleMidrollEnd}
+            onEnded={handleMidrollEnd}
+            hideSkip={isCatalog}
+          />
+        </div>
       )}
 
       {/* Shopping Panel — above control bar, right-aligned */}
