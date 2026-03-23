@@ -786,7 +786,8 @@ function DashboardHome({ empresa, onNavigate }: { empresa: import("./Configuraco
           className={`dashboard-widget-card rounded-2xl p-3 lg:p-4 flex-shrink-0 overflow-hidden relative ${
             draggedId === widget.id ? "opacity-50 scale-95" : ""
           } ${dragOverId === widget.id ? "ring-2" : ""}`}
-           style={widget.bg === "glass-dark" ? {
+           style={{
+             ...(widget.bg === "glass-dark" ? {
              background: "rgba(12, 4, 65, 0.6)",
              backdropFilter: "blur(24px) saturate(1.4)",
              WebkitBackdropFilter: "blur(24px) saturate(1.4)",
