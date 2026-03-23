@@ -156,7 +156,7 @@ export default function AudioDualCard({
               left: "50%",
               transform: "translateX(-50%)",
             }),
-            backgroundColor: "#a10a0b",
+            backgroundColor: "var(--layout-widget-bg-hex, #555)",
             backgroundImage: presenterPhoto ? `url(${presenterPhoto})` : undefined,
             backgroundSize: "cover",
             backgroundPosition: "top center",
