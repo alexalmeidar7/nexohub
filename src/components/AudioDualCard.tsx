@@ -244,7 +244,7 @@ export default function AudioDualCard({
                 )}
               </div>
 
-              <Mic size={16} className="mb-1" style={{ color: "hsl(0 80% 50%)" }} />
+              <Mic size={16} className="mb-1" style={{ color: "hsl(var(--player-accent))" }} />
               <p className="text-white font-semibold text-sm md:text-base leading-tight drop-shadow-lg">
                 {presenterName || "Locutor"}
               </p>
