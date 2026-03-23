@@ -589,7 +589,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 onMouseEnter={e => { e.currentTarget.style.backgroundColor = `${layoutColors.navText}33`; }}
                 onMouseLeave={e => { e.currentTarget.style.backgroundColor = `${layoutColors.navText}1a`; }}
               >
-                <Settings size={14} className="text-white/70" />
+                <Settings size={14} style={{ color: `${layoutColors.navText}b3` }} />
               </button>
             </TooltipTrigger>
             <TooltipContent side="bottom"><p className="text-xs">Configurações</p></TooltipContent>
