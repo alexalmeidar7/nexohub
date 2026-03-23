@@ -393,7 +393,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         <button
           onClick={onLogout}
           className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold transition-all mr-2"
-          style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "#ffffff" }}
+          style={{ backgroundColor: `${layoutColors.navText}26`, color: layoutColors.navText }}
           onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#dc2626"; }}
           onMouseLeave={e => { e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.15)"; }}
         >
