@@ -1094,17 +1094,17 @@ function StatsWidget() {
   return (
     <div>
       <div className="flex items-center gap-2 mb-3">
-        <BarChart3 size={14} className="text-[#be0101]" />
-        <p className="text-black font-bold text-sm">Dados Estatísticos</p>
+        <BarChart3 size={14} style={{ color: "var(--layout-icon-color, #888)" }} />
+        <p className="font-bold text-sm" style={{ color: "var(--layout-widget-text, #fff)" }}>Dados Estatísticos</p>
       </div>
       <div className="grid grid-cols-2 gap-3">
-        <div className="px-3 py-3 rounded-xl text-center" style={{ background: "rgba(190,1,1,0.06)" }}>
-          <p className="text-2xl font-bold text-black">{prerollCount}</p>
-          <p className="text-black/40 text-[10px] mt-0.5">Pre-rolls Ativos</p>
+        <div className="px-3 py-3 rounded-xl text-center" style={{ background: `color-mix(in srgb, var(--layout-button-bg, #333) 6%, transparent)` }}>
+          <p className="text-2xl font-bold" style={{ color: "var(--layout-widget-text, #fff)" }}>{prerollCount}</p>
+          <p className="text-[10px] mt-0.5" style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.4 }}>Pre-rolls Ativos</p>
         </div>
-        <div className="px-3 py-3 rounded-xl text-center" style={{ background: "rgba(190,1,1,0.06)" }}>
-          <p className="text-2xl font-bold text-black">{channelCount}</p>
-          <p className="text-black/40 text-[10px] mt-0.5">Canais Ativos</p>
+        <div className="px-3 py-3 rounded-xl text-center" style={{ background: `color-mix(in srgb, var(--layout-button-bg, #333) 6%, transparent)` }}>
+          <p className="text-2xl font-bold" style={{ color: "var(--layout-widget-text, #fff)" }}>{channelCount}</p>
+          <p className="text-[10px] mt-0.5" style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.4 }}>Canais Ativos</p>
         </div>
       </div>
     </div>
