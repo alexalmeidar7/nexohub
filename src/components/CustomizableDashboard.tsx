@@ -450,8 +450,8 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                     draggable
                     onDragStart={(e) => { e.stopPropagation(); handleDragStart(item.id); }}
                   >
-                    <GripVertical size={10} className={item.widgetType === "player" ? "text-white/20" : "text-black/20"} />
-                    <span className={`text-[9px] font-bold uppercase tracking-[0.15em] ${item.widgetType === "player" ? "text-white/40" : "text-black/40"}`}>
+                    <GripVertical size={10} style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.2 }} />
+                    <span className="text-[9px] font-bold uppercase tracking-[0.15em]" style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.4 }}>
                       {item.widgetType === "agenda" ? "Agenda" : item.widgetType === "musica" ? "No Ar" : item.widgetType === "weather" ? "Tempo" : item.widgetType === "player" ? "Player" : "Estatísticas"}
                     </span>
                   </div>
