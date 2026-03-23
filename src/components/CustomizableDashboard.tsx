@@ -487,14 +487,14 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
             onClick={() => { setShowAddDialog(true); setAddStep("choose"); }}
             className="w-[70px] h-[70px] sm:w-[90px] sm:h-[90px] rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all hover:scale-[1.06]"
             style={{
-              background: "rgba(255,255,255,0.08)",
-              border: "1.5px dashed rgba(255,255,255,0.25)",
+              background: "color-mix(in srgb, var(--layout-nav-text, #fff) 8%, transparent)",
+              border: "1.5px dashed color-mix(in srgb, var(--layout-nav-text, #fff) 25%, transparent)",
             }}
-            onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.15)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.5)"; }}
-            onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.08)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.25)"; }}
+            onMouseEnter={e => { e.currentTarget.style.background = "color-mix(in srgb, var(--layout-nav-text, #fff) 15%, transparent)"; e.currentTarget.style.borderColor = "color-mix(in srgb, var(--layout-nav-text, #fff) 50%, transparent)"; }}
+            onMouseLeave={e => { e.currentTarget.style.background = "color-mix(in srgb, var(--layout-nav-text, #fff) 8%, transparent)"; e.currentTarget.style.borderColor = "color-mix(in srgb, var(--layout-nav-text, #fff) 25%, transparent)"; }}
           >
-            <Plus size={16} className="text-white/40 mb-1" />
-            <span className="text-white/40 text-[9px] font-semibold">Adicionar</span>
+            <Plus size={16} className="mb-1" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.4 }} />
+            <span className="text-[9px] font-semibold" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.4 }}>Adicionar</span>
           </div>
         </div>
       )}
