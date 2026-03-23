@@ -349,10 +349,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       return { backgroundImage: `url(${layoutColors.homeBgImage})`, backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat" } as React.CSSProperties;
     }
     if (layoutColors.homeBgColor && layoutColors.homeBgColor !== defaultLayoutColors.homeBgColor) {
-      return { backgroundColor: layoutColors.homeBgColor } as React.CSSProperties;
+      return { background: `linear-gradient(135deg, ${layoutColors.homeBgColor} 0%, #000000 100%)` } as React.CSSProperties;
     }
-    // Default: vivid red → black gradient (top-right → bottom-left)
-    return { background: "linear-gradient(to bottom left, #be0101, #000000)" } as React.CSSProperties;
+    // Default: grayscale gradient
+    return { background: "linear-gradient(135deg, #333333 0%, #000000 100%)" } as React.CSSProperties;
   })();
 
   return (
