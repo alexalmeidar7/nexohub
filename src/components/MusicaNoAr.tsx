@@ -830,106 +830,140 @@ export default function MusicaNoAr() {
 
         {showConfig && (
           <div className="p-4 space-y-4">
-            {/* Dual source indicator */}
-            {bothActive && (
-              <div className="flex items-center justify-center gap-2 py-2 rounded-xl animate-pulse" style={{ backgroundColor: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.25)" }}>
-                <span className="relative flex h-2.5 w-2.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: "#22c55e" }} />
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5" style={{ backgroundColor: "#22c55e" }} />
-                </span>
-                <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#16a34a" }}>Monitorando os dois sources</span>
-                <span className="relative flex h-2.5 w-2.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: "#22c55e" }} />
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5" style={{ backgroundColor: "#22c55e" }} />
-                </span>
-              </div>
-            )}
-            {/* Two columns: Online | Local */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Online */}
-              <div className="space-y-2">
-                <p className="text-[9px] font-bold uppercase tracking-wider flex items-center gap-1.5" style={{ color: "rgba(13,4,70,0.5)" }}>
-                  <Globe size={10} style={{ color: "#268ffa" }} /> Origem Online
-                  <span className="text-[8px] font-normal ml-auto" style={{ color: "#268ffa" }}>{sourceStats.online}x atualizações</span>
-                </p>
-                {editingUrl ? (
-                  <div className="flex gap-1.5">
-                    <input
-                      value={tempUrl}
-                      onChange={(e) => setTempUrl(e.target.value)}
-                      className="flex-1 text-[10px] px-2.5 py-1.5 outline-none rounded-lg"
-                      style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "1px solid rgba(13,4,70,0.15)", color: "#0d0446" }}
-                      onFocus={e => { e.currentTarget.style.borderColor = "#268ffa"; }}
-                      onBlur={e => { e.currentTarget.style.borderColor = "rgba(13,4,70,0.15)"; }}
-                      placeholder="URL do XML"
-                    />
-                    <button onClick={() => { saveUrl(tempUrl); setEditingUrl(false); }} className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#fff" }}>
-                      <Check size={13} />
+            {/* Two columns with center divider */}
+            <div className="grid grid-cols-[1fr_auto_1fr] gap-0 items-stretch">
+              {/* ── ONLINE SOURCE ── */}
+              <div className="rounded-xl p-4 space-y-3" style={{ backgroundColor: "#e8f0fb", border: "1px solid #c5d9f2" }}>
+                <h4 className="text-xs font-black uppercase tracking-wide" style={{ color: "#0d0446" }}>Origem Source Online</h4>
+                <div className="flex gap-1.5">
+                  <div className="flex-1 flex items-center gap-2 px-3 py-2 rounded-lg" style={{ backgroundColor: "#ffffff", border: "1px solid #c5d9f2" }}>
+                    <Globe size={14} style={{ color: "#7c8db5" }} />
+                    {editingUrl ? (
+                      <input
+                        value={tempUrl}
+                        onChange={(e) => setTempUrl(e.target.value)}
+                        className="flex-1 text-xs outline-none bg-transparent"
+                        style={{ color: "#0d0446" }}
+                        placeholder="URL do XML"
+                        autoFocus
+                      />
+                    ) : (
+                      <span className="flex-1 text-xs truncate" style={{ color: xmlUrl === DEFAULT_XML_URL ? "#7c8db5" : "#0d0446" }}>{xmlUrl}</span>
+                    )}
+                  </div>
+                  {editingUrl ? (
+                    <button onClick={() => { saveUrl(tempUrl); setEditingUrl(false); }} className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: "#0d0446", color: "#ffffff" }}>
+                      <Check size={16} />
                     </button>
+                  ) : (
+                    <button onClick={() => { setTempUrl(xmlUrl); setEditingUrl(true); }} className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: "#0d0446", color: "#ffffff" }}>
+                      <Pencil size={14} />
+                    </button>
+                  )}
+                  <label className="flex items-center gap-1.5 px-3 py-2 rounded-lg cursor-pointer select-none shrink-0" style={{ backgroundColor: "#0d0446", color: "#ffffff" }}>
+                    <input
+                      type="checkbox"
+                      checked={sourceMode === "online"}
+                      onChange={() => setSourceMode(sourceMode === "online" ? "pasta" : "online")}
+                      className="w-3.5 h-3.5 accent-white"
+                    />
+                    <span className="text-[10px] font-bold whitespace-nowrap">LER SOMENTE ESSA</span>
+                  </label>
+                </div>
+
+                {/* Status bar */}
+                {lastSource === "online" ? (
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: "linear-gradient(90deg, #22c55e 0%, #4ade80 100%)", color: "#ffffff" }}>
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 bg-white" />
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-white" />
+                    </span>
+                    <span className="text-xs font-bold">LENDO AQUI</span>
                   </div>
                 ) : (
-                  <div className="flex items-center gap-1.5">
-                    <p className="text-[9px] truncate px-2.5 py-1.5 flex-1 rounded-lg" style={{ backgroundColor: "rgba(13,4,70,0.03)", color: "rgba(13,4,70,0.6)", border: "1px solid rgba(13,4,70,0.06)" }}>{xmlUrl}</p>
-                    <button onClick={() => { setTempUrl(xmlUrl); setEditingUrl(true); }} className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: "rgba(13,4,70,0.04)" }}>
-                      <Pencil size={11} style={{ color: "#268ffa" }} />
-                    </button>
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: "linear-gradient(90deg, #d4e157 0%, #c6ff00 100%)", color: "#555" }}>
+                    <Loader2 size={12} className="animate-spin" />
+                    <span className="text-xs font-bold">AGUARDANDO LEITURA</span>
+                  </div>
+                )}
+                {onlineError && (
+                  <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[9px] font-semibold" style={{ backgroundColor: "rgba(239,68,68,0.08)", color: "#dc2626", border: "1px solid rgba(239,68,68,0.2)" }}>
+                    <AlertTriangle size={11} />
+                    <span>⚠ {onlineError}</span>
                   </div>
                 )}
               </div>
 
-              {/* Local */}
-              <div className="space-y-2">
-                <p className="text-[9px] font-bold uppercase tracking-wider flex items-center gap-1.5" style={{ color: "rgba(13,4,70,0.5)" }}>
-                  <FolderOpen size={10} style={{ color: "#22c55e" }} /> Origem Local
-                  <span className="text-[8px] font-normal ml-auto" style={{ color: "#22c55e" }}>{sourceStats.pasta}x atualizações</span>
-                </p>
+              {/* ── CENTER DIVIDER ── */}
+              <div className="flex flex-col items-center justify-center px-3" style={{ minWidth: 100 }}>
+                <div className={`rounded-xl px-3 py-4 flex flex-col items-center gap-2 ${bothActive ? "animate-pulse" : ""}`} style={{ backgroundColor: "#0d0446", color: "#ffffff" }}>
+                  <span className="text-[9px] font-black uppercase tracking-wider text-center leading-tight">Monitorar<br/>os dois<br/>Sources</span>
+                  <span className="text-lg">↔</span>
+                </div>
+              </div>
+
+              {/* ── LOCAL SOURCE ── */}
+              <div className="rounded-xl p-4 space-y-3" style={{ backgroundColor: "#e8f0fb", border: "1px solid #c5d9f2" }}>
+                <h4 className="text-xs font-black uppercase tracking-wide" style={{ color: "#0d0446" }}>Origem Source Arquivo Local</h4>
+                <div className="flex gap-1.5">
+                  <div className="flex-1 flex items-center gap-2 px-3 py-2 rounded-lg" style={{ backgroundColor: "#ffffff", border: "1px solid #c5d9f2" }}>
+                    <FolderOpen size={14} style={{ color: "#7c8db5" }} />
+                    <span className="flex-1 text-xs truncate" style={{ color: localFileName ? "#0d0446" : "#7c8db5" }}>{localFileName || "Nenhum arquivo"}</span>
+                  </div>
+                  <button
+                    onClick={() => {
+                      if ('showOpenFilePicker' in window) {
+                        handleFileSelect();
+                      } else {
+                        fileInputRef.current?.click();
+                      }
+                    }}
+                    className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
+                    style={{ backgroundColor: "#0d0446", color: "#ffffff" }}
+                  >
+                    <Upload size={14} />
+                  </button>
+                  <label className="flex items-center gap-1.5 px-3 py-2 rounded-lg cursor-pointer select-none shrink-0" style={{ backgroundColor: "#0d0446", color: "#ffffff" }}>
+                    <input
+                      type="checkbox"
+                      checked={sourceMode === "pasta"}
+                      onChange={() => setSourceMode(sourceMode === "pasta" ? "online" : "pasta")}
+                      className="w-3.5 h-3.5 accent-white"
+                    />
+                    <span className="text-[10px] font-bold whitespace-nowrap">LER SOMENTE ESSA</span>
+                  </label>
+                </div>
+
+                <input ref={fileInputRef} type="file" accept=".xml,application/xml,text/xml" onChange={handleFileSelect} className="hidden" />
 
                 {/* Device name */}
-                <div className="rounded-lg p-2 flex items-center gap-2" style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "1px solid rgba(13,4,70,0.06)" }}>
-                  <Monitor size={12} className="shrink-0" style={{ color: "#268ffa" }} />
-                  {editingDeviceName ? (
-                    <div className="flex-1 flex gap-1">
-                      <input
-                        value={deviceNameInput}
-                        onChange={e => setDeviceNameInput(e.target.value)}
-                        className="flex-1 text-[9px] px-1.5 py-0.5 rounded outline-none"
-                        style={{ backgroundColor: "#fff", border: "1px solid #268ffa", color: "#0d0446" }}
-                        autoFocus
-                        onKeyDown={e => {
-                          if (e.key === "Enter") {
-                            localStorage.setItem(DEVICE_NAME_KEY, deviceNameInput);
-                            setCurrentDeviceName(deviceNameInput);
-                            setEditingDeviceName(false);
-                          }
-                        }}
-                      />
-                      <button
-                        onClick={() => {
-                          localStorage.setItem(DEVICE_NAME_KEY, deviceNameInput);
-                          setCurrentDeviceName(deviceNameInput);
-                          setEditingDeviceName(false);
-                        }}
-                        className="w-5 h-5 rounded flex items-center justify-center"
-                        style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#fff" }}
-                      >
-                        <Check size={10} />
-                      </button>
-                    </div>
-                  ) : (
-                    <>
-                      <span className="flex-1 text-[9px] font-semibold truncate" style={{ color: "#0d0446" }}>
-                        {currentDeviceName}
-                      </span>
-                      <button
-                        onClick={() => { setDeviceNameInput(currentDeviceName); setEditingDeviceName(true); }}
-                        className="w-5 h-5 rounded flex items-center justify-center shrink-0"
-                        style={{ backgroundColor: "rgba(13,4,70,0.04)" }}
-                      >
-                        <Pencil size={9} style={{ color: "#268ffa" }} />
-                      </button>
-                    </>
-                  )}
-                </div>
+                {localMonitoring && (
+                  <p className="text-[10px] font-semibold" style={{ color: "#0d0446" }}>
+                    lendo no computador <span className="font-mono" style={{ color: "#7c8db5" }}>{currentDeviceName}</span>
+                  </p>
+                )}
+
+                {/* Status bar */}
+                {lastSource === "pasta" ? (
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: "linear-gradient(90deg, #22c55e 0%, #4ade80 100%)", color: "#ffffff" }}>
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 bg-white" />
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-white" />
+                    </span>
+                    <span className="text-xs font-bold">LENDO AQUI</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: "linear-gradient(90deg, #d4e157 0%, #c6ff00 100%)", color: "#555" }}>
+                    <Loader2 size={12} className="animate-spin" />
+                    <span className="text-xs font-bold">AGUARDANDO LEITURA</span>
+                  </div>
+                )}
+                {localError && (
+                  <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[9px] font-semibold" style={{ backgroundColor: "rgba(239,68,68,0.08)", color: "#dc2626", border: "1px solid rgba(239,68,68,0.2)" }}>
+                    <AlertTriangle size={11} />
+                    <span>⚠ {localError}</span>
+                  </div>
+                )}
 
                 {/* Remote device warning */}
                 {!localFileName && (() => {
@@ -938,42 +972,14 @@ export default function MusicaNoAr() {
                     return (
                       <div className="rounded-lg p-2 flex items-start gap-2" style={{ backgroundColor: "rgba(234,179,8,0.1)", border: "1px solid rgba(234,179,8,0.3)" }}>
                         <Monitor size={12} className="shrink-0 mt-0.5" style={{ color: "#ca8a04" }} />
-                        <div>
-                          <p className="text-[9px] font-semibold" style={{ color: "#0d0446" }}>
-                            XML carregado em outro computador: <span className="font-mono" style={{ color: "rgba(13,4,70,0.5)" }}>{lastLocal.deviceName}</span>
-                          </p>
-                        </div>
+                        <p className="text-[9px] font-semibold" style={{ color: "#0d0446" }}>
+                          XML carregado em outro computador: <span className="font-mono" style={{ color: "rgba(13,4,70,0.5)" }}>{lastLocal.deviceName}</span>
+                        </p>
                       </div>
                     );
                   }
                   return null;
                 })()}
-
-                <input ref={fileInputRef} type="file" accept=".xml,application/xml,text/xml" onChange={handleFileSelect} className="hidden" />
-                <button
-                  onClick={() => {
-                    if ('showOpenFilePicker' in window) {
-                      handleFileSelect();
-                    } else {
-                      fileInputRef.current?.click();
-                    }
-                  }}
-                  className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-[10px] font-bold border-2 border-dashed transition-colors"
-                  style={{ borderColor: localFileName ? "#22c55e" : "rgba(13,4,70,0.15)", color: localFileName ? "#22c55e" : "rgba(13,4,70,0.4)" }}
-                >
-                  <Upload size={12} />
-                  {localFileName || "Selecionar .XML"}
-                </button>
-
-                {localMonitoring && localFileName && (
-                  <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-[9px] font-semibold" style={{ backgroundColor: "rgba(34,197,94,0.08)", color: "#16a34a", border: "1px solid rgba(34,197,94,0.2)" }}>
-                    <span className="relative flex h-1.5 w-1.5 shrink-0">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: "#22c55e" }} />
-                      <span className="relative inline-flex rounded-full h-1.5 w-1.5" style={{ backgroundColor: "#22c55e" }} />
-                    </span>
-                    Monitorando {localFileName} a cada 1s
-                  </div>
-                )}
               </div>
             </div>
 
