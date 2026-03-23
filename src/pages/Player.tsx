@@ -470,6 +470,10 @@ export default function PlayerPage() {
   const midrollTriggeredRef = useRef<Set<number>>(new Set());
   const [midrollPreroll, setMidrollPreroll] = useState<{ url: string; linkUrl: string | null; mediaType: string; youtubeUrl: string | null } | null>(null);
   const [midrollFading, setMidrollFading] = useState<"out" | "in" | null>(null);
+  // Mid-roll queue: up to 3 consecutive ads
+  const [midrollQueue, setMidrollQueue] = useState<{ url: string; linkUrl: string | null; mediaType: string; youtubeUrl: string | null }[]>([]);
+  const [midrollIndex, setMidrollIndex] = useState(0);
+  const [midrollTotal, setMidrollTotal] = useState(0);
 
   // Unified buffering detection
   const { buffering, setBuffering } = useBufferingDetection(videoRef, audioRef);
