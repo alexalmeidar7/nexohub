@@ -366,7 +366,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                 <Circle size={8} fill="#ff0000" color="#ff0000" className="animate-pulse" />
                 <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#ff0000" }}>Ao Vivo</span>
               </div>
-              <span className="text-white/50 text-[10px]">
+              <span className="text-[10px]" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.5 }}>
                 {onAirProgram.horario_inicio} — {onAirProgram.horario_fim}
               </span>
               {onAirProgram.classificacao_etaria && (
