@@ -138,10 +138,10 @@ export default function AudioDualCard({
 
   return (
     <div className="absolute inset-0 z-10 flex items-center justify-center overflow-hidden" style={{ paddingBottom: isMobile ? "70px" : "100px" }}>
-      {/* Background — same as player home */}
+      {/* Background — CSS gradient from layout colors */}
       <div 
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: "url(/images/player-bg.png)", backgroundColor: "hsl(0 0% 5%)" }}
+        className="absolute inset-0"
+        style={{ background: "var(--player-glow, radial-gradient(ellipse at 30% 50%, rgba(68,68,68,0.2) 0%, #1a1a1a 60%, #000 100%))" }}
       />
       {/* Wrapper */}
       <div className={`relative ${isMobile ? "flex flex-col items-center gap-2 w-[85vw] max-w-[320px]" : `flex items-center justify-center ${isTV ? "max-w-[1200px]" : "max-w-[800px]"}`}`} style={isMobile ? {} : { width: isTV ? "80vw" : "80vw", height: isTV ? "80vh" : "min(80vh, 420px)" }}>
@@ -156,7 +156,7 @@ export default function AudioDualCard({
               left: "50%",
               transform: "translateX(-50%)",
             }),
-            backgroundColor: "#a10a0b",
+            backgroundColor: "var(--layout-widget-bg-hex, #555)",
             backgroundImage: presenterPhoto ? `url(${presenterPhoto})` : undefined,
             backgroundSize: "cover",
             backgroundPosition: "top center",
@@ -206,7 +206,7 @@ export default function AudioDualCard({
                         data-menu-item
                         onClick={onOpenChat}
                         className={`flex items-center gap-2.5 rounded-lg transition-all hover:brightness-125 active:scale-95 text-left focus:outline-none focus:ring-2 focus:ring-white/70 ${isTV ? "px-5 py-3.5" : "px-3.5 py-2"}`}
-                        style={{ backgroundColor: "hsl(0 80% 40%)" }}
+                        style={{ backgroundColor: "hsl(var(--player-accent))" }}
                       >
                         <MessageCircle size={isTV ? 22 : 16} className="text-white shrink-0" />
                         <span className={`text-white font-semibold whitespace-nowrap ${isTV ? "text-base" : "text-xs"}`}>Chat ao Vivo</span>
@@ -220,7 +220,7 @@ export default function AudioDualCard({
                         target="_blank"
                         rel="noopener noreferrer"
                         className={`flex items-center gap-2.5 rounded-lg transition-all hover:brightness-125 active:scale-95 focus:outline-none focus:ring-2 focus:ring-white/70 ${isTV ? "px-5 py-3.5" : "px-3.5 py-2"}`}
-                        style={{ backgroundColor: "hsl(0 80% 40%)" }}
+                        style={{ backgroundColor: "hsl(var(--player-accent))" }}
                       >
                         <span className="shrink-0 text-white"><WhatsAppIcon size={isTV ? 22 : 16} /></span>
                         <span className={`text-white font-semibold whitespace-nowrap ${isTV ? "text-base" : "text-xs"}`}>WhatsApp do Estúdio</span>
@@ -234,7 +234,7 @@ export default function AudioDualCard({
                         target="_blank"
                         rel="noopener noreferrer"
                         className={`flex items-center gap-2.5 rounded-lg transition-all hover:brightness-125 active:scale-95 focus:outline-none focus:ring-2 focus:ring-white/70 ${isTV ? "px-5 py-3.5" : "px-3.5 py-2"}`}
-                        style={{ backgroundColor: "hsl(0 80% 40%)" }}
+                        style={{ backgroundColor: "hsl(var(--player-accent))" }}
                       >
                         <Instagram size={isTV ? 22 : 16} className="text-white shrink-0" />
                         <span className={`text-white font-semibold whitespace-nowrap ${isTV ? "text-base" : "text-xs"}`}>Siga {presenterName || "Locutor"}</span>
@@ -244,7 +244,7 @@ export default function AudioDualCard({
                 )}
               </div>
 
-              <Mic size={16} className="mb-1" style={{ color: "hsl(0 80% 50%)" }} />
+              <Mic size={16} className="mb-1" style={{ color: "hsl(var(--player-accent))" }} />
               <p className="text-white font-semibold text-sm md:text-base leading-tight drop-shadow-lg">
                 {presenterName || "Locutor"}
               </p>
@@ -272,21 +272,21 @@ export default function AudioDualCard({
             transform: "translateY(-50%)",
             zIndex: 3,
             height: "85%",
-            background: "linear-gradient(135deg, rgba(20,20,20,0.95) 0%, rgba(40,10,10,0.95) 100%)",
+            background: "linear-gradient(135deg, rgba(20,20,20,0.95) 0%, rgba(30,30,30,0.95) 100%)",
             boxShadow: historyOpen 
-              ? "0 25px 60px hsla(0,0%,0%,0.6), 0 0 0 1px hsla(0,80%,45%,0.3), inset 0 1px 0 hsla(0,0%,100%,0.1)" 
+              ? "0 25px 60px hsla(0,0%,0%,0.6), 0 0 0 1px hsla(var(--player-accent) / 0.3), inset 0 1px 0 hsla(0,0%,100%,0.1)" 
               : "none",
             opacity: historyOpen ? 1 : 0,
             transition: "all 0.5s cubic-bezier(0.22, 1, 0.36, 1)",
             pointerEvents: historyOpen ? "auto" : "none",
-            border: "1px solid hsla(0,80%,45%,0.2)",
+            border: "1px solid hsla(var(--player-accent) / 0.2)",
           }}
         >
           <div className="flex flex-col h-full p-4">
             {/* Header */}
-            <div className="flex items-center gap-2 mb-3 pb-3" style={{ borderBottom: "1px solid hsla(0,80%,45%,0.2)" }}>
-              <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: "hsla(0,80%,45%,0.2)" }}>
-                <Music size={14} style={{ color: "#a10a0b" }} />
+            <div className="flex items-center gap-2 mb-3 pb-3" style={{ borderBottom: "1px solid hsla(var(--player-accent) / 0.2)" }}>
+              <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: "hsla(var(--player-accent) / 0.2)" }}>
+                <Music size={14} style={{ color: "hsl(var(--player-accent))" }} />
               </div>
               <div className="flex-1">
                 <h3 className="font-bold text-sm text-white">Últimas Tocadas</h3>
@@ -301,7 +301,7 @@ export default function AudioDualCard({
             </div>
             
             {/* Song list */}
-            <div className="flex-1 min-h-0 overflow-y-auto pr-1" style={{ scrollbarWidth: "thin", scrollbarColor: "#a10a0b transparent" }}>
+            <div className="flex-1 min-h-0 overflow-y-auto pr-1" style={{ scrollbarWidth: "thin", scrollbarColor: "hsl(var(--player-accent)) transparent" }}>
               {recentSongs.length === 0 ? (
                 <p className="text-xs text-center mt-8 text-white/30">Nenhuma música registrada</p>
               ) : (
@@ -316,11 +316,11 @@ export default function AudioDualCard({
                         transform: historyOpen ? "translateX(0)" : "translateX(20px)",
                         transition: `all 0.3s ease ${i * 0.04}s`,
                       }}
-                      onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "hsla(0,80%,45%,0.15)"; }}
+                      onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "hsla(var(--player-accent) / 0.15)"; }}
                       onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "hsla(0,0%,100%,0.03)"; }}
                     >
                       {/* Time badge */}
-                      <div className="shrink-0 px-2 py-1 rounded-md" style={{ backgroundColor: "hsla(0,80%,45%,0.2)" }}>
+                      <div className="shrink-0 px-2 py-1 rounded-md" style={{ backgroundColor: "hsla(var(--player-accent) / 0.2)" }}>
                         <span className="text-[10px] font-mono font-bold text-white">
                           {song.horario?.slice(0, 5)}
                         </span>
@@ -357,7 +357,7 @@ export default function AudioDualCard({
           <div
             className={`relative w-full ${isMobile ? "aspect-[4/3]" : "aspect-square"} rounded-3xl overflow-hidden`}
             style={{
-              backgroundColor: isSemTitulo ? "#880000" : "hsl(0 0% 5%)",
+              backgroundColor: isSemTitulo ? "var(--layout-widget-bg-hex, #555)" : "hsl(0 0% 5%)",
               transform: isMobile ? "none" : (historyOpen ? "translateX(-25%) scale(0.96)" : "translateX(0%) scale(1)"),
               boxShadow: historyOpen && !isMobile
                 ? "0 25px 60px hsla(0, 0%, 0%, 0.5), 0 0 0 1px hsla(0, 0%, 100%, 0.05)"
@@ -367,11 +367,11 @@ export default function AudioDualCard({
           >
           {isSemTitulo ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center rounded-3xl overflow-hidden">
-              <div className="absolute inset-0" style={{ background: "radial-gradient(circle at center, hsla(0,70%,20%,0.4) 0%, transparent 70%)" }} />
+              <div className="absolute inset-0" style={{ background: "radial-gradient(circle at center, hsla(var(--player-accent) / 0.4) 0%, transparent 70%)" }} />
               <Suspense fallback={null}>
                 <div className="absolute inset-0 z-[2]">
                   <div className="relative w-full h-full">
-                    <AudioSpectrum audioElement={audioElement ?? null} barColor="#a10a0b" />
+                    <AudioSpectrum audioElement={audioElement ?? null} barColor="var(--layout-accent-hex, #888)" />
                   </div>
                 </div>
               </Suspense>
@@ -383,7 +383,7 @@ export default function AudioDualCard({
                   <Suspense fallback={null}>
                     <div className="absolute inset-0 z-[2]">
                       <div className="relative w-full h-full">
-                        <AudioSpectrum audioElement={audioElement ?? null} barColor="#a10a0b" />
+                        <AudioSpectrum audioElement={audioElement ?? null} barColor="var(--layout-accent-hex, #888)" />
                       </div>
                     </div>
                   </Suspense>
@@ -401,7 +401,7 @@ export default function AudioDualCard({
                   <Suspense fallback={null}>
                     <div className="absolute inset-0 z-[2]">
                       <div className="relative w-full h-full">
-                        <AudioSpectrum audioElement={audioElement ?? null} barColor="#a10a0b" />
+                        <AudioSpectrum audioElement={audioElement ?? null} barColor="var(--layout-accent-hex, #888)" />
                       </div>
                     </div>
                   </Suspense>
@@ -411,7 +411,7 @@ export default function AudioDualCard({
                   <Suspense fallback={null}>
                     <div className="absolute inset-x-0 bottom-0 z-[2]" style={{ height: "60%" }}>
                       <div className="relative w-full h-full">
-                        <AudioSpectrum audioElement={audioElement ?? null} barColor="#a10a0b" />
+                        <AudioSpectrum audioElement={audioElement ?? null} barColor="var(--layout-accent-hex, #888)" />
                       </div>
                     </div>
                   </Suspense>
@@ -424,7 +424,7 @@ export default function AudioDualCard({
                 <button
                   onClick={() => setHistoryOpen(o => !o)}
                   className="absolute top-3 right-3 z-[5] w-7 h-7 rounded-full flex items-center justify-center transition-all hover:scale-110 active:scale-95"
-                  style={{ backgroundColor: "hsl(0 80% 45%)" }}
+                  style={{ backgroundColor: "hsl(var(--player-accent))" }}
                 >
                   {historyOpen ? <X size={14} className="text-white" /> : <Plus size={14} className="text-white" />}
                 </button>
@@ -435,27 +435,27 @@ export default function AudioDualCard({
                 <div
                   className="absolute inset-0 z-[6] rounded-3xl overflow-hidden backdrop-blur-xl flex flex-col"
                   style={{
-                    background: "linear-gradient(135deg, rgba(20,20,20,0.95) 0%, rgba(40,10,10,0.95) 100%)",
-                    border: "1px solid hsla(0,80%,45%,0.2)",
+                    background: "linear-gradient(135deg, rgba(20,20,20,0.95) 0%, rgba(30,30,30,0.95) 100%)",
+                    border: "1px solid hsla(var(--player-accent) / 0.2)",
                   }}
                 >
-                  <div className="flex items-center gap-2 p-3 pb-2" style={{ borderBottom: "1px solid hsla(0,80%,45%,0.2)" }}>
-                    <div className="w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: "hsla(0,80%,45%,0.2)" }}>
-                      <Music size={12} style={{ color: "#a10a0b" }} />
+                  <div className="flex items-center gap-2 p-3 pb-2" style={{ borderBottom: "1px solid hsla(var(--player-accent) / 0.2)" }}>
+                    <div className="w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: "hsla(var(--player-accent) / 0.2)" }}>
+                      <Music size={12} style={{ color: "hsl(var(--player-accent))" }} />
                     </div>
                     <span className="font-bold text-xs text-white flex-1">Últimas Tocadas</span>
                     <button onClick={() => setHistoryOpen(false)} className="w-6 h-6 rounded-full flex items-center justify-center hover:bg-white/10 active:scale-95">
                       <X size={12} className="text-white/60" />
                     </button>
                   </div>
-                  <div className="flex-1 min-h-0 overflow-y-auto p-2" style={{ scrollbarWidth: "thin", scrollbarColor: "#a10a0b transparent" }}>
+                  <div className="flex-1 min-h-0 overflow-y-auto p-2" style={{ scrollbarWidth: "thin", scrollbarColor: "hsl(var(--player-accent)) transparent" }}>
                     {recentSongs.length === 0 ? (
                       <p className="text-[10px] text-center mt-4 text-white/30">Nenhuma música registrada</p>
                     ) : (
                       <div className="flex flex-col gap-1">
                         {recentSongs.map((song) => (
                           <div key={song.id} className="flex items-center gap-2 py-1.5 px-2 rounded-lg" style={{ backgroundColor: "hsla(0,0%,100%,0.03)" }}>
-                            <div className="shrink-0 px-1.5 py-0.5 rounded" style={{ backgroundColor: "hsla(0,80%,45%,0.2)" }}>
+                            <div className="shrink-0 px-1.5 py-0.5 rounded" style={{ backgroundColor: "hsla(var(--player-accent) / 0.2)" }}>
                               <span className="text-[9px] font-mono font-bold text-white">{song.horario?.slice(0, 5)}</span>
                             </div>
                             <div className="flex-1 min-w-0">
@@ -482,8 +482,8 @@ export default function AudioDualCard({
                       size={isMobile ? 16 : 20}
                       className="transition-colors"
                       style={{
-                        color: liked ? "hsl(0 80% 50%)" : "white",
-                        fill: liked ? "hsl(0 80% 50%)" : "none",
+                        color: liked ? "hsl(var(--player-accent))" : "white",
+                        fill: liked ? "hsl(var(--player-accent))" : "none",
                       }}
                     />
                   </button>

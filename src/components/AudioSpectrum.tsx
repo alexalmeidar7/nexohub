@@ -60,8 +60,16 @@ export default function AudioSpectrum({ audioElement, barColor }: AudioSpectrumP
 
         const x = i * (w / bufferLength);
 
-        // Main bar (red)
-        ctx.fillStyle = barColor ? `${barColor}` : `rgba(211, 7, 7, ${0.7 + (barHeight / h) * 0.3})`;
+        // Main bar — resolve CSS var if needed
+        let resolvedColor = barColor || "rgba(211, 7, 7, 0.85)";
+        if (resolvedColor.startsWith("var(")) {
+          const match = resolvedColor.match(/var\(([^,)]+)/);
+          if (match) {
+            const computed = getComputedStyle(document.documentElement).getPropertyValue(match[1]).trim();
+            if (computed) resolvedColor = computed;
+          }
+        }
+        ctx.fillStyle = `${resolvedColor}`;
         ctx.fillRect(x, h - barHeight, barWidth, barHeight);
 
         // Peak marker (yellow)

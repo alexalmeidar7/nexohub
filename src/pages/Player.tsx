@@ -2107,7 +2107,7 @@ export default function PlayerPage() {
               <div id="yt-playlist-scroll" className="flex gap-3 overflow-x-hidden px-4 py-3 scroll-smooth">
                 {youtubeVideos.map((v) => (
                   <button key={v.videoId} onClick={() => handleSelectVideo(v.videoId)}
-                    className={`flex flex-col shrink-0 rounded-lg overflow-hidden transition-all ${selectedVideoId === v.videoId ? "ring-2 ring-[#e60000]" : "hover:ring-1 hover:ring-white/30"}`}
+                    className={`flex flex-col shrink-0 rounded-lg overflow-hidden transition-all ${selectedVideoId === v.videoId ? "ring-2 ring-player-accent" : "hover:ring-1 hover:ring-white/30"}`}
                     style={{ width: "180px" }}
                   >
                     <div className="relative">
@@ -2144,7 +2144,7 @@ export default function PlayerPage() {
             style={{ backgroundColor: "rgba(0,0,0,0.75)", backdropFilter: "blur(12px)", minWidth: "100px" }}>
             {muted ? <VolumeX size={32} className="text-white/90" /> : <Volume2 size={32} className="text-white/90" />}
             <div className="w-20 h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "rgba(255,255,255,0.15)" }}>
-              <div className="h-full rounded-full transition-all duration-200" style={{ width: `${muted ? 0 : volume}%`, backgroundColor: "#e60000" }} />
+              <div className="h-full rounded-full transition-all duration-200" style={{ width: `${muted ? 0 : volume}%`, backgroundColor: "hsl(var(--player-accent))" }} />
             </div>
             <span className="text-white/80 text-xs font-medium">{muted ? "Mudo" : `${volume}%`}</span>
           </div>
@@ -2213,7 +2213,7 @@ export default function PlayerPage() {
           <h1 className="text-white text-xl sm:text-3xl font-bold mb-2 text-center">{canal?.name || "Nenhum canal"}</h1>
           {canal && <p className="text-white/50 text-xs sm:text-sm mb-6 sm:mb-8">Canal {canal.numero_canal}</p>}
           {canal && (
-            <button onClick={handlePlayCanal} className="flex items-center gap-2 text-white px-6 sm:px-8 py-2.5 sm:py-3 rounded-full font-bold text-base sm:text-lg transition-all" style={{ backgroundColor: "#e60000" }}>
+            <button onClick={handlePlayCanal} className="flex items-center gap-2 text-white px-6 sm:px-8 py-2.5 sm:py-3 rounded-full font-bold text-base sm:text-lg transition-all" style={{ backgroundColor: "hsl(var(--player-accent))" }}>
               <Play size={18} fill="white" /> Assistir
             </button>
           )}
@@ -2258,18 +2258,18 @@ export default function PlayerPage() {
             {!isCatalog && (
             <div className="flex flex-col items-center gap-0.5 sm:gap-1">
               {liveChannels.length > 1 && (
-                <button onClick={() => navigateChannel(-1)} className="text-white/60 hover:text-white hover:bg-[#e60000] rounded px-1.5 py-1 sm:px-2 sm:py-2 transition-all" title="Canal anterior"><ChevronUp size={14} /></button>
+                <button onClick={() => navigateChannel(-1)} className="text-white/60 hover:text-white hover:bg-player-accent rounded px-1.5 py-1 sm:px-2 sm:py-2 transition-all" title="Canal anterior"><ChevronUp size={14} /></button>
               )}
               <div className="text-white text-[10px] sm:text-xs font-bold py-0.5">
                 {(() => {
                   const num = canal?.numero_canal || "--";
                   const dashIdx = num.indexOf("-");
                   if (dashIdx < 0) return num;
-                  return <>{num.slice(0, dashIdx)} <sup className="text-[8px] sm:text-[9px]" style={{ color: "#e60000" }}>{num.slice(dashIdx + 1)}</sup></>;
+                  return <>{num.slice(0, dashIdx)} <sup className="text-[8px] sm:text-[9px]" style={{ color: "hsl(var(--player-accent))" }}>{num.slice(dashIdx + 1)}</sup></>;
                 })()}
               </div>
               {liveChannels.length > 1 && (
-                <button onClick={() => navigateChannel(1)} className="text-white/60 hover:text-white hover:bg-[#e60000] rounded px-1.5 py-1 sm:px-2 sm:py-2 transition-all" title="Próximo canal"><ChevronDown size={14} /></button>
+                <button onClick={() => navigateChannel(1)} className="text-white/60 hover:text-white hover:bg-player-accent rounded px-1.5 py-1 sm:px-2 sm:py-2 transition-all" title="Próximo canal"><ChevronDown size={14} /></button>
               )}
             </div>
             )}
@@ -2285,28 +2285,28 @@ export default function PlayerPage() {
             {isCatalog && selectedVideoId && (
               <div className="flex items-center gap-1">
                 <button onClick={ytPrevVideo} className="text-white/60 hover:text-white transition-colors rounded-md p-1" title="Vídeo anterior"><SkipBack size={15} /></button>
-                <button onClick={ytTogglePlay} className="w-8 h-8 rounded-full border-2 border-[#e60000] flex items-center justify-center transition-all hover:bg-[#e60000]/20" title={ytPlaying ? "Pausar" : "Reproduzir"}>
-                  {ytPlaying ? <Pause size={14} color="#e60000" /> : <Play size={14} color="#e60000" fill="#e60000" />}
+                <button onClick={ytTogglePlay} className="w-8 h-8 rounded-full border-2 border-player-accent flex items-center justify-center transition-all hover:bg-player-accent/20" title={ytPlaying ? "Pausar" : "Reproduzir"}>
+                  {ytPlaying ? <Pause size={14} className="text-player-accent" /> : <Play size={14} className="text-player-accent fill-player-accent" />}
                 </button>
                 <button onClick={ytNextVideo} className="text-white/60 hover:text-white transition-colors rounded-md p-1" title="Próximo vídeo"><SkipForward size={15} /></button>
               </div>
             )}
             {isCatalog && !selectedVideoId && (
-              <button onClick={handlePlayCanal} className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-[#e60000] flex items-center justify-center transition-all hover:bg-[#e60000]/20" title="Reproduzir">
-                <Play size={14} color="#e60000" fill="#e60000" />
+              <button onClick={handlePlayCanal} className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-player-accent flex items-center justify-center transition-all hover:bg-player-accent/20" title="Reproduzir">
+                <Play size={14} className="text-player-accent fill-player-accent" />
               </button>
             )}
 
             {/* Non-catalog: original play/pause */}
             {!isCatalog && (
-              <button onClick={handlePlayCanal} className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-[#e60000] flex items-center justify-center transition-all hover:bg-[#e60000]/20" title={playing ? "Pausar" : "Reproduzir"}>
-                {playing ? <Pause size={14} color="#e60000" /> : <Play size={14} color="#e60000" fill="#e60000" />}
+              <button onClick={handlePlayCanal} className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-player-accent flex items-center justify-center transition-all hover:bg-player-accent/20" title={playing ? "Pausar" : "Reproduzir"}>
+                {playing ? <Pause size={14} className="text-player-accent" /> : <Play size={14} className="text-player-accent fill-player-accent" />}
               </button>
             )}
 
             {/* Program info inline on mobile */}
             <div className="flex-1 min-w-0 sm:hidden">
-              <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: "#e60000" }}>No Ar:</span>
+              <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: "hsl(var(--player-accent))" }}>No Ar:</span>
               <MarqueeText className="text-white text-sm font-bold leading-tight" text={channelLabel} />
               {!isYoutube && musicData?.titulo && (
                 <MarqueeText className="text-white/50 text-[10px]" text={`♫ ${musicData.titulo} — ${musicData.artista}`} />
@@ -2316,7 +2316,7 @@ export default function PlayerPage() {
 
           {/* Program Info — desktop only as separate section */}
           <div className="hidden sm:block px-5 min-w-0" style={{ flex: "0 1 450px" }}>
-            <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#e60000" }}>No Ar:</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "hsl(var(--player-accent))" }}>No Ar:</span>
             <MarqueeText className="text-white text-lg font-bold leading-tight" text={channelLabel} />
             {programLabel && (
               <MarqueeText className="text-white/60 text-sm leading-tight" text={programLabel} />
@@ -2350,7 +2350,7 @@ export default function PlayerPage() {
               >
                 <div data-seek-tooltip className="absolute -top-6 text-[10px] font-bold text-white bg-black/90 px-1.5 py-0.5 rounded pointer-events-none -translate-x-1/2 opacity-0 transition-opacity z-10 whitespace-nowrap" />
                 <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden group-hover:h-3 transition-all relative">
-                  <div className="h-full rounded-full transition-all duration-300" style={{ width: `${ytProgressPct}%`, backgroundColor: "#e60000" }} />
+                  <div className="h-full rounded-full transition-all duration-300" style={{ width: `${ytProgressPct}%`, backgroundColor: "hsl(var(--player-accent))" }} />
                 </div>
                 {midrollBreakPoints.map((bp, i) => (
                   <div
@@ -2392,16 +2392,16 @@ export default function PlayerPage() {
               >
                 <div data-seek-tooltip className="absolute -top-6 text-[10px] font-bold text-white bg-black/90 px-1.5 py-0.5 rounded pointer-events-none -translate-x-1/2 opacity-0 transition-opacity z-10 whitespace-nowrap" />
                 <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden group-hover:h-3 transition-all">
-                  <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${progress}%`, backgroundColor: "#e60000" }} />
+                  <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${progress}%`, backgroundColor: "hsl(var(--player-accent))" }} />
                 </div>
               </div>
             )}
             {isYoutube && selectedVideoId ? (
-              <span className="text-[10px] mt-1 inline-block" style={{ color: "#e60000" }}>
+              <span className="text-[10px] mt-1 inline-block" style={{ color: "hsl(var(--player-accent))" }}>
                 {fmtTime(ytCurrentTime)} - {fmtTime(ytDuration)}
               </span>
             ) : (
-              <span className="text-[10px] mt-1 inline-block" style={{ color: "#e60000" }}>
+              <span className="text-[10px] mt-1 inline-block" style={{ color: "hsl(var(--player-accent))" }}>
                 {currentProg ? `${currentProg.horario_inicio.slice(0, 5)} - ${currentProg.horario_fim.slice(0, 5)}` : "--:-- - --:--"}
               </span>
             )}
@@ -2411,11 +2411,11 @@ export default function PlayerPage() {
           <div className="sm:hidden w-full">
             {isYoutube && selectedVideoId ? (
               <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden">
-                <div className="h-full rounded-full transition-all duration-300" style={{ width: `${ytProgressPct}%`, backgroundColor: "#e60000" }} />
+                <div className="h-full rounded-full transition-all duration-300" style={{ width: `${ytProgressPct}%`, backgroundColor: "hsl(var(--player-accent))" }} />
               </div>
             ) : (
               <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden">
-                <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${progress}%`, backgroundColor: "#e60000" }} />
+                <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${progress}%`, backgroundColor: "hsl(var(--player-accent))" }} />
               </div>
             )}
           </div>
@@ -2493,9 +2493,7 @@ export default function PlayerPage() {
                     <Heart
                       key={h.id}
                       size={12 + Math.random() * 6}
-                      fill="hsl(var(--player-accent))"
-                      color="hsl(var(--player-accent))"
-                      className="absolute pointer-events-none"
+                      className="absolute pointer-events-none fill-player-accent text-player-accent"
                       style={{ left: `calc(50% + ${h.x}px)`, bottom: "100%", opacity: 0, animation: `floatHeart 1.2s ease-out ${h.delay}s forwards` }}
                     />
                   ))}
@@ -2659,7 +2657,7 @@ export default function PlayerPage() {
           <div className="hidden md:flex items-stretch relative group/next shrink-0 ml-auto">
             {/* Red arrow trigger */}
             <div className="flex items-center pl-2 border-l border-white/10 cursor-pointer">
-              <div className="w-6 h-6 rounded-full flex items-center justify-center transition-all group-hover/next:bg-[#e60000]/20" style={{ color: "#e60000" }}>
+              <div className="w-6 h-6 rounded-full flex items-center justify-center transition-all group-hover/next:bg-[hsl(var(--player-accent))]/20" style={{ color: "hsl(var(--player-accent))" }}>
                 <ChevronRight size={16} />
               </div>
             </div>
@@ -2668,21 +2666,21 @@ export default function PlayerPage() {
               className="overflow-hidden transition-all duration-300 ease-in-out flex items-stretch gap-2 max-w-0 opacity-0 group-hover/next:max-w-[320px] group-hover/next:opacity-100 group-hover/next:pl-3"
             >
               <div className="min-w-0 flex-1" style={{ maxWidth: "200px" }}>
-                <span className="text-[10px] font-bold uppercase" style={{ color: "#e60000" }}>A seguir:</span>
+                <span className="text-[10px] font-bold uppercase" style={{ color: "hsl(var(--player-accent))" }}>A seguir:</span>
                 <div className="text-white text-sm font-medium leading-tight line-clamp-2 whitespace-normal">
                   {isYoutube ? (nextYtVideo?.title || "Sem vídeo") : (nextProg?.nome || "Sem programação")}
                 </div>
                 {!isYoutube && (
-                  <span className="text-[10px] whitespace-nowrap" style={{ color: "#e60000" }}>
+                  <span className="text-[10px] whitespace-nowrap" style={{ color: "hsl(var(--player-accent))" }}>
                     {nextProg ? `${nextProg.horario_inicio.slice(0, 5)} - ${nextProg.horario_fim.slice(0, 5)}` : "--:-- - --:--"}
                   </span>
                 )}
                 <div className="mt-0.5">
                   <button onClick={() => setGradeOpen(true)}
                     className="flex items-center gap-1 text-white text-[8px] font-bold uppercase px-2 py-0.5 rounded-full transition-all"
-                    style={{ backgroundColor: "#e60000", border: "1px solid transparent" }}
+                    style={{ backgroundColor: "hsl(var(--player-accent))", border: "1px solid transparent" }}
                     onMouseEnter={e => { e.currentTarget.style.borderColor = "#ed0808"; e.currentTarget.style.backgroundColor = "#000"; }}
-                    onMouseLeave={e => { e.currentTarget.style.borderColor = "transparent"; e.currentTarget.style.backgroundColor = "#e60000"; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = "transparent"; e.currentTarget.style.backgroundColor = "hsl(var(--player-accent))"; }}
                   >
                     + Grade
                   </button>
