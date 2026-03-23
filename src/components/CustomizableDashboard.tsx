@@ -24,6 +24,45 @@ interface DashboardItem {
 
 const STORAGE_KEY = "nexohub_dashboard_items";
 
+interface DashboardSettingsPayload {
+  items?: DashboardItem[];
+  layout_colors?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
+const NUMERIC_KEY_REGEX = /^\d+$/;
+
+function normalizeDashboardSettings(raw: unknown): DashboardSettingsPayload {
+  if (Array.isArray(raw)) {
+    return { items: raw as DashboardItem[] };
+  }
+
+  if (raw && typeof raw === "object") {
+    const payload = { ...(raw as Record<string, unknown>) };
+    const numericKeys = Object.keys(payload)
+      .filter((key) => NUMERIC_KEY_REGEX.test(key))
+      .sort((a, b) => Number(a) - Number(b));
+
+    if (!Array.isArray(payload.items) && numericKeys.length > 0) {
+      payload.items = numericKeys
+        .map((key) => payload[key])
+        .filter(Boolean) as DashboardItem[];
+    }
+
+    numericKeys.forEach((key) => {
+      delete payload[key];
+    });
+
+    if (!Array.isArray(payload.items)) {
+      payload.items = [];
+    }
+
+    return payload as DashboardSettingsPayload;
+  }
+
+  return { items: [] };
+}
+
 const linkOptions: { label: string; page?: Page; external?: string; icon: string }[] = [
   { label: "Apresentadores", page: "apresentadores", icon: "Mic2" },
   { label: "Programas", page: "programas", icon: "PlaySquare" },
@@ -67,6 +106,7 @@ interface Props {
 export default function CustomizableDashboard({ onNavigate }: Props) {
   const { user } = useAuth();
   const [items, setItems] = useState<DashboardItem[]>([]);
+  const dashboardSettingsRef = useRef<DashboardSettingsPayload>({ items: [] });
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [addStep, setAddStep] = useState<"choose" | "link" | "widget">("choose");
   const [editMode, setEditMode] = useState(false);
@@ -145,43 +185,83 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
     if (!user) return;
     const loadItems = async () => {
       // Try DB first
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("user_settings")
         .select("dashboard_items")
         .eq("user_id", user.id)
         .maybeSingle();
 
-      if (data?.dashboard_items && (data.dashboard_items as any[]).length > 0) {
-        setItems(data.dashboard_items as unknown as DashboardItem[]);
-      } else {
-        // Migrate from localStorage if exists
-        try {
-          const saved = localStorage.getItem(STORAGE_KEY);
-          if (saved) {
-            const parsed = JSON.parse(saved);
-            setItems(parsed);
-            // Save to DB immediately
-            await supabase
-              .from("user_settings")
-              .upsert({ user_id: user.id, dashboard_items: parsed }, { onConflict: "user_id" });
-          }
-        } catch {}
+      if (error) {
+        console.error("Erro ao carregar dashboard_items:", error);
+      }
+
+      const normalized = normalizeDashboardSettings(data?.dashboard_items);
+      dashboardSettingsRef.current = normalized;
+
+      if (Array.isArray(normalized.items) && normalized.items.length > 0) {
+        setItems(normalized.items);
+        return;
+      }
+
+      // Migrate from localStorage if exists
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (!saved) return;
+
+        const parsed = JSON.parse(saved);
+        if (!Array.isArray(parsed) || parsed.length === 0) return;
+
+        setItems(parsed as DashboardItem[]);
+        const payload: DashboardSettingsPayload = {
+          ...dashboardSettingsRef.current,
+          items: parsed as DashboardItem[],
+        };
+        dashboardSettingsRef.current = payload;
+
+        await supabase
+          .from("user_settings")
+          .upsert(
+            {
+              user_id: user.id,
+              dashboard_items: payload as any,
+              updated_at: new Date().toISOString(),
+            },
+            { onConflict: "user_id" }
+          );
+      } catch {
+        // ignore invalid local data
       }
     };
     loadItems();
   }, [user]);
 
-  const saveItems = useCallback((newItems: DashboardItem[]) => {
+  const saveItems = useCallback(async (newItems: DashboardItem[]) => {
     setItems(newItems);
-    // Save to DB
-    if (user) {
-      supabase
-        .from("user_settings")
-        .upsert({ user_id: user.id, dashboard_items: newItems as any }, { onConflict: "user_id" })
-        .then();
-    }
-    // Keep localStorage as fallback
     localStorage.setItem(STORAGE_KEY, JSON.stringify(newItems));
+
+    if (!user) return;
+
+    const payload: DashboardSettingsPayload = {
+      ...dashboardSettingsRef.current,
+      items: newItems,
+    };
+    dashboardSettingsRef.current = payload;
+
+    // Save to DB
+    const { error } = await supabase
+      .from("user_settings")
+      .upsert(
+        {
+          user_id: user.id,
+          dashboard_items: payload as any,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "user_id" }
+      );
+
+    if (error) {
+      console.error("Erro ao salvar dashboard_items:", error);
+    }
   }, [user]);
 
   const addLink = (opt: typeof linkOptions[0]) => {
