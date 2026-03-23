@@ -594,7 +594,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                         opacity: exists ? 0.4 : 1,
                         color: "#fff",
                       }}
-                      onMouseEnter={e => { if (!exists) { e.currentTarget.style.background = "rgba(190,1,1,0.15)"; } }}
+                      onMouseEnter={e => { if (!exists) { e.currentTarget.style.background = `color-mix(in srgb, var(--layout-button-bg, #333) 15%, transparent)`; } }}
                       onMouseLeave={e => { e.currentTarget.style.background = exists ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.06)"; }}
                     >
                       <Icon size={16} />
