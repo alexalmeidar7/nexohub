@@ -24,16 +24,6 @@ import {
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 
-interface GoogleCalendarEvent {
-  id: string;
-  summary: string;
-  description: string;
-  location: string;
-  start: string;
-  end: string;
-  htmlLink: string;
-}
-
 interface Programa {
   id: string;
   nome: string;
