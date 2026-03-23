@@ -560,9 +560,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                           key={child.label}
                           onClick={() => handleChildClick(child, item.label)}
                           className="w-full text-left px-4 py-2 text-[11px] transition-all rounded-lg mx-0"
-                          style={{ color: child.page && currentPage === child.page ? layoutColors.buttonBg : "rgba(255,255,255,0.8)" }}
-                          onMouseEnter={e => { if (!(child.page && currentPage === child.page)) { e.currentTarget.style.color = layoutColors.buttonBg; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.05)"; } }}
-                          onMouseLeave={e => { if (!(child.page && currentPage === child.page)) { e.currentTarget.style.color = "rgba(255,255,255,0.8)"; e.currentTarget.style.backgroundColor = "transparent"; } }}
+                          style={{ color: child.page && currentPage === child.page ? layoutColors.buttonBg : `${layoutColors.navText}cc` }}
+                          onMouseEnter={e => { if (!(child.page && currentPage === child.page)) { e.currentTarget.style.color = layoutColors.buttonBg; e.currentTarget.style.backgroundColor = `${layoutColors.navText}0d`; } }}
+                          onMouseLeave={e => { if (!(child.page && currentPage === child.page)) { e.currentTarget.style.color = `${layoutColors.navText}cc`; e.currentTarget.style.backgroundColor = "transparent"; } }}
                         >
                           {child.label}
                         </button>
