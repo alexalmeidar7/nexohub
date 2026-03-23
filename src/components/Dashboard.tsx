@@ -548,10 +548,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                     <div
                       className="rounded-xl py-1.5 min-w-[180px]"
                       style={{
-                        background: "rgba(0, 0, 0, 0.80)",
+                        background: `${layoutColors.navBg}cc`,
                         backdropFilter: "blur(24px) saturate(1.4)",
                         WebkitBackdropFilter: "blur(24px) saturate(1.4)",
-                        border: "1px solid rgba(255,255,255,0.08)",
+                        border: `1px solid ${layoutColors.borderColor}22`,
                         boxShadow: "0 12px 32px rgba(0,0,0,0.5)",
                       }}
                     >
