@@ -120,9 +120,8 @@ Deno.serve(async (req) => {
       parsedUrl = new URL(url);
       if (!/^https?:$/.test(parsedUrl.protocol)) throw new Error("invalid_protocol");
     } catch {
-      return new Response(JSON.stringify({ error: "URL inválida" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      return new Response(JSON.stringify({ content: "", error: "URL inválida", ok: false }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json; charset=utf-8" },
       });
     }
 
