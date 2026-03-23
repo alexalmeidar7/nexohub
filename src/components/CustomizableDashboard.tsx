@@ -272,7 +272,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
       {/* Section: Atalhos */}
       {items.filter(i => i.type === "link").length > 0 && (
         <div className="mb-6">
-          <p className="text-white/70 text-[10px] font-bold uppercase tracking-[0.15em] mb-3 animate-fade-in">Atalhos rápidos</p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.15em] mb-3 animate-fade-in" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.7 }}>Atalhos rápidos</p>
           <div className="flex flex-wrap gap-2 sm:gap-3">
             {items.filter(i => i.type === "link").map(item => {
               const Icon = getIcon(item.linkIcon || "Link2");
