@@ -2107,7 +2107,7 @@ export default function PlayerPage() {
               <div id="yt-playlist-scroll" className="flex gap-3 overflow-x-hidden px-4 py-3 scroll-smooth">
                 {youtubeVideos.map((v) => (
                   <button key={v.videoId} onClick={() => handleSelectVideo(v.videoId)}
-                    className={`flex flex-col shrink-0 rounded-lg overflow-hidden transition-all ${selectedVideoId === v.videoId ? "ring-2 ring-[hsl(var(--player-accent))]" : "hover:ring-1 hover:ring-white/30"}`}
+                    className={`flex flex-col shrink-0 rounded-lg overflow-hidden transition-all ${selectedVideoId === v.videoId ? "ring-2 ring-player-accent" : "hover:ring-1 hover:ring-white/30"}`}
                     style={{ width: "180px" }}
                   >
                     <div className="relative">
@@ -2258,7 +2258,7 @@ export default function PlayerPage() {
             {!isCatalog && (
             <div className="flex flex-col items-center gap-0.5 sm:gap-1">
               {liveChannels.length > 1 && (
-                <button onClick={() => navigateChannel(-1)} className="text-white/60 hover:text-white hover:bg-[hsl(var(--player-accent))] rounded px-1.5 py-1 sm:px-2 sm:py-2 transition-all" title="Canal anterior"><ChevronUp size={14} /></button>
+                <button onClick={() => navigateChannel(-1)} className="text-white/60 hover:text-white hover:bg-player-accent rounded px-1.5 py-1 sm:px-2 sm:py-2 transition-all" title="Canal anterior"><ChevronUp size={14} /></button>
               )}
               <div className="text-white text-[10px] sm:text-xs font-bold py-0.5">
                 {(() => {
@@ -2269,7 +2269,7 @@ export default function PlayerPage() {
                 })()}
               </div>
               {liveChannels.length > 1 && (
-                <button onClick={() => navigateChannel(1)} className="text-white/60 hover:text-white hover:bg-[hsl(var(--player-accent))] rounded px-1.5 py-1 sm:px-2 sm:py-2 transition-all" title="Próximo canal"><ChevronDown size={14} /></button>
+                <button onClick={() => navigateChannel(1)} className="text-white/60 hover:text-white hover:bg-player-accent rounded px-1.5 py-1 sm:px-2 sm:py-2 transition-all" title="Próximo canal"><ChevronDown size={14} /></button>
               )}
             </div>
             )}
@@ -2285,21 +2285,21 @@ export default function PlayerPage() {
             {isCatalog && selectedVideoId && (
               <div className="flex items-center gap-1">
                 <button onClick={ytPrevVideo} className="text-white/60 hover:text-white transition-colors rounded-md p-1" title="Vídeo anterior"><SkipBack size={15} /></button>
-                <button onClick={ytTogglePlay} className="w-8 h-8 rounded-full border-2 border-[hsl(var(--player-accent))] flex items-center justify-center transition-all hover:bg-[hsl(var(--player-accent))]/20" title={ytPlaying ? "Pausar" : "Reproduzir"}>
+                <button onClick={ytTogglePlay} className="w-8 h-8 rounded-full border-2 border-player-accent flex items-center justify-center transition-all hover:bg-player-accent/20" title={ytPlaying ? "Pausar" : "Reproduzir"}>
                   {ytPlaying ? <Pause size={14} color="hsl(var(--player-accent))" /> : <Play size={14} color="hsl(var(--player-accent))" fill="hsl(var(--player-accent))" />}
                 </button>
                 <button onClick={ytNextVideo} className="text-white/60 hover:text-white transition-colors rounded-md p-1" title="Próximo vídeo"><SkipForward size={15} /></button>
               </div>
             )}
             {isCatalog && !selectedVideoId && (
-              <button onClick={handlePlayCanal} className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-[hsl(var(--player-accent))] flex items-center justify-center transition-all hover:bg-[hsl(var(--player-accent))]/20" title="Reproduzir">
+              <button onClick={handlePlayCanal} className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-player-accent flex items-center justify-center transition-all hover:bg-player-accent/20" title="Reproduzir">
                 <Play size={14} color="hsl(var(--player-accent))" fill="hsl(var(--player-accent))" />
               </button>
             )}
 
             {/* Non-catalog: original play/pause */}
             {!isCatalog && (
-              <button onClick={handlePlayCanal} className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-[hsl(var(--player-accent))] flex items-center justify-center transition-all hover:bg-[hsl(var(--player-accent))]/20" title={playing ? "Pausar" : "Reproduzir"}>
+              <button onClick={handlePlayCanal} className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-player-accent flex items-center justify-center transition-all hover:bg-player-accent/20" title={playing ? "Pausar" : "Reproduzir"}>
                 {playing ? <Pause size={14} color="hsl(var(--player-accent))" /> : <Play size={14} color="hsl(var(--player-accent))" fill="hsl(var(--player-accent))" />}
               </button>
             )}
