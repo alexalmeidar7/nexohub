@@ -585,9 +585,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               <button
                 onClick={() => setCurrentPage("configuracoes")}
                 className="w-8 h-8 rounded-full flex items-center justify-center transition-all"
-                style={{ backgroundColor: "rgba(255,255,255,0.1)" }}
-                onMouseEnter={e => { e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.2)"; }}
-                onMouseLeave={e => { e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.1)"; }}
+                style={{ backgroundColor: `${layoutColors.navText}1a` }}
+                onMouseEnter={e => { e.currentTarget.style.backgroundColor = `${layoutColors.navText}33`; }}
+                onMouseLeave={e => { e.currentTarget.style.backgroundColor = `${layoutColors.navText}1a`; }}
               >
                 <Settings size={14} className="text-white/70" />
               </button>
