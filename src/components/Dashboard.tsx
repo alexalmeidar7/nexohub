@@ -1206,7 +1206,7 @@ function DashboardAgenda() {
           ))}
         </div>
         <div className="mt-1 space-y-1">
-          <div className="h-6 rounded-lg bg-[#be0101]/15" />
+          <div className="h-6 rounded-lg" style={{ backgroundColor: "var(--layout-button-bg, #333333)", opacity: 0.15 }} />
         </div>
       </div>
     );
