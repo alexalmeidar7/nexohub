@@ -66,6 +66,7 @@ export default function PreRollPage() {
   const [aspectRatio, setAspectRatio] = useState<"16:9" | "9:16">("16:9");
   const [videoPosition, setVideoPosition] = useState<"center" | "left" | "right">("center");
   const [showPreview, setShowPreview] = useState(false);
+  const [isMidroll, setIsMidroll] = useState(false);
 
   const bgInputRef = useRef<HTMLInputElement>(null);
 
