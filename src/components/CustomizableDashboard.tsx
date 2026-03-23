@@ -568,8 +568,8 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                     <BarChart3 size={20} style={{ color: "var(--layout-button-text, #fff)" }} />
                   </div>
                   <div className="text-center">
-                    <p className="text-white font-semibold text-sm">Widget</p>
-                    <p className="text-white/40 text-[10px] mt-0.5">Dados em tempo real</p>
+                    <p className="font-semibold text-sm" style={{ color: "var(--layout-nav-text, #fff)" }}>Widget</p>
+                    <p className="text-[10px] mt-0.5" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.4 }}>Dados em tempo real</p>
                   </div>
                 </button>
               </div>
