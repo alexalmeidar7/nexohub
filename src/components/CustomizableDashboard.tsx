@@ -1225,7 +1225,7 @@ function DashboardWeatherWidget() {
 
           {/* Amanhã */}
           {weather.tomorrow && (
-            <div className="flex-1 flex items-center gap-2 px-3 py-2.5 rounded-lg" style={{ background: "rgba(190,1,1,0.05)" }}>
+            <div className="flex-1 flex items-center gap-2 px-3 py-2.5 rounded-lg" style={{ background: `color-mix(in srgb, var(--layout-button-bg, #333) 5%, transparent)` }}>
               <div className="flex-shrink-0">
                 {WeatherIconComp && <WeatherIconComp code={weather.tomorrow.weatherCode} size={32} forceDay />}
               </div>
