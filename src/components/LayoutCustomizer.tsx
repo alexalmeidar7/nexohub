@@ -204,8 +204,8 @@ export default function LayoutCustomizer() {
     toast.success("Layout salvo com sucesso!");
     originalRef.current = colors;
     setHasChanges(false);
-    // Reload page to apply changes
-    setTimeout(() => window.location.reload(), 800);
+    // Notify useLayoutColors to re-fetch without reloading
+    window.dispatchEvent(new Event("layout-colors-updated"));
   };
 
   const resetColors = async () => {
@@ -216,7 +216,7 @@ export default function LayoutCustomizer() {
     toast.success("Cores restauradas ao padrão.");
     originalRef.current = defaultColors;
     setHasChanges(false);
-    setTimeout(() => window.location.reload(), 800);
+    window.dispatchEvent(new Event("layout-colors-updated"));
   };
 
   const handleBgImageUpload = () => {
