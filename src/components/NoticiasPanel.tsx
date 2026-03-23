@@ -728,7 +728,7 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
       )}
 
       {/* Main two-column layout: Left (Cotações + Portais) | Right (Jornal Builder) */}
-      <div className="flex gap-4">
+      <div className="flex gap-4" style={{ alignItems: "flex-start" }}>
         {/* LEFT COLUMN */}
         <div className="space-y-4" style={{ width: (jornalConfig || wizardOpen) ? "50%" : "100%" }}>
           {/* News Portals Accordion */}
@@ -1114,7 +1114,7 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
 
         {/* RIGHT COLUMN - Wizard or Jornal Builder */}
         {(wizardOpen || jornalConfig) && (
-          <div className="flex-1" style={{ position: "sticky", top: "0", alignSelf: "flex-start" }}>
+          <div className="flex-1" style={{ position: "sticky", top: "16px", alignSelf: "flex-start", maxHeight: "calc(100vh - 32px)", overflowY: "auto" }}>
             {wizardOpen && !jornalConfig && (
               <MontarJornalInline
                 programas={programas}

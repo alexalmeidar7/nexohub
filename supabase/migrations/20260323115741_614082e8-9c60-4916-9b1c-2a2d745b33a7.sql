@@ -1,0 +1,1 @@
+ALTER TABLE public.comercial_preroll ADD COLUMN IF NOT EXISTS is_midroll boolean NOT NULL DEFAULT false;

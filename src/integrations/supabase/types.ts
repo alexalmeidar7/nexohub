@@ -234,6 +234,7 @@ export type Database = {
           horario_fim: string
           horario_inicio: string
           id: string
+          is_midroll: boolean
           link_url: string | null
           media_type: string
           nome: string
@@ -258,6 +259,7 @@ export type Database = {
           horario_fim: string
           horario_inicio: string
           id?: string
+          is_midroll?: boolean
           link_url?: string | null
           media_type?: string
           nome?: string
@@ -282,6 +284,7 @@ export type Database = {
           horario_fim?: string
           horario_inicio?: string
           id?: string
+          is_midroll?: boolean
           link_url?: string | null
           media_type?: string
           nome?: string

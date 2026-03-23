@@ -359,9 +359,11 @@ export default function AgendaPage() {
     const selStr = selectedDate ? format(selectedDate, "yyyy-MM-dd") : "";
     const matchDate = selectedDate ? eventMatchesDate(e, selStr) : true;
     const matchLocal = filterLocal === "todos" || e.local === filterLocal;
-    // Only future/current events
+    // Only future/current events (unique with past date go to history)
     const isFuture = e.recorrencia !== "unico" || e.data >= todayStr;
-    return matchDate && matchLocal && isFuture;
+    // Also exclude events whose linked programa is inactive (vencido)
+    const programaAtivo = !e.programa_id || programas.find(p => p.id === e.programa_id) !== undefined;
+    return matchDate && matchLocal && isFuture && programaAtivo;
   });
 
   // Past events

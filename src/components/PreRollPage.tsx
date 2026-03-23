@@ -34,6 +34,7 @@ interface PreRoll {
   background_url: string | null;
   aspect_ratio: string;
   video_position: string;
+  is_midroll: boolean;
 }
 
 const DIAS = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
@@ -65,6 +66,7 @@ export default function PreRollPage() {
   const [aspectRatio, setAspectRatio] = useState<"16:9" | "9:16">("16:9");
   const [videoPosition, setVideoPosition] = useState<"center" | "left" | "right">("center");
   const [showPreview, setShowPreview] = useState(false);
+  const [isMidroll, setIsMidroll] = useState(false);
 
   const bgInputRef = useRef<HTMLInputElement>(null);
 
@@ -109,7 +111,7 @@ export default function PreRollPage() {
     setMediaType("video"); setVideoFile(null); setVideoPreview(""); setYoutubeUrl("");
     setDiasSemana([]); setHorarioInicio("00:00"); setHorarioFim("23:59");
     setPriority("1"); setLinkUrl(""); setDataInicial(new Date()); setDataFinal(undefined); setEditId(null);
-    setBackgroundFile(null); setBackgroundPreview(""); setAspectRatio("16:9"); setVideoPosition("center"); setShowPreview(false);
+    setBackgroundFile(null); setBackgroundPreview(""); setAspectRatio("16:9"); setVideoPosition("center"); setShowPreview(false); setIsMidroll(false);
   };
 
   const extractYoutubeId = (url: string): string | null => {
@@ -139,6 +141,7 @@ export default function PreRollPage() {
         data_final: dataFinal ? format(dataFinal, "yyyy-MM-dd") : null,
         aspect_ratio: aspectRatio,
         video_position: videoPosition,
+        is_midroll: isMidroll,
       };
       if (bgUrl !== undefined) payload.background_url = bgUrl;
 
@@ -172,6 +175,7 @@ export default function PreRollPage() {
     setAspectRatio((p.aspect_ratio as "16:9" | "9:16") || "16:9");
     setVideoPosition((p.video_position as "center" | "left" | "right") || "center");
     setShowPreview(false);
+    setIsMidroll((p as any).is_midroll || false);
   };
 
   const handleDelete = async (id: string) => {
@@ -490,6 +494,20 @@ export default function PreRollPage() {
             {/* ──── SEÇÃO 4: CONFIGURAÇÕES ──── */}
             {sectionHeader("⚙️", "Configurações")}
 
+            {/* Mid-Roll checkbox */}
+            <div className="rounded-xl p-4" style={{ backgroundColor: "rgba(38,143,250,0.04)", border: "1px solid rgba(38,143,250,0.15)" }}>
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input type="checkbox" checked={isMidroll} onChange={(e) => setIsMidroll(e.target.checked)}
+                  className="w-4 h-4 rounded" style={{ accentColor: "#268ffa" }} />
+                <div>
+                  <span className="text-xs font-bold" style={{ color: "#0d0446" }}>Mid-Roll (Intervalo)</span>
+                  <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.5)" }}>
+                    Marque para usar este vídeo como comercial de intervalo nos canais de catálogo. Máx. 3 seguidos.
+                  </p>
+                </div>
+              </label>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Link */}
               <div>
@@ -634,6 +652,9 @@ export default function PreRollPage() {
                         {p.horario_inicio} - {p.horario_fim}
                         <span className="ml-2 text-[10px] font-normal" style={{ color: "rgba(13,4,70,0.4)" }}>
                           {p.media_type === "youtube" ? "YouTube" : "Vídeo"} • {p.aspect_ratio || "16:9"}
+                          {(p as any).is_midroll && (
+                            <span className="ml-1 px-1.5 py-0.5 rounded text-[9px] font-bold" style={{ backgroundColor: "rgba(38,143,250,0.15)", color: "#268ffa" }}>Mid-Roll</span>
+                          )}
                         </span>
                       </div>
                       <div className="text-[10px]" style={{ color: "rgba(13,4,70,0.5)" }}>
