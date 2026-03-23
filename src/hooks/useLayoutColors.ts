@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -38,7 +38,7 @@ export function useLayoutColors() {
   const { user } = useAuth();
   const [colors, setColors] = useState<LayoutColors>(defaultLayoutColors);
 
-  useEffect(() => {
+  const fetchColors = useCallback(() => {
     if (!user) return;
     supabase
       .from("user_settings")
@@ -60,7 +60,17 @@ export function useLayoutColors() {
       });
   }, [user]);
 
-  // Apply as CSS custom properties
+  useEffect(() => {
+    fetchColors();
+  }, [fetchColors]);
+
+  // Listen for custom event dispatched by LayoutCustomizer after save
+  useEffect(() => {
+    const handler = () => fetchColors();
+    window.addEventListener("layout-colors-updated", handler);
+    return () => window.removeEventListener("layout-colors-updated", handler);
+  }, [fetchColors]);
+
   useEffect(() => {
     const root = document.documentElement;
     root.style.setProperty("--layout-page-bg", colors.pageBg);

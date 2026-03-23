@@ -408,7 +408,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           <div className="w-[280px] flex flex-col h-full overflow-y-auto" style={{ background: "rgba(0, 0, 0, 0.45)", backdropFilter: "blur(32px) saturate(1.5)", WebkitBackdropFilter: "blur(32px) saturate(1.5)", borderRight: "1px solid rgba(255,255,255,0.1)" }}>
             <div className="flex items-center justify-between px-4 pt-3 pb-2">
               <img src={seloNexohub} alt="NexoHUB" className="h-4" />
-              <button onClick={() => setMobileMenuOpen(false)} className="p-1.5 rounded-full" style={{ backgroundColor: "#be0101" }}>
+              <button onClick={() => setMobileMenuOpen(false)} className="p-1.5 rounded-full" style={{ backgroundColor: layoutColors.buttonBg }}>
                 <X size={16} className="text-white" />
               </button>
             </div>
@@ -431,7 +431,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                       aria-label={item.label}
                       role="menuitem"
                     >
-                      <Icon size={16} className={active ? "text-[#be0101]" : "text-white"} />
+                      <Icon size={16} className={active ? "" : "text-white"} style={active ? { color: layoutColors.buttonBg } : {}} />
                       <span className="flex-1 text-left">{item.label}</span>
                       {item.children && (expanded ? <ChevronUp size={12} className="text-white/30" /> : <ChevronDown size={12} className="text-white/30" />)}
                     </button>
@@ -446,7 +446,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                               aria-label={child.label}
                               role="menuitem"
                             >
-                              <ChildIcon size={12} className={childActive ? "text-[#be0101]" : "text-white"} />
+                              <ChildIcon size={12} className={childActive ? "" : "text-white"} style={childActive ? { color: layoutColors.buttonBg } : {}} />
                               <span>{child.label}</span>
                             </button>
                           );
@@ -459,12 +459,12 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             </nav>
             <div className="px-4 py-4 border-t border-white/10">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style={{ backgroundColor: "#be0101" }}>
+                <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style={{ backgroundColor: layoutColors.buttonBg }}>
                   {empresa.nome ? empresa.nome.charAt(0).toUpperCase() : "U"}
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-white text-xs font-bold truncate">{empresa.nome || "Empresa"}</p>
-                  <button onClick={onLogout} className="text-[10px] underline hover:opacity-70 mt-0.5" style={{ color: "#be0101" }}>sair</button>
+                  <button onClick={onLogout} className="text-[10px] underline hover:opacity-70 mt-0.5" style={{ color: layoutColors.buttonBg }}>sair</button>
                 </div>
               </div>
             </div>
@@ -529,7 +529,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                       className="flex items-center gap-1 xl:gap-1.5 text-[11px] font-semibold py-1.5 lg:py-1 px-1.5 lg:px-2 xl:px-1.5 rounded-lg transition-all whitespace-nowrap"
                       style={{
                         color: active ? "#ffffff" : "rgba(255,255,255,0.6)",
-                        backgroundColor: active ? "rgba(190,1,1,0.35)" : "transparent",
+                        backgroundColor: active ? `${layoutColors.buttonBg}59` : "transparent",
                       }}
                       onMouseEnter={e => { if (!active) { e.currentTarget.style.color = "#ffffff"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.08)"; } }}
                       onMouseLeave={e => { if (!active) { e.currentTarget.style.color = "rgba(255,255,255,0.6)"; e.currentTarget.style.backgroundColor = "transparent"; } }}
@@ -560,8 +560,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                           key={child.label}
                           onClick={() => handleChildClick(child, item.label)}
                           className="w-full text-left px-4 py-2 text-[11px] transition-all rounded-lg mx-0"
-                          style={{ color: child.page && currentPage === child.page ? "#be0101" : "rgba(255,255,255,0.8)" }}
-                          onMouseEnter={e => { if (!(child.page && currentPage === child.page)) { e.currentTarget.style.color = "#be0101"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.05)"; } }}
+                          style={{ color: child.page && currentPage === child.page ? layoutColors.buttonBg : "rgba(255,255,255,0.8)" }}
+                          onMouseEnter={e => { if (!(child.page && currentPage === child.page)) { e.currentTarget.style.color = layoutColors.buttonBg; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.05)"; } }}
                           onMouseLeave={e => { if (!(child.page && currentPage === child.page)) { e.currentTarget.style.color = "rgba(255,255,255,0.8)"; e.currentTarget.style.backgroundColor = "transparent"; } }}
                         >
                           {child.label}
@@ -597,9 +597,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           <button
             onClick={onLogout}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold transition-all"
-            style={{ background: "linear-gradient(135deg, #960101, #be0101)", color: "#ffffff", boxShadow: "0 2px 10px rgba(150,1,1,0.3)" }}
-            onMouseEnter={e => { e.currentTarget.style.background = "linear-gradient(135deg, #be0101, #d40101)"; e.currentTarget.style.boxShadow = "0 4px 15px rgba(150,1,1,0.5)"; }}
-            onMouseLeave={e => { e.currentTarget.style.background = "linear-gradient(135deg, #960101, #be0101)"; e.currentTarget.style.boxShadow = "0 2px 10px rgba(150,1,1,0.3)"; }}
+            style={{ background: `linear-gradient(135deg, ${layoutColors.buttonBg}cc, ${layoutColors.buttonBg})`, color: layoutColors.buttonText, boxShadow: `0 2px 10px ${layoutColors.buttonBg}4d` }}
+            onMouseEnter={e => { e.currentTarget.style.opacity = "0.85"; }}
+            onMouseLeave={e => { e.currentTarget.style.opacity = "1"; }}
           >
             <LogOut size={10} /> Sair
           </button>
@@ -624,9 +624,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               <button
                 onClick={() => setCurrentPage("dashboard")}
                 className="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold transition-all"
-                style={{ backgroundColor: "#be0101", color: "#ffffff" }}
-                onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#960101"; }}
-                onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#be0101"; }}
+                style={{ backgroundColor: layoutColors.buttonBg, color: layoutColors.buttonText }}
+                onMouseEnter={e => { e.currentTarget.style.opacity = "0.85"; }}
+                onMouseLeave={e => { e.currentTarget.style.opacity = "1"; }}
               >
                 <ChevronUp size={14} className="rotate-[-90deg]" /> Voltar
               </button>
