@@ -320,7 +320,7 @@ export default function AudioDualCard({
                       onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "hsla(0,0%,100%,0.03)"; }}
                     >
                       {/* Time badge */}
-                      <div className="shrink-0 px-2 py-1 rounded-md" style={{ backgroundColor: "hsla(0,80%,45%,0.2)" }}>
+                      <div className="shrink-0 px-2 py-1 rounded-md" style={{ backgroundColor: "hsla(var(--player-accent) / 0.2)" }}>
                         <span className="text-[10px] font-mono font-bold text-white">
                           {song.horario?.slice(0, 5)}
                         </span>
