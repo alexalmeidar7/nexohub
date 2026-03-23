@@ -528,11 +528,11 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                       }}
                       className="flex items-center gap-1 xl:gap-1.5 text-[11px] font-semibold py-1.5 lg:py-1 px-1.5 lg:px-2 xl:px-1.5 rounded-lg transition-all whitespace-nowrap"
                       style={{
-                        color: active ? "#ffffff" : "rgba(255,255,255,0.6)",
+                        color: active ? layoutColors.navText : `${layoutColors.navText}99`,
                         backgroundColor: active ? `${layoutColors.buttonBg}59` : "transparent",
                       }}
-                      onMouseEnter={e => { if (!active) { e.currentTarget.style.color = "#ffffff"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.08)"; } }}
-                      onMouseLeave={e => { if (!active) { e.currentTarget.style.color = "rgba(255,255,255,0.6)"; e.currentTarget.style.backgroundColor = "transparent"; } }}
+                      onMouseEnter={e => { if (!active) { e.currentTarget.style.color = layoutColors.navText; e.currentTarget.style.backgroundColor = `${layoutColors.navText}14`; } }}
+                      onMouseLeave={e => { if (!active) { e.currentTarget.style.color = `${layoutColors.navText}99`; e.currentTarget.style.backgroundColor = "transparent"; } }}
                     >
                       <Icon size={14} className="flex-shrink-0" />
                       <span className="hidden xl:inline">{item.label}</span>
