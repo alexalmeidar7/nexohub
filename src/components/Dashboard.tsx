@@ -787,11 +787,13 @@ function DashboardHome({ empresa, onNavigate }: { empresa: import("./Configuraco
             draggedId === widget.id ? "opacity-50 scale-95" : ""
           } ${dragOverId === widget.id ? "ring-2" : ""}`}
            style={{
-             background: widget.bg === "glass-dark" ? `${layoutColors.widgetBg}99` : `${layoutColors.widgetBg}33`,
+             background: widget.bg === "glass-dark"
+               ? "color-mix(in srgb, var(--layout-widget-bg, #1a1a1a) 60%, transparent)"
+               : "color-mix(in srgb, var(--layout-widget-bg, #1a1a1a) 20%, transparent)",
              backdropFilter: "blur(24px) saturate(1.4)",
              WebkitBackdropFilter: "blur(24px) saturate(1.4)",
              boxShadow: "0 8px 32px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.1)",
-             border: `1px solid ${layoutColors.borderColor}33`,
+             border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)",
            }}
           onDragOver={(e) => handleDragOver(e, widget.id)}
           onDrop={(e) => handleDrop(e, widget.id)}
