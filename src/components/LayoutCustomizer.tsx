@@ -407,7 +407,7 @@ export default function LayoutCustomizer() {
           {/* Hero banner */}
           <div className="px-5 py-5 transition-colors duration-300" style={{ background: `linear-gradient(135deg, ${colors.headerBg}ee, ${colors.accentColor}88)` }}>
             <p className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: colors.accentColor }}>AO VIVO</p>
-            <h2 className="text-sm font-bold mb-1" style={{ color: colors.headerText }}>Primeira Hora Positiva</h2>
+            <h2 className="text-sm font-bold mb-1" style={{ color: colors.headerText }}>Nome do Programa</h2>
             <p className="text-[10px] leading-relaxed mb-3" style={{ color: colors.headerText, opacity: 0.7 }}>O melhor conteúdo da manhã começa aqui.</p>
             <button className="px-4 py-1.5 text-[10px] font-bold rounded-full transition-colors duration-300" style={{ backgroundColor: colors.buttonBg, color: colors.buttonText }}>
               ▶ Ouvir Agora
