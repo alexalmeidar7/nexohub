@@ -284,9 +284,9 @@ export default function AudioDualCard({
         >
           <div className="flex flex-col h-full p-4">
             {/* Header */}
-            <div className="flex items-center gap-2 mb-3 pb-3" style={{ borderBottom: "1px solid hsla(0,80%,45%,0.2)" }}>
-              <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: "hsla(0,80%,45%,0.2)" }}>
-                <Music size={14} style={{ color: "#a10a0b" }} />
+            <div className="flex items-center gap-2 mb-3 pb-3" style={{ borderBottom: "1px solid hsla(var(--player-accent) / 0.2)" }}>
+              <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: "hsla(var(--player-accent) / 0.2)" }}>
+                <Music size={14} style={{ color: "hsl(var(--player-accent))" }} />
               </div>
               <div className="flex-1">
                 <h3 className="font-bold text-sm text-white">Últimas Tocadas</h3>
