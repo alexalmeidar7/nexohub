@@ -609,8 +609,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
       {/* Company name below menu */}
       <div className="hidden lg:block px-4 xl:px-8 pt-2 relative z-[50]">
-        <h1 className="font-bold text-white text-base xl:text-lg leading-tight truncate">{empresa.nome || "Dashboard"}</h1>
-        <p className="text-[10px] truncate" style={{ color: "rgba(255,255,255,0.4)" }}>{user?.email || ""}</p>
+        <h1 className="font-bold text-base xl:text-lg leading-tight truncate" style={{ color: layoutColors.navText }}>{empresa.nome || "Dashboard"}</h1>
+        <p className="text-[10px] truncate" style={{ color: `${layoutColors.navText}66` }}>{user?.email || ""}</p>
       </div>
 
       <div className="flex gap-4 lg:gap-[30px] pt-3 flex-1 min-h-0 px-3 sm:px-4 lg:px-4 xl:px-8 relative z-[1]">
