@@ -3,6 +3,7 @@ import type HlsType from "hls.js";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import { useLayoutColors } from "@/hooks/useLayoutColors";
 import { useLocation, useParams, useNavigate, useSearchParams } from "react-router-dom";
 import {
   ChevronUp,
@@ -309,6 +310,7 @@ function MarqueeText({ text, className }: { text: string; className?: string }) 
 
 export default function PlayerPage() {
   usePageTitle("Player");
+  useLayoutColors();
   const { userSlug } = useParams<{ userSlug?: string }>();
   const [searchParams] = useSearchParams();
   const requestedChannelId = searchParams.get("ch");

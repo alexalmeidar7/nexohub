@@ -2,6 +2,30 @@ import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
+/** Convert hex color to HSL string "H S% L%" for CSS custom properties */
+function hexToHsl(hex: string, lightnessOffset = 0): string | null {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  if (!result) return null;
+  let r = parseInt(result[1], 16) / 255;
+  let g = parseInt(result[2], 16) / 255;
+  let b = parseInt(result[3], 16) / 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  let h = 0, s = 0, l = (max + min) / 2;
+  if (max !== min) {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+      case g: h = ((b - r) / d + 2) / 6; break;
+      case b: h = ((r - g) / d + 4) / 6; break;
+    }
+  }
+  const H = Math.round(h * 360);
+  const S = Math.round(s * 100);
+  const L = Math.max(0, Math.min(100, Math.round(l * 100) + lightnessOffset));
+  return `${H} ${S}% ${L}%`;
+}
+
 export interface LayoutColors {
   pageBg: string;
   pageText: string;
@@ -100,6 +124,28 @@ export function useLayoutColors() {
     root.style.setProperty("--layout-icon-color", colors.iconColor);
     root.style.setProperty("--layout-border-color", colors.borderColor);
     root.style.setProperty("--layout-home-bg-color", colors.homeBgColor);
+
+    // Also update player CSS vars from accent color
+    const accentHsl = hexToHsl(colors.accentColor);
+    if (accentHsl) {
+      root.style.setProperty("--player-accent", accentHsl);
+      // Darker hover variant
+      const hoverHsl = hexToHsl(colors.accentColor, -7);
+      if (hoverHsl) root.style.setProperty("--player-accent-hover", hoverHsl);
+      root.style.setProperty("--player-accent-soft", accentHsl);
+    }
+
+    // Update player glow/bg from homeBgColor
+    const bgHsl = hexToHsl(colors.homeBgColor);
+    if (bgHsl) {
+      root.style.setProperty("--player-bg", bgHsl);
+    }
+
+    // Update header gradient for modules (roteiro, etc.)
+    const headerHsl = hexToHsl(colors.headerBg);
+    if (headerHsl) {
+      root.style.setProperty("--layout-header-hsl", headerHsl);
+    }
   }, [colors]);
 
   return colors;

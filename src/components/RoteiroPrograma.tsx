@@ -650,7 +650,7 @@ ${perguntaActions}
       {/* ── STEP 1: Configuração do Programa ── */}
       <div className="rounded-2xl overflow-hidden" style={{ background: "#ffffff", boxShadow: "0 4px 24px rgba(13,4,70,0.08)", border: "1px solid rgba(13,4,70,0.06)" }}>
         {/* Section Header */}
-        <div className="px-6 py-4 flex items-center justify-between" style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)", borderBottom: "1px solid rgba(13,4,70,0.06)" }}>
+        <div className="px-6 py-4 flex items-center justify-between" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #0d0446), color-mix(in srgb, var(--layout-header-bg, #1a0a6e) 80%, white 20%))", borderBottom: "1px solid rgba(13,4,70,0.06)" }}>
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: "rgba(255,255,255,0.15)" }}>
               <FileText size={18} className="text-white" />
