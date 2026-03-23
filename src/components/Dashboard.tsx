@@ -1223,15 +1223,15 @@ function DashboardAgenda() {
     <div className="flex flex-col h-full overflow-hidden">
       {/* Header: icon + AGENDA + month nav */}
       <div className="flex items-center gap-1.5 mb-1">
-        <CalendarDays size={14} style={{ color: "#be0101" }} />
+        <CalendarDays size={14} style={{ color: "var(--layout-button-bg, #333333)" }} />
         <span className="font-bold text-xs uppercase tracking-wide text-white">Agenda</span>
         <div className="flex items-center gap-1 ml-auto">
           <button onClick={prevMonth} className="w-4 h-4 flex items-center justify-center rounded hover:opacity-70">
-            <ChevronDown size={10} className="rotate-90" style={{ color: "#be0101" }} />
+            <ChevronDown size={10} className="rotate-90" style={{ color: "var(--layout-button-bg, #333333)" }} />
           </button>
-          <span className="text-[9px] font-semibold capitalize" style={{ color: "#be0101", minWidth: "55px", textAlign: "center" }}>{monthLabel}</span>
+          <span className="text-[9px] font-semibold capitalize" style={{ color: "var(--layout-button-bg, #333333)", minWidth: "55px", textAlign: "center" }}>{monthLabel}</span>
           <button onClick={nextMonth} className="w-4 h-4 flex items-center justify-center rounded hover:opacity-70">
-            <ChevronDown size={10} className="-rotate-90" style={{ color: "#be0101" }} />
+            <ChevronDown size={10} className="-rotate-90" style={{ color: "var(--layout-button-bg, #333333)" }} />
           </button>
         </div>
       </div>
