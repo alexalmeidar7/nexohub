@@ -494,6 +494,20 @@ export default function PreRollPage() {
             {/* ──── SEÇÃO 4: CONFIGURAÇÕES ──── */}
             {sectionHeader("⚙️", "Configurações")}
 
+            {/* Mid-Roll checkbox */}
+            <div className="rounded-xl p-4" style={{ backgroundColor: "rgba(38,143,250,0.04)", border: "1px solid rgba(38,143,250,0.15)" }}>
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input type="checkbox" checked={isMidroll} onChange={(e) => setIsMidroll(e.target.checked)}
+                  className="w-4 h-4 rounded" style={{ accentColor: "#268ffa" }} />
+                <div>
+                  <span className="text-xs font-bold" style={{ color: "#0d0446" }}>Mid-Roll (Intervalo)</span>
+                  <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.5)" }}>
+                    Marque para usar este vídeo como comercial de intervalo nos canais de catálogo. Máx. 3 seguidos.
+                  </p>
+                </div>
+              </label>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Link */}
               <div>
