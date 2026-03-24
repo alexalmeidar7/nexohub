@@ -57,7 +57,7 @@ function HeroBanner({
 }: {
   currentProgram?: Programa;
   nextProgram?: Programa;
-  nowPlaying?: { musica: string; artista: string } | null;
+  nowPlaying?: { musica: string; artista: string; capa?: string } | null;
   channelName?: string;
   channelIsHd?: boolean;
   channelIsStereo?: boolean;
@@ -202,7 +202,8 @@ function HeroBanner({
 
       {/* Gradient overlays */}
       <div className="absolute inset-0 z-[2]" style={{ background: "linear-gradient(to right, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.5) 40%, rgba(0,0,0,0.1) 70%, transparent 100%)" }} />
-      <div className="absolute inset-0 z-[2]" style={{ background: "linear-gradient(to top, hsl(var(--player-bg)) 0%, rgba(0,0,0,0.3) 30%, transparent 60%)" }} />
+      <div className="absolute inset-0 z-[2]" style={{ background: `linear-gradient(to top, hsl(var(--player-bg)) 0%, transparent 60%)` }} />
+      <div className="absolute inset-0 z-[1]" style={{ background: `radial-gradient(ellipse at 50% 100%, hsla(var(--player-accent) / 0.15) 0%, transparent 60%)` }} />
 
       {/* Content */}
       <div className="absolute bottom-0 left-0 right-0 px-8 sm:px-12 pb-10 z-10 player-hero-content" style={{ maxWidth: "680px" }}>
@@ -215,7 +216,11 @@ function HeroBanner({
           {channelName && (
             <span className="flex items-center gap-2 text-white/60 text-xs">
               {channelName}
-              {channelIsHd && <img src="/images/icon-fullhd.png" alt="FULL HD" className="h-3.5" style={{ opacity: 0.6 }} />}
+              {channelIsHd && (
+                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wide text-white/60 border border-white/20" style={{ fontFamily: "monospace" }}>
+                  1080P <span className="text-[7px] font-extrabold tracking-widest ml-0.5 px-1 rounded" style={{ background: "hsla(var(--player-accent) / 0.3)", color: "hsl(var(--player-accent))" }}>FULL HD</span>
+                </span>
+              )}
               {channelIsStereo && (
                 <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wide text-white/40 border border-white/15">
                   STEREO
@@ -287,8 +292,12 @@ function HeroBanner({
 
         {/* Now playing music */}
         {nowPlaying?.musica && (
-          <div className="flex items-center gap-2 mb-4">
-            <Music className="h-3.5 w-3.5 text-player-accent flex-shrink-0" />
+          <div className="flex items-center gap-2.5 mb-4">
+            {nowPlaying.capa ? (
+              <img src={nowPlaying.capa} alt="" className="w-8 h-8 rounded object-cover flex-shrink-0 shadow-lg" />
+            ) : (
+              <Music className="h-3.5 w-3.5 text-player-accent flex-shrink-0" />
+            )}
             <span className="text-xs text-white/70 truncate">{nowPlaying.musica} — {nowPlaying.artista}</span>
           </div>
         )}
@@ -352,7 +361,7 @@ function HeroBanner({
 function StreamingCard({ channel, currentProgram, nowPlaying, onClick }: {
   channel: Channel;
   currentProgram?: Programa;
-  nowPlaying?: { musica: string; artista: string } | null;
+  nowPlaying?: { musica: string; artista: string; capa?: string } | null;
   onClick: () => void;
 }) {
   const [hovered, setHovered] = useState(false);
@@ -960,7 +969,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   const [dataLoaded, setDataLoaded] = useState(false);
   const [watchHistory, setWatchHistory] = useState<any[]>([]);
   const [playlistVideos, setPlaylistVideos] = useState<Record<string, PlaylistVideo[]>>({});
-  const [nowPlaying, setNowPlaying] = useState<{ musica: string; artista: string } | null>(null);
+  const [nowPlaying, setNowPlaying] = useState<{ musica: string; artista: string; capa?: string } | null>(null);
   const [shopProducts, setShopProducts] = useState<any[]>([]);
   const [showGrade, setShowGrade] = useState(false);
   const [activeCatalog, setActiveCatalog] = useState<string | null>(null);
@@ -990,7 +999,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
         const raw = localStorage.getItem("masterview_music_data");
         if (raw) {
           const parsed = JSON.parse(raw);
-          if (parsed.titulo) { setNowPlaying({ musica: parsed.titulo, artista: parsed.artista || "" }); return; }
+          if (parsed.titulo) { setNowPlaying({ musica: parsed.titulo, artista: parsed.artista || "", capa: parsed.capa || "" }); return; }
         }
       } catch {}
       // Fallback to DB
@@ -1002,12 +1011,12 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
           if (data) setNowPlaying({ musica: data.musica, artista: data.artista });
         } else if (userSlug) {
           const { data } = await supabase.functions.invoke("public-player-data", { body: { slug: userSlug, section: "now_playing" } });
-          if (data?.musica) setNowPlaying({ musica: data.musica, artista: data.artista || "" });
+          if (data?.musica) setNowPlaying({ musica: data.musica, artista: data.artista || "", capa: data.capa || "" });
         }
       } catch {}
     };
     fetchMusic();
-    const interval = setInterval(fetchMusic, 5000);
+    const interval = setInterval(fetchMusic, 3000);
     return () => clearInterval(interval);
   }, [user, userSlug]);
 
@@ -1309,7 +1318,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   return (
     <div
       className={`fixed inset-0 text-white flex transition-opacity duration-400 ease-in-out ${fadeOut ? "opacity-0" : "opacity-100"}`}
-      style={{ background: "hsl(var(--player-bg))" }}
+      style={{ background: `linear-gradient(180deg, hsl(var(--player-bg)) 0%, hsl(var(--player-bg)) 60%, hsla(var(--player-accent) / 0.08) 100%)` }}
     >
       {/* Sidebar */}
       <PlayerSidebar
@@ -1360,7 +1369,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
               </div>
 
               {/* All sections stacked vertically */}
-              <div className="px-6 sm:px-10 pb-8 relative z-10" style={{ marginTop: "-4px", background: "hsl(var(--player-bg))" }}>
+              <div className="px-6 sm:px-10 pb-8 relative z-10" style={{ marginTop: "-4px", background: `linear-gradient(180deg, hsl(var(--player-bg)) 0%, hsla(var(--player-accent) / 0.06) 100%)` }}>
 
                 {/* Streaming ao vivo */}
                 <section id="section-streaming" className="scroll-mt-4">
