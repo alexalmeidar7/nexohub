@@ -376,20 +376,6 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
                 </button>
               </div>
             </div>
-            <div className="space-y-1">
-              <label className="block text-xs mb-1" style={{ color: "#0d0446", fontWeight: 600 }}>Imagem de Fundo do Painel</label>
-              <div className="flex items-center gap-4">
-                {config.backgroundUrl && <img src={config.backgroundUrl} alt="Fundo" className="w-16 h-16 rounded-lg object-cover" style={{ border: "1px solid #0d0446" }} />}
-                <button onClick={handleBackgroundUpload}
-                  className="px-4 py-1.5 font-bold transition-all text-xs flex items-center gap-1"
-                  style={btnSecondary}
-                  onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#0d0446"; e.currentTarget.style.color = "#ffffff"; }}
-                  onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#ffffff"; e.currentTarget.style.color = "#0d0446"; }}
-                >
-                  <Upload size={12} /> {config.backgroundUrl ? "Trocar Fundo" : "Carregar Fundo"}
-                </button>
-              </div>
-            </div>
           </div>
           {field("Endereço", "endereco", "Endereço completo")}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
