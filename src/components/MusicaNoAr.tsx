@@ -572,6 +572,17 @@ export default function MusicaNoAr() {
     localFileRef.current = file;
     setLocalFileName(file.name);
 
+    // Persist local filename to DB so it survives across computers/sessions
+    if (user) {
+      const { data: currentSettings } = await supabase.from("user_settings").select("dashboard_items").eq("user_id", user.id).maybeSingle();
+      const di = (currentSettings?.dashboard_items as any) || {};
+      await supabase.from("user_settings").upsert({
+        user_id: user.id,
+        dashboard_items: { ...di, local_xml_filename: file.name },
+        updated_at: new Date().toISOString(),
+      }, { onConflict: "user_id" });
+    }
+
     const text = await readFileWithEncoding(file);
     localFileContentRef.current = text;
     setLocalFileContent(text);
