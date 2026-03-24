@@ -993,8 +993,6 @@ function useGlobalMusicXmlUpload() {
   }, [user]);
 }
 
-// Re-export from shared hook
-export { useGlobalMusicSync } from "@/hooks/useGlobalMusicSync";
 
 /* ========== COMERCIAL WIDGETS ========== */
 function ComercialWidgets() {
