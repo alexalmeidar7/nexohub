@@ -198,8 +198,8 @@ export default function OnAirWidget() {
           </div>
 
           <div className="flex items-center gap-2 mb-1 pt-1 pl-1">
-            <ArrowRight size={14} style={{ color: "#268ffa" }} />
-            <span className="font-bold text-[10px]" style={{ color: "#268ffa" }}>PRÓXIMO</span>
+            <ArrowRight size={14} style={{ color: "var(--layout-accent-color)" }} />
+            <span className="font-bold text-[10px]" style={{ color: "var(--layout-accent-color)" }}>PRÓXIMO</span>
           </div>
 
           <div className="flex-1 flex flex-col justify-center z-10 pl-1">
@@ -250,8 +250,8 @@ export default function OnAirWidget() {
         </div>
 
         <div className="flex items-center gap-2 mb-1">
-          <Radio size={14} style={{ color: "#268ffa" }} className="animate-pulse" />
-          <span className="font-bold text-xs animate-pulse" style={{ color: "#268ffa" }}>NO AR</span>
+          <Radio size={14} style={{ color: "var(--layout-accent-color)" }} className="animate-pulse" />
+          <span className="font-bold text-xs animate-pulse" style={{ color: "var(--layout-accent-color)" }}>NO AR</span>
         </div>
 
         <div className="flex-1 flex flex-col justify-center z-10">
@@ -264,7 +264,7 @@ export default function OnAirWidget() {
         {/* Music info */}
         {musicData?.titulo && (
           <div className="z-10 flex items-center gap-1.5 mb-1" style={{ maxWidth: "55%" }}>
-            <Music size={11} style={{ color: "#268ffa" }} className="flex-shrink-0" />
+            <Music size={11} style={{ color: "var(--layout-accent-color)" }} className="flex-shrink-0" />
             <p className="text-white/70 text-[10px] truncate">
               {musicData.titulo}{musicData.artista ? ` — ${musicData.artista}` : ""}
             </p>
@@ -272,7 +272,7 @@ export default function OnAirWidget() {
         )}
 
         <div className="z-10 mb-4 flex items-center gap-1">
-          <Mic size={12} style={{ color: "#268ffa" }} />
+          <Mic size={12} style={{ color: "var(--layout-accent-color)" }} />
           <p className="font-semibold text-white/80 text-xs">{apresentadorNome}</p>
         </div>
 
@@ -280,7 +280,7 @@ export default function OnAirWidget() {
           <div className="w-full h-1 bg-white/20 overflow-hidden">
             <div
               className="h-full transition-all duration-1000"
-              style={{ width: `${progress}%`, backgroundColor: "#268ffa" }}
+              style={{ width: `${progress}%`, backgroundColor: "var(--layout-accent-color)" }}
             />
           </div>
         </div>
