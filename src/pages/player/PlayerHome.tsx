@@ -1314,7 +1314,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   return (
     <div
       className={`fixed inset-0 text-white flex transition-opacity duration-400 ease-in-out ${fadeOut ? "opacity-0" : "opacity-100"}`}
-      style={{ background: "hsl(var(--player-bg))" }}
+      style={{ background: `linear-gradient(180deg, hsl(var(--player-bg)) 0%, hsl(var(--player-bg)) 60%, hsla(var(--player-accent) / 0.08) 100%)` }}
     >
       {/* Sidebar */}
       <PlayerSidebar
