@@ -134,6 +134,7 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
 
   const saveCommands = async () => {
     setSaving(true);
+    const payload: any = { commands, custom_horario: customHorario || null };
     const { data: existing } = await (supabase.from("preset_commands" as any) as any)
       .select("id")
       .eq("user_id", userId)
@@ -141,12 +142,12 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
       .maybeSingle();
 
     if (existing) {
-      await (supabase.from("preset_commands" as any) as any).update({ commands }).eq("id", existing.id);
+      await (supabase.from("preset_commands" as any) as any).update(payload).eq("id", existing.id);
     } else {
-      await (supabase.from("preset_commands" as any) as any).insert({ user_id: userId, programa_id: programaId, commands });
+      await (supabase.from("preset_commands" as any) as any).insert({ user_id: userId, programa_id: programaId, ...payload });
     }
     setSaving(false);
-    toast({ title: "Ações salvas", description: `${commands.length} comando(s) salvos para ${programaNome}.` });
+    toast({ title: "Ações salvas", description: `${commands.length} comando(s) salvos para ${programaNome}.${customHorario ? ` Horário: ${customHorario}` : " Usando horário da grade."}` });
   };
 
   const runAll = async () => {
