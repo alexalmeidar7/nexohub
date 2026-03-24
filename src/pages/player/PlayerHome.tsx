@@ -1365,7 +1365,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
               </div>
 
               {/* All sections stacked vertically */}
-              <div className="px-6 sm:px-10 pb-8 relative z-10" style={{ marginTop: "-4px", background: "hsl(var(--player-bg))" }}>
+              <div className="px-6 sm:px-10 pb-8 relative z-10" style={{ marginTop: "-4px", background: `linear-gradient(180deg, hsl(var(--player-bg)) 0%, hsla(var(--player-accent) / 0.06) 100%)` }}>
 
                 {/* Streaming ao vivo */}
                 <section id="section-streaming" className="scroll-mt-4">
