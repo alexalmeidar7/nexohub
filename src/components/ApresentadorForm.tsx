@@ -162,6 +162,54 @@ export default function ApresentadorForm() {
     await load();
   };
 
+  const handleExcelFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const wb = XLSX.read(ev.target?.result, { type: "array" });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const rows: any[][] = XLSX.utils.sheet_to_json(ws, { header: 1 });
+        // Skip header row, filter empty rows
+        const dataRows = rows.slice(1).filter(r => r.length >= 2 && r[1]?.toString().trim());
+        const mapped = dataRows.map(r => ({
+          categoria: (r[0] || "Convidado").toString().trim(),
+          nome: (r[1] || "").toString().trim(),
+          cargo: (r[2] || "").toString().trim(),
+          instagram: (r[3] || "").toString().trim(),
+          whatsapp: (r[4] || "").toString().trim(),
+          ativo: r[5] !== undefined ? String(r[5]).toLowerCase() !== "inativo" && String(r[5]) !== "0" && String(r[5]).toLowerCase() !== "false" : true,
+        }));
+        if (mapped.length > 0) {
+          setImportRows(mapped);
+        }
+      } catch { }
+    };
+    reader.readAsArrayBuffer(file);
+    if (excelInputRef.current) excelInputRef.current.value = "";
+  };
+
+  const confirmImport = async () => {
+    if (!importRows || !user) return;
+    setImporting(true);
+    const inserts = importRows.map(r => ({
+      user_id: user.id,
+      nome: r.nome,
+      cargo: CATEGORIA_OPTIONS.includes(r.categoria) ? r.categoria : r.cargo || "Convidado",
+      instagram: r.instagram,
+      whatsapp: r.whatsapp,
+      foto: "",
+      ativo: r.ativo,
+    }));
+    await supabase.from("apresentadores").insert(inserts as any);
+    setImportRows(null);
+    setImporting(false);
+    await load();
+    setShowSuccess(true);
+    setTimeout(() => setShowSuccess(false), 2000);
+  };
+
   const filtered = filterCategoria === "todos"
     ? apresentadores
     : apresentadores.filter(a => a.cargo === filterCategoria);
