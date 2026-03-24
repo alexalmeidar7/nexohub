@@ -2260,7 +2260,7 @@ export default function PlayerPage() {
                 })()}
               </div>
               {liveChannels.length > 1 && (
-                <button onClick={() => navigateChannel(1)} className="text-white/60 hover:text-white hover:bg-player-accent rounded px-1.5 py-1 sm:px-2 sm:py-2 transition-all" title="Próximo canal"><ChevronDown size={14} /></button>
+                <button onClick={() => navigateChannel(1)} className="hover:opacity-80 rounded px-1.5 py-1 sm:px-2 sm:py-2 transition-all" style={{ color: "var(--layout-button-text)", background: "var(--layout-button-bg)" }} title="Próximo canal"><ChevronDown size={14} /></button>
               )}
             </div>
             )}
