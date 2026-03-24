@@ -668,6 +668,12 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   );
 }
 
+function DashboardRuntimeEffects() {
+  useGlobalMusicXmlUpload();
+  useGlobalMusicSync();
+  return null;
+}
+
 /* ========== DASHBOARD HOME ========== */
 const WIDGETS_ORDER_KEY = "masterview_widgets_order";
 
