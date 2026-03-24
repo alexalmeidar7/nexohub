@@ -2100,7 +2100,7 @@ export default function VmixPage() {
                                 }
                                 toast({ title: `Preset: ${prog.nome}`, description: `${cmds.length} ação(ões) executada(s) localmente.` });
                               }
-                            }
+                            }}
                           >
                             {prog.apresentador_foto && (
                               <img
