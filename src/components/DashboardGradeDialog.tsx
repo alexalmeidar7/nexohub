@@ -142,11 +142,22 @@ function DashboardGradeDialog({ open, onOpenChange }: Props) {
     return { skipMap: skip, spanMap: span };
   }, [programas, gradeSlots]);
 
+  const ui = {
+    pageBg: "var(--layout-page-bg)",
+    pageText: "var(--layout-page-text)",
+    headerBg: "var(--layout-header-bg)",
+    headerText: "var(--layout-header-text)",
+    accent: "var(--layout-link-color)",
+    buttonBg: "var(--layout-button-bg)",
+    buttonText: "var(--layout-button-text)",
+    border: "var(--layout-border-color)",
+  };
+
   return (
     <Dialog open={open} onOpenChange={(v) => { onOpenChange(v); if (!v) setDetailProg(null); }}>
-      <DialogContent className="max-w-[95vw] max-h-[90vh] p-0 overflow-hidden" style={{ backgroundColor: "#ffffff", border: "2px solid #0d0446" }}>
-        <DialogHeader className="px-6 pt-5 pb-3" style={{ borderBottom: "2px solid #0d0446" }}>
-          <DialogTitle className="text-lg font-bold flex items-center gap-2" style={{ color: "#0d0446" }}>
+      <DialogContent className="max-w-[95vw] max-h-[90vh] p-0 overflow-hidden" style={{ backgroundColor: ui.pageBg, border: `2px solid ${ui.headerBg}` }}>
+        <DialogHeader className="px-6 pt-5 pb-3" style={{ borderBottom: `2px solid ${ui.headerBg}` }}>
+          <DialogTitle className="text-lg font-bold flex items-center gap-2" style={{ color: ui.pageText }}>
             📺 Grade de Programação
           </DialogTitle>
         </DialogHeader>
@@ -154,16 +165,16 @@ function DashboardGradeDialog({ open, onOpenChange }: Props) {
         {loading ? (
           <div className="px-4 pb-4 animate-pulse">
             <div className="flex gap-1 mb-3 mt-2">
-              <div className="w-20 h-5 rounded bg-[#0d0446]/10" />
+              <div className="w-20 h-5 rounded" style={{ backgroundColor: "color-mix(in srgb, var(--layout-header-bg) 12%, transparent)" }} />
               {Array.from({ length: 7 }).map((_, i) => (
-                <div key={i} className="flex-1 h-5 rounded bg-[#0d0446]/5" />
+                <div key={i} className="flex-1 h-5 rounded" style={{ backgroundColor: "color-mix(in srgb, var(--layout-header-bg) 7%, transparent)" }} />
               ))}
             </div>
             {Array.from({ length: 12 }).map((_, row) => (
               <div key={row} className="flex gap-1 mb-1">
-                <div className="w-20 h-8 rounded bg-[#0d0446]/5" />
+                <div className="w-20 h-8 rounded" style={{ backgroundColor: "color-mix(in srgb, var(--layout-header-bg) 7%, transparent)" }} />
                 {Array.from({ length: 7 }).map((_, col) => (
-                  <div key={col} className="flex-1 h-8 rounded" style={{ backgroundColor: Math.random() > 0.4 ? "rgba(13,4,70,0.06)" : "transparent" }} />
+                  <div key={col} className="flex-1 h-8 rounded" style={{ backgroundColor: Math.random() > 0.4 ? "color-mix(in srgb, var(--layout-header-bg) 6%, transparent)" : "transparent" }} />
                 ))}
               </div>
             ))}
@@ -171,21 +182,21 @@ function DashboardGradeDialog({ open, onOpenChange }: Props) {
         ) : (
           <div
             className="overflow-auto max-h-[75vh] px-4 pb-4 grade-scroll-dashboard"
-            style={{ scrollbarWidth: "thin", scrollbarColor: "#0d0446 #f0f0f0" }}
+            style={{ scrollbarWidth: "thin", scrollbarColor: "var(--layout-header-bg) var(--layout-page-bg)" }}
           >
             <style>{`
               .grade-scroll-dashboard::-webkit-scrollbar { width: 8px; height: 8px; }
-              .grade-scroll-dashboard::-webkit-scrollbar-track { background: #f0f0f0; border-radius: 4px; }
-              .grade-scroll-dashboard::-webkit-scrollbar-thumb { background: #0d0446; border-radius: 4px; }
-              .grade-scroll-dashboard::-webkit-scrollbar-thumb:hover { background: #2dbef3; }
+              .grade-scroll-dashboard::-webkit-scrollbar-track { background: color-mix(in srgb, var(--layout-page-bg) 92%, black 8%); border-radius: 4px; }
+              .grade-scroll-dashboard::-webkit-scrollbar-thumb { background: var(--layout-header-bg); border-radius: 4px; }
+              .grade-scroll-dashboard::-webkit-scrollbar-thumb:hover { background: var(--layout-link-color); }
             `}</style>
             <table data-no-row-hover className="w-full text-xs border-separate border-spacing-1">
-              <thead className="sticky top-0 z-10" style={{ backgroundColor: "#ffffff" }}>
+              <thead className="sticky top-0 z-10" style={{ backgroundColor: ui.pageBg }}>
                 <tr>
-                  <th className="px-2 py-2 text-left w-20 rounded-lg" style={{ color: "#0d0446" }}>Horário</th>
+                  <th className="px-2 py-2 text-left w-20 rounded-lg" style={{ color: ui.pageText }}>Horário</th>
                   {DIAS_SEMANA.map(dia => (
                     <th key={dia} className={`px-2 py-2 text-center rounded-lg ${dia === diaAtual ? "font-bold" : ""}`}
-                      style={{ color: dia === diaAtual ? "#2dbef3" : "rgba(13,4,70,0.4)" }}>
+                      style={{ color: dia === diaAtual ? ui.accent : "color-mix(in srgb, var(--layout-page-text) 45%, transparent)" }}>
                       <div>{dia.slice(0, 3)}</div>
                       <div className="text-[9px] font-normal opacity-70">{weekDates[dia]}</div>
                     </th>
@@ -206,7 +217,7 @@ function DashboardGradeDialog({ open, onOpenChange }: Props) {
                       data-needle-row={isNeedleRow ? "true" : undefined}
                       data-needle-percent={isNeedleRow ? ((currentMinutes - slotMinutes) / 30) * 100 : undefined}
                     >
-                      <td className="px-2 py-2 font-mono rounded-lg" style={{ color: "rgba(13,4,70,0.5)" }}>{slot.slice(0, 5)}</td>
+                      <td className="px-2 py-2 font-mono rounded-lg" style={{ color: "color-mix(in srgb, var(--layout-page-text) 55%, transparent)" }}>{slot.slice(0, 5)}</td>
                       {DIAS_SEMANA.map(dia => {
                         const key = `${dia}-${slot}`;
                         if (skipMap[key]) return null;
@@ -217,30 +228,42 @@ function DashboardGradeDialog({ open, onOpenChange }: Props) {
                         const presenterName = getPresenterName(prog.apresentadorId);
                         return (
                           <td key={dia} rowSpan={rowSpan}
-                            className="rounded-lg transition-all relative hover:!border-[#2dbef3] hover:border-2"
+                            className="rounded-lg transition-all relative"
                             style={{
-                              backgroundColor: isOnAir ? "#2dbef3" : "#ffffff",
-                              color: isOnAir ? "#ffffff" : "#0d0446",
+                              backgroundColor: isOnAir ? ui.accent : ui.pageBg,
+                              color: isOnAir ? ui.headerText : ui.pageText,
                               fontWeight: isOnAir ? "bold" : undefined,
-                              border: isOnAir ? "2px solid #2dbef3" : "1px solid #ccc",
+                              border: isOnAir ? `2px solid ${ui.accent}` : "1px solid color-mix(in srgb, var(--layout-border-color) 50%, transparent)",
                               verticalAlign: "top",
                               padding: "8px 10px",
+                            }}
+                            onMouseEnter={(e) => {
+                              if (!isOnAir) {
+                                e.currentTarget.style.borderColor = "var(--layout-link-color)";
+                                e.currentTarget.style.borderWidth = "2px";
+                              }
+                            }}
+                            onMouseLeave={(e) => {
+                              if (!isOnAir) {
+                                e.currentTarget.style.borderColor = "color-mix(in srgb, var(--layout-border-color) 50%, transparent)";
+                                e.currentTarget.style.borderWidth = "1px";
+                              }
                             }}>
                             <div className="text-[10px] font-bold leading-tight" style={{ wordBreak: "break-word", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{prog.nome}</div>
-                            <div className="text-[9px] mt-0.5" style={{ color: isOnAir ? "rgba(255,255,255,0.8)" : "rgba(13,4,70,0.5)" }}>
+                            <div className="text-[9px] mt-0.5" style={{ color: isOnAir ? "color-mix(in srgb, var(--layout-header-text) 85%, transparent)" : "color-mix(in srgb, var(--layout-page-text) 55%, transparent)" }}>
                               {prog.horarioInicio.slice(0, 5)} - {prog.horarioFim.slice(0, 5)}
                             </div>
                             {presenterName && (
-                              <div className="text-[9px] font-semibold mt-0.5" style={{ color: isOnAir ? "rgba(255,255,255,0.9)" : "#0d0446" }}>
+                              <div className="text-[9px] font-semibold mt-0.5" style={{ color: isOnAir ? "color-mix(in srgb, var(--layout-header-text) 92%, transparent)" : ui.pageText }}>
                                 {presenterName}
                               </div>
                             )}
                             <button
                               onClick={(e) => { e.stopPropagation(); setDetailProg(prog); }}
                               className="mt-1 px-2 py-0.5 rounded text-[8px] font-bold flex items-center gap-1 transition-colors"
-                              style={{ backgroundColor: "#0d0446", color: "#ffffff" }}
-                              onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#2dbef3"; }}
-                              onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#0d0446"; }}
+                              style={{ backgroundColor: ui.buttonBg, color: ui.buttonText }}
+                              onMouseEnter={e => { e.currentTarget.style.backgroundColor = ui.accent; }}
+                              onMouseLeave={e => { e.currentTarget.style.backgroundColor = ui.buttonBg; }}
                             >
                               + informações
                             </button>
@@ -257,8 +280,8 @@ function DashboardGradeDialog({ open, onOpenChange }: Props) {
 
         {detailProg && createPortal(
           <div className="fixed inset-0 z-[200] flex items-center justify-center" style={{ backgroundColor: "rgba(0,0,0,0.5)" }} onClick={() => setDetailProg(null)}>
-            <div className="rounded-xl max-w-2xl w-full mx-4 relative" style={{ backgroundColor: "#ffffff", padding: "20px" }} onClick={e => e.stopPropagation()}>
-              <button onClick={() => setDetailProg(null)} className="absolute top-4 right-4 z-10 font-bold text-sm" style={{ color: "#0d0446" }}>
+            <div className="rounded-xl max-w-2xl w-full mx-4 relative" style={{ backgroundColor: ui.pageBg, padding: "20px", border: `1px solid ${ui.border}` }} onClick={e => e.stopPropagation()}>
+              <button onClick={() => setDetailProg(null)} className="absolute top-4 right-4 z-10 font-bold text-sm" style={{ color: ui.pageText }}>
                 <X size={18} />
               </button>
               <div className="flex gap-5">
@@ -266,20 +289,20 @@ function DashboardGradeDialog({ open, onOpenChange }: Props) {
                   <img src={detailProg.capa} alt={detailProg.nome} className="w-48 h-48 object-cover rounded-lg shrink-0" />
                 )}
                 <div className="space-y-2 flex-1 min-w-0">
-                  <h2 className="text-lg font-bold pr-6" style={{ color: "#0d0446" }}>{detailProg.nome}</h2>
-                  <p className="text-xs flex items-center gap-1" style={{ color: "rgba(13,4,70,0.5)" }}>
+                  <h2 className="text-lg font-bold pr-6" style={{ color: ui.pageText }}>{detailProg.nome}</h2>
+                  <p className="text-xs flex items-center gap-1" style={{ color: "color-mix(in srgb, var(--layout-page-text) 55%, transparent)" }}>
                     <Clock size={12} /> {detailProg.horarioInicio.slice(0, 5)} — {detailProg.horarioFim.slice(0, 5)}
                   </p>
-                  <p className="text-xs flex items-center gap-1" style={{ color: "rgba(13,4,70,0.5)" }}>
+                  <p className="text-xs flex items-center gap-1" style={{ color: "color-mix(in srgb, var(--layout-page-text) 55%, transparent)" }}>
                     <Calendar size={12} /> {detailProg.diasSemana.join(", ")}
                   </p>
                   {getPresenterName(detailProg.apresentadorId) && (
-                    <p className="text-xs font-semibold" style={{ color: "#0d0446" }}>
+                    <p className="text-xs font-semibold" style={{ color: ui.pageText }}>
                       Locutor: {getPresenterName(detailProg.apresentadorId)}
                     </p>
                   )}
                   {detailProg.descricao && (
-                    <p className="text-sm mt-2 leading-relaxed" style={{ color: "rgba(13,4,70,0.7)" }}>{detailProg.descricao}</p>
+                    <p className="text-sm mt-2 leading-relaxed" style={{ color: "color-mix(in srgb, var(--layout-page-text) 78%, transparent)" }}>{detailProg.descricao}</p>
                   )}
                 </div>
               </div>

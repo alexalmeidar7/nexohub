@@ -443,8 +443,8 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
             {/* Ao vivo + horário + classificação */}
             <div className="flex items-center gap-3 mb-2">
               <div className="flex items-center gap-1.5">
-                <Circle size={8} fill="#ff0000" color="#ff0000" className="animate-pulse" />
-                <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#ff0000" }}>Ao Vivo</span>
+                <Circle size={8} fill="var(--layout-accent-color)" color="var(--layout-accent-color)" className="animate-pulse" />
+                <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--layout-accent-color)" }}>Ao Vivo</span>
               </div>
               <span className="text-[10px]" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.5 }}>
                 {onAirProgram.horario_inicio} — {onAirProgram.horario_fim}
@@ -510,9 +510,9 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                   key={item.id}
                   className={`relative group rounded-2xl animate-fade-in flex flex-col ${isDragging ? "opacity-40 scale-95" : ""}`}
                   style={{
-                    background: item.widgetType === "player" ? "#0a0a0a" : "var(--layout-widget-bg, #1a1a1a)",
-                    border: isDragOver ? `2px solid var(--layout-button-bg, #333)` : item.widgetType === "player" ? "1px solid rgba(255,255,255,0.08)" : `1px solid color-mix(in srgb, var(--layout-border-color, #333) 30%, transparent)`,
-                    boxShadow: item.widgetType === "player" ? "0 4px 20px rgba(0,0,0,0.4)" : "0 2px 12px rgba(0,0,0,0.06)",
+                    background: "var(--layout-widget-bg)",
+                    border: isDragOver ? "2px solid var(--layout-button-bg)" : "1px solid color-mix(in srgb, var(--layout-border-color) 30%, transparent)",
+                    boxShadow: "0 4px 20px color-mix(in srgb, var(--layout-border-color) 25%, transparent)",
                     minHeight: item.widgetType === "agenda" ? "200px" : "150px",
                     maxHeight: item.widgetType === "agenda" ? "240px" : "none",
                     overflow: item.widgetType === "player" ? "visible" : "hidden",
@@ -858,21 +858,21 @@ function MusicaPreview() {
       {music.capa ? (
         <img src={music.capa} alt="" className="w-12 h-12 rounded-lg object-cover flex-shrink-0 shadow-md" />
       ) : (
-        <div className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "rgba(190,1,1,0.1)" }}>
-          <Music size={16} className="text-[#be0101]" />
+        <div className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "color-mix(in srgb, var(--layout-accent-color) 14%, transparent)" }}>
+          <Music size={16} style={{ color: "var(--layout-accent-color)" }} />
         </div>
       )}
       <div className="min-w-0 flex-1">
         <p className="text-black text-[11px] font-bold truncate leading-tight">{music.titulo}</p>
         <p className="text-black/50 text-[10px] truncate">{music.artista}</p>
         {programa && (
-          <p className="text-[9px] mt-0.5 truncate" style={{ color: "#be0101" }}>🔴 {programa}</p>
+          <p className="text-[9px] mt-0.5 truncate" style={{ color: "var(--layout-accent-color)" }}>🔴 {programa}</p>
         )}
       </div>
     </div>
   ) : (
     <div className="flex items-center gap-2">
-      <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: "rgba(190,1,1,0.06)" }}>
+      <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: "color-mix(in srgb, var(--layout-accent-color) 8%, transparent)" }}>
         <Music size={14} className="text-black/20" />
       </div>
       <p className="text-black/30 text-[10px]">Sem música no ar</p>
@@ -974,17 +974,17 @@ function DashboardAgendaWidget({ onNavigate }: { onNavigate: (page: Page) => voi
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center gap-2 mb-3">
-        <CalendarDays size={14} className="text-[#be0101]" />
-        <p className="text-black font-bold text-sm">Agenda de Eventos</p>
+        <CalendarDays size={14} style={{ color: "var(--layout-accent-color)" }} />
+        <p className="font-bold text-sm" style={{ color: "var(--layout-widget-text)" }}>Agenda de Eventos</p>
       </div>
       {events.length === 0 ? (
-        <p className="text-black/30 text-xs">Nenhum evento próximo</p>
+        <p className="text-xs" style={{ color: "color-mix(in srgb, var(--layout-widget-text) 35%, transparent)" }}>Nenhum evento próximo</p>
       ) : (
         <div className="space-y-2">
           {events.map(ev => (
-            <div key={ev.id} className="px-3 py-2 rounded-lg" style={{ background: "rgba(190,1,1,0.06)" }}>
-              <p className="text-black text-xs font-semibold truncate">{ev.descricao || "Evento"}</p>
-              <p className="text-black/40 text-[10px]">
+            <div key={ev.id} className="px-3 py-2 rounded-lg" style={{ background: "color-mix(in srgb, var(--layout-accent-color) 10%, transparent)" }}>
+              <p className="text-xs font-semibold truncate" style={{ color: "var(--layout-widget-text)" }}>{ev.descricao || "Evento"}</p>
+              <p className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-widget-text) 45%, transparent)" }}>
                 {new Date(ev.data + "T12:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })} — {ev.local}
               </p>
             </div>
@@ -995,9 +995,9 @@ function DashboardAgendaWidget({ onNavigate }: { onNavigate: (page: Page) => voi
         <button
           onClick={() => onNavigate("agenda")}
           className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold transition-all"
-          style={{ backgroundColor: "rgba(190,1,1,0.1)", color: "#be0101" }}
-          onMouseEnter={e => { e.currentTarget.style.backgroundColor = "rgba(190,1,1,0.2)"; }}
-          onMouseLeave={e => { e.currentTarget.style.backgroundColor = "rgba(190,1,1,0.1)"; }}
+          style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color) 16%, transparent)", color: "var(--layout-accent-color)" }}
+          onMouseEnter={e => { e.currentTarget.style.backgroundColor = "color-mix(in srgb, var(--layout-accent-color) 28%, transparent)"; }}
+          onMouseLeave={e => { e.currentTarget.style.backgroundColor = "color-mix(in srgb, var(--layout-accent-color) 16%, transparent)"; }}
         >
           <Plus size={10} /> Adicionar evento
         </button>
@@ -1582,7 +1582,7 @@ function DashboardPlayerWidget({ onVideoChange }: { onVideoChange?: (active: boo
       ) : (
         <div className="relative z-10 flex items-center gap-2.5 flex-shrink-0 pb-0.5">
           {channels.length > 1 && (
-            <button onClick={goPrev} className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-all hover:scale-110" style={{ background: "rgba(255,255,255,0.1)" }} onMouseEnter={e => { e.currentTarget.style.background = "rgba(190,1,1,0.4)"; }} onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.1)"; }}>
+            <button onClick={goPrev} className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-all hover:scale-110" style={{ background: "rgba(255,255,255,0.1)" }} onMouseEnter={e => { e.currentTarget.style.background = "color-mix(in srgb, var(--layout-accent-color) 35%, transparent)"; }} onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.1)"; }}>
               <ChevronLeft size={14} className="text-white/70" />
             </button>
           )}
@@ -1601,7 +1601,7 @@ function DashboardPlayerWidget({ onVideoChange }: { onVideoChange?: (active: boo
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="flex items-end gap-[2px] h-4">
                     {[0, 1, 2, 3].map(i => (
-                      <div key={i} className="w-[3px] rounded-full" style={{ background: "linear-gradient(0deg, #be0101, #ff4444)", animation: `eq-bar 0.${4 + i}s ease-in-out infinite alternate`, height: `${6 + Math.random() * 10}px` }} />
+                      <div key={i} className="w-[3px] rounded-full" style={{ background: "linear-gradient(0deg, var(--layout-button-bg), var(--layout-accent-color))", animation: `eq-bar 0.${4 + i}s ease-in-out infinite alternate`, height: `${6 + Math.random() * 10}px` }} />
                     ))}
                   </div>
                 </div>
@@ -1611,7 +1611,7 @@ function DashboardPlayerWidget({ onVideoChange }: { onVideoChange?: (active: boo
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5 mb-0.5">
-              {isPlaying && <Circle size={5} fill="#ff0000" color="#ff0000" className="animate-pulse flex-shrink-0" />}
+              {isPlaying && <Circle size={5} fill="var(--layout-accent-color)" color="var(--layout-accent-color)" className="animate-pulse flex-shrink-0" />}
               <p className="text-white text-[11px] font-bold truncate">{activeChannel?.name}</p>
             </div>
             {currentMusic ? (
@@ -1621,24 +1621,24 @@ function DashboardPlayerWidget({ onVideoChange }: { onVideoChange?: (active: boo
               </div>
             ) : (
               <div className="flex items-center gap-1 mb-1">
-                <span className="text-[7px] font-bold px-1.5 py-0.5 rounded" style={{ background: "rgba(190,1,1,0.3)", color: "#ff6666" }}>{activeChannel?.numero_canal}</span>
+                <span className="text-[7px] font-bold px-1.5 py-0.5 rounded" style={{ background: "color-mix(in srgb, var(--layout-accent-color) 26%, transparent)", color: "var(--layout-accent-color)" }}>{activeChannel?.numero_canal}</span>
                 <span className="text-white/30 text-[8px]">{isVideo ? "Vídeo" : "Áudio"}</span>
               </div>
             )}
             <div className="flex items-center gap-2">
-              <button onClick={togglePlay} className="w-8 h-8 rounded-full flex items-center justify-center transition-all hover:scale-110" style={{ background: "linear-gradient(135deg, #be0101, #e60000)", boxShadow: "0 2px 12px rgba(190,1,1,0.4)" }}>
+              <button onClick={togglePlay} className="w-8 h-8 rounded-full flex items-center justify-center transition-all hover:scale-110" style={{ background: "linear-gradient(135deg, var(--layout-button-bg), var(--layout-accent-color))", boxShadow: "0 2px 12px color-mix(in srgb, var(--layout-accent-color) 40%, transparent)" }}>
                 {isPlaying ? <Pause size={12} className="text-white" /> : <Play size={12} className="text-white ml-0.5" />}
               </button>
               <button onClick={toggleMute} className="text-white/40 hover:text-white transition-colors flex-shrink-0">
                 {isMuted || volume === 0 ? <VolumeX size={13} /> : <Volume2 size={13} />}
               </button>
-              <input type="range" min={0} max={1} step={0.01} value={isMuted ? 0 : volume} onChange={e => handleVolume(Number(e.target.value))} onMouseDown={e => e.stopPropagation()} onTouchStart={e => e.stopPropagation()} onDragStart={e => { e.stopPropagation(); e.preventDefault(); }} draggable={false} className="w-14 h-1 appearance-none rounded-full cursor-pointer flex-shrink-0" style={{ background: `linear-gradient(to right, #be0101 ${(isMuted ? 0 : volume) * 100}%, rgba(255,255,255,0.15) ${(isMuted ? 0 : volume) * 100}%)`, accentColor: "#be0101" }} />
+              <input type="range" min={0} max={1} step={0.01} value={isMuted ? 0 : volume} onChange={e => handleVolume(Number(e.target.value))} onMouseDown={e => e.stopPropagation()} onTouchStart={e => e.stopPropagation()} onDragStart={e => { e.stopPropagation(); e.preventDefault(); }} draggable={false} className="w-14 h-1 appearance-none rounded-full cursor-pointer flex-shrink-0" style={{ background: `linear-gradient(to right, var(--layout-accent-color) ${(isMuted ? 0 : volume) * 100}%, rgba(255,255,255,0.15) ${(isMuted ? 0 : volume) * 100}%)`, accentColor: "var(--layout-accent-color)" }} />
               {isVideo && <span className="text-[7px] font-bold text-white/20 ml-auto"><Tv size={10} className="inline mr-0.5" />VIDEO</span>}
             </div>
           </div>
 
           {channels.length > 1 && (
-            <button onClick={goNext} className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-all hover:scale-110" style={{ background: "rgba(255,255,255,0.1)" }} onMouseEnter={e => { e.currentTarget.style.background = "rgba(190,1,1,0.4)"; }} onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.1)"; }}>
+            <button onClick={goNext} className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-all hover:scale-110" style={{ background: "rgba(255,255,255,0.1)" }} onMouseEnter={e => { e.currentTarget.style.background = "color-mix(in srgb, var(--layout-accent-color) 35%, transparent)"; }} onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.1)"; }}>
               <ChevronRight size={14} className="text-white/70" />
             </button>
           )}

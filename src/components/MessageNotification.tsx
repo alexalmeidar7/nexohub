@@ -130,7 +130,11 @@ export default function MessageNotification() {
       {unreadCount > 0 && (
         <span
           className="absolute -top-1 -right-1 w-[18px] h-[18px] rounded-full text-[9px] font-bold flex items-center justify-center animate-scale-in ring-2 ring-black/40"
-          style={{ background: "linear-gradient(135deg, #960101, #be0101)", color: "#ffffff", boxShadow: "0 0 10px rgba(190,1,1,0.5)" }}
+          style={{
+            background: "linear-gradient(135deg, var(--layout-button-bg), var(--layout-accent-color))",
+            color: "var(--layout-button-text)",
+            boxShadow: "0 0 10px color-mix(in srgb, var(--layout-accent-color) 45%, transparent)",
+          }}
         >
           {unreadCount > 9 ? "9+" : unreadCount}
         </span>
@@ -152,13 +156,16 @@ export default function MessageNotification() {
           {/* Header */}
           <div className="flex items-center justify-between px-5 py-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
             <div className="flex items-center gap-2">
-              <Bell size={13} style={{ color: "#be0101" }} />
+              <Bell size={13} style={{ color: "var(--layout-accent-color)" }} />
               <span className="text-[11px] font-semibold text-white/90 tracking-wide uppercase">Notificações</span>
             </div>
             {unreadCount > 0 && (
               <span
                 className="text-[9px] font-bold px-2 py-0.5 rounded-full"
-                style={{ background: "rgba(190,1,1,0.2)", color: "#be0101" }}
+                style={{
+                  background: "color-mix(in srgb, var(--layout-accent-color) 20%, transparent)",
+                  color: "var(--layout-accent-color)",
+                }}
               >
                 {unreadCount} nova{unreadCount > 1 ? "s" : ""}
               </span>
@@ -171,9 +178,9 @@ export default function MessageNotification() {
               onClick={() => setTab("novas")}
               className="text-[10px] font-semibold px-4 py-1.5 rounded-full transition-all duration-200"
               style={{
-                background: tab === "novas" ? "linear-gradient(135deg, #960101, #be0101)" : "rgba(255,255,255,0.06)",
-                color: tab === "novas" ? "#ffffff" : "rgba(255,255,255,0.5)",
-                boxShadow: tab === "novas" ? "0 2px 12px rgba(190,1,1,0.3)" : "none",
+                background: tab === "novas" ? "linear-gradient(135deg, var(--layout-button-bg), var(--layout-accent-color))" : "rgba(255,255,255,0.06)",
+                color: tab === "novas" ? "var(--layout-button-text)" : "rgba(255,255,255,0.5)",
+                boxShadow: tab === "novas" ? "0 2px 12px color-mix(in srgb, var(--layout-accent-color) 35%, transparent)" : "none",
               }}
             >
               Novas {unreadCount > 0 && `(${unreadCount})`}
@@ -182,9 +189,9 @@ export default function MessageNotification() {
               onClick={() => setTab("lidas")}
               className="text-[10px] font-semibold px-4 py-1.5 rounded-full transition-all duration-200"
               style={{
-                background: tab === "lidas" ? "linear-gradient(135deg, #960101, #be0101)" : "rgba(255,255,255,0.06)",
-                color: tab === "lidas" ? "#ffffff" : "rgba(255,255,255,0.5)",
-                boxShadow: tab === "lidas" ? "0 2px 12px rgba(190,1,1,0.3)" : "none",
+                background: tab === "lidas" ? "linear-gradient(135deg, var(--layout-button-bg), var(--layout-accent-color))" : "rgba(255,255,255,0.06)",
+                color: tab === "lidas" ? "var(--layout-button-text)" : "rgba(255,255,255,0.5)",
+                boxShadow: tab === "lidas" ? "0 2px 12px color-mix(in srgb, var(--layout-accent-color) 35%, transparent)" : "none",
               }}
             >
               Lidas
@@ -221,7 +228,7 @@ export default function MessageNotification() {
                     className="px-4 py-3 transition-colors"
                     style={{
                       borderBottom: idx < filteredMessages.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none",
-                      background: openMsgId === msg.id ? "rgba(190,1,1,0.08)" : "transparent",
+                      background: openMsgId === msg.id ? "color-mix(in srgb, var(--layout-accent-color) 10%, transparent)" : "transparent",
                     }}
                   >
                     <div className="flex items-start gap-3">
@@ -230,14 +237,14 @@ export default function MessageNotification() {
                         <div
                           className="w-2 h-2 rounded-full"
                           style={{
-                            background: !msg.is_read ? "#be0101" : "rgba(255,255,255,0.15)",
-                            boxShadow: !msg.is_read ? "0 0 8px rgba(190,1,1,0.5)" : "none",
+                            background: !msg.is_read ? "var(--layout-accent-color)" : "rgba(255,255,255,0.15)",
+                            boxShadow: !msg.is_read ? "0 0 8px color-mix(in srgb, var(--layout-accent-color) 50%, transparent)" : "none",
                           }}
                         />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-2">
-                          <p className="text-[11px] font-bold truncate" style={{ color: !msg.is_read ? "#be0101" : "rgba(255,255,255,0.9)" }}>{msg.subject}</p>
+                          <p className="text-[11px] font-bold truncate" style={{ color: !msg.is_read ? "var(--layout-accent-color)" : "rgba(255,255,255,0.9)" }}>{msg.subject}</p>
                           <div className="flex items-center gap-1 shrink-0">
                             <Clock size={9} className="text-white/30" />
                             <span className="text-[9px] text-white/35">{formatDate(msg.created_at)}</span>
@@ -248,8 +255,8 @@ export default function MessageNotification() {
                             <button
                               className="text-[9px] font-semibold px-3 py-1 rounded-full transition-all duration-200 flex items-center gap-1"
                               style={{
-                                background: openMsgId === msg.id ? "rgba(255,255,255,0.12)" : "rgba(190,1,1,0.15)",
-                                color: openMsgId === msg.id ? "#ffffff" : "#be0101",
+                                background: openMsgId === msg.id ? "rgba(255,255,255,0.12)" : "color-mix(in srgb, var(--layout-accent-color) 20%, transparent)",
+                                color: openMsgId === msg.id ? "#ffffff" : "var(--layout-accent-color)",
                               }}
                             >
                               {openMsgId === msg.id ? "Fechar" : "Ler"}
@@ -263,10 +270,19 @@ export default function MessageNotification() {
                           {tab === "lidas" && (
                             <button
                               onClick={(e) => { e.stopPropagation(); deleteMessage(msg.id); }}
-                              className="p-1 rounded-full transition-all duration-200 hover:bg-red-500/20"
+                              className="p-1 rounded-full transition-all duration-200"
                               title="Excluir mensagem"
+                              style={{ color: "color-mix(in srgb, var(--layout-accent-color) 70%, white 30%)" }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.background = "color-mix(in srgb, var(--layout-accent-color) 20%, transparent)";
+                                e.currentTarget.style.color = "var(--layout-accent-color)";
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.background = "transparent";
+                                e.currentTarget.style.color = "color-mix(in srgb, var(--layout-accent-color) 70%, white 30%)";
+                              }}
                             >
-                              <Trash2 size={11} className="text-red-400/60 hover:text-red-400" />
+                              <Trash2 size={11} />
                             </button>
                           )}
                         </div>
