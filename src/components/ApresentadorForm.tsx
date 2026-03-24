@@ -518,6 +518,32 @@ export default function ApresentadorForm() {
         </div>
       ) : null}
 
+      {/* Import Confirmation Popup */}
+      {importRows && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+          <div className="animate-fade-in p-6 text-center space-y-4"
+            style={{ width: "420px", background: "linear-gradient(135deg, #0d0446, #1a0a6e)", borderRadius: "20px", boxShadow: "0 20px 60px rgba(13,4,70,0.5)" }}>
+            <FileSpreadsheet size={36} style={{ color: "#2dbef3", margin: "0 auto" }} />
+            <p className="text-white text-sm font-semibold">
+              Deseja importar <span style={{ color: "#2dbef3" }}>{importRows.length}</span> participante{importRows.length > 1 ? "s" : ""} para o banco de dados?
+            </p>
+            <div className="flex gap-3 justify-center pt-2">
+              <button onClick={() => setImportRows(null)} disabled={importing}
+                className="px-5 py-2 rounded-xl text-xs font-bold transition-all"
+                style={{ backgroundColor: "rgba(255,255,255,0.1)", color: "#fff", border: "1px solid rgba(255,255,255,0.2)" }}>
+                Cancelar
+              </button>
+              <button onClick={confirmImport} disabled={importing}
+                className="px-5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2"
+                style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#fff", boxShadow: "0 4px 15px rgba(38,143,250,0.4)" }}>
+                {importing && <Loader2 size={13} className="animate-spin" />}
+                {importing ? "Importando..." : "OK"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showSuccess && (
         <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: "rgba(0,0,0,0.3)" }}>
           <div className="flex flex-col items-center justify-center animate-fade-in overflow-hidden"
