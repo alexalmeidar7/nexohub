@@ -490,8 +490,8 @@ function StreamingCard({ channel, currentProgram, nowPlaying, onClick }: {
 
       {/* Live badge */}
       <span
-        className="absolute top-2.5 left-2.5 z-10 text-[9px] uppercase tracking-wider font-bold px-2 py-1 rounded-lg flex items-center gap-1.5 text-white"
-        style={{ background: "linear-gradient(135deg, hsl(var(--player-accent)), hsl(var(--player-accent-hover)))", boxShadow: "0 4px 16px hsla(var(--player-accent) / 0.5)" }}
+        className="absolute top-2.5 left-2.5 z-10 text-[9px] uppercase tracking-wider font-bold px-2 py-1 rounded-lg flex items-center gap-1.5"
+        style={{ background: "var(--layout-button-bg)", color: "var(--layout-button-text)", boxShadow: "0 4px 16px color-mix(in srgb, var(--layout-button-bg) 50%, transparent)" }}
       >
         <span className="inline-block w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
         ao vivo

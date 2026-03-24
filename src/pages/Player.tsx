@@ -2477,8 +2477,8 @@ export default function PlayerPage() {
                       size={15}
                       className="transition-colors"
                       style={{
-                        color: liked ? "hsl(var(--player-accent))" : "hsl(var(--player-muted-foreground))",
-                        fill: liked ? "hsl(var(--player-accent))" : "none",
+                        color: liked ? "var(--layout-button-bg)" : "hsl(var(--player-muted-foreground))",
+                        fill: liked ? "var(--layout-button-bg)" : "none",
                       }}
                     />
                   </button>
