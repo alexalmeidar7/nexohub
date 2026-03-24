@@ -56,6 +56,9 @@ export default function ApresentadorForm() {
   const [saving, setSaving] = useState(false);
   const [loadingList, setLoadingList] = useState(true);
   const [catOpen, setCatOpen] = useState(false);
+  const [importRows, setImportRows] = useState<any[] | null>(null);
+  const [importing, setImporting] = useState(false);
+  const excelInputRef = useRef<HTMLInputElement>(null);
 
   const load = async () => {
     setLoadingList(true);
