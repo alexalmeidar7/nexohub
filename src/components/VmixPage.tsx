@@ -2242,7 +2242,7 @@ export default function VmixPage() {
                                   toast({ title: `Efeito: ${btn.nome}`, description: `${btn.commands.length} ação(ões) executada(s) localmente.` });
                                 }
                               }
-                            }
+                            }}
                           >
                             {hasSchedule && (
                               <div className="absolute top-1 left-1 flex items-center gap-0.5 px-1 py-0.5 rounded" style={{ backgroundColor: "rgba(0,0,0,0.4)", backdropFilter: "blur(4px)", zIndex: 2 }}>
