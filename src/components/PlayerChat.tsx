@@ -141,6 +141,7 @@ export default function PlayerChat({ channelId, onClose, shopOpen = false }: Pla
     const { data: allMsgs } = await supabase
       .from("player_chat_messages")
       .select("id")
+      .eq("channel_id", channelId)
       .order("created_at", { ascending: true });
     if (allMsgs && allMsgs.length > 100) {
       const idsToDelete = allMsgs.slice(0, allMsgs.length - 100).map((m) => m.id);
