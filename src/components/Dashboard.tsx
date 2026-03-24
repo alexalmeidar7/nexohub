@@ -359,6 +359,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
   return (
     <div className="h-screen flex flex-col animate-fade-in overflow-hidden relative" style={{ backgroundColor: "#000000" }}>
+      <DashboardRuntimeEffects />
       {/* Base background layer (layout settings or default gradient) */}
       <div
         className="absolute inset-0 z-0 transition-opacity duration-1000"
