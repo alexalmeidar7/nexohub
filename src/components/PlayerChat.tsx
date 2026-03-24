@@ -73,6 +73,7 @@ export default function PlayerChat({ channelId, onClose, shopOpen = false }: Pla
       const { data } = await supabase
         .from("player_chat_messages")
         .select("*")
+        .eq("channel_id", channelId)
         .order("created_at", { ascending: true })
         .limit(100);
       if (data) setMessages(data);
@@ -84,10 +85,9 @@ export default function PlayerChat({ channelId, onClose, shopOpen = false }: Pla
       .channel("player-chat-" + channelId)
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "player_chat_messages" },
+        { event: "INSERT", schema: "public", table: "player_chat_messages", filter: `channel_id=eq.${channelId}` },
         (payload) => {
           setMessages((prev) => {
-            // Remove optimistic message if it matches, then add real one
             const filtered = prev.filter(m => !m.id.startsWith("optimistic-"));
             const updated = [...filtered, payload.new as ChatMessage];
             return updated.slice(-100);
@@ -141,6 +141,7 @@ export default function PlayerChat({ channelId, onClose, shopOpen = false }: Pla
     const { data: allMsgs } = await supabase
       .from("player_chat_messages")
       .select("id")
+      .eq("channel_id", channelId)
       .order("created_at", { ascending: true });
     if (allMsgs && allMsgs.length > 100) {
       const idsToDelete = allMsgs.slice(0, allMsgs.length - 100).map((m) => m.id);
