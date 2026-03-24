@@ -1012,7 +1012,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       } catch {}
     };
     fetchMusic();
-    const interval = setInterval(fetchMusic, 5000);
+    const interval = setInterval(fetchMusic, 3000);
     return () => clearInterval(interval);
   }, [user, userSlug]);
 
