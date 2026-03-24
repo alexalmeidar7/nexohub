@@ -64,9 +64,10 @@ export function useGlobalMusicSync() {
     if (!user) return;
 
     const recordToHistory = async (titulo: string, artista: string) => {
-      const key = `${artista}||${titulo}`;
+      const now = new Date();
+      const day = now.toISOString().slice(0, 10);
+      const key = `${day}||${artista}||${titulo}`;
       if (lastRecordedRef.current === key) return;
-      lastRecordedRef.current = key;
 
       try {
         const { data: programas } = await supabase
@@ -76,16 +77,19 @@ export function useGlobalMusicSync() {
           .eq("ativo", true);
 
         const programa = getCurrentProgram(programas || []);
-        const now = new Date();
 
-        await supabase.from("musicas_tocadas").upsert({
+        const { error } = await supabase.from("musicas_tocadas").upsert({
           user_id: user.id,
-          dia: now.toISOString().slice(0, 10),
+          dia: day,
           horario: `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`,
           programa,
           artista,
           musica: titulo,
         }, { onConflict: "user_id,musica,artista,dia", ignoreDuplicates: true });
+
+        if (!error) {
+          lastRecordedRef.current = key;
+        }
       } catch {}
     };
 
@@ -102,7 +106,19 @@ export function useGlobalMusicSync() {
       }
 
       const url = cachedUrlRef.current;
-      if (!url) return;
+      if (!url) {
+        try {
+          const raw = localStorage.getItem(MUSIC_DATA_KEY);
+          if (!raw) return;
+          const localMusic = JSON.parse(raw) as { titulo?: string; artista?: string };
+          const titulo = normalizeMusicText(localMusic?.titulo || "");
+          const artista = normalizeMusicText(localMusic?.artista || "") || "Desconhecido";
+          if (titulo && titulo !== "Sem título") {
+            void recordToHistory(titulo, artista);
+          }
+        } catch {}
+        return;
+      }
 
       try {
         let text: string | null = null;
@@ -172,12 +188,12 @@ export function useGlobalMusicSync() {
         if (songChanged) {
           localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify(data));
           localStorage.setItem(MUSIC_START_KEY, Date.now().toString());
-          // Record to history
-          if (data.titulo && data.titulo !== "Sem título") {
-            recordToHistory(data.titulo, data.artista);
-          }
         } else if (data.capa && (!prev.capa || prev.capa !== data.capa)) {
           localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify({ ...prev, capa: data.capa }));
+        }
+
+        if (data.titulo && data.titulo !== "Sem título") {
+          void recordToHistory(data.titulo, data.artista || "Desconhecido");
         }
       } catch {}
     };

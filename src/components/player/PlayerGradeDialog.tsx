@@ -43,14 +43,14 @@ function generateGradeSlots(): string[] {
   return slots;
 }
 
-const RATING_COLORS: Record<string, { bg: string; text: string; label: string }> = {
-  "Livre": { bg: "rgba(34,197,94,0.15)", text: "rgb(74,222,128)", label: "Livre" },
-  "6": { bg: "rgba(251,191,36,0.15)", text: "rgb(251,191,36)", label: "6 anos" },
-  "10": { bg: "rgba(59,130,246,0.15)", text: "rgb(96,165,250)", label: "10 anos" },
-  "12": { bg: "rgba(245,158,11,0.15)", text: "rgb(251,191,36)", label: "12 anos" },
-  "14": { bg: "rgba(249,115,22,0.15)", text: "rgb(251,146,60)", label: "14 anos" },
-  "16": { bg: "rgba(239,68,68,0.15)", text: "rgb(248,113,113)", label: "16 anos" },
-  "18": { bg: "rgba(0,0,0,0.3)", text: "rgb(248,113,113)", label: "18 anos" },
+const RATING_LABELS: Record<string, string> = {
+  "Livre": "Livre",
+  "6": "6 anos",
+  "10": "10 anos",
+  "12": "12 anos",
+  "14": "14 anos",
+  "16": "16 anos",
+  "18": "18 anos",
 };
 
 interface Props {
@@ -130,15 +130,17 @@ function PlayerGradeDialog({ programas, onClose }: Props) {
     return { skipMap: skip, spanMap: span };
   }, [programas, gradeSlots]);
 
-  // Color palette — only black, gray, red variations
+  const getRatingLabel = (classificacao?: string) => {
+    if (!classificacao) return "Livre";
+    return RATING_LABELS[classificacao] || classificacao;
+  };
+
   const getProgColor = (name: string) => {
     const colors = [
-      { bg: "rgba(200,0,0,0.10)", border: "rgba(200,0,0,0.25)", text: "rgb(248,140,140)" },
-      { bg: "rgba(255,255,255,0.05)", border: "rgba(255,255,255,0.12)", text: "rgb(200,200,200)" },
-      { bg: "rgba(150,1,1,0.12)", border: "rgba(150,1,1,0.30)", text: "rgb(255,160,160)" },
-      { bg: "rgba(255,255,255,0.04)", border: "rgba(255,255,255,0.10)", text: "rgb(180,180,180)" },
-      { bg: "rgba(190,1,1,0.10)", border: "rgba(190,1,1,0.22)", text: "rgb(252,170,170)" },
-      { bg: "rgba(255,255,255,0.06)", border: "rgba(255,255,255,0.14)", text: "rgb(210,210,210)" },
+      { bg: 14, border: 65, text: 90 },
+      { bg: 18, border: 72, text: 92 },
+      { bg: 22, border: 78, text: 94 },
+      { bg: 26, border: 82, text: 96 },
     ];
     let hash = 0;
     for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
@@ -365,7 +367,7 @@ function PlayerGradeDialog({ programas, onClose }: Props) {
                       const key = `${dia}-${slot}`;
                       if (skipMap[key]) return null;
                       const cellData = spanMap[key];
-                      if (!cellData) return <td key={dia} className="rounded-xl" style={{ background: "rgba(255,255,255,0.01)" }} />;
+                      if (!cellData) return <td key={dia} className="rounded-xl" style={{ background: "color-mix(in srgb, var(--layout-page-bg) 75%, transparent)" }} />;
                       const { prog, rowSpan } = cellData;
                       const isOnAir = prog && dia === diaAtual && currentTimeStr >= prog.horario_inicio && currentTimeStr < prog.horario_fim;
                       const color = getProgColor(prog.nome);
@@ -377,15 +379,19 @@ function PlayerGradeDialog({ programas, onClose }: Props) {
                           className="px-2.5 py-2 text-left rounded-xl cursor-pointer group transition-all duration-200 hover:scale-[1.02] hover:z-10 relative"
                           style={{
                             background: isOnAir
-                              ? "linear-gradient(135deg, hsl(var(--player-accent)), hsl(var(--player-accent-hover)))"
-                              : color.bg,
-                            color: isOnAir ? "#fff" : color.text,
+                              ? "linear-gradient(135deg, var(--layout-accent-color), color-mix(in srgb, var(--layout-accent-color) 74%, var(--layout-header-bg) 26%))"
+                              : `color-mix(in srgb, var(--layout-widget-bg) ${color.bg}%, transparent)`,
+                            color: isOnAir
+                              ? "var(--layout-header-text)"
+                              : `color-mix(in srgb, var(--layout-widget-text) ${color.text}%, transparent)`,
                             fontWeight: isOnAir ? 700 : 500,
                             verticalAlign: "top",
                             boxShadow: isOnAir
-                              ? "0 4px 20px hsla(var(--player-accent) / 0.4), inset 0 1px 0 rgba(255,255,255,0.15)"
+                              ? "0 4px 20px color-mix(in srgb, var(--layout-accent-color) 45%, transparent), inset 0 1px 0 color-mix(in srgb, var(--layout-header-text) 20%, transparent)"
                               : "none",
-                            border: isOnAir ? "none" : `1px solid ${color.border}`,
+                            border: isOnAir
+                              ? "1px solid color-mix(in srgb, var(--layout-accent-color) 72%, var(--layout-border-color) 28%)"
+                              : `1px solid color-mix(in srgb, var(--layout-border-color) ${color.border}%, transparent)`,
                           }}
                           onClick={() => setDetailProg(prog)}
                         >
@@ -398,13 +404,13 @@ function PlayerGradeDialog({ programas, onClose }: Props) {
                             <div className="mt-1">
                               <div className="flex flex-wrap items-center gap-0.5">
                                 {cellAiData[prog.id].keywords.slice(0, 3).map((kw, ki) => (
-                                  <span key={ki} className="text-[7px] px-1 py-0 rounded" style={{ backgroundColor: isOnAir ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.06)", color: isOnAir ? "rgba(255,255,255,0.8)" : "inherit", opacity: isOnAir ? 1 : 0.7 }}>
+                                  <span key={ki} className="text-[7px] px-1 py-0 rounded" style={{ backgroundColor: isOnAir ? "color-mix(in srgb, var(--layout-header-text) 20%, transparent)" : "color-mix(in srgb, var(--layout-widget-text) 10%, transparent)", color: isOnAir ? "color-mix(in srgb, var(--layout-header-text) 88%, transparent)" : "inherit", opacity: isOnAir ? 1 : 0.75 }}>
                                     {kw}
                                   </span>
                                 ))}
                               </div>
-                              <span className="text-[7px] px-1 py-0 rounded font-bold mt-0.5 inline-block" style={{ backgroundColor: "rgba(255,255,255,0.06)", color: isOnAir ? "rgba(255,255,255,0.7)" : "rgba(200,200,200,0.7)" }}>
-                                {(RATING_COLORS[cellAiData[prog.id].classificacao] || RATING_COLORS["Livre"]).label}
+                              <span className="text-[7px] px-1 py-0 rounded font-bold mt-0.5 inline-block" style={{ backgroundColor: "color-mix(in srgb, var(--layout-button-bg) 22%, transparent)", color: "var(--layout-button-text)", border: "1px solid color-mix(in srgb, var(--layout-border-color) 70%, transparent)" }}>
+                                {getRatingLabel(cellAiData[prog.id].classificacao)}
                               </span>
                             </div>
                           )}
@@ -509,15 +515,19 @@ function PlayerGradeDialog({ programas, onClose }: Props) {
                   {/* AI Age rating chip */}
                   {aiAnalysis && (
                     (() => {
-                      const rating = RATING_COLORS[aiAnalysis.classificacao] || RATING_COLORS["Livre"];
+                      const ratingLabel = getRatingLabel(aiAnalysis.classificacao);
                       return (
                         <div
                           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold"
-                          style={{ backgroundColor: rating.bg, color: rating.text }}
+                          style={{
+                            backgroundColor: "color-mix(in srgb, var(--layout-button-bg) 25%, transparent)",
+                            color: "var(--layout-button-text)",
+                            border: "1px solid color-mix(in srgb, var(--layout-border-color) 70%, transparent)",
+                          }}
                           title={aiAnalysis.justificativa}
                         >
                           <Shield size={10} />
-                          {rating.label}
+                          {ratingLabel}
                         </div>
                       );
                     })()
@@ -593,10 +603,10 @@ function PlayerGradeDialog({ programas, onClose }: Props) {
                           style={{ backgroundColor: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.05)" }}
                         >
                           <div className="flex items-start gap-2">
-                            <Shield size={12} className="flex-shrink-0 mt-0.5" style={{ color: RATING_COLORS[aiAnalysis.classificacao]?.text || "rgb(74,222,128)" }} />
+                            <Shield size={12} className="flex-shrink-0 mt-0.5" style={{ color: "var(--layout-accent-color)" }} />
                             <div>
-                              <span className="text-[11px] font-semibold" style={{ color: RATING_COLORS[aiAnalysis.classificacao]?.text || "rgb(74,222,128)" }}>
-                                Classificação: {RATING_COLORS[aiAnalysis.classificacao]?.label || aiAnalysis.classificacao}
+                              <span className="text-[11px] font-semibold" style={{ color: "var(--layout-accent-color)" }}>
+                                Classificação: {getRatingLabel(aiAnalysis.classificacao)}
                               </span>
                               <p className="text-[11px] text-white/40 mt-1 leading-relaxed">{aiAnalysis.justificativa}</p>
                             </div>
