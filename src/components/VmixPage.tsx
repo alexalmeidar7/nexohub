@@ -2228,15 +2228,21 @@ export default function VmixPage() {
                             onClick={async () => {
                               setActiveCustomButton(btn.id);
                               if (btn.commands && Array.isArray(btn.commands) && btn.commands.length > 0) {
-                                for (const cmd of btn.commands) {
-                                  let cmdVal = cmd.value;
-                                  if (cmd.extraValue) cmdVal = cmdVal ? `${cmdVal},${cmd.extraValue}` : cmd.extraValue;
-                                  await sendCommand(cmd.fn, cmd.input, cmdVal);
-                                  await new Promise(r2 => setTimeout(r2, 400));
+                                try {
+                                  const res = await supabase.functions.invoke("execute-vmix-commands", { body: { commands: btn.commands } });
+                                  if (res.error) throw res.error;
+                                  toast({ title: `Efeito: ${btn.nome}`, description: `${btn.commands.length} ação(ões) executada(s) no servidor.` });
+                                } catch {
+                                  for (const cmd of btn.commands) {
+                                    let cmdVal = cmd.value;
+                                    if (cmd.extraValue) cmdVal = cmdVal ? `${cmdVal},${cmd.extraValue}` : cmd.extraValue;
+                                    await sendCommand(cmd.fn, cmd.input, cmdVal);
+                                    await new Promise(r2 => setTimeout(r2, 400));
+                                  }
+                                  toast({ title: `Efeito: ${btn.nome}`, description: `${btn.commands.length} ação(ões) executada(s) localmente.` });
                                 }
-                                toast({ title: `Efeito: ${btn.nome}`, description: `${btn.commands.length} ação(ões) executada(s).` });
                               }
-                            }}
+                            }
                           >
                             {hasSchedule && (
                               <div className="absolute top-1 left-1 flex items-center gap-0.5 px-1 py-0.5 rounded" style={{ backgroundColor: "rgba(0,0,0,0.4)", backdropFilter: "blur(4px)", zIndex: 2 }}>
