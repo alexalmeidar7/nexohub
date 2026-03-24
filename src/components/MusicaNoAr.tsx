@@ -270,19 +270,17 @@ export default function MusicaNoAr() {
       const [{ data }, history] = await Promise.all([
         supabase
           .from("user_settings")
-          .select("music_xml_url, music_source_mode")
+          .select("music_xml_url, music_source_mode, dashboard_items")
           .eq("user_id", user.id)
           .maybeSingle(),
         loadUploadHistoryFromDb(user.id),
       ]);
       setUploadHistory(history);
       if (typeof data?.music_xml_url === "string") {
-        // Ignore storage URLs that were incorrectly saved as the origin URL
         const isStorageUrl = data.music_xml_url.includes("/storage/v1/object/") || data.music_xml_url.includes("/xml-files/local-xml-");
         if (!isStorageUrl) {
           setXmlUrl(data.music_xml_url);
         } else {
-          // Clean up: reset to default since the stored value is a local sync URL
           setXmlUrl(DEFAULT_XML_URL);
           await supabase.from("user_settings").upsert({
             user_id: user.id,
@@ -296,6 +294,11 @@ export default function MusicaNoAr() {
           music_xml_url: DEFAULT_XML_URL,
           updated_at: new Date().toISOString(),
         }, { onConflict: "user_id" });
+      }
+      // Restore local filename from DB (persists across computers)
+      const di = data?.dashboard_items as any;
+      if (di?.local_xml_filename) {
+        setLocalFileName(di.local_xml_filename);
       }
       // Restore saved source mode
       const savedMode = (data as any)?.music_source_mode;
@@ -569,6 +572,17 @@ export default function MusicaNoAr() {
     localFileRef.current = file;
     setLocalFileName(file.name);
 
+    // Persist local filename to DB so it survives across computers/sessions
+    if (user) {
+      const { data: currentSettings } = await supabase.from("user_settings").select("dashboard_items").eq("user_id", user.id).maybeSingle();
+      const di = (currentSettings?.dashboard_items as any) || {};
+      await supabase.from("user_settings").upsert({
+        user_id: user.id,
+        dashboard_items: { ...di, local_xml_filename: file.name },
+        updated_at: new Date().toISOString(),
+      }, { onConflict: "user_id" });
+    }
+
     const text = await readFileWithEncoding(file);
     localFileContentRef.current = text;
     setLocalFileContent(text);
@@ -590,6 +604,57 @@ export default function MusicaNoAr() {
     localPollRef.current = setInterval(readLocalFile, 3000);
     return () => { if (localPollRef.current) clearInterval(localPollRef.current); };
   }, [isLocalSelected, localMonitoring, readLocalFile]);
+
+  // Remote storage polling: when local filename is set but no file handle (other computer)
+  const storagePollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  useEffect(() => {
+    if (!user || !isLocalSelected || !localFileName) return;
+    // If we have a local file handle, direct polling handles it
+    if (fileHandleRef.current || localFileRef.current) return;
+
+    const pollStorage = async () => {
+      try {
+        const filePath = `local-xml-${user.id}.xml`;
+        const { data } = supabase.storage.from("xml-files").getPublicUrl(filePath);
+        if (!data?.publicUrl) return;
+        const res = await fetch(data.publicUrl + `?t=${Date.now()}`);
+        if (!res.ok) return;
+        const text = await res.text();
+        if (!text || text === localFileContentRef.current) return;
+        localFileContentRef.current = text;
+        setLocalFileContent(text);
+        lastLocalSuccessRef.current = Date.now();
+        setLocalDelay(false);
+        setLocalError(null);
+        const parsed = parseXmlString(text);
+        if (parsed) processMusicRef.current(parsed, "pasta");
+      } catch {}
+    };
+
+    pollStorage();
+    setLocalMonitoring(true);
+    storagePollRef.current = setInterval(pollStorage, 3000);
+    return () => { if (storagePollRef.current) clearInterval(storagePollRef.current); };
+  }, [user, isLocalSelected, localFileName]);
+
+  // Staleness check: if last read is >2s ago, force a fetch
+  useEffect(() => {
+    const checkStale = setInterval(() => {
+      const now = Date.now();
+      const lastRead = Math.max(lastOnlineSuccessRef.current, lastLocalSuccessRef.current);
+      if (now - lastRead > 2000) {
+        // Force reads on active sources
+        if (isOnlineSelected && hasValidOnlineUrl) {
+          // fetchXml is called by its own interval, but we can trigger immediately
+          void fetchXml();
+        }
+        if (isLocalSelected && (fileHandleRef.current || localFileRef.current)) {
+          void readLocalFile();
+        }
+      }
+    }, 2000);
+    return () => clearInterval(checkStale);
+  }, [isOnlineSelected, hasValidOnlineUrl, isLocalSelected, fetchXml, readLocalFile]);
 
   useEffect(() => {
     if (!music || !startTime) return;
@@ -927,7 +992,7 @@ export default function MusicaNoAr() {
                   </label>
                 </div>
 
-                {/* Status bar */}
+                {/* Status bar — hide AGUARDANDO when URL is empty */}
                 {isOnlineSelected && (music || lastSource === "online") ? (
                   <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: "linear-gradient(90deg, #22c55e 0%, #4ade80 100%)", color: "#ffffff" }}>
                     <span className="relative flex h-2 w-2">
@@ -936,12 +1001,12 @@ export default function MusicaNoAr() {
                     </span>
                     <span className="text-xs font-bold">LENDO AQUI</span>
                   </div>
-                ) : (
+                ) : hasValidOnlineUrl ? (
                   <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: "linear-gradient(90deg, #d4e157 0%, #c6ff00 100%)", color: "#555" }}>
                     <Loader2 size={12} className="animate-spin" />
                     <span className="text-xs font-bold">AGUARDANDO LEITURA</span>
                   </div>
-                )}
+                ) : null}
                 {onlineError && (
                   <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[9px] font-semibold" style={{ backgroundColor: "rgba(239,68,68,0.08)", color: "#dc2626", border: "1px solid rgba(239,68,68,0.2)" }}>
                     <AlertTriangle size={11} />
@@ -1045,7 +1110,7 @@ export default function MusicaNoAr() {
                   </div>
                 )}
 
-                {/* Status bar */}
+                {/* Status bar — hide AGUARDANDO when no file */}
                 {isLocalSelected && localMonitoring && (music || lastSource === "pasta") ? (
                   <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: "linear-gradient(90deg, #22c55e 0%, #4ade80 100%)", color: "#ffffff" }}>
                     <span className="relative flex h-2 w-2">
@@ -1054,12 +1119,12 @@ export default function MusicaNoAr() {
                     </span>
                     <span className="text-xs font-bold">LENDO AQUI</span>
                   </div>
-                ) : (
+                ) : localFileName ? (
                   <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: "linear-gradient(90deg, #d4e157 0%, #c6ff00 100%)", color: "#555" }}>
                     <Loader2 size={12} className="animate-spin" />
                     <span className="text-xs font-bold">AGUARDANDO LEITURA</span>
                   </div>
-                )}
+                ) : null}
                 {localError && (
                   <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[9px] font-semibold" style={{ backgroundColor: "rgba(239,68,68,0.08)", color: "#dc2626", border: "1px solid rgba(239,68,68,0.2)" }}>
                     <AlertTriangle size={11} />
