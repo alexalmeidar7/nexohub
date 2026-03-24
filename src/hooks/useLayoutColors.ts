@@ -140,8 +140,8 @@ export function useLayoutColors() {
       root.style.setProperty("--player-bg", bgHsl);
     }
 
-    // Player glow: CSS gradient instead of image, using accent + bg colors
-    const glowGradient = `radial-gradient(ellipse at 30% 50%, ${colors.accentColor}33 0%, ${colors.homeBgColor} 60%, ${colors.navBg} 100%)`;
+    // Player glow: radial gradient at bottom center, lighter middle, darker edges
+    const glowGradient = `radial-gradient(ellipse at 50% 100%, ${colors.accentColor}55 0%, ${colors.homeBgColor} 50%, ${colors.navBg} 100%)`;
     root.style.setProperty("--player-glow", glowGradient);
     root.style.setProperty("--player-glow-corner", glowGradient);
 
