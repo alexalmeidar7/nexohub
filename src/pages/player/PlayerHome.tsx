@@ -292,8 +292,12 @@ function HeroBanner({
 
         {/* Now playing music */}
         {nowPlaying?.musica && (
-          <div className="flex items-center gap-2 mb-4">
-            <Music className="h-3.5 w-3.5 text-player-accent flex-shrink-0" />
+          <div className="flex items-center gap-2.5 mb-4">
+            {nowPlaying.capa ? (
+              <img src={nowPlaying.capa} alt="" className="w-8 h-8 rounded object-cover flex-shrink-0 shadow-lg" />
+            ) : (
+              <Music className="h-3.5 w-3.5 text-player-accent flex-shrink-0" />
+            )}
             <span className="text-xs text-white/70 truncate">{nowPlaying.musica} — {nowPlaying.artista}</span>
           </div>
         )}
