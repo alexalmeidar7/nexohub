@@ -638,6 +638,7 @@ export type Database = {
         Row: {
           commands: Json
           created_at: string
+          custom_horario: string | null
           id: string
           programa_id: string
           updated_at: string
@@ -646,6 +647,7 @@ export type Database = {
         Insert: {
           commands?: Json
           created_at?: string
+          custom_horario?: string | null
           id?: string
           programa_id: string
           updated_at?: string
@@ -654,6 +656,7 @@ export type Database = {
         Update: {
           commands?: Json
           created_at?: string
+          custom_horario?: string | null
           id?: string
           programa_id?: string
           updated_at?: string

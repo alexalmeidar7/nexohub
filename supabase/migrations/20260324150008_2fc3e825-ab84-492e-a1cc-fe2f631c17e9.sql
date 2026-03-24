@@ -1,0 +1,1 @@
+ALTER TABLE public.preset_commands ADD COLUMN IF NOT EXISTS custom_horario text DEFAULT null;

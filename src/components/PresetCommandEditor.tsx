@@ -90,13 +90,14 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
   const [running, setRunning] = useState(false);
   const [showCode, setShowCode] = useState(false);
   const [pasteValue, setPasteValue] = useState("");
+  const [customHorario, setCustomHorario] = useState<string>("");
 
   useEffect(() => {
     if (!open) return;
     setLoading(true);
     supabase
       .from("preset_commands" as any)
-      .select("commands")
+      .select("commands, custom_horario")
       .eq("user_id", userId)
       .eq("programa_id", programaId)
       .maybeSingle()
@@ -106,6 +107,7 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
         } else {
           setCommands([]);
         }
+        setCustomHorario(data?.custom_horario || "");
         setLoading(false);
       });
   }, [open, programaId, userId]);
@@ -132,6 +134,7 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
 
   const saveCommands = async () => {
     setSaving(true);
+    const payload: any = { commands, custom_horario: customHorario || null };
     const { data: existing } = await (supabase.from("preset_commands" as any) as any)
       .select("id")
       .eq("user_id", userId)
@@ -139,12 +142,12 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
       .maybeSingle();
 
     if (existing) {
-      await (supabase.from("preset_commands" as any) as any).update({ commands }).eq("id", existing.id);
+      await (supabase.from("preset_commands" as any) as any).update(payload).eq("id", existing.id);
     } else {
-      await (supabase.from("preset_commands" as any) as any).insert({ user_id: userId, programa_id: programaId, commands });
+      await (supabase.from("preset_commands" as any) as any).insert({ user_id: userId, programa_id: programaId, ...payload });
     }
     setSaving(false);
-    toast({ title: "Ações salvas", description: `${commands.length} comando(s) salvos para ${programaNome}.` });
+    toast({ title: "Ações salvas", description: `${commands.length} comando(s) salvos para ${programaNome}.${customHorario ? ` Horário: ${customHorario}` : " Usando horário da grade."}` });
   };
 
   const runAll = async () => {
@@ -200,13 +203,37 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
             <h2 className="text-sm font-black uppercase tracking-wider" style={{ color: "#eee" }}>{programaNome}</h2>
             <div className="flex items-center gap-1.5">
               <Clock size={10} style={{ color: "#888" }} />
-              <span className="text-[10px] font-mono" style={{ color: "#888" }}>{programaHorario}</span>
+              <span className="text-[10px] font-mono" style={{ color: "#888", textDecoration: customHorario ? "line-through" : "none", opacity: customHorario ? 0.5 : 1 }}>{programaHorario}</span>
               <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ backgroundColor: "#ffffff08", color: "#666" }}>{commands.length} ação(ões)</span>
             </div>
           </div>
-          <button onClick={onClose} className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/10 transition-colors" style={{ color: "#888" }}>
-            <X size={16} />
-          </button>
+          <div className="flex items-center gap-2">
+            {/* Custom schedule time */}
+            <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg" style={{ backgroundColor: customHorario ? "#22c55e12" : "#ffffff06", border: `1px solid ${customHorario ? "#22c55e30" : "#333"}` }}>
+              <Clock size={12} style={{ color: customHorario ? "#22c55e" : "#666" }} />
+              <input
+                type="time"
+                value={customHorario}
+                onChange={e => setCustomHorario(e.target.value)}
+                className="bg-transparent text-[11px] font-mono outline-none w-[70px]"
+                style={{ color: customHorario ? "#22c55e" : "#666", colorScheme: "dark" }}
+                title={customHorario ? `Horário personalizado: ${customHorario}` : "Definir horário personalizado (vazio = horário da grade)"}
+              />
+              {customHorario && (
+                <button
+                  onClick={() => setCustomHorario("")}
+                  className="w-4 h-4 rounded flex items-center justify-center hover:bg-white/10"
+                  style={{ color: "#888" }}
+                  title="Remover horário personalizado (usar grade)"
+                >
+                  <X size={10} />
+                </button>
+              )}
+            </div>
+            <button onClick={onClose} className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/10 transition-colors" style={{ color: "#888" }}>
+              <X size={16} />
+            </button>
+          </div>
         </div>
 
         {/* Commands list */}
