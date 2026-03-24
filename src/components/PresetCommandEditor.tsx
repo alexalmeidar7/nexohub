@@ -90,13 +90,14 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
   const [running, setRunning] = useState(false);
   const [showCode, setShowCode] = useState(false);
   const [pasteValue, setPasteValue] = useState("");
+  const [customHorario, setCustomHorario] = useState<string>("");
 
   useEffect(() => {
     if (!open) return;
     setLoading(true);
     supabase
       .from("preset_commands" as any)
-      .select("commands")
+      .select("commands, custom_horario")
       .eq("user_id", userId)
       .eq("programa_id", programaId)
       .maybeSingle()
@@ -106,6 +107,7 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
         } else {
           setCommands([]);
         }
+        setCustomHorario(data?.custom_horario || "");
         setLoading(false);
       });
   }, [open, programaId, userId]);
