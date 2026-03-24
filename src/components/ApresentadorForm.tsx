@@ -401,23 +401,32 @@ export default function ApresentadorForm() {
         </div>
       </div>
 
-      {/* Stats Bar */}
-      {!loadingList && apresentadores.length > 0 && (
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl" style={{ backgroundColor: "rgba(13,4,70,0.06)" }}>
-            <Shield size={13} style={{ color: "#0d0446" }} />
-            <span className="text-[11px] font-semibold" style={{ color: "#0d0446" }}>{stats.total} cadastrados</span>
-          </div>
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl" style={{ backgroundColor: "rgba(34,197,94,0.08)" }}>
-            <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
-            <span className="text-[11px] font-medium text-green-700">{stats.ativos} ativos</span>
-          </div>
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl" style={{ backgroundColor: "rgba(220,38,38,0.06)" }}>
-            <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
-            <span className="text-[11px] font-medium text-red-600">{stats.inativos} inativos</span>
-          </div>
-        </div>
-      )}
+      {/* Import Excel + Stats Bar */}
+      <div className="flex items-center gap-4 flex-wrap">
+        <label className="cursor-pointer flex items-center gap-2 px-4 py-1.5 rounded-xl text-[11px] font-semibold transition-all hover:opacity-80"
+          style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#fff", boxShadow: "0 2px 8px rgba(38,143,250,0.25)" }}>
+          <FileSpreadsheet size={14} />
+          Importar Excel
+          <input ref={excelInputRef} type="file" accept=".xlsx,.xls,.csv" onChange={handleExcelFile} className="hidden" />
+        </label>
+
+        {!loadingList && apresentadores.length > 0 && (
+          <>
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl" style={{ backgroundColor: "rgba(13,4,70,0.06)" }}>
+              <Shield size={13} style={{ color: "#0d0446" }} />
+              <span className="text-[11px] font-semibold" style={{ color: "#0d0446" }}>{stats.total} cadastrados</span>
+            </div>
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl" style={{ backgroundColor: "rgba(34,197,94,0.08)" }}>
+              <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+              <span className="text-[11px] font-medium text-green-700">{stats.ativos} ativos</span>
+            </div>
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl" style={{ backgroundColor: "rgba(220,38,38,0.06)" }}>
+              <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
+              <span className="text-[11px] font-medium text-red-600">{stats.inativos} inativos</span>
+            </div>
+          </>
+        )}
+      </div>
 
       {/* Table */}
       {loadingList ? listSkeleton : apresentadores.length > 0 ? (
