@@ -2078,19 +2078,29 @@ export default function VmixPage() {
                                 .eq("user_id", user?.id)
                                 .eq("programa_id", prog.id)
                                 .maybeSingle();
-                              if (presetData?.commands && Array.isArray(presetData.commands) && presetData.commands.length > 0) {
-                                for (const cmd of presetData.commands as any[]) {
+                              const cmds = presetData?.commands && Array.isArray(presetData.commands) && presetData.commands.length > 0
+                                ? presetData.commands
+                                : [{ fn: "ScriptStart", input: prog.nome }];
+                              try {
+                                const { data: { session } } = await supabase.auth.getSession();
+                                if (session?.access_token) {
+                                  const res = await supabase.functions.invoke("execute-vmix-commands", { body: { commands: cmds } });
+                                  if (res.error) throw res.error;
+                                  toast({ title: `Preset: ${prog.nome}`, description: `${cmds.length} ação(ões) executada(s) no servidor.` });
+                                } else {
+                                  throw new Error("no session");
+                                }
+                              } catch {
+                                // Fallback: execute client-side
+                                for (const cmd of cmds as any[]) {
                                   let value = cmd.value;
                                   if (cmd.extraValue) value = value ? `${value},${cmd.extraValue}` : cmd.extraValue;
                                   await sendCommand(cmd.fn, cmd.input, value);
                                   await new Promise(r => setTimeout(r, 400));
                                 }
-                                toast({ title: `Preset: ${prog.nome}`, description: `${presetData.commands.length} ação(ões) executada(s).` });
-                              } else {
-                                sendCommand("ScriptStart", prog.nome);
-                                toast({ title: `Preset: ${prog.nome}`, description: "Comando enviado ao vMix." });
+                                toast({ title: `Preset: ${prog.nome}`, description: `${cmds.length} ação(ões) executada(s) localmente.` });
                               }
-                            }}
+                            }
                           >
                             {prog.apresentador_foto && (
                               <img
