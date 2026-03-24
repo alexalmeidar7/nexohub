@@ -961,8 +961,8 @@ export default function MusicaNoAr() {
                       color: "hsl(0 0% 100%)",
                     }}
                   >
-                  <span className="text-[9px] font-black uppercase tracking-wider text-center leading-tight">Monitorar<br/>os dois<br/>Sources</span>
-                  <span className="text-lg">↔</span>
+                  <span className="text-[9px] font-black uppercase tracking-wider text-center leading-tight text-white">Monitorar<br/>os dois<br/>Sources</span>
+                  <span className="text-lg text-white">↔</span>
                 </div>
               </div>
 
