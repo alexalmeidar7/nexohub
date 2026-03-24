@@ -58,6 +58,7 @@ export function useGlobalMusicSync() {
   const cachedUrlRef = useRef<string | null>(null);
   const urlFetchedRef = useRef(false);
   const lastRecordedRef = useRef<string>("");
+  const useDirectFetchRef = useRef<boolean | null>(null); // null = not tested, true = CORS ok
 
   useEffect(() => {
     if (!user) return;
