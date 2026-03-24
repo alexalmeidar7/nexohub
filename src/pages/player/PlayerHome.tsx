@@ -953,6 +953,7 @@ interface PlayerHomeProps {
 
 export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   const { user, signOut, loading: authLoading } = useAuth();
+  useGlobalMusicSync();
   const { userSlug } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
