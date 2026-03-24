@@ -2418,7 +2418,8 @@ export default function PlayerPage() {
             {!isCatalog && (
               <button
                 onClick={handleHomeClick}
-                className="rounded-lg border border-player-border bg-player-surface/80 p-1.5 text-player-muted-foreground hover:text-player-foreground hover:bg-player-surface-hover transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-player-accent"
+                className="rounded-lg border border-player-border p-1.5 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-player-accent hover:opacity-80"
+                style={{ background: "var(--layout-button-bg)", color: "var(--layout-button-text)" }}
                 title="Voltar ao Hub"
                 aria-label="Voltar ao Hub"
               >
