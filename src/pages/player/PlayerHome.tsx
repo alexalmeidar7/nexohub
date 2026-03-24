@@ -307,22 +307,24 @@ function HeroBanner({
         <div className="flex items-center gap-3">
           <button
             onClick={onPlay}
-            className="flex items-center gap-2 px-6 py-3 rounded-lg text-sm font-bold text-white transition-all duration-300 hover:scale-105"
+            className="flex items-center gap-2 px-6 py-3 rounded-lg text-sm font-bold transition-all duration-300 hover:scale-105"
             style={{
-              background: "linear-gradient(135deg, hsl(var(--player-accent)), hsl(var(--player-accent-hover)))",
-              boxShadow: "0 4px 24px hsla(var(--player-accent) / 0.4)",
+              background: "var(--layout-button-bg)",
+              color: "var(--layout-button-text)",
+              boxShadow: "0 4px 24px color-mix(in srgb, var(--layout-button-bg) 40%, transparent)",
             }}
           >
-            <Play className="h-4 w-4 fill-white" />
+            <Play className="h-4 w-4 fill-current" />
             Assistir agora
           </button>
           <button
             onClick={onGrade}
-            className="flex items-center gap-2 px-5 py-3 rounded-lg text-sm font-semibold text-white/90 transition-all duration-300 hover:bg-white/20"
+            className="flex items-center gap-2 px-5 py-3 rounded-lg text-sm font-semibold transition-all duration-300 hover:opacity-80"
             style={{
-              background: "rgba(255,255,255,0.1)",
+              background: "color-mix(in srgb, var(--layout-button-bg) 30%, transparent)",
+              color: "var(--layout-button-text)",
               backdropFilter: "blur(12px)",
-              border: "1px solid rgba(255,255,255,0.15)",
+              border: "1px solid color-mix(in srgb, var(--layout-button-bg) 40%, transparent)",
             }}
           >
             <LayoutGrid className="h-4 w-4" />
@@ -488,8 +490,8 @@ function StreamingCard({ channel, currentProgram, nowPlaying, onClick }: {
 
       {/* Live badge */}
       <span
-        className="absolute top-2.5 left-2.5 z-10 text-[9px] uppercase tracking-wider font-bold px-2 py-1 rounded-lg flex items-center gap-1.5 text-white"
-        style={{ background: "linear-gradient(135deg, hsl(var(--player-accent)), hsl(var(--player-accent-hover)))", boxShadow: "0 4px 16px hsla(var(--player-accent) / 0.5)" }}
+        className="absolute top-2.5 left-2.5 z-10 text-[9px] uppercase tracking-wider font-bold px-2 py-1 rounded-lg flex items-center gap-1.5"
+        style={{ background: "var(--layout-button-bg)", color: "var(--layout-button-text)", boxShadow: "0 4px 16px color-mix(in srgb, var(--layout-button-bg) 50%, transparent)" }}
       >
         <span className="inline-block w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
         ao vivo

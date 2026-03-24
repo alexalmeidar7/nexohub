@@ -2249,7 +2249,7 @@ export default function PlayerPage() {
             {!isCatalog && (
             <div className="flex flex-col items-center gap-0.5 sm:gap-1">
               {liveChannels.length > 1 && (
-                <button onClick={() => navigateChannel(-1)} className="text-white/60 hover:text-white hover:bg-player-accent rounded px-1.5 py-1 sm:px-2 sm:py-2 transition-all" title="Canal anterior"><ChevronUp size={14} /></button>
+                <button onClick={() => navigateChannel(-1)} className="hover:opacity-80 rounded px-1.5 py-1 sm:px-2 sm:py-2 transition-all" style={{ color: "var(--layout-button-text)", background: "var(--layout-button-bg)" }} title="Canal anterior"><ChevronUp size={14} /></button>
               )}
               <div className="text-white text-[10px] sm:text-xs font-bold py-0.5">
                 {(() => {
@@ -2260,7 +2260,7 @@ export default function PlayerPage() {
                 })()}
               </div>
               {liveChannels.length > 1 && (
-                <button onClick={() => navigateChannel(1)} className="text-white/60 hover:text-white hover:bg-player-accent rounded px-1.5 py-1 sm:px-2 sm:py-2 transition-all" title="Próximo canal"><ChevronDown size={14} /></button>
+                <button onClick={() => navigateChannel(1)} className="hover:opacity-80 rounded px-1.5 py-1 sm:px-2 sm:py-2 transition-all" style={{ color: "var(--layout-button-text)", background: "var(--layout-button-bg)" }} title="Próximo canal"><ChevronDown size={14} /></button>
               )}
             </div>
             )}
@@ -2418,7 +2418,8 @@ export default function PlayerPage() {
             {!isCatalog && (
               <button
                 onClick={handleHomeClick}
-                className="rounded-lg border border-player-border bg-player-surface/80 p-1.5 text-player-muted-foreground hover:text-player-foreground hover:bg-player-surface-hover transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-player-accent"
+                className="rounded-lg border border-player-border p-1.5 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-player-accent hover:opacity-80"
+                style={{ background: "var(--layout-button-bg)", color: "var(--layout-button-text)" }}
                 title="Voltar ao Hub"
                 aria-label="Voltar ao Hub"
               >
@@ -2430,7 +2431,8 @@ export default function PlayerPage() {
             <div className="relative flex items-center" onMouseEnter={showVolume} onMouseLeave={hideVolume}>
               <button
                 onClick={toggleMuteWithOsd}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-player-border bg-player-surface/80 px-2.5 py-1.5 text-player-muted-foreground hover:text-player-foreground hover:bg-player-surface-hover transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-player-accent"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-player-border px-2.5 py-1.5 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-player-accent hover:opacity-80"
+                style={{ background: "var(--layout-button-bg)", color: "var(--layout-button-text)" }}
                 title={muted ? "Ativar som" : "Desativar som"}
                 aria-label={muted ? "Ativar som" : "Desativar som"}
               >
@@ -2475,8 +2477,8 @@ export default function PlayerPage() {
                       size={15}
                       className="transition-colors"
                       style={{
-                        color: liked ? "hsl(var(--player-accent))" : "hsl(var(--player-muted-foreground))",
-                        fill: liked ? "hsl(var(--player-accent))" : "none",
+                        color: liked ? "var(--layout-button-bg)" : "hsl(var(--player-muted-foreground))",
+                        fill: liked ? "var(--layout-button-bg)" : "none",
                       }}
                     />
                   </button>
