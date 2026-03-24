@@ -28,24 +28,79 @@ function parseXml(xmlStr: string) {
   } catch { return null; }
 }
 
+function getCurrentProgram(
+  programas: { nome: string; horario_inicio: string; horario_fim: string; dias_semana: string[] | null; variavel: boolean; data_variavel: string | null; ativo: boolean }[]
+): string {
+  const now = new Date();
+  const dias = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+  const diaAtual = dias[now.getDay()];
+  const horaAtual = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+  const todayStr = now.toISOString().slice(0, 10);
+
+  for (const p of programas) {
+    if (!p.ativo) continue;
+    if (p.variavel) {
+      if (p.data_variavel === todayStr && horaAtual >= p.horario_inicio && horaAtual < p.horario_fim) return p.nome;
+    } else {
+      if (p.dias_semana?.includes(diaAtual) && horaAtual >= p.horario_inicio && horaAtual < p.horario_fim) return p.nome;
+    }
+  }
+  return "";
+}
+
 /**
- * Polls the user's XML music source and keeps localStorage in sync.
- * Can be used from Dashboard, PlayerHome, or any page that needs live music data.
+ * Polls the user's XML music source every 3s, keeps localStorage in sync,
+ * and records song changes to musicas_tocadas for history.
  */
 export function useGlobalMusicSync() {
   const { user } = useAuth();
   const coverCacheRef = useRef<Record<string, string>>({});
+  const cachedUrlRef = useRef<string | null>(null);
+  const urlFetchedRef = useRef(false);
+  const lastRecordedRef = useRef<string>("");
 
   useEffect(() => {
     if (!user) return;
 
+    const recordToHistory = async (titulo: string, artista: string) => {
+      const key = `${artista}||${titulo}`;
+      if (lastRecordedRef.current === key) return;
+      lastRecordedRef.current = key;
+
+      try {
+        const { data: programas } = await supabase
+          .from("programas")
+          .select("nome, horario_inicio, horario_fim, dias_semana, variavel, data_variavel, ativo")
+          .eq("user_id", user.id)
+          .eq("ativo", true);
+
+        const programa = getCurrentProgram(programas || []);
+        const now = new Date();
+
+        await supabase.from("musicas_tocadas").upsert({
+          user_id: user.id,
+          dia: now.toISOString().slice(0, 10),
+          horario: `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`,
+          programa,
+          artista,
+          musica: titulo,
+        }, { onConflict: "user_id,musica,artista,dia", ignoreDuplicates: true });
+      } catch {}
+    };
+
     const fetchAndSync = async () => {
-      const { data: settings } = await supabase
-        .from("user_settings")
-        .select("music_xml_url")
-        .eq("user_id", user.id)
-        .maybeSingle();
-      const url = settings?.music_xml_url;
+      // Cache URL to avoid re-fetching settings every poll
+      if (!urlFetchedRef.current) {
+        const { data: settings } = await supabase
+          .from("user_settings")
+          .select("music_xml_url")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        cachedUrlRef.current = settings?.music_xml_url || null;
+        urlFetchedRef.current = true;
+      }
+
+      const url = cachedUrlRef.current;
       if (!url) return;
 
       try {
@@ -58,6 +113,7 @@ export function useGlobalMusicSync() {
         const data = parseXml(text);
         if (!data) return;
 
+        // Fetch cover from iTunes if missing
         if (!data.capa) {
           const cacheKey = `${data.artista}-${data.titulo}`;
           if (coverCacheRef.current[cacheKey]) {
@@ -80,17 +136,28 @@ export function useGlobalMusicSync() {
 
         const prevRaw = localStorage.getItem(MUSIC_DATA_KEY);
         const prev = prevRaw ? JSON.parse(prevRaw) : null;
-        if (!prev || prev.titulo !== data.titulo || prev.artista !== data.artista) {
+        const songChanged = !prev || prev.titulo !== data.titulo || prev.artista !== data.artista;
+
+        if (songChanged) {
           localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify(data));
           localStorage.setItem(MUSIC_START_KEY, Date.now().toString());
+          // Record to history
+          if (data.titulo && data.titulo !== "Sem título") {
+            recordToHistory(data.titulo, data.artista);
+          }
         } else if (data.capa && (!prev.capa || prev.capa !== data.capa)) {
           localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify({ ...prev, capa: data.capa }));
         }
       } catch {}
     };
 
-    const startTimer = setTimeout(fetchAndSync, 1500);
-    const interval = setInterval(fetchAndSync, 5000);
-    return () => { clearTimeout(startTimer); clearInterval(interval); };
+    // Start immediately, poll every 3s
+    fetchAndSync();
+    const interval = setInterval(fetchAndSync, 3000);
+
+    // Refresh cached URL every 60s in case user changes it
+    const urlRefresh = setInterval(() => { urlFetchedRef.current = false; }, 60000);
+
+    return () => { clearInterval(interval); clearInterval(urlRefresh); };
   }, [user]);
 }
