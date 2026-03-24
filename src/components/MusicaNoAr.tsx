@@ -928,7 +928,7 @@ export default function MusicaNoAr() {
                 </div>
 
                 {/* Status bar */}
-                {isOnlineSelected && lastSource === "online" ? (
+                {isOnlineSelected && (music || lastSource === "online") ? (
                   <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: "linear-gradient(90deg, #22c55e 0%, #4ade80 100%)", color: "#ffffff" }}>
                     <span className="relative flex h-2 w-2">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 bg-white" />
