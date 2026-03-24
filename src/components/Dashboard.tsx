@@ -279,9 +279,6 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     }
   }, [currentPage, enabledModules, planModules]);
 
-  useGlobalMusicXmlUpload();
-  useGlobalMusicSync();
-
   const toggleMenu = (label: string) => {
     setExpandedMenus(prev => {
       const next = new Set(prev);
