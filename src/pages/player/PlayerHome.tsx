@@ -356,7 +356,7 @@ function HeroBanner({
 function StreamingCard({ channel, currentProgram, nowPlaying, onClick }: {
   channel: Channel;
   currentProgram?: Programa;
-  nowPlaying?: { musica: string; artista: string } | null;
+  nowPlaying?: { musica: string; artista: string; capa?: string } | null;
   onClick: () => void;
 }) {
   const [hovered, setHovered] = useState(false);
