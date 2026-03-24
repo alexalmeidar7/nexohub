@@ -2078,17 +2078,27 @@ export default function VmixPage() {
                                 .eq("user_id", user?.id)
                                 .eq("programa_id", prog.id)
                                 .maybeSingle();
-                              if (presetData?.commands && Array.isArray(presetData.commands) && presetData.commands.length > 0) {
-                                for (const cmd of presetData.commands as any[]) {
+                              const cmds = presetData?.commands && Array.isArray(presetData.commands) && presetData.commands.length > 0
+                                ? presetData.commands
+                                : [{ fn: "ScriptStart", input: prog.nome }];
+                              try {
+                                const { data: { session } } = await supabase.auth.getSession();
+                                if (session?.access_token) {
+                                  const res = await supabase.functions.invoke("execute-vmix-commands", { body: { commands: cmds } });
+                                  if (res.error) throw res.error;
+                                  toast({ title: `Preset: ${prog.nome}`, description: `${cmds.length} ação(ões) executada(s) no servidor.` });
+                                } else {
+                                  throw new Error("no session");
+                                }
+                              } catch {
+                                // Fallback: execute client-side
+                                for (const cmd of cmds as any[]) {
                                   let value = cmd.value;
                                   if (cmd.extraValue) value = value ? `${value},${cmd.extraValue}` : cmd.extraValue;
                                   await sendCommand(cmd.fn, cmd.input, value);
                                   await new Promise(r => setTimeout(r, 400));
                                 }
-                                toast({ title: `Preset: ${prog.nome}`, description: `${presetData.commands.length} ação(ões) executada(s).` });
-                              } else {
-                                sendCommand("ScriptStart", prog.nome);
-                                toast({ title: `Preset: ${prog.nome}`, description: "Comando enviado ao vMix." });
+                                toast({ title: `Preset: ${prog.nome}`, description: `${cmds.length} ação(ões) executada(s) localmente.` });
                               }
                             }}
                           >
@@ -2218,13 +2228,19 @@ export default function VmixPage() {
                             onClick={async () => {
                               setActiveCustomButton(btn.id);
                               if (btn.commands && Array.isArray(btn.commands) && btn.commands.length > 0) {
-                                for (const cmd of btn.commands) {
-                                  let cmdVal = cmd.value;
-                                  if (cmd.extraValue) cmdVal = cmdVal ? `${cmdVal},${cmd.extraValue}` : cmd.extraValue;
-                                  await sendCommand(cmd.fn, cmd.input, cmdVal);
-                                  await new Promise(r2 => setTimeout(r2, 400));
+                                try {
+                                  const res = await supabase.functions.invoke("execute-vmix-commands", { body: { commands: btn.commands } });
+                                  if (res.error) throw res.error;
+                                  toast({ title: `Efeito: ${btn.nome}`, description: `${btn.commands.length} ação(ões) executada(s) no servidor.` });
+                                } catch {
+                                  for (const cmd of btn.commands) {
+                                    let cmdVal = cmd.value;
+                                    if (cmd.extraValue) cmdVal = cmdVal ? `${cmdVal},${cmd.extraValue}` : cmd.extraValue;
+                                    await sendCommand(cmd.fn, cmd.input, cmdVal);
+                                    await new Promise(r2 => setTimeout(r2, 400));
+                                  }
+                                  toast({ title: `Efeito: ${btn.nome}`, description: `${btn.commands.length} ação(ões) executada(s) localmente.` });
                                 }
-                                toast({ title: `Efeito: ${btn.nome}`, description: `${btn.commands.length} ação(ões) executada(s).` });
                               }
                             }}
                           >
