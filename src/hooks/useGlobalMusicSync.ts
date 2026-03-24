@@ -58,7 +58,8 @@ export function useGlobalMusicSync() {
   const cachedUrlRef = useRef<string | null>(null);
   const urlFetchedRef = useRef(false);
   const lastRecordedRef = useRef<string>("");
-  const useDirectFetchRef = useRef<boolean | null>(null); // null = not tested, true = CORS ok
+  const directFetchOkRef = useRef<boolean | null>(null);
+  const fetchCountRef = useRef(0);
 
   useEffect(() => {
     if (!user) return;
@@ -89,16 +90,107 @@ export function useGlobalMusicSync() {
 
         if (!error) {
           lastRecordedRef.current = key;
+        } else {
+          console.warn("[MusicSync] History insert error:", error.message);
         }
-      } catch {}
+      } catch (e) {
+        console.warn("[MusicSync] History error:", e);
+      }
+    };
+
+    const applyMusicData = (data: { titulo: string; artista: string; duracao: number; capa: string }) => {
+      const prevRaw = localStorage.getItem(MUSIC_DATA_KEY);
+      const prev = prevRaw ? JSON.parse(prevRaw) : null;
+      const songChanged = !prev || prev.titulo !== data.titulo || prev.artista !== data.artista;
+
+      if (songChanged) {
+        localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify(data));
+        localStorage.setItem(MUSIC_START_KEY, Date.now().toString());
+      } else if (data.capa && (!prev.capa || prev.capa !== data.capa)) {
+        localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify({ ...prev, capa: data.capa }));
+      }
+
+      if (data.titulo && data.titulo !== "Sem título") {
+        void recordToHistory(data.titulo, data.artista || "Desconhecido");
+      }
+    };
+
+    const fetchCoverAsync = (data: { titulo: string; artista: string; capa: string }) => {
+      if (data.capa) return;
+      const cacheKey = `${data.artista}-${data.titulo}`;
+      if (coverCacheRef.current[cacheKey]) {
+        data.capa = coverCacheRef.current[cacheKey];
+        return;
+      }
+      const fetchCover = async () => {
+        try {
+          const query = encodeURIComponent(`${data.artista} ${data.titulo}`);
+          const itunesRes = await fetch(`https://itunes.apple.com/search?term=${query}&media=music&limit=1`, { signal: AbortSignal.timeout(5000) });
+          const itunesData = await itunesRes.json();
+          if (itunesData.results?.length > 0) {
+            const cover = itunesData.results[0].artworkUrl100?.replace("100x100", "600x600") || "";
+            if (cover) {
+              coverCacheRef.current[cacheKey] = cover;
+              const curRaw = localStorage.getItem(MUSIC_DATA_KEY);
+              if (curRaw) {
+                const cur = JSON.parse(curRaw);
+                if (cur.titulo === data.titulo && cur.artista === data.artista && !cur.capa) {
+                  localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify({ ...cur, capa: cover }));
+                }
+              }
+            }
+          }
+        } catch {}
+      };
+      fetchCover();
+    };
+
+    const fetchXmlFromUrl = async (url: string): Promise<string | null> => {
+      // Reset direct fetch flag every 20 cycles (~60s) to retry CORS
+      if (fetchCountRef.current % 20 === 0) {
+        directFetchOkRef.current = null;
+      }
+
+      // Try direct fetch first
+      if (directFetchOkRef.current !== false) {
+        try {
+          const directRes = await fetch(url, {
+            signal: AbortSignal.timeout(4000),
+            cache: "no-store",
+          });
+          if (directRes.ok) {
+            directFetchOkRef.current = true;
+            return await directRes.text();
+          }
+        } catch {
+          if (directFetchOkRef.current === null) directFetchOkRef.current = false;
+        }
+      }
+
+      // Fallback to edge function
+      try {
+        const { data: rssData, error: rssError } = await supabase.functions.invoke("fetch-rss", {
+          body: { url },
+        });
+        if (!rssError && rssData?.content) {
+          return rssData.content;
+        }
+        console.warn("[MusicSync] Edge fetch-rss failed:", rssError?.message);
+      } catch (e) {
+        console.warn("[MusicSync] Edge fetch-rss exception:", e);
+      }
+
+      return null;
     };
 
     const fetchAndSync = async () => {
+      fetchCountRef.current++;
+
       // Cache URL to avoid re-fetching settings every poll
       if (!urlFetchedRef.current) {
         const { data: settings } = await supabase
           .from("user_settings")
-          .select("music_xml_url")
+          .select("music_xml_url, music_source_mode")
           .eq("user_id", user.id)
           .maybeSingle();
         cachedUrlRef.current = settings?.music_xml_url || null;
@@ -106,6 +198,8 @@ export function useGlobalMusicSync() {
       }
 
       const url = cachedUrlRef.current;
+
+      // If no online URL, still record from localStorage (local file source)
       if (!url) {
         try {
           const raw = localStorage.getItem(MUSIC_DATA_KEY);
@@ -120,90 +214,26 @@ export function useGlobalMusicSync() {
         return;
       }
 
-      try {
-        let text: string | null = null;
+      // Fetch XML from online source
+      const text = await fetchXmlFromUrl(url);
+      if (!text) return;
 
-        // Try direct fetch first (much faster, ~200ms vs ~2s edge function)
-        if (useDirectFetchRef.current !== false) {
-          try {
-            const directRes = await fetch(url, { signal: AbortSignal.timeout(3000) });
-            if (directRes.ok) {
-              text = await directRes.text();
-              useDirectFetchRef.current = true;
-            }
-          } catch {
-            // CORS or network error — mark as unavailable, use edge function
-            if (useDirectFetchRef.current === null) useDirectFetchRef.current = false;
-          }
-        }
+      const data = parseXml(text);
+      if (!data) return;
 
-        // Fallback to edge function
-        if (!text) {
-          const { data: rssData, error: rssError } = await supabase.functions.invoke("fetch-rss", {
-            body: { url },
-          });
-          if (rssError || !rssData?.content) return;
-          text = rssData.content;
-        }
+      // Async cover fetch (non-blocking)
+      fetchCoverAsync(data);
 
-        if (!text) return;
-        const data = parseXml(text);
-        if (!data) return;
-
-        // Fetch cover from iTunes if missing (non-blocking)
-        if (!data.capa) {
-          const cacheKey = `${data.artista}-${data.titulo}`;
-          if (coverCacheRef.current[cacheKey]) {
-            data.capa = coverCacheRef.current[cacheKey];
-          } else {
-            // Fire and forget - don't block sync
-            const fetchCover = async () => {
-              try {
-                const query = encodeURIComponent(`${data.artista} ${data.titulo}`);
-                const itunesRes = await fetch(`https://itunes.apple.com/search?term=${query}&media=music&limit=1`);
-                const itunesData = await itunesRes.json();
-                if (itunesData.results?.length > 0) {
-                  const cover = itunesData.results[0].artworkUrl100?.replace("100x100", "600x600") || "";
-                  if (cover) {
-                    coverCacheRef.current[cacheKey] = cover;
-                    const curRaw = localStorage.getItem(MUSIC_DATA_KEY);
-                    if (curRaw) {
-                      const cur = JSON.parse(curRaw);
-                      if (cur.titulo === data.titulo && cur.artista === data.artista && !cur.capa) {
-                        localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify({ ...cur, capa: cover }));
-                      }
-                    }
-                  }
-                }
-              } catch {}
-            };
-            fetchCover();
-          }
-        }
-
-        const prevRaw = localStorage.getItem(MUSIC_DATA_KEY);
-        const prev = prevRaw ? JSON.parse(prevRaw) : null;
-        const songChanged = !prev || prev.titulo !== data.titulo || prev.artista !== data.artista;
-
-        if (songChanged) {
-          localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify(data));
-          localStorage.setItem(MUSIC_START_KEY, Date.now().toString());
-        } else if (data.capa && (!prev.capa || prev.capa !== data.capa)) {
-          localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify({ ...prev, capa: data.capa }));
-        }
-
-        if (data.titulo && data.titulo !== "Sem título") {
-          void recordToHistory(data.titulo, data.artista || "Desconhecido");
-        }
-      } catch {}
+      // Apply to localStorage and record history
+      applyMusicData(data);
     };
 
     // Start immediately, poll every 3s
     fetchAndSync();
     const interval = setInterval(fetchAndSync, 3000);
 
-    // Refresh cached URL every 60s in case user changes it
-    const urlRefresh = setInterval(() => { urlFetchedRef.current = false; }, 60000);
+    // Refresh cached URL every 15s in case user changes it
+    const urlRefresh = setInterval(() => { urlFetchedRef.current = false; }, 15000);
 
     return () => { clearInterval(interval); clearInterval(urlRefresh); };
   }, [user]);
