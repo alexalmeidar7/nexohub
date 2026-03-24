@@ -1698,19 +1698,10 @@ export default function PlayerPage() {
       }
     };
 
-    // beforeunload also hints the browser to keep the page alive
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (playing) {
-        e.preventDefault();
-      }
-    };
-
     document.addEventListener("visibilitychange", handleVisibility);
-    window.addEventListener("beforeunload", handleBeforeUnload);
 
     return () => {
       document.removeEventListener("visibilitychange", handleVisibility);
-      window.removeEventListener("beforeunload", handleBeforeUnload);
       if (releaseLock) releaseLock();
     };
   }, [isAudio, playing]);
