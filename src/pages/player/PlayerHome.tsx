@@ -990,7 +990,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
         const raw = localStorage.getItem("masterview_music_data");
         if (raw) {
           const parsed = JSON.parse(raw);
-          if (parsed.titulo) { setNowPlaying({ musica: parsed.titulo, artista: parsed.artista || "" }); return; }
+          if (parsed.titulo) { setNowPlaying({ musica: parsed.titulo, artista: parsed.artista || "", capa: parsed.capa || "" }); return; }
         }
       } catch {}
       // Fallback to DB
