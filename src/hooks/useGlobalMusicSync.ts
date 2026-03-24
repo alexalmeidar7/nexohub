@@ -113,24 +113,34 @@ export function useGlobalMusicSync() {
         const data = parseXml(text);
         if (!data) return;
 
-        // Fetch cover from iTunes if missing
+        // Fetch cover from iTunes if missing (non-blocking)
         if (!data.capa) {
           const cacheKey = `${data.artista}-${data.titulo}`;
           if (coverCacheRef.current[cacheKey]) {
             data.capa = coverCacheRef.current[cacheKey];
           } else {
-            try {
-              const query = encodeURIComponent(`${data.artista} ${data.titulo}`);
-              const itunesRes = await fetch(`https://itunes.apple.com/search?term=${query}&media=music&limit=1`);
-              const itunesData = await itunesRes.json();
-              if (itunesData.results?.length > 0) {
-                const cover = itunesData.results[0].artworkUrl100?.replace("100x100", "600x600") || "";
-                if (cover) {
-                  data.capa = cover;
-                  coverCacheRef.current[cacheKey] = cover;
+            // Fire and forget - don't block sync
+            const fetchCover = async () => {
+              try {
+                const query = encodeURIComponent(`${data.artista} ${data.titulo}`);
+                const itunesRes = await fetch(`https://itunes.apple.com/search?term=${query}&media=music&limit=1`);
+                const itunesData = await itunesRes.json();
+                if (itunesData.results?.length > 0) {
+                  const cover = itunesData.results[0].artworkUrl100?.replace("100x100", "600x600") || "";
+                  if (cover) {
+                    coverCacheRef.current[cacheKey] = cover;
+                    const curRaw = localStorage.getItem(MUSIC_DATA_KEY);
+                    if (curRaw) {
+                      const cur = JSON.parse(curRaw);
+                      if (cur.titulo === data.titulo && cur.artista === data.artista && !cur.capa) {
+                        localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify({ ...cur, capa: cover }));
+                      }
+                    }
+                  }
                 }
-              }
-            } catch {}
+              } catch {}
+            };
+            fetchCover();
           }
         }
 

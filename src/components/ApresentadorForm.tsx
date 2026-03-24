@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Instagram, UserCheck, UserX, Trash2, Pencil, X, Loader2, CheckCircle, UserPlus, Camera, Shield, Phone } from "lucide-react";
+import { Instagram, UserCheck, UserX, Trash2, Pencil, X, Loader2, CheckCircle, UserPlus, Camera, Shield, Phone, FileSpreadsheet } from "lucide-react";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { uploadImageToStorage } from "@/lib/uploadImageToStorage";
+import * as XLSX from "xlsx";
 import {
   Select,
   SelectContent,
@@ -55,6 +56,9 @@ export default function ApresentadorForm() {
   const [saving, setSaving] = useState(false);
   const [loadingList, setLoadingList] = useState(true);
   const [catOpen, setCatOpen] = useState(false);
+  const [importRows, setImportRows] = useState<any[] | null>(null);
+  const [importing, setImporting] = useState(false);
+  const excelInputRef = useRef<HTMLInputElement>(null);
 
   const load = async () => {
     setLoadingList(true);
@@ -156,6 +160,54 @@ export default function ApresentadorForm() {
   const removeApresentador = async (id: string) => {
     await supabase.from("apresentadores").delete().eq("id", id);
     await load();
+  };
+
+  const handleExcelFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const wb = XLSX.read(ev.target?.result, { type: "array" });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const rows: any[][] = XLSX.utils.sheet_to_json(ws, { header: 1 });
+        // Skip header row, filter empty rows
+        const dataRows = rows.slice(1).filter(r => r.length >= 2 && r[1]?.toString().trim());
+        const mapped = dataRows.map(r => ({
+          categoria: (r[0] || "Convidado").toString().trim(),
+          nome: (r[1] || "").toString().trim(),
+          cargo: (r[2] || "").toString().trim(),
+          instagram: (r[3] || "").toString().trim(),
+          whatsapp: (r[4] || "").toString().trim(),
+          ativo: r[5] !== undefined ? String(r[5]).toLowerCase() !== "inativo" && String(r[5]) !== "0" && String(r[5]).toLowerCase() !== "false" : true,
+        }));
+        if (mapped.length > 0) {
+          setImportRows(mapped);
+        }
+      } catch { }
+    };
+    reader.readAsArrayBuffer(file);
+    if (excelInputRef.current) excelInputRef.current.value = "";
+  };
+
+  const confirmImport = async () => {
+    if (!importRows || !user) return;
+    setImporting(true);
+    const inserts = importRows.map(r => ({
+      user_id: user.id,
+      nome: r.nome,
+      cargo: CATEGORIA_OPTIONS.includes(r.categoria) ? r.categoria : r.cargo || "Convidado",
+      instagram: r.instagram,
+      whatsapp: r.whatsapp,
+      foto: "",
+      ativo: r.ativo,
+    }));
+    await supabase.from("apresentadores").insert(inserts as any);
+    setImportRows(null);
+    setImporting(false);
+    await load();
+    setShowSuccess(true);
+    setTimeout(() => setShowSuccess(false), 2000);
   };
 
   const filtered = filterCategoria === "todos"
@@ -349,23 +401,32 @@ export default function ApresentadorForm() {
         </div>
       </div>
 
-      {/* Stats Bar */}
-      {!loadingList && apresentadores.length > 0 && (
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl" style={{ backgroundColor: "rgba(13,4,70,0.06)" }}>
-            <Shield size={13} style={{ color: "#0d0446" }} />
-            <span className="text-[11px] font-semibold" style={{ color: "#0d0446" }}>{stats.total} cadastrados</span>
-          </div>
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl" style={{ backgroundColor: "rgba(34,197,94,0.08)" }}>
-            <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
-            <span className="text-[11px] font-medium text-green-700">{stats.ativos} ativos</span>
-          </div>
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl" style={{ backgroundColor: "rgba(220,38,38,0.06)" }}>
-            <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
-            <span className="text-[11px] font-medium text-red-600">{stats.inativos} inativos</span>
-          </div>
-        </div>
-      )}
+      {/* Import Excel + Stats Bar */}
+      <div className="flex items-center gap-4 flex-wrap">
+        <label className="cursor-pointer flex items-center gap-2 px-4 py-1.5 rounded-xl text-[11px] font-semibold transition-all hover:opacity-80"
+          style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#fff", boxShadow: "0 2px 8px rgba(38,143,250,0.25)" }}>
+          <FileSpreadsheet size={14} />
+          Importar Excel
+          <input ref={excelInputRef} type="file" accept=".xlsx,.xls,.csv" onChange={handleExcelFile} className="hidden" />
+        </label>
+
+        {!loadingList && apresentadores.length > 0 && (
+          <>
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl" style={{ backgroundColor: "rgba(13,4,70,0.06)" }}>
+              <Shield size={13} style={{ color: "#0d0446" }} />
+              <span className="text-[11px] font-semibold" style={{ color: "#0d0446" }}>{stats.total} cadastrados</span>
+            </div>
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl" style={{ backgroundColor: "rgba(34,197,94,0.08)" }}>
+              <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+              <span className="text-[11px] font-medium text-green-700">{stats.ativos} ativos</span>
+            </div>
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl" style={{ backgroundColor: "rgba(220,38,38,0.06)" }}>
+              <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
+              <span className="text-[11px] font-medium text-red-600">{stats.inativos} inativos</span>
+            </div>
+          </>
+        )}
+      </div>
 
       {/* Table */}
       {loadingList ? listSkeleton : apresentadores.length > 0 ? (
@@ -456,6 +517,32 @@ export default function ApresentadorForm() {
           </div>
         </div>
       ) : null}
+
+      {/* Import Confirmation Popup */}
+      {importRows && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+          <div className="animate-fade-in p-6 text-center space-y-4"
+            style={{ width: "420px", background: "linear-gradient(135deg, #0d0446, #1a0a6e)", borderRadius: "20px", boxShadow: "0 20px 60px rgba(13,4,70,0.5)" }}>
+            <FileSpreadsheet size={36} style={{ color: "#2dbef3", margin: "0 auto" }} />
+            <p className="text-white text-sm font-semibold">
+              Deseja importar <span style={{ color: "#2dbef3" }}>{importRows.length}</span> participante{importRows.length > 1 ? "s" : ""} para o banco de dados?
+            </p>
+            <div className="flex gap-3 justify-center pt-2">
+              <button onClick={() => setImportRows(null)} disabled={importing}
+                className="px-5 py-2 rounded-xl text-xs font-bold transition-all"
+                style={{ backgroundColor: "rgba(255,255,255,0.1)", color: "#fff", border: "1px solid rgba(255,255,255,0.2)" }}>
+                Cancelar
+              </button>
+              <button onClick={confirmImport} disabled={importing}
+                className="px-5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2"
+                style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#fff", boxShadow: "0 4px 15px rgba(38,143,250,0.4)" }}>
+                {importing && <Loader2 size={13} className="animate-spin" />}
+                {importing ? "Importando..." : "OK"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showSuccess && (
         <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: "rgba(0,0,0,0.3)" }}>

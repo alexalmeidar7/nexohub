@@ -1,0 +1,1 @@
+ALTER TABLE public.musicas_tocadas ADD CONSTRAINT musicas_tocadas_user_musica_artista_dia_key UNIQUE (user_id, musica, artista, dia);
