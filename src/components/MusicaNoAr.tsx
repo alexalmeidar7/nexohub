@@ -1009,11 +1009,40 @@ export default function MusicaNoAr() {
 
                 <input ref={fileInputRef} type="file" accept=".xml,application/xml,text/xml" onChange={handleFileSelect} className="hidden" />
 
-                {/* Device name */}
+                {/* Device name — editable */}
                 {localMonitoring && (
-                  <p className="text-[10px] font-semibold" style={{ color: "#0d0446" }}>
-                    lendo no computador <span className="font-mono" style={{ color: "#7c8db5" }}>{currentDeviceName}</span>
-                  </p>
+                  <div className="flex items-center gap-2 text-[10px] font-semibold" style={{ color: "#0d0446" }}>
+                    <span>lendo no computador</span>
+                    {editingDeviceName ? (
+                      <span className="flex items-center gap-1">
+                        <input
+                          value={deviceNameInput}
+                          onChange={e => setDeviceNameInput(e.target.value)}
+                          className="px-1.5 py-0.5 rounded text-[10px] font-mono outline-none"
+                          style={{ backgroundColor: "#ffffff", border: "1px solid #c5d9f2", color: "#0d0446", width: 140 }}
+                          autoFocus
+                          onKeyDown={e => {
+                            if (e.key === "Enter") {
+                              const v = deviceNameInput.trim() || deriveDeviceName();
+                              localStorage.setItem(DEVICE_NAME_KEY, v);
+                              setCurrentDeviceName(v);
+                              setEditingDeviceName(false);
+                            }
+                          }}
+                        />
+                        <button onClick={() => {
+                          const v = deviceNameInput.trim() || deriveDeviceName();
+                          localStorage.setItem(DEVICE_NAME_KEY, v);
+                          setCurrentDeviceName(v);
+                          setEditingDeviceName(false);
+                        }} className="text-green-600"><Check size={12} /></button>
+                      </span>
+                    ) : (
+                      <button onClick={() => { setDeviceNameInput(currentDeviceName); setEditingDeviceName(true); }} className="font-mono underline" style={{ color: "#7c8db5" }}>
+                        {currentDeviceName}
+                      </button>
+                    )}
+                  </div>
                 )}
 
                 {/* Status bar */}
