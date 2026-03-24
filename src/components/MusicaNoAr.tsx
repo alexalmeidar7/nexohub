@@ -270,19 +270,17 @@ export default function MusicaNoAr() {
       const [{ data }, history] = await Promise.all([
         supabase
           .from("user_settings")
-          .select("music_xml_url, music_source_mode")
+          .select("music_xml_url, music_source_mode, dashboard_items")
           .eq("user_id", user.id)
           .maybeSingle(),
         loadUploadHistoryFromDb(user.id),
       ]);
       setUploadHistory(history);
       if (typeof data?.music_xml_url === "string") {
-        // Ignore storage URLs that were incorrectly saved as the origin URL
         const isStorageUrl = data.music_xml_url.includes("/storage/v1/object/") || data.music_xml_url.includes("/xml-files/local-xml-");
         if (!isStorageUrl) {
           setXmlUrl(data.music_xml_url);
         } else {
-          // Clean up: reset to default since the stored value is a local sync URL
           setXmlUrl(DEFAULT_XML_URL);
           await supabase.from("user_settings").upsert({
             user_id: user.id,
@@ -296,6 +294,11 @@ export default function MusicaNoAr() {
           music_xml_url: DEFAULT_XML_URL,
           updated_at: new Date().toISOString(),
         }, { onConflict: "user_id" });
+      }
+      // Restore local filename from DB (persists across computers)
+      const di = data?.dashboard_items as any;
+      if (di?.local_xml_filename) {
+        setLocalFileName(di.local_xml_filename);
       }
       // Restore saved source mode
       const savedMode = (data as any)?.music_source_mode;
