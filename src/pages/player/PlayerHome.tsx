@@ -999,7 +999,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       try {
         if (targetId) {
           const { data } = await supabase.from("musicas_tocadas").select("musica, artista").eq("user_id", targetId).order("created_at", { ascending: false }).limit(1).maybeSingle();
-          if (data) setNowPlaying({ musica: data.musica, artista: data.artista });
+          if (data) setNowPlaying({ musica: data.musica, artista: data.artista, capa: data.capa || "" });
         } else if (userSlug) {
           const { data } = await supabase.functions.invoke("public-player-data", { body: { slug: userSlug, section: "now_playing" } });
           if (data?.musica) setNowPlaying({ musica: data.musica, artista: data.artista || "" });
