@@ -105,12 +105,32 @@ export function useGlobalMusicSync() {
       if (!url) return;
 
       try {
-        const { data: rssData, error: rssError } = await supabase.functions.invoke("fetch-rss", {
-          body: { url },
-        });
-        if (rssError || !rssData?.content) return;
+        let text: string | null = null;
 
-        const text = rssData.content;
+        // Try direct fetch first (much faster, ~200ms vs ~2s edge function)
+        if (useDirectFetchRef.current !== false) {
+          try {
+            const directRes = await fetch(url, { signal: AbortSignal.timeout(3000) });
+            if (directRes.ok) {
+              text = await directRes.text();
+              useDirectFetchRef.current = true;
+            }
+          } catch {
+            // CORS or network error — mark as unavailable, use edge function
+            if (useDirectFetchRef.current === null) useDirectFetchRef.current = false;
+          }
+        }
+
+        // Fallback to edge function
+        if (!text) {
+          const { data: rssData, error: rssError } = await supabase.functions.invoke("fetch-rss", {
+            body: { url },
+          });
+          if (rssError || !rssData?.content) return;
+          text = rssData.content;
+        }
+
+        if (!text) return;
         const data = parseXml(text);
         if (!data) return;
 
