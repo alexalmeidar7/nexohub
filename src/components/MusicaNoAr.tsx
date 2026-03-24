@@ -992,7 +992,7 @@ export default function MusicaNoAr() {
                   </label>
                 </div>
 
-                {/* Status bar */}
+                {/* Status bar — hide AGUARDANDO when URL is empty */}
                 {isOnlineSelected && (music || lastSource === "online") ? (
                   <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: "linear-gradient(90deg, #22c55e 0%, #4ade80 100%)", color: "#ffffff" }}>
                     <span className="relative flex h-2 w-2">
@@ -1001,12 +1001,12 @@ export default function MusicaNoAr() {
                     </span>
                     <span className="text-xs font-bold">LENDO AQUI</span>
                   </div>
-                ) : (
+                ) : hasValidOnlineUrl ? (
                   <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: "linear-gradient(90deg, #d4e157 0%, #c6ff00 100%)", color: "#555" }}>
                     <Loader2 size={12} className="animate-spin" />
                     <span className="text-xs font-bold">AGUARDANDO LEITURA</span>
                   </div>
-                )}
+                ) : null}
                 {onlineError && (
                   <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[9px] font-semibold" style={{ backgroundColor: "rgba(239,68,68,0.08)", color: "#dc2626", border: "1px solid rgba(239,68,68,0.2)" }}>
                     <AlertTriangle size={11} />
