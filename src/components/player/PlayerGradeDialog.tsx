@@ -515,15 +515,19 @@ function PlayerGradeDialog({ programas, onClose }: Props) {
                   {/* AI Age rating chip */}
                   {aiAnalysis && (
                     (() => {
-                      const rating = RATING_COLORS[aiAnalysis.classificacao] || RATING_COLORS["Livre"];
+                      const ratingLabel = getRatingLabel(aiAnalysis.classificacao);
                       return (
                         <div
                           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold"
-                          style={{ backgroundColor: rating.bg, color: rating.text }}
+                          style={{
+                            backgroundColor: "color-mix(in srgb, var(--layout-button-bg) 25%, transparent)",
+                            color: "var(--layout-button-text)",
+                            border: "1px solid color-mix(in srgb, var(--layout-border-color) 70%, transparent)",
+                          }}
                           title={aiAnalysis.justificativa}
                         >
                           <Shield size={10} />
-                          {rating.label}
+                          {ratingLabel}
                         </div>
                       );
                     })()
@@ -599,10 +603,10 @@ function PlayerGradeDialog({ programas, onClose }: Props) {
                           style={{ backgroundColor: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.05)" }}
                         >
                           <div className="flex items-start gap-2">
-                            <Shield size={12} className="flex-shrink-0 mt-0.5" style={{ color: RATING_COLORS[aiAnalysis.classificacao]?.text || "rgb(74,222,128)" }} />
+                            <Shield size={12} className="flex-shrink-0 mt-0.5" style={{ color: "var(--layout-accent-color)" }} />
                             <div>
-                              <span className="text-[11px] font-semibold" style={{ color: RATING_COLORS[aiAnalysis.classificacao]?.text || "rgb(74,222,128)" }}>
-                                Classificação: {RATING_COLORS[aiAnalysis.classificacao]?.label || aiAnalysis.classificacao}
+                              <span className="text-[11px] font-semibold" style={{ color: "var(--layout-accent-color)" }}>
+                                Classificação: {getRatingLabel(aiAnalysis.classificacao)}
                               </span>
                               <p className="text-[11px] text-white/40 mt-1 leading-relaxed">{aiAnalysis.justificativa}</p>
                             </div>
