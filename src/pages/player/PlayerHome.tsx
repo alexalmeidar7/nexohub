@@ -57,7 +57,7 @@ function HeroBanner({
 }: {
   currentProgram?: Programa;
   nextProgram?: Programa;
-  nowPlaying?: { musica: string; artista: string } | null;
+  nowPlaying?: { musica: string; artista: string; capa?: string } | null;
   channelName?: string;
   channelIsHd?: boolean;
   channelIsStereo?: boolean;
