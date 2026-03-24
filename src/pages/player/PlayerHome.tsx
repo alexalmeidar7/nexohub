@@ -1002,7 +1002,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
           if (data) setNowPlaying({ musica: data.musica, artista: data.artista, capa: data.capa || "" });
         } else if (userSlug) {
           const { data } = await supabase.functions.invoke("public-player-data", { body: { slug: userSlug, section: "now_playing" } });
-          if (data?.musica) setNowPlaying({ musica: data.musica, artista: data.artista || "" });
+          if (data?.musica) setNowPlaying({ musica: data.musica, artista: data.artista || "", capa: data.capa || "" });
         }
       } catch {}
     };
