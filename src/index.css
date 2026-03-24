@@ -416,6 +416,19 @@
   color: #ffffff !important;
 }
 
+/* Tables follow layout colors */
+.mv-content-area table {
+  color: var(--layout-page-text, #0d0446);
+}
+.mv-content-area table thead tr {
+  background-color: color-mix(in srgb, var(--layout-header-bg, #0d0446) 10%, var(--layout-page-bg, #ffffff)) !important;
+}
+.mv-content-area table thead th {
+  color: var(--layout-page-text, #0d0446) !important;
+}
+.mv-content-area table tbody td {
+  color: var(--layout-page-text, #0d0446);
+}
 table:not([data-no-row-hover]) tbody tr {
   transition: outline 0.15s ease;
   outline: 2px solid transparent;
@@ -424,6 +437,35 @@ table:not([data-no-row-hover]) tbody tr {
 table:not([data-no-row-hover]) tbody tr:hover {
   outline: 2px solid var(--layout-link-color, #2dbef3);
   border-radius: 4px;
+}
+
+/* Override hardcoded form section backgrounds */
+.mv-content-area [style*="background-color: #e8f0fb"],
+.mv-content-area [style*="background-color: rgb(232, 240, 251)"] {
+  background-color: color-mix(in srgb, var(--layout-header-bg, #0d0446) 8%, var(--layout-page-bg, #ffffff)) !important;
+  border-color: color-mix(in srgb, var(--layout-header-bg, #0d0446) 15%, var(--layout-page-bg, #ffffff)) !important;
+}
+
+/* Override hardcoded header backgrounds in form sections */
+.mv-content-area [style*="background: linear-gradient(135deg, #0d0446"],
+.mv-content-area [style*="background-color: #0d0446"] {
+  background: linear-gradient(135deg, var(--layout-header-bg, #0d0446), color-mix(in srgb, var(--layout-header-bg, #0d0446) 80%, var(--layout-page-bg, #ffffff))) !important;
+}
+
+/* Override hardcoded text colors */
+.mv-content-area [style*="color: #0d0446"] {
+  color: var(--layout-page-text, #0d0446) !important;
+}
+
+/* Buttons inside mv-content-area with hardcoded backgrounds */
+.mv-content-area button[style*="background-color: #0d0446"] {
+  background-color: var(--layout-button-bg, #0d0446) !important;
+  color: var(--layout-button-text, #ffffff) !important;
+}
+
+/* Icon colors */
+.mv-content-area svg:not(.text-white):not([style*="color: #fff"]):not([style*="color: rgb(255"]):not([style*="color: #22c55e"]):not([style*="color: #dc2626"]):not([style*="color: #ca8a04"]) {
+  color: var(--layout-icon-color, #888888);
 }
 
 /* Dashboard widget responsive sizing */

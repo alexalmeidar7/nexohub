@@ -132,8 +132,10 @@ export default function WelcomeScreen({ userName, avatarUrl, onContinue }: Welco
 
   return (
     <div
-      className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-player"
-      style={{ background: "var(--player-glow)" }}
+      className="fixed inset-0 z-50 flex flex-col items-center justify-center"
+      style={{
+        background: "radial-gradient(ellipse at 50% 100%, hsl(var(--player-accent) / 0.35) 0%, hsl(var(--player-bg)) 60%, hsl(var(--player-bg) / 0.95) 100%)",
+      }}
     >
       <h1
         className={`text-player-foreground text-2xl font-semibold mb-8 transition-all duration-700 ease-out ${
