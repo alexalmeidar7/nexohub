@@ -215,7 +215,11 @@ function HeroBanner({
           {channelName && (
             <span className="flex items-center gap-2 text-white/60 text-xs">
               {channelName}
-              {channelIsHd && <img src="/images/icon-fullhd.png" alt="FULL HD" className="h-3.5" style={{ opacity: 0.6 }} />}
+              {channelIsHd && (
+                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wide text-white/60 border border-white/20" style={{ fontFamily: "monospace" }}>
+                  1080P <span className="text-[7px] font-extrabold tracking-widest ml-0.5 px-1 rounded" style={{ background: "hsla(var(--player-accent) / 0.3)", color: "hsl(var(--player-accent))" }}>FULL HD</span>
+                </span>
+              )}
               {channelIsStereo && (
                 <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wide text-white/40 border border-white/15">
                   STEREO
