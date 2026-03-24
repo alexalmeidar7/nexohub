@@ -605,6 +605,57 @@ export default function MusicaNoAr() {
     return () => { if (localPollRef.current) clearInterval(localPollRef.current); };
   }, [isLocalSelected, localMonitoring, readLocalFile]);
 
+  // Remote storage polling: when local filename is set but no file handle (other computer)
+  const storagePollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  useEffect(() => {
+    if (!user || !isLocalSelected || !localFileName) return;
+    // If we have a local file handle, direct polling handles it
+    if (fileHandleRef.current || localFileRef.current) return;
+
+    const pollStorage = async () => {
+      try {
+        const filePath = `local-xml-${user.id}.xml`;
+        const { data } = supabase.storage.from("xml-files").getPublicUrl(filePath);
+        if (!data?.publicUrl) return;
+        const res = await fetch(data.publicUrl + `?t=${Date.now()}`);
+        if (!res.ok) return;
+        const text = await res.text();
+        if (!text || text === localFileContentRef.current) return;
+        localFileContentRef.current = text;
+        setLocalFileContent(text);
+        lastLocalSuccessRef.current = Date.now();
+        setLocalDelay(false);
+        setLocalError(null);
+        const parsed = parseXmlString(text);
+        if (parsed) processMusicRef.current(parsed, "pasta");
+      } catch {}
+    };
+
+    pollStorage();
+    setLocalMonitoring(true);
+    storagePollRef.current = setInterval(pollStorage, 3000);
+    return () => { if (storagePollRef.current) clearInterval(storagePollRef.current); };
+  }, [user, isLocalSelected, localFileName]);
+
+  // Staleness check: if last read is >2s ago, force a fetch
+  useEffect(() => {
+    const checkStale = setInterval(() => {
+      const now = Date.now();
+      const lastRead = Math.max(lastOnlineSuccessRef.current, lastLocalSuccessRef.current);
+      if (now - lastRead > 2000) {
+        // Force reads on active sources
+        if (isOnlineSelected && hasValidOnlineUrl) {
+          // fetchXml is called by its own interval, but we can trigger immediately
+          void fetchXml();
+        }
+        if (isLocalSelected && (fileHandleRef.current || localFileRef.current)) {
+          void readLocalFile();
+        }
+      }
+    }, 2000);
+    return () => clearInterval(checkStale);
+  }, [isOnlineSelected, hasValidOnlineUrl, isLocalSelected, fetchXml, readLocalFile]);
+
   useEffect(() => {
     if (!music || !startTime) return;
     const tick = () => { const el = (Date.now() - startTime) / 1000; setElapsed(Math.min(el, music.duracao)); };
