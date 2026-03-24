@@ -73,6 +73,7 @@ export default function PlayerChat({ channelId, onClose, shopOpen = false }: Pla
       const { data } = await supabase
         .from("player_chat_messages")
         .select("*")
+        .eq("channel_id", channelId)
         .order("created_at", { ascending: true })
         .limit(100);
       if (data) setMessages(data);
