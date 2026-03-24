@@ -30,13 +30,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let mounted = true;
 
-    // Safety timeout: if loading takes more than 8s, stop loading
+    // Safety timeout: if loading takes more than 12s, stop loading
     const timeout = setTimeout(() => {
       if (mounted && loading) {
         console.warn("Auth loading timeout - forcing load complete");
         setLoading(false);
       }
-    }, 8000);
+    }, 12000);
 
     const updateAuth = async (newSession: Session | null) => {
       if (!mounted) return;
@@ -80,18 +80,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Set up auth state listener FIRST
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      // Ignore TOKEN_REFRESHED failures that would sign the user out
+      if (event === "SIGNED_OUT") {
+        // Only sign out if the user explicitly signed out (not token expiry)
+        // Check if we still have a session in storage
+        supabase.auth.getSession().then(({ data }) => {
+          if (!data.session) {
+            void updateAuth(null);
+          }
+        });
+        return;
+      }
       void updateAuth(session);
     });
 
     // Then restore initial session from storage
     supabase.auth.getSession().then(({ data: { session }, error }) => {
       if (error && !session) {
-        prevUserIdRef.current = null;
-        setUser(null);
-        setSession(null);
-        setRole(null);
-        setLoading(false);
+        // Try to recover by refreshing the session
+        supabase.auth.refreshSession().then(({ data: refreshed }) => {
+          if (refreshed.session) {
+            void updateAuth(refreshed.session);
+          } else {
+            prevUserIdRef.current = null;
+            setUser(null);
+            setSession(null);
+            setRole(null);
+            setLoading(false);
+          }
+        });
         return;
       }
 
