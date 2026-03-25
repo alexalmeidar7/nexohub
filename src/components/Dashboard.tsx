@@ -45,6 +45,7 @@ const PropostasPage = lazy(() => import("./PropostasPage"));
 const MessageNotification = lazy(() => import("./MessageNotification"));
 import DashboardSkeleton from "./skeletons/DashboardSkeleton";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
+import BotsStatusBox from "./BotsStatusBox";
 
 type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll" | "cortevideo" | "playerconfig" | "vmix" | "propostas" | "tp";
 
@@ -664,6 +665,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         <img src={logoFooter} alt="Nexo" className="h-5 opacity-80" />
         <span className="text-[10px]" style={{ color: `${layoutColors.navText}99` }}>Copyrighted 2026 - Todos os direitos reservados.</span>
       </footer>
+
+      <BotsStatusBox />
     </div>
   );
 }
