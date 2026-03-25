@@ -123,8 +123,9 @@ function parseXmlString(xmlStr: string): MusicData | null {
       doc.querySelector("artist")?.textContent ||
       "";
 
-    const titulo = normalizeMusicText(rawTitulo) || "Sem titulo";
-    const artista = normalizeMusicText(rawArtista) || "Desconhecido";
+    const titulo = normalizeMusicText(rawTitulo);
+    const artista = normalizeMusicText(rawArtista);
+    if (!titulo && !artista) return null;
 
     const duracaoStr =
       doc.querySelector("duracao")?.textContent ||
@@ -145,7 +146,12 @@ function parseXmlString(xmlStr: string): MusicData | null {
       if (duracao > 600) duracao = duracao / 1000;
     }
 
-    return { titulo, artista, duracao, capa };
+    return {
+      titulo: titulo || "Sem titulo",
+      artista: artista || "Desconhecido",
+      duracao,
+      capa,
+    };
   } catch {
     return null;
   }
@@ -387,6 +393,16 @@ export default function MusicaNoAr() {
   const processMusic = useCallback(async (data: MusicData, source?: "online" | "pasta") => {
     const prevRaw = localStorage.getItem(MUSIC_DATA_KEY);
     const prev: MusicData | null = prevRaw ? JSON.parse(prevRaw) : null;
+    const incomingIsPlaceholder = (!data.titulo || data.titulo.toLowerCase() === "sem titulo" || data.titulo.toLowerCase() === "sem título")
+      && (!data.artista || data.artista.toLowerCase() === "desconhecido");
+    const previousHasReal = !!prev
+      && prev.titulo
+      && prev.titulo.toLowerCase() !== "sem titulo"
+      && prev.titulo.toLowerCase() !== "sem título";
+
+    if (incomingIsPlaceholder && previousHasReal) {
+      return;
+    }
 
     if (!data.capa) {
       const cacheKey = `${data.artista}-${data.titulo}`;
