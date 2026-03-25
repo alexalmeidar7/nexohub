@@ -665,6 +665,38 @@ export default function VmixPage() {
     }
   };
 
+  const normalizeCommands = useCallback((cmds: any[] = []) => {
+    return cmds.map((cmd) => {
+      const value = cmd?.extraValue
+        ? (cmd?.value ? `${cmd.value},${cmd.extraValue}` : cmd.extraValue)
+        : (cmd?.value || "");
+      return {
+        fn: cmd?.fn || "",
+        input: cmd?.input || "",
+        value,
+      };
+    }).filter((cmd) => cmd.fn);
+  }, []);
+
+  const runCommandsUnified = useCallback(async (cmds: any[], label: string) => {
+    const normalized = normalizeCommands(cmds);
+    if (!normalized.length) return;
+
+    try {
+      const res = await supabase.functions.invoke("execute-vmix-commands", { body: { commands: normalized } });
+      if (res.error) throw res.error;
+      setTimeout(() => connectToVmix(), 300);
+      toast({ title: label, description: `${normalized.length} ação(ões) executada(s) no servidor.` });
+      return;
+    } catch {
+      for (const cmd of normalized) {
+        await sendCommand(cmd.fn, cmd.input, cmd.value);
+        await new Promise((r) => setTimeout(r, 400));
+      }
+      toast({ title: label, description: `${normalized.length} ação(ões) executada(s).` });
+    }
+  }, [connectToVmix, normalizeCommands, sendCommand, toast]);
+
   const runScene = async (scene: VmixScene) => {
     setRunningScene(scene.id);
     for (const cmd of scene.commands) {
@@ -2081,25 +2113,7 @@ export default function VmixPage() {
                               const cmds = presetData?.commands && Array.isArray(presetData.commands) && presetData.commands.length > 0
                                 ? presetData.commands
                                 : [{ fn: "ScriptStart", input: prog.nome }];
-                              try {
-                                const { data: { session } } = await supabase.auth.getSession();
-                                if (session?.access_token) {
-                                  const res = await supabase.functions.invoke("execute-vmix-commands", { body: { commands: cmds } });
-                                  if (res.error) throw res.error;
-                                  toast({ title: `Preset: ${prog.nome}`, description: `${cmds.length} ação(ões) executada(s) no servidor.` });
-                                } else {
-                                  throw new Error("no session");
-                                }
-                              } catch {
-                                // Fallback: execute client-side
-                                for (const cmd of cmds as any[]) {
-                                  let value = cmd.value;
-                                  if (cmd.extraValue) value = value ? `${value},${cmd.extraValue}` : cmd.extraValue;
-                                  await sendCommand(cmd.fn, cmd.input, value);
-                                  await new Promise(r => setTimeout(r, 400));
-                                }
-                                toast({ title: `Preset: ${prog.nome}`, description: `${cmds.length} ação(ões) executada(s) localmente.` });
-                              }
+                              await runCommandsUnified(cmds as any[], `Preset: ${prog.nome}`);
                             }}
                           >
                             {prog.apresentador_foto && (
@@ -2228,19 +2242,7 @@ export default function VmixPage() {
                             onClick={async () => {
                               setActiveCustomButton(btn.id);
                               if (btn.commands && Array.isArray(btn.commands) && btn.commands.length > 0) {
-                                try {
-                                  const res = await supabase.functions.invoke("execute-vmix-commands", { body: { commands: btn.commands } });
-                                  if (res.error) throw res.error;
-                                  toast({ title: `Efeito: ${btn.nome}`, description: `${btn.commands.length} ação(ões) executada(s) no servidor.` });
-                                } catch {
-                                  for (const cmd of btn.commands) {
-                                    let cmdVal = cmd.value;
-                                    if (cmd.extraValue) cmdVal = cmdVal ? `${cmdVal},${cmd.extraValue}` : cmd.extraValue;
-                                    await sendCommand(cmd.fn, cmd.input, cmdVal);
-                                    await new Promise(r2 => setTimeout(r2, 400));
-                                  }
-                                  toast({ title: `Efeito: ${btn.nome}`, description: `${btn.commands.length} ação(ões) executada(s) localmente.` });
-                                }
+                                await runCommandsUnified(btn.commands as any[], `Efeito: ${btn.nome}`);
                               }
                             }}
                           >
@@ -2500,13 +2502,7 @@ export default function VmixPage() {
             userId={user.id}
             inputs={inputs}
             onRunCommands={async (cmds) => {
-              for (const cmd of cmds) {
-                let value = cmd.value;
-                if (cmd.extraValue) value = value ? `${value},${cmd.extraValue}` : cmd.extraValue;
-                await sendCommand(cmd.fn, cmd.input, value);
-                await new Promise(r => setTimeout(r, 400));
-              }
-              toast({ title: "Teste concluído", description: `${cmds.length} ação(ões) executada(s).` });
+              await runCommandsUnified(cmds as any[], "Teste concluído");
             }}
           />
         );
@@ -2520,13 +2516,7 @@ export default function VmixPage() {
           userId={user.id}
           inputs={inputs}
           onRunCommands={async (cmds) => {
-            for (const cmd of cmds) {
-              let value = cmd.value;
-              if (cmd.extraValue) value = value ? `${value},${cmd.extraValue}` : cmd.extraValue;
-              await sendCommand(cmd.fn, cmd.input, value);
-              await new Promise(r => setTimeout(r, 400));
-            }
-            toast({ title: "Teste concluído", description: `${cmds.length} ação(ões) executada(s).` });
+            await runCommandsUnified(cmds as any[], "Teste concluído");
           }}
           onSaved={loadCustomButtons}
         />
