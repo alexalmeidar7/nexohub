@@ -26,6 +26,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [role, setRole] = useState<AppRole | null>(null);
   const prevUserIdRef = useRef<string | null>(null);
+  const manualSignOutRef = useRef(false);
 
   useEffect(() => {
     let mounted = true;
@@ -81,14 +82,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
-      // Ignore TOKEN_REFRESHED failures that would sign the user out
       if (event === "SIGNED_OUT") {
-        // Only sign out if the user explicitly signed out (not token expiry)
-        // Check if we still have a session in storage
-        supabase.auth.getSession().then(({ data }) => {
-          if (!data.session) {
-            void updateAuth(null);
+        if (manualSignOutRef.current) {
+          manualSignOutRef.current = false;
+          void updateAuth(null);
+          return;
+        }
+
+        // Never auto-logout on idle/session hiccups: try to recover silently
+        supabase.auth.getSession().then(async ({ data }) => {
+          if (data.session) {
+            void updateAuth(data.session);
+            return;
           }
+
+          try {
+            const { data: refreshed } = await supabase.auth.refreshSession();
+            if (refreshed.session) {
+              void updateAuth(refreshed.session);
+              return;
+            }
+          } catch {
+            // keep current in-memory auth state
+          }
+
+          if (mounted) setLoading(false);
         });
         return;
       }
@@ -128,6 +146,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signOut = async () => {
+    manualSignOutRef.current = true;
     await supabase.auth.signOut();
     setRole(null);
   };
