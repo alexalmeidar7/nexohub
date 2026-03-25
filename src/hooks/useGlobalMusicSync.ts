@@ -5,14 +5,24 @@ import { normalizeMusicText } from "@/lib/textEncoding";
 
 const MUSIC_DATA_KEY = "masterview_music_data";
 const MUSIC_START_KEY = "masterview_music_start";
+const BOT_XML_LAST_RUN_KEY = "bot_xml_last_run";
+
+function isPlaceholderTrack(data: { titulo?: string; artista?: string }) {
+  const titulo = (data.titulo || "").trim().toLowerCase();
+  const artista = (data.artista || "").trim().toLowerCase();
+  return (titulo === "" || titulo === "sem título" || titulo === "sem titulo") && (artista === "" || artista === "desconhecido");
+}
 
 function parseXml(xmlStr: string) {
   try {
     const parser = new DOMParser();
     const doc = parser.parseFromString(xmlStr, "application/xml");
     if (doc.querySelector("parsererror")) return null;
-    const titulo = normalizeMusicText(doc.querySelector("nome_musica")?.textContent || doc.querySelector("titulo")?.textContent || doc.querySelector("title")?.textContent || "Sem título");
-    const artista = normalizeMusicText(doc.querySelector("interprete")?.textContent || doc.querySelector("nome_interprete")?.textContent || doc.querySelector("artista")?.textContent || doc.querySelector("artist")?.textContent || "Desconhecido");
+    const rawTitulo = doc.querySelector("nome_musica")?.textContent || doc.querySelector("titulo")?.textContent || doc.querySelector("title")?.textContent || "";
+    const rawArtista = doc.querySelector("interprete")?.textContent || doc.querySelector("nome_interprete")?.textContent || doc.querySelector("artista")?.textContent || doc.querySelector("artist")?.textContent || "";
+    const titulo = normalizeMusicText(rawTitulo);
+    const artista = normalizeMusicText(rawArtista);
+    if (!titulo && !artista) return null;
     const duracaoStr = doc.querySelector("duracao")?.textContent || doc.querySelector("duration")?.textContent || "0";
     const capa = doc.querySelector("capa")?.textContent || doc.querySelector("cover")?.textContent || "";
     let duracao = 0;
@@ -24,7 +34,12 @@ function parseXml(xmlStr: string) {
       duracao = parseFloat(duracaoStr) || 0;
       if (duracao > 600) duracao = duracao / 1000;
     }
-    return { titulo, artista, duracao, capa };
+    return {
+      titulo: titulo || "Sem título",
+      artista: artista || "Desconhecido",
+      duracao,
+      capa,
+    };
   } catch { return null; }
 }
 
@@ -55,8 +70,12 @@ function getCurrentProgram(
 export function useGlobalMusicSync() {
   const { user } = useAuth();
   const coverCacheRef = useRef<Record<string, string>>({});
-  const cachedUrlRef = useRef<string | null>(null);
-  const urlFetchedRef = useRef(false);
+  const cachedSettingsRef = useRef<{ url: string | null; mode: string; localFileName: string | null }>({
+    url: null,
+    mode: "online",
+    localFileName: null,
+  });
+  const settingsFetchedRef = useRef(false);
   const lastRecordedRef = useRef<string>("");
   const directFetchOkRef = useRef<boolean | null>(null);
   const fetchCountRef = useRef(0);
@@ -101,6 +120,9 @@ export function useGlobalMusicSync() {
     const applyMusicData = (data: { titulo: string; artista: string; duracao: number; capa: string }) => {
       const prevRaw = localStorage.getItem(MUSIC_DATA_KEY);
       const prev = prevRaw ? JSON.parse(prevRaw) : null;
+      const prevHasRealTrack = !!prev && !isPlaceholderTrack(prev);
+      if (prevHasRealTrack && isPlaceholderTrack(data)) return;
+
       const songChanged = !prev || prev.titulo !== data.titulo || prev.artista !== data.artista;
 
       if (songChanged) {
@@ -110,7 +132,7 @@ export function useGlobalMusicSync() {
         localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify({ ...prev, capa: data.capa }));
       }
 
-      if (data.titulo && data.titulo !== "Sem título") {
+      if (!isPlaceholderTrack(data)) {
         void recordToHistory(data.titulo, data.artista || "Desconhecido");
       }
     };
@@ -186,21 +208,67 @@ export function useGlobalMusicSync() {
     const fetchAndSync = async () => {
       fetchCountRef.current++;
 
-      // Cache URL to avoid re-fetching settings every poll
-      if (!urlFetchedRef.current) {
+      // Cache settings to avoid re-fetching every poll
+      if (!settingsFetchedRef.current) {
         const { data: settings } = await supabase
           .from("user_settings")
-          .select("music_xml_url, music_source_mode")
+          .select("music_xml_url, music_source_mode, dashboard_items")
           .eq("user_id", user.id)
           .maybeSingle();
-        cachedUrlRef.current = settings?.music_xml_url || null;
-        urlFetchedRef.current = true;
+
+        const dashboardItems = settings?.dashboard_items as { local_xml_filename?: string } | null;
+        cachedSettingsRef.current = {
+          url: settings?.music_xml_url || null,
+          mode: settings?.music_source_mode || "online",
+          localFileName: dashboardItems?.local_xml_filename || null,
+        };
+        settingsFetchedRef.current = true;
       }
 
-      const url = cachedUrlRef.current;
+      const { url, mode, localFileName } = cachedSettingsRef.current;
+      const useOnline = mode === "online" || mode === "both";
+      const useLocal = mode === "pasta" || mode === "both";
 
-      // If no online URL, still record from localStorage (local file source)
-      if (!url) {
+      const syncLocalFromStorage = async () => {
+        if (!useLocal || !localFileName) return;
+        try {
+          const filePath = `local-xml-${user.id}.xml`;
+          const { data: urlData } = supabase.storage.from("xml-files").getPublicUrl(filePath);
+          if (!urlData?.publicUrl) return;
+          const res = await fetch(`${urlData.publicUrl}?t=${Date.now()}`, {
+            signal: AbortSignal.timeout(4000),
+            cache: "no-store",
+          });
+          if (!res.ok) return;
+          const text = await res.text();
+          if (!text) return;
+          const data = parseXml(text);
+          if (!data) return;
+          fetchCoverAsync(data);
+          applyMusicData(data);
+          localStorage.setItem(BOT_XML_LAST_RUN_KEY, Date.now().toString());
+        } catch {
+          // keep online source running
+        }
+      };
+
+      const syncOnline = async () => {
+        if (!useOnline || !url) return;
+        const text = await fetchXmlFromUrl(url);
+        if (!text) return;
+
+        const data = parseXml(text);
+        if (!data) return;
+
+        fetchCoverAsync(data);
+        applyMusicData(data);
+        localStorage.setItem(BOT_XML_LAST_RUN_KEY, Date.now().toString());
+      };
+
+      await Promise.allSettled([syncLocalFromStorage(), syncOnline()]);
+
+      // If no configured source, still keep history from current canonical localStorage
+      if ((!useOnline || !url) && (!useLocal || !localFileName)) {
         try {
           const raw = localStorage.getItem(MUSIC_DATA_KEY);
           if (!raw) return;
@@ -214,26 +282,14 @@ export function useGlobalMusicSync() {
         return;
       }
 
-      // Fetch XML from online source
-      const text = await fetchXmlFromUrl(url);
-      if (!text) return;
-
-      const data = parseXml(text);
-      if (!data) return;
-
-      // Async cover fetch (non-blocking)
-      fetchCoverAsync(data);
-
-      // Apply to localStorage and record history
-      applyMusicData(data);
     };
 
     // Start immediately, poll every 3s
     fetchAndSync();
     const interval = setInterval(fetchAndSync, 3000);
 
-    // Refresh cached URL every 15s in case user changes it
-    const urlRefresh = setInterval(() => { urlFetchedRef.current = false; }, 15000);
+    // Refresh cached settings every 15s in case user changes sources
+    const urlRefresh = setInterval(() => { settingsFetchedRef.current = false; }, 15000);
 
     return () => { clearInterval(interval); clearInterval(urlRefresh); };
   }, [user]);
