@@ -294,18 +294,18 @@
   background: transparent;
 }
 .widget-scroll::-webkit-scrollbar-thumb {
-  background: #be0101;
+  background: var(--layout-scrollbar-color, #555555);
   border-radius: 10px;
 }
 .widget-scroll::-webkit-scrollbar-thumb:hover {
-  background: #960101;
+  background: color-mix(in srgb, var(--layout-scrollbar-color, #555555) 80%, white 20%);
 }
 .widget-scroll::-webkit-scrollbar-button {
   display: none;
 }
 .widget-scroll {
   scrollbar-width: thin;
-  scrollbar-color: #be0101 transparent;
+  scrollbar-color: var(--layout-scrollbar-color, #555555) transparent;
 }
 
 /* ====== Form styling for masterview content area ====== */
