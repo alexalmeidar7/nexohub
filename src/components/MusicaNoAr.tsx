@@ -942,14 +942,14 @@ export default function MusicaNoAr() {
       </div>
 
       {/* ═══ COLLAPSIBLE CONFIG SECTION ═══ */}
-      <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "#ffffff", boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}>
+      <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
         <button
           onClick={() => setShowConfig(!showConfig)}
           className="w-full flex items-center justify-between px-4 py-3 text-left"
-          style={{ borderBottom: showConfig ? "1px solid rgba(13,4,70,0.06)" : "none" }}
+          style={{ borderBottom: showConfig ? "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 10%, transparent)" : "none" }}
         >
-          <span className="text-xs font-bold flex items-center gap-2" style={{ color: "#0d0446" }}>
-            <Monitor size={14} style={{ color: "#268ffa" }} />
+          <span className="text-xs font-bold flex items-center gap-2" style={{ color: "var(--layout-page-text, #0d0446)" }}>
+            <Monitor size={14} style={{ color: "var(--layout-icon-color, #268ffa)" }} />
             Configuração das Origens
             {localMonitoring && (
               <span className="relative flex h-2 w-2">
@@ -958,7 +958,7 @@ export default function MusicaNoAr() {
               </span>
             )}
           </span>
-          {showConfig ? <ChevronUp size={16} style={{ color: "rgba(13,4,70,0.3)" }} /> : <ChevronDown size={16} style={{ color: "rgba(13,4,70,0.3)" }} />}
+          {showConfig ? <ChevronUp size={16} style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 40%, transparent)" }} /> : <ChevronDown size={16} style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 40%, transparent)" }} />}
         </button>
 
         {showConfig && (
