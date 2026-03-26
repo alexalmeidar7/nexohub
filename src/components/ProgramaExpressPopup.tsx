@@ -83,7 +83,7 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
 
   // Search apresentadores
   useEffect(() => {
-    if (!searchNome.trim() || !user) { setSearchResults([]); return; }
+    if (!searchNome.trim() || !user) { setSearchResults([]); setNoResults(false); return; }
     const timer = setTimeout(async () => {
       const { data } = await supabase
         .from("apresentadores")
@@ -91,7 +91,13 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
         .eq("user_id", user.id)
         .ilike("nome", `%${searchNome}%`)
         .limit(5);
-      if (data) setSearchResults(data.map(d => ({ nome: d.nome, cargo: d.cargo || "", instagram: d.instagram || "" })));
+      if (data && data.length > 0) {
+        setSearchResults(data.map(d => ({ nome: d.nome, cargo: d.cargo || "", instagram: d.instagram || "" })));
+        setNoResults(false);
+      } else {
+        setSearchResults([]);
+        setNoResults(true);
+      }
     }, 300);
     return () => clearTimeout(timer);
   }, [searchNome, user]);
