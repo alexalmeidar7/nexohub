@@ -229,6 +229,7 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
     setEditingId(null);
     setInitialized(false);
     setParticipantes([]);
+    setEscaladaList([]);
     setSearchNome("");
     setSearchResults([]);
     setShowResults(false);
