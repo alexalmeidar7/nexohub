@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { Zap, Plus, Trash2, Link2, Loader2, Image, Type, Check, X as XIcon, ChevronDown, ChevronUp, Pencil, Users, Search } from "lucide-react";
+import { Zap, Plus, Trash2, Link2, Loader2, Image, Type, Check, X as XIcon, ChevronDown, ChevronUp, Pencil, Users, Search, UserPlus } from "lucide-react";
 import { decodeHtmlEntities } from "@/lib/textEncoding";
 
 interface Participante {
@@ -72,6 +72,10 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
   const [searchNome, setSearchNome] = useState("");
   const [searchResults, setSearchResults] = useState<Participante[]>([]);
   const [showResults, setShowResults] = useState(false);
+  const [noResults, setNoResults] = useState(false);
+  const [showNewContact, setShowNewContact] = useState(false);
+  const [newContact, setNewContact] = useState<{ nome: string; cargo: string; instagram: string; whatsapp: string }>({ nome: "", cargo: "", instagram: "", whatsapp: "" });
+  const [savingContact, setSavingContact] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
 
   const filteredProgramas = estudio ? programas.filter(p => p.estudio === estudio) : programas;
@@ -79,7 +83,7 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
 
   // Search apresentadores
   useEffect(() => {
-    if (!searchNome.trim() || !user) { setSearchResults([]); return; }
+    if (!searchNome.trim() || !user) { setSearchResults([]); setNoResults(false); return; }
     const timer = setTimeout(async () => {
       const { data } = await supabase
         .from("apresentadores")
@@ -87,7 +91,13 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
         .eq("user_id", user.id)
         .ilike("nome", `%${searchNome}%`)
         .limit(5);
-      if (data) setSearchResults(data.map(d => ({ nome: d.nome, cargo: d.cargo || "", instagram: d.instagram || "" })));
+      if (data && data.length > 0) {
+        setSearchResults(data.map(d => ({ nome: d.nome, cargo: d.cargo || "", instagram: d.instagram || "" })));
+        setNoResults(false);
+      } else {
+        setSearchResults([]);
+        setNoResults(true);
+      }
     }, 300);
     return () => clearTimeout(timer);
   }, [searchNome, user]);
@@ -111,6 +121,34 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
 
   const removeParticipante = (idx: number) => {
     setParticipantes(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  const openNewContactPopup = () => {
+    setNewContact({ nome: searchNome.trim(), cargo: "", instagram: "", whatsapp: "" });
+    setShowNewContact(true);
+    setShowResults(false);
+    setNoResults(false);
+  };
+
+  const saveNewContact = async () => {
+    if (!user || !newContact.nome.trim()) return;
+    setSavingContact(true);
+    try {
+      const { error } = await supabase.from("apresentadores").insert({
+        user_id: user.id,
+        nome: newContact.nome.trim(),
+        cargo: newContact.cargo.trim(),
+        instagram: newContact.instagram.trim(),
+        whatsapp: newContact.whatsapp.trim(),
+      });
+      if (error) throw error;
+      addParticipante({ nome: newContact.nome.trim(), cargo: newContact.cargo.trim(), instagram: newContact.instagram.trim() });
+      setShowNewContact(false);
+      toast.success("Contato salvo e adicionado!");
+    } catch {
+      toast.error("Erro ao salvar contato");
+    }
+    setSavingContact(false);
   };
 
   // Load edit data when popup opens
@@ -139,6 +177,8 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
     setSearchNome("");
     setSearchResults([]);
     setShowResults(false);
+    setNoResults(false);
+    setShowNewContact(false);
   };
 
   const updateNoticia = (bi: number, ni: number, field: keyof NewsItem, value: any) => {
@@ -424,7 +464,7 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
                 <input
                   value={searchNome}
                   onChange={e => { setSearchNome(e.target.value); setShowResults(true); }}
-                  onFocus={() => { if (searchResults.length > 0) setShowResults(true); }}
+                  onFocus={() => { if (searchResults.length > 0 || noResults) setShowResults(true); }}
                   placeholder="Buscar participante pelo nome..."
                   className="w-full pl-7 pr-3 py-1.5 rounded-lg text-[11px] outline-none"
                   style={inputStyle}
@@ -447,8 +487,63 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
                 ))}
               </div>
             )}
+            {showResults && noResults && searchNome.trim().length > 1 && (
+              <div className="absolute z-50 w-full mt-1 rounded-lg shadow-lg overflow-hidden p-3" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 25%, transparent)" }}>
+                <p className="text-[11px] mb-2" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                  Nenhum resultado para "<strong>{searchNome}</strong>".
+                </p>
+                <button
+                  onClick={openNewContactPopup}
+                  className="flex items-center gap-1.5 text-[11px] font-semibold py-1.5 px-3 rounded-lg hover:opacity-80 transition-all"
+                  style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 12%, transparent)", color: "var(--layout-accent-color, #2ec1f7)" }}
+                >
+                  <UserPlus size={12} /> Vamos salvar esse contato?
+                </button>
+              </div>
+            )}
           </div>
         </div>
+
+        {/* New Contact Popup */}
+        {showNewContact && (
+          <div className="rounded-xl p-3 mt-2 space-y-2" style={{ border: "2px solid var(--layout-accent-color, #2ec1f7)", backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 6%, transparent)" }}>
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-bold flex items-center gap-1.5" style={{ color: "var(--layout-accent-color, #2ec1f7)" }}>
+                <UserPlus size={14} /> Novo Participante
+              </p>
+              <button onClick={() => setShowNewContact(false)} className="p-0.5 rounded hover:opacity-70" style={{ color: "var(--layout-page-text)" }}>
+                <XIcon size={14} />
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="text-[10px] font-semibold mb-0.5 block" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Nome</label>
+                <input value={newContact.nome} onChange={e => setNewContact(p => ({ ...p, nome: e.target.value }))} className="w-full px-2.5 py-1.5 rounded-lg text-[11px] outline-none" style={inputStyle} />
+              </div>
+              <div>
+                <label className="text-[10px] font-semibold mb-0.5 block" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Cargo</label>
+                <input value={newContact.cargo} onChange={e => setNewContact(p => ({ ...p, cargo: e.target.value }))} placeholder="Ex: Repórter" className="w-full px-2.5 py-1.5 rounded-lg text-[11px] outline-none" style={inputStyle} />
+              </div>
+              <div>
+                <label className="text-[10px] font-semibold mb-0.5 block" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Instagram</label>
+                <input value={newContact.instagram} onChange={e => setNewContact(p => ({ ...p, instagram: e.target.value }))} placeholder="@usuario" className="w-full px-2.5 py-1.5 rounded-lg text-[11px] outline-none" style={inputStyle} />
+              </div>
+              <div>
+                <label className="text-[10px] font-semibold mb-0.5 block" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>WhatsApp</label>
+                <input value={newContact.whatsapp} onChange={e => setNewContact(p => ({ ...p, whatsapp: e.target.value }))} placeholder="(00) 00000-0000" className="w-full px-2.5 py-1.5 rounded-lg text-[11px] outline-none" style={inputStyle} />
+              </div>
+            </div>
+            <button
+              onClick={saveNewContact}
+              disabled={savingContact || !newContact.nome.trim()}
+              className="w-full py-2 rounded-lg text-[11px] font-bold transition-all hover:opacity-90 flex items-center justify-center gap-1.5 disabled:opacity-40"
+              style={{ backgroundColor: "var(--layout-accent-color, #2ec1f7)", color: "var(--layout-header-text, #fff)" }}
+            >
+              {savingContact ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
+              Salvar e Incluir
+            </button>
+          </div>
+        )}
 
         {/* Blocos */}
         <div className="space-y-4 mt-4">
