@@ -813,14 +813,17 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
                 <label className="flex items-center gap-2.5 cursor-pointer group" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
                   <input type="checkbox" checked={canalForm.is_hd} onChange={(e) => setCanalForm(p => ({ ...p, is_hd: e.target.checked }))}
                     className="w-4 h-4 rounded" style={{ accentColor: "var(--layout-accent-color, #444444)" }} />
-                  <img src="/images/icon-fullhd.png" alt="FULL HD" className="h-4 opacity-80 group-hover:opacity-100 transition-opacity" />
-                  <span className="text-sm font-semibold group-hover:opacity-80 transition-opacity">FULL HD</span>
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded border text-[10px] font-black tracking-wider opacity-80 group-hover:opacity-100 transition-opacity" style={{ borderColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 25%, transparent)", color: "var(--layout-page-text, #1a1a1a)" }}>
+                    <span className="text-[9px]">1080p</span> FULL HD
+                  </span>
                 </label>
                 <label className="flex items-center gap-2.5 cursor-pointer group" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
                   <input type="checkbox" checked={canalForm.is_stereo} onChange={(e) => setCanalForm(p => ({ ...p, is_stereo: e.target.checked }))}
                     className="w-4 h-4 rounded" style={{ accentColor: "var(--layout-accent-color, #444444)" }} />
-                  <img src="/images/icon-stereo.png" alt="Stereo" className="h-4 opacity-80 group-hover:opacity-100 transition-opacity" />
-                  <span className="text-sm font-semibold group-hover:opacity-80 transition-opacity">Áudio Estéreo</span>
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded border text-[10px] font-black tracking-wider opacity-80 group-hover:opacity-100 transition-opacity" style={{ borderColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 25%, transparent)", color: "var(--layout-page-text, #1a1a1a)" }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2 10v3"/><path d="M6 6v11"/><path d="M10 3v18"/><path d="M14 8v7"/><path d="M18 5v13"/><path d="M22 10v3"/></svg>
+                    STEREO
+                  </span>
                 </label>
               </div>
             </div>
