@@ -1190,7 +1190,7 @@ export default function MusicaNoAr() {
                     <span className="text-xs font-bold">LENDO AQUI</span>
                   </div>
                 ) : localFileName ? (
-                  <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: "linear-gradient(90deg, #d4e157 0%, #c6ff00 100%)", color: "#555" }}>
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #444444) 12%, transparent)", color: "var(--layout-page-text, #1a1a1a)" }}>
                     <Loader2 size={12} className="animate-spin" />
                     <span className="text-xs font-bold">AGUARDANDO LEITURA</span>
                   </div>
