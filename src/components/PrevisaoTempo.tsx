@@ -507,7 +507,7 @@ export default function PrevisaoTempo() {
                 <div key={day.date}
                   className="rounded-xl p-5 text-center space-y-2 transition-all hover:shadow-lg hover:-translate-y-1 group"
                   style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "2px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)" }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = "#2dbef3"; e.currentTarget.style.boxShadow = "0 8px 25px rgba(45,190,243,0.15)"; }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #444444)"; e.currentTarget.style.boxShadow = "0 8px 25px color-mix(in srgb, var(--layout-accent-color, #444444) 15%, transparent)"; }}
                   onMouseLeave={e => { e.currentTarget.style.borderColor = "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)"; e.currentTarget.style.boxShadow = "none"; }}
                 >
                   <p className="text-[11px] font-semibold uppercase tracking-wider capitalize" style={{ color: "rgba(13,4,70,0.45)" }}>{formatDay(day.date)}</p>
