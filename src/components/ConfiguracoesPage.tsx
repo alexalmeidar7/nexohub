@@ -770,8 +770,8 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
           {/* ── Seção 2: Imagens ── */}
           <div className="rounded-2xl p-5 space-y-4" style={{ backgroundColor: "#d9e9fa", boxShadow: "0 2px 8px color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)" }}>
             <div className="flex items-center gap-2 mb-1">
-              <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" }}>
-                <ImageIcon size={12} className="text-white" />
+              <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))", color: "var(--layout-header-text, #ffffff)" }}>
+                <ImageIcon size={12} />
               </div>
               <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{canalMode === "catalog" ? "Imagens do Catálogo" : "Imagens do Canal"}</span>
             </div>
