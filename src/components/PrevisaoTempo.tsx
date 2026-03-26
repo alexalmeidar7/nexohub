@@ -115,9 +115,11 @@ export default function PrevisaoTempo() {
   const fetchSuggestions = useCallback(async (query: string) => {
     if (query.trim().length < 2) { setSuggestions([]); return; }
     try {
-      const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=5&language=pt`);
-      const data = await res.json();
-      setSuggestions(data.results || []);
+      const { data, error } = await supabase.functions.invoke("fetch-weather", {
+        body: { action: "geocode", query, count: 5 },
+      });
+      if (error) throw error;
+      setSuggestions(data?.results || []);
       setShowSuggestions(true);
     } catch { setSuggestions([]); }
   }, []);
