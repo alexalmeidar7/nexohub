@@ -284,6 +284,11 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
 
       // Build HTML content for roteiro
       let html = `<h2 style="text-align:center;font-weight:bold;">PROGRAMA EXPRESS — ${programaNome}</h2>`;
+      if (participantes.length > 0) {
+        html += `<h3 style="font-weight:bold;margin-top:16px;">👥 PARTICIPANTES</h3><ul>`;
+        participantes.forEach(p => { html += `<li><strong>${p.nome}</strong>${p.cargo ? ` — ${p.cargo}` : ""}${p.instagram ? ` (@${p.instagram.replace("@", "")})` : ""}</li>`; });
+        html += `</ul>`;
+      }
       if (escaladaItems.length > 0) {
         html += `<h3 style="font-weight:bold;margin-top:16px;">📢 ESCALADA</h3><ul>`;
         escaladaItems.forEach(n => { html += `<li><strong>${n.titulo}</strong></li>`; });
@@ -298,7 +303,6 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
         });
       });
 
-      // Upload XML first to get URL
       const blob = new Blob([xmlContent], { type: "application/xml" });
       const fileName = `express_${programaId}_${Date.now()}.xml`;
       const filePath = `express/${user.id}/${fileName}`;
@@ -306,8 +310,8 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
       const { data: urlData } = supabase.storage.from("empresa-assets").getPublicUrl(filePath);
       const xmlUrl = urlData.publicUrl;
 
-      // Store blocos as JSON in participantes for edit reconstruction
-      const blocosJson = JSON.stringify(blocos);
+      // Store blocos + participantes as JSON for edit reconstruction
+      const blocosJson = JSON.stringify({ blocos, participantes });
 
       if (editingId) {
         // Update existing
