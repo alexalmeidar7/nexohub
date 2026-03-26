@@ -123,6 +123,34 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
     setParticipantes(prev => prev.filter((_, i) => i !== idx));
   };
 
+  const openNewContactPopup = () => {
+    setNewContact({ nome: searchNome.trim(), cargo: "", instagram: "", whatsapp: "" });
+    setShowNewContact(true);
+    setShowResults(false);
+    setNoResults(false);
+  };
+
+  const saveNewContact = async () => {
+    if (!user || !newContact.nome.trim()) return;
+    setSavingContact(true);
+    try {
+      const { error } = await supabase.from("apresentadores").insert({
+        user_id: user.id,
+        nome: newContact.nome.trim(),
+        cargo: newContact.cargo.trim(),
+        instagram: newContact.instagram.trim(),
+        whatsapp: newContact.whatsapp.trim(),
+      });
+      if (error) throw error;
+      addParticipante({ nome: newContact.nome.trim(), cargo: newContact.cargo.trim(), instagram: newContact.instagram.trim() });
+      setShowNewContact(false);
+      toast.success("Contato salvo e adicionado!");
+    } catch {
+      toast.error("Erro ao salvar contato");
+    }
+    setSavingContact(false);
+  };
+
   // Load edit data when popup opens
   if (open && editData && !initialized) {
     setEstudio(editData.estudio);
