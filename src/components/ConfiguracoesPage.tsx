@@ -663,33 +663,33 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
                       onClick={() => setCatalogContentMode("playlist")}
                       className="flex-1 px-4 py-3 rounded-xl text-xs font-bold transition-all text-left"
                       style={{
-                        backgroundColor: catalogContentMode === "playlist" ? "var(--layout-header-bg, #1a1a1a)" : "#ffffff",
-                        color: catalogContentMode === "playlist" ? "#ffffff" : "var(--layout-header-bg, #1a1a1a)",
-                        border: `2px solid ${catalogContentMode === "playlist" ? "var(--layout-header-bg, #1a1a1a)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 15%, transparent)"}`,
-                        boxShadow: catalogContentMode === "playlist" ? "0 4px 12px color-mix(in srgb, var(--layout-page-text, #1a1a1a) 25%, transparent)" : "none",
+                        backgroundColor: catalogContentMode === "playlist" ? "var(--layout-header-bg, #1a1a1a)" : "var(--layout-page-bg, #ffffff)",
+                        color: catalogContentMode === "playlist" ? "var(--layout-header-text, #ffffff)" : "var(--layout-page-text, #1a1a1a)",
+                        border: `2px solid ${catalogContentMode === "playlist" ? "var(--layout-header-bg, #1a1a1a)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 20%, transparent)"}`,
+                        boxShadow: catalogContentMode === "playlist" ? "0 4px 12px rgba(0,0,0,0.15)" : "none",
                       }}
                     >
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-base">🔗</span>
-                        <span style={{ color: catalogContentMode === "playlist" ? "#ffffff" : "var(--layout-header-bg, #1a1a1a)" }}>Criar por URL de Playlist</span>
+                        <span>Criar por URL de Playlist</span>
                       </div>
-                      <p className="text-[10px] ml-7" style={{ color: catalogContentMode === "playlist" ? "rgba(255,255,255,0.85)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Importa automaticamente todos os vídeos da playlist</p>
+                      <p className="text-[10px] ml-7" style={{ opacity: catalogContentMode === "playlist" ? 0.85 : 0.5 }}>Importa automaticamente todos os vídeos da playlist</p>
                     </button>
                     <button
                       onClick={() => setCatalogContentMode("individual")}
                       className="flex-1 px-4 py-3 rounded-xl text-xs font-bold transition-all text-left"
                       style={{
-                        backgroundColor: catalogContentMode === "individual" ? "var(--layout-header-bg, #1a1a1a)" : "#ffffff",
-                        color: catalogContentMode === "individual" ? "#ffffff" : "var(--layout-header-bg, #1a1a1a)",
-                        border: `2px solid ${catalogContentMode === "individual" ? "var(--layout-header-bg, #1a1a1a)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 15%, transparent)"}`,
-                        boxShadow: catalogContentMode === "individual" ? "0 4px 12px color-mix(in srgb, var(--layout-page-text, #1a1a1a) 25%, transparent)" : "none",
+                        backgroundColor: catalogContentMode === "individual" ? "var(--layout-header-bg, #1a1a1a)" : "var(--layout-page-bg, #ffffff)",
+                        color: catalogContentMode === "individual" ? "var(--layout-header-text, #ffffff)" : "var(--layout-page-text, #1a1a1a)",
+                        border: `2px solid ${catalogContentMode === "individual" ? "var(--layout-header-bg, #1a1a1a)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 20%, transparent)"}`,
+                        boxShadow: catalogContentMode === "individual" ? "0 4px 12px rgba(0,0,0,0.15)" : "none",
                       }}
                     >
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-base">📹</span>
-                        <span style={{ color: catalogContentMode === "individual" ? "#ffffff" : "var(--layout-header-bg, #1a1a1a)" }}>Cadastrar Vídeos Individualmente</span>
+                        <span>Cadastrar Vídeos Individualmente</span>
                       </div>
-                      <p className="text-[10px] ml-7" style={{ color: catalogContentMode === "individual" ? "rgba(255,255,255,0.85)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Adicione vídeos um a um com capas personalizadas</p>
+                      <p className="text-[10px] ml-7" style={{ opacity: catalogContentMode === "individual" ? 0.85 : 0.5 }}>Adicione vídeos um a um com capas personalizadas</p>
                     </button>
                   </div>
                 </div>
