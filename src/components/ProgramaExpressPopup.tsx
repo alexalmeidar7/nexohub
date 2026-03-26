@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { Zap, Plus, Trash2, Link2, Loader2, Image, Type, Check, X as XIcon, ChevronDown, ChevronUp } from "lucide-react";
+import { Zap, Plus, Trash2, Link2, Loader2, Image, Type, Check, X as XIcon, ChevronDown, ChevronUp, Pencil } from "lucide-react";
 
 interface NewsItem {
   titulo: string;
@@ -336,6 +336,7 @@ function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRe
   canRemove: boolean;
 }) {
   const [linkInput, setLinkInput] = useState("");
+  const [collapsed, setCollapsed] = useState(false);
   const isFetching = fetchingLink === `${bi}-${ni}`;
 
   const handlePasteLink = (url: string) => {
@@ -343,17 +344,64 @@ function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRe
     if (url.startsWith("http")) onFetchLink(bi, ni, url);
   };
 
+  // Auto-collapse when title is filled
+  const prevTituloRef = useState({ val: noticia.titulo })[0];
+  if (noticia.titulo && !prevTituloRef.val && !collapsed) {
+    setTimeout(() => setCollapsed(true), 300);
+  }
+  prevTituloRef.val = noticia.titulo;
+
+  // Collapsed view
+  if (collapsed && noticia.titulo) {
+    return (
+      <div
+        className="rounded-lg px-3 py-2 flex items-center justify-between cursor-pointer hover:opacity-90 transition-all"
+        style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 80%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 15%, transparent)" }}
+        onClick={() => setCollapsed(false)}
+      >
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          <p className="text-[10px] font-bold uppercase shrink-0" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
+            Notícia {ni + 1}
+          </p>
+          <p className="text-[11px] truncate font-medium" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+            {noticia.titulo}
+          </p>
+          {noticia.escalada && (
+            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 15%, transparent)", color: "var(--layout-accent-color, #2ec1f7)" }}>
+              ESCALADA
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-1 shrink-0 ml-2">
+          <Pencil size={12} style={{ color: "var(--layout-icon-color, #888)" }} />
+          {canRemove && (
+            <button onClick={(e) => { e.stopPropagation(); onRemove(bi, ni); }} className="p-0.5 rounded hover:opacity-70" style={{ color: "#ef4444" }}>
+              <Trash2 size={12} />
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="rounded-lg p-2.5 space-y-2" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 80%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 15%, transparent)" }}>
       <div className="flex items-center justify-between">
         <p className="text-[10px] font-bold uppercase" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
           Notícia {ni + 1}
         </p>
-        {canRemove && (
-          <button onClick={() => onRemove(bi, ni)} className="p-0.5 rounded hover:opacity-70" style={{ color: "#ef4444" }}>
-            <Trash2 size={12} />
-          </button>
-        )}
+        <div className="flex items-center gap-1">
+          {noticia.titulo && (
+            <button onClick={() => setCollapsed(true)} className="p-0.5 rounded hover:opacity-70" style={{ color: "var(--layout-icon-color, #888)" }}>
+              <ChevronUp size={12} />
+            </button>
+          )}
+          {canRemove && (
+            <button onClick={() => onRemove(bi, ni)} className="p-0.5 rounded hover:opacity-70" style={{ color: "#ef4444" }}>
+              <Trash2 size={12} />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Link fetch */}
