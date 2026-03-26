@@ -309,7 +309,7 @@ export default function PrevisaoTempo() {
               className="flex items-center gap-2 rounded-full px-4 py-2 text-xs font-bold transition-all hover:scale-105"
               style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))", color: "var(--layout-header-text, #ffffff)", boxShadow: "0 4px 15px color-mix(in srgb, var(--layout-page-text, #1a1a1a) 30%, transparent)" }}
             >
-              <Star size={12} style={{ color: "#2dbef3" }} />
+              <Star size={12} style={{ color: "var(--layout-accent-color, #444444)" }} />
               {primaryCity.name}
             </button>
           )}
@@ -317,9 +317,9 @@ export default function PrevisaoTempo() {
             <div key={f.name} className="flex items-center gap-2 rounded-full px-3 py-1.5 transition-all hover:shadow-md"
               style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)" }}>
               <input type="checkbox" checked={f.inXml} onChange={() => toggleFavoriteXml(f.name)}
-                className="w-3 h-3" style={{ accentColor: "#2dbef3" }} title="Incluir no XML" />
+                className="w-3 h-3" style={{ accentColor: "var(--layout-accent-color, #444444)" }} title="Incluir no XML" />
               <button onClick={() => { setCity(f.name); fetchWeather(f.name); }}
-                className="text-xs font-medium transition-colors hover:text-[#2dbef3]"
+                className="text-xs font-medium transition-colors"
                 style={{ color: "var(--layout-page-text, #1a1a1a)" }}
               >{f.name}</button>
               <button onClick={() => removeFavorite(f.name)}
@@ -342,7 +342,7 @@ export default function PrevisaoTempo() {
               placeholder="Buscar cidade..."
               className="w-full pl-10 pr-4 py-2.5 outline-none transition-all text-sm"
               style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "2px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 10%, transparent)", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "16px" }}
-              onFocusCapture={e => { e.currentTarget.style.borderColor = "#2dbef3"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(45,190,243,0.1)"; }}
+              onFocusCapture={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #444444)"; e.currentTarget.style.boxShadow = "0 0 0 3px color-mix(in srgb, var(--layout-accent-color, #444444) 10%, transparent)"; }}
               onBlur={e => { e.currentTarget.style.borderColor = "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 10%, transparent)"; e.currentTarget.style.boxShadow = "none"; }}
             />
           </div>
@@ -362,7 +362,7 @@ export default function PrevisaoTempo() {
                 style={{ color: "var(--layout-header-text, #ffffff)" }}
               >
                 <span className="flex items-center gap-2">
-                  <MapPin size={12} style={{ color: "#2dbef3" }} />
+                  <MapPin size={12} style={{ color: "var(--layout-accent-color, #444444)" }} />
                   {s.name}{s.admin1 ? `, ${s.admin1}` : ""}
                 </span>
                 <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "10px" }}>{s.country}</span>
@@ -417,7 +417,7 @@ export default function PrevisaoTempo() {
                       <label className="flex items-center gap-2 cursor-pointer select-none rounded-full px-3 py-1 transition-all"
                         style={{ backgroundColor: isPrimary ? "var(--layout-header-bg, #1a1a1a)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)", border: `1px solid ${isPrimary ? "var(--layout-header-bg, #1a1a1a)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 15%, transparent)"}` }}>
                         <input type="checkbox" checked={isPrimary} onChange={togglePrimaryCity}
-                          className="w-3.5 h-3.5" style={{ accentColor: "#2dbef3" }} />
+                          className="w-3.5 h-3.5" style={{ accentColor: "var(--layout-accent-color, #444444)" }} />
                         <span className="text-[11px] font-semibold" style={{ color: isPrimary ? "var(--layout-header-text, #ffffff)" : "var(--layout-header-bg, #1a1a1a)" }}>Cidade Principal</span>
                       </label>
                     )}
@@ -493,7 +493,7 @@ export default function PrevisaoTempo() {
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <StatCard icon={<Thermometer size={18} />} label="Mínima" value={`${weather.current.tempMin}°C`} color="#60a5fa" />
                 <StatCard icon={<Thermometer size={18} />} label="Máxima" value={`${weather.current.tempMax}°C`} color="#f97316" />
-                <StatCard icon={<Droplets size={18} />} label="Humidade" value={`${weather.current.humidity}%`} color="#2dbef3" />
+                <StatCard icon={<Droplets size={18} />} label="Humidade" value={`${weather.current.humidity}%`} color="var(--layout-accent-color, #444444)" />
                 <StatCard icon={<CloudRain size={18} />} label="Chuva" value={`${weather.current.rainChance}%`} color="#a78bfa" />
               </div>
             </div>
@@ -507,7 +507,7 @@ export default function PrevisaoTempo() {
                 <div key={day.date}
                   className="rounded-xl p-5 text-center space-y-2 transition-all hover:shadow-lg hover:-translate-y-1 group"
                   style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "2px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)" }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = "#2dbef3"; e.currentTarget.style.boxShadow = "0 8px 25px rgba(45,190,243,0.15)"; }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #444444)"; e.currentTarget.style.boxShadow = "0 8px 25px color-mix(in srgb, var(--layout-accent-color, #444444) 15%, transparent)"; }}
                   onMouseLeave={e => { e.currentTarget.style.borderColor = "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)"; e.currentTarget.style.boxShadow = "none"; }}
                 >
                   <p className="text-[11px] font-semibold uppercase tracking-wider capitalize" style={{ color: "rgba(13,4,70,0.45)" }}>{formatDay(day.date)}</p>
@@ -523,7 +523,7 @@ export default function PrevisaoTempo() {
                       <span style={{ color: "#f97316" }}>↑{day.tempMax}°</span>
                     </p>
                     <p className="flex items-center justify-center gap-1">
-                      <Droplets size={11} style={{ color: "#2dbef3" }} />{day.humidity}%
+                      <Droplets size={11} style={{ color: "var(--layout-accent-color, #444444)" }} />{day.humidity}%
                     </p>
                     <p className="flex items-center justify-center gap-1">
                       <CloudRain size={11} style={{ color: "#a78bfa" }} />{day.rainChance}%
