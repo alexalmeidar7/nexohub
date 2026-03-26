@@ -581,11 +581,57 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
         </button>
 
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-            <Zap size={20} style={{ color: "var(--layout-accent-color, #2ec1f7)" }} />
-            {editingId ? "Editar Programa Express" : "Programa Express"}
-          </DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle className="flex items-center gap-2" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+              <Zap size={20} style={{ color: "var(--layout-accent-color, #2ec1f7)" }} />
+              {editingId ? "Editar Programa Express" : "Programa Express"}
+            </DialogTitle>
+            <button
+              onClick={() => setShowPastePopup(true)}
+              className="flex items-center gap-1.5 text-[11px] font-semibold py-1.5 px-3 rounded-lg hover:opacity-80 transition-all mr-6"
+              style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 12%, transparent)", color: "var(--layout-accent-color, #2ec1f7)" }}
+            >
+              <ClipboardPaste size={13} /> Colar Roteiro
+            </button>
+          </div>
         </DialogHeader>
+
+        {/* Paste Script Popup */}
+        {showPastePopup && (
+          <div className="rounded-xl p-3 space-y-2" style={{ border: "2px solid var(--layout-accent-color, #2ec1f7)", backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 6%, transparent)" }}>
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-bold flex items-center gap-1.5" style={{ color: "var(--layout-accent-color, #2ec1f7)" }}>
+                <ClipboardPaste size={14} /> Colar Roteiro
+              </p>
+              <button onClick={() => { setShowPastePopup(false); setPasteText(""); }} className="p-0.5 rounded hover:opacity-70" style={{ color: "var(--layout-page-text)" }}>
+                <XIcon size={14} />
+              </button>
+            </div>
+            <p className="text-[10px] leading-relaxed" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>
+              Cole o texto seguindo a ordem:<br/>
+              <strong>Linha 1:</strong> Estúdio | <strong>Linha 2:</strong> Programa<br/>
+              <strong>Depois:</strong> Participantes (Nome - Cargo : Instagram)<br/>
+              <strong>Depois:</strong> Escalada<br/>
+              <strong>Depois:</strong> Bloco 1, Bloco 2... (títulos ou links)
+            </p>
+            <textarea
+              value={pasteText}
+              onChange={e => setPasteText(e.target.value)}
+              placeholder={"Estúdio A\nJornal da Manhã\nParticipantes\nJoão Silva - Âncora : @joaosilva\nMaria - Repórter\nEscalada\nTítulo da notícia 1\nTítulo da notícia 2\nBloco 1\nNotícia do bloco 1\nhttps://link-da-materia.com\nBloco 2\nOutra notícia"}
+              className="w-full px-3 py-2 rounded-lg text-[11px] outline-none resize-none"
+              rows={10}
+              style={inputStyle}
+            />
+            <button
+              onClick={parsePastedScript}
+              disabled={!pasteText.trim()}
+              className="w-full py-2 rounded-lg text-[11px] font-bold transition-all hover:opacity-90 flex items-center justify-center gap-1.5 disabled:opacity-40"
+              style={{ backgroundColor: "var(--layout-accent-color, #2ec1f7)", color: "var(--layout-header-text, #fff)" }}
+            >
+              <Check size={12} /> Importar Roteiro
+            </button>
+          </div>
+        )}
 
         {/* Estudio + Programa */}
         <div className="grid grid-cols-2 gap-3 mt-2">
