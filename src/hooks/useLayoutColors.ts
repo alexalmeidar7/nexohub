@@ -41,6 +41,7 @@ export interface LayoutColors {
   widgetText: string;
   iconColor: string;
   borderColor: string;
+  sliderBg: string;
   homeBgType: "color" | "image";
   homeBgColor: string;
   homeBgImage: string;
@@ -61,6 +62,7 @@ export const defaultLayoutColors: LayoutColors = {
   widgetText: "#ffffff",
   iconColor: "#888888",
   borderColor: "#333333",
+  sliderBg: "#0d0d0d",
   homeBgType: "color",
   homeBgColor: "#1a1a1a",
   homeBgImage: "",
@@ -124,6 +126,7 @@ export function useLayoutColors() {
     root.style.setProperty("--layout-icon-color", colors.iconColor);
     root.style.setProperty("--layout-border-color", colors.borderColor);
     root.style.setProperty("--layout-home-bg-color", colors.homeBgColor);
+    root.style.setProperty("--layout-slider-bg", colors.sliderBg);
 
     // Also update player CSS vars from accent color
     const accentHsl = hexToHsl(colors.accentColor);
