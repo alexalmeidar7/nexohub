@@ -261,13 +261,16 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
     let currentSection: "participantes" | "escalada" | "bloco" | null = null;
     let currentBloco: NewsItem[] = [];
 
+    let lineIndex = 0;
     for (const rawLine of rawLines) {
       const line = rawLine.trim();
       if (!line) continue;
       const cleaned = clean(line);
       const lower = cleaned.toLowerCase();
+      lineIndex++;
 
-      // 1) Try label extraction: "Estúdio: xxx" or "**Estúdio:** xxx"
+      // 1) First non-empty line = Estúdio (if no label found yet)
+      // Check for labeled format first: "Estúdio: xxx"
       const estMatch = cleaned.match(/^est[uú]dio\s*:\s*(.+)/i);
       if (estMatch && !parsedEstudio) {
         parsedEstudio = estMatch[1].trim();
@@ -279,7 +282,18 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
         continue;
       }
 
-      // 2) Detect section headers
+      // If no estudio yet and no section started, this is the first line = estudio
+      if (!parsedEstudio && !currentSection) {
+        parsedEstudio = cleaned;
+        continue;
+      }
+      // If no programa yet and no section started, this is the second line = programa
+      if (!parsedPrograma && !currentSection) {
+        parsedPrograma = cleaned;
+        continue;
+      }
+
+      // 2) Detect section headers: *EQUIPE*, **EQUIPE:**, EQUIPE:, etc.
       if (/^(equipe|participantes?)\s*:?\s*$/i.test(lower)) {
         currentSection = "participantes";
         continue;
