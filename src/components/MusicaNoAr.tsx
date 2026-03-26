@@ -924,20 +924,22 @@ export default function MusicaNoAr() {
           >
             {/* Gradient progress fill */}
             <div
-              className="absolute inset-0 rounded-2xl"
+              className="absolute inset-y-0 left-0 rounded-2xl pointer-events-none"
               style={{
                 width: `${progress}%`,
-                background: `linear-gradient(90deg, var(--layout-slider-bg, #0d0d0d) 0%, color-mix(in srgb, var(--layout-slider-bg, #0d0d0d) 60%, var(--layout-accent-color, #268ffa)) 50%, var(--layout-accent-color, #268ffa) 100%)`,
+                minWidth: progress > 0 ? "8px" : "0px",
+                background: `linear-gradient(90deg, var(--layout-slider-bg, #0d0d0d) 0%, color-mix(in srgb, var(--layout-slider-bg, #0d0d0d) 50%, var(--layout-accent-color, #268ffa)) 60%, var(--layout-accent-color, #268ffa) 100%)`,
                 transition: sliderResetting
                   ? "width 0.6s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.6s ease"
                   : "width 0.5s linear",
-                opacity: sliderResetting ? 0.3 : 1,
+                opacity: sliderResetting ? 0.3 : 0.85,
+                zIndex: 1,
               }}
             />
             {/* Shimmer overlay on progress */}
-            <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none" style={{ width: `${progress}%` }}>
+            <div className="absolute inset-y-0 left-0 rounded-2xl overflow-hidden pointer-events-none" style={{ width: `${progress}%`, zIndex: 2 }}>
               <div className="absolute inset-0" style={{
-                background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.06) 50%, transparent 100%)",
+                background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.08) 50%, transparent 100%)",
                 animation: "player-shimmer 3s ease-in-out infinite",
               }} />
             </div>
