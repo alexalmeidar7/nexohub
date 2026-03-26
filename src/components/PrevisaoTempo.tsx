@@ -317,9 +317,9 @@ export default function PrevisaoTempo() {
             <div key={f.name} className="flex items-center gap-2 rounded-full px-3 py-1.5 transition-all hover:shadow-md"
               style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)" }}>
               <input type="checkbox" checked={f.inXml} onChange={() => toggleFavoriteXml(f.name)}
-                className="w-3 h-3" style={{ accentColor: "#2dbef3" }} title="Incluir no XML" />
+                className="w-3 h-3" style={{ accentColor: "var(--layout-accent-color, #444444)" }} title="Incluir no XML" />
               <button onClick={() => { setCity(f.name); fetchWeather(f.name); }}
-                className="text-xs font-medium transition-colors hover:text-[#2dbef3]"
+                className="text-xs font-medium transition-colors"
                 style={{ color: "var(--layout-page-text, #1a1a1a)" }}
               >{f.name}</button>
               <button onClick={() => removeFavorite(f.name)}
