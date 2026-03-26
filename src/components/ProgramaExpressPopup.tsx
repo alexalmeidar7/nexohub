@@ -280,7 +280,7 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
             <Zap size={20} style={{ color: "var(--layout-accent-color, #2ec1f7)" }} />
-            Programa Express
+            {editingId ? "Editar Programa Express" : "Programa Express"}
           </DialogTitle>
         </DialogHeader>
 
