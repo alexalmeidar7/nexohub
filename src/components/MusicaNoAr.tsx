@@ -990,28 +990,31 @@ export default function MusicaNoAr() {
               </div>
 
               {/* ── CENTER DIVIDER ── */}
-                <div className="flex flex-col items-center justify-center px-3" style={{ minWidth: 100 }}>
+                <div className="flex flex-col items-center justify-center px-3" style={{ minWidth: 90 }}>
                   <div
                     className={`rounded-xl px-3 py-4 flex flex-col items-center gap-2 ${bothActive ? "music-dual-monitor-blink" : ""}`}
                     style={{
                       background: bothActive
                         ? "linear-gradient(135deg, hsl(142 72% 26%) 0%, hsl(142 72% 42%) 100%)"
-                        : "hsl(246 69% 16%)",
-                      color: "hsl(0 0% 100%)",
+                        : "var(--layout-header-bg, #0d0446)",
+                      color: "var(--layout-header-text, #ffffff)",
                     }}
                   >
-                  <span className="text-[9px] font-black uppercase tracking-wider text-center leading-tight text-white">Monitorar<br/>os dois<br/>Sources</span>
-                  <span className="text-lg text-white">↔</span>
+                  <span className="text-[8px] font-black uppercase tracking-wider text-center leading-tight" style={{ color: "var(--layout-header-text, #ffffff)" }}>Monitorar<br/>os dois<br/>Sources</span>
+                  <span className="text-lg" style={{ color: "var(--layout-header-text, #ffffff)" }}>↔</span>
                 </div>
               </div>
 
               {/* ── LOCAL SOURCE ── */}
-              <div className="rounded-xl p-4 space-y-3" style={{ backgroundColor: "color-mix(in srgb, var(--layout-header-bg, #0d0446) 8%, var(--layout-page-bg, #ffffff))", border: "1px solid color-mix(in srgb, var(--layout-header-bg, #0d0446) 15%, var(--layout-page-bg, #ffffff))" }}>
-                <h4 className="text-xs font-black uppercase tracking-wide" style={{ color: "var(--layout-page-text, #0d0446)" }}>Origem Source Arquivo Local</h4>
+              <div className="rounded-xl p-4 space-y-3" style={{ backgroundColor: "color-mix(in srgb, var(--layout-header-bg, #0d0446) 6%, var(--layout-page-bg, #ffffff))", border: "1px solid color-mix(in srgb, var(--layout-header-bg, #0d0446) 10%, var(--layout-page-bg, #ffffff))" }}>
+                <h4 className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 70%, transparent)" }}>
+                  <FolderOpen size={12} style={{ color: "var(--layout-icon-color, #268ffa)" }} />
+                  Origem Local
+                </h4>
                 <div className="flex gap-1.5">
-                  <div className="flex-1 flex items-center gap-2 px-3 py-2 rounded-lg" style={{ backgroundColor: "#ffffff", border: "1px solid #c5d9f2" }}>
-                    <FolderOpen size={14} style={{ color: "#7c8db5" }} />
-                    <span className="flex-1 text-xs truncate" style={{ color: localFileName ? "#0d0446" : "#7c8db5" }}>{localFileName || "Nenhum arquivo"}</span>
+                  <div className="flex-1 flex items-center gap-2 px-3 py-2.5 rounded-lg transition-all" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 15%, transparent)" }}>
+                    <FolderOpen size={13} style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 40%, transparent)" }} />
+                    <span className="flex-1 text-xs truncate" style={{ color: localFileName ? "var(--layout-page-text, #0d0446)" : "color-mix(in srgb, var(--layout-page-text, #0d0446) 40%, transparent)" }}>{localFileName || "Nenhum arquivo"}</span>
                   </div>
                   <button
                     onClick={() => {
@@ -1021,16 +1024,16 @@ export default function MusicaNoAr() {
                         fileInputRef.current?.click();
                       }
                     }}
-                    className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
-                    style={{ backgroundColor: "#0d0446", color: "#ffffff" }}
+                    className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 transition-all hover:opacity-80"
+                    style={{ backgroundColor: "var(--layout-header-bg, #0d0446)", color: "var(--layout-header-text, #ffffff)" }}
                   >
                     <Upload size={14} />
                   </button>
                   <label
-                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg select-none shrink-0 text-white"
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg select-none shrink-0 transition-all hover:opacity-90"
                     style={{
-                      backgroundColor: "#0d0446",
-                      color: "hsl(0 0% 100%)",
+                      backgroundColor: "var(--layout-header-bg, #0d0446)",
+                      color: "var(--layout-header-text, #ffffff)",
                       opacity: hasValidLocalSource ? 1 : 0.45,
                       cursor: hasValidLocalSource ? "pointer" : "not-allowed",
                     }}
@@ -1042,7 +1045,7 @@ export default function MusicaNoAr() {
                       disabled={!hasValidLocalSource}
                       className="w-3.5 h-3.5 accent-white"
                     />
-                    <span className="text-[10px] font-bold whitespace-nowrap text-white">LER ESSA</span>
+                    <span className="text-[10px] font-bold whitespace-nowrap" style={{ color: "var(--layout-header-text, #ffffff)" }}>LER ESSA</span>
                   </label>
                 </div>
 
