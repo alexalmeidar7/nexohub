@@ -138,6 +138,7 @@ const colorLabels: Record<string, string> = {
   widgetText: "Texto dos Widgets",
   iconColor: "Cor dos Ícones",
   borderColor: "Cor das Bordas",
+  sliderBg: "Fundo Slider Música",
 };
 
 type DashboardSettingsPayload = Record<string, any> & {
