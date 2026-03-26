@@ -1182,7 +1182,7 @@ export default function MusicaNoAr() {
 
                 {/* Status bar — hide AGUARDANDO when no file */}
                 {isLocalSelected && localMonitoring && (music || lastSource === "pasta") ? (
-                  <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: "linear-gradient(90deg, #22c55e 0%, #4ade80 100%)", color: "#ffffff" }}>
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))", color: "var(--layout-header-text, #ffffff)" }}>
                     <span className="relative flex h-2 w-2">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 bg-white" />
                       <span className="relative inline-flex rounded-full h-2 w-2 bg-white" />
