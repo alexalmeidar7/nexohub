@@ -237,116 +237,143 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
 
   const parsePastedScript = () => {
     if (!pasteText.trim()) { toast.error("Cole o texto do roteiro"); return; }
-    const lines = pasteText.split("\n").map(l => l.trim()).filter(l => l);
-    if (lines.length < 3) { toast.error("O roteiro precisa de pelo menos 3 linhas (Estúdio, Programa, conteúdo)"); return; }
+    const rawLines = pasteText.split("\n").map(l => l.trim()).filter(l => l);
+    if (rawLines.length < 2) { toast.error("O roteiro precisa de pelo menos 2 linhas"); return; }
 
-    // Line 1: Estúdio
-    const parsedEstudio = lines[0];
-    const matchedEstudio = estudios.find(e => e.toLowerCase() === parsedEstudio.toLowerCase());
-    if (matchedEstudio) setEstudio(matchedEstudio);
-    else { setEstudio(parsedEstudio); toast.info(`Estúdio "${parsedEstudio}" não encontrado na lista, definido manualmente`); }
+    // Helper: strip markdown bold markers and leading bullet/number
+    const clean = (s: string) => s.replace(/\*\*/g, "").replace(/^[-•]\s*/, "").replace(/^\d+\.\s*/, "").trim();
+    // Extract value after label like "Estúdio: xxx" or "**Estúdio:** xxx"
+    const extractLabel = (line: string, ...labels: string[]): string | null => {
+      const c = clean(line);
+      for (const label of labels) {
+        const re = new RegExp(`^${label}\\s*:\\s*(.+)`, "i");
+        const m = c.match(re);
+        if (m) return m[1].trim();
+      }
+      return null;
+    };
+    // Extract URL from markdown link [text](url) or plain URL
+    const extractUrl = (s: string): string | null => {
+      const mdLink = s.match(/\[.*?\]\((https?:\/\/[^\s)]+)\)/);
+      if (mdLink) return mdLink[1];
+      const plainUrl = s.match(/(https?:\/\/[^\s]+)/);
+      if (plainUrl) return plainUrl[1];
+      return null;
+    };
+    // Check if line is a section header
+    const isSectionHeader = (line: string): string | null => {
+      const c = clean(line).toLowerCase();
+      if (/^(equipe|participantes?)\s*:?\s*$/i.test(c) || c === "equipe" || c === "participantes") return "participantes";
+      if (/^escalada\s*:?\s*$/i.test(c) || c === "escalada") return "escalada";
+      const blocoMatch = c.match(/^bloco\s*(\d+)\s*:?\s*$/i);
+      if (blocoMatch) return "bloco";
+      return null;
+    };
 
-    // Line 2: Programa
-    const parsedPrograma = lines[1];
-    const matchedPrograma = programas.find(p => p.nome.toLowerCase() === parsedPrograma.toLowerCase());
-    if (matchedPrograma) {
-      setProgramaId(matchedPrograma.id);
-    } else {
-      // Try partial match
-      const partial = programas.find(p => p.nome.toLowerCase().includes(parsedPrograma.toLowerCase()) || parsedPrograma.toLowerCase().includes(p.nome.toLowerCase()));
-      if (partial) setProgramaId(partial.id);
-      else toast.warning(`Programa "${parsedPrograma}" não encontrado`);
-    }
-
-    // Remaining lines: parse sections
+    let parsedEstudio = "";
+    let parsedPrograma = "";
     const parsedParticipantes: Participante[] = [];
     const parsedEscalada: string[] = [];
     const parsedBlocos: Bloco[] = [];
     let currentSection: "participantes" | "escalada" | "bloco" | null = null;
     let currentBloco: NewsItem[] = [];
 
-    for (let i = 2; i < lines.length; i++) {
-      const line = lines[i];
-      const lower = line.toLowerCase();
+    for (const line of rawLines) {
+      // Try to extract Estúdio label
+      const estVal = extractLabel(line, "est[uú]dio", "studio");
+      if (estVal && !parsedEstudio) { parsedEstudio = estVal; continue; }
 
-      // Detect section headers
-      if (lower.includes("participante") || lower.includes("participantes")) {
-        currentSection = "participantes";
-        continue;
-      }
-      if (lower.includes("escalada")) {
-        currentSection = "escalada";
-        continue;
-      }
-      if (/^bloco\s*\d+/i.test(lower)) {
-        if (currentBloco.length > 0) parsedBlocos.push({ noticias: currentBloco });
-        currentBloco = [];
-        currentSection = "bloco";
-        continue;
-      }
+      // Try to extract Programa label
+      const progVal = extractLabel(line, "programa");
+      if (progVal && !parsedPrograma) { parsedPrograma = progVal; continue; }
 
-      // If no section detected yet, try to auto-detect based on content
-      if (!currentSection) {
-        // Check if it looks like a participant (Nome - Cargo : Instagram)
-        if (line.includes(" - ") || line.includes(" : ")) {
-          currentSection = "participantes";
-        } else {
-          // Default to bloco content
-          currentSection = "bloco";
+      // Check section header
+      const section = isSectionHeader(line);
+      if (section) {
+        if (section === "bloco") {
+          if (currentBloco.length > 0) parsedBlocos.push({ noticias: currentBloco });
+          currentBloco = [];
         }
+        currentSection = section as any;
+        continue;
       }
 
+      // Parse content based on current section
       if (currentSection === "participantes") {
-        // Format: Nome - Cargo : Instagram  OR  Nome - Cargo  OR  Nome
-        const parts = line.split(/\s*[-–]\s*/);
-        const nome = parts[0]?.trim() || "";
+        const cleaned = clean(line);
+        if (!cleaned) continue;
+        // Format: Nome – cargo : @instagram  OR  Nome - cargo: @insta
+        const dashParts = cleaned.split(/\s*[–—-]\s*/);
+        const nome = dashParts[0]?.trim() || "";
         let cargo = "";
         let instagram = "";
-        if (parts.length > 1) {
-          const rest = parts.slice(1).join(" - ");
-          const colonParts = rest.split(/\s*[:]\s*/);
+        if (dashParts.length > 1) {
+          const rest = dashParts.slice(1).join(" – ");
+          const colonParts = rest.split(/\s*:\s*/);
           cargo = colonParts[0]?.trim() || "";
-          instagram = colonParts[1]?.trim() || "";
+          instagram = colonParts[1]?.trim().replace(/^@/, "") || "";
         }
-        if (nome) parsedParticipantes.push({ nome, cargo, instagram });
+        if (nome) parsedParticipantes.push({ nome, cargo, instagram: instagram ? `@${instagram}` : "" });
       } else if (currentSection === "escalada") {
-        if (line) parsedEscalada.push(line);
+        const cleaned = clean(line);
+        if (cleaned) parsedEscalada.push(cleaned);
       } else if (currentSection === "bloco") {
-        if (line) {
-          const isUrl = line.startsWith("http");
-          currentBloco.push({
-            titulo: isUrl ? "" : line,
-            imagemUrl: "",
-            escalada: false,
-            link: isUrl ? line : undefined,
-          });
-        }
+        const cleaned = clean(line);
+        if (!cleaned) continue;
+        const url = extractUrl(line);
+        currentBloco.push({
+          titulo: url ? "" : cleaned,
+          imagemUrl: "",
+          escalada: false,
+          link: url || undefined,
+        });
       }
     }
 
     if (currentBloco.length > 0) parsedBlocos.push({ noticias: currentBloco });
 
+    // If no labeled estudio/programa, fallback to first two non-section lines
+    if (!parsedEstudio && !parsedPrograma) {
+      const contentLines = rawLines.filter(l => !isSectionHeader(l));
+      if (contentLines.length >= 2) {
+        parsedEstudio = clean(contentLines[0]);
+        parsedPrograma = clean(contentLines[1]);
+      }
+    }
+
+    // Set Estúdio
+    if (parsedEstudio) {
+      const matched = estudios.find(e => e.toLowerCase() === parsedEstudio.toLowerCase());
+      if (matched) setEstudio(matched);
+      else { setEstudio(parsedEstudio); toast.info(`Estúdio "${parsedEstudio}" não encontrado na lista, definido manualmente`); }
+    }
+
+    // Set Programa
+    if (parsedPrograma) {
+      const matched = programas.find(p => p.nome.toLowerCase() === parsedPrograma.toLowerCase());
+      if (matched) setProgramaId(matched.id);
+      else {
+        const partial = programas.find(p => p.nome.toLowerCase().includes(parsedPrograma.toLowerCase()) || parsedPrograma.toLowerCase().includes(p.nome.toLowerCase()));
+        if (partial) setProgramaId(partial.id);
+        else toast.warning(`Programa "${parsedPrograma}" não encontrado`);
+      }
+    }
+
     // Mark escalada items in blocos
     if (parsedEscalada.length > 0 && parsedBlocos.length > 0) {
       parsedBlocos.forEach(b => {
         b.noticias.forEach(n => {
-          if (parsedEscalada.some(e => e.toLowerCase() === n.titulo.toLowerCase())) {
-            n.escalada = true;
-          }
+          if (parsedEscalada.some(e => e.toLowerCase() === n.titulo.toLowerCase())) n.escalada = true;
         });
       });
     }
 
-    // If no blocos parsed but we have escalada items, create a bloco from them
     if (parsedBlocos.length === 0 && parsedEscalada.length > 0) {
-      parsedBlocos.push({
-        noticias: parsedEscalada.map(t => ({ titulo: t, imagemUrl: "", escalada: true })),
-      });
+      parsedBlocos.push({ noticias: parsedEscalada.map(t => ({ titulo: t, imagemUrl: "", escalada: true })) });
     }
 
     if (parsedParticipantes.length > 0) setParticipantes(parsedParticipantes);
     if (parsedBlocos.length > 0) setBlocos(parsedBlocos);
-    else if (parsedBlocos.length === 0) setBlocos([{ noticias: [{ titulo: "", imagemUrl: "", escalada: false }] }]);
 
     setShowPastePopup(false);
     setPasteText("");
