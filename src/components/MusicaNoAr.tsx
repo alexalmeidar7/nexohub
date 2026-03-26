@@ -778,6 +778,8 @@ export default function MusicaNoAr() {
                   </span>
                 )}
               </div>
+            </div>
+          </div>
         </div>
 
         {/* Delay & error warnings */}
