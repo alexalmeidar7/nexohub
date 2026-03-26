@@ -228,7 +228,7 @@ export default function MusicaNoAr() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const localFileRef = useRef<File | null>(null);
   const fileHandleRef = useRef<FileSystemFileHandle | null>(null);
-  const localPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // localPollRef removed — using Web Worker timer instead
   const [uploadHistory, setUploadHistory] = useState<UploadLogEntry[]>([]);
   const [localFileName, setLocalFileName] = useState<string>("");
   const [localMonitoring, setLocalMonitoring] = useState(false);
