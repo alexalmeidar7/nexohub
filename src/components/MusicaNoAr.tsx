@@ -1080,7 +1080,7 @@ export default function MusicaNoAr() {
                         }} className="text-green-600"><Check size={12} /></button>
                       </span>
                     ) : (
-                      <button onClick={() => { setDeviceNameInput(currentDeviceName); setEditingDeviceName(true); }} className="font-mono underline" style={{ color: "#7c8db5" }}>
+                      <button onClick={() => { setDeviceNameInput(currentDeviceName); setEditingDeviceName(true); }} className="font-mono underline" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 50%, transparent)" }}>
                         {currentDeviceName}
                       </button>
                     )}
