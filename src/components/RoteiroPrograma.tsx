@@ -90,6 +90,7 @@ export default function RoteiroPrograma() {
   const [showWhatsAppDialog, setShowWhatsAppDialog] = useState(false);
   const [whatsAppHistoricoData, setWhatsAppHistoricoData] = useState<any>(null);
   const [showExpressPopup, setShowExpressPopup] = useState(false);
+  const [expressEditData, setExpressEditData] = useState<ExpressEditData | null>(null);
 
   const fetchApresentadorStatus = async (roteiroId: string) => {
     const { data } = await supabase.from("roteiros").select("apresentador_editado, editado_at, share_login").eq("id", roteiroId).maybeSingle();
