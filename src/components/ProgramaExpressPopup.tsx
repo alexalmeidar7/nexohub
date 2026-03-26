@@ -353,7 +353,7 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
     toast.success("Roteiro importado com sucesso!");
   };
 
-
+  const updateNoticia = (bi: number, ni: number, field: keyof NewsItem, value: any) => {
     setBlocos(prev => {
       const copy = prev.map((b, i) => i === bi ? { ...b, noticias: b.noticias.map((n, j) => j === ni ? { ...n, [field]: value } : n) } : b);
       return copy;
