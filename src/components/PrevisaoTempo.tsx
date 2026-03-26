@@ -195,9 +195,11 @@ export default function PrevisaoTempo() {
     if (!searchCity.trim()) return;
     if (!silent) { setLoading(true); setError(""); setWeather(null); }
     try {
-      const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(searchCity)}&count=1&language=pt`);
-      const geoData = await geoRes.json();
-      if (!geoData.results?.length) { setError("Cidade não encontrada."); setLoading(false); return; }
+      const { data: geoData, error: geoErr } = await supabase.functions.invoke("fetch-weather", {
+        body: { action: "geocode", query: searchCity, count: 1 },
+      });
+      if (geoErr) throw geoErr;
+      if (!geoData?.results?.length) { setError("Cidade não encontrada."); setLoading(false); return; }
       const { latitude, longitude, name } = geoData.results[0];
       await fetchWeatherByCoords(latitude, longitude, name, silent);
     } catch { if (!silent) setError("Erro ao buscar dados meteorológicos."); setLoading(false); }
