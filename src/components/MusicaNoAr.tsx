@@ -915,22 +915,9 @@ export default function MusicaNoAr() {
                 </span>
 
                 {music && music.duracao > 0 && (
-                  <div className="mt-2 space-y-1.5">
-                    {/* Progress bar (thin) */}
-                    <div className="w-full h-1 rounded-full overflow-hidden" style={{ backgroundColor: "rgba(255,255,255,0.1)" }}>
-                      <div
-                        className="h-full rounded-full"
-                        style={{
-                          width: `${progress}%`,
-                          backgroundColor: "rgba(255,255,255,0.5)",
-                          transition: sliderResetting ? "width 0.6s ease" : "width 0.5s linear",
-                        }}
-                      />
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-[10px] font-mono font-bold" style={{ color: "rgba(255,255,255,0.7)" }}>{formatTime(elapsed)}</span>
-                      <span className="text-[10px] font-mono font-bold" style={{ color: "rgba(255,255,255,0.35)" }}>{formatTime(music.duracao)}</span>
-                    </div>
+                  <div className="mt-2 flex items-center gap-2">
+                    <span className="text-[10px] font-mono font-bold" style={{ color: "rgba(255,255,255,0.7)" }}>{formatTime(elapsed)}</span>
+                    <span className="text-[10px] font-mono font-bold" style={{ color: "rgba(255,255,255,0.35)" }}>{formatTime(music.duracao)}</span>
                   </div>
                 )}
               </div>
