@@ -374,7 +374,7 @@ export default function LayoutCustomizer() {
     <div className="space-y-6">
       {/* Home Background Section */}
       <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(46,193,247,0.2)", backgroundColor: "rgba(46,193,247,0.03)" }}>
-        <div className="px-5 py-3 flex items-center gap-2" style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)" }}>
+        <div className="px-5 py-3 flex items-center gap-2" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" }}>
           <ImageIcon size={16} className="text-white" />
           <h4 className="text-sm font-bold text-white">Fundo da Home</h4>
         </div>
@@ -664,7 +664,7 @@ export default function LayoutCustomizer() {
           onClick={handleSave}
           disabled={saving || !hasChanges}
           className="px-8 py-2.5 text-sm font-bold flex items-center gap-2 rounded-xl transition-all disabled:opacity-40"
-          style={{ background: hasChanges ? "linear-gradient(135deg, #268ffa, #2dbef3)" : "rgba(13,4,70,0.15)", color: "#ffffff", boxShadow: hasChanges ? "0 4px 16px rgba(38,143,250,0.3)" : "none" }}
+          style={{ background: hasChanges ? "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" : "rgba(13,4,70,0.15)", color: "#ffffff", boxShadow: hasChanges ? "0 4px 16px color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 30%, transparent)" : "none" }}
         >
           {saving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
           {saving ? "Salvando..." : "Salvar Alterações"}

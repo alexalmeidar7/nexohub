@@ -315,7 +315,7 @@ export default function LogosPatrocinadoresPage() {
                   <input type="text" value={nomeLogo} onChange={(e) => setNomeLogo(e.target.value)} placeholder="Ex: Patrocinador X"
                     className="w-full px-4 py-1.5 text-sm outline-none uppercase font-bold"
                     style={inputStyle}
-                    onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
+                    onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #444444)"; }}
                     onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
                   />
                 </div>
@@ -324,7 +324,7 @@ export default function LogosPatrocinadoresPage() {
                   <select value={programaId} onChange={(e) => setProgramaId(e.target.value)}
                     className="w-full px-4 py-1.5 text-sm outline-none appearance-none"
                     style={inputStyle}
-                    onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
+                    onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #444444)"; }}
                     onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
                   >
                     <option value="">Selecione um programa</option>
@@ -339,7 +339,7 @@ export default function LogosPatrocinadoresPage() {
                   <input type="date" value={dataFinal} onChange={(e) => setDataFinal(e.target.value)} required
                     className="w-full px-4 py-1.5 text-sm outline-none"
                     style={inputStyle}
-                    onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
+                    onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #444444)"; }}
                     onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
                   />
                 </div>
@@ -374,7 +374,7 @@ export default function LogosPatrocinadoresPage() {
                   ))}
                   <label className="w-20 h-20 rounded-lg flex flex-col items-center justify-center cursor-pointer transition-colors"
                     style={{ border: "2px dashed color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }}
-                    onMouseEnter={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #444444)"; }}
                     onMouseLeave={e => { e.currentTarget.style.borderColor = "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 20%, transparent)"; }}
                   >
                     <Plus size={18} style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }} />
@@ -508,7 +508,7 @@ export default function LogosPatrocinadoresPage() {
                               </span>
                               <button onClick={() => startFullEdit(logo)} className="text-[10px] flex items-center gap-1 mx-auto transition-colors"
                                 style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}
-                                onMouseEnter={e => { e.currentTarget.style.color = "#2dbef3"; }}
+                                onMouseEnter={e => { e.currentTarget.style.color = "var(--layout-accent-color, #444444)"; }}
                                 onMouseLeave={e => { e.currentTarget.style.color = "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)"; }}
                               >
                                 <Pencil size={10} /> Editar

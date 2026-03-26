@@ -523,9 +523,9 @@ export default function ApresentadorForm() {
         <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
           <div className="animate-fade-in p-6 text-center space-y-4"
             style={{ width: "420px", background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))", borderRadius: "20px", boxShadow: "0 20px 60px color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
-            <FileSpreadsheet size={36} style={{ color: "#2dbef3", margin: "0 auto" }} />
+            <FileSpreadsheet size={36} style={{ color: "var(--layout-accent-color, #444444)", margin: "0 auto" }} />
             <p className="text-white text-sm font-semibold">
-              Deseja importar <span style={{ color: "#2dbef3" }}>{importRows.length}</span> participante{importRows.length > 1 ? "s" : ""} para o banco de dados?
+              Deseja importar <span style={{ color: "var(--layout-accent-color, #444444)" }}>{importRows.length}</span> participante{importRows.length > 1 ? "s" : ""} para o banco de dados?
             </p>
             <div className="flex gap-3 justify-center pt-2">
               <button onClick={() => setImportRows(null)} disabled={importing}
@@ -549,10 +549,10 @@ export default function ApresentadorForm() {
           <div className="flex flex-col items-center justify-center animate-fade-in overflow-hidden"
             style={{ width: "450px", height: "165px", background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))", borderRadius: "20px", boxShadow: "0 20px 60px color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>
             <div className="flex items-center gap-3 flex-1 justify-center" style={{ fontSize: "14px", color: "var(--layout-header-text, #ffffff)", fontWeight: 600 }}>
-              <CheckCircle size={22} style={{ color: "#2dbef3" }} /> Salvo com sucesso!
+              <CheckCircle size={22} style={{ color: "var(--layout-accent-color, #444444)" }} /> Salvo com sucesso!
             </div>
             <div className="w-full" style={{ height: "4px", backgroundColor: "rgba(255,255,255,0.1)" }}>
-              <div style={{ height: "100%", background: "linear-gradient(90deg, #268ffa, #2dbef3)", animation: "shrinkBar 2s linear forwards" }} />
+              <div style={{ height: "100%", background: "linear-gradient(90deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))", animation: "shrinkBar 2s linear forwards" }} />
             </div>
           </div>
         </div>

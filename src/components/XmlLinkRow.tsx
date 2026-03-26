@@ -85,7 +85,7 @@ export default function XmlLinkRow({ label, xmlContent, permanentUrl: externalUr
         className="cursor-pointer py-1 transition-opacity hover:opacity-80"
       >
         <div className="flex items-center gap-2">
-          <Code2 size={14} className="shrink-0" style={{ color: "#268ffa" }} />
+          <Code2 size={14} className="shrink-0" style={{ color: "var(--layout-accent-color, #444444)" }} />
           <span className="text-[10px] text-white/70 font-bold whitespace-nowrap">{label}</span>
           {!ready ? (
             <Loader2 size={12} className="shrink-0 animate-spin text-white/40 ml-auto" />
