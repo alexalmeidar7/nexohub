@@ -497,7 +497,7 @@ export default function PreRollPage() {
             {sectionHeader("⚙️", "Configurações")}
 
             {/* Mid-Roll checkbox */}
-            <div className="rounded-xl p-4" style={{ backgroundColor: "rgba(38,143,250,0.04)", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #444444) 15%, transparent)" }}>
+            <div className="rounded-xl p-4" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #444444) 4%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #444444) 15%, transparent)" }}>
               <label className="flex items-center gap-3 cursor-pointer">
                 <input type="checkbox" checked={isMidroll} onChange={(e) => setIsMidroll(e.target.checked)}
                   className="w-4 h-4 rounded" style={{ accentColor: "var(--layout-accent-color, #444444)" }} />

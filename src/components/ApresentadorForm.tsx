@@ -480,11 +480,11 @@ export default function ApresentadorForm() {
                         {a.whatsapp ? (
                           <span className="flex items-center gap-1.5 text-[11px]"><Phone size={12} style={{ color: "#25D366" }} /> {a.whatsapp}</span>
                         ) : null}
-                        {!a.instagram && !a.whatsapp && <span className="text-[#0d0446]/25">—</span>}
+                        {!a.instagram && !a.whatsapp && <span className="text-[var(--layout-page-text)]/25">—</span>}
                       </div>
                     </td>
                     <td className="px-4 py-2.5 text-center">
-                      {a.foto ? <CheckCircle size={15} className="inline" style={{ color: "#22c55e" }} /> : <span className="text-[#0d0446]/20">—</span>}
+                      {a.foto ? <CheckCircle size={15} className="inline" style={{ color: "#22c55e" }} /> : <span className="text-[var(--layout-page-text)]/20">—</span>}
                     </td>
                     <td className="px-4 py-2.5 text-center">
                       <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-semibold ${
@@ -497,7 +497,7 @@ export default function ApresentadorForm() {
                     <td className="px-4 py-2.5 text-center">
                       <div className="flex items-center justify-center gap-1">
                         <button onClick={() => startEdit(a)} title="Editar"
-                          className="w-7 h-7 rounded-lg flex items-center justify-center transition-all hover:bg-[#268ffa]/10">
+                          className="w-7 h-7 rounded-lg flex items-center justify-center transition-all hover:bg-[var(--layout-accent-color)]/10">
                           <Pencil size={13} style={{ color: "var(--layout-icon-color, #888888)" }} />
                         </button>
                         <button onClick={() => toggleAtivo(a.id, a.ativo)} title={a.ativo ? "Desativar" : "Ativar"}

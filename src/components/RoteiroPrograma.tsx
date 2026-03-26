@@ -409,7 +409,7 @@ export default function RoteiroPrograma() {
     setEditingRoteiroId(null);
 
     const tdStyle = "border:1px solid rgba(13,4,70,0.10);padding:10px 12px;word-wrap:break-word;overflow-wrap:break-word;vertical-align:top;line-height:1.6";
-    const thStyle = `${tdStyle};text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:0.8px;font-weight:700;color:#0d0446;background:rgba(38,143,250,0.06)`;
+    const thStyle = `${tdStyle};text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:0.8px;font-weight:700;color:#0d0446;background:color-mix(in srgb, var(--layout-accent-color) 6%, transparent)`;
     const actionBtnStyle = "cursor:pointer;padding:2px 6px;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;font-size:13px";
     const perguntaActions = `<td style="${tdStyle};white-space:nowrap;text-align:center;width:90px" contenteditable="false"><span data-action="move-up" style="${actionBtnStyle};color:#268ffa" title="Mover para cima">▲</span> <span data-action="move-down" style="${actionBtnStyle};color:#268ffa" title="Mover para baixo">▼</span> <span data-action="delete-pergunta" style="${actionBtnStyle};color:#dc2626" title="Remover pergunta">🗑</span></td>`;
     const elStyle = `${tdStyle};font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.3px;color:#0d0446`;
@@ -557,8 +557,8 @@ export default function RoteiroPrograma() {
 <td style="${tdStyle};font-size:11px;color:color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)">Abertura do programa</td>
 </tr>
 <tr>
-<td style="${tdStyle};background:rgba(38,143,250,0.04)"></td>
-<td style="${tdStyle};font-weight:700;color:#268ffa;background:rgba(38,143,250,0.04)" colspan="3">ENTREVISTA</td>
+<td style="${tdStyle};background:color-mix(in srgb, var(--layout-accent-color) 4%, transparent)"></td>
+<td style="${tdStyle};font-weight:700;color:#268ffa;background:color-mix(in srgb, var(--layout-accent-color) 4%, transparent)" colspan="3">ENTREVISTA</td>
 </tr>
 <tr data-pergunta="1">
 <td style="${timeStyle}">--:--</td>
@@ -691,7 +691,7 @@ ${perguntaActions}
                   data-field="estudio"
                   value={estudio}
                   onChange={e => handleEstudioChange(e.target.value)}
-                  className="w-full px-3 py-2.5 rounded-xl text-xs outline-none transition-all focus:ring-2 focus:ring-[#268ffa]/20"
+                  className="w-full px-3 py-2.5 rounded-xl text-xs outline-none transition-all focus:ring-2 focus:ring-[var(--layout-accent-color)]/20"
                   style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 35%, transparent)", color: "var(--layout-page-text, #1a1a1a)" }}
                 >
                   <option value="">Selecione o estúdio</option>
@@ -704,7 +704,7 @@ ${perguntaActions}
                 <select
                   value={tipoPrograma}
                   onChange={e => handleTipoChange(e.target.value)}
-                  className="w-full px-3 py-2.5 rounded-xl text-xs outline-none transition-all focus:ring-2 focus:ring-[#268ffa]/20"
+                  className="w-full px-3 py-2.5 rounded-xl text-xs outline-none transition-all focus:ring-2 focus:ring-[var(--layout-accent-color)]/20"
                   style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 35%, transparent)", color: "var(--layout-page-text, #1a1a1a)" }}
                 >
                   <option value="">Todos os tipos</option>
@@ -720,7 +720,7 @@ ${perguntaActions}
                   data-field="programa"
                   value={programaNome}
                   onChange={e => handleProgramaChange(e.target.value)}
-                  className="w-full px-3 py-2.5 rounded-xl text-xs outline-none transition-all focus:ring-2 focus:ring-[#268ffa]/20"
+                  className="w-full px-3 py-2.5 rounded-xl text-xs outline-none transition-all focus:ring-2 focus:ring-[var(--layout-accent-color)]/20"
                   style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 35%, transparent)", color: "var(--layout-page-text, #1a1a1a)" }}
                 >
                   <option value="">Selecione o programa</option>
@@ -744,7 +744,7 @@ ${perguntaActions}
                 <Popover>
                   <PopoverTrigger asChild>
                     <button
-                      className="w-full px-3 py-2.5 rounded-xl text-xs text-left flex items-center gap-2 outline-none transition-all hover:border-[#268ffa]/30"
+                      className="w-full px-3 py-2.5 rounded-xl text-xs text-left flex items-center gap-2 outline-none transition-all hover:border-[var(--layout-accent-color)]/30"
                       style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 35%, transparent)", color: "var(--layout-page-text, #1a1a1a)" }}
                     >
                       <CalendarIcon size={12} style={{ color: "var(--layout-icon-color, #888888)" }} />
@@ -773,7 +773,7 @@ ${perguntaActions}
                         row: "flex w-full mt-1",
                         cell: "h-9 w-9 text-center text-sm p-0 relative rounded-full",
                         day: "h-9 w-9 p-0 font-medium rounded-full transition-all hover:bg-[rgba(38,143,250,0.12)]",
-                        day_selected: "bg-[#268ffa] text-white hover:bg-[#268ffa] focus:bg-[var(--layout-accent-color)] font-bold shadow-md",
+                        day_selected: "bg-[var(--layout-accent-color)] text-white hover:bg-[var(--layout-accent-color)] focus:bg-[var(--layout-accent-color)] font-bold shadow-md",
                         day_today: "bg-[color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)] font-bold",
                         day_outside: "opacity-30",
                         day_disabled: "opacity-30",
@@ -800,7 +800,7 @@ ${perguntaActions}
                   value={horario}
                   onChange={e => setHorario(e.target.value)}
                   placeholder="Ex: 08:00"
-                  className="w-full px-3 py-2.5 rounded-xl text-xs outline-none transition-all focus:ring-2 focus:ring-[#268ffa]/20"
+                  className="w-full px-3 py-2.5 rounded-xl text-xs outline-none transition-all focus:ring-2 focus:ring-[var(--layout-accent-color)]/20"
                   style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 35%, transparent)", color: "var(--layout-page-text, #1a1a1a)" }}
                 />
               </div>
@@ -814,7 +814,7 @@ ${perguntaActions}
                   value={roteiroTitulo}
                   onChange={e => setRoteiroTitulo(e.target.value)}
                   placeholder="Ex: Gravação de Podcast"
-                  className="w-full px-3 py-2.5 rounded-xl outline-none transition-all focus:ring-2 focus:ring-[#268ffa]/20 uppercase text-sm font-bold"
+                  className="w-full px-3 py-2.5 rounded-xl outline-none transition-all focus:ring-2 focus:ring-[var(--layout-accent-color)]/20 uppercase text-sm font-bold"
                   style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 35%, transparent)", color: "var(--layout-page-text, #1a1a1a)" }}
                 />
               </div>
@@ -981,14 +981,14 @@ ${perguntaActions}
                 value={roteiroSubtitulo}
                 onChange={e => setRoteiroSubtitulo(e.target.value)}
                 placeholder="Título da entrevista"
-                className="w-full px-3 py-2.5 rounded-xl text-sm font-bold outline-none mb-2 transition-all focus:ring-2 focus:ring-[#268ffa]/20"
+                className="w-full px-3 py-2.5 rounded-xl text-sm font-bold outline-none mb-2 transition-all focus:ring-2 focus:ring-[var(--layout-accent-color)]/20"
                 style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)", color: "var(--layout-page-text, #1a1a1a)" }}
               />
               <input
                 value={assuntoSubtitulo}
                 onChange={e => setAssuntoSubtitulo(e.target.value)}
                 placeholder="Subtítulo ou observação"
-                className="w-full px-3 py-2.5 rounded-xl text-xs outline-none transition-all focus:ring-2 focus:ring-[#268ffa]/20"
+                className="w-full px-3 py-2.5 rounded-xl text-xs outline-none transition-all focus:ring-2 focus:ring-[var(--layout-accent-color)]/20"
                 style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)", color: "var(--layout-page-text, #1a1a1a)" }}
               />
             </div>
@@ -1125,7 +1125,7 @@ ${perguntaActions}
                 <button
                   onClick={() => setShowParticipantForm(true)}
                   className="w-full py-2.5 rounded-xl text-xs font-bold transition-all hover:opacity-90 flex items-center justify-center gap-1.5"
-                  style={{ border: "1px dashed color-mix(in srgb, var(--layout-accent-color, #444444) 40%, transparent)", color: "var(--layout-icon-color, #888888)", backgroundColor: "rgba(38,143,250,0.04)" }}
+                  style={{ border: "1px dashed color-mix(in srgb, var(--layout-accent-color, #444444) 40%, transparent)", color: "var(--layout-icon-color, #888888)", backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #444444) 4%, transparent)" }}
                 >
                   <Plus size={12} />
                   adicionar participante
@@ -1327,7 +1327,7 @@ ${perguntaActions}
                           cell.style.backgroundColor = "";
                           return prev.filter(c => c !== cell);
                         } else {
-                          cell.style.outline = "2px solid #268ffa";
+                          cell.style.outline = "2px solid var(--layout-accent-color, #444444)";
                           cell.style.backgroundColor = mergeHighlightColor;
                           return [...prev, cell];
                         }
@@ -1627,7 +1627,7 @@ ${perguntaActions}
 
               {/* Assunto */}
               {(roteiroSubtitulo || assuntoSubtitulo) && (
-                <div className="mt-3 px-4 py-3 rounded-lg" style={{ backgroundColor: "rgba(38,143,250,0.06)", borderLeft: "3px solid #268ffa" }}>
+                <div className="mt-3 px-4 py-3 rounded-lg" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #444444) 6%, transparent)", borderLeft: "3px solid var(--layout-accent-color, #444444)" }}>
                   <p className="text-xs font-bold uppercase mb-0.5" style={{ color: "var(--layout-icon-color, #888888)" }}>Assunto da entrevista</p>
                   {roteiroSubtitulo && <p className="text-sm font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{roteiroSubtitulo}</p>}
                   {assuntoSubtitulo && <p className="text-xs" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>{assuntoSubtitulo}</p>}

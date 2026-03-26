@@ -214,7 +214,7 @@ function GradeBody({ gradeSlots, diasSemana, diaAtual, currentTimeStr, getProgra
                       background: isOnAir ? "linear-gradient(135deg, #268ffa, #2dbef3)" : "#ffffff",
                       color: isOnAir ? "#ffffff" : "var(--layout-header-bg, #1a1a1a)",
                       fontWeight: isOnAir ? "bold" : undefined,
-                      border: isOnAir ? "2px solid #268ffa" : "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)",
+                      border: isOnAir ? "2px solid var(--layout-accent-color, #444444)" : "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)",
                       verticalAlign: "top",
                       padding: "8px 10px",
                       boxShadow: isOnAir ? "0 2px 12px color-mix(in srgb, var(--layout-accent-color, #444444) 30%, transparent)" : "none",

@@ -142,13 +142,13 @@ export default function WeatherWidget({ onNavigate }: { onNavigate?: (page: any)
             <div className="w-16 h-2.5 rounded bg-white/5" />
           </div>
         </div>
-        <div className="w-24 h-10 rounded bg-[#268ffa]/15 mb-1" />
+        <div className="w-24 h-10 rounded bg-[var(--layout-accent-color)]/15 mb-1" />
         <div className="flex gap-3">
           <div className="w-16 h-2.5 rounded bg-white/5" />
           <div className="w-10 h-2.5 rounded bg-white/5" />
           <div className="w-10 h-2.5 rounded bg-white/5" />
         </div>
-        <div className="mt-auto w-24 h-6 rounded-lg bg-[#268ffa]/10" />
+        <div className="mt-auto w-24 h-6 rounded-lg bg-[var(--layout-accent-color)]/10" />
       </div>
     );
   }
