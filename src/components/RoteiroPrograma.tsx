@@ -1707,6 +1707,15 @@ ${perguntaActions}
           }}
         />
       </Suspense>
+      <Suspense fallback={null}>
+        <ProgramaExpressPopup
+          open={showExpressPopup}
+          onOpenChange={setShowExpressPopup}
+          programas={programas}
+          estudios={estudios}
+          onFinish={fetchHistorico}
+        />
+      </Suspense>
 
     </div>
   );
