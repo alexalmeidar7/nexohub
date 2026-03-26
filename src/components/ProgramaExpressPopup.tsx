@@ -229,7 +229,7 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) { reset(); onOpenChange(false); } }}>
-      <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "none" }}>
+      <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto overflow-x-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "none" }}>
         <button onClick={() => { reset(); onOpenChange(false); }} className="absolute top-3 right-3 rounded-full p-1 hover:opacity-70 transition-opacity" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
           <XIcon size={18} />
         </button>
