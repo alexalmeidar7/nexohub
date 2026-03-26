@@ -118,6 +118,7 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
     setEstudio(editData.estudio);
     setProgramaId(editData.programaId);
     setBlocos(editData.blocos.length > 0 ? editData.blocos : [{ noticias: [{ titulo: "", imagemUrl: "", escalada: false }] }]);
+    setParticipantes(editData.participantes || []);
     setEditingId(editData.roteiroId);
     setInitialized(true);
   }
