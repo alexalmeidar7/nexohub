@@ -80,10 +80,32 @@ export default function MiniPlayerWidget({ data, onClose }: { data: MiniPlayerDa
   const [volume, setVolume] = useState(80);
   const [playing, setPlaying] = useState(false);
   const [needsUnlock, setNeedsUnlock] = useState(false);
+  const [liveTitle, setLiveTitle] = useState(data.musicTitle || "");
+  const [liveArtist, setLiveArtist] = useState(data.musicArtist || "");
   const navigate = useNavigate();
   const { userSlug } = useParams();
 
   const isVideo = data.type === "video_live" || data.type === "video";
+
+  // Poll live music data from localStorage every 2s
+  useEffect(() => {
+    const sync = () => {
+      try {
+        const raw = localStorage.getItem("masterview_music_data");
+        if (!raw) return;
+        const m = JSON.parse(raw);
+        const t = (m.titulo || "").trim();
+        const a = (m.artista || "").trim();
+        if (t && t.toLowerCase() !== "sem título" && t.toLowerCase() !== "sem titulo") {
+          setLiveTitle(t);
+          setLiveArtist(a || "Desconhecido");
+        }
+      } catch {}
+    };
+    sync();
+    const iv = setInterval(sync, 2000);
+    return () => clearInterval(iv);
+  }, []);
 
   // Audio streaming — uses the global pre-unlocked audio element
   useEffect(() => {
