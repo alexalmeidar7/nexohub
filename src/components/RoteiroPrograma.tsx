@@ -1743,10 +1743,11 @@ ${perguntaActions}
       <Suspense fallback={null}>
         <ProgramaExpressPopup
           open={showExpressPopup}
-          onOpenChange={setShowExpressPopup}
+          onOpenChange={(v) => { setShowExpressPopup(v); if (!v) setExpressEditData(null); }}
           programas={programas}
           estudios={estudios}
           onFinish={fetchHistorico}
+          editData={expressEditData}
         />
       </Suspense>
 
