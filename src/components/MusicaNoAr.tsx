@@ -959,7 +959,7 @@ export default function MusicaNoAr() {
                       disabled={!hasValidOnlineUrl}
                       className="w-3.5 h-3.5 accent-white"
                     />
-                    <span className="text-[10px] font-bold whitespace-nowrap text-white">LER SOMENTE ESSA</span>
+                    <span className="text-[10px] font-bold whitespace-nowrap text-white">LER ESSA</span>
                   </label>
                 </div>
 
