@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { Zap, Plus, Trash2, Link2, Loader2, Image, Type, Check, X as XIcon, ChevronDown, ChevronUp, Pencil, Users, Search, UserPlus } from "lucide-react";
+import { Zap, Plus, Trash2, Link2, Loader2, Image, Type, Check, X as XIcon, ChevronDown, ChevronUp, Pencil, Users, Search, UserPlus, ClipboardPaste } from "lucide-react";
 import { decodeHtmlEntities } from "@/lib/textEncoding";
 
 interface Participante {
@@ -119,6 +119,8 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
   const [collapsedBlocos, setCollapsedBlocos] = useState<Set<number>>(new Set());
   const [editingId, setEditingId] = useState<string | null>(null);
   const [initialized, setInitialized] = useState(false);
+  const [showPastePopup, setShowPastePopup] = useState(false);
+  const [pasteText, setPasteText] = useState("");
 
   const [participantes, setParticipantes] = useState<Participante[]>([]);
   const [searchNome, setSearchNome] = useState("");
@@ -231,6 +233,124 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
     setShowResults(false);
     setNoResults(false);
     setShowNewContact(false);
+  };
+
+  const parsePastedScript = () => {
+    if (!pasteText.trim()) { toast.error("Cole o texto do roteiro"); return; }
+    const lines = pasteText.split("\n").map(l => l.trim()).filter(l => l);
+    if (lines.length < 3) { toast.error("O roteiro precisa de pelo menos 3 linhas (Estúdio, Programa, conteúdo)"); return; }
+
+    // Line 1: Estúdio
+    const parsedEstudio = lines[0];
+    const matchedEstudio = estudios.find(e => e.toLowerCase() === parsedEstudio.toLowerCase());
+    if (matchedEstudio) setEstudio(matchedEstudio);
+    else { setEstudio(parsedEstudio); toast.info(`Estúdio "${parsedEstudio}" não encontrado na lista, definido manualmente`); }
+
+    // Line 2: Programa
+    const parsedPrograma = lines[1];
+    const matchedPrograma = programas.find(p => p.nome.toLowerCase() === parsedPrograma.toLowerCase());
+    if (matchedPrograma) {
+      setProgramaId(matchedPrograma.id);
+    } else {
+      // Try partial match
+      const partial = programas.find(p => p.nome.toLowerCase().includes(parsedPrograma.toLowerCase()) || parsedPrograma.toLowerCase().includes(p.nome.toLowerCase()));
+      if (partial) setProgramaId(partial.id);
+      else toast.warning(`Programa "${parsedPrograma}" não encontrado`);
+    }
+
+    // Remaining lines: parse sections
+    const parsedParticipantes: Participante[] = [];
+    const parsedEscalada: string[] = [];
+    const parsedBlocos: Bloco[] = [];
+    let currentSection: "participantes" | "escalada" | "bloco" | null = null;
+    let currentBloco: NewsItem[] = [];
+
+    for (let i = 2; i < lines.length; i++) {
+      const line = lines[i];
+      const lower = line.toLowerCase();
+
+      // Detect section headers
+      if (lower.includes("participante") || lower.includes("participantes")) {
+        currentSection = "participantes";
+        continue;
+      }
+      if (lower.includes("escalada")) {
+        currentSection = "escalada";
+        continue;
+      }
+      if (/^bloco\s*\d+/i.test(lower)) {
+        if (currentBloco.length > 0) parsedBlocos.push({ noticias: currentBloco });
+        currentBloco = [];
+        currentSection = "bloco";
+        continue;
+      }
+
+      // If no section detected yet, try to auto-detect based on content
+      if (!currentSection) {
+        // Check if it looks like a participant (Nome - Cargo : Instagram)
+        if (line.includes(" - ") || line.includes(" : ")) {
+          currentSection = "participantes";
+        } else {
+          // Default to bloco content
+          currentSection = "bloco";
+        }
+      }
+
+      if (currentSection === "participantes") {
+        // Format: Nome - Cargo : Instagram  OR  Nome - Cargo  OR  Nome
+        const parts = line.split(/\s*[-–]\s*/);
+        const nome = parts[0]?.trim() || "";
+        let cargo = "";
+        let instagram = "";
+        if (parts.length > 1) {
+          const rest = parts.slice(1).join(" - ");
+          const colonParts = rest.split(/\s*[:]\s*/);
+          cargo = colonParts[0]?.trim() || "";
+          instagram = colonParts[1]?.trim() || "";
+        }
+        if (nome) parsedParticipantes.push({ nome, cargo, instagram });
+      } else if (currentSection === "escalada") {
+        if (line) parsedEscalada.push(line);
+      } else if (currentSection === "bloco") {
+        if (line) {
+          const isUrl = line.startsWith("http");
+          currentBloco.push({
+            titulo: isUrl ? "" : line,
+            imagemUrl: "",
+            escalada: false,
+            link: isUrl ? line : undefined,
+          });
+        }
+      }
+    }
+
+    if (currentBloco.length > 0) parsedBlocos.push({ noticias: currentBloco });
+
+    // Mark escalada items in blocos
+    if (parsedEscalada.length > 0 && parsedBlocos.length > 0) {
+      parsedBlocos.forEach(b => {
+        b.noticias.forEach(n => {
+          if (parsedEscalada.some(e => e.toLowerCase() === n.titulo.toLowerCase())) {
+            n.escalada = true;
+          }
+        });
+      });
+    }
+
+    // If no blocos parsed but we have escalada items, create a bloco from them
+    if (parsedBlocos.length === 0 && parsedEscalada.length > 0) {
+      parsedBlocos.push({
+        noticias: parsedEscalada.map(t => ({ titulo: t, imagemUrl: "", escalada: true })),
+      });
+    }
+
+    if (parsedParticipantes.length > 0) setParticipantes(parsedParticipantes);
+    if (parsedBlocos.length > 0) setBlocos(parsedBlocos);
+    else if (parsedBlocos.length === 0) setBlocos([{ noticias: [{ titulo: "", imagemUrl: "", escalada: false }] }]);
+
+    setShowPastePopup(false);
+    setPasteText("");
+    toast.success("Roteiro importado com sucesso!");
   };
 
   const updateNoticia = (bi: number, ni: number, field: keyof NewsItem, value: any) => {
@@ -461,11 +581,57 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
         </button>
 
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-            <Zap size={20} style={{ color: "var(--layout-accent-color, #2ec1f7)" }} />
-            {editingId ? "Editar Programa Express" : "Programa Express"}
-          </DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle className="flex items-center gap-2" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+              <Zap size={20} style={{ color: "var(--layout-accent-color, #2ec1f7)" }} />
+              {editingId ? "Editar Programa Express" : "Programa Express"}
+            </DialogTitle>
+            <button
+              onClick={() => setShowPastePopup(true)}
+              className="flex items-center gap-1.5 text-[11px] font-semibold py-1.5 px-3 rounded-lg hover:opacity-80 transition-all mr-6"
+              style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 12%, transparent)", color: "var(--layout-accent-color, #2ec1f7)" }}
+            >
+              <ClipboardPaste size={13} /> Colar Roteiro
+            </button>
+          </div>
         </DialogHeader>
+
+        {/* Paste Script Popup */}
+        {showPastePopup && (
+          <div className="rounded-xl p-3 space-y-2" style={{ border: "2px solid var(--layout-accent-color, #2ec1f7)", backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 6%, transparent)" }}>
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-bold flex items-center gap-1.5" style={{ color: "var(--layout-accent-color, #2ec1f7)" }}>
+                <ClipboardPaste size={14} /> Colar Roteiro
+              </p>
+              <button onClick={() => { setShowPastePopup(false); setPasteText(""); }} className="p-0.5 rounded hover:opacity-70" style={{ color: "var(--layout-page-text)" }}>
+                <XIcon size={14} />
+              </button>
+            </div>
+            <p className="text-[10px] leading-relaxed" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>
+              Cole o texto seguindo a ordem:<br/>
+              <strong>Linha 1:</strong> Estúdio | <strong>Linha 2:</strong> Programa<br/>
+              <strong>Depois:</strong> Participantes (Nome - Cargo : Instagram)<br/>
+              <strong>Depois:</strong> Escalada<br/>
+              <strong>Depois:</strong> Bloco 1, Bloco 2... (títulos ou links)
+            </p>
+            <textarea
+              value={pasteText}
+              onChange={e => setPasteText(e.target.value)}
+              placeholder={"Estúdio A\nJornal da Manhã\nParticipantes\nJoão Silva - Âncora : @joaosilva\nMaria - Repórter\nEscalada\nTítulo da notícia 1\nTítulo da notícia 2\nBloco 1\nNotícia do bloco 1\nhttps://link-da-materia.com\nBloco 2\nOutra notícia"}
+              className="w-full px-3 py-2 rounded-lg text-[11px] outline-none resize-none"
+              rows={10}
+              style={inputStyle}
+            />
+            <button
+              onClick={parsePastedScript}
+              disabled={!pasteText.trim()}
+              className="w-full py-2 rounded-lg text-[11px] font-bold transition-all hover:opacity-90 flex items-center justify-center gap-1.5 disabled:opacity-40"
+              style={{ backgroundColor: "var(--layout-accent-color, #2ec1f7)", color: "var(--layout-header-text, #fff)" }}
+            >
+              <Check size={12} /> Importar Roteiro
+            </button>
+          </div>
+        )}
 
         {/* Estudio + Programa */}
         <div className="grid grid-cols-2 gap-3 mt-2">
