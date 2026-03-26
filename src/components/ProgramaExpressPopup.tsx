@@ -375,6 +375,63 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
           </div>
         </div>
 
+        {/* Participantes */}
+        <div className="mt-4 rounded-xl p-3" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 25%, transparent)", backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 4%, transparent)" }}>
+          <p className="text-xs font-bold flex items-center gap-1.5 mb-2" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+            <Users size={14} style={{ color: "var(--layout-accent-color, #2ec1f7)" }} />
+            Participantes
+          </p>
+
+          {/* Listed participants */}
+          {participantes.length > 0 && (
+            <div className="space-y-1.5 mb-2">
+              {participantes.map((p, idx) => (
+                <div key={idx} className="flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-[11px]" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 90%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 12%, transparent)" }}>
+                  <span className="font-semibold flex-1 truncate" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{p.nome}</span>
+                  {p.cargo && <span className="text-[10px] shrink-0" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>{p.cargo}</span>}
+                  {p.instagram && <span className="text-[10px] shrink-0" style={{ color: "var(--layout-accent-color, #2ec1f7)" }}>@{p.instagram.replace("@", "")}</span>}
+                  <button onClick={() => removeParticipante(idx)} className="p-0.5 rounded hover:opacity-70 shrink-0" style={{ color: "#ef4444" }}>
+                    <Trash2 size={11} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Search input */}
+          <div ref={searchRef} className="relative">
+            <div className="flex gap-1.5 items-center">
+              <div className="relative flex-1">
+                <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2" style={{ color: "var(--layout-icon-color, #888)" }} />
+                <input
+                  value={searchNome}
+                  onChange={e => { setSearchNome(e.target.value); setShowResults(true); }}
+                  onFocus={() => { if (searchResults.length > 0) setShowResults(true); }}
+                  placeholder="Buscar participante pelo nome..."
+                  className="w-full pl-7 pr-3 py-1.5 rounded-lg text-[11px] outline-none"
+                  style={inputStyle}
+                />
+              </div>
+            </div>
+            {showResults && searchResults.length > 0 && (
+              <div className="absolute z-50 w-full mt-1 rounded-lg shadow-lg overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 25%, transparent)" }}>
+                {searchResults.map((r, i) => (
+                  <button
+                    key={i}
+                    onClick={() => addParticipante(r)}
+                    className="w-full text-left px-3 py-2 text-[11px] hover:opacity-80 transition-all flex items-center gap-2"
+                    style={{ color: "var(--layout-page-text, #1a1a1a)", borderBottom: i < searchResults.length - 1 ? "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 10%, transparent)" : "none" }}
+                  >
+                    <span className="font-semibold flex-1 truncate">{r.nome}</span>
+                    {r.cargo && <span className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>{r.cargo}</span>}
+                    {r.instagram && <span className="text-[10px]" style={{ color: "var(--layout-accent-color, #2ec1f7)" }}>@{r.instagram.replace("@", "")}</span>}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* Blocos */}
         <div className="space-y-4 mt-4">
           {blocos.map((bloco, bi) => (
