@@ -159,7 +159,7 @@ export default function WhatsAppSendDialog({ open, onClose, roteiroData }: Whats
             {loading ? (
               <div className="flex items-center gap-2 py-8 justify-center">
                 <Loader2 size={18} className="animate-spin" style={{ color: "#25d366" }} />
-                <span className="text-xs text-white/70">Formatando com IA...</span>
+                <span className="text-xs" style={{ color: "var(--layout-header-text, #ffffff)", opacity: 0.7 }}>Formatando com IA...</span>
               </div>
             ) : (
               <textarea
