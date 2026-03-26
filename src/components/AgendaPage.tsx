@@ -800,7 +800,7 @@ export default function AgendaPage() {
                 />
                 {historyDateFilter && (
                   <button onClick={() => setHistoryDateFilter(undefined)} className="p-0.5 rounded hover:bg-white/20 transition-colors">
-                    <X size={12} className="text-white" />
+                    <X size={12} style={{ color: "var(--layout-header-text, #ffffff)" }} />
                   </button>
                 )}
               </div>
