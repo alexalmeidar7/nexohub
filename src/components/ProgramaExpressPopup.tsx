@@ -241,8 +241,8 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
     const nonEmptyLines = rawLines.filter(l => l.length > 0);
     if (nonEmptyLines.length < 2) { toast.error("O roteiro precisa de pelo menos 2 linhas"); return; }
 
-    // Helper: strip markdown bold, bullets, numbers
-    const clean = (s: string) => s.replace(/\*\*/g, "").replace(/^[-•–]\s+/, "").replace(/^\d+[\.\)]\s*/, "").trim();
+    // Helper: strip markdown bold (** or *), bullets, numbers
+    const clean = (s: string) => s.replace(/\*+/g, "").replace(/^[-•–]\s+/, "").replace(/^\d+[\.\)]\s*/, "").trim();
 
     // Extract URL from markdown link [text](url) or plain URL
     const extractUrl = (s: string): string | null => {
@@ -261,13 +261,16 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
     let currentSection: "participantes" | "escalada" | "bloco" | null = null;
     let currentBloco: NewsItem[] = [];
 
+    let lineIndex = 0;
     for (const rawLine of rawLines) {
       const line = rawLine.trim();
       if (!line) continue;
       const cleaned = clean(line);
       const lower = cleaned.toLowerCase();
+      lineIndex++;
 
-      // 1) Try label extraction: "Estúdio: xxx" or "**Estúdio:** xxx"
+      // 1) First non-empty line = Estúdio (if no label found yet)
+      // Check for labeled format first: "Estúdio: xxx"
       const estMatch = cleaned.match(/^est[uú]dio\s*:\s*(.+)/i);
       if (estMatch && !parsedEstudio) {
         parsedEstudio = estMatch[1].trim();
@@ -279,7 +282,18 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
         continue;
       }
 
-      // 2) Detect section headers
+      // If no estudio yet and no section started, this is the first line = estudio
+      if (!parsedEstudio && !currentSection) {
+        parsedEstudio = cleaned;
+        continue;
+      }
+      // If no programa yet and no section started, this is the second line = programa
+      if (!parsedPrograma && !currentSection) {
+        parsedPrograma = cleaned;
+        continue;
+      }
+
+      // 2) Detect section headers: *EQUIPE*, **EQUIPE:**, EQUIPE:, etc.
       if (/^(equipe|participantes?)\s*:?\s*$/i.test(lower)) {
         currentSection = "participantes";
         continue;
@@ -338,11 +352,7 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
 
     if (currentBloco.length > 0) parsedBlocos.push({ noticias: currentBloco });
 
-    // Fallback: if no labeled estudio/programa, use first two non-section content lines
-    if (!parsedEstudio && !parsedPrograma && nonEmptyLines.length >= 2) {
-      parsedEstudio = clean(nonEmptyLines[0]);
-      parsedPrograma = clean(nonEmptyLines[1]);
-    }
+    // Fallback no longer needed since we handle inline
 
     // Set Estúdio
     if (parsedEstudio) {
