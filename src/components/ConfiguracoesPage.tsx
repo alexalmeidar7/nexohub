@@ -427,8 +427,8 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
 
       {/* Box 2: Configurações do Player */}
       {(section === "all" || section === "player") && <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-        <div className="w-full flex items-center justify-between px-5 py-3" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" }}>
-          <h3 className="text-sm font-bold text-white">Configurações do Player</h3>
+        <div className="w-full flex items-center justify-between px-5 py-3" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))", color: "var(--layout-header-text, #ffffff)" }}>
+          <h3 className="text-sm font-bold">Configurações do Player</h3>
         </div>
         <div className="p-5 space-y-4">
         <div className="space-y-6">
