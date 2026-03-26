@@ -444,14 +444,9 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
           {participantes.length > 0 && (
             <div className="space-y-1.5 mb-2">
               {participantes.map((p, idx) => (
-                <div key={idx} className="flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-[11px]" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 90%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 12%, transparent)" }}>
-                  <span className="font-semibold flex-1 truncate" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{p.nome}</span>
-                  {p.cargo && <span className="text-[10px] shrink-0" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>{p.cargo}</span>}
-                  {p.instagram && <span className="text-[10px] shrink-0" style={{ color: "var(--layout-accent-color, #2ec1f7)" }}>@{p.instagram.replace("@", "")}</span>}
-                  <button onClick={() => removeParticipante(idx)} className="p-0.5 rounded hover:opacity-70 shrink-0" style={{ color: "#ef4444" }}>
-                    <Trash2 size={11} />
-                  </button>
-                </div>
+                <ParticipanteRow key={idx} participante={p} inputStyle={inputStyle} onRemove={() => removeParticipante(idx)} onUpdateCargo={(cargo) => {
+                  setParticipantes(prev => prev.map((x, i) => i === idx ? { ...x, cargo } : x));
+                }} userId={user?.id || ""} />
               ))}
             </div>
           )}
@@ -761,6 +756,60 @@ function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRe
         </div>
         <span className="text-[11px] font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Escalada</span>
       </label>
+    </div>
+  );
+}
+
+/* Inline participant row with editable cargo */
+function ParticipanteRow({ participante, inputStyle, onRemove, onUpdateCargo, userId }: {
+  participante: { nome: string; cargo: string; instagram: string };
+  inputStyle: React.CSSProperties;
+  onRemove: () => void;
+  onUpdateCargo: (cargo: string) => void;
+  userId: string;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [cargoVal, setCargoVal] = useState(participante.cargo);
+
+  const saveCargo = async () => {
+    setEditing(false);
+    const trimmed = cargoVal.trim();
+    if (trimmed !== participante.cargo) {
+      onUpdateCargo(trimmed);
+      // Update in DB
+      await supabase.from("apresentadores").update({ cargo: trimmed }).eq("nome", participante.nome).eq("user_id", userId);
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-[11px]" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 90%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 12%, transparent)" }}>
+      <span className="font-semibold flex-1 truncate" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{participante.nome}</span>
+      {editing ? (
+        <input
+          autoFocus
+          value={cargoVal}
+          onChange={e => setCargoVal(e.target.value)}
+          onBlur={saveCargo}
+          onKeyDown={e => { if (e.key === "Enter") saveCargo(); }}
+          className="px-1.5 py-0.5 rounded text-[10px] outline-none w-24 shrink-0"
+          style={inputStyle}
+          placeholder="Cargo..."
+        />
+      ) : (
+        <span
+          onClick={() => { setCargoVal(participante.cargo); setEditing(true); }}
+          className="text-[10px] shrink-0 cursor-pointer hover:opacity-70 flex items-center gap-0.5"
+          style={{ color: participante.cargo ? "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 35%, transparent)" }}
+          title="Clique para editar cargo"
+        >
+          {participante.cargo || "..."}
+          <Pencil size={9} />
+        </span>
+      )}
+      {participante.instagram && <span className="text-[10px] shrink-0" style={{ color: "var(--layout-accent-color, #2ec1f7)" }}>@{participante.instagram.replace("@", "")}</span>}
+      <button onClick={onRemove} className="p-0.5 rounded hover:opacity-70 shrink-0" style={{ color: "#ef4444" }}>
+        <Trash2 size={11} />
+      </button>
     </div>
   );
 }
