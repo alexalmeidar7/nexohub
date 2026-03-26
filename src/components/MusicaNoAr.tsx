@@ -804,8 +804,8 @@ export default function MusicaNoAr() {
               {(() => {
                 const isLocalActive = lastSource === "pasta";
                 const isLocalPreferred = preferredSource === "pasta";
-                const localColor = isLocalActive ? "#22c55e" : isLocalPreferred ? "#268ffa" : "rgba(13,4,70,0.3)";
-                const localBg = isLocalActive ? "rgba(34,197,94,0.15)" : isLocalPreferred ? "rgba(38,143,250,0.08)" : "rgba(34,197,94,0.03)";
+                const localColor = isLocalActive ? "#22c55e" : isLocalPreferred ? "#60a5fa" : "rgba(255,255,255,0.45)";
+                const localBg = isLocalActive ? "rgba(34,197,94,0.2)" : isLocalPreferred ? "rgba(96,165,250,0.15)" : "rgba(255,255,255,0.08)";
                 const localBorder = isLocalActive ? "rgba(34,197,94,0.35)" : "transparent";
                 return (
                   <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[7px] font-bold" style={{
