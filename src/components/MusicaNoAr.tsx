@@ -757,17 +757,17 @@ export default function MusicaNoAr() {
   return (
     <div className="animate-fade-in space-y-3">
       {/* ═══ MAIN MUSIC CARD ═══ */}
-      <div className="rounded-2xl overflow-hidden" style={{ background: "#d9e9fa", boxShadow: "0 8px 32px rgba(13,4,70,0.12)" }}>
+      <div className="rounded-2xl overflow-hidden" style={{ background: "var(--layout-header-bg, #0d0446)", boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }}>
         {/* Header */}
         <div className="flex items-center justify-between px-4 pt-3 pb-2">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "rgba(13,4,70,0.08)" }}>
-              <Music size={16} style={{ color: "#0d0446" }} />
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "rgba(255,255,255,0.15)" }}>
+              <Music size={16} style={{ color: "var(--layout-header-text, #ffffff)" }} />
             </div>
             <div>
-              <h3 className="text-sm font-bold leading-tight" style={{ color: "#0d0446" }}>Música no Ar</h3>
+              <h3 className="text-sm font-bold leading-tight" style={{ color: "var(--layout-header-text, #ffffff)" }}>Música no Ar</h3>
               <div className="flex items-center gap-2 mt-0.5">
-                <span className="text-[8px] font-semibold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: "rgba(124,58,237,0.1)", color: "#7c3aed" }}>MODO UNIFICADO</span>
+                <span className="text-[8px] font-semibold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "var(--layout-header-text, #ffffff)" }}>MODO UNIFICADO</span>
                 {bothActive && (
                   <span className="inline-flex items-center gap-1 text-[7px] font-bold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: "rgba(34,197,94,0.12)", color: "#16a34a", border: "1px solid rgba(34,197,94,0.25)" }}>
                     <span className="relative flex h-1.5 w-1.5">
@@ -777,7 +777,7 @@ export default function MusicaNoAr() {
                     DUAL
                   </span>
                 )}
-                <span className="text-[8px]" style={{ color: "rgba(13,4,70,0.4)" }}>
+                <span className="text-[8px]" style={{ color: "rgba(255,255,255,0.5)" }}>
                   {`${sourceStats.online + sourceStats.pasta} atualizações`}
                 </span>
               </div>
@@ -789,8 +789,8 @@ export default function MusicaNoAr() {
               {(() => {
                 const isOnlineActive = lastSource === "online";
                 const isOnlinePreferred = preferredSource === "online";
-                const onlineColor = isOnlineActive ? "#22c55e" : isOnlinePreferred ? "#268ffa" : "rgba(13,4,70,0.3)";
-                const onlineBg = isOnlineActive ? "rgba(34,197,94,0.15)" : isOnlinePreferred ? "rgba(38,143,250,0.08)" : "rgba(38,143,250,0.03)";
+                const onlineColor = isOnlineActive ? "#22c55e" : isOnlinePreferred ? "#60a5fa" : "rgba(255,255,255,0.45)";
+                const onlineBg = isOnlineActive ? "rgba(34,197,94,0.2)" : isOnlinePreferred ? "rgba(96,165,250,0.15)" : "rgba(255,255,255,0.08)";
                 const onlineBorder = isOnlineActive ? "rgba(34,197,94,0.35)" : "transparent";
                 return (
                   <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[7px] font-bold" style={{
@@ -804,8 +804,8 @@ export default function MusicaNoAr() {
               {(() => {
                 const isLocalActive = lastSource === "pasta";
                 const isLocalPreferred = preferredSource === "pasta";
-                const localColor = isLocalActive ? "#22c55e" : isLocalPreferred ? "#268ffa" : "rgba(13,4,70,0.3)";
-                const localBg = isLocalActive ? "rgba(34,197,94,0.15)" : isLocalPreferred ? "rgba(38,143,250,0.08)" : "rgba(34,197,94,0.03)";
+                const localColor = isLocalActive ? "#22c55e" : isLocalPreferred ? "#60a5fa" : "rgba(255,255,255,0.45)";
+                const localBg = isLocalActive ? "rgba(34,197,94,0.2)" : isLocalPreferred ? "rgba(96,165,250,0.15)" : "rgba(255,255,255,0.08)";
                 const localBorder = isLocalActive ? "rgba(34,197,94,0.35)" : "transparent";
                 return (
                   <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[7px] font-bold" style={{
@@ -817,10 +817,10 @@ export default function MusicaNoAr() {
                 );
               })()}
             </div>
-            <span className="inline-flex items-center gap-1.5 px-2 py-1 text-[8px] uppercase tracking-widest font-bold rounded-full" style={{ backgroundColor: "rgba(38,143,250,0.1)", color: "#268ffa", border: "1px solid rgba(38,143,250,0.2)" }}>
+            <span className="inline-flex items-center gap-1.5 px-2 py-1 text-[8px] uppercase tracking-widest font-bold rounded-full" style={{ backgroundColor: "rgba(255,255,255,0.12)", color: "#ffffff", border: "1px solid rgba(255,255,255,0.25)" }}>
               <span className="relative flex h-1.5 w-1.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: "#268ffa" }} />
-                <span className="relative inline-flex rounded-full h-1.5 w-1.5" style={{ backgroundColor: "#268ffa" }} />
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: "#22c55e" }} />
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5" style={{ backgroundColor: "#22c55e" }} />
               </span>
               AO VIVO
             </span>
@@ -942,14 +942,14 @@ export default function MusicaNoAr() {
       </div>
 
       {/* ═══ COLLAPSIBLE CONFIG SECTION ═══ */}
-      <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "#ffffff", boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}>
+      <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
         <button
           onClick={() => setShowConfig(!showConfig)}
           className="w-full flex items-center justify-between px-4 py-3 text-left"
-          style={{ borderBottom: showConfig ? "1px solid rgba(13,4,70,0.06)" : "none" }}
+          style={{ borderBottom: showConfig ? "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 10%, transparent)" : "none" }}
         >
-          <span className="text-xs font-bold flex items-center gap-2" style={{ color: "#0d0446" }}>
-            <Monitor size={14} style={{ color: "#268ffa" }} />
+          <span className="text-xs font-bold flex items-center gap-2" style={{ color: "var(--layout-page-text, #0d0446)" }}>
+            <Monitor size={14} style={{ color: "var(--layout-icon-color, #268ffa)" }} />
             Configuração das Origens
             {localMonitoring && (
               <span className="relative flex h-2 w-2">
@@ -958,7 +958,7 @@ export default function MusicaNoAr() {
               </span>
             )}
           </span>
-          {showConfig ? <ChevronUp size={16} style={{ color: "rgba(13,4,70,0.3)" }} /> : <ChevronDown size={16} style={{ color: "rgba(13,4,70,0.3)" }} />}
+          {showConfig ? <ChevronUp size={16} style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 40%, transparent)" }} /> : <ChevronDown size={16} style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 40%, transparent)" }} />}
         </button>
 
         {showConfig && (
@@ -966,8 +966,8 @@ export default function MusicaNoAr() {
             {/* Two columns with center divider */}
             <div className="grid grid-cols-[1fr_auto_1fr] gap-0 items-stretch">
               {/* ── ONLINE SOURCE ── */}
-              <div className="rounded-xl p-4 space-y-3" style={{ backgroundColor: "#e8f0fb", border: "1px solid #c5d9f2" }}>
-                <h4 className="text-xs font-black uppercase tracking-wide" style={{ color: "#0d0446" }}>Origem Source Online</h4>
+              <div className="rounded-xl p-4 space-y-3" style={{ backgroundColor: "color-mix(in srgb, var(--layout-header-bg, #0d0446) 8%, var(--layout-page-bg, #ffffff))", border: "1px solid color-mix(in srgb, var(--layout-header-bg, #0d0446) 15%, var(--layout-page-bg, #ffffff))" }}>
+                <h4 className="text-xs font-black uppercase tracking-wide" style={{ color: "var(--layout-page-text, #0d0446)" }}>Origem Source Online</h4>
                 <div className="flex gap-1.5">
                   <div className="flex-1 flex items-center gap-2 px-3 py-2 rounded-lg" style={{ backgroundColor: "#ffffff", border: "1px solid #c5d9f2" }}>
                     <Globe size={14} style={{ color: "#7c8db5" }} />
@@ -1048,8 +1048,8 @@ export default function MusicaNoAr() {
               </div>
 
               {/* ── LOCAL SOURCE ── */}
-              <div className="rounded-xl p-4 space-y-3" style={{ backgroundColor: "#e8f0fb", border: "1px solid #c5d9f2" }}>
-                <h4 className="text-xs font-black uppercase tracking-wide" style={{ color: "#0d0446" }}>Origem Source Arquivo Local</h4>
+              <div className="rounded-xl p-4 space-y-3" style={{ backgroundColor: "color-mix(in srgb, var(--layout-header-bg, #0d0446) 8%, var(--layout-page-bg, #ffffff))", border: "1px solid color-mix(in srgb, var(--layout-header-bg, #0d0446) 15%, var(--layout-page-bg, #ffffff))" }}>
+                <h4 className="text-xs font-black uppercase tracking-wide" style={{ color: "var(--layout-page-text, #0d0446)" }}>Origem Source Arquivo Local</h4>
                 <div className="flex gap-1.5">
                   <div className="flex-1 flex items-center gap-2 px-3 py-2 rounded-lg" style={{ backgroundColor: "#ffffff", border: "1px solid #c5d9f2" }}>
                     <FolderOpen size={14} style={{ color: "#7c8db5" }} />
