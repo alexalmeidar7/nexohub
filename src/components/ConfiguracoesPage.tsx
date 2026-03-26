@@ -358,7 +358,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
         <div className="space-y-5">
 
       {/* Box 1: Configurações da Empresa */}
-      {(section === "all" || section === "empresa") && <CollapsibleBox title="Configurações da Empresa" icon={<Settings size={16} className="text-white/80" />}>
+      {(section === "all" || section === "empresa") && <CollapsibleBox title="Configurações da Empresa" icon={<Settings size={16} style={{ opacity: 0.8 }} />}>
         <div className="space-y-4">
           {field("Nome da Empresa", "nome", "Nome da empresa")}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
