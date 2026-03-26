@@ -650,14 +650,14 @@ ${perguntaActions}
       {/* ── STEP 1: Configuração do Programa ── */}
       <div className="rounded-2xl overflow-hidden" style={{ background: "#ffffff", boxShadow: "0 4px 24px rgba(0,0,0,0.08)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)" }}>
         {/* Section Header */}
-        <div className="px-6 py-4 flex items-center justify-between" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #0d0446), color-mix(in srgb, var(--layout-header-bg, color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%)) 80%, white 20%))", borderBottom: "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)" }}>
+        <div className="px-6 py-4 flex items-center justify-between" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #0d0446), color-mix(in srgb, var(--layout-header-bg, color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%)) 80%, white 20%))", borderBottom: "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)", color: "var(--layout-header-text, #ffffff)" }}>
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: "rgba(255,255,255,0.15)" }}>
-              <FileText size={18} className="text-white" />
+              <FileText size={18} />
             </div>
             <div>
-              <h3 className="text-base font-bold text-white drop-shadow-sm">Roteiro de Programa</h3>
-              <p className="text-xs text-white/80 drop-shadow-sm">Passo 1 — Selecione o programa e a data</p>
+              <h3 className="text-base font-bold drop-shadow-sm">Roteiro de Programa</h3>
+              <p className="text-xs drop-shadow-sm" style={{ opacity: 0.8 }}>Passo 1 — Selecione o programa e a data</p>
             </div>
           </div>
           {editingRoteiroId && (
