@@ -43,6 +43,7 @@ export interface LayoutColors {
   borderColor: string;
   sliderBg: string;
   scrollbarColor: string;
+  previewBarBg: string;
   homeBgType: "color" | "image";
   homeBgColor: string;
   homeBgImage: string;
