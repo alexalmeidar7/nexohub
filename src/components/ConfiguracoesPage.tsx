@@ -755,8 +755,8 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
                           }}
                             className="w-full px-3 py-1.5 font-bold transition-all text-xs flex items-center justify-center gap-1 rounded-full"
                             style={btnSecondary}
-                            onMouseEnter={e => { e.currentTarget.style.backgroundColor = "var(--layout-header-bg, #1a1a1a)"; e.currentTarget.style.color = "#ffffff"; }}
-                            onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#ffffff"; e.currentTarget.style.color = "var(--layout-header-bg, #1a1a1a)"; }}
+                            onMouseEnter={e => { e.currentTarget.style.backgroundColor = "var(--layout-page-text, #1a1a1a)"; e.currentTarget.style.color = "var(--layout-page-bg, #ffffff)"; }}
+                            onMouseLeave={e => { e.currentTarget.style.backgroundColor = "var(--layout-page-bg, #ffffff)"; e.currentTarget.style.color = "var(--layout-page-text, #1a1a1a)"; }}
                           >
                             <Upload size={10} /> {img.url ? "Trocar" : "Upload"}
                           </button>
