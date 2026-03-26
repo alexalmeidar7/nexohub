@@ -1115,227 +1115,218 @@ export default function VmixPage() {
   // ── Not connected ──
   if (!effectiveConnected) {
     return (
-      <div className="space-y-0">
-        {/* Inline warning banner for iframe + local HTTP */}
-        {showNewTabBanner && (
-          <div className="rounded-xl p-4 mb-3 space-y-3" style={{ backgroundColor: "#f59e0b10", border: "1px solid #f59e0b40" }}>
-            <div className="flex items-start gap-3">
-              <AlertTriangle size={18} style={{ color: "#f59e0b", flexShrink: 0, marginTop: 2 }} />
-              <div className="flex-1">
-                <p className="text-xs font-bold mb-2" style={{ color: "#fbbf24" }}>
-                  ⚠️ Habilite "Conteúdo não seguro" para este domínio
-                </p>
-                <p className="text-[11px] leading-relaxed mb-3" style={{ color: "#ffffff80" }}>
-                  O preview roda em HTTPS e bloqueia requisições HTTP para IPs locais ({savedUrl}). 
-                  Siga os passos abaixo <strong style={{ color: "#fff" }}>uma única vez</strong> para permitir a conexão:
-                </p>
-                <div className="rounded-lg p-3 space-y-2" style={{ backgroundColor: "#ffffff06", border: "1px solid #ffffff10" }}>
-                  <div className="flex items-start gap-2">
-                    <span className="text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#f59e0b", color: "#000" }}>1</span>
-                    <p className="text-[11px]" style={{ color: "#ffffff90" }}>
-                      Abra esta URL em uma aba separada (apenas para configurar):
-                      <button
-                        onClick={() => {
-                          window.open(previewDomain + "/vmix-control", "_blank", "noopener,noreferrer");
-                        }}
-                        className="ml-1.5 inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-bold transition-all hover:brightness-110"
-                        style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #444444) 20%, transparent)", color: "var(--layout-icon-color, #888888)", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #444444) 25%, transparent)" }}
-                      >
-                        <ExternalLink size={10} />
-                        {previewDomain.replace("https://", "").slice(0, 30)}...
-                      </button>
-                    </p>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <span className="text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#f59e0b", color: "#000" }}>2</span>
-                    <p className="text-[11px]" style={{ color: "#ffffff90" }}>
-                      Na barra de endereço, clique no ícone <strong style={{ color: "#fff" }}>🔒 cadeado</strong> (ou ícone de ajuste) → <strong style={{ color: "#fff" }}>Configurações do site</strong>
-                    </p>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <span className="text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#f59e0b", color: "#000" }}>3</span>
-                    <p className="text-[11px]" style={{ color: "#ffffff90" }}>
-                      Encontre <strong style={{ color: "#fff" }}>Conteúdo não seguro</strong> → mude para <strong style={{ color: "#22c55e" }}>Permitir</strong>
-                    </p>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <span className="text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#f59e0b", color: "#000" }}>4</span>
-                    <p className="text-[11px]" style={{ color: "#ffffff90" }}>
-                      <strong style={{ color: "#fff" }}>Feche a aba</strong> e volte aqui. Clique <strong style={{ color: "#22c55e" }}>Conectar</strong> — agora vai funcionar! ✅
-                    </p>
-                  </div>
-                </div>
-              </div>
+      <div className="max-w-2xl mx-auto space-y-5 py-4">
+        {/* ── CONNECTION CARD ── */}
+        <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "#1e1e24", border: "1px solid #ffffff0a", boxShadow: "0 8px 32px rgba(0,0,0,0.3)" }}>
+          {/* Card Header */}
+          <div className="px-6 py-4 flex items-center gap-3" style={{ background: "linear-gradient(135deg, #242430, #2a2a36)", borderBottom: "1px solid #ffffff08" }}>
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ backgroundColor: "#ffffff08" }}>
+              <Wifi size={18} style={{ color: "#888" }} />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-white/90">Conexão vMix</h3>
+              <p className="text-[10px] text-white/35">Configure o endereço IP do computador com vMix</p>
             </div>
           </div>
-        )}
-        {/* URL input + action buttons row */}
-        <div className="flex items-center gap-3 px-0 py-3 flex-wrap">
-          <div className="flex gap-2 items-center flex-1 flex-wrap">
-            <input
-              type="text"
-              value={vmixUrl}
-              onChange={e => setVmixUrl(e.target.value)}
-              placeholder="http://192.168.x.x:8088"
-              className="w-64 px-4 py-2 rounded-lg text-sm outline-none"
-              style={{ backgroundColor: "#2a2a2a", color: "#fff", border: "1px solid #ffffff15" }}
-            />
-            <button onClick={saveUrl} className="px-4 py-2 rounded-lg text-xs font-bold text-white" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" }}>
-              Salvar
-            </button>
-            {savedUrl && (
-              <>
-                <button
-                  onClick={connectToVmix}
-                  disabled={connecting}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold text-white"
-                  style={{ backgroundColor: "#22c55e", opacity: connecting ? 0.6 : 1 }}
-                >
-                  {connecting ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
-                  {connecting ? "Conectando..." : "Conectar"}
+
+          {/* Card Body */}
+          <div className="p-6 space-y-5">
+            {/* URL Input Group */}
+            <div>
+              <label className="text-[10px] font-bold uppercase tracking-widest text-white/30 block mb-2">Endereço do vMix</label>
+              <div className="flex gap-2 items-center flex-wrap">
+                <div className="flex-1 min-w-[200px] flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all" style={{ backgroundColor: "#2a2a30", border: "1px solid #ffffff10" }}>
+                  <Monitor size={14} className="shrink-0" style={{ color: "#ffffff25" }} />
+                  <input
+                    type="text"
+                    value={vmixUrl}
+                    onChange={e => setVmixUrl(e.target.value)}
+                    placeholder="http://192.168.x.x:8088"
+                    className="flex-1 text-sm outline-none bg-transparent text-white placeholder:text-white/20"
+                  />
+                </div>
+                <button onClick={saveUrl} className="px-5 py-2.5 rounded-xl text-xs font-bold text-white transition-all hover:brightness-110" style={{ backgroundColor: "#3a3a44" }}>
+                  Salvar
                 </button>
+                {savedUrl && (
+                  <button
+                    onClick={connectToVmix}
+                    disabled={connecting}
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white transition-all hover:brightness-110 disabled:opacity-50"
+                    style={{ backgroundColor: "#22c55e" }}
+                  >
+                    {connecting ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+                    {connecting ? "Conectando..." : "Conectar"}
+                  </button>
+                )}
                 <div className="relative group">
-                  <button className="p-1.5 rounded-lg text-white/30 hover:text-white/60 transition-colors">
+                  <button className="p-2 rounded-lg text-white/20 hover:text-white/50 transition-colors">
                     <HelpCircle size={14} />
                   </button>
-                  <div className="absolute left-0 top-full mt-2 w-80 p-4 rounded-lg text-[11px] text-white/70 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50"
+                  <div className="absolute left-0 top-full mt-2 w-80 p-4 rounded-xl text-[11px] text-white/70 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50"
                     style={{ backgroundColor: "#2a2a3a", border: "1px solid #ffffff15", boxShadow: "0 8px 24px rgba(0,0,0,0.5)" }}
                   >
                     <p className="font-bold text-white/90 mb-2">Conexão Direta:</p>
-                    <div className="mb-3 p-2 rounded" style={{ backgroundColor: "#22c55e10", border: "1px solid #22c55e30" }}>
+                    <div className="mb-3 p-2 rounded-lg" style={{ backgroundColor: "#22c55e10", border: "1px solid #22c55e30" }}>
                       <p className="font-bold text-[#22c55e] mb-1">🟢 Rede Local</p>
                       <p className="text-white/50">Use o IP local do computador com vMix (ex: <strong className="text-white/70">http://192.168.x.x:8088</strong>).</p>
                     </div>
                     <p className="text-white/30 text-[10px]">💡 Certifique-se de estar na mesma rede que o vMix.</p>
                   </div>
                 </div>
-              </>
-            )}
-          </div>
-        </div>
-        {/* Diagnostic section */}
-        {savedUrl && (
-          <div className="mt-4 space-y-3">
-            <button
-              onClick={runDiagnostic}
-              disabled={diagRunning}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold text-white transition-all hover:brightness-110 disabled:opacity-50"
-              style={{ backgroundColor: "#f59e0b" }}
-            >
-              {diagRunning ? <Loader2 size={14} className="animate-spin" /> : <Activity size={14} />}
-              {diagRunning ? "Diagnosticando..." : "🔧 Corrigir Conexão"}
-            </button>
+              </div>
+            </div>
 
-            {diagResult && (
-              <div className="rounded-xl p-4 space-y-3" style={{ backgroundColor: "#1a1a2e", border: "1px solid #ffffff08" }}>
-                <div className="flex items-center gap-2 mb-2">
-                  <Activity size={14} style={{ color: "#f59e0b" }} />
-                  <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#f59e0b" }}>Resultado do Diagnóstico</span>
-                </div>
+            {/* Diagnostic Button */}
+            {savedUrl && (
+              <div className="space-y-4">
+                <div className="h-px" style={{ backgroundColor: "#ffffff08" }} />
+                <button
+                  onClick={runDiagnostic}
+                  disabled={diagRunning}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition-all hover:brightness-110 disabled:opacity-50"
+                  style={{ backgroundColor: "#f59e0b20", color: "#f59e0b", border: "1px solid #f59e0b30" }}
+                >
+                  {diagRunning ? <Loader2 size={14} className="animate-spin" /> : <Activity size={14} />}
+                  {diagRunning ? "Diagnosticando..." : "🔧 Corrigir Conexão"}
+                </button>
 
-                {/* URL Analysis */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  <div className="rounded-lg p-2.5" style={{ backgroundColor: "#ffffff06" }}>
-                    <p className="text-[9px] font-bold uppercase text-white/30 mb-1">Tipo de IP</p>
-                    <p className="text-xs font-bold" style={{ color: diagResult.urlType === "local" ? "#22c55e" : "var(--layout-accent-color, #444444)" }}>
-                      {diagResult.urlType === "local" ? "🏠 Local" : "🌐 Público"}
-                    </p>
-                  </div>
-                  <div className="rounded-lg p-2.5" style={{ backgroundColor: "#ffffff06" }}>
-                    <p className="text-[9px] font-bold uppercase text-white/30 mb-1">Protocolo</p>
-                    <p className="text-xs font-bold" style={{ color: diagResult.protocol === "https" ? "#22c55e" : "#f59e0b" }}>
-                      {diagResult.protocol.toUpperCase()}
-                    </p>
-                  </div>
-                  <div className="rounded-lg p-2.5" style={{ backgroundColor: "#ffffff06" }}>
-                    <p className="text-[9px] font-bold uppercase text-white/30 mb-1">App HTTPS</p>
-                    <p className="text-xs font-bold" style={{ color: diagResult.isSecureContext ? "#f59e0b" : "#22c55e" }}>
-                      {diagResult.isSecureContext ? "⚡ Sim" : "✓ Não"}
-                    </p>
-                  </div>
-                  <div className="rounded-lg p-2.5" style={{ backgroundColor: "#ffffff06" }}>
-                    <p className="text-[9px] font-bold uppercase text-white/30 mb-1">Mixed Content</p>
-                    <p className="text-xs font-bold" style={{ color: diagResult.mixedContentBlocked ? "#dc2626" : "#22c55e" }}>
-                      {diagResult.mixedContentBlocked ? "🚫 Bloqueado" : "✓ OK"}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Connection Tests */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  <div className="rounded-lg p-3" style={{
-                    backgroundColor: diagResult.directResult === "ok" ? "#22c55e10" : diagResult.directResult === "fail" ? "#dc262610" : "#ffffff06",
-                    border: `1px solid ${diagResult.directResult === "ok" ? "#22c55e30" : diagResult.directResult === "fail" ? "#dc262630" : "#ffffff08"}`,
-                  }}>
+                {diagResult && (
+                  <div className="rounded-xl p-5 space-y-4" style={{ backgroundColor: "#16161c", border: "1px solid #ffffff08" }}>
                     <div className="flex items-center gap-2 mb-1">
-                      {diagResult.directResult === "ok" ? <CheckCircle size={14} style={{ color: "#22c55e" }} /> :
-                       diagResult.directResult === "fail" ? <XCircle size={14} style={{ color: "#dc2626" }} /> :
-                       <AlertTriangle size={14} style={{ color: "#ffffff30" }} />}
-                      <span className="text-xs font-bold" style={{
-                        color: diagResult.directResult === "ok" ? "#22c55e" : diagResult.directResult === "fail" ? "#dc2626" : "#ffffff40",
-                      }}>Modo Direto</span>
+                      <Activity size={14} style={{ color: "#f59e0b" }} />
+                      <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#f59e0b" }}>Resultado do Diagnóstico</span>
                     </div>
-                    {diagResult.directError && (
-                      <p className="text-[10px] text-white/40 mt-1">{diagResult.directError}</p>
-                    )}
-                    {diagResult.directResult === "ok" && (
-                      <p className="text-[10px] text-white/40 mt-1">Conexão direta funcionando!</p>
-                    )}
-                  </div>
 
-                  <div className="rounded-lg p-3" style={{
-                    backgroundColor: diagResult.proxyResult === "ok" ? "#22c55e10" : diagResult.proxyResult === "fail" ? "#dc262610" : "#ffffff06",
-                    border: `1px solid ${diagResult.proxyResult === "ok" ? "#22c55e30" : diagResult.proxyResult === "fail" ? "#dc262630" : "#ffffff08"}`,
-                  }}>
-                    <div className="flex items-center gap-2 mb-1">
-                      {diagResult.proxyResult === "ok" ? <CheckCircle size={14} style={{ color: "#22c55e" }} /> :
-                       diagResult.proxyResult === "fail" ? <XCircle size={14} style={{ color: "#dc2626" }} /> :
-                       diagResult.proxyResult === "skipped" ? <Shield size={14} style={{ color: "#ffffff30" }} /> :
-                       <AlertTriangle size={14} style={{ color: "#ffffff30" }} />}
-                      <span className="text-xs font-bold" style={{
-                        color: diagResult.proxyResult === "ok" ? "#22c55e" : diagResult.proxyResult === "fail" ? "#dc2626" : "#ffffff40",
-                      }}>Modo Proxy</span>
+                    {/* URL Analysis */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      <div className="rounded-lg p-2.5" style={{ backgroundColor: "#ffffff06" }}>
+                        <p className="text-[9px] font-bold uppercase text-white/30 mb-1">Tipo de IP</p>
+                        <p className="text-xs font-bold" style={{ color: diagResult.urlType === "local" ? "#22c55e" : "#60a5fa" }}>
+                          {diagResult.urlType === "local" ? "🏠 Local" : "🌐 Público"}
+                        </p>
+                      </div>
+                      <div className="rounded-lg p-2.5" style={{ backgroundColor: "#ffffff06" }}>
+                        <p className="text-[9px] font-bold uppercase text-white/30 mb-1">Protocolo</p>
+                        <p className="text-xs font-bold" style={{ color: diagResult.protocol === "https" ? "#22c55e" : "#f59e0b" }}>
+                          {diagResult.protocol.toUpperCase()}
+                        </p>
+                      </div>
+                      <div className="rounded-lg p-2.5" style={{ backgroundColor: "#ffffff06" }}>
+                        <p className="text-[9px] font-bold uppercase text-white/30 mb-1">App HTTPS</p>
+                        <p className="text-xs font-bold" style={{ color: diagResult.isSecureContext ? "#f59e0b" : "#22c55e" }}>
+                          {diagResult.isSecureContext ? "⚡ Sim" : "✓ Não"}
+                        </p>
+                      </div>
+                      <div className="rounded-lg p-2.5" style={{ backgroundColor: "#ffffff06" }}>
+                        <p className="text-[9px] font-bold uppercase text-white/30 mb-1">Mixed Content</p>
+                        <p className="text-xs font-bold" style={{ color: diagResult.mixedContentBlocked ? "#dc2626" : "#22c55e" }}>
+                          {diagResult.mixedContentBlocked ? "🚫 Bloqueado" : "✓ OK"}
+                        </p>
+                      </div>
                     </div>
-                    {diagResult.proxyError && (
-                      <p className="text-[10px] text-white/40 mt-1">{diagResult.proxyError}</p>
+
+                    {/* Connection Tests */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <div className="rounded-lg p-3" style={{
+                        backgroundColor: diagResult.directResult === "ok" ? "#22c55e10" : diagResult.directResult === "fail" ? "#dc262610" : "#ffffff06",
+                        border: `1px solid ${diagResult.directResult === "ok" ? "#22c55e30" : diagResult.directResult === "fail" ? "#dc262630" : "#ffffff08"}`,
+                      }}>
+                        <div className="flex items-center gap-2 mb-1">
+                          {diagResult.directResult === "ok" ? <CheckCircle size={14} style={{ color: "#22c55e" }} /> :
+                           diagResult.directResult === "fail" ? <XCircle size={14} style={{ color: "#dc2626" }} /> :
+                           <AlertTriangle size={14} style={{ color: "#ffffff30" }} />}
+                          <span className="text-xs font-bold" style={{
+                            color: diagResult.directResult === "ok" ? "#22c55e" : diagResult.directResult === "fail" ? "#dc2626" : "#ffffff40",
+                          }}>Modo Direto</span>
+                        </div>
+                        {diagResult.directError && <p className="text-[10px] text-white/40 mt-1">{diagResult.directError}</p>}
+                        {diagResult.directResult === "ok" && <p className="text-[10px] text-white/40 mt-1">Conexão direta funcionando!</p>}
+                      </div>
+                      <div className="rounded-lg p-3" style={{
+                        backgroundColor: diagResult.proxyResult === "ok" ? "#22c55e10" : diagResult.proxyResult === "fail" ? "#dc262610" : "#ffffff06",
+                        border: `1px solid ${diagResult.proxyResult === "ok" ? "#22c55e30" : diagResult.proxyResult === "fail" ? "#dc262630" : "#ffffff08"}`,
+                      }}>
+                        <div className="flex items-center gap-2 mb-1">
+                          {diagResult.proxyResult === "ok" ? <CheckCircle size={14} style={{ color: "#22c55e" }} /> :
+                           diagResult.proxyResult === "fail" ? <XCircle size={14} style={{ color: "#dc2626" }} /> :
+                           diagResult.proxyResult === "skipped" ? <Shield size={14} style={{ color: "#ffffff30" }} /> :
+                           <AlertTriangle size={14} style={{ color: "#ffffff30" }} />}
+                          <span className="text-xs font-bold" style={{
+                            color: diagResult.proxyResult === "ok" ? "#22c55e" : diagResult.proxyResult === "fail" ? "#dc2626" : "#ffffff40",
+                          }}>Modo Proxy</span>
+                        </div>
+                        {diagResult.proxyError && <p className="text-[10px] text-white/40 mt-1">{diagResult.proxyError}</p>}
+                        {diagResult.proxyResult === "ok" && <p className="text-[10px] text-white/40 mt-1">Conexão via proxy funcionando!</p>}
+                      </div>
+                    </div>
+
+                    {/* Recommendation */}
+                    <div className="rounded-lg p-3" style={{ backgroundColor: "#f59e0b10", border: "1px solid #f59e0b30" }}>
+                      <p className="text-[11px] font-medium" style={{ color: "#fbbf24", lineHeight: 1.6 }}>
+                        {diagResult.recommendation}
+                      </p>
+                    </div>
+
+                    {/* Auto-connect status */}
+                    {(diagResult.directResult === "ok" || diagResult.proxyResult === "ok") && (
+                      <div className="flex items-center gap-2 rounded-lg p-2.5" style={{ backgroundColor: "#22c55e10", border: "1px solid #22c55e30" }}>
+                        <Loader2 size={14} className="animate-spin" style={{ color: "#22c55e" }} />
+                        <span className="text-[11px] font-bold" style={{ color: "#22c55e" }}>Conectando automaticamente no modo {diagResult.directResult === "ok" ? "Direto" : "Proxy"}...</span>
+                      </div>
                     )}
-                    {diagResult.proxyResult === "ok" && (
-                      <p className="text-[10px] text-white/40 mt-1">Conexão via proxy funcionando!</p>
+
+                    {/* Retry button */}
+                    {diagResult.directResult !== "ok" && diagResult.proxyResult !== "ok" && (
+                      <button
+                        onClick={runDiagnostic}
+                        className="w-full py-2.5 rounded-xl text-xs font-bold transition-all hover:brightness-110"
+                        style={{ backgroundColor: "#f59e0b20", color: "#f59e0b", border: "1px solid #f59e0b30" }}
+                      >
+                        🔄 Tentar novamente
+                      </button>
                     )}
                   </div>
-                </div>
-
-                {/* Recommendation */}
-                <div className="rounded-lg p-3" style={{ backgroundColor: "#f59e0b10", border: "1px solid #f59e0b30" }}>
-                  <p className="text-[11px] font-medium" style={{ color: "#fbbf24", lineHeight: 1.6 }}>
-                    {diagResult.recommendation}
-                  </p>
-                </div>
-
-                {/* Auto-connect status */}
-                {(diagResult.directResult === "ok" || diagResult.proxyResult === "ok") && (
-                  <div className="flex items-center gap-2 rounded-lg p-2.5" style={{ backgroundColor: "#22c55e10", border: "1px solid #22c55e30" }}>
-                    <Loader2 size={14} className="animate-spin" style={{ color: "#22c55e" }} />
-                    <span className="text-[11px] font-bold" style={{ color: "#22c55e" }}>Conectando automaticamente no modo {diagResult.directResult === "ok" ? "Direto" : "Proxy"}...</span>
-                  </div>
-                )}
-
-                {/* Retry button when nothing works */}
-                {diagResult.directResult !== "ok" && diagResult.proxyResult !== "ok" && (
-                  <button
-                    onClick={runDiagnostic}
-                    className="w-full py-2 rounded-lg text-xs font-bold text-white"
-                    style={{ backgroundColor: "#f59e0b" }}
-                  >
-                    🔄 Tentar novamente
-                  </button>
                 )}
               </div>
             )}
+
+            {!diagResult && !savedUrl && (
+              <p className="text-xs text-white/15 py-4 text-center">Digite o endereço IP do computador com vMix e clique em Salvar</p>
+            )}
+            {!diagResult && savedUrl && (
+              <p className="text-xs text-white/15 py-4 text-center">Use 'Direto' para rede local (192.168.x.x) ou 'Proxy' com IP público + port forwarding.</p>
+            )}
           </div>
-        )}
-        {!diagResult && (
-          <p className="text-xs text-white/20 py-8 text-center">Use 'Direto' para rede local (192.168.x.x) ou 'Proxy' com IP público + port forwarding.</p>
+        </div>
+
+        {/* ── WARNING BANNER ── */}
+        {showNewTabBanner && (
+          <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "#1e1e24", border: "1px solid #f59e0b25", boxShadow: "0 4px 20px rgba(0,0,0,0.2)" }}>
+            <div className="px-6 py-3 flex items-center gap-2" style={{ background: "linear-gradient(135deg, #f59e0b15, #f59e0b08)", borderBottom: "1px solid #f59e0b15" }}>
+              <AlertTriangle size={14} style={{ color: "#f59e0b" }} />
+              <span className="text-xs font-bold" style={{ color: "#fbbf24" }}>Habilite "Conteúdo não seguro"</span>
+            </div>
+            <div className="p-6">
+              <p className="text-[11px] leading-relaxed mb-4" style={{ color: "#ffffff60" }}>
+                O preview roda em HTTPS e bloqueia requisições HTTP para IPs locais ({savedUrl}). 
+                Siga os passos abaixo <strong style={{ color: "#fff" }}>uma única vez</strong> para permitir a conexão:
+              </p>
+              <div className="rounded-xl p-4 space-y-3" style={{ backgroundColor: "#ffffff04", border: "1px solid #ffffff08" }}>
+                {[
+                  <>Abra esta URL em uma aba separada: <button onClick={() => window.open(previewDomain + "/vmix-control", "_blank", "noopener,noreferrer")} className="ml-1.5 inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-bold transition-all hover:brightness-110" style={{ backgroundColor: "#f59e0b20", color: "#fbbf24", border: "1px solid #f59e0b30" }}><ExternalLink size={10} />{previewDomain.replace("https://", "").slice(0, 30)}...</button></>,
+                  <>Na barra de endereço, clique no ícone <strong style={{ color: "#fff" }}>🔒 cadeado</strong> → <strong style={{ color: "#fff" }}>Configurações do site</strong></>,
+                  <>Encontre <strong style={{ color: "#fff" }}>Conteúdo não seguro</strong> → mude para <strong style={{ color: "#22c55e" }}>Permitir</strong></>,
+                  <><strong style={{ color: "#fff" }}>Feche a aba</strong> e volte aqui. Clique <strong style={{ color: "#22c55e" }}>Conectar</strong> — agora vai funcionar! ✅</>,
+                ].map((content, i) => (
+                  <div key={i} className="flex items-start gap-3">
+                    <span className="text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#f59e0b", color: "#000" }}>{i + 1}</span>
+                    <p className="text-[11px]" style={{ color: "#ffffff80" }}>{content}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         )}
       </div>
     );
