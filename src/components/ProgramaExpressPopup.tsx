@@ -189,13 +189,21 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
         });
       });
 
-      // Save as roteiro
+      // Upload XML first to get URL
+      const blob = new Blob([xmlContent], { type: "application/xml" });
+      const fileName = `express_${programaId}_${Date.now()}.xml`;
+      const filePath = `express/${user.id}/${fileName}`;
+      await supabase.storage.from("empresa-assets").upload(filePath, blob, { upsert: true, contentType: "application/xml" });
+      const { data: urlData } = supabase.storage.from("empresa-assets").getPublicUrl(filePath);
+      const xmlUrl = urlData.publicUrl;
+
+      // Save as roteiro with XML URL in subtitulo
       const { error } = await supabase.from("roteiros").insert({
         user_id: user.id,
         programa_nome: programaNome,
         estudio,
         titulo: `PROGRAMA EXPRESS — ${programaNome}`,
-        subtitulo: "Programa Express",
+        subtitulo: `express_xml::${xmlUrl}`,
         tipo_programa: "Jornalístico",
         data_programa: new Date().toISOString().split("T")[0],
         horario: new Date().toTimeString().slice(0, 5),
@@ -204,11 +212,6 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
         status: "feito",
       });
       if (error) throw error;
-
-      // Upload XML
-      const blob = new Blob([xmlContent], { type: "application/xml" });
-      const file = new File([blob], `express_${programaId}_${Date.now()}.xml`, { type: "application/xml" });
-      await supabase.storage.from("empresa-assets").upload(`express/${user.id}/${file.name}`, file, { upsert: true });
 
       toast.success("Programa Express salvo com sucesso!");
       reset();

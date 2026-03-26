@@ -884,6 +884,20 @@ ${perguntaActions}
                     )}
                   </div>
                   <div className="flex items-center gap-1 ml-2 flex-wrap">
+                    {/* XML button for express programs */}
+                    {r.subtitulo?.startsWith("express_xml::") && (
+                      <button
+                        onClick={() => {
+                          const xmlUrl = r.subtitulo.replace("express_xml::", "");
+                          navigator.clipboard.writeText(xmlUrl).then(() => toast.success("URL do XML copiada!")).catch(() => toast.error("Erro ao copiar"));
+                        }}
+                        className="h-7 px-2 flex items-center justify-center gap-1 rounded-lg hover:opacity-70 transition text-[9px] font-bold"
+                        style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #444444) 10%, transparent)", color: "var(--layout-accent-color, #444444)" }}
+                        title="Copiar URL do XML"
+                      >
+                        <Code2 size={12} /> XML
+                      </button>
+                    )}
                     {/* Apresentador status */}
                     {r.share_token && (
                       <span
