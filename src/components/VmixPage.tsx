@@ -1139,7 +1139,7 @@ export default function VmixPage() {
                           window.open(previewDomain + "/vmix-control", "_blank", "noopener,noreferrer");
                         }}
                         className="ml-1.5 inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-bold transition-all hover:brightness-110"
-                        style={{ backgroundColor: "#268ffa30", color: "var(--layout-icon-color, #888888)", border: "1px solid #268ffa40" }}
+                        style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #444444) 20%, transparent)", color: "var(--layout-icon-color, #888888)", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #444444) 25%, transparent)" }}
                       >
                         <ExternalLink size={10} />
                         {previewDomain.replace("https://", "").slice(0, 30)}...
@@ -1180,7 +1180,7 @@ export default function VmixPage() {
               className="w-64 px-4 py-2 rounded-lg text-sm outline-none"
               style={{ backgroundColor: "#2a2a2a", color: "#fff", border: "1px solid #ffffff15" }}
             />
-            <button onClick={saveUrl} className="px-4 py-2 rounded-lg text-xs font-bold text-white" style={{ background: "linear-gradient(135deg,#268ffa,#2dbef3)" }}>
+            <button onClick={saveUrl} className="px-4 py-2 rounded-lg text-xs font-bold text-white" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" }}>
               Salvar
             </button>
             {savedUrl && (

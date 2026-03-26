@@ -552,7 +552,7 @@ export default function ApresentadorForm() {
               <CheckCircle size={22} style={{ color: "var(--layout-accent-color, #444444)" }} /> Salvo com sucesso!
             </div>
             <div className="w-full" style={{ height: "4px", backgroundColor: "rgba(255,255,255,0.1)" }}>
-              <div style={{ height: "100%", background: "linear-gradient(90deg, #268ffa, #2dbef3)", animation: "shrinkBar 2s linear forwards" }} />
+              <div style={{ height: "100%", background: "linear-gradient(90deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))", animation: "shrinkBar 2s linear forwards" }} />
             </div>
           </div>
         </div>

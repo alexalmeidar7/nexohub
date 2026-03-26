@@ -211,7 +211,7 @@ function GradeBody({ gradeSlots, diasSemana, diaAtual, currentTimeStr, getProgra
                   <td key={dia} rowSpan={rowSpan}
                     className="rounded-lg transition-all relative group"
                     style={{
-                      background: isOnAir ? "linear-gradient(135deg, #268ffa, #2dbef3)" : "#ffffff",
+                      background: isOnAir ? "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" : "#ffffff",
                       color: isOnAir ? "#ffffff" : "var(--layout-header-bg, #1a1a1a)",
                       fontWeight: isOnAir ? "bold" : undefined,
                       border: isOnAir ? "2px solid var(--layout-accent-color, #444444)" : "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)",
@@ -1283,7 +1283,7 @@ export default function ProgramaForm() {
               <CheckCircle size={22} style={{ color: "var(--layout-accent-color, #444444)" }} /> Salvo com sucesso!
             </div>
             <div className="w-full" style={{ height: "4px", backgroundColor: "rgba(255,255,255,0.1)" }}>
-              <div style={{ height: "100%", background: "linear-gradient(90deg, #268ffa, #2dbef3)", animation: "shrinkBar 2s linear forwards" }} />
+              <div style={{ height: "100%", background: "linear-gradient(90deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))", animation: "shrinkBar 2s linear forwards" }} />
             </div>
           </div>
         </div>
