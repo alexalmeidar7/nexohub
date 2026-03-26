@@ -148,8 +148,11 @@ export default function PrevisaoTempo() {
   const fetchWeatherByCoords = useCallback(async (lat: number, lon: number, name: string, silent = false) => {
     if (!silent) { setLoading(true); setError(""); setWeather(null); }
     try {
-      const wxRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code,relative_humidity_2m_max&timezone=auto&forecast_days=6`);
-      const wxData = await wxRes.json();
+      const { data: resp, error: fnErr } = await supabase.functions.invoke("fetch-weather", {
+        body: { action: "forecast", lat, lon, forecast_days: 6 },
+      });
+      if (fnErr) throw fnErr;
+      const wxData = resp?.data;
       const current: DayWeather = {
         date: "Agora", temp: Math.round(wxData.current.temperature_2m),
         tempMin: Math.round(wxData.daily.temperature_2m_min[0]), tempMax: Math.round(wxData.daily.temperature_2m_max[0]),
