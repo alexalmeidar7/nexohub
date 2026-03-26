@@ -302,7 +302,7 @@ export default function LogosPatrocinadoresPage() {
               {editingFullId ? "✏️ Editar Logo de Patrocinador" : "➕ Nova Logo de Patrocinador"}
             </h3>
             {editingFullId && (
-              <button type="button" onClick={resetForm} className="text-[10px] text-white/70 hover:text-white transition-colors">
+              <button type="button" onClick={resetForm} className="text-[10px] transition-colors" style={{ color: "var(--layout-header-text, #ffffff)", opacity: 0.7 }}>
                 Cancelar edição
               </button>
             )}
@@ -402,7 +402,7 @@ export default function LogosPatrocinadoresPage() {
                   {excluidasOpen && (
                     <div onClick={(e) => e.stopPropagation()}>
                       <div className="relative">
-                        <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-white/50" />
+                        <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2" style={{ color: "var(--layout-header-text, #ffffff)", opacity: 0.5 }} />
                         <input
                           type="text"
                           value={excluidasSearch}
@@ -416,7 +416,7 @@ export default function LogosPatrocinadoresPage() {
                       </div>
                     </div>
                   )}
-                  <ChevronDown size={16} className={`text-white transition-transform duration-200 ${excluidasOpen ? "rotate-180" : ""}`} />
+                  <ChevronDown size={16} className={`transition-transform duration-200 ${excluidasOpen ? "rotate-180" : ""}`} style={{ color: "var(--layout-header-text, #ffffff)" }} />
                 </div>
               </button>
             </CollapsibleTrigger>
@@ -480,7 +480,7 @@ export default function LogosPatrocinadoresPage() {
               <CollapsibleTrigger asChild>
                 <button className="w-full px-4 py-2.5 flex items-center justify-between cursor-pointer" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" }}>
                   <h3 className="text-sm font-bold" style={{ color: "var(--layout-header-text, #ffffff)" }}>{programa.nome}</h3>
-                  <ChevronDown size={16} className="text-white transition-transform duration-200" />
+                  <ChevronDown size={16} className="transition-transform duration-200" style={{ color: "var(--layout-header-text, #ffffff)" }} />
                 </button>
               </CollapsibleTrigger>
               <CollapsibleContent>

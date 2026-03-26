@@ -144,9 +144,9 @@ export default function WhatsAppSendDialog({ open, onClose, roteiroData }: Whats
         <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: "rgba(255,255,255,0.1)" }}>
           <div className="flex items-center gap-2">
             <MessageSquare size={16} style={{ color: "#25d366" }} />
-            <h3 className="text-sm font-bold text-white">Enviar Roteiro por WhatsApp</h3>
+            <h3 className="text-sm font-bold" style={{ color: "var(--layout-header-text, #ffffff)" }}>Enviar Roteiro por WhatsApp</h3>
           </div>
-          <button onClick={onClose} className="text-white/50 hover:text-white transition"><X size={16} /></button>
+          <button onClick={onClose} style={{ color: "var(--layout-header-text, #ffffff)", opacity: 0.5 }} className="hover:opacity-100 transition"><X size={16} /></button>
         </div>
 
         {/* Body */}
@@ -159,7 +159,7 @@ export default function WhatsAppSendDialog({ open, onClose, roteiroData }: Whats
             {loading ? (
               <div className="flex items-center gap-2 py-8 justify-center">
                 <Loader2 size={18} className="animate-spin" style={{ color: "#25d366" }} />
-                <span className="text-xs text-white/70">Formatando com IA...</span>
+                <span className="text-xs" style={{ color: "var(--layout-header-text, #ffffff)", opacity: 0.7 }}>Formatando com IA...</span>
               </div>
             ) : (
               <textarea
@@ -189,8 +189,8 @@ export default function WhatsAppSendDialog({ open, onClose, roteiroData }: Whats
               <div className="space-y-1 mb-3">
                 {contatos.map((c, i) => (
                   <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ backgroundColor: "rgba(255,255,255,0.06)" }}>
-                    <span className="text-xs text-white flex-1">{c.nome} <span className="text-white/40">· {c.whatsapp}</span></span>
-                    <button onClick={() => removeContato(i)} className="text-white/30 hover:text-red-400 transition"><Trash2 size={12} /></button>
+                    <span className="text-xs flex-1" style={{ color: "var(--layout-header-text, #ffffff)" }}>{c.nome} <span style={{ opacity: 0.4 }}>· {c.whatsapp}</span></span>
+                    <button onClick={() => removeContato(i)} className="hover:text-red-400 transition" style={{ color: "var(--layout-header-text, #ffffff)", opacity: 0.3 }}><Trash2 size={12} /></button>
                   </div>
                 ))}
               </div>
@@ -203,7 +203,7 @@ export default function WhatsAppSendDialog({ open, onClose, roteiroData }: Whats
                 onChange={e => setNovoNome(e.target.value)}
                 placeholder="Nome"
                 className="flex-1 px-3 py-2 rounded-lg text-xs outline-none"
-                style={{ backgroundColor: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff" }}
+                style={{ backgroundColor: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "var(--layout-header-text, #ffffff)" }}
               />
               <input
                 value={novoWhatsapp}
@@ -222,12 +222,12 @@ export default function WhatsAppSendDialog({ open, onClose, roteiroData }: Whats
                 }}
                 placeholder="(XX) XXXXX-XXXX"
                 className="flex-1 px-3 py-2 rounded-lg text-xs outline-none"
-                style={{ backgroundColor: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff" }}
+                style={{ backgroundColor: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "var(--layout-header-text, #ffffff)" }}
                 onKeyDown={e => { if (e.key === "Enter") addContato(); }}
               />
               <button
                 onClick={addContato}
-                className="px-3 py-2 rounded-lg text-xs font-bold text-white hover:opacity-80 transition"
+                className="px-3 py-2 rounded-lg text-xs font-bold hover:opacity-80 transition"
                 style={{ backgroundColor: "rgba(255,255,255,0.1)" }}
               >
                 <Plus size={14} />
@@ -238,13 +238,13 @@ export default function WhatsAppSendDialog({ open, onClose, roteiroData }: Whats
 
         {/* Footer */}
         <div className="px-5 py-4 border-t flex items-center justify-end gap-2" style={{ borderColor: "rgba(255,255,255,0.1)" }}>
-          <button onClick={onClose} className="px-4 py-2 rounded-lg text-xs font-bold text-white/60 hover:text-white transition">
+          <button onClick={onClose} className="px-4 py-2 rounded-lg text-xs font-bold transition" style={{ color: "var(--layout-header-text, #ffffff)", opacity: 0.6 }}>
             cancelar
           </button>
           <button
             onClick={copiarMensagem}
             disabled={loading || !formattedText.trim()}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold text-white hover:opacity-90 transition disabled:opacity-40"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold hover:opacity-90 transition disabled:opacity-40"
             style={{ backgroundColor: "rgba(255,255,255,0.14)" }}
           >
             <Copy size={13} />
@@ -253,7 +253,7 @@ export default function WhatsAppSendDialog({ open, onClose, roteiroData }: Whats
           <button
             onClick={enviar}
             disabled={loading || !formattedText.trim() || contatos.length === 0}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-xs font-bold text-white hover:opacity-90 transition disabled:opacity-40"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-xs font-bold hover:opacity-90 transition disabled:opacity-40"
             style={{ backgroundColor: "#25d366" }}
           >
             <Send size={13} />

@@ -524,14 +524,14 @@ export default function AgendaPage() {
             `}</style>
 
             {/* Header */}
-            <div className="px-6 pt-5 pb-4" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a) 0%, color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%) 100%)", borderRadius: "20px 20px 0 0" }}>
+            <div className="px-6 pt-5 pb-4" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a) 0%, color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%) 100%)", borderRadius: "20px 20px 0 0", color: "var(--layout-header-text, #ffffff)" }}>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: "rgba(255,255,255,0.15)" }}>
-                  <CalendarIcon size={20} className="text-white" />
+                  <CalendarIcon size={20} />
                 </div>
                 <div>
-                  <DialogTitle className="text-sm font-bold text-white m-0">{editingId ? "Editar Evento" : "Novo Evento"}</DialogTitle>
-                  <p className="text-[10px] text-white/60 mt-0.5">Preencha os dados abaixo</p>
+                  <DialogTitle className="text-sm font-bold m-0">{editingId ? "Editar Evento" : "Novo Evento"}</DialogTitle>
+                  <p className="text-[10px] mt-0.5" style={{ opacity: 0.6 }}>Preencha os dados abaixo</p>
                 </div>
               </div>
             </div>
@@ -676,7 +676,7 @@ export default function AgendaPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
           {/* Calendar */}
           <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-            <div className="px-4 py-2.5 font-bold text-xs tracking-wide text-white" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" }}>
+            <div className="px-4 py-2.5 font-bold text-xs tracking-wide" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))", color: "var(--layout-header-text, #ffffff)" }}>
               📅 Calendário
             </div>
             <div className="p-3">
@@ -705,7 +705,7 @@ export default function AgendaPage() {
           <div className="lg:col-span-2 space-y-4">
             {/* Events of selected day */}
             <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-              <div className="px-4 py-2.5 font-bold text-xs tracking-wide text-white flex items-center justify-between" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" }}>
+              <div className="px-4 py-2.5 font-bold text-xs tracking-wide flex items-center justify-between" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))", color: "var(--layout-header-text, #ffffff)" }}>
                 <span style={{ color: "var(--layout-header-text, #ffffff)" }}>
                   {selectedDate
                     ? `📋 Eventos em ${format(selectedDate, "dd/MM/yyyy")}`
@@ -729,7 +729,7 @@ export default function AgendaPage() {
 
             {/* Upcoming 7 days */}
             <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-              <div className="px-4 py-2.5 font-bold text-xs tracking-wide text-white" style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #444444), color-mix(in srgb, var(--layout-accent-color, #444444) 70%, white 30%))" }}>
+              <div className="px-4 py-2.5 font-bold text-xs tracking-wide" style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #444444), color-mix(in srgb, var(--layout-accent-color, #444444) 70%, white 30%))", color: "var(--layout-header-text, #ffffff)" }}>
                 🗓️ Próximos 7 dias
               </div>
               <div className="p-3 space-y-3 max-h-[400px] overflow-y-auto" style={{ scrollbarWidth: "thin", scrollbarColor: "var(--layout-scrollbar-color, #555555) transparent" }}>
@@ -786,7 +786,7 @@ export default function AgendaPage() {
         {/* Past events history */}
         <div className="mt-5">
           <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-            <div className="px-4 py-2.5 font-bold text-xs tracking-wide text-white flex items-center justify-between" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" }}>
+            <div className="px-4 py-2.5 font-bold text-xs tracking-wide flex items-center justify-between" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))", color: "var(--layout-header-text, #ffffff)" }}>
               <span className="flex items-center gap-1.5" style={{ color: "var(--layout-header-text, #ffffff)" }}>
                 <History size={12} /> Histórico de Eventos Passados
               </span>
@@ -800,7 +800,7 @@ export default function AgendaPage() {
                 />
                 {historyDateFilter && (
                   <button onClick={() => setHistoryDateFilter(undefined)} className="p-0.5 rounded hover:bg-white/20 transition-colors">
-                    <X size={12} className="text-white" />
+                    <X size={12} style={{ color: "var(--layout-header-text, #ffffff)" }} />
                   </button>
                 )}
               </div>

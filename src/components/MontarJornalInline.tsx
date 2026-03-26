@@ -105,7 +105,7 @@ export default function MontarJornalInline({ programas, onFinish, onCancel }: Pr
       `}</style>
 
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2 text-white font-bold text-xs" style={{ backgroundColor: "var(--layout-header-bg, #1a1a1a)" }}>
+      <div className="flex items-center justify-between px-3 py-2 font-bold text-xs" style={{ backgroundColor: "var(--layout-header-bg, #1a1a1a)", color: "var(--layout-header-text, #ffffff)" }}>
         <span className="flex items-center gap-2">
           <Newspaper size={12} />
           Montar Jornal

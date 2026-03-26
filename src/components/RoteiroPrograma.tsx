@@ -650,20 +650,20 @@ ${perguntaActions}
       {/* ── STEP 1: Configuração do Programa ── */}
       <div className="rounded-2xl overflow-hidden" style={{ background: "#ffffff", boxShadow: "0 4px 24px rgba(0,0,0,0.08)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)" }}>
         {/* Section Header */}
-        <div className="px-6 py-4 flex items-center justify-between" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #0d0446), color-mix(in srgb, var(--layout-header-bg, color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%)) 80%, white 20%))", borderBottom: "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)" }}>
+        <div className="px-6 py-4 flex items-center justify-between" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #0d0446), color-mix(in srgb, var(--layout-header-bg, color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%)) 80%, white 20%))", borderBottom: "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)", color: "var(--layout-header-text, #ffffff)" }}>
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: "rgba(255,255,255,0.15)" }}>
-              <FileText size={18} className="text-white" />
+              <FileText size={18} />
             </div>
             <div>
-              <h3 className="text-base font-bold text-white drop-shadow-sm">Roteiro de Programa</h3>
-              <p className="text-xs text-white/80 drop-shadow-sm">Passo 1 — Selecione o programa e a data</p>
+              <h3 className="text-base font-bold drop-shadow-sm">Roteiro de Programa</h3>
+              <p className="text-xs drop-shadow-sm" style={{ opacity: 0.8 }}>Passo 1 — Selecione o programa e a data</p>
             </div>
           </div>
           {editingRoteiroId && (
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg" style={{ backgroundColor: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.2)" }}>
-              <Code2 size={14} className="text-white" />
-              <span className="text-[9px] font-bold uppercase tracking-wider text-white/80">XML</span>
+              <Code2 size={14} />
+              <span className="text-[9px] font-bold uppercase tracking-wider" style={{ opacity: 0.8 }}>XML</span>
               <button
                 onClick={() => {
                   const xmlUrl = `https://${import.meta.env.VITE_SUPABASE_PROJECT_ID}.supabase.co/functions/v1/roteiro-xml?id=${editingRoteiroId}`;
@@ -672,7 +672,7 @@ ${perguntaActions}
                 className="p-1 rounded hover:bg-white/20 transition-colors"
                 title="Copiar URL do XML"
               >
-                <Copy size={12} className="text-white" />
+                <Copy size={12} />
               </button>
             </div>
           )}
@@ -943,13 +943,13 @@ ${perguntaActions}
       {showRoteiro && (
         <div className="rounded-2xl overflow-hidden" style={{ background: "#ffffff", boxShadow: "0 4px 24px rgba(0,0,0,0.08)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)" }}>
           {/* Section Header */}
-          <div className="px-6 py-4" style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #444444), color-mix(in srgb, var(--layout-accent-color, #444444) 70%, white 30%))" }}>
+           <div className="px-6 py-4" style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #444444), color-mix(in srgb, var(--layout-accent-color, #444444) 70%, white 30%))", color: "var(--layout-header-text, #ffffff)" }}>
             <div className="flex items-center justify-between flex-wrap gap-2">
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-white/60">Passo 2 — Conteúdo do Roteiro</p>
-                <h2 className="text-lg font-bold text-white mt-0.5">
+                <p className="text-[10px] font-bold uppercase tracking-wider" style={{ opacity: 0.6 }}>Passo 2 — Conteúdo do Roteiro</p>
+                <h2 className="text-lg font-bold mt-0.5">
                   {programaNome}
-                  {numeroRoteiro && <span className="text-sm font-medium ml-2 text-white/60">#{numeroRoteiro}</span>}
+                  {numeroRoteiro && <span className="text-sm font-medium ml-2" style={{ opacity: 0.6 }}>#{numeroRoteiro}</span>}
                 </h2>
               </div>
                 <div className="flex items-center gap-2 flex-wrap">

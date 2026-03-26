@@ -418,7 +418,7 @@ export default function PrevisaoTempo() {
                         style={{ backgroundColor: isPrimary ? "var(--layout-header-bg, #1a1a1a)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)", border: `1px solid ${isPrimary ? "var(--layout-header-bg, #1a1a1a)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 15%, transparent)"}` }}>
                         <input type="checkbox" checked={isPrimary} onChange={togglePrimaryCity}
                           className="w-3.5 h-3.5" style={{ accentColor: "#2dbef3" }} />
-                        <span className="text-[11px] font-semibold" style={{ color: isPrimary ? "#ffffff" : "var(--layout-header-bg, #1a1a1a)" }}>Cidade Principal</span>
+                        <span className="text-[11px] font-semibold" style={{ color: isPrimary ? "var(--layout-header-text, #ffffff)" : "var(--layout-header-bg, #1a1a1a)" }}>Cidade Principal</span>
                       </label>
                     )}
                     {!isFavorited && (

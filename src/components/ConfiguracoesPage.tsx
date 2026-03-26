@@ -97,11 +97,11 @@ function CollapsibleBox({ title, icon, children }: { title: string; icon?: React
         className="w-full flex items-center justify-between px-6 py-4 transition-colors"
         style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))", color: "var(--layout-header-text, #ffffff)" }}
       >
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3" style={{ color: "var(--layout-header-text, #ffffff)" }}>
           {icon}
-          <h3 className="text-sm font-bold text-white">{title}</h3>
+          <h3 className="text-sm font-bold">{title}</h3>
         </div>
-        {open ? <ChevronUp size={18} className="text-white/80" /> : <ChevronDown size={18} className="text-white/80" />}
+        {open ? <ChevronUp size={18} style={{ color: "var(--layout-header-text, #ffffff)", opacity: 0.8 }} /> : <ChevronDown size={18} style={{ color: "var(--layout-header-text, #ffffff)", opacity: 0.8 }} />}
       </button>
       {open && <div className="p-6 space-y-5" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)" }}>{children}</div>}
     </div>
@@ -358,7 +358,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
         <div className="space-y-5">
 
       {/* Box 1: Configurações da Empresa */}
-      {(section === "all" || section === "empresa") && <CollapsibleBox title="Configurações da Empresa" icon={<Settings size={16} className="text-white/80" />}>
+      {(section === "all" || section === "empresa") && <CollapsibleBox title="Configurações da Empresa" icon={<Settings size={16} style={{ opacity: 0.8 }} />}>
         <div className="space-y-4">
           {field("Nome da Empresa", "nome", "Nome da empresa")}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -427,8 +427,8 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
 
       {/* Box 2: Configurações do Player */}
       {(section === "all" || section === "player") && <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-        <div className="w-full flex items-center justify-between px-5 py-3" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" }}>
-          <h3 className="text-sm font-bold text-white">Configurações do Player</h3>
+        <div className="w-full flex items-center justify-between px-5 py-3" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))", color: "var(--layout-header-text, #ffffff)" }}>
+          <h3 className="text-sm font-bold">Configurações do Player</h3>
         </div>
         <div className="p-5 space-y-4">
         <div className="space-y-6">
@@ -484,8 +484,8 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
           {/* ── Seção 1: Informações do Canal ── */}
           <div className="rounded-2xl p-5 space-y-4" style={{ backgroundColor: "#d9e9fa", boxShadow: "0 2px 8px color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)" }}>
             <div className="flex items-center gap-2 mb-1">
-              <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" }}>
-                <Settings size={12} className="text-white" />
+              <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))", color: "var(--layout-header-text, #ffffff)" }}>
+                <Settings size={12} />
               </div>
               <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Informações do Canal</span>
             </div>
@@ -770,8 +770,8 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
           {/* ── Seção 2: Imagens ── */}
           <div className="rounded-2xl p-5 space-y-4" style={{ backgroundColor: "#d9e9fa", boxShadow: "0 2px 8px color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)" }}>
             <div className="flex items-center gap-2 mb-1">
-              <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" }}>
-                <ImageIcon size={12} className="text-white" />
+              <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))", color: "var(--layout-header-text, #ffffff)" }}>
+                <ImageIcon size={12} />
               </div>
               <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{canalMode === "catalog" ? "Imagens do Catálogo" : "Imagens do Canal"}</span>
             </div>
@@ -922,7 +922,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
       </div></div>}
 
       {/* Box 3: Layout */}
-      {(section === "all" || section === "empresa") && <CollapsibleBox title="Layout — Cores e Personalização" icon={<Palette size={16} className="text-white/80" />}>
+      {(section === "all" || section === "empresa") && <CollapsibleBox title="Layout — Cores e Personalização" icon={<Palette size={16} style={{ opacity: 0.8 }} />}>
         <Suspense fallback={<div className="flex items-center gap-2 text-xs py-8 justify-center" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}><Loader2 size={16} className="animate-spin" /> Carregando...</div>}>
           <LayoutCustomizer />
         </Suspense>
