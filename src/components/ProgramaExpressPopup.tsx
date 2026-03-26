@@ -444,14 +444,9 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
           {participantes.length > 0 && (
             <div className="space-y-1.5 mb-2">
               {participantes.map((p, idx) => (
-                <div key={idx} className="flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-[11px]" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 90%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 12%, transparent)" }}>
-                  <span className="font-semibold flex-1 truncate" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{p.nome}</span>
-                  {p.cargo && <span className="text-[10px] shrink-0" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>{p.cargo}</span>}
-                  {p.instagram && <span className="text-[10px] shrink-0" style={{ color: "var(--layout-accent-color, #2ec1f7)" }}>@{p.instagram.replace("@", "")}</span>}
-                  <button onClick={() => removeParticipante(idx)} className="p-0.5 rounded hover:opacity-70 shrink-0" style={{ color: "#ef4444" }}>
-                    <Trash2 size={11} />
-                  </button>
-                </div>
+                <ParticipanteRow key={idx} participante={p} inputStyle={inputStyle} onRemove={() => removeParticipante(idx)} onUpdateCargo={(cargo) => {
+                  setParticipantes(prev => prev.map((x, i) => i === idx ? { ...x, cargo } : x));
+                }} userId={user?.id || ""} />
               ))}
             </div>
           )}
