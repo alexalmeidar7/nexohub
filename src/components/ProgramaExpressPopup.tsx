@@ -229,6 +229,18 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
     xml += `  <estudio>${estudio}</estudio>\n`;
     xml += `  <data>${new Date().toISOString().split("T")[0]}</data>\n`;
 
+    if (participantes.length > 0) {
+      xml += `  <participantes>\n`;
+      participantes.forEach(p => {
+        xml += `    <participante>\n`;
+        xml += `      <nome>${escXml(p.nome)}</nome>\n`;
+        xml += `      <cargo>${escXml(p.cargo)}</cargo>\n`;
+        xml += `      <instagram>${escXml(p.instagram)}</instagram>\n`;
+        xml += `    </participante>\n`;
+      });
+      xml += `  </participantes>\n`;
+    }
+
     if (escaladaItems.length > 0) {
       xml += `  <escalada>\n`;
       escaladaItems.forEach((n, i) => {
