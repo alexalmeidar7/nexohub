@@ -918,17 +918,71 @@ ${perguntaActions}
                     {/* WhatsApp button */}
                     <button
                       onClick={() => {
+                        const isExpress = r.subtitulo?.startsWith("express_xml::");
                         let parts: any[] = [];
                         try { parts = typeof r.participantes === "string" ? JSON.parse(r.participantes) : r.participantes || []; } catch { parts = []; }
-                        setWhatsAppHistoricoData({
-                          titulo: r.titulo || "Roteiro",
-                          programaNome: r.programa_nome || "",
-                          estudio: r.estudio || "",
-                          data: format(new Date(r.data_programa), "dd/MM/yyyy"),
-                          horario: r.horario || "",
-                          participantes: parts,
-                          conteudoTexto: r.conteudo_html?.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim() || "",
-                        });
+
+                        if (isExpress) {
+                          // Build formatted WhatsApp text for Express
+                          const parsed = Array.isArray(parts) ? { blocos: [], participantes: parts } : (parts || {});
+                          const pList: any[] = parsed.participantes || [];
+                          const blocosList: any[] = parsed.blocos || [];
+                          const dataStr = format(new Date(r.data_programa), "dd/MM/yyyy");
+
+                          let msg = `*${r.programa_nome || "Programa"}*\n`;
+                          msg += `📅 ${dataStr}${r.horario ? ` · ${r.horario}` : ""}\n\n`;
+
+                          if (pList.length > 0) {
+                            msg += `👥 *Participantes:*\n`;
+                            pList.forEach((p: any) => {
+                              msg += `• ${p.nome}${p.cargo ? ` — ${p.cargo}` : ""}${p.instagram ? ` (${p.instagram.startsWith("@") ? p.instagram : "@" + p.instagram})` : ""}\n`;
+                            });
+                            msg += `\n`;
+                          }
+
+                          // Escalada from blocos noticias marked as escalada
+                          const escaladaItems = blocosList.flatMap((b: any) => (b.noticias || []).filter((n: any) => n.escalada).map((n: any) => n.titulo)).filter(Boolean);
+                          if (escaladaItems.length > 0) {
+                            msg += `📢 *Escalada:*\n`;
+                            escaladaItems.forEach((t: string, i: number) => { msg += `${i + 1}. ${t}\n`; });
+                            msg += `\n`;
+                          }
+
+                          blocosList.forEach((b: any, bi: number) => {
+                            const noticias = (b.noticias || []).filter((n: any) => n.titulo);
+                            if (noticias.length === 0) return;
+                            msg += `📺 *BLOCO ${bi + 1}:*\n`;
+                            noticias.forEach((n: any) => {
+                              msg += `• ${n.titulo}`;
+                              if (n.link) msg += `\n  🔗 ${n.link}`;
+                              msg += `\n`;
+                            });
+                            msg += `\n`;
+                          });
+
+                          msg += `_Nos vemos no programa ;)_`;
+
+                          setWhatsAppHistoricoData({
+                            titulo: r.titulo || "Roteiro",
+                            programaNome: r.programa_nome || "",
+                            estudio: r.estudio || "",
+                            data: dataStr,
+                            horario: r.horario || "",
+                            participantes: pList,
+                            conteudoTexto: "",
+                            _expressFormatted: msg,
+                          });
+                        } else {
+                          setWhatsAppHistoricoData({
+                            titulo: r.titulo || "Roteiro",
+                            programaNome: r.programa_nome || "",
+                            estudio: r.estudio || "",
+                            data: format(new Date(r.data_programa), "dd/MM/yyyy"),
+                            horario: r.horario || "",
+                            participantes: parts,
+                            conteudoTexto: r.conteudo_html?.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim() || "",
+                          });
+                        }
                         setShowWhatsAppDialog(true);
                       }}
                       className="h-7 w-7 flex items-center justify-center rounded-lg hover:opacity-70 transition"
@@ -937,8 +991,8 @@ ${perguntaActions}
                     >
                       <MessageSquare size={12} style={{ color: "#25d366" }} />
                     </button>
-                    {/* PDF button - only for saved/exported roteiros */}
-                    {r.status !== "rascunho" && (
+                    {/* PDF button - only for non-express saved roteiros */}
+                    {r.status !== "rascunho" && !r.subtitulo?.startsWith("express_xml::") && (
                       <button
                         onClick={() => {
                           editarRoteiro(r);
