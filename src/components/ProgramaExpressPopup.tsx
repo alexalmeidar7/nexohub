@@ -235,7 +235,125 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
     setShowNewContact(false);
   };
 
-  const updateNoticia = (bi: number, ni: number, field: keyof NewsItem, value: any) => {
+  const parsePastedScript = () => {
+    if (!pasteText.trim()) { toast.error("Cole o texto do roteiro"); return; }
+    const lines = pasteText.split("\n").map(l => l.trim()).filter(l => l);
+    if (lines.length < 3) { toast.error("O roteiro precisa de pelo menos 3 linhas (Estúdio, Programa, conteúdo)"); return; }
+
+    // Line 1: Estúdio
+    const parsedEstudio = lines[0];
+    const matchedEstudio = estudios.find(e => e.toLowerCase() === parsedEstudio.toLowerCase());
+    if (matchedEstudio) setEstudio(matchedEstudio);
+    else { setEstudio(parsedEstudio); toast.info(`Estúdio "${parsedEstudio}" não encontrado na lista, definido manualmente`); }
+
+    // Line 2: Programa
+    const parsedPrograma = lines[1];
+    const matchedPrograma = programas.find(p => p.nome.toLowerCase() === parsedPrograma.toLowerCase());
+    if (matchedPrograma) {
+      setProgramaId(matchedPrograma.id);
+    } else {
+      // Try partial match
+      const partial = programas.find(p => p.nome.toLowerCase().includes(parsedPrograma.toLowerCase()) || parsedPrograma.toLowerCase().includes(p.nome.toLowerCase()));
+      if (partial) setProgramaId(partial.id);
+      else toast.warning(`Programa "${parsedPrograma}" não encontrado`);
+    }
+
+    // Remaining lines: parse sections
+    const parsedParticipantes: Participante[] = [];
+    const parsedEscalada: string[] = [];
+    const parsedBlocos: Bloco[] = [];
+    let currentSection: "participantes" | "escalada" | "bloco" | null = null;
+    let currentBloco: NewsItem[] = [];
+
+    for (let i = 2; i < lines.length; i++) {
+      const line = lines[i];
+      const lower = line.toLowerCase();
+
+      // Detect section headers
+      if (lower.includes("participante") || lower.includes("participantes")) {
+        currentSection = "participantes";
+        continue;
+      }
+      if (lower.includes("escalada")) {
+        currentSection = "escalada";
+        continue;
+      }
+      if (/^bloco\s*\d+/i.test(lower)) {
+        if (currentBloco.length > 0) parsedBlocos.push({ noticias: currentBloco });
+        currentBloco = [];
+        currentSection = "bloco";
+        continue;
+      }
+
+      // If no section detected yet, try to auto-detect based on content
+      if (!currentSection) {
+        // Check if it looks like a participant (Nome - Cargo : Instagram)
+        if (line.includes(" - ") || line.includes(" : ")) {
+          currentSection = "participantes";
+        } else {
+          // Default to bloco content
+          currentSection = "bloco";
+        }
+      }
+
+      if (currentSection === "participantes") {
+        // Format: Nome - Cargo : Instagram  OR  Nome - Cargo  OR  Nome
+        const parts = line.split(/\s*[-–]\s*/);
+        const nome = parts[0]?.trim() || "";
+        let cargo = "";
+        let instagram = "";
+        if (parts.length > 1) {
+          const rest = parts.slice(1).join(" - ");
+          const colonParts = rest.split(/\s*[:]\s*/);
+          cargo = colonParts[0]?.trim() || "";
+          instagram = colonParts[1]?.trim() || "";
+        }
+        if (nome) parsedParticipantes.push({ nome, cargo, instagram });
+      } else if (currentSection === "escalada") {
+        if (line) parsedEscalada.push(line);
+      } else if (currentSection === "bloco") {
+        if (line) {
+          const isUrl = line.startsWith("http");
+          currentBloco.push({
+            titulo: isUrl ? "" : line,
+            imagemUrl: "",
+            escalada: false,
+            link: isUrl ? line : undefined,
+          });
+        }
+      }
+    }
+
+    if (currentBloco.length > 0) parsedBlocos.push({ noticias: currentBloco });
+
+    // Mark escalada items in blocos
+    if (parsedEscalada.length > 0 && parsedBlocos.length > 0) {
+      parsedBlocos.forEach(b => {
+        b.noticias.forEach(n => {
+          if (parsedEscalada.some(e => e.toLowerCase() === n.titulo.toLowerCase())) {
+            n.escalada = true;
+          }
+        });
+      });
+    }
+
+    // If no blocos parsed but we have escalada items, create a bloco from them
+    if (parsedBlocos.length === 0 && parsedEscalada.length > 0) {
+      parsedBlocos.push({
+        noticias: parsedEscalada.map(t => ({ titulo: t, imagemUrl: "", escalada: true })),
+      });
+    }
+
+    if (parsedParticipantes.length > 0) setParticipantes(parsedParticipantes);
+    if (parsedBlocos.length > 0) setBlocos(parsedBlocos);
+    else if (parsedBlocos.length === 0) setBlocos([{ noticias: [{ titulo: "", imagemUrl: "", escalada: false }] }]);
+
+    setShowPastePopup(false);
+    setPasteText("");
+    toast.success("Roteiro importado com sucesso!");
+  };
+
+
     setBlocos(prev => {
       const copy = prev.map((b, i) => i === bi ? { ...b, noticias: b.noticias.map((n, j) => j === ni ? { ...n, [field]: value } : n) } : b);
       return copy;
