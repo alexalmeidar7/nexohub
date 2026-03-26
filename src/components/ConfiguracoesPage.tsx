@@ -369,8 +369,8 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
                 <button onClick={handleLogoUpload}
                   className="px-4 py-1.5 font-bold transition-all text-xs flex items-center gap-1"
                   style={btnSecondary}
-                  onMouseEnter={e => { e.currentTarget.style.backgroundColor = "var(--layout-header-bg, #1a1a1a)"; e.currentTarget.style.color = "#ffffff"; }}
-                  onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#ffffff"; e.currentTarget.style.color = "var(--layout-header-bg, #1a1a1a)"; }}
+                  onMouseEnter={e => { e.currentTarget.style.backgroundColor = "var(--layout-page-text, #1a1a1a)"; e.currentTarget.style.color = "var(--layout-page-bg, #ffffff)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.backgroundColor = "var(--layout-page-bg, #ffffff)"; e.currentTarget.style.color = "var(--layout-page-text, #1a1a1a)"; }}
                 >
                   <Upload size={12} /> {config.logo ? "Trocar Logo" : "Carregar Logo"}
                 </button>
