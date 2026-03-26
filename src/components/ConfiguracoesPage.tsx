@@ -452,9 +452,10 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
                 onClick={() => { setCanalMode("live"); setCanalForm(p => ({ ...p, type: "audio_live" })); }}
                 className="px-5 py-2.5 text-xs font-bold transition-all flex items-center gap-2 rounded-xl"
                 style={{
-                  backgroundColor: canalMode === "live" ? "var(--layout-header-bg, #1a1a1a)" : "rgba(13,4,70,0.05)",
-                  color: canalMode === "live" ? "#ffffff" : "var(--layout-header-bg, #1a1a1a)",
-                  boxShadow: canalMode === "live" ? "0 4px 12px color-mix(in srgb, var(--layout-page-text, #1a1a1a) 25%, transparent)" : "none",
+                  backgroundColor: canalMode === "live" ? "var(--layout-header-bg, #1a1a1a)" : "var(--layout-page-bg, #ffffff)",
+                  color: canalMode === "live" ? "var(--layout-header-text, #ffffff)" : "var(--layout-page-text, #1a1a1a)",
+                  border: canalMode === "live" ? "2px solid var(--layout-header-bg, #1a1a1a)" : "2px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 20%, transparent)",
+                  boxShadow: canalMode === "live" ? "0 4px 12px rgba(0,0,0,0.15)" : "none",
                 }}
               >
                 📡 Ao Vivo
