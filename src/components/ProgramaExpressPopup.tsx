@@ -229,7 +229,7 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) { reset(); onOpenChange(false); } }}>
-      <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "none" }}>
+      <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto overflow-x-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "none" }}>
         <button onClick={() => { reset(); onOpenChange(false); }} className="absolute top-3 right-3 rounded-full p-1 hover:opacity-70 transition-opacity" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
           <XIcon size={18} />
         </button>
@@ -385,7 +385,7 @@ function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRe
   }
 
   return (
-    <div className="rounded-lg p-2.5 space-y-2" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 80%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 15%, transparent)" }}>
+    <div className="rounded-lg p-2.5 space-y-2 overflow-hidden" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 80%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 15%, transparent)" }}>
       <div className="flex items-center justify-between">
         <p className="text-[10px] font-bold uppercase" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
           Notícia {ni + 1}
@@ -405,7 +405,7 @@ function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRe
       </div>
 
       {/* Link fetch */}
-      <div className="flex gap-1.5 items-center">
+      <div className="flex gap-1.5 items-center min-w-0">
         <div className="relative flex-1">
           <Link2 size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2" style={{ color: "var(--layout-icon-color, #888)" }} />
           <input
