@@ -927,8 +927,8 @@ export default function MusicaNoAr() {
                   Origem Online
                 </h4>
                 <div className="flex gap-1.5">
-                  <div className="flex-1 flex items-center gap-2 px-3 py-2 rounded-lg" style={{ backgroundColor: "#ffffff", border: "1px solid #c5d9f2" }}>
-                    <Globe size={14} style={{ color: "#7c8db5" }} />
+                  <div className="flex-1 flex items-center gap-2 px-3 py-2.5 rounded-lg transition-all" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 15%, transparent)" }}>
+                    <Globe size={13} style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 40%, transparent)" }} />
                     <input
                       value={xmlUrl}
                       onChange={(e) => {
@@ -939,18 +939,18 @@ export default function MusicaNoAr() {
                         }
                       }}
                       className="flex-1 text-xs outline-none bg-transparent"
-                      style={{ color: "#0d0446" }}
+                      style={{ color: "var(--layout-page-text, #0d0446)" }}
                       placeholder="Cole ou digite uma URL .xml"
                     />
                   </div>
-                  <button onClick={() => void saveUrl(xmlUrl)} className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: "#0d0446", color: "#ffffff" }}>
+                  <button onClick={() => void saveUrl(xmlUrl)} className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 transition-all hover:opacity-80" style={{ backgroundColor: "var(--layout-header-bg, #0d0446)", color: "var(--layout-header-text, #ffffff)" }}>
                     <Check size={16} />
                   </button>
                   <label
-                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg select-none shrink-0 text-white"
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg select-none shrink-0 transition-all hover:opacity-90"
                     style={{
-                      backgroundColor: "#0d0446",
-                      color: "hsl(0 0% 100%)",
+                      backgroundColor: "var(--layout-header-bg, #0d0446)",
+                      color: "var(--layout-header-text, #ffffff)",
                       opacity: hasValidOnlineUrl ? 1 : 0.45,
                       cursor: hasValidOnlineUrl ? "pointer" : "not-allowed",
                     }}
@@ -962,7 +962,7 @@ export default function MusicaNoAr() {
                       disabled={!hasValidOnlineUrl}
                       className="w-3.5 h-3.5 accent-white"
                     />
-                    <span className="text-[10px] font-bold whitespace-nowrap text-white">LER ESSA</span>
+                    <span className="text-[10px] font-bold whitespace-nowrap" style={{ color: "var(--layout-header-text, #ffffff)" }}>LER ESSA</span>
                   </label>
                 </div>
 
