@@ -365,6 +365,25 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
     setShowPastePopup(false);
     setPasteText("");
     toast.success(`Importado: ${summary.join(", ")}`);
+
+    // Auto-fetch links after import
+    if (parsedBlocos.length > 0) {
+      const linksToFetch: { bi: number; ni: number; url: string }[] = [];
+      parsedBlocos.forEach((b, bi) => {
+        b.noticias.forEach((n, ni) => {
+          if (n.link && n.link.startsWith("http")) {
+            linksToFetch.push({ bi, ni, url: n.link });
+          }
+        });
+      });
+      if (linksToFetch.length > 0) {
+        toast.info(`Buscando dados de ${linksToFetch.length} links...`);
+        // Fetch all links in parallel
+        linksToFetch.forEach(({ bi, ni, url }) => {
+          fetchFromLink(bi, ni, url);
+        });
+      }
+    }
   };
 
   const updateNoticia = (bi: number, ni: number, field: keyof NewsItem, value: any) => {
