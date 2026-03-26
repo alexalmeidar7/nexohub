@@ -523,7 +523,7 @@ export default function PrevisaoTempo() {
                       <span style={{ color: "#f97316" }}>↑{day.tempMax}°</span>
                     </p>
                     <p className="flex items-center justify-center gap-1">
-                      <Droplets size={11} style={{ color: "#2dbef3" }} />{day.humidity}%
+                      <Droplets size={11} style={{ color: "var(--layout-accent-color, #444444)" }} />{day.humidity}%
                     </p>
                     <p className="flex items-center justify-center gap-1">
                       <CloudRain size={11} style={{ color: "#a78bfa" }} />{day.rainChance}%
