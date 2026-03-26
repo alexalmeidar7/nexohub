@@ -41,6 +41,7 @@ export interface LayoutColors {
   widgetText: string;
   iconColor: string;
   borderColor: string;
+  sliderBg: string;
   homeBgType: "color" | "image";
   homeBgColor: string;
   homeBgImage: string;
