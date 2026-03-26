@@ -241,8 +241,8 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
     const nonEmptyLines = rawLines.filter(l => l.length > 0);
     if (nonEmptyLines.length < 2) { toast.error("O roteiro precisa de pelo menos 2 linhas"); return; }
 
-    // Helper: strip markdown bold, bullets, numbers
-    const clean = (s: string) => s.replace(/\*\*/g, "").replace(/^[-•–]\s+/, "").replace(/^\d+[\.\)]\s*/, "").trim();
+    // Helper: strip markdown bold (** or *), bullets, numbers
+    const clean = (s: string) => s.replace(/\*+/g, "").replace(/^[-•–]\s+/, "").replace(/^\d+[\.\)]\s*/, "").trim();
 
     // Extract URL from markdown link [text](url) or plain URL
     const extractUrl = (s: string): string | null => {
