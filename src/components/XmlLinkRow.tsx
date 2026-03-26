@@ -105,25 +105,25 @@ export default function XmlLinkRow({ label, xmlContent, permanentUrl: externalUr
   return (
     <div
       onClick={copy}
-      className="flex items-center gap-3 rounded-xl p-4 cursor-pointer transition-colors"
-      style={dark
-        ? { backgroundColor: "#0d0446", border: "2px solid #0d0446" }
-        : undefined
-      }
-      onMouseEnter={e => { if (dark) e.currentTarget.style.borderColor = "#2dbef3"; }}
-      onMouseLeave={e => { if (dark) e.currentTarget.style.borderColor = "#0d0446"; }}
+      className="flex items-center gap-3 rounded-xl p-4 cursor-pointer transition-all"
+      style={{
+        backgroundColor: "var(--layout-header-bg, #0d0446)",
+        border: "2px solid var(--layout-header-bg, #0d0446)",
+      }}
+      onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--layout-icon-color, #268ffa)"; }}
+      onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #0d0446)"; }}
     >
-      <Code2 size={18} style={dark ? { color: "#2ec1f7" } : undefined} className={dark ? "shrink-0" : "text-primary shrink-0"} />
-      <span style={dark ? { color: "#ffffff" } : undefined} className={`text-xs font-bold whitespace-nowrap ${!dark ? "text-foreground" : ""}`}>{label}</span>
-      <span style={dark ? { color: "#ffffff" } : undefined} className={`text-[10px] truncate flex-1 font-mono ${!dark ? "text-muted-foreground" : ""}`}>
+      <Code2 size={18} className="shrink-0" style={{ color: "var(--layout-icon-color, #268ffa)" }} />
+      <span className="text-xs font-bold whitespace-nowrap" style={{ color: "var(--layout-header-text, #ffffff)" }}>{label}</span>
+      <span className="text-[10px] truncate flex-1 font-mono" style={{ color: "color-mix(in srgb, var(--layout-header-text, #ffffff) 70%, transparent)" }}>
         {!ready ? "Gerando link..." : url}
       </span>
       {!ready ? (
-        <Loader2 size={16} style={dark ? { color: "#2ec1f7" } : undefined} className={`shrink-0 animate-spin ${dark ? "" : "text-muted-foreground"}`} />
+        <Loader2 size={16} className="shrink-0 animate-spin" style={{ color: "var(--layout-icon-color, #268ffa)" }} />
       ) : copied ? (
-        <Check size={16} className={dark ? "text-green-400 shrink-0" : "text-primary shrink-0"} />
+        <Check size={16} className="shrink-0" style={{ color: "#22c55e" }} />
       ) : (
-        <Copy size={16} style={dark ? { color: "#2ec1f7" } : undefined} className={`shrink-0 ${dark ? "" : "text-muted-foreground"}`} />
+        <Copy size={16} className="shrink-0" style={{ color: "var(--layout-icon-color, #268ffa)" }} />
       )}
     </div>
   );
