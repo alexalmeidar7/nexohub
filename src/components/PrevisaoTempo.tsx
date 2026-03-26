@@ -362,7 +362,7 @@ export default function PrevisaoTempo() {
                 style={{ color: "var(--layout-header-text, #ffffff)" }}
               >
                 <span className="flex items-center gap-2">
-                  <MapPin size={12} style={{ color: "#2dbef3" }} />
+                  <MapPin size={12} style={{ color: "var(--layout-accent-color, #444444)" }} />
                   {s.name}{s.admin1 ? `, ${s.admin1}` : ""}
                 </span>
                 <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "10px" }}>{s.country}</span>
