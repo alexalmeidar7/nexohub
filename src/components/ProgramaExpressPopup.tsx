@@ -123,6 +123,7 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
   const [pasteText, setPasteText] = useState("");
 
   const [participantes, setParticipantes] = useState<Participante[]>([]);
+  const [escaladaList, setEscaladaList] = useState<string[]>([]);
   const [searchNome, setSearchNome] = useState("");
   const [searchResults, setSearchResults] = useState<Participante[]>([]);
   const [showResults, setShowResults] = useState(false);
@@ -228,6 +229,7 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
     setEditingId(null);
     setInitialized(false);
     setParticipantes([]);
+    setEscaladaList([]);
     setSearchNome("");
     setSearchResults([]);
     setShowResults(false);
@@ -387,6 +389,7 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
     }
 
     if (parsedParticipantes.length > 0) setParticipantes(parsedParticipantes);
+    if (parsedEscalada.length > 0) setEscaladaList(parsedEscalada);
     if (parsedBlocos.length > 0) setBlocos(parsedBlocos);
 
     const summary = [];
@@ -485,7 +488,6 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
   };
 
   const generateXml = (): string => {
-    const escaladaItems = blocos.flatMap(b => b.noticias.filter(n => n.escalada && n.titulo));
     let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<programaExpress>\n`;
     xml += `  <programa>${programaNome}</programa>\n`;
     xml += `  <estudio>${estudio}</estudio>\n`;
@@ -503,12 +505,11 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
       xml += `  </participantes>\n`;
     }
 
-    if (escaladaItems.length > 0) {
+    if (escaladaList.length > 0) {
       xml += `  <escalada>\n`;
-      escaladaItems.forEach((n, i) => {
+      escaladaList.forEach((t, i) => {
         xml += `    <item ordem="${i + 1}">\n`;
-        xml += `      <titulo>${escXml(n.titulo)}</titulo>\n`;
-        xml += `      <imagem>${escXml(n.imagemUrl)}</imagem>\n`;
+        xml += `      <titulo>${escXml(t)}</titulo>\n`;
         xml += `    </item>\n`;
       });
       xml += `  </escalada>\n`;
@@ -542,7 +543,6 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
     setSaving(true);
     try {
       const xmlContent = generateXml();
-      const escaladaItems = blocos.flatMap(b => b.noticias.filter(n => n.escalada && n.titulo));
 
       // Build HTML content for roteiro
       let html = `<h2 style="text-align:center;font-weight:bold;">PROGRAMA EXPRESS — ${programaNome}</h2>`;
@@ -551,9 +551,9 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
         participantes.forEach(p => { html += `<li><strong>${p.nome}</strong>${p.cargo ? ` — ${p.cargo}` : ""}${p.instagram ? ` (@${p.instagram.replace("@", "")})` : ""}</li>`; });
         html += `</ul>`;
       }
-      if (escaladaItems.length > 0) {
+      if (escaladaList.length > 0) {
         html += `<h3 style="font-weight:bold;margin-top:16px;">📢 ESCALADA</h3><ul>`;
-        escaladaItems.forEach(n => { html += `<li><strong>${n.titulo}</strong></li>`; });
+        escaladaList.forEach(t => { html += `<li><strong>${t}</strong></li>`; });
         html += `</ul>`;
       }
       blocos.forEach((b, bi) => {
@@ -806,6 +806,42 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
             </button>
           </div>
         )}
+
+        {/* Escalada */}
+        <div className="mt-4 rounded-xl p-3" style={{ border: "1px solid color-mix(in srgb, #f59e0b 30%, transparent)", backgroundColor: "color-mix(in srgb, #f59e0b 5%, transparent)" }}>
+          <p className="text-xs font-bold flex items-center gap-1.5 mb-2" style={{ color: "#f59e0b" }}>
+            📢 Escalada
+            {escaladaList.length > 0 && (
+              <span className="text-[10px] font-normal" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
+                ({escaladaList.length} {escaladaList.length === 1 ? "item" : "itens"})
+              </span>
+            )}
+          </p>
+          <div className="space-y-1.5">
+            {escaladaList.map((item, idx) => (
+              <div key={idx} className="flex items-center gap-1.5">
+                <span className="text-[10px] font-bold shrink-0 w-5 text-center" style={{ color: "#f59e0b" }}>{idx + 1}.</span>
+                <input
+                  value={item}
+                  onChange={e => setEscaladaList(prev => prev.map((v, i) => i === idx ? e.target.value : v))}
+                  className="flex-1 px-2.5 py-1.5 rounded-lg text-[11px] outline-none"
+                  style={inputStyle}
+                  placeholder="Título da manchete..."
+                />
+                <button onClick={() => setEscaladaList(prev => prev.filter((_, i) => i !== idx))} className="p-1 rounded-full hover:opacity-70 shrink-0" style={{ color: "#ef4444" }}>
+                  <Trash2 size={12} />
+                </button>
+              </div>
+            ))}
+          </div>
+          <button
+            onClick={() => setEscaladaList(prev => [...prev, ""])}
+            className="flex items-center gap-1 text-[11px] font-semibold py-1.5 px-3 rounded-full hover:opacity-80 transition-all mt-2"
+            style={{ color: "#f59e0b", border: "1px dashed color-mix(in srgb, #f59e0b 40%, transparent)" }}
+          >
+            <Plus size={12} /> Adicionar manchete
+          </button>
+        </div>
 
         {/* Blocos */}
         <div className="space-y-4 mt-4">
