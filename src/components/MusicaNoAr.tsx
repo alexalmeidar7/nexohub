@@ -739,7 +739,7 @@ export default function MusicaNoAr() {
 
   // Detect when progress resets (music changed or reached end)
   useEffect(() => {
-    const songKey = `${displayTitulo}|${displayArtista}`;
+    const songKey = `${music?.titulo || ""}|${music?.artista || ""}`;
     const songChanged = prevSongRef.current !== "" && prevSongRef.current !== songKey;
     const progressReset = prevProgressRef.current > 10 && rawProgress < 5;
 
@@ -752,7 +752,7 @@ export default function MusicaNoAr() {
     }
     prevSongRef.current = songKey;
     prevProgressRef.current = rawProgress;
-  }, [rawProgress, displayTitulo, displayArtista]);
+  }, [rawProgress, music?.titulo, music?.artista]);
 
   const progress = sliderResetting ? 0 : rawProgress;
 
