@@ -928,9 +928,11 @@ ${perguntaActions}
                           const pList: any[] = parsed.participantes || [];
                           const blocosList: any[] = parsed.blocos || [];
                           const dataStr = format(new Date(r.data_programa), "dd/MM/yyyy");
+                          const prog = programas.find(p => p.nome === r.programa_nome);
+                          const horarioInicio = prog?.horario_inicio?.slice(0, 5) || r.horario || "";
 
                           let msg = `*${r.programa_nome || "Programa"}*\n`;
-                          msg += `📅 ${dataStr}${r.horario ? ` · ${r.horario}` : ""}\n\n`;
+                          msg += `📅 ${dataStr}${horarioInicio ? ` às ${horarioInicio}` : ""}\n\n`;
 
                           if (pList.length > 0) {
                             msg += `👥 *Participantes:*\n`;
