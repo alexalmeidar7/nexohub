@@ -17,6 +17,7 @@ import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 const NoticiasPanel = lazy(() => import("./NoticiasPanel"));
 const WhatsAppSendDialog = lazy(() => import("./WhatsAppSendDialog"));
 const ProgramaExpressPopup = lazy(() => import("./ProgramaExpressPopup"));
+import type { ExpressEditData } from "./ProgramaExpressPopup";
 
 interface Apresentador {
   id: string;
@@ -89,6 +90,7 @@ export default function RoteiroPrograma() {
   const [showWhatsAppDialog, setShowWhatsAppDialog] = useState(false);
   const [whatsAppHistoricoData, setWhatsAppHistoricoData] = useState<any>(null);
   const [showExpressPopup, setShowExpressPopup] = useState(false);
+  const [expressEditData, setExpressEditData] = useState<ExpressEditData | null>(null);
 
   const fetchApresentadorStatus = async (roteiroId: string) => {
     const { data } = await supabase.from("roteiros").select("apresentador_editado, editado_at, share_login").eq("id", roteiroId).maybeSingle();
@@ -948,7 +950,24 @@ ${perguntaActions}
                         <Download size={12} style={{ color: "var(--layout-icon-color, #888888)" }} />
                       </button>
                     )}
-                    <button onClick={() => editarRoteiro(r)} className="h-7 w-7 flex items-center justify-center rounded-lg hover:opacity-70 transition" style={{ backgroundColor: "rgba(38,143,250,0.08)" }} title="Editar">
+                    <button onClick={() => {
+                      if (r.subtitulo?.startsWith("express_xml::")) {
+                        // Parse blocos from participantes
+                        let blocos = [];
+                        try { blocos = typeof r.participantes === "string" ? JSON.parse(r.participantes) : r.participantes || []; } catch { blocos = []; }
+                        // Find programaId by name
+                        const prog = programas.find(p => p.nome === r.programa_nome);
+                        setExpressEditData({
+                          roteiroId: r.id,
+                          estudio: r.estudio || "",
+                          programaId: prog?.id || "",
+                          blocos,
+                        });
+                        setShowExpressPopup(true);
+                      } else {
+                        editarRoteiro(r);
+                      }
+                    }} className="h-7 w-7 flex items-center justify-center rounded-lg hover:opacity-70 transition" style={{ backgroundColor: "rgba(38,143,250,0.08)" }} title="Editar">
                       <Pencil size={12} style={{ color: "var(--layout-icon-color, #888888)" }} />
                     </button>
                     <button onClick={() => excluirRoteiro(r.id)} className="h-7 w-7 flex items-center justify-center rounded-lg hover:opacity-70 transition" style={{ backgroundColor: "rgba(220,38,38,0.08)" }} title="Excluir">
@@ -1724,10 +1743,11 @@ ${perguntaActions}
       <Suspense fallback={null}>
         <ProgramaExpressPopup
           open={showExpressPopup}
-          onOpenChange={setShowExpressPopup}
+          onOpenChange={(v) => { setShowExpressPopup(v); if (!v) setExpressEditData(null); }}
           programas={programas}
           estudios={estudios}
           onFinish={fetchHistorico}
+          editData={expressEditData}
         />
       </Suspense>
 

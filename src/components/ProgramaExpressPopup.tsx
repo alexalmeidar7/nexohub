@@ -22,15 +22,23 @@ interface Programa {
   estudio: string;
 }
 
+export interface ExpressEditData {
+  roteiroId: string;
+  estudio: string;
+  programaId: string;
+  blocos: Bloco[];
+}
+
 interface Props {
   open: boolean;
   onOpenChange: (o: boolean) => void;
   programas: Programa[];
   estudios: string[];
   onFinish: () => void;
+  editData?: ExpressEditData | null;
 }
 
-export default function ProgramaExpressPopup({ open, onOpenChange, programas, estudios, onFinish }: Props) {
+export default function ProgramaExpressPopup({ open, onOpenChange, programas, estudios, onFinish, editData }: Props) {
   const { user } = useAuth();
   const [estudio, setEstudio] = useState("");
   const [programaId, setProgramaId] = useState("");
@@ -38,9 +46,23 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
   const [fetchingLink, setFetchingLink] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [collapsedBlocos, setCollapsedBlocos] = useState<Set<number>>(new Set());
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [initialized, setInitialized] = useState(false);
 
   const filteredProgramas = estudio ? programas.filter(p => p.estudio === estudio) : programas;
   const programaNome = programas.find(p => p.id === programaId)?.nome || "";
+
+  // Load edit data when popup opens
+  if (open && editData && !initialized) {
+    setEstudio(editData.estudio);
+    setProgramaId(editData.programaId);
+    setBlocos(editData.blocos.length > 0 ? editData.blocos : [{ noticias: [{ titulo: "", imagemUrl: "", escalada: false }] }]);
+    setEditingId(editData.roteiroId);
+    setInitialized(true);
+  }
+  if (!open && initialized) {
+    setInitialized(false);
+  }
 
   const reset = () => {
     setEstudio("");
@@ -49,6 +71,8 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
     setFetchingLink(null);
     setSaving(false);
     setCollapsedBlocos(new Set());
+    setEditingId(null);
+    setInitialized(false);
   };
 
   const updateNoticia = (bi: number, ni: number, field: keyof NewsItem, value: any) => {
@@ -197,21 +221,37 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
       const { data: urlData } = supabase.storage.from("empresa-assets").getPublicUrl(filePath);
       const xmlUrl = urlData.publicUrl;
 
-      // Save as roteiro with XML URL in subtitulo
-      const { error } = await supabase.from("roteiros").insert({
-        user_id: user.id,
-        programa_nome: programaNome,
-        estudio,
-        titulo: `PROGRAMA EXPRESS — ${programaNome}`,
-        subtitulo: `express_xml::${xmlUrl}`,
-        tipo_programa: "Jornalístico",
-        data_programa: new Date().toISOString().split("T")[0],
-        horario: new Date().toTimeString().slice(0, 5),
-        conteudo_html: html,
-        participantes: JSON.stringify([]),
-        status: "feito",
-      });
-      if (error) throw error;
+      // Store blocos as JSON in participantes for edit reconstruction
+      const blocosJson = JSON.stringify(blocos);
+
+      if (editingId) {
+        // Update existing
+        const { error } = await supabase.from("roteiros").update({
+          programa_nome: programaNome,
+          estudio,
+          titulo: `PROGRAMA EXPRESS — ${programaNome}`,
+          subtitulo: `express_xml::${xmlUrl}`,
+          conteudo_html: html,
+          participantes: blocosJson,
+        }).eq("id", editingId);
+        if (error) throw error;
+      } else {
+        // Insert new
+        const { error } = await supabase.from("roteiros").insert({
+          user_id: user.id,
+          programa_nome: programaNome,
+          estudio,
+          titulo: `PROGRAMA EXPRESS — ${programaNome}`,
+          subtitulo: `express_xml::${xmlUrl}`,
+          tipo_programa: "Jornalístico",
+          data_programa: new Date().toISOString().split("T")[0],
+          horario: new Date().toTimeString().slice(0, 5),
+          conteudo_html: html,
+          participantes: blocosJson,
+          status: "feito",
+        });
+        if (error) throw error;
+      }
 
       toast.success("Programa Express salvo com sucesso!");
       reset();
@@ -240,7 +280,7 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
             <Zap size={20} style={{ color: "var(--layout-accent-color, #2ec1f7)" }} />
-            Programa Express
+            {editingId ? "Editar Programa Express" : "Programa Express"}
           </DialogTitle>
         </DialogHeader>
 
