@@ -22,12 +22,20 @@ interface Programa {
   estudio: string;
 }
 
+export interface ExpressEditData {
+  roteiroId: string;
+  estudio: string;
+  programaId: string;
+  blocos: Bloco[];
+}
+
 interface Props {
   open: boolean;
   onOpenChange: (o: boolean) => void;
   programas: Programa[];
   estudios: string[];
   onFinish: () => void;
+  editData?: ExpressEditData | null;
 }
 
 export default function ProgramaExpressPopup({ open, onOpenChange, programas, estudios, onFinish }: Props) {
