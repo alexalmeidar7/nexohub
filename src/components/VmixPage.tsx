@@ -763,20 +763,7 @@ export default function VmixPage() {
     }
   }, [savedUrl, connected, detectedMachines, toast]);
 
-  // Auto-scan only once when entering NDI tab to avoid re-trigger loop
-  useEffect(() => {
-    if (activeTab === "ndi" && connected) {
-      if (!ndiAutoScanDoneRef.current) {
-        ndiAutoScanDoneRef.current = true;
-        scanNdiSources();
-      }
-      return;
-    }
-
-    if (activeTab !== "ndi") {
-      ndiAutoScanDoneRef.current = false;
-    }
-  }, [activeTab, connected, scanNdiSources]);
+  // NDI auto-scan removed (NDI tab removed)
 
   const addNdiInput = async (source?: string) => {
     const ndiName = source || ndiUrl.trim();
