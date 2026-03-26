@@ -15,6 +15,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -791,15 +796,28 @@ export default function AgendaPage() {
                 <History size={12} /> Histórico de Eventos Passados
               </span>
               <div className="flex items-center gap-2">
-                <Input
-                  type="date"
-                  value={historyDateFilter ? format(historyDateFilter, "yyyy-MM-dd") : ""}
-                  onChange={(e) => setHistoryDateFilter(e.target.value ? new Date(e.target.value + "T12:00:00") : undefined)}
-                  className="w-[150px] h-6 text-[10px] rounded-md"
-                  style={{ backgroundColor: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.2)", color: "var(--layout-header-text, #ffffff)", colorScheme: "dark" }}
-                />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button
+                      className="w-8 h-8 rounded-full flex items-center justify-center transition-all hover:scale-110"
+                      style={{ backgroundColor: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.25)" }}
+                      title="Filtrar por data"
+                    >
+                      <CalendarIcon size={14} style={{ color: "var(--layout-header-text, #ffffff)" }} />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="end">
+                    <Calendar
+                      mode="single"
+                      selected={historyDateFilter}
+                      onSelect={(d) => setHistoryDateFilter(d || undefined)}
+                      locale={ptBR}
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
                 {historyDateFilter && (
-                  <button onClick={() => setHistoryDateFilter(undefined)} className="p-0.5 rounded hover:bg-white/20 transition-colors">
+                  <button onClick={() => setHistoryDateFilter(undefined)} className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-white/20 transition-colors" style={{ backgroundColor: "rgba(255,255,255,0.1)" }}>
                     <X size={12} style={{ color: "var(--layout-header-text, #ffffff)" }} />
                   </button>
                 )}
