@@ -1090,17 +1090,21 @@ export default function ProgramaForm() {
           `}</style>
           <div
             ref={gradeRef}
-            className="rounded-xl overflow-auto max-h-[340px] grade-scroll"
+            className="rounded-xl overflow-auto max-h-[400px] grade-scroll"
             style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)", backgroundColor: "var(--layout-page-bg, #ffffff)", scrollbarWidth: "thin", scrollbarColor: "#0d0446 transparent", position: "relative", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}
           >
-            <table data-no-row-hover className="w-full text-xs border-separate border-spacing-1">
+            <table data-no-row-hover className="w-full text-xs border-separate border-spacing-[3px]">
               <thead className="sticky top-0 z-10">
                 <tr style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" }}>
-                  <th className="px-3 py-2.5 text-left w-20 rounded-lg text-[11px] font-semibold uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.7)" }}>Horário</th>
+                  <th className="px-3 py-3 text-left w-20 rounded-lg text-[11px] font-bold uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.8)" }}>Horário</th>
                   {DIAS_SEMANA.map(dia => (
-                    <th key={dia} className={`px-2 py-2.5 text-center rounded-lg text-[11px] font-semibold uppercase tracking-wider ${dia === diaAtual ? "font-bold" : ""}`} style={{ color: dia === diaAtual ? "var(--layout-accent-color, #444444)" : "rgba(255,255,255,0.85)" }}>
-                      <div>{dia.slice(0, 3)}</div>
-                      <div className="text-[9px] font-normal" style={{ color: dia === diaAtual ? "rgba(45,190,243,0.7)" : "rgba(255,255,255,0.4)" }}>{weekDates[dia]}</div>
+                    <th key={dia} className={`px-2 py-3 text-center rounded-lg text-[11px] font-bold uppercase tracking-wider`}
+                      style={{
+                        color: dia === diaAtual ? "#ffffff" : "rgba(255,255,255,0.85)",
+                        backgroundColor: dia === diaAtual ? "color-mix(in srgb, var(--layout-accent-color, #444444) 40%, var(--layout-header-bg, #1a1a1a))" : undefined,
+                      }}>
+                      <div className="text-[12px]">{dia.slice(0, 3).toUpperCase()}</div>
+                      <div className="text-[9px] font-medium mt-0.5" style={{ color: dia === diaAtual ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.4)" }}>{weekDates[dia]}</div>
                     </th>
                   ))}
                 </tr>
