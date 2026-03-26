@@ -212,19 +212,18 @@ function GradeBody({ gradeSlots, diasSemana, diaAtual, currentTimeStr, getProgra
                     style={{
                       background: isOnAir
                         ? "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))"
-                        : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, var(--layout-page-bg, #ffffff) 94%)",
+                        : "var(--layout-page-bg, #ffffff)",
                       color: isOnAir ? "#ffffff" : "var(--layout-page-text, #1a1a1a)",
-                      fontWeight: isOnAir ? "bold" : undefined,
                       border: isOnAir
                         ? "2px solid var(--layout-accent-color, #444444)"
-                        : "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 10%, transparent)",
+                        : "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 25%, transparent)",
                       verticalAlign: "top",
                       padding: "8px 10px",
                       boxShadow: isOnAir ? "0 2px 12px color-mix(in srgb, var(--layout-accent-color, #444444) 30%, transparent)" : "0 1px 3px rgba(0,0,0,0.04)",
                     }}>
-                    <div className="text-[11px] font-bold leading-tight" style={{ wordBreak: "break-word", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", color: isOnAir ? "#ffffff" : "var(--layout-header-bg, #1a1a1a)" }}>{prog.nome}</div>
+                    <div className="text-[12px] font-bold leading-snug" style={{ wordBreak: "break-word", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden", color: isOnAir ? "#ffffff" : "var(--layout-page-text, #1a1a1a)" }}>{prog.nome}</div>
                     {prog.classificacaoEtaria && <div className="mt-1"><ClassificacaoBadge value={prog.classificacaoEtaria} size={14} /></div>}
-                    <div className="text-[9px] mt-1 font-medium" style={{ color: isOnAir ? "rgba(255,255,255,0.8)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
+                    <div className="text-[10px] mt-1 font-medium" style={{ color: isOnAir ? "rgba(255,255,255,0.8)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>
                       {prog.horarioInicio.slice(0, 5)} - {prog.horarioFim.slice(0, 5)}
                     </div>
                     {(() => {
