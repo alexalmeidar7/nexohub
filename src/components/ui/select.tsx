@@ -71,7 +71,7 @@ const SelectContent = React.forwardRef<
           "data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1",
         className,
       )}
-      style={{ backgroundColor: "#0d0446", color: "#ffffff", border: "none" }}
+      style={{ backgroundColor: "var(--layout-header-bg, #1a1a1a)", color: "var(--layout-header-text, #ffffff)", border: "none" }}
       position={position}
       {...props}
     >
