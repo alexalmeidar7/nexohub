@@ -662,8 +662,8 @@ ${perguntaActions}
           </div>
           {editingRoteiroId && (
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg" style={{ backgroundColor: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.2)" }}>
-              <Code2 size={14} className="text-white" />
-              <span className="text-[9px] font-bold uppercase tracking-wider text-white/80">XML</span>
+              <Code2 size={14} />
+              <span className="text-[9px] font-bold uppercase tracking-wider" style={{ opacity: 0.8 }}>XML</span>
               <button
                 onClick={() => {
                   const xmlUrl = `https://${import.meta.env.VITE_SUPABASE_PROJECT_ID}.supabase.co/functions/v1/roteiro-xml?id=${editingRoteiroId}`;
