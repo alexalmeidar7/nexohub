@@ -777,7 +777,7 @@ export default function MusicaNoAr() {
                     DUAL
                   </span>
                 )}
-                <span className="text-[8px]" style={{ color: "rgba(13,4,70,0.4)" }}>
+                <span className="text-[8px]" style={{ color: "rgba(255,255,255,0.5)" }}>
                   {`${sourceStats.online + sourceStats.pasta} atualizações`}
                 </span>
               </div>
