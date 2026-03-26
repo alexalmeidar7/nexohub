@@ -441,8 +441,12 @@ table:not([data-no-row-hover]) tbody tr:hover {
 
 /* Override hardcoded form section backgrounds */
 .mv-content-area [style*="background-color: #e8f0fb"],
-.mv-content-area [style*="background-color: rgb(232, 240, 251)"] {
+.mv-content-area [style*="background-color: rgb(232, 240, 251)"],
+.mv-content-area [style*="background-color: #d9e9fa"],
+.mv-content-area [style*="background: #d9e9fa"],
+.mv-content-area [style*="background-color: rgb(217, 233, 250)"] {
   background-color: color-mix(in srgb, var(--layout-header-bg, #0d0446) 8%, var(--layout-page-bg, #ffffff)) !important;
+  background: color-mix(in srgb, var(--layout-header-bg, #0d0446) 8%, var(--layout-page-bg, #ffffff)) !important;
   border-color: color-mix(in srgb, var(--layout-header-bg, #0d0446) 15%, var(--layout-page-bg, #ffffff)) !important;
 }
 
