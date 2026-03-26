@@ -64,6 +64,7 @@ export const defaultLayoutColors: LayoutColors = {
   iconColor: "#888888",
   borderColor: "#333333",
   sliderBg: "#0d0d0d",
+  scrollbarColor: "#555555",
   homeBgType: "color",
   homeBgColor: "#1a1a1a",
   homeBgImage: "",
