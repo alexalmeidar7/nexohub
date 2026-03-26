@@ -433,6 +433,28 @@ export default function MusicaNoAr() {
       setMusic(data);
       setStartTime(now);
       setElapsed(0);
+      // Persist to DB
+      if (user) {
+        (async () => {
+          try {
+            const { data: settings } = await supabase.from("user_settings")
+              .select("dashboard_items")
+              .eq("user_id", user.id)
+              .maybeSingle();
+            const items = (settings?.dashboard_items as Record<string, any>) || {};
+            await supabase.from("user_settings").upsert({
+              user_id: user.id,
+              dashboard_items: {
+                ...items,
+                music_start_time: now,
+                music_current_title: data.titulo,
+                music_current_artist: data.artista,
+              },
+              updated_at: new Date().toISOString(),
+            }, { onConflict: "user_id" });
+          } catch {}
+        })();
+      }
       // Track which source detected the change first
       if (source) {
         setLastSource(source);
