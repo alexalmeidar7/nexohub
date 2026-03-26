@@ -71,7 +71,7 @@ const SelectContent = React.forwardRef<
           "data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1",
         className,
       )}
-      style={{ backgroundColor: "#0d0446", color: "#ffffff", border: "none" }}
+      style={{ backgroundColor: "var(--layout-header-bg, #1a1a1a)", color: "var(--layout-header-text, #ffffff)", border: "none" }}
       position={position}
       {...props}
     >
@@ -106,7 +106,8 @@ const SelectItem = React.forwardRef<
   <SelectPrimitive.Item
     ref={ref}
     className={cn(
-      "relative flex w-full cursor-default select-none items-center rounded-lg py-1.5 pl-8 pr-2 text-sm outline-none text-white data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[highlighted]:bg-[#2dbff4] data-[highlighted]:text-white focus:bg-[#2dbff4] focus:text-white",
+      "relative flex w-full cursor-default select-none items-center rounded-lg py-1.5 pl-8 pr-2 text-sm outline-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+      "data-[highlighted]:bg-[color-mix(in_srgb,var(--layout-accent-color,#444444)_30%,transparent)] focus:bg-[color-mix(in_srgb,var(--layout-accent-color,#444444)_30%,transparent)]",
       className,
     )}
     {...props}
