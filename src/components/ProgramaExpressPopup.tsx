@@ -221,21 +221,37 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
       const { data: urlData } = supabase.storage.from("empresa-assets").getPublicUrl(filePath);
       const xmlUrl = urlData.publicUrl;
 
-      // Save as roteiro with XML URL in subtitulo
-      const { error } = await supabase.from("roteiros").insert({
-        user_id: user.id,
-        programa_nome: programaNome,
-        estudio,
-        titulo: `PROGRAMA EXPRESS — ${programaNome}`,
-        subtitulo: `express_xml::${xmlUrl}`,
-        tipo_programa: "Jornalístico",
-        data_programa: new Date().toISOString().split("T")[0],
-        horario: new Date().toTimeString().slice(0, 5),
-        conteudo_html: html,
-        participantes: JSON.stringify([]),
-        status: "feito",
-      });
-      if (error) throw error;
+      // Store blocos as JSON in participantes for edit reconstruction
+      const blocosJson = JSON.stringify(blocos);
+
+      if (editingId) {
+        // Update existing
+        const { error } = await supabase.from("roteiros").update({
+          programa_nome: programaNome,
+          estudio,
+          titulo: `PROGRAMA EXPRESS — ${programaNome}`,
+          subtitulo: `express_xml::${xmlUrl}`,
+          conteudo_html: html,
+          participantes: blocosJson,
+        }).eq("id", editingId);
+        if (error) throw error;
+      } else {
+        // Insert new
+        const { error } = await supabase.from("roteiros").insert({
+          user_id: user.id,
+          programa_nome: programaNome,
+          estudio,
+          titulo: `PROGRAMA EXPRESS — ${programaNome}`,
+          subtitulo: `express_xml::${xmlUrl}`,
+          tipo_programa: "Jornalístico",
+          data_programa: new Date().toISOString().split("T")[0],
+          horario: new Date().toTimeString().slice(0, 5),
+          conteudo_html: html,
+          participantes: blocosJson,
+          status: "feito",
+        });
+        if (error) throw error;
+      }
 
       toast.success("Programa Express salvo com sucesso!");
       reset();
