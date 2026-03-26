@@ -77,7 +77,7 @@ function ParticipanteRow({ participante, inputStyle, onRemove, onUpdateCargo, us
   };
 
   return (
-    <div className="flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-[11px]" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 90%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 12%, transparent)" }}>
+    <div className="flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-[11px] min-w-0 overflow-hidden" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 90%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 12%, transparent)" }}>
       <span className="font-semibold flex-1 truncate" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{participante.nome}</span>
       {editing ? (
         <input
