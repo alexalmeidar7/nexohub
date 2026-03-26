@@ -402,7 +402,7 @@ export default function LogosPatrocinadoresPage() {
                   {excluidasOpen && (
                     <div onClick={(e) => e.stopPropagation()}>
                       <div className="relative">
-                        <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-white/50" />
+                        <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2" style={{ color: "var(--layout-header-text, #ffffff)", opacity: 0.5 }} />
                         <input
                           type="text"
                           value={excluidasSearch}
