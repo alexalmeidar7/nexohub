@@ -17,6 +17,7 @@ import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 const NoticiasPanel = lazy(() => import("./NoticiasPanel"));
 const WhatsAppSendDialog = lazy(() => import("./WhatsAppSendDialog"));
 const ProgramaExpressPopup = lazy(() => import("./ProgramaExpressPopup"));
+import type { ExpressEditData } from "./ProgramaExpressPopup";
 
 interface Apresentador {
   id: string;
