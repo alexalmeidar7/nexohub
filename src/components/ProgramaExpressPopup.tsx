@@ -67,8 +67,50 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
   const [editingId, setEditingId] = useState<string | null>(null);
   const [initialized, setInitialized] = useState(false);
 
+  const [participantes, setParticipantes] = useState<Participante[]>([]);
+  const [searchNome, setSearchNome] = useState("");
+  const [searchResults, setSearchResults] = useState<Participante[]>([]);
+  const [showResults, setShowResults] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
+
   const filteredProgramas = estudio ? programas.filter(p => p.estudio === estudio) : programas;
   const programaNome = programas.find(p => p.id === programaId)?.nome || "";
+
+  // Search apresentadores
+  useEffect(() => {
+    if (!searchNome.trim() || !user) { setSearchResults([]); return; }
+    const timer = setTimeout(async () => {
+      const { data } = await supabase
+        .from("apresentadores")
+        .select("nome, cargo, instagram")
+        .eq("user_id", user.id)
+        .ilike("nome", `%${searchNome}%`)
+        .limit(5);
+      if (data) setSearchResults(data.map(d => ({ nome: d.nome, cargo: d.cargo || "", instagram: d.instagram || "" })));
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchNome, user]);
+
+  // Close dropdown on click outside
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) setShowResults(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const addParticipante = (p: Participante) => {
+    if (participantes.some(x => x.nome === p.nome)) { toast.info("Participante já adicionado"); return; }
+    setParticipantes(prev => [...prev, p]);
+    setSearchNome("");
+    setSearchResults([]);
+    setShowResults(false);
+  };
+
+  const removeParticipante = (idx: number) => {
+    setParticipantes(prev => prev.filter((_, i) => i !== idx));
+  };
 
   // Load edit data when popup opens
   if (open && editData && !initialized) {
