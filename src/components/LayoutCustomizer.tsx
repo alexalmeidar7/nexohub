@@ -664,7 +664,7 @@ export default function LayoutCustomizer() {
           onClick={handleSave}
           disabled={saving || !hasChanges}
           className="px-8 py-2.5 text-sm font-bold flex items-center gap-2 rounded-xl transition-all disabled:opacity-40"
-          style={{ background: hasChanges ? "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" : "rgba(13,4,70,0.15)", color: "#ffffff", boxShadow: hasChanges ? "0 4px 16px rgba(38,143,250,0.3)" : "none" }}
+          style={{ background: hasChanges ? "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" : "rgba(13,4,70,0.15)", color: "#ffffff", boxShadow: hasChanges ? "0 4px 16px color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 30%, transparent)" : "none" }}
         >
           {saving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
           {saving ? "Salvando..." : "Salvar Alterações"}
