@@ -635,16 +635,17 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
               </button>
             </div>
             <p className="text-[10px] leading-relaxed" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>
-              Cole o texto seguindo a ordem:<br/>
-              <strong>Linha 1:</strong> Estúdio | <strong>Linha 2:</strong> Programa<br/>
-              <strong>Depois:</strong> Participantes (Nome - Cargo : Instagram)<br/>
-              <strong>Depois:</strong> Escalada<br/>
-              <strong>Depois:</strong> Bloco 1, Bloco 2... (títulos ou links)
+              Cole o texto seguindo o formato:<br/>
+              <strong>Estúdio:</strong> Nome do Estúdio<br/>
+              <strong>Programa:</strong> Nome do Programa<br/>
+              <strong>EQUIPE:</strong> Nome – cargo : @instagram<br/>
+              <strong>ESCALADA:</strong> títulos numerados<br/>
+              <strong>BLOCO 1:</strong> links ou textos das tarjas
             </p>
             <textarea
               value={pasteText}
               onChange={e => setPasteText(e.target.value)}
-              placeholder={"Estúdio A\nJornal da Manhã\nParticipantes\nJoão Silva - Âncora : @joaosilva\nMaria - Repórter\nEscalada\nTítulo da notícia 1\nTítulo da notícia 2\nBloco 1\nNotícia do bloco 1\nhttps://link-da-materia.com\nBloco 2\nOutra notícia"}
+              placeholder={"Estúdio: Estudio FM\nPrograma: Papo Cabeça\n\nEQUIPE:\n- Henrique Augusto – âncora: @henriquelocuteiro\n- Maria Silva – repórter: @mariasilva\n\nESCALADA:\n1. TÍTULO DA NOTÍCIA 1\n2. TÍTULO DA NOTÍCIA 2\n\nBLOCO 1:\n- https://link-da-materia.com\n- https://outro-link.com\n\nBLOCO 2:\n- https://mais-um-link.com"}
               className="w-full px-3 py-2 rounded-lg text-[11px] outline-none resize-none"
               rows={10}
               style={inputStyle}
