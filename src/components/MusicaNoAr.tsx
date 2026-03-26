@@ -817,14 +817,14 @@ export default function MusicaNoAr() {
           <div
             key={`${displayTitulo}-${displayArtista}`}
             className="rounded-2xl overflow-hidden relative animate-fade-in"
-            style={{ backgroundColor: "#0a1a3a", boxShadow: "0 4px 20px rgba(0,0,0,0.2)" }}
+            style={{ backgroundColor: "var(--layout-slider-bg, #0d0d0d)", boxShadow: "0 4px 20px rgba(0,0,0,0.2)" }}
           >
             {/* Gradient progress fill */}
             <div
               className="absolute inset-0 rounded-2xl"
               style={{
                 width: `${progress}%`,
-                background: "linear-gradient(90deg, #0a1a3a 0%, #1a3a7a 30%, #268ffa 70%, #2dbef3 100%)",
+                background: `linear-gradient(90deg, var(--layout-slider-bg, #0d0d0d) 0%, color-mix(in srgb, var(--layout-slider-bg, #0d0d0d) 60%, var(--layout-accent-color, #268ffa)) 50%, var(--layout-accent-color, #268ffa) 100%)`,
                 transition: sliderResetting
                   ? "width 0.6s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.6s ease"
                   : "width 0.5s linear",

@@ -62,6 +62,7 @@ export const defaultLayoutColors: LayoutColors = {
   widgetText: "#ffffff",
   iconColor: "#888888",
   borderColor: "#333333",
+  sliderBg: "#0d0d0d",
   homeBgType: "color",
   homeBgColor: "#1a1a1a",
   homeBgImage: "",
