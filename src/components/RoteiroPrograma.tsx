@@ -672,7 +672,7 @@ ${perguntaActions}
                 className="p-1 rounded hover:bg-white/20 transition-colors"
                 title="Copiar URL do XML"
               >
-                <Copy size={12} className="text-white" />
+                <Copy size={12} />
               </button>
             </div>
           )}
