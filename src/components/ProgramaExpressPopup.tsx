@@ -237,36 +237,19 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
 
   const parsePastedScript = () => {
     if (!pasteText.trim()) { toast.error("Cole o texto do roteiro"); return; }
-    const rawLines = pasteText.split("\n").map(l => l.trim()).filter(l => l);
-    if (rawLines.length < 2) { toast.error("O roteiro precisa de pelo menos 2 linhas"); return; }
+    const rawLines = pasteText.split("\n").map(l => l.trim());
+    const nonEmptyLines = rawLines.filter(l => l.length > 0);
+    if (nonEmptyLines.length < 2) { toast.error("O roteiro precisa de pelo menos 2 linhas"); return; }
 
-    // Helper: strip markdown bold markers and leading bullet/number
-    const clean = (s: string) => s.replace(/\*\*/g, "").replace(/^[-•]\s*/, "").replace(/^\d+\.\s*/, "").trim();
-    // Extract value after label like "Estúdio: xxx" or "**Estúdio:** xxx"
-    const extractLabel = (line: string, ...labels: string[]): string | null => {
-      const c = clean(line);
-      for (const label of labels) {
-        const re = new RegExp(`^${label}\\s*:\\s*(.+)`, "i");
-        const m = c.match(re);
-        if (m) return m[1].trim();
-      }
-      return null;
-    };
+    // Helper: strip markdown bold, bullets, numbers
+    const clean = (s: string) => s.replace(/\*\*/g, "").replace(/^[-•–]\s+/, "").replace(/^\d+[\.\)]\s*/, "").trim();
+
     // Extract URL from markdown link [text](url) or plain URL
     const extractUrl = (s: string): string | null => {
       const mdLink = s.match(/\[.*?\]\((https?:\/\/[^\s)]+)\)/);
       if (mdLink) return mdLink[1];
       const plainUrl = s.match(/(https?:\/\/[^\s]+)/);
       if (plainUrl) return plainUrl[1];
-      return null;
-    };
-    // Check if line is a section header
-    const isSectionHeader = (line: string): string | null => {
-      const c = clean(line).toLowerCase();
-      if (/^(equipe|participantes?)\s*:?\s*$/i.test(c) || c === "equipe" || c === "participantes") return "participantes";
-      if (/^escalada\s*:?\s*$/i.test(c) || c === "escalada") return "escalada";
-      const blocoMatch = c.match(/^bloco\s*(\d+)\s*:?\s*$/i);
-      if (blocoMatch) return "bloco";
       return null;
     };
 
@@ -278,47 +261,70 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
     let currentSection: "participantes" | "escalada" | "bloco" | null = null;
     let currentBloco: NewsItem[] = [];
 
-    for (const line of rawLines) {
-      // Try to extract Estúdio label
-      const estVal = extractLabel(line, "est[uú]dio", "studio");
-      if (estVal && !parsedEstudio) { parsedEstudio = estVal; continue; }
+    for (const rawLine of rawLines) {
+      const line = rawLine.trim();
+      if (!line) continue;
+      const cleaned = clean(line);
+      const lower = cleaned.toLowerCase();
 
-      // Try to extract Programa label
-      const progVal = extractLabel(line, "programa");
-      if (progVal && !parsedPrograma) { parsedPrograma = progVal; continue; }
-
-      // Check section header
-      const section = isSectionHeader(line);
-      if (section) {
-        if (section === "bloco") {
-          if (currentBloco.length > 0) parsedBlocos.push({ noticias: currentBloco });
-          currentBloco = [];
-        }
-        currentSection = section as any;
+      // 1) Try label extraction: "Estúdio: xxx" or "**Estúdio:** xxx"
+      const estMatch = cleaned.match(/^est[uú]dio\s*:\s*(.+)/i);
+      if (estMatch && !parsedEstudio) {
+        parsedEstudio = estMatch[1].trim();
+        continue;
+      }
+      const progMatch = cleaned.match(/^programa\s*:\s*(.+)/i);
+      if (progMatch && !parsedPrograma) {
+        parsedPrograma = progMatch[1].trim();
         continue;
       }
 
-      // Parse content based on current section
+      // 2) Detect section headers
+      if (/^(equipe|participantes?)\s*:?\s*$/i.test(lower)) {
+        currentSection = "participantes";
+        continue;
+      }
+      if (/^escalada\s*:?\s*$/i.test(lower)) {
+        currentSection = "escalada";
+        continue;
+      }
+      const blocoHeaderMatch = lower.match(/^bloco\s*(\d+)\s*:?\s*$/);
+      if (blocoHeaderMatch) {
+        if (currentBloco.length > 0) parsedBlocos.push({ noticias: currentBloco });
+        currentBloco = [];
+        currentSection = "bloco";
+        continue;
+      }
+
+      // 3) Parse content based on current section
       if (currentSection === "participantes") {
-        const cleaned = clean(line);
         if (!cleaned) continue;
-        // Format: Nome – cargo : @instagram  OR  Nome - cargo: @insta
-        const dashParts = cleaned.split(/\s*[–—-]\s*/);
-        const nome = dashParts[0]?.trim() || "";
-        let cargo = "";
-        let instagram = "";
-        if (dashParts.length > 1) {
-          const rest = dashParts.slice(1).join(" – ");
-          const colonParts = rest.split(/\s*:\s*/);
-          cargo = colonParts[0]?.trim() || "";
-          instagram = colonParts[1]?.trim().replace(/^@/, "") || "";
+        // Format: "Nome – cargo : @instagram" or "Nome - cargo: @instagram"
+        // Split on first dash/en-dash/em-dash that has spaces around it
+        const dashMatch = cleaned.match(/^([^–—-]+?)\s*[–—-]\s*(.+)$/);
+        if (dashMatch) {
+          const nome = dashMatch[1].trim();
+          const rest = dashMatch[2].trim();
+          // Split rest on colon to separate cargo from instagram
+          const colonIdx = rest.lastIndexOf(":");
+          let cargo = rest;
+          let instagram = "";
+          if (colonIdx > 0) {
+            const afterColon = rest.substring(colonIdx + 1).trim();
+            // If what comes after : looks like an @handle, it's instagram
+            if (afterColon.startsWith("@") || /^[a-zA-Z0-9._]+$/.test(afterColon)) {
+              cargo = rest.substring(0, colonIdx).trim();
+              instagram = afterColon.startsWith("@") ? afterColon : `@${afterColon}`;
+            }
+          }
+          if (nome) parsedParticipantes.push({ nome, cargo, instagram });
+        } else if (cleaned) {
+          // Just a name with no dash
+          parsedParticipantes.push({ nome: cleaned, cargo: "", instagram: "" });
         }
-        if (nome) parsedParticipantes.push({ nome, cargo, instagram: instagram ? `@${instagram}` : "" });
       } else if (currentSection === "escalada") {
-        const cleaned = clean(line);
         if (cleaned) parsedEscalada.push(cleaned);
       } else if (currentSection === "bloco") {
-        const cleaned = clean(line);
         if (!cleaned) continue;
         const url = extractUrl(line);
         currentBloco.push({
@@ -332,20 +338,17 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
 
     if (currentBloco.length > 0) parsedBlocos.push({ noticias: currentBloco });
 
-    // If no labeled estudio/programa, fallback to first two non-section lines
-    if (!parsedEstudio && !parsedPrograma) {
-      const contentLines = rawLines.filter(l => !isSectionHeader(l));
-      if (contentLines.length >= 2) {
-        parsedEstudio = clean(contentLines[0]);
-        parsedPrograma = clean(contentLines[1]);
-      }
+    // Fallback: if no labeled estudio/programa, use first two non-section content lines
+    if (!parsedEstudio && !parsedPrograma && nonEmptyLines.length >= 2) {
+      parsedEstudio = clean(nonEmptyLines[0]);
+      parsedPrograma = clean(nonEmptyLines[1]);
     }
 
     // Set Estúdio
     if (parsedEstudio) {
       const matched = estudios.find(e => e.toLowerCase() === parsedEstudio.toLowerCase());
       if (matched) setEstudio(matched);
-      else { setEstudio(parsedEstudio); toast.info(`Estúdio "${parsedEstudio}" não encontrado na lista, definido manualmente`); }
+      else { setEstudio(parsedEstudio); toast.info(`Estúdio "${parsedEstudio}" não encontrado na lista`); }
     }
 
     // Set Programa
@@ -368,6 +371,7 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
       });
     }
 
+    // If no blocos but escalada exists, create bloco from escalada
     if (parsedBlocos.length === 0 && parsedEscalada.length > 0) {
       parsedBlocos.push({ noticias: parsedEscalada.map(t => ({ titulo: t, imagemUrl: "", escalada: true })) });
     }
@@ -375,9 +379,16 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
     if (parsedParticipantes.length > 0) setParticipantes(parsedParticipantes);
     if (parsedBlocos.length > 0) setBlocos(parsedBlocos);
 
+    const summary = [];
+    if (parsedEstudio) summary.push(`Estúdio: ${parsedEstudio}`);
+    if (parsedPrograma) summary.push(`Programa: ${parsedPrograma}`);
+    if (parsedParticipantes.length > 0) summary.push(`${parsedParticipantes.length} participantes`);
+    if (parsedEscalada.length > 0) summary.push(`${parsedEscalada.length} escaladas`);
+    if (parsedBlocos.length > 0) summary.push(`${parsedBlocos.length} blocos`);
+
     setShowPastePopup(false);
     setPasteText("");
-    toast.success("Roteiro importado com sucesso!");
+    toast.success(`Importado: ${summary.join(", ")}`);
   };
 
   const updateNoticia = (bi: number, ni: number, field: keyof NewsItem, value: any) => {
