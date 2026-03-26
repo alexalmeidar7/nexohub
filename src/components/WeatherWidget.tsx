@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Settings } from "lucide-react";
 import { WeatherIcon } from "@/components/WeatherIcons";
+import { supabase } from "@/integrations/supabase/client";
 
 interface WidgetWeather {
   city: string;
