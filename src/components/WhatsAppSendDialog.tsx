@@ -37,8 +37,13 @@ export default function WhatsAppSendDialog({ open, onClose, roteiroData }: Whats
         .filter(p => p.whatsapp?.trim())
         .map(p => ({ nome: p.nome, whatsapp: p.whatsapp!.trim() }));
       setContatos(existing);
-      setFormattedText("");
-      formatWithAI();
+      if (roteiroData._expressFormatted) {
+        setFormattedText(roteiroData._expressFormatted);
+        setLoading(false);
+      } else {
+        setFormattedText("");
+        formatWithAI();
+      }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
