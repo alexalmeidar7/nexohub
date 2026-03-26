@@ -1053,7 +1053,7 @@ export default function MusicaNoAr() {
 
                 {/* Device name — editable */}
                 {localMonitoring && (
-                  <div className="flex items-center gap-2 text-[10px] font-semibold" style={{ color: "#0d0446" }}>
+                  <div className="flex items-center gap-2 text-[10px] font-semibold" style={{ color: "var(--layout-page-text, #0d0446)" }}>
                     <span>lendo no computador</span>
                     {editingDeviceName ? (
                       <span className="flex items-center gap-1">
@@ -1061,7 +1061,7 @@ export default function MusicaNoAr() {
                           value={deviceNameInput}
                           onChange={e => setDeviceNameInput(e.target.value)}
                           className="px-1.5 py-0.5 rounded text-[10px] font-mono outline-none"
-                          style={{ backgroundColor: "#ffffff", border: "1px solid #c5d9f2", color: "#0d0446", width: 140 }}
+                          style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 15%, transparent)", color: "var(--layout-page-text, #0d0446)", width: 140 }}
                           autoFocus
                           onKeyDown={e => {
                             if (e.key === "Enter") {
