@@ -4,6 +4,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { Zap, Plus, Trash2, Link2, Loader2, Image, Type, Check, X as XIcon, ChevronDown, ChevronUp, Pencil } from "lucide-react";
+import { decodeHtmlEntities } from "@/lib/textEncoding";
+
+const BLOCK_COLORS = [
+  "#2ec1f7", // azul
+  "#f59e0b", // amarelo
+  "#10b981", // verde
+  "#ef4444", // vermelho
+  "#8b5cf6", // roxo
+  "#ec4899", // rosa
+  "#06b6d4", // ciano
+  "#f97316", // laranja
+];
 
 interface NewsItem {
   titulo: string;
