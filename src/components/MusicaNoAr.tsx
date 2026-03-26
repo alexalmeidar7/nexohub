@@ -1048,8 +1048,8 @@ export default function MusicaNoAr() {
               </div>
 
               {/* ── LOCAL SOURCE ── */}
-              <div className="rounded-xl p-4 space-y-3" style={{ backgroundColor: "#e8f0fb", border: "1px solid #c5d9f2" }}>
-                <h4 className="text-xs font-black uppercase tracking-wide" style={{ color: "#0d0446" }}>Origem Source Arquivo Local</h4>
+              <div className="rounded-xl p-4 space-y-3" style={{ backgroundColor: "color-mix(in srgb, var(--layout-header-bg, #0d0446) 8%, var(--layout-page-bg, #ffffff))", border: "1px solid color-mix(in srgb, var(--layout-header-bg, #0d0446) 15%, var(--layout-page-bg, #ffffff))" }}>
+                <h4 className="text-xs font-black uppercase tracking-wide" style={{ color: "var(--layout-page-text, #0d0446)" }}>Origem Source Arquivo Local</h4>
                 <div className="flex gap-1.5">
                   <div className="flex-1 flex items-center gap-2 px-3 py-2 rounded-lg" style={{ backgroundColor: "#ffffff", border: "1px solid #c5d9f2" }}>
                     <FolderOpen size={14} style={{ color: "#7c8db5" }} />
