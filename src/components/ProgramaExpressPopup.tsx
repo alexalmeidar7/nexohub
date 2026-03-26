@@ -1,10 +1,16 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { Zap, Plus, Trash2, Link2, Loader2, Image, Type, Check, X as XIcon, ChevronDown, ChevronUp, Pencil } from "lucide-react";
+import { Zap, Plus, Trash2, Link2, Loader2, Image, Type, Check, X as XIcon, ChevronDown, ChevronUp, Pencil, Users, Search } from "lucide-react";
 import { decodeHtmlEntities } from "@/lib/textEncoding";
+
+interface Participante {
+  nome: string;
+  cargo: string;
+  instagram: string;
+}
 
 const BLOCK_COLORS = [
   "#2ec1f7", // azul
