@@ -912,10 +912,10 @@ export default function ProgramaForm() {
                 <button key={dia} onClick={() => toggleDia(dia)}
                   className="px-3 py-1.5 text-[11px] font-semibold transition-all rounded-lg"
                   style={{
-                    backgroundColor: diasSemana.includes(dia) ? "var(--layout-accent-color, #444444)" : "rgba(255,255,255,0.5)",
-                    color: diasSemana.includes(dia) ? "#ffffff" : "var(--layout-header-bg, #1a1a1a)",
-                    border: diasSemana.includes(dia) ? "1px solid var(--layout-accent-color, #444444)" : "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 15%, transparent)",
-                    boxShadow: diasSemana.includes(dia) ? "0 2px 8px color-mix(in srgb, var(--layout-accent-color, #444444) 30%, transparent)" : "none",
+                    backgroundColor: diasSemana.includes(dia) ? "var(--layout-header-bg, #1a1a1a)" : "var(--layout-page-bg, #ffffff)",
+                    color: diasSemana.includes(dia) ? "var(--layout-header-text, #ffffff)" : "var(--layout-page-text, #1a1a1a)",
+                    border: diasSemana.includes(dia) ? "2px solid var(--layout-header-bg, #1a1a1a)" : "2px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 20%, transparent)",
+                    boxShadow: diasSemana.includes(dia) ? "0 2px 8px rgba(0,0,0,0.15)" : "none",
                   }}>
                   {dia.slice(0, 3)}
                 </button>
