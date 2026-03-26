@@ -1116,8 +1116,8 @@ export default function MusicaNoAr() {
                     return (
                       <div className="rounded-lg p-2 flex items-start gap-2" style={{ backgroundColor: "rgba(234,179,8,0.1)", border: "1px solid rgba(234,179,8,0.3)" }}>
                         <Monitor size={12} className="shrink-0 mt-0.5" style={{ color: "#ca8a04" }} />
-                        <p className="text-[9px] font-semibold" style={{ color: "#0d0446" }}>
-                          XML carregado em outro computador: <span className="font-mono" style={{ color: "rgba(13,4,70,0.5)" }}>{lastLocal.deviceName}</span>
+                        <p className="text-[9px] font-semibold" style={{ color: "var(--layout-page-text, #0d0446)" }}>
+                          XML carregado em outro computador: <span className="font-mono" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 50%, transparent)" }}>{lastLocal.deviceName}</span>
                         </p>
                       </div>
                     );
