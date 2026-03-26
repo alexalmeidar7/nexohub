@@ -943,13 +943,13 @@ ${perguntaActions}
       {showRoteiro && (
         <div className="rounded-2xl overflow-hidden" style={{ background: "#ffffff", boxShadow: "0 4px 24px rgba(0,0,0,0.08)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)" }}>
           {/* Section Header */}
-          <div className="px-6 py-4" style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #444444), color-mix(in srgb, var(--layout-accent-color, #444444) 70%, white 30%))" }}>
+           <div className="px-6 py-4" style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #444444), color-mix(in srgb, var(--layout-accent-color, #444444) 70%, white 30%))", color: "var(--layout-header-text, #ffffff)" }}>
             <div className="flex items-center justify-between flex-wrap gap-2">
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-white/60">Passo 2 — Conteúdo do Roteiro</p>
-                <h2 className="text-lg font-bold text-white mt-0.5">
+                <p className="text-[10px] font-bold uppercase tracking-wider" style={{ opacity: 0.6 }}>Passo 2 — Conteúdo do Roteiro</p>
+                <h2 className="text-lg font-bold mt-0.5">
                   {programaNome}
-                  {numeroRoteiro && <span className="text-sm font-medium ml-2 text-white/60">#{numeroRoteiro}</span>}
+                  {numeroRoteiro && <span className="text-sm font-medium ml-2" style={{ opacity: 0.6 }}>#{numeroRoteiro}</span>}
                 </h2>
               </div>
                 <div className="flex items-center gap-2 flex-wrap">
