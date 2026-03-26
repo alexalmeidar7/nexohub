@@ -302,7 +302,7 @@ export default function LogosPatrocinadoresPage() {
               {editingFullId ? "✏️ Editar Logo de Patrocinador" : "➕ Nova Logo de Patrocinador"}
             </h3>
             {editingFullId && (
-              <button type="button" onClick={resetForm} className="text-[10px] text-white/70 hover:text-white transition-colors">
+              <button type="button" onClick={resetForm} className="text-[10px] transition-colors" style={{ color: "var(--layout-header-text, #ffffff)", opacity: 0.7 }}>
                 Cancelar edição
               </button>
             )}
