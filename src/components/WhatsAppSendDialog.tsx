@@ -17,8 +17,9 @@ interface WhatsAppSendDialogProps {
     estudio: string;
     data: string;
     horario: string;
-    participantes: { nome: string; categoria: string; cargo: string; instagram: string; whatsapp?: string }[];
+    participantes: { nome: string; categoria?: string; cargo?: string; instagram?: string; whatsapp?: string }[];
     conteudoTexto: string;
+    _expressFormatted?: string;
   };
 }
 
