@@ -147,33 +147,33 @@ export default function CortesVideoPage() {
 
   return (
     <div className="animate-fade-in">
-      <div className="rounded-2xl" style={{ background: "#d9e9fa", boxShadow: "0 8px 32px rgba(13,4,70,0.12)", padding: "20px" }}>
+      <div className="rounded-2xl" style={{ background: "color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 12%, var(--layout-page-bg, #ffffff) 88%)", boxShadow: "0 8px 32px rgba(0,0,0,0.10)", padding: "20px" }}>
         {/* Header */}
         <div className="flex items-center gap-3 mb-5">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(13,4,70,0.08)" }}>
-            <Scissors size={20} style={{ color: "#0d0446" }} />
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)" }}>
+            <Scissors size={20} style={{ color: "var(--layout-page-text, #1a1a1a)" }} />
           </div>
           <div>
-            <h3 className="text-base font-bold" style={{ color: "#0d0446" }}>Cortes de Vídeo</h3>
-            <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.5)" }}>Crie clipes de vídeos do YouTube com até 10 minutos</p>
+            <h3 className="text-base font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Cortes de Vídeo</h3>
+            <p className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Crie clipes de vídeos do YouTube com até 10 minutos</p>
           </div>
         </div>
 
         {/* URL Input */}
-        <div className="rounded-xl overflow-hidden mb-5" style={{ backgroundColor: "#ffffff", boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}>
-          <div className="px-4 py-2.5" style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)" }}>
-            <h3 className="text-sm font-bold" style={{ color: "#ffffff" }}>🔗 Link do Vídeo</h3>
+        <div className="rounded-xl overflow-hidden mb-5" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+          <div className="px-4 py-2.5" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" }}>
+            <h3 className="text-sm font-bold" style={{ color: "var(--layout-header-text, #ffffff)" }}>🔗 Link do Vídeo</h3>
           </div>
           <div className="p-5">
             <div className="relative flex items-center">
-              <Link2 size={16} className="absolute left-3 pointer-events-none flex-shrink-0" style={{ color: "#268ffa" }} />
+              <Link2 size={16} className="absolute left-3 pointer-events-none flex-shrink-0" style={{ color: "var(--layout-icon-color, #888888)" }} />
               <input
                 type="url"
                 value={youtubeUrl}
                 onChange={(e) => { setYoutubeUrl(e.target.value); setResult(null); }}
                 placeholder="https://www.youtube.com/watch?v=..."
                 className="w-full pl-10 pr-4 py-2.5 text-sm outline-none transition-colors"
-                style={{ backgroundColor: "#ffffff", border: "1px solid #0d0446", color: "#0d0446", borderRadius: "20px" }}
+                style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid #0d0446", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "20px" }}
                 onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
                 onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
               />
@@ -186,7 +186,7 @@ export default function CortesVideoPage() {
 
         {/* Video preview */}
         {videoId && (
-          <div className="rounded-xl overflow-hidden mb-5" style={{ backgroundColor: "#ffffff", boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}>
+          <div className="rounded-xl overflow-hidden mb-5" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
             <div className="p-4 flex flex-col items-center gap-2">
               <div className="rounded-xl overflow-hidden w-full" style={{ maxWidth: 480 }}>
                 <iframe
@@ -198,34 +198,34 @@ export default function CortesVideoPage() {
                 />
               </div>
               {videoTitle && (
-                <p className="text-xs font-bold text-center max-w-[480px] leading-snug" style={{ color: "#0d0446" }}>
+                <p className="text-xs font-bold text-center max-w-[480px] leading-snug" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
                   {videoTitle}
                 </p>
               )}
-              <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.4)" }}>{currentTimeStr}</p>
+              <p className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>{currentTimeStr}</p>
             </div>
           </div>
         )}
 
         {/* Time inputs */}
-        <div className="rounded-xl overflow-hidden mb-5" style={{ backgroundColor: "#ffffff", boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}>
-          <div className="px-4 py-2.5" style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)" }}>
-            <h3 className="text-sm font-bold" style={{ color: "#ffffff" }}>⏱️ Definir Trecho</h3>
+        <div className="rounded-xl overflow-hidden mb-5" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+          <div className="px-4 py-2.5" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" }}>
+            <h3 className="text-sm font-bold" style={{ color: "var(--layout-header-text, #ffffff)" }}>⏱️ Definir Trecho</h3>
           </div>
           <div className="p-5">
             <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-4 items-center">
-              <div className="rounded-xl p-4 flex flex-col items-center gap-2" style={{ backgroundColor: "rgba(13,4,70,0.02)", border: "1px solid rgba(13,4,70,0.08)" }}>
-                <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#0d0446" }}>Tempo Inicial</label>
+              <div className="rounded-xl p-4 flex flex-col items-center gap-2" style={{ backgroundColor: "rgba(13,4,70,0.02)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }}>
+                <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Tempo Inicial</label>
                 <input
                   type="text" value={startTime} onChange={(e) => setStartTime(maskHMS(e.target.value))}
                   placeholder="HH:MM:SS" maxLength={8}
                   className="w-28 text-center py-2 rounded-lg text-sm font-mono outline-none transition-colors"
-                  style={{ border: "1px solid #0d0446", color: "#0d0446", backgroundColor: "#ffffff" }}
+                  style={{ border: "1px solid #0d0446", color: "var(--layout-page-text, #1a1a1a)", backgroundColor: "var(--layout-page-bg, #ffffff)" }}
                   onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
                   onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
                 />
                 {videoId && startSeconds > 0 && (
-                  <img src={`https://img.youtube.com/vi/${videoId}/mqdefault.jpg`} alt="Frame" className="w-full max-w-[140px] h-auto rounded-lg object-cover" style={{ border: "1px solid rgba(13,4,70,0.08)" }} />
+                  <img src={`https://img.youtube.com/vi/${videoId}/mqdefault.jpg`} alt="Frame" className="w-full max-w-[140px] h-auto rounded-lg object-cover" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }} />
                 )}
               </div>
 
@@ -239,18 +239,18 @@ export default function CortesVideoPage() {
                 {duration > 600 && <p className="text-[10px] mt-1 text-center" style={{ color: "#ef4444" }}>Máximo 10 min</p>}
               </div>
 
-              <div className="rounded-xl p-4 flex flex-col items-center gap-2" style={{ backgroundColor: "rgba(13,4,70,0.02)", border: "1px solid rgba(13,4,70,0.08)" }}>
-                <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#0d0446" }}>Tempo Final</label>
+              <div className="rounded-xl p-4 flex flex-col items-center gap-2" style={{ backgroundColor: "rgba(13,4,70,0.02)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }}>
+                <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Tempo Final</label>
                 <input
                   type="text" value={endTime} onChange={(e) => setEndTime(maskHMS(e.target.value))}
                   placeholder="HH:MM:SS" maxLength={8}
                   className="w-28 text-center py-2 rounded-lg text-sm font-mono outline-none transition-colors"
-                  style={{ border: "1px solid #0d0446", color: "#0d0446", backgroundColor: "#ffffff" }}
+                  style={{ border: "1px solid #0d0446", color: "var(--layout-page-text, #1a1a1a)", backgroundColor: "var(--layout-page-bg, #ffffff)" }}
                   onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
                   onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
                 />
                 {videoId && endSeconds > 0 && (
-                  <img src={`https://img.youtube.com/vi/${videoId}/mqdefault.jpg`} alt="Frame" className="w-full max-w-[140px] h-auto rounded-lg object-cover" style={{ border: "1px solid rgba(13,4,70,0.08)" }} />
+                  <img src={`https://img.youtube.com/vi/${videoId}/mqdefault.jpg`} alt="Frame" className="w-full max-w-[140px] h-auto rounded-lg object-cover" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }} />
                 )}
               </div>
             </div>
@@ -261,7 +261,7 @@ export default function CortesVideoPage() {
         <div className="flex justify-center mb-5">
           <button onClick={handleCut} disabled={!canCut || cutting}
             className="flex items-center gap-2 px-8 py-2.5 rounded-full text-sm font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-            style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#fff", border: "none" }}
+            style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #444444), color-mix(in srgb, var(--layout-accent-color, #444444) 70%, white 30%))", color: "#fff", border: "none" }}
             onMouseEnter={e => { if (canCut && !cutting) e.currentTarget.style.boxShadow = "0 4px 15px rgba(38,143,250,0.4)"; }}
             onMouseLeave={e => { e.currentTarget.style.boxShadow = "none"; }}
           >
@@ -272,7 +272,7 @@ export default function CortesVideoPage() {
         {/* Result */}
         {result && (
           <div className="space-y-4">
-            <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}>
+            <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
               <div className="p-4 flex justify-center">
                 <div className="rounded-xl overflow-hidden w-full" style={{ maxWidth: 640 }}>
                   <iframe src={result.clip_embed_url} title="Clip preview" className="w-full aspect-video"
@@ -281,8 +281,8 @@ export default function CortesVideoPage() {
               </div>
             </div>
 
-            <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}>
-              <div className="px-4 py-2.5" style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)" }}>
+            <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+              <div className="px-4 py-2.5" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" }}>
                 <div className="flex items-center gap-2">
                   <Play size={14} className="text-white" />
                   <span className="text-sm font-bold text-white">Trecho gerado com sucesso!</span>
@@ -305,7 +305,7 @@ export default function CortesVideoPage() {
                 </button>
                 <button onClick={() => copyToClipboard(result.clip_embed_url)}
                   className="flex items-center gap-1.5 px-4 py-2 rounded-full text-[10px] font-bold transition-opacity hover:opacity-80"
-                  style={{ backgroundColor: "#0d0446", color: "#fff" }}>
+                  style={{ backgroundColor: "var(--layout-header-bg, #1a1a1a)", color: "#fff" }}>
                   <Copy size={12} /> Copiar Embed
                 </button>
                 <a href={result.share_url} target="_blank" rel="noopener noreferrer"

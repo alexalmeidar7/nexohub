@@ -6,19 +6,19 @@ export default function PropostasPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-sm font-bold uppercase" style={{ color: "#0d0446" }}>Propostas Comerciais</h2>
-          <p className="text-[11px] mt-0.5" style={{ color: "rgba(13,4,70,0.5)" }}>Gerencie suas propostas comerciais</p>
+          <h2 className="text-sm font-bold uppercase" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Propostas Comerciais</h2>
+          <p className="text-[11px] mt-0.5" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Gerencie suas propostas comerciais</p>
         </div>
-        <button className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white transition-all hover:opacity-90" style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)" }}>
+        <button className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white transition-all hover:opacity-90" style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #444444), color-mix(in srgb, var(--layout-accent-color, #444444) 70%, white 30%))" }}>
           <Plus size={14} />
           nova proposta
         </button>
       </div>
 
-      <div className="rounded-xl p-8 text-center" style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "1px solid rgba(13,4,70,0.08)" }}>
+      <div className="rounded-xl p-8 text-center" style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }}>
         <FileText size={32} style={{ color: "rgba(13,4,70,0.2)" }} className="mx-auto mb-3" />
-        <p className="text-xs font-semibold" style={{ color: "rgba(13,4,70,0.4)" }}>Nenhuma proposta cadastrada</p>
-        <p className="text-[10px] mt-1" style={{ color: "rgba(13,4,70,0.3)" }}>Clique em "nova proposta" para começar</p>
+        <p className="text-xs font-semibold" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>Nenhuma proposta cadastrada</p>
+        <p className="text-[10px] mt-1" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 30%, transparent)" }}>Clique em "nova proposta" para começar</p>
       </div>
     </div>
   );

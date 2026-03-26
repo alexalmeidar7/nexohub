@@ -102,11 +102,11 @@ export default function MontarJornalWizard({ open, onOpenChange, programas, onFi
   if (mounting) {
     return (
       <Dialog open={open} onOpenChange={(v) => { if (!v) { reset(); onOpenChange(false); } }}>
-        <DialogContent className="sm:max-w-md" style={{ backgroundColor: "#ffffff", border: "none" }}>
+        <DialogContent className="sm:max-w-md" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "none" }}>
           <div className="flex flex-col items-center justify-center py-12 gap-4">
             <div className="animate-spin rounded-full h-12 w-12 border-4 border-t-transparent" style={{ borderColor: "#2ec1f7", borderTopColor: "transparent" }} />
-            <p className="text-lg font-bold" style={{ color: "#0d0446" }}>Montando Programa...</p>
-            <p className="text-sm" style={{ color: "rgba(13,4,70,0.5)" }}>{programaNome}</p>
+            <p className="text-lg font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Montando Programa...</p>
+            <p className="text-sm" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>{programaNome}</p>
           </div>
         </DialogContent>
       </Dialog>
@@ -115,11 +115,11 @@ export default function MontarJornalWizard({ open, onOpenChange, programas, onFi
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) { reset(); onOpenChange(false); } }}>
-      <DialogContent className="sm:max-w-lg relative" style={{ backgroundColor: "#ffffff", border: "none" }}>
+      <DialogContent className="sm:max-w-lg relative" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "none" }}>
         <button
           onClick={() => { reset(); onOpenChange(false); }}
           className="absolute top-3 right-3 rounded-full p-1 hover:opacity-70 transition-opacity"
-          style={{ color: "#0d0446" }}
+          style={{ color: "var(--layout-page-text, #1a1a1a)" }}
         >
           <XIcon size={18} />
         </button>
@@ -135,7 +135,7 @@ export default function MontarJornalWizard({ open, onOpenChange, programas, onFi
           }
         `}</style>
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2" style={{ color: "#0d0446" }}>
+          <DialogTitle className="flex items-center gap-2" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
             <Newspaper size={20} style={{ color: "#2ec1f7" }} />
             Montar Jornal
           </DialogTitle>
@@ -147,7 +147,7 @@ export default function MontarJornalWizard({ open, onOpenChange, programas, onFi
             <div key={i} className="flex-1 h-1 rounded-full transition-all" style={{ backgroundColor: i < step ? "#2ec1f7" : "rgba(13,4,70,0.1)" }} />
           ))}
         </div>
-        <p className="text-xs mb-4" style={{ color: "rgba(13,4,70,0.4)" }}>
+        <p className="text-xs mb-4" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>
           Passo {step} de {TOTAL_STEPS} — {stepLabels[step - 1]}
         </p>
 
@@ -155,9 +155,9 @@ export default function MontarJornalWizard({ open, onOpenChange, programas, onFi
         <div className="min-h-[120px]">
           {step === 1 && (
             <div className="space-y-3">
-              <label className="text-sm font-semibold" style={{ color: "#0d0446" }}>Nome do Programa</label>
+              <label className="text-sm font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Nome do Programa</label>
               <Select value={programaId} onValueChange={setProgramaId}>
-                <SelectTrigger className="jornal-wizard-input" style={{ borderColor: "#2ec1f7", borderRadius: "9999px", backgroundColor: "#ffffff", color: "#0d0446" }}>
+                <SelectTrigger className="jornal-wizard-input" style={{ borderColor: "#2ec1f7", borderRadius: "9999px", backgroundColor: "var(--layout-page-bg, #ffffff)", color: "var(--layout-page-text, #1a1a1a)" }}>
                   <SelectValue placeholder="Selecione um programa" />
                 </SelectTrigger>
                 <SelectContent>
@@ -171,33 +171,33 @@ export default function MontarJornalWizard({ open, onOpenChange, programas, onFi
 
           {step === 2 && (
             <div className="space-y-3">
-              <label className="text-sm font-semibold" style={{ color: "#0d0446" }}>Quantidade de Blocos</label>
-              <Input type="number" min={1} max={20} value={blocos} onChange={e => setBlocos(Number(e.target.value))} className="jornal-wizard-input" style={{ borderColor: "#2ec1f7", borderRadius: "9999px", backgroundColor: "#ffffff" }} />
-              <p className="text-xs" style={{ color: "rgba(13,4,70,0.4)" }}>Quantos blocos o programa terá?</p>
+              <label className="text-sm font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Quantidade de Blocos</label>
+              <Input type="number" min={1} max={20} value={blocos} onChange={e => setBlocos(Number(e.target.value))} className="jornal-wizard-input" style={{ borderColor: "#2ec1f7", borderRadius: "9999px", backgroundColor: "var(--layout-page-bg, #ffffff)" }} />
+              <p className="text-xs" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>Quantos blocos o programa terá?</p>
             </div>
           )}
 
           {step === 3 && (
             <div className="space-y-3">
-              <label className="text-sm font-semibold" style={{ color: "#0d0446" }}>Tempo de Cada Bloco (minutos)</label>
-              <Input type="number" min={1} max={120} value={tempoBlocoMin} onChange={e => setTempoBlocoMin(Number(e.target.value))} className="jornal-wizard-input" style={{ borderColor: "#2ec1f7", borderRadius: "9999px", backgroundColor: "#ffffff" }} />
-              <p className="text-xs" style={{ color: "rgba(13,4,70,0.4)" }}>Duração em minutos de cada bloco</p>
+              <label className="text-sm font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Tempo de Cada Bloco (minutos)</label>
+              <Input type="number" min={1} max={120} value={tempoBlocoMin} onChange={e => setTempoBlocoMin(Number(e.target.value))} className="jornal-wizard-input" style={{ borderColor: "#2ec1f7", borderRadius: "9999px", backgroundColor: "var(--layout-page-bg, #ffffff)" }} />
+              <p className="text-xs" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>Duração em minutos de cada bloco</p>
             </div>
           )}
 
           {step === 4 && (
             <div className="space-y-3">
-              <label className="text-sm font-semibold" style={{ color: "#0d0446" }}>Quantidade de Intervalos</label>
-              <Input type="number" min={0} max={20} value={intervalos} onChange={e => setIntervalos(Number(e.target.value))} className="jornal-wizard-input" style={{ borderColor: "#2ec1f7", borderRadius: "9999px", backgroundColor: "#ffffff" }} />
-              <p className="text-xs" style={{ color: "rgba(13,4,70,0.4)" }}>Quantos intervalos haverá durante o programa?</p>
+              <label className="text-sm font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Quantidade de Intervalos</label>
+              <Input type="number" min={0} max={20} value={intervalos} onChange={e => setIntervalos(Number(e.target.value))} className="jornal-wizard-input" style={{ borderColor: "#2ec1f7", borderRadius: "9999px", backgroundColor: "var(--layout-page-bg, #ffffff)" }} />
+              <p className="text-xs" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>Quantos intervalos haverá durante o programa?</p>
             </div>
           )}
 
           {step === 5 && (
             <div className="space-y-3">
-              <label className="text-sm font-semibold" style={{ color: "#0d0446" }}>Tempo do Intervalo (minutos)</label>
-              <Input type="number" min={0} max={60} value={tempoIntervaloMin} onChange={e => setTempoIntervaloMin(Number(e.target.value))} className="jornal-wizard-input" style={{ borderColor: "#2ec1f7", borderRadius: "9999px", backgroundColor: "#ffffff" }} />
-              <p className="text-xs" style={{ color: "rgba(13,4,70,0.4)" }}>Duração de cada intervalo em minutos</p>
+              <label className="text-sm font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Tempo do Intervalo (minutos)</label>
+              <Input type="number" min={0} max={60} value={tempoIntervaloMin} onChange={e => setTempoIntervaloMin(Number(e.target.value))} className="jornal-wizard-input" style={{ borderColor: "#2ec1f7", borderRadius: "9999px", backgroundColor: "var(--layout-page-bg, #ffffff)" }} />
+              <p className="text-xs" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>Duração de cada intervalo em minutos</p>
             </div>
           )}
         </div>

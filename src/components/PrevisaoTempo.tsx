@@ -307,7 +307,7 @@ export default function PrevisaoTempo() {
             <button
               onClick={() => { setCity(primaryCity.name); fetchWeatherByCoords(primaryCity.lat, primaryCity.lon, primaryCity.name); }}
               className="flex items-center gap-2 rounded-full px-4 py-2 text-xs font-bold transition-all hover:scale-105"
-              style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)", color: "#ffffff", boxShadow: "0 4px 15px rgba(13,4,70,0.3)" }}
+              style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))", color: "var(--layout-header-text, #ffffff)", boxShadow: "0 4px 15px rgba(13,4,70,0.3)" }}
             >
               <Star size={12} style={{ color: "#2dbef3" }} />
               {primaryCity.name}
@@ -315,16 +315,16 @@ export default function PrevisaoTempo() {
           )}
           {favorites.map(f => (
             <div key={f.name} className="flex items-center gap-2 rounded-full px-3 py-1.5 transition-all hover:shadow-md"
-              style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.15)" }}>
+              style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)" }}>
               <input type="checkbox" checked={f.inXml} onChange={() => toggleFavoriteXml(f.name)}
                 className="w-3 h-3" style={{ accentColor: "#2dbef3" }} title="Incluir no XML" />
               <button onClick={() => { setCity(f.name); fetchWeather(f.name); }}
                 className="text-xs font-medium transition-colors hover:text-[#2dbef3]"
-                style={{ color: "#0d0446" }}
+                style={{ color: "var(--layout-page-text, #1a1a1a)" }}
               >{f.name}</button>
               <button onClick={() => removeFavorite(f.name)}
                 className="text-xs transition-colors hover:text-red-500"
-                style={{ color: "rgba(13,4,70,0.3)" }}
+                style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 30%, transparent)" }}
               >✕</button>
             </div>
           ))}
@@ -335,31 +335,31 @@ export default function PrevisaoTempo() {
       <div className="relative" ref={suggestionsRef}>
         <div className="flex gap-3">
           <div className="relative flex-1">
-            <MapPin size={16} className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: "rgba(13,4,70,0.4)" }} />
+            <MapPin size={16} className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }} />
             <input value={city} onChange={(e) => handleCityChange(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && searchWeather()}
               onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
               placeholder="Buscar cidade..."
               className="w-full pl-10 pr-4 py-2.5 outline-none transition-all text-sm"
-              style={{ backgroundColor: "#ffffff", border: "2px solid rgba(13,4,70,0.1)", color: "#0d0446", borderRadius: "16px" }}
+              style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "2px solid rgba(13,4,70,0.1)", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "16px" }}
               onFocusCapture={e => { e.currentTarget.style.borderColor = "#2dbef3"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(45,190,243,0.1)"; }}
               onBlur={e => { e.currentTarget.style.borderColor = "rgba(13,4,70,0.1)"; e.currentTarget.style.boxShadow = "none"; }}
             />
           </div>
           <button onClick={searchWeather} disabled={loading}
             className="px-6 py-2.5 font-bold transition-all flex items-center gap-2 disabled:opacity-50 hover:scale-105"
-            style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)", color: "#ffffff", borderRadius: "16px", boxShadow: "0 4px 15px rgba(13,4,70,0.25)" }}
+            style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))", color: "var(--layout-header-text, #ffffff)", borderRadius: "16px", boxShadow: "0 4px 15px rgba(13,4,70,0.25)" }}
           >
             <Search size={16} /> Buscar
           </button>
         </div>
         {showSuggestions && suggestions.length > 0 && (
           <div className="absolute z-50 top-full left-0 right-0 mt-2 rounded-xl overflow-hidden"
-            style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)", marginRight: "110px", boxShadow: "0 10px 40px rgba(13,4,70,0.3)" }}>
+            style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))", marginRight: "110px", boxShadow: "0 10px 40px rgba(13,4,70,0.3)" }}>
             {suggestions.map((s, i) => (
               <button key={i} onClick={() => selectSuggestion(s)}
                 className="w-full text-left px-4 py-3 transition-all flex items-center justify-between text-xs border-b border-white/5 last:border-0 hover:bg-white/10"
-                style={{ color: "#ffffff" }}
+                style={{ color: "var(--layout-header-text, #ffffff)" }}
               >
                 <span className="flex items-center gap-2">
                   <MapPin size={12} style={{ color: "#2dbef3" }} />
@@ -394,10 +394,10 @@ export default function PrevisaoTempo() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
             {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="rounded-xl p-5 space-y-3" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.06)" }}>
-                <div className="h-3 w-14 mx-auto rounded bg-[#0d0446]/8" />
-                <div className="h-10 w-10 mx-auto rounded-full bg-[#0d0446]/5" />
-                <div className="h-4 w-16 mx-auto rounded bg-[#0d0446]/5" />
+              <div key={i} className="rounded-xl p-5 space-y-3" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid rgba(13,4,70,0.06)" }}>
+                <div className="h-3 w-14 mx-auto rounded bg-[var(--layout-header-bg)]/8" />
+                <div className="h-10 w-10 mx-auto rounded-full bg-[var(--layout-header-bg)]/5" />
+                <div className="h-4 w-16 mx-auto rounded bg-[var(--layout-header-bg)]/5" />
               </div>
             ))}
           </div>
@@ -407,12 +407,12 @@ export default function PrevisaoTempo() {
       {weather && (
         <>
           {/* Current weather — hero card */}
-          <div className="rounded-2xl overflow-hidden" style={{ background: "#d9e9fa", boxShadow: "0 8px 32px rgba(13,4,70,0.15)" }}>
+          <div className="rounded-2xl overflow-hidden" style={{ background: "color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 12%, var(--layout-page-bg, #ffffff) 88%)", boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }}>
             <div className="p-6">
               <div className="flex items-start justify-between mb-5">
                 <div className="space-y-2">
                   <div className="flex items-center gap-3 flex-wrap">
-                    <h3 className="text-2xl font-bold" style={{ color: "#0d0446" }}>{weather.city}</h3>
+                    <h3 className="text-2xl font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{weather.city}</h3>
                     {(!primaryCity || isPrimary) && (
                       <label className="flex items-center gap-2 cursor-pointer select-none rounded-full px-3 py-1 transition-all"
                         style={{ backgroundColor: isPrimary ? "#0d0446" : "rgba(13,4,70,0.08)", border: `1px solid ${isPrimary ? "#0d0446" : "rgba(13,4,70,0.15)"}` }}>
@@ -424,14 +424,14 @@ export default function PrevisaoTempo() {
                     {!isFavorited && (
                       <button onClick={addFavorite} disabled={isPrimary}
                         className="flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-semibold transition-all disabled:opacity-40"
-                        style={{ backgroundColor: "rgba(13,4,70,0.08)", color: "#0d0446", border: "1px solid rgba(13,4,70,0.15)" }}
+                        style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)" }}
                       >
                         <Star size={12} /> Secundária
                       </button>
                     )}
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs" style={{ color: "rgba(13,4,70,0.5)" }}>
+                    <span className="text-xs" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
                       {new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
                     </span>
                   </div>
@@ -443,46 +443,46 @@ export default function PrevisaoTempo() {
               </div>
 
               <div className="flex items-start gap-6 mb-6">
-                <div className="text-6xl font-bold flex-shrink-0" style={{ color: "#0d0446" }}>{weather.current.temp}°C</div>
+                <div className="text-6xl font-bold flex-shrink-0" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{weather.current.temp}°C</div>
                 <div className="flex-1 space-y-3 pt-2">
                   {aiLoading ? (
-                    <div className="flex items-center gap-2" style={{ color: "rgba(13,4,70,0.4)" }}>
+                    <div className="flex items-center gap-2" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>
                       <Sparkles size={14} className="animate-pulse" />
                       <span className="text-xs italic">Gerando descrição...</span>
                     </div>
                   ) : aiDescription ? (
                     <div className="flex items-start gap-2">
-                      <Sparkles size={14} className="mt-0.5 flex-shrink-0" style={{ color: "#268ffa" }} />
-                      <p className="text-sm leading-relaxed" style={{ color: "#0d0446" }}>{aiDescription}</p>
+                      <Sparkles size={14} className="mt-0.5 flex-shrink-0" style={{ color: "var(--layout-icon-color, #888888)" }} />
+                      <p className="text-sm leading-relaxed" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{aiDescription}</p>
                     </div>
                   ) : null}
 
                   {!forecastDescription && !forecastLoading && aiDescription && (
                     <button onClick={fetchForecastDescription}
                       className="flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold transition-all hover:scale-105"
-                      style={{ background: "rgba(13,4,70,0.08)", color: "#0d0446", border: "1px solid rgba(13,4,70,0.15)" }}
+                      style={{ background: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)" }}
                     >
                       <Sparkles size={12} /> Quer que eu te fale como será os próximos 5 dias?
                     </button>
                   )}
                   {forecastLoading && (
-                    <div className="flex items-center gap-2" style={{ color: "rgba(13,4,70,0.4)" }}>
+                    <div className="flex items-center gap-2" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>
                       <Sparkles size={14} className="animate-pulse" />
                       <span className="text-xs italic">Analisando os próximos dias...</span>
                     </div>
                   )}
                   {forecastDescription && (
-                    <div className="rounded-xl p-4" style={{ backgroundColor: "rgba(13,4,70,0.06)", border: "1px solid rgba(13,4,70,0.1)" }}>
+                    <div className="rounded-xl p-4" style={{ backgroundColor: "rgba(13,4,70,0.06)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 35%, transparent)" }}>
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs font-bold" style={{ color: "#0d0446" }}>Veja como fica o tempo nos próximos 5 dias</span>
+                        <span className="text-xs font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Veja como fica o tempo nos próximos 5 dias</span>
                         <button onClick={() => setForecastDescription("")}
-                          className="text-xs px-2 py-0.5 rounded-full transition-all hover:bg-[#0d0446]/10"
-                          style={{ color: "rgba(13,4,70,0.5)" }}
+                          className="text-xs px-2 py-0.5 rounded-full transition-all hover:bg-[var(--layout-header-bg)]/10"
+                          style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}
                         >✕</button>
                       </div>
                       <div className="flex items-start gap-2">
-                        <Sparkles size={14} className="mt-0.5 flex-shrink-0" style={{ color: "#268ffa" }} />
-                        <p className="text-sm leading-relaxed" style={{ color: "#0d0446" }}>{forecastDescription}</p>
+                        <Sparkles size={14} className="mt-0.5 flex-shrink-0" style={{ color: "var(--layout-icon-color, #888888)" }} />
+                        <p className="text-sm leading-relaxed" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{forecastDescription}</p>
                       </div>
                     </div>
                   )}
@@ -501,12 +501,12 @@ export default function PrevisaoTempo() {
 
           {/* Forecast 5 days */}
           <div>
-            <h4 className="text-lg font-bold mb-4" style={{ color: "#0d0446" }}>Próximos 5 dias</h4>
+            <h4 className="text-lg font-bold mb-4" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Próximos 5 dias</h4>
             <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
               {weather.forecast.map((day) => (
                 <div key={day.date}
                   className="rounded-xl p-5 text-center space-y-2 transition-all hover:shadow-lg hover:-translate-y-1 group"
-                  style={{ backgroundColor: "#ffffff", border: "2px solid rgba(13,4,70,0.06)" }}
+                  style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "2px solid rgba(13,4,70,0.06)" }}
                   onMouseEnter={e => { e.currentTarget.style.borderColor = "#2dbef3"; e.currentTarget.style.boxShadow = "0 8px 25px rgba(45,190,243,0.15)"; }}
                   onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(13,4,70,0.06)"; e.currentTarget.style.boxShadow = "none"; }}
                 >
@@ -514,9 +514,9 @@ export default function PrevisaoTempo() {
                   <div className="flex justify-center py-1">
                     <WeatherIcon code={day.weatherCode} size={44} forceDay />
                   </div>
-                  <p className="text-[11px] font-medium" style={{ color: "rgba(13,4,70,0.5)" }}>{getWeatherLabel(day.weatherCode)}</p>
-                  <p className="text-2xl font-bold" style={{ color: "#0d0446" }}>{day.temp}°C</p>
-                  <div className="text-[11px] space-y-1.5 pt-1" style={{ color: "rgba(13,4,70,0.5)" }}>
+                  <p className="text-[11px] font-medium" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>{getWeatherLabel(day.weatherCode)}</p>
+                  <p className="text-2xl font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{day.temp}°C</p>
+                  <div className="text-[11px] space-y-1.5 pt-1" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
                     <p className="flex items-center justify-center gap-1">
                       <span style={{ color: "#60a5fa" }}>↓{day.tempMin}°</span>
                       <span className="mx-1">/</span>
@@ -554,12 +554,12 @@ export default function PrevisaoTempo() {
 function StatCard({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: string; color: string }) {
   return (
     <div className="rounded-xl p-3.5 text-center transition-all hover:shadow-md"
-      style={{ backgroundColor: "rgba(255,255,255,0.5)", border: "1px solid rgba(13,4,70,0.08)" }}>
+      style={{ backgroundColor: "rgba(255,255,255,0.5)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }}>
       <div className="flex items-center justify-center gap-1.5 mb-1.5" style={{ color }}>
         {icon}
-        <span className="text-[11px] font-medium" style={{ color: "rgba(13,4,70,0.5)" }}>{label}</span>
+        <span className="text-[11px] font-medium" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>{label}</span>
       </div>
-      <p className="text-lg font-bold" style={{ color: "#0d0446" }}>{value}</p>
+      <p className="text-lg font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{value}</p>
     </div>
   );
 }

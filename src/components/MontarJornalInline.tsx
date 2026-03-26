@@ -79,22 +79,22 @@ export default function MontarJornalInline({ programas, onFinish, onCancel }: Pr
 
   const stepLabels = ["Programa", "Blocos", "Tempo Bloco", "Intervalos", "Tempo Intervalo"];
 
-  const inputStyle = { borderColor: "#2ec1f7", borderRadius: "9999px", backgroundColor: "#ffffff", color: "#0d0446" };
+  const inputStyle = { borderColor: "#2ec1f7", borderRadius: "9999px", backgroundColor: "var(--layout-page-bg, #ffffff)", color: "var(--layout-page-text, #1a1a1a)" };
 
   if (mounting) {
     return (
-      <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(13,4,70,0.1)", backgroundColor: "#ffffff" }}>
+      <div className="rounded-xl overflow-hidden" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 35%, transparent)", backgroundColor: "var(--layout-page-bg, #ffffff)" }}>
         <div className="flex flex-col items-center justify-center py-12 gap-3">
           <Loader2 size={28} className="animate-spin" style={{ color: "#2ec1f7" }} />
-          <p className="text-sm font-bold" style={{ color: "#0d0446" }}>Montando Programa...</p>
-          <p className="text-xs" style={{ color: "rgba(13,4,70,0.5)" }}>{programaNome}</p>
+          <p className="text-sm font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Montando Programa...</p>
+          <p className="text-xs" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>{programaNome}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(13,4,70,0.1)", backgroundColor: "#ffffff" }}>
+    <div className="rounded-xl overflow-hidden" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 35%, transparent)", backgroundColor: "var(--layout-page-bg, #ffffff)" }}>
       <style>{`
         .jornal-inline-input:focus, .jornal-inline-input:focus-visible, .jornal-inline-input:active {
           outline: none !important;
@@ -105,7 +105,7 @@ export default function MontarJornalInline({ programas, onFinish, onCancel }: Pr
       `}</style>
 
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2 text-white font-bold text-xs" style={{ backgroundColor: "#0d0446" }}>
+      <div className="flex items-center justify-between px-3 py-2 text-white font-bold text-xs" style={{ backgroundColor: "var(--layout-header-bg, #1a1a1a)" }}>
         <span className="flex items-center gap-2">
           <Newspaper size={12} />
           Montar Jornal
@@ -122,7 +122,7 @@ export default function MontarJornalInline({ programas, onFinish, onCancel }: Pr
             <div key={i} className="flex-1 h-1 rounded-full transition-all" style={{ backgroundColor: i < step ? "#2ec1f7" : "rgba(13,4,70,0.1)" }} />
           ))}
         </div>
-        <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.4)" }}>
+        <p className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>
           Passo {step} de {TOTAL_STEPS} — {stepLabels[step - 1]}
         </p>
 
@@ -130,7 +130,7 @@ export default function MontarJornalInline({ programas, onFinish, onCancel }: Pr
         <div className="min-h-[80px]">
           {step === 1 && (
             <div className="space-y-2">
-              <label className="text-xs font-semibold" style={{ color: "#0d0446" }}>Nome do Programa</label>
+              <label className="text-xs font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Nome do Programa</label>
               <Select value={programaId} onValueChange={setProgramaId}>
                 <SelectTrigger className="jornal-inline-input text-xs h-8" style={inputStyle}>
                   <SelectValue placeholder="Selecione um programa" />
@@ -146,28 +146,28 @@ export default function MontarJornalInline({ programas, onFinish, onCancel }: Pr
 
           {step === 2 && (
             <div className="space-y-2">
-              <label className="text-xs font-semibold" style={{ color: "#0d0446" }}>Quantidade de Blocos</label>
+              <label className="text-xs font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Quantidade de Blocos</label>
               <Input type="number" min={1} max={20} value={blocos} onChange={e => setBlocos(Number(e.target.value))} className="jornal-inline-input text-xs h-8" style={inputStyle} />
             </div>
           )}
 
           {step === 3 && (
             <div className="space-y-2">
-              <label className="text-xs font-semibold" style={{ color: "#0d0446" }}>Tempo de Cada Bloco (min)</label>
+              <label className="text-xs font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Tempo de Cada Bloco (min)</label>
               <Input type="number" min={1} max={120} value={tempoBlocoMin} onChange={e => setTempoBlocoMin(Number(e.target.value))} className="jornal-inline-input text-xs h-8" style={inputStyle} />
             </div>
           )}
 
           {step === 4 && (
             <div className="space-y-2">
-              <label className="text-xs font-semibold" style={{ color: "#0d0446" }}>Quantidade de Intervalos</label>
+              <label className="text-xs font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Quantidade de Intervalos</label>
               <Input type="number" min={0} max={20} value={intervalos} onChange={e => setIntervalos(Number(e.target.value))} className="jornal-inline-input text-xs h-8" style={inputStyle} />
             </div>
           )}
 
           {step === 5 && (
             <div className="space-y-2">
-              <label className="text-xs font-semibold" style={{ color: "#0d0446" }}>Tempo do Intervalo (min)</label>
+              <label className="text-xs font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Tempo do Intervalo (min)</label>
               <Input type="number" min={0} max={60} value={tempoIntervaloMin} onChange={e => setTempoIntervaloMin(Number(e.target.value))} className="jornal-inline-input text-xs h-8" style={inputStyle} />
             </div>
           )}
@@ -179,7 +179,7 @@ export default function MontarJornalInline({ programas, onFinish, onCancel }: Pr
             onClick={handleBack}
             disabled={step === 1}
             className="flex items-center gap-1 text-xs font-semibold disabled:opacity-30 transition-opacity"
-            style={{ color: "#0d0446" }}
+            style={{ color: "var(--layout-page-text, #1a1a1a)" }}
           >
             <ChevronLeft size={14} /> Voltar
           </button>

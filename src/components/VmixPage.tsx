@@ -1139,7 +1139,7 @@ export default function VmixPage() {
                           window.open(previewDomain + "/vmix-control", "_blank", "noopener,noreferrer");
                         }}
                         className="ml-1.5 inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-bold transition-all hover:brightness-110"
-                        style={{ backgroundColor: "#268ffa30", color: "#268ffa", border: "1px solid #268ffa40" }}
+                        style={{ backgroundColor: "#268ffa30", color: "var(--layout-icon-color, #888888)", border: "1px solid #268ffa40" }}
                       >
                         <ExternalLink size={10} />
                         {previewDomain.replace("https://", "").slice(0, 30)}...

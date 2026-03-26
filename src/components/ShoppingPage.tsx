@@ -132,33 +132,33 @@ export default function ShoppingPage() {
   if (loading) return <ModulePageSkeleton />;
 
   const inputStyle: React.CSSProperties = {
-    backgroundColor: "#ffffff", border: "1px solid #0d0446", color: "#0d0446", borderRadius: "20px",
+    backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid #0d0446", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "20px",
   };
 
   return (
     <div className="animate-fade-in">
-      <div className="rounded-2xl" style={{ background: "#d9e9fa", boxShadow: "0 8px 32px rgba(13,4,70,0.12)", padding: "20px" }}>
+      <div className="rounded-2xl" style={{ background: "color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 12%, var(--layout-page-bg, #ffffff) 88%)", boxShadow: "0 8px 32px rgba(0,0,0,0.10)", padding: "20px" }}>
         {/* Header */}
         <div className="flex items-center gap-3 mb-5">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(13,4,70,0.08)" }}>
-            <Package size={20} style={{ color: "#0d0446" }} />
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)" }}>
+            <Package size={20} style={{ color: "var(--layout-page-text, #1a1a1a)" }} />
           </div>
           <div>
-            <h3 className="text-base font-bold" style={{ color: "#0d0446" }}>Shopping</h3>
-            <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.5)" }}>Gerencie produtos exibidos na vitrine do player</p>
+            <h3 className="text-base font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Shopping</h3>
+            <p className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Gerencie produtos exibidos na vitrine do player</p>
           </div>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="rounded-xl overflow-hidden mb-5" style={{ backgroundColor: "#ffffff", boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}>
-          <div className="px-4 py-2.5 flex items-center justify-between" style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)" }}>
-            <h3 className="text-sm font-bold" style={{ color: "#ffffff" }}>
+        <form onSubmit={handleSubmit} className="rounded-xl overflow-hidden mb-5" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+          <div className="px-4 py-2.5 flex items-center justify-between" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" }}>
+            <h3 className="text-sm font-bold" style={{ color: "var(--layout-header-text, #ffffff)" }}>
               {editId ? "✏️ Editar Produto" : "➕ Novo Produto"}
             </h3>
             {editId && (
               <button type="button" onClick={resetForm}
                 className="flex items-center gap-1 px-3 py-1 text-[10px] font-bold rounded-full transition-all"
-                style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "#ffffff", border: "1px solid rgba(255,255,255,0.3)" }}
+                style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "var(--layout-header-text, #ffffff)", border: "1px solid rgba(255,255,255,0.3)" }}
               >
                 Cancelar
               </button>
@@ -168,7 +168,7 @@ export default function ShoppingPage() {
           <div className="p-5 space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="text-xs font-semibold block mb-1" style={{ color: "#0d0446" }}>Nome do Produto</label>
+                <label className="text-xs font-semibold block mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Nome do Produto</label>
                 <input value={name} onChange={(e) => setName(e.target.value)}
                   className="w-full px-4 py-1.5 text-sm outline-none transition-colors"
                   style={inputStyle} placeholder="Ex: Caneca Positiva FM" required
@@ -177,7 +177,7 @@ export default function ShoppingPage() {
                 />
               </div>
               <div>
-                <label className="text-xs font-semibold block mb-1" style={{ color: "#0d0446" }}>Programa vinculado</label>
+                <label className="text-xs font-semibold block mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Programa vinculado</label>
                 <select value={programId} onChange={(e) => setProgramId(e.target.value)}
                   className="w-full px-4 py-1.5 text-sm outline-none transition-colors appearance-none"
                   style={inputStyle}
@@ -189,7 +189,7 @@ export default function ShoppingPage() {
                 </select>
               </div>
               <div className="md:col-span-2">
-                <label className="text-xs font-semibold block mb-1" style={{ color: "#0d0446" }}>Descrição do Produto</label>
+                <label className="text-xs font-semibold block mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Descrição do Produto</label>
                 <textarea value={description} onChange={(e) => setDescription(e.target.value)}
                   className="w-full px-4 py-2 text-sm outline-none transition-colors min-h-[60px]"
                   style={{ ...inputStyle, borderRadius: "12px" }} placeholder="Descrição do produto..."
@@ -198,7 +198,7 @@ export default function ShoppingPage() {
                 />
               </div>
               <div>
-                <label className="text-xs font-semibold block mb-1" style={{ color: "#0d0446" }}>Preço (R$)</label>
+                <label className="text-xs font-semibold block mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Preço (R$)</label>
                 <input type="number" step="0.01" min="0" value={price} onChange={(e) => setPrice(e.target.value)}
                   className="w-full px-4 py-1.5 text-sm outline-none transition-colors" style={inputStyle} placeholder="29.90"
                   onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
@@ -206,7 +206,7 @@ export default function ShoppingPage() {
                 />
               </div>
               <div>
-                <label className="text-xs font-semibold block mb-1" style={{ color: "#0d0446" }}>Estoque</label>
+                <label className="text-xs font-semibold block mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Estoque</label>
                 <input type="number" min="0" value={stock} onChange={(e) => setStock(e.target.value)}
                   className="w-full px-4 py-1.5 text-sm outline-none transition-colors" style={inputStyle} placeholder="100"
                   onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
@@ -214,7 +214,7 @@ export default function ShoppingPage() {
                 />
               </div>
               <div className="md:col-span-2">
-                <label className="text-xs font-semibold block mb-1" style={{ color: "#0d0446" }}>Link de Pagamento (Mercado Pago)</label>
+                <label className="text-xs font-semibold block mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Link de Pagamento (Mercado Pago)</label>
                 <input value={paymentUrl} onChange={(e) => setPaymentUrl(e.target.value)}
                   className="w-full px-4 py-1.5 text-sm outline-none transition-colors" style={inputStyle} placeholder="https://mpago.la/..."
                   onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
@@ -223,16 +223,16 @@ export default function ShoppingPage() {
               </div>
             </div>
             <div>
-              <label className="text-xs font-semibold block mb-1" style={{ color: "#0d0446" }}>Imagem do Produto</label>
-              <input type="file" accept="image/*" onChange={handleImageChange} className="text-xs" style={{ color: "#0d0446" }} />
+              <label className="text-xs font-semibold block mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Imagem do Produto</label>
+              <input type="file" accept="image/*" onChange={handleImageChange} className="text-xs" style={{ color: "var(--layout-page-text, #1a1a1a)" }} />
               {imagePreview && (
-                <img src={imagePreview} alt="Preview" className="mt-2 w-24 h-24 object-cover rounded-lg" style={{ border: "1px solid rgba(13,4,70,0.1)" }} />
+                <img src={imagePreview} alt="Preview" className="mt-2 w-24 h-24 object-cover rounded-lg" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 35%, transparent)" }} />
               )}
             </div>
 
             <button type="submit" disabled={saving}
               className="px-6 py-2 font-bold text-sm transition-all flex items-center gap-2 disabled:opacity-50 rounded-full"
-              style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#ffffff", border: "none" }}
+              style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #444444), color-mix(in srgb, var(--layout-accent-color, #444444) 70%, white 30%))", color: "var(--layout-header-text, #ffffff)", border: "none" }}
               onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 4px 15px rgba(38,143,250,0.4)"; }}
               onMouseLeave={e => { e.currentTarget.style.boxShadow = "none"; }}
             >
@@ -243,22 +243,22 @@ export default function ShoppingPage() {
         </form>
 
         {/* List */}
-        <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}>
-          <div className="px-4 py-2.5 flex items-center justify-between" style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)" }}>
-            <h3 className="text-sm font-bold" style={{ color: "#ffffff" }}>📋 Produtos Cadastrados</h3>
-            <span className="text-[9px] font-normal px-2 py-0.5 rounded-full" style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "#ffffff" }}>
+        <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+          <div className="px-4 py-2.5 flex items-center justify-between" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" }}>
+            <h3 className="text-sm font-bold" style={{ color: "var(--layout-header-text, #ffffff)" }}>📋 Produtos Cadastrados</h3>
+            <span className="text-[9px] font-normal px-2 py-0.5 rounded-full" style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "var(--layout-header-text, #ffffff)" }}>
               {products.length} item{products.length !== 1 ? "s" : ""}
             </span>
           </div>
 
           {products.length === 0 ? (
-            <p className="text-sm py-8 text-center" style={{ color: "rgba(13,4,70,0.4)" }}>Nenhum produto cadastrado.</p>
+            <p className="text-sm py-8 text-center" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>Nenhum produto cadastrado.</p>
           ) : (
             <div className="p-3 space-y-2">
               {products.map((p) => {
                 const prog = programas.find((pr) => pr.id === p.program_id);
                 return (
-                  <div key={p.id} className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 rounded-xl p-3" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.06)" }}>
+                  <div key={p.id} className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 rounded-xl p-3" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid rgba(13,4,70,0.06)" }}>
                     <div className="flex items-center gap-3 flex-1 min-w-0">
                       {p.image_url ? (
                         <img src={p.image_url} alt={p.name} className="w-14 h-14 object-cover rounded-lg shrink-0" />
@@ -268,12 +268,12 @@ export default function ShoppingPage() {
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
-                        <div className="font-bold truncate text-xs" style={{ color: "#0d0446" }}>{p.name}</div>
-                        <div className="text-[10px]" style={{ color: "rgba(13,4,70,0.5)" }}>
+                        <div className="font-bold truncate text-xs" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{p.name}</div>
+                        <div className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
                           R$ {Number(p.price).toFixed(2)} • Estoque: {p.stock}
                           {prog && <span className="hidden sm:inline"> • {prog.nome}</span>}
                         </div>
-                        {p.description && <div className="text-[10px] truncate mt-0.5" style={{ color: "rgba(13,4,70,0.4)" }}>{p.description}</div>}
+                        {p.description && <div className="text-[10px] truncate mt-0.5" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>{p.description}</div>}
                         {p.payment_url && <div className="text-[10px] mt-0.5" style={{ color: "#2dbef3" }}>💳 Link configurado</div>}
                       </div>
                     </div>
@@ -287,10 +287,10 @@ export default function ShoppingPage() {
                       >
                         {p.active ? "Ativo" : "Inativo"}
                       </button>
-                      <button onClick={() => startEdit(p)} className="p-1.5 rounded-lg transition-colors" style={{ color: "rgba(13,4,70,0.4)" }}>
+                      <button onClick={() => startEdit(p)} className="p-1.5 rounded-lg transition-colors" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>
                         <Pencil size={14} />
                       </button>
-                      <button onClick={() => handleDelete(p.id)} className="p-1.5 rounded-lg transition-colors" style={{ color: "rgba(13,4,70,0.4)" }}>
+                      <button onClick={() => handleDelete(p.id)} className="p-1.5 rounded-lg transition-colors" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>
                         <Trash2 size={14} />
                       </button>
                     </div>

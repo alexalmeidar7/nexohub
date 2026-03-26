@@ -120,7 +120,7 @@ export default function WeatherWidget({ onNavigate }: { onNavigate?: (page: any)
         <button
           onClick={() => onNavigate?.("previsao")}
           className="mt-auto flex items-center gap-1.5 text-[10px] font-semibold rounded-lg px-2 py-1 hover:opacity-80 transition-opacity"
-          style={{ color: "#268ffa", backgroundColor: "rgba(38,143,250,0.15)" }}
+          style={{ color: "var(--layout-icon-color, #888888)", backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #444444) 15%, transparent)" }}
         >
           <Settings size={10} /> Configurar
         </button>
@@ -166,7 +166,7 @@ export default function WeatherWidget({ onNavigate }: { onNavigate?: (page: any)
           <span className="text-[9px] font-bold tracking-wider text-white/40 uppercase">Agora</span>
           <div className="flex items-center gap-1.5 mt-0.5">
             <WeatherIcon code={weather.weatherCode} size={32} />
-            <p className="text-2xl font-bold leading-none" style={{ color: "#268ffa" }}>{weather.temp}°</p>
+            <p className="text-2xl font-bold leading-none" style={{ color: "var(--layout-icon-color, #888888)" }}>{weather.temp}°</p>
           </div>
           <p className="font-semibold text-[11px] text-white truncate mt-0.5">{weather.city}</p>
           <p className="text-[9px] text-white/50 truncate">{getLabel(weather.weatherCode)}</p>
@@ -183,7 +183,7 @@ export default function WeatherWidget({ onNavigate }: { onNavigate?: (page: any)
       <button
         onClick={() => onNavigate?.("previsao")}
         className="mt-auto flex items-center gap-1.5 text-[10px] font-semibold rounded-lg px-2 py-1 self-start hover:opacity-80 transition-opacity"
-        style={{ color: "#268ffa", backgroundColor: "rgba(38,143,250,0.15)" }}
+        style={{ color: "var(--layout-icon-color, #888888)", backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #444444) 15%, transparent)" }}
       >
         <Settings size={10} /> Configuração
       </button>

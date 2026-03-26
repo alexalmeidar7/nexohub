@@ -18,7 +18,7 @@ interface Promocao {
 }
 
 const inputStyle: React.CSSProperties = {
-  backgroundColor: "#ffffff", border: "1px solid #0d0446", color: "#0d0446", borderRadius: "20px",
+  backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid #0d0446", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "20px",
 };
 
 export default function PromocoesPage() {
@@ -170,28 +170,28 @@ export default function PromocoesPage() {
 
   return (
     <div className="animate-fade-in">
-      <div className="rounded-2xl" style={{ background: "#d9e9fa", boxShadow: "0 8px 32px rgba(13,4,70,0.12)", padding: "20px" }}>
+      <div className="rounded-2xl" style={{ background: "color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 12%, var(--layout-page-bg, #ffffff) 88%)", boxShadow: "0 8px 32px rgba(0,0,0,0.10)", padding: "20px" }}>
         {/* Header */}
         <div className="flex items-center gap-3 mb-5">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(13,4,70,0.08)" }}>
-            <ImageIcon size={20} style={{ color: "#0d0446" }} />
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)" }}>
+            <ImageIcon size={20} style={{ color: "var(--layout-page-text, #1a1a1a)" }} />
           </div>
           <div>
-            <h3 className="text-base font-bold" style={{ color: "#0d0446" }}>Promoções</h3>
-            <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.5)" }}>Gerencie campanhas promocionais com banners e oferecimentos</p>
+            <h3 className="text-base font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Promoções</h3>
+            <p className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Gerencie campanhas promocionais com banners e oferecimentos</p>
           </div>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="rounded-xl overflow-hidden mb-5" style={{ backgroundColor: "#ffffff", boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}>
-          <div className="px-4 py-2.5 flex items-center justify-between" style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)" }}>
-            <h3 className="text-sm font-bold" style={{ color: "#ffffff" }}>
+        <form onSubmit={handleSubmit} className="rounded-xl overflow-hidden mb-5" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+          <div className="px-4 py-2.5 flex items-center justify-between" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" }}>
+            <h3 className="text-sm font-bold" style={{ color: "var(--layout-header-text, #ffffff)" }}>
               {editingId ? "✏️ Editar Promoção" : "➕ Nova Promoção"}
             </h3>
             {editingId && (
               <button type="button" onClick={cancelEdit}
                 className="flex items-center gap-1 px-3 py-1 text-[10px] font-bold rounded-full transition-all"
-                style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "#ffffff", border: "1px solid rgba(255,255,255,0.3)" }}
+                style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "var(--layout-header-text, #ffffff)", border: "1px solid rgba(255,255,255,0.3)" }}
               >
                 <X size={10} /> Cancelar
               </button>
@@ -202,17 +202,17 @@ export default function PromocoesPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-4">
                 <div>
-                  <label className="block text-xs mb-1" style={{ color: "#0d0446", fontWeight: 600 }}>Banner da Promoção <span className="font-normal" style={{ color: "rgba(13,4,70,0.5)" }}>(1920×850px)</span></label>
+                  <label className="block text-xs mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)", fontWeight: 600 }}>Banner da Promoção <span className="font-normal" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>(1920×850px)</span></label>
                   <div className="flex items-center gap-3">
                     {imagePreview ? (
-                      <img src={imagePreview} alt="banner" className="w-24 h-14 rounded-lg object-cover" style={{ border: "1px solid rgba(13,4,70,0.1)" }} />
+                      <img src={imagePreview} alt="banner" className="w-24 h-14 rounded-lg object-cover" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 35%, transparent)" }} />
                     ) : (
-                      <div className="w-24 h-14 rounded-lg flex items-center justify-center" style={{ backgroundColor: "rgba(13,4,70,0.04)", border: "1px solid rgba(13,4,70,0.1)" }}>
-                        <ImageIcon size={20} style={{ color: "rgba(13,4,70,0.3)" }} />
+                      <div className="w-24 h-14 rounded-lg flex items-center justify-center" style={{ backgroundColor: "rgba(13,4,70,0.04)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 35%, transparent)" }}>
+                        <ImageIcon size={20} style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 30%, transparent)" }} />
                       </div>
                     )}
                     <label className="cursor-pointer inline-flex items-center gap-2 px-3 py-1.5 text-xs font-bold transition-all rounded-full"
-                      style={{ backgroundColor: "#ffffff", color: "#0d0446", border: "2px solid #0d0446", borderRadius: "20px" }}
+                      style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", color: "var(--layout-page-text, #1a1a1a)", border: "2px solid #0d0446", borderRadius: "20px" }}
                       onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = "#0d0446"; (e.currentTarget as HTMLElement).style.color = "#ffffff"; }}
                       onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = "#ffffff"; (e.currentTarget as HTMLElement).style.color = "#0d0446"; }}
                     >
@@ -223,17 +223,17 @@ export default function PromocoesPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs mb-1" style={{ color: "#0d0446", fontWeight: 600 }}>Imagem do Botão</label>
+                  <label className="block text-xs mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)", fontWeight: 600 }}>Imagem do Botão</label>
                   <div className="flex items-center gap-3">
                     {botaoPreview ? (
-                      <img src={botaoPreview} alt="botão" className="w-16 h-10 rounded-lg object-contain" style={{ border: "1px solid rgba(13,4,70,0.1)" }} />
+                      <img src={botaoPreview} alt="botão" className="w-16 h-10 rounded-lg object-contain" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 35%, transparent)" }} />
                     ) : (
-                      <div className="w-16 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: "rgba(13,4,70,0.04)", border: "1px solid rgba(13,4,70,0.1)" }}>
-                        <ImageIcon size={16} style={{ color: "rgba(13,4,70,0.3)" }} />
+                      <div className="w-16 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: "rgba(13,4,70,0.04)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 35%, transparent)" }}>
+                        <ImageIcon size={16} style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 30%, transparent)" }} />
                       </div>
                     )}
                     <label className="cursor-pointer inline-flex items-center gap-2 px-3 py-1.5 text-xs font-bold transition-all rounded-full"
-                      style={{ backgroundColor: "#ffffff", color: "#0d0446", border: "2px solid #0d0446", borderRadius: "20px" }}
+                      style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", color: "var(--layout-page-text, #1a1a1a)", border: "2px solid #0d0446", borderRadius: "20px" }}
                       onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = "#0d0446"; (e.currentTarget as HTMLElement).style.color = "#ffffff"; }}
                       onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = "#ffffff"; (e.currentTarget as HTMLElement).style.color = "#0d0446"; }}
                     >
@@ -244,7 +244,7 @@ export default function PromocoesPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs mb-1" style={{ color: "#0d0446", fontWeight: 600 }}>Texto da Promoção</label>
+                  <label className="block text-xs mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)", fontWeight: 600 }}>Texto da Promoção</label>
                   <textarea value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="Descrição da campanha..." rows={3} required
                     className="w-full px-4 py-2 text-sm outline-none transition-colors min-h-[80px]"
                     style={{ ...inputStyle, borderRadius: "12px" }}
@@ -256,7 +256,7 @@ export default function PromocoesPage() {
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-xs mb-1" style={{ color: "#0d0446", fontWeight: 600 }}>Oferecimento</label>
+                  <label className="block text-xs mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)", fontWeight: 600 }}>Oferecimento</label>
                   <input value={oferecimento} onChange={(e) => setOferecimento(e.target.value)} placeholder="Quem assina a promoção"
                     className="w-full px-4 py-1.5 text-sm outline-none"
                     style={inputStyle}
@@ -267,7 +267,7 @@ export default function PromocoesPage() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs mb-1" style={{ color: "#0d0446", fontWeight: 600 }}>Início</label>
+                    <label className="block text-xs mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)", fontWeight: 600 }}>Início</label>
                     <input type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} required
                       className="w-full px-4 py-1.5 text-sm outline-none"
                       style={inputStyle}
@@ -276,7 +276,7 @@ export default function PromocoesPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-xs mb-1" style={{ color: "#0d0446", fontWeight: 600 }}>Fim</label>
+                    <label className="block text-xs mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)", fontWeight: 600 }}>Fim</label>
                     <input type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} required
                       className="w-full px-4 py-1.5 text-sm outline-none"
                       style={inputStyle}
@@ -288,7 +288,7 @@ export default function PromocoesPage() {
 
                 <button type="submit" disabled={saving}
                   className="w-full px-6 py-2 font-bold text-sm transition-all flex items-center justify-center gap-2 disabled:opacity-50 rounded-full"
-                  style={{ background: "linear-gradient(135deg, #960101, #be0101)", color: "#ffffff", border: "none" }}
+                  style={{ background: "linear-gradient(135deg, #960101, #be0101)", color: "var(--layout-header-text, #ffffff)", border: "none" }}
                   onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 4px 15px rgba(190,1,1,0.4)"; }}
                   onMouseLeave={e => { e.currentTarget.style.boxShadow = "none"; }}
                 >
@@ -300,18 +300,18 @@ export default function PromocoesPage() {
         </form>
 
         {/* List */}
-        <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}>
-          <div className="px-4 py-2.5" style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)" }}>
-            <h3 className="text-sm font-bold" style={{ color: "#ffffff" }}>📋 Promoções Cadastradas</h3>
+        <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+          <div className="px-4 py-2.5" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" }}>
+            <h3 className="text-sm font-bold" style={{ color: "var(--layout-header-text, #ffffff)" }}>📋 Promoções Cadastradas</h3>
           </div>
 
           {items.length === 0 ? (
-            <p className="text-sm py-8 text-center" style={{ color: "rgba(13,4,70,0.4)" }}>Nenhuma promoção cadastrada.</p>
+            <p className="text-sm py-8 text-center" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>Nenhuma promoção cadastrada.</p>
           ) : (
             <>
               {/* Desktop table */}
               <div className="hidden md:block">
-                <table className="w-full text-sm" style={{ color: "#0d0446" }}>
+                <table className="w-full text-sm" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
                   <thead>
                     <tr style={{ backgroundColor: "rgba(13,4,70,0.04)" }}>
                       <th className="px-4 py-2 text-left font-semibold text-xs" style={{ color: "rgba(13,4,70,0.6)" }}>Banner</th>
@@ -329,7 +329,7 @@ export default function PromocoesPage() {
                         <tr key={item.id} style={{ backgroundColor: i % 2 === 0 ? "#ffffff" : "#f8f8fc", borderTop: "1px solid rgba(13,4,70,0.06)" }}>
                           <td className="px-4 py-2">
                             {item.imagem_url ? (
-                              <img src={item.imagem_url} alt="" className="w-20 h-10 rounded-lg object-cover" style={{ border: "1px solid rgba(13,4,70,0.08)" }} />
+                              <img src={item.imagem_url} alt="" className="w-20 h-10 rounded-lg object-cover" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }} />
                             ) : (
                               <span style={{ color: "rgba(13,4,70,0.25)" }}>—</span>
                             )}
@@ -345,7 +345,7 @@ export default function PromocoesPage() {
                           </td>
                           <td className="px-4 py-2 text-center">
                             <button onClick={() => startEdit(item)} title="Editar" className="hover:opacity-70 transition-opacity">
-                              <Pencil size={14} style={{ color: "#0d0446" }} />
+                              <Pencil size={14} style={{ color: "var(--layout-page-text, #1a1a1a)" }} />
                             </button>
                           </td>
                           <td className="px-4 py-2 text-center">
@@ -365,14 +365,14 @@ export default function PromocoesPage() {
                 {items.map((item) => {
                   const dias = diasRestantes(item.data_fim);
                   return (
-                    <div key={item.id} className="rounded-xl p-3 space-y-2" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.08)" }}>
+                    <div key={item.id} className="rounded-xl p-3 space-y-2" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }}>
                       <div className="flex items-start gap-3">
                         {item.imagem_url && (
-                          <img src={item.imagem_url} alt="" className="w-16 h-10 rounded-lg object-cover shrink-0" style={{ border: "1px solid rgba(13,4,70,0.08)" }} />
+                          <img src={item.imagem_url} alt="" className="w-16 h-10 rounded-lg object-cover shrink-0" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }} />
                         )}
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs truncate" style={{ color: "#0d0446" }}>{item.texto}</p>
-                          <p className="text-[10px] mt-0.5" style={{ color: "rgba(13,4,70,0.5)" }}>{item.oferecimento || "Sem oferecimento"}</p>
+                          <p className="text-xs truncate" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{item.texto}</p>
+                          <p className="text-[10px] mt-0.5" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>{item.oferecimento || "Sem oferecimento"}</p>
                         </div>
                       </div>
                       <div className="flex items-center justify-between">
@@ -380,7 +380,7 @@ export default function PromocoesPage() {
                           {dias}d restante{dias !== 1 ? "s" : ""}
                         </span>
                         <div className="flex items-center gap-3">
-                          <button onClick={() => startEdit(item)}><Pencil size={14} style={{ color: "#0d0446" }} /></button>
+                          <button onClick={() => startEdit(item)}><Pencil size={14} style={{ color: "var(--layout-page-text, #1a1a1a)" }} /></button>
                           <button onClick={() => handleDelete(item.id)}><Trash2 size={14} style={{ color: "#dc2626" }} /></button>
                         </div>
                       </div>

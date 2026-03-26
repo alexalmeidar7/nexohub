@@ -60,7 +60,7 @@ export default function TopLikedSongs() {
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center gap-1.5 mb-2">
-        <Heart size={14} fill="#268ffa" style={{ color: "#268ffa" }} className="animate-pulse" />
+        <Heart size={14} fill="#268ffa" style={{ color: "var(--layout-icon-color, #888888)" }} className="animate-pulse" />
         <span className="font-bold text-xs uppercase tracking-wide text-white">Músicas Curtidas</span>
       </div>
 
@@ -104,7 +104,7 @@ export default function TopLikedSongs() {
                 <p className="text-[9px] truncate text-white/50">{song.artista}</p>
               </div>
               <div className="flex items-center gap-0.5 shrink-0">
-                <Heart size={8} fill="#268ffa" style={{ color: "#268ffa" }} />
+                <Heart size={8} fill="#268ffa" style={{ color: "var(--layout-icon-color, #888888)" }} />
                 <span className="text-[9px] font-bold text-white">{song.count}</span>
               </div>
             </div>
