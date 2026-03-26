@@ -98,6 +98,9 @@ interface LayoutColors {
   widgetText: string;
   iconColor: string;
   borderColor: string;
+  sliderBg: string;
+  scrollbarColor: string;
+  previewBarBg: string;
   homeBgType: "color" | "image";
   homeBgColor: string;
   homeBgImage: string;
@@ -118,6 +121,9 @@ const defaultColors: LayoutColors = {
   widgetText: "#ffffff",
   iconColor: "#888888",
   borderColor: "#333333",
+  sliderBg: "#0d0d0d",
+  scrollbarColor: "#555555",
+  previewBarBg: "#0d0446",
   homeBgType: "color",
   homeBgColor: "#1a1a1a",
   homeBgImage: "",

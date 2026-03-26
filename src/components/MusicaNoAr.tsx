@@ -228,7 +228,7 @@ export default function MusicaNoAr() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const localFileRef = useRef<File | null>(null);
   const fileHandleRef = useRef<FileSystemFileHandle | null>(null);
-  const localPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // localPollRef removed — using Web Worker timer instead
   const [uploadHistory, setUploadHistory] = useState<UploadLogEntry[]>([]);
   const [localFileName, setLocalFileName] = useState<string>("");
   const [localMonitoring, setLocalMonitoring] = useState(false);
@@ -611,21 +611,55 @@ export default function MusicaNoAr() {
   };
 
   // Local polling — active only when local source is selected
+  // --- Background-safe polling using Web Worker timer ---
+  // Browsers throttle setInterval to ~1min in background tabs.
+  // A Web Worker timer keeps firing at full speed regardless of tab focus.
+  const workerRef = useRef<Worker | null>(null);
+
   useEffect(() => {
+    // Create a minimal Web Worker that sends a "tick" message at the given interval
+    const blob = new Blob([`
+      let timers = {};
+      onmessage = function(e) {
+        if (e.data.cmd === 'start') {
+          if (timers[e.data.id]) clearInterval(timers[e.data.id]);
+          timers[e.data.id] = setInterval(function() { postMessage({ id: e.data.id }); }, e.data.interval);
+        } else if (e.data.cmd === 'stop') {
+          if (timers[e.data.id]) { clearInterval(timers[e.data.id]); delete timers[e.data.id]; }
+        } else if (e.data.cmd === 'stopAll') {
+          Object.keys(timers).forEach(function(k) { clearInterval(timers[k]); });
+          timers = {};
+        }
+      };
+    `], { type: "application/javascript" });
+    const worker = new Worker(URL.createObjectURL(blob));
+    workerRef.current = worker;
+    return () => { worker.postMessage({ cmd: "stopAll" }); worker.terminate(); };
+  }, []);
+
+  // Local file polling via Worker
+  useEffect(() => {
+    const worker = workerRef.current;
+    if (!worker) return;
     if (!localMonitoring || !isLocalSelected) {
-      if (localPollRef.current) clearInterval(localPollRef.current);
+      worker.postMessage({ cmd: "stop", id: "localPoll" });
       return;
     }
     if (!localFileRef.current && !fileHandleRef.current) return;
-    localPollRef.current = setInterval(readLocalFile, 3000);
-    return () => { if (localPollRef.current) clearInterval(localPollRef.current); };
+
+    const handler = (e: MessageEvent) => { if (e.data.id === "localPoll") readLocalFile(); };
+    worker.addEventListener("message", handler);
+    worker.postMessage({ cmd: "start", id: "localPoll", interval: 3000 });
+    return () => {
+      worker.removeEventListener("message", handler);
+      worker.postMessage({ cmd: "stop", id: "localPoll" });
+    };
   }, [isLocalSelected, localMonitoring, readLocalFile]);
 
-  // Remote storage polling: when local filename is set but no file handle (other computer)
-  const storagePollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Remote storage polling via Worker
   useEffect(() => {
-    if (!user || !isLocalSelected || !localFileName) return;
-    // If we have a local file handle, direct polling handles it
+    const worker = workerRef.current;
+    if (!worker || !user || !isLocalSelected || !localFileName) return;
     if (fileHandleRef.current || localFileRef.current) return;
 
     const pollStorage = async () => {
@@ -649,27 +683,37 @@ export default function MusicaNoAr() {
 
     pollStorage();
     setLocalMonitoring(true);
-    storagePollRef.current = setInterval(pollStorage, 3000);
-    return () => { if (storagePollRef.current) clearInterval(storagePollRef.current); };
+
+    const handler = (e: MessageEvent) => { if (e.data.id === "storagePoll") pollStorage(); };
+    worker.addEventListener("message", handler);
+    worker.postMessage({ cmd: "start", id: "storagePoll", interval: 3000 });
+    return () => {
+      worker.removeEventListener("message", handler);
+      worker.postMessage({ cmd: "stop", id: "storagePoll" });
+    };
   }, [user, isLocalSelected, localFileName]);
 
-  // Staleness check: if last read is >2s ago, force a fetch
+  // Staleness check via Worker
   useEffect(() => {
-    const checkStale = setInterval(() => {
+    const worker = workerRef.current;
+    if (!worker) return;
+
+    const handler = (e: MessageEvent) => {
+      if (e.data.id !== "staleCheck") return;
       const now = Date.now();
       const lastRead = Math.max(lastOnlineSuccessRef.current, lastLocalSuccessRef.current);
       if (now - lastRead > 2000) {
-        // Force reads on active sources
-        if (isOnlineSelected && hasValidOnlineUrl) {
-          // fetchXml is called by its own interval, but we can trigger immediately
-          void fetchXml();
-        }
-        if (isLocalSelected && (fileHandleRef.current || localFileRef.current)) {
-          void readLocalFile();
-        }
+        if (isOnlineSelected && hasValidOnlineUrl) void fetchXml();
+        if (isLocalSelected && (fileHandleRef.current || localFileRef.current)) void readLocalFile();
       }
-    }, 2000);
-    return () => clearInterval(checkStale);
+    };
+
+    worker.addEventListener("message", handler);
+    worker.postMessage({ cmd: "start", id: "staleCheck", interval: 2000 });
+    return () => {
+      worker.removeEventListener("message", handler);
+      worker.postMessage({ cmd: "stop", id: "staleCheck" });
+    };
   }, [isOnlineSelected, hasValidOnlineUrl, isLocalSelected, fetchXml, readLocalFile]);
 
   useEffect(() => {
