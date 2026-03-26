@@ -144,9 +144,9 @@ export default function WhatsAppSendDialog({ open, onClose, roteiroData }: Whats
         <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: "rgba(255,255,255,0.1)" }}>
           <div className="flex items-center gap-2">
             <MessageSquare size={16} style={{ color: "#25d366" }} />
-            <h3 className="text-sm font-bold text-white">Enviar Roteiro por WhatsApp</h3>
+            <h3 className="text-sm font-bold" style={{ color: "var(--layout-header-text, #ffffff)" }}>Enviar Roteiro por WhatsApp</h3>
           </div>
-          <button onClick={onClose} className="text-white/50 hover:text-white transition"><X size={16} /></button>
+          <button onClick={onClose} style={{ color: "var(--layout-header-text, #ffffff)", opacity: 0.5 }} className="hover:opacity-100 transition"><X size={16} /></button>
         </div>
 
         {/* Body */}
