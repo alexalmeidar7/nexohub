@@ -405,7 +405,7 @@ function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRe
       </div>
 
       {/* Link fetch */}
-      <div className="flex gap-1.5 items-center">
+      <div className="flex gap-1.5 items-center min-w-0">
         <div className="relative flex-1">
           <Link2 size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2" style={{ color: "var(--layout-icon-color, #888)" }} />
           <input
