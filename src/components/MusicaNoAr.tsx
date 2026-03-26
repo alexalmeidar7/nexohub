@@ -789,8 +789,8 @@ export default function MusicaNoAr() {
               {(() => {
                 const isOnlineActive = lastSource === "online";
                 const isOnlinePreferred = preferredSource === "online";
-                const onlineColor = isOnlineActive ? "#22c55e" : isOnlinePreferred ? "#268ffa" : "rgba(13,4,70,0.3)";
-                const onlineBg = isOnlineActive ? "rgba(34,197,94,0.15)" : isOnlinePreferred ? "rgba(38,143,250,0.08)" : "rgba(38,143,250,0.03)";
+                const onlineColor = isOnlineActive ? "#22c55e" : isOnlinePreferred ? "#60a5fa" : "rgba(255,255,255,0.45)";
+                const onlineBg = isOnlineActive ? "rgba(34,197,94,0.2)" : isOnlinePreferred ? "rgba(96,165,250,0.15)" : "rgba(255,255,255,0.08)";
                 const onlineBorder = isOnlineActive ? "rgba(34,197,94,0.35)" : "transparent";
                 return (
                   <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[7px] font-bold" style={{
