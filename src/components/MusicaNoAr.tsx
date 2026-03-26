@@ -1014,7 +1014,7 @@ export default function MusicaNoAr() {
             {/* Two columns with center divider */}
             <div className="grid grid-cols-[1fr_auto_1fr] gap-0 items-stretch">
               {/* ── ONLINE SOURCE ── */}
-              <div className="rounded-xl p-4 space-y-3" style={{ backgroundColor: "color-mix(in srgb, var(--layout-header-bg, #0d0446) 6%, var(--layout-page-bg, #ffffff))", border: "1px solid color-mix(in srgb, var(--layout-header-bg, #0d0446) 10%, var(--layout-page-bg, #ffffff))" }}>
+              <div className="rounded-xl p-4 space-y-3" style={{ backgroundColor: "color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 6%, var(--layout-page-bg, #ffffff))", border: "2px solid color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 15%, var(--layout-page-bg, #ffffff))" }}>
                 <h4 className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 70%, transparent)" }}>
                   <Globe size={12} style={{ color: "var(--layout-icon-color, #268ffa)" }} />
                   Origem Online
