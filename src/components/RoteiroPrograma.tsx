@@ -354,7 +354,10 @@ export default function RoteiroPrograma() {
     }
     setRoteiroTexto(r.conteudo_html || "");
     try {
-      setParticipantes(typeof r.participantes === "string" ? JSON.parse(r.participantes) : r.participantes || []);
+      const parsed = typeof r.participantes === "string" ? JSON.parse(r.participantes) : r.participantes;
+      // ProgramaExpress stores { blocos, participantes }, regular roteiro stores array directly
+      const pArr = Array.isArray(parsed) ? parsed : (parsed?.participantes && Array.isArray(parsed.participantes) ? parsed.participantes : []);
+      setParticipantes(pArr);
     } catch { setParticipantes([]); }
     setEditingRoteiroId(r.id);
     setNumeroRoteiro(r.numero_roteiro || null);
