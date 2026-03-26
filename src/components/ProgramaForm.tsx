@@ -1104,7 +1104,7 @@ export default function ProgramaForm() {
                         backgroundColor: dia === diaAtual ? "color-mix(in srgb, var(--layout-accent-color, #444444) 40%, var(--layout-header-bg, #1a1a1a))" : undefined,
                       }}>
                       <div className="text-[12px]">{dia.slice(0, 3).toUpperCase()}</div>
-                      <div className="text-[9px] font-medium mt-0.5" style={{ color: dia === diaAtual ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.4)" }}>{weekDates[dia]}</div>
+                      <div className="text-[10px] font-semibold mt-0.5" style={{ color: dia === diaAtual ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.6)" }}>{weekDates[dia]}</div>
                     </th>
                   ))}
                 </tr>
