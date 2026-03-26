@@ -417,7 +417,7 @@ export default function PrevisaoTempo() {
                       <label className="flex items-center gap-2 cursor-pointer select-none rounded-full px-3 py-1 transition-all"
                         style={{ backgroundColor: isPrimary ? "var(--layout-header-bg, #1a1a1a)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)", border: `1px solid ${isPrimary ? "var(--layout-header-bg, #1a1a1a)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 15%, transparent)"}` }}>
                         <input type="checkbox" checked={isPrimary} onChange={togglePrimaryCity}
-                          className="w-3.5 h-3.5" style={{ accentColor: "#2dbef3" }} />
+                          className="w-3.5 h-3.5" style={{ accentColor: "var(--layout-accent-color, #444444)" }} />
                         <span className="text-[11px] font-semibold" style={{ color: isPrimary ? "var(--layout-header-text, #ffffff)" : "var(--layout-header-bg, #1a1a1a)" }}>Cidade Principal</span>
                       </label>
                     )}
