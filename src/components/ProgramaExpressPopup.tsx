@@ -807,6 +807,42 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
           </div>
         )}
 
+        {/* Escalada */}
+        <div className="mt-4 rounded-xl p-3" style={{ border: "1px solid color-mix(in srgb, #f59e0b 30%, transparent)", backgroundColor: "color-mix(in srgb, #f59e0b 5%, transparent)" }}>
+          <p className="text-xs font-bold flex items-center gap-1.5 mb-2" style={{ color: "#f59e0b" }}>
+            📢 Escalada
+            {escaladaList.length > 0 && (
+              <span className="text-[10px] font-normal" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
+                ({escaladaList.length} {escaladaList.length === 1 ? "item" : "itens"})
+              </span>
+            )}
+          </p>
+          <div className="space-y-1.5">
+            {escaladaList.map((item, idx) => (
+              <div key={idx} className="flex items-center gap-1.5">
+                <span className="text-[10px] font-bold shrink-0 w-5 text-center" style={{ color: "#f59e0b" }}>{idx + 1}.</span>
+                <input
+                  value={item}
+                  onChange={e => setEscaladaList(prev => prev.map((v, i) => i === idx ? e.target.value : v))}
+                  className="flex-1 px-2.5 py-1.5 rounded-lg text-[11px] outline-none"
+                  style={inputStyle}
+                  placeholder="Título da manchete..."
+                />
+                <button onClick={() => setEscaladaList(prev => prev.filter((_, i) => i !== idx))} className="p-1 rounded-full hover:opacity-70 shrink-0" style={{ color: "#ef4444" }}>
+                  <Trash2 size={12} />
+                </button>
+              </div>
+            ))}
+          </div>
+          <button
+            onClick={() => setEscaladaList(prev => [...prev, ""])}
+            className="flex items-center gap-1 text-[11px] font-semibold py-1.5 px-3 rounded-full hover:opacity-80 transition-all mt-2"
+            style={{ color: "#f59e0b", border: "1px dashed color-mix(in srgb, #f59e0b 40%, transparent)" }}
+          >
+            <Plus size={12} /> Adicionar manchete
+          </button>
+        </div>
+
         {/* Blocos */}
         <div className="space-y-4 mt-4">
           {blocos.map((bloco, bi) => (
