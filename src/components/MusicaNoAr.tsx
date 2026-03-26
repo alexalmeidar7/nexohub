@@ -757,17 +757,17 @@ export default function MusicaNoAr() {
   return (
     <div className="animate-fade-in space-y-3">
       {/* ═══ MAIN MUSIC CARD ═══ */}
-      <div className="rounded-2xl overflow-hidden" style={{ background: "#d9e9fa", boxShadow: "0 8px 32px rgba(13,4,70,0.12)" }}>
+      <div className="rounded-2xl overflow-hidden" style={{ background: "var(--layout-header-bg, #0d0446)", boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }}>
         {/* Header */}
         <div className="flex items-center justify-between px-4 pt-3 pb-2">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "rgba(13,4,70,0.08)" }}>
-              <Music size={16} style={{ color: "#0d0446" }} />
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "rgba(255,255,255,0.15)" }}>
+              <Music size={16} style={{ color: "var(--layout-header-text, #ffffff)" }} />
             </div>
             <div>
-              <h3 className="text-sm font-bold leading-tight" style={{ color: "#0d0446" }}>Música no Ar</h3>
+              <h3 className="text-sm font-bold leading-tight" style={{ color: "var(--layout-header-text, #ffffff)" }}>Música no Ar</h3>
               <div className="flex items-center gap-2 mt-0.5">
-                <span className="text-[8px] font-semibold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: "rgba(124,58,237,0.1)", color: "#7c3aed" }}>MODO UNIFICADO</span>
+                <span className="text-[8px] font-semibold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "var(--layout-header-text, #ffffff)" }}>MODO UNIFICADO</span>
                 {bothActive && (
                   <span className="inline-flex items-center gap-1 text-[7px] font-bold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: "rgba(34,197,94,0.12)", color: "#16a34a", border: "1px solid rgba(34,197,94,0.25)" }}>
                     <span className="relative flex h-1.5 w-1.5">
