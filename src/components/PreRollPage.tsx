@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Loader2, Trash2, Pencil, Plus, Film, Eye, MousePointerClick, Image, Monitor, Play } from "lucide-react";
+import { Loader2, Trash2, Pencil, Plus, Film, Eye, MousePointerClick, Image, Monitor, Play, Tag, Video, Calendar as CalendarLucide, Settings2, Sparkles } from "lucide-react";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import { toast } from "@/components/ui/use-toast";
 import { format } from "date-fns";
@@ -60,7 +60,6 @@ export default function PreRollPage() {
   const [dataFinal, setDataFinal] = useState<Date | undefined>(undefined);
   const [editId, setEditId] = useState<string | null>(null);
 
-  // New fields
   const [backgroundFile, setBackgroundFile] = useState<File | null>(null);
   const [backgroundPreview, setBackgroundPreview] = useState("");
   const [aspectRatio, setAspectRatio] = useState<"16:9" | "9:16" | "full">("16:9");
@@ -78,104 +77,99 @@ export default function PreRollPage() {
   const loadData = async () => {
     if (!user) return;
     setLoading(true);
-    const { data } = await supabase.from("comercial_preroll").select("*").eq("user_id", user.id).order("created_at", { ascending: false });
-    if (data) setPrerolls(data as unknown as PreRoll[]);
+    const { data } = await supabase.from("comercial_preroll").select("*").eq("user_id", user.id).order("priority");
+    if (data) setPrerolls(data as any);
     setLoading(false);
   };
 
-  const toggleDia = (dia: string) => {
-    setDiasSemana((prev) => (prev.includes(dia) ? prev.filter((d) => d !== dia) : [...prev, dia]));
-  };
-
-  const uploadVideo = async (file: File): Promise<string> => {
-    if (file.size > 5 * 1024 * 1024) throw new Error("O vídeo deve ter no máximo 5MB");
-    const ext = file.name.split(".").pop();
-    const path = `${user!.id}/${Date.now()}.${ext}`;
-    const { error } = await supabase.storage.from("preroll").upload(path, file);
-    if (error) throw error;
-    const { data } = supabase.storage.from("preroll").getPublicUrl(path);
-    return data.publicUrl;
-  };
-
-  const uploadBackground = async (file: File): Promise<string> => {
-    const compressed = await compressImage(file);
-    const path = `${user!.id}/bg-${Date.now()}.webp`;
-    const { error } = await supabase.storage.from("preroll").upload(path, compressed);
-    if (error) throw error;
-    const { data } = supabase.storage.from("preroll").getPublicUrl(path);
-    return data.publicUrl;
+  const extractYoutubeId = (url: string) => {
+    const m = url.match(/(?:v=|\/embed\/|\.be\/|\/shorts\/)([A-Za-z0-9_-]{11})/);
+    return m?.[1] || null;
   };
 
   const resetForm = () => {
-    setNome(""); setActiveField(true);
-    setMediaType("video"); setVideoFile(null); setVideoPreview(""); setYoutubeUrl("");
-    setDiasSemana([]); setHorarioInicio("00:00"); setHorarioFim("23:59");
-    setPriority("1"); setLinkUrl(""); setDataInicial(new Date()); setDataFinal(undefined); setEditId(null);
-    setBackgroundFile(null); setBackgroundPreview(""); setAspectRatio("16:9"); setVideoPosition("center"); setShowPreview(false); setIsMidroll(false);
+    setNome(""); setActiveField(true); setMediaType("video"); setVideoFile(null); setVideoPreview("");
+    setYoutubeUrl(""); setDiasSemana([]); setHorarioInicio("00:00"); setHorarioFim("23:59");
+    setPriority("1"); setLinkUrl(""); setDataInicial(new Date()); setDataFinal(undefined);
+    setEditId(null); setBackgroundFile(null); setBackgroundPreview(""); setAspectRatio("16:9");
+    setVideoPosition("center"); setShowPreview(false); setIsMidroll(false);
   };
 
-  const extractYoutubeId = (url: string): string | null => {
-    const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([a-zA-Z0-9_-]{11})/);
-    return match ? match[1] : null;
+  const startEdit = (p: PreRoll) => {
+    setEditId(p.id); setNome(p.nome); setActiveField(p.active);
+    setMediaType(p.media_type === "youtube" ? "youtube" : "video");
+    if (p.media_type !== "youtube") setVideoPreview(p.video_url);
+    if (p.youtube_url) setYoutubeUrl(p.youtube_url);
+    setDiasSemana(p.dias_semana || []);
+    setHorarioInicio(p.horario_inicio); setHorarioFim(p.horario_fim);
+    setPriority(String(p.priority)); setLinkUrl(p.link_url || "");
+    setDataInicial(p.data_inicial ? new Date(p.data_inicial + "T00:00:00") : undefined);
+    setDataFinal(p.data_final ? new Date(p.data_final + "T00:00:00") : undefined);
+    setAspectRatio((p.aspect_ratio || "16:9") as any);
+    setVideoPosition((p.video_position || "center") as any);
+    setBackgroundPreview(p.background_url || "");
+    setIsMidroll(p.is_midroll || false);
+  };
+
+  const toggleDia = (dia: string) => {
+    setDiasSemana((prev) => prev.includes(dia) ? prev.filter(d => d !== dia) : [...prev, dia]);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
-    if (mediaType === "video" && !editId && !videoFile) { toast({ title: "Selecione um vídeo .mp4 (até 5MB)", variant: "destructive" }); return; }
-    if (mediaType === "youtube" && !youtubeUrl) { toast({ title: "Cole o link do YouTube", variant: "destructive" }); return; }
-    if (mediaType === "youtube" && !extractYoutubeId(youtubeUrl)) { toast({ title: "Link do YouTube inválido", variant: "destructive" }); return; }
     setSaving(true);
     try {
-      let videoUrl = "";
-      if (mediaType === "video" && videoFile) videoUrl = await uploadVideo(videoFile);
-      let bgUrl: string | undefined;
-      if (backgroundFile) bgUrl = await uploadBackground(backgroundFile);
+      let videoUrl = videoPreview;
+      if (mediaType === "video" && videoFile) {
+        const path = `prerolls/${user.id}/${Date.now()}_${videoFile.name}`;
+        const { error } = await supabase.storage.from("preroll-videos").upload(path, videoFile, { upsert: true });
+        if (error) throw error;
+        const { data: pub } = supabase.storage.from("preroll-videos").getPublicUrl(path);
+        videoUrl = pub.publicUrl;
+      }
 
-      const payload: any = {
-        nome, active: activeField,
-        dias_semana: diasSemana, horario_inicio: horarioInicio, horario_fim: horarioFim,
-        priority: parseInt(priority) || 1, link_url: linkUrl, media_type: mediaType,
-        youtube_url: mediaType === "youtube" ? youtubeUrl : "",
+      let bgUrl = backgroundPreview;
+      if (backgroundFile) {
+        const compressed = await compressImage(backgroundFile, 1200, 0.85);
+        const path = `prerolls/${user.id}/bg_${Date.now()}.jpg`;
+        const { error } = await supabase.storage.from("preroll-videos").upload(path, compressed, { upsert: true, contentType: "image/jpeg" });
+        if (error) throw error;
+        const { data: pub } = supabase.storage.from("preroll-videos").getPublicUrl(path);
+        bgUrl = pub.publicUrl;
+      }
+
+      const payload = {
+        user_id: user.id,
+        nome,
+        active: activeField,
+        media_type: mediaType,
+        video_url: mediaType === "video" ? videoUrl : "",
+        youtube_url: mediaType === "youtube" ? youtubeUrl : null,
+        dias_semana: diasSemana,
+        horario_inicio: horarioInicio,
+        horario_fim: horarioFim,
+        priority: parseInt(priority) || 1,
+        link_url: linkUrl || null,
         data_inicial: dataInicial ? format(dataInicial, "yyyy-MM-dd") : null,
         data_final: dataFinal ? format(dataFinal, "yyyy-MM-dd") : null,
+        background_url: bgUrl || null,
         aspect_ratio: aspectRatio,
         video_position: videoPosition,
         is_midroll: isMidroll,
       };
-      if (bgUrl !== undefined) payload.background_url = bgUrl;
 
       if (editId) {
-        if (videoUrl) payload.video_url = videoUrl;
         await supabase.from("comercial_preroll").update(payload).eq("id", editId);
         toast({ title: "Pré-Roll atualizado!" });
       } else {
-        payload.user_id = user.id;
-        payload.video_url = mediaType === "video" ? videoUrl : "";
-        if (!bgUrl) payload.background_url = "";
         await supabase.from("comercial_preroll").insert(payload);
         toast({ title: "Pré-Roll cadastrado!" });
       }
       resetForm(); loadData();
     } catch (err: any) {
       toast({ title: "Erro", description: err.message, variant: "destructive" });
-    }
-    setSaving(false);
-  };
-
-  const startEdit = (p: PreRoll) => {
-    setEditId(p.id); setNome(p.nome || ""); setActiveField(p.active);
-    setMediaType((p.media_type as "video" | "youtube") || "video");
-    setDiasSemana(p.dias_semana || []); setHorarioInicio(p.horario_inicio); setHorarioFim(p.horario_fim);
-    setPriority(String(p.priority)); setLinkUrl(p.link_url || ""); setYoutubeUrl(p.youtube_url || "");
-    setVideoPreview(p.media_type === "video" ? p.video_url : ""); setVideoFile(null);
-    setDataInicial(p.data_inicial ? new Date(p.data_inicial + "T00:00:00") : undefined);
-    setDataFinal(p.data_final ? new Date(p.data_final + "T00:00:00") : undefined);
-    setBackgroundPreview(p.background_url || ""); setBackgroundFile(null);
-    setAspectRatio((p.aspect_ratio as "16:9" | "9:16" | "full") || "16:9");
-    setVideoPosition((p.video_position as "center" | "left" | "right") || "center");
-    setShowPreview(false);
-    setIsMidroll((p as any).is_midroll || false);
+    } finally { setSaving(false); }
   };
 
   const handleDelete = async (id: string) => {
@@ -192,33 +186,37 @@ export default function PreRollPage() {
     if (!p.active) return { label: "Inativo", color: { backgroundColor: "rgba(220,38,38,0.1)", color: "#dc2626" } };
     const today = format(new Date(), "yyyy-MM-dd");
     if (p.data_final && today > p.data_final) return { label: "Expirado", color: { backgroundColor: "rgba(234,179,8,0.1)", color: "#eab308" } };
-    if (p.data_inicial && today < p.data_inicial) return { label: "Agendado", color: { backgroundColor: "rgba(45,190,243,0.1)", color: "#2dbef3" } };
+    if (p.data_inicial && today < p.data_inicial) return { label: "Agendado", color: { backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #444444) 10%, transparent)", color: "var(--layout-accent-color, #444444)" } };
     return { label: "Ativo", color: { backgroundColor: "rgba(34,197,94,0.1)", color: "#22c55e" } };
   };
 
   if (loading) return <ModulePageSkeleton />;
 
   const inputStyle: React.CSSProperties = {
-    backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid var(--layout-border-color, #333333)", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "20px",
+    backgroundColor: "var(--layout-page-bg, #ffffff)",
+    border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)",
+    color: "var(--layout-page-text, #1a1a1a)",
+    borderRadius: "12px",
   };
 
-  const sectionHeader = (icon: string, title: string) => (
-    <div className="flex items-center gap-2 mb-3 mt-1">
-      <span className="text-sm">{icon}</span>
+  const focusHandler = (e: React.FocusEvent<HTMLInputElement>) => {
+    e.currentTarget.style.borderColor = "var(--layout-accent-color, #444444)";
+    e.currentTarget.style.boxShadow = "0 0 0 3px color-mix(in srgb, var(--layout-accent-color, #444444) 12%, transparent)";
+  };
+  const blurHandler = (e: React.FocusEvent<HTMLInputElement>) => {
+    e.currentTarget.style.borderColor = "color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)";
+    e.currentTarget.style.boxShadow = "none";
+  };
+
+  const sectionHeader = (icon: React.ReactNode, title: string) => (
+    <div className="flex items-center gap-2.5 mb-4 mt-2">
+      <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "color-mix(in srgb, var(--layout-accent-color, #444444) 10%, transparent)" }}>
+        {icon}
+      </div>
       <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{title}</span>
-      <div className="flex-1 h-px" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 10%, transparent)" }} />
+      <div className="flex-1 h-px" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)" }} />
     </div>
   );
-
-  // Get a preview thumbnail
-  const getPreviewThumb = (): string | null => {
-    if (mediaType === "youtube" && youtubeUrl) {
-      const id = extractYoutubeId(youtubeUrl);
-      if (id) return `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
-    }
-    if (videoPreview) return null; // video element needed
-    return null;
-  };
 
   return (
     <div className="animate-fade-in">
@@ -226,7 +224,7 @@ export default function PreRollPage() {
         {/* Header */}
         <div className="flex items-center gap-3 mb-5">
           <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)" }}>
-            <Film size={20} style={{ color: "var(--layout-page-text, #1a1a1a)" }} />
+            <Film size={20} style={{ color: "var(--layout-icon-color, #888888)" }} />
           </div>
           <div>
             <h3 className="text-base font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Pré-Roll</h3>
@@ -236,36 +234,35 @@ export default function PreRollPage() {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="rounded-xl overflow-hidden mb-5" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-          <div className="px-4 py-2.5 flex items-center justify-between" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" }}>
-            <h3 className="text-sm font-bold" style={{ color: "var(--layout-header-text, #ffffff)" }}>
+          <div className="px-5 py-3 flex items-center justify-between" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))", color: "var(--layout-header-text, #ffffff)" }}>
+            <h3 className="text-sm font-bold">
               {editId ? "✏️ Editar Pré-Roll" : "➕ Novo Pré-Roll"}
             </h3>
             {editId && (
               <button type="button" onClick={resetForm}
                 className="flex items-center gap-1 px-3 py-1 text-[10px] font-bold rounded-full transition-all"
-                style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "var(--layout-header-text, #ffffff)", border: "1px solid rgba(255,255,255,0.3)" }}
+                style={{ backgroundColor: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.3)" }}
               >
                 Cancelar
               </button>
             )}
           </div>
 
-          <div className="p-5 space-y-5">
+          <div className="p-5 space-y-6">
             {/* ──── SEÇÃO 1: IDENTIFICAÇÃO ──── */}
-            {sectionHeader("🏷️", "Identificação")}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {sectionHeader(<Tag size={14} style={{ color: "var(--layout-accent-color, #444444)" }} />, "Identificação")}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
               <div>
-                <label className="text-xs font-semibold block mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Nome do Pré-Roll</label>
+                <label className="text-xs font-semibold block mb-1.5" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Nome do Pré-Roll</label>
                 <input type="text" placeholder="Ex: Campanha Black Friday" value={nome} onChange={(e) => setNome(e.target.value)}
-                  className="w-full px-4 py-1.5 text-sm outline-none transition-colors" style={inputStyle}
-                  onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
-                  onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
+                  className="w-full px-4 py-2 text-sm outline-none transition-all" style={inputStyle}
+                  onFocus={focusHandler} onBlur={blurHandler}
                 />
               </div>
-              <div className="flex items-end">
-                <label className="flex items-center gap-2 cursor-pointer pb-1.5">
+              <div>
+                <label className="flex items-center gap-2.5 cursor-pointer py-2">
                   <input type="checkbox" checked={activeField} onChange={(e) => setActiveField(e.target.checked)}
-                    className="w-4 h-4 rounded" style={{ accentColor: "var(--layout-header-bg, #1a1a1a)" }} />
+                    className="w-4 h-4 rounded" style={{ accentColor: "var(--layout-accent-color, #444444)" }} />
                   <span className="text-xs font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Ativo</span>
                   <span className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>— Desmarque para salvar como inativo</span>
                 </label>
@@ -273,18 +270,18 @@ export default function PreRollPage() {
             </div>
 
             {/* ──── SEÇÃO 2: MÍDIA ──── */}
-            {sectionHeader("🎬", "Mídia")}
+            {sectionHeader(<Video size={14} style={{ color: "var(--layout-accent-color, #444444)" }} />, "Mídia")}
 
             {/* Media type */}
             <div>
               <label className="text-xs font-semibold block mb-2" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Tipo de Mídia</label>
               <div className="flex gap-4">
                 <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="radio" checked={mediaType === "video"} onChange={() => setMediaType("video")} style={{ accentColor: "var(--layout-header-bg, #1a1a1a)" }} />
+                  <input type="radio" checked={mediaType === "video"} onChange={() => setMediaType("video")} style={{ accentColor: "var(--layout-accent-color, #444444)" }} />
                   <span className="text-xs" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Upload de vídeo (até 5MB)</span>
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="radio" checked={mediaType === "youtube"} onChange={() => setMediaType("youtube")} style={{ accentColor: "var(--layout-header-bg, #1a1a1a)" }} />
+                  <input type="radio" checked={mediaType === "youtube"} onChange={() => setMediaType("youtube")} style={{ accentColor: "var(--layout-accent-color, #444444)" }} />
                   <span className="text-xs" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Link do YouTube</span>
                 </label>
               </div>
@@ -292,7 +289,7 @@ export default function PreRollPage() {
 
             {mediaType === "video" && (
               <div>
-                <label className="text-xs font-semibold block mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Vídeo (.mp4, máx 5MB)</label>
+                <label className="text-xs font-semibold block mb-1.5" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Vídeo (.mp4, máx 5MB)</label>
                 <input type="file" accept="video/mp4" onChange={(e) => {
                   const f = e.target.files?.[0];
                   if (f) {
@@ -306,11 +303,10 @@ export default function PreRollPage() {
 
             {mediaType === "youtube" && (
               <div>
-                <label className="text-xs font-semibold block mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Link do YouTube</label>
+                <label className="text-xs font-semibold block mb-1.5" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Link do YouTube</label>
                 <input type="url" placeholder="https://www.youtube.com/watch?v=..." value={youtubeUrl} onChange={(e) => setYoutubeUrl(e.target.value)}
-                  className="w-full px-4 py-1.5 text-sm outline-none transition-colors" style={inputStyle}
-                  onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
-                  onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
+                  className="w-full px-4 py-2 text-sm outline-none transition-all" style={inputStyle}
+                  onFocus={focusHandler} onBlur={blurHandler}
                 />
                 {youtubeUrl && extractYoutubeId(youtubeUrl) && (
                   <img src={`https://img.youtube.com/vi/${extractYoutubeId(youtubeUrl)}/hqdefault.jpg`} alt="Thumbnail" className="mt-2 w-64 rounded-lg" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 35%, transparent)" }} />
@@ -319,7 +315,7 @@ export default function PreRollPage() {
             )}
 
             {/* Aspect Ratio + Position */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               {/* Aspect Ratio */}
               <div>
                 <label className="text-xs font-semibold block mb-2" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Proporção do Vídeo</label>
@@ -328,8 +324,8 @@ export default function PreRollPage() {
                     <button key={ratio} type="button" onClick={() => setAspectRatio(ratio)}
                       className="flex flex-col items-center gap-1.5 p-3 rounded-xl transition-all"
                       style={{
-                        border: aspectRatio === ratio ? "2px solid #0d0446" : "2px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 10%, transparent)",
-                        backgroundColor: aspectRatio === ratio ? "rgba(13,4,70,0.05)" : "transparent",
+                        border: aspectRatio === ratio ? "2px solid var(--layout-accent-color, #444444)" : "2px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 10%, transparent)",
+                        backgroundColor: aspectRatio === ratio ? "color-mix(in srgb, var(--layout-accent-color, #444444) 8%, transparent)" : "transparent",
                       }}
                     >
                       <div
@@ -337,11 +333,11 @@ export default function PreRollPage() {
                         style={{
                           width: ratio === "16:9" ? 48 : ratio === "9:16" ? 24 : 48,
                           height: ratio === "16:9" ? 27 : ratio === "9:16" ? 42 : 32,
-                          backgroundColor: aspectRatio === ratio ? "var(--layout-header-bg, #1a1a1a)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 15%, transparent)",
+                          backgroundColor: aspectRatio === ratio ? "var(--layout-accent-color, #444444)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 15%, transparent)",
                           transition: "background-color 0.2s",
                         }}
                       />
-                      <span className="text-[10px] font-bold" style={{ color: aspectRatio === ratio ? "var(--layout-header-bg, #1a1a1a)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>
+                      <span className="text-[10px] font-bold" style={{ color: aspectRatio === ratio ? "var(--layout-accent-color, #444444)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>
                         {ratio === "full" ? "Full" : ratio}
                       </span>
                     </button>
@@ -361,11 +357,10 @@ export default function PreRollPage() {
                     <button key={pos.value} type="button" onClick={() => setVideoPosition(pos.value)}
                       className="flex flex-col items-center gap-1.5 p-3 rounded-xl transition-all flex-1"
                       style={{
-                        border: videoPosition === pos.value ? "2px solid #0d0446" : "2px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 10%, transparent)",
-                        backgroundColor: videoPosition === pos.value ? "rgba(13,4,70,0.05)" : "transparent",
+                        border: videoPosition === pos.value ? "2px solid var(--layout-accent-color, #444444)" : "2px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 10%, transparent)",
+                        backgroundColor: videoPosition === pos.value ? "color-mix(in srgb, var(--layout-accent-color, #444444) 8%, transparent)" : "transparent",
                       }}
                     >
-                      {/* Visual representation */}
                       <div className="w-12 h-8 rounded overflow-hidden flex" style={{
                         backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)",
                         justifyContent: pos.align,
@@ -375,12 +370,12 @@ export default function PreRollPage() {
                         <div className="rounded-sm" style={{
                           width: aspectRatio === "16:9" ? 20 : 10,
                           height: aspectRatio === "16:9" ? 12 : 22,
-                          backgroundColor: videoPosition === pos.value ? "var(--layout-header-bg, #1a1a1a)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 20%, transparent)",
+                          backgroundColor: videoPosition === pos.value ? "var(--layout-accent-color, #444444)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 20%, transparent)",
                           transition: "background-color 0.2s",
                           flexShrink: 0,
                         }} />
                       </div>
-                      <span className="text-[10px] font-bold" style={{ color: videoPosition === pos.value ? "var(--layout-header-bg, #1a1a1a)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>
+                      <span className="text-[10px] font-bold" style={{ color: videoPosition === pos.value ? "var(--layout-accent-color, #444444)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>
                         {pos.label}
                       </span>
                     </button>
@@ -391,11 +386,11 @@ export default function PreRollPage() {
 
             {/* Background image */}
             <div>
-              <label className="text-xs font-semibold block mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-                <Image size={12} className="inline mr-1" />
+              <label className="text-xs font-semibold flex items-center gap-1.5 mb-1.5" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                <Image size={13} style={{ color: "var(--layout-icon-color, #888888)" }} />
                 Background do Pré-Roll (opcional)
               </label>
-              <p className="text-[10px] mb-2" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>
+              <p className="text-[10px] mb-2.5" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>
                 Imagem de fundo exibida atrás do vídeo. Se não enviar, será usado o gradiente padrão.
               </p>
               <input ref={bgInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => {
@@ -404,16 +399,16 @@ export default function PreRollPage() {
               }} />
               <div className="flex items-center gap-3">
                 <button type="button" onClick={() => bgInputRef.current?.click()}
-                  className="px-4 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-2"
-                  style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)" }}
+                  className="px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 hover:shadow-md"
+                  style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #444444) 8%, transparent)", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)" }}
                 >
-                  <Image size={14} /> Escolher imagem
+                  <Image size={14} style={{ color: "var(--layout-icon-color, #888888)" }} /> Escolher imagem
                 </button>
                 {backgroundPreview && (
                   <div className="flex items-center gap-2">
                     <img src={backgroundPreview} alt="Background" className="w-16 h-10 object-cover rounded-lg" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 35%, transparent)" }} />
                     <button type="button" onClick={() => { setBackgroundFile(null); setBackgroundPreview(""); }}
-                      className="text-[10px] px-2 py-1 rounded-full" style={{ color: "#dc2626", backgroundColor: "rgba(220,38,38,0.1)" }}>
+                      className="text-[10px] px-2.5 py-1 rounded-full font-medium" style={{ color: "#dc2626", backgroundColor: "rgba(220,38,38,0.08)" }}>
                       Remover
                     </button>
                   </div>
@@ -422,7 +417,7 @@ export default function PreRollPage() {
             </div>
 
             {/* ──── SEÇÃO 3: AGENDAMENTO ──── */}
-            {sectionHeader("📅", "Agendamento")}
+            {sectionHeader(<CalendarLucide size={14} style={{ color: "var(--layout-accent-color, #444444)" }} />, "Agendamento")}
 
             {/* Days */}
             <div>
@@ -430,9 +425,9 @@ export default function PreRollPage() {
               <div className="flex flex-wrap gap-2">
                 {DIAS.map((dia) => (
                   <button key={dia} type="button" onClick={() => toggleDia(dia)}
-                    className="px-3 py-1 rounded-full text-[10px] font-bold transition-all"
+                    className="px-3.5 py-1.5 rounded-full text-[11px] font-bold transition-all"
                     style={diasSemana.includes(dia)
-                      ? { backgroundColor: "var(--layout-header-bg, #1a1a1a)", color: "var(--layout-header-text, #ffffff)" }
+                      ? { backgroundColor: "var(--layout-header-bg, #1a1a1a)", color: "var(--layout-header-text, #ffffff)", boxShadow: "0 2px 8px color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 30%, transparent)" }
                       : { backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)", color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }
                     }
                   >
@@ -440,29 +435,27 @@ export default function PreRollPage() {
                   </button>
                 ))}
               </div>
-              {diasSemana.length === 0 && <p className="text-[10px] mt-1" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>Todos os dias se nenhum selecionado.</p>}
+              {diasSemana.length === 0 && <p className="text-[10px] mt-1.5" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>Todos os dias se nenhum selecionado.</p>}
             </div>
 
             {/* Schedule grid */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div>
-                <label className="text-xs font-semibold block mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Horário Início</label>
+                <label className="text-xs font-semibold block mb-1.5" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Horário Início</label>
                 <input type="time" value={horarioInicio} onChange={(e) => setHorarioInicio(e.target.value)}
-                  className="w-full px-4 py-1.5 text-sm outline-none transition-colors" style={inputStyle}
-                  onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
-                  onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
+                  className="w-full px-4 py-2 text-sm outline-none transition-all" style={inputStyle}
+                  onFocus={focusHandler} onBlur={blurHandler}
                 />
               </div>
               <div>
-                <label className="text-xs font-semibold block mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Horário Fim</label>
+                <label className="text-xs font-semibold block mb-1.5" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Horário Fim</label>
                 <input type="time" value={horarioFim} onChange={(e) => setHorarioFim(e.target.value)}
-                  className="w-full px-4 py-1.5 text-sm outline-none transition-colors" style={inputStyle}
-                  onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
-                  onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
+                  className="w-full px-4 py-2 text-sm outline-none transition-all" style={inputStyle}
+                  onFocus={focusHandler} onBlur={blurHandler}
                 />
               </div>
               <div>
-                <label className="text-xs font-semibold block mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Data Inicial</label>
+                <label className="text-xs font-semibold block mb-1.5" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Data Inicial</label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button variant="outline" className={cn("w-full justify-start text-left text-sm font-normal", !dataInicial && "text-muted-foreground")}
@@ -477,7 +470,7 @@ export default function PreRollPage() {
                 </Popover>
               </div>
               <div>
-                <label className="text-xs font-semibold block mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Data Final</label>
+                <label className="text-xs font-semibold block mb-1.5" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Data Final</label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button variant="outline" className={cn("w-full justify-start text-left text-sm font-normal", !dataFinal && "text-muted-foreground")}
@@ -494,7 +487,7 @@ export default function PreRollPage() {
             </div>
 
             {/* ──── SEÇÃO 4: CONFIGURAÇÕES ──── */}
-            {sectionHeader("⚙️", "Configurações")}
+            {sectionHeader(<Settings2 size={14} style={{ color: "var(--layout-accent-color, #444444)" }} />, "Configurações")}
 
             {/* Mid-Roll checkbox */}
             <div className="rounded-xl p-4" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #444444) 4%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #444444) 15%, transparent)" }}>
@@ -513,33 +506,31 @@ export default function PreRollPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Link */}
               <div>
-                <label className="text-xs font-semibold block mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Link do Anúncio (opcional)</label>
+                <label className="text-xs font-semibold block mb-1.5" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Link do Anúncio (opcional)</label>
                 <input type="url" placeholder="https://exemplo.com/oferta" value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)}
-                  className="w-full px-4 py-1.5 text-sm outline-none transition-colors" style={inputStyle}
-                  onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
-                  onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
+                  className="w-full px-4 py-2 text-sm outline-none transition-all" style={inputStyle}
+                  onFocus={focusHandler} onBlur={blurHandler}
                 />
                 <p className="text-[10px] mt-1" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>Exibirá QR Code durante o pré-roll.</p>
               </div>
               {/* Priority */}
               <div>
-                <label className="text-xs font-semibold block mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Prioridade</label>
+                <label className="text-xs font-semibold block mb-1.5" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Prioridade</label>
                 <input type="number" min="1" value={priority} onChange={(e) => setPriority(e.target.value)}
-                  className="w-32 px-4 py-1.5 text-sm outline-none transition-colors" style={inputStyle}
-                  onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
-                  onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
+                  className="w-32 px-4 py-2 text-sm outline-none transition-all" style={inputStyle}
+                  onFocus={focusHandler} onBlur={blurHandler}
                 />
               </div>
             </div>
 
             {/* ──── SEÇÃO 5: PRÉ-VISUALIZAÇÃO ──── */}
-            {sectionHeader("👁️", "Pré-visualização")}
+            {sectionHeader(<Sparkles size={14} style={{ color: "var(--layout-accent-color, #444444)" }} />, "Pré-visualização")}
 
             <button type="button" onClick={() => setShowPreview(!showPreview)}
-              className="px-4 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-2"
+              className="px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2"
               style={{
                 backgroundColor: showPreview ? "var(--layout-header-bg, #1a1a1a)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)",
-                color: showPreview ? "#ffffff" : "var(--layout-header-bg, #1a1a1a)",
+                color: showPreview ? "var(--layout-header-text, #ffffff)" : "var(--layout-page-text, #1a1a1a)",
                 border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)",
               }}
             >
@@ -549,7 +540,6 @@ export default function PreRollPage() {
 
             {showPreview && (
               <div className="rounded-xl overflow-hidden" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 35%, transparent)" }}>
-                {/* Preview container */}
                 <div
                   className="relative w-full flex items-center p-4"
                   style={{
@@ -560,7 +550,6 @@ export default function PreRollPage() {
                     justifyContent: videoPosition === "left" ? "flex-start" : videoPosition === "right" ? "flex-end" : "center",
                   }}
                 >
-                  {/* Video placeholder */}
                   <div
                     className="relative shadow-2xl overflow-hidden"
                     style={{
@@ -570,7 +559,6 @@ export default function PreRollPage() {
                       borderRadius: "1rem",
                     }}
                   >
-                    {/* Video content */}
                     {mediaType === "youtube" && youtubeUrl && extractYoutubeId(youtubeUrl) ? (
                       <img
                         src={`https://img.youtube.com/vi/${extractYoutubeId(youtubeUrl)}/hqdefault.jpg`}
@@ -585,14 +573,12 @@ export default function PreRollPage() {
                       </div>
                     )}
 
-                    {/* Skip button mock */}
                     <div className="absolute top-3 right-3 z-10">
                       <span className="px-3 py-1 rounded-full text-[10px] font-medium" style={{ backgroundColor: "hsl(0 100% 40%)", color: "white" }}>
                         pular 5s
                       </span>
                     </div>
 
-                    {/* QR Code mock */}
                     {linkUrl && (
                       <div className="absolute top-3 left-3 z-10 flex flex-col items-center p-2 rounded-lg" style={{ backgroundColor: "hsl(0 100% 40%)" }}>
                         <div className="bg-white rounded p-1 w-10 h-10 flex items-center justify-center">
@@ -603,7 +589,7 @@ export default function PreRollPage() {
                     )}
                   </div>
                 </div>
-                <div className="px-3 py-2 text-center" style={{ backgroundColor: "rgba(13,4,70,0.03)" }}>
+                <div className="px-3 py-2 text-center" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 3%, transparent)" }}>
                   <span className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
                     Preview aproximado — proporção {aspectRatio}, posição {videoPosition === "center" ? "centro" : videoPosition === "left" ? "esquerda" : "direita"}
                   </span>
@@ -613,9 +599,9 @@ export default function PreRollPage() {
 
             {/* Submit */}
             <button type="submit" disabled={saving}
-              className="px-6 py-2 font-bold text-sm transition-all flex items-center gap-2 disabled:opacity-50 rounded-full"
-              style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #444444), color-mix(in srgb, var(--layout-accent-color, #444444) 70%, white 30%))", color: "var(--layout-header-text, #ffffff)", border: "none" }}
-              onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 4px 15px color-mix(in srgb, var(--layout-accent-color, #444444) 40%, transparent)"; }}
+              className="w-full sm:w-auto px-8 py-2.5 font-bold text-sm transition-all flex items-center justify-center gap-2 disabled:opacity-50 rounded-xl hover:shadow-lg"
+              style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))", color: "var(--layout-header-text, #ffffff)", border: "none" }}
+              onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 4px 20px color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 40%, transparent)"; }}
               onMouseLeave={e => { e.currentTarget.style.boxShadow = "none"; }}
             >
               {saving ? <Loader2 className="animate-spin" size={16} /> : <Plus size={16} />}
@@ -626,9 +612,9 @@ export default function PreRollPage() {
 
         {/* List */}
         <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-          <div className="px-4 py-2.5 flex items-center justify-between" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" }}>
-            <h3 className="text-sm font-bold" style={{ color: "var(--layout-header-text, #ffffff)" }}>📋 Pré-Rolls Cadastrados</h3>
-            <span className="text-[9px] font-normal px-2 py-0.5 rounded-full" style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "var(--layout-header-text, #ffffff)" }}>
+          <div className="px-5 py-3 flex items-center justify-between" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))", color: "var(--layout-header-text, #ffffff)" }}>
+            <h3 className="text-sm font-bold">📋 Pré-Rolls Cadastrados</h3>
+            <span className="text-[9px] font-normal px-2.5 py-0.5 rounded-full" style={{ backgroundColor: "rgba(255,255,255,0.15)" }}>
               {prerolls.length} item{prerolls.length !== 1 ? "s" : ""}
             </span>
           </div>
@@ -640,7 +626,7 @@ export default function PreRollPage() {
               {prerolls.map((p) => {
                 const status = getStatus(p);
                 return (
-                  <div key={p.id} className="flex items-center gap-4 rounded-xl p-3" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)" }}>
+                  <div key={p.id} className="flex items-center gap-4 rounded-xl p-3 transition-all hover:shadow-sm" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)" }}>
                     {p.media_type === "youtube" && p.youtube_url ? (
                       <img src={`https://img.youtube.com/vi/${extractYoutubeId(p.youtube_url) || ""}/mqdefault.jpg`} alt="YT" className="w-28 h-16 object-cover rounded-lg" />
                     ) : (
@@ -650,7 +636,7 @@ export default function PreRollPage() {
                       {p.nome && (
                         <div className="text-xs font-bold truncate" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{p.nome}</div>
                       )}
-                      <div className="text-xs font-bold" style={{ color: p.nome ? "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" : "var(--layout-header-bg, #1a1a1a)" }}>
+                      <div className="text-xs font-bold" style={{ color: p.nome ? "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" : "var(--layout-page-text, #1a1a1a)" }}>
                         {p.horario_inicio} - {p.horario_fim}
                         <span className="ml-2 text-[10px] font-normal" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>
                           {p.media_type === "youtube" ? "YouTube" : "Vídeo"} • {p.aspect_ratio || "16:9"}
@@ -685,15 +671,15 @@ export default function PreRollPage() {
                         {status.label}
                       </span>
                       <button onClick={() => toggleActive(p.id, p.active)}
-                        className="text-[10px] px-2 py-1 rounded-full transition-colors"
+                        className="text-[10px] px-2.5 py-1 rounded-full transition-colors font-medium"
                         style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)", color: "var(--layout-page-text, #1a1a1a)" }}
                       >
                         {p.active ? "Desativar" : "Ativar"}
                       </button>
-                      <button onClick={() => startEdit(p)} className="p-1.5 rounded-lg transition-colors" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>
+                      <button onClick={() => startEdit(p)} className="p-1.5 rounded-lg transition-colors hover:bg-[color-mix(in_srgb,var(--layout-page-text)_8%,transparent)]" style={{ color: "var(--layout-icon-color, #888888)" }}>
                         <Pencil size={14} />
                       </button>
-                      <button onClick={() => handleDelete(p.id)} className="p-1.5 rounded-lg transition-colors" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>
+                      <button onClick={() => handleDelete(p.id)} className="p-1.5 rounded-lg transition-colors hover:bg-[rgba(220,38,38,0.08)]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>
                         <Trash2 size={14} />
                       </button>
                     </div>
