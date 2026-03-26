@@ -352,11 +352,7 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
 
     if (currentBloco.length > 0) parsedBlocos.push({ noticias: currentBloco });
 
-    // Fallback: if no labeled estudio/programa, use first two non-section content lines
-    if (!parsedEstudio && !parsedPrograma && nonEmptyLines.length >= 2) {
-      parsedEstudio = clean(nonEmptyLines[0]);
-      parsedPrograma = clean(nonEmptyLines[1]);
-    }
+    // Fallback no longer needed since we handle inline
 
     // Set Estúdio
     if (parsedEstudio) {
