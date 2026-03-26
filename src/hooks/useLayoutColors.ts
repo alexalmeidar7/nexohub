@@ -42,6 +42,7 @@ export interface LayoutColors {
   iconColor: string;
   borderColor: string;
   sliderBg: string;
+  scrollbarColor: string;
   homeBgType: "color" | "image";
   homeBgColor: string;
   homeBgImage: string;
@@ -63,6 +64,7 @@ export const defaultLayoutColors: LayoutColors = {
   iconColor: "#888888",
   borderColor: "#333333",
   sliderBg: "#0d0d0d",
+  scrollbarColor: "#555555",
   homeBgType: "color",
   homeBgColor: "#1a1a1a",
   homeBgImage: "",
@@ -127,6 +129,7 @@ export function useLayoutColors() {
     root.style.setProperty("--layout-border-color", colors.borderColor);
     root.style.setProperty("--layout-home-bg-color", colors.homeBgColor);
     root.style.setProperty("--layout-slider-bg", colors.sliderBg);
+    root.style.setProperty("--layout-scrollbar-color", colors.scrollbarColor);
 
     // Also update player CSS vars from accent color
     const accentHsl = hexToHsl(colors.accentColor);
