@@ -620,17 +620,17 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
           {/* Content area */}
           {currentPage !== "dashboard" && (
-            <div className="flex items-center gap-3 mb-2 ml-1">
+            <div className="flex items-center gap-3 mb-2 ml-1 px-4 py-2 rounded-xl" style={{ backgroundColor: layoutColors.headerBg, color: layoutColors.headerText }}>
               <button
                 onClick={() => setCurrentPage("dashboard")}
                 className="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold transition-all"
-                style={{ backgroundColor: layoutColors.buttonBg, color: layoutColors.buttonText }}
+                style={{ backgroundColor: layoutColors.headerText, color: layoutColors.headerBg }}
                 onMouseEnter={e => { e.currentTarget.style.opacity = "0.85"; }}
                 onMouseLeave={e => { e.currentTarget.style.opacity = "1"; }}
               >
                 <ChevronUp size={14} className="rotate-[-90deg]" /> Voltar
               </button>
-              <span style={{ color: layoutColors.navText }} className="font-semibold text-sm">{pageTitle[currentPage]}</span>
+              <span style={{ color: layoutColors.headerText }} className="font-semibold text-sm">{pageTitle[currentPage]}</span>
             </div>
           )}
           <div className={`flex-1 overflow-y-auto overflow-x-hidden rounded-xl lg:rounded-2xl ${currentPage !== "dashboard" ? "mv-content-area" : ""}`} style={currentPage === "dashboard" ? {} : { padding: "0.75rem" }}>
