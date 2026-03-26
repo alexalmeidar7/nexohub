@@ -27,7 +27,7 @@ interface Programa {
 }
 
 const inputStyle: React.CSSProperties = {
-  backgroundColor: "#ffffff", border: "1px solid #0d0446", color: "#0d0446", borderRadius: "20px",
+  backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid var(--layout-border-color, #333333)", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "20px",
 };
 
 export default function LogosPatrocinadoresPage() {
@@ -279,15 +279,15 @@ export default function LogosPatrocinadoresPage() {
 
   return (
     <div className="animate-fade-in">
-      <div className="rounded-2xl" style={{ background: "#d9e9fa", boxShadow: "0 8px 32px rgba(13,4,70,0.12)", padding: "20px" }}>
+      <div className="rounded-2xl" style={{ background: "color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 12%, var(--layout-page-bg, #ffffff) 88%)", boxShadow: "0 8px 32px rgba(0,0,0,0.10)", padding: "20px" }}>
         {/* Header */}
         <div className="flex items-center gap-3 mb-5">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "rgba(13,4,70,0.08)" }}>
-            <Upload size={20} style={{ color: "#0d0446" }} />
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)" }}>
+            <Upload size={20} style={{ color: "var(--layout-page-text, #1a1a1a)" }} />
           </div>
           <div className="shrink-0">
-            <h3 className="text-base font-bold" style={{ color: "#0d0446" }}>Logos de Patrocinadores</h3>
-            <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.5)" }}>Gerencie as logos vinculadas aos programas</p>
+            <h3 className="text-base font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Logos de Patrocinadores</h3>
+            <p className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Gerencie as logos vinculadas aos programas</p>
           </div>
           <div className="flex-1 ml-4 space-y-1">
             {logosXmlUrl && <XmlLinkRow label="XML LOGOS" permanentUrl={logosXmlUrl} dark />}
@@ -296,9 +296,9 @@ export default function LogosPatrocinadoresPage() {
         </div>
 
         {/* Form */}
-        <form ref={formRef} onSubmit={handleSubmit} className="rounded-xl overflow-hidden mb-5" style={{ backgroundColor: "#ffffff", boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}>
-          <div className="px-4 py-2.5 flex items-center justify-between" style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)" }}>
-            <h3 className="text-sm font-bold" style={{ color: "#ffffff" }}>
+        <form ref={formRef} onSubmit={handleSubmit} className="rounded-xl overflow-hidden mb-5" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+          <div className="px-4 py-2.5 flex items-center justify-between" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" }}>
+            <h3 className="text-sm font-bold" style={{ color: "var(--layout-header-text, #ffffff)" }}>
               {editingFullId ? "✏️ Editar Logo de Patrocinador" : "➕ Nova Logo de Patrocinador"}
             </h3>
             {editingFullId && (
@@ -311,21 +311,21 @@ export default function LogosPatrocinadoresPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-4">
                 <div>
-                  <label className="block text-xs mb-1" style={{ color: "#0d0446", fontWeight: 600 }}>Nome *</label>
+                  <label className="block text-xs mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)", fontWeight: 600 }}>Nome *</label>
                   <input type="text" value={nomeLogo} onChange={(e) => setNomeLogo(e.target.value)} placeholder="Ex: Patrocinador X"
                     className="w-full px-4 py-1.5 text-sm outline-none uppercase font-bold"
                     style={inputStyle}
                     onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
-                    onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
+                    onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
                   />
                 </div>
                 <div>
-                  <label className="block text-xs mb-1" style={{ color: "#0d0446", fontWeight: 600 }}>Programa *</label>
+                  <label className="block text-xs mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)", fontWeight: 600 }}>Programa *</label>
                   <select value={programaId} onChange={(e) => setProgramaId(e.target.value)}
                     className="w-full px-4 py-1.5 text-sm outline-none appearance-none"
                     style={inputStyle}
                     onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
-                    onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
+                    onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
                   >
                     <option value="">Selecione um programa</option>
                     {programas.map((p) => (
@@ -335,19 +335,19 @@ export default function LogosPatrocinadoresPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs mb-1" style={{ color: "#0d0446", fontWeight: 600 }}>Data de Expiração *</label>
+                  <label className="block text-xs mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)", fontWeight: 600 }}>Data de Expiração *</label>
                   <input type="date" value={dataFinal} onChange={(e) => setDataFinal(e.target.value)} required
                     className="w-full px-4 py-1.5 text-sm outline-none"
                     style={inputStyle}
                     onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
-                    onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
+                    onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
                   />
                 </div>
 
                 <button type="submit" disabled={saving}
                   className="w-full px-6 py-2 font-bold text-sm transition-all flex items-center justify-center gap-2 disabled:opacity-50 rounded-full"
-                  style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#ffffff", border: "none" }}
-                  onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 4px 15px rgba(38,143,250,0.4)"; }}
+                  style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #444444), color-mix(in srgb, var(--layout-accent-color, #444444) 70%, white 30%))", color: "var(--layout-header-text, #ffffff)", border: "none" }}
+                  onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 4px 15px color-mix(in srgb, var(--layout-accent-color, #444444) 40%, transparent)"; }}
                   onMouseLeave={e => { e.currentTarget.style.boxShadow = "none"; }}
                 >
                   {saving ? <><Loader2 className="animate-spin" size={14} /> Salvando...</> : editingFullId ? "Atualizar Logo" : `Salvar ${pendingFiles.length} logo(s)`}
@@ -355,30 +355,30 @@ export default function LogosPatrocinadoresPage() {
               </div>
 
               <div className="space-y-3">
-                <label className="block text-xs mb-1" style={{ color: "#0d0446", fontWeight: 600 }}>
-                  Logo {editingFullId ? "" : "*"} <span className="font-normal" style={{ color: "rgba(13,4,70,0.5)" }}>(1080×1080, fundo transparente)</span>
+                <label className="block text-xs mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)", fontWeight: 600 }}>
+                  Logo {editingFullId ? "" : "*"} <span className="font-normal" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>(1080×1080, fundo transparente)</span>
                 </label>
                 <div className="flex flex-wrap gap-3">
                   {existingLogoUrl && pendingFiles.length === 0 && (
                     <div className="relative group">
-                      <img src={existingLogoUrl} alt="" className="w-20 h-20 rounded-lg object-contain" style={{ border: "1px solid rgba(13,4,70,0.1)", backgroundColor: "#0d0446" }} />
-                      <span className="text-[8px] text-center block mt-0.5" style={{ color: "rgba(13,4,70,0.4)" }}>Atual</span>
+                      <img src={existingLogoUrl} alt="" className="w-20 h-20 rounded-lg object-contain" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 35%, transparent)", backgroundColor: "var(--layout-header-bg, #1a1a1a)" }} />
+                      <span className="text-[8px] text-center block mt-0.5" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>Atual</span>
                     </div>
                   )}
                   {pendingFiles.map((pf, idx) => (
                     <div key={idx} className="relative group">
-                      <img src={pf.preview} alt="" className="w-20 h-20 rounded-lg object-contain" style={{ border: "1px solid rgba(13,4,70,0.1)", backgroundColor: "repeating-conic-gradient(#ddd 0% 25%,transparent 0% 50%) 0 0/20px 20px" }} />
+                      <img src={pf.preview} alt="" className="w-20 h-20 rounded-lg object-contain" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 35%, transparent)", backgroundColor: "repeating-conic-gradient(#ddd 0% 25%,transparent 0% 50%) 0 0/20px 20px" }} />
                       <button type="button" onClick={() => removePendingFile(idx)}
                         className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity">×</button>
                     </div>
                   ))}
                   <label className="w-20 h-20 rounded-lg flex flex-col items-center justify-center cursor-pointer transition-colors"
-                    style={{ border: "2px dashed rgba(13,4,70,0.2)" }}
+                    style={{ border: "2px dashed color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }}
                     onMouseEnter={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
-                    onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(13,4,70,0.2)"; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 20%, transparent)"; }}
                   >
-                    <Plus size={18} style={{ color: "rgba(13,4,70,0.4)" }} />
-                    <span className="text-[10px] mt-1" style={{ color: "rgba(13,4,70,0.4)" }}>Adicionar</span>
+                    <Plus size={18} style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }} />
+                    <span className="text-[10px] mt-1" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>Adicionar</span>
                     <input type="file" accept="image/png" className="hidden" onChange={handleAddFile} />
                   </label>
                 </div>
@@ -389,10 +389,10 @@ export default function LogosPatrocinadoresPage() {
 
         {/* Excluded Logos - right after form */}
         <Collapsible open={excluidasOpen} onOpenChange={setExcluidasOpen}>
-          <div className="rounded-xl overflow-hidden mb-5" style={{ backgroundColor: "#ffffff", boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}>
+          <div className="rounded-xl overflow-hidden mb-5" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
             <CollapsibleTrigger asChild>
               <button className="w-full px-4 py-2.5 flex items-center justify-between cursor-pointer" style={{ background: "linear-gradient(135deg, #6b7280, #4b5563)" }}>
-                <h3 className="text-sm font-bold flex items-center gap-2" style={{ color: "#ffffff" }}>
+                <h3 className="text-sm font-bold flex items-center gap-2" style={{ color: "var(--layout-header-text, #ffffff)" }}>
                   🗑️ Logos Excluídas
                   {excludedLogos.length > 0 && (
                     <span className="text-[10px] font-normal bg-white/20 px-2 py-0.5 rounded-full">{excludedLogos.length}</span>
@@ -409,7 +409,7 @@ export default function LogosPatrocinadoresPage() {
                           onChange={(e) => setExcluidasSearch(e.target.value)}
                           placeholder="Buscar logo..."
                           className="pl-7 pr-3 py-1 text-[11px] rounded-full outline-none w-40"
-                          style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "#ffffff", border: "1px solid rgba(255,255,255,0.25)" }}
+                          style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "var(--layout-header-text, #ffffff)", border: "1px solid rgba(255,255,255,0.25)" }}
                           onFocus={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.5)"; }}
                           onBlur={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.25)"; }}
                         />
@@ -428,12 +428,12 @@ export default function LogosPatrocinadoresPage() {
                   return (l.nome || "").toLowerCase().includes(q);
                 });
                 return filtered.length === 0 ? (
-                  <p className="text-sm py-8 text-center" style={{ color: "rgba(13,4,70,0.4)" }}>
+                  <p className="text-sm py-8 text-center" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>
                     {excludedLogos.length === 0 ? "Nenhuma logo excluída." : "Nenhuma logo encontrada."}
                   </p>
                 ) : (
                 <div className="p-4">
-                  <p className="text-[10px] mb-3" style={{ color: "rgba(13,4,70,0.5)" }}>
+                  <p className="text-[10px] mb-3" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
                     Arraste uma logo para um programa para restaurá-la, ou clique no botão de restaurar.
                     <br />Logos excluídas são mantidas por até 180 dias.
                   </p>
@@ -446,7 +446,7 @@ export default function LogosPatrocinadoresPage() {
                           onDragStart={() => handleDragStart(logo)}
                         >
                           <div className="relative group">
-                            <img src={logo.logo_url} alt={logo.nome} className="w-full aspect-square rounded-lg object-contain p-1" style={{ border: "1px solid rgba(107,114,128,0.2)", backgroundColor: "#0d0446", filter: "grayscale(50%)" }} />
+                            <img src={logo.logo_url} alt={logo.nome} className="w-full aspect-square rounded-lg object-contain p-1" style={{ border: "1px solid rgba(107,114,128,0.2)", backgroundColor: "var(--layout-header-bg, #1a1a1a)", filter: "grayscale(50%)" }} />
                             <div className="absolute inset-0 rounded-lg flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity" style={{ backgroundColor: "rgba(0,0,0,0.4)" }}>
                               <button onClick={() => handleRestore(logo)} className="bg-green-500 text-white rounded-full w-7 h-7 flex items-center justify-center" title="Restaurar">
                                 <RotateCcw size={13} />
@@ -474,12 +474,12 @@ export default function LogosPatrocinadoresPage() {
         {/* Each program as its own collapsible section */}
         {grouped.map(({ programa, logos: gLogos }) => (
           <Collapsible key={programa.id} defaultOpen>
-            <div className="rounded-xl overflow-hidden mb-4" style={{ backgroundColor: "#ffffff", boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}
+            <div className="rounded-xl overflow-hidden mb-4" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}
               onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}
             >
               <CollapsibleTrigger asChild>
-                <button className="w-full px-4 py-2.5 flex items-center justify-between cursor-pointer" style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)" }}>
-                  <h3 className="text-sm font-bold" style={{ color: "#ffffff" }}>{programa.nome}</h3>
+                <button className="w-full px-4 py-2.5 flex items-center justify-between cursor-pointer" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" }}>
+                  <h3 className="text-sm font-bold" style={{ color: "var(--layout-header-text, #ffffff)" }}>{programa.nome}</h3>
                   <ChevronDown size={16} className="text-white transition-transform duration-200" />
                 </button>
               </CollapsibleTrigger>
@@ -494,22 +494,22 @@ export default function LogosPatrocinadoresPage() {
                           <CarouselItem key={logo.id} className="basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5">
                             <div className="space-y-2 text-center">
                               <div className="relative group">
-                                <img src={logo.logo_url} alt={logo.nome} className="w-full aspect-square rounded-lg object-contain" style={{ border: "1px solid rgba(13,4,70,0.08)", backgroundColor: "#0d0446" }} />
+                                <img src={logo.logo_url} alt={logo.nome} className="w-full aspect-square rounded-lg object-contain" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)", backgroundColor: "var(--layout-header-bg, #1a1a1a)" }} />
                                 <button onClick={() => handleSoftDelete(logo.id)}
                                   className="absolute top-1 right-1 bg-red-500/80 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity">
                                   <Trash2 size={12} />
                                 </button>
                               </div>
                               {logo.nome && (
-                                <p className="text-[11px] font-semibold truncate" style={{ color: "#0d0446" }}>{logo.nome}</p>
+                                <p className="text-[11px] font-semibold truncate" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{logo.nome}</p>
                               )}
                               <span className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full ${diasRestantes <= 7 ? "bg-red-100 text-red-600" : "bg-green-100 text-green-700"}`}>
                                 {diasRestantes > 0 ? `${diasRestantes}d restantes` : "Expirando"}
                               </span>
                               <button onClick={() => startFullEdit(logo)} className="text-[10px] flex items-center gap-1 mx-auto transition-colors"
-                                style={{ color: "rgba(13,4,70,0.4)" }}
+                                style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}
                                 onMouseEnter={e => { e.currentTarget.style.color = "#2dbef3"; }}
-                                onMouseLeave={e => { e.currentTarget.style.color = "rgba(13,4,70,0.4)"; }}
+                                onMouseLeave={e => { e.currentTarget.style.color = "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)"; }}
                               >
                                 <Pencil size={10} /> Editar
                               </button>

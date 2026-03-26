@@ -631,31 +631,31 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
     <TooltipProvider delayDuration={300}>
     <div className="animate-fade-in space-y-4">
       {/* Main Card */}
-      <div className="rounded-2xl overflow-hidden" style={{ background: "#d9e9fa", boxShadow: "0 8px 32px rgba(13,4,70,0.12)", padding: "20px" }}>
+      <div className="rounded-2xl overflow-hidden" style={{ background: "color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 12%, var(--layout-page-bg, #ffffff) 88%)", boxShadow: "0 8px 32px rgba(0,0,0,0.10)", padding: "20px" }}>
         {/* Header */}
         <div className="flex items-center justify-between mb-5 flex-wrap gap-2">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(13,4,70,0.08)" }}>
-              <Newspaper size={20} style={{ color: "#0d0446" }} />
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)" }}>
+              <Newspaper size={20} style={{ color: "var(--layout-page-text, #1a1a1a)" }} />
             </div>
-            <h3 className="text-lg font-bold" style={{ color: "#0d0446" }}>Notícias do momento</h3>
+            <h3 className="text-lg font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Notícias do momento</h3>
             <button
               onClick={() => { setShowAddSiteInput(prev => !prev); setShowNoticiaAvulsaInput(false); }}
               className="flex items-center gap-1 px-3 py-1.5 rounded-full font-bold text-[10px] transition-all"
-              style={{ backgroundColor: "#0d0446", color: "#ffffff" }}
+              style={{ backgroundColor: "var(--layout-header-bg, #1a1a1a)", color: "var(--layout-header-text, #ffffff)" }}
             >
               <Plus size={10} /> Adicionar Site
             </button>
             <button
               onClick={() => { setShowNoticiaAvulsaInput(prev => !prev); setShowAddSiteInput(false); }}
               className="flex items-center gap-1 px-3 py-1.5 rounded-full font-bold text-[10px] transition-all"
-              style={{ backgroundColor: "#0d0446", color: "#ffffff" }}
+              style={{ backgroundColor: "var(--layout-header-bg, #1a1a1a)", color: "var(--layout-header-text, #ffffff)" }}
             >
               <LinkIcon size={10} /> Notícia Avulsa
             </button>
             {loading && (
-              <span className="flex items-center gap-1.5 text-[10px] font-semibold" style={{ color: "rgba(13,4,70,0.5)" }}>
-                <Loader2 size={12} className="animate-spin" style={{ color: "#268ffa" }} />
+              <span className="flex items-center gap-1.5 text-[10px] font-semibold" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
+                <Loader2 size={12} className="animate-spin" style={{ color: "var(--layout-icon-color, #888888)" }} />
                 atualizando notícias...
               </span>
             )}
@@ -665,18 +665,18 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
               <button
                 onClick={() => setWizardOpen(true)}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-bold text-[10px] transition-all hover:shadow-md"
-                style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#ffffff" }}
+                style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #444444), color-mix(in srgb, var(--layout-accent-color, #444444) 70%, white 30%))", color: "var(--layout-header-text, #ffffff)" }}
               >
                 <Newspaper size={11} /> Montar Roteiro
               </button>
             )}
             <button onClick={() => { loadAll(); loadCotacoes(); }} disabled={loading}
               className="w-8 h-8 rounded-full flex items-center justify-center transition-all disabled:opacity-50"
-              style={{ backgroundColor: "rgba(13,4,70,0.06)" }}
-              onMouseEnter={e => { e.currentTarget.style.backgroundColor = "rgba(13,4,70,0.12)"; }}
-              onMouseLeave={e => { e.currentTarget.style.backgroundColor = "rgba(13,4,70,0.06)"; }}
+              style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)" }}
+              onMouseEnter={e => { e.currentTarget.style.backgroundColor = "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 12%, transparent)"; }}
+              onMouseLeave={e => { e.currentTarget.style.backgroundColor = "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)"; }}
             >
-              <RefreshCw size={14} className={loading ? "animate-spin" : ""} style={{ color: "#0d0446" }} />
+              <RefreshCw size={14} className={loading ? "animate-spin" : ""} style={{ color: "var(--layout-page-text, #1a1a1a)" }} />
             </button>
           </div>
         </div>
@@ -687,18 +687,18 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
             onKeyDown={(e) => { if (e.key === "Enter") { addCustomSite(); setShowAddSiteInput(false); } }}
             placeholder="URL do RSS feed (ex: https://site.com/feed)"
             className="flex-1 px-3 py-1 outline-none transition-colors text-xs"
-            style={{ backgroundColor: "#ffffff", border: "1px solid #0d0446", color: "#0d0446", borderRadius: "20px" }}
+            style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid var(--layout-border-color, #333333)", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "20px" }}
             onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
-            onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
+            onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
             autoFocus
           />
           <button onClick={() => { addCustomSite(); setShowAddSiteInput(false); }}
             className="px-3 py-1 font-bold transition-all flex items-center gap-1 text-xs"
-            style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "20px" }}
+            style={{ backgroundColor: "var(--layout-header-bg, #1a1a1a)", color: "var(--layout-header-text, #ffffff)", borderRadius: "20px" }}
           >
             <Plus size={12} /> Adicionar
           </button>
-          <button onClick={() => setShowAddSiteInput(false)} className="px-2 py-1 rounded-full" style={{ color: "#0d0446" }}>
+          <button onClick={() => setShowAddSiteInput(false)} className="px-2 py-1 rounded-full" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
             <X size={14} />
           </button>
         </div>
@@ -710,18 +710,18 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
             onKeyDown={(e) => { if (e.key === "Enter") addNoticiaAvulsa(); }}
             placeholder="URL da notícia (ex: https://site.com/noticia)"
             className="flex-1 px-3 py-1 outline-none transition-colors text-xs"
-            style={{ backgroundColor: "#ffffff", border: "1px solid #0d0446", color: "#0d0446", borderRadius: "20px" }}
+            style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid var(--layout-border-color, #333333)", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "20px" }}
             onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
-            onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
+            onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
             autoFocus
           />
           <button onClick={addNoticiaAvulsa} disabled={loadingAvulsa}
             className="px-3 py-1 font-bold transition-all flex items-center gap-1 text-xs"
-            style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "20px" }}
+            style={{ backgroundColor: "var(--layout-header-bg, #1a1a1a)", color: "var(--layout-header-text, #ffffff)", borderRadius: "20px" }}
           >
             {loadingAvulsa ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />} Adicionar
           </button>
-          <button onClick={() => setShowNoticiaAvulsaInput(false)} className="px-2 py-1 rounded-full" style={{ color: "#0d0446" }}>
+          <button onClick={() => setShowNoticiaAvulsaInput(false)} className="px-2 py-1 rounded-full" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
             <X size={14} />
           </button>
         </div>
@@ -732,14 +732,14 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
         {/* LEFT COLUMN */}
         <div className="space-y-4" style={{ width: (jornalConfig || wizardOpen) ? "50%" : "100%" }}>
           {/* News Portals Accordion */}
-          <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.06)", width: (jornalConfig || wizardOpen) ? "100%" : "50%", boxShadow: "0 2px 10px rgba(13,4,70,0.05)" }}>
-            <div className="px-3 py-2.5 font-bold text-xs tracking-wide text-white flex items-center justify-between" style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)" }}>
-              <span style={{ color: "#ffffff" }}>📰 Portais de Notícias</span>
+          <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)", width: (jornalConfig || wizardOpen) ? "100%" : "50%", boxShadow: "0 2px 10px rgba(0,0,0,0.05)" }}>
+            <div className="px-3 py-2.5 font-bold text-xs tracking-wide text-white flex items-center justify-between" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" }}>
+              <span style={{ color: "var(--layout-header-text, #ffffff)" }}>📰 Portais de Notícias</span>
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => setReorderMode(r => !r)}
                   className="px-2 py-0.5 rounded text-[9px] font-semibold transition-colors"
-                  style={{ backgroundColor: reorderMode ? "#2ec1f7" : "rgba(255,255,255,0.15)", color: reorderMode ? "#0d0446" : "#ffffff" }}
+                  style={{ backgroundColor: reorderMode ? "#2ec1f7" : "rgba(255,255,255,0.15)", color: reorderMode ? "var(--layout-header-bg, #1a1a1a)" : "#ffffff" }}
                   title="Reordenar portais"
                 >
                   {reorderMode ? "✓ Salvar ordem" : "⇅ Reordenar"}
@@ -755,7 +755,7 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
                   {Array.from({ length: 8 }).map((_, i) => (
                     <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ backgroundColor: i % 2 === 0 ? "#ffffff" : "#f8f8fc" }}>
                       <Skeleton className="w-3 h-3 rounded-full bg-[#2ec1f7]/15 shrink-0" />
-                      <Skeleton className="h-3 rounded bg-[#0d0446]/10" style={{ width: `${35 + (i % 3) * 15}%` }} />
+                      <Skeleton className="h-3 rounded bg-[var(--layout-header-bg)]/10" style={{ width: `${35 + (i % 3) * 15}%` }} />
                       <Skeleton className="h-4 w-8 rounded-full bg-[#2ec1f7]/10 ml-auto" />
                     </div>
                   ))}
@@ -763,17 +763,17 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
               ) : reorderMode ? (
                 <div className="p-1 space-y-0.5">
                   {orderedPortals.map((portal, idx) => (
-                    <div key={portal.name} className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold" style={{ color: "#0d0446", backgroundColor: idx % 2 === 0 ? "#ffffff" : "#f8f8fc" }}>
+                    <div key={portal.name} className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)", backgroundColor: idx % 2 === 0 ? "#ffffff" : "#f8f8fc" }}>
                       <span className="text-[10px] font-bold w-5 text-center" style={{ color: "#2ec1f7" }}>{idx + 1}</span>
                       <Newspaper size={12} style={{ color: "#2ec1f7" }} />
                       <span className="flex-1">{portal.name}</span>
                       <button onClick={() => movePortal(idx, "up")} disabled={idx === 0}
                         className="p-0.5 rounded hover:bg-blue-50 disabled:opacity-20 transition-opacity">
-                        <ArrowUp size={12} style={{ color: "#0d0446" }} />
+                        <ArrowUp size={12} style={{ color: "var(--layout-page-text, #1a1a1a)" }} />
                       </button>
                       <button onClick={() => movePortal(idx, "down")} disabled={idx === orderedPortals.length - 1}
                         className="p-0.5 rounded hover:bg-blue-50 disabled:opacity-20 transition-opacity">
-                        <ArrowDown size={12} style={{ color: "#0d0446" }} />
+                        <ArrowDown size={12} style={{ color: "var(--layout-page-text, #1a1a1a)" }} />
                       </button>
                     </div>
                   ))}
@@ -783,8 +783,8 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
                   {orderedPortals.map(portal => {
                     const news = newsByPortal[portal.name] || [];
                     return (
-                      <AccordionItem key={portal.name} value={portal.name} className="border-b-0" style={{ borderBottom: "1px solid rgba(13,4,70,0.06)" }}>
-                        <AccordionTrigger className="px-3 py-2 text-xs font-bold hover:no-underline" style={{ color: "#0d0446" }}>
+                      <AccordionItem key={portal.name} value={portal.name} className="border-b-0" style={{ borderBottom: "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)" }}>
+                        <AccordionTrigger className="px-3 py-2 text-xs font-bold hover:no-underline" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
                           <span className="flex items-center gap-2 flex-1">
                             <Newspaper size={12} style={{ color: "#2ec1f7" }} />
                             {portal.name}
@@ -803,9 +803,9 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
                                 <GripVertical size={10} className="shrink-0 opacity-20" />
                                 <Tooltip>
                                   <TooltipTrigger asChild>
-                                    <span className="flex-1 line-clamp-1 cursor-default" style={{ color: "#0d0446" }}>{item.title}</span>
+                                    <span className="flex-1 line-clamp-1 cursor-default" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{item.title}</span>
                                   </TooltipTrigger>
-                                  <TooltipContent style={{ backgroundColor: "#2ec1f7", color: "#0d0446", maxWidth: 350 }} className="text-xs font-medium">
+                                  <TooltipContent style={{ backgroundColor: "#2ec1f7", color: "var(--layout-page-text, #1a1a1a)", maxWidth: 350 }} className="text-xs font-medium">
                                     {item.title}
                                   </TooltipContent>
                                 </Tooltip>
@@ -817,7 +817,7 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
                                   <div className="shrink-0 relative"
                                     onMouseEnter={(e) => handleImageHover(e, item.thumbnail || "")}
                                     onMouseLeave={() => setHoveredImage(null)}>
-                                    <ImageIcon size={12} style={{ color: "rgba(13,4,70,0.3)" }} className="cursor-pointer hover:opacity-70" />
+                                    <ImageIcon size={12} style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 30%, transparent)" }} className="cursor-pointer hover:opacity-70" />
                                   </div>
                                 )}
                               </div>
@@ -833,7 +833,7 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
           </div>
 
           {/* Mini Previsão do Tempo */}
-          <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.06)", width: (jornalConfig || wizardOpen) ? "100%" : "50%", boxShadow: "0 2px 10px rgba(13,4,70,0.05)" }}
+          <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)", width: (jornalConfig || wizardOpen) ? "100%" : "50%", boxShadow: "0 2px 10px rgba(0,0,0,0.05)" }}
             draggable={!!miniWeather}
             onDragStart={(e) => {
               if (!miniWeather) return;
@@ -845,8 +845,8 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
               }));
             }}
           >
-            <div className="px-3 py-2.5 font-bold text-xs tracking-wide text-white flex items-center justify-between cursor-grab" style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)" }}>
-              <span className="flex items-center gap-1.5" style={{ color: "#ffffff" }}>
+            <div className="px-3 py-2.5 font-bold text-xs tracking-wide text-white flex items-center justify-between cursor-grab" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" }}>
+              <span className="flex items-center gap-1.5" style={{ color: "var(--layout-header-text, #ffffff)" }}>
                 <GripVertical size={12} className="opacity-60" />
                 <CloudSun size={12} />
                 Previsão do Tempo
@@ -866,7 +866,7 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
                     </div>
                   </div>
                 ) : !miniWeather ? (
-                  <p className="text-xs" style={{ color: "rgba(13,4,70,0.5)" }}>Nenhuma cidade principal cadastrada. Defina em Previsão do Tempo.</p>
+                  <p className="text-xs" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Nenhuma cidade principal cadastrada. Defina em Previsão do Tempo.</p>
                 ) : (
                   <div className="space-y-2">
                     <div className="flex items-center gap-4">
@@ -874,20 +874,20 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
                         <span className="text-2xl font-bold" style={{ color: "#2ec1f7" }}>{miniWeather.temp}°C</span>
                       </div>
                       <div className="flex-1 space-y-0.5">
-                        <p className="text-xs font-bold" style={{ color: "#0d0446" }}>{miniWeather.city}</p>
-                        <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.6)" }}>{miniWeatherLabel(miniWeather.code)}</p>
-                        <div className="flex items-center gap-3 text-[10px]" style={{ color: "rgba(13,4,70,0.5)" }}>
+                        <p className="text-xs font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{miniWeather.city}</p>
+                        <p className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>{miniWeatherLabel(miniWeather.code)}</p>
+                        <div className="flex items-center gap-3 text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
                           <span className="flex items-center gap-0.5"><Thermometer size={9} /> Mín {miniWeather.min}° · Máx {miniWeather.max}°</span>
                           <span className="flex items-center gap-0.5"><Droplets size={9} /> {miniWeather.humidity}%</span>
                         </div>
                       </div>
                     </div>
                     {loadingWeatherAi ? (
-                      <div className="flex items-center gap-1.5 text-[10px]" style={{ color: "rgba(13,4,70,0.4)" }}>
+                      <div className="flex items-center gap-1.5 text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>
                         <Loader2 size={10} className="animate-spin" /> Gerando descrição...
                       </div>
                     ) : weatherAiDesc && (
-                      <p className="text-[10px] leading-relaxed rounded-md px-2 py-1.5" style={{ color: "#0d0446", backgroundColor: "rgba(46,193,247,0.06)", border: "1px solid rgba(46,193,247,0.15)" }}>
+                      <p className="text-[10px] leading-relaxed rounded-md px-2 py-1.5" style={{ color: "var(--layout-page-text, #1a1a1a)", backgroundColor: "rgba(46,193,247,0.06)", border: "1px solid rgba(46,193,247,0.15)" }}>
                         {weatherAiDesc}
                       </p>
                     )}
@@ -898,9 +898,9 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
           </div>
 
           {/* Cotações marquee */}
-          <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.06)", width: (jornalConfig || wizardOpen) ? "100%" : "50%", boxShadow: "0 2px 10px rgba(13,4,70,0.05)" }}>
-            <div className="px-3 py-2.5 font-bold text-xs tracking-wide text-white flex items-center justify-between" style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)" }}>
-              <span style={{ color: "#ffffff" }}>💹 Cotações - Bolsas e Moedas</span>
+          <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)", width: (jornalConfig || wizardOpen) ? "100%" : "50%", boxShadow: "0 2px 10px rgba(0,0,0,0.05)" }}>
+            <div className="px-3 py-2.5 font-bold text-xs tracking-wide text-white flex items-center justify-between" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" }}>
+              <span style={{ color: "var(--layout-header-text, #ffffff)" }}>💹 Cotações - Bolsas e Moedas</span>
               <button onClick={() => toggleBox('cotacoes')} className="p-0.5 rounded hover:bg-white/20 transition-colors">
                 {collapsedBoxes['cotacoes'] ? <ChevronDown size={12} /> : <ChevronUp size={12} />}
               </button>
@@ -911,13 +911,13 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
                   <div className="animate-pulse flex gap-2 overflow-hidden">
                     {Array.from({ length: 8 }).map((_, i) => (
                       <div key={i} className="rounded-md px-3 py-2 shrink-0 flex items-center gap-2" style={{ backgroundColor: "rgba(13,4,70,0.04)" }}>
-                        <div className="h-2.5 w-14 rounded bg-[#0d0446]/10" />
-                        <div className="h-2.5 w-10 rounded bg-[#0d0446]/5" />
+                        <div className="h-2.5 w-14 rounded bg-[var(--layout-header-bg)]/10" />
+                        <div className="h-2.5 w-10 rounded bg-[var(--layout-header-bg)]/5" />
                       </div>
                     ))}
                   </div>
                 ) : cotacoes.length === 0 ? (
-                  <p className="text-xs" style={{ color: "rgba(13,4,70,0.5)" }}>Cotações indisponíveis</p>
+                  <p className="text-xs" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Cotações indisponíveis</p>
                 ) : (
                   <div className="relative overflow-hidden">
                     <style>{`
@@ -932,10 +932,10 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
                           style={{ backgroundColor: c.direction === "down" ? "rgba(239,68,68,0.15)" : c.direction === "up" ? "rgba(34,197,94,0.15)" : "rgba(13,4,70,0.04)", cursor: "copy" }}
                           title="Clique para adicionar ao Bloco de Economia"
                         >
-                          <span className="font-semibold whitespace-nowrap" style={{ color: "#0d0446" }}>{c.name}</span>
-                          <span className="whitespace-nowrap" style={{ color: "#0d0446" }}>{c.value}</span>
+                          <span className="font-semibold whitespace-nowrap" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{c.name}</span>
+                          <span className="whitespace-nowrap" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{c.value}</span>
                           <span className={`flex items-center gap-0.5 whitespace-nowrap font-semibold ${c.direction === "up" ? "text-green-600" : c.direction === "down" ? "text-red-600" : ""}`}
-                            style={c.direction === "neutral" ? { color: "rgba(13,4,70,0.4)" } : undefined}>
+                            style={c.direction === "neutral" ? { color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" } : undefined}>
                             {c.direction === "up" ? <TrendingUp size={9} /> : c.direction === "down" ? <TrendingDown size={9} /> : <Minus size={9} />}
                             {c.change}
                           </span>
@@ -950,7 +950,7 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
 
           {/* Bloco de Economia */}
           {blocoEconomia.length > 0 && (
-            <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.06)", width: (jornalConfig || wizardOpen) ? "100%" : "50%", boxShadow: "0 2px 10px rgba(13,4,70,0.05)" }}
+            <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)", width: (jornalConfig || wizardOpen) ? "100%" : "50%", boxShadow: "0 2px 10px rgba(0,0,0,0.05)" }}
               draggable
               onDragStart={(e) => {
                 e.dataTransfer.setData("text/plain", JSON.stringify({
@@ -959,10 +959,10 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
                 }));
               }}
             >
-              <div className="px-3 py-2.5 font-bold text-xs tracking-wide text-white flex items-center justify-between cursor-grab" style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)" }}>
+              <div className="px-3 py-2.5 font-bold text-xs tracking-wide text-white flex items-center justify-between cursor-grab" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" }}>
                 <span className="flex items-center gap-1.5">
                   <GripVertical size={12} className="opacity-60" />
-                  <span style={{ color: "#ffffff" }}>📊 Bloco de Economia</span>
+                  <span style={{ color: "var(--layout-header-text, #ffffff)" }}>📊 Bloco de Economia</span>
                 </span>
                 <button onClick={() => toggleBox('blocoEconomia')} className="p-0.5 rounded hover:bg-white/20 transition-colors">
                   {collapsedBoxes['blocoEconomia'] ? <ChevronDown size={12} /> : <ChevronUp size={12} />}
@@ -972,10 +972,10 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
                 <div className="divide-y" style={{ borderColor: "rgba(13,4,70,0.04)" }}>
                   {blocoEconomia.map((c) => (
                     <div key={c.name} className="flex items-center gap-2 px-3 py-1.5 text-[11px] hover:bg-gray-50">
-                      <span className="font-semibold" style={{ color: "#0d0446" }}>{c.name}</span>
-                      <span style={{ color: "#0d0446" }}>{c.value}</span>
+                      <span className="font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{c.name}</span>
+                      <span style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{c.value}</span>
                       <span className={`flex items-center gap-0.5 font-semibold ${c.direction === "up" ? "text-green-600" : c.direction === "down" ? "text-red-600" : ""}`}
-                        style={c.direction === "neutral" ? { color: "rgba(13,4,70,0.4)" } : undefined}>
+                        style={c.direction === "neutral" ? { color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" } : undefined}>
                         {c.direction === "up" ? <TrendingUp size={9} /> : c.direction === "down" ? <TrendingDown size={9} /> : <Minus size={9} />}
                         {c.change}
                       </span>
@@ -992,9 +992,9 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
 
           {/* Sites Adicionados Box */}
           {customSites.length > 0 && (
-            <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.06)", width: (jornalConfig || wizardOpen) ? "100%" : "50%", boxShadow: "0 2px 10px rgba(13,4,70,0.05)" }}>
-              <div className="px-3 py-2.5 font-bold text-xs tracking-wide text-white flex items-center justify-between" style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)" }}>
-                <span style={{ color: "#ffffff" }}>🌐 Sites Adicionados</span>
+            <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)", width: (jornalConfig || wizardOpen) ? "100%" : "50%", boxShadow: "0 2px 10px rgba(0,0,0,0.05)" }}>
+              <div className="px-3 py-2.5 font-bold text-xs tracking-wide text-white flex items-center justify-between" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" }}>
+                <span style={{ color: "var(--layout-header-text, #ffffff)" }}>🌐 Sites Adicionados</span>
                 <button onClick={() => toggleBox('sitesAdicionados')} className="p-0.5 rounded hover:bg-white/20 transition-colors">
                   {collapsedBoxes['sitesAdicionados'] ? <ChevronDown size={12} /> : <ChevronUp size={12} />}
                 </button>
@@ -1003,15 +1003,15 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
                 loading ? (
                   <div className="p-4 flex items-center gap-2">
                     <Loader2 size={14} className="animate-spin" style={{ color: "#2ec1f7" }} />
-                    <span className="text-xs" style={{ color: "rgba(13,4,70,0.5)" }}>Carregando...</span>
+                    <span className="text-xs" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Carregando...</span>
                   </div>
                 ) : (
                   <Accordion type="multiple" className="w-full">
                     {customSites.map(site => {
                       const news = newsByPortal[site.name] || [];
                       return (
-                        <AccordionItem key={site.name} value={site.name} className="border-b-0" style={{ borderBottom: "1px solid rgba(13,4,70,0.06)" }}>
-                          <AccordionTrigger className="px-3 py-2 text-xs font-bold hover:no-underline" style={{ color: "#0d0446" }}>
+                        <AccordionItem key={site.name} value={site.name} className="border-b-0" style={{ borderBottom: "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)" }}>
+                          <AccordionTrigger className="px-3 py-2 text-xs font-bold hover:no-underline" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
                             <span className="flex items-center gap-2 flex-1">
                               <Newspaper size={12} style={{ color: "#2ec1f7" }} />
                               {site.name}
@@ -1034,9 +1034,9 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
                                   <GripVertical size={10} className="shrink-0 opacity-20" />
                                   <Tooltip>
                                     <TooltipTrigger asChild>
-                                      <span className="flex-1 line-clamp-1 cursor-default" style={{ color: "#0d0446" }}>{item.title}</span>
+                                      <span className="flex-1 line-clamp-1 cursor-default" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{item.title}</span>
                                     </TooltipTrigger>
-                                    <TooltipContent style={{ backgroundColor: "#2ec1f7", color: "#0d0446", maxWidth: 350 }} className="text-xs font-medium">
+                                    <TooltipContent style={{ backgroundColor: "#2ec1f7", color: "var(--layout-page-text, #1a1a1a)", maxWidth: 350 }} className="text-xs font-medium">
                                       {item.title}
                                     </TooltipContent>
                                   </Tooltip>
@@ -1048,7 +1048,7 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
                                     <div className="shrink-0 relative"
                                       onMouseEnter={(e) => handleImageHover(e, item.thumbnail || "")}
                                       onMouseLeave={() => setHoveredImage(null)}>
-                                      <ImageIcon size={12} style={{ color: "rgba(13,4,70,0.3)" }} className="cursor-pointer hover:opacity-70" />
+                                      <ImageIcon size={12} style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 30%, transparent)" }} className="cursor-pointer hover:opacity-70" />
                                     </div>
                                   )}
                                 </div>
@@ -1066,9 +1066,9 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
 
           {/* Notícia Avulsa Box */}
           {noticiasAvulsas.length > 0 && (
-            <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.06)", width: (jornalConfig || wizardOpen) ? "100%" : "50%", boxShadow: "0 2px 10px rgba(13,4,70,0.05)" }}>
-              <div className="px-3 py-2.5 font-bold text-xs tracking-wide text-white flex items-center justify-between" style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)" }}>
-                <span style={{ color: "#ffffff" }}>📌 Notícia Avulsa</span>
+            <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)", width: (jornalConfig || wizardOpen) ? "100%" : "50%", boxShadow: "0 2px 10px rgba(0,0,0,0.05)" }}>
+              <div className="px-3 py-2.5 font-bold text-xs tracking-wide text-white flex items-center justify-between" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" }}>
+                <span style={{ color: "var(--layout-header-text, #ffffff)" }}>📌 Notícia Avulsa</span>
                 <button onClick={() => toggleBox('noticiaAvulsa')} className="p-0.5 rounded hover:bg-white/20 transition-colors">
                   {collapsedBoxes['noticiaAvulsa'] ? <ChevronDown size={12} /> : <ChevronUp size={12} />}
                 </button>
@@ -1083,9 +1083,9 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
                       <GripVertical size={10} className="shrink-0 opacity-20" />
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <span className="flex-1 line-clamp-1 cursor-default" style={{ color: "#0d0446" }}>{item.title}</span>
+                          <span className="flex-1 line-clamp-1 cursor-default" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{item.title}</span>
                         </TooltipTrigger>
-                        <TooltipContent style={{ backgroundColor: "#2ec1f7", color: "#0d0446", maxWidth: 350 }} className="text-xs font-medium">
+                        <TooltipContent style={{ backgroundColor: "#2ec1f7", color: "var(--layout-page-text, #1a1a1a)", maxWidth: 350 }} className="text-xs font-medium">
                           {item.title}
                         </TooltipContent>
                       </Tooltip>
@@ -1097,7 +1097,7 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
                         <div className="shrink-0 relative"
                           onMouseEnter={(ev) => handleImageHover(ev, item.thumbnail || "")}
                           onMouseLeave={() => setHoveredImage(null)}>
-                          <ImageIcon size={12} style={{ color: "rgba(13,4,70,0.3)" }} className="cursor-pointer hover:opacity-70" />
+                          <ImageIcon size={12} style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 30%, transparent)" }} className="cursor-pointer hover:opacity-70" />
                         </div>
                       )}
                       <button onClick={() => removeNoticiaAvulsa(idx)}
@@ -1156,7 +1156,7 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
           style={{
             left: hoveredImage.x + 16,
             top: hoveredImage.y - 60,
-            borderColor: "rgba(13,4,70,0.1)",
+            borderColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 10%, transparent)",
           }}
         >
           <img src={hoveredImage.url} alt="" className="w-32 h-20 object-cover" />
@@ -1203,7 +1203,7 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
                 onError={(e) => { (e.target as HTMLImageElement).src = "/placeholder.svg"; }}
               />
               <div className="flex-1 min-w-0">
-                <h3 className="font-bold text-lg leading-tight pr-6" style={{ color: "#0d0446" }}>{readingPopup.title}</h3>
+                <h3 className="font-bold text-lg leading-tight pr-6" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{readingPopup.title}</h3>
                 <a href={readingPopup.link} target="_blank" rel="noopener noreferrer"
                   className="text-[10px] mt-1 inline-block hover:underline" style={{ color: "#2ec1f7" }}>
                   {readingPopup.link}
@@ -1213,12 +1213,12 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
             {loadingReading ? (
               <div className="flex items-center gap-2 py-8 justify-center">
                 <Loader2 size={20} className="animate-spin" style={{ color: "#2ec1f7" }} />
-                <span className="text-sm" style={{ color: "rgba(13,4,70,0.5)" }}>Carregando conteúdo...</span>
+                <span className="text-sm" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Carregando conteúdo...</span>
               </div>
             ) : readingPopup.body ? (
-              <p className="text-sm leading-relaxed whitespace-pre-line" style={{ color: "#0d0446" }}>{readingPopup.body}</p>
+              <p className="text-sm leading-relaxed whitespace-pre-line" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{readingPopup.body}</p>
             ) : (
-              <p className="text-sm italic" style={{ color: "rgba(13,4,70,0.4)" }}>Conteúdo da matéria não disponível. Clique no link acima para ler no site original.</p>
+              <p className="text-sm italic" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>Conteúdo da matéria não disponível. Clique no link acima para ler no site original.</p>
             )}
           </div>
         </div>

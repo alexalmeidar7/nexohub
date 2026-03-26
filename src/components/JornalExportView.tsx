@@ -23,11 +23,11 @@ export default function JornalExportView({ config, blocks, onClose }: Props) {
     if (!win) return;
     win.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${config.programaNome}</title><style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
-      body { font-family: 'Inter', Arial, sans-serif; padding: 24px; color: #0d0446; font-size: 12px; }
+      body { font-family: 'Inter', Arial, sans-serif; padding: 24px; color: var(--layout-page-text, #1a1a1a); font-size: 12px; }
       .header { border-bottom: 2px solid #0d0446; padding-bottom: 8px; margin-bottom: 16px; }
       .header h1 { font-size: 18px; font-weight: 700; }
       .header p { font-size: 10px; color: #666; }
-      .bloco-label { background: #0d0446; color: #fff; display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; margin-bottom: 8px; }
+      .bloco-label { background: var(--layout-header-bg, #1a1a1a); color: #fff; display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; margin-bottom: 8px; }
       .bloco-time { font-size: 10px; color: #999; margin-left: 8px; }
       .intervalo { text-align: center; padding: 8px 0; font-size: 10px; color: #999; }
       .news-item { border: 1px solid #eee; border-radius: 6px; padding: 10px; margin-bottom: 8px; page-break-inside: avoid; }
@@ -93,19 +93,19 @@ export default function JornalExportView({ config, blocks, onClose }: Props) {
   }
 
   return (
-    <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(13,4,70,0.1)", backgroundColor: "#ffffff" }}>
+    <div className="rounded-xl overflow-hidden" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 35%, transparent)", backgroundColor: "var(--layout-page-bg, #ffffff)" }}>
       {/* Header */}
-      <div className="flex items-center gap-3 px-4 py-3" style={{ borderBottom: "1px solid rgba(13,4,70,0.1)", backgroundColor: "#0d0446" }}>
-        <button onClick={onClose} className="hover:opacity-70 transition-opacity" style={{ color: "#ffffff" }}>
+      <div className="flex items-center gap-3 px-4 py-3" style={{ borderBottom: "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 10%, transparent)", backgroundColor: "var(--layout-header-bg, #1a1a1a)" }}>
+        <button onClick={onClose} className="hover:opacity-70 transition-opacity" style={{ color: "var(--layout-header-text, #ffffff)" }}>
           <ArrowLeft size={16} />
         </button>
         <div className="flex-1">
-          <h2 className="font-bold text-sm" style={{ color: "#ffffff" }}>{config.programaNome}</h2>
+          <h2 className="font-bold text-sm" style={{ color: "var(--layout-header-text, #ffffff)" }}>{config.programaNome}</h2>
           <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.6)" }}>
             {dia} · Montado às {hora}
           </p>
         </div>
-        <button onClick={handlePrint} className="hover:opacity-70 transition-opacity" style={{ color: "#ffffff" }} title="Imprimir jornal">
+        <button onClick={handlePrint} className="hover:opacity-70 transition-opacity" style={{ color: "var(--layout-header-text, #ffffff)" }} title="Imprimir jornal">
           <Printer size={16} />
         </button>
       </div>
@@ -116,7 +116,7 @@ export default function JornalExportView({ config, blocks, onClose }: Props) {
           if (item.type === "intervalo") {
             return (
               <div key={`int-${idx}`} className="text-center py-2">
-                <span className="text-[10px] px-3 py-1 rounded-full" style={{ backgroundColor: "rgba(13,4,70,0.05)", color: "rgba(13,4,70,0.4)" }}>
+                <span className="text-[10px] px-3 py-1 rounded-full" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 5%, transparent)", color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>
                   ⏸ Intervalo {item.num} — {config.tempoIntervaloMin} min
                 </span>
               </div>
@@ -126,7 +126,7 @@ export default function JornalExportView({ config, blocks, onClose }: Props) {
             return (
               <div key="test" className="rounded-lg p-3" style={{ backgroundColor: "rgba(46,193,247,0.05)", border: "1px dashed #2ec1f7" }}>
                 <p className="font-bold text-xs" style={{ color: "#2ec1f7" }}>🎤 Testemunha — {config.horarioTestemunha || "Horário não definido"}</p>
-                <p className="text-xs mt-1" style={{ color: "rgba(13,4,70,0.5)" }}>{config.textoTestemunhal || ""}</p>
+                <p className="text-xs mt-1" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>{config.textoTestemunhal || ""}</p>
               </div>
             );
           }
@@ -136,36 +136,36 @@ export default function JornalExportView({ config, blocks, onClose }: Props) {
           return (
             <div key={`blk-${blockNum}`}>
               <div className="flex items-center gap-2 mb-2">
-                <span className="text-xs font-bold px-2 py-0.5 rounded" style={{ backgroundColor: "#0d0446", color: "#ffffff" }}>
+                <span className="text-xs font-bold px-2 py-0.5 rounded" style={{ backgroundColor: "var(--layout-header-bg, #1a1a1a)", color: "var(--layout-header-text, #ffffff)" }}>
                   Bloco {blockNum}
                 </span>
-                <span className="text-[10px]" style={{ color: "rgba(13,4,70,0.4)" }}>{config.tempoBlocoMin} min</span>
+                <span className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>{config.tempoBlocoMin} min</span>
               </div>
               {blockItems.length === 0 ? (
-                <p className="text-[10px] italic pl-2" style={{ color: "rgba(13,4,70,0.3)" }}>Nenhuma notícia neste bloco</p>
+                <p className="text-[10px] italic pl-2" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 30%, transparent)" }}>Nenhuma notícia neste bloco</p>
               ) : (
                 <div className="space-y-3 pl-1">
                   {blockItems.map((n, ni) => {
                     const isRead = readTitles.has(n.title);
                     return (
-                      <div key={ni} className="rounded-lg p-3" style={{ backgroundColor: isRead ? "rgba(46,193,247,0.05)" : "rgba(13,4,70,0.02)", border: `1px solid ${isRead ? "rgba(46,193,247,0.3)" : "rgba(13,4,70,0.06)"}` }}>
+                      <div key={ni} className="rounded-lg p-3" style={{ backgroundColor: isRead ? "rgba(46,193,247,0.05)" : "rgba(13,4,70,0.02)", border: `1px solid ${isRead ? "rgba(46,193,247,0.3)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)"}` }}>
                         <div className="flex items-start gap-2">
                           <button
                             onClick={() => toggleRead(n.title)}
                             className="shrink-0 mt-0.5 w-4 h-4 rounded-full flex items-center justify-center transition-colors"
                             style={{
                               backgroundColor: isRead ? "#2ec1f7" : "transparent",
-                              border: isRead ? "none" : "2px solid rgba(13,4,70,0.2)",
+                              border: isRead ? "none" : "2px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 20%, transparent)",
                             }}
                             title={isRead ? "Marcar como não lido" : "Marcar como lido"}
                           >
-                            {isRead && <Check size={10} style={{ color: "#ffffff" }} />}
+                            {isRead && <Check size={10} style={{ color: "var(--layout-header-text, #ffffff)" }} />}
                           </button>
                           <div className="flex-1 min-w-0">
                             <p
                               className="font-bold text-xs leading-tight cursor-pointer"
                               style={{
-                                color: "#0d0446",
+                                color: "var(--layout-page-text, #1a1a1a)",
                                 textDecoration: isRead ? "line-through" : "none",
                                 opacity: isRead ? 0.5 : 1,
                               }}
@@ -175,7 +175,7 @@ export default function JornalExportView({ config, blocks, onClose }: Props) {
                             </p>
                             <span className="text-[8px] px-1 rounded mt-1 inline-block" style={{ backgroundColor: "rgba(46,193,247,0.1)", color: "#2ec1f7" }}>{n.portal}</span>
                             {n.body && (
-                              <p className="text-[11px] mt-2 leading-relaxed whitespace-pre-line" style={{ color: "rgba(13,4,70,0.7)" }}>
+                              <p className="text-[11px] mt-2 leading-relaxed whitespace-pre-line" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 70%, transparent)" }}>
                                 {n.body}
                               </p>
                             )}

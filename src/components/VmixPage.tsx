@@ -1139,7 +1139,7 @@ export default function VmixPage() {
                           window.open(previewDomain + "/vmix-control", "_blank", "noopener,noreferrer");
                         }}
                         className="ml-1.5 inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-bold transition-all hover:brightness-110"
-                        style={{ backgroundColor: "#268ffa30", color: "#268ffa", border: "1px solid #268ffa40" }}
+                        style={{ backgroundColor: "#268ffa30", color: "var(--layout-icon-color, #888888)", border: "1px solid #268ffa40" }}
                       >
                         <ExternalLink size={10} />
                         {previewDomain.replace("https://", "").slice(0, 30)}...
@@ -1237,7 +1237,7 @@ export default function VmixPage() {
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   <div className="rounded-lg p-2.5" style={{ backgroundColor: "#ffffff06" }}>
                     <p className="text-[9px] font-bold uppercase text-white/30 mb-1">Tipo de IP</p>
-                    <p className="text-xs font-bold" style={{ color: diagResult.urlType === "local" ? "#22c55e" : "#268ffa" }}>
+                    <p className="text-xs font-bold" style={{ color: diagResult.urlType === "local" ? "#22c55e" : "var(--layout-accent-color, #444444)" }}>
                       {diagResult.urlType === "local" ? "🏠 Local" : "🌐 Público"}
                     </p>
                   </div>

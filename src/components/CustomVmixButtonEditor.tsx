@@ -555,7 +555,7 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
           <button
             onClick={addCommand}
             className="flex items-center gap-1.5 text-[10px] font-bold px-3 py-1.5 rounded-lg transition-all hover:scale-[1.03]"
-            style={{ backgroundColor: "#268ffa15", color: "#268ffa", border: "1px solid #268ffa30" }}
+            style={{ backgroundColor: "#268ffa15", color: "var(--layout-icon-color, #888888)", border: "1px solid #268ffa30" }}
           >
             <Plus size={12} />
             Adicionar Ação

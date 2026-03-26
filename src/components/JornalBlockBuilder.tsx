@@ -231,9 +231,9 @@ export default function JornalBlockBuilder({ config, selectedNews, onClose }: Pr
   }
 
   return (
-    <div className="rounded-xl overflow-hidden" style={{ border: "1px solid #2ec1f7", backgroundColor: "#ffffff" }}>
+    <div className="rounded-xl overflow-hidden" style={{ border: "1px solid #2ec1f7", backgroundColor: "var(--layout-page-bg, #ffffff)" }}>
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2 font-bold text-xs" style={{ backgroundColor: "#2ec1f7", color: "#0d0446", borderBottom: "1px solid #2ec1f7" }}>
+      <div className="flex items-center justify-between px-4 py-2 font-bold text-xs" style={{ backgroundColor: "#2ec1f7", color: "var(--layout-page-text, #1a1a1a)", borderBottom: "1px solid #2ec1f7" }}>
         <span className="flex items-center gap-2">
           <Newspaper size={14} />
           Jornal: {config.programaNome}
@@ -248,7 +248,7 @@ export default function JornalBlockBuilder({ config, selectedNews, onClose }: Pr
         {sequence.map((item, idx) => {
           if (item.type === "intervalo") {
             return (
-              <div key={`int-${idx}`} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs" style={{ backgroundColor: "rgba(13,4,70,0.03)", color: "rgba(13,4,70,0.4)" }}>
+              <div key={`int-${idx}`} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs" style={{ backgroundColor: "rgba(13,4,70,0.03)", color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>
                 <Clock size={12} />
                 Intervalo {item.num} — {config.tempoIntervaloMin} min
               </div>
@@ -258,7 +258,7 @@ export default function JornalBlockBuilder({ config, selectedNews, onClose }: Pr
             return (
               <div key="test" className="rounded-lg p-3 text-xs" style={{ backgroundColor: "rgba(46,193,247,0.05)", border: "1px dashed #2ec1f7" }}>
                 <p className="font-bold mb-1" style={{ color: "#2ec1f7" }}>🎤 Testemunha — {config.horarioTestemunha || "Horário não definido"}</p>
-                <p style={{ color: "rgba(13,4,70,0.5)" }}>{config.textoTestemunhal || "Sem texto definido"}</p>
+                <p style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>{config.textoTestemunhal || "Sem texto definido"}</p>
               </div>
             );
           }
@@ -273,13 +273,13 @@ export default function JornalBlockBuilder({ config, selectedNews, onClose }: Pr
               onDragOver={e => e.preventDefault()}
               onDrop={(e) => handleDropOnBlock(blockNum, e)}
             >
-              <div className="flex items-center justify-between px-3 py-2 text-xs font-bold" style={{ backgroundColor: "#a8e2f7", color: "#0d0446", borderBottom: "1px solid rgba(46,193,247,0.2)" }}>
+              <div className="flex items-center justify-between px-3 py-2 text-xs font-bold" style={{ backgroundColor: "#a8e2f7", color: "var(--layout-page-text, #1a1a1a)", borderBottom: "1px solid rgba(46,193,247,0.2)" }}>
                 <span>Bloco {blockNum}</span>
-                <span className="font-normal" style={{ color: "rgba(13,4,70,0.4)" }}>{config.tempoBlocoMin} min · {blockItems.length} notícia(s)</span>
+                <span className="font-normal" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>{config.tempoBlocoMin} min · {blockItems.length} notícia(s)</span>
               </div>
               <div className="min-h-[40px] p-1">
                 {blockItems.length === 0 ? (
-                  <p className="text-[10px] text-center py-3" style={{ color: "rgba(13,4,70,0.3)" }}>
+                  <p className="text-[10px] text-center py-3" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 30%, transparent)" }}>
                     Arraste notícias dos portais para este bloco
                   </p>
                 ) : (
@@ -292,16 +292,16 @@ export default function JornalBlockBuilder({ config, selectedNews, onClose }: Pr
                       className="flex items-start gap-2 px-2 py-2 rounded text-xs cursor-grab active:cursor-grabbing hover:bg-gray-50"
                       style={{ borderBottom: "1px solid rgba(13,4,70,0.05)" }}
                     >
-                      <GripVertical size={12} className="shrink-0 mt-0.5" style={{ color: "rgba(13,4,70,0.2)" }} />
+                      <GripVertical size={12} className="shrink-0 mt-0.5" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 20%, transparent)" }} />
                       <div className="flex-1 min-w-0">
-                        <p className="font-bold line-clamp-2 leading-tight" style={{ color: "#0d0446" }}>{n.title}</p>
+                        <p className="font-bold line-clamp-2 leading-tight" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{n.title}</p>
                         {n.body && (
-                          <p className="line-clamp-3 mt-0.5 leading-snug" style={{ color: "rgba(13,4,70,0.5)", fontSize: "10px" }}>
+                          <p className="line-clamp-3 mt-0.5 leading-snug" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)", fontSize: "10px" }}>
                             {n.body}
                           </p>
                         )}
                         {!n.body && n.link && (
-                          <p className="mt-0.5 italic" style={{ color: "rgba(13,4,70,0.3)", fontSize: "10px" }}>
+                          <p className="mt-0.5 italic" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 30%, transparent)", fontSize: "10px" }}>
                             Texto não disponível
                           </p>
                         )}
@@ -312,7 +312,7 @@ export default function JornalBlockBuilder({ config, selectedNews, onClose }: Pr
                           <Pencil size={10} style={{ color: "#2ec1f7" }} />
                         </button>
                         <button onClick={() => removeFromBlock(blockNum, ni)} className="p-0.5 rounded hover:bg-red-50 transition-colors" title="Remover">
-                          <Trash2 size={10} style={{ color: "rgba(13,4,70,0.3)" }} />
+                          <Trash2 size={10} style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 30%, transparent)" }} />
                         </button>
                       </div>
                     </div>
@@ -327,7 +327,7 @@ export default function JornalBlockBuilder({ config, selectedNews, onClose }: Pr
 
       {/* Edit Dialog */}
       <Dialog open={!!editingItem} onOpenChange={(open) => !open && setEditingItem(null)}>
-        <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col" style={{ backgroundColor: "#ffffff", borderRadius: "20px", border: "1px solid #2ec1f7" }}>
+        <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", borderRadius: "20px", border: "1px solid #2ec1f7" }}>
           <style>{`
             .edit-materia-input:focus, .edit-materia-input:focus-visible, .edit-materia-input:active {
               outline: none !important;
@@ -337,17 +337,17 @@ export default function JornalBlockBuilder({ config, selectedNews, onClose }: Pr
             }
           `}</style>
           <DialogHeader>
-            <DialogTitle className="text-sm font-bold" style={{ color: "#0d0446" }}>Editar Matéria</DialogTitle>
+            <DialogTitle className="text-sm font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Editar Matéria</DialogTitle>
           </DialogHeader>
           <div className="flex flex-col gap-3 flex-1 min-h-0">
             <div>
-              <Label className="text-xs font-semibold" style={{ color: "#0d0446" }}>Título</Label>
-              <Input value={editTitle} onChange={e => setEditTitle(e.target.value)} className="edit-materia-input text-xs mt-1 font-bold" style={{ borderColor: "#2ec1f7", borderRadius: "9999px", backgroundColor: "#ffffff", color: "#0d0446" }} />
+              <Label className="text-xs font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Título</Label>
+              <Input value={editTitle} onChange={e => setEditTitle(e.target.value)} className="edit-materia-input text-xs mt-1 font-bold" style={{ borderColor: "#2ec1f7", borderRadius: "9999px", backgroundColor: "var(--layout-page-bg, #ffffff)", color: "var(--layout-page-text, #1a1a1a)" }} />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <Label className="text-xs font-semibold shrink-0" style={{ color: "#0d0446" }}>URL da Imagem</Label>
-                <Input value={editImageUrl} onChange={e => setEditImageUrl(e.target.value)} className="edit-materia-input flex-1" placeholder="https://..." style={{ borderColor: "#2ec1f7", borderRadius: "9999px", backgroundColor: "#ffffff", color: "#0d0446", fontSize: "10px", height: "28px", padding: "0 12px" }} />
+                <Label className="text-xs font-semibold shrink-0" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>URL da Imagem</Label>
+                <Input value={editImageUrl} onChange={e => setEditImageUrl(e.target.value)} className="edit-materia-input flex-1" placeholder="https://..." style={{ borderColor: "#2ec1f7", borderRadius: "9999px", backgroundColor: "var(--layout-page-bg, #ffffff)", color: "var(--layout-page-text, #1a1a1a)", fontSize: "10px", height: "28px", padding: "0 12px" }} />
               </div>
               {editImageUrl && (
                 <img src={editImageUrl} alt="" className="mt-1 w-full h-24 object-cover rounded" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
@@ -355,13 +355,13 @@ export default function JornalBlockBuilder({ config, selectedNews, onClose }: Pr
             </div>
             <div className="flex-1 flex flex-col min-h-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <Label className="text-xs font-semibold" style={{ color: "#0d0446" }}>Texto da Matéria</Label>
+                <Label className="text-xs font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Texto da Matéria</Label>
                 <div className="flex items-center gap-1">
-                  <button onClick={() => setEditFontSize(s => Math.max(8, s - 1))} className="rounded-full w-5 h-5 flex items-center justify-center hover:opacity-70" style={{ border: "1px solid #2ec1f7", color: "#0d0446" }} title="Diminuir fonte">
+                  <button onClick={() => setEditFontSize(s => Math.max(8, s - 1))} className="rounded-full w-5 h-5 flex items-center justify-center hover:opacity-70" style={{ border: "1px solid #2ec1f7", color: "var(--layout-page-text, #1a1a1a)" }} title="Diminuir fonte">
                     <Minus size={10} />
                   </button>
-                  <span className="text-[9px] min-w-[24px] text-center" style={{ color: "rgba(13,4,70,0.5)" }}>{editFontSize}px</span>
-                  <button onClick={() => setEditFontSize(s => Math.min(24, s + 1))} className="rounded-full w-5 h-5 flex items-center justify-center hover:opacity-70" style={{ border: "1px solid #2ec1f7", color: "#0d0446" }} title="Aumentar fonte">
+                  <span className="text-[9px] min-w-[24px] text-center" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>{editFontSize}px</span>
+                  <button onClick={() => setEditFontSize(s => Math.min(24, s + 1))} className="rounded-full w-5 h-5 flex items-center justify-center hover:opacity-70" style={{ border: "1px solid #2ec1f7", color: "var(--layout-page-text, #1a1a1a)" }} title="Aumentar fonte">
                     <Plus size={10} />
                   </button>
                 </div>
@@ -369,7 +369,7 @@ export default function JornalBlockBuilder({ config, selectedNews, onClose }: Pr
                   onClick={handleImproveText}
                   disabled={aiImproving || !editBody.trim()}
                   className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold hover:opacity-80 transition-opacity disabled:opacity-40"
-                  style={{ backgroundColor: "#2ec1f7", color: "#0d0446" }}
+                  style={{ backgroundColor: "#2ec1f7", color: "var(--layout-page-text, #1a1a1a)" }}
                 >
                   {aiImproving ? <Loader2 size={10} className="animate-spin" /> : <Sparkles size={10} />}
                   Melhorar com IA
@@ -378,23 +378,23 @@ export default function JornalBlockBuilder({ config, selectedNews, onClose }: Pr
                   <button
                     onClick={undoAiText}
                     className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold hover:opacity-80 transition-opacity"
-                    style={{ backgroundColor: "rgba(13,4,70,0.08)", color: "#0d0446" }}
+                    style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)", color: "var(--layout-page-text, #1a1a1a)" }}
                   >
                     <Undo2 size={10} />
                     Desfazer IA
                   </button>
                 )}
                 {editBody.trim() && (
-                  <span className="text-[9px] ml-auto" style={{ color: "rgba(13,4,70,0.4)" }}>
+                  <span className="text-[9px] ml-auto" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>
                     ⏱ Leitura: {estimateReadingTime(editBody)}
                   </span>
                 )}
               </div>
-              <Textarea value={editBody} onChange={e => setEditBody(e.target.value)} className="edit-materia-input mt-1 flex-1" style={{ borderColor: "#2ec1f7", borderRadius: "20px", backgroundColor: "#ffffff", color: "#0d0446", minHeight: "300px", maxHeight: "calc(90vh - 340px)", resize: "none", fontSize: `${editFontSize}px` }} />
+              <Textarea value={editBody} onChange={e => setEditBody(e.target.value)} className="edit-materia-input mt-1 flex-1" style={{ borderColor: "#2ec1f7", borderRadius: "20px", backgroundColor: "var(--layout-page-bg, #ffffff)", color: "var(--layout-page-text, #1a1a1a)", minHeight: "300px", maxHeight: "calc(90vh - 340px)", resize: "none", fontSize: `${editFontSize}px` }} />
             </div>
             <div className="flex justify-end gap-2">
-              <Button variant="outline" size="sm" onClick={() => setEditingItem(null)} style={{ borderColor: "#2ec1f7", borderRadius: "9999px", color: "#0d0446", backgroundColor: "#ffffff" }}>Cancelar</Button>
-              <Button size="sm" onClick={saveEdit} style={{ backgroundColor: "#2ec1f7", color: "#0d0446", borderRadius: "9999px" }}>Salvar</Button>
+              <Button variant="outline" size="sm" onClick={() => setEditingItem(null)} style={{ borderColor: "#2ec1f7", borderRadius: "9999px", color: "var(--layout-page-text, #1a1a1a)", backgroundColor: "var(--layout-page-bg, #ffffff)" }}>Cancelar</Button>
+              <Button size="sm" onClick={saveEdit} style={{ backgroundColor: "#2ec1f7", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "9999px" }}>Salvar</Button>
             </div>
           </div>
         </DialogContent>

@@ -88,16 +88,16 @@ export default function TeleprompterPage() {
     <div className="space-y-6">
       {/* Form */}
       <div className="rounded-xl p-5 space-y-4" style={{ backgroundColor: "#f0f2f8", border: "1px solid #e2e8f0" }}>
-        <h3 className="text-sm font-bold" style={{ color: "#0d0446" }}>Cadastrar TP</h3>
+        <h3 className="text-sm font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Cadastrar TP</h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="text-xs font-semibold mb-1 block" style={{ color: "#0d0446" }}>Estúdio</label>
+            <label className="text-xs font-semibold mb-1 block" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Estúdio</label>
             <select
               value={estudio}
               onChange={(e) => setEstudio(e.target.value)}
               className={inputStyle}
-              style={{ borderColor: "#c7d2e0", color: "#0d0446", backgroundColor: "#ffffff" }}
+              style={{ borderColor: "#c7d2e0", color: "var(--layout-page-text, #1a1a1a)", backgroundColor: "var(--layout-page-bg, #ffffff)" }}
             >
               <option value="">Selecione o estúdio</option>
               {estudios.map((e) => (
@@ -106,13 +106,13 @@ export default function TeleprompterPage() {
             </select>
           </div>
           <div>
-            <label className="text-xs font-semibold mb-1 block" style={{ color: "#0d0446" }}>Nome do TP</label>
+            <label className="text-xs font-semibold mb-1 block" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Nome do TP</label>
             <input
               value={nome}
               onChange={(e) => setNome(e.target.value)}
               placeholder="Ex: TP Principal"
               className={inputStyle}
-              style={{ borderColor: "#c7d2e0", color: "#0d0446", backgroundColor: "#ffffff" }}
+              style={{ borderColor: "#c7d2e0", color: "var(--layout-page-text, #1a1a1a)", backgroundColor: "var(--layout-page-bg, #ffffff)" }}
             />
           </div>
         </div>
@@ -121,9 +121,9 @@ export default function TeleprompterPage() {
           onClick={handleAdd}
           disabled={loading}
           className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all"
-          style={{ backgroundColor: "#268ffa", color: "#ffffff" }}
-          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#0d0446"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "#268ffa"; }}
+          style={{ backgroundColor: "var(--layout-accent-color, #444444)", color: "var(--layout-header-text, #ffffff)" }}
+          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "var(--layout-header-bg, #1a1a1a)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "var(--layout-accent-color, #444444)"; }}
         >
           <Plus size={14} /> {loading ? "Salvando..." : "Cadastrar TP"}
         </button>
@@ -133,7 +133,7 @@ export default function TeleprompterPage() {
       <div className="rounded-xl overflow-hidden" style={{ border: "1px solid #e2e8f0" }}>
         <table className="w-full text-xs">
           <thead>
-            <tr style={{ backgroundColor: "#0d0446", color: "#ffffff" }}>
+            <tr style={{ backgroundColor: "var(--layout-header-bg, #1a1a1a)", color: "var(--layout-header-text, #ffffff)" }}>
               <th className="text-left px-4 py-2 font-semibold">Estúdio</th>
               <th className="text-left px-4 py-2 font-semibold">Nome do TP</th>
               <th className="text-center px-4 py-2 font-semibold">Status</th>
@@ -142,12 +142,12 @@ export default function TeleprompterPage() {
           </thead>
           <tbody>
             {tps.length === 0 && (
-              <tr><td colSpan={4} className="text-center py-6 text-sm" style={{ color: "rgba(13,4,70,0.4)" }}>Nenhum TP cadastrado</td></tr>
+              <tr><td colSpan={4} className="text-center py-6 text-sm" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>Nenhum TP cadastrado</td></tr>
             )}
             {tps.map((tp) => (
-              <tr key={tp.id} className="border-t" style={{ borderColor: "#e2e8f0", backgroundColor: "#ffffff" }}>
-                <td className="px-4 py-2" style={{ color: "#0d0446" }}>{tp.estudio}</td>
-                <td className="px-4 py-2 font-medium" style={{ color: "#0d0446" }}>{tp.nome}</td>
+              <tr key={tp.id} className="border-t" style={{ borderColor: "#e2e8f0", backgroundColor: "var(--layout-page-bg, #ffffff)" }}>
+                <td className="px-4 py-2" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{tp.estudio}</td>
+                <td className="px-4 py-2 font-medium" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{tp.nome}</td>
                 <td className="px-4 py-2 text-center">
                   <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${tp.ativo ? "bg-green-100 text-green-700" : "bg-red-100 text-red-500"}`}>
                     {tp.ativo ? "Ativo" : "Inativo"}

@@ -84,20 +84,20 @@ export default function MusicasCurtidasPage() {
 
   return (
     <div className="space-y-4 animate-fade-in">
-      <p className="text-sm" style={{ color: "rgba(13,4,70,0.5)" }}>
+      <p className="text-sm" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
         Suas {songs.length} músicas mais curtidas, da mais curtida para a menos curtida.
         Músicas além da posição 100 são removidas automaticamente.
       </p>
 
       {songs.length === 0 ? (
-        <p className="text-sm py-10 text-center" style={{ color: "rgba(13,4,70,0.5)" }}>
+        <p className="text-sm py-10 text-center" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
           Nenhuma música curtida ainda. Curta músicas no Player!
         </p>
       ) : (
-        <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(13,4,70,0.1)" }}>
-          <table className="w-full text-sm" style={{ color: "#0d0446" }}>
+        <div className="rounded-xl overflow-hidden" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 35%, transparent)" }}>
+          <table className="w-full text-sm" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
             <thead>
-              <tr style={{ backgroundColor: "#0d0446", color: "#ffffff" }}>
+              <tr style={{ backgroundColor: "var(--layout-header-bg, #1a1a1a)", color: "var(--layout-header-text, #ffffff)" }}>
                 <th className="px-4 py-2 text-center font-semibold w-12">#</th>
                 <th className="px-4 py-2 text-center font-semibold w-14">Capa</th>
                 <th className="px-4 py-2 text-left font-semibold">Música</th>
@@ -109,27 +109,27 @@ export default function MusicasCurtidasPage() {
             <tbody>
               {songs.map((song, i) => (
                 <tr key={`${song.artista}-${song.titulo}`}
-                  style={{ backgroundColor: i % 2 === 0 ? "#ffffff" : "#f8f8fc", borderTop: "1px solid rgba(13,4,70,0.08)" }}
+                  style={{ backgroundColor: i % 2 === 0 ? "#ffffff" : "#f8f8fc", borderTop: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }}
                 >
                   <td className="px-4 py-2 text-center">
                     <span
                       className="inline-flex items-center justify-center w-7 h-7 rounded-full text-[10px] font-bold text-white"
-                      style={{ backgroundColor: i < 3 ? "#ed0808" : i < 10 ? "#0d0446" : "rgba(13,4,70,0.3)" }}
+                      style={{ backgroundColor: i < 3 ? "#ed0808" : i < 10 ? "var(--layout-header-bg, #1a1a1a)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 30%, transparent)" }}
                     >
                       {i + 1}
                     </span>
                   </td>
                   <td className="px-4 py-2 text-center">
                     {song.capa ? (
-                      <img src={song.capa} alt={song.titulo} className="w-10 h-10 rounded-lg object-cover mx-auto" style={{ border: "1px solid rgba(13,4,70,0.08)" }} />
+                      <img src={song.capa} alt={song.titulo} className="w-10 h-10 rounded-lg object-cover mx-auto" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }} />
                     ) : (
                       <div className="w-10 h-10 rounded-lg flex items-center justify-center mx-auto" style={{ backgroundColor: "rgba(13,4,70,0.04)" }}>
-                        <Music size={16} style={{ color: "rgba(13,4,70,0.3)" }} />
+                        <Music size={16} style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 30%, transparent)" }} />
                       </div>
                     )}
                   </td>
                   <td className="px-4 py-2 font-medium truncate max-w-[200px]">{song.titulo}</td>
-                  <td className="px-4 py-2 truncate max-w-[150px]" style={{ color: "rgba(13,4,70,0.6)" }}>{song.artista}</td>
+                  <td className="px-4 py-2 truncate max-w-[150px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>{song.artista}</td>
                   <td className="px-4 py-2 text-center">
                     <span className="inline-flex items-center gap-1">
                       <Heart size={12} className="text-red-500" fill="#ef4444" />

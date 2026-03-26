@@ -409,11 +409,11 @@ export default function RoteiroPrograma() {
     setEditingRoteiroId(null);
 
     const tdStyle = "border:1px solid rgba(13,4,70,0.10);padding:10px 12px;word-wrap:break-word;overflow-wrap:break-word;vertical-align:top;line-height:1.6";
-    const thStyle = `${tdStyle};text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:0.8px;font-weight:700;color:#0d0446;background:rgba(38,143,250,0.06)`;
+    const thStyle = `${tdStyle};text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:0.8px;font-weight:700;color:#0d0446;background:color-mix(in srgb, var(--layout-accent-color) 6%, transparent)`;
     const actionBtnStyle = "cursor:pointer;padding:2px 6px;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;font-size:13px";
     const perguntaActions = `<td style="${tdStyle};white-space:nowrap;text-align:center;width:90px" contenteditable="false"><span data-action="move-up" style="${actionBtnStyle};color:#268ffa" title="Mover para cima">▲</span> <span data-action="move-down" style="${actionBtnStyle};color:#268ffa" title="Mover para baixo">▼</span> <span data-action="delete-pergunta" style="${actionBtnStyle};color:#dc2626" title="Remover pergunta">🗑</span></td>`;
     const elStyle = `${tdStyle};font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.3px;color:#0d0446`;
-    const timeStyle = `${tdStyle};font-family:monospace;font-size:12px;color:rgba(13,4,70,0.5);text-align:center`;
+    const timeStyle = `${tdStyle};font-family:monospace;font-size:12px;color:color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent);text-align:center`;
     const blocoStyle = `${tdStyle};font-weight:700;color:#ffffff;background:#0d0446;font-size:12px;text-transform:uppercase;letter-spacing:1px`;
     const intervaloStyle = `${tdStyle};font-weight:700;color:#dc2626;background:rgba(220,38,38,0.06);font-size:11px;text-transform:uppercase;letter-spacing:0.5px`;
 
@@ -525,7 +525,7 @@ export default function RoteiroPrograma() {
 <td style="${timeStyle}">--:--</td>
 <td style="${elStyle}">Encerramento</td>
 <td style="${tdStyle}"><strong>APRESENTADOR:</strong> "Encerramos por aqui a edição de hoje. Amanhã tem mais. Até lá!"</td>
-<td style="${tdStyle};font-size:11px;color:rgba(13,4,70,0.5)">Encerrar jornal</td>
+<td style="${tdStyle};font-size:11px;color:color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)">Encerrar jornal</td>
 </tr>
 </tbody>
 </table>`;
@@ -554,11 +554,11 @@ export default function RoteiroPrograma() {
 <td style="${timeStyle}">--:--</td>
 <td style="${elStyle}">Off / Cabeça</td>
 <td style="${tdStyle}"><strong>APRESENTADOR:</strong> "Olá! Hoje o tema é sério. Vamos falar sobre como a informação é o melhor caminho contra a dependência química."</td>
-<td style="${tdStyle};font-size:11px;color:rgba(13,4,70,0.5)">Abertura do programa</td>
+<td style="${tdStyle};font-size:11px;color:color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)">Abertura do programa</td>
 </tr>
 <tr>
-<td style="${tdStyle};background:rgba(38,143,250,0.04)"></td>
-<td style="${tdStyle};font-weight:700;color:#268ffa;background:rgba(38,143,250,0.04)" colspan="3">ENTREVISTA</td>
+<td style="${tdStyle};background:color-mix(in srgb, var(--layout-accent-color) 4%, transparent)"></td>
+<td style="${tdStyle};font-weight:700;color:#268ffa;background:color-mix(in srgb, var(--layout-accent-color) 4%, transparent)" colspan="3">ENTREVISTA</td>
 </tr>
 <tr data-pergunta="1">
 <td style="${timeStyle}">--:--</td>
@@ -581,7 +581,7 @@ ${perguntaActions}
 <td style="${timeStyle}">--:--</td>
 <td style="${elStyle}">Encerramento</td>
 <td style="${tdStyle}"><strong>APRESENTADOR:</strong> "Agradecemos ao [Nome]. Se você precisa de ajuda, ligue para o [Número/CAPS]. Até amanhã."</td>
-<td style="${tdStyle};font-size:11px;color:rgba(13,4,70,0.5)">Encerrar programa</td>
+<td style="${tdStyle};font-size:11px;color:color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)">Encerrar programa</td>
 </tr>
 </tbody>
 </table>`;
@@ -648,9 +648,9 @@ ${perguntaActions}
   return (
     <div className="animate-fade-in space-y-5">
       {/* ── STEP 1: Configuração do Programa ── */}
-      <div className="rounded-2xl overflow-hidden" style={{ background: "#ffffff", boxShadow: "0 4px 24px rgba(13,4,70,0.08)", border: "1px solid rgba(13,4,70,0.06)" }}>
+      <div className="rounded-2xl overflow-hidden" style={{ background: "#ffffff", boxShadow: "0 4px 24px rgba(0,0,0,0.08)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)" }}>
         {/* Section Header */}
-        <div className="px-6 py-4 flex items-center justify-between" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #0d0446), color-mix(in srgb, var(--layout-header-bg, #1a0a6e) 80%, white 20%))", borderBottom: "1px solid rgba(13,4,70,0.06)" }}>
+        <div className="px-6 py-4 flex items-center justify-between" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #0d0446), color-mix(in srgb, var(--layout-header-bg, color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%)) 80%, white 20%))", borderBottom: "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)" }}>
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: "rgba(255,255,255,0.15)" }}>
               <FileText size={18} className="text-white" />
@@ -681,18 +681,18 @@ ${perguntaActions}
         <div className="p-6 space-y-5">
           {/* Row 1: Estúdio + Tipo + Programa */}
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-wider mb-3" style={{ color: "rgba(13,4,70,0.4)" }}>Identificação do programa</p>
+            <p className="text-[10px] font-bold uppercase tracking-wider mb-3" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>Identificação do programa</p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="text-[11px] font-semibold mb-1.5 flex items-center gap-1.5" style={{ color: "#0d0446" }}>
-                  <Building2 size={12} style={{ color: "#268ffa" }} />Estúdio
+                <label className="text-[11px] font-semibold mb-1.5 flex items-center gap-1.5" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                  <Building2 size={12} style={{ color: "var(--layout-icon-color, #888888)" }} />Estúdio
                 </label>
                 <select
                   data-field="estudio"
                   value={estudio}
                   onChange={e => handleEstudioChange(e.target.value)}
-                  className="w-full px-3 py-2.5 rounded-xl text-xs outline-none transition-all focus:ring-2 focus:ring-[#268ffa]/20"
-                  style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "1px solid rgba(13,4,70,0.1)", color: "#0d0446" }}
+                  className="w-full px-3 py-2.5 rounded-xl text-xs outline-none transition-all focus:ring-2 focus:ring-[var(--layout-accent-color)]/20"
+                  style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 35%, transparent)", color: "var(--layout-page-text, #1a1a1a)" }}
                 >
                   <option value="">Selecione o estúdio</option>
                   {estudios.map(e => <option key={e} value={e}>{e}</option>)}
@@ -700,12 +700,12 @@ ${perguntaActions}
               </div>
 
               <div>
-                <label className="text-[11px] font-semibold mb-1.5 block" style={{ color: "#0d0446" }}>Tipo de Programa</label>
+                <label className="text-[11px] font-semibold mb-1.5 block" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Tipo de Programa</label>
                 <select
                   value={tipoPrograma}
                   onChange={e => handleTipoChange(e.target.value)}
-                  className="w-full px-3 py-2.5 rounded-xl text-xs outline-none transition-all focus:ring-2 focus:ring-[#268ffa]/20"
-                  style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "1px solid rgba(13,4,70,0.1)", color: "#0d0446" }}
+                  className="w-full px-3 py-2.5 rounded-xl text-xs outline-none transition-all focus:ring-2 focus:ring-[var(--layout-accent-color)]/20"
+                  style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 35%, transparent)", color: "var(--layout-page-text, #1a1a1a)" }}
                 >
                   <option value="">Todos os tipos</option>
                   {tiposFiltrados.map(t => <option key={t} value={t}>{t}</option>)}
@@ -713,15 +713,15 @@ ${perguntaActions}
               </div>
 
               <div>
-                <label className="text-[11px] font-semibold mb-1.5 flex items-center gap-1.5" style={{ color: "#0d0446" }}>
-                  <FileText size={12} style={{ color: "#268ffa" }} />Programa
+                <label className="text-[11px] font-semibold mb-1.5 flex items-center gap-1.5" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                  <FileText size={12} style={{ color: "var(--layout-icon-color, #888888)" }} />Programa
                 </label>
                 <select
                   data-field="programa"
                   value={programaNome}
                   onChange={e => handleProgramaChange(e.target.value)}
-                  className="w-full px-3 py-2.5 rounded-xl text-xs outline-none transition-all focus:ring-2 focus:ring-[#268ffa]/20"
-                  style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "1px solid rgba(13,4,70,0.1)", color: "#0d0446" }}
+                  className="w-full px-3 py-2.5 rounded-xl text-xs outline-none transition-all focus:ring-2 focus:ring-[var(--layout-accent-color)]/20"
+                  style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 35%, transparent)", color: "var(--layout-page-text, #1a1a1a)" }}
                 >
                   <option value="">Selecione o programa</option>
                   {programasFiltrados.map(p => <option key={p.id} value={p.nome}>{p.nome}</option>)}
@@ -731,23 +731,23 @@ ${perguntaActions}
           </div>
 
           {/* Divider */}
-          <div className="h-px" style={{ backgroundColor: "rgba(13,4,70,0.06)" }} />
+          <div className="h-px" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)" }} />
 
           {/* Row 2: Data + Horário + Título */}
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-wider mb-3" style={{ color: "rgba(13,4,70,0.4)" }}>Data, horário e título</p>
+            <p className="text-[10px] font-bold uppercase tracking-wider mb-3" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>Data, horário e título</p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="text-[11px] font-semibold mb-1.5 flex items-center gap-1.5" style={{ color: "#0d0446" }}>
-                  <CalendarIcon size={12} style={{ color: "#268ffa" }} />Data do Programa
+                <label className="text-[11px] font-semibold mb-1.5 flex items-center gap-1.5" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                  <CalendarIcon size={12} style={{ color: "var(--layout-icon-color, #888888)" }} />Data do Programa
                 </label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <button
-                      className="w-full px-3 py-2.5 rounded-xl text-xs text-left flex items-center gap-2 outline-none transition-all hover:border-[#268ffa]/30"
-                      style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "1px solid rgba(13,4,70,0.1)", color: "#0d0446" }}
+                      className="w-full px-3 py-2.5 rounded-xl text-xs text-left flex items-center gap-2 outline-none transition-all hover:border-[var(--layout-accent-color)]/30"
+                      style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 35%, transparent)", color: "var(--layout-page-text, #1a1a1a)" }}
                     >
-                      <CalendarIcon size={12} style={{ color: "#268ffa" }} />
+                      <CalendarIcon size={12} style={{ color: "var(--layout-icon-color, #888888)" }} />
                       {format(selectedDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
                     </button>
                   </PopoverTrigger>
@@ -773,17 +773,17 @@ ${perguntaActions}
                         row: "flex w-full mt-1",
                         cell: "h-9 w-9 text-center text-sm p-0 relative rounded-full",
                         day: "h-9 w-9 p-0 font-medium rounded-full transition-all hover:bg-[rgba(38,143,250,0.12)]",
-                        day_selected: "bg-[#268ffa] text-white hover:bg-[#268ffa] focus:bg-[#268ffa] font-bold shadow-md",
-                        day_today: "bg-[rgba(13,4,70,0.08)] font-bold",
+                        day_selected: "bg-[var(--layout-accent-color)] text-white hover:bg-[var(--layout-accent-color)] focus:bg-[var(--layout-accent-color)] font-bold shadow-md",
+                        day_today: "bg-[color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)] font-bold",
                         day_outside: "opacity-30",
                         day_disabled: "opacity-30",
                         day_hidden: "invisible",
                       }}
                       styles={{
-                        caption_label: { color: "#0d0446" },
+                        caption_label: { color: "var(--layout-page-text, #1a1a1a)" },
                         head_cell: { color: "rgba(13,4,70,0.45)" },
-                        day: { color: "#0d0446" },
-                        nav_button: { color: "#268ffa", backgroundColor: "rgba(38,143,250,0.08)" },
+                        day: { color: "var(--layout-page-text, #1a1a1a)" },
+                        nav_button: { color: "var(--layout-icon-color, #888888)", backgroundColor: "rgba(38,143,250,0.08)" },
                       }}
                     />
                   </PopoverContent>
@@ -791,8 +791,8 @@ ${perguntaActions}
               </div>
 
               <div>
-                <label className="text-[11px] font-semibold mb-1.5 flex items-center gap-1.5" style={{ color: "#0d0446" }}>
-                  <Clock size={12} style={{ color: "#268ffa" }} />Horário
+                <label className="text-[11px] font-semibold mb-1.5 flex items-center gap-1.5" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                  <Clock size={12} style={{ color: "var(--layout-icon-color, #888888)" }} />Horário
                 </label>
                 <input
                   data-field="horario"
@@ -800,22 +800,22 @@ ${perguntaActions}
                   value={horario}
                   onChange={e => setHorario(e.target.value)}
                   placeholder="Ex: 08:00"
-                  className="w-full px-3 py-2.5 rounded-xl text-xs outline-none transition-all focus:ring-2 focus:ring-[#268ffa]/20"
-                  style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "1px solid rgba(13,4,70,0.1)", color: "#0d0446" }}
+                  className="w-full px-3 py-2.5 rounded-xl text-xs outline-none transition-all focus:ring-2 focus:ring-[var(--layout-accent-color)]/20"
+                  style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 35%, transparent)", color: "var(--layout-page-text, #1a1a1a)" }}
                 />
               </div>
 
               <div>
-                <label className="text-[11px] font-semibold mb-1.5 flex items-center gap-1.5" style={{ color: "#0d0446" }}>
-                  <Type size={12} style={{ color: "#268ffa" }} />Título do Roteiro
+                <label className="text-[11px] font-semibold mb-1.5 flex items-center gap-1.5" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                  <Type size={12} style={{ color: "var(--layout-icon-color, #888888)" }} />Título do Roteiro
                 </label>
                 <input
                   data-field="titulo"
                   value={roteiroTitulo}
                   onChange={e => setRoteiroTitulo(e.target.value)}
                   placeholder="Ex: Gravação de Podcast"
-                  className="w-full px-3 py-2.5 rounded-xl outline-none transition-all focus:ring-2 focus:ring-[#268ffa]/20 uppercase text-sm font-bold"
-                  style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "1px solid rgba(13,4,70,0.1)", color: "#0d0446" }}
+                  className="w-full px-3 py-2.5 rounded-xl outline-none transition-all focus:ring-2 focus:ring-[var(--layout-accent-color)]/20 uppercase text-sm font-bold"
+                  style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 35%, transparent)", color: "var(--layout-page-text, #1a1a1a)" }}
                 />
               </div>
             </div>
@@ -828,7 +828,7 @@ ${perguntaActions}
         <button
           onClick={handleMontarRoteiro}
           className="w-full py-3 rounded-xl text-sm font-bold transition-all hover:opacity-90"
-          style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#ffffff", boxShadow: "0 4px 16px rgba(38,143,250,0.3)" }}
+          style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #444444), color-mix(in srgb, var(--layout-accent-color, #444444) 70%, white 30%))", color: "var(--layout-header-text, #ffffff)", boxShadow: "0 4px 16px color-mix(in srgb, var(--layout-accent-color, #444444) 30%, transparent)" }}
         >
           Montar Roteiro
         </button>
@@ -836,10 +836,10 @@ ${perguntaActions}
 
       {/* Histórico de Roteiros */}
       {historico.length > 0 && (
-        <div className="rounded-xl p-4 mt-4" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.08)" }}>
+        <div className="rounded-xl p-4 mt-4" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }}>
           <div className="flex items-center gap-2 mb-3">
-            <History size={14} style={{ color: "#268ffa" }} />
-            <p className="text-xs font-bold" style={{ color: "#0d0446" }}>Últimos roteiros</p>
+            <History size={14} style={{ color: "var(--layout-icon-color, #888888)" }} />
+            <p className="text-xs font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Últimos roteiros</p>
           </div>
           <div className="space-y-2">
             {historico.map(r => {
@@ -847,28 +847,28 @@ ${perguntaActions}
               const isAgd = r.status === "agendado";
               const isFeito = r.status === "feito";
               return (
-                <div key={r.id} className="flex items-center justify-between px-3 py-2.5 rounded-lg" style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "1px solid rgba(13,4,70,0.06)" }}>
+                <div key={r.id} className="flex items-center justify-between px-3 py-2.5 rounded-lg" style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)" }}>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <p className="text-sm font-bold truncate" style={{ color: "#0d0446" }}>
+                      <p className="text-sm font-bold truncate" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
                         {r.programa_nome || "Sem programa"}
-                        {r.numero_roteiro && <span className="text-xs font-semibold" style={{ color: "rgba(13,4,70,0.5)" }}> #{r.numero_roteiro}</span>}
+                        {r.numero_roteiro && <span className="text-xs font-semibold" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}> #{r.numero_roteiro}</span>}
                       </p>
                       <span
                         className="text-[10px] px-2 py-0.5 rounded-full font-bold"
                         style={{
-                          backgroundColor: isFeito ? "rgba(22,163,74,0.1)" : isAgd ? "rgba(38,143,250,0.1)" : "rgba(13,4,70,0.06)",
-                          color: isFeito ? "#16a34a" : isAgd ? "#268ffa" : "rgba(13,4,70,0.5)",
+                          backgroundColor: isFeito ? "rgba(22,163,74,0.1)" : isAgd ? "color-mix(in srgb, var(--layout-accent-color, #444444) 10%, transparent)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)",
+                          color: isFeito ? "#16a34a" : isAgd ? "var(--layout-accent-color, #444444)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)",
                         }}
                       >
                         {isFeito ? "feito" : isAgd ? "agendado" : r.status}
                       </span>
                     </div>
-                    <p className="text-xs font-medium mt-0.5" style={{ color: "rgba(13,4,70,0.6)" }}>
+                    <p className="text-xs font-medium mt-0.5" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>
                       {dataFormatada} {r.horario ? `· ${r.horario}` : ""} {r.titulo ? `· ${r.titulo}` : ""}
                     </p>
                     {r.editado_at && (
-                      <p className="text-[10px] mt-0.5" style={{ color: "rgba(13,4,70,0.4)" }}>
+                      <p className="text-[10px] mt-0.5" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>
                         Editado por último em: {format(new Date(r.editado_at), "dd/MM/yyyy 'às' HH:mm")}
                         {r.share_login ? ` por: ${r.share_login}` : ""}
                       </p>
@@ -922,11 +922,11 @@ ${perguntaActions}
                         style={{ backgroundColor: "rgba(38,143,250,0.08)" }}
                         title="Baixar PDF"
                       >
-                        <Download size={12} style={{ color: "#268ffa" }} />
+                        <Download size={12} style={{ color: "var(--layout-icon-color, #888888)" }} />
                       </button>
                     )}
                     <button onClick={() => editarRoteiro(r)} className="h-7 w-7 flex items-center justify-center rounded-lg hover:opacity-70 transition" style={{ backgroundColor: "rgba(38,143,250,0.08)" }} title="Editar">
-                      <Pencil size={12} style={{ color: "#268ffa" }} />
+                      <Pencil size={12} style={{ color: "var(--layout-icon-color, #888888)" }} />
                     </button>
                     <button onClick={() => excluirRoteiro(r.id)} className="h-7 w-7 flex items-center justify-center rounded-lg hover:opacity-70 transition" style={{ backgroundColor: "rgba(220,38,38,0.08)" }} title="Excluir">
                       <Trash2 size={12} style={{ color: "#dc2626" }} />
@@ -941,9 +941,9 @@ ${perguntaActions}
 
       {/* Roteiro Form */}
       {showRoteiro && (
-        <div className="rounded-2xl overflow-hidden" style={{ background: "#ffffff", boxShadow: "0 4px 24px rgba(13,4,70,0.08)", border: "1px solid rgba(13,4,70,0.06)" }}>
+        <div className="rounded-2xl overflow-hidden" style={{ background: "#ffffff", boxShadow: "0 4px 24px rgba(0,0,0,0.08)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)" }}>
           {/* Section Header */}
-          <div className="px-6 py-4" style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)" }}>
+          <div className="px-6 py-4" style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #444444), color-mix(in srgb, var(--layout-accent-color, #444444) 70%, white 30%))" }}>
             <div className="flex items-center justify-between flex-wrap gap-2">
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-wider text-white/60">Passo 2 — Conteúdo do Roteiro</p>
@@ -956,15 +956,15 @@ ${perguntaActions}
                   <button
                     onClick={async () => { await salvarRoteiro(); fetchHistorico(); setShowRoteiro(false); setShowExportView(false); setEditingRoteiroId(null); }}
                     className="px-3 py-1.5 rounded-full text-[11px] font-bold flex items-center gap-1.5 transition-all hover:bg-white/30"
-                    style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "#ffffff" }}
+                    style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "var(--layout-header-text, #ffffff)" }}
                   >
                     <X size={12} />
                     Fechar
                   </button>
-                  <span className="px-2.5 py-1 rounded-full text-[10px] font-bold" style={{ backgroundColor: "rgba(255,255,255,0.2)", color: "#ffffff" }}>
+                  <span className="px-2.5 py-1 rounded-full text-[10px] font-bold" style={{ backgroundColor: "rgba(255,255,255,0.2)", color: "var(--layout-header-text, #ffffff)" }}>
                     Estúdio {estudio || "—"}
                 </span>
-                <span className="px-2.5 py-1 rounded-full text-[10px] font-bold" style={{ backgroundColor: "rgba(255,255,255,0.2)", color: "#ffffff" }}>
+                <span className="px-2.5 py-1 rounded-full text-[10px] font-bold" style={{ backgroundColor: "rgba(255,255,255,0.2)", color: "var(--layout-header-text, #ffffff)" }}>
                   {format(selectedDate, "dd/MM/yy", { locale: ptBR })} · {horario || "—"}
                 </span>
               </div>
@@ -973,46 +973,46 @@ ${perguntaActions}
 
           <div className="p-6 space-y-5">
             {programaNome !== "Primeira Hora Positiva" && (
-            <div className="rounded-xl p-4" style={{ backgroundColor: "rgba(38,143,250,0.03)", border: "1px solid rgba(38,143,250,0.1)" }}>
-              <p className="text-[10px] font-bold uppercase tracking-wider mb-3" style={{ color: "#268ffa" }}>
+            <div className="rounded-xl p-4" style={{ backgroundColor: "rgba(38,143,250,0.03)", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #444444) 10%, transparent)" }}>
+              <p className="text-[10px] font-bold uppercase tracking-wider mb-3" style={{ color: "var(--layout-icon-color, #888888)" }}>
                 Assunto do {tipoPrograma?.toLowerCase() || "programa"}
               </p>
               <input
                 value={roteiroSubtitulo}
                 onChange={e => setRoteiroSubtitulo(e.target.value)}
                 placeholder="Título da entrevista"
-                className="w-full px-3 py-2.5 rounded-xl text-sm font-bold outline-none mb-2 transition-all focus:ring-2 focus:ring-[#268ffa]/20"
-                style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.08)", color: "#0d0446" }}
+                className="w-full px-3 py-2.5 rounded-xl text-sm font-bold outline-none mb-2 transition-all focus:ring-2 focus:ring-[var(--layout-accent-color)]/20"
+                style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)", color: "var(--layout-page-text, #1a1a1a)" }}
               />
               <input
                 value={assuntoSubtitulo}
                 onChange={e => setAssuntoSubtitulo(e.target.value)}
                 placeholder="Subtítulo ou observação"
-                className="w-full px-3 py-2.5 rounded-xl text-xs outline-none transition-all focus:ring-2 focus:ring-[#268ffa]/20"
-                style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.08)", color: "#0d0446" }}
+                className="w-full px-3 py-2.5 rounded-xl text-xs outline-none transition-all focus:ring-2 focus:ring-[var(--layout-accent-color)]/20"
+                style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)", color: "var(--layout-page-text, #1a1a1a)" }}
               />
             </div>
             )}
 
             {/* Divider */}
-            <div className="h-px" style={{ backgroundColor: "rgba(13,4,70,0.06)" }} />
+            <div className="h-px" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)" }} />
 
             {/* Participantes */}
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-wider mb-3" style={{ color: "rgba(13,4,70,0.4)" }}>Participantes</p>
+              <p className="text-[10px] font-bold uppercase tracking-wider mb-3" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>Participantes</p>
             <div className="space-y-2">
               {participantes.map((p, idx) => (
-                <div key={idx} className="rounded-xl p-3" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.08)" }}>
+                <div key={idx} className="rounded-xl p-3" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }}>
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <p className="text-[10px] font-bold mb-1" style={{ color: "#268ffa" }}>Participante {idx + 1}</p>
-                      <p className="text-xs font-bold" style={{ color: "#0d0446" }}>{p.nome}</p>
-                      <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.5)" }}>{p.categoria}{p.cargo ? ` · ${p.cargo}` : ""}</p>
-                      {p.instagram && <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.4)" }}>@{p.instagram.replace("@", "")}</p>}
-                      {p.whatsapp && <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.4)" }}>📱 {p.whatsapp}</p>}
+                      <p className="text-[10px] font-bold mb-1" style={{ color: "var(--layout-icon-color, #888888)" }}>Participante {idx + 1}</p>
+                      <p className="text-xs font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{p.nome}</p>
+                      <p className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>{p.categoria}{p.cargo ? ` · ${p.cargo}` : ""}</p>
+                      {p.instagram && <p className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>@{p.instagram.replace("@", "")}</p>}
+                      {p.whatsapp && <p className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>📱 {p.whatsapp}</p>}
                     </div>
                     <button onClick={() => removeParticipante(idx)} className="hover:opacity-70 mt-1">
-                      <X size={12} style={{ color: "rgba(13,4,70,0.3)" }} />
+                      <X size={12} style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 30%, transparent)" }} />
                     </button>
                   </div>
                 </div>
@@ -1020,16 +1020,16 @@ ${perguntaActions}
 
               {/* Cadastro message */}
               {cadastroMsg && (
-                <div className="rounded-xl p-3 flex items-center gap-2" style={{ backgroundColor: "rgba(38,143,250,0.1)", border: "1px solid rgba(38,143,250,0.3)" }}>
-                  <Check size={14} style={{ color: "#268ffa" }} />
-                  <p className="text-xs font-semibold" style={{ color: "#268ffa" }}>Cadastrei esse participante na nossa agenda!</p>
+                <div className="rounded-xl p-3 flex items-center gap-2" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #444444) 10%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #444444) 30%, transparent)" }}>
+                  <Check size={14} style={{ color: "var(--layout-icon-color, #888888)" }} />
+                  <p className="text-xs font-semibold" style={{ color: "var(--layout-icon-color, #888888)" }}>Cadastrei esse participante na nossa agenda!</p>
                 </div>
               )}
 
               {/* Inline add participant fields */}
               {showParticipantForm ? (
-                <div className="rounded-xl p-3 space-y-2" style={{ backgroundColor: "#ffffff", border: "1px dashed rgba(13,4,70,0.15)" }}>
-                  <p className="text-[10px] font-bold" style={{ color: "#268ffa" }}>Participante {participantes.length + 1}</p>
+                <div className="rounded-xl p-3 space-y-2" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px dashed color-mix(in srgb, var(--layout-page-text, #1a1a1a) 15%, transparent)" }}>
+                  <p className="text-[10px] font-bold" style={{ color: "var(--layout-icon-color, #888888)" }}>Participante {participantes.length + 1}</p>
                   
                   {/* Nome with autocomplete */}
                   <div className="relative">
@@ -1045,20 +1045,20 @@ ${perguntaActions}
                       onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
                       placeholder="nome"
                       className="w-full px-3 py-2 rounded-lg text-xs outline-none"
-                      style={{ backgroundColor: "rgba(13,4,70,0.04)", border: "1px solid rgba(13,4,70,0.08)", color: "#0d0446" }}
+                      style={{ backgroundColor: "rgba(13,4,70,0.04)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)", color: "var(--layout-page-text, #1a1a1a)" }}
                     />
                     {showSuggestions && nameSuggestions.length > 0 && (
-                      <div className="absolute z-10 left-0 right-0 mt-1 rounded-lg overflow-hidden shadow-lg" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.12)" }}>
+                      <div className="absolute z-10 left-0 right-0 mt-1 rounded-lg overflow-hidden shadow-lg" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 12%, transparent)" }}>
                         {nameSuggestions.map(s => (
                           <button
                             key={s.id}
                             onMouseDown={() => selectSuggestion(s)}
                             className="w-full text-left px-3 py-2 hover:bg-[rgba(38,143,250,0.08)] transition-colors flex items-center gap-2"
                           >
-                            <UserPlus size={11} style={{ color: "#268ffa" }} />
+                            <UserPlus size={11} style={{ color: "var(--layout-icon-color, #888888)" }} />
                             <div>
-                              <p className="text-xs font-semibold" style={{ color: "#0d0446" }}>{s.nome}</p>
-                              <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.4)" }}>{s.cargo}</p>
+                              <p className="text-xs font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{s.nome}</p>
+                              <p className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>{s.cargo}</p>
                             </div>
                           </button>
                         ))}
@@ -1071,7 +1071,7 @@ ${perguntaActions}
                     value={newCategoria}
                     onChange={e => setNewCategoria(e.target.value)}
                     className="w-full px-3 py-2 rounded-lg text-xs outline-none"
-                    style={{ backgroundColor: "rgba(13,4,70,0.04)", border: "1px solid rgba(13,4,70,0.08)", color: "#0d0446" }}
+                    style={{ backgroundColor: "rgba(13,4,70,0.04)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)", color: "var(--layout-page-text, #1a1a1a)" }}
                   >
                     {categorias.map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
@@ -1082,7 +1082,7 @@ ${perguntaActions}
                     onChange={e => setNewCargoText(e.target.value)}
                     placeholder="cargo (ex: Diretor, Produtor...)"
                     className="w-full px-3 py-2 rounded-lg text-xs outline-none"
-                    style={{ backgroundColor: "rgba(13,4,70,0.04)", border: "1px solid rgba(13,4,70,0.08)", color: "#0d0446" }}
+                    style={{ backgroundColor: "rgba(13,4,70,0.04)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)", color: "var(--layout-page-text, #1a1a1a)" }}
                   />
 
                   <input
@@ -1090,14 +1090,14 @@ ${perguntaActions}
                     onChange={e => setNewInstagram(e.target.value)}
                     placeholder="rede social (@usuario)"
                     className="w-full px-3 py-2 rounded-lg text-xs outline-none"
-                    style={{ backgroundColor: "rgba(13,4,70,0.04)", border: "1px solid rgba(13,4,70,0.08)", color: "#0d0446" }}
+                    style={{ backgroundColor: "rgba(13,4,70,0.04)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)", color: "var(--layout-page-text, #1a1a1a)" }}
                    />
                   <input
                     value={newWhatsapp}
                     onChange={e => setNewWhatsapp(e.target.value)}
                     placeholder="whatsapp (ex: +55 11 99999-9999)"
                     className="w-full px-3 py-2 rounded-lg text-xs outline-none"
-                    style={{ backgroundColor: "rgba(13,4,70,0.04)", border: "1px solid rgba(13,4,70,0.08)", color: "#0d0446" }}
+                    style={{ backgroundColor: "rgba(13,4,70,0.04)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)", color: "var(--layout-page-text, #1a1a1a)" }}
                   />
                   <div className="flex gap-2">
                     <button
@@ -1107,7 +1107,7 @@ ${perguntaActions}
                       }}
                       disabled={!newNome.trim()}
                       className="flex-1 py-2 rounded-lg text-xs font-bold transition-all hover:opacity-90 disabled:opacity-40 flex items-center justify-center gap-1.5"
-                      style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#ffffff" }}
+                      style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #444444), color-mix(in srgb, var(--layout-accent-color, #444444) 70%, white 30%))", color: "var(--layout-header-text, #ffffff)" }}
                     >
                       <Save size={12} />
                       salvar participante
@@ -1115,7 +1115,7 @@ ${perguntaActions}
                     <button
                       onClick={() => setShowParticipantForm(false)}
                       className="px-3 py-2 rounded-lg text-xs font-bold transition-all hover:opacity-90"
-                      style={{ border: "1px solid rgba(13,4,70,0.1)", color: "rgba(13,4,70,0.5)" }}
+                      style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 35%, transparent)", color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}
                     >
                       <X size={12} />
                     </button>
@@ -1125,7 +1125,7 @@ ${perguntaActions}
                 <button
                   onClick={() => setShowParticipantForm(true)}
                   className="w-full py-2.5 rounded-xl text-xs font-bold transition-all hover:opacity-90 flex items-center justify-center gap-1.5"
-                  style={{ border: "1px dashed rgba(38,143,250,0.4)", color: "#268ffa", backgroundColor: "rgba(38,143,250,0.04)" }}
+                  style={{ border: "1px dashed color-mix(in srgb, var(--layout-accent-color, #444444) 40%, transparent)", color: "var(--layout-icon-color, #888888)", backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #444444) 4%, transparent)" }}
                 >
                   <Plus size={12} />
                   adicionar participante
@@ -1137,7 +1137,7 @@ ${perguntaActions}
             {/* NoticiasPanel inline for Primeira Hora Positiva - with auto JornalBlockBuilder */}
             {programaNome === "Primeira Hora Positiva" && (
               <>
-                <div className="h-px" style={{ backgroundColor: "rgba(13,4,70,0.06)" }} />
+                <div className="h-px" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)" }} />
                 <Suspense fallback={<ModulePageSkeleton />}>
                   <NoticiasPanel defaultJornalConfig={{
                     programaId: programas.find(p => p.nome === "Primeira Hora Positiva")?.id || "",
@@ -1158,15 +1158,15 @@ ${perguntaActions}
             {programaNome !== "Primeira Hora Positiva" && (
               <>
             {/* Divider */}
-            <div className="h-px" style={{ backgroundColor: "rgba(13,4,70,0.06)" }} />
+            <div className="h-px" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)" }} />
 
             {/* Texto Roteiro */}
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-wider mb-3" style={{ color: "rgba(13,4,70,0.4)" }}>Conteúdo do roteiro</p>
-              <div className="rounded-xl p-4" style={{ backgroundColor: "rgba(13,4,70,0.02)", border: "1px solid rgba(13,4,70,0.06)" }}>
+              <p className="text-[10px] font-bold uppercase tracking-wider mb-3" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>Conteúdo do roteiro</p>
+              <div className="rounded-xl p-4" style={{ backgroundColor: "rgba(13,4,70,0.02)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)" }}>
 
             {/* Toolbar */}
-            <div className="flex flex-wrap items-center gap-1 mb-3 pb-3" style={{ borderBottom: "1px solid rgba(13,4,70,0.08)" }}>
+            <div className="flex flex-wrap items-center gap-1 mb-3 pb-3" style={{ borderBottom: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }}>
               {/* Font size */}
               <select
                 value={fontSize}
@@ -1185,7 +1185,7 @@ ${perguntaActions}
                   }
                 }}
                 className="h-8 px-2 rounded-lg text-xs outline-none cursor-pointer"
-                style={{ backgroundColor: "rgba(13,4,70,0.04)", border: "1px solid rgba(13,4,70,0.08)", color: "#0d0446" }}
+                style={{ backgroundColor: "rgba(13,4,70,0.04)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)", color: "var(--layout-page-text, #1a1a1a)" }}
               >
                 <option value="12">12px</option>
                 <option value="14">14px</option>
@@ -1196,13 +1196,13 @@ ${perguntaActions}
                 <option value="28">28px</option>
               </select>
 
-              <div className="w-px h-5 mx-1" style={{ backgroundColor: "rgba(13,4,70,0.1)" }} />
+              <div className="w-px h-5 mx-1" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 10%, transparent)" }} />
 
               <button type="button" onClick={() => document.execCommand("bold")} className="h-8 w-8 flex items-center justify-center rounded-lg hover:opacity-70 transition" style={{ backgroundColor: "rgba(13,4,70,0.04)" }} title="Negrito">
-                <Bold size={14} style={{ color: "#0d0446" }} />
+                <Bold size={14} style={{ color: "var(--layout-page-text, #1a1a1a)" }} />
               </button>
               <button type="button" onClick={() => document.execCommand("underline")} className="h-8 w-8 flex items-center justify-center rounded-lg hover:opacity-70 transition" style={{ backgroundColor: "rgba(13,4,70,0.04)" }} title="Sublinhado">
-                <Underline size={14} style={{ color: "#0d0446" }} />
+                <Underline size={14} style={{ color: "var(--layout-page-text, #1a1a1a)" }} />
               </button>
               <button type="button" onClick={() => {
                 const sel = window.getSelection();
@@ -1219,31 +1219,31 @@ ${perguntaActions}
                   }
                 }
               }} className="h-8 w-8 flex items-center justify-center rounded-lg hover:opacity-70 transition" style={{ backgroundColor: "rgba(13,4,70,0.04)" }} title="Destaque">
-                <Highlighter size={14} style={{ color: "#0d0446" }} />
+                <Highlighter size={14} style={{ color: "var(--layout-page-text, #1a1a1a)" }} />
               </button>
 
-              <div className="w-px h-5 mx-1" style={{ backgroundColor: "rgba(13,4,70,0.1)" }} />
+              <div className="w-px h-5 mx-1" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 10%, transparent)" }} />
 
               <button type="button" onClick={() => document.execCommand("justifyLeft")} className="h-8 w-8 flex items-center justify-center rounded-lg hover:opacity-70 transition" style={{ backgroundColor: "rgba(13,4,70,0.04)" }} title="Alinhar à esquerda">
-                <AlignLeft size={14} style={{ color: "#0d0446" }} />
+                <AlignLeft size={14} style={{ color: "var(--layout-page-text, #1a1a1a)" }} />
               </button>
               <button type="button" onClick={() => document.execCommand("justifyCenter")} className="h-8 w-8 flex items-center justify-center rounded-lg hover:opacity-70 transition" style={{ backgroundColor: "rgba(13,4,70,0.04)" }} title="Centralizar">
-                <AlignCenter size={14} style={{ color: "#0d0446" }} />
+                <AlignCenter size={14} style={{ color: "var(--layout-page-text, #1a1a1a)" }} />
               </button>
               <button type="button" onClick={() => document.execCommand("justifyRight")} className="h-8 w-8 flex items-center justify-center rounded-lg hover:opacity-70 transition" style={{ backgroundColor: "rgba(13,4,70,0.04)" }} title="Alinhar à direita">
-                <AlignRight size={14} style={{ color: "#0d0446" }} />
+                <AlignRight size={14} style={{ color: "var(--layout-page-text, #1a1a1a)" }} />
               </button>
 
-              <div className="w-px h-5 mx-1" style={{ backgroundColor: "rgba(13,4,70,0.1)" }} />
+              <div className="w-px h-5 mx-1" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 10%, transparent)" }} />
 
               <button type="button" onClick={() => document.execCommand("insertUnorderedList")} className="h-8 w-8 flex items-center justify-center rounded-lg hover:opacity-70 transition" style={{ backgroundColor: "rgba(13,4,70,0.04)" }} title="Lista">
-                <List size={14} style={{ color: "#0d0446" }} />
+                <List size={14} style={{ color: "var(--layout-page-text, #1a1a1a)" }} />
               </button>
               <button type="button" onClick={() => document.execCommand("insertOrderedList")} className="h-8 w-8 flex items-center justify-center rounded-lg hover:opacity-70 transition" style={{ backgroundColor: "rgba(13,4,70,0.04)" }} title="Lista numerada">
-                <ListOrdered size={14} style={{ color: "#0d0446" }} />
+                <ListOrdered size={14} style={{ color: "var(--layout-page-text, #1a1a1a)" }} />
               </button>
 
-              <div className="w-px h-5 mx-1" style={{ backgroundColor: "rgba(13,4,70,0.1)" }} />
+              <div className="w-px h-5 mx-1" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 10%, transparent)" }} />
 
               {/* Merge cells button */}
               <button
@@ -1279,7 +1279,7 @@ ${perguntaActions}
                   toast.success("Células mescladas!");
                 }}
                 className="h-8 px-2 flex items-center justify-center rounded-lg hover:opacity-70 transition gap-1 text-xs font-semibold"
-                style={{ backgroundColor: mergeCells.length >= 2 ? "rgba(38,143,250,0.15)" : "rgba(13,4,70,0.04)", color: mergeCells.length >= 2 ? "#268ffa" : "#0d0446" }}
+                style={{ backgroundColor: mergeCells.length >= 2 ? "color-mix(in srgb, var(--layout-accent-color, #444444) 15%, transparent)" : "rgba(13,4,70,0.04)", color: mergeCells.length >= 2 ? "var(--layout-accent-color, #444444)" : "var(--layout-header-bg, #1a1a1a)" }}
                 title="Mesclar células selecionadas"
               >
                 <Columns size={14} />
@@ -1298,7 +1298,7 @@ ${perguntaActions}
                 style={{ backgroundColor: "rgba(13,4,70,0.04)" }}
                 title="Copiar texto"
               >
-                <Copy size={14} style={{ color: "#0d0446" }} />
+                <Copy size={14} style={{ color: "var(--layout-page-text, #1a1a1a)" }} />
               </button>
             </div>
 
@@ -1327,7 +1327,7 @@ ${perguntaActions}
                           cell.style.backgroundColor = "";
                           return prev.filter(c => c !== cell);
                         } else {
-                          cell.style.outline = "2px solid #268ffa";
+                          cell.style.outline = "2px solid var(--layout-accent-color, #444444)";
                           cell.style.backgroundColor = mergeHighlightColor;
                           return [...prev, cell];
                         }
@@ -1342,7 +1342,7 @@ ${perguntaActions}
                 e.preventDefault();
                 const table = editorRef.current.querySelector("table tbody");
                 if (!table) return;
-                const tdS = "border:1px solid rgba(13,4,70,0.12);padding:8px 10px";
+                const tdS = "border:1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 12%, transparent);padding:8px 10px";
                 const actionBtnS = "cursor:pointer;padding:2px 4px;border-radius:4px;display:inline-flex;align-items:center;justify-content:center";
                 const actionRow = table.querySelector("tr[data-action-row]");
 
@@ -1393,7 +1393,7 @@ ${perguntaActions}
                 }
               }}
               className="w-full min-h-[280px] text-sm outline-none"
-              style={{ color: "#0d0446", fontSize: fontSize + "px", lineHeight: "1.7" }}
+              style={{ color: "var(--layout-page-text, #1a1a1a)", fontSize: fontSize + "px", lineHeight: "1.7" }}
               data-placeholder="Digite o roteiro aqui..."
             />
               </div>
@@ -1447,7 +1447,7 @@ ${perguntaActions}
               }}
               disabled={savingRoteiro}
               className="w-full py-3.5 rounded-xl text-sm font-bold transition-all hover:opacity-90 flex items-center justify-center gap-2"
-              style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#ffffff", boxShadow: "0 4px 16px rgba(38,143,250,0.3)" }}
+              style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #444444), color-mix(in srgb, var(--layout-accent-color, #444444) 70%, white 30%))", color: "var(--layout-header-text, #ffffff)", boxShadow: "0 4px 16px color-mix(in srgb, var(--layout-accent-color, #444444) 30%, transparent)" }}
             >
               <Save size={14} />
               {savingRoteiro ? "salvando..." : "Salvar e Exportar Roteiro"}
@@ -1462,7 +1462,7 @@ ${perguntaActions}
         <div ref={exportViewRef} className="mt-4">
           {/* Top bar */}
           <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-            <button onClick={() => setShowExportView(false)} className="flex items-center gap-2 text-xs font-semibold hover:opacity-80 transition" style={{ color: "#268ffa" }}>
+            <button onClick={() => setShowExportView(false)} className="flex items-center gap-2 text-xs font-semibold hover:opacity-80 transition" style={{ color: "var(--layout-icon-color, #888888)" }}>
               <ArrowLeft size={14} />
               voltar ao roteiro
             </button>
@@ -1490,7 +1490,7 @@ ${perguntaActions}
                 }}
                   disabled={pdfPopup.status === "generating"}
                   className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold text-white hover:opacity-90 transition disabled:opacity-60"
-                  style={{ backgroundColor: "#268ffa" }}
+                  style={{ backgroundColor: "var(--layout-accent-color, #444444)" }}
                 >
                   {pdfPopup.status === "generating" ? (
                     <>
@@ -1546,7 +1546,7 @@ ${perguntaActions}
                 className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold hover:opacity-90 transition`}
                 style={apresentadorStatus?.editado
                   ? { backgroundColor: "#16a34a", color: "#fff" }
-                  : { backgroundColor: "rgba(13,4,70,0.06)", color: "#0d0446" }
+                  : { backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)", color: "var(--layout-page-text, #1a1a1a)" }
                 }
               >
                 {apresentadorStatus?.editado ? <Check size={13} /> : <Send size={13} />}
@@ -1580,7 +1580,7 @@ ${perguntaActions}
                   toast.success("Roteiro salvo e fechado!");
                 }}
                 className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold text-white hover:opacity-90 transition"
-                style={{ backgroundColor: "#268ffa" }}
+                style={{ backgroundColor: "var(--layout-accent-color, #444444)" }}
               >
                 <Save size={13} />
                 salvar e fechar
@@ -1588,19 +1588,19 @@ ${perguntaActions}
             </div>
           </div>
 
-          <div id="roteiro-export-content" className="rounded-xl p-6" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(13,4,70,0.08)" }}>
+          <div id="roteiro-export-content" className="rounded-xl p-6" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }}>
             {/* Header */}
             <div className="mb-6">
               <div className="flex items-start justify-between gap-4">
                 {numeroRoteiro && (
-                  <p className="text-3xl font-black mb-1" style={{ color: "#268ffa" }}>#{numeroRoteiro}</p>
+                  <p className="text-3xl font-black mb-1" style={{ color: "var(--layout-icon-color, #888888)" }}>#{numeroRoteiro}</p>
                 )}
                 <div className="flex-1 min-w-0">
-                  <h1 className="text-xl font-bold uppercase mb-1" style={{ color: "#0d0446" }}>
+                  <h1 className="text-xl font-bold uppercase mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
                     {roteiroTitulo || "Roteiro"}
                   </h1>
                   {roteiroSubtitulo && (
-                    <p className="text-sm mb-2" style={{ color: "rgba(13,4,70,0.6)" }}>{roteiroSubtitulo}</p>
+                    <p className="text-sm mb-2" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>{roteiroSubtitulo}</p>
                   )}
                 </div>
                 {(() => {
@@ -1617,32 +1617,32 @@ ${perguntaActions}
                   );
                 })()}
               </div>
-              <p className="text-sm" style={{ color: "rgba(13,4,70,0.7)" }}>
-                <span className="font-semibold" style={{ color: "#0d0446" }}>{programaNome}</span>
+              <p className="text-sm" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 70%, transparent)" }}>
+                <span className="font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{programaNome}</span>
                 {estudio && <span> · Estúdio {estudio}</span>}
               </p>
-              <p className="text-sm" style={{ color: "rgba(13,4,70,0.6)" }}>
+              <p className="text-sm" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>
                 {format(selectedDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })} {horario && `às ${horario}`}
               </p>
 
               {/* Assunto */}
               {(roteiroSubtitulo || assuntoSubtitulo) && (
-                <div className="mt-3 px-4 py-3 rounded-lg" style={{ backgroundColor: "rgba(38,143,250,0.06)", borderLeft: "3px solid #268ffa" }}>
-                  <p className="text-xs font-bold uppercase mb-0.5" style={{ color: "#268ffa" }}>Assunto da entrevista</p>
-                  {roteiroSubtitulo && <p className="text-sm font-bold" style={{ color: "#0d0446" }}>{roteiroSubtitulo}</p>}
-                  {assuntoSubtitulo && <p className="text-xs" style={{ color: "rgba(13,4,70,0.6)" }}>{assuntoSubtitulo}</p>}
+                <div className="mt-3 px-4 py-3 rounded-lg" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #444444) 6%, transparent)", borderLeft: "3px solid var(--layout-accent-color, #444444)" }}>
+                  <p className="text-xs font-bold uppercase mb-0.5" style={{ color: "var(--layout-icon-color, #888888)" }}>Assunto da entrevista</p>
+                  {roteiroSubtitulo && <p className="text-sm font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{roteiroSubtitulo}</p>}
+                  {assuntoSubtitulo && <p className="text-xs" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>{assuntoSubtitulo}</p>}
                 </div>
               )}
 
               {/* Participantes */}
               {participantes.length > 0 && (
                 <div className="mt-3">
-                  <p className="text-xs font-bold uppercase mb-2" style={{ color: "rgba(13,4,70,0.5)" }}>Participantes</p>
+                  <p className="text-xs font-bold uppercase mb-2" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Participantes</p>
                   <div className="flex flex-wrap gap-2">
                     {participantes.map((p, i) => (
-                      <span key={i} className="px-3 py-1.5 rounded-lg text-xs font-semibold" style={{ backgroundColor: "rgba(13,4,70,0.05)", color: "#0d0446" }}>
+                      <span key={i} className="px-3 py-1.5 rounded-lg text-xs font-semibold" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 5%, transparent)", color: "var(--layout-page-text, #1a1a1a)" }}>
                         {p.nome}
-                        {p.cargo ? <span style={{ color: "rgba(13,4,70,0.4)" }}> · {p.cargo}</span> : p.categoria && <span style={{ color: "rgba(13,4,70,0.4)" }}> · {p.categoria}</span>}
+                        {p.cargo ? <span style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}> · {p.cargo}</span> : p.categoria && <span style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}> · {p.categoria}</span>}
                       </span>
                     ))}
                   </div>
@@ -1650,17 +1650,17 @@ ${perguntaActions}
               )}
             </div>
 
-            <div className="h-px mb-4" style={{ backgroundColor: "rgba(13,4,70,0.1)" }} />
+            <div className="h-px mb-4" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 10%, transparent)" }} />
 
-            <h2 className="text-sm font-bold uppercase mb-3" style={{ color: "#0d0446" }}>Roteiro do programa</h2>
+            <h2 className="text-sm font-bold uppercase mb-3" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Roteiro do programa</h2>
             <div
               className="text-sm leading-relaxed"
-              style={{ color: "#0d0446" }}
+              style={{ color: "var(--layout-page-text, #1a1a1a)" }}
               dangerouslySetInnerHTML={{ __html: sanitizeRoteiroHtml(editorRef.current?.innerHTML || roteiroTexto) }}
             />
 
-            <div className="mt-8 pt-4 text-center" style={{ borderTop: "1px solid rgba(13,4,70,0.1)" }}>
-              <p className="text-lg font-bold italic" style={{ color: "#268ffa" }}>Bom programa! 🎙️</p>
+            <div className="mt-8 pt-4 text-center" style={{ borderTop: "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 10%, transparent)" }}>
+              <p className="text-lg font-bold italic" style={{ color: "var(--layout-icon-color, #888888)" }}>Bom programa! 🎙️</p>
             </div>
 
             {/* Apresentador edit status */}

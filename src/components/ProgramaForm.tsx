@@ -198,7 +198,7 @@ function GradeBody({ gradeSlots, diasSemana, diaAtual, currentTimeStr, getProgra
 
           return (
             <tr key={slot} data-needle-row={isNeedleRow ? "true" : undefined} data-needle-percent={isNeedleRow ? ((currentMinutes - slotMinutes) / 30) * 100 : undefined}>
-              <td className="px-2 py-2 font-mono rounded-lg" style={{ color: "rgba(13,4,70,0.5)" }}>{slot.slice(0, 5)}</td>
+              <td className="px-2 py-2 font-mono rounded-lg" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>{slot.slice(0, 5)}</td>
               {diasSemana.map(dia => {
                 const key = `${dia}-${slot}`;
                 if (skipMap[key]) return null;
@@ -212,22 +212,22 @@ function GradeBody({ gradeSlots, diasSemana, diaAtual, currentTimeStr, getProgra
                     className="rounded-lg transition-all relative group"
                     style={{
                       background: isOnAir ? "linear-gradient(135deg, #268ffa, #2dbef3)" : "#ffffff",
-                      color: isOnAir ? "#ffffff" : "#0d0446",
+                      color: isOnAir ? "#ffffff" : "var(--layout-header-bg, #1a1a1a)",
                       fontWeight: isOnAir ? "bold" : undefined,
-                      border: isOnAir ? "2px solid #268ffa" : "1px solid rgba(13,4,70,0.08)",
+                      border: isOnAir ? "2px solid var(--layout-accent-color, #444444)" : "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)",
                       verticalAlign: "top",
                       padding: "8px 10px",
-                      boxShadow: isOnAir ? "0 2px 12px rgba(38,143,250,0.3)" : "none",
+                      boxShadow: isOnAir ? "0 2px 12px color-mix(in srgb, var(--layout-accent-color, #444444) 30%, transparent)" : "none",
                     }}>
                     <div className="text-[10px] font-bold leading-tight" style={{ wordBreak: "break-word", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{prog.nome}</div>
                     {prog.classificacaoEtaria && <div className="mt-0.5"><ClassificacaoBadge value={prog.classificacaoEtaria} size={14} /></div>}
-                    <div className="text-[9px] mt-0.5" style={{ color: isOnAir ? "rgba(255,255,255,0.8)" : "rgba(13,4,70,0.4)" }}>
+                    <div className="text-[9px] mt-0.5" style={{ color: isOnAir ? "rgba(255,255,255,0.8)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>
                       {prog.horarioInicio.slice(0, 5)} - {prog.horarioFim.slice(0, 5)}
                     </div>
                     {(() => {
                       const names = getPresenterNames(prog);
                       return names ? (
-                        <div className="text-[9px] font-semibold mt-0.5" style={{ color: isOnAir ? "rgba(255,255,255,0.9)" : "rgba(13,4,70,0.6)" }}>
+                        <div className="text-[9px] font-semibold mt-0.5" style={{ color: isOnAir ? "rgba(255,255,255,0.9)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>
                           {names}
                         </div>
                       ) : null;
@@ -235,9 +235,9 @@ function GradeBody({ gradeSlots, diasSemana, diaAtual, currentTimeStr, getProgra
                     <button
                       onClick={(e) => { e.stopPropagation(); setDetailProg(prog); }}
                       className="mt-1.5 px-2.5 py-0.5 rounded-md text-[8px] font-bold flex items-center gap-1 transition-all opacity-70 group-hover:opacity-100"
-                      style={{ backgroundColor: isOnAir ? "rgba(255,255,255,0.2)" : "#0d0446", color: "#ffffff" }}
-                      onMouseEnter={e => { e.currentTarget.style.backgroundColor = isOnAir ? "rgba(255,255,255,0.3)" : "#268ffa"; }}
-                      onMouseLeave={e => { e.currentTarget.style.backgroundColor = isOnAir ? "rgba(255,255,255,0.2)" : "#0d0446"; }}
+                      style={{ backgroundColor: isOnAir ? "rgba(255,255,255,0.2)" : "var(--layout-header-bg, #1a1a1a)", color: "var(--layout-header-text, #ffffff)" }}
+                      onMouseEnter={e => { e.currentTarget.style.backgroundColor = isOnAir ? "rgba(255,255,255,0.3)" : "var(--layout-accent-color, #444444)"; }}
+                      onMouseLeave={e => { e.currentTarget.style.backgroundColor = isOnAir ? "rgba(255,255,255,0.2)" : "var(--layout-header-bg, #1a1a1a)"; }}
                     >
                       + informações
                     </button>
@@ -252,8 +252,8 @@ function GradeBody({ gradeSlots, diasSemana, diaAtual, currentTimeStr, getProgra
       {/* Detail popup */}
       {detailProg && createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: "rgba(0,0,0,0.5)" }} onClick={() => setDetailProg(null)}>
-          <div className="rounded-xl max-w-2xl w-full mx-4 relative" style={{ backgroundColor: "#ffffff", padding: "20px" }} onClick={e => e.stopPropagation()}>
-            <button onClick={() => setDetailProg(null)} className="absolute top-4 right-4 z-10 font-bold text-sm" style={{ color: "#0d0446" }}>
+          <div className="rounded-xl max-w-2xl w-full mx-4 relative" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", padding: "20px" }} onClick={e => e.stopPropagation()}>
+            <button onClick={() => setDetailProg(null)} className="absolute top-4 right-4 z-10 font-bold text-sm" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
               <X size={18} />
             </button>
             <div className="flex gap-5">
@@ -261,20 +261,20 @@ function GradeBody({ gradeSlots, diasSemana, diaAtual, currentTimeStr, getProgra
                 <img src={detailProg.capa} alt={detailProg.nome} className="w-48 h-48 object-cover rounded-lg shrink-0" />
               )}
               <div className="space-y-2 flex-1 min-w-0">
-                <h2 className="text-lg font-bold pr-6" style={{ color: "#0d0446" }}>{detailProg.nome}</h2>
-                <p className="text-xs flex items-center gap-1" style={{ color: "rgba(13,4,70,0.5)" }}>
+                <h2 className="text-lg font-bold pr-6" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{detailProg.nome}</h2>
+                <p className="text-xs flex items-center gap-1" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
                   <Clock size={12} /> {detailProg.horarioInicio.slice(0, 5)} — {detailProg.horarioFim.slice(0, 5)}
                 </p>
-                <p className="text-xs flex items-center gap-1" style={{ color: "rgba(13,4,70,0.5)" }}>
+                <p className="text-xs flex items-center gap-1" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
                   <Calendar size={12} /> {detailProg.diasSemana.join(", ")}
                 </p>
                 {getPresenterName(detailProg.apresentadorId) && (
-                  <p className="text-xs font-semibold" style={{ color: "#0d0446" }}>
+                  <p className="text-xs font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
                     Locutor: {getPresenterName(detailProg.apresentadorId)}
                   </p>
                 )}
                 {detailProg.descricao && (
-                  <p className="text-sm mt-2 leading-relaxed" style={{ color: "rgba(13,4,70,0.7)" }}>{detailProg.descricao}</p>
+                  <p className="text-sm mt-2 leading-relaxed" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 70%, transparent)" }}>{detailProg.descricao}</p>
                 )}
               </div>
             </div>
@@ -659,17 +659,17 @@ export default function ProgramaForm() {
   return (
     <div className="animate-fade-in space-y-6">
       {/* Form Card */}
-      <div ref={formRef} className="rounded-2xl overflow-hidden" style={{ background: "#d9e9fa", boxShadow: "0 8px 32px rgba(13,4,70,0.15)" }}>
+      <div ref={formRef} className="rounded-2xl overflow-hidden" style={{ background: "color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 12%, var(--layout-page-bg, #ffffff) 88%)", boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }}>
         {/* Form Header */}
-        <div className="flex items-center gap-3 px-6 py-4" style={{ borderBottom: "1px solid rgba(13,4,70,0.1)" }}>
+        <div className="flex items-center gap-3 px-6 py-4" style={{ borderBottom: "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 10%, transparent)" }}>
           <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(45,191,244,0.15)" }}>
             <PlaySquare size={20} style={{ color: "#2dbff4" }} />
           </div>
           <div>
-            <h3 className="text-base font-bold" style={{ color: "#0d0446" }}>
+            <h3 className="text-base font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
               {editingId ? "Editar Programa" : "Cadastro de Programa"}
             </h3>
-            <p className="text-[11px]" style={{ color: "rgba(13,4,70,0.7)" }}>Preencha os dados para cadastrar o programa</p>
+            <p className="text-[11px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 70%, transparent)" }}>Preencha os dados para cadastrar o programa</p>
           </div>
         </div>
 
@@ -678,19 +678,19 @@ export default function ProgramaForm() {
           {/* Nome + Tipo */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "#0d0446" }}>Nome do Programa</label>
+              <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Nome do Programa</label>
               <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Digite o nome do programa"
-                className="w-full px-4 py-2 outline-none transition-all text-sm placeholder:text-[#0d0446]/40"
-                style={{ backgroundColor: "rgba(255,255,255,0.6)", border: "1px solid rgba(13,4,70,0.15)", borderRadius: "12px", color: "#0d0446" }}
-                onFocus={e => { e.currentTarget.style.borderColor = "#268ffa"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.8)"; }}
-                onBlur={e => { e.currentTarget.style.borderColor = "rgba(13,4,70,0.15)"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.6)"; }}
+                className="w-full px-4 py-2 outline-none transition-all text-sm placeholder:text-[color-mix(in_srgb,var(--layout-page-text)_40%,transparent)]"
+                style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 60%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)", borderRadius: "12px", color: "var(--layout-page-text, #1a1a1a)" }}
+                onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #444444)"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.8)"; }}
+                onBlur={e => { e.currentTarget.style.borderColor = "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 15%, transparent)"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.6)"; }}
               />
             </div>
             <div>
-              <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "#0d0446" }}>Tipo do Programa</label>
+              <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Tipo do Programa</label>
               <div className="flex gap-2">
                 <Select value={tipoPrograma} onValueChange={setTipoPrograma}>
-                  <SelectTrigger className="flex-1 h-9" style={{ backgroundColor: "rgba(255,255,255,0.6)", color: "#0d0446", borderRadius: "12px", border: "1px solid rgba(13,4,70,0.15)", fontSize: "13px" }}>
+                  <SelectTrigger className="flex-1 h-9" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 60%, transparent)", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "12px", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)", fontSize: "13px" }}>
                     <SelectValue placeholder="Selecione o tipo" />
                   </SelectTrigger>
                   <SelectContent>
@@ -702,20 +702,20 @@ export default function ProgramaForm() {
                 <Dialog open={tipoDialogOpen} onOpenChange={setTipoDialogOpen}>
                   <DialogTrigger asChild>
                     <button className="px-3 py-1 text-xs font-bold transition-all shrink-0 rounded-xl"
-                      style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#ffffff" }}
+                      style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #444444), color-mix(in srgb, var(--layout-accent-color, #444444) 70%, white 30%))", color: "var(--layout-header-text, #ffffff)" }}
                     >+ Novo</button>
                   </DialogTrigger>
                   <DialogContent className="max-w-sm">
-                    <DialogHeader><DialogTitle style={{ color: "#0d0446" }}>Novo Tipo de Programa</DialogTitle></DialogHeader>
+                    <DialogHeader><DialogTitle style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Novo Tipo de Programa</DialogTitle></DialogHeader>
                     <div className="space-y-3">
                       <input value={newTipo} onChange={(e) => setNewTipo(e.target.value)} placeholder="Nome do tipo"
                         className="w-full px-4 py-1.5 outline-none transition-colors text-sm"
-                        style={{ backgroundColor: "#ffffff", border: "1px solid #0d0446", color: "#0d0446", borderRadius: "12px" }}
+                        style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid var(--layout-border-color, #333333)", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "12px" }}
                         onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
-                        onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
+                        onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
                       />
                       <button onClick={addTipo} className="w-full py-2 font-bold transition-all rounded-xl"
-                        style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#ffffff" }}
+                        style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #444444), color-mix(in srgb, var(--layout-accent-color, #444444) 70%, white 30%))", color: "var(--layout-header-text, #ffffff)" }}
                       >Adicionar</button>
                     </div>
                   </DialogContent>
@@ -727,9 +727,9 @@ export default function ProgramaForm() {
           {/* Classificação + Apresentador */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "#0d0446" }}>Classificação Etária</label>
+              <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Classificação Etária</label>
               <Select value={classificacaoEtaria} onValueChange={setClassificacaoEtaria}>
-                <SelectTrigger className="w-full h-9" style={{ backgroundColor: "rgba(255,255,255,0.6)", color: "#0d0446", borderRadius: "12px", border: "1px solid rgba(13,4,70,0.15)", fontSize: "13px" }}>
+                <SelectTrigger className="w-full h-9" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 60%, transparent)", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "12px", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)", fontSize: "13px" }}>
                   <SelectValue placeholder="Selecione a classificação" />
                 </SelectTrigger>
                 <SelectContent>
@@ -745,14 +745,14 @@ export default function ProgramaForm() {
               </Select>
             </div>
             <div>
-              <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "#0d0446" }}>Apresentadores</label>
+              <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Apresentadores</label>
               <Popover open={apresentadorComboOpen} onOpenChange={setApresentadorComboOpen}>
                 <PopoverTrigger asChild>
                   <button
                     className="w-full min-h-[36px] flex items-center justify-between px-4 text-sm rounded-xl gap-2"
-                    style={{ backgroundColor: "rgba(255,255,255,0.6)", color: "#0d0446", border: "1px solid rgba(13,4,70,0.15)" }}
+                    style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 60%, transparent)", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)" }}
                   >
-                    <span className="flex-1 text-left truncate" style={{ color: "#0d0446" }}>
+                    <span className="flex-1 text-left truncate" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
                       {apresentadoresIds.length > 0
                         ? apresentadoresIds.map(id => apresentadores.find(a => a.id === id)?.nome).filter(Boolean).join(", ")
                         : "Selecionar Apresentadores"}
@@ -787,7 +787,7 @@ export default function ProgramaForm() {
                     const ap = apresentadores.find(a => a.id === id);
                     if (!ap) return null;
                     return (
-                      <span key={id} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold" style={{ backgroundColor: "rgba(38,143,250,0.1)", color: "#268ffa" }}>
+                      <span key={id} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #444444) 10%, transparent)", color: "var(--layout-icon-color, #888888)" }}>
                         {ap.nome}
                         <button onClick={() => toggleApresentador(id)} className="hover:opacity-60">
                           <X size={10} />
@@ -802,26 +802,26 @@ export default function ProgramaForm() {
 
           {/* Descrição */}
           <div>
-            <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "#0d0446" }}>Descrição</label>
+            <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Descrição</label>
             <Textarea value={descricao} onChange={(e) => setDescricao(e.target.value)} placeholder="Descrição do programa (opcional)"
-              className="min-h-[60px] px-4 py-2 outline-none transition-all text-sm placeholder:text-[#0d0446]/40"
-              style={{ backgroundColor: "rgba(255,255,255,0.6)", border: "1px solid rgba(13,4,70,0.15)", borderRadius: "12px", color: "#0d0446" }}
-              onFocus={e => { e.currentTarget.style.borderColor = "#268ffa"; }}
-              onBlur={e => { e.currentTarget.style.borderColor = "rgba(13,4,70,0.15)"; }}
+              className="min-h-[60px] px-4 py-2 outline-none transition-all text-sm placeholder:text-[color-mix(in_srgb,var(--layout-page-text)_40%,transparent)]"
+              style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 60%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)", borderRadius: "12px", color: "var(--layout-page-text, #1a1a1a)" }}
+              onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #444444)"; }}
+              onBlur={e => { e.currentTarget.style.borderColor = "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 15%, transparent)"; }}
             />
           </div>
 
           {/* Selo + Capa + Thumb */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "#0d0446" }}>Selo (1080×1080 PNG alpha)</label>
+              <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Selo (1080×1080 PNG alpha)</label>
               <label className="cursor-pointer group">
-                <div className="w-16 h-16 rounded-xl flex flex-col items-center justify-center gap-0.5 transition-all group-hover:border-[#268ffa]"
-                  style={{ backgroundColor: "rgba(255,255,255,0.5)", border: "2px dashed rgba(13,4,70,0.2)" }}>
+                <div className="w-16 h-16 rounded-xl flex flex-col items-center justify-center gap-0.5 transition-all group-hover:border-[var(--layout-accent-color)]"
+                  style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 50%, transparent)", border: "2px dashed color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }}>
                   {selo ? (
                     <img src={selo} alt="Selo" className="w-full h-full object-cover rounded-xl" />
                   ) : (
-                    <span className="text-[9px]" style={{ color: "#0d0446" }}>Upload</span>
+                    <span className="text-[9px]" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Upload</span>
                   )}
                 </div>
                 <input type="file" accept="image/*" onChange={handleSelo} className="hidden" />
@@ -829,14 +829,14 @@ export default function ProgramaForm() {
               {selo && <button onClick={() => setSelo("")} className="text-[10px] text-red-400 hover:text-red-300 mt-1">Remover</button>}
             </div>
             <div>
-              <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "#0d0446" }}>Capa (226×302 PNG alpha)</label>
+              <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Capa (226×302 PNG alpha)</label>
               <label className="cursor-pointer group">
-                <div className="rounded-xl flex flex-col items-center justify-center gap-0.5 transition-all group-hover:border-[#268ffa]"
-                  style={{ width: "56px", height: "75px", backgroundColor: "rgba(255,255,255,0.5)", border: "2px dashed rgba(13,4,70,0.2)" }}>
+                <div className="rounded-xl flex flex-col items-center justify-center gap-0.5 transition-all group-hover:border-[var(--layout-accent-color)]"
+                  style={{ width: "56px", height: "75px", backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 50%, transparent)", border: "2px dashed color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }}>
                   {capa ? (
                     <img src={capa} alt="Capa" className="w-full h-full object-cover rounded-xl" />
                   ) : (
-                    <span className="text-[9px]" style={{ color: "#0d0446" }}>Upload</span>
+                    <span className="text-[9px]" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Upload</span>
                   )}
                 </div>
                 <input type="file" accept="image/*" onChange={handleCapa} className="hidden" />
@@ -844,14 +844,14 @@ export default function ProgramaForm() {
               {capa && <button onClick={() => setCapa("")} className="text-[10px] text-red-400 hover:text-red-300 mt-1">Remover</button>}
             </div>
             <div>
-              <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "#0d0446" }}>Thumb (1920×1080 PNG)</label>
+              <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Thumb (1920×1080 PNG)</label>
               <label className="cursor-pointer group">
-                <div className="rounded-xl flex flex-col items-center justify-center gap-0.5 transition-all group-hover:border-[#268ffa]"
-                  style={{ width: "96px", height: "54px", backgroundColor: "rgba(255,255,255,0.5)", border: "2px dashed rgba(13,4,70,0.2)" }}>
+                <div className="rounded-xl flex flex-col items-center justify-center gap-0.5 transition-all group-hover:border-[var(--layout-accent-color)]"
+                  style={{ width: "96px", height: "54px", backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 50%, transparent)", border: "2px dashed color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }}>
                   {thumb ? (
                     <img src={thumb} alt="Thumb" className="w-full h-full object-cover rounded-xl" />
                   ) : (
-                    <span className="text-[9px]" style={{ color: "#0d0446" }}>Upload</span>
+                    <span className="text-[9px]" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Upload</span>
                   )}
                 </div>
                 <input type="file" accept="image/*" onChange={handleThumb} className="hidden" />
@@ -862,12 +862,12 @@ export default function ProgramaForm() {
 
           {/* Estúdio */}
           <div>
-            <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider flex items-center gap-1" style={{ color: "#0d0446" }}>
+            <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider flex items-center gap-1" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
               <Building2 size={13} /> Estúdio
             </label>
             <div className="flex gap-2">
               <Select value={estudio} onValueChange={setEstudio}>
-                <SelectTrigger className="flex-1 h-9" style={{ backgroundColor: "rgba(255,255,255,0.6)", color: "#0d0446", borderRadius: "12px", border: "1px solid rgba(13,4,70,0.15)", fontSize: "13px" }}>
+                <SelectTrigger className="flex-1 h-9" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 60%, transparent)", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "12px", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)", fontSize: "13px" }}>
                   <SelectValue placeholder="Selecione o estúdio" />
                 </SelectTrigger>
                 <SelectContent>
@@ -879,20 +879,20 @@ export default function ProgramaForm() {
               <Dialog open={estudioDialogOpen} onOpenChange={setEstudioDialogOpen}>
                 <DialogTrigger asChild>
                   <button className="px-3 py-1 text-xs font-bold transition-all shrink-0 rounded-xl"
-                    style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#ffffff" }}
+                    style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #444444), color-mix(in srgb, var(--layout-accent-color, #444444) 70%, white 30%))", color: "var(--layout-header-text, #ffffff)" }}
                   >+ Novo</button>
                 </DialogTrigger>
                 <DialogContent className="max-w-sm">
-                  <DialogHeader><DialogTitle style={{ color: "#0d0446" }}>Cadastrar Estúdio</DialogTitle></DialogHeader>
+                  <DialogHeader><DialogTitle style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Cadastrar Estúdio</DialogTitle></DialogHeader>
                   <div className="space-y-3">
                     <input value={newEstudio} onChange={(e) => setNewEstudio(e.target.value)} placeholder="Nome do estúdio"
                       className="w-full px-4 py-1.5 outline-none transition-colors text-sm"
-                      style={{ backgroundColor: "#ffffff", border: "1px solid #0d0446", color: "#0d0446", borderRadius: "12px" }}
+                      style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid var(--layout-border-color, #333333)", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "12px" }}
                       onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
-                      onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
+                      onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
                     />
                     <button onClick={addEstudio} className="w-full py-2 font-bold transition-all rounded-xl"
-                      style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#ffffff" }}
+                      style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #444444), color-mix(in srgb, var(--layout-accent-color, #444444) 70%, white 30%))", color: "var(--layout-header-text, #ffffff)" }}
                     >Adicionar</button>
                   </div>
                 </DialogContent>
@@ -902,7 +902,7 @@ export default function ProgramaForm() {
 
           {/* Dias da Semana */}
           <div>
-            <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider flex items-center gap-1" style={{ color: "#0d0446" }}>
+            <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider flex items-center gap-1" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
               <Calendar size={13} /> Dias da Semana
             </label>
             <div className="flex flex-wrap gap-1.5">
@@ -910,10 +910,10 @@ export default function ProgramaForm() {
                 <button key={dia} onClick={() => toggleDia(dia)}
                   className="px-3 py-1.5 text-[11px] font-semibold transition-all rounded-lg"
                   style={{
-                    backgroundColor: diasSemana.includes(dia) ? "#268ffa" : "rgba(255,255,255,0.5)",
-                    color: diasSemana.includes(dia) ? "#ffffff" : "#0d0446",
-                    border: diasSemana.includes(dia) ? "1px solid #268ffa" : "1px solid rgba(13,4,70,0.15)",
-                    boxShadow: diasSemana.includes(dia) ? "0 2px 8px rgba(38,143,250,0.3)" : "none",
+                    backgroundColor: diasSemana.includes(dia) ? "var(--layout-accent-color, #444444)" : "rgba(255,255,255,0.5)",
+                    color: diasSemana.includes(dia) ? "#ffffff" : "var(--layout-header-bg, #1a1a1a)",
+                    border: diasSemana.includes(dia) ? "1px solid var(--layout-accent-color, #444444)" : "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 15%, transparent)",
+                    boxShadow: diasSemana.includes(dia) ? "0 2px 8px color-mix(in srgb, var(--layout-accent-color, #444444) 30%, transparent)" : "none",
                   }}>
                   {dia.slice(0, 3)}
                 </button>
@@ -924,42 +924,42 @@ export default function ProgramaForm() {
           {/* Horários */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider flex items-center gap-1" style={{ color: "#0d0446" }}><Clock size={12} /> Início</label>
+              <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider flex items-center gap-1" style={{ color: "var(--layout-page-text, #1a1a1a)" }}><Clock size={12} /> Início</label>
               <input type="time" step="1" value={horarioInicio} onChange={(e) => setHorarioInicio(e.target.value)}
                 className="w-full px-4 py-2 outline-none transition-all text-sm"
-                style={{ backgroundColor: "rgba(255,255,255,0.6)", border: "1px solid rgba(13,4,70,0.15)", borderRadius: "12px", color: "#0d0446" }}
-                onFocus={e => { e.currentTarget.style.borderColor = "#268ffa"; }}
-                onBlur={e => { e.currentTarget.style.borderColor = "rgba(13,4,70,0.15)"; }}
+                style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 60%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)", borderRadius: "12px", color: "var(--layout-page-text, #1a1a1a)" }}
+                onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #444444)"; }}
+                onBlur={e => { e.currentTarget.style.borderColor = "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 15%, transparent)"; }}
               />
             </div>
             <div>
-              <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider flex items-center gap-1" style={{ color: "#0d0446" }}><Clock size={12} /> Fim</label>
+              <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider flex items-center gap-1" style={{ color: "var(--layout-page-text, #1a1a1a)" }}><Clock size={12} /> Fim</label>
               <input type="time" step="1" value={horarioFim} onChange={(e) => setHorarioFim(e.target.value)}
                 className="w-full px-4 py-2 outline-none transition-all text-sm"
-                style={{ backgroundColor: "rgba(255,255,255,0.6)", border: "1px solid rgba(13,4,70,0.15)", borderRadius: "12px", color: "#0d0446" }}
-                onFocus={e => { e.currentTarget.style.borderColor = "#268ffa"; }}
-                onBlur={e => { e.currentTarget.style.borderColor = "rgba(13,4,70,0.15)"; }}
+                style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 60%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)", borderRadius: "12px", color: "var(--layout-page-text, #1a1a1a)" }}
+                onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #444444)"; }}
+                onBlur={e => { e.currentTarget.style.borderColor = "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 15%, transparent)"; }}
               />
             </div>
           </div>
 
           {/* Toggles */}
-          <div className="flex items-center gap-6" style={{ borderTop: "1px solid rgba(13,4,70,0.1)", paddingTop: "12px" }}>
+          <div className="flex items-center gap-6" style={{ borderTop: "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 10%, transparent)", paddingTop: "12px" }}>
             <label className="flex items-center gap-2.5 cursor-pointer select-none">
               <div className="relative">
                 <input type="checkbox" checked={ativo} onChange={(e) => setAtivo(e.target.checked)} className="sr-only peer" />
-                <div className="w-9 h-5 rounded-full transition-colors peer-checked:bg-[#268ffa]" style={{ backgroundColor: "rgba(13,4,70,0.15)" }} />
+                <div className="w-9 h-5 rounded-full transition-colors peer-checked:bg-[var(--layout-accent-color)]" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 15%, transparent)" }} />
                 <div className="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-4 shadow-sm" />
               </div>
-              <span className="text-xs font-medium" style={{ color: "#0d0446" }}>Ativo</span>
+              <span className="text-xs font-medium" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Ativo</span>
             </label>
             <label className="flex items-center gap-2.5 cursor-pointer select-none">
               <div className="relative">
                 <input type="checkbox" checked={variavel} onChange={(e) => { setVariavel(e.target.checked); if (!e.target.checked) setDataVariavel(undefined); }} className="sr-only peer" />
-                <div className="w-9 h-5 rounded-full transition-colors peer-checked:bg-[#f59e0b]" style={{ backgroundColor: "rgba(13,4,70,0.15)" }} />
+                <div className="w-9 h-5 rounded-full transition-colors peer-checked:bg-[#f59e0b]" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 15%, transparent)" }} />
                 <div className="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-4 shadow-sm" />
               </div>
-              <span className="text-xs font-medium" style={{ color: "#0d0446" }}>Variável</span>
+              <span className="text-xs font-medium" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Variável</span>
             </label>
           </div>
 
@@ -972,7 +972,7 @@ export default function ProgramaForm() {
               <Popover>
                 <PopoverTrigger asChild>
                   <button className={cn("w-full justify-start text-left font-normal flex items-center gap-2 px-4 py-2 text-sm rounded-xl")}
-                    style={{ backgroundColor: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", color: "#ffffff" }}>
+                    style={{ backgroundColor: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", color: "var(--layout-header-text, #ffffff)" }}>
                     <CalendarDays className="h-4 w-4 text-amber-400" />
                     {dataVariavel ? format(dataVariavel, "dd/MM/yyyy (EEEE)", { locale: ptBR }) : "Selecione a data"}
                   </button>
@@ -1005,7 +1005,7 @@ export default function ProgramaForm() {
             {editingId && (
               <button onClick={resetForm}
                 className="px-4 py-2 text-xs font-bold transition-all flex items-center gap-1.5 rounded-xl"
-                style={{ backgroundColor: "rgba(255,255,255,0.5)", color: "#0d0446", border: "1px solid rgba(13,4,70,0.15)" }}
+                style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 50%, transparent)", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)" }}
                 onMouseEnter={e => { e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.7)"; }}
                 onMouseLeave={e => { e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.5)"; }}
               >
@@ -1014,9 +1014,9 @@ export default function ProgramaForm() {
             )}
             <button onClick={handleAdd} disabled={saving}
               className="px-6 py-2 text-xs font-bold transition-all flex items-center gap-2 disabled:opacity-50 rounded-xl"
-              style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)", color: "#ffffff", boxShadow: "0 4px 15px rgba(38,143,250,0.3)" }}
-              onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 6px 20px rgba(38,143,250,0.5)"; e.currentTarget.style.transform = "translateY(-1px)"; }}
-              onMouseLeave={e => { e.currentTarget.style.boxShadow = "0 4px 15px rgba(38,143,250,0.3)"; e.currentTarget.style.transform = "translateY(0)"; }}
+              style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #444444), color-mix(in srgb, var(--layout-accent-color, #444444) 70%, white 30%))", color: "var(--layout-header-text, #ffffff)", boxShadow: "0 4px 15px color-mix(in srgb, var(--layout-accent-color, #444444) 30%, transparent)" }}
+              onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 6px 20px color-mix(in srgb, var(--layout-accent-color, #444444) 50%, transparent)"; e.currentTarget.style.transform = "translateY(-1px)"; }}
+              onMouseLeave={e => { e.currentTarget.style.boxShadow = "0 4px 15px color-mix(in srgb, var(--layout-accent-color, #444444) 30%, transparent)"; e.currentTarget.style.transform = "translateY(0)"; }}
             >
               {saving && <Loader2 size={13} className="animate-spin" />}
               {saving ? "Salvando..." : editingId ? "Atualizar" : "Adicionar Programa"}
@@ -1029,23 +1029,23 @@ export default function ProgramaForm() {
       {loadingData ? (
         <div className="animate-pulse space-y-3">
           <div className="flex items-center justify-between mb-4">
-            <div className="h-5 w-48 rounded bg-[#0d0446]/10" />
-            <div className="h-7 w-48 rounded-full bg-[#0d0446]/10" />
+            <div className="h-5 w-48 rounded bg-[var(--layout-header-bg)]/10" />
+            <div className="h-7 w-48 rounded-full bg-[var(--layout-header-bg)]/10" />
           </div>
-          <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(13,4,70,0.1)" }}>
+          <div className="rounded-xl overflow-hidden" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 35%, transparent)" }}>
             <table className="w-full">
               <thead>
-                <tr style={{ backgroundColor: "rgba(13,4,70,0.05)" }}>
-                  <th className="px-2 py-2 w-20"><div className="h-3 w-12 rounded bg-[#0d0446]/10" /></th>
+                <tr style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 5%, transparent)" }}>
+                  <th className="px-2 py-2 w-20"><div className="h-3 w-12 rounded bg-[var(--layout-header-bg)]/10" /></th>
                   {Array.from({ length: 7 }).map((_, i) => (
-                    <th key={i} className="px-2 py-2 text-center"><div className="h-3 w-8 mx-auto rounded bg-[#0d0446]/10" /></th>
+                    <th key={i} className="px-2 py-2 text-center"><div className="h-3 w-8 mx-auto rounded bg-[var(--layout-header-bg)]/10" /></th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {Array.from({ length: 10 }).map((_, row) => (
                   <tr key={row}>
-                    <td className="px-2 py-1.5"><div className="h-2.5 w-10 rounded bg-[#0d0446]/5" /></td>
+                    <td className="px-2 py-1.5"><div className="h-2.5 w-10 rounded bg-[var(--layout-header-bg)]/5" /></td>
                     {Array.from({ length: 7 }).map((_, col) => (
                       <td key={col} className="px-1 py-1">
                         <div className="h-6 rounded" style={{ backgroundColor: `rgba(13,4,70,${Math.random() * 0.08 + 0.02})` }} />
@@ -1058,19 +1058,19 @@ export default function ProgramaForm() {
           </div>
         </div>
       ) : programas.length > 0 && (
-        <div className="rounded-2xl overflow-hidden" style={{ background: "#d9e9fa", boxShadow: "0 8px 32px rgba(13,4,70,0.12)", padding: "20px" }}>
+        <div className="rounded-2xl overflow-hidden" style={{ background: "color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 12%, var(--layout-page-bg, #ffffff) 88%)", boxShadow: "0 8px 32px rgba(0,0,0,0.10)", padding: "20px" }}>
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "rgba(13,4,70,0.08)" }}>
-                <Calendar size={18} style={{ color: "#0d0446" }} />
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)" }}>
+                <Calendar size={18} style={{ color: "var(--layout-page-text, #1a1a1a)" }} />
               </div>
               <div>
-                <h4 className="text-base font-bold" style={{ color: "#0d0446" }}>Grade de Programação</h4>
-                <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.5)" }}>Visualização semanal dos programas</p>
+                <h4 className="text-base font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Grade de Programação</h4>
+                <p className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Visualização semanal dos programas</p>
               </div>
             </div>
             <Select value={gradeEstudioFilter} onValueChange={setGradeEstudioFilter}>
-              <SelectTrigger className="w-[180px]" style={{ backgroundColor: "#0d0446", color: "#ffffff", borderRadius: "20px", border: "none", fontSize: "11px", height: "30px", padding: "0 12px" }}>
+              <SelectTrigger className="w-[180px]" style={{ backgroundColor: "var(--layout-header-bg, #1a1a1a)", color: "var(--layout-header-text, #ffffff)", borderRadius: "20px", border: "none", fontSize: "11px", height: "30px", padding: "0 12px" }}>
                 <SelectValue placeholder="Filtrar por estúdio" />
               </SelectTrigger>
               <SelectContent>
@@ -1084,18 +1084,18 @@ export default function ProgramaForm() {
           <style>{`
             .grade-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
             .grade-scroll::-webkit-scrollbar-track { background: transparent; }
-            .grade-scroll::-webkit-scrollbar-thumb { background: #0d0446; border-radius: 3px; }
-            .grade-scroll::-webkit-scrollbar-thumb:hover { background: #268ffa; }
+            .grade-scroll::-webkit-scrollbar-thumb { background: var(--layout-header-bg, #1a1a1a); border-radius: 3px; }
+            .grade-scroll::-webkit-scrollbar-thumb:hover { background: var(--layout-accent-color, #444444); }
             .grade-scroll::-webkit-scrollbar-button { display: none; }
           `}</style>
           <div
             ref={gradeRef}
             className="rounded-xl overflow-auto max-h-[340px] grade-scroll"
-            style={{ border: "1px solid rgba(13,4,70,0.08)", backgroundColor: "#ffffff", scrollbarWidth: "thin", scrollbarColor: "#0d0446 transparent", position: "relative", boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}
+            style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)", backgroundColor: "var(--layout-page-bg, #ffffff)", scrollbarWidth: "thin", scrollbarColor: "#0d0446 transparent", position: "relative", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}
           >
             <table data-no-row-hover className="w-full text-xs border-separate border-spacing-1">
               <thead className="sticky top-0 z-10">
-                <tr style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)" }}>
+                <tr style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" }}>
                   <th className="px-3 py-2.5 text-left w-20 rounded-lg text-[11px] font-semibold uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.7)" }}>Horário</th>
                   {DIAS_SEMANA.map(dia => (
                     <th key={dia} className={`px-2 py-2.5 text-center rounded-lg text-[11px] font-semibold uppercase tracking-wider ${dia === diaAtual ? "font-bold" : ""}`} style={{ color: dia === diaAtual ? "#2dbef3" : "rgba(255,255,255,0.85)" }}>
@@ -1142,7 +1142,7 @@ export default function ProgramaForm() {
                 top: -9,
                 fontSize: "9px",
                 fontWeight: 700,
-                color: "#ffffff",
+                color: "var(--layout-header-text, #ffffff)",
                 backgroundColor: "#dc2626",
                 padding: "2px 6px",
                 borderRadius: "4px",
@@ -1158,38 +1158,38 @@ export default function ProgramaForm() {
 
       {loadingData ? (
         <div className="animate-pulse space-y-3">
-          <div className="h-5 w-52 rounded bg-[#0d0446]/10 mb-4" />
-          <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(13,4,70,0.1)" }}>
-            <div className="h-10 w-full" style={{ backgroundColor: "rgba(13,4,70,0.08)" }} />
+          <div className="h-5 w-52 rounded bg-[var(--layout-header-bg)]/10 mb-4" />
+          <div className="rounded-xl overflow-hidden" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 35%, transparent)" }}>
+            <div className="h-10 w-full" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)" }} />
             {Array.from({ length: 5 }).map((_, i) => (
               <div key={i} className="flex items-center gap-4 px-4 py-3" style={{ borderBottom: "1px solid rgba(13,4,70,0.05)" }}>
-                <div className="h-3 w-32 rounded bg-[#0d0446]/8" />
-                <div className="h-3 w-24 rounded bg-[#0d0446]/5" />
-                <div className="h-3 w-20 rounded bg-[#0d0446]/5" />
-                <div className="h-3 w-28 rounded bg-[#0d0446]/5" />
+                <div className="h-3 w-32 rounded bg-[var(--layout-header-bg)]/8" />
+                <div className="h-3 w-24 rounded bg-[var(--layout-header-bg)]/5" />
+                <div className="h-3 w-20 rounded bg-[var(--layout-header-bg)]/5" />
+                <div className="h-3 w-28 rounded bg-[var(--layout-header-bg)]/5" />
                 <div className="ml-auto flex gap-2">
-                  <div className="h-6 w-6 rounded bg-[#0d0446]/5" />
-                  <div className="h-6 w-6 rounded bg-[#0d0446]/5" />
+                  <div className="h-6 w-6 rounded bg-[var(--layout-header-bg)]/5" />
+                  <div className="h-6 w-6 rounded bg-[var(--layout-header-bg)]/5" />
                 </div>
               </div>
             ))}
           </div>
         </div>
       ) : programas.length > 0 && (
-        <div className="rounded-2xl overflow-hidden" style={{ background: "#d9e9fa", boxShadow: "0 8px 32px rgba(13,4,70,0.12)", padding: "20px" }}>
+        <div className="rounded-2xl overflow-hidden" style={{ background: "color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 12%, var(--layout-page-bg, #ffffff) 88%)", boxShadow: "0 8px 32px rgba(0,0,0,0.10)", padding: "20px" }}>
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "rgba(13,4,70,0.08)" }}>
-              <PlaySquare size={18} style={{ color: "#0d0446" }} />
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)" }}>
+              <PlaySquare size={18} style={{ color: "var(--layout-page-text, #1a1a1a)" }} />
             </div>
             <div>
-              <h4 className="text-base font-bold" style={{ color: "#0d0446" }}>Programas Cadastrados</h4>
-              <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.5)" }}>{sortedProgramas.length} programa{sortedProgramas.length !== 1 ? "s" : ""} registrado{sortedProgramas.length !== 1 ? "s" : ""}</p>
+              <h4 className="text-base font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Programas Cadastrados</h4>
+              <p className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>{sortedProgramas.length} programa{sortedProgramas.length !== 1 ? "s" : ""} registrado{sortedProgramas.length !== 1 ? "s" : ""}</p>
             </div>
           </div>
-          <div className="rounded-xl overflow-hidden" style={{ boxShadow: "0 2px 12px rgba(13,4,70,0.06)" }}>
-            <table className="w-full text-xs" style={{ color: "#0d0446" }}>
+          <div className="rounded-xl overflow-hidden" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+            <table className="w-full text-xs" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
               <thead>
-                <tr style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)", color: "#ffffff" }}>
+                <tr style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))", color: "var(--layout-header-text, #ffffff)" }}>
                   <th className="px-4 py-3 text-left font-semibold text-[11px] uppercase tracking-wider">Programa</th>
                   <th className="px-4 py-3 text-left font-semibold text-[11px] uppercase tracking-wider">Exibição</th>
                   <th className="px-4 py-3 text-left font-semibold text-[11px] uppercase tracking-wider">Horário</th>
@@ -1206,7 +1206,7 @@ export default function ProgramaForm() {
                   >
                     <td className="px-4 py-3 font-semibold">
                       <div className="flex items-center gap-2">
-                        {p.capa && <img src={p.capa} alt="" className="w-8 h-8 rounded-lg object-cover shrink-0" style={{ border: "1px solid rgba(13,4,70,0.08)" }} />}
+                        {p.capa && <img src={p.capa} alt="" className="w-8 h-8 rounded-lg object-cover shrink-0" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }} />}
                         <div>
                           <div className="flex items-center gap-1.5">
                             {p.nome}
@@ -1216,19 +1216,19 @@ export default function ProgramaForm() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-[11px]" style={{ color: "rgba(13,4,70,0.6)" }}>
+                    <td className="px-4 py-3 text-[11px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>
                       {p.variavel && p.dataVariavel
                         ? format(new Date(p.dataVariavel + "T12:00:00"), "dd/MM/yyyy (EEEE)", { locale: ptBR })
-                        : <div className="flex flex-wrap gap-0.5">{p.diasSemana.map(d => <span key={d} className="px-1.5 py-0.5 rounded text-[9px] font-medium" style={{ backgroundColor: "rgba(13,4,70,0.06)", color: "#0d0446" }}>{d.slice(0, 3)}</span>)}</div>}
+                        : <div className="flex flex-wrap gap-0.5">{p.diasSemana.map(d => <span key={d} className="px-1.5 py-0.5 rounded text-[9px] font-medium" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)", color: "var(--layout-page-text, #1a1a1a)" }}>{d.slice(0, 3)}</span>)}</div>}
                     </td>
                     <td className="px-4 py-3">
-                      <span className="inline-flex items-center gap-1 text-[11px] font-medium" style={{ color: "rgba(13,4,70,0.7)" }}>
+                      <span className="inline-flex items-center gap-1 text-[11px] font-medium" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 70%, transparent)" }}>
                         <Clock size={11} style={{ color: "rgba(13,4,70,0.35)" }} />
                         {p.horarioInicio.slice(0, 5)} — {p.horarioFim.slice(0, 5)}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-[11px] font-medium" style={{ color: "rgba(13,4,70,0.7)" }}>
-                      {getApresentadoresNomes(p) !== "—" ? getApresentadoresNomes(p) : <span style={{ color: "rgba(13,4,70,0.3)" }}>—</span>}
+                    <td className="px-4 py-3 text-[11px] font-medium" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 70%, transparent)" }}>
+                      {getApresentadoresNomes(p) !== "—" ? getApresentadoresNomes(p) : <span style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 30%, transparent)" }}>—</span>}
                     </td>
                     <td className="px-4 py-3 text-center">
                       <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold" style={{
@@ -1244,10 +1244,10 @@ export default function ProgramaForm() {
                         <button onClick={() => startEdit(p)} title="Editar"
                           className="w-8 h-8 rounded-lg flex items-center justify-center transition-all"
                           style={{ backgroundColor: "transparent" }}
-                          onMouseEnter={e => { e.currentTarget.style.backgroundColor = "rgba(38,143,250,0.1)"; }}
+                          onMouseEnter={e => { e.currentTarget.style.backgroundColor = "color-mix(in srgb, var(--layout-accent-color, #444444) 10%, transparent)"; }}
                           onMouseLeave={e => { e.currentTarget.style.backgroundColor = "transparent"; }}
                         >
-                          <Pencil size={14} style={{ color: "#268ffa" }} />
+                          <Pencil size={14} style={{ color: "var(--layout-icon-color, #888888)" }} />
                         </button>
                         <button onClick={() => toggleAtivo(p.id, p.ativo)} title={p.ativo ? "Desativar" : "Ativar"}
                           className="w-8 h-8 rounded-lg flex items-center justify-center transition-all"
@@ -1278,8 +1278,8 @@ export default function ProgramaForm() {
       {showSuccess && (
         <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: "rgba(0,0,0,0.3)" }}>
           <div className="flex flex-col items-center justify-center animate-fade-in overflow-hidden"
-            style={{ width: "450px", height: "165px", background: "linear-gradient(135deg, #0d0446, #1a0a6e)", borderRadius: "20px", boxShadow: "0 20px 60px rgba(13,4,70,0.4)" }}>
-            <div className="flex items-center gap-3 flex-1 justify-center" style={{ fontSize: "14px", color: "#ffffff", fontWeight: 600 }}>
+            style={{ width: "450px", height: "165px", background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))", borderRadius: "20px", boxShadow: "0 20px 60px color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>
+            <div className="flex items-center gap-3 flex-1 justify-center" style={{ fontSize: "14px", color: "var(--layout-header-text, #ffffff)", fontWeight: 600 }}>
               <CheckCircle size={22} style={{ color: "#2dbef3" }} /> Salvo com sucesso!
             </div>
             <div className="w-full" style={{ height: "4px", backgroundColor: "rgba(255,255,255,0.1)" }}>
