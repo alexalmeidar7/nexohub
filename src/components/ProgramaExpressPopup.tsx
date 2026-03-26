@@ -45,6 +45,7 @@ export interface ExpressEditData {
   estudio: string;
   programaId: string;
   blocos: Bloco[];
+  participantes?: Participante[];
 }
 
 interface Props {
