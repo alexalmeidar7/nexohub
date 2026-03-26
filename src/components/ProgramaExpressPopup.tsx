@@ -147,8 +147,8 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
         const title = getMetaContent("og:title") || getMetaContent("twitter:title") || (html.match(/<title[^>]*>([^<]+)<\/title>/i)?.[1] || "").trim();
         const image = getMetaContent("og:image") || getMetaContent("twitter:image");
 
-        if (title) updateNoticia(bi, ni, "titulo", title);
-        if (image) updateNoticia(bi, ni, "imagemUrl", image);
+        if (title) updateNoticia(bi, ni, "titulo", decodeHtmlEntities(title));
+        if (image) updateNoticia(bi, ni, "imagemUrl", decodeHtmlEntities(image));
         updateNoticia(bi, ni, "link", url);
         if (title) toast.success("Dados extraídos do link!");
         else toast.warning("Link carregado, mas não foi possível extrair o título");
