@@ -163,6 +163,13 @@ function formatTime(seconds: number): string {
   return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
 
+function formatTimeMs(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  const ms = Math.floor((seconds % 1) * 100);
+  return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}.${String(ms).padStart(2, "0")}`;
+}
+
 async function fetchCoverFromiTunes(titulo: string, artista: string): Promise<string> {
   try {
     const query = encodeURIComponent(`${artista} ${titulo}`);
