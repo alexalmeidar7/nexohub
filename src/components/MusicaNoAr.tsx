@@ -730,6 +730,7 @@ export default function MusicaNoAr() {
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
   }, [music, startTime]);
 
+  // Load music data from localStorage first, then try DB for start time persistence
   useEffect(() => {
     const stored = getMusicData();
     if (stored) {
@@ -738,7 +739,37 @@ export default function MusicaNoAr() {
       setStartTime(st);
       setElapsed(stored.elapsed);
     }
-  }, []);
+    // Also try to restore from DB if localStorage has no start time
+    if (!user) return;
+    const restoreFromDb = async () => {
+      const { data: settings } = await supabase
+        .from("user_settings")
+        .select("dashboard_items")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      const items = settings?.dashboard_items as Record<string, any> | null;
+      if (!items?.music_start_time) return;
+      const dbStartTime = items.music_start_time as number;
+      const dbTitle = items.music_current_title as string;
+      const dbArtist = items.music_current_artist as string;
+      // Use DB start time if it matches the current song and localStorage doesn't have it or is stale
+      const currentRaw = localStorage.getItem(MUSIC_DATA_KEY);
+      if (currentRaw) {
+        const current = JSON.parse(currentRaw);
+        if (current.titulo === dbTitle && current.artista === dbArtist) {
+          const localStart = parseInt(localStorage.getItem(MUSIC_START_KEY) || "0", 10);
+          // If localStorage start is newer than DB, keep it; otherwise use DB
+          if (!localStart || Math.abs(localStart - dbStartTime) > 5000) {
+            localStorage.setItem(MUSIC_START_KEY, dbStartTime.toString());
+            setStartTime(dbStartTime);
+            const el = (Date.now() - dbStartTime) / 1000;
+            setElapsed(Math.min(el, current.duracao || 999));
+          }
+        }
+      }
+    };
+    restoreFromDb();
+  }, [user]);
 
   const rawProgress = music && music.duracao > 0 ? Math.min(100, (elapsed / music.duracao) * 100) : 0;
 
