@@ -488,7 +488,6 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
   };
 
   const generateXml = (): string => {
-    const escaladaItems = blocos.flatMap(b => b.noticias.filter(n => n.escalada && n.titulo));
     let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<programaExpress>\n`;
     xml += `  <programa>${programaNome}</programa>\n`;
     xml += `  <estudio>${estudio}</estudio>\n`;
@@ -506,12 +505,11 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
       xml += `  </participantes>\n`;
     }
 
-    if (escaladaItems.length > 0) {
+    if (escaladaList.length > 0) {
       xml += `  <escalada>\n`;
-      escaladaItems.forEach((n, i) => {
+      escaladaList.forEach((t, i) => {
         xml += `    <item ordem="${i + 1}">\n`;
-        xml += `      <titulo>${escXml(n.titulo)}</titulo>\n`;
-        xml += `      <imagem>${escXml(n.imagemUrl)}</imagem>\n`;
+        xml += `      <titulo>${escXml(t)}</titulo>\n`;
         xml += `    </item>\n`;
       });
       xml += `  </escalada>\n`;
