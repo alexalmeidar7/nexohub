@@ -448,13 +448,26 @@ table:not([data-no-row-hover]) tbody tr:hover {
 
 /* Override hardcoded header backgrounds in form sections */
 .mv-content-area [style*="background: linear-gradient(135deg, #0d0446"],
-.mv-content-area [style*="background-color: #0d0446"] {
+.mv-content-area [style*="background-color: #0d0446"],
+.mv-content-area [style*="background: linear-gradient(135deg, #268ffa"] {
   background: linear-gradient(135deg, var(--layout-header-bg, #0d0446), color-mix(in srgb, var(--layout-header-bg, #0d0446) 80%, var(--layout-page-bg, #ffffff))) !important;
+  color: var(--layout-header-text, #ffffff) !important;
+}
+.mv-content-area [style*="background: linear-gradient(135deg, #0d0446"] *,
+.mv-content-area [style*="background-color: #0d0446"] *,
+.mv-content-area [style*="background: linear-gradient(135deg, #268ffa"] * {
+  color: var(--layout-header-text, #ffffff) !important;
 }
 
 /* Override hardcoded text colors */
 .mv-content-area [style*="color: #0d0446"] {
   color: var(--layout-page-text, #0d0446) !important;
+}
+
+/* Gradient buttons (blue accent) follow header colors */
+.mv-content-area button[style*="background: linear-gradient(135deg, #268ffa"] {
+  background: linear-gradient(135deg, var(--layout-header-bg, #0d0446), color-mix(in srgb, var(--layout-header-bg, #0d0446) 80%, var(--layout-accent-color, #268ffa))) !important;
+  color: var(--layout-header-text, #ffffff) !important;
 }
 
 /* Buttons inside mv-content-area with hardcoded backgrounds */
