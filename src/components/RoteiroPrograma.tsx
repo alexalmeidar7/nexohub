@@ -917,19 +917,36 @@ ${perguntaActions}
                     )}
                     {/* WhatsApp button */}
                     <button
-                      onClick={() => {
+                      onClick={async () => {
                         const isExpress = r.subtitulo?.startsWith("express_xml::");
                         let parts: any[] = [];
                         try { parts = typeof r.participantes === "string" ? JSON.parse(r.participantes) : r.participantes || []; } catch { parts = []; }
 
                         if (isExpress) {
-                          // Build formatted WhatsApp text for Express
                           const parsed = Array.isArray(parts) ? { blocos: [], participantes: parts } : (parts || {});
                           const pList: any[] = parsed.participantes || [];
                           const blocosList: any[] = parsed.blocos || [];
                           const dataStr = format(new Date(r.data_programa), "dd/MM/yyyy");
                           const prog = programas.find(p => p.nome === r.programa_nome);
                           const horarioInicio = prog?.horario_inicio?.slice(0, 5) || r.horario || "";
+
+                          // Collect all links to shorten
+                          const allLinks: string[] = [];
+                          blocosList.forEach((b: any) => (b.noticias || []).forEach((n: any) => { if (n.link) allLinks.push(n.link); }));
+
+                          // Shorten links in parallel
+                          const shortenUrl = async (url: string): Promise<string> => {
+                            try {
+                              const res = await fetch(`https://is.gd/create.php?format=simple&url=${encodeURIComponent(url)}`);
+                              if (res.ok) { const short = await res.text(); return short.trim(); }
+                            } catch { /* fallback */ }
+                            return url;
+                          };
+
+                          toast.info("Encurtando links...");
+                          const shortened = await Promise.all(allLinks.map(shortenUrl));
+                          const linkMap = new Map<string, string>();
+                          allLinks.forEach((url, i) => linkMap.set(url, shortened[i]));
 
                           let msg = `*${r.programa_nome || "Programa"}*\n`;
                           msg += `📅 ${dataStr}${horarioInicio ? ` às ${horarioInicio}` : ""}\n\n`;
@@ -942,7 +959,6 @@ ${perguntaActions}
                             msg += `\n`;
                           }
 
-                          // Escalada from blocos noticias marked as escalada
                           const escaladaItems = blocosList.flatMap((b: any) => (b.noticias || []).filter((n: any) => n.escalada).map((n: any) => n.titulo)).filter(Boolean);
                           if (escaladaItems.length > 0) {
                             msg += `📢 *Escalada:*\n`;
@@ -956,7 +972,7 @@ ${perguntaActions}
                             msg += `📺 *BLOCO ${bi + 1}:*\n`;
                             noticias.forEach((n: any) => {
                               msg += `• ${n.titulo}`;
-                              if (n.link) msg += `\n  🔗 ${n.link}`;
+                              if (n.link) msg += `\n  🔗 ${linkMap.get(n.link) || n.link}`;
                               msg += `\n`;
                             });
                             msg += `\n`;
