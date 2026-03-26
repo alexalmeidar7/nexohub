@@ -89,12 +89,35 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
     setFetchingLink(key);
     try {
       const { data, error } = await supabase.functions.invoke("fetch-rss", {
-        body: { url, mode: "meta" },
+        body: { url },
       });
-      if (!error && data) {
-        updateNoticia(bi, ni, "titulo", data.title || "");
-        updateNoticia(bi, ni, "imagemUrl", data.image || "");
+      if (!error && data?.ok && data.content) {
+        const html = data.content as string;
+        // Parse OG meta tags from HTML
+        const getMetaContent = (property: string): string => {
+          const patterns = [
+            new RegExp(`<meta[^>]+property=["']${property}["'][^>]+content=["']([^"']+)["']`, "i"),
+            new RegExp(`<meta[^>]+content=["']([^"']+)["'][^>]+property=["']${property}["']`, "i"),
+            new RegExp(`<meta[^>]+name=["']${property}["'][^>]+content=["']([^"']+)["']`, "i"),
+            new RegExp(`<meta[^>]+content=["']([^"']+)["'][^>]+name=["']${property}["']`, "i"),
+          ];
+          for (const p of patterns) {
+            const m = html.match(p);
+            if (m?.[1]) return m[1];
+          }
+          return "";
+        };
+
+        const title = getMetaContent("og:title") || getMetaContent("twitter:title") || (html.match(/<title[^>]*>([^<]+)<\/title>/i)?.[1] || "").trim();
+        const image = getMetaContent("og:image") || getMetaContent("twitter:image");
+
+        if (title) updateNoticia(bi, ni, "titulo", title);
+        if (image) updateNoticia(bi, ni, "imagemUrl", image);
         updateNoticia(bi, ni, "link", url);
+        if (title) toast.success("Dados extraídos do link!");
+        else toast.warning("Link carregado, mas não foi possível extrair o título");
+      } else {
+        toast.error("Não foi possível acessar o link");
       }
     } catch {
       toast.error("Não foi possível extrair dados do link");
