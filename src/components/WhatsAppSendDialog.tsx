@@ -238,7 +238,7 @@ export default function WhatsAppSendDialog({ open, onClose, roteiroData }: Whats
 
         {/* Footer */}
         <div className="px-5 py-4 border-t flex items-center justify-end gap-2" style={{ borderColor: "rgba(255,255,255,0.1)" }}>
-          <button onClick={onClose} className="px-4 py-2 rounded-lg text-xs font-bold text-white/60 hover:text-white transition">
+          <button onClick={onClose} className="px-4 py-2 rounded-lg text-xs font-bold transition" style={{ color: "var(--layout-header-text, #ffffff)", opacity: 0.6 }}>
             cancelar
           </button>
           <button
