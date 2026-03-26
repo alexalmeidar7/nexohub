@@ -203,7 +203,7 @@ export default function WhatsAppSendDialog({ open, onClose, roteiroData }: Whats
                 onChange={e => setNovoNome(e.target.value)}
                 placeholder="Nome"
                 className="flex-1 px-3 py-2 rounded-lg text-xs outline-none"
-                style={{ backgroundColor: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff" }}
+                style={{ backgroundColor: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "var(--layout-header-text, #ffffff)" }}
               />
               <input
                 value={novoWhatsapp}
