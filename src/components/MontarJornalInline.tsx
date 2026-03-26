@@ -101,7 +101,7 @@ export default function MontarJornalInline({ programas, onFinish, onCancel }: Pr
           box-shadow: none !important;
           border-color: #2ec1f7 !important;
         }
-        .jornal-inline-input { color: #0d0446 !important; }
+        .jornal-inline-input { color: var(--layout-page-text, #1a1a1a) !important; }
       `}</style>
 
       {/* Header */}

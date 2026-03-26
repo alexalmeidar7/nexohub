@@ -506,25 +506,25 @@ export default function AgendaPage() {
               .agenda-form-input:focus, .agenda-form-input:focus-visible, .agenda-form-input:active {
                 outline: none !important;
                 box-shadow: 0 0 0 2px color-mix(in srgb, var(--layout-accent-color, #444444) 20%, transparent) !important;
-                border-color: #268ffa !important;
+                border-color: var(--layout-accent-color, #444444) !important;
               }
-              .agenda-form-calendar .rdp { color: #0d0446 !important; }
-              .agenda-form-calendar .rdp-caption_label { color: #0d0446 !important; font-weight: 700; }
+              .agenda-form-calendar .rdp { color: var(--layout-page-text, #1a1a1a) !important; }
+              .agenda-form-calendar .rdp-caption_label { color: var(--layout-page-text, #1a1a1a) !important; font-weight: 700; }
               .agenda-form-calendar .rdp-head_cell { color: color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent) !important; }
-              .agenda-form-calendar .rdp-day { color: #0d0446 !important; }
-              .agenda-form-calendar .rdp-day:hover { background-color: color-mix(in srgb, var(--layout-accent-color, #444444) 15%, transparent) !important; color: #268ffa !important; }
-              .agenda-form-calendar .rdp-day_selected { background-color: #268ffa !important; color: #fff !important; }
+              .agenda-form-calendar .rdp-day { color: var(--layout-page-text, #1a1a1a) !important; }
+              .agenda-form-calendar .rdp-day:hover { background-color: color-mix(in srgb, var(--layout-accent-color, #444444) 15%, transparent) !important; color: var(--layout-accent-color, #444444) !important; }
+              .agenda-form-calendar .rdp-day_selected { background-color: var(--layout-accent-color, #444444) !important; color: #fff !important; }
               .agenda-form-calendar .rdp-day_selected:hover { background-color: #1a7ae0 !important; color: #fff !important; }
-              .agenda-form-calendar .rdp-day_today { background-color: #0d0446 !important; color: #fff !important; font-weight: 700; }
+              .agenda-form-calendar .rdp-day_today { background-color: var(--layout-page-text, #1a1a1a) !important; color: #fff !important; font-weight: 700; }
               .agenda-form-calendar .rdp-day_outside { color: color-mix(in srgb, var(--layout-page-text, #1a1a1a) 25%, transparent) !important; }
-              .agenda-form-calendar .rdp-nav_button { color: #0d0446 !important; }
+              .agenda-form-calendar .rdp-nav_button { color: var(--layout-page-text, #1a1a1a) !important; }
               .agenda-form-calendar .rdp-nav_button:hover { background-color: color-mix(in srgb, var(--layout-accent-color, #444444) 10%, transparent) !important; }
               .agenda-form-calendar button[name="previous-month"],
-              .agenda-form-calendar button[name="next-month"] { color: #0d0446 !important; }
+              .agenda-form-calendar button[name="next-month"] { color: var(--layout-page-text, #1a1a1a) !important; }
             `}</style>
 
             {/* Header */}
-            <div className="px-6 pt-5 pb-4" style={{ background: "linear-gradient(135deg, #0d0446 0%, color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%) 100%)", borderRadius: "20px 20px 0 0" }}>
+            <div className="px-6 pt-5 pb-4" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a) 0%, color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%) 100%)", borderRadius: "20px 20px 0 0" }}>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: "rgba(255,255,255,0.15)" }}>
                   <CalendarIcon size={20} className="text-white" />
@@ -537,12 +537,12 @@ export default function AgendaPage() {
             </div>
 
             {/* Form body */}
-            <div className="agenda-dialog-scroll px-6 pb-6 pt-4 space-y-5 overflow-y-auto flex-1 min-h-0" style={{ scrollbarWidth: "thin", scrollbarColor: "#268ffa transparent" }}>
+            <div className="agenda-dialog-scroll px-6 pb-6 pt-4 space-y-5 overflow-y-auto flex-1 min-h-0" style={{ scrollbarWidth: "thin", scrollbarColor: "var(--layout-scrollbar-color, #555555) transparent" }}>
               <style>{`
                 .agenda-dialog-scroll::-webkit-scrollbar { width: 6px; }
                 .agenda-dialog-scroll::-webkit-scrollbar-track { background: transparent; margin: 8px 0; }
-                .agenda-dialog-scroll::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #268ffa, #2dbef3); border-radius: 10px; }
-                .agenda-dialog-scroll::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, #1a7ae0, #268ffa); }
+                .agenda-dialog-scroll::-webkit-scrollbar-thumb { background: linear-gradient(180deg, var(--layout-accent-color, #444444), color-mix(in srgb, var(--layout-accent-color, #444444) 70%, white 30%)); border-radius: 10px; }
+                .agenda-dialog-scroll::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, color-mix(in srgb, var(--layout-accent-color, #444444) 80%, black 20%), var(--layout-accent-color, #444444)); }
               `}</style>
 
               {/* Programa */}
@@ -681,13 +681,13 @@ export default function AgendaPage() {
             </div>
             <div className="p-3">
               <style>{`
-                .agenda-calendar .rdp-day:hover { background-color: color-mix(in srgb, var(--layout-accent-color, #444444) 15%, transparent) !important; color: #268ffa !important; }
-                .agenda-calendar .rdp-day_selected { background-color: #268ffa !important; color: #fff !important; }
-                .agenda-calendar .rdp-day_selected:hover { background-color: #268ffa !important; }
-                .agenda-calendar .rdp-day_today { background-color: #0d0446 !important; color: #ffffff !important; font-weight: 700 !important; }
-                .agenda-calendar .rdp-day_today:hover { background-color: #0d0446 !important; color: #ffffff !important; }
-                .agenda-calendar [class*="day_today"] { background-color: #0d0446 !important; color: #ffffff !important; font-weight: 700 !important; }
-                .agenda-calendar .has-event-day { background-color: color-mix(in srgb, var(--layout-accent-color, #444444) 15%, transparent) !important; color: #268ffa !important; font-weight: bold; }
+                .agenda-calendar .rdp-day:hover { background-color: color-mix(in srgb, var(--layout-accent-color, #444444) 15%, transparent) !important; color: var(--layout-accent-color, #444444) !important; }
+                .agenda-calendar .rdp-day_selected { background-color: var(--layout-accent-color, #444444) !important; color: #fff !important; }
+                .agenda-calendar .rdp-day_selected:hover { background-color: var(--layout-accent-color, #444444) !important; }
+                .agenda-calendar .rdp-day_today { background-color: var(--layout-page-text, #1a1a1a) !important; color: #ffffff !important; font-weight: 700 !important; }
+                .agenda-calendar .rdp-day_today:hover { background-color: var(--layout-page-text, #1a1a1a) !important; color: #ffffff !important; }
+                .agenda-calendar [class*="day_today"] { background-color: var(--layout-page-text, #1a1a1a) !important; color: #ffffff !important; font-weight: 700 !important; }
+                .agenda-calendar .has-event-day { background-color: color-mix(in srgb, var(--layout-accent-color, #444444) 15%, transparent) !important; color: var(--layout-accent-color, #444444) !important; font-weight: bold; }
               `}</style>
               <Calendar
                 mode="single"
@@ -732,7 +732,7 @@ export default function AgendaPage() {
               <div className="px-4 py-2.5 font-bold text-xs tracking-wide text-white" style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #444444), color-mix(in srgb, var(--layout-accent-color, #444444) 70%, white 30%))" }}>
                 🗓️ Próximos 7 dias
               </div>
-              <div className="p-3 space-y-3 max-h-[400px] overflow-y-auto" style={{ scrollbarWidth: "thin", scrollbarColor: "#268ffa transparent" }}>
+              <div className="p-3 space-y-3 max-h-[400px] overflow-y-auto" style={{ scrollbarWidth: "thin", scrollbarColor: "var(--layout-scrollbar-color, #555555) transparent" }}>
                 {upcomingEvents.length === 0 ? (
                   <p className="text-xs py-4 text-center" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>
                     Nenhum evento nos próximos dias.

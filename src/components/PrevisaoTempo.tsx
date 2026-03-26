@@ -377,7 +377,7 @@ export default function PrevisaoTempo() {
       {/* Loading skeleton */}
       {loading && (
         <div className="animate-pulse space-y-6">
-          <div className="rounded-2xl p-6" style={{ background: "linear-gradient(135deg, #0d0446 0%, color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%) 100%)" }}>
+          <div className="rounded-2xl p-6" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a) 0%, color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%) 100%)" }}>
             <div className="flex items-center justify-between mb-6">
               <div className="space-y-3">
                 <div className="h-6 w-36 rounded-lg bg-white/10" />

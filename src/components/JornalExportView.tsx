@@ -23,11 +23,11 @@ export default function JornalExportView({ config, blocks, onClose }: Props) {
     if (!win) return;
     win.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${config.programaNome}</title><style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
-      body { font-family: 'Inter', Arial, sans-serif; padding: 24px; color: #0d0446; font-size: 12px; }
+      body { font-family: 'Inter', Arial, sans-serif; padding: 24px; color: var(--layout-page-text, #1a1a1a); font-size: 12px; }
       .header { border-bottom: 2px solid #0d0446; padding-bottom: 8px; margin-bottom: 16px; }
       .header h1 { font-size: 18px; font-weight: 700; }
       .header p { font-size: 10px; color: #666; }
-      .bloco-label { background: #0d0446; color: #fff; display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; margin-bottom: 8px; }
+      .bloco-label { background: var(--layout-header-bg, #1a1a1a); color: #fff; display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; margin-bottom: 8px; }
       .bloco-time { font-size: 10px; color: #999; margin-left: 8px; }
       .intervalo { text-align: center; padding: 8px 0; font-size: 10px; color: #999; }
       .news-item { border: 1px solid #eee; border-radius: 6px; padding: 10px; margin-bottom: 8px; page-break-inside: avoid; }

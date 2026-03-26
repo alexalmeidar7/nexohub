@@ -1084,8 +1084,8 @@ export default function ProgramaForm() {
           <style>{`
             .grade-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
             .grade-scroll::-webkit-scrollbar-track { background: transparent; }
-            .grade-scroll::-webkit-scrollbar-thumb { background: #0d0446; border-radius: 3px; }
-            .grade-scroll::-webkit-scrollbar-thumb:hover { background: #268ffa; }
+            .grade-scroll::-webkit-scrollbar-thumb { background: var(--layout-header-bg, #1a1a1a); border-radius: 3px; }
+            .grade-scroll::-webkit-scrollbar-thumb:hover { background: var(--layout-accent-color, #444444); }
             .grade-scroll::-webkit-scrollbar-button { display: none; }
           `}</style>
           <div

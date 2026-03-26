@@ -131,7 +131,7 @@ export default function MontarJornalWizard({ open, onOpenChange, programas, onFi
             border-color: #2ec1f7 !important;
           }
           .jornal-wizard-input, .jornal-wizard-input::placeholder {
-            color: #0d0446 !important;
+            color: var(--layout-page-text, #1a1a1a) !important;
           }
         `}</style>
         <DialogHeader>
