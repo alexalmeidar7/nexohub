@@ -1339,7 +1339,6 @@ export default function VmixPage() {
   const tabs = [
     { key: "controls" as const, label: "Inputs", icon: <Layers size={13} /> },
     { key: "scenes" as const, label: "Cenas", icon: <Wand2 size={13} /> },
-    { key: "ndi" as const, label: "NDI", icon: <Tv size={13} /> },
   ];
 
   return (
