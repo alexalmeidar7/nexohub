@@ -516,7 +516,6 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
         xml += `      <titulo>${escXml(n.titulo)}</titulo>\n`;
         xml += `      <imagem>${escXml(n.imagemUrl)}</imagem>\n`;
         xml += `      <escalada>${n.escalada}</escalada>\n`;
-        if (n.link) xml += `      <link>${escXml(n.link)}</link>\n`;
         xml += `    </noticia>\n`;
       });
       xml += `  </bloco>\n`;
