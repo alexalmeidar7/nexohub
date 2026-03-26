@@ -656,8 +656,8 @@ ${perguntaActions}
               <FileText size={18} className="text-white" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-white">Roteiro de Programa</h3>
-              <p className="text-[10px] text-white/50">Passo 1 — Selecione o programa e a data</p>
+              <h3 className="text-base font-bold text-white drop-shadow-sm">Roteiro de Programa</h3>
+              <p className="text-xs text-white/80 drop-shadow-sm">Passo 1 — Selecione o programa e a data</p>
             </div>
           </div>
           {editingRoteiroId && (
