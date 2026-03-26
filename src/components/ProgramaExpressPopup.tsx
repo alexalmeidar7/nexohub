@@ -38,7 +38,7 @@ interface Props {
   editData?: ExpressEditData | null;
 }
 
-export default function ProgramaExpressPopup({ open, onOpenChange, programas, estudios, onFinish }: Props) {
+export default function ProgramaExpressPopup({ open, onOpenChange, programas, estudios, onFinish, editData }: Props) {
   const { user } = useAuth();
   const [estudio, setEstudio] = useState("");
   const [programaId, setProgramaId] = useState("");
@@ -46,9 +46,23 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
   const [fetchingLink, setFetchingLink] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [collapsedBlocos, setCollapsedBlocos] = useState<Set<number>>(new Set());
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [initialized, setInitialized] = useState(false);
 
   const filteredProgramas = estudio ? programas.filter(p => p.estudio === estudio) : programas;
   const programaNome = programas.find(p => p.id === programaId)?.nome || "";
+
+  // Load edit data when popup opens
+  if (open && editData && !initialized) {
+    setEstudio(editData.estudio);
+    setProgramaId(editData.programaId);
+    setBlocos(editData.blocos.length > 0 ? editData.blocos : [{ noticias: [{ titulo: "", imagemUrl: "", escalada: false }] }]);
+    setEditingId(editData.roteiroId);
+    setInitialized(true);
+  }
+  if (!open && initialized) {
+    setInitialized(false);
+  }
 
   const reset = () => {
     setEstudio("");
@@ -57,6 +71,8 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
     setFetchingLink(null);
     setSaving(false);
     setCollapsedBlocos(new Set());
+    setEditingId(null);
+    setInitialized(false);
   };
 
   const updateNoticia = (bi: number, ni: number, field: keyof NewsItem, value: any) => {
