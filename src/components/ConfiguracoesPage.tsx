@@ -65,7 +65,7 @@ interface Canal {
 /* ── Styled input helper ── */
 const inputStyle: React.CSSProperties = {
   backgroundColor: "var(--layout-page-bg, #ffffff)",
-  border: "1px solid #0d0446",
+  border: "1px solid var(--layout-border-color, #333333)",
   color: "var(--layout-page-text, #1a1a1a)",
   borderRadius: "20px",
 };
@@ -365,7 +365,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
             <div className="space-y-1">
               <label className="block text-xs mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)", fontWeight: 600 }}>Logo da Empresa</label>
               <div className="flex items-center gap-4">
-                {config.logo && <img src={config.logo} alt="Logo" className="w-16 h-16 rounded-lg object-contain" style={{ border: "1px solid #0d0446" }} />}
+                {config.logo && <img src={config.logo} alt="Logo" className="w-16 h-16 rounded-lg object-contain" style={{ border: "1px solid var(--layout-border-color, #333333)" }} />}
                 <button onClick={handleLogoUpload}
                   className="px-4 py-1.5 font-bold transition-all text-xs flex items-center gap-1"
                   style={btnSecondary}
@@ -581,7 +581,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
                             value={canalForm.catalog_name}
                             onChange={(e) => setCanalForm(p => ({ ...p, catalog_name: e.target.value, name: e.target.value }))}
                             className="w-full px-4 py-2 outline-none text-sm font-medium cursor-pointer"
-                            style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "20px", border: "1px solid #0d0446" }}
+                            style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "20px", border: "1px solid var(--layout-border-color, #333333)" }}
                           >
                             <option value="">Selecione um catálogo</option>
                             {existingCatalogs.map(cat => (

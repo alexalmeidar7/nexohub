@@ -132,7 +132,7 @@ export default function ShoppingPage() {
   if (loading) return <ModulePageSkeleton />;
 
   const inputStyle: React.CSSProperties = {
-    backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid #0d0446", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "20px",
+    backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid var(--layout-border-color, #333333)", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "20px",
   };
 
   return (
@@ -258,7 +258,7 @@ export default function ShoppingPage() {
               {products.map((p) => {
                 const prog = programas.find((pr) => pr.id === p.program_id);
                 return (
-                  <div key={p.id} className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 rounded-xl p-3" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid rgba(13,4,70,0.06)" }}>
+                  <div key={p.id} className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 rounded-xl p-3" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)" }}>
                     <div className="flex items-center gap-3 flex-1 min-w-0">
                       {p.image_url ? (
                         <img src={p.image_url} alt={p.name} className="w-14 h-14 object-cover rounded-lg shrink-0" />

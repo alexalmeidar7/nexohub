@@ -482,9 +482,9 @@ export default function AgendaPage() {
                   <SelectValue placeholder="Filtrar por local" />
                 </SelectTrigger>
                 <SelectContent style={{ backgroundColor: "var(--layout-header-bg, #1a1a1a)", color: "var(--layout-header-text, #ffffff)", borderRadius: "12px" }}>
-                  <SelectItem value="todos" className="text-white focus:bg-[#268ffa] focus:text-white">Todos os locais</SelectItem>
+                  <SelectItem value="todos" className="text-white focus:bg-[var(--layout-accent-color)] focus:text-white">Todos os locais</SelectItem>
                   {locais.map((l) => (
-                    <SelectItem key={l} value={l} className="text-white focus:bg-[#268ffa] focus:text-white">{l}</SelectItem>
+                    <SelectItem key={l} value={l} className="text-white focus:bg-[var(--layout-accent-color)] focus:text-white">{l}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -757,7 +757,7 @@ export default function AgendaPage() {
                           <div
                             key={evt.id}
                             className="rounded-lg px-3 py-2 cursor-pointer hover:shadow-sm transition-shadow"
-                            style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "1px solid rgba(13,4,70,0.06)" }}
+                            style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)" }}
                             onClick={() => { setSelectedDate(date); }}
                           >
                             <p className="text-xs font-semibold truncate" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>

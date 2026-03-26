@@ -648,7 +648,7 @@ ${perguntaActions}
   return (
     <div className="animate-fade-in space-y-5">
       {/* ── STEP 1: Configuração do Programa ── */}
-      <div className="rounded-2xl overflow-hidden" style={{ background: "#ffffff", boxShadow: "0 4px 24px rgba(0,0,0,0.08)", border: "1px solid rgba(13,4,70,0.06)" }}>
+      <div className="rounded-2xl overflow-hidden" style={{ background: "#ffffff", boxShadow: "0 4px 24px rgba(0,0,0,0.08)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)" }}>
         {/* Section Header */}
         <div className="px-6 py-4 flex items-center justify-between" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #0d0446), color-mix(in srgb, var(--layout-header-bg, #1a0a6e) 80%, white 20%))", borderBottom: "1px solid rgba(13,4,70,0.06)" }}>
           <div className="flex items-center gap-3">
@@ -773,7 +773,7 @@ ${perguntaActions}
                         row: "flex w-full mt-1",
                         cell: "h-9 w-9 text-center text-sm p-0 relative rounded-full",
                         day: "h-9 w-9 p-0 font-medium rounded-full transition-all hover:bg-[rgba(38,143,250,0.12)]",
-                        day_selected: "bg-[#268ffa] text-white hover:bg-[#268ffa] focus:bg-[#268ffa] font-bold shadow-md",
+                        day_selected: "bg-[#268ffa] text-white hover:bg-[#268ffa] focus:bg-[var(--layout-accent-color)] font-bold shadow-md",
                         day_today: "bg-[rgba(13,4,70,0.08)] font-bold",
                         day_outside: "opacity-30",
                         day_disabled: "opacity-30",
@@ -847,7 +847,7 @@ ${perguntaActions}
               const isAgd = r.status === "agendado";
               const isFeito = r.status === "feito";
               return (
-                <div key={r.id} className="flex items-center justify-between px-3 py-2.5 rounded-lg" style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "1px solid rgba(13,4,70,0.06)" }}>
+                <div key={r.id} className="flex items-center justify-between px-3 py-2.5 rounded-lg" style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)" }}>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <p className="text-sm font-bold truncate" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
@@ -941,7 +941,7 @@ ${perguntaActions}
 
       {/* Roteiro Form */}
       {showRoteiro && (
-        <div className="rounded-2xl overflow-hidden" style={{ background: "#ffffff", boxShadow: "0 4px 24px rgba(0,0,0,0.08)", border: "1px solid rgba(13,4,70,0.06)" }}>
+        <div className="rounded-2xl overflow-hidden" style={{ background: "#ffffff", boxShadow: "0 4px 24px rgba(0,0,0,0.08)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)" }}>
           {/* Section Header */}
           <div className="px-6 py-4" style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #444444), color-mix(in srgb, var(--layout-accent-color, #444444) 70%, white 30%))" }}>
             <div className="flex items-center justify-between flex-wrap gap-2">
@@ -1163,7 +1163,7 @@ ${perguntaActions}
             {/* Texto Roteiro */}
             <div>
               <p className="text-[10px] font-bold uppercase tracking-wider mb-3" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>Conteúdo do roteiro</p>
-              <div className="rounded-xl p-4" style={{ backgroundColor: "rgba(13,4,70,0.02)", border: "1px solid rgba(13,4,70,0.06)" }}>
+              <div className="rounded-xl p-4" style={{ backgroundColor: "rgba(13,4,70,0.02)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)" }}>
 
             {/* Toolbar */}
             <div className="flex flex-wrap items-center gap-1 mb-3 pb-3" style={{ borderBottom: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }}>

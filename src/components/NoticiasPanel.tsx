@@ -687,7 +687,7 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
             onKeyDown={(e) => { if (e.key === "Enter") { addCustomSite(); setShowAddSiteInput(false); } }}
             placeholder="URL do RSS feed (ex: https://site.com/feed)"
             className="flex-1 px-3 py-1 outline-none transition-colors text-xs"
-            style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid #0d0446", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "20px" }}
+            style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid var(--layout-border-color, #333333)", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "20px" }}
             onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
             onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
             autoFocus
@@ -710,7 +710,7 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
             onKeyDown={(e) => { if (e.key === "Enter") addNoticiaAvulsa(); }}
             placeholder="URL da notícia (ex: https://site.com/noticia)"
             className="flex-1 px-3 py-1 outline-none transition-colors text-xs"
-            style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid #0d0446", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "20px" }}
+            style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid var(--layout-border-color, #333333)", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "20px" }}
             onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
             onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
             autoFocus
@@ -732,7 +732,7 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
         {/* LEFT COLUMN */}
         <div className="space-y-4" style={{ width: (jornalConfig || wizardOpen) ? "50%" : "100%" }}>
           {/* News Portals Accordion */}
-          <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid rgba(13,4,70,0.06)", width: (jornalConfig || wizardOpen) ? "100%" : "50%", boxShadow: "0 2px 10px rgba(0,0,0,0.05)" }}>
+          <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)", width: (jornalConfig || wizardOpen) ? "100%" : "50%", boxShadow: "0 2px 10px rgba(0,0,0,0.05)" }}>
             <div className="px-3 py-2.5 font-bold text-xs tracking-wide text-white flex items-center justify-between" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" }}>
               <span style={{ color: "var(--layout-header-text, #ffffff)" }}>📰 Portais de Notícias</span>
               <div className="flex items-center gap-1">
@@ -833,7 +833,7 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
           </div>
 
           {/* Mini Previsão do Tempo */}
-          <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid rgba(13,4,70,0.06)", width: (jornalConfig || wizardOpen) ? "100%" : "50%", boxShadow: "0 2px 10px rgba(0,0,0,0.05)" }}
+          <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)", width: (jornalConfig || wizardOpen) ? "100%" : "50%", boxShadow: "0 2px 10px rgba(0,0,0,0.05)" }}
             draggable={!!miniWeather}
             onDragStart={(e) => {
               if (!miniWeather) return;
@@ -898,7 +898,7 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
           </div>
 
           {/* Cotações marquee */}
-          <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid rgba(13,4,70,0.06)", width: (jornalConfig || wizardOpen) ? "100%" : "50%", boxShadow: "0 2px 10px rgba(0,0,0,0.05)" }}>
+          <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)", width: (jornalConfig || wizardOpen) ? "100%" : "50%", boxShadow: "0 2px 10px rgba(0,0,0,0.05)" }}>
             <div className="px-3 py-2.5 font-bold text-xs tracking-wide text-white flex items-center justify-between" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" }}>
               <span style={{ color: "var(--layout-header-text, #ffffff)" }}>💹 Cotações - Bolsas e Moedas</span>
               <button onClick={() => toggleBox('cotacoes')} className="p-0.5 rounded hover:bg-white/20 transition-colors">
@@ -950,7 +950,7 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
 
           {/* Bloco de Economia */}
           {blocoEconomia.length > 0 && (
-            <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid rgba(13,4,70,0.06)", width: (jornalConfig || wizardOpen) ? "100%" : "50%", boxShadow: "0 2px 10px rgba(0,0,0,0.05)" }}
+            <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)", width: (jornalConfig || wizardOpen) ? "100%" : "50%", boxShadow: "0 2px 10px rgba(0,0,0,0.05)" }}
               draggable
               onDragStart={(e) => {
                 e.dataTransfer.setData("text/plain", JSON.stringify({
@@ -992,7 +992,7 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
 
           {/* Sites Adicionados Box */}
           {customSites.length > 0 && (
-            <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid rgba(13,4,70,0.06)", width: (jornalConfig || wizardOpen) ? "100%" : "50%", boxShadow: "0 2px 10px rgba(0,0,0,0.05)" }}>
+            <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)", width: (jornalConfig || wizardOpen) ? "100%" : "50%", boxShadow: "0 2px 10px rgba(0,0,0,0.05)" }}>
               <div className="px-3 py-2.5 font-bold text-xs tracking-wide text-white flex items-center justify-between" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" }}>
                 <span style={{ color: "var(--layout-header-text, #ffffff)" }}>🌐 Sites Adicionados</span>
                 <button onClick={() => toggleBox('sitesAdicionados')} className="p-0.5 rounded hover:bg-white/20 transition-colors">
@@ -1066,7 +1066,7 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
 
           {/* Notícia Avulsa Box */}
           {noticiasAvulsas.length > 0 && (
-            <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid rgba(13,4,70,0.06)", width: (jornalConfig || wizardOpen) ? "100%" : "50%", boxShadow: "0 2px 10px rgba(0,0,0,0.05)" }}>
+            <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)", width: (jornalConfig || wizardOpen) ? "100%" : "50%", boxShadow: "0 2px 10px rgba(0,0,0,0.05)" }}>
               <div className="px-3 py-2.5 font-bold text-xs tracking-wide text-white flex items-center justify-between" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" }}>
                 <span style={{ color: "var(--layout-header-text, #ffffff)" }}>📌 Notícia Avulsa</span>
                 <button onClick={() => toggleBox('noticiaAvulsa')} className="p-0.5 rounded hover:bg-white/20 transition-colors">

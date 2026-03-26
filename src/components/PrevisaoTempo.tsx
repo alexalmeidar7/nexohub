@@ -394,7 +394,7 @@ export default function PrevisaoTempo() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
             {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="rounded-xl p-5 space-y-3" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid rgba(13,4,70,0.06)" }}>
+              <div key={i} className="rounded-xl p-5 space-y-3" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)" }}>
                 <div className="h-3 w-14 mx-auto rounded bg-[var(--layout-header-bg)]/8" />
                 <div className="h-10 w-10 mx-auto rounded-full bg-[var(--layout-header-bg)]/5" />
                 <div className="h-4 w-16 mx-auto rounded bg-[var(--layout-header-bg)]/5" />
@@ -554,7 +554,7 @@ export default function PrevisaoTempo() {
 function StatCard({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: string; color: string }) {
   return (
     <div className="rounded-xl p-3.5 text-center transition-all hover:shadow-md"
-      style={{ backgroundColor: "rgba(255,255,255,0.5)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }}>
+      style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 50%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }}>
       <div className="flex items-center justify-center gap-1.5 mb-1.5" style={{ color }}>
         {icon}
         <span className="text-[11px] font-medium" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>{label}</span>

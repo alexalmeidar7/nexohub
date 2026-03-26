@@ -680,8 +680,8 @@ export default function ProgramaForm() {
             <div>
               <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Nome do Programa</label>
               <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Digite o nome do programa"
-                className="w-full px-4 py-2 outline-none transition-all text-sm placeholder:text-[#0d0446]/40"
-                style={{ backgroundColor: "rgba(255,255,255,0.6)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)", borderRadius: "12px", color: "var(--layout-page-text, #1a1a1a)" }}
+                className="w-full px-4 py-2 outline-none transition-all text-sm placeholder:text-[color-mix(in_srgb,var(--layout-page-text)_40%,transparent)]"
+                style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 60%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)", borderRadius: "12px", color: "var(--layout-page-text, #1a1a1a)" }}
                 onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #444444)"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.8)"; }}
                 onBlur={e => { e.currentTarget.style.borderColor = "rgba(13,4,70,0.15)"; e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.6)"; }}
               />
@@ -690,7 +690,7 @@ export default function ProgramaForm() {
               <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Tipo do Programa</label>
               <div className="flex gap-2">
                 <Select value={tipoPrograma} onValueChange={setTipoPrograma}>
-                  <SelectTrigger className="flex-1 h-9" style={{ backgroundColor: "rgba(255,255,255,0.6)", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "12px", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)", fontSize: "13px" }}>
+                  <SelectTrigger className="flex-1 h-9" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 60%, transparent)", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "12px", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)", fontSize: "13px" }}>
                     <SelectValue placeholder="Selecione o tipo" />
                   </SelectTrigger>
                   <SelectContent>
@@ -710,7 +710,7 @@ export default function ProgramaForm() {
                     <div className="space-y-3">
                       <input value={newTipo} onChange={(e) => setNewTipo(e.target.value)} placeholder="Nome do tipo"
                         className="w-full px-4 py-1.5 outline-none transition-colors text-sm"
-                        style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid #0d0446", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "12px" }}
+                        style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid var(--layout-border-color, #333333)", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "12px" }}
                         onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
                         onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
                       />
@@ -729,7 +729,7 @@ export default function ProgramaForm() {
             <div>
               <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Classificação Etária</label>
               <Select value={classificacaoEtaria} onValueChange={setClassificacaoEtaria}>
-                <SelectTrigger className="w-full h-9" style={{ backgroundColor: "rgba(255,255,255,0.6)", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "12px", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)", fontSize: "13px" }}>
+                <SelectTrigger className="w-full h-9" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 60%, transparent)", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "12px", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)", fontSize: "13px" }}>
                   <SelectValue placeholder="Selecione a classificação" />
                 </SelectTrigger>
                 <SelectContent>
@@ -750,7 +750,7 @@ export default function ProgramaForm() {
                 <PopoverTrigger asChild>
                   <button
                     className="w-full min-h-[36px] flex items-center justify-between px-4 text-sm rounded-xl gap-2"
-                    style={{ backgroundColor: "rgba(255,255,255,0.6)", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)" }}
+                    style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 60%, transparent)", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)" }}
                   >
                     <span className="flex-1 text-left truncate" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
                       {apresentadoresIds.length > 0
@@ -804,8 +804,8 @@ export default function ProgramaForm() {
           <div>
             <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Descrição</label>
             <Textarea value={descricao} onChange={(e) => setDescricao(e.target.value)} placeholder="Descrição do programa (opcional)"
-              className="min-h-[60px] px-4 py-2 outline-none transition-all text-sm placeholder:text-[#0d0446]/40"
-              style={{ backgroundColor: "rgba(255,255,255,0.6)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)", borderRadius: "12px", color: "var(--layout-page-text, #1a1a1a)" }}
+              className="min-h-[60px] px-4 py-2 outline-none transition-all text-sm placeholder:text-[color-mix(in_srgb,var(--layout-page-text)_40%,transparent)]"
+              style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 60%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)", borderRadius: "12px", color: "var(--layout-page-text, #1a1a1a)" }}
               onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #444444)"; }}
               onBlur={e => { e.currentTarget.style.borderColor = "rgba(13,4,70,0.15)"; }}
             />
@@ -816,8 +816,8 @@ export default function ProgramaForm() {
             <div>
               <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Selo (1080×1080 PNG alpha)</label>
               <label className="cursor-pointer group">
-                <div className="w-16 h-16 rounded-xl flex flex-col items-center justify-center gap-0.5 transition-all group-hover:border-[#268ffa]"
-                  style={{ backgroundColor: "rgba(255,255,255,0.5)", border: "2px dashed rgba(13,4,70,0.2)" }}>
+                <div className="w-16 h-16 rounded-xl flex flex-col items-center justify-center gap-0.5 transition-all group-hover:border-[var(--layout-accent-color)]"
+                  style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 50%, transparent)", border: "2px dashed color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }}>
                   {selo ? (
                     <img src={selo} alt="Selo" className="w-full h-full object-cover rounded-xl" />
                   ) : (
@@ -831,8 +831,8 @@ export default function ProgramaForm() {
             <div>
               <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Capa (226×302 PNG alpha)</label>
               <label className="cursor-pointer group">
-                <div className="rounded-xl flex flex-col items-center justify-center gap-0.5 transition-all group-hover:border-[#268ffa]"
-                  style={{ width: "56px", height: "75px", backgroundColor: "rgba(255,255,255,0.5)", border: "2px dashed rgba(13,4,70,0.2)" }}>
+                <div className="rounded-xl flex flex-col items-center justify-center gap-0.5 transition-all group-hover:border-[var(--layout-accent-color)]"
+                  style={{ width: "56px", height: "75px", backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 50%, transparent)", border: "2px dashed color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }}>
                   {capa ? (
                     <img src={capa} alt="Capa" className="w-full h-full object-cover rounded-xl" />
                   ) : (
@@ -846,8 +846,8 @@ export default function ProgramaForm() {
             <div>
               <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Thumb (1920×1080 PNG)</label>
               <label className="cursor-pointer group">
-                <div className="rounded-xl flex flex-col items-center justify-center gap-0.5 transition-all group-hover:border-[#268ffa]"
-                  style={{ width: "96px", height: "54px", backgroundColor: "rgba(255,255,255,0.5)", border: "2px dashed rgba(13,4,70,0.2)" }}>
+                <div className="rounded-xl flex flex-col items-center justify-center gap-0.5 transition-all group-hover:border-[var(--layout-accent-color)]"
+                  style={{ width: "96px", height: "54px", backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 50%, transparent)", border: "2px dashed color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }}>
                   {thumb ? (
                     <img src={thumb} alt="Thumb" className="w-full h-full object-cover rounded-xl" />
                   ) : (
@@ -867,7 +867,7 @@ export default function ProgramaForm() {
             </label>
             <div className="flex gap-2">
               <Select value={estudio} onValueChange={setEstudio}>
-                <SelectTrigger className="flex-1 h-9" style={{ backgroundColor: "rgba(255,255,255,0.6)", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "12px", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)", fontSize: "13px" }}>
+                <SelectTrigger className="flex-1 h-9" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 60%, transparent)", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "12px", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)", fontSize: "13px" }}>
                   <SelectValue placeholder="Selecione o estúdio" />
                 </SelectTrigger>
                 <SelectContent>
@@ -887,7 +887,7 @@ export default function ProgramaForm() {
                   <div className="space-y-3">
                     <input value={newEstudio} onChange={(e) => setNewEstudio(e.target.value)} placeholder="Nome do estúdio"
                       className="w-full px-4 py-1.5 outline-none transition-colors text-sm"
-                      style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid #0d0446", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "12px" }}
+                      style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid var(--layout-border-color, #333333)", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "12px" }}
                       onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
                       onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
                     />
@@ -912,7 +912,7 @@ export default function ProgramaForm() {
                   style={{
                     backgroundColor: diasSemana.includes(dia) ? "#268ffa" : "rgba(255,255,255,0.5)",
                     color: diasSemana.includes(dia) ? "#ffffff" : "#0d0446",
-                    border: diasSemana.includes(dia) ? "1px solid #268ffa" : "1px solid rgba(13,4,70,0.15)",
+                    border: diasSemana.includes(dia) ? "1px solid var(--layout-accent-color, #444444)" : "1px solid rgba(13,4,70,0.15)",
                     boxShadow: diasSemana.includes(dia) ? "0 2px 8px rgba(38,143,250,0.3)" : "none",
                   }}>
                   {dia.slice(0, 3)}
@@ -927,7 +927,7 @@ export default function ProgramaForm() {
               <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider flex items-center gap-1" style={{ color: "var(--layout-page-text, #1a1a1a)" }}><Clock size={12} /> Início</label>
               <input type="time" step="1" value={horarioInicio} onChange={(e) => setHorarioInicio(e.target.value)}
                 className="w-full px-4 py-2 outline-none transition-all text-sm"
-                style={{ backgroundColor: "rgba(255,255,255,0.6)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)", borderRadius: "12px", color: "var(--layout-page-text, #1a1a1a)" }}
+                style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 60%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)", borderRadius: "12px", color: "var(--layout-page-text, #1a1a1a)" }}
                 onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #444444)"; }}
                 onBlur={e => { e.currentTarget.style.borderColor = "rgba(13,4,70,0.15)"; }}
               />
@@ -936,7 +936,7 @@ export default function ProgramaForm() {
               <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider flex items-center gap-1" style={{ color: "var(--layout-page-text, #1a1a1a)" }}><Clock size={12} /> Fim</label>
               <input type="time" step="1" value={horarioFim} onChange={(e) => setHorarioFim(e.target.value)}
                 className="w-full px-4 py-2 outline-none transition-all text-sm"
-                style={{ backgroundColor: "rgba(255,255,255,0.6)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)", borderRadius: "12px", color: "var(--layout-page-text, #1a1a1a)" }}
+                style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 60%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)", borderRadius: "12px", color: "var(--layout-page-text, #1a1a1a)" }}
                 onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #444444)"; }}
                 onBlur={e => { e.currentTarget.style.borderColor = "rgba(13,4,70,0.15)"; }}
               />
@@ -948,7 +948,7 @@ export default function ProgramaForm() {
             <label className="flex items-center gap-2.5 cursor-pointer select-none">
               <div className="relative">
                 <input type="checkbox" checked={ativo} onChange={(e) => setAtivo(e.target.checked)} className="sr-only peer" />
-                <div className="w-9 h-5 rounded-full transition-colors peer-checked:bg-[#268ffa]" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 15%, transparent)" }} />
+                <div className="w-9 h-5 rounded-full transition-colors peer-checked:bg-[var(--layout-accent-color)]" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 15%, transparent)" }} />
                 <div className="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-4 shadow-sm" />
               </div>
               <span className="text-xs font-medium" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Ativo</span>
@@ -1005,7 +1005,7 @@ export default function ProgramaForm() {
             {editingId && (
               <button onClick={resetForm}
                 className="px-4 py-2 text-xs font-bold transition-all flex items-center gap-1.5 rounded-xl"
-                style={{ backgroundColor: "rgba(255,255,255,0.5)", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)" }}
+                style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 50%, transparent)", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)" }}
                 onMouseEnter={e => { e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.7)"; }}
                 onMouseLeave={e => { e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.5)"; }}
               >

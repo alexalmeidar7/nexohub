@@ -27,7 +27,7 @@ interface Programa {
 }
 
 const inputStyle: React.CSSProperties = {
-  backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid #0d0446", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "20px",
+  backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid var(--layout-border-color, #333333)", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "20px",
 };
 
 export default function LogosPatrocinadoresPage() {
@@ -373,7 +373,7 @@ export default function LogosPatrocinadoresPage() {
                     </div>
                   ))}
                   <label className="w-20 h-20 rounded-lg flex flex-col items-center justify-center cursor-pointer transition-colors"
-                    style={{ border: "2px dashed rgba(13,4,70,0.2)" }}
+                    style={{ border: "2px dashed color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }}
                     onMouseEnter={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
                     onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(13,4,70,0.2)"; }}
                   >
