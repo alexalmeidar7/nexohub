@@ -77,8 +77,14 @@ function ParticipanteRow({ participante, inputStyle, onRemove, onUpdateCargo, us
   };
 
   return (
-    <div className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] min-w-0" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 90%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 12%, transparent)" }}>
-      <span className="font-semibold truncate min-w-0" style={{ color: "var(--layout-page-text, #1a1a1a)", flex: "1 1 40%" }}>{participante.nome}</span>
+    <div
+      className="grid w-full grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,1fr)_auto] items-center gap-2 rounded-lg px-2.5 py-1.5 text-[11px] overflow-hidden"
+      style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 90%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 12%, transparent)" }}
+    >
+      <span className="font-semibold truncate min-w-0" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+        {participante.nome}
+      </span>
+
       {editing ? (
         <input
           autoFocus
@@ -86,22 +92,27 @@ function ParticipanteRow({ participante, inputStyle, onRemove, onUpdateCargo, us
           onChange={e => setCargoVal(e.target.value)}
           onBlur={saveCargo}
           onKeyDown={e => { if (e.key === "Enter") saveCargo(); }}
-          className="px-1.5 py-0.5 rounded text-[10px] outline-none min-w-0"
-          style={{ ...inputStyle, flex: "0 1 100px" }}
+          className="w-full px-1.5 py-0.5 rounded text-[10px] outline-none min-w-0"
+          style={inputStyle}
           placeholder="Cargo..."
         />
       ) : (
-        <span
+        <button
+          type="button"
           onClick={() => { setCargoVal(participante.cargo); setEditing(true); }}
-          className="text-[10px] truncate min-w-0 cursor-pointer hover:opacity-70 flex items-center gap-0.5"
-          style={{ color: participante.cargo ? "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 35%, transparent)", flex: "0 1 auto", maxWidth: "30%" }}
+          className="text-[10px] min-w-0 cursor-pointer hover:opacity-70 flex items-center gap-0.5 text-left"
+          style={{ color: participante.cargo ? "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 35%, transparent)" }}
           title="Clique para editar cargo"
         >
           <span className="truncate">{participante.cargo || "..."}</span>
           <Pencil size={9} className="shrink-0" />
-        </span>
+        </button>
       )}
-      {participante.instagram && <span className="text-[10px] truncate min-w-0" style={{ color: "var(--layout-accent-color, #2ec1f7)", flex: "0 1 auto", maxWidth: "25%" }}>@{participante.instagram.replace("@", "")}</span>}
+
+      <span className="text-[10px] truncate min-w-0" style={{ color: "var(--layout-accent-color, #2ec1f7)" }}>
+        {participante.instagram ? `@${participante.instagram.replace("@", "")}` : "..."}
+      </span>
+
       <button onClick={onRemove} className="p-0.5 rounded hover:opacity-70 shrink-0" style={{ color: "#ef4444" }}>
         <Trash2 size={11} />
       </button>
