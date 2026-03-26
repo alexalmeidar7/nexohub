@@ -267,8 +267,8 @@ export default function TestemunhaisPage() {
 
                 <button type="submit" disabled={saving}
                   className="w-full px-6 py-2 font-bold text-sm transition-all flex items-center justify-center gap-2 disabled:opacity-50 rounded-full"
-                  style={{ background: "linear-gradient(135deg, #960101, #be0101)", color: "var(--layout-header-text, #ffffff)", border: "none" }}
-                  onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 4px 15px rgba(190,1,1,0.4)"; }}
+                  style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))", color: "var(--layout-header-text, #ffffff)", border: "none" }}
+                  onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 4px 15px color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 40%, transparent)"; }}
                   onMouseLeave={e => { e.currentTarget.style.boxShadow = "none"; }}
                 >
                   {saving ? <><Loader2 className="animate-spin" size={14} /> Salvando...</> : editingId ? "Atualizar Testemunhal" : "Cadastrar Testemunhal"}
