@@ -177,6 +177,8 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
     setSearchNome("");
     setSearchResults([]);
     setShowResults(false);
+    setNoResults(false);
+    setShowNewContact(false);
   };
 
   const updateNoticia = (bi: number, ni: number, field: keyof NewsItem, value: any) => {
