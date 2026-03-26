@@ -123,6 +123,7 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
   const [pasteText, setPasteText] = useState("");
 
   const [participantes, setParticipantes] = useState<Participante[]>([]);
+  const [escaladaList, setEscaladaList] = useState<string[]>([]);
   const [searchNome, setSearchNome] = useState("");
   const [searchResults, setSearchResults] = useState<Participante[]>([]);
   const [showResults, setShowResults] = useState(false);
