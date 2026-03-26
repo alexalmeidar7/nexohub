@@ -678,6 +678,13 @@ ${perguntaActions}
               </button>
             </div>
           )}
+          <button
+            onClick={() => setShowExpressPopup(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all hover:opacity-90"
+            style={{ backgroundColor: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.25)", color: "var(--layout-header-text, #ffffff)" }}
+          >
+            ⚡ Programa Express
+          </button>
         </div>
 
         <div className="p-6 space-y-5">
