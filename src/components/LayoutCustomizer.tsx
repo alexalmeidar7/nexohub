@@ -140,6 +140,7 @@ const colorLabels: Record<string, string> = {
   borderColor: "Cor das Bordas",
   sliderBg: "Fundo Slider Música",
   scrollbarColor: "Cor do Scroll",
+  previewBarBg: "Barra Pré-Visualização",
 };
 
 type DashboardSettingsPayload = Record<string, any> & {
