@@ -1130,29 +1130,29 @@ export default function MusicaNoAr() {
             {/* Upload History */}
             {uploadHistory.length > 0 && (
               <div>
-                <p className="text-[9px] mb-1.5 font-bold uppercase tracking-wider flex items-center gap-1" style={{ color: "rgba(13,4,70,0.4)" }}>
+                <p className="text-[9px] mb-2 font-bold uppercase tracking-widest flex items-center gap-1.5" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 40%, transparent)" }}>
                   <Clock size={9} /> Histórico de atualizações
                 </p>
-                <div className="rounded-lg overflow-auto max-h-[120px]" style={{ border: "1px solid rgba(13,4,70,0.06)" }}>
+                <div className="rounded-lg overflow-auto max-h-[120px]" style={{ border: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 8%, transparent)" }}>
                   <table className="w-full text-[9px]">
                     <thead className="sticky top-0">
-                      <tr style={{ backgroundColor: "rgba(13,4,70,0.03)" }}>
-                        <th className="text-left px-2 py-1 font-bold uppercase" style={{ color: "rgba(13,4,70,0.4)" }}>Origem</th>
-                        <th className="text-left px-2 py-1 font-bold uppercase" style={{ color: "rgba(13,4,70,0.4)" }}>Data</th>
-                        <th className="text-left px-2 py-1 font-bold uppercase" style={{ color: "rgba(13,4,70,0.4)" }}>Hora</th>
+                      <tr style={{ backgroundColor: "color-mix(in srgb, var(--layout-header-bg, #0d0446) 5%, var(--layout-page-bg, #ffffff))" }}>
+                        <th className="text-left px-2.5 py-1.5 font-bold uppercase" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 40%, transparent)" }}>Origem</th>
+                        <th className="text-left px-2.5 py-1.5 font-bold uppercase" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 40%, transparent)" }}>Data</th>
+                        <th className="text-left px-2.5 py-1.5 font-bold uppercase" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 40%, transparent)" }}>Hora</th>
                       </tr>
                     </thead>
                     <tbody>
                       {uploadHistory.map((entry, i) => (
-                        <tr key={i} style={{ borderTop: i > 0 ? "1px solid rgba(13,4,70,0.04)" : undefined }}>
-                          <td className="px-2 py-1 font-semibold" style={{ color: entry.source === "pasta" ? "#22c55e" : "#268ffa" }}>
+                        <tr key={i} style={{ borderTop: i > 0 ? "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 6%, transparent)" : undefined }}>
+                          <td className="px-2.5 py-1.5 font-semibold" style={{ color: entry.source === "pasta" ? "#22c55e" : "var(--layout-icon-color, #268ffa)" }}>
                             <span className="inline-flex items-center gap-1">
                               {entry.source === "pasta" ? <FolderOpen size={9} /> : <Globe size={9} />}
                               {entry.source === "pasta" ? "Pasta" : "Online"}
                             </span>
                           </td>
-                          <td className="px-2 py-1 font-mono" style={{ color: "rgba(13,4,70,0.5)" }}>{entry.date}</td>
-                          <td className="px-2 py-1 font-mono" style={{ color: "rgba(13,4,70,0.5)" }}>{entry.time}</td>
+                          <td className="px-2.5 py-1.5 font-mono" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 50%, transparent)" }}>{entry.date}</td>
+                          <td className="px-2.5 py-1.5 font-mono" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 50%, transparent)" }}>{entry.time}</td>
                         </tr>
                       ))}
                     </tbody>
