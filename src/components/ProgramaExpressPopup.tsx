@@ -488,12 +488,12 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
 
     if (participantes.length > 0) {
       xml += `  <participantes>\n`;
-      participantes.forEach(p => {
-        xml += `    <participante>\n`;
+      participantes.forEach((p, pi) => {
+        xml += `    <participante${pi + 1}>\n`;
         xml += `      <nome>${escXml(p.nome)}</nome>\n`;
         xml += `      <cargo>${escXml(p.cargo)}</cargo>\n`;
         xml += `      <instagram>${escXml(p.instagram)}</instagram>\n`;
-        xml += `    </participante>\n`;
+        xml += `    </participante${pi + 1}>\n`;
       });
       xml += `  </participantes>\n`;
     }
@@ -516,7 +516,6 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
         xml += `      <titulo>${escXml(n.titulo)}</titulo>\n`;
         xml += `      <imagem>${escXml(n.imagemUrl)}</imagem>\n`;
         xml += `      <escalada>${n.escalada}</escalada>\n`;
-        if (n.link) xml += `      <link>${escXml(n.link)}</link>\n`;
         xml += `    </noticia>\n`;
       });
       xml += `  </bloco>\n`;
