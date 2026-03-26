@@ -4,6 +4,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { Zap, Plus, Trash2, Link2, Loader2, Image, Type, Check, X as XIcon, ChevronDown, ChevronUp, Pencil } from "lucide-react";
+import { decodeHtmlEntities } from "@/lib/textEncoding";
+
+const BLOCK_COLORS = [
+  "#2ec1f7", // azul
+  "#f59e0b", // amarelo
+  "#10b981", // verde
+  "#ef4444", // vermelho
+  "#8b5cf6", // roxo
+  "#ec4899", // rosa
+  "#06b6d4", // ciano
+  "#f97316", // laranja
+];
 
 interface NewsItem {
   titulo: string;
@@ -135,8 +147,8 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
         const title = getMetaContent("og:title") || getMetaContent("twitter:title") || (html.match(/<title[^>]*>([^<]+)<\/title>/i)?.[1] || "").trim();
         const image = getMetaContent("og:image") || getMetaContent("twitter:image");
 
-        if (title) updateNoticia(bi, ni, "titulo", title);
-        if (image) updateNoticia(bi, ni, "imagemUrl", image);
+        if (title) updateNoticia(bi, ni, "titulo", decodeHtmlEntities(title));
+        if (image) updateNoticia(bi, ni, "imagemUrl", decodeHtmlEntities(image));
         updateNoticia(bi, ni, "link", url);
         if (title) toast.success("Dados extraídos do link!");
         else toast.warning("Link carregado, mas não foi possível extrair o título");
@@ -305,9 +317,9 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
         {/* Blocos */}
         <div className="space-y-4 mt-4">
           {blocos.map((bloco, bi) => (
-            <div key={bi} className="rounded-xl p-3" style={{ border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 30%, transparent)", backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 4%, transparent)" }}>
+            <div key={bi} className="rounded-xl p-3" style={{ border: `2px solid ${BLOCK_COLORS[bi % BLOCK_COLORS.length]}44`, backgroundColor: `${BLOCK_COLORS[bi % BLOCK_COLORS.length]}0a` }}>
               <div className="flex items-center justify-between mb-2 cursor-pointer" onClick={() => toggleCollapse(bi)}>
-                <p className="text-xs font-bold flex items-center gap-1.5" style={{ color: "var(--layout-accent-color, #2ec1f7)" }}>
+                <p className="text-xs font-bold flex items-center gap-1.5" style={{ color: BLOCK_COLORS[bi % BLOCK_COLORS.length] }}>
                   📺 BLOCO {bi + 1}
                   <span className="text-[10px] font-normal" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
                     ({bloco.noticias.length} {bloco.noticias.length === 1 ? "notícia" : "notícias"})
