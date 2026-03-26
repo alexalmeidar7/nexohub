@@ -462,7 +462,7 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
                 <input
                   value={searchNome}
                   onChange={e => { setSearchNome(e.target.value); setShowResults(true); }}
-                  onFocus={() => { if (searchResults.length > 0) setShowResults(true); }}
+                  onFocus={() => { if (searchResults.length > 0 || noResults) setShowResults(true); }}
                   placeholder="Buscar participante pelo nome..."
                   className="w-full pl-7 pr-3 py-1.5 rounded-lg text-[11px] outline-none"
                   style={inputStyle}
@@ -485,8 +485,63 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
                 ))}
               </div>
             )}
+            {showResults && noResults && searchNome.trim().length > 1 && (
+              <div className="absolute z-50 w-full mt-1 rounded-lg shadow-lg overflow-hidden p-3" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 25%, transparent)" }}>
+                <p className="text-[11px] mb-2" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                  Nenhum resultado para "<strong>{searchNome}</strong>".
+                </p>
+                <button
+                  onClick={openNewContactPopup}
+                  className="flex items-center gap-1.5 text-[11px] font-semibold py-1.5 px-3 rounded-lg hover:opacity-80 transition-all"
+                  style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 12%, transparent)", color: "var(--layout-accent-color, #2ec1f7)" }}
+                >
+                  <UserPlus size={12} /> Vamos salvar esse contato?
+                </button>
+              </div>
+            )}
           </div>
         </div>
+
+        {/* New Contact Popup */}
+        {showNewContact && (
+          <div className="rounded-xl p-3 mt-2 space-y-2" style={{ border: "2px solid var(--layout-accent-color, #2ec1f7)", backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 6%, transparent)" }}>
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-bold flex items-center gap-1.5" style={{ color: "var(--layout-accent-color, #2ec1f7)" }}>
+                <UserPlus size={14} /> Novo Participante
+              </p>
+              <button onClick={() => setShowNewContact(false)} className="p-0.5 rounded hover:opacity-70" style={{ color: "var(--layout-page-text)" }}>
+                <XIcon size={14} />
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="text-[10px] font-semibold mb-0.5 block" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Nome</label>
+                <input value={newContact.nome} onChange={e => setNewContact(p => ({ ...p, nome: e.target.value }))} className="w-full px-2.5 py-1.5 rounded-lg text-[11px] outline-none" style={inputStyle} />
+              </div>
+              <div>
+                <label className="text-[10px] font-semibold mb-0.5 block" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Cargo</label>
+                <input value={newContact.cargo} onChange={e => setNewContact(p => ({ ...p, cargo: e.target.value }))} placeholder="Ex: Repórter" className="w-full px-2.5 py-1.5 rounded-lg text-[11px] outline-none" style={inputStyle} />
+              </div>
+              <div>
+                <label className="text-[10px] font-semibold mb-0.5 block" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Instagram</label>
+                <input value={newContact.instagram} onChange={e => setNewContact(p => ({ ...p, instagram: e.target.value }))} placeholder="@usuario" className="w-full px-2.5 py-1.5 rounded-lg text-[11px] outline-none" style={inputStyle} />
+              </div>
+              <div>
+                <label className="text-[10px] font-semibold mb-0.5 block" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>WhatsApp</label>
+                <input value={newContact.whatsapp} onChange={e => setNewContact(p => ({ ...p, whatsapp: e.target.value }))} placeholder="(00) 00000-0000" className="w-full px-2.5 py-1.5 rounded-lg text-[11px] outline-none" style={inputStyle} />
+              </div>
+            </div>
+            <button
+              onClick={saveNewContact}
+              disabled={savingContact || !newContact.nome.trim()}
+              className="w-full py-2 rounded-lg text-[11px] font-bold transition-all hover:opacity-90 flex items-center justify-center gap-1.5 disabled:opacity-40"
+              style={{ backgroundColor: "var(--layout-accent-color, #2ec1f7)", color: "var(--layout-header-text, #fff)" }}
+            >
+              {savingContact ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
+              Salvar e Incluir
+            </button>
+          </div>
+        )}
 
         {/* Blocos */}
         <div className="space-y-4 mt-4">
