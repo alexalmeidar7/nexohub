@@ -115,9 +115,11 @@ export default function PrevisaoTempo() {
   const fetchSuggestions = useCallback(async (query: string) => {
     if (query.trim().length < 2) { setSuggestions([]); return; }
     try {
-      const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=5&language=pt`);
-      const data = await res.json();
-      setSuggestions(data.results || []);
+      const { data, error } = await supabase.functions.invoke("fetch-weather", {
+        body: { action: "geocode", query, count: 5 },
+      });
+      if (error) throw error;
+      setSuggestions(data?.results || []);
       setShowSuggestions(true);
     } catch { setSuggestions([]); }
   }, []);
@@ -146,8 +148,11 @@ export default function PrevisaoTempo() {
   const fetchWeatherByCoords = useCallback(async (lat: number, lon: number, name: string, silent = false) => {
     if (!silent) { setLoading(true); setError(""); setWeather(null); }
     try {
-      const wxRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code,relative_humidity_2m_max&timezone=auto&forecast_days=6`);
-      const wxData = await wxRes.json();
+      const { data: resp, error: fnErr } = await supabase.functions.invoke("fetch-weather", {
+        body: { action: "forecast", lat, lon, forecast_days: 6 },
+      });
+      if (fnErr) throw fnErr;
+      const wxData = resp?.data;
       const current: DayWeather = {
         date: "Agora", temp: Math.round(wxData.current.temperature_2m),
         tempMin: Math.round(wxData.daily.temperature_2m_min[0]), tempMax: Math.round(wxData.daily.temperature_2m_max[0]),
@@ -190,9 +195,11 @@ export default function PrevisaoTempo() {
     if (!searchCity.trim()) return;
     if (!silent) { setLoading(true); setError(""); setWeather(null); }
     try {
-      const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(searchCity)}&count=1&language=pt`);
-      const geoData = await geoRes.json();
-      if (!geoData.results?.length) { setError("Cidade não encontrada."); setLoading(false); return; }
+      const { data: geoData, error: geoErr } = await supabase.functions.invoke("fetch-weather", {
+        body: { action: "geocode", query: searchCity, count: 1 },
+      });
+      if (geoErr) throw geoErr;
+      if (!geoData?.results?.length) { setError("Cidade não encontrada."); setLoading(false); return; }
       const { latitude, longitude, name } = geoData.results[0];
       await fetchWeatherByCoords(latitude, longitude, name, silent);
     } catch { if (!silent) setError("Erro ao buscar dados meteorológicos."); setLoading(false); }

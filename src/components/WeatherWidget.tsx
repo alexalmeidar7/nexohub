@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Settings } from "lucide-react";
 import { WeatherIcon } from "@/components/WeatherIcons";
+import { supabase } from "@/integrations/supabase/client";
 
 interface WidgetWeather {
   city: string;
@@ -77,20 +78,21 @@ export default function WeatherWidget({ onNavigate }: { onNavigate?: (page: any)
         let name = cityName!;
 
         if (!latitude || !longitude) {
-          const geoRes = await fetch(
-            `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(name)}&count=1&language=pt`
-          );
-          const geoData = await geoRes.json();
-          if (!geoData.results?.length) return;
+          const { data: geoData, error: geoErr } = await supabase.functions.invoke("fetch-weather", {
+            body: { action: "geocode", query: name, count: 1 },
+          });
+          if (geoErr) throw geoErr;
+          if (!geoData?.results?.length) return;
           latitude = geoData.results[0].latitude;
           longitude = geoData.results[0].longitude;
           name = geoData.results[0].name;
         }
 
-        const wxRes = await fetch(
-          `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=2`
-        );
-        const wxData = await wxRes.json();
+        const { data: wxResp, error: wxErr } = await supabase.functions.invoke("fetch-weather", {
+          body: { action: "forecast", lat: latitude, lon: longitude, forecast_days: 2 },
+        });
+        if (wxErr) throw wxErr;
+        const wxData = wxResp?.data;
 
         setWeather({
           city: name,
