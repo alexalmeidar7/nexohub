@@ -133,6 +133,10 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
     setCollapsedBlocos(new Set());
     setEditingId(null);
     setInitialized(false);
+    setParticipantes([]);
+    setSearchNome("");
+    setSearchResults([]);
+    setShowResults(false);
   };
 
   const updateNoticia = (bi: number, ni: number, field: keyof NewsItem, value: any) => {
