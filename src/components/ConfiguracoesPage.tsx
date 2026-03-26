@@ -922,7 +922,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
       </div></div>}
 
       {/* Box 3: Layout */}
-      {(section === "all" || section === "empresa") && <CollapsibleBox title="Layout — Cores e Personalização" icon={<Palette size={16} className="text-white/80" />}>
+      {(section === "all" || section === "empresa") && <CollapsibleBox title="Layout — Cores e Personalização" icon={<Palette size={16} style={{ opacity: 0.8 }} />}>
         <Suspense fallback={<div className="flex items-center gap-2 text-xs py-8 justify-center" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}><Loader2 size={16} className="animate-spin" /> Carregando...</div>}>
           <LayoutCustomizer />
         </Suspense>
