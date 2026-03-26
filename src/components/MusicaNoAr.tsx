@@ -891,23 +891,23 @@ export default function MusicaNoAr() {
                   </span>
                 )}
                 {onlineError && (
-                  <span className="inline-flex items-center gap-1 text-[7px] font-bold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: "rgba(239,68,68,0.15)", color: "#fca5a5", border: "1px solid rgba(239,68,68,0.3)" }}>
-                    <AlertTriangle size={9} className="shrink-0" /> Online: erro
+                  <span className="inline-flex items-center gap-1 text-[8px] font-bold px-2 py-1 rounded-full" style={{ backgroundColor: "rgba(239,68,68,0.25)", color: "#ffffff", border: "1px solid rgba(239,68,68,0.5)" }}>
+                    <AlertTriangle size={10} className="shrink-0" /> Online: erro
                   </span>
                 )}
                 {!onlineError && onlineDelay && (
-                  <span className="inline-flex items-center gap-1 text-[7px] font-bold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: "rgba(250,204,21,0.12)", color: "#fde047", border: "1px solid rgba(250,204,21,0.25)" }}>
-                    <AlertTriangle size={9} className="shrink-0" /> Online: sem resposta +30s
+                  <span className="inline-flex items-center gap-1 text-[8px] font-bold px-2 py-1 rounded-full" style={{ backgroundColor: "rgba(250,204,21,0.25)", color: "#ffffff", border: "1px solid rgba(250,204,21,0.5)" }}>
+                    <AlertTriangle size={10} className="shrink-0" /> Online: sem resposta +30s
                   </span>
                 )}
                 {localError && (
-                  <span className="inline-flex items-center gap-1 text-[7px] font-bold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: "rgba(239,68,68,0.15)", color: "#fca5a5", border: "1px solid rgba(239,68,68,0.3)" }}>
-                    <AlertTriangle size={9} className="shrink-0" /> Local: erro
+                  <span className="inline-flex items-center gap-1 text-[8px] font-bold px-2 py-1 rounded-full" style={{ backgroundColor: "rgba(239,68,68,0.25)", color: "#ffffff", border: "1px solid rgba(239,68,68,0.5)" }}>
+                    <AlertTriangle size={10} className="shrink-0" /> Local: erro
                   </span>
                 )}
                 {!localError && localDelay && (
-                  <span className="inline-flex items-center gap-1 text-[7px] font-bold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: "rgba(250,204,21,0.12)", color: "#fde047", border: "1px solid rgba(250,204,21,0.25)" }}>
-                    <AlertTriangle size={9} className="shrink-0" /> Local: sem resposta +15s
+                  <span className="inline-flex items-center gap-1 text-[8px] font-bold px-2 py-1 rounded-full" style={{ backgroundColor: "rgba(250,204,21,0.25)", color: "#ffffff", border: "1px solid rgba(250,204,21,0.5)" }}>
+                    <AlertTriangle size={10} className="shrink-0" /> Local: sem resposta +15s
                   </span>
                 )}
               </div>
