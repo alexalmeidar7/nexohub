@@ -16,6 +16,7 @@ import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 
 const NoticiasPanel = lazy(() => import("./NoticiasPanel"));
 const WhatsAppSendDialog = lazy(() => import("./WhatsAppSendDialog"));
+const ProgramaExpressPopup = lazy(() => import("./ProgramaExpressPopup"));
 
 interface Apresentador {
   id: string;
@@ -87,6 +88,7 @@ export default function RoteiroPrograma() {
   const mergeHighlightColor = "rgba(38,143,250,0.18)";
   const [showWhatsAppDialog, setShowWhatsAppDialog] = useState(false);
   const [whatsAppHistoricoData, setWhatsAppHistoricoData] = useState<any>(null);
+  const [showExpressPopup, setShowExpressPopup] = useState(false);
 
   const fetchApresentadorStatus = async (roteiroId: string) => {
     const { data } = await supabase.from("roteiros").select("apresentador_editado, editado_at, share_login").eq("id", roteiroId).maybeSingle();
@@ -676,6 +678,13 @@ ${perguntaActions}
               </button>
             </div>
           )}
+          <button
+            onClick={() => setShowExpressPopup(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all hover:opacity-90"
+            style={{ backgroundColor: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.25)", color: "var(--layout-header-text, #ffffff)" }}
+          >
+            ⚡ Programa Express
+          </button>
         </div>
 
         <div className="p-6 space-y-5">
@@ -1696,6 +1705,15 @@ ${perguntaActions}
             participantes,
             conteudoTexto: editorRef.current?.innerText || roteiroTexto,
           }}
+        />
+      </Suspense>
+      <Suspense fallback={null}>
+        <ProgramaExpressPopup
+          open={showExpressPopup}
+          onOpenChange={setShowExpressPopup}
+          programas={programas}
+          estudios={estudios}
+          onFinish={fetchHistorico}
         />
       </Suspense>
 
