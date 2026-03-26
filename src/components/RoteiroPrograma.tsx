@@ -950,7 +950,24 @@ ${perguntaActions}
                         <Download size={12} style={{ color: "var(--layout-icon-color, #888888)" }} />
                       </button>
                     )}
-                    <button onClick={() => editarRoteiro(r)} className="h-7 w-7 flex items-center justify-center rounded-lg hover:opacity-70 transition" style={{ backgroundColor: "rgba(38,143,250,0.08)" }} title="Editar">
+                    <button onClick={() => {
+                      if (r.subtitulo?.startsWith("express_xml::")) {
+                        // Parse blocos from participantes
+                        let blocos = [];
+                        try { blocos = typeof r.participantes === "string" ? JSON.parse(r.participantes) : r.participantes || []; } catch { blocos = []; }
+                        // Find programaId by name
+                        const prog = programas.find(p => p.nome === r.programa_nome);
+                        setExpressEditData({
+                          roteiroId: r.id,
+                          estudio: r.estudio || "",
+                          programaId: prog?.id || "",
+                          blocos,
+                        });
+                        setShowExpressPopup(true);
+                      } else {
+                        editarRoteiro(r);
+                      }
+                    }} className="h-7 w-7 flex items-center justify-center rounded-lg hover:opacity-70 transition" style={{ backgroundColor: "rgba(38,143,250,0.08)" }} title="Editar">
                       <Pencil size={12} style={{ color: "var(--layout-icon-color, #888888)" }} />
                     </button>
                     <button onClick={() => excluirRoteiro(r.id)} className="h-7 w-7 flex items-center justify-center rounded-lg hover:opacity-70 transition" style={{ backgroundColor: "rgba(220,38,38,0.08)" }} title="Excluir">
