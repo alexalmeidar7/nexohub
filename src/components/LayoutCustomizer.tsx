@@ -140,6 +140,7 @@ const colorLabels: Record<string, string> = {
   borderColor: "Cor das Bordas",
   sliderBg: "Fundo Slider Música",
   scrollbarColor: "Cor do Scroll",
+  previewBarBg: "Barra Pré-Visualização",
 };
 
 type DashboardSettingsPayload = Record<string, any> & {
@@ -480,7 +481,7 @@ export default function LayoutCustomizer() {
 
       {/* Mockup preview */}
       <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(13,4,70,0.12)", boxShadow: "0 8px 32px rgba(13,4,70,0.10), 0 2px 8px rgba(13,4,70,0.06)" }}>
-        <div className="px-5 py-3 flex items-center justify-between" style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+        <div className="px-5 py-3 flex items-center justify-between" style={{ background: colors.previewBarBg, borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
           <div className="flex items-center gap-2">
             <Palette size={14} className="text-white/70" />
             <span className="text-xs font-bold text-white/90 uppercase tracking-wider">Pré-visualização</span>
