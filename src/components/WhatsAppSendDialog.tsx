@@ -244,7 +244,7 @@ export default function WhatsAppSendDialog({ open, onClose, roteiroData }: Whats
           <button
             onClick={copiarMensagem}
             disabled={loading || !formattedText.trim()}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold text-white hover:opacity-90 transition disabled:opacity-40"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold hover:opacity-90 transition disabled:opacity-40"
             style={{ backgroundColor: "rgba(255,255,255,0.14)" }}
           >
             <Copy size={13} />
