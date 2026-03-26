@@ -729,20 +729,20 @@ export default function MusicaNoAr() {
   if (!music && !presenterFallback) {
     return (
       <div className="animate-pulse">
-        <div className="rounded-2xl overflow-hidden p-5" style={{ background: "#d9e9fa", boxShadow: "0 8px 32px rgba(13,4,70,0.12)" }}>
+        <div className="rounded-2xl overflow-hidden p-5" style={{ background: "var(--layout-header-bg, #0d0446)", boxShadow: "0 8px 32px rgba(0,0,0,0.18)" }}>
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(13,4,70,0.08)" }}>
-              <Music size={20} style={{ color: "#0d0446" }} />
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(255,255,255,0.12)" }}>
+              <Music size={20} style={{ color: "var(--layout-header-text, #ffffff)" }} />
             </div>
-            <div className="h-5 w-32 rounded bg-[#0d0446]/10" />
+            <div className="h-5 w-32 rounded" style={{ backgroundColor: "rgba(255,255,255,0.1)" }} />
           </div>
-          <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "#ffffff" }}>
+          <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "var(--layout-slider-bg, #0d0d0d)" }}>
             <div className="flex gap-4 p-4">
-              <div className="w-40 h-40 rounded-xl bg-[#0d0446]/5 shrink-0" />
+              <div className="w-40 h-40 rounded-xl shrink-0" style={{ backgroundColor: "rgba(255,255,255,0.05)" }} />
               <div className="flex-1 space-y-3 py-2">
-                <div className="h-6 w-48 rounded bg-[#0d0446]/10" />
-                <div className="h-4 w-32 rounded bg-[#268ffa]/15" />
-                <div className="h-2 w-full rounded-full bg-[#0d0446]/5 mt-8" />
+                <div className="h-6 w-48 rounded" style={{ backgroundColor: "rgba(255,255,255,0.08)" }} />
+                <div className="h-4 w-32 rounded" style={{ backgroundColor: "rgba(255,255,255,0.06)" }} />
+                <div className="h-2 w-full rounded-full mt-8" style={{ backgroundColor: "rgba(255,255,255,0.05)" }} />
               </div>
             </div>
           </div>
@@ -897,13 +897,13 @@ export default function MusicaNoAr() {
       </div>
 
       {/* ═══ COLLAPSIBLE CONFIG SECTION ═══ */}
-      <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+      <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 16px rgba(0,0,0,0.08)", border: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 8%, transparent)" }}>
         <button
           onClick={() => setShowConfig(!showConfig)}
-          className="w-full flex items-center justify-between px-4 py-3 text-left"
-          style={{ borderBottom: showConfig ? "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 10%, transparent)" : "none" }}
+          className="w-full flex items-center justify-between px-5 py-3.5 text-left transition-colors"
+          style={{ borderBottom: showConfig ? "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 8%, transparent)" : "none" }}
         >
-          <span className="text-xs font-bold flex items-center gap-2" style={{ color: "var(--layout-page-text, #0d0446)" }}>
+          <span className="text-xs font-bold flex items-center gap-2.5" style={{ color: "var(--layout-page-text, #0d0446)" }}>
             <Monitor size={14} style={{ color: "var(--layout-icon-color, #268ffa)" }} />
             Configuração das Origens
             {localMonitoring && (
@@ -917,15 +917,18 @@ export default function MusicaNoAr() {
         </button>
 
         {showConfig && (
-          <div className="p-4 space-y-4">
+          <div className="p-5 space-y-5">
             {/* Two columns with center divider */}
             <div className="grid grid-cols-[1fr_auto_1fr] gap-0 items-stretch">
               {/* ── ONLINE SOURCE ── */}
-              <div className="rounded-xl p-4 space-y-3" style={{ backgroundColor: "color-mix(in srgb, var(--layout-header-bg, #0d0446) 8%, var(--layout-page-bg, #ffffff))", border: "1px solid color-mix(in srgb, var(--layout-header-bg, #0d0446) 15%, var(--layout-page-bg, #ffffff))" }}>
-                <h4 className="text-xs font-black uppercase tracking-wide" style={{ color: "var(--layout-page-text, #0d0446)" }}>Origem Source Online</h4>
+              <div className="rounded-xl p-4 space-y-3" style={{ backgroundColor: "color-mix(in srgb, var(--layout-header-bg, #0d0446) 6%, var(--layout-page-bg, #ffffff))", border: "1px solid color-mix(in srgb, var(--layout-header-bg, #0d0446) 10%, var(--layout-page-bg, #ffffff))" }}>
+                <h4 className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 70%, transparent)" }}>
+                  <Globe size={12} style={{ color: "var(--layout-icon-color, #268ffa)" }} />
+                  Origem Online
+                </h4>
                 <div className="flex gap-1.5">
-                  <div className="flex-1 flex items-center gap-2 px-3 py-2 rounded-lg" style={{ backgroundColor: "#ffffff", border: "1px solid #c5d9f2" }}>
-                    <Globe size={14} style={{ color: "#7c8db5" }} />
+                  <div className="flex-1 flex items-center gap-2 px-3 py-2.5 rounded-lg transition-all" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 15%, transparent)" }}>
+                    <Globe size={13} style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 40%, transparent)" }} />
                     <input
                       value={xmlUrl}
                       onChange={(e) => {
@@ -936,18 +939,18 @@ export default function MusicaNoAr() {
                         }
                       }}
                       className="flex-1 text-xs outline-none bg-transparent"
-                      style={{ color: "#0d0446" }}
+                      style={{ color: "var(--layout-page-text, #0d0446)" }}
                       placeholder="Cole ou digite uma URL .xml"
                     />
                   </div>
-                  <button onClick={() => void saveUrl(xmlUrl)} className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: "#0d0446", color: "#ffffff" }}>
+                  <button onClick={() => void saveUrl(xmlUrl)} className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 transition-all hover:opacity-80" style={{ backgroundColor: "var(--layout-header-bg, #0d0446)", color: "var(--layout-header-text, #ffffff)" }}>
                     <Check size={16} />
                   </button>
                   <label
-                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg select-none shrink-0 text-white"
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg select-none shrink-0 transition-all hover:opacity-90"
                     style={{
-                      backgroundColor: "#0d0446",
-                      color: "hsl(0 0% 100%)",
+                      backgroundColor: "var(--layout-header-bg, #0d0446)",
+                      color: "var(--layout-header-text, #ffffff)",
                       opacity: hasValidOnlineUrl ? 1 : 0.45,
                       cursor: hasValidOnlineUrl ? "pointer" : "not-allowed",
                     }}
@@ -959,7 +962,7 @@ export default function MusicaNoAr() {
                       disabled={!hasValidOnlineUrl}
                       className="w-3.5 h-3.5 accent-white"
                     />
-                    <span className="text-[10px] font-bold whitespace-nowrap text-white">LER SOMENTE ESSA</span>
+                    <span className="text-[10px] font-bold whitespace-nowrap" style={{ color: "var(--layout-header-text, #ffffff)" }}>LER ESSA</span>
                   </label>
                 </div>
 
@@ -987,28 +990,31 @@ export default function MusicaNoAr() {
               </div>
 
               {/* ── CENTER DIVIDER ── */}
-                <div className="flex flex-col items-center justify-center px-3" style={{ minWidth: 100 }}>
+                <div className="flex flex-col items-center justify-center px-3" style={{ minWidth: 90 }}>
                   <div
                     className={`rounded-xl px-3 py-4 flex flex-col items-center gap-2 ${bothActive ? "music-dual-monitor-blink" : ""}`}
                     style={{
                       background: bothActive
                         ? "linear-gradient(135deg, hsl(142 72% 26%) 0%, hsl(142 72% 42%) 100%)"
-                        : "hsl(246 69% 16%)",
-                      color: "hsl(0 0% 100%)",
+                        : "var(--layout-header-bg, #0d0446)",
+                      color: "var(--layout-header-text, #ffffff)",
                     }}
                   >
-                  <span className="text-[9px] font-black uppercase tracking-wider text-center leading-tight text-white">Monitorar<br/>os dois<br/>Sources</span>
-                  <span className="text-lg text-white">↔</span>
+                  <span className="text-[8px] font-black uppercase tracking-wider text-center leading-tight" style={{ color: "var(--layout-header-text, #ffffff)" }}>Monitorar<br/>os dois<br/>Sources</span>
+                  <span className="text-lg" style={{ color: "var(--layout-header-text, #ffffff)" }}>↔</span>
                 </div>
               </div>
 
               {/* ── LOCAL SOURCE ── */}
-              <div className="rounded-xl p-4 space-y-3" style={{ backgroundColor: "color-mix(in srgb, var(--layout-header-bg, #0d0446) 8%, var(--layout-page-bg, #ffffff))", border: "1px solid color-mix(in srgb, var(--layout-header-bg, #0d0446) 15%, var(--layout-page-bg, #ffffff))" }}>
-                <h4 className="text-xs font-black uppercase tracking-wide" style={{ color: "var(--layout-page-text, #0d0446)" }}>Origem Source Arquivo Local</h4>
+              <div className="rounded-xl p-4 space-y-3" style={{ backgroundColor: "color-mix(in srgb, var(--layout-header-bg, #0d0446) 6%, var(--layout-page-bg, #ffffff))", border: "1px solid color-mix(in srgb, var(--layout-header-bg, #0d0446) 10%, var(--layout-page-bg, #ffffff))" }}>
+                <h4 className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 70%, transparent)" }}>
+                  <FolderOpen size={12} style={{ color: "var(--layout-icon-color, #268ffa)" }} />
+                  Origem Local
+                </h4>
                 <div className="flex gap-1.5">
-                  <div className="flex-1 flex items-center gap-2 px-3 py-2 rounded-lg" style={{ backgroundColor: "#ffffff", border: "1px solid #c5d9f2" }}>
-                    <FolderOpen size={14} style={{ color: "#7c8db5" }} />
-                    <span className="flex-1 text-xs truncate" style={{ color: localFileName ? "#0d0446" : "#7c8db5" }}>{localFileName || "Nenhum arquivo"}</span>
+                  <div className="flex-1 flex items-center gap-2 px-3 py-2.5 rounded-lg transition-all" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 15%, transparent)" }}>
+                    <FolderOpen size={13} style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 40%, transparent)" }} />
+                    <span className="flex-1 text-xs truncate" style={{ color: localFileName ? "var(--layout-page-text, #0d0446)" : "color-mix(in srgb, var(--layout-page-text, #0d0446) 40%, transparent)" }}>{localFileName || "Nenhum arquivo"}</span>
                   </div>
                   <button
                     onClick={() => {
@@ -1018,16 +1024,16 @@ export default function MusicaNoAr() {
                         fileInputRef.current?.click();
                       }
                     }}
-                    className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
-                    style={{ backgroundColor: "#0d0446", color: "#ffffff" }}
+                    className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 transition-all hover:opacity-80"
+                    style={{ backgroundColor: "var(--layout-header-bg, #0d0446)", color: "var(--layout-header-text, #ffffff)" }}
                   >
                     <Upload size={14} />
                   </button>
                   <label
-                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg select-none shrink-0 text-white"
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg select-none shrink-0 transition-all hover:opacity-90"
                     style={{
-                      backgroundColor: "#0d0446",
-                      color: "hsl(0 0% 100%)",
+                      backgroundColor: "var(--layout-header-bg, #0d0446)",
+                      color: "var(--layout-header-text, #ffffff)",
                       opacity: hasValidLocalSource ? 1 : 0.45,
                       cursor: hasValidLocalSource ? "pointer" : "not-allowed",
                     }}
@@ -1039,7 +1045,7 @@ export default function MusicaNoAr() {
                       disabled={!hasValidLocalSource}
                       className="w-3.5 h-3.5 accent-white"
                     />
-                    <span className="text-[10px] font-bold whitespace-nowrap text-white">LER SOMENTE ESSA</span>
+                    <span className="text-[10px] font-bold whitespace-nowrap" style={{ color: "var(--layout-header-text, #ffffff)" }}>LER ESSA</span>
                   </label>
                 </div>
 
@@ -1047,7 +1053,7 @@ export default function MusicaNoAr() {
 
                 {/* Device name — editable */}
                 {localMonitoring && (
-                  <div className="flex items-center gap-2 text-[10px] font-semibold" style={{ color: "#0d0446" }}>
+                  <div className="flex items-center gap-2 text-[10px] font-semibold" style={{ color: "var(--layout-page-text, #0d0446)" }}>
                     <span>lendo no computador</span>
                     {editingDeviceName ? (
                       <span className="flex items-center gap-1">
@@ -1055,7 +1061,7 @@ export default function MusicaNoAr() {
                           value={deviceNameInput}
                           onChange={e => setDeviceNameInput(e.target.value)}
                           className="px-1.5 py-0.5 rounded text-[10px] font-mono outline-none"
-                          style={{ backgroundColor: "#ffffff", border: "1px solid #c5d9f2", color: "#0d0446", width: 140 }}
+                          style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 15%, transparent)", color: "var(--layout-page-text, #0d0446)", width: 140 }}
                           autoFocus
                           onKeyDown={e => {
                             if (e.key === "Enter") {
@@ -1074,7 +1080,7 @@ export default function MusicaNoAr() {
                         }} className="text-green-600"><Check size={12} /></button>
                       </span>
                     ) : (
-                      <button onClick={() => { setDeviceNameInput(currentDeviceName); setEditingDeviceName(true); }} className="font-mono underline" style={{ color: "#7c8db5" }}>
+                      <button onClick={() => { setDeviceNameInput(currentDeviceName); setEditingDeviceName(true); }} className="font-mono underline" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 50%, transparent)" }}>
                         {currentDeviceName}
                       </button>
                     )}
@@ -1110,8 +1116,8 @@ export default function MusicaNoAr() {
                     return (
                       <div className="rounded-lg p-2 flex items-start gap-2" style={{ backgroundColor: "rgba(234,179,8,0.1)", border: "1px solid rgba(234,179,8,0.3)" }}>
                         <Monitor size={12} className="shrink-0 mt-0.5" style={{ color: "#ca8a04" }} />
-                        <p className="text-[9px] font-semibold" style={{ color: "#0d0446" }}>
-                          XML carregado em outro computador: <span className="font-mono" style={{ color: "rgba(13,4,70,0.5)" }}>{lastLocal.deviceName}</span>
+                        <p className="text-[9px] font-semibold" style={{ color: "var(--layout-page-text, #0d0446)" }}>
+                          XML carregado em outro computador: <span className="font-mono" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 50%, transparent)" }}>{lastLocal.deviceName}</span>
                         </p>
                       </div>
                     );
@@ -1124,29 +1130,29 @@ export default function MusicaNoAr() {
             {/* Upload History */}
             {uploadHistory.length > 0 && (
               <div>
-                <p className="text-[9px] mb-1.5 font-bold uppercase tracking-wider flex items-center gap-1" style={{ color: "rgba(13,4,70,0.4)" }}>
+                <p className="text-[9px] mb-2 font-bold uppercase tracking-widest flex items-center gap-1.5" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 40%, transparent)" }}>
                   <Clock size={9} /> Histórico de atualizações
                 </p>
-                <div className="rounded-lg overflow-auto max-h-[120px]" style={{ border: "1px solid rgba(13,4,70,0.06)" }}>
+                <div className="rounded-lg overflow-auto max-h-[120px]" style={{ border: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 8%, transparent)" }}>
                   <table className="w-full text-[9px]">
                     <thead className="sticky top-0">
-                      <tr style={{ backgroundColor: "rgba(13,4,70,0.03)" }}>
-                        <th className="text-left px-2 py-1 font-bold uppercase" style={{ color: "rgba(13,4,70,0.4)" }}>Origem</th>
-                        <th className="text-left px-2 py-1 font-bold uppercase" style={{ color: "rgba(13,4,70,0.4)" }}>Data</th>
-                        <th className="text-left px-2 py-1 font-bold uppercase" style={{ color: "rgba(13,4,70,0.4)" }}>Hora</th>
+                      <tr style={{ backgroundColor: "color-mix(in srgb, var(--layout-header-bg, #0d0446) 5%, var(--layout-page-bg, #ffffff))" }}>
+                        <th className="text-left px-2.5 py-1.5 font-bold uppercase" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 40%, transparent)" }}>Origem</th>
+                        <th className="text-left px-2.5 py-1.5 font-bold uppercase" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 40%, transparent)" }}>Data</th>
+                        <th className="text-left px-2.5 py-1.5 font-bold uppercase" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 40%, transparent)" }}>Hora</th>
                       </tr>
                     </thead>
                     <tbody>
                       {uploadHistory.map((entry, i) => (
-                        <tr key={i} style={{ borderTop: i > 0 ? "1px solid rgba(13,4,70,0.04)" : undefined }}>
-                          <td className="px-2 py-1 font-semibold" style={{ color: entry.source === "pasta" ? "#22c55e" : "#268ffa" }}>
+                        <tr key={i} style={{ borderTop: i > 0 ? "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 6%, transparent)" : undefined }}>
+                          <td className="px-2.5 py-1.5 font-semibold" style={{ color: entry.source === "pasta" ? "#22c55e" : "var(--layout-icon-color, #268ffa)" }}>
                             <span className="inline-flex items-center gap-1">
                               {entry.source === "pasta" ? <FolderOpen size={9} /> : <Globe size={9} />}
                               {entry.source === "pasta" ? "Pasta" : "Online"}
                             </span>
                           </td>
-                          <td className="px-2 py-1 font-mono" style={{ color: "rgba(13,4,70,0.5)" }}>{entry.date}</td>
-                          <td className="px-2 py-1 font-mono" style={{ color: "rgba(13,4,70,0.5)" }}>{entry.time}</td>
+                          <td className="px-2.5 py-1.5 font-mono" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 50%, transparent)" }}>{entry.date}</td>
+                          <td className="px-2.5 py-1.5 font-mono" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 50%, transparent)" }}>{entry.time}</td>
                         </tr>
                       ))}
                     </tbody>
