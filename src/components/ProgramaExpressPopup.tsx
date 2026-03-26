@@ -389,6 +389,7 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
     }
 
     if (parsedParticipantes.length > 0) setParticipantes(parsedParticipantes);
+    if (parsedEscalada.length > 0) setEscaladaList(parsedEscalada);
     if (parsedBlocos.length > 0) setBlocos(parsedBlocos);
 
     const summary = [];
