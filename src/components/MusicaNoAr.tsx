@@ -163,6 +163,13 @@ function formatTime(seconds: number): string {
   return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
 
+function formatTimeMs(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  const ms = Math.floor((seconds % 1) * 100);
+  return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}.${String(ms).padStart(2, "0")}`;
+}
+
 async function fetchCoverFromiTunes(titulo: string, artista: string): Promise<string> {
   try {
     const query = encodeURIComponent(`${artista} ${titulo}`);
@@ -915,9 +922,10 @@ export default function MusicaNoAr() {
                 </span>
 
                 {music && music.duracao > 0 && (
-                  <div className="mt-2 flex items-center gap-2">
-                    <span className="text-[10px] font-mono font-bold" style={{ color: "rgba(255,255,255,0.7)" }}>{formatTime(elapsed)}</span>
-                    <span className="text-[10px] font-mono font-bold" style={{ color: "rgba(255,255,255,0.35)" }}>{formatTime(music.duracao)}</span>
+                  <div className="mt-2 flex items-center gap-1.5">
+                    <span className="text-sm font-mono font-black tracking-wide" style={{ color: "rgba(255,255,255,0.85)" }}>{formatTimeMs(elapsed)}</span>
+                    <span className="text-sm font-mono font-bold" style={{ color: "rgba(255,255,255,0.3)" }}>/</span>
+                    <span className="text-sm font-mono font-bold" style={{ color: "rgba(255,255,255,0.4)" }}>{formatTime(music.duracao)}</span>
                   </div>
                 )}
               </div>
