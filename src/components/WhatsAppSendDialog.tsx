@@ -227,7 +227,7 @@ export default function WhatsAppSendDialog({ open, onClose, roteiroData }: Whats
               />
               <button
                 onClick={addContato}
-                className="px-3 py-2 rounded-lg text-xs font-bold text-white hover:opacity-80 transition"
+                className="px-3 py-2 rounded-lg text-xs font-bold hover:opacity-80 transition"
                 style={{ backgroundColor: "rgba(255,255,255,0.1)" }}
               >
                 <Plus size={14} />
