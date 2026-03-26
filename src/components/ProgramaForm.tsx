@@ -198,46 +198,47 @@ function GradeBody({ gradeSlots, diasSemana, diaAtual, currentTimeStr, getProgra
 
           return (
             <tr key={slot} data-needle-row={isNeedleRow ? "true" : undefined} data-needle-percent={isNeedleRow ? ((currentMinutes - slotMinutes) / 30) * 100 : undefined}>
-              <td className="px-2 py-2 font-mono rounded-lg" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>{slot.slice(0, 5)}</td>
+              <td className="px-2 py-2 font-mono rounded-lg text-[11px] font-semibold" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>{slot.slice(0, 5)}</td>
               {diasSemana.map(dia => {
                 const key = `${dia}-${slot}`;
                 if (skipMap[key]) return null;
                 const cellData = spanMap[key];
-                if (!cellData) return <td key={dia} className="px-1 py-1 rounded-lg" style={{ backgroundColor: "rgba(13,4,70,0.015)" }} />;
+                if (!cellData) return <td key={dia} className="px-1 py-1 rounded-lg" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 3%, transparent)" }} />;
                 const { prog, rowSpan } = cellData;
                 const isOnAir = prog && dia === diaAtual && currentTimeStr >= prog.horarioInicio && currentTimeStr < prog.horarioFim;
-                const presenterName = getPresenterName(prog.apresentadorId);
                 return (
                   <td key={dia} rowSpan={rowSpan}
                     className="rounded-lg transition-all relative group"
                     style={{
-                      background: isOnAir ? "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" : "#ffffff",
-                      color: isOnAir ? "#ffffff" : "var(--layout-header-bg, #1a1a1a)",
+                      background: isOnAir
+                        ? "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))"
+                        : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, var(--layout-page-bg, #ffffff) 94%)",
+                      color: isOnAir ? "#ffffff" : "var(--layout-page-text, #1a1a1a)",
                       fontWeight: isOnAir ? "bold" : undefined,
-                      border: isOnAir ? "2px solid var(--layout-accent-color, #444444)" : "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)",
+                      border: isOnAir
+                        ? "2px solid var(--layout-accent-color, #444444)"
+                        : "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 10%, transparent)",
                       verticalAlign: "top",
                       padding: "8px 10px",
-                      boxShadow: isOnAir ? "0 2px 12px color-mix(in srgb, var(--layout-accent-color, #444444) 30%, transparent)" : "none",
+                      boxShadow: isOnAir ? "0 2px 12px color-mix(in srgb, var(--layout-accent-color, #444444) 30%, transparent)" : "0 1px 3px rgba(0,0,0,0.04)",
                     }}>
-                    <div className="text-[10px] font-bold leading-tight" style={{ wordBreak: "break-word", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{prog.nome}</div>
-                    {prog.classificacaoEtaria && <div className="mt-0.5"><ClassificacaoBadge value={prog.classificacaoEtaria} size={14} /></div>}
-                    <div className="text-[9px] mt-0.5" style={{ color: isOnAir ? "rgba(255,255,255,0.8)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>
+                    <div className="text-[11px] font-bold leading-tight" style={{ wordBreak: "break-word", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", color: isOnAir ? "#ffffff" : "var(--layout-header-bg, #1a1a1a)" }}>{prog.nome}</div>
+                    {prog.classificacaoEtaria && <div className="mt-1"><ClassificacaoBadge value={prog.classificacaoEtaria} size={14} /></div>}
+                    <div className="text-[9px] mt-1 font-medium" style={{ color: isOnAir ? "rgba(255,255,255,0.8)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
                       {prog.horarioInicio.slice(0, 5)} - {prog.horarioFim.slice(0, 5)}
                     </div>
                     {(() => {
                       const names = getPresenterNames(prog);
                       return names ? (
-                        <div className="text-[9px] font-semibold mt-0.5" style={{ color: isOnAir ? "rgba(255,255,255,0.9)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>
+                        <div className="text-[9px] font-semibold mt-0.5" style={{ color: isOnAir ? "rgba(255,255,255,0.9)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 65%, transparent)" }}>
                           {names}
                         </div>
                       ) : null;
                     })()}
                     <button
                       onClick={(e) => { e.stopPropagation(); setDetailProg(prog); }}
-                      className="mt-1.5 px-2.5 py-0.5 rounded-md text-[8px] font-bold flex items-center gap-1 transition-all opacity-70 group-hover:opacity-100"
+                      className="mt-1.5 px-2.5 py-1 rounded-md text-[8px] font-bold flex items-center gap-1 transition-all hover:opacity-90"
                       style={{ backgroundColor: isOnAir ? "rgba(255,255,255,0.2)" : "var(--layout-header-bg, #1a1a1a)", color: "var(--layout-header-text, #ffffff)" }}
-                      onMouseEnter={e => { e.currentTarget.style.backgroundColor = isOnAir ? "rgba(255,255,255,0.3)" : "var(--layout-accent-color, #444444)"; }}
-                      onMouseLeave={e => { e.currentTarget.style.backgroundColor = isOnAir ? "rgba(255,255,255,0.2)" : "var(--layout-header-bg, #1a1a1a)"; }}
                     >
                       + informações
                     </button>
@@ -1090,17 +1091,21 @@ export default function ProgramaForm() {
           `}</style>
           <div
             ref={gradeRef}
-            className="rounded-xl overflow-auto max-h-[340px] grade-scroll"
+            className="rounded-xl overflow-auto max-h-[400px] grade-scroll"
             style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)", backgroundColor: "var(--layout-page-bg, #ffffff)", scrollbarWidth: "thin", scrollbarColor: "#0d0446 transparent", position: "relative", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}
           >
-            <table data-no-row-hover className="w-full text-xs border-separate border-spacing-1">
+            <table data-no-row-hover className="w-full text-xs border-separate border-spacing-[3px]">
               <thead className="sticky top-0 z-10">
                 <tr style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" }}>
-                  <th className="px-3 py-2.5 text-left w-20 rounded-lg text-[11px] font-semibold uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.7)" }}>Horário</th>
+                  <th className="px-3 py-3 text-left w-20 rounded-lg text-[11px] font-bold uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.8)" }}>Horário</th>
                   {DIAS_SEMANA.map(dia => (
-                    <th key={dia} className={`px-2 py-2.5 text-center rounded-lg text-[11px] font-semibold uppercase tracking-wider ${dia === diaAtual ? "font-bold" : ""}`} style={{ color: dia === diaAtual ? "var(--layout-accent-color, #444444)" : "rgba(255,255,255,0.85)" }}>
-                      <div>{dia.slice(0, 3)}</div>
-                      <div className="text-[9px] font-normal" style={{ color: dia === diaAtual ? "rgba(45,190,243,0.7)" : "rgba(255,255,255,0.4)" }}>{weekDates[dia]}</div>
+                    <th key={dia} className={`px-2 py-3 text-center rounded-lg text-[11px] font-bold uppercase tracking-wider`}
+                      style={{
+                        color: dia === diaAtual ? "#ffffff" : "rgba(255,255,255,0.85)",
+                        backgroundColor: dia === diaAtual ? "color-mix(in srgb, var(--layout-accent-color, #444444) 40%, var(--layout-header-bg, #1a1a1a))" : undefined,
+                      }}>
+                      <div className="text-[12px]">{dia.slice(0, 3).toUpperCase()}</div>
+                      <div className="text-[9px] font-medium mt-0.5" style={{ color: dia === diaAtual ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.4)" }}>{weekDates[dia]}</div>
                     </th>
                   ))}
                 </tr>
