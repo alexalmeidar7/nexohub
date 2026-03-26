@@ -842,6 +842,9 @@ export default function MusicaNoAr() {
                   </span>
                 )}
               </div>
+            </div>
+          </div>
+        </div>
 
         {/* Song display with gradient progress */}
         <div className="px-4 pb-4">
