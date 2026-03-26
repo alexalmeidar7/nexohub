@@ -189,8 +189,8 @@ export default function WhatsAppSendDialog({ open, onClose, roteiroData }: Whats
               <div className="space-y-1 mb-3">
                 {contatos.map((c, i) => (
                   <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ backgroundColor: "rgba(255,255,255,0.06)" }}>
-                    <span className="text-xs text-white flex-1">{c.nome} <span className="text-white/40">· {c.whatsapp}</span></span>
-                    <button onClick={() => removeContato(i)} className="text-white/30 hover:text-red-400 transition"><Trash2 size={12} /></button>
+                    <span className="text-xs flex-1" style={{ color: "var(--layout-header-text, #ffffff)" }}>{c.nome} <span style={{ opacity: 0.4 }}>· {c.whatsapp}</span></span>
+                    <button onClick={() => removeContato(i)} className="hover:text-red-400 transition" style={{ color: "var(--layout-header-text, #ffffff)", opacity: 0.3 }}><Trash2 size={12} /></button>
                   </div>
                 ))}
               </div>
