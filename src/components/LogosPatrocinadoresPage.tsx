@@ -480,7 +480,7 @@ export default function LogosPatrocinadoresPage() {
               <CollapsibleTrigger asChild>
                 <button className="w-full px-4 py-2.5 flex items-center justify-between cursor-pointer" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" }}>
                   <h3 className="text-sm font-bold" style={{ color: "var(--layout-header-text, #ffffff)" }}>{programa.nome}</h3>
-                  <ChevronDown size={16} className="text-white transition-transform duration-200" />
+                  <ChevronDown size={16} className="transition-transform duration-200" style={{ color: "var(--layout-header-text, #ffffff)" }} />
                 </button>
               </CollapsibleTrigger>
               <CollapsibleContent>
