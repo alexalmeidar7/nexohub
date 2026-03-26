@@ -976,7 +976,7 @@ function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRe
   }
 
   return (
-    <div className="rounded-lg p-2.5 space-y-2 overflow-hidden" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 80%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 15%, transparent)" }}>
+    <div className="rounded-lg p-2.5 space-y-2 w-full" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 80%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 15%, transparent)", maxWidth: "100%", boxSizing: "border-box" }}>
       <div className="flex items-center justify-between">
         <p className="text-[10px] font-bold uppercase" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
           Notícia {ni + 1}
@@ -996,8 +996,8 @@ function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRe
       </div>
 
       {/* Link fetch */}
-      <div className="flex gap-1.5 items-center min-w-0 w-full overflow-hidden">
-        <div className="relative flex-1">
+      <div className="flex gap-1.5 items-center" style={{ maxWidth: "100%" }}>
+        <div className="relative min-w-0 flex-1">
           <Link2 size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2" style={{ color: "var(--layout-icon-color, #888)" }} />
           <input
             value={linkInput}
@@ -1005,13 +1005,13 @@ function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRe
             onPaste={e => { const t = e.clipboardData.getData("text"); setTimeout(() => handlePasteLink(t), 50); }}
             placeholder="Cole o link da matéria"
             className="w-full pl-7 pr-3 py-1.5 rounded-lg text-[11px] outline-none"
-            style={inputStyle}
+            style={{ ...inputStyle, maxWidth: "100%", boxSizing: "border-box" }}
           />
         </div>
         <button
           onClick={() => handlePasteLink(linkInput)}
           disabled={isFetching || !linkInput}
-          className="px-2 py-1.5 rounded-lg text-[10px] font-bold disabled:opacity-30"
+          className="px-2 py-1.5 rounded-lg text-[10px] font-bold disabled:opacity-30 shrink-0"
           style={{ backgroundColor: "var(--layout-accent-color, #2ec1f7)", color: "var(--layout-header-text, #fff)" }}
         >
           {isFetching ? <Loader2 size={12} className="animate-spin" /> : "Buscar"}
@@ -1019,7 +1019,7 @@ function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRe
       </div>
 
       {/* Manual fields */}
-      <div>
+      <div style={{ maxWidth: "100%" }}>
         <div className="flex items-center gap-1 mb-1">
           <Type size={10} style={{ color: "var(--layout-icon-color)" }} />
           <span className="text-[10px] font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Título / Tarja</span>
@@ -1029,11 +1029,11 @@ function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRe
           onChange={e => onUpdate(bi, ni, "titulo", e.target.value)}
           placeholder="Título da matéria"
           className="w-full px-3 py-1.5 rounded-lg text-[11px] outline-none"
-          style={inputStyle}
+          style={{ ...inputStyle, maxWidth: "100%", boxSizing: "border-box" }}
         />
       </div>
 
-      <div>
+      <div style={{ maxWidth: "100%" }}>
         <div className="flex items-center gap-1 mb-1">
           <Image size={10} style={{ color: "var(--layout-icon-color)" }} />
           <span className="text-[10px] font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>URL Imagem</span>
@@ -1043,7 +1043,7 @@ function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRe
           onChange={e => onUpdate(bi, ni, "imagemUrl", e.target.value)}
           placeholder="https://..."
           className="w-full px-3 py-1.5 rounded-lg text-[11px] outline-none"
-          style={inputStyle}
+          style={{ ...inputStyle, maxWidth: "100%", boxSizing: "border-box" }}
         />
       </div>
 
