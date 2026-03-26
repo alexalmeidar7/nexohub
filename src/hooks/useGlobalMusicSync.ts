@@ -126,8 +126,34 @@ export function useGlobalMusicSync() {
       const songChanged = !prev || prev.titulo !== data.titulo || prev.artista !== data.artista;
 
       if (songChanged) {
+        const now = Date.now();
         localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify(data));
-        localStorage.setItem(MUSIC_START_KEY, Date.now().toString());
+        localStorage.setItem(MUSIC_START_KEY, now.toString());
+        // Persist start time to DB for cross-session/device continuity
+        supabase.from("user_settings").upsert({
+          user_id: user.id,
+          dashboard_items: supabase.rpc ? undefined : undefined, // handled below
+          updated_at: new Date().toISOString(),
+        }, { onConflict: "user_id" }).then(() => {
+          // Update dashboard_items with music_start_time via a select+merge
+          supabase.from("user_settings")
+            .select("dashboard_items")
+            .eq("user_id", user.id)
+            .maybeSingle()
+            .then(({ data: settings }) => {
+              const items = (settings?.dashboard_items as Record<string, any>) || {};
+              supabase.from("user_settings").upsert({
+                user_id: user.id,
+                dashboard_items: {
+                  ...items,
+                  music_start_time: now,
+                  music_current_title: data.titulo,
+                  music_current_artist: data.artista,
+                },
+                updated_at: new Date().toISOString(),
+              }, { onConflict: "user_id" });
+            });
+        });
       } else if (data.capa && (!prev.capa || prev.capa !== data.capa)) {
         localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify({ ...prev, capa: data.capa }));
       }
