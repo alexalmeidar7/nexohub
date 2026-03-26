@@ -4,6 +4,7 @@ import { LogOut, Loader2, Clock, ExternalLink } from "lucide-react";
 import VmixPage from "@/components/VmixPage";
 import type { User } from "@supabase/supabase-js";
 import logoMixControl from "@/assets/logo-mixcontrol.png";
+import VmixControlSkeleton from "@/components/skeletons/VmixControlSkeleton";
 
 export default function VmixControl() {
   const [user, setUser] = useState<User | null>(null);
@@ -58,11 +59,7 @@ export default function VmixControl() {
   };
 
   if (loading) {
-    return (
-      <div className="h-screen flex items-center justify-center" style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)" }}>
-        <Loader2 className="animate-spin text-white" size={32} />
-      </div>
-    );
+    return <VmixControlSkeleton />;
   }
 
   if (!user) {
