@@ -433,6 +433,28 @@ export default function MusicaNoAr() {
       setMusic(data);
       setStartTime(now);
       setElapsed(0);
+      // Persist to DB
+      if (user) {
+        (async () => {
+          try {
+            const { data: settings } = await supabase.from("user_settings")
+              .select("dashboard_items")
+              .eq("user_id", user.id)
+              .maybeSingle();
+            const items = (settings?.dashboard_items as Record<string, any>) || {};
+            await supabase.from("user_settings").upsert({
+              user_id: user.id,
+              dashboard_items: {
+                ...items,
+                music_start_time: now,
+                music_current_title: data.titulo,
+                music_current_artist: data.artista,
+              },
+              updated_at: new Date().toISOString(),
+            }, { onConflict: "user_id" });
+          } catch {}
+        })();
+      }
       // Track which source detected the change first
       if (source) {
         setLastSource(source);
@@ -730,6 +752,7 @@ export default function MusicaNoAr() {
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
   }, [music, startTime]);
 
+  // Load music data from localStorage first, then try DB for start time persistence
   useEffect(() => {
     const stored = getMusicData();
     if (stored) {
@@ -738,7 +761,37 @@ export default function MusicaNoAr() {
       setStartTime(st);
       setElapsed(stored.elapsed);
     }
-  }, []);
+    // Also try to restore from DB if localStorage has no start time
+    if (!user) return;
+    const restoreFromDb = async () => {
+      const { data: settings } = await supabase
+        .from("user_settings")
+        .select("dashboard_items")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      const items = settings?.dashboard_items as Record<string, any> | null;
+      if (!items?.music_start_time) return;
+      const dbStartTime = items.music_start_time as number;
+      const dbTitle = items.music_current_title as string;
+      const dbArtist = items.music_current_artist as string;
+      // Use DB start time if it matches the current song and localStorage doesn't have it or is stale
+      const currentRaw = localStorage.getItem(MUSIC_DATA_KEY);
+      if (currentRaw) {
+        const current = JSON.parse(currentRaw);
+        if (current.titulo === dbTitle && current.artista === dbArtist) {
+          const localStart = parseInt(localStorage.getItem(MUSIC_START_KEY) || "0", 10);
+          // If localStorage start is newer than DB, keep it; otherwise use DB
+          if (!localStart || Math.abs(localStart - dbStartTime) > 5000) {
+            localStorage.setItem(MUSIC_START_KEY, dbStartTime.toString());
+            setStartTime(dbStartTime);
+            const el = (Date.now() - dbStartTime) / 1000;
+            setElapsed(Math.min(el, current.duracao || 999));
+          }
+        }
+      }
+    };
+    restoreFromDb();
+  }, [user]);
 
   const rawProgress = music && music.duracao > 0 ? Math.min(100, (elapsed / music.duracao) * 100) : 0;
 
@@ -871,20 +924,22 @@ export default function MusicaNoAr() {
           >
             {/* Gradient progress fill */}
             <div
-              className="absolute inset-0 rounded-2xl"
+              className="absolute inset-y-0 left-0 rounded-2xl pointer-events-none"
               style={{
                 width: `${progress}%`,
-                background: `linear-gradient(90deg, var(--layout-slider-bg, #0d0d0d) 0%, color-mix(in srgb, var(--layout-slider-bg, #0d0d0d) 60%, var(--layout-accent-color, #268ffa)) 50%, var(--layout-accent-color, #268ffa) 100%)`,
+                minWidth: progress > 0 ? "8px" : "0px",
+                background: `linear-gradient(90deg, var(--layout-slider-bg, #0d0d0d) 0%, color-mix(in srgb, var(--layout-slider-bg, #0d0d0d) 50%, var(--layout-accent-color, #268ffa)) 60%, var(--layout-accent-color, #268ffa) 100%)`,
                 transition: sliderResetting
                   ? "width 0.6s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.6s ease"
                   : "width 0.5s linear",
-                opacity: sliderResetting ? 0.3 : 1,
+                opacity: sliderResetting ? 0.3 : 0.85,
+                zIndex: 1,
               }}
             />
             {/* Shimmer overlay on progress */}
-            <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none" style={{ width: `${progress}%` }}>
+            <div className="absolute inset-y-0 left-0 rounded-2xl overflow-hidden pointer-events-none" style={{ width: `${progress}%`, zIndex: 2 }}>
               <div className="absolute inset-0" style={{
-                background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.06) 50%, transparent 100%)",
+                background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.08) 50%, transparent 100%)",
                 animation: "player-shimmer 3s ease-in-out infinite",
               }} />
             </div>
