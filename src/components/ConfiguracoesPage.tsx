@@ -82,7 +82,7 @@ function StyledInput({ value, onChange, placeholder, type = "text", readOnly = f
       readOnly={readOnly}
       className={`w-full px-4 py-1.5 outline-none transition-colors text-sm ${readOnly ? "cursor-not-allowed opacity-60" : ""} ${className}`}
       style={inputStyle}
-      onFocus={e => { if (!readOnly) e.currentTarget.style.borderColor = "#2dbef3"; }}
+      onFocus={e => { if (!readOnly) e.currentTarget.style.borderColor = "var(--layout-accent-color, #444444)"; }}
       onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
     />
   );
@@ -718,7 +718,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
                         placeholder="Descreva o conteúdo do vídeo..."
                         className="w-full px-4 py-2 outline-none transition-colors text-sm resize-none"
                         style={inputStyle}
-                        onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
+                        onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #444444)"; }}
                         onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
                       />
                     </div>

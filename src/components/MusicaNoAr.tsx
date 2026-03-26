@@ -949,7 +949,7 @@ export default function MusicaNoAr() {
               <div className="relative w-36 h-36 lg:w-44 lg:h-44 shrink-0 overflow-hidden rounded-xl group" style={{ boxShadow: "0 8px 24px rgba(0,0,0,0.3)" }}>
                 {loadingCover && !isBreak && (
                   <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-10 backdrop-blur-sm rounded-xl">
-                    <Loader2 className="animate-spin" size={28} style={{ color: "#268ffa" }} />
+                    <Loader2 className="animate-spin" size={28} style={{ color: "var(--layout-accent-color, #444444)" }} />
                   </div>
                 )}
                 {isBreak ? (

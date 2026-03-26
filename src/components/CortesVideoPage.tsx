@@ -174,7 +174,7 @@ export default function CortesVideoPage() {
                 placeholder="https://www.youtube.com/watch?v=..."
                 className="w-full pl-10 pr-4 py-2.5 text-sm outline-none transition-colors"
                 style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid var(--layout-border-color, #333333)", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "20px" }}
-                onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
+                onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #444444)"; }}
                 onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
               />
             </div>
@@ -221,7 +221,7 @@ export default function CortesVideoPage() {
                   placeholder="HH:MM:SS" maxLength={8}
                   className="w-28 text-center py-2 rounded-lg text-sm font-mono outline-none transition-colors"
                   style={{ border: "1px solid var(--layout-border-color, #333333)", color: "var(--layout-page-text, #1a1a1a)", backgroundColor: "var(--layout-page-bg, #ffffff)" }}
-                  onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
+                  onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #444444)"; }}
                   onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
                 />
                 {videoId && startSeconds > 0 && (
@@ -246,7 +246,7 @@ export default function CortesVideoPage() {
                   placeholder="HH:MM:SS" maxLength={8}
                   className="w-28 text-center py-2 rounded-lg text-sm font-mono outline-none transition-colors"
                   style={{ border: "1px solid var(--layout-border-color, #333333)", color: "var(--layout-page-text, #1a1a1a)", backgroundColor: "var(--layout-page-bg, #ffffff)" }}
-                  onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
+                  onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #444444)"; }}
                   onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
                 />
                 {videoId && endSeconds > 0 && (

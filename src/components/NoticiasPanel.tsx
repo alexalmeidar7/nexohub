@@ -688,7 +688,7 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
             placeholder="URL do RSS feed (ex: https://site.com/feed)"
             className="flex-1 px-3 py-1 outline-none transition-colors text-xs"
             style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid var(--layout-border-color, #333333)", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "20px" }}
-            onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
+            onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #444444)"; }}
             onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
             autoFocus
           />
@@ -711,7 +711,7 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
             placeholder="URL da notícia (ex: https://site.com/noticia)"
             className="flex-1 px-3 py-1 outline-none transition-colors text-xs"
             style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid var(--layout-border-color, #333333)", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "20px" }}
-            onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
+            onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #444444)"; }}
             onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
             autoFocus
           />

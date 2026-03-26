@@ -663,7 +663,7 @@ export default function ProgramaForm() {
         {/* Form Header */}
         <div className="flex items-center gap-3 px-6 py-4" style={{ borderBottom: "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 10%, transparent)" }}>
           <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(45,191,244,0.15)" }}>
-            <PlaySquare size={20} style={{ color: "#2dbff4" }} />
+            <PlaySquare size={20} style={{ color: "var(--layout-accent-color, #444444)" }} />
           </div>
           <div>
             <h3 className="text-base font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
@@ -711,7 +711,7 @@ export default function ProgramaForm() {
                       <input value={newTipo} onChange={(e) => setNewTipo(e.target.value)} placeholder="Nome do tipo"
                         className="w-full px-4 py-1.5 outline-none transition-colors text-sm"
                         style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid var(--layout-border-color, #333333)", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "12px" }}
-                        onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
+                        onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #444444)"; }}
                         onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
                       />
                       <button onClick={addTipo} className="w-full py-2 font-bold transition-all rounded-xl"
@@ -888,7 +888,7 @@ export default function ProgramaForm() {
                     <input value={newEstudio} onChange={(e) => setNewEstudio(e.target.value)} placeholder="Nome do estúdio"
                       className="w-full px-4 py-1.5 outline-none transition-colors text-sm"
                       style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid var(--layout-border-color, #333333)", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "12px" }}
-                      onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
+                      onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #444444)"; }}
                       onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
                     />
                     <button onClick={addEstudio} className="w-full py-2 font-bold transition-all rounded-xl"
@@ -1098,7 +1098,7 @@ export default function ProgramaForm() {
                 <tr style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" }}>
                   <th className="px-3 py-2.5 text-left w-20 rounded-lg text-[11px] font-semibold uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.7)" }}>Horário</th>
                   {DIAS_SEMANA.map(dia => (
-                    <th key={dia} className={`px-2 py-2.5 text-center rounded-lg text-[11px] font-semibold uppercase tracking-wider ${dia === diaAtual ? "font-bold" : ""}`} style={{ color: dia === diaAtual ? "#2dbef3" : "rgba(255,255,255,0.85)" }}>
+                    <th key={dia} className={`px-2 py-2.5 text-center rounded-lg text-[11px] font-semibold uppercase tracking-wider ${dia === diaAtual ? "font-bold" : ""}`} style={{ color: dia === diaAtual ? "var(--layout-accent-color, #444444)" : "rgba(255,255,255,0.85)" }}>
                       <div>{dia.slice(0, 3)}</div>
                       <div className="text-[9px] font-normal" style={{ color: dia === diaAtual ? "rgba(45,190,243,0.7)" : "rgba(255,255,255,0.4)" }}>{weekDates[dia]}</div>
                     </th>
@@ -1280,7 +1280,7 @@ export default function ProgramaForm() {
           <div className="flex flex-col items-center justify-center animate-fade-in overflow-hidden"
             style={{ width: "450px", height: "165px", background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))", borderRadius: "20px", boxShadow: "0 20px 60px color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>
             <div className="flex items-center gap-3 flex-1 justify-center" style={{ fontSize: "14px", color: "var(--layout-header-text, #ffffff)", fontWeight: 600 }}>
-              <CheckCircle size={22} style={{ color: "#2dbef3" }} /> Salvo com sucesso!
+              <CheckCircle size={22} style={{ color: "var(--layout-accent-color, #444444)" }} /> Salvo com sucesso!
             </div>
             <div className="w-full" style={{ height: "4px", backgroundColor: "rgba(255,255,255,0.1)" }}>
               <div style={{ height: "100%", background: "linear-gradient(90deg, #268ffa, #2dbef3)", animation: "shrinkBar 2s linear forwards" }} />

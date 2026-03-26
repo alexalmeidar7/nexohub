@@ -172,7 +172,7 @@ export default function ShoppingPage() {
                 <input value={name} onChange={(e) => setName(e.target.value)}
                   className="w-full px-4 py-1.5 text-sm outline-none transition-colors"
                   style={inputStyle} placeholder="Ex: Caneca Positiva FM" required
-                  onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
+                  onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #444444)"; }}
                   onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
                 />
               </div>
@@ -181,7 +181,7 @@ export default function ShoppingPage() {
                 <select value={programId} onChange={(e) => setProgramId(e.target.value)}
                   className="w-full px-4 py-1.5 text-sm outline-none transition-colors appearance-none"
                   style={inputStyle}
-                  onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
+                  onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #444444)"; }}
                   onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
                 >
                   <option value="">Nenhum (todos)</option>
@@ -193,7 +193,7 @@ export default function ShoppingPage() {
                 <textarea value={description} onChange={(e) => setDescription(e.target.value)}
                   className="w-full px-4 py-2 text-sm outline-none transition-colors min-h-[60px]"
                   style={{ ...inputStyle, borderRadius: "12px" }} placeholder="Descrição do produto..."
-                  onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
+                  onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #444444)"; }}
                   onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
                 />
               </div>
@@ -201,7 +201,7 @@ export default function ShoppingPage() {
                 <label className="text-xs font-semibold block mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Preço (R$)</label>
                 <input type="number" step="0.01" min="0" value={price} onChange={(e) => setPrice(e.target.value)}
                   className="w-full px-4 py-1.5 text-sm outline-none transition-colors" style={inputStyle} placeholder="29.90"
-                  onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
+                  onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #444444)"; }}
                   onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
                 />
               </div>
@@ -209,7 +209,7 @@ export default function ShoppingPage() {
                 <label className="text-xs font-semibold block mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Estoque</label>
                 <input type="number" min="0" value={stock} onChange={(e) => setStock(e.target.value)}
                   className="w-full px-4 py-1.5 text-sm outline-none transition-colors" style={inputStyle} placeholder="100"
-                  onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
+                  onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #444444)"; }}
                   onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
                 />
               </div>
@@ -217,7 +217,7 @@ export default function ShoppingPage() {
                 <label className="text-xs font-semibold block mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Link de Pagamento (Mercado Pago)</label>
                 <input value={paymentUrl} onChange={(e) => setPaymentUrl(e.target.value)}
                   className="w-full px-4 py-1.5 text-sm outline-none transition-colors" style={inputStyle} placeholder="https://mpago.la/..."
-                  onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
+                  onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #444444)"; }}
                   onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
                 />
               </div>
@@ -274,7 +274,7 @@ export default function ShoppingPage() {
                           {prog && <span className="hidden sm:inline"> • {prog.nome}</span>}
                         </div>
                         {p.description && <div className="text-[10px] truncate mt-0.5" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>{p.description}</div>}
-                        {p.payment_url && <div className="text-[10px] mt-0.5" style={{ color: "#2dbef3" }}>💳 Link configurado</div>}
+                        {p.payment_url && <div className="text-[10px] mt-0.5" style={{ color: "var(--layout-accent-color, #444444)" }}>💳 Link configurado</div>}
                       </div>
                     </div>
                     <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
