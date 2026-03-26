@@ -114,7 +114,7 @@ export default function VmixControl() {
             type="submit"
             disabled={signing}
             className="w-full py-2.5 rounded-xl text-sm font-bold text-white flex items-center justify-center gap-2 transition-opacity hover:opacity-90 disabled:opacity-50"
-            style={{ background: "linear-gradient(135deg, #268ffa, #2dbef3)" }}
+            style={{ background: "linear-gradient(135deg, #3a3a44, #4a4a54)" }}
           >
             {signing ? <Loader2 className="animate-spin" size={16} /> : null}
             Entrar
