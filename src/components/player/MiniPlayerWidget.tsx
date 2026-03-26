@@ -314,10 +314,10 @@ export default function MiniPlayerWidget({ data, onClose }: { data: MiniPlayerDa
         {/* Name + Music info */}
         <div className="flex-1 min-w-0 overflow-hidden">
           <p className="text-white text-xs font-bold truncate">{data.name}</p>
-          {data.musicTitle && data.musicTitle !== "Sem título" ? (
+          {liveTitle && liveTitle.toLowerCase() !== "sem título" && liveTitle.toLowerCase() !== "sem titulo" ? (
             <div className="overflow-hidden">
               <p className="text-white/50 text-[10px] whitespace-nowrap mini-marquee">
-                ♫ {data.musicTitle} — {data.musicArtist || ""}
+                ♫ {liveTitle} — {liveArtist || ""}
               </p>
             </div>
           ) : (
