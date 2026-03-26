@@ -851,10 +851,10 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
         </div>
 
         {/* Blocos */}
-        <div className="space-y-4 mt-4">
+        <div className="space-y-4 mt-4 min-w-0 w-full">
           {blocos.map((bloco, bi) => (
-            <div key={bi} className="rounded-xl p-3" style={{ border: `2px solid ${BLOCK_COLORS[bi % BLOCK_COLORS.length]}44`, backgroundColor: `${BLOCK_COLORS[bi % BLOCK_COLORS.length]}0a` }}>
-              <div className="flex items-center justify-between mb-2 cursor-pointer" onClick={() => toggleCollapse(bi)}>
+            <div key={bi} className="rounded-xl p-3 min-w-0 w-full overflow-hidden" style={{ border: `2px solid ${BLOCK_COLORS[bi % BLOCK_COLORS.length]}44`, backgroundColor: `${BLOCK_COLORS[bi % BLOCK_COLORS.length]}0a` }}>
+              <div className="flex items-center justify-between mb-2 cursor-pointer min-w-0" onClick={() => toggleCollapse(bi)}>
                 <p className="text-xs font-bold flex items-center gap-1.5" style={{ color: BLOCK_COLORS[bi % BLOCK_COLORS.length] }}>
                   📺 BLOCO {bi + 1}
                   <span className="text-[10px] font-normal" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
