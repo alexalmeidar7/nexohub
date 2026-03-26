@@ -777,54 +777,7 @@ export default function MusicaNoAr() {
                     DUAL
                   </span>
                 )}
-                <span className="text-[8px]" style={{ color: "rgba(255,255,255,0.5)" }}>
-                  {`${sourceStats.online + sourceStats.pasta} atualizações`}
-                </span>
               </div>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            {/* Source mini-badges — active source gets green highlight */}
-            <div className="flex gap-1">
-              {(() => {
-                const isOnlineActive = lastSource === "online";
-                const isOnlinePreferred = preferredSource === "online";
-                const onlineColor = isOnlineActive ? "#22c55e" : isOnlinePreferred ? "#60a5fa" : "rgba(255,255,255,0.45)";
-                const onlineBg = isOnlineActive ? "rgba(34,197,94,0.2)" : isOnlinePreferred ? "rgba(96,165,250,0.15)" : "rgba(255,255,255,0.08)";
-                const onlineBorder = isOnlineActive ? "rgba(34,197,94,0.35)" : "transparent";
-                return (
-                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[7px] font-bold" style={{
-                    backgroundColor: onlineBg, color: onlineColor, border: `1px solid ${onlineBorder}`,
-                  }}>
-                    <Globe size={8} /> Online
-                    {isOnlineActive && <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: "#22c55e" }} />}
-                  </span>
-                );
-              })()}
-              {(() => {
-                const isLocalActive = lastSource === "pasta";
-                const isLocalPreferred = preferredSource === "pasta";
-                const localColor = isLocalActive ? "#22c55e" : isLocalPreferred ? "#60a5fa" : "rgba(255,255,255,0.45)";
-                const localBg = isLocalActive ? "rgba(34,197,94,0.2)" : isLocalPreferred ? "rgba(96,165,250,0.15)" : "rgba(255,255,255,0.08)";
-                const localBorder = isLocalActive ? "rgba(34,197,94,0.35)" : "transparent";
-                return (
-                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[7px] font-bold" style={{
-                    backgroundColor: localBg, color: localColor, border: `1px solid ${localBorder}`,
-                  }}>
-                    <FolderOpen size={8} /> Local
-                    {isLocalActive && <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: "#22c55e" }} />}
-                  </span>
-                );
-              })()}
-            </div>
-            <span className="inline-flex items-center gap-1.5 px-2 py-1 text-[8px] uppercase tracking-widest font-bold rounded-full" style={{ backgroundColor: "rgba(255,255,255,0.12)", color: "#ffffff", border: "1px solid rgba(255,255,255,0.25)" }}>
-              <span className="relative flex h-1.5 w-1.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: "#22c55e" }} />
-                <span className="relative inline-flex rounded-full h-1.5 w-1.5" style={{ backgroundColor: "#22c55e" }} />
-              </span>
-              AO VIVO
-            </span>
-          </div>
         </div>
 
         {/* Delay & error warnings */}
