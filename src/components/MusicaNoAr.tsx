@@ -922,9 +922,10 @@ export default function MusicaNoAr() {
                 </span>
 
                 {music && music.duracao > 0 && (
-                  <div className="mt-2 flex items-center gap-2">
-                    <span className="text-[10px] font-mono font-bold" style={{ color: "rgba(255,255,255,0.7)" }}>{formatTime(elapsed)}</span>
-                    <span className="text-[10px] font-mono font-bold" style={{ color: "rgba(255,255,255,0.35)" }}>{formatTime(music.duracao)}</span>
+                  <div className="mt-2 flex items-center gap-1.5">
+                    <span className="text-sm font-mono font-black tracking-wide" style={{ color: "rgba(255,255,255,0.85)" }}>{formatTimeMs(elapsed)}</span>
+                    <span className="text-sm font-mono font-bold" style={{ color: "rgba(255,255,255,0.3)" }}>/</span>
+                    <span className="text-sm font-mono font-bold" style={{ color: "rgba(255,255,255,0.4)" }}>{formatTime(music.duracao)}</span>
                   </div>
                 )}
               </div>
