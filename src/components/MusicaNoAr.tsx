@@ -828,29 +828,29 @@ export default function MusicaNoAr() {
 
         {/* Delay & error warnings */}
         {(onlineDelay || localDelay || onlineError || localError) && (
-          <div className="px-4 pb-2 flex flex-col gap-1.5">
+          <div className="px-4 pb-3 flex flex-col gap-2">
             {onlineError && (
-              <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[9px] font-semibold" style={{ backgroundColor: "rgba(239,68,68,0.08)", color: "#dc2626", border: "1px solid rgba(239,68,68,0.2)" }}>
-                <AlertTriangle size={11} />
-                <span>⚠ Online: {onlineError}</span>
+              <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-xs font-bold" style={{ backgroundColor: "rgba(239,68,68,0.15)", color: "#fca5a5", border: "1px solid rgba(239,68,68,0.3)" }}>
+                <AlertTriangle size={14} className="shrink-0" />
+                <span>Online: {onlineError}</span>
               </div>
             )}
             {!onlineError && onlineDelay && (
-              <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[9px] font-semibold" style={{ backgroundColor: "rgba(234,179,8,0.08)", color: "#ca8a04", border: "1px solid rgba(234,179,8,0.2)" }}>
-                <AlertTriangle size={11} />
-                Origem Online sem resposta há mais de 30s
+              <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-xs font-bold" style={{ backgroundColor: "rgba(250,204,21,0.12)", color: "#fde047", border: "1px solid rgba(250,204,21,0.25)" }}>
+                <AlertTriangle size={14} className="shrink-0" />
+                <span>Origem Online sem resposta há mais de 30s</span>
               </div>
             )}
             {localError && (
-              <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[9px] font-semibold" style={{ backgroundColor: "rgba(239,68,68,0.08)", color: "#dc2626", border: "1px solid rgba(239,68,68,0.2)" }}>
-                <AlertTriangle size={11} />
-                <span>⚠ Local: {localError}</span>
+              <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-xs font-bold" style={{ backgroundColor: "rgba(239,68,68,0.15)", color: "#fca5a5", border: "1px solid rgba(239,68,68,0.3)" }}>
+                <AlertTriangle size={14} className="shrink-0" />
+                <span>Local: {localError}</span>
               </div>
             )}
             {!localError && localDelay && (
-              <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[9px] font-semibold" style={{ backgroundColor: "rgba(234,179,8,0.08)", color: "#ca8a04", border: "1px solid rgba(234,179,8,0.2)" }}>
-                <AlertTriangle size={11} />
-                Origem Local sem resposta há mais de 15s
+              <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-xs font-bold" style={{ backgroundColor: "rgba(250,204,21,0.12)", color: "#fde047", border: "1px solid rgba(250,204,21,0.25)" }}>
+                <AlertTriangle size={14} className="shrink-0" />
+                <span>Origem Local sem resposta há mais de 15s</span>
               </div>
             )}
           </div>
