@@ -616,7 +616,7 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) { reset(); onOpenChange(false); } }}>
-      <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto overflow-x-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "none" }}>
+      <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto overflow-x-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "none", scrollbarGutter: "stable both-edges" }}>
         <button onClick={() => { reset(); onOpenChange(false); }} className="absolute top-3 right-3 rounded-full p-1 hover:opacity-70 transition-opacity" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
           <XIcon size={18} />
         </button>
@@ -851,10 +851,10 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
         </div>
 
         {/* Blocos */}
-        <div className="space-y-4 mt-4">
+        <div className="space-y-4 mt-4 min-w-0 w-full">
           {blocos.map((bloco, bi) => (
-            <div key={bi} className="rounded-xl p-3" style={{ border: `2px solid ${BLOCK_COLORS[bi % BLOCK_COLORS.length]}44`, backgroundColor: `${BLOCK_COLORS[bi % BLOCK_COLORS.length]}0a` }}>
-              <div className="flex items-center justify-between mb-2 cursor-pointer" onClick={() => toggleCollapse(bi)}>
+            <div key={bi} className="rounded-xl p-3 min-w-0 w-full overflow-hidden" style={{ border: `2px solid ${BLOCK_COLORS[bi % BLOCK_COLORS.length]}44`, backgroundColor: `${BLOCK_COLORS[bi % BLOCK_COLORS.length]}0a` }}>
+              <div className="flex items-center justify-between mb-2 cursor-pointer min-w-0" onClick={() => toggleCollapse(bi)}>
                 <p className="text-xs font-bold flex items-center gap-1.5" style={{ color: BLOCK_COLORS[bi % BLOCK_COLORS.length] }}>
                   📺 BLOCO {bi + 1}
                   <span className="text-[10px] font-normal" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
@@ -976,12 +976,12 @@ function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRe
   }
 
   return (
-    <div className="rounded-lg p-2.5 space-y-2 w-full" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 80%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 15%, transparent)", maxWidth: "100%", boxSizing: "border-box" }}>
-      <div className="flex items-center justify-between">
+    <div className="rounded-lg p-2.5 space-y-2 w-full min-w-0 overflow-hidden" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 80%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 15%, transparent)", maxWidth: "100%", boxSizing: "border-box" }}>
+      <div className="flex items-center justify-between min-w-0">
         <p className="text-[10px] font-bold uppercase" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
           Notícia {ni + 1}
         </p>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 shrink-0">
           {noticia.titulo && (
             <button onClick={() => setCollapsed(true)} className="p-0.5 rounded hover:opacity-70" style={{ color: "var(--layout-icon-color, #888)" }}>
               <ChevronUp size={12} />
@@ -996,16 +996,16 @@ function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRe
       </div>
 
       {/* Link fetch */}
-      <div className="flex gap-1.5 items-center" style={{ maxWidth: "100%" }}>
-        <div className="relative min-w-0 flex-1">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-1.5 items-center w-full min-w-0 max-w-full overflow-hidden">
+        <div className="relative min-w-0 max-w-full overflow-hidden">
           <Link2 size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2" style={{ color: "var(--layout-icon-color, #888)" }} />
           <input
             value={linkInput}
             onChange={e => setLinkInput(e.target.value)}
             onPaste={e => { const t = e.clipboardData.getData("text"); setTimeout(() => handlePasteLink(t), 50); }}
             placeholder="Cole o link da matéria"
-            className="w-full pl-7 pr-3 py-1.5 rounded-lg text-[11px] outline-none"
-            style={{ ...inputStyle, maxWidth: "100%", boxSizing: "border-box" }}
+            className="block w-full min-w-0 max-w-full pl-7 pr-3 py-1.5 rounded-lg text-[11px] outline-none"
+            style={{ ...inputStyle, width: "100%", maxWidth: "100%", boxSizing: "border-box" }}
           />
         </div>
         <button
@@ -1019,7 +1019,7 @@ function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRe
       </div>
 
       {/* Manual fields */}
-      <div style={{ maxWidth: "100%" }}>
+      <div className="w-full min-w-0 max-w-full overflow-hidden">
         <div className="flex items-center gap-1 mb-1">
           <Type size={10} style={{ color: "var(--layout-icon-color)" }} />
           <span className="text-[10px] font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Título / Tarja</span>
@@ -1028,12 +1028,12 @@ function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRe
           value={noticia.titulo}
           onChange={e => onUpdate(bi, ni, "titulo", e.target.value)}
           placeholder="Título da matéria"
-          className="w-full px-3 py-1.5 rounded-lg text-[11px] outline-none"
-          style={{ ...inputStyle, maxWidth: "100%", boxSizing: "border-box" }}
+          className="block w-full min-w-0 max-w-full px-3 py-1.5 rounded-lg text-[11px] outline-none"
+          style={{ ...inputStyle, width: "100%", maxWidth: "100%", boxSizing: "border-box" }}
         />
       </div>
 
-      <div style={{ maxWidth: "100%" }}>
+      <div className="w-full min-w-0 max-w-full overflow-hidden">
         <div className="flex items-center gap-1 mb-1">
           <Image size={10} style={{ color: "var(--layout-icon-color)" }} />
           <span className="text-[10px] font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>URL Imagem</span>
@@ -1042,8 +1042,8 @@ function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRe
           value={noticia.imagemUrl}
           onChange={e => onUpdate(bi, ni, "imagemUrl", e.target.value)}
           placeholder="https://..."
-          className="w-full px-3 py-1.5 rounded-lg text-[11px] outline-none"
-          style={{ ...inputStyle, maxWidth: "100%", boxSizing: "border-box" }}
+          className="block w-full min-w-0 max-w-full px-3 py-1.5 rounded-lg text-[11px] outline-none"
+          style={{ ...inputStyle, width: "100%", maxWidth: "100%", boxSizing: "border-box" }}
         />
       </div>
 
