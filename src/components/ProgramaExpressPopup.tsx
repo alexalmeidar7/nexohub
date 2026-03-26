@@ -946,7 +946,7 @@ function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRe
   if (collapsed && noticia.titulo) {
     return (
       <div
-        className="rounded-lg px-3 py-2 flex items-center justify-between cursor-pointer hover:opacity-90 transition-all"
+        className="rounded-lg px-3 py-2 flex items-center justify-between cursor-pointer hover:opacity-90 transition-all overflow-hidden"
         style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 80%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 15%, transparent)" }}
         onClick={() => setCollapsed(false)}
       >
@@ -996,7 +996,7 @@ function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRe
       </div>
 
       {/* Link fetch */}
-      <div className="flex gap-1.5 items-center min-w-0">
+      <div className="flex gap-1.5 items-center min-w-0 w-full overflow-hidden">
         <div className="relative flex-1">
           <Link2 size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2" style={{ color: "var(--layout-icon-color, #888)" }} />
           <input
