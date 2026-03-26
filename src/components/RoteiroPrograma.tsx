@@ -952,9 +952,18 @@ ${perguntaActions}
                     )}
                     <button onClick={() => {
                       if (r.subtitulo?.startsWith("express_xml::")) {
-                        // Parse blocos from participantes
+                        // Parse blocos and participantes from stored JSON
                         let blocos = [];
-                        try { blocos = typeof r.participantes === "string" ? JSON.parse(r.participantes) : r.participantes || []; } catch { blocos = []; }
+                        let editParticipantes: any[] = [];
+                        try {
+                          const parsed = typeof r.participantes === "string" ? JSON.parse(r.participantes) : r.participantes || [];
+                          if (parsed && parsed.blocos) {
+                            blocos = parsed.blocos;
+                            editParticipantes = parsed.participantes || [];
+                          } else {
+                            blocos = Array.isArray(parsed) ? parsed : [];
+                          }
+                        } catch { blocos = []; }
                         // Find programaId by name
                         const prog = programas.find(p => p.nome === r.programa_nome);
                         setExpressEditData({
@@ -962,6 +971,7 @@ ${perguntaActions}
                           estudio: r.estudio || "",
                           programaId: prog?.id || "",
                           blocos,
+                          participantes: editParticipantes,
                         });
                         setShowExpressPopup(true);
                       } else {

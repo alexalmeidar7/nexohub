@@ -1,10 +1,16 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { Zap, Plus, Trash2, Link2, Loader2, Image, Type, Check, X as XIcon, ChevronDown, ChevronUp, Pencil } from "lucide-react";
+import { Zap, Plus, Trash2, Link2, Loader2, Image, Type, Check, X as XIcon, ChevronDown, ChevronUp, Pencil, Users, Search } from "lucide-react";
 import { decodeHtmlEntities } from "@/lib/textEncoding";
+
+interface Participante {
+  nome: string;
+  cargo: string;
+  instagram: string;
+}
 
 const BLOCK_COLORS = [
   "#2ec1f7", // azul
@@ -39,6 +45,7 @@ export interface ExpressEditData {
   estudio: string;
   programaId: string;
   blocos: Bloco[];
+  participantes?: Participante[];
 }
 
 interface Props {
@@ -61,14 +68,57 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
   const [editingId, setEditingId] = useState<string | null>(null);
   const [initialized, setInitialized] = useState(false);
 
+  const [participantes, setParticipantes] = useState<Participante[]>([]);
+  const [searchNome, setSearchNome] = useState("");
+  const [searchResults, setSearchResults] = useState<Participante[]>([]);
+  const [showResults, setShowResults] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
+
   const filteredProgramas = estudio ? programas.filter(p => p.estudio === estudio) : programas;
   const programaNome = programas.find(p => p.id === programaId)?.nome || "";
+
+  // Search apresentadores
+  useEffect(() => {
+    if (!searchNome.trim() || !user) { setSearchResults([]); return; }
+    const timer = setTimeout(async () => {
+      const { data } = await supabase
+        .from("apresentadores")
+        .select("nome, cargo, instagram")
+        .eq("user_id", user.id)
+        .ilike("nome", `%${searchNome}%`)
+        .limit(5);
+      if (data) setSearchResults(data.map(d => ({ nome: d.nome, cargo: d.cargo || "", instagram: d.instagram || "" })));
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchNome, user]);
+
+  // Close dropdown on click outside
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) setShowResults(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const addParticipante = (p: Participante) => {
+    if (participantes.some(x => x.nome === p.nome)) { toast.info("Participante já adicionado"); return; }
+    setParticipantes(prev => [...prev, p]);
+    setSearchNome("");
+    setSearchResults([]);
+    setShowResults(false);
+  };
+
+  const removeParticipante = (idx: number) => {
+    setParticipantes(prev => prev.filter((_, i) => i !== idx));
+  };
 
   // Load edit data when popup opens
   if (open && editData && !initialized) {
     setEstudio(editData.estudio);
     setProgramaId(editData.programaId);
     setBlocos(editData.blocos.length > 0 ? editData.blocos : [{ noticias: [{ titulo: "", imagemUrl: "", escalada: false }] }]);
+    setParticipantes(editData.participantes || []);
     setEditingId(editData.roteiroId);
     setInitialized(true);
   }
@@ -85,6 +135,10 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
     setCollapsedBlocos(new Set());
     setEditingId(null);
     setInitialized(false);
+    setParticipantes([]);
+    setSearchNome("");
+    setSearchResults([]);
+    setShowResults(false);
   };
 
   const updateNoticia = (bi: number, ni: number, field: keyof NewsItem, value: any) => {
@@ -177,6 +231,18 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
     xml += `  <estudio>${estudio}</estudio>\n`;
     xml += `  <data>${new Date().toISOString().split("T")[0]}</data>\n`;
 
+    if (participantes.length > 0) {
+      xml += `  <participantes>\n`;
+      participantes.forEach(p => {
+        xml += `    <participante>\n`;
+        xml += `      <nome>${escXml(p.nome)}</nome>\n`;
+        xml += `      <cargo>${escXml(p.cargo)}</cargo>\n`;
+        xml += `      <instagram>${escXml(p.instagram)}</instagram>\n`;
+        xml += `    </participante>\n`;
+      });
+      xml += `  </participantes>\n`;
+    }
+
     if (escaladaItems.length > 0) {
       xml += `  <escalada>\n`;
       escaladaItems.forEach((n, i) => {
@@ -220,6 +286,11 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
 
       // Build HTML content for roteiro
       let html = `<h2 style="text-align:center;font-weight:bold;">PROGRAMA EXPRESS — ${programaNome}</h2>`;
+      if (participantes.length > 0) {
+        html += `<h3 style="font-weight:bold;margin-top:16px;">👥 PARTICIPANTES</h3><ul>`;
+        participantes.forEach(p => { html += `<li><strong>${p.nome}</strong>${p.cargo ? ` — ${p.cargo}` : ""}${p.instagram ? ` (@${p.instagram.replace("@", "")})` : ""}</li>`; });
+        html += `</ul>`;
+      }
       if (escaladaItems.length > 0) {
         html += `<h3 style="font-weight:bold;margin-top:16px;">📢 ESCALADA</h3><ul>`;
         escaladaItems.forEach(n => { html += `<li><strong>${n.titulo}</strong></li>`; });
@@ -234,7 +305,6 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
         });
       });
 
-      // Upload XML first to get URL
       const blob = new Blob([xmlContent], { type: "application/xml" });
       const fileName = `express_${programaId}_${Date.now()}.xml`;
       const filePath = `express/${user.id}/${fileName}`;
@@ -242,8 +312,8 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
       const { data: urlData } = supabase.storage.from("empresa-assets").getPublicUrl(filePath);
       const xmlUrl = urlData.publicUrl;
 
-      // Store blocos as JSON in participantes for edit reconstruction
-      const blocosJson = JSON.stringify(blocos);
+      // Store blocos + participantes as JSON for edit reconstruction
+      const blocosJson = JSON.stringify({ blocos, participantes });
 
       if (editingId) {
         // Update existing
@@ -320,6 +390,63 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
               <option value="">Selecione</option>
               {filteredProgramas.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
             </select>
+          </div>
+        </div>
+
+        {/* Participantes */}
+        <div className="mt-4 rounded-xl p-3" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 25%, transparent)", backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 4%, transparent)" }}>
+          <p className="text-xs font-bold flex items-center gap-1.5 mb-2" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+            <Users size={14} style={{ color: "var(--layout-accent-color, #2ec1f7)" }} />
+            Participantes
+          </p>
+
+          {/* Listed participants */}
+          {participantes.length > 0 && (
+            <div className="space-y-1.5 mb-2">
+              {participantes.map((p, idx) => (
+                <div key={idx} className="flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-[11px]" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 90%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 12%, transparent)" }}>
+                  <span className="font-semibold flex-1 truncate" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{p.nome}</span>
+                  {p.cargo && <span className="text-[10px] shrink-0" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>{p.cargo}</span>}
+                  {p.instagram && <span className="text-[10px] shrink-0" style={{ color: "var(--layout-accent-color, #2ec1f7)" }}>@{p.instagram.replace("@", "")}</span>}
+                  <button onClick={() => removeParticipante(idx)} className="p-0.5 rounded hover:opacity-70 shrink-0" style={{ color: "#ef4444" }}>
+                    <Trash2 size={11} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Search input */}
+          <div ref={searchRef} className="relative">
+            <div className="flex gap-1.5 items-center">
+              <div className="relative flex-1">
+                <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2" style={{ color: "var(--layout-icon-color, #888)" }} />
+                <input
+                  value={searchNome}
+                  onChange={e => { setSearchNome(e.target.value); setShowResults(true); }}
+                  onFocus={() => { if (searchResults.length > 0) setShowResults(true); }}
+                  placeholder="Buscar participante pelo nome..."
+                  className="w-full pl-7 pr-3 py-1.5 rounded-lg text-[11px] outline-none"
+                  style={inputStyle}
+                />
+              </div>
+            </div>
+            {showResults && searchResults.length > 0 && (
+              <div className="absolute z-50 w-full mt-1 rounded-lg shadow-lg overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 25%, transparent)" }}>
+                {searchResults.map((r, i) => (
+                  <button
+                    key={i}
+                    onClick={() => addParticipante(r)}
+                    className="w-full text-left px-3 py-2 text-[11px] hover:opacity-80 transition-all flex items-center gap-2"
+                    style={{ color: "var(--layout-page-text, #1a1a1a)", borderBottom: i < searchResults.length - 1 ? "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 10%, transparent)" : "none" }}
+                  >
+                    <span className="font-semibold flex-1 truncate">{r.nome}</span>
+                    {r.cargo && <span className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>{r.cargo}</span>}
+                    {r.instagram && <span className="text-[10px]" style={{ color: "var(--layout-accent-color, #2ec1f7)" }}>@{r.instagram.replace("@", "")}</span>}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
