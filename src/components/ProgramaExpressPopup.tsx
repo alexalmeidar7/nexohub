@@ -543,7 +543,6 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
     setSaving(true);
     try {
       const xmlContent = generateXml();
-      const escaladaItems = blocos.flatMap(b => b.noticias.filter(n => n.escalada && n.titulo));
 
       // Build HTML content for roteiro
       let html = `<h2 style="text-align:center;font-weight:bold;">PROGRAMA EXPRESS — ${programaNome}</h2>`;
@@ -552,9 +551,9 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
         participantes.forEach(p => { html += `<li><strong>${p.nome}</strong>${p.cargo ? ` — ${p.cargo}` : ""}${p.instagram ? ` (@${p.instagram.replace("@", "")})` : ""}</li>`; });
         html += `</ul>`;
       }
-      if (escaladaItems.length > 0) {
+      if (escaladaList.length > 0) {
         html += `<h3 style="font-weight:bold;margin-top:16px;">📢 ESCALADA</h3><ul>`;
-        escaladaItems.forEach(n => { html += `<li><strong>${n.titulo}</strong></li>`; });
+        escaladaList.forEach(t => { html += `<li><strong>${t}</strong></li>`; });
         html += `</ul>`;
       }
       blocos.forEach((b, bi) => {
