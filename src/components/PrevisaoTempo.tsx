@@ -307,7 +307,7 @@ export default function PrevisaoTempo() {
             <button
               onClick={() => { setCity(primaryCity.name); fetchWeatherByCoords(primaryCity.lat, primaryCity.lon, primaryCity.name); }}
               className="flex items-center gap-2 rounded-full px-4 py-2 text-xs font-bold transition-all hover:scale-105"
-              style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))", color: "var(--layout-header-text, #ffffff)", boxShadow: "0 4px 15px rgba(13,4,70,0.3)" }}
+              style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))", color: "var(--layout-header-text, #ffffff)", boxShadow: "0 4px 15px color-mix(in srgb, var(--layout-page-text, #1a1a1a) 30%, transparent)" }}
             >
               <Star size={12} style={{ color: "#2dbef3" }} />
               {primaryCity.name}
@@ -341,21 +341,21 @@ export default function PrevisaoTempo() {
               onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
               placeholder="Buscar cidade..."
               className="w-full pl-10 pr-4 py-2.5 outline-none transition-all text-sm"
-              style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "2px solid rgba(13,4,70,0.1)", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "16px" }}
+              style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "2px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 10%, transparent)", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "16px" }}
               onFocusCapture={e => { e.currentTarget.style.borderColor = "#2dbef3"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(45,190,243,0.1)"; }}
-              onBlur={e => { e.currentTarget.style.borderColor = "rgba(13,4,70,0.1)"; e.currentTarget.style.boxShadow = "none"; }}
+              onBlur={e => { e.currentTarget.style.borderColor = "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 10%, transparent)"; e.currentTarget.style.boxShadow = "none"; }}
             />
           </div>
           <button onClick={searchWeather} disabled={loading}
             className="px-6 py-2.5 font-bold transition-all flex items-center gap-2 disabled:opacity-50 hover:scale-105"
-            style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))", color: "var(--layout-header-text, #ffffff)", borderRadius: "16px", boxShadow: "0 4px 15px rgba(13,4,70,0.25)" }}
+            style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))", color: "var(--layout-header-text, #ffffff)", borderRadius: "16px", boxShadow: "0 4px 15px color-mix(in srgb, var(--layout-page-text, #1a1a1a) 25%, transparent)" }}
           >
             <Search size={16} /> Buscar
           </button>
         </div>
         {showSuggestions && suggestions.length > 0 && (
           <div className="absolute z-50 top-full left-0 right-0 mt-2 rounded-xl overflow-hidden"
-            style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))", marginRight: "110px", boxShadow: "0 10px 40px rgba(13,4,70,0.3)" }}>
+            style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))", marginRight: "110px", boxShadow: "0 10px 40px color-mix(in srgb, var(--layout-page-text, #1a1a1a) 30%, transparent)" }}>
             {suggestions.map((s, i) => (
               <button key={i} onClick={() => selectSuggestion(s)}
                 className="w-full text-left px-4 py-3 transition-all flex items-center justify-between text-xs border-b border-white/5 last:border-0 hover:bg-white/10"
@@ -377,7 +377,7 @@ export default function PrevisaoTempo() {
       {/* Loading skeleton */}
       {loading && (
         <div className="animate-pulse space-y-6">
-          <div className="rounded-2xl p-6" style={{ background: "linear-gradient(135deg, #0d0446 0%, #1a0a6e 100%)" }}>
+          <div className="rounded-2xl p-6" style={{ background: "linear-gradient(135deg, #0d0446 0%, color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%) 100%)" }}>
             <div className="flex items-center justify-between mb-6">
               <div className="space-y-3">
                 <div className="h-6 w-36 rounded-lg bg-white/10" />
@@ -415,10 +415,10 @@ export default function PrevisaoTempo() {
                     <h3 className="text-2xl font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{weather.city}</h3>
                     {(!primaryCity || isPrimary) && (
                       <label className="flex items-center gap-2 cursor-pointer select-none rounded-full px-3 py-1 transition-all"
-                        style={{ backgroundColor: isPrimary ? "#0d0446" : "rgba(13,4,70,0.08)", border: `1px solid ${isPrimary ? "#0d0446" : "rgba(13,4,70,0.15)"}` }}>
+                        style={{ backgroundColor: isPrimary ? "var(--layout-header-bg, #1a1a1a)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)", border: `1px solid ${isPrimary ? "var(--layout-header-bg, #1a1a1a)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 15%, transparent)"}` }}>
                         <input type="checkbox" checked={isPrimary} onChange={togglePrimaryCity}
                           className="w-3.5 h-3.5" style={{ accentColor: "#2dbef3" }} />
-                        <span className="text-[11px] font-semibold" style={{ color: isPrimary ? "#ffffff" : "#0d0446" }}>Cidade Principal</span>
+                        <span className="text-[11px] font-semibold" style={{ color: isPrimary ? "#ffffff" : "var(--layout-header-bg, #1a1a1a)" }}>Cidade Principal</span>
                       </label>
                     )}
                     {!isFavorited && (
@@ -435,7 +435,7 @@ export default function PrevisaoTempo() {
                       {new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
                     </span>
                   </div>
-                  <p className="text-sm" style={{ color: "rgba(13,4,70,0.6)" }}>{getWeatherLabel(weather.current.weatherCode)}</p>
+                  <p className="text-sm" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>{getWeatherLabel(weather.current.weatherCode)}</p>
                 </div>
                 <div className="flex items-center">
                   <WeatherIcon code={weather.current.weatherCode} size={72} />
@@ -472,7 +472,7 @@ export default function PrevisaoTempo() {
                     </div>
                   )}
                   {forecastDescription && (
-                    <div className="rounded-xl p-4" style={{ backgroundColor: "rgba(13,4,70,0.06)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 35%, transparent)" }}>
+                    <div className="rounded-xl p-4" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 35%, transparent)" }}>
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-xs font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Veja como fica o tempo nos próximos 5 dias</span>
                         <button onClick={() => setForecastDescription("")}
@@ -506,9 +506,9 @@ export default function PrevisaoTempo() {
               {weather.forecast.map((day) => (
                 <div key={day.date}
                   className="rounded-xl p-5 text-center space-y-2 transition-all hover:shadow-lg hover:-translate-y-1 group"
-                  style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "2px solid rgba(13,4,70,0.06)" }}
+                  style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "2px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)" }}
                   onMouseEnter={e => { e.currentTarget.style.borderColor = "#2dbef3"; e.currentTarget.style.boxShadow = "0 8px 25px rgba(45,190,243,0.15)"; }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(13,4,70,0.06)"; e.currentTarget.style.boxShadow = "none"; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)"; e.currentTarget.style.boxShadow = "none"; }}
                 >
                   <p className="text-[11px] font-semibold uppercase tracking-wider capitalize" style={{ color: "rgba(13,4,70,0.45)" }}>{formatDay(day.date)}</p>
                   <div className="flex justify-center py-1">

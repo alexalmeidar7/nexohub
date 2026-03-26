@@ -144,7 +144,7 @@ export default function MontarJornalWizard({ open, onOpenChange, programas, onFi
         {/* Progress bar */}
         <div className="flex gap-1 mb-2">
           {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
-            <div key={i} className="flex-1 h-1 rounded-full transition-all" style={{ backgroundColor: i < step ? "#2ec1f7" : "rgba(13,4,70,0.1)" }} />
+            <div key={i} className="flex-1 h-1 rounded-full transition-all" style={{ backgroundColor: i < step ? "#2ec1f7" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 10%, transparent)" }} />
           ))}
         </div>
         <p className="text-xs mb-4" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>

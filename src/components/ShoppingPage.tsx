@@ -173,7 +173,7 @@ export default function ShoppingPage() {
                   className="w-full px-4 py-1.5 text-sm outline-none transition-colors"
                   style={inputStyle} placeholder="Ex: Caneca Positiva FM" required
                   onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
-                  onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
+                  onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
                 />
               </div>
               <div>
@@ -182,7 +182,7 @@ export default function ShoppingPage() {
                   className="w-full px-4 py-1.5 text-sm outline-none transition-colors appearance-none"
                   style={inputStyle}
                   onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
-                  onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
+                  onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
                 >
                   <option value="">Nenhum (todos)</option>
                   {programas.map((p) => <option key={p.id} value={p.id}>{p.nome}</option>)}
@@ -194,7 +194,7 @@ export default function ShoppingPage() {
                   className="w-full px-4 py-2 text-sm outline-none transition-colors min-h-[60px]"
                   style={{ ...inputStyle, borderRadius: "12px" }} placeholder="Descrição do produto..."
                   onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
-                  onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
+                  onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
                 />
               </div>
               <div>
@@ -202,7 +202,7 @@ export default function ShoppingPage() {
                 <input type="number" step="0.01" min="0" value={price} onChange={(e) => setPrice(e.target.value)}
                   className="w-full px-4 py-1.5 text-sm outline-none transition-colors" style={inputStyle} placeholder="29.90"
                   onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
-                  onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
+                  onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
                 />
               </div>
               <div>
@@ -210,7 +210,7 @@ export default function ShoppingPage() {
                 <input type="number" min="0" value={stock} onChange={(e) => setStock(e.target.value)}
                   className="w-full px-4 py-1.5 text-sm outline-none transition-colors" style={inputStyle} placeholder="100"
                   onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
-                  onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
+                  onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
                 />
               </div>
               <div className="md:col-span-2">
@@ -218,7 +218,7 @@ export default function ShoppingPage() {
                 <input value={paymentUrl} onChange={(e) => setPaymentUrl(e.target.value)}
                   className="w-full px-4 py-1.5 text-sm outline-none transition-colors" style={inputStyle} placeholder="https://mpago.la/..."
                   onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
-                  onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
+                  onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
                 />
               </div>
             </div>
@@ -233,7 +233,7 @@ export default function ShoppingPage() {
             <button type="submit" disabled={saving}
               className="px-6 py-2 font-bold text-sm transition-all flex items-center gap-2 disabled:opacity-50 rounded-full"
               style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #444444), color-mix(in srgb, var(--layout-accent-color, #444444) 70%, white 30%))", color: "var(--layout-header-text, #ffffff)", border: "none" }}
-              onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 4px 15px rgba(38,143,250,0.4)"; }}
+              onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 4px 15px color-mix(in srgb, var(--layout-accent-color, #444444) 40%, transparent)"; }}
               onMouseLeave={e => { e.currentTarget.style.boxShadow = "none"; }}
             >
               {saving ? <Loader2 className="animate-spin" size={16} /> : <Plus size={16} />}
@@ -264,7 +264,7 @@ export default function ShoppingPage() {
                         <img src={p.image_url} alt={p.name} className="w-14 h-14 object-cover rounded-lg shrink-0" />
                       ) : (
                         <div className="w-14 h-14 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: "rgba(13,4,70,0.04)" }}>
-                          <Package size={24} style={{ color: "rgba(13,4,70,0.2)" }} />
+                          <Package size={24} style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 20%, transparent)" }} />
                         </div>
                       )}
                       <div className="flex-1 min-w-0">

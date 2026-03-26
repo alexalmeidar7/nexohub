@@ -114,7 +114,7 @@ export default function MusicasCurtidasPage() {
                   <td className="px-4 py-2 text-center">
                     <span
                       className="inline-flex items-center justify-center w-7 h-7 rounded-full text-[10px] font-bold text-white"
-                      style={{ backgroundColor: i < 3 ? "#ed0808" : i < 10 ? "#0d0446" : "rgba(13,4,70,0.3)" }}
+                      style={{ backgroundColor: i < 3 ? "#ed0808" : i < 10 ? "var(--layout-header-bg, #1a1a1a)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 30%, transparent)" }}
                     >
                       {i + 1}
                     </span>
@@ -129,7 +129,7 @@ export default function MusicasCurtidasPage() {
                     )}
                   </td>
                   <td className="px-4 py-2 font-medium truncate max-w-[200px]">{song.titulo}</td>
-                  <td className="px-4 py-2 truncate max-w-[150px]" style={{ color: "rgba(13,4,70,0.6)" }}>{song.artista}</td>
+                  <td className="px-4 py-2 truncate max-w-[150px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>{song.artista}</td>
                   <td className="px-4 py-2 text-center">
                     <span className="inline-flex items-center gap-1">
                       <Heart size={12} className="text-red-500" fill="#ef4444" />

@@ -316,7 +316,7 @@ export default function LogosPatrocinadoresPage() {
                     className="w-full px-4 py-1.5 text-sm outline-none uppercase font-bold"
                     style={inputStyle}
                     onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
-                    onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
+                    onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
                   />
                 </div>
                 <div>
@@ -325,7 +325,7 @@ export default function LogosPatrocinadoresPage() {
                     className="w-full px-4 py-1.5 text-sm outline-none appearance-none"
                     style={inputStyle}
                     onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
-                    onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
+                    onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
                   >
                     <option value="">Selecione um programa</option>
                     {programas.map((p) => (
@@ -340,14 +340,14 @@ export default function LogosPatrocinadoresPage() {
                     className="w-full px-4 py-1.5 text-sm outline-none"
                     style={inputStyle}
                     onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
-                    onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
+                    onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
                   />
                 </div>
 
                 <button type="submit" disabled={saving}
                   className="w-full px-6 py-2 font-bold text-sm transition-all flex items-center justify-center gap-2 disabled:opacity-50 rounded-full"
                   style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #444444), color-mix(in srgb, var(--layout-accent-color, #444444) 70%, white 30%))", color: "var(--layout-header-text, #ffffff)", border: "none" }}
-                  onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 4px 15px rgba(38,143,250,0.4)"; }}
+                  onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 4px 15px color-mix(in srgb, var(--layout-accent-color, #444444) 40%, transparent)"; }}
                   onMouseLeave={e => { e.currentTarget.style.boxShadow = "none"; }}
                 >
                   {saving ? <><Loader2 className="animate-spin" size={14} /> Salvando...</> : editingFullId ? "Atualizar Logo" : `Salvar ${pendingFiles.length} logo(s)`}
@@ -375,7 +375,7 @@ export default function LogosPatrocinadoresPage() {
                   <label className="w-20 h-20 rounded-lg flex flex-col items-center justify-center cursor-pointer transition-colors"
                     style={{ border: "2px dashed color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }}
                     onMouseEnter={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
-                    onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(13,4,70,0.2)"; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 20%, transparent)"; }}
                   >
                     <Plus size={18} style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }} />
                     <span className="text-[10px] mt-1" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>Adicionar</span>
@@ -509,7 +509,7 @@ export default function LogosPatrocinadoresPage() {
                               <button onClick={() => startFullEdit(logo)} className="text-[10px] flex items-center gap-1 mx-auto transition-colors"
                                 style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}
                                 onMouseEnter={e => { e.currentTarget.style.color = "#2dbef3"; }}
-                                onMouseLeave={e => { e.currentTarget.style.color = "rgba(13,4,70,0.4)"; }}
+                                onMouseLeave={e => { e.currentTarget.style.color = "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)"; }}
                               >
                                 <Pencil size={10} /> Editar
                               </button>

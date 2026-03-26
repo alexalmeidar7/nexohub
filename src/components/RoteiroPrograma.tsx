@@ -413,7 +413,7 @@ export default function RoteiroPrograma() {
     const actionBtnStyle = "cursor:pointer;padding:2px 6px;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;font-size:13px";
     const perguntaActions = `<td style="${tdStyle};white-space:nowrap;text-align:center;width:90px" contenteditable="false"><span data-action="move-up" style="${actionBtnStyle};color:#268ffa" title="Mover para cima">▲</span> <span data-action="move-down" style="${actionBtnStyle};color:#268ffa" title="Mover para baixo">▼</span> <span data-action="delete-pergunta" style="${actionBtnStyle};color:#dc2626" title="Remover pergunta">🗑</span></td>`;
     const elStyle = `${tdStyle};font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.3px;color:#0d0446`;
-    const timeStyle = `${tdStyle};font-family:monospace;font-size:12px;color:rgba(13,4,70,0.5);text-align:center`;
+    const timeStyle = `${tdStyle};font-family:monospace;font-size:12px;color:color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent);text-align:center`;
     const blocoStyle = `${tdStyle};font-weight:700;color:#ffffff;background:#0d0446;font-size:12px;text-transform:uppercase;letter-spacing:1px`;
     const intervaloStyle = `${tdStyle};font-weight:700;color:#dc2626;background:rgba(220,38,38,0.06);font-size:11px;text-transform:uppercase;letter-spacing:0.5px`;
 
@@ -525,7 +525,7 @@ export default function RoteiroPrograma() {
 <td style="${timeStyle}">--:--</td>
 <td style="${elStyle}">Encerramento</td>
 <td style="${tdStyle}"><strong>APRESENTADOR:</strong> "Encerramos por aqui a edição de hoje. Amanhã tem mais. Até lá!"</td>
-<td style="${tdStyle};font-size:11px;color:rgba(13,4,70,0.5)">Encerrar jornal</td>
+<td style="${tdStyle};font-size:11px;color:color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)">Encerrar jornal</td>
 </tr>
 </tbody>
 </table>`;
@@ -554,7 +554,7 @@ export default function RoteiroPrograma() {
 <td style="${timeStyle}">--:--</td>
 <td style="${elStyle}">Off / Cabeça</td>
 <td style="${tdStyle}"><strong>APRESENTADOR:</strong> "Olá! Hoje o tema é sério. Vamos falar sobre como a informação é o melhor caminho contra a dependência química."</td>
-<td style="${tdStyle};font-size:11px;color:rgba(13,4,70,0.5)">Abertura do programa</td>
+<td style="${tdStyle};font-size:11px;color:color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)">Abertura do programa</td>
 </tr>
 <tr>
 <td style="${tdStyle};background:rgba(38,143,250,0.04)"></td>
@@ -581,7 +581,7 @@ ${perguntaActions}
 <td style="${timeStyle}">--:--</td>
 <td style="${elStyle}">Encerramento</td>
 <td style="${tdStyle}"><strong>APRESENTADOR:</strong> "Agradecemos ao [Nome]. Se você precisa de ajuda, ligue para o [Número/CAPS]. Até amanhã."</td>
-<td style="${tdStyle};font-size:11px;color:rgba(13,4,70,0.5)">Encerrar programa</td>
+<td style="${tdStyle};font-size:11px;color:color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)">Encerrar programa</td>
 </tr>
 </tbody>
 </table>`;
@@ -650,7 +650,7 @@ ${perguntaActions}
       {/* ── STEP 1: Configuração do Programa ── */}
       <div className="rounded-2xl overflow-hidden" style={{ background: "#ffffff", boxShadow: "0 4px 24px rgba(0,0,0,0.08)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)" }}>
         {/* Section Header */}
-        <div className="px-6 py-4 flex items-center justify-between" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #0d0446), color-mix(in srgb, var(--layout-header-bg, #1a0a6e) 80%, white 20%))", borderBottom: "1px solid rgba(13,4,70,0.06)" }}>
+        <div className="px-6 py-4 flex items-center justify-between" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #0d0446), color-mix(in srgb, var(--layout-header-bg, color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%)) 80%, white 20%))", borderBottom: "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)" }}>
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: "rgba(255,255,255,0.15)" }}>
               <FileText size={18} className="text-white" />
@@ -731,7 +731,7 @@ ${perguntaActions}
           </div>
 
           {/* Divider */}
-          <div className="h-px" style={{ backgroundColor: "rgba(13,4,70,0.06)" }} />
+          <div className="h-px" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)" }} />
 
           {/* Row 2: Data + Horário + Título */}
           <div>
@@ -774,7 +774,7 @@ ${perguntaActions}
                         cell: "h-9 w-9 text-center text-sm p-0 relative rounded-full",
                         day: "h-9 w-9 p-0 font-medium rounded-full transition-all hover:bg-[rgba(38,143,250,0.12)]",
                         day_selected: "bg-[#268ffa] text-white hover:bg-[#268ffa] focus:bg-[var(--layout-accent-color)] font-bold shadow-md",
-                        day_today: "bg-[rgba(13,4,70,0.08)] font-bold",
+                        day_today: "bg-[color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)] font-bold",
                         day_outside: "opacity-30",
                         day_disabled: "opacity-30",
                         day_hidden: "invisible",
@@ -828,7 +828,7 @@ ${perguntaActions}
         <button
           onClick={handleMontarRoteiro}
           className="w-full py-3 rounded-xl text-sm font-bold transition-all hover:opacity-90"
-          style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #444444), color-mix(in srgb, var(--layout-accent-color, #444444) 70%, white 30%))", color: "var(--layout-header-text, #ffffff)", boxShadow: "0 4px 16px rgba(38,143,250,0.3)" }}
+          style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #444444), color-mix(in srgb, var(--layout-accent-color, #444444) 70%, white 30%))", color: "var(--layout-header-text, #ffffff)", boxShadow: "0 4px 16px color-mix(in srgb, var(--layout-accent-color, #444444) 30%, transparent)" }}
         >
           Montar Roteiro
         </button>
@@ -857,14 +857,14 @@ ${perguntaActions}
                       <span
                         className="text-[10px] px-2 py-0.5 rounded-full font-bold"
                         style={{
-                          backgroundColor: isFeito ? "rgba(22,163,74,0.1)" : isAgd ? "rgba(38,143,250,0.1)" : "rgba(13,4,70,0.06)",
-                          color: isFeito ? "#16a34a" : isAgd ? "#268ffa" : "rgba(13,4,70,0.5)",
+                          backgroundColor: isFeito ? "rgba(22,163,74,0.1)" : isAgd ? "color-mix(in srgb, var(--layout-accent-color, #444444) 10%, transparent)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)",
+                          color: isFeito ? "#16a34a" : isAgd ? "var(--layout-accent-color, #444444)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)",
                         }}
                       >
                         {isFeito ? "feito" : isAgd ? "agendado" : r.status}
                       </span>
                     </div>
-                    <p className="text-xs font-medium mt-0.5" style={{ color: "rgba(13,4,70,0.6)" }}>
+                    <p className="text-xs font-medium mt-0.5" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>
                       {dataFormatada} {r.horario ? `· ${r.horario}` : ""} {r.titulo ? `· ${r.titulo}` : ""}
                     </p>
                     {r.editado_at && (
@@ -973,7 +973,7 @@ ${perguntaActions}
 
           <div className="p-6 space-y-5">
             {programaNome !== "Primeira Hora Positiva" && (
-            <div className="rounded-xl p-4" style={{ backgroundColor: "rgba(38,143,250,0.03)", border: "1px solid rgba(38,143,250,0.1)" }}>
+            <div className="rounded-xl p-4" style={{ backgroundColor: "rgba(38,143,250,0.03)", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #444444) 10%, transparent)" }}>
               <p className="text-[10px] font-bold uppercase tracking-wider mb-3" style={{ color: "var(--layout-icon-color, #888888)" }}>
                 Assunto do {tipoPrograma?.toLowerCase() || "programa"}
               </p>
@@ -995,7 +995,7 @@ ${perguntaActions}
             )}
 
             {/* Divider */}
-            <div className="h-px" style={{ backgroundColor: "rgba(13,4,70,0.06)" }} />
+            <div className="h-px" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)" }} />
 
             {/* Participantes */}
             <div>
@@ -1020,7 +1020,7 @@ ${perguntaActions}
 
               {/* Cadastro message */}
               {cadastroMsg && (
-                <div className="rounded-xl p-3 flex items-center gap-2" style={{ backgroundColor: "rgba(38,143,250,0.1)", border: "1px solid rgba(38,143,250,0.3)" }}>
+                <div className="rounded-xl p-3 flex items-center gap-2" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #444444) 10%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #444444) 30%, transparent)" }}>
                   <Check size={14} style={{ color: "var(--layout-icon-color, #888888)" }} />
                   <p className="text-xs font-semibold" style={{ color: "var(--layout-icon-color, #888888)" }}>Cadastrei esse participante na nossa agenda!</p>
                 </div>
@@ -1028,7 +1028,7 @@ ${perguntaActions}
 
               {/* Inline add participant fields */}
               {showParticipantForm ? (
-                <div className="rounded-xl p-3 space-y-2" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px dashed rgba(13,4,70,0.15)" }}>
+                <div className="rounded-xl p-3 space-y-2" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px dashed color-mix(in srgb, var(--layout-page-text, #1a1a1a) 15%, transparent)" }}>
                   <p className="text-[10px] font-bold" style={{ color: "var(--layout-icon-color, #888888)" }}>Participante {participantes.length + 1}</p>
                   
                   {/* Nome with autocomplete */}
@@ -1048,7 +1048,7 @@ ${perguntaActions}
                       style={{ backgroundColor: "rgba(13,4,70,0.04)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)", color: "var(--layout-page-text, #1a1a1a)" }}
                     />
                     {showSuggestions && nameSuggestions.length > 0 && (
-                      <div className="absolute z-10 left-0 right-0 mt-1 rounded-lg overflow-hidden shadow-lg" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid rgba(13,4,70,0.12)" }}>
+                      <div className="absolute z-10 left-0 right-0 mt-1 rounded-lg overflow-hidden shadow-lg" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 12%, transparent)" }}>
                         {nameSuggestions.map(s => (
                           <button
                             key={s.id}
@@ -1125,7 +1125,7 @@ ${perguntaActions}
                 <button
                   onClick={() => setShowParticipantForm(true)}
                   className="w-full py-2.5 rounded-xl text-xs font-bold transition-all hover:opacity-90 flex items-center justify-center gap-1.5"
-                  style={{ border: "1px dashed rgba(38,143,250,0.4)", color: "var(--layout-icon-color, #888888)", backgroundColor: "rgba(38,143,250,0.04)" }}
+                  style={{ border: "1px dashed color-mix(in srgb, var(--layout-accent-color, #444444) 40%, transparent)", color: "var(--layout-icon-color, #888888)", backgroundColor: "rgba(38,143,250,0.04)" }}
                 >
                   <Plus size={12} />
                   adicionar participante
@@ -1137,7 +1137,7 @@ ${perguntaActions}
             {/* NoticiasPanel inline for Primeira Hora Positiva - with auto JornalBlockBuilder */}
             {programaNome === "Primeira Hora Positiva" && (
               <>
-                <div className="h-px" style={{ backgroundColor: "rgba(13,4,70,0.06)" }} />
+                <div className="h-px" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)" }} />
                 <Suspense fallback={<ModulePageSkeleton />}>
                   <NoticiasPanel defaultJornalConfig={{
                     programaId: programas.find(p => p.nome === "Primeira Hora Positiva")?.id || "",
@@ -1158,7 +1158,7 @@ ${perguntaActions}
             {programaNome !== "Primeira Hora Positiva" && (
               <>
             {/* Divider */}
-            <div className="h-px" style={{ backgroundColor: "rgba(13,4,70,0.06)" }} />
+            <div className="h-px" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)" }} />
 
             {/* Texto Roteiro */}
             <div>
@@ -1279,7 +1279,7 @@ ${perguntaActions}
                   toast.success("Células mescladas!");
                 }}
                 className="h-8 px-2 flex items-center justify-center rounded-lg hover:opacity-70 transition gap-1 text-xs font-semibold"
-                style={{ backgroundColor: mergeCells.length >= 2 ? "rgba(38,143,250,0.15)" : "rgba(13,4,70,0.04)", color: mergeCells.length >= 2 ? "#268ffa" : "#0d0446" }}
+                style={{ backgroundColor: mergeCells.length >= 2 ? "color-mix(in srgb, var(--layout-accent-color, #444444) 15%, transparent)" : "rgba(13,4,70,0.04)", color: mergeCells.length >= 2 ? "var(--layout-accent-color, #444444)" : "var(--layout-header-bg, #1a1a1a)" }}
                 title="Mesclar células selecionadas"
               >
                 <Columns size={14} />
@@ -1342,7 +1342,7 @@ ${perguntaActions}
                 e.preventDefault();
                 const table = editorRef.current.querySelector("table tbody");
                 if (!table) return;
-                const tdS = "border:1px solid rgba(13,4,70,0.12);padding:8px 10px";
+                const tdS = "border:1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 12%, transparent);padding:8px 10px";
                 const actionBtnS = "cursor:pointer;padding:2px 4px;border-radius:4px;display:inline-flex;align-items:center;justify-content:center";
                 const actionRow = table.querySelector("tr[data-action-row]");
 
@@ -1447,7 +1447,7 @@ ${perguntaActions}
               }}
               disabled={savingRoteiro}
               className="w-full py-3.5 rounded-xl text-sm font-bold transition-all hover:opacity-90 flex items-center justify-center gap-2"
-              style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #444444), color-mix(in srgb, var(--layout-accent-color, #444444) 70%, white 30%))", color: "var(--layout-header-text, #ffffff)", boxShadow: "0 4px 16px rgba(38,143,250,0.3)" }}
+              style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #444444), color-mix(in srgb, var(--layout-accent-color, #444444) 70%, white 30%))", color: "var(--layout-header-text, #ffffff)", boxShadow: "0 4px 16px color-mix(in srgb, var(--layout-accent-color, #444444) 30%, transparent)" }}
             >
               <Save size={14} />
               {savingRoteiro ? "salvando..." : "Salvar e Exportar Roteiro"}
@@ -1490,7 +1490,7 @@ ${perguntaActions}
                 }}
                   disabled={pdfPopup.status === "generating"}
                   className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold text-white hover:opacity-90 transition disabled:opacity-60"
-                  style={{ backgroundColor: "#268ffa" }}
+                  style={{ backgroundColor: "var(--layout-accent-color, #444444)" }}
                 >
                   {pdfPopup.status === "generating" ? (
                     <>
@@ -1546,7 +1546,7 @@ ${perguntaActions}
                 className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold hover:opacity-90 transition`}
                 style={apresentadorStatus?.editado
                   ? { backgroundColor: "#16a34a", color: "#fff" }
-                  : { backgroundColor: "rgba(13,4,70,0.06)", color: "var(--layout-page-text, #1a1a1a)" }
+                  : { backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)", color: "var(--layout-page-text, #1a1a1a)" }
                 }
               >
                 {apresentadorStatus?.editado ? <Check size={13} /> : <Send size={13} />}
@@ -1580,7 +1580,7 @@ ${perguntaActions}
                   toast.success("Roteiro salvo e fechado!");
                 }}
                 className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold text-white hover:opacity-90 transition"
-                style={{ backgroundColor: "#268ffa" }}
+                style={{ backgroundColor: "var(--layout-accent-color, #444444)" }}
               >
                 <Save size={13} />
                 salvar e fechar
@@ -1600,7 +1600,7 @@ ${perguntaActions}
                     {roteiroTitulo || "Roteiro"}
                   </h1>
                   {roteiroSubtitulo && (
-                    <p className="text-sm mb-2" style={{ color: "rgba(13,4,70,0.6)" }}>{roteiroSubtitulo}</p>
+                    <p className="text-sm mb-2" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>{roteiroSubtitulo}</p>
                   )}
                 </div>
                 {(() => {
@@ -1617,11 +1617,11 @@ ${perguntaActions}
                   );
                 })()}
               </div>
-              <p className="text-sm" style={{ color: "rgba(13,4,70,0.7)" }}>
+              <p className="text-sm" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 70%, transparent)" }}>
                 <span className="font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{programaNome}</span>
                 {estudio && <span> · Estúdio {estudio}</span>}
               </p>
-              <p className="text-sm" style={{ color: "rgba(13,4,70,0.6)" }}>
+              <p className="text-sm" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>
                 {format(selectedDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })} {horario && `às ${horario}`}
               </p>
 
@@ -1630,7 +1630,7 @@ ${perguntaActions}
                 <div className="mt-3 px-4 py-3 rounded-lg" style={{ backgroundColor: "rgba(38,143,250,0.06)", borderLeft: "3px solid #268ffa" }}>
                   <p className="text-xs font-bold uppercase mb-0.5" style={{ color: "var(--layout-icon-color, #888888)" }}>Assunto da entrevista</p>
                   {roteiroSubtitulo && <p className="text-sm font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{roteiroSubtitulo}</p>}
-                  {assuntoSubtitulo && <p className="text-xs" style={{ color: "rgba(13,4,70,0.6)" }}>{assuntoSubtitulo}</p>}
+                  {assuntoSubtitulo && <p className="text-xs" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>{assuntoSubtitulo}</p>}
                 </div>
               )}
 
@@ -1659,7 +1659,7 @@ ${perguntaActions}
               dangerouslySetInnerHTML={{ __html: sanitizeRoteiroHtml(editorRef.current?.innerHTML || roteiroTexto) }}
             />
 
-            <div className="mt-8 pt-4 text-center" style={{ borderTop: "1px solid rgba(13,4,70,0.1)" }}>
+            <div className="mt-8 pt-4 text-center" style={{ borderTop: "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 10%, transparent)" }}>
               <p className="text-lg font-bold italic" style={{ color: "var(--layout-icon-color, #888888)" }}>Bom programa! 🎙️</p>
             </div>
 

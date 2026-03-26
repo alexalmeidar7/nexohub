@@ -95,7 +95,7 @@ export default function JornalExportView({ config, blocks, onClose }: Props) {
   return (
     <div className="rounded-xl overflow-hidden" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 35%, transparent)", backgroundColor: "var(--layout-page-bg, #ffffff)" }}>
       {/* Header */}
-      <div className="flex items-center gap-3 px-4 py-3" style={{ borderBottom: "1px solid rgba(13,4,70,0.1)", backgroundColor: "var(--layout-header-bg, #1a1a1a)" }}>
+      <div className="flex items-center gap-3 px-4 py-3" style={{ borderBottom: "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 10%, transparent)", backgroundColor: "var(--layout-header-bg, #1a1a1a)" }}>
         <button onClick={onClose} className="hover:opacity-70 transition-opacity" style={{ color: "var(--layout-header-text, #ffffff)" }}>
           <ArrowLeft size={16} />
         </button>
@@ -148,14 +148,14 @@ export default function JornalExportView({ config, blocks, onClose }: Props) {
                   {blockItems.map((n, ni) => {
                     const isRead = readTitles.has(n.title);
                     return (
-                      <div key={ni} className="rounded-lg p-3" style={{ backgroundColor: isRead ? "rgba(46,193,247,0.05)" : "rgba(13,4,70,0.02)", border: `1px solid ${isRead ? "rgba(46,193,247,0.3)" : "rgba(13,4,70,0.06)"}` }}>
+                      <div key={ni} className="rounded-lg p-3" style={{ backgroundColor: isRead ? "rgba(46,193,247,0.05)" : "rgba(13,4,70,0.02)", border: `1px solid ${isRead ? "rgba(46,193,247,0.3)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)"}` }}>
                         <div className="flex items-start gap-2">
                           <button
                             onClick={() => toggleRead(n.title)}
                             className="shrink-0 mt-0.5 w-4 h-4 rounded-full flex items-center justify-center transition-colors"
                             style={{
                               backgroundColor: isRead ? "#2ec1f7" : "transparent",
-                              border: isRead ? "none" : "2px solid rgba(13,4,70,0.2)",
+                              border: isRead ? "none" : "2px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 20%, transparent)",
                             }}
                             title={isRead ? "Marcar como não lido" : "Marcar como lido"}
                           >
@@ -175,7 +175,7 @@ export default function JornalExportView({ config, blocks, onClose }: Props) {
                             </p>
                             <span className="text-[8px] px-1 rounded mt-1 inline-block" style={{ backgroundColor: "rgba(46,193,247,0.1)", color: "#2ec1f7" }}>{n.portal}</span>
                             {n.body && (
-                              <p className="text-[11px] mt-2 leading-relaxed whitespace-pre-line" style={{ color: "rgba(13,4,70,0.7)" }}>
+                              <p className="text-[11px] mt-2 leading-relaxed whitespace-pre-line" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 70%, transparent)" }}>
                                 {n.body}
                               </p>
                             )}

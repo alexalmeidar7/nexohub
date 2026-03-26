@@ -492,7 +492,7 @@ export default function AgendaPage() {
             <button type="button" onClick={openNewDialog}
               className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold transition-all rounded-full"
               style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #444444), color-mix(in srgb, var(--layout-accent-color, #444444) 70%, white 30%))", color: "var(--layout-header-text, #ffffff)", border: "none" }}
-              onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 4px 15px rgba(38,143,250,0.4)"; }}
+              onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 4px 15px color-mix(in srgb, var(--layout-accent-color, #444444) 40%, transparent)"; }}
               onMouseLeave={e => { e.currentTarget.style.boxShadow = "none"; }}
             >
               <Plus size={14} /> Novo Evento
@@ -501,30 +501,30 @@ export default function AgendaPage() {
         </div>
 
         <Dialog open={dialogOpen} onOpenChange={(open) => { if (!open) resetForm(); setDialogOpen(open); }}>
-          <DialogContent className="max-w-md max-h-[70vh] overflow-hidden p-0 flex flex-col" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", borderRadius: "20px", border: "none", boxShadow: "0 20px 60px rgba(13,4,70,0.15)" }}>
+          <DialogContent className="max-w-md max-h-[70vh] overflow-hidden p-0 flex flex-col" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", borderRadius: "20px", border: "none", boxShadow: "0 20px 60px color-mix(in srgb, var(--layout-page-text, #1a1a1a) 15%, transparent)" }}>
             <style>{`
               .agenda-form-input:focus, .agenda-form-input:focus-visible, .agenda-form-input:active {
                 outline: none !important;
-                box-shadow: 0 0 0 2px rgba(38,143,250,0.2) !important;
+                box-shadow: 0 0 0 2px color-mix(in srgb, var(--layout-accent-color, #444444) 20%, transparent) !important;
                 border-color: #268ffa !important;
               }
               .agenda-form-calendar .rdp { color: #0d0446 !important; }
               .agenda-form-calendar .rdp-caption_label { color: #0d0446 !important; font-weight: 700; }
-              .agenda-form-calendar .rdp-head_cell { color: rgba(13,4,70,0.5) !important; }
+              .agenda-form-calendar .rdp-head_cell { color: color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent) !important; }
               .agenda-form-calendar .rdp-day { color: #0d0446 !important; }
-              .agenda-form-calendar .rdp-day:hover { background-color: rgba(38,143,250,0.15) !important; color: #268ffa !important; }
+              .agenda-form-calendar .rdp-day:hover { background-color: color-mix(in srgb, var(--layout-accent-color, #444444) 15%, transparent) !important; color: #268ffa !important; }
               .agenda-form-calendar .rdp-day_selected { background-color: #268ffa !important; color: #fff !important; }
               .agenda-form-calendar .rdp-day_selected:hover { background-color: #1a7ae0 !important; color: #fff !important; }
               .agenda-form-calendar .rdp-day_today { background-color: #0d0446 !important; color: #fff !important; font-weight: 700; }
-              .agenda-form-calendar .rdp-day_outside { color: rgba(13,4,70,0.25) !important; }
+              .agenda-form-calendar .rdp-day_outside { color: color-mix(in srgb, var(--layout-page-text, #1a1a1a) 25%, transparent) !important; }
               .agenda-form-calendar .rdp-nav_button { color: #0d0446 !important; }
-              .agenda-form-calendar .rdp-nav_button:hover { background-color: rgba(38,143,250,0.1) !important; }
+              .agenda-form-calendar .rdp-nav_button:hover { background-color: color-mix(in srgb, var(--layout-accent-color, #444444) 10%, transparent) !important; }
               .agenda-form-calendar button[name="previous-month"],
               .agenda-form-calendar button[name="next-month"] { color: #0d0446 !important; }
             `}</style>
 
             {/* Header */}
-            <div className="px-6 pt-5 pb-4" style={{ background: "linear-gradient(135deg, #0d0446 0%, #1a0a6e 100%)", borderRadius: "20px 20px 0 0" }}>
+            <div className="px-6 pt-5 pb-4" style={{ background: "linear-gradient(135deg, #0d0446 0%, color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%) 100%)", borderRadius: "20px 20px 0 0" }}>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: "rgba(255,255,255,0.15)" }}>
                   <CalendarIcon size={20} className="text-white" />
@@ -549,7 +549,7 @@ export default function AgendaPage() {
               <div>
                 <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Programa</Label>
                 <Select value={formProgramaId} onValueChange={setFormProgramaId}>
-                  <SelectTrigger className="agenda-form-input h-10" style={{ borderColor: "rgba(38,143,250,0.2)", borderRadius: "12px", backgroundColor: "#f8faff", color: "var(--layout-page-text, #1a1a1a)" }}>
+                  <SelectTrigger className="agenda-form-input h-10" style={{ borderColor: "color-mix(in srgb, var(--layout-accent-color, #444444) 20%, transparent)", borderRadius: "12px", backgroundColor: "#f8faff", color: "var(--layout-page-text, #1a1a1a)" }}>
                     <SelectValue placeholder="Selecione o programa" />
                   </SelectTrigger>
                   <SelectContent>
@@ -571,7 +571,7 @@ export default function AgendaPage() {
               {/* Calendário */}
               <div>
                 <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Data do Evento</Label>
-                <div className="agenda-form-calendar rounded-xl overflow-hidden" style={{ border: "1px solid rgba(38,143,250,0.15)", backgroundColor: "#f8faff" }}>
+                <div className="agenda-form-calendar rounded-xl overflow-hidden" style={{ border: "1px solid color-mix(in srgb, var(--layout-accent-color, #444444) 15%, transparent)", backgroundColor: "#f8faff" }}>
                   <Calendar
                     mode="single"
                     selected={formData}
@@ -593,7 +593,7 @@ export default function AgendaPage() {
                 <div>
                   <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Recorrência</Label>
                   <Select value={formRecorrencia} onValueChange={setFormRecorrencia}>
-                    <SelectTrigger className="agenda-form-input h-10" style={{ borderColor: "rgba(38,143,250,0.2)", borderRadius: "12px", backgroundColor: "#f8faff", color: "var(--layout-page-text, #1a1a1a)" }}>
+                    <SelectTrigger className="agenda-form-input h-10" style={{ borderColor: "color-mix(in srgb, var(--layout-accent-color, #444444) 20%, transparent)", borderRadius: "12px", backgroundColor: "#f8faff", color: "var(--layout-page-text, #1a1a1a)" }}>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -607,7 +607,7 @@ export default function AgendaPage() {
                 <div>
                   <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Local</Label>
                   <Select value={formLocal} onValueChange={setFormLocal}>
-                    <SelectTrigger className="agenda-form-input h-10" style={{ borderColor: "rgba(38,143,250,0.2)", borderRadius: "12px", backgroundColor: "#f8faff", color: "var(--layout-page-text, #1a1a1a)" }}>
+                    <SelectTrigger className="agenda-form-input h-10" style={{ borderColor: "color-mix(in srgb, var(--layout-accent-color, #444444) 20%, transparent)", borderRadius: "12px", backgroundColor: "#f8faff", color: "var(--layout-page-text, #1a1a1a)" }}>
                       <SelectValue placeholder="Local" />
                     </SelectTrigger>
                     <SelectContent>
@@ -636,8 +636,8 @@ export default function AgendaPage() {
                       className="flex-1 py-2 rounded-lg text-[10px] font-bold transition-all"
                       style={{
                         backgroundColor: formPrioridade === p.value ? p.color : "rgba(13,4,70,0.04)",
-                        color: formPrioridade === p.value ? "#fff" : "rgba(13,4,70,0.5)",
-                        border: `1.5px solid ${formPrioridade === p.value ? p.color : "rgba(13,4,70,0.08)"}`,
+                        color: formPrioridade === p.value ? "#fff" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)",
+                        border: `1.5px solid ${formPrioridade === p.value ? p.color : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)"}`,
                       }}
                     >
                       {p.label}
@@ -655,7 +655,7 @@ export default function AgendaPage() {
                   placeholder="Breve descrição do evento..."
                   rows={3}
                   className="agenda-form-input w-full resize-none text-xs px-3 py-2.5"
-                  style={{ borderColor: "rgba(38,143,250,0.2)", borderRadius: "12px", backgroundColor: "#f8faff", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid rgba(38,143,250,0.2)" }}
+                  style={{ borderColor: "color-mix(in srgb, var(--layout-accent-color, #444444) 20%, transparent)", borderRadius: "12px", backgroundColor: "#f8faff", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #444444) 20%, transparent)" }}
                 />
               </div>
 
@@ -681,13 +681,13 @@ export default function AgendaPage() {
             </div>
             <div className="p-3">
               <style>{`
-                .agenda-calendar .rdp-day:hover { background-color: rgba(38,143,250,0.15) !important; color: #268ffa !important; }
+                .agenda-calendar .rdp-day:hover { background-color: color-mix(in srgb, var(--layout-accent-color, #444444) 15%, transparent) !important; color: #268ffa !important; }
                 .agenda-calendar .rdp-day_selected { background-color: #268ffa !important; color: #fff !important; }
                 .agenda-calendar .rdp-day_selected:hover { background-color: #268ffa !important; }
                 .agenda-calendar .rdp-day_today { background-color: #0d0446 !important; color: #ffffff !important; font-weight: 700 !important; }
                 .agenda-calendar .rdp-day_today:hover { background-color: #0d0446 !important; color: #ffffff !important; }
                 .agenda-calendar [class*="day_today"] { background-color: #0d0446 !important; color: #ffffff !important; font-weight: 700 !important; }
-                .agenda-calendar .has-event-day { background-color: rgba(38,143,250,0.15) !important; color: #268ffa !important; font-weight: bold; }
+                .agenda-calendar .has-event-day { background-color: color-mix(in srgb, var(--layout-accent-color, #444444) 15%, transparent) !important; color: #268ffa !important; font-weight: bold; }
               `}</style>
               <Calendar
                 mode="single"
@@ -748,7 +748,7 @@ export default function AgendaPage() {
                       >
                         <CalendarIcon size={10} />
                         {format(date, "EEEE, dd/MM", { locale: ptBR })}
-                        <span className="ml-auto text-[9px] font-normal px-1.5 py-0.5 rounded-full" style={{ backgroundColor: "rgba(38,143,250,0.1)", color: "var(--layout-icon-color, #888888)" }}>
+                        <span className="ml-auto text-[9px] font-normal px-1.5 py-0.5 rounded-full" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #444444) 10%, transparent)", color: "var(--layout-icon-color, #888888)" }}>
                           {dayEvents.length}
                         </span>
                       </button>

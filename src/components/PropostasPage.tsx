@@ -16,7 +16,7 @@ export default function PropostasPage() {
       </div>
 
       <div className="rounded-xl p-8 text-center" style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }}>
-        <FileText size={32} style={{ color: "rgba(13,4,70,0.2)" }} className="mx-auto mb-3" />
+        <FileText size={32} style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 20%, transparent)" }} className="mx-auto mb-3" />
         <p className="text-xs font-semibold" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>Nenhuma proposta cadastrada</p>
         <p className="text-[10px] mt-1" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 30%, transparent)" }}>Clique em "nova proposta" para começar</p>
       </div>

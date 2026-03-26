@@ -119,7 +119,7 @@ export default function MontarJornalInline({ programas, onFinish, onCancel }: Pr
         {/* Progress */}
         <div className="flex gap-1">
           {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
-            <div key={i} className="flex-1 h-1 rounded-full transition-all" style={{ backgroundColor: i < step ? "#2ec1f7" : "rgba(13,4,70,0.1)" }} />
+            <div key={i} className="flex-1 h-1 rounded-full transition-all" style={{ backgroundColor: i < step ? "#2ec1f7" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 10%, transparent)" }} />
           ))}
         </div>
         <p className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>

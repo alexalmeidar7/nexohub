@@ -83,7 +83,7 @@ function StyledInput({ value, onChange, placeholder, type = "text", readOnly = f
       className={`w-full px-4 py-1.5 outline-none transition-colors text-sm ${readOnly ? "cursor-not-allowed opacity-60" : ""} ${className}`}
       style={inputStyle}
       onFocus={e => { if (!readOnly) e.currentTarget.style.borderColor = "#2dbef3"; }}
-      onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
+      onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
     />
   );
 }
@@ -91,7 +91,7 @@ function StyledInput({ value, onChange, placeholder, type = "text", readOnly = f
 function CollapsibleBox({ title, icon, children }: { title: string; icon?: React.ReactNode; defaultOpen?: boolean; children: React.ReactNode }) {
   const [open, setOpen] = useState(true);
   return (
-    <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 4px 20px rgba(13,4,70,0.08)" }}>
+    <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 4px 20px color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)" }}>
       <button
         onClick={() => setOpen(!open)}
         className="w-full flex items-center justify-between px-6 py-4 transition-colors"
@@ -369,8 +369,8 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
                 <button onClick={handleLogoUpload}
                   className="px-4 py-1.5 font-bold transition-all text-xs flex items-center gap-1"
                   style={btnSecondary}
-                  onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#0d0446"; e.currentTarget.style.color = "#ffffff"; }}
-                  onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#ffffff"; e.currentTarget.style.color = "#0d0446"; }}
+                  onMouseEnter={e => { e.currentTarget.style.backgroundColor = "var(--layout-header-bg, #1a1a1a)"; e.currentTarget.style.color = "#ffffff"; }}
+                  onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#ffffff"; e.currentTarget.style.color = "var(--layout-header-bg, #1a1a1a)"; }}
                 >
                   <Upload size={12} /> {config.logo ? "Trocar Logo" : "Carregar Logo"}
                 </button>
@@ -391,7 +391,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
         </div>
 
         {/* Credenciais */}
-        <div className="pt-4 mt-4 space-y-3" style={{ borderTop: "1px solid rgba(13,4,70,0.15)" }}>
+        <div className="pt-4 mt-4 space-y-3" style={{ borderTop: "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 15%, transparent)" }}>
           <h4 className="text-sm font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Gestão de Acesso</h4>
           <div className="space-y-1">
             <label className="block text-xs mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)", fontWeight: 600 }}>E-mail de Login</label>
@@ -410,8 +410,8 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
               <button onClick={handleChangePassword} disabled={savingPassword}
                 className="px-5 py-2 font-bold transition-all text-xs disabled:opacity-50 flex items-center gap-1"
                 style={btnPrimary}
-                onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#ffffff"; e.currentTarget.style.color = "#0d0446"; }}
-                onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#0d0446"; e.currentTarget.style.color = "#ffffff"; }}
+                onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#ffffff"; e.currentTarget.style.color = "var(--layout-header-bg, #1a1a1a)"; }}
+                onMouseLeave={e => { e.currentTarget.style.backgroundColor = "var(--layout-header-bg, #1a1a1a)"; e.currentTarget.style.color = "#ffffff"; }}
               >
                 {savingPassword ? <Loader2 size={14} className="animate-spin" /> : "Salvar"}
               </button>
@@ -452,9 +452,9 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
                 onClick={() => { setCanalMode("live"); setCanalForm(p => ({ ...p, type: "audio_live" })); }}
                 className="px-5 py-2.5 text-xs font-bold transition-all flex items-center gap-2 rounded-xl"
                 style={{
-                  backgroundColor: canalMode === "live" ? "#0d0446" : "rgba(13,4,70,0.05)",
-                  color: canalMode === "live" ? "#ffffff" : "#0d0446",
-                  boxShadow: canalMode === "live" ? "0 4px 12px rgba(13,4,70,0.25)" : "none",
+                  backgroundColor: canalMode === "live" ? "var(--layout-header-bg, #1a1a1a)" : "rgba(13,4,70,0.05)",
+                  color: canalMode === "live" ? "#ffffff" : "var(--layout-header-bg, #1a1a1a)",
+                  boxShadow: canalMode === "live" ? "0 4px 12px color-mix(in srgb, var(--layout-page-text, #1a1a1a) 25%, transparent)" : "none",
                 }}
               >
                 📡 Ao Vivo
@@ -471,9 +471,9 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
                 }}
                 className="px-5 py-2.5 text-xs font-bold transition-all flex items-center gap-2 rounded-xl"
                 style={{
-                  backgroundColor: canalMode === "catalog" ? "#0d0446" : "rgba(13,4,70,0.05)",
-                  color: canalMode === "catalog" ? "#ffffff" : "#0d0446",
-                  boxShadow: canalMode === "catalog" ? "0 4px 12px rgba(13,4,70,0.25)" : "none",
+                  backgroundColor: canalMode === "catalog" ? "var(--layout-header-bg, #1a1a1a)" : "rgba(13,4,70,0.05)",
+                  color: canalMode === "catalog" ? "#ffffff" : "var(--layout-header-bg, #1a1a1a)",
+                  boxShadow: canalMode === "catalog" ? "0 4px 12px color-mix(in srgb, var(--layout-page-text, #1a1a1a) 25%, transparent)" : "none",
                 }}
               >
                 📁 Catálogo
@@ -482,7 +482,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
           </div>
 
           {/* ── Seção 1: Informações do Canal ── */}
-          <div className="rounded-2xl p-5 space-y-4" style={{ backgroundColor: "#d9e9fa", boxShadow: "0 2px 8px rgba(13,4,70,0.06)" }}>
+          <div className="rounded-2xl p-5 space-y-4" style={{ backgroundColor: "#d9e9fa", boxShadow: "0 2px 8px color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)" }}>
             <div className="flex items-center gap-2 mb-1">
               <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" }}>
                 <Settings size={12} className="text-white" />
@@ -533,7 +533,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div className="space-y-1.5">
                     <label className="block text-[11px] font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Tipo de Transmissão</label>
-                    <div className="w-full px-4 py-2 text-sm font-medium" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "20px", border: "2px solid rgba(13,4,70,0.2)" }}>
+                    <div className="w-full px-4 py-2 text-sm font-medium" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "20px", border: "2px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 20%, transparent)" }}>
                       Gravado
                     </div>
                   </div>
@@ -661,33 +661,33 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
                       onClick={() => setCatalogContentMode("playlist")}
                       className="flex-1 px-4 py-3 rounded-xl text-xs font-bold transition-all text-left"
                       style={{
-                        backgroundColor: catalogContentMode === "playlist" ? "#0d0446" : "#ffffff",
-                        color: catalogContentMode === "playlist" ? "#ffffff" : "#0d0446",
-                        border: `2px solid ${catalogContentMode === "playlist" ? "#0d0446" : "rgba(13,4,70,0.15)"}`,
-                        boxShadow: catalogContentMode === "playlist" ? "0 4px 12px rgba(13,4,70,0.25)" : "none",
+                        backgroundColor: catalogContentMode === "playlist" ? "var(--layout-header-bg, #1a1a1a)" : "#ffffff",
+                        color: catalogContentMode === "playlist" ? "#ffffff" : "var(--layout-header-bg, #1a1a1a)",
+                        border: `2px solid ${catalogContentMode === "playlist" ? "var(--layout-header-bg, #1a1a1a)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 15%, transparent)"}`,
+                        boxShadow: catalogContentMode === "playlist" ? "0 4px 12px color-mix(in srgb, var(--layout-page-text, #1a1a1a) 25%, transparent)" : "none",
                       }}
                     >
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-base">🔗</span>
-                        <span style={{ color: catalogContentMode === "playlist" ? "#ffffff" : "#0d0446" }}>Criar por URL de Playlist</span>
+                        <span style={{ color: catalogContentMode === "playlist" ? "#ffffff" : "var(--layout-header-bg, #1a1a1a)" }}>Criar por URL de Playlist</span>
                       </div>
-                      <p className="text-[10px] ml-7" style={{ color: catalogContentMode === "playlist" ? "rgba(255,255,255,0.85)" : "rgba(13,4,70,0.5)" }}>Importa automaticamente todos os vídeos da playlist</p>
+                      <p className="text-[10px] ml-7" style={{ color: catalogContentMode === "playlist" ? "rgba(255,255,255,0.85)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Importa automaticamente todos os vídeos da playlist</p>
                     </button>
                     <button
                       onClick={() => setCatalogContentMode("individual")}
                       className="flex-1 px-4 py-3 rounded-xl text-xs font-bold transition-all text-left"
                       style={{
-                        backgroundColor: catalogContentMode === "individual" ? "#0d0446" : "#ffffff",
-                        color: catalogContentMode === "individual" ? "#ffffff" : "#0d0446",
-                        border: `2px solid ${catalogContentMode === "individual" ? "#0d0446" : "rgba(13,4,70,0.15)"}`,
-                        boxShadow: catalogContentMode === "individual" ? "0 4px 12px rgba(13,4,70,0.25)" : "none",
+                        backgroundColor: catalogContentMode === "individual" ? "var(--layout-header-bg, #1a1a1a)" : "#ffffff",
+                        color: catalogContentMode === "individual" ? "#ffffff" : "var(--layout-header-bg, #1a1a1a)",
+                        border: `2px solid ${catalogContentMode === "individual" ? "var(--layout-header-bg, #1a1a1a)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 15%, transparent)"}`,
+                        boxShadow: catalogContentMode === "individual" ? "0 4px 12px color-mix(in srgb, var(--layout-page-text, #1a1a1a) 25%, transparent)" : "none",
                       }}
                     >
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-base">📹</span>
-                        <span style={{ color: catalogContentMode === "individual" ? "#ffffff" : "#0d0446" }}>Cadastrar Vídeos Individualmente</span>
+                        <span style={{ color: catalogContentMode === "individual" ? "#ffffff" : "var(--layout-header-bg, #1a1a1a)" }}>Cadastrar Vídeos Individualmente</span>
                       </div>
-                      <p className="text-[10px] ml-7" style={{ color: catalogContentMode === "individual" ? "rgba(255,255,255,0.85)" : "rgba(13,4,70,0.5)" }}>Adicione vídeos um a um com capas personalizadas</p>
+                      <p className="text-[10px] ml-7" style={{ color: catalogContentMode === "individual" ? "rgba(255,255,255,0.85)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Adicione vídeos um a um com capas personalizadas</p>
                     </button>
                   </div>
                 </div>
@@ -719,7 +719,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
                         className="w-full px-4 py-2 outline-none transition-colors text-sm resize-none"
                         style={inputStyle}
                         onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
-                        onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
+                        onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
                       />
                     </div>
                     {/* Upload de imagens do vídeo individual */}
@@ -732,8 +732,8 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
                           {img.url ? (
                             <img src={img.url} alt={img.label} className="w-full h-24 rounded-xl object-contain" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }} />
                           ) : (
-                            <div className="w-full h-24 rounded-xl flex flex-col items-center justify-center gap-1" style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "2px dashed rgba(13,4,70,0.12)" }}>
-                              <Upload size={20} style={{ color: "rgba(13,4,70,0.2)" }} />
+                            <div className="w-full h-24 rounded-xl flex flex-col items-center justify-center gap-1" style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "2px dashed color-mix(in srgb, var(--layout-page-text, #1a1a1a) 12%, transparent)" }}>
+                              <Upload size={20} style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 20%, transparent)" }} />
                               <span className="text-[9px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 30%, transparent)" }}>Arraste ou clique</span>
                             </div>
                           )}
@@ -753,8 +753,8 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
                           }}
                             className="w-full px-3 py-1.5 font-bold transition-all text-xs flex items-center justify-center gap-1 rounded-full"
                             style={btnSecondary}
-                            onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#0d0446"; e.currentTarget.style.color = "#ffffff"; }}
-                            onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#ffffff"; e.currentTarget.style.color = "#0d0446"; }}
+                            onMouseEnter={e => { e.currentTarget.style.backgroundColor = "var(--layout-header-bg, #1a1a1a)"; e.currentTarget.style.color = "#ffffff"; }}
+                            onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#ffffff"; e.currentTarget.style.color = "var(--layout-header-bg, #1a1a1a)"; }}
                           >
                             <Upload size={10} /> {img.url ? "Trocar" : "Upload"}
                           </button>
@@ -768,7 +768,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
           </div>
 
           {/* ── Seção 2: Imagens ── */}
-          <div className="rounded-2xl p-5 space-y-4" style={{ backgroundColor: "#d9e9fa", boxShadow: "0 2px 8px rgba(13,4,70,0.06)" }}>
+          <div className="rounded-2xl p-5 space-y-4" style={{ backgroundColor: "#d9e9fa", boxShadow: "0 2px 8px color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)" }}>
             <div className="flex items-center gap-2 mb-1">
               <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" }}>
                 <ImageIcon size={12} className="text-white" />
@@ -785,8 +785,8 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
                   {(canalForm as any)[img.key] ? (
                     <img src={(canalForm as any)[img.key]} alt={img.alt} className="w-full h-24 rounded-xl object-contain" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)", backgroundColor: img.key === "background_url" ? "#1a1a2e" : "transparent" }} />
                   ) : (
-                    <div className="w-full h-24 rounded-xl flex flex-col items-center justify-center gap-1" style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "2px dashed rgba(13,4,70,0.12)" }}>
-                      <Upload size={20} style={{ color: "rgba(13,4,70,0.2)" }} />
+                    <div className="w-full h-24 rounded-xl flex flex-col items-center justify-center gap-1" style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "2px dashed color-mix(in srgb, var(--layout-page-text, #1a1a1a) 12%, transparent)" }}>
+                      <Upload size={20} style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 20%, transparent)" }} />
                       <span className="text-[9px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 30%, transparent)" }}>Arraste ou clique</span>
                     </div>
                   )}
@@ -795,8 +795,8 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
                   <button onClick={() => handleImageUpload(img.key)}
                     className="w-full px-3 py-1.5 font-bold transition-all text-xs flex items-center justify-center gap-1 rounded-full"
                     style={btnSecondary}
-                    onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#0d0446"; e.currentTarget.style.color = "#ffffff"; }}
-                    onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#ffffff"; e.currentTarget.style.color = "#0d0446"; }}
+                    onMouseEnter={e => { e.currentTarget.style.backgroundColor = "var(--layout-header-bg, #1a1a1a)"; e.currentTarget.style.color = "#ffffff"; }}
+                    onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#ffffff"; e.currentTarget.style.color = "var(--layout-header-bg, #1a1a1a)"; }}
                   >
                     <Upload size={10} /> {(canalForm as any)[img.key] ? "Trocar" : "Upload"}
                   </button>
@@ -812,13 +812,13 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
               <div className="flex flex-wrap items-center gap-6">
                 <label className="flex items-center gap-2.5 cursor-pointer group" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
                   <input type="checkbox" checked={canalForm.is_hd} onChange={(e) => setCanalForm(p => ({ ...p, is_hd: e.target.checked }))}
-                    className="w-4 h-4 rounded" style={{ accentColor: "#268ffa" }} />
+                    className="w-4 h-4 rounded" style={{ accentColor: "var(--layout-accent-color, #444444)" }} />
                   <img src="/images/icon-fullhd.png" alt="FULL HD" className="h-4 opacity-80 group-hover:opacity-100 transition-opacity" />
                   <span className="text-sm font-semibold group-hover:opacity-80 transition-opacity">FULL HD</span>
                 </label>
                 <label className="flex items-center gap-2.5 cursor-pointer group" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
                   <input type="checkbox" checked={canalForm.is_stereo} onChange={(e) => setCanalForm(p => ({ ...p, is_stereo: e.target.checked }))}
-                    className="w-4 h-4 rounded" style={{ accentColor: "#268ffa" }} />
+                    className="w-4 h-4 rounded" style={{ accentColor: "var(--layout-accent-color, #444444)" }} />
                   <img src="/images/icon-stereo.png" alt="Stereo" className="h-4 opacity-80 group-hover:opacity-100 transition-opacity" />
                   <span className="text-sm font-semibold group-hover:opacity-80 transition-opacity">Áudio Estéreo</span>
                 </label>
@@ -849,17 +849,17 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
         {loadingCanais ? (
           <div className="flex items-center gap-2 text-sm mt-6 justify-center py-8" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}><Loader2 size={16} className="animate-spin" /> Carregando canais...</div>
         ) : canais.length === 0 ? (
-          <div className="mt-6 text-center py-8 rounded-2xl" style={{ backgroundColor: "rgba(13,4,70,0.02)", border: "2px dashed rgba(13,4,70,0.1)" }}>
-            <Tv size={32} className="mx-auto mb-2" style={{ color: "rgba(13,4,70,0.15)" }} />
+          <div className="mt-6 text-center py-8 rounded-2xl" style={{ backgroundColor: "rgba(13,4,70,0.02)", border: "2px dashed color-mix(in srgb, var(--layout-page-text, #1a1a1a) 10%, transparent)" }}>
+            <Tv size={32} className="mx-auto mb-2" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 15%, transparent)" }} />
             <p className="text-sm font-medium" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>Nenhum canal cadastrado ainda</p>
-            <p className="text-[11px] mt-0.5" style={{ color: "rgba(13,4,70,0.25)" }}>Use o formulário acima para adicionar seu primeiro canal</p>
+            <p className="text-[11px] mt-0.5" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 25%, transparent)" }}>Use o formulário acima para adicionar seu primeiro canal</p>
           </div>
         ) : (
           <div className="mt-6">
             <div className="flex items-center gap-2 mb-4">
               <Tv size={16} style={{ color: "var(--layout-icon-color, #888888)" }} />
               <h4 className="text-base font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Canais Cadastrados</h4>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: "rgba(38,143,250,0.1)", color: "var(--layout-icon-color, #888888)" }}>{canais.length}</span>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #444444) 10%, transparent)", color: "var(--layout-icon-color, #888888)" }}>{canais.length}</span>
             </div>
             <div className="rounded-2xl overflow-hidden shadow-sm" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }}>
               <table className="w-full text-sm" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
@@ -877,7 +877,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
                   {canais.map((c, i) => (
                     <tr key={c.id} className="transition-colors hover:bg-blue-50/50" style={{ backgroundColor: i % 2 === 0 ? "#ffffff" : "#f8f9fe", borderTop: "1px solid rgba(13,4,70,0.05)" }}>
                       <td className="px-4 py-3" style={{ minWidth: "80px", whiteSpace: "nowrap" }}>
-                        <span className="inline-flex items-center justify-center min-w-[32px] h-7 px-2 rounded-lg text-xs font-bold" style={{ backgroundColor: "rgba(38,143,250,0.1)", color: "var(--layout-icon-color, #888888)" }}>
+                        <span className="inline-flex items-center justify-center min-w-[32px] h-7 px-2 rounded-lg text-xs font-bold" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #444444) 10%, transparent)", color: "var(--layout-icon-color, #888888)" }}>
                           {c.numero_canal || "—"}
                         </span>
                       </td>
@@ -886,21 +886,21 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
                         {c.catalog_name ? <span className="text-[10px] ml-1.5 px-1.5 py-0.5 rounded-full" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)", backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 5%, transparent)" }}>({c.catalog_name})</span> : null}
                       </td>
                       <td className="px-4 py-3">
-                        <span className="text-[11px] font-medium px-2.5 py-1 rounded-full" style={{ backgroundColor: c.type === "catalog" ? "rgba(139,92,246,0.1)" : "rgba(38,143,250,0.1)", color: c.type === "catalog" ? "#8b5cf6" : "#268ffa" }}>
+                        <span className="text-[11px] font-medium px-2.5 py-1 rounded-full" style={{ backgroundColor: c.type === "catalog" ? "rgba(139,92,246,0.1)" : "color-mix(in srgb, var(--layout-accent-color, #444444) 10%, transparent)", color: c.type === "catalog" ? "#8b5cf6" : "var(--layout-accent-color, #444444)" }}>
                           {typeLabels[c.type] || c.type}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-center">
-                        {c.cover_url ? <CheckCircle size={16} className="inline" style={{ color: "#22c55e" }} /> : <span className="text-[10px]" style={{ color: "rgba(13,4,70,0.2)" }}>—</span>}
+                        {c.cover_url ? <CheckCircle size={16} className="inline" style={{ color: "#22c55e" }} /> : <span className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 20%, transparent)" }}>—</span>}
                       </td>
                       <td className="px-4 py-3 text-center">
-                        {c.logo_url ? <CheckCircle size={16} className="inline" style={{ color: "#22c55e" }} /> : <span className="text-[10px]" style={{ color: "rgba(13,4,70,0.2)" }}>—</span>}
+                        {c.logo_url ? <CheckCircle size={16} className="inline" style={{ color: "#22c55e" }} /> : <span className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 20%, transparent)" }}>—</span>}
                       </td>
                       <td className="px-4 py-3 text-center">
                         <div className="flex items-center justify-center gap-1">
-                          <button onClick={() => handleEditCanal(c)} title="Editar" className="w-8 h-8 rounded-lg flex items-center justify-center transition-all hover:shadow-sm" style={{ backgroundColor: "rgba(38,143,250,0.1)" }}
-                            onMouseEnter={e => { e.currentTarget.style.backgroundColor = "rgba(38,143,250,0.2)"; }}
-                            onMouseLeave={e => { e.currentTarget.style.backgroundColor = "rgba(38,143,250,0.1)"; }}
+                          <button onClick={() => handleEditCanal(c)} title="Editar" className="w-8 h-8 rounded-lg flex items-center justify-center transition-all hover:shadow-sm" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #444444) 10%, transparent)" }}
+                            onMouseEnter={e => { e.currentTarget.style.backgroundColor = "color-mix(in srgb, var(--layout-accent-color, #444444) 20%, transparent)"; }}
+                            onMouseLeave={e => { e.currentTarget.style.backgroundColor = "color-mix(in srgb, var(--layout-accent-color, #444444) 10%, transparent)"; }}
                           >
                             <Pencil size={13} style={{ color: "var(--layout-icon-color, #888888)" }} />
                           </button>

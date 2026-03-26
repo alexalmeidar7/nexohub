@@ -292,7 +292,7 @@ export default function JornalBlockBuilder({ config, selectedNews, onClose }: Pr
                       className="flex items-start gap-2 px-2 py-2 rounded text-xs cursor-grab active:cursor-grabbing hover:bg-gray-50"
                       style={{ borderBottom: "1px solid rgba(13,4,70,0.05)" }}
                     >
-                      <GripVertical size={12} className="shrink-0 mt-0.5" style={{ color: "rgba(13,4,70,0.2)" }} />
+                      <GripVertical size={12} className="shrink-0 mt-0.5" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 20%, transparent)" }} />
                       <div className="flex-1 min-w-0">
                         <p className="font-bold line-clamp-2 leading-tight" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{n.title}</p>
                         {n.body && (

@@ -672,9 +672,9 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
             )}
             <button onClick={() => { loadAll(); loadCotacoes(); }} disabled={loading}
               className="w-8 h-8 rounded-full flex items-center justify-center transition-all disabled:opacity-50"
-              style={{ backgroundColor: "rgba(13,4,70,0.06)" }}
-              onMouseEnter={e => { e.currentTarget.style.backgroundColor = "rgba(13,4,70,0.12)"; }}
-              onMouseLeave={e => { e.currentTarget.style.backgroundColor = "rgba(13,4,70,0.06)"; }}
+              style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)" }}
+              onMouseEnter={e => { e.currentTarget.style.backgroundColor = "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 12%, transparent)"; }}
+              onMouseLeave={e => { e.currentTarget.style.backgroundColor = "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)"; }}
             >
               <RefreshCw size={14} className={loading ? "animate-spin" : ""} style={{ color: "var(--layout-page-text, #1a1a1a)" }} />
             </button>
@@ -689,7 +689,7 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
             className="flex-1 px-3 py-1 outline-none transition-colors text-xs"
             style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid var(--layout-border-color, #333333)", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "20px" }}
             onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
-            onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
+            onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
             autoFocus
           />
           <button onClick={() => { addCustomSite(); setShowAddSiteInput(false); }}
@@ -712,7 +712,7 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
             className="flex-1 px-3 py-1 outline-none transition-colors text-xs"
             style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid var(--layout-border-color, #333333)", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "20px" }}
             onFocus={e => { e.currentTarget.style.borderColor = "#2dbef3"; }}
-            onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
+            onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
             autoFocus
           />
           <button onClick={addNoticiaAvulsa} disabled={loadingAvulsa}
@@ -739,7 +739,7 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
                 <button
                   onClick={() => setReorderMode(r => !r)}
                   className="px-2 py-0.5 rounded text-[9px] font-semibold transition-colors"
-                  style={{ backgroundColor: reorderMode ? "#2ec1f7" : "rgba(255,255,255,0.15)", color: reorderMode ? "#0d0446" : "#ffffff" }}
+                  style={{ backgroundColor: reorderMode ? "#2ec1f7" : "rgba(255,255,255,0.15)", color: reorderMode ? "var(--layout-header-bg, #1a1a1a)" : "#ffffff" }}
                   title="Reordenar portais"
                 >
                   {reorderMode ? "✓ Salvar ordem" : "⇅ Reordenar"}
@@ -783,7 +783,7 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
                   {orderedPortals.map(portal => {
                     const news = newsByPortal[portal.name] || [];
                     return (
-                      <AccordionItem key={portal.name} value={portal.name} className="border-b-0" style={{ borderBottom: "1px solid rgba(13,4,70,0.06)" }}>
+                      <AccordionItem key={portal.name} value={portal.name} className="border-b-0" style={{ borderBottom: "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)" }}>
                         <AccordionTrigger className="px-3 py-2 text-xs font-bold hover:no-underline" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
                           <span className="flex items-center gap-2 flex-1">
                             <Newspaper size={12} style={{ color: "#2ec1f7" }} />
@@ -875,7 +875,7 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
                       </div>
                       <div className="flex-1 space-y-0.5">
                         <p className="text-xs font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{miniWeather.city}</p>
-                        <p className="text-[10px]" style={{ color: "rgba(13,4,70,0.6)" }}>{miniWeatherLabel(miniWeather.code)}</p>
+                        <p className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>{miniWeatherLabel(miniWeather.code)}</p>
                         <div className="flex items-center gap-3 text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
                           <span className="flex items-center gap-0.5"><Thermometer size={9} /> Mín {miniWeather.min}° · Máx {miniWeather.max}°</span>
                           <span className="flex items-center gap-0.5"><Droplets size={9} /> {miniWeather.humidity}%</span>
@@ -1010,7 +1010,7 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
                     {customSites.map(site => {
                       const news = newsByPortal[site.name] || [];
                       return (
-                        <AccordionItem key={site.name} value={site.name} className="border-b-0" style={{ borderBottom: "1px solid rgba(13,4,70,0.06)" }}>
+                        <AccordionItem key={site.name} value={site.name} className="border-b-0" style={{ borderBottom: "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)" }}>
                           <AccordionTrigger className="px-3 py-2 text-xs font-bold hover:no-underline" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
                             <span className="flex items-center gap-2 flex-1">
                               <Newspaper size={12} style={{ color: "#2ec1f7" }} />
@@ -1156,7 +1156,7 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
           style={{
             left: hoveredImage.x + 16,
             top: hoveredImage.y - 60,
-            borderColor: "rgba(13,4,70,0.1)",
+            borderColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 10%, transparent)",
           }}
         >
           <img src={hoveredImage.url} alt="" className="w-32 h-20 object-cover" />

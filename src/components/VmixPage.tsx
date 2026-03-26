@@ -1237,7 +1237,7 @@ export default function VmixPage() {
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   <div className="rounded-lg p-2.5" style={{ backgroundColor: "#ffffff06" }}>
                     <p className="text-[9px] font-bold uppercase text-white/30 mb-1">Tipo de IP</p>
-                    <p className="text-xs font-bold" style={{ color: diagResult.urlType === "local" ? "#22c55e" : "#268ffa" }}>
+                    <p className="text-xs font-bold" style={{ color: diagResult.urlType === "local" ? "#22c55e" : "var(--layout-accent-color, #444444)" }}>
                       {diagResult.urlType === "local" ? "🏠 Local" : "🌐 Público"}
                     </p>
                   </div>

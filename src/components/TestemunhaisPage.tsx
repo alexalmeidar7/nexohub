@@ -208,8 +208,8 @@ export default function TestemunhaisPage() {
                     )}
                     <label className="cursor-pointer inline-flex items-center gap-2 px-3 py-1.5 text-xs font-bold transition-all rounded-full"
                       style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", color: "var(--layout-page-text, #1a1a1a)", border: "2px solid #0d0446", borderRadius: "20px" }}
-                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = "#0d0446"; (e.currentTarget as HTMLElement).style.color = "#ffffff"; }}
-                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = "#ffffff"; (e.currentTarget as HTMLElement).style.color = "#0d0446"; }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = "var(--layout-header-bg, #1a1a1a)"; (e.currentTarget as HTMLElement).style.color = "#ffffff"; }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = "#ffffff"; (e.currentTarget as HTMLElement).style.color = "var(--layout-header-bg, #1a1a1a)"; }}
                     >
                       <Upload size={12} /> Enviar imagem
                       <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
@@ -223,7 +223,7 @@ export default function TestemunhaisPage() {
                     className="w-full px-4 py-2 text-sm outline-none transition-colors min-h-[80px]"
                     style={{ ...inputStyle, borderRadius: "12px" }}
                     onFocus={e => { e.currentTarget.style.borderColor = "#be0101"; }}
-                    onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
+                    onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
                   />
                 </div>
               </div>
@@ -235,7 +235,7 @@ export default function TestemunhaisPage() {
                     className="w-full px-4 py-1.5 text-sm outline-none appearance-none"
                     style={inputStyle}
                     onFocus={e => { e.currentTarget.style.borderColor = "#be0101"; }}
-                    onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
+                    onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
                   >
                     <option value="">Selecione um programa</option>
                     {programas.map((p) => (
@@ -251,7 +251,7 @@ export default function TestemunhaisPage() {
                       className="w-full px-4 py-1.5 text-sm outline-none"
                       style={inputStyle}
                       onFocus={e => { e.currentTarget.style.borderColor = "#be0101"; }}
-                      onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
+                      onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
                     />
                   </div>
                   <div>
@@ -260,7 +260,7 @@ export default function TestemunhaisPage() {
                       className="w-full px-4 py-1.5 text-sm outline-none"
                       style={inputStyle}
                       onFocus={e => { e.currentTarget.style.borderColor = "#be0101"; }}
-                      onBlur={e => { e.currentTarget.style.borderColor = "#0d0446"; }}
+                      onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
                     />
                   </div>
                 </div>
@@ -293,24 +293,24 @@ export default function TestemunhaisPage() {
                 <table className="w-full text-sm" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
                   <thead>
                     <tr style={{ backgroundColor: "rgba(13,4,70,0.04)" }}>
-                      <th className="px-4 py-2 text-left font-semibold text-xs" style={{ color: "rgba(13,4,70,0.6)" }}>Imagem</th>
-                      <th className="px-4 py-2 text-left font-semibold text-xs" style={{ color: "rgba(13,4,70,0.6)" }}>Texto</th>
-                      <th className="px-4 py-2 text-left font-semibold text-xs" style={{ color: "rgba(13,4,70,0.6)" }}>Programa</th>
-                      <th className="px-4 py-2 text-center font-semibold text-xs" style={{ color: "rgba(13,4,70,0.6)" }}>Validade</th>
-                      <th className="px-4 py-2 text-center font-semibold text-xs" style={{ color: "rgba(13,4,70,0.6)" }}>Editar</th>
-                      <th className="px-4 py-2 text-center font-semibold text-xs" style={{ color: "rgba(13,4,70,0.6)" }}>Excluir</th>
+                      <th className="px-4 py-2 text-left font-semibold text-xs" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>Imagem</th>
+                      <th className="px-4 py-2 text-left font-semibold text-xs" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>Texto</th>
+                      <th className="px-4 py-2 text-left font-semibold text-xs" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>Programa</th>
+                      <th className="px-4 py-2 text-center font-semibold text-xs" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>Validade</th>
+                      <th className="px-4 py-2 text-center font-semibold text-xs" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>Editar</th>
+                      <th className="px-4 py-2 text-center font-semibold text-xs" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>Excluir</th>
                     </tr>
                   </thead>
                   <tbody>
                     {items.map((item, i) => {
                       const dias = diasRestantes(item.data_fim);
                       return (
-                        <tr key={item.id} style={{ backgroundColor: i % 2 === 0 ? "#ffffff" : "#f8f8fc", borderTop: "1px solid rgba(13,4,70,0.06)" }}>
+                        <tr key={item.id} style={{ backgroundColor: i % 2 === 0 ? "#ffffff" : "#f8f8fc", borderTop: "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)" }}>
                           <td className="px-4 py-2">
                             {item.imagem_url ? (
                               <img src={item.imagem_url} alt="" className="w-10 h-10 rounded-lg object-cover" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }} />
                             ) : (
-                              <span style={{ color: "rgba(13,4,70,0.25)" }}>—</span>
+                              <span style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 25%, transparent)" }}>—</span>
                             )}
                           </td>
                           <td className="px-4 py-2 max-w-[200px]">
