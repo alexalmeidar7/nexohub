@@ -72,6 +72,10 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
   const [searchNome, setSearchNome] = useState("");
   const [searchResults, setSearchResults] = useState<Participante[]>([]);
   const [showResults, setShowResults] = useState(false);
+  const [noResults, setNoResults] = useState(false);
+  const [showNewContact, setShowNewContact] = useState(false);
+  const [newContact, setNewContact] = useState<{ nome: string; cargo: string; instagram: string; whatsapp: string }>({ nome: "", cargo: "", instagram: "", whatsapp: "" });
+  const [savingContact, setSavingContact] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
 
   const filteredProgramas = estudio ? programas.filter(p => p.estudio === estudio) : programas;
