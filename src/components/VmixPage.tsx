@@ -141,7 +141,7 @@ export default function VmixPage() {
   const [recording, setRecording] = useState(false);
   const [overlays, setOverlays] = useState<Record<number, boolean>>({ 1: false, 2: false, 3: false, 4: false });
   const [minimizedInputs, setMinimizedInputs] = useState<Record<string, boolean>>({});
-  const [activeTab, setActiveTab] = useState<"controls" | "scenes" | "ndi">("controls");
+  const [activeTab, setActiveTab] = useState<"controls" | "scenes">("controls");
   // Keyboard shortcuts per input (persisted in localStorage)
   const [inputShortcuts, setInputShortcuts] = useState<Record<string, string>>(() => {
     try {
