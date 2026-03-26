@@ -882,7 +882,7 @@ function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRe
   onFetchLink: (bi: number, ni: number, url: string) => void;
   canRemove: boolean;
 }) {
-  const [linkInput, setLinkInput] = useState("");
+  const [linkInput, setLinkInput] = useState(noticia.link || "");
   const [collapsed, setCollapsed] = useState(false);
   const isFetching = fetchingLink === `${bi}-${ni}`;
 
