@@ -309,7 +309,7 @@ export default function PrevisaoTempo() {
               className="flex items-center gap-2 rounded-full px-4 py-2 text-xs font-bold transition-all hover:scale-105"
               style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))", color: "var(--layout-header-text, #ffffff)", boxShadow: "0 4px 15px color-mix(in srgb, var(--layout-page-text, #1a1a1a) 30%, transparent)" }}
             >
-              <Star size={12} style={{ color: "#2dbef3" }} />
+              <Star size={12} style={{ color: "var(--layout-accent-color, #444444)" }} />
               {primaryCity.name}
             </button>
           )}
