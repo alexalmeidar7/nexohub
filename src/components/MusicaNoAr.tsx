@@ -729,20 +729,20 @@ export default function MusicaNoAr() {
   if (!music && !presenterFallback) {
     return (
       <div className="animate-pulse">
-        <div className="rounded-2xl overflow-hidden p-5" style={{ background: "#d9e9fa", boxShadow: "0 8px 32px rgba(13,4,70,0.12)" }}>
+        <div className="rounded-2xl overflow-hidden p-5" style={{ background: "var(--layout-header-bg, #0d0446)", boxShadow: "0 8px 32px rgba(0,0,0,0.18)" }}>
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(13,4,70,0.08)" }}>
-              <Music size={20} style={{ color: "#0d0446" }} />
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(255,255,255,0.12)" }}>
+              <Music size={20} style={{ color: "var(--layout-header-text, #ffffff)" }} />
             </div>
-            <div className="h-5 w-32 rounded bg-[#0d0446]/10" />
+            <div className="h-5 w-32 rounded" style={{ backgroundColor: "rgba(255,255,255,0.1)" }} />
           </div>
-          <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "#ffffff" }}>
+          <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "var(--layout-slider-bg, #0d0d0d)" }}>
             <div className="flex gap-4 p-4">
-              <div className="w-40 h-40 rounded-xl bg-[#0d0446]/5 shrink-0" />
+              <div className="w-40 h-40 rounded-xl shrink-0" style={{ backgroundColor: "rgba(255,255,255,0.05)" }} />
               <div className="flex-1 space-y-3 py-2">
-                <div className="h-6 w-48 rounded bg-[#0d0446]/10" />
-                <div className="h-4 w-32 rounded bg-[#268ffa]/15" />
-                <div className="h-2 w-full rounded-full bg-[#0d0446]/5 mt-8" />
+                <div className="h-6 w-48 rounded" style={{ backgroundColor: "rgba(255,255,255,0.08)" }} />
+                <div className="h-4 w-32 rounded" style={{ backgroundColor: "rgba(255,255,255,0.06)" }} />
+                <div className="h-2 w-full rounded-full mt-8" style={{ backgroundColor: "rgba(255,255,255,0.05)" }} />
               </div>
             </div>
           </div>
