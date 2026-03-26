@@ -603,10 +603,10 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
                 </div>
 
                 {/* Vincular Programa */}
-                <div className="rounded-xl p-4 space-y-3" style={{ backgroundColor: "rgba(139, 92, 246, 0.06)", border: "1px solid rgba(139, 92, 246, 0.15)" }}>
+                <div className="rounded-xl p-4 space-y-3" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color) 8%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-accent-color) 18%, transparent)" }}>
                   <div className="flex items-center gap-2">
-                    <Link2 size={14} style={{ color: "#8b5cf6" }} />
-                    <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#8b5cf6" }}>Vincular Programa</span>
+                    <Link2 size={14} style={{ color: "var(--layout-accent-color)" }} />
+                    <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--layout-accent-color)" }}>Vincular Programa</span>
                   </div>
                   <select
                     value={selectedProgramaId}
