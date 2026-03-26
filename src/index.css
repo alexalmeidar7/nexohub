@@ -446,14 +446,12 @@ table:not([data-no-row-hover]) tbody tr:hover {
   border-color: color-mix(in srgb, var(--layout-header-bg, #0d0446) 15%, var(--layout-page-bg, #ffffff)) !important;
 }
 
-/* Override hardcoded header backgrounds in form sections */
+/* Override hardcoded header backgrounds in form sections — background only, no text override */
 .mv-content-area [style*="background: linear-gradient(135deg, #0d0446"],
 .mv-content-area [style*="background-color: #0d0446"],
 .mv-content-area [style*="background: linear-gradient(135deg, #268ffa"] {
   background: linear-gradient(135deg, var(--layout-header-bg, #0d0446), color-mix(in srgb, var(--layout-header-bg, #0d0446) 80%, var(--layout-page-bg, #ffffff))) !important;
-  color: var(--layout-header-text, #ffffff) !important;
 }
-/* Let .text-white and similar classes remain untouched inside headers */
 
 /* Override hardcoded text colors */
 .mv-content-area [style*="color: #0d0446"] {
