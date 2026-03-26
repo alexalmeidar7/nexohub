@@ -253,7 +253,7 @@ export default function WhatsAppSendDialog({ open, onClose, roteiroData }: Whats
           <button
             onClick={enviar}
             disabled={loading || !formattedText.trim() || contatos.length === 0}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-xs font-bold text-white hover:opacity-90 transition disabled:opacity-40"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-xs font-bold hover:opacity-90 transition disabled:opacity-40"
             style={{ backgroundColor: "#25d366" }}
           >
             <Send size={13} />
