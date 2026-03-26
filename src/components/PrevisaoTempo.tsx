@@ -342,7 +342,7 @@ export default function PrevisaoTempo() {
               placeholder="Buscar cidade..."
               className="w-full pl-10 pr-4 py-2.5 outline-none transition-all text-sm"
               style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "2px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 10%, transparent)", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "16px" }}
-              onFocusCapture={e => { e.currentTarget.style.borderColor = "#2dbef3"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(45,190,243,0.1)"; }}
+              onFocusCapture={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #444444)"; e.currentTarget.style.boxShadow = "0 0 0 3px color-mix(in srgb, var(--layout-accent-color, #444444) 10%, transparent)"; }}
               onBlur={e => { e.currentTarget.style.borderColor = "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 10%, transparent)"; e.currentTarget.style.boxShadow = "none"; }}
             />
           </div>
