@@ -416,7 +416,7 @@ export default function LogosPatrocinadoresPage() {
                       </div>
                     </div>
                   )}
-                  <ChevronDown size={16} className={`text-white transition-transform duration-200 ${excluidasOpen ? "rotate-180" : ""}`} />
+                  <ChevronDown size={16} className={`transition-transform duration-200 ${excluidasOpen ? "rotate-180" : ""}`} style={{ color: "var(--layout-header-text, #ffffff)" }} />
                 </div>
               </button>
             </CollapsibleTrigger>
