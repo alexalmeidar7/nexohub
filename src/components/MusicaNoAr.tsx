@@ -897,13 +897,13 @@ export default function MusicaNoAr() {
       </div>
 
       {/* ═══ COLLAPSIBLE CONFIG SECTION ═══ */}
-      <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+      <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 16px rgba(0,0,0,0.08)", border: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 8%, transparent)" }}>
         <button
           onClick={() => setShowConfig(!showConfig)}
-          className="w-full flex items-center justify-between px-4 py-3 text-left"
-          style={{ borderBottom: showConfig ? "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 10%, transparent)" : "none" }}
+          className="w-full flex items-center justify-between px-5 py-3.5 text-left transition-colors"
+          style={{ borderBottom: showConfig ? "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 8%, transparent)" : "none" }}
         >
-          <span className="text-xs font-bold flex items-center gap-2" style={{ color: "var(--layout-page-text, #0d0446)" }}>
+          <span className="text-xs font-bold flex items-center gap-2.5" style={{ color: "var(--layout-page-text, #0d0446)" }}>
             <Monitor size={14} style={{ color: "var(--layout-icon-color, #268ffa)" }} />
             Configuração das Origens
             {localMonitoring && (
@@ -917,12 +917,15 @@ export default function MusicaNoAr() {
         </button>
 
         {showConfig && (
-          <div className="p-4 space-y-4">
+          <div className="p-5 space-y-5">
             {/* Two columns with center divider */}
             <div className="grid grid-cols-[1fr_auto_1fr] gap-0 items-stretch">
               {/* ── ONLINE SOURCE ── */}
-              <div className="rounded-xl p-4 space-y-3" style={{ backgroundColor: "color-mix(in srgb, var(--layout-header-bg, #0d0446) 8%, var(--layout-page-bg, #ffffff))", border: "1px solid color-mix(in srgb, var(--layout-header-bg, #0d0446) 15%, var(--layout-page-bg, #ffffff))" }}>
-                <h4 className="text-xs font-black uppercase tracking-wide" style={{ color: "var(--layout-page-text, #0d0446)" }}>Origem Source Online</h4>
+              <div className="rounded-xl p-4 space-y-3" style={{ backgroundColor: "color-mix(in srgb, var(--layout-header-bg, #0d0446) 6%, var(--layout-page-bg, #ffffff))", border: "1px solid color-mix(in srgb, var(--layout-header-bg, #0d0446) 10%, var(--layout-page-bg, #ffffff))" }}>
+                <h4 className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 70%, transparent)" }}>
+                  <Globe size={12} style={{ color: "var(--layout-icon-color, #268ffa)" }} />
+                  Origem Online
+                </h4>
                 <div className="flex gap-1.5">
                   <div className="flex-1 flex items-center gap-2 px-3 py-2 rounded-lg" style={{ backgroundColor: "#ffffff", border: "1px solid #c5d9f2" }}>
                     <Globe size={14} style={{ color: "#7c8db5" }} />
