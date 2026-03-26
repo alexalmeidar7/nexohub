@@ -119,6 +119,8 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
   const [collapsedBlocos, setCollapsedBlocos] = useState<Set<number>>(new Set());
   const [editingId, setEditingId] = useState<string | null>(null);
   const [initialized, setInitialized] = useState(false);
+  const [showPastePopup, setShowPastePopup] = useState(false);
+  const [pasteText, setPasteText] = useState("");
 
   const [participantes, setParticipantes] = useState<Participante[]>([]);
   const [searchNome, setSearchNome] = useState("");
