@@ -857,16 +857,16 @@ export default function CenarioInterativoPage() {
 
                   {/* Traffic overlay */}
                   {activeTab === "traffic" && (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center p-3" style={{ color: config.traffic.bgImage ? "#fff" : "#333" }}>
-                      {config.traffic.enabled ? (
-                        <>
-                          <Car size={24} className="mb-1 drop-shadow-md" />
-                          <div className="text-xs font-bold drop-shadow-md">Trânsito</div>
-                          <div className="text-[9px] opacity-70 mt-0.5">{config.traffic.city || config.city || "—"}</div>
-                          <div className="text-[8px] opacity-50 mt-1">Mapa Waze em tempo real</div>
-                        </>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center p-3">
+                      {config.traffic.enabled && trafficCoords ? (
+                        <div className="text-center text-white drop-shadow-lg">
+                          <div className="text-sm font-bold">{config.traffic.city || config.city || "—"}</div>
+                          <div className="text-[8px] opacity-70 mt-1">Trânsito em tempo real</div>
+                        </div>
+                      ) : config.traffic.enabled ? (
+                        <div className="text-[10px] opacity-50" style={{ color: "#333" }}>Buscando localização...</div>
                       ) : (
-                        <div className="text-[10px] opacity-50">Trânsito desativado</div>
+                        <div className="text-[10px] opacity-50" style={{ color: "#333" }}>Trânsito desativado</div>
                       )}
                     </div>
                   )}
