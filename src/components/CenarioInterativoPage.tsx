@@ -261,6 +261,8 @@ export default function CenarioInterativoPage() {
             <div className="flex items-center gap-2 mb-4">
               <Settings size={16} style={{ color: mutedText }} />
               <span className="text-sm font-semibold">Configuração</span>
+              {saving && <span className="text-[10px] ml-auto animate-pulse" style={{ color: mutedText }}>Salvando...</span>}
+              {!saving && loaded && <span className="text-[10px] ml-auto" style={{ color: mutedText }}>✓ Salvo</span>}
             </div>
 
             <Tabs value={activeTab} onValueChange={setActiveTab}>
