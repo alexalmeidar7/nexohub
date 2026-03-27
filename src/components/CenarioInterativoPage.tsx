@@ -93,15 +93,33 @@ const mockMessages = [
 ];
 
 /* ─── BG Upload helper ─── */
-function BgImageUpload({ value, onChange, mutedText }: { value: string; onChange: (v: string) => void; mutedText: string }) {
+async function uploadBgImage(file: File, userId: string, category: string): Promise<string> {
+  const ext = file.name.split(".").pop() || "jpg";
+  const path = `cenario/${userId}/${category}-${Date.now()}.${ext}`;
+  const { error } = await supabase.storage.from("empresa-assets").upload(path, file, { upsert: true });
+  if (error) throw error;
+  const { data } = supabase.storage.from("empresa-assets").getPublicUrl(path);
+  return data.publicUrl;
+}
+
+function BgImageUpload({ value, onChange, mutedText, userId, category }: { value: string; onChange: (v: string) => void; mutedText: string; userId?: string; category: string }) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const [uploading, setUploading] = useState(false);
+  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > 5 * 1024 * 1024) { toast.error("Imagem deve ter no máximo 5MB"); return; }
-    const reader = new FileReader();
-    reader.onload = () => onChange(reader.result as string);
-    reader.readAsDataURL(file);
+    if (!userId) { toast.error("Faça login para enviar imagens"); return; }
+    setUploading(true);
+    try {
+      const url = await uploadBgImage(file, userId, category);
+      onChange(url);
+      toast.success("Imagem enviada!");
+    } catch (err) {
+      toast.error("Erro ao enviar imagem");
+    } finally {
+      setUploading(false);
+    }
   };
   return (
     <div className="space-y-2">
@@ -122,11 +140,12 @@ function BgImageUpload({ value, onChange, mutedText }: { value: string; onChange
       ) : (
         <button
           onClick={() => inputRef.current?.click()}
+          disabled={uploading}
           className="w-full rounded-lg border-2 border-dashed flex flex-col items-center justify-center gap-1 py-4 text-xs transition-colors hover:opacity-80"
           style={{ borderColor: "color-mix(in srgb, var(--layout-border-color, #333) 30%, transparent)", color: mutedText }}
         >
           <Upload size={16} />
-          <span>Clique para enviar imagem</span>
+          <span>{uploading ? "Enviando..." : "Clique para enviar imagem"}</span>
           <span className="text-[10px]">PNG, JPG (máx. 5MB)</span>
         </button>
       )}
