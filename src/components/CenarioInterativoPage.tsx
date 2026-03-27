@@ -246,6 +246,21 @@ export default function CenarioInterativoPage() {
     return () => clearInterval(timer);
   }, []);
 
+  /* ─── Fetch live currencies ─── */
+  useEffect(() => {
+    if (!config.currency.enabled || !config.currency.currencies.length) return;
+    let cancelled = false;
+    const load = async () => {
+      setCurrencyLoading(true);
+      const data = await fetchLiveCurrencies(config.currency.currencies);
+      if (!cancelled) setLiveCurrencies(data);
+      setCurrencyLoading(false);
+    };
+    load();
+    const interval = setInterval(load, 60000); // refresh every 60s
+    return () => { cancelled = true; clearInterval(interval); };
+  }, [config.currency.enabled, config.currency.currencies.join(",")]);
+
   /* ─── Fetch current program + sponsor logos ─── */
   useEffect(() => {
     if (!user?.id) return;
