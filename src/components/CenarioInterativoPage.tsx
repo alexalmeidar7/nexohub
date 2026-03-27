@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { MonitorPlay, CloudSun, Car, DollarSign, MessageCircle, Plus, Trash2, Eye, Settings, ChevronDown, ChevronUp } from "lucide-react";
+import { MonitorPlay, CloudSun, Car, DollarSign, MessageCircle, Plus, Trash2, Eye, Settings, ChevronDown, ChevronUp, Home } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
