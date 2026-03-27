@@ -956,16 +956,16 @@ export default function CenarioInterativoPage() {
 
                             {weatherSubTab === "forecast" && (
                               <>
-                                <div className="flex justify-end mb-1">
+                                <div className="flex justify-end mb-1 cenario-anim-icon">
                                   <CalendarDays size={32} className="drop-shadow-lg" style={{ color: "#fff" }} />
                                 </div>
                                 <div className="mb-3">
-                                  <div className="text-xl font-extrabold leading-tight drop-shadow-lg">{weatherCity || config.city || "Cidade"}</div>
-                                  <div className="text-sm font-bold" style={{ color: "#c8e600" }}>próximos dias</div>
+                                  <div className="text-xl font-extrabold leading-tight drop-shadow-lg cenario-anim-title">{weatherCity || config.city || "Cidade"}</div>
+                                  <div className="text-sm font-bold cenario-anim-subtitle" style={{ color: "#c8e600" }}>próximos dias</div>
                                 </div>
-                                <div className="flex-1 rounded-xl p-3 space-y-2" style={{ background: "rgba(255,255,255,0.2)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.3)" }}>
+                                <div className="flex-1 rounded-xl p-3 space-y-2 cenario-anim-card" style={{ background: "rgba(255,255,255,0.2)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.3)" }}>
                                   {liveWeather.daily.slice(1, 4).map((d, i) => (
-                                    <div key={i} className="flex items-center justify-between text-[9px] rounded-lg px-2 py-1.5" style={{ background: "rgba(255,255,255,0.15)" }}>
+                                    <div key={i} className={`flex items-center justify-between text-[9px] rounded-lg px-2 py-1.5 cenario-anim-row-${i + 1}`} style={{ background: "rgba(255,255,255,0.15)" }}>
                                       <span className="font-bold">{new Date(d.date + "T12:00").toLocaleDateString("pt-BR", { weekday: "short", day: "numeric" })}</span>
                                       <span className="text-base">{getWIcon(d.code)}</span>
                                       <span>↓{d.min}° ↑{d.max}°</span>
