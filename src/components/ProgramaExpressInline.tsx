@@ -105,7 +105,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
   const [pasteText, setPasteText] = useState("");
 
   const [participantes, setParticipantes] = useState<Participante[]>([]);
-  const [escaladaList, setEscaladaList] = useState<string[]>([]);
+  const [escaladaList, setEscaladaList] = useState<{titulo: string; imagemUrl: string}[]>([]);
   const [searchNome, setSearchNome] = useState("");
   const [searchResults, setSearchResults] = useState<Participante[]>([]);
   const [showResults, setShowResults] = useState(false);
@@ -258,7 +258,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
     if (parsedEstudio) { const matched = estudios.find(e => e.toLowerCase() === parsedEstudio.toLowerCase()); if (matched) setEstudio(matched); else { setEstudio(parsedEstudio); toast.info(`Estúdio "${parsedEstudio}" não encontrado na lista`); } }
     if (parsedPrograma) { const matched = programas.find(p => p.nome.toLowerCase() === parsedPrograma.toLowerCase()); if (matched) setProgramaId(matched.id); else { const partial = programas.find(p => p.nome.toLowerCase().includes(parsedPrograma.toLowerCase()) || parsedPrograma.toLowerCase().includes(p.nome.toLowerCase())); if (partial) setProgramaId(partial.id); else toast.warning(`Programa "${parsedPrograma}" não encontrado`); } }
     if (parsedParticipantes.length > 0) setParticipantes(parsedParticipantes);
-    if (parsedEscalada.length > 0) setEscaladaList(parsedEscalada);
+    if (parsedEscalada.length > 0) setEscaladaList(parsedEscalada.map(t => ({ titulo: t, imagemUrl: "" })));
     if (parsedBlocos.length > 0) setBlocos(parsedBlocos);
     setShowPastePopup(false);
     setPasteText("");
@@ -278,14 +278,12 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
         const noticia = prev[bi]?.noticias[ni];
         if (noticia) {
           if (value && noticia.titulo) {
-            // Add to escalada list if not already there
             setEscaladaList(prevList => {
-              if (prevList.includes(noticia.titulo)) return prevList;
-              return [...prevList, noticia.titulo];
+              if (prevList.some(e => e.titulo === noticia.titulo)) return prevList;
+              return [...prevList, { titulo: noticia.titulo, imagemUrl: noticia.imagemUrl || "" }];
             });
           } else if (!value && noticia.titulo) {
-            // Remove from escalada list
-            setEscaladaList(prevList => prevList.filter(t => t !== noticia.titulo));
+            setEscaladaList(prevList => prevList.filter(e => e.titulo !== noticia.titulo));
           }
         }
       }
@@ -333,7 +331,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
     let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<programaExpress>\n`;
     xml += `  <programa>${programaNome}</programa>\n  <estudio>${estudio}</estudio>\n  <data>${new Date().toISOString().split("T")[0]}</data>\n`;
     if (participantes.length > 0) { xml += `  <participantes>\n`; participantes.forEach((p, pi) => { xml += `    <participante${pi + 1}>\n      <nome>${escXml(p.nome)}</nome>\n      <cargo>${escXml(p.cargo)}</cargo>\n      <instagram>${escXml(p.instagram)}</instagram>\n    </participante${pi + 1}>\n`; }); xml += `  </participantes>\n`; }
-    if (escaladaList.length > 0) { xml += `  <escalada>\n`; escaladaList.forEach((t, i) => { xml += `    <item ordem="${i + 1}">\n      <titulo>${escXml(t)}</titulo>\n    </item>\n`; }); xml += `  </escalada>\n`; }
+    if (escaladaList.length > 0) { xml += `  <escalada>\n`; escaladaList.forEach((e, i) => { xml += `    <item ordem="${i + 1}">\n      <titulo>${escXml(e.titulo)}</titulo>\n      <imagem>${escXml(e.imagemUrl)}</imagem>\n    </item>\n`; }); xml += `  </escalada>\n`; }
     blocos.forEach((b, bi) => { xml += `  <bloco numero="${bi + 1}">\n`; b.noticias.forEach((n, ni) => { if (!n.titulo) return; xml += `    <noticia ordem="${ni + 1}">\n      <titulo>${escXml(n.titulo)}</titulo>\n      <imagem>${escXml(n.imagemUrl)}</imagem>\n      <escalada>${n.escalada}</escalada>\n    </noticia>\n`; }); xml += `  </bloco>\n`; });
     xml += `</programaExpress>`;
     return xml;
@@ -348,7 +346,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
       const xmlContent = generateXml();
       let html = `<h2 style="text-align:center;font-weight:bold;">PROGRAMA EXPRESS — ${programaNome}</h2>`;
       if (participantes.length > 0) { html += `<h3 style="font-weight:bold;margin-top:16px;">👥 PARTICIPANTES</h3><ul>`; participantes.forEach(p => { html += `<li><strong>${p.nome}</strong>${p.cargo ? ` — ${p.cargo}` : ""}${p.instagram ? ` (@${p.instagram.replace("@", "")})` : ""}</li>`; }); html += `</ul>`; }
-      if (escaladaList.length > 0) { html += `<h3 style="font-weight:bold;margin-top:16px;">📢 ESCALADA</h3><ul>`; escaladaList.forEach(t => { html += `<li><strong>${t}</strong></li>`; }); html += `</ul>`; }
+      if (escaladaList.length > 0) { html += `<h3 style="font-weight:bold;margin-top:16px;">📢 ESCALADA</h3><ul>`; escaladaList.forEach(e => { html += `<li><strong>${e.titulo}</strong></li>`; }); html += `</ul>`; }
       blocos.forEach((b, bi) => { html += `<h3 style="font-weight:bold;margin-top:16px;">📺 BLOCO ${bi + 1}</h3>`; b.noticias.forEach((n, ni) => { if (!n.titulo) return; html += `<p><strong>Notícia ${ni + 1}:</strong> ${n.titulo}</p>`; if (n.imagemUrl) html += `<p><em>Imagem:</em> <a href="${n.imagemUrl}">${n.imagemUrl}</a></p>`; }); });
 
       const blob = new Blob([xmlContent], { type: "application/xml" });
@@ -527,18 +525,21 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
           </p>
           <div className="space-y-1.5">
             {escaladaList.map((item, idx) => (
-              <div key={idx} className="flex items-center gap-1">
+              <div key={idx} className="flex items-center gap-1.5">
                 <span className="text-[10px] font-bold shrink-0 w-5 text-center" style={{ color: "#f59e0b" }}>{idx + 1}.</span>
                 <div className="flex flex-col shrink-0">
                   <button onClick={() => { if (idx === 0) return; setEscaladaList(prev => { const c = [...prev]; [c[idx - 1], c[idx]] = [c[idx], c[idx - 1]]; return c; }); }} disabled={idx === 0} className="p-0.5 rounded hover:opacity-70 disabled:opacity-20" style={{ color: "#f59e0b" }}><ArrowUp size={10} /></button>
                   <button onClick={() => { if (idx === escaladaList.length - 1) return; setEscaladaList(prev => { const c = [...prev]; [c[idx], c[idx + 1]] = [c[idx + 1], c[idx]]; return c; }); }} disabled={idx === escaladaList.length - 1} className="p-0.5 rounded hover:opacity-70 disabled:opacity-20" style={{ color: "#f59e0b" }}><ArrowDown size={10} /></button>
                 </div>
-                <input value={item} onChange={e => setEscaladaList(prev => prev.map((v, i) => i === idx ? e.target.value : v))} className="flex-1 px-2.5 py-1.5 rounded-lg text-[11px] outline-none min-w-0" style={inputStyle} placeholder="Título da manchete..." />
+                {item.imagemUrl && item.imagemUrl.startsWith("http") && (
+                  <img src={item.imagemUrl} alt="" className="w-10 h-7 object-cover rounded shrink-0" onError={e => (e.currentTarget.style.display = "none")} />
+                )}
+                <input value={item.titulo} onChange={e => setEscaladaList(prev => prev.map((v, i) => i === idx ? { ...v, titulo: e.target.value } : v))} className="flex-1 px-2.5 py-1.5 rounded-lg text-[11px] outline-none min-w-0" style={inputStyle} placeholder="Título da manchete..." />
                 <button onClick={() => setEscaladaList(prev => prev.filter((_, i) => i !== idx))} className="p-1 rounded-full hover:opacity-70 shrink-0" style={{ color: "#ef4444" }}><Trash2 size={12} /></button>
               </div>
             ))}
           </div>
-          <button onClick={() => setEscaladaList(prev => [...prev, ""])} className="flex items-center gap-1 text-[11px] font-semibold py-1.5 px-3 rounded-full hover:opacity-80 transition-all mt-2" style={{ color: "#f59e0b", border: "1px dashed color-mix(in srgb, #f59e0b 40%, transparent)" }}>
+          <button onClick={() => setEscaladaList(prev => [...prev, { titulo: "", imagemUrl: "" }])} className="flex items-center gap-1 text-[11px] font-semibold py-1.5 px-3 rounded-full hover:opacity-80 transition-all mt-2" style={{ color: "#f59e0b", border: "1px dashed color-mix(in srgb, #f59e0b 40%, transparent)" }}>
             <Plus size={12} /> Adicionar manchete
           </button>
         </div>
