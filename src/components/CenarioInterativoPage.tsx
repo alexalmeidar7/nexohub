@@ -1032,43 +1032,41 @@ export default function CenarioInterativoPage() {
                   {/* Currency overlay */}
                   {activeTab === "currency" && (
                     <div className="absolute inset-0 flex flex-col overflow-hidden" style={{ color: "#fff" }}>
-                      {/* Dark bg with stock ticker feel when no custom bg */}
                       {!config.currency.bgImage && (
-                        <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, #0a0a0a 0%, #1a1a1a 100%)" }} />
+                        <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, #06080c 0%, #111826 100%)" }} />
                       )}
-                      {/* Bottom accent glow */}
-                      <div className="absolute bottom-0 left-0 right-0 h-1/4" style={{ background: "linear-gradient(to top, rgba(200,230,0,0.25), transparent)" }} />
+                      {config.currency.bgImage && (
+                        <div className="absolute inset-0" style={{ background: "rgba(3,8,14,0.45)" }} />
+                      )}
+                      <div className="absolute bottom-0 left-0 right-0 h-1/4" style={{ background: "linear-gradient(to top, rgba(225,245,50,0.22), transparent)" }} />
 
                       <div className="relative z-10 flex flex-col h-full p-3">
                         {config.currency.enabled ? (
                           <>
-                            {/* Icon top-right */}
                             <div className="flex justify-end mb-1">
-                              <DollarSign size={32} className="drop-shadow-lg" style={{ color: "#c8e600" }} />
+                              <DollarSign size={32} className="drop-shadow-lg" style={{ color: "#e1f532" }} />
                             </div>
-                            {/* Title */}
-                            <div className="mb-3">
-                              <div className="text-xl font-extrabold leading-tight drop-shadow-lg">cotação</div>
-                              <div className="text-sm font-bold" style={{ color: "#c8e600" }}>moedas</div>
+                            <div className="mb-2">
+                              <div className="text-2xl font-extrabold leading-tight drop-shadow-lg">cotação</div>
+                              <div className="text-base font-bold tracking-wide" style={{ color: "#e1f532" }}>moedas</div>
                             </div>
-                            {/* Glassmorphism card */}
-                            <div className="flex-1 rounded-xl p-3 space-y-2 overflow-auto" style={{ background: "rgba(255,255,255,0.12)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.15)" }}>
-                              <div className="text-[10px] font-bold opacity-70 mb-1">cotações moedas</div>
+                            <div className="flex-1 rounded-xl p-3 space-y-2 overflow-auto" style={{ background: "rgba(6,10,16,0.72)", backdropFilter: "blur(12px)", border: "1px solid rgba(225,245,50,0.28)", boxShadow: "0 12px 28px rgba(0,0,0,0.45)" }}>
+                              <div className="text-[11px] font-bold uppercase tracking-wide mb-1" style={{ color: "rgba(255,255,255,0.9)" }}>cotações em tempo real</div>
                               {currencyLoading && !liveCurrencies.length ? (
-                                <div className="flex items-center gap-2 text-[9px] opacity-60"><Loader2 size={12} className="animate-spin" /> Carregando...</div>
+                                <div className="flex items-center gap-2 text-[10px] opacity-80"><Loader2 size={12} className="animate-spin" /> Carregando...</div>
                               ) : config.currency.currencies.map(c => {
                                 const opt = CURRENCY_OPTIONS.find(o => o.value === c);
                                 const live = liveCurrencies.find(l => l.code === c);
                                 return (
-                                  <div key={c} className="flex items-center justify-between text-[9px] rounded-lg px-2 py-1.5" style={{ background: "rgba(255,255,255,0.08)" }}>
-                                    <span className="font-bold">{opt?.label?.split("(")[0]?.trim() || c}</span>
+                                  <div key={c} className="flex items-center justify-between rounded-lg px-2.5 py-2 text-[11px]" style={{ background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.12)" }}>
+                                    <span className="font-semibold leading-tight pr-2" style={{ color: "#fff" }}>{opt?.label?.split("(")[0]?.trim() || c}</span>
                                     {live ? (
                                       <div className="flex items-center gap-1.5">
-                                        <span className="font-bold">{live.value}</span>
-                                        <span style={{ color: live.direction === "up" ? "#4ade80" : live.direction === "down" ? "#f87171" : "#999" }}>{live.change}</span>
+                                        <span className="font-extrabold text-[12px]" style={{ color: "#fff" }}>{live.value}</span>
+                                        <span className="font-bold text-[11px]" style={{ color: live.direction === "up" ? "#4ade80" : live.direction === "down" ? "#f87171" : "rgba(255,255,255,0.75)" }}>{live.change}</span>
                                       </div>
                                     ) : (
-                                      <span className="opacity-50">---</span>
+                                      <span className="opacity-70">---</span>
                                     )}
                                   </div>
                                 );
@@ -1076,7 +1074,7 @@ export default function CenarioInterativoPage() {
                             </div>
                           </>
                         ) : (
-                          <div className="flex-1 flex items-center justify-center text-[10px] opacity-50">Cotação desativada</div>
+                          <div className="flex-1 flex items-center justify-center text-[11px] opacity-70">Cotação desativada</div>
                         )}
                       </div>
                     </div>

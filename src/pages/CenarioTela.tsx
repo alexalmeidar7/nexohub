@@ -386,37 +386,38 @@ export default function CenarioTela() {
             {/* ═══ CURRENCY ═══ */}
             {activeTab === "currency" && (
               <div className="absolute inset-0 flex flex-col overflow-hidden" style={{ color: "#fff" }}>
-                {!config.currency.bgImage && <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, #0a0a0a 0%, #1a1a1a 100%)" }} />}
-                <div className="absolute bottom-0 left-0 right-0 h-1/4" style={{ background: "linear-gradient(to top, rgba(200,230,0,0.25), transparent)" }} />
+                {!config.currency.bgImage && <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, #06080c 0%, #111826 100%)" }} />}
+                {config.currency.bgImage && <div className="absolute inset-0" style={{ background: "rgba(3,8,14,0.45)" }} />}
+                <div className="absolute bottom-0 left-0 right-0 h-1/4" style={{ background: "linear-gradient(to top, rgba(225,245,50,0.22), transparent)" }} />
                 <div className="relative z-10 flex flex-col h-full" style={{ padding: "3vh" }}>
                   {config.currency.enabled ? (<>
                     <div className="flex justify-end mb-1"><DollarSign size={48} className="drop-shadow-lg" style={{ color: "#e1f532" }} /></div>
-                    <div style={{ marginBottom: "2vh" }}>
-                      <div className="font-extrabold leading-tight drop-shadow-lg" style={{ fontSize: "4vh" }}>cotação</div>
-                      <div className="font-bold" style={{ fontSize: "2.5vh", color: "#e1f532" }}>moedas</div>
+                    <div style={{ marginBottom: "1.6vh" }}>
+                      <div className="font-extrabold leading-tight drop-shadow-lg" style={{ fontSize: "4.2vh" }}>cotação</div>
+                      <div className="font-bold" style={{ fontSize: "2.6vh", color: "#e1f532" }}>moedas</div>
                     </div>
-                    <div className="flex-1 rounded-xl space-y-2" style={{ padding: "2.5vh", background: "rgba(255,255,255,0.12)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.15)" }}>
-                      <div className="font-bold opacity-70" style={{ fontSize: "1.8vh", marginBottom: "1vh" }}>cotações moedas</div>
+                    <div className="flex-1 rounded-xl space-y-2 overflow-auto" style={{ padding: "2.2vh", background: "rgba(6,10,16,0.72)", backdropFilter: "blur(12px)", border: "1px solid rgba(225,245,50,0.28)", boxShadow: "0 12px 28px rgba(0,0,0,0.45)" }}>
+                      <div className="font-bold uppercase tracking-wide" style={{ fontSize: "1.7vh", marginBottom: "0.8vh", color: "rgba(255,255,255,0.9)" }}>cotações em tempo real</div>
                       {config.currency.currencies.map(c => {
                         const opt = CURRENCY_OPTIONS.find(o => o.value === c);
                         const live = liveCurrencies.find(l => l.code === c);
                         return (
-                          <div key={c} className="flex items-center justify-between rounded-lg" style={{ fontSize: "1.8vh", padding: "1.2vh 1.5vh", background: "rgba(255,255,255,0.08)" }}>
-                            <span className="font-bold">{opt?.label?.split("(")[0]?.trim() || c}</span>
+                          <div key={c} className="flex items-center justify-between rounded-lg" style={{ fontSize: "1.95vh", padding: "1.25vh 1.4vh", background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.12)" }}>
+                            <span className="font-semibold" style={{ maxWidth: "52%", lineHeight: 1.15 }}>{opt?.label?.split("(")[0]?.trim() || c}</span>
                             {live ? (
-                              <div className="flex items-center" style={{ gap: "1vh" }}>
-                                <span className="font-bold">{live.value}</span>
-                                <span style={{ color: live.direction === "up" ? "#4ade80" : live.direction === "down" ? "#f87171" : "#999" }}>{live.change}</span>
+                              <div className="flex items-center" style={{ gap: "0.8vh" }}>
+                                <span className="font-extrabold" style={{ fontSize: "2.05vh" }}>{live.value}</span>
+                                <span className="font-bold" style={{ fontSize: "1.75vh", color: live.direction === "up" ? "#4ade80" : live.direction === "down" ? "#f87171" : "rgba(255,255,255,0.75)" }}>{live.change}</span>
                               </div>
                             ) : (
-                              <span className="opacity-50">---</span>
+                              <span className="opacity-70">---</span>
                             )}
                           </div>
                         );
                       })}
                     </div>
                   </>) : (
-                    <div className="flex-1 flex items-center justify-center opacity-50" style={{ fontSize: "1.8vh" }}>Cotação desativada</div>
+                    <div className="flex-1 flex items-center justify-center opacity-70" style={{ fontSize: "1.9vh" }}>Cotação desativada</div>
                   )}
                 </div>
               </div>
