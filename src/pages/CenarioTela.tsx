@@ -450,8 +450,8 @@ export default function CenarioTela() {
                                 <div className="flex items-center" style={{ gap: "0.8vh" }}>
                                   <span className="font-extrabold" style={{ fontSize: "2.05vh" }}>{live.value}</span>
                                   <span className="font-bold" style={{ fontSize: "1.75vh", color: live.direction === "up" ? "#4ade80" : live.direction === "down" ? "#f87171" : "rgba(255,255,255,0.75)" }}>{live.change}</span>
-                                  {live.direction === "up" && <TrendingUp style={{ width: "2vh", height: "2vh" }} className="cenario-arrow-up" />}
-                                  {live.direction === "down" && <TrendingDown style={{ width: "2vh", height: "2vh" }} className="cenario-arrow-down" />}
+                                  {live.direction === "up" && <ChevronUp style={{ width: "2.5vh", height: "2.5vh" }} strokeWidth={3} className="cenario-arrow-up" />}
+                                  {live.direction === "down" && <ChevronDown style={{ width: "2.5vh", height: "2.5vh" }} strokeWidth={3} className="cenario-arrow-down" />}
                                   {live.direction !== "up" && live.direction !== "down" && <Minus style={{ width: "2vh", height: "2vh", color: "rgba(255,255,255,0.5)" }} />}
                                 </div>
                               ) : (
