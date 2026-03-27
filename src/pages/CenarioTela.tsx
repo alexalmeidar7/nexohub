@@ -89,6 +89,20 @@ export default function CenarioTela() {
   const [liveWeather, setLiveWeather] = useState<LiveWeather | null>(null);
   const [weatherCoords, setWeatherCoords] = useState<{ lat: number; lon: number } | null>(null);
   const [trafficCoords, setTrafficCoords] = useState<{ lat: number; lon: number } | null>(null);
+  const [liveCurrencies, setLiveCurrencies] = useState<LiveCurrency[]>([]);
+
+  /* Fetch live currencies */
+  useEffect(() => {
+    if (!config.currency.enabled || !config.currency.currencies.length) return;
+    let cancelled = false;
+    const load = async () => {
+      const data = await fetchLiveCurrencies(config.currency.currencies);
+      if (!cancelled) setLiveCurrencies(data);
+    };
+    load();
+    const interval = setInterval(load, 60000);
+    return () => { cancelled = true; clearInterval(interval); };
+  }, [config.currency.enabled, config.currency.currencies.join(",")]);
 
   /* Clock */
   useEffect(() => {
