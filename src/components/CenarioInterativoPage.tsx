@@ -1,31 +1,31 @@
-import { useState, useEffect } from "react";
-import { MonitorPlay, CloudSun, Car, DollarSign, MessageCircle, Plus, Trash2, Eye, Settings, ChevronDown, ChevronUp, Home } from "lucide-react";
+import { useState } from "react";
+import { MonitorPlay, CloudSun, Car, DollarSign, MessageCircle, Plus, Trash2, Eye, Settings, Home, MapPin, Satellite, Sun, CalendarDays, Search } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { toast } from "sonner";
 
 /* ─── types ─── */
 interface WeatherConfig {
   enabled: boolean;
   showCurrent: boolean;
   showForecast3Days: boolean;
+  showSatellite: boolean;
   city: string;
 }
 
 interface TrafficPoint {
   id: string;
   label: string;
-  address: string;
+  lat: number;
+  lng: number;
 }
 
 interface TrafficConfig {
   enabled: boolean;
+  city: string;
   points: TrafficPoint[];
 }
 
@@ -47,8 +47,8 @@ interface CenarioConfig {
 }
 
 const defaultConfig: CenarioConfig = {
-  weather: { enabled: true, showCurrent: true, showForecast3Days: true, city: "" },
-  traffic: { enabled: false, points: [] },
+  weather: { enabled: true, showCurrent: true, showForecast3Days: true, showSatellite: false, city: "" },
+  traffic: { enabled: false, city: "", points: [] },
   currency: { enabled: true, currencies: ["USD", "EUR"] },
   chat: { enabled: false, youtubeVideoUrl: "" },
 };
@@ -86,10 +86,8 @@ export default function CenarioInterativoPage() {
   const { user } = useAuth();
   const [config, setConfig] = useState<CenarioConfig>(defaultConfig);
   const [activeTab, setActiveTab] = useState("weather");
-  const [newAddress, setNewAddress] = useState("");
-  const [newAddressLabel, setNewAddressLabel] = useState("");
-
-  /* persist / load could go to user_settings JSON later */
+  const [weatherSubTab, setWeatherSubTab] = useState("today");
+  const [trafficSearchCity, setTrafficSearchCity] = useState("");
 
   const updateWeather = (partial: Partial<WeatherConfig>) =>
     setConfig(c => ({ ...c, weather: { ...c.weather, ...partial } }));
@@ -100,14 +98,6 @@ export default function CenarioInterativoPage() {
   const updateChat = (partial: Partial<ChatConfig>) =>
     setConfig(c => ({ ...c, chat: { ...c.chat, ...partial } }));
 
-  const addTrafficPoint = () => {
-    if (!newAddress.trim()) return;
-    const point: TrafficPoint = { id: crypto.randomUUID(), label: newAddressLabel || newAddress, address: newAddress };
-    updateTraffic({ points: [...config.traffic.points, point] });
-    setNewAddress("");
-    setNewAddressLabel("");
-  };
-
   const removeTrafficPoint = (id: string) =>
     updateTraffic({ points: config.traffic.points.filter(p => p.id !== id) });
 
@@ -115,6 +105,14 @@ export default function CenarioInterativoPage() {
     const has = config.currency.currencies.includes(code);
     updateCurrency({ currencies: has ? config.currency.currencies.filter(c => c !== code) : [...config.currency.currencies, code] });
   };
+
+  const handleTrafficSearch = () => {
+    if (!trafficSearchCity.trim()) return;
+    updateTraffic({ city: trafficSearchCity.trim() });
+  };
+
+  const trafficMapCity = config.traffic.city || "São Paulo";
+  const trafficMapUrl = `https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d50000!2d-46.6333!3d-23.5505!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1spt-BR!2sbr!4v1&q=${encodeURIComponent(trafficMapCity)}&layer=traffic`;
 
   /* ─── header style ─── */
   const headerStyle = {
@@ -128,11 +126,12 @@ export default function CenarioInterativoPage() {
   };
   const textColor = "var(--layout-page-text, #1a1a1a)";
   const mutedText = "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)";
+  const subTabBg = "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)";
+  const subTabActive = "var(--layout-header-bg, #0d0446)";
 
   /* ─── RENDER ─── */
   return (
     <div className="animate-fade-in space-y-5">
-      {/* Header */}
       <div className="rounded-2xl overflow-hidden" style={pageStyle}>
         <div className="px-6 py-4 flex items-center gap-3" style={headerStyle}>
           <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: "rgba(255,255,255,0.15)" }}>
@@ -144,7 +143,6 @@ export default function CenarioInterativoPage() {
           </div>
         </div>
 
-        {/* Body: config left + preview right */}
         <div className="p-5 flex flex-col lg:flex-row gap-6" style={{ color: textColor }}>
 
           {/* ── LEFT: Configuration ── */}
@@ -162,31 +160,97 @@ export default function CenarioInterativoPage() {
                 <TabsTrigger value="chat" className="text-xs gap-1 data-[state=active]:shadow-sm"><MessageCircle size={14} /> Chat</TabsTrigger>
               </TabsList>
 
-              {/* Weather */}
+              {/* ═══ Weather ═══ */}
               <TabsContent value="weather" className="space-y-4">
                 <div className="flex items-center justify-between">
                   <Label className="text-sm font-medium">Ativar Previsão do Tempo</Label>
                   <Switch checked={config.weather.enabled} onCheckedChange={v => updateWeather({ enabled: v })} />
                 </div>
+
                 {config.weather.enabled && (
                   <>
-                    <div>
-                      <Label className="text-xs mb-1 block" style={{ color: mutedText }}>Cidade</Label>
-                      <Input placeholder="Ex: São Paulo" value={config.weather.city} onChange={e => updateWeather({ city: e.target.value })} className="text-sm" />
+                    {/* Sub-tabs */}
+                    <div className="flex gap-1 rounded-lg p-1" style={{ background: subTabBg }}>
+                      {[
+                        { key: "today", label: "Hoje", icon: <Sun size={13} /> },
+                        { key: "forecast", label: "3 Dias", icon: <CalendarDays size={13} /> },
+                        { key: "satellite", label: "Satélite", icon: <Satellite size={13} /> },
+                      ].map(t => (
+                        <button
+                          key={t.key}
+                          onClick={() => setWeatherSubTab(t.key)}
+                          className="flex-1 flex items-center justify-center gap-1 rounded-md px-2 py-1.5 text-xs font-medium transition-all"
+                          style={{
+                            background: weatherSubTab === t.key ? subTabActive : "transparent",
+                            color: weatherSubTab === t.key ? "var(--layout-header-text, #fff)" : textColor,
+                          }}
+                        >
+                          {t.icon} {t.label}
+                        </button>
+                      ))}
                     </div>
-                    <div className="flex items-center justify-between">
-                      <Label className="text-sm">Mostrar tempo atual</Label>
-                      <Switch checked={config.weather.showCurrent} onCheckedChange={v => updateWeather({ showCurrent: v })} />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <Label className="text-sm">Mostrar próximos 3 dias</Label>
-                      <Switch checked={config.weather.showForecast3Days} onCheckedChange={v => updateWeather({ showForecast3Days: v })} />
-                    </div>
+
+                    {/* Sub-tab: Hoje */}
+                    {weatherSubTab === "today" && (
+                      <div className="space-y-3">
+                        <p className="text-xs" style={{ color: mutedText }}>
+                          Exibe o tempo completo do dia atual: temperatura, umidade, vento, sensação térmica e condição climática.
+                        </p>
+                        <div className="flex items-center justify-between">
+                          <Label className="text-sm">Exibir tempo atual completo</Label>
+                          <Switch checked={config.weather.showCurrent} onCheckedChange={v => updateWeather({ showCurrent: v })} />
+                        </div>
+                        <div>
+                          <Label className="text-xs mb-1 block" style={{ color: mutedText }}>Cidade</Label>
+                          <Input placeholder="Ex: São Paulo" value={config.weather.city} onChange={e => updateWeather({ city: e.target.value })} className="text-sm" />
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Sub-tab: 3 Dias */}
+                    {weatherSubTab === "forecast" && (
+                      <div className="space-y-3">
+                        <p className="text-xs" style={{ color: mutedText }}>
+                          Exibe a previsão completa para os próximos 3 dias com temperaturas mínima e máxima, condição e ícone.
+                        </p>
+                        <div className="flex items-center justify-between">
+                          <Label className="text-sm">Exibir previsão 3 dias</Label>
+                          <Switch checked={config.weather.showForecast3Days} onCheckedChange={v => updateWeather({ showForecast3Days: v })} />
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Sub-tab: Satélite */}
+                    {weatherSubTab === "satellite" && (
+                      <div className="space-y-3">
+                        <p className="text-xs" style={{ color: mutedText }}>
+                          Exibe imagens de satélite meteorológico da região configurada.
+                        </p>
+                        <div className="flex items-center justify-between">
+                          <Label className="text-sm">Exibir imagens de satélite</Label>
+                          <Switch checked={config.weather.showSatellite} onCheckedChange={v => updateWeather({ showSatellite: v })} />
+                        </div>
+                        <div>
+                          <Label className="text-xs mb-1 block" style={{ color: mutedText }}>Cidade para satélite</Label>
+                          <Input placeholder="Ex: São Paulo" value={config.weather.city} onChange={e => updateWeather({ city: e.target.value })} className="text-sm" />
+                        </div>
+                        {config.weather.showSatellite && (
+                          <div className="rounded-lg overflow-hidden border" style={{ borderColor: "color-mix(in srgb, var(--layout-border-color, #333) 20%, transparent)" }}>
+                            <img
+                              src={`https://satellite.imdl.es/imagery/GOES16_ABI/BAND13/-23.55/-46.63/4/latest.jpg`}
+                              alt="Imagem de satélite"
+                              className="w-full h-40 object-cover"
+                              onError={e => { (e.target as HTMLImageElement).src = "https://placehold.co/400x200/1a1a2e/white?text=Satélite"; }}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </>
                 )}
               </TabsContent>
 
-              {/* Traffic */}
+              {/* ═══ Traffic ═══ */}
               <TabsContent value="traffic" className="space-y-4">
                 <div className="flex items-center justify-between">
                   <Label className="text-sm font-medium">Ativar Trânsito</Label>
@@ -194,23 +258,43 @@ export default function CenarioInterativoPage() {
                 </div>
                 {config.traffic.enabled && (
                   <>
-                    <p className="text-xs" style={{ color: mutedText }}>Adicione endereços/pontos para exibir no cenário.</p>
-                    <div className="space-y-2">
-                      <Input placeholder="Rótulo (ex: Av. Paulista)" value={newAddressLabel} onChange={e => setNewAddressLabel(e.target.value)} className="text-sm" />
-                      <Input placeholder="Endereço completo" value={newAddress} onChange={e => setNewAddress(e.target.value)} className="text-sm" />
-                      <Button size="sm" onClick={addTrafficPoint} className="gap-1 text-xs" style={{ background: "var(--layout-header-bg, #0d0446)", color: "var(--layout-header-text, #fff)" }}>
-                        <Plus size={14} /> Adicionar ponto
+                    {/* City search */}
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Nome da cidade..."
+                        value={trafficSearchCity}
+                        onChange={e => setTrafficSearchCity(e.target.value)}
+                        onKeyDown={e => e.key === "Enter" && handleTrafficSearch()}
+                        className="text-sm flex-1"
+                      />
+                      <Button size="sm" onClick={handleTrafficSearch} className="gap-1 text-xs" style={{ background: "var(--layout-header-bg, #0d0446)", color: "var(--layout-header-text, #fff)" }}>
+                        <Search size={14} /> Buscar
                       </Button>
                     </div>
+
+                    {/* Embedded map with traffic */}
+                    <div className="rounded-lg overflow-hidden border" style={{ borderColor: "color-mix(in srgb, var(--layout-border-color, #333) 20%, transparent)" }}>
+                      <iframe
+                        title="Mapa de Trânsito"
+                        src={`https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&q=${encodeURIComponent(trafficMapCity)}&zoom=12&maptype=roadmap`}
+                        className="w-full h-[280px] border-0"
+                        allowFullScreen
+                        loading="lazy"
+                        referrerPolicy="no-referrer-when-downgrade"
+                      />
+                      <p className="text-[10px] text-center py-1" style={{ color: mutedText }}>
+                        Clique no mapa para marcar pontos de trânsito
+                      </p>
+                    </div>
+
+                    {/* Marked points */}
                     {config.traffic.points.length > 0 && (
                       <div className="space-y-2 mt-2">
+                        <Label className="text-xs font-medium" style={{ color: mutedText }}>Pontos marcados</Label>
                         {config.traffic.points.map(p => (
-                          <div key={p.id} className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs" style={{ background: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)" }}>
-                            <Car size={12} style={{ color: mutedText }} />
-                            <div className="flex-1 min-w-0">
-                              <span className="font-medium">{p.label}</span>
-                              <span className="block truncate" style={{ color: mutedText }}>{p.address}</span>
-                            </div>
+                          <div key={p.id} className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs" style={{ background: subTabBg }}>
+                            <MapPin size={12} style={{ color: mutedText }} />
+                            <span className="flex-1 font-medium">{p.label}</span>
                             <button onClick={() => removeTrafficPoint(p.id)} className="opacity-60 hover:opacity-100"><Trash2 size={14} /></button>
                           </div>
                         ))}
@@ -220,7 +304,7 @@ export default function CenarioInterativoPage() {
                 )}
               </TabsContent>
 
-              {/* Currency */}
+              {/* ═══ Currency ═══ */}
               <TabsContent value="currency" className="space-y-4">
                 <div className="flex items-center justify-between">
                   <Label className="text-sm font-medium">Ativar Cotações</Label>
@@ -240,7 +324,7 @@ export default function CenarioInterativoPage() {
                 )}
               </TabsContent>
 
-              {/* Chat */}
+              {/* ═══ Chat ═══ */}
               <TabsContent value="chat" className="space-y-4">
                 <div className="flex items-center justify-between">
                   <Label className="text-sm font-medium">Ativar Chat YouTube Live</Label>
@@ -263,7 +347,6 @@ export default function CenarioInterativoPage() {
               <span className="text-sm font-semibold">Preview (9:16)</span>
             </div>
 
-            {/* 9:16 container */}
             <div
               className="relative rounded-2xl overflow-hidden mx-auto"
               style={{
@@ -274,17 +357,12 @@ export default function CenarioInterativoPage() {
                 border: "2px solid rgba(255,255,255,0.08)",
               }}
             >
-              {/* Layout: dark sidebar + light content area */}
               <div className="absolute inset-0 flex" style={{ fontSize: 10 }}>
-
-                {/* ── Dark sidebar with icon buttons ── */}
+                {/* ── Dark sidebar ── */}
                 <div className="w-[52px] flex-shrink-0 flex flex-col items-center py-4 gap-1" style={{ background: "#1a1a1a" }}>
-                  {/* Home */}
                   <div className="w-9 h-9 rounded-full flex items-center justify-center mb-2" style={{ background: "rgba(255,255,255,0.12)" }}>
                     <Home size={16} className="text-white" />
                   </div>
-
-                  {/* Weather icon */}
                   <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.12)", opacity: config.weather.enabled ? 1 : 0.35 }}>
                     <CloudSun size={16} className="text-white" />
                   </div>
@@ -293,30 +371,26 @@ export default function CenarioInterativoPage() {
                       {i + 1}
                     </div>
                   ))}
-
-                  {/* Traffic icon */}
+                  {config.weather.enabled && config.weather.showSatellite && (
+                    <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.12)" }}>
+                      <Satellite size={14} className="text-white" />
+                    </div>
+                  )}
                   <div className="w-9 h-9 rounded-full flex items-center justify-center mt-2" style={{ background: "rgba(255,255,255,0.12)", opacity: config.traffic.enabled ? 1 : 0.35 }}>
                     <Car size={16} className="text-white" />
                   </div>
-
-                  {/* Currency icon */}
                   <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.15)", opacity: config.currency.enabled ? 1 : 0.35 }}>
                     <DollarSign size={16} className="text-white" />
                   </div>
-
-                  {/* Chat icon */}
                   <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.15)", opacity: config.chat.enabled ? 1 : 0.35 }}>
                     <MessageCircle size={16} className="text-white" />
                   </div>
                 </div>
 
                 {/* ── Light content area ── */}
-                <div className="flex-1" style={{ background: "#e8e8e8" }}>
-                  {/* Content would render here based on active sidebar item */}
-                </div>
+                <div className="flex-1" style={{ background: "#e8e8e8" }} />
               </div>
 
-              {/* Empty state overlay */}
               {!config.weather.enabled && !config.traffic.enabled && !config.currency.enabled && !config.chat.enabled && (
                 <div className="absolute inset-0 flex items-center justify-center text-center" style={{ background: "rgba(26,26,26,0.85)" }}>
                   <div className="text-white opacity-50">
