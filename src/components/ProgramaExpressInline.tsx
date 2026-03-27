@@ -175,9 +175,53 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
     }
   }, [editData, initialized]);
 
+  // Store initial data snapshot for edit tracking
+  useEffect(() => {
+    if (editData && initialized && !initialDataRef.current) {
+      initialDataRef.current = {
+        estudio: editData.estudio,
+        programaId: editData.programaId,
+        blocos: JSON.stringify(editData.blocos),
+        participantes: JSON.stringify(editData.participantes || []),
+      };
+    }
+  }, [editData, initialized]);
+
+  // Auto-save debounced (only when editing existing roteiro)
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!editingId || !initialized || !user || !programaId) return;
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    autoSaveTimerRef.current = setTimeout(async () => {
+      const totalNews = blocos.reduce((s, b) => s + b.noticias.filter(n => n.titulo).length, 0);
+      if (totalNews === 0) return;
+      setAutoSaving(true);
+      try {
+        const xmlContent = generateXml();
+        const pNome = programas.find(p => p.id === programaId)?.nome || "";
+        let html = `<h2 style="text-align:center;font-weight:bold;">PROGRAMA EXPRESS — ${pNome}</h2>`;
+        if (participantes.length > 0) { html += `<h3 style="font-weight:bold;margin-top:16px;">👥 PARTICIPANTES</h3><ul>`; participantes.forEach(p => { html += `<li><strong>${p.nome}</strong>${p.cargo ? ` — ${p.cargo}` : ""}${p.instagram ? ` (@${p.instagram.replace("@", "")})` : ""}</li>`; }); html += `</ul>`; }
+        if (escaladaList.length > 0) { html += `<h3 style="font-weight:bold;margin-top:16px;">📢 ESCALADA</h3><ul>`; escaladaList.forEach(e => { html += `<li><strong>${e.titulo}</strong></li>`; }); html += `</ul>`; }
+        blocos.forEach((b, bi) => { html += `<h3 style="font-weight:bold;margin-top:16px;">📺 BLOCO ${bi + 1}</h3>`; b.noticias.forEach((n, ni) => { if (!n.titulo) return; html += `<p><strong>Notícia ${ni + 1}:</strong> ${n.titulo}</p>`; if (n.imagemUrl) html += `<p><em>Imagem:</em> <a href="${n.imagemUrl}">${n.imagemUrl}</a></p>`; }); });
+        const blob = new Blob([xmlContent], { type: "application/xml" });
+        const fileName = `express_${programaId}_${Date.now()}.xml`;
+        const filePath = `express/${user.id}/${fileName}`;
+        await supabase.storage.from("empresa-assets").upload(filePath, blob, { upsert: true, contentType: "application/xml" });
+        const { data: urlData } = supabase.storage.from("empresa-assets").getPublicUrl(filePath);
+        const blocosJson = JSON.stringify({ blocos, participantes });
+        await supabase.from("roteiros").update({ programa_nome: pNome, estudio, titulo: `PROGRAMA EXPRESS — ${pNome}`, subtitulo: `express_xml::${urlData.publicUrl}`, conteudo_html: html, participantes: blocosJson }).eq("id", editingId);
+        setLastAutoSaved(Date.now());
+      } catch (e) { console.error("Auto-save error:", e); }
+      setAutoSaving(false);
+    }, 2000);
+    return () => { if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editingId, estudio, programaId, blocos, participantes, escaladaList, initialized]);
+
   const addParticipante = (p: Participante) => {
     if (participantes.some(x => x.nome === p.nome)) { toast.info("Participante já adicionado"); return; }
     setParticipantes(prev => [...prev, p]);
+    markEdited("participantes");
     setSearchNome("");
     setSearchResults([]);
     setShowResults(false);
@@ -185,6 +229,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
 
   const removeParticipante = (idx: number) => {
     setParticipantes(prev => prev.filter((_, i) => i !== idx));
+    markEdited("participantes");
   };
 
   const openNewContactPopup = () => {
