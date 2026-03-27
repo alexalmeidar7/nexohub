@@ -177,8 +177,22 @@ function BgImageUpload({ value, onChange, mutedText, userId, category }: { value
 export default function CenarioInterativoPage() {
   const { user } = useAuth();
   const [config, setConfig] = useState<CenarioConfig>(defaultConfig);
+  const cenarioBcRef = useRef<BroadcastChannel | null>(null);
+  useEffect(() => {
+    cenarioBcRef.current = new BroadcastChannel("cenario-interativo");
+    return () => cenarioBcRef.current?.close();
+  }, []);
   const [activeTab, setActiveTab] = useState("home");
   const [weatherSubTab, setWeatherSubTab] = useState("today");
+
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    cenarioBcRef.current?.postMessage({ type: "tab-change", tab, subTab: weatherSubTab });
+  };
+  const handleWeatherSubTabChange = (sub: string) => {
+    setWeatherSubTab(sub);
+    cenarioBcRef.current?.postMessage({ type: "tab-change", tab: "weather", subTab: sub });
+  };
   const [trafficSearchCity, setTrafficSearchCity] = useState("");
   const [saving, setSaving] = useState(false);
   const [loaded, setLoaded] = useState(false);
