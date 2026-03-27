@@ -258,7 +258,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
     if (parsedEstudio) { const matched = estudios.find(e => e.toLowerCase() === parsedEstudio.toLowerCase()); if (matched) setEstudio(matched); else { setEstudio(parsedEstudio); toast.info(`Estúdio "${parsedEstudio}" não encontrado na lista`); } }
     if (parsedPrograma) { const matched = programas.find(p => p.nome.toLowerCase() === parsedPrograma.toLowerCase()); if (matched) setProgramaId(matched.id); else { const partial = programas.find(p => p.nome.toLowerCase().includes(parsedPrograma.toLowerCase()) || parsedPrograma.toLowerCase().includes(p.nome.toLowerCase())); if (partial) setProgramaId(partial.id); else toast.warning(`Programa "${parsedPrograma}" não encontrado`); } }
     if (parsedParticipantes.length > 0) setParticipantes(parsedParticipantes);
-    if (parsedEscalada.length > 0) setEscaladaList(parsedEscalada);
+    if (parsedEscalada.length > 0) setEscaladaList(parsedEscalada.map(t => ({ titulo: t, imagemUrl: "" })));
     if (parsedBlocos.length > 0) setBlocos(parsedBlocos);
     setShowPastePopup(false);
     setPasteText("");
