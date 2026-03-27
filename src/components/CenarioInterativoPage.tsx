@@ -437,7 +437,7 @@ export default function CenarioInterativoPage() {
                         {opt.label}
                       </label>
                     ))}
-                    <BgImageUpload value={config.currency.bgImage} onChange={v => updateCurrency({ bgImage: v })} mutedText={mutedText} />
+                    <BgImageUpload value={config.currency.bgImage} onChange={v => updateCurrency({ bgImage: v })} mutedText={mutedText} userId={uid} category="currency" />
                   </div>
                 )}
               </TabsContent>
