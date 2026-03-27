@@ -89,6 +89,7 @@ const sidebarMenu: MenuItem[] = [
     icon: Monitor, label: "vmix", children: [
       { icon: Monitor, label: "vmix control", page: undefined as unknown as Page },
       { icon: Image, label: "logos", page: "logos" },
+      { icon: MonitorPlay, label: "cenário interativo", page: "cenario" },
     ]
   },
   {
