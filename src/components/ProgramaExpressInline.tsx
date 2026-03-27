@@ -1,8 +1,8 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { Zap, Plus, Trash2, Link2, Loader2, Image, Type, Check, X as XIcon, ChevronDown, ChevronUp, Pencil, Users, Search, UserPlus, ClipboardPaste, ArrowUp, ArrowDown } from "lucide-react";
+import { Zap, Plus, Trash2, Link2, Loader2, Image, Type, Check, X as XIcon, ChevronDown, ChevronUp, Pencil, Users, Search, UserPlus, ClipboardPaste, ArrowUp, ArrowDown, CheckCircle2 } from "lucide-react";
 import { decodeHtmlEntities } from "@/lib/textEncoding";
 
 interface Participante {
@@ -91,6 +91,11 @@ function ParticipanteRow({ participante, inputStyle, onRemove, onUpdateCargo, us
   );
 }
 
+/* Small green check indicator for edited fields */
+function EditedCheck() {
+  return <CheckCircle2 size={11} className="shrink-0" style={{ color: "#22c55e" }} />;
+}
+
 export default function ProgramaExpressInline({ programas, estudios, onFinish, editData }: Props) {
   const { user } = useAuth();
   const [estudio, setEstudio] = useState("");
@@ -103,6 +108,16 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
   const [initialized, setInitialized] = useState(false);
   const [showPastePopup, setShowPastePopup] = useState(false);
   const [pasteText, setPasteText] = useState("");
+  const [autoSaving, setAutoSaving] = useState(false);
+  const [lastAutoSaved, setLastAutoSaved] = useState<number | null>(null);
+
+  // Track edited fields for green check indicators
+  const [editedFields, setEditedFields] = useState<Set<string>>(new Set());
+  const initialDataRef = useRef<{ estudio: string; programaId: string; blocos: string; participantes: string } | null>(null);
+
+  const markEdited = useCallback((field: string) => {
+    setEditedFields(prev => { const n = new Set(prev); n.add(field); return n; });
+  }, []);
 
   const [participantes, setParticipantes] = useState<Participante[]>([]);
   const [escaladaList, setEscaladaList] = useState<{titulo: string; imagemUrl: string}[]>([]);
@@ -160,9 +175,53 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
     }
   }, [editData, initialized]);
 
+  // Store initial data snapshot for edit tracking
+  useEffect(() => {
+    if (editData && initialized && !initialDataRef.current) {
+      initialDataRef.current = {
+        estudio: editData.estudio,
+        programaId: editData.programaId,
+        blocos: JSON.stringify(editData.blocos),
+        participantes: JSON.stringify(editData.participantes || []),
+      };
+    }
+  }, [editData, initialized]);
+
+  // Auto-save debounced (only when editing existing roteiro)
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!editingId || !initialized || !user || !programaId) return;
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    autoSaveTimerRef.current = setTimeout(async () => {
+      const totalNews = blocos.reduce((s, b) => s + b.noticias.filter(n => n.titulo).length, 0);
+      if (totalNews === 0) return;
+      setAutoSaving(true);
+      try {
+        const xmlContent = generateXml();
+        const pNome = programas.find(p => p.id === programaId)?.nome || "";
+        let html = `<h2 style="text-align:center;font-weight:bold;">PROGRAMA EXPRESS — ${pNome}</h2>`;
+        if (participantes.length > 0) { html += `<h3 style="font-weight:bold;margin-top:16px;">👥 PARTICIPANTES</h3><ul>`; participantes.forEach(p => { html += `<li><strong>${p.nome}</strong>${p.cargo ? ` — ${p.cargo}` : ""}${p.instagram ? ` (@${p.instagram.replace("@", "")})` : ""}</li>`; }); html += `</ul>`; }
+        if (escaladaList.length > 0) { html += `<h3 style="font-weight:bold;margin-top:16px;">📢 ESCALADA</h3><ul>`; escaladaList.forEach(e => { html += `<li><strong>${e.titulo}</strong></li>`; }); html += `</ul>`; }
+        blocos.forEach((b, bi) => { html += `<h3 style="font-weight:bold;margin-top:16px;">📺 BLOCO ${bi + 1}</h3>`; b.noticias.forEach((n, ni) => { if (!n.titulo) return; html += `<p><strong>Notícia ${ni + 1}:</strong> ${n.titulo}</p>`; if (n.imagemUrl) html += `<p><em>Imagem:</em> <a href="${n.imagemUrl}">${n.imagemUrl}</a></p>`; }); });
+        const blob = new Blob([xmlContent], { type: "application/xml" });
+        const fileName = `express_${programaId}_${Date.now()}.xml`;
+        const filePath = `express/${user.id}/${fileName}`;
+        await supabase.storage.from("empresa-assets").upload(filePath, blob, { upsert: true, contentType: "application/xml" });
+        const { data: urlData } = supabase.storage.from("empresa-assets").getPublicUrl(filePath);
+        const blocosJson = JSON.stringify({ blocos, participantes });
+        await supabase.from("roteiros").update({ programa_nome: pNome, estudio, titulo: `PROGRAMA EXPRESS — ${pNome}`, subtitulo: `express_xml::${urlData.publicUrl}`, conteudo_html: html, participantes: blocosJson }).eq("id", editingId);
+        setLastAutoSaved(Date.now());
+      } catch (e) { console.error("Auto-save error:", e); }
+      setAutoSaving(false);
+    }, 2000);
+    return () => { if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editingId, estudio, programaId, blocos, participantes, escaladaList, initialized]);
+
   const addParticipante = (p: Participante) => {
     if (participantes.some(x => x.nome === p.nome)) { toast.info("Participante já adicionado"); return; }
     setParticipantes(prev => [...prev, p]);
+    markEdited("participantes");
     setSearchNome("");
     setSearchResults([]);
     setShowResults(false);
@@ -170,6 +229,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
 
   const removeParticipante = (idx: number) => {
     setParticipantes(prev => prev.filter((_, i) => i !== idx));
+    markEdited("participantes");
   };
 
   const openNewContactPopup = () => {
@@ -216,6 +276,9 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
     setShowResults(false);
     setNoResults(false);
     setShowNewContact(false);
+    setEditedFields(new Set());
+    setLastAutoSaved(null);
+    initialDataRef.current = null;
   };
 
   const parsePastedScript = () => {
@@ -271,6 +334,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
   };
 
   const updateNoticia = (bi: number, ni: number, field: keyof NewsItem, value: any) => {
+    if (editingId) markEdited(`noticia-${bi}-${ni}-${field}`);
     setBlocos(prev => {
       const updated = prev.map((b, i) => i === bi ? { ...b, noticias: b.noticias.map((n, j) => j === ni ? { ...n, [field]: value } : n) } : b);
       // Sync escaladaList when escalada checkbox is toggled
@@ -387,7 +451,9 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
           </div>
           <div>
             <h3 className="text-base font-bold drop-shadow-sm">{editingId ? "Editar Programa Express" : "Programa Express"}</h3>
-            <p className="text-xs drop-shadow-sm" style={{ opacity: 0.8 }}>Monte seu roteiro de forma rápida</p>
+            <p className="text-xs drop-shadow-sm flex items-center gap-1.5" style={{ opacity: 0.8 }}>
+              {autoSaving ? <><Loader2 size={10} className="animate-spin" /> Salvando...</> : lastAutoSaved ? <><CheckCircle2 size={10} style={{ color: "#22c55e" }} /> Salvo automaticamente</> : "Monte seu roteiro de forma rápida"}
+            </p>
           </div>
         </div>
         <button
@@ -438,15 +504,15 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
           <p className="text-[10px] font-bold uppercase tracking-wider mb-3" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>Identificação do programa</p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="text-[11px] font-semibold mb-1.5 block" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Estúdio</label>
-              <select value={estudio} onChange={e => { setEstudio(e.target.value); setProgramaId(""); }} className="w-full px-3 py-2.5 rounded-xl text-xs outline-none transition-all" style={inputStyle}>
+              <label className="text-[11px] font-semibold mb-1.5 flex items-center gap-1" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Estúdio {editedFields.has("estudio") && <EditedCheck />}</label>
+              <select value={estudio} onChange={e => { setEstudio(e.target.value); setProgramaId(""); if (editingId) markEdited("estudio"); }} className="w-full px-3 py-2.5 rounded-xl text-xs outline-none transition-all" style={inputStyle}>
                 <option value="">Selecione</option>
                 {estudios.map(e => <option key={e} value={e}>{e}</option>)}
               </select>
             </div>
             <div>
-              <label className="text-[11px] font-semibold mb-1.5 block" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Programa</label>
-              <select value={programaId} onChange={e => setProgramaId(e.target.value)} className="w-full px-3 py-2.5 rounded-xl text-xs outline-none transition-all" style={inputStyle}>
+              <label className="text-[11px] font-semibold mb-1.5 flex items-center gap-1" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Programa {editedFields.has("programa") && <EditedCheck />}</label>
+              <select value={programaId} onChange={e => { setProgramaId(e.target.value); if (editingId) markEdited("programa"); }} className="w-full px-3 py-2.5 rounded-xl text-xs outline-none transition-all" style={inputStyle}>
                 <option value="">Selecione</option>
                 {filteredProgramas.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
               </select>
@@ -460,7 +526,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
         <div className="rounded-xl p-4" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 25%, transparent)", backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 4%, transparent)" }}>
           <p className="text-xs font-bold flex items-center gap-1.5 mb-3" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
             <Users size={14} style={{ color: "var(--layout-accent-color, #2ec1f7)" }} />
-            Participantes
+            Participantes {editedFields.has("participantes") && <EditedCheck />}
           </p>
           {participantes.length > 0 && (
             <div className="space-y-1.5 mb-3">
@@ -561,7 +627,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
               {!collapsedBlocos.has(bi) && (
                 <div className="space-y-3">
                   {bloco.noticias.map((noticia, ni) => (
-                    <NoticiaItem key={ni} noticia={noticia} bi={bi} ni={ni} inputStyle={inputStyle} fetchingLink={fetchingLink} onUpdate={updateNoticia} onRemove={removeNoticia} onFetchLink={fetchFromLink} canRemove={bloco.noticias.length > 1} />
+                    <NoticiaItem key={ni} noticia={noticia} bi={bi} ni={ni} inputStyle={inputStyle} fetchingLink={fetchingLink} onUpdate={updateNoticia} onRemove={removeNoticia} onFetchLink={fetchFromLink} canRemove={bloco.noticias.length > 1} editedFields={editingId ? editedFields : undefined} />
                   ))}
                   <button onClick={() => addNoticia(bi)} className="flex items-center gap-1 text-[11px] font-semibold py-1.5 px-3 rounded-full hover:opacity-80 transition-all" style={{ color: "var(--layout-accent-color, #2ec1f7)", border: "1px dashed color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 40%, transparent)" }}>
                     <Plus size={12} /> Adicionar notícia
@@ -587,13 +653,14 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
 }
 
 /* Sub-component for each noticia row */
-function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRemove, onFetchLink, canRemove }: {
+function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRemove, onFetchLink, canRemove, editedFields }: {
   noticia: NewsItem; bi: number; ni: number;
   inputStyle: React.CSSProperties; fetchingLink: string | null;
   onUpdate: (bi: number, ni: number, field: keyof NewsItem, value: any) => void;
   onRemove: (bi: number, ni: number) => void;
   onFetchLink: (bi: number, ni: number, url: string) => void;
   canRemove: boolean;
+  editedFields?: Set<string>;
 }) {
   const [linkInput, setLinkInput] = useState(noticia.link || "");
   const [collapsed, setCollapsed] = useState(false);
@@ -639,11 +706,11 @@ function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRe
         </button>
       </div>
       <div className="w-full min-w-0 max-w-full overflow-hidden">
-        <div className="flex items-center gap-1 mb-1"><Type size={10} style={{ color: "var(--layout-icon-color)" }} /><span className="text-[10px] font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Título / Tarja</span></div>
+        <div className="flex items-center gap-1 mb-1"><Type size={10} style={{ color: "var(--layout-icon-color)" }} /><span className="text-[10px] font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Título / Tarja</span>{editedFields?.has(`noticia-${bi}-${ni}-titulo`) && <EditedCheck />}</div>
         <input value={noticia.titulo} onChange={e => onUpdate(bi, ni, "titulo", e.target.value)} placeholder="Título da matéria" className="block w-full min-w-0 max-w-full px-3 py-1.5 rounded-lg text-[11px] outline-none" style={{ ...inputStyle, width: "100%", maxWidth: "100%", boxSizing: "border-box" }} />
       </div>
       <div className="w-full min-w-0 max-w-full overflow-hidden">
-        <div className="flex items-center gap-1 mb-1"><Image size={10} style={{ color: "var(--layout-icon-color)" }} /><span className="text-[10px] font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>URL Imagem</span></div>
+        <div className="flex items-center gap-1 mb-1"><Image size={10} style={{ color: "var(--layout-icon-color)" }} /><span className="text-[10px] font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>URL Imagem</span>{editedFields?.has(`noticia-${bi}-${ni}-imagemUrl`) && <EditedCheck />}</div>
         <input value={noticia.imagemUrl} onChange={e => onUpdate(bi, ni, "imagemUrl", e.target.value)} placeholder="https://..." className="block w-full min-w-0 max-w-full px-3 py-1.5 rounded-lg text-[11px] outline-none" style={{ ...inputStyle, width: "100%", maxWidth: "100%", boxSizing: "border-box" }} />
       </div>
       {noticia.imagemUrl && noticia.imagemUrl.startsWith("http") && <img src={noticia.imagemUrl} alt="" className="w-16 h-10 object-cover rounded" onError={e => (e.currentTarget.style.display = "none")} />}
