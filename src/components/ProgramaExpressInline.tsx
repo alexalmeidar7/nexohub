@@ -456,9 +456,10 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
         const { error } = await supabase.from("roteiros").insert({ user_id: user.id, programa_nome: programaNome, estudio, titulo: `PROGRAMA EXPRESS — ${programaNome}`, subtitulo: `express_xml::${xmlUrl}`, tipo_programa: "Jornalístico", data_programa: new Date().toISOString().split("T")[0], horario: new Date().toTimeString().slice(0, 5), conteudo_html: html, participantes: blocosJson, status: "feito" });
         if (error) throw error;
       }
-      toast.success("Programa Express salvo com sucesso!");
+      toast.success("Roteiro salvo ✨", { duration: 3000, style: { background: "#22c55e", color: "#fff", fontWeight: 600, borderRadius: "12px", boxShadow: "0 8px 32px rgba(34,197,94,0.35)" } });
       reset();
       onFinish();
+      setTimeout(() => { window.scrollTo({ top: 0, behavior: "smooth" }); }, 200);
     } catch (e) { console.error(e); toast.error("Erro ao salvar Programa Express"); }
     setSaving(false);
   };
