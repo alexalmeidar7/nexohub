@@ -1070,20 +1070,17 @@ export default function CenarioInterativoPage() {
                       <div className="relative z-10 flex flex-col h-full p-3">
                         {config.chat.enabled ? (
                           <>
-                            {/* Icon top-right */}
-                            <div className="flex justify-end mb-1">
+                            <div className="flex justify-end mb-1 cenario-anim-icon">
                               <MessageCircle size={32} className="drop-shadow-lg" style={{ color: "#c8e600" }} />
                             </div>
-                            {/* Title */}
                             <div className="mb-3">
-                              <div className="text-xl font-extrabold leading-tight drop-shadow-lg">mensagens</div>
-                              <div className="text-sm font-bold" style={{ color: "#c8e600" }}>chat</div>
+                              <div className="text-xl font-extrabold leading-tight drop-shadow-lg cenario-anim-title">mensagens</div>
+                              <div className="text-sm font-bold cenario-anim-subtitle" style={{ color: "#c8e600" }}>chat</div>
                             </div>
-                            {/* Glassmorphism card */}
-                            <div className="flex-1 rounded-xl p-3 space-y-2" style={{ background: "rgba(255,255,255,0.12)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.15)" }}>
+                            <div className="flex-1 rounded-xl p-3 space-y-2 cenario-anim-card" style={{ background: "rgba(255,255,255,0.12)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.15)" }}>
                               <div className="text-[10px] font-bold opacity-70 mb-1">mensagens aqui</div>
                               {mockMessages.map((m, i) => (
-                                <div key={i} className="rounded-lg px-2 py-1.5 text-[8px]" style={{ background: "rgba(255,255,255,0.08)" }}>
+                                <div key={i} className={`rounded-lg px-2 py-1.5 text-[8px] cenario-anim-row-${Math.min(i + 1, 8)}`} style={{ background: "rgba(255,255,255,0.08)" }}>
                                   <span className="font-bold">{m.user}: </span>
                                   <span className="opacity-80">{m.text}</span>
                                 </div>
