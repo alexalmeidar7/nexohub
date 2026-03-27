@@ -525,18 +525,21 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
           </p>
           <div className="space-y-1.5">
             {escaladaList.map((item, idx) => (
-              <div key={idx} className="flex items-center gap-1">
+              <div key={idx} className="flex items-center gap-1.5">
                 <span className="text-[10px] font-bold shrink-0 w-5 text-center" style={{ color: "#f59e0b" }}>{idx + 1}.</span>
                 <div className="flex flex-col shrink-0">
                   <button onClick={() => { if (idx === 0) return; setEscaladaList(prev => { const c = [...prev]; [c[idx - 1], c[idx]] = [c[idx], c[idx - 1]]; return c; }); }} disabled={idx === 0} className="p-0.5 rounded hover:opacity-70 disabled:opacity-20" style={{ color: "#f59e0b" }}><ArrowUp size={10} /></button>
                   <button onClick={() => { if (idx === escaladaList.length - 1) return; setEscaladaList(prev => { const c = [...prev]; [c[idx], c[idx + 1]] = [c[idx + 1], c[idx]]; return c; }); }} disabled={idx === escaladaList.length - 1} className="p-0.5 rounded hover:opacity-70 disabled:opacity-20" style={{ color: "#f59e0b" }}><ArrowDown size={10} /></button>
                 </div>
-                <input value={item} onChange={e => setEscaladaList(prev => prev.map((v, i) => i === idx ? e.target.value : v))} className="flex-1 px-2.5 py-1.5 rounded-lg text-[11px] outline-none min-w-0" style={inputStyle} placeholder="Título da manchete..." />
+                {item.imagemUrl && item.imagemUrl.startsWith("http") && (
+                  <img src={item.imagemUrl} alt="" className="w-10 h-7 object-cover rounded shrink-0" onError={e => (e.currentTarget.style.display = "none")} />
+                )}
+                <input value={item.titulo} onChange={e => setEscaladaList(prev => prev.map((v, i) => i === idx ? { ...v, titulo: e.target.value } : v))} className="flex-1 px-2.5 py-1.5 rounded-lg text-[11px] outline-none min-w-0" style={inputStyle} placeholder="Título da manchete..." />
                 <button onClick={() => setEscaladaList(prev => prev.filter((_, i) => i !== idx))} className="p-1 rounded-full hover:opacity-70 shrink-0" style={{ color: "#ef4444" }}><Trash2 size={12} /></button>
               </div>
             ))}
           </div>
-          <button onClick={() => setEscaladaList(prev => [...prev, ""])} className="flex items-center gap-1 text-[11px] font-semibold py-1.5 px-3 rounded-full hover:opacity-80 transition-all mt-2" style={{ color: "#f59e0b", border: "1px dashed color-mix(in srgb, #f59e0b 40%, transparent)" }}>
+          <button onClick={() => setEscaladaList(prev => [...prev, { titulo: "", imagemUrl: "" }])} className="flex items-center gap-1 text-[11px] font-semibold py-1.5 px-3 rounded-full hover:opacity-80 transition-all mt-2" style={{ color: "#f59e0b", border: "1px dashed color-mix(in srgb, #f59e0b 40%, transparent)" }}>
             <Plus size={12} /> Adicionar manchete
           </button>
         </div>
