@@ -830,7 +830,7 @@ export default function CenarioInterativoPage() {
                                   <div className="text-sm font-bold" style={{ color: "#e1f532" }}>hoje</div>
                                 </div>
                                 {/* Glassmorphism card */}
-                                <div className="flex-1 rounded-xl p-3 flex flex-col items-center justify-center gap-2" style={{ background: "rgba(255,255,255,0.18)", backdropFilter: "blur(14px)", border: "1px solid rgba(255,255,255,0.25)" }}>
+                                <div className="flex-1 rounded-xl p-3 flex flex-col items-start gap-2" style={{ background: "rgba(255,255,255,0.18)", backdropFilter: "blur(14px)", border: "1px solid rgba(255,255,255,0.25)" }}>
                                   {/* 1. Large animated icon */}
                                   <div className="w-16 h-16 rounded-full bg-white/70 flex items-center justify-center drop-shadow-xl">
                                     <WeatherIcon code={liveWeather.current.code} size={44} />
@@ -843,17 +843,17 @@ export default function CenarioInterativoPage() {
                                     </span>
                                   </div>
                                   {/* 3. Description */}
-                                  <div className="text-[10px] font-semibold text-white drop-shadow-sm text-center">
+                                  <div className="text-[10px] font-semibold text-white drop-shadow-sm">
                                     {getWLabel(liveWeather.current.code)}
                                   </div>
                                   {/* 4. Humidity + Rain */}
-                                  <div className="flex items-center gap-3 text-[9px] text-white/80">
+                                  <div className="flex items-center gap-3 text-[9px] text-white">
                                     <span className="flex items-center gap-0.5"><Droplets size={10} /> {liveWeather.current.humidity}%</span>
                                     <span className="flex items-center gap-0.5">🌧 {liveWeather.daily[0]?.precip ?? 0}%</span>
                                   </div>
                                   {/* 5. Separator + Current temp */}
-                                  <div className="w-full mt-auto pt-2" style={{ borderTop: "1px solid rgba(255,255,255,0.3)" }}>
-                                    <div className="text-[9px] text-white/60 font-semibold uppercase tracking-wider">tempo atual</div>
+                                  <div className="w-full pt-2" style={{ borderTop: "1px solid rgba(255,255,255,0.3)" }}>
+                                    <div className="text-[9px] text-white font-semibold uppercase tracking-wider">tempo atual</div>
                                     <div className="text-2xl font-black text-white drop-shadow-lg">
                                       {liveWeather.current.temp}°C
                                     </div>
