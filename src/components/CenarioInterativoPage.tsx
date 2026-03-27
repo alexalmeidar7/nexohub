@@ -323,8 +323,34 @@ export default function CenarioInterativoPage() {
               {/* ═══ Home ═══ */}
               <TabsContent value="home" className="space-y-4">
                 <p className="text-xs" style={{ color: mutedText }}>
-                  Configure a tela inicial do cenário interativo. Esta é a tela padrão exibida quando nenhum módulo está ativo.
+                  Tela inicial: exibe hora atual, data e logos dos patrocinadores do programa no ar.
                 </p>
+
+                {/* Current program info */}
+                <div className="rounded-lg p-3 text-sm" style={{ background: subTabBg }}>
+                  <div className="flex items-center gap-2 mb-1">
+                    <Clock size={14} style={{ color: mutedText }} />
+                    <span className="font-medium">Programa no ar</span>
+                  </div>
+                  {currentProgram ? (
+                    <div className="space-y-1">
+                      <span className="text-xs font-bold">{currentProgram.nome}</span>
+                      {sponsorLogos.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {sponsorLogos.map(l => (
+                            <div key={l.id} className="flex items-center gap-1 rounded px-2 py-1 text-[10px]" style={{ background: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 4%, transparent)" }}>
+                              {l.logo_url && <img src={l.logo_url} alt={l.nome} className="w-5 h-5 object-contain rounded" />}
+                              <span>{l.nome}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <span className="text-xs" style={{ color: mutedText }}>Nenhum programa no ar no momento</span>
+                  )}
+                </div>
+
                 <BgImageUpload value={config.home.bgImage} onChange={v => updateHome({ bgImage: v })} mutedText={mutedText} userId={uid} category="home" />
               </TabsContent>
 
