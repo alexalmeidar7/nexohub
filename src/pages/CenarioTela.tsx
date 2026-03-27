@@ -112,6 +112,9 @@ export default function CenarioTela() {
   const [trafficCoords, setTrafficCoords] = useState<{ lat: number; lon: number } | null>(null);
   const [liveCurrencies, setLiveCurrencies] = useState<LiveCurrency[]>([]);
 
+  const [currencySubTab, setCurrencySubTab] = useState<"moedas" | "bolsas">("moedas");
+  const [liveStocks, setLiveStocks] = useState<LiveStock[]>([]);
+
   /* Fetch live currencies */
   useEffect(() => {
     if (!config.currency.enabled || !config.currency.currencies.length) return;
@@ -124,6 +127,19 @@ export default function CenarioTela() {
     const interval = setInterval(load, 60000);
     return () => { cancelled = true; clearInterval(interval); };
   }, [config.currency.enabled, config.currency.currencies.join(",")]);
+
+  /* Fetch live stocks */
+  useEffect(() => {
+    if (!config.currency.enabled) return;
+    let cancelled = false;
+    const load = async () => {
+      const data = await fetchLiveStocks();
+      if (!cancelled) setLiveStocks(data);
+    };
+    load();
+    const interval = setInterval(load, 120000);
+    return () => { cancelled = true; clearInterval(interval); };
+  }, [config.currency.enabled]);
 
   /* Clock */
   useEffect(() => {
