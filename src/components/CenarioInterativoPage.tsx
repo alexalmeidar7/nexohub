@@ -310,13 +310,14 @@ export default function CenarioInterativoPage() {
               <Settings size={16} style={{ color: mutedText }} />
               <span className="text-sm font-semibold">Configuração</span>
               <div className="flex items-center gap-2 ml-auto">
-                <div className="flex items-center gap-1.5 rounded-lg px-2 py-1" style={{ background: subTabBg }}>
+                <div className="flex items-center gap-1.5 rounded-lg px-2 py-1 border" style={{ background: "var(--layout-page-bg, #ffffff)", borderColor: "color-mix(in srgb, var(--layout-border-color, #333) 30%, transparent)" }}>
                   <MapPin size={13} style={{ color: mutedText }} />
                   <Input
                     placeholder="Cidade principal..."
                     value={config.city}
                     onChange={e => setConfig(c => ({ ...c, city: e.target.value }))}
                     className="text-xs h-7 w-36 border-0 bg-transparent p-0 focus-visible:ring-0"
+                    style={{ color: textColor }}
                   />
                 </div>
                 {saving && <span className="text-[10px] animate-pulse" style={{ color: mutedText }}>Salvando...</span>}
@@ -407,7 +408,7 @@ export default function CenarioInterativoPage() {
                         </div>
                         <div>
                           <Label className="text-xs mb-1 block" style={{ color: mutedText }}>Cidade</Label>
-                          <Input placeholder="Ex: São Paulo" value={config.weather.city} onChange={e => updateWeather({ city: e.target.value })} className="text-sm" />
+                          <Input placeholder="Ex: São Paulo" value={config.weather.city} onChange={e => updateWeather({ city: e.target.value })} className="text-sm" style={{ color: textColor, background: "var(--layout-page-bg, #ffffff)" }} />
                         </div>
                       </div>
                     )}
@@ -435,7 +436,7 @@ export default function CenarioInterativoPage() {
                         </div>
                         <div>
                           <Label className="text-xs mb-1 block" style={{ color: mutedText }}>Cidade para satélite</Label>
-                          <Input placeholder="Ex: São Paulo" value={config.weather.city} onChange={e => updateWeather({ city: e.target.value })} className="text-sm" />
+                          <Input placeholder="Ex: São Paulo" value={config.weather.city} onChange={e => updateWeather({ city: e.target.value })} className="text-sm" style={{ color: textColor, background: "var(--layout-page-bg, #ffffff)" }} />
                         </div>
                         {config.weather.showSatellite && (
                           <div className="rounded-lg overflow-hidden border" style={{ borderColor: "color-mix(in srgb, var(--layout-border-color, #333) 20%, transparent)" }}>
@@ -470,6 +471,7 @@ export default function CenarioInterativoPage() {
                         onChange={e => setTrafficSearchCity(e.target.value)}
                         onKeyDown={e => e.key === "Enter" && handleTrafficSearch()}
                         className="text-sm flex-1"
+                        style={{ color: textColor, background: "var(--layout-page-bg, #ffffff)" }}
                       />
                       <Button size="sm" onClick={handleTrafficSearch} className="gap-1 text-xs" style={{ background: "var(--layout-header-bg, #0d0446)", color: "var(--layout-header-text, #fff)" }}>
                         <Search size={14} /> Buscar
@@ -538,7 +540,7 @@ export default function CenarioInterativoPage() {
                 {config.chat.enabled && (
                   <div className="space-y-3">
                     <Label className="text-xs mb-1 block" style={{ color: mutedText }}>URL do vídeo/live do YouTube</Label>
-                    <Input placeholder="https://youtube.com/watch?v=..." value={config.chat.youtubeVideoUrl} onChange={e => updateChat({ youtubeVideoUrl: e.target.value })} className="text-sm" />
+                    <Input placeholder="https://youtube.com/watch?v=..." value={config.chat.youtubeVideoUrl} onChange={e => updateChat({ youtubeVideoUrl: e.target.value })} className="text-sm" style={{ color: textColor, background: "var(--layout-page-bg, #ffffff)" }} />
                     <BgImageUpload value={config.chat.bgImage} onChange={v => updateChat({ bgImage: v })} mutedText={mutedText} userId={uid} category="chat" />
                   </div>
                 )}
