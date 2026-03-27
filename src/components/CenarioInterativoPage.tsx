@@ -843,35 +843,35 @@ export default function CenarioInterativoPage() {
                 )}
                 {/* ── Dark sidebar ── */}
                 <div className="w-[52px] flex-shrink-0 flex flex-col items-center py-4 gap-1 relative" style={{ background: (activeTab === "weather" && weatherSubTab === "satellite" && config.weather.showSatellite) || (activeTab === "traffic" && config.traffic.enabled) ? "rgba(26,26,26,0.7)" : "#1a1a1a", zIndex: 10, backdropFilter: (activeTab === "weather" && weatherSubTab === "satellite") || (activeTab === "traffic" && config.traffic.enabled) ? "blur(4px)" : "none" }}>
-                  <div className="w-9 h-9 rounded-full flex items-center justify-center mb-2" style={{ background: "rgba(255,255,255,0.12)", border: activeTab === "home" ? "2px solid #e1f532" : "2px solid transparent", animation: activeTab === "home" ? "cenario-active-blink 1.5s ease-in-out infinite" : "none" }}>
+                  <div className="w-9 h-9 rounded-full flex items-center justify-center mb-2 cursor-pointer" onClick={() => handleTabChange("home")} style={{ background: "rgba(255,255,255,0.12)", border: activeTab === "home" ? "2px solid #e1f532" : "2px solid transparent", animation: activeTab === "home" ? "cenario-active-blink 1.5s ease-in-out infinite" : "none" }}>
                     <Home size={16} className="text-white" />
                   </div>
                   {/* Weather icon + sub-tabs grouped */}
                   <div className="rounded-2xl py-1 px-1 flex flex-col items-center gap-1" style={{ background: "rgba(255,255,255,0.08)", opacity: config.weather.enabled ? 1 : 0.35 }}>
-                    <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.12)", border: activeTab === "weather" ? "2px solid #e1f532" : "2px solid transparent", animation: activeTab === "weather" ? "cenario-active-blink 1.5s ease-in-out infinite" : "none" }}>
+                    <div className="w-9 h-9 rounded-full flex items-center justify-center cursor-pointer" onClick={() => config.weather.enabled && handleTabChange("weather")} style={{ background: "rgba(255,255,255,0.12)", border: activeTab === "weather" ? "2px solid #e1f532" : "2px solid transparent", animation: activeTab === "weather" ? "cenario-active-blink 1.5s ease-in-out infinite" : "none" }}>
                       <CloudSun size={16} className="text-white" />
                     </div>
                     {config.weather.enabled && (
                       <>
                         {config.weather.showCurrent && (
-                          <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold cursor-pointer" style={{ background: weatherSubTab === "today" ? "rgba(225,245,50,0.25)" : "rgba(255,255,255,0.12)", border: weatherSubTab === "today" ? "1px solid rgba(225,245,50,0.5)" : "1px solid transparent" }}>1</div>
+                          <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold cursor-pointer" onClick={() => { handleTabChange("weather"); handleWeatherSubTabChange("today"); }} style={{ background: weatherSubTab === "today" && activeTab === "weather" ? "rgba(225,245,50,0.25)" : "rgba(255,255,255,0.12)", border: weatherSubTab === "today" && activeTab === "weather" ? "1px solid rgba(225,245,50,0.5)" : "1px solid transparent" }}>1</div>
                         )}
                         {config.weather.showForecast3Days && (
-                          <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold cursor-pointer" style={{ background: weatherSubTab === "forecast" ? "rgba(225,245,50,0.25)" : "rgba(255,255,255,0.12)", border: weatherSubTab === "forecast" ? "1px solid rgba(225,245,50,0.5)" : "1px solid transparent" }}>2</div>
+                          <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold cursor-pointer" onClick={() => { handleTabChange("weather"); handleWeatherSubTabChange("forecast"); }} style={{ background: weatherSubTab === "forecast" && activeTab === "weather" ? "rgba(225,245,50,0.25)" : "rgba(255,255,255,0.12)", border: weatherSubTab === "forecast" && activeTab === "weather" ? "1px solid rgba(225,245,50,0.5)" : "1px solid transparent" }}>2</div>
                         )}
                         {config.weather.showSatellite && (
-                          <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold cursor-pointer" style={{ background: weatherSubTab === "satellite" ? "rgba(225,245,50,0.25)" : "rgba(255,255,255,0.12)", border: weatherSubTab === "satellite" ? "1px solid rgba(225,245,50,0.5)" : "1px solid transparent" }}>3</div>
+                          <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold cursor-pointer" onClick={() => { handleTabChange("weather"); handleWeatherSubTabChange("satellite"); }} style={{ background: weatherSubTab === "satellite" && activeTab === "weather" ? "rgba(225,245,50,0.25)" : "rgba(255,255,255,0.12)", border: weatherSubTab === "satellite" && activeTab === "weather" ? "1px solid rgba(225,245,50,0.5)" : "1px solid transparent" }}>3</div>
                         )}
                       </>
                     )}
                   </div>
-                  <div className="w-9 h-9 rounded-full flex items-center justify-center mt-2" style={{ background: "rgba(255,255,255,0.12)", opacity: config.traffic.enabled ? 1 : 0.35, border: activeTab === "traffic" ? "2px solid #e1f532" : "2px solid transparent", animation: activeTab === "traffic" ? "cenario-active-blink 1.5s ease-in-out infinite" : "none" }}>
+                  <div className="w-9 h-9 rounded-full flex items-center justify-center mt-2 cursor-pointer" onClick={() => config.traffic.enabled && handleTabChange("traffic")} style={{ background: "rgba(255,255,255,0.12)", opacity: config.traffic.enabled ? 1 : 0.35, border: activeTab === "traffic" ? "2px solid #e1f532" : "2px solid transparent", animation: activeTab === "traffic" ? "cenario-active-blink 1.5s ease-in-out infinite" : "none" }}>
                     <Car size={16} className="text-white" />
                   </div>
-                  <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.15)", opacity: config.currency.enabled ? 1 : 0.35, border: activeTab === "currency" ? "2px solid #e1f532" : "2px solid transparent", animation: activeTab === "currency" ? "cenario-active-blink 1.5s ease-in-out infinite" : "none" }}>
+                  <div className="w-9 h-9 rounded-full flex items-center justify-center cursor-pointer" onClick={() => config.currency.enabled && handleTabChange("currency")} style={{ background: "rgba(255,255,255,0.15)", opacity: config.currency.enabled ? 1 : 0.35, border: activeTab === "currency" ? "2px solid #e1f532" : "2px solid transparent", animation: activeTab === "currency" ? "cenario-active-blink 1.5s ease-in-out infinite" : "none" }}>
                     <DollarSign size={16} className="text-white" />
                   </div>
-                  <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.15)", opacity: config.chat.enabled ? 1 : 0.35, border: activeTab === "chat" ? "2px solid #e1f532" : "2px solid transparent", animation: activeTab === "chat" ? "cenario-active-blink 1.5s ease-in-out infinite" : "none" }}>
+                  <div className="w-9 h-9 rounded-full flex items-center justify-center cursor-pointer" onClick={() => config.chat.enabled && handleTabChange("chat")} style={{ background: "rgba(255,255,255,0.15)", opacity: config.chat.enabled ? 1 : 0.35, border: activeTab === "chat" ? "2px solid #e1f532" : "2px solid transparent", animation: activeTab === "chat" ? "cenario-active-blink 1.5s ease-in-out infinite" : "none" }}>
                     <MessageCircle size={16} className="text-white" />
                   </div>
                 </div>
