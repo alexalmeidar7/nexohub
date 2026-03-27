@@ -501,8 +501,8 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
           <p className="text-[10px] font-bold uppercase tracking-wider mb-3" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>Identificação do programa</p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="text-[11px] font-semibold mb-1.5 block" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Estúdio</label>
-              <select value={estudio} onChange={e => { setEstudio(e.target.value); setProgramaId(""); }} className="w-full px-3 py-2.5 rounded-xl text-xs outline-none transition-all" style={inputStyle}>
+              <label className="text-[11px] font-semibold mb-1.5 flex items-center gap-1" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Estúdio {editedFields.has("estudio") && <EditedCheck />}</label>
+              <select value={estudio} onChange={e => { setEstudio(e.target.value); setProgramaId(""); if (editingId) markEdited("estudio"); }} className="w-full px-3 py-2.5 rounded-xl text-xs outline-none transition-all" style={inputStyle}>
                 <option value="">Selecione</option>
                 {estudios.map(e => <option key={e} value={e}>{e}</option>)}
               </select>
