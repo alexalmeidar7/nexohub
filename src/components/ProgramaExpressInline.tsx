@@ -38,6 +38,7 @@ export interface ExpressEditData {
   programaId: string;
   blocos: Bloco[];
   participantes?: Participante[];
+  escaladaList?: {titulo: string; imagemUrl: string}[];
 }
 
 interface Props {
