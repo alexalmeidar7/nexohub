@@ -708,8 +708,17 @@ export default function CenarioInterativoPage() {
               }}
             >
               <div className="absolute inset-0 flex" style={{ fontSize: 10 }}>
+                {/* Satellite fullscreen behind sidebar */}
+                {activeTab === "weather" && weatherSubTab === "satellite" && config.weather.showSatellite && weatherCoords && (
+                  <iframe
+                    src={`https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=°C&metricWind=km/h&zoom=8&overlay=satellite&product=satellite&level=surface&lat=${weatherCoords.lat}&lon=${weatherCoords.lon}&detailLat=${weatherCoords.lat}&detailLon=${weatherCoords.lon}&marker=true&message=true`}
+                    className="absolute inset-0 w-full h-full border-0"
+                    title="Satélite preview"
+                    style={{ zIndex: 0 }}
+                  />
+                )}
                 {/* ── Dark sidebar ── */}
-                <div className="w-[52px] flex-shrink-0 flex flex-col items-center py-4 gap-1" style={{ background: "#1a1a1a" }}>
+                <div className="w-[52px] flex-shrink-0 flex flex-col items-center py-4 gap-1 relative" style={{ background: activeTab === "weather" && weatherSubTab === "satellite" && config.weather.showSatellite ? "rgba(26,26,26,0.7)" : "#1a1a1a", zIndex: 1, backdropFilter: activeTab === "weather" && weatherSubTab === "satellite" ? "blur(4px)" : "none" }}>
                   <div className="w-9 h-9 rounded-full flex items-center justify-center mb-2" style={{ background: "rgba(255,255,255,0.12)" }}>
                     <Home size={16} className="text-white" />
                   </div>
@@ -741,7 +750,7 @@ export default function CenarioInterativoPage() {
                 </div>
 
                 {/* ── Content area with bg image ── */}
-                <div className="flex-1 relative" style={{ background: "#e8e8e8" }}>
+                <div className="flex-1 relative" style={{ background: activeTab === "weather" && weatherSubTab === "satellite" && config.weather.showSatellite ? "transparent" : "#e8e8e8", zIndex: 1 }}>
                   {/* Show bg image based on active tab */}
                   {activeTab === "home" && config.home.bgImage && (
                     <img src={config.home.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />
@@ -823,10 +832,9 @@ export default function CenarioInterativoPage() {
 
                           {/* Sub-tab: Satélite */}
                           {weatherSubTab === "satellite" && (
-                            <div className="flex-1 flex flex-col items-center justify-center text-center">
-                              <Satellite size={20} className="mb-1 opacity-60" />
-                              <div className="text-[9px] opacity-60">Imagem de satélite</div>
-                              <div className="text-[8px] opacity-40 mt-0.5">{weatherCity || config.city}</div>
+                            <div className="flex-1 flex flex-col items-center justify-center text-center text-white drop-shadow-lg">
+                              <div className="text-sm font-bold">{weatherCity || config.city || "—"}</div>
+                              <div className="text-[8px] opacity-70 mt-1">Satélite em tempo real</div>
                             </div>
                           )}
                         </>
