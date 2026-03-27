@@ -56,11 +56,11 @@ async function fetchAll(): Promise<any[]> {
         if (allNums.length > 0) price = allNums[0];
       }
 
-      // Percentage: first match of pattern (−X.XX%) or (-X.XX%)
+      // Percentage: first >X.XX%< pattern in the page
       let pct = 0;
-      const pctParen = html.match(/\(([−+-]?\d+\.\d+)%\)/);
-      if (pctParen) {
-        pct = parseFloat(pctParen[1].replace("−", "-"));
+      const pctMatch = html.match(/>([-+]?\d+\.\d+)%</);
+      if (pctMatch) {
+        pct = parseFloat(pctMatch[1]);
       }
 
       if (price === 0) return null;
