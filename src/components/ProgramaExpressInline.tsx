@@ -105,7 +105,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
   const [pasteText, setPasteText] = useState("");
 
   const [participantes, setParticipantes] = useState<Participante[]>([]);
-  const [escaladaList, setEscaladaList] = useState<string[]>([]);
+  const [escaladaList, setEscaladaList] = useState<{titulo: string; imagemUrl: string}[]>([]);
   const [searchNome, setSearchNome] = useState("");
   const [searchResults, setSearchResults] = useState<Participante[]>([]);
   const [showResults, setShowResults] = useState(false);
