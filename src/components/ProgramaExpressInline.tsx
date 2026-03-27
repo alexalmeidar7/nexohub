@@ -650,13 +650,14 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
 }
 
 /* Sub-component for each noticia row */
-function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRemove, onFetchLink, canRemove }: {
+function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRemove, onFetchLink, canRemove, editedFields }: {
   noticia: NewsItem; bi: number; ni: number;
   inputStyle: React.CSSProperties; fetchingLink: string | null;
   onUpdate: (bi: number, ni: number, field: keyof NewsItem, value: any) => void;
   onRemove: (bi: number, ni: number) => void;
   onFetchLink: (bi: number, ni: number, url: string) => void;
   canRemove: boolean;
+  editedFields?: Set<string>;
 }) {
   const [linkInput, setLinkInput] = useState(noticia.link || "");
   const [collapsed, setCollapsed] = useState(false);
