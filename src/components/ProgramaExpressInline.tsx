@@ -671,8 +671,9 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
 
         {/* Save / Finish editing */}
         {editingId ? (
-          <button onClick={() => { reset(); onFinish(); }} className="w-full py-4 rounded-xl text-sm font-bold transition-all hover:scale-[1.01] hover:shadow-lg active:scale-[0.98] flex items-center justify-center gap-2.5" style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff", boxShadow: "0 6px 24px rgba(34,197,94,0.3)", letterSpacing: "0.03em" }}>
-            <Check size={18} /> Finalizar Edição
+          <button onClick={handleSave} disabled={saving || !programaId} className="w-full py-4 rounded-xl text-sm font-bold transition-all hover:scale-[1.01] hover:shadow-lg active:scale-[0.98] flex items-center justify-center gap-2.5 disabled:opacity-40 disabled:hover:scale-100" style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #2ec1f7), color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 65%, #000 35%))", color: "var(--layout-header-text, #ffffff)", boxShadow: "0 6px 24px color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 35%, transparent)", letterSpacing: "0.03em" }}>
+            {saving ? <Loader2 size={18} className="animate-spin" /> : <Check size={18} />}
+            {saving ? "Finalizando..." : "Finalizar Edição"}
           </button>
         ) : (
           <button onClick={handleSave} disabled={saving || !programaId} className="w-full py-4 rounded-xl text-sm font-bold transition-all hover:scale-[1.01] hover:shadow-lg active:scale-[0.98] flex items-center justify-center gap-2.5 disabled:opacity-40 disabled:hover:scale-100" style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #2ec1f7), color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 65%, #000 35%))", color: "var(--layout-header-text, #ffffff)", boxShadow: "0 6px 24px color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 35%, transparent)", letterSpacing: "0.03em" }}>

@@ -110,7 +110,7 @@ export default function RoteiroPrograma() {
         <ProgramaExpressInline
           programas={programas}
           estudios={estudios}
-          onFinish={fetchHistorico}
+          onFinish={async () => { setExpressEditData(null); await fetchHistorico(); }}
           editData={expressEditData}
         />
       </Suspense>
