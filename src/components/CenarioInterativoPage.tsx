@@ -727,7 +727,7 @@ export default function CenarioInterativoPage() {
                   />
                 )}
                 {/* ── Dark sidebar ── */}
-                <div className="w-[52px] flex-shrink-0 flex flex-col items-center py-4 gap-1 relative" style={{ background: activeTab === "weather" && weatherSubTab === "satellite" && config.weather.showSatellite ? "rgba(26,26,26,0.7)" : "#1a1a1a", zIndex: 1, backdropFilter: activeTab === "weather" && weatherSubTab === "satellite" ? "blur(4px)" : "none" }}>
+                <div className="w-[52px] flex-shrink-0 flex flex-col items-center py-4 gap-1 relative" style={{ background: (activeTab === "weather" && weatherSubTab === "satellite" && config.weather.showSatellite) || (activeTab === "traffic" && config.traffic.enabled) ? "rgba(26,26,26,0.7)" : "#1a1a1a", zIndex: 1, backdropFilter: (activeTab === "weather" && weatherSubTab === "satellite") || (activeTab === "traffic" && config.traffic.enabled) ? "blur(4px)" : "none" }}>
                   <div className="w-9 h-9 rounded-full flex items-center justify-center mb-2" style={{ background: "rgba(255,255,255,0.12)" }}>
                     <Home size={16} className="text-white" />
                   </div>
