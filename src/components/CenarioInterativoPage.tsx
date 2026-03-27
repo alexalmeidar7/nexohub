@@ -552,15 +552,23 @@ export default function CenarioInterativoPage() {
                           <Label className="text-xs mb-1 block" style={{ color: mutedText }}>Cidade para satélite</Label>
                           <Input placeholder="Ex: São Paulo" value={config.weather.city} onChange={e => updateWeather({ city: e.target.value })} className="text-sm" style={{ color: textColor, background: "var(--layout-page-bg, #ffffff)" }} />
                         </div>
-                        {config.weather.showSatellite && (
+                        {config.weather.showSatellite && weatherCoords && (
                           <div className="rounded-lg overflow-hidden border" style={{ borderColor: "color-mix(in srgb, var(--layout-border-color, #333) 20%, transparent)" }}>
-                            <img
-                              src="https://satellite.imdl.es/imagery/GOES16_ABI/BAND13/-23.55/-46.63/4/latest.jpg"
-                              alt="Imagem de satélite"
-                              className="w-full h-40 object-cover"
-                              onError={e => { (e.target as HTMLImageElement).src = "https://placehold.co/400x200/1a1a2e/white?text=Satélite"; }}
+                            <iframe
+                              src={`https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=°C&metricWind=km/h&zoom=7&overlay=satellite&product=satellite&level=surface&lat=${weatherCoords.lat}&lon=${weatherCoords.lon}&detailLat=${weatherCoords.lat}&detailLon=${weatherCoords.lon}&marker=true&message=true`}
+                              width="100%"
+                              height="220"
+                              frameBorder="0"
+                              className="w-full"
+                              title="Imagem de satélite em tempo real"
+                              allow="fullscreen"
                             />
                           </div>
+                        )}
+                        {config.weather.showSatellite && !weatherCoords && (
+                          <p className="text-xs text-center py-4" style={{ color: mutedText }}>
+                            {weatherCity ? "Buscando coordenadas..." : "Defina uma cidade para ver o satélite."}
+                          </p>
                         )}
                       </div>
                     )}
