@@ -386,9 +386,7 @@ export default function CenarioTela() {
             {/* ═══ CURRENCY ═══ */}
             {activeTab === "currency" && (
               <div className="absolute inset-0 flex flex-col overflow-hidden" style={{ color: "#fff" }}>
-                {!config.currency.bgImage && <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, #06080c 0%, #111826 100%)" }} />}
-                {config.currency.bgImage && <div className="absolute inset-0" style={{ background: "rgba(3,8,14,0.45)" }} />}
-                <div className="absolute bottom-0 left-0 right-0 h-1/4" style={{ background: "linear-gradient(to top, rgba(225,245,50,0.22), transparent)" }} />
+                {config.currency.bgImage && <div className="absolute inset-0" style={{ background: "rgba(3,8,14,0.3)" }} />}
                 <div className="relative z-10 flex flex-col h-full" style={{ padding: "3vh" }}>
                   {config.currency.enabled ? (<>
                     <div className="flex justify-end mb-1"><DollarSign size={48} className="drop-shadow-lg" style={{ color: "#e1f532" }} /></div>
