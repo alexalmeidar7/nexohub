@@ -467,17 +467,42 @@ export default function CenarioInterativoPage() {
 
                     {weatherSubTab === "today" && (
                       <div className="space-y-3">
-                        <p className="text-xs" style={{ color: mutedText }}>
-                          Exibe o tempo completo do dia atual: temperatura, umidade, vento, sensação térmica e condição climática.
-                        </p>
                         <div className="flex items-center justify-between">
                           <Label className="text-sm">Exibir tempo atual completo</Label>
                           <Switch checked={config.weather.showCurrent} onCheckedChange={v => updateWeather({ showCurrent: v })} />
                         </div>
                         <div>
-                          <Label className="text-xs mb-1 block" style={{ color: mutedText }}>Cidade</Label>
-                          <Input placeholder="Ex: São Paulo" value={config.weather.city} onChange={e => updateWeather({ city: e.target.value })} className="text-sm" style={{ color: textColor, background: "var(--layout-page-bg, #ffffff)" }} />
+                          <Label className="text-xs mb-1 block" style={{ color: mutedText }}>Cidade (ou use a cidade principal)</Label>
+                          <Input placeholder={config.city || "Ex: São Paulo"} value={config.weather.city} onChange={e => updateWeather({ city: e.target.value })} className="text-sm" style={{ color: textColor, background: "var(--layout-page-bg, #ffffff)" }} />
                         </div>
+                        {weatherLoading && (
+                          <div className="flex items-center gap-2 text-xs" style={{ color: mutedText }}>
+                            <Loader2 size={14} className="animate-spin" /> Carregando dados...
+                          </div>
+                        )}
+                        {!weatherLoading && liveWeather && (
+                          <div className="rounded-lg p-3 space-y-2" style={{ background: subTabBg }}>
+                            <div className="flex items-center gap-3">
+                              <span className="text-3xl">{getWIcon(liveWeather.current.code)}</span>
+                              <div>
+                                <div className="text-2xl font-bold">{liveWeather.current.temp}°C</div>
+                                <div className="text-xs" style={{ color: mutedText }}>{getWLabel(liveWeather.current.code)}</div>
+                              </div>
+                            </div>
+                            <div className="flex gap-4 text-xs" style={{ color: mutedText }}>
+                              <span className="flex items-center gap-1"><Droplets size={12} /> {liveWeather.current.humidity}%</span>
+                              {liveWeather.daily[0] && (
+                                <>
+                                  <span className="flex items-center gap-1"><Thermometer size={12} /> {liveWeather.daily[0].min}° / {liveWeather.daily[0].max}°</span>
+                                  <span>💧 {liveWeather.daily[0].precip}%</span>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                        {!weatherLoading && !liveWeather && weatherCity && (
+                          <p className="text-xs" style={{ color: mutedText }}>Cidade não encontrada. Verifique o nome.</p>
+                        )}
                       </div>
                     )}
 
