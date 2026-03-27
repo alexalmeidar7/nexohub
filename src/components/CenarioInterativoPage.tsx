@@ -1034,17 +1034,17 @@ export default function CenarioInterativoPage() {
                                   <div className="w-20 h-20 flex items-center justify-center drop-shadow-xl cenario-anim-row-1">
                                     <WeatherIcon code={liveWeather.current.code} size={64} forceDay />
                                   </div>
-                                  <div className="flex items-center gap-1.5 text-white cenario-anim-row-2">
-                                    <Thermometer size={13} />
+                                  <div className="flex items-center gap-1.5 cenario-anim-row-2" style={{ color: "#fff", textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>
+                                    <Thermometer size={13} color="#fff" />
                                     <span className="text-sm font-extrabold">
                                       {liveWeather.daily[0]?.min ?? "--"}° / {liveWeather.daily[0]?.max ?? "--"}°
                                     </span>
                                   </div>
-                                  <div className="text-[10px] font-semibold text-white drop-shadow-sm cenario-anim-row-3">
+                                  <div className="text-[10px] font-semibold drop-shadow-sm cenario-anim-row-3" style={{ color: "#fff", textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>
                                     {getWLabel(liveWeather.current.code)}
                                   </div>
-                                  <div className="flex items-center gap-3 text-[9px] text-white cenario-anim-row-4">
-                                    <span className="flex items-center gap-0.5"><Droplets size={10} /> {liveWeather.current.humidity}%</span>
+                                  <div className="flex items-center gap-3 text-[9px] cenario-anim-row-4" style={{ color: "#fff", textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>
+                                    <span className="flex items-center gap-0.5"><Droplets size={10} color="#fff" /> {liveWeather.current.humidity}%</span>
                                     <span className="flex items-center gap-0.5">🌧 {liveWeather.daily[0]?.precip ?? 0}%</span>
                                   </div>
                                   <div className="w-full pt-2 cenario-anim-row-5" style={{ borderTop: "1px solid rgba(255,255,255,0.3)" }}>
