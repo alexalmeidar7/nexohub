@@ -324,6 +324,11 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       setHoveredMenu(null);
       return;
     }
+    if (parentLabel === "vmix" && child.label === "vmix control") {
+      window.open("/vmix-control", "_blank");
+      setHoveredMenu(null);
+      return;
+    }
     if (child.page) {
       setCurrentPage(child.page);
       setMobileMenuOpen(false);
