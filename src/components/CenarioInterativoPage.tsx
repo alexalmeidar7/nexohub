@@ -246,7 +246,57 @@ export default function CenarioInterativoPage() {
     })();
   }, [user?.id]);
 
-  /* ─── Auto-save on config change (debounced) ─── */
+  /* ─── Fetch weather data ─── */
+  const weatherCity = config.weather.city || config.city;
+  const weatherFetchRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!config.weather.enabled || !weatherCity) return;
+    if (weatherFetchRef.current) clearTimeout(weatherFetchRef.current);
+    weatherFetchRef.current = setTimeout(async () => {
+      setWeatherLoading(true);
+      try {
+        // 1. Geocode city
+        const { data: geoData } = await supabase.functions.invoke("fetch-weather", {
+          body: { action: "geocode", query: weatherCity, count: 1 },
+        });
+        const results = geoData?.results;
+        if (!results || results.length === 0) {
+          setLiveWeather(null);
+          setWeatherLoading(false);
+          return;
+        }
+        const { latitude, longitude } = results[0];
+        // 2. Get forecast
+        const { data: forecastData } = await supabase.functions.invoke("fetch-weather", {
+          body: { action: "forecast", lat: latitude, lon: longitude, forecast_days: 5 },
+        });
+        if (forecastData?.ok && forecastData.data) {
+          const d = forecastData.data;
+          setLiveWeather({
+            current: {
+              temp: Math.round(d.current?.temperature_2m ?? 0),
+              humidity: Math.round(d.current?.relative_humidity_2m ?? 0),
+              code: d.current?.weather_code ?? 0,
+            },
+            daily: (d.daily?.time || []).map((date: string, i: number) => ({
+              date,
+              min: Math.round(d.daily.temperature_2m_min?.[i] ?? 0),
+              max: Math.round(d.daily.temperature_2m_max?.[i] ?? 0),
+              code: d.daily.weather_code?.[i] ?? 0,
+              humidity: Math.round(d.daily.relative_humidity_2m_max?.[i] ?? 0),
+              precip: Math.round(d.daily.precipitation_probability_max?.[i] ?? 0),
+            })),
+          });
+        }
+      } catch (err) {
+        console.error("Weather fetch error:", err);
+      }
+      setWeatherLoading(false);
+    }, 1000);
+    return () => { if (weatherFetchRef.current) clearTimeout(weatherFetchRef.current); };
+  }, [config.weather.enabled, weatherCity]);
+
+
   const saveTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (!user?.id || !loaded) return;
