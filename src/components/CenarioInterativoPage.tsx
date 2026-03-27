@@ -299,8 +299,27 @@ export default function CenarioInterativoPage() {
     return () => { if (weatherFetchRef.current) clearTimeout(weatherFetchRef.current); };
   }, [config.weather.enabled, weatherCity]);
 
+  /* ─── Geocode traffic city ─── */
+  const trafficCity = config.traffic.city || config.city;
+  const trafficGeoRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!config.traffic.enabled || !trafficCity) { setTrafficCoords(null); return; }
+    if (trafficGeoRef.current) clearTimeout(trafficGeoRef.current);
+    trafficGeoRef.current = setTimeout(async () => {
+      try {
+        const { data: geoData } = await supabase.functions.invoke("fetch-weather", {
+          body: { action: "geocode", query: trafficCity, count: 1 },
+        });
+        const results = geoData?.results;
+        if (results?.length) {
+          setTrafficCoords({ lat: results[0].latitude, lon: results[0].longitude });
+        }
+      } catch { /* silent */ }
+    }, 1000);
+    return () => { if (trafficGeoRef.current) clearTimeout(trafficGeoRef.current); };
+  }, [config.traffic.enabled, trafficCity]);
 
-  const saveTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   useEffect(() => {
     if (!user?.id || !loaded) return;
     if (saveTimeout.current) clearTimeout(saveTimeout.current);
