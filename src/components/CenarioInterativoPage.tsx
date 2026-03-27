@@ -100,10 +100,44 @@ interface LiveWeather {
   daily: { date: string; min: number; max: number; code: number; humidity: number; precip: number }[];
 }
 
-const mockCurrencies = [
-  { code: "USD", name: "Dólar", value: "5,42", change: "+0,12%" },
-  { code: "EUR", name: "Euro", value: "5,89", change: "-0,05%" },
-];
+/* ─── Currency API mapping ─── */
+const CURRENCY_API_MAP: Record<string, string> = {
+  USD: "USD-BRL", EUR: "EUR-BRL", GBP: "GBP-BRL", ARS: "ARS-BRL", JPY: "JPY-BRL", BTC: "BTC-BRL", ETH: "ETH-BRL",
+};
+
+interface LiveCurrency {
+  code: string;
+  name: string;
+  value: string;
+  change: string;
+  direction: "up" | "down" | "neutral";
+}
+
+async function fetchLiveCurrencies(codes: string[]): Promise<LiveCurrency[]> {
+  if (!codes.length) return [];
+  const pairs = codes.map(c => CURRENCY_API_MAP[c]).filter(Boolean).join(",");
+  if (!pairs) return [];
+  try {
+    const res = await fetch(`https://economia.awesomeapi.com.br/last/${pairs}`);
+    const data = await res.json();
+    return codes.map(c => {
+      const key = CURRENCY_API_MAP[c]?.replace("-", "");
+      const item = data[key];
+      if (!item) return null;
+      const pct = parseFloat(item.pctChange);
+      const opt = CURRENCY_OPTIONS.find(o => o.value === c);
+      return {
+        code: c,
+        name: opt?.label?.split("(")[0]?.trim() || item.name,
+        value: parseFloat(item.bid).toLocaleString("pt-BR", { style: "currency", currency: "BRL" }),
+        change: `${pct >= 0 ? "+" : ""}${pct.toFixed(2)}%`,
+        direction: pct > 0 ? "up" as const : pct < 0 ? "down" as const : "neutral" as const,
+      };
+    }).filter(Boolean) as LiveCurrency[];
+  } catch {
+    return [];
+  }
+}
 
 const mockMessages = [
   { user: "João Silva", text: "Boa tarde! 🎉" },
@@ -203,12 +237,29 @@ export default function CenarioInterativoPage() {
   const [weatherLoading, setWeatherLoading] = useState(false);
   const [weatherCoords, setWeatherCoords] = useState<{ lat: number; lon: number } | null>(null);
   const [trafficCoords, setTrafficCoords] = useState<{ lat: number; lon: number } | null>(null);
+  const [liveCurrencies, setLiveCurrencies] = useState<LiveCurrency[]>([]);
+  const [currencyLoading, setCurrencyLoading] = useState(false);
 
   /* ─── Clock tick ─── */
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
+
+  /* ─── Fetch live currencies ─── */
+  useEffect(() => {
+    if (!config.currency.enabled || !config.currency.currencies.length) return;
+    let cancelled = false;
+    const load = async () => {
+      setCurrencyLoading(true);
+      const data = await fetchLiveCurrencies(config.currency.currencies);
+      if (!cancelled) setLiveCurrencies(data);
+      setCurrencyLoading(false);
+    };
+    load();
+    const interval = setInterval(load, 60000); // refresh every 60s
+    return () => { cancelled = true; clearInterval(interval); };
+  }, [config.currency.enabled, config.currency.currencies.join(",")]);
 
   /* ─── Fetch current program + sponsor logos ─── */
   useEffect(() => {
@@ -1001,14 +1052,24 @@ export default function CenarioInterativoPage() {
                               <div className="text-sm font-bold" style={{ color: "#c8e600" }}>moedas</div>
                             </div>
                             {/* Glassmorphism card */}
-                            <div className="flex-1 rounded-xl p-3 space-y-2" style={{ background: "rgba(255,255,255,0.12)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.15)" }}>
+                            <div className="flex-1 rounded-xl p-3 space-y-2 overflow-auto" style={{ background: "rgba(255,255,255,0.12)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.15)" }}>
                               <div className="text-[10px] font-bold opacity-70 mb-1">cotações moedas</div>
-                              {config.currency.currencies.map(c => {
+                              {currencyLoading && !liveCurrencies.length ? (
+                                <div className="flex items-center gap-2 text-[9px] opacity-60"><Loader2 size={12} className="animate-spin" /> Carregando...</div>
+                              ) : config.currency.currencies.map(c => {
                                 const opt = CURRENCY_OPTIONS.find(o => o.value === c);
+                                const live = liveCurrencies.find(l => l.code === c);
                                 return (
                                   <div key={c} className="flex items-center justify-between text-[9px] rounded-lg px-2 py-1.5" style={{ background: "rgba(255,255,255,0.08)" }}>
                                     <span className="font-bold">{opt?.label?.split("(")[0]?.trim() || c}</span>
-                                    <span className="opacity-50">---</span>
+                                    {live ? (
+                                      <div className="flex items-center gap-1.5">
+                                        <span className="font-bold">{live.value}</span>
+                                        <span style={{ color: live.direction === "up" ? "#4ade80" : live.direction === "down" ? "#f87171" : "#999" }}>{live.change}</span>
+                                      </div>
+                                    ) : (
+                                      <span className="opacity-50">---</span>
+                                    )}
                                   </div>
                                 );
                               })}
