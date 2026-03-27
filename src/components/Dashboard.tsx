@@ -657,6 +657,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               {currentPage === "vmix" && <VmixPage />}
               {currentPage === "propostas" && <PropostasPage />}
               {currentPage === "tp" && <TeleprompterPage />}
+              {currentPage === "cenario" && <CenarioInterativoPage />}
             </Suspense>
           </div>
         </main>
