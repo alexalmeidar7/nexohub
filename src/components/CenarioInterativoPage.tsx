@@ -779,7 +779,7 @@ export default function CenarioInterativoPage() {
 
                   {/* Home overlay: clock + date + logos */}
                   {activeTab === "home" && (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-3" style={{ color: config.home.bgImage ? "#fff" : "#333" }}>
+                    <div className="absolute inset-0 flex flex-col justify-center p-3" style={{ color: config.home.bgImage ? "#fff" : "#333" }}>
                       <div className="text-3xl font-bold leading-none drop-shadow-md" style={{ fontVariantNumeric: "tabular-nums" }}>
                         {currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
                       </div>
