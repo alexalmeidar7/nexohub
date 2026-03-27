@@ -270,110 +270,71 @@ export default function CenarioInterativoPage() {
                 width: "100%",
                 maxWidth: 300,
                 aspectRatio: "9/16",
-                background: "linear-gradient(180deg, #0f0f2e 0%, #1a1a40 40%, #0d0d2a 100%)",
                 boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
                 border: "2px solid rgba(255,255,255,0.08)",
               }}
             >
-              {/* inner padding */}
-              <div className="absolute inset-0 flex flex-col p-3 gap-2 text-white overflow-hidden" style={{ fontSize: 10 }}>
+              {/* Layout: dark sidebar + light content area */}
+              <div className="absolute inset-0 flex" style={{ fontSize: 10 }}>
 
-                {/* Weather block */}
-                {config.weather.enabled && (
-                  <div className="rounded-xl p-3 flex-shrink-0" style={{ background: "rgba(255,255,255,0.07)", backdropFilter: "blur(8px)" }}>
-                    <div className="flex items-center gap-2 mb-1">
-                      <CloudSun size={14} className="text-yellow-400" />
-                      <span className="font-bold text-xs">Previsão do Tempo</span>
-                    </div>
-                    {config.weather.showCurrent && (
-                      <div className="flex items-center gap-2">
-                        <span className="text-2xl">{mockWeather.icon}</span>
-                        <div>
-                          <div className="text-lg font-bold leading-none">{mockWeather.temp}°C</div>
-                          <div className="text-[9px] opacity-70">{config.weather.city || mockWeather.city}</div>
-                        </div>
-                      </div>
-                    )}
-                    {config.weather.showForecast3Days && (
-                      <div className="flex gap-2 mt-2">
-                        {mockWeather.forecast.map((d, i) => (
-                          <div key={i} className="flex-1 text-center rounded-lg py-1" style={{ background: "rgba(255,255,255,0.06)" }}>
-                            <div className="text-[9px] opacity-70">{d.day}</div>
-                            <div className="text-sm">{d.icon}</div>
-                            <div className="text-[8px]">{d.min}°/{d.max}°</div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                {/* ── Dark sidebar with icon buttons ── */}
+                <div className="w-[52px] flex-shrink-0 flex flex-col items-center py-4 gap-1" style={{ background: "#1a1a1a" }}>
+                  {/* Home */}
+                  <div className="w-9 h-9 rounded-full flex items-center justify-center mb-2" style={{ background: "rgba(255,255,255,0.12)" }}>
+                    <MonitorPlay size={16} className="text-white" />
                   </div>
-                )}
 
-                {/* Traffic block */}
-                {config.traffic.enabled && config.traffic.points.length > 0 && (
-                  <div className="rounded-xl p-3 flex-shrink-0" style={{ background: "rgba(255,255,255,0.07)", backdropFilter: "blur(8px)" }}>
-                    <div className="flex items-center gap-2 mb-1">
-                      <Car size={14} className="text-green-400" />
-                      <span className="font-bold text-xs">Trânsito</span>
-                    </div>
-                    {config.traffic.points.slice(0, 3).map(p => (
-                      <div key={p.id} className="flex items-center gap-2 py-1 border-b border-white/10 last:border-0">
-                        <div className="w-2 h-2 rounded-full bg-green-400" />
-                        <div className="truncate">
-                          <div className="text-[10px] font-medium">{p.label}</div>
-                          <div className="text-[8px] opacity-50 truncate">{p.address}</div>
-                        </div>
+                  {/* Weather icon */}
+                  {config.weather.enabled && (
+                    <>
+                      <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.12)" }}>
+                        <CloudSun size={16} className="text-white" />
                       </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Currency block */}
-                {config.currency.enabled && config.currency.currencies.length > 0 && (
-                  <div className="rounded-xl p-3 flex-shrink-0" style={{ background: "rgba(255,255,255,0.07)", backdropFilter: "blur(8px)" }}>
-                    <div className="flex items-center gap-2 mb-1">
-                      <DollarSign size={14} className="text-emerald-400" />
-                      <span className="font-bold text-xs">Cotações</span>
-                    </div>
-                    {mockCurrencies.filter(m => config.currency.currencies.includes(m.code)).map(c => (
-                      <div key={c.code} className="flex items-center justify-between py-1 border-b border-white/10 last:border-0">
-                        <span className="text-[10px]">{c.name}</span>
-                        <div className="text-right">
-                          <span className="text-[11px] font-bold">R$ {c.value}</span>
-                          <span className={`text-[8px] ml-1 ${c.change.startsWith("+") ? "text-green-400" : "text-red-400"}`}>{c.change}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Chat block */}
-                {config.chat.enabled && (
-                  <div className="rounded-xl p-3 flex-1 min-h-0 flex flex-col" style={{ background: "rgba(255,255,255,0.07)", backdropFilter: "blur(8px)" }}>
-                    <div className="flex items-center gap-2 mb-1">
-                      <MessageCircle size={14} className="text-red-400" />
-                      <span className="font-bold text-xs">Chat ao Vivo</span>
-                    </div>
-                    <div className="flex-1 overflow-hidden space-y-1">
-                      {mockMessages.map((m, i) => (
-                        <div key={i} className="rounded-lg px-2 py-1" style={{ background: "rgba(255,255,255,0.05)" }}>
-                          <span className="font-bold text-[9px] text-blue-300">{m.user}: </span>
-                          <span className="text-[9px]">{m.text}</span>
+                      {config.weather.showForecast3Days && mockWeather.forecast.map((_, i) => (
+                        <div key={i} className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold" style={{ background: "rgba(255,255,255,0.12)" }}>
+                          {i + 1}
                         </div>
                       ))}
-                    </div>
-                  </div>
-                )}
+                    </>
+                  )}
 
-                {/* Empty state */}
-                {!config.weather.enabled && !config.traffic.enabled && !config.currency.enabled && !config.chat.enabled && (
-                  <div className="flex-1 flex items-center justify-center text-center opacity-40">
-                    <div>
-                      <MonitorPlay size={28} className="mx-auto mb-2" />
-                      <div className="text-[10px]">Ative os módulos na configuração para visualizar o cenário</div>
+                  {/* Traffic icon */}
+                  {config.traffic.enabled && config.traffic.points.length > 0 && (
+                    <div className="w-9 h-9 rounded-full flex items-center justify-center mt-2" style={{ background: "rgba(255,255,255,0.12)" }}>
+                      <Car size={16} className="text-white" />
                     </div>
-                  </div>
-                )}
+                  )}
+
+                  {/* Currency icon */}
+                  {config.currency.enabled && config.currency.currencies.length > 0 && (
+                    <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.15)" }}>
+                      <DollarSign size={16} className="text-white" />
+                    </div>
+                  )}
+
+                  {/* Chat icon */}
+                  {config.chat.enabled && (
+                    <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.15)" }}>
+                      <MessageCircle size={16} className="text-white" />
+                    </div>
+                  )}
+                </div>
+
+                {/* ── Light content area ── */}
+                <div className="flex-1" style={{ background: "#e8e8e8" }}>
+                  {/* Content would render here based on active sidebar item */}
+                </div>
               </div>
+
+              {/* Empty state overlay */}
+              {!config.weather.enabled && !config.traffic.enabled && !config.currency.enabled && !config.chat.enabled && (
+                <div className="absolute inset-0 flex items-center justify-center text-center" style={{ background: "rgba(26,26,26,0.85)" }}>
+                  <div className="text-white opacity-50">
+                    <MonitorPlay size={28} className="mx-auto mb-2" />
+                    <div className="text-[10px]">Ative os módulos para visualizar</div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
