@@ -1068,10 +1068,10 @@ export default function CenarioInterativoPage() {
                                 </div>
                                 <div className="flex-1 rounded-xl p-3 space-y-2 cenario-anim-card" style={{ background: "rgba(255,255,255,0.2)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.3)" }}>
                                   {liveWeather.daily.slice(1, 4).map((d, i) => (
-                                    <div key={i} className={`flex items-center justify-between text-[9px] rounded-lg px-2 py-1.5 cenario-anim-row-${i + 1}`} style={{ background: "rgba(255,255,255,0.15)" }}>
-                                      <span className="font-bold">{new Date(d.date + "T12:00").toLocaleDateString("pt-BR", { weekday: "short", day: "numeric" })}</span>
+                                    <div key={i} className={`flex items-center justify-between text-[9px] rounded-lg px-2 py-1.5 cenario-anim-row-${i + 1}`} style={{ background: "rgba(255,255,255,0.15)", color: "#fff", textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>
+                                      <span className="font-bold" style={{ color: "#fff" }}>{new Date(d.date + "T12:00").toLocaleDateString("pt-BR", { weekday: "short", day: "numeric" })}</span>
                                       <span className="text-base">{getWIcon(d.code)}</span>
-                                      <span>↓{d.min}° ↑{d.max}°</span>
+                                      <span style={{ color: "#fff" }}>↓{d.min}° ↑{d.max}°</span>
                                     </div>
                                   ))}
                                 </div>
