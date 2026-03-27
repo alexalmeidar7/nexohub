@@ -50,6 +50,7 @@ interface HomeConfig {
 }
 
 interface CenarioConfig {
+  city: string;
   home: HomeConfig;
   weather: WeatherConfig;
   traffic: TrafficConfig;
