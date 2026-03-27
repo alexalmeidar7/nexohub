@@ -247,8 +247,20 @@ export default function CenarioInterativoPage() {
   const [config, setConfig] = useState<CenarioConfig>(defaultConfig);
   const cenarioBcRef = useRef<BroadcastChannel | null>(null);
   useEffect(() => {
-    cenarioBcRef.current = new BroadcastChannel("cenario-interativo");
-    return () => cenarioBcRef.current?.close();
+    const bc = new BroadcastChannel("cenario-interativo");
+    cenarioBcRef.current = bc;
+    bc.onmessage = (ev) => {
+      if (ev.data?.type === "request-state") {
+        bc.postMessage({
+          type: "full-state",
+          tab: activeTabRef.current,
+          subTab: weatherSubTabRef.current,
+          currencySubTab: currencySubTabRef.current,
+          config: configRef.current,
+        });
+      }
+    };
+    return () => { cenarioBcRef.current = null; bc.close(); };
   }, []);
   const [activeTab, setActiveTab] = useState("home");
   const [weatherSubTab, setWeatherSubTab] = useState("today");
