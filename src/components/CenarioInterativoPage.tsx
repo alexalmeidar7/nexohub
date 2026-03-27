@@ -820,7 +820,7 @@ export default function CenarioInterativoPage() {
                 {activeTab === "traffic" && config.traffic.enabled && trafficCoords && (
                   <iframe
                     src={`https://embed.waze.com/iframe?zoom=13&lat=${trafficCoords.lat}&lon=${trafficCoords.lon}&pin=1`}
-                    className="absolute top-0 bottom-0 right-0 border-0"
+                    className="absolute inset-0 h-full border-0"
                     style={{ left: 52, width: 'calc(100% - 52px)', zIndex: 5 }}
                     title="Trânsito preview"
                   />
