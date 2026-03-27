@@ -171,6 +171,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
       setProgramaId(editData.programaId);
       setBlocos(editData.blocos.length > 0 ? editData.blocos : [{ noticias: [{ titulo: "", imagemUrl: "", escalada: false }] }]);
       setParticipantes(editData.participantes || []);
+      setEscaladaList(editData.escaladaList || []);
       setEditingId(editData.roteiroId);
       setInitialized(true);
     }
