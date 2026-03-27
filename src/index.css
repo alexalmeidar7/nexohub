@@ -593,20 +593,14 @@ table:not([data-no-row-hover]) tbody tr:hover {
   0% { opacity: 0; transform: translateY(-20px); }
   100% { opacity: 1; transform: translateY(0); }
 }
-@keyframes cenario-bounce-up {
-  0% { transform: translateY(0); }
-  50% { transform: translateY(-4px); }
-  100% { transform: translateY(0); }
+@keyframes cenario-neon-blink-up {
+  0%, 100% { opacity: 1; filter: drop-shadow(0 0 6px #4ade80) drop-shadow(0 0 12px #22c55e); transform: translateY(0); }
+  50% { opacity: 0.3; filter: drop-shadow(0 0 2px #4ade80); transform: translateY(-3px); }
 }
-@keyframes cenario-bounce-down {
-  0% { transform: translateY(0); }
-  50% { transform: translateY(4px); }
-  100% { transform: translateY(0); }
+@keyframes cenario-neon-blink-down {
+  0%, 100% { opacity: 1; filter: drop-shadow(0 0 6px #f87171) drop-shadow(0 0 12px #ef4444); transform: translateY(0); }
+  50% { opacity: 0.3; filter: drop-shadow(0 0 2px #f87171); transform: translateY(3px); }
 }
-.cenario-anim-icon { animation: cenario-fade-in 0.5s ease-out both; }
-.cenario-anim-title { animation: cenario-slide-right 0.6s ease-out 0.1s both; }
-.cenario-anim-subtitle { animation: cenario-slide-right 0.6s ease-out 0.2s both; }
-.cenario-anim-card { animation: cenario-slide-up 0.5s ease-out 0.3s both; }
 .cenario-anim-row-1 { animation: cenario-slide-up 0.45s ease-out 0.35s both; }
 .cenario-anim-row-2 { animation: cenario-slide-up 0.45s ease-out 0.45s both; }
 .cenario-anim-row-3 { animation: cenario-slide-up 0.45s ease-out 0.55s both; }
@@ -615,5 +609,5 @@ table:not([data-no-row-hover]) tbody tr:hover {
 .cenario-anim-row-6 { animation: cenario-slide-up 0.45s ease-out 0.85s both; }
 .cenario-anim-row-7 { animation: cenario-slide-up 0.45s ease-out 0.95s both; }
 .cenario-anim-row-8 { animation: cenario-slide-up 0.45s ease-out 1.05s both; }
-.cenario-arrow-up { animation: cenario-bounce-up 1.2s ease-in-out infinite; color: #4ade80; }
-.cenario-arrow-down { animation: cenario-bounce-down 1.2s ease-in-out infinite; color: #f87171; }
+.cenario-arrow-up { animation: cenario-neon-blink-up 1s ease-in-out infinite; color: #4ade80; }
+.cenario-arrow-down { animation: cenario-neon-blink-down 1s ease-in-out infinite; color: #f87171; }
