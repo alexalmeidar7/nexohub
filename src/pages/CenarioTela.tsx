@@ -430,31 +430,58 @@ export default function CenarioTela() {
                 {config.currency.bgImage && <div className="absolute inset-0" style={{ background: "rgba(3,8,14,0.3)" }} />}
                 <div className="relative z-10 flex flex-col h-full" style={{ padding: "3vh" }}>
                   {config.currency.enabled ? (<>
-                    <div className="flex justify-end mb-1"><DollarSign size={48} className="drop-shadow-lg" style={{ color: "#e1f532" }} /></div>
+                    <div className="flex justify-end mb-1 cenario-anim-icon"><DollarSign size={48} className="drop-shadow-lg" style={{ color: "#e1f532" }} /></div>
                     <div style={{ marginBottom: "1.6vh" }}>
-                      <div className="font-extrabold leading-tight drop-shadow-lg" style={{ fontSize: "4.2vh" }}>cotação</div>
-                      <div className="font-bold" style={{ fontSize: "2.6vh", color: "#e1f532" }}>moedas</div>
+                      <div className="font-extrabold leading-tight drop-shadow-lg cenario-anim-title" style={{ fontSize: "4.2vh" }}>cotação</div>
+                      <div className="font-bold cenario-anim-subtitle" style={{ fontSize: "2.6vh", color: "#e1f532" }}>
+                        {currencySubTab === "moedas" ? "moedas" : "bolsas"}
+                      </div>
                     </div>
-                    <div className="flex-1 space-y-2 overflow-auto" style={{ padding: "2.2vh" }}>
-                      
-                      {config.currency.currencies.map(c => {
-                        const opt = CURRENCY_OPTIONS.find(o => o.value === c);
-                        const live = liveCurrencies.find(l => l.code === c);
-                        return (
-                          <div key={c} className="flex items-center justify-between" style={{ fontSize: "1.95vh", padding: "1.25vh 1.4vh" }}>
-                            <span className="font-semibold" style={{ maxWidth: "52%", lineHeight: 1.15 }}>{opt?.label?.split("(")[0]?.trim() || c}</span>
-                            {live ? (
-                              <div className="flex items-center" style={{ gap: "0.8vh" }}>
-                                <span className="font-extrabold" style={{ fontSize: "2.05vh" }}>{live.value}</span>
-                                <span className="font-bold" style={{ fontSize: "1.75vh", color: live.direction === "up" ? "#4ade80" : live.direction === "down" ? "#f87171" : "rgba(255,255,255,0.75)" }}>{live.change}</span>
-                              </div>
-                            ) : (
-                              <span className="opacity-70">---</span>
-                            )}
+
+                    {currencySubTab === "moedas" ? (
+                      <div className="flex-1 space-y-2 overflow-auto" style={{ padding: "2.2vh" }}>
+                        {config.currency.currencies.map((c, idx) => {
+                          const opt = CURRENCY_OPTIONS.find(o => o.value === c);
+                          const live = liveCurrencies.find(l => l.code === c);
+                          return (
+                            <div key={c} className={`flex items-center justify-between cenario-anim-row-${Math.min(idx + 1, 8)}`} style={{ fontSize: "1.95vh", padding: "1.25vh 1.4vh" }}>
+                              <span className="font-semibold" style={{ maxWidth: "52%", lineHeight: 1.15 }}>{opt?.label?.split("(")[0]?.trim() || c}</span>
+                              {live ? (
+                                <div className="flex items-center" style={{ gap: "0.8vh" }}>
+                                  <span className="font-extrabold" style={{ fontSize: "2.05vh" }}>{live.value}</span>
+                                  <span className="font-bold" style={{ fontSize: "1.75vh", color: live.direction === "up" ? "#4ade80" : live.direction === "down" ? "#f87171" : "rgba(255,255,255,0.75)" }}>{live.change}</span>
+                                  {live.direction === "up" && <TrendingUp style={{ width: "2vh", height: "2vh" }} className="cenario-arrow-up" />}
+                                  {live.direction === "down" && <TrendingDown style={{ width: "2vh", height: "2vh" }} className="cenario-arrow-down" />}
+                                  {live.direction !== "up" && live.direction !== "down" && <Minus style={{ width: "2vh", height: "2vh", color: "rgba(255,255,255,0.5)" }} />}
+                                </div>
+                              ) : (
+                                <span className="opacity-70">---</span>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="flex-1 space-y-2 overflow-auto" style={{ padding: "2.2vh" }}>
+                        {liveStocks.map((s, idx) => (
+                          <div key={s.symbol} className={`flex items-center justify-between cenario-anim-row-${Math.min(idx + 1, 8)}`} style={{ fontSize: "1.95vh", padding: "1.25vh 1.4vh" }}>
+                            <span className="font-semibold" style={{ maxWidth: "52%", lineHeight: 1.15 }}>
+                              <span style={{ marginRight: "0.5vh" }}>{s.flag}</span>{s.name}
+                            </span>
+                            <div className="flex items-center" style={{ gap: "0.8vh" }}>
+                              <span className="font-extrabold" style={{ fontSize: "2.05vh" }}>{s.value}</span>
+                              <span className="font-bold" style={{ fontSize: "1.75vh", color: s.direction === "up" ? "#4ade80" : s.direction === "down" ? "#f87171" : "rgba(255,255,255,0.75)" }}>{s.change}</span>
+                              {s.direction === "up" && <TrendingUp style={{ width: "2vh", height: "2vh" }} className="cenario-arrow-up" />}
+                              {s.direction === "down" && <TrendingDown style={{ width: "2vh", height: "2vh" }} className="cenario-arrow-down" />}
+                              {s.direction !== "up" && s.direction !== "down" && <Minus style={{ width: "2vh", height: "2vh", color: "rgba(255,255,255,0.5)" }} />}
+                            </div>
                           </div>
-                        );
-                      })}
-                    </div>
+                        ))}
+                        {!liveStocks.length && (
+                          <div className="opacity-60 text-center" style={{ fontSize: "1.8vh" }}>Dados indisponíveis</div>
+                        )}
+                      </div>
+                    )}
                   </>) : (
                     <div className="flex-1 flex items-center justify-center opacity-70" style={{ fontSize: "1.9vh" }}>Cotação desativada</div>
                   )}
