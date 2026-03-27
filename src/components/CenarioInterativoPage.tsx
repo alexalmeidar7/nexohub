@@ -139,6 +139,40 @@ async function fetchLiveCurrencies(codes: string[]): Promise<LiveCurrency[]> {
   }
 }
 
+/* ─── Stock Exchange (Bolsas) ─── */
+const STOCK_EXCHANGES = [
+  { symbol: "^BVSP", name: "Ibovespa", flag: "🇧🇷" },
+  { symbol: "^GSPC", name: "S&P 500", flag: "🇺🇸" },
+  { symbol: "^DJI", name: "Dow Jones", flag: "🇺🇸" },
+  { symbol: "^IXIC", name: "Nasdaq", flag: "🇺🇸" },
+  { symbol: "^FTSE", name: "FTSE 100", flag: "🇬🇧" },
+  { symbol: "^N225", name: "Nikkei 225", flag: "🇯🇵" },
+  { symbol: "^GDAXI", name: "DAX", flag: "🇩🇪" },
+];
+
+interface LiveStock {
+  symbol: string;
+  name: string;
+  flag: string;
+  value: string;
+  change: string;
+  direction: "up" | "down" | "neutral";
+}
+
+async function fetchLiveStocks(): Promise<LiveStock[]> {
+  try {
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const res = await fetch(`${supabaseUrl}/functions/v1/fetch-stocks`, {
+      headers: { "Content-Type": "application/json" },
+    });
+    if (!res.ok) throw new Error("fetch-stocks failed");
+    const data = await res.json();
+    return (data.stocks || []) as LiveStock[];
+  } catch {
+    return [];
+  }
+}
+
 const mockMessages = [
   { user: "João Silva", text: "Boa tarde! 🎉" },
   { user: "Maria", text: "Excelente programa hoje!" },
@@ -218,14 +252,19 @@ export default function CenarioInterativoPage() {
   }, []);
   const [activeTab, setActiveTab] = useState("home");
   const [weatherSubTab, setWeatherSubTab] = useState("today");
+  const [currencySubTab, setCurrencySubTab] = useState<"moedas" | "bolsas">("moedas");
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
-    cenarioBcRef.current?.postMessage({ type: "tab-change", tab, subTab: weatherSubTab });
+    cenarioBcRef.current?.postMessage({ type: "tab-change", tab, subTab: weatherSubTab, currencySubTab });
   };
   const handleWeatherSubTabChange = (sub: string) => {
     setWeatherSubTab(sub);
-    cenarioBcRef.current?.postMessage({ type: "tab-change", tab: "weather", subTab: sub });
+    cenarioBcRef.current?.postMessage({ type: "tab-change", tab: "weather", subTab: sub, currencySubTab });
+  };
+  const handleCurrencySubTabChange = (sub: "moedas" | "bolsas") => {
+    setCurrencySubTab(sub);
+    cenarioBcRef.current?.postMessage({ type: "tab-change", tab: "currency", subTab: weatherSubTab, currencySubTab: sub });
   };
   const [trafficSearchCity, setTrafficSearchCity] = useState("");
   const [saving, setSaving] = useState(false);
@@ -239,6 +278,8 @@ export default function CenarioInterativoPage() {
   const [trafficCoords, setTrafficCoords] = useState<{ lat: number; lon: number } | null>(null);
   const [liveCurrencies, setLiveCurrencies] = useState<LiveCurrency[]>([]);
   const [currencyLoading, setCurrencyLoading] = useState(false);
+  const [liveStocks, setLiveStocks] = useState<LiveStock[]>([]);
+  const [stocksLoading, setStocksLoading] = useState(false);
 
   /* ─── Clock tick ─── */
   useEffect(() => {
@@ -257,9 +298,24 @@ export default function CenarioInterativoPage() {
       setCurrencyLoading(false);
     };
     load();
-    const interval = setInterval(load, 60000); // refresh every 60s
+    const interval = setInterval(load, 60000);
     return () => { cancelled = true; clearInterval(interval); };
   }, [config.currency.enabled, config.currency.currencies.join(",")]);
+
+  /* ─── Fetch live stocks ─── */
+  useEffect(() => {
+    if (!config.currency.enabled) return;
+    let cancelled = false;
+    const load = async () => {
+      setStocksLoading(true);
+      const data = await fetchLiveStocks();
+      if (!cancelled) setLiveStocks(data);
+      setStocksLoading(false);
+    };
+    load();
+    const interval = setInterval(load, 120000); // refresh every 2min
+    return () => { cancelled = true; clearInterval(interval); };
+  }, [config.currency.enabled]);
 
   /* ─── Fetch current program + sponsor logos ─── */
   useEffect(() => {
@@ -752,14 +808,61 @@ export default function CenarioInterativoPage() {
                 </div>
                 {config.currency.enabled && (
                   <div className="space-y-3">
-                    <p className="text-xs" style={{ color: mutedText }}>Selecione as moedas para exibir:</p>
-                    {CURRENCY_OPTIONS.map(opt => (
-                      <label key={opt.value} className="flex items-center gap-3 rounded-lg px-3 py-2 cursor-pointer text-sm hover:bg-black/5 transition-colors" style={{ background: config.currency.currencies.includes(opt.value) ? "color-mix(in srgb, var(--layout-header-bg, #0d0446) 10%, transparent)" : "transparent" }}>
-                        <input type="checkbox" checked={config.currency.currencies.includes(opt.value)} onChange={() => toggleCurrency(opt.value)} className="accent-[var(--layout-header-bg)]" />
-                        <DollarSign size={14} style={{ color: mutedText }} />
-                        {opt.label}
-                      </label>
-                    ))}
+                    {/* Sub-tabs: Moedas / Bolsas */}
+                    <div className="flex gap-1 rounded-lg p-1" style={{ background: subTabBg }}>
+                      {([{ key: "moedas", label: "Moedas", icon: DollarSign }, { key: "bolsas", label: "Bolsas", icon: TrendingUp }] as const).map(t => (
+                        <button
+                          key={t.key}
+                          onClick={() => handleCurrencySubTabChange(t.key as "moedas" | "bolsas")}
+                          className="flex-1 flex items-center justify-center gap-1 rounded-md px-2 py-1.5 text-xs font-medium transition-all"
+                          style={{
+                            background: currencySubTab === t.key ? subTabActive : "transparent",
+                            color: currencySubTab === t.key ? "var(--layout-header-text, #fff)" : textColor,
+                          }}
+                        >
+                          <t.icon size={12} /> {t.label}
+                        </button>
+                      ))}
+                    </div>
+
+                    {currencySubTab === "moedas" && (
+                      <>
+                        <p className="text-xs" style={{ color: mutedText }}>Selecione as moedas para exibir:</p>
+                        {CURRENCY_OPTIONS.map(opt => (
+                          <label key={opt.value} className="flex items-center gap-3 rounded-lg px-3 py-2 cursor-pointer text-sm hover:bg-black/5 transition-colors" style={{ background: config.currency.currencies.includes(opt.value) ? "color-mix(in srgb, var(--layout-header-bg, #0d0446) 10%, transparent)" : "transparent" }}>
+                            <input type="checkbox" checked={config.currency.currencies.includes(opt.value)} onChange={() => toggleCurrency(opt.value)} className="accent-[var(--layout-header-bg)]" />
+                            <DollarSign size={14} style={{ color: mutedText }} />
+                            {opt.label}
+                          </label>
+                        ))}
+                      </>
+                    )}
+
+                    {currencySubTab === "bolsas" && (
+                      <div className="space-y-2">
+                        <p className="text-xs" style={{ color: mutedText }}>Principais bolsas de valores em tempo real:</p>
+                        {stocksLoading && !liveStocks.length ? (
+                          <div className="flex items-center gap-2 text-xs" style={{ color: mutedText }}><Loader2 size={14} className="animate-spin" /> Carregando bolsas...</div>
+                        ) : liveStocks.length > 0 ? (
+                          liveStocks.map(s => (
+                            <div key={s.symbol} className="flex items-center justify-between rounded-lg px-3 py-2 text-sm" style={{ background: subTabBg }}>
+                              <span className="flex items-center gap-2 font-medium">
+                                <span>{s.flag}</span> {s.name}
+                              </span>
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-bold">{s.value}</span>
+                                <span className="font-semibold text-xs" style={{ color: s.direction === "up" ? "#22c55e" : s.direction === "down" ? "#ef4444" : mutedText }}>{s.change}</span>
+                                {s.direction === "up" && <TrendingUp size={14} style={{ color: "#22c55e" }} />}
+                                {s.direction === "down" && <TrendingDown size={14} style={{ color: "#ef4444" }} />}
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <p className="text-xs opacity-60">Dados indisponíveis no momento</p>
+                        )}
+                      </div>
+                    )}
+
                     <BgImageUpload value={config.currency.bgImage} onChange={v => updateCurrency({ bgImage: v })} mutedText={mutedText} userId={uid} category="currency" />
                   </div>
                 )}
@@ -1022,33 +1125,64 @@ export default function CenarioInterativoPage() {
                             </div>
                             <div className="mb-2">
                               <div className="text-2xl font-extrabold leading-tight drop-shadow-lg cenario-anim-title">cotação</div>
-                              <div className="text-base font-bold tracking-wide cenario-anim-subtitle" style={{ color: "#e1f532" }}>moedas</div>
+                              <div className="text-base font-bold tracking-wide cenario-anim-subtitle" style={{ color: "#e1f532" }}>
+                                {currencySubTab === "moedas" ? "moedas" : "bolsas"}
+                              </div>
                             </div>
-                            <div className="flex-1 p-3 space-y-2 overflow-auto">
-                              {currencyLoading && !liveCurrencies.length ? (
-                                <div className="flex items-center gap-2 text-[10px] opacity-80"><Loader2 size={12} className="animate-spin" /> Carregando...</div>
-                              ) : config.currency.currencies.map((c, idx) => {
-                                const opt = CURRENCY_OPTIONS.find(o => o.value === c);
-                                const live = liveCurrencies.find(l => l.code === c);
-                                const rowClass = `cenario-anim-row-${Math.min(idx + 1, 8)}`;
-                                return (
-                                  <div key={c} className={`flex items-center justify-between px-2.5 py-2 text-[11px] ${rowClass}`}>
-                                    <span className="font-semibold leading-tight pr-2" style={{ color: "#fff" }}>{opt?.label?.split("(")[0]?.trim() || c}</span>
-                                    {live ? (
+
+                            {/* Sub-tab content */}
+                            {currencySubTab === "moedas" ? (
+                              <div className="flex-1 p-3 space-y-2 overflow-auto">
+                                {currencyLoading && !liveCurrencies.length ? (
+                                  <div className="flex items-center gap-2 text-[10px] opacity-80"><Loader2 size={12} className="animate-spin" /> Carregando...</div>
+                                ) : config.currency.currencies.map((c, idx) => {
+                                  const opt = CURRENCY_OPTIONS.find(o => o.value === c);
+                                  const live = liveCurrencies.find(l => l.code === c);
+                                  const rowClass = `cenario-anim-row-${Math.min(idx + 1, 8)}`;
+                                  return (
+                                    <div key={c} className={`flex items-center justify-between px-2.5 py-2 text-[11px] ${rowClass}`}>
+                                      <span className="font-semibold leading-tight pr-2" style={{ color: "#fff" }}>{opt?.label?.split("(")[0]?.trim() || c}</span>
+                                      {live ? (
+                                        <div className="flex items-center gap-1.5">
+                                          <span className="font-extrabold text-[12px]" style={{ color: "#fff" }}>{live.value}</span>
+                                          <span className="font-bold text-[11px]" style={{ color: live.direction === "up" ? "#4ade80" : live.direction === "down" ? "#f87171" : "rgba(255,255,255,0.75)" }}>{live.change}</span>
+                                          {live.direction === "up" && <TrendingUp size={13} className="cenario-arrow-up" />}
+                                          {live.direction === "down" && <TrendingDown size={13} className="cenario-arrow-down" />}
+                                          {live.direction !== "up" && live.direction !== "down" && <Minus size={13} style={{ color: "rgba(255,255,255,0.5)" }} />}
+                                        </div>
+                                      ) : (
+                                        <span className="opacity-70">---</span>
+                                      )}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            ) : (
+                              <div className="flex-1 p-3 space-y-2 overflow-auto">
+                                {stocksLoading && !liveStocks.length ? (
+                                  <div className="flex items-center gap-2 text-[10px] opacity-80"><Loader2 size={12} className="animate-spin" /> Carregando...</div>
+                                ) : liveStocks.map((s, idx) => {
+                                  const rowClass = `cenario-anim-row-${Math.min(idx + 1, 8)}`;
+                                  return (
+                                    <div key={s.symbol} className={`flex items-center justify-between px-2.5 py-2 text-[11px] ${rowClass}`}>
+                                      <span className="font-semibold leading-tight pr-2" style={{ color: "#fff" }}>
+                                        <span className="mr-1">{s.flag}</span>{s.name}
+                                      </span>
                                       <div className="flex items-center gap-1.5">
-                                        <span className="font-extrabold text-[12px]" style={{ color: "#fff" }}>{live.value}</span>
-                                        <span className="font-bold text-[11px]" style={{ color: live.direction === "up" ? "#4ade80" : live.direction === "down" ? "#f87171" : "rgba(255,255,255,0.75)" }}>{live.change}</span>
-                                        {live.direction === "up" && <TrendingUp size={13} className="cenario-arrow-up" />}
-                                        {live.direction === "down" && <TrendingDown size={13} className="cenario-arrow-down" />}
-                                        {live.direction !== "up" && live.direction !== "down" && <Minus size={13} style={{ color: "rgba(255,255,255,0.5)" }} />}
+                                        <span className="font-extrabold text-[12px]" style={{ color: "#fff" }}>{s.value}</span>
+                                        <span className="font-bold text-[11px]" style={{ color: s.direction === "up" ? "#4ade80" : s.direction === "down" ? "#f87171" : "rgba(255,255,255,0.75)" }}>{s.change}</span>
+                                        {s.direction === "up" && <TrendingUp size={13} className="cenario-arrow-up" />}
+                                        {s.direction === "down" && <TrendingDown size={13} className="cenario-arrow-down" />}
+                                        {s.direction !== "up" && s.direction !== "down" && <Minus size={13} style={{ color: "rgba(255,255,255,0.5)" }} />}
                                       </div>
-                                    ) : (
-                                      <span className="opacity-70">---</span>
-                                    )}
-                                  </div>
-                                );
-                              })}
-                            </div>
+                                    </div>
+                                  );
+                                })}
+                                {!stocksLoading && !liveStocks.length && (
+                                  <div className="text-[10px] opacity-60 text-center">Dados indisponíveis</div>
+                                )}
+                              </div>
+                            )}
                           </>
                         ) : (
                           <div className="flex-1 flex items-center justify-center text-[11px] opacity-70">Cotação desativada</div>
