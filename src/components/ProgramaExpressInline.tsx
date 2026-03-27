@@ -523,7 +523,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
         <div className="rounded-xl p-4" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 25%, transparent)", backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 4%, transparent)" }}>
           <p className="text-xs font-bold flex items-center gap-1.5 mb-3" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
             <Users size={14} style={{ color: "var(--layout-accent-color, #2ec1f7)" }} />
-            Participantes
+            Participantes {editedFields.has("participantes") && <EditedCheck />}
           </p>
           {participantes.length > 0 && (
             <div className="space-y-1.5 mb-3">
