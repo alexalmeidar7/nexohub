@@ -703,11 +703,11 @@ function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRe
         </button>
       </div>
       <div className="w-full min-w-0 max-w-full overflow-hidden">
-        <div className="flex items-center gap-1 mb-1"><Type size={10} style={{ color: "var(--layout-icon-color)" }} /><span className="text-[10px] font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Título / Tarja</span></div>
+        <div className="flex items-center gap-1 mb-1"><Type size={10} style={{ color: "var(--layout-icon-color)" }} /><span className="text-[10px] font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Título / Tarja</span>{editedFields?.has(`noticia-${bi}-${ni}-titulo`) && <EditedCheck />}</div>
         <input value={noticia.titulo} onChange={e => onUpdate(bi, ni, "titulo", e.target.value)} placeholder="Título da matéria" className="block w-full min-w-0 max-w-full px-3 py-1.5 rounded-lg text-[11px] outline-none" style={{ ...inputStyle, width: "100%", maxWidth: "100%", boxSizing: "border-box" }} />
       </div>
       <div className="w-full min-w-0 max-w-full overflow-hidden">
-        <div className="flex items-center gap-1 mb-1"><Image size={10} style={{ color: "var(--layout-icon-color)" }} /><span className="text-[10px] font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>URL Imagem</span></div>
+        <div className="flex items-center gap-1 mb-1"><Image size={10} style={{ color: "var(--layout-icon-color)" }} /><span className="text-[10px] font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>URL Imagem</span>{editedFields?.has(`noticia-${bi}-${ni}-imagemUrl`) && <EditedCheck />}</div>
         <input value={noticia.imagemUrl} onChange={e => onUpdate(bi, ni, "imagemUrl", e.target.value)} placeholder="https://..." className="block w-full min-w-0 max-w-full px-3 py-1.5 rounded-lg text-[11px] outline-none" style={{ ...inputStyle, width: "100%", maxWidth: "100%", boxSizing: "border-box" }} />
       </div>
       {noticia.imagemUrl && noticia.imagemUrl.startsWith("http") && <img src={noticia.imagemUrl} alt="" className="w-16 h-10 object-cover rounded" onError={e => (e.currentTarget.style.display = "none")} />}
