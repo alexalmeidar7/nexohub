@@ -354,6 +354,13 @@ export default function CenarioTela() {
             {activeTab === "currency" && config.currency.bgImage && <img src={config.currency.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
             {activeTab === "chat" && config.chat.bgImage && <img src={config.chat.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
 
+            {/* Animated page wrapper */}
+            <div
+              key={activeTab + (activeTab === "weather" ? `-${weatherSubTab}` : "") + (activeTab === "currency" ? `-${currencySubTab}` : "")}
+              className="absolute inset-0"
+              style={{ animation: "cenario-page-enter 0.5s cubic-bezier(0.16,1,0.3,1) both" }}
+            >
+
             {/* ═══ HOME ═══ */}
             {activeTab === "home" && (
               <div className="absolute inset-0 flex flex-col justify-center" style={{ padding: "3vh", color: config.home.bgImage ? "#fff" : "#333" }}>
@@ -538,6 +545,8 @@ export default function CenarioTela() {
                 </div>
               </div>
             )}
+
+            </div>{/* end animated page wrapper */}
           </div>
         </div>
       </div>
