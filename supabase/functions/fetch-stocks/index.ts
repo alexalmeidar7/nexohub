@@ -6,13 +6,13 @@ const corsHeaders = {
 };
 
 const STOCK_EXCHANGES = [
-  { symbol: "^BVSP", name: "Ibovespa", flag: "🇧🇷" },
-  { symbol: "^GSPC", name: "S&P 500", flag: "🇺🇸" },
-  { symbol: "^DJI", name: "Dow Jones", flag: "🇺🇸" },
-  { symbol: "^IXIC", name: "Nasdaq", flag: "🇺🇸" },
-  { symbol: "^FTSE", name: "FTSE 100", flag: "🇬🇧" },
-  { symbol: "^N225", name: "Nikkei 225", flag: "🇯🇵" },
-  { symbol: "^GDAXI", name: "DAX", flag: "🇩🇪" },
+  { symbol: "^BVSP", name: "Ibovespa", flag: "🇧🇷", gfPath: "IBOV:INDEXBVL" },
+  { symbol: "^GSPC", name: "S&P 500", flag: "🇺🇸", gfPath: ".INX:INDEXSP" },
+  { symbol: "^DJI", name: "Dow Jones", flag: "🇺🇸", gfPath: ".DJI:INDEXDJX" },
+  { symbol: "^IXIC", name: "Nasdaq", flag: "🇺🇸", gfPath: ".IXIC:INDEXNASDAQ" },
+  { symbol: "^FTSE", name: "FTSE 100", flag: "🇬🇧", gfPath: "UKX:INDEXFTSE" },
+  { symbol: "^N225", name: "Nikkei 225", flag: "🇯🇵", gfPath: "NI225:INDEXNIKKEI" },
+  { symbol: "^GDAXI", name: "DAX", flag: "🇩🇪", gfPath: "DAX:INDEXDB" },
 ];
 
 serve(async (req) => {
@@ -21,54 +21,62 @@ serve(async (req) => {
   }
 
   try {
-    const symbols = STOCK_EXCHANGES.map(s => s.symbol).join(",");
-    const url = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(symbols)}&fields=regularMarketPrice,regularMarketChangePercent,shortName`;
-    
-    const res = await fetch(url, {
-      headers: { "User-Agent": "Mozilla/5.0" },
+    const stocks = await fetchAll();
+    return new Response(JSON.stringify({ stocks }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-
-    if (!res.ok) {
-      // Fallback: try v6
-      const url2 = `https://query2.finance.yahoo.com/v6/finance/quote?symbols=${encodeURIComponent(symbols)}`;
-      const res2 = await fetch(url2, { headers: { "User-Agent": "Mozilla/5.0" } });
-      if (!res2.ok) throw new Error("Yahoo Finance unavailable");
-      const data2 = await res2.json();
-      const results = data2?.quoteResponse?.result || [];
-      return buildResponse(results);
-    }
-
-    const data = await res.json();
-    const results = data?.quoteResponse?.result || [];
-    return buildResponse(results);
   } catch (error) {
-    console.error("fetch-stocks error:", error);
     return new Response(JSON.stringify({ stocks: [], error: String(error) }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
     });
   }
 });
 
-function buildResponse(results: any[]) {
-  const stocks = STOCK_EXCHANGES.map(exchange => {
-    const quote = results.find((r: any) => r.symbol === exchange.symbol);
-    if (!quote) return null;
+async function fetchAll(): Promise<any[]> {
+  const results = await Promise.allSettled(
+    STOCK_EXCHANGES.map(async (ex) => {
+      const url = `https://www.google.com/finance/quote/${ex.gfPath}`;
+      const res = await fetch(url, {
+        headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" },
+      });
+      const html = await res.text();
 
-    const price = quote.regularMarketPrice || 0;
-    const pctChange = quote.regularMarketChangePercent || 0;
+      // 1) data-last-price
+      let price = 0;
+      const dlp = html.match(/data-last-price="([^"]+)"/);
+      if (dlp) {
+        price = parseFloat(dlp[1]);
+      }
 
-    return {
-      symbol: exchange.symbol,
-      name: exchange.name,
-      flag: exchange.flag,
-      value: price.toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 2 }),
-      change: `${pctChange >= 0 ? "+" : ""}${pctChange.toFixed(2)}%`,
-      direction: pctChange > 0 ? "up" : pctChange < 0 ? "down" : "neutral",
-    };
-  }).filter(Boolean);
+      // 2) Fallback: biggest number with comma-thousands and decimals in the page
+      if (price === 0) {
+        const allNums = [...html.matchAll(/>(\d{1,3}(?:,\d{3})+\.\d{2})</g)]
+          .map(m => parseFloat(m[1].replace(/,/g, "")))
+          .sort((a, b) => b - a);
+        if (allNums.length > 0) price = allNums[0];
+      }
 
-  return new Response(JSON.stringify({ stocks }), {
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
-  });
+      // Percentage: first >X.XX%< pattern in the page
+      let pct = 0;
+      const pctMatch = html.match(/>([-+]?\d+\.\d+)%</);
+      if (pctMatch) {
+        pct = parseFloat(pctMatch[1]);
+      }
+
+      if (price === 0) return null;
+
+      return {
+        symbol: ex.symbol, name: ex.name, flag: ex.flag,
+        value: price >= 1000
+          ? price.toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 2 })
+          : price.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+        change: `${pct >= 0 ? "+" : ""}${pct.toFixed(2)}%`,
+        direction: pct > 0 ? ("up" as const) : pct < 0 ? ("down" as const) : ("neutral" as const),
+      };
+    })
+  );
+
+  return results
+    .filter((r): r is PromiseFulfilledResult<any> => r.status === "fulfilled" && r.value !== null)
+    .map(r => r.value);
 }
