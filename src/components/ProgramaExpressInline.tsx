@@ -673,13 +673,13 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
 
         {/* Save / Finish editing */}
         {editingId ? (
-          <button onClick={handleSave} disabled={saving || !programaId} className="w-full py-4 rounded-xl text-sm font-bold transition-all hover:scale-[1.01] hover:shadow-lg active:scale-[0.98] flex items-center justify-center gap-2.5 disabled:opacity-40 disabled:hover:scale-100" style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #2ec1f7), color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 65%, #000 35%))", color: "var(--layout-header-text, #ffffff)", boxShadow: "0 6px 24px color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 35%, transparent)", letterSpacing: "0.03em" }}>
-            {saving ? <Loader2 size={18} className="animate-spin" /> : <Check size={18} />}
+          <button onClick={handleSave} disabled={saving || !programaId} className="w-full py-3.5 rounded-xl text-sm font-bold transition-all hover:opacity-90 hover:shadow-lg active:scale-[0.98] flex items-center justify-center gap-2.5 disabled:opacity-40 disabled:hover:scale-100" style={{ background: "var(--layout-button-bg, linear-gradient(135deg, var(--layout-accent-color, #2ec1f7), color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 75%, #000 25%)))", color: "var(--layout-button-text, #fff)", boxShadow: "0 2px 8px color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 25%, transparent)", letterSpacing: "0.03em" }}>
+            {saving ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
             {saving ? "Finalizando..." : "Finalizar Edição"}
           </button>
         ) : (
-          <button onClick={handleSave} disabled={saving || !programaId} className="w-full py-4 rounded-xl text-sm font-bold transition-all hover:scale-[1.01] hover:shadow-lg active:scale-[0.98] flex items-center justify-center gap-2.5 disabled:opacity-40 disabled:hover:scale-100" style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #2ec1f7), color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 65%, #000 35%))", color: "var(--layout-header-text, #ffffff)", boxShadow: "0 6px 24px color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 35%, transparent)", letterSpacing: "0.03em" }}>
-            {saving ? <Loader2 size={18} className="animate-spin" /> : <Zap size={18} />}
+          <button onClick={handleSave} disabled={saving || !programaId} className="w-full py-3.5 rounded-xl text-sm font-bold transition-all hover:opacity-90 hover:shadow-lg active:scale-[0.98] flex items-center justify-center gap-2.5 disabled:opacity-40 disabled:hover:scale-100" style={{ background: "var(--layout-button-bg, linear-gradient(135deg, var(--layout-accent-color, #2ec1f7), color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 75%, #000 25%)))", color: "var(--layout-button-text, #fff)", boxShadow: "0 2px 8px color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 25%, transparent)", letterSpacing: "0.03em" }}>
+            {saving ? <Loader2 size={16} className="animate-spin" /> : <Zap size={16} />}
             {saving ? "Salvando..." : "Finalizar Programa Express"}
           </button>
         )}
