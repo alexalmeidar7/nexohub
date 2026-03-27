@@ -1005,7 +1005,7 @@ ${perguntaActions}
                             estudio: r.estudio || "",
                             data: format(new Date(r.data_programa), "dd/MM/yyyy"),
                             horario: r.horario || "",
-                            participantes: parts,
+                            participantes: Array.isArray(parts) ? parts : (parts?.participantes || []),
                             conteudoTexto: r.conteudo_html?.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim() || "",
                           });
                         }
