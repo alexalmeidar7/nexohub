@@ -364,15 +364,15 @@ export default function CenarioTela() {
             {/* ═══ HOME ═══ */}
             {activeTab === "home" && (
               <div className="absolute inset-0 flex flex-col justify-center" style={{ padding: "3vh", color: config.home.bgImage ? "#fff" : "#333" }}>
-                <div className="font-bold leading-none drop-shadow-md" style={{ fontSize: "6vh", fontVariantNumeric: "tabular-nums" }}>
+                <div className="font-bold leading-none drop-shadow-md" style={{ fontSize: "6vh", fontVariantNumeric: "tabular-nums", animation: "cenario-clock-enter 0.8s cubic-bezier(0.16,1,0.3,1) both" }}>
                   {currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
                 </div>
-                <div className="mt-1 drop-shadow-sm opacity-80" style={{ fontSize: "1.8vh" }}>
+                <div className="mt-1 drop-shadow-sm opacity-80" style={{ fontSize: "1.8vh", animation: "cenario-clock-enter 0.8s cubic-bezier(0.16,1,0.3,1) 0.15s both" }}>
                   {currentTime.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
                 </div>
-                {currentProgram && <div className="mt-2 font-semibold drop-shadow-sm opacity-90" style={{ fontSize: "1.6vh" }}>{currentProgram.nome}</div>}
+                {currentProgram && <div className="mt-2 font-semibold drop-shadow-sm opacity-90" style={{ fontSize: "1.6vh", animation: "cenario-clock-enter 0.8s cubic-bezier(0.16,1,0.3,1) 0.3s both" }}>{currentProgram.nome}</div>}
                 {sponsorLogos.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-3">
+                  <div className="flex flex-wrap gap-2 mt-3" style={{ animation: "cenario-clock-enter 0.8s cubic-bezier(0.16,1,0.3,1) 0.45s both" }}>
                     {sponsorLogos.map(l => l.logo_url && <img key={l.id} src={l.logo_url} alt={l.nome} className="object-contain rounded drop-shadow-md" style={{ width: "5vh", height: "5vh", background: "rgba(255,255,255,0.15)", padding: 2 }} />)}
                   </div>
                 )}

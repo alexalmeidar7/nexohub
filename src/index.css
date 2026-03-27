@@ -616,3 +616,9 @@ table:not([data-no-row-hover]) tbody tr:hover {
   0% { opacity: 0; transform: translateY(12px) scale(0.97); }
   100% { opacity: 1; transform: translateY(0) scale(1); }
 }
+
+@keyframes cenario-clock-enter {
+  0% { opacity: 0; transform: translateX(-30px) scale(0.92); filter: blur(6px); }
+  60% { opacity: 1; filter: blur(0); }
+  100% { opacity: 1; transform: translateX(0) scale(1); filter: blur(0); }
+}
