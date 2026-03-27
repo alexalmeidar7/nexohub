@@ -254,7 +254,6 @@ export default function CenarioTela() {
               />
             </div>
           )}
-          )}
 
           {/* Sidebar — always on top */}
           <div className="flex-shrink-0 flex flex-col items-center py-[3vh] px-[0.8vh] gap-[0.8vh] relative" style={{ width: "11%", background: isMapTab ? "rgba(26,26,26,0.7)" : "#1a1a1a", zIndex: 10, backdropFilter: isMapTab ? "blur(4px)" : "none" }}>
