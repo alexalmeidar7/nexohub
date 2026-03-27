@@ -91,6 +91,11 @@ function ParticipanteRow({ participante, inputStyle, onRemove, onUpdateCargo, us
   );
 }
 
+/* Small green check indicator for edited fields */
+function EditedCheck() {
+  return <CheckCircle2 size={11} className="shrink-0" style={{ color: "#22c55e" }} />;
+}
+
 export default function ProgramaExpressInline({ programas, estudios, onFinish, editData }: Props) {
   const { user } = useAuth();
   const [estudio, setEstudio] = useState("");
@@ -103,6 +108,16 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
   const [initialized, setInitialized] = useState(false);
   const [showPastePopup, setShowPastePopup] = useState(false);
   const [pasteText, setPasteText] = useState("");
+  const [autoSaving, setAutoSaving] = useState(false);
+  const [lastAutoSaved, setLastAutoSaved] = useState<number | null>(null);
+
+  // Track edited fields for green check indicators
+  const [editedFields, setEditedFields] = useState<Set<string>>(new Set());
+  const initialDataRef = useRef<{ estudio: string; programaId: string; blocos: string; participantes: string } | null>(null);
+
+  const markEdited = useCallback((field: string) => {
+    setEditedFields(prev => { const n = new Set(prev); n.add(field); return n; });
+  }, []);
 
   const [participantes, setParticipantes] = useState<Participante[]>([]);
   const [escaladaList, setEscaladaList] = useState<{titulo: string; imagemUrl: string}[]>([]);
