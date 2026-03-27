@@ -399,10 +399,18 @@ export default function CenarioTela() {
                       <div className="font-bold opacity-70" style={{ fontSize: "1.8vh", marginBottom: "1vh" }}>cotações moedas</div>
                       {config.currency.currencies.map(c => {
                         const opt = CURRENCY_OPTIONS.find(o => o.value === c);
+                        const live = liveCurrencies.find(l => l.code === c);
                         return (
                           <div key={c} className="flex items-center justify-between rounded-lg" style={{ fontSize: "1.8vh", padding: "1.2vh 1.5vh", background: "rgba(255,255,255,0.08)" }}>
                             <span className="font-bold">{opt?.label?.split("(")[0]?.trim() || c}</span>
-                            <span className="opacity-50">---</span>
+                            {live ? (
+                              <div className="flex items-center" style={{ gap: "1vh" }}>
+                                <span className="font-bold">{live.value}</span>
+                                <span style={{ color: live.direction === "up" ? "#4ade80" : live.direction === "down" ? "#f87171" : "#999" }}>{live.change}</span>
+                              </div>
+                            ) : (
+                              <span className="opacity-50">---</span>
+                            )}
                           </div>
                         );
                       })}
