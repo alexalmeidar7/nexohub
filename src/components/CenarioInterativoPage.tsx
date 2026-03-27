@@ -319,7 +319,7 @@ export default function CenarioInterativoPage() {
     return () => { if (trafficGeoRef.current) clearTimeout(trafficGeoRef.current); };
   }, [config.traffic.enabled, trafficCity]);
 
-
+  const saveTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (!user?.id || !loaded) return;
     if (saveTimeout.current) clearTimeout(saveTimeout.current);
