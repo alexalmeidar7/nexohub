@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Home, CloudSun, Car, DollarSign, MessageCircle, Thermometer, Droplets, CalendarDays } from "lucide-react";
+import { Home, CloudSun, Car, DollarSign, MessageCircle, Thermometer, Droplets, CalendarDays, TrendingUp, TrendingDown, Minus, Loader2 } from "lucide-react";
 import { WeatherIcon } from "@/components/WeatherIcons";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
