@@ -416,7 +416,7 @@ export default function CenarioInterativoPage() {
                       </div>
                     )}
 
-                    <BgImageUpload value={config.traffic.bgImage} onChange={v => updateTraffic({ bgImage: v })} mutedText={mutedText} />
+                    <BgImageUpload value={config.traffic.bgImage} onChange={v => updateTraffic({ bgImage: v })} mutedText={mutedText} userId={uid} category="traffic" />
                   </>
                 )}
               </TabsContent>
