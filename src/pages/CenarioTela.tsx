@@ -246,10 +246,14 @@ export default function CenarioTela() {
 
           {/* Traffic fullscreen */}
           {activeTab === "traffic" && config.traffic.enabled && trafficCoords && (
-            <iframe
-              src={`https://embed.waze.com/iframe?zoom=13&lat=${trafficCoords.lat}&lon=${trafficCoords.lon}&pin=1`}
-              className="absolute inset-0 w-full h-full border-0" title="Trânsito" style={{ zIndex: 1 }}
-            />
+            <div className="absolute inset-0 overflow-hidden" style={{ zIndex: 1 }}>
+              <iframe
+                src={`https://embed.waze.com/iframe?zoom=13&lat=${trafficCoords.lat}&lon=${trafficCoords.lon}&pin=1`}
+                className="absolute border-0" style={{ top: 0, left: 0, width: '100%', height: 'calc(100% + 80px)' }}
+                title="Trânsito"
+              />
+            </div>
+          )}
           )}
 
           {/* Sidebar — always on top */}
