@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { MonitorPlay, CloudSun, Car, DollarSign, MessageCircle, Trash2, Eye, Settings, Home, MapPin, Satellite, Sun, CalendarDays, Search, Upload, Image } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 /* ─── types ─── */
@@ -92,15 +93,33 @@ const mockMessages = [
 ];
 
 /* ─── BG Upload helper ─── */
-function BgImageUpload({ value, onChange, mutedText }: { value: string; onChange: (v: string) => void; mutedText: string }) {
+async function uploadBgImage(file: File, userId: string, category: string): Promise<string> {
+  const ext = file.name.split(".").pop() || "jpg";
+  const path = `cenario/${userId}/${category}-${Date.now()}.${ext}`;
+  const { error } = await supabase.storage.from("empresa-assets").upload(path, file, { upsert: true });
+  if (error) throw error;
+  const { data } = supabase.storage.from("empresa-assets").getPublicUrl(path);
+  return data.publicUrl;
+}
+
+function BgImageUpload({ value, onChange, mutedText, userId, category }: { value: string; onChange: (v: string) => void; mutedText: string; userId?: string; category: string }) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const [uploading, setUploading] = useState(false);
+  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > 5 * 1024 * 1024) { toast.error("Imagem deve ter no máximo 5MB"); return; }
-    const reader = new FileReader();
-    reader.onload = () => onChange(reader.result as string);
-    reader.readAsDataURL(file);
+    if (!userId) { toast.error("Faça login para enviar imagens"); return; }
+    setUploading(true);
+    try {
+      const url = await uploadBgImage(file, userId, category);
+      onChange(url);
+      toast.success("Imagem enviada!");
+    } catch (err) {
+      toast.error("Erro ao enviar imagem");
+    } finally {
+      setUploading(false);
+    }
   };
   return (
     <div className="space-y-2">
@@ -121,11 +140,12 @@ function BgImageUpload({ value, onChange, mutedText }: { value: string; onChange
       ) : (
         <button
           onClick={() => inputRef.current?.click()}
+          disabled={uploading}
           className="w-full rounded-lg border-2 border-dashed flex flex-col items-center justify-center gap-1 py-4 text-xs transition-colors hover:opacity-80"
           style={{ borderColor: "color-mix(in srgb, var(--layout-border-color, #333) 30%, transparent)", color: mutedText }}
         >
           <Upload size={16} />
-          <span>Clique para enviar imagem</span>
+          <span>{uploading ? "Enviando..." : "Clique para enviar imagem"}</span>
           <span className="text-[10px]">PNG, JPG (máx. 5MB)</span>
         </button>
       )}
@@ -141,6 +161,43 @@ export default function CenarioInterativoPage() {
   const [activeTab, setActiveTab] = useState("home");
   const [weatherSubTab, setWeatherSubTab] = useState("today");
   const [trafficSearchCity, setTrafficSearchCity] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+
+  /* ─── Load from DB ─── */
+  useEffect(() => {
+    if (!user?.id) return;
+    (async () => {
+      const { data } = await supabase
+        .from("user_settings")
+        .select("cenario_config" as any)
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if ((data as any)?.cenario_config && typeof (data as any).cenario_config === "object") {
+        setConfig(prev => ({ ...prev, ...((data as any).cenario_config as Partial<CenarioConfig>) }));
+      }
+      setLoaded(true);
+    })();
+  }, [user?.id]);
+
+  /* ─── Auto-save on config change (debounced) ─── */
+  const saveTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!user?.id || !loaded) return;
+    if (saveTimeout.current) clearTimeout(saveTimeout.current);
+    saveTimeout.current = setTimeout(async () => {
+      setSaving(true);
+      const payload = { user_id: user.id, cenario_config: config } as any;
+      const { error } = await supabase
+        .from("user_settings")
+        .upsert(payload, { onConflict: "user_id" });
+      if (error) {
+        console.error("Erro ao salvar cenário:", error);
+      }
+      setSaving(false);
+    }, 1500);
+    return () => { if (saveTimeout.current) clearTimeout(saveTimeout.current); };
+  }, [config, user?.id, loaded]);
 
   const updateHome = (partial: Partial<HomeConfig>) =>
     setConfig(c => ({ ...c, home: { ...c.home, ...partial } }));
@@ -167,6 +224,7 @@ export default function CenarioInterativoPage() {
   };
 
   const trafficMapCity = config.traffic.city || "São Paulo";
+  const uid = user?.id;
 
   /* ─── styles ─── */
   const headerStyle = {
@@ -203,6 +261,8 @@ export default function CenarioInterativoPage() {
             <div className="flex items-center gap-2 mb-4">
               <Settings size={16} style={{ color: mutedText }} />
               <span className="text-sm font-semibold">Configuração</span>
+              {saving && <span className="text-[10px] ml-auto animate-pulse" style={{ color: mutedText }}>Salvando...</span>}
+              {!saving && loaded && <span className="text-[10px] ml-auto" style={{ color: mutedText }}>✓ Salvo</span>}
             </div>
 
             <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -219,7 +279,7 @@ export default function CenarioInterativoPage() {
                 <p className="text-xs" style={{ color: mutedText }}>
                   Configure a tela inicial do cenário interativo. Esta é a tela padrão exibida quando nenhum módulo está ativo.
                 </p>
-                <BgImageUpload value={config.home.bgImage} onChange={v => updateHome({ bgImage: v })} mutedText={mutedText} />
+                <BgImageUpload value={config.home.bgImage} onChange={v => updateHome({ bgImage: v })} mutedText={mutedText} userId={uid} category="home" />
               </TabsContent>
 
               {/* ═══ Weather ═══ */}
@@ -305,7 +365,7 @@ export default function CenarioInterativoPage() {
                       </div>
                     )}
 
-                    <BgImageUpload value={config.weather.bgImage} onChange={v => updateWeather({ bgImage: v })} mutedText={mutedText} />
+                    <BgImageUpload value={config.weather.bgImage} onChange={v => updateWeather({ bgImage: v })} mutedText={mutedText} userId={uid} category="weather" />
                   </>
                 )}
               </TabsContent>
@@ -358,7 +418,7 @@ export default function CenarioInterativoPage() {
                       </div>
                     )}
 
-                    <BgImageUpload value={config.traffic.bgImage} onChange={v => updateTraffic({ bgImage: v })} mutedText={mutedText} />
+                    <BgImageUpload value={config.traffic.bgImage} onChange={v => updateTraffic({ bgImage: v })} mutedText={mutedText} userId={uid} category="traffic" />
                   </>
                 )}
               </TabsContent>
@@ -379,7 +439,7 @@ export default function CenarioInterativoPage() {
                         {opt.label}
                       </label>
                     ))}
-                    <BgImageUpload value={config.currency.bgImage} onChange={v => updateCurrency({ bgImage: v })} mutedText={mutedText} />
+                    <BgImageUpload value={config.currency.bgImage} onChange={v => updateCurrency({ bgImage: v })} mutedText={mutedText} userId={uid} category="currency" />
                   </div>
                 )}
               </TabsContent>
@@ -394,7 +454,7 @@ export default function CenarioInterativoPage() {
                   <div className="space-y-3">
                     <Label className="text-xs mb-1 block" style={{ color: mutedText }}>URL do vídeo/live do YouTube</Label>
                     <Input placeholder="https://youtube.com/watch?v=..." value={config.chat.youtubeVideoUrl} onChange={e => updateChat({ youtubeVideoUrl: e.target.value })} className="text-sm" />
-                    <BgImageUpload value={config.chat.bgImage} onChange={v => updateChat({ bgImage: v })} mutedText={mutedText} />
+                    <BgImageUpload value={config.chat.bgImage} onChange={v => updateChat({ bgImage: v })} mutedText={mutedText} userId={uid} category="chat" />
                   </div>
                 )}
               </TabsContent>

@@ -1161,6 +1161,7 @@ export type Database = {
       }
       user_settings: {
         Row: {
+          cenario_config: Json | null
           dashboard_items: Json | null
           id: string
           music_source_mode: string
@@ -1176,6 +1177,7 @@ export type Database = {
           weather_lon: number | null
         }
         Insert: {
+          cenario_config?: Json | null
           dashboard_items?: Json | null
           id?: string
           music_source_mode?: string
@@ -1191,6 +1193,7 @@ export type Database = {
           weather_lon?: number | null
         }
         Update: {
+          cenario_config?: Json | null
           dashboard_items?: Json | null
           id?: string
           music_source_mode?: string
