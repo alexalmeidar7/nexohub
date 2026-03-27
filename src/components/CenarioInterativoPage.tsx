@@ -920,39 +920,31 @@ export default function CenarioInterativoPage() {
                           <>
                             {weatherSubTab === "today" && (
                               <>
-                                {/* Icon top-right */}
-                                <div className="flex justify-end mb-0">
+                                <div className="flex justify-end mb-0 cenario-anim-icon">
                                   <WeatherIcon code={liveWeather.current.code} size={36} />
                                 </div>
-                                {/* City + subtitle */}
                                 <div className="mb-2">
-                                  <div className="text-xl font-extrabold leading-tight drop-shadow-lg">{weatherCity || config.city || "Cidade"}</div>
-                                  <div className="text-sm font-bold" style={{ color: "#e1f532" }}>hoje</div>
+                                  <div className="text-xl font-extrabold leading-tight drop-shadow-lg cenario-anim-title">{weatherCity || config.city || "Cidade"}</div>
+                                  <div className="text-sm font-bold cenario-anim-subtitle" style={{ color: "#e1f532" }}>hoje</div>
                                 </div>
-                                {/* Glassmorphism card */}
-                                <div className="flex-1 rounded-xl p-3 flex flex-col items-start gap-2" style={{ background: "rgba(255,255,255,0.18)", backdropFilter: "blur(14px)", border: "1px solid rgba(255,255,255,0.25)" }}>
-                                  {/* 1. Large animated icon */}
-                                  <div className="w-20 h-20 flex items-center justify-center drop-shadow-xl">
+                                <div className="flex-1 rounded-xl p-3 flex flex-col items-start gap-2 cenario-anim-card" style={{ background: "rgba(255,255,255,0.18)", backdropFilter: "blur(14px)", border: "1px solid rgba(255,255,255,0.25)" }}>
+                                  <div className="w-20 h-20 flex items-center justify-center drop-shadow-xl cenario-anim-row-1">
                                     <WeatherIcon code={liveWeather.current.code} size={64} forceDay />
                                   </div>
-                                  {/* 2. Min / Max */}
-                                  <div className="flex items-center gap-1.5 text-white">
+                                  <div className="flex items-center gap-1.5 text-white cenario-anim-row-2">
                                     <Thermometer size={13} />
                                     <span className="text-sm font-extrabold">
                                       {liveWeather.daily[0]?.min ?? "--"}° / {liveWeather.daily[0]?.max ?? "--"}°
                                     </span>
                                   </div>
-                                  {/* 3. Description */}
-                                  <div className="text-[10px] font-semibold text-white drop-shadow-sm">
+                                  <div className="text-[10px] font-semibold text-white drop-shadow-sm cenario-anim-row-3">
                                     {getWLabel(liveWeather.current.code)}
                                   </div>
-                                  {/* 4. Humidity + Rain */}
-                                  <div className="flex items-center gap-3 text-[9px] text-white">
+                                  <div className="flex items-center gap-3 text-[9px] text-white cenario-anim-row-4">
                                     <span className="flex items-center gap-0.5"><Droplets size={10} /> {liveWeather.current.humidity}%</span>
                                     <span className="flex items-center gap-0.5">🌧 {liveWeather.daily[0]?.precip ?? 0}%</span>
                                   </div>
-                                  {/* 5. Separator + Current temp */}
-                                  <div className="w-full pt-2" style={{ borderTop: "1px solid rgba(255,255,255,0.3)" }}>
+                                  <div className="w-full pt-2 cenario-anim-row-5" style={{ borderTop: "1px solid rgba(255,255,255,0.3)" }}>
                                     <div className="text-[9px] text-white font-semibold uppercase tracking-wider">tempo atual</div>
                                     <div className="text-2xl font-black text-white drop-shadow-lg">
                                       {liveWeather.current.temp}°C
