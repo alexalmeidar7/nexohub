@@ -257,6 +257,7 @@ export default function CenarioTela() {
       if (ev.data?.type === "tab-change") {
         setActiveTab(ev.data.tab);
         if (ev.data.subTab) setWeatherSubTab(ev.data.subTab);
+        if (ev.data.currencySubTab) setCurrencySubTab(ev.data.currencySubTab);
       }
 
       if (ev.data?.type === "config-update" && ev.data.config && typeof ev.data.config === "object") {
