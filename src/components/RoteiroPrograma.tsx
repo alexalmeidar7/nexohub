@@ -224,9 +224,10 @@ export default function RoteiroPrograma() {
                     <button onClick={() => {
                       let blocos = [];
                       let editParticipantes: any[] = [];
+                      let editEscaladaList: any[] = [];
                       try {
                         const parsed = typeof r.participantes === "string" ? JSON.parse(r.participantes) : r.participantes || [];
-                        if (parsed && parsed.blocos) { blocos = parsed.blocos; editParticipantes = parsed.participantes || []; }
+                        if (parsed && parsed.blocos) { blocos = parsed.blocos; editParticipantes = parsed.participantes || []; editEscaladaList = parsed.escaladaList || []; }
                         else { blocos = Array.isArray(parsed) ? parsed : []; }
                       } catch { blocos = []; }
                       const prog = programas.find(p => p.nome === r.programa_nome);
@@ -236,6 +237,7 @@ export default function RoteiroPrograma() {
                         programaId: prog?.id || "",
                         blocos,
                         participantes: editParticipantes,
+                        escaladaList: editEscaladaList,
                       });
                     }} className="h-7 w-7 flex items-center justify-center rounded-lg hover:opacity-70 transition" style={{ backgroundColor: "rgba(38,143,250,0.08)" }} title="Editar">
                       <Pencil size={12} style={{ color: "var(--layout-icon-color, #888888)" }} />

@@ -38,6 +38,7 @@ export interface ExpressEditData {
   programaId: string;
   blocos: Bloco[];
   participantes?: Participante[];
+  escaladaList?: {titulo: string; imagemUrl: string}[];
 }
 
 interface Props {
@@ -170,6 +171,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
       setProgramaId(editData.programaId);
       setBlocos(editData.blocos.length > 0 ? editData.blocos : [{ noticias: [{ titulo: "", imagemUrl: "", escalada: false }] }]);
       setParticipantes(editData.participantes || []);
+      setEscaladaList(editData.escaladaList || []);
       setEditingId(editData.roteiroId);
       setInitialized(true);
     }
@@ -208,7 +210,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
         const filePath = `express/${user.id}/${fileName}`;
         await supabase.storage.from("empresa-assets").upload(filePath, blob, { upsert: true, contentType: "application/xml" });
         const { data: urlData } = supabase.storage.from("empresa-assets").getPublicUrl(filePath);
-        const blocosJson = JSON.stringify({ blocos, participantes });
+        const blocosJson = JSON.stringify({ blocos, participantes, escaladaList });
         await supabase.from("roteiros").update({ programa_nome: pNome, estudio, titulo: `PROGRAMA EXPRESS — ${pNome}`, subtitulo: `express_xml::${urlData.publicUrl}`, conteudo_html: html, participantes: blocosJson }).eq("id", editingId);
         setLastAutoSaved(Date.now());
       } catch (e) { console.error("Auto-save error:", e); }
@@ -419,7 +421,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
       await supabase.storage.from("empresa-assets").upload(filePath, blob, { upsert: true, contentType: "application/xml" });
       const { data: urlData } = supabase.storage.from("empresa-assets").getPublicUrl(filePath);
       const xmlUrl = urlData.publicUrl;
-      const blocosJson = JSON.stringify({ blocos, participantes });
+      const blocosJson = JSON.stringify({ blocos, participantes, escaladaList });
 
       if (editingId) {
         const { error } = await supabase.from("roteiros").update({ programa_nome: programaNome, estudio, titulo: `PROGRAMA EXPRESS — ${programaNome}`, subtitulo: `express_xml::${xmlUrl}`, conteudo_html: html, participantes: blocosJson }).eq("id", editingId);
