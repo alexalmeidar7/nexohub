@@ -186,6 +186,7 @@ export default function CenarioInterativoPage() {
   const [sponsorLogos, setSponsorLogos] = useState<{ id: string; nome: string; logo_url: string }[]>([]);
   const [liveWeather, setLiveWeather] = useState<LiveWeather | null>(null);
   const [weatherLoading, setWeatherLoading] = useState(false);
+  const [weatherCoords, setWeatherCoords] = useState<{ lat: number; lon: number } | null>(null);
 
   /* ─── Clock tick ─── */
   useEffect(() => {
