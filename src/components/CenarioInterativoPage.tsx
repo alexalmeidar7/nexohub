@@ -139,6 +139,40 @@ async function fetchLiveCurrencies(codes: string[]): Promise<LiveCurrency[]> {
   }
 }
 
+/* ─── Stock Exchange (Bolsas) ─── */
+const STOCK_EXCHANGES = [
+  { symbol: "^BVSP", name: "Ibovespa", flag: "🇧🇷" },
+  { symbol: "^GSPC", name: "S&P 500", flag: "🇺🇸" },
+  { symbol: "^DJI", name: "Dow Jones", flag: "🇺🇸" },
+  { symbol: "^IXIC", name: "Nasdaq", flag: "🇺🇸" },
+  { symbol: "^FTSE", name: "FTSE 100", flag: "🇬🇧" },
+  { symbol: "^N225", name: "Nikkei 225", flag: "🇯🇵" },
+  { symbol: "^GDAXI", name: "DAX", flag: "🇩🇪" },
+];
+
+interface LiveStock {
+  symbol: string;
+  name: string;
+  flag: string;
+  value: string;
+  change: string;
+  direction: "up" | "down" | "neutral";
+}
+
+async function fetchLiveStocks(): Promise<LiveStock[]> {
+  try {
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const res = await fetch(`${supabaseUrl}/functions/v1/fetch-stocks`, {
+      headers: { "Content-Type": "application/json" },
+    });
+    if (!res.ok) throw new Error("fetch-stocks failed");
+    const data = await res.json();
+    return (data.stocks || []) as LiveStock[];
+  } catch {
+    return [];
+  }
+}
+
 const mockMessages = [
   { user: "João Silva", text: "Boa tarde! 🎉" },
   { user: "Maria", text: "Excelente programa hoje!" },
