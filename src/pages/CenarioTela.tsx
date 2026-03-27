@@ -48,8 +48,14 @@ export default function CenarioTela() {
   usePageTitle("NexoHub - Cenário Interativo");
 
   const [config, setConfig] = useState<CenarioConfig>(defaultConfig);
-  const [activeTab, setActiveTab] = useState("home");
-  const [weatherSubTab, setWeatherSubTab] = useState("today");
+  const [activeTab, setActiveTab] = useState(() => {
+    if (typeof window === "undefined") return "home";
+    return new URLSearchParams(window.location.search).get("tab") || "home";
+  });
+  const [weatherSubTab, setWeatherSubTab] = useState(() => {
+    if (typeof window === "undefined") return "today";
+    return new URLSearchParams(window.location.search).get("weatherSubTab") || "today";
+  });
   const [currentTime, setCurrentTime] = useState(new Date());
   const [currentProgram, setCurrentProgram] = useState<{ nome: string; id: string } | null>(null);
   const [sponsorLogos, setSponsorLogos] = useState<{ id: string; nome: string; logo_url: string }[]>([]);
@@ -63,19 +69,48 @@ export default function CenarioTela() {
     return () => clearInterval(t);
   }, []);
 
+  /* Load cached config first (works even without auth token in new tab) */
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("cenario_interativo_config_cache_v1");
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as Partial<CenarioConfig>;
+      if (parsed && typeof parsed === "object") {
+        setConfig(prev => ({ ...prev, ...parsed }));
+      }
+    } catch {
+      // silent
+    }
+  }, []);
+
   /* Load config from DB + poll every 10s */
   useEffect(() => {
     if (!user?.id) return;
     const load = async () => {
       const { data } = await supabase.from("user_settings").select("cenario_config" as any).eq("user_id", user.id).maybeSingle();
       if ((data as any)?.cenario_config && typeof (data as any).cenario_config === "object") {
-        setConfig(prev => ({ ...defaultConfig, ...((data as any).cenario_config as Partial<CenarioConfig>) }));
+        const merged = { ...defaultConfig, ...((data as any).cenario_config as Partial<CenarioConfig>) };
+        setConfig(merged);
+        try {
+          localStorage.setItem("cenario_interativo_config_cache_v1", JSON.stringify(merged));
+        } catch {
+          // silent
+        }
       }
     };
     load();
     const interval = setInterval(load, 10000);
     return () => clearInterval(interval);
   }, [user?.id]);
+
+  /* Keep cache synced */
+  useEffect(() => {
+    try {
+      localStorage.setItem("cenario_interativo_config_cache_v1", JSON.stringify(config));
+    } catch {
+      // silent
+    }
+  }, [config]);
 
   /* Fetch current program + sponsor logos */
   useEffect(() => {
@@ -137,13 +172,17 @@ export default function CenarioTela() {
     return () => clearTimeout(t);
   }, [config.traffic.enabled, trafficCity]);
 
-  /* Listen for tab changes from config page via BroadcastChannel */
+  /* Listen for sync messages from config page via BroadcastChannel */
   useEffect(() => {
     const bc = new BroadcastChannel("cenario-interativo");
     bc.onmessage = (ev) => {
       if (ev.data?.type === "tab-change") {
         setActiveTab(ev.data.tab);
         if (ev.data.subTab) setWeatherSubTab(ev.data.subTab);
+      }
+
+      if (ev.data?.type === "config-update" && ev.data.config && typeof ev.data.config === "object") {
+        setConfig(prev => ({ ...prev, ...(ev.data.config as Partial<CenarioConfig>) }));
       }
     };
     return () => bc.close();

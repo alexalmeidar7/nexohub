@@ -247,21 +247,63 @@ export default function CenarioInterativoPage() {
     })();
   }, [user?.id]);
 
-  /* ─── Load from DB ─── */
+  /* ─── Load from DB (with local cache fallback) ─── */
   useEffect(() => {
-    if (!user?.id) return;
+    const applyCachedConfig = () => {
+      try {
+        const raw = localStorage.getItem("cenario_interativo_config_cache_v1");
+        if (!raw) return false;
+        const parsed = JSON.parse(raw) as Partial<CenarioConfig>;
+        if (parsed && typeof parsed === "object") {
+          setConfig(prev => ({ ...prev, ...parsed }));
+          return true;
+        }
+      } catch {
+        // silent
+      }
+      return false;
+    };
+
+    if (!user?.id) {
+      applyCachedConfig();
+      setLoaded(true);
+      return;
+    }
+
     (async () => {
       const { data } = await supabase
         .from("user_settings")
         .select("cenario_config" as any)
         .eq("user_id", user.id)
         .maybeSingle();
+
       if ((data as any)?.cenario_config && typeof (data as any).cenario_config === "object") {
-        setConfig(prev => ({ ...prev, ...((data as any).cenario_config as Partial<CenarioConfig>) }));
+        const merged = { ...defaultConfig, ...((data as any).cenario_config as Partial<CenarioConfig>) };
+        setConfig(merged);
+        try {
+          localStorage.setItem("cenario_interativo_config_cache_v1", JSON.stringify(merged));
+        } catch {
+          // silent
+        }
+      } else {
+        applyCachedConfig();
       }
+
       setLoaded(true);
     })();
   }, [user?.id]);
+
+  /* ─── Keep local cache + live sync for /cenario-tela ─── */
+  useEffect(() => {
+    if (!loaded) return;
+    try {
+      localStorage.setItem("cenario_interativo_config_cache_v1", JSON.stringify(config));
+    } catch {
+      // silent
+    }
+
+    cenarioBcRef.current?.postMessage({ type: "config-update", config });
+  }, [config, loaded]);
 
   /* ─── Fetch weather data ─── */
   const weatherCity = config.weather.city || config.city;
