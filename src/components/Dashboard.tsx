@@ -108,7 +108,7 @@ const menuToModuleKey: Record<string, string> = {
   "agenda": "agenda",
   "player": "player",
   "comercial": "comercial",
-  "vmix control": "vmix",
+  "vmix": "vmix",
   "ferramentas": "ferramentas",
 };
 
