@@ -42,6 +42,7 @@ const VmixPage = lazy(() => import("./VmixPage"));
 const TeleprompterPage = lazy(() => import("./TeleprompterPage"));
 const CustomizableDashboard = lazy(() => import("./CustomizableDashboard"));
 const PropostasPage = lazy(() => import("./PropostasPage"));
+const CenarioInterativoPage = lazy(() => import("./CenarioInterativoPage"));
 const MessageNotification = lazy(() => import("./MessageNotification"));
 import DashboardSkeleton from "./skeletons/DashboardSkeleton";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
