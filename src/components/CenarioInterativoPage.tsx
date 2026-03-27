@@ -821,32 +821,40 @@ export default function CenarioInterativoPage() {
                             {weatherSubTab === "today" && (
                               <>
                                 {/* Icon top-right */}
-                                <div className="flex justify-end mb-1">
-                                  <CloudSun size={32} className="drop-shadow-lg" style={{ color: "#fff" }} />
+                                <div className="flex justify-end mb-0">
+                                  <WeatherIcon code={liveWeather.current.code} size={36} />
                                 </div>
                                 {/* City + subtitle */}
-                                <div className="mb-3">
+                                <div className="mb-2">
                                   <div className="text-xl font-extrabold leading-tight drop-shadow-lg">{weatherCity || config.city || "Cidade"}</div>
-                                  <div className="text-sm font-bold" style={{ color: "#c8e600" }}>hoje</div>
+                                  <div className="text-sm font-bold" style={{ color: "#e1f532" }}>hoje</div>
                                 </div>
                                 {/* Glassmorphism card */}
-                                <div className="flex-1 rounded-xl p-3 flex flex-col" style={{ background: "rgba(255,255,255,0.2)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.3)" }}>
-                                  <div className="text-[10px] font-bold opacity-80">
-                                    temp. min {liveWeather.daily[0]?.min ?? "--"}°
+                                <div className="flex-1 rounded-xl p-3 flex flex-col gap-1" style={{ background: "rgba(255,255,255,0.18)", backdropFilter: "blur(14px)", border: "1px solid rgba(255,255,255,0.25)" }}>
+                                  {/* Min / Max large */}
+                                  <div className="flex items-center gap-2">
+                                    <Thermometer size={14} style={{ color: "#0d4751" }} />
+                                    <span className="text-sm font-extrabold" style={{ color: "#0d4751" }}>
+                                      {liveWeather.daily[0]?.min ?? "--"}° / {liveWeather.daily[0]?.max ?? "--"}°
+                                    </span>
                                   </div>
-                                  <div className="text-[10px] font-bold opacity-80">
-                                    temp máxima {liveWeather.daily[0]?.max ?? "--"}°
+                                  {/* Animated weather icon centered */}
+                                  <div className="flex-1 flex flex-col items-center justify-center">
+                                    <div className="w-16 h-16 rounded-full bg-white/70 flex items-center justify-center drop-shadow-xl">
+                                      <WeatherIcon code={liveWeather.current.code} size={44} />
+                                    </div>
+                                    <div className="text-[10px] font-semibold mt-1.5 text-center drop-shadow-sm" style={{ color: "#0d4751" }}>
+                                      {getWLabel(liveWeather.current.code)}
+                                    </div>
                                   </div>
-                                  {/* Weather icon circle */}
-                                  <div className="my-3 w-14 h-14 rounded-full bg-white/80 flex items-center justify-center mx-auto drop-shadow-lg">
-                                    <span className="text-2xl">{getWIcon(liveWeather.current.code)}</span>
-                                  </div>
-                                  <div className="mt-auto">
-                                    <div className="text-sm font-extrabold drop-shadow-sm" style={{ color: "#0d4751" }}>
+                                  {/* Current temp + details */}
+                                  <div className="mt-auto pt-1" style={{ borderTop: "1px solid rgba(255,255,255,0.2)" }}>
+                                    <div className="text-xl font-black drop-shadow-md" style={{ color: "#0d4751" }}>
                                       {liveWeather.current.temp}°C
                                     </div>
-                                    <div className="text-[9px] opacity-70" style={{ color: "#0d4751" }}>
-                                      💧 {liveWeather.current.humidity}% &nbsp; 🌧 {liveWeather.daily[0]?.precip ?? 0}%
+                                    <div className="flex items-center gap-3 text-[9px] mt-0.5" style={{ color: "#0d4751", opacity: 0.75 }}>
+                                      <span className="flex items-center gap-0.5"><Droplets size={10} /> {liveWeather.current.humidity}%</span>
+                                      <span className="flex items-center gap-0.5">🌧 {liveWeather.daily[0]?.precip ?? 0}%</span>
                                     </div>
                                   </div>
                                 </div>
