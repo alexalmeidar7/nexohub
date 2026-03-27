@@ -187,6 +187,7 @@ export default function CenarioInterativoPage() {
   const [liveWeather, setLiveWeather] = useState<LiveWeather | null>(null);
   const [weatherLoading, setWeatherLoading] = useState(false);
   const [weatherCoords, setWeatherCoords] = useState<{ lat: number; lon: number } | null>(null);
+  const [trafficCoords, setTrafficCoords] = useState<{ lat: number; lon: number } | null>(null);
 
   /* ─── Clock tick ─── */
   useEffect(() => {
@@ -298,6 +299,25 @@ export default function CenarioInterativoPage() {
     return () => { if (weatherFetchRef.current) clearTimeout(weatherFetchRef.current); };
   }, [config.weather.enabled, weatherCity]);
 
+  /* ─── Geocode traffic city ─── */
+  const trafficCity = config.traffic.city || config.city;
+  const trafficGeoRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!config.traffic.enabled || !trafficCity) { setTrafficCoords(null); return; }
+    if (trafficGeoRef.current) clearTimeout(trafficGeoRef.current);
+    trafficGeoRef.current = setTimeout(async () => {
+      try {
+        const { data: geoData } = await supabase.functions.invoke("fetch-weather", {
+          body: { action: "geocode", query: trafficCity, count: 1 },
+        });
+        const results = geoData?.results;
+        if (results?.length) {
+          setTrafficCoords({ lat: results[0].latitude, lon: results[0].longitude });
+        }
+      } catch { /* silent */ }
+    }, 1000);
+    return () => { if (trafficGeoRef.current) clearTimeout(trafficGeoRef.current); };
+  }, [config.traffic.enabled, trafficCity]);
 
   const saveTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
@@ -602,13 +622,16 @@ export default function CenarioInterativoPage() {
 
                     <div className="rounded-lg overflow-hidden border" style={{ borderColor: "color-mix(in srgb, var(--layout-border-color, #333) 20%, transparent)" }}>
                       <iframe
-                        title="Mapa de Trânsito"
-                        src={`https://www.google.com/maps?q=${encodeURIComponent(trafficMapCity)}&z=13&layer=traffic&output=embed`}
+                        title="Mapa de Trânsito - Waze"
+                        src={`https://embed.waze.com/iframe?zoom=13&lat=${trafficCoords?.lat ?? -16.68}&lon=${trafficCoords?.lon ?? -49.26}&pin=1`}
                         className="w-full h-[280px] border-0"
                         allowFullScreen
                         loading="lazy"
                         referrerPolicy="no-referrer-when-downgrade"
                       />
+                      <p className="text-[10px] text-center py-1" style={{ color: mutedText }}>
+                        Powered by Waze — trânsito em tempo real
+                      </p>
                     </div>
 
                     {config.traffic.points.length > 0 && (
