@@ -829,7 +829,7 @@ export default function CenarioInterativoPage() {
                     src={`https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=°C&metricWind=km/h&zoom=8&overlay=satellite&product=satellite&level=surface&lat=${weatherCoords.lat}&lon=${weatherCoords.lon}&detailLat=${weatherCoords.lat}&detailLon=${weatherCoords.lon}&marker=true&message=true&autoplay=true&border=full`}
                     className="absolute inset-0 w-full h-full border-0"
                     title="Satélite preview"
-                    style={{ zIndex: 1 }}
+                    style={{ zIndex: 5 }}
                   />
                 )}
                 {/* Traffic (Waze) fullscreen behind sidebar */}
@@ -838,7 +838,7 @@ export default function CenarioInterativoPage() {
                     src={`https://embed.waze.com/iframe?zoom=13&lat=${trafficCoords.lat}&lon=${trafficCoords.lon}&pin=1`}
                     className="absolute inset-0 w-full h-full border-0"
                     title="Trânsito preview"
-                    style={{ zIndex: 1 }}
+                    style={{ zIndex: 5 }}
                   />
                 )}
                 {/* ── Dark sidebar ── */}
