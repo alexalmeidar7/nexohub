@@ -598,6 +598,30 @@ export default function CenarioInterativoPage() {
                   {activeTab === "chat" && config.chat.bgImage && (
                     <img src={config.chat.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />
                   )}
+
+                  {/* Home overlay: clock + date + logos */}
+                  {activeTab === "home" && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-3" style={{ color: config.home.bgImage ? "#fff" : "#333" }}>
+                      <div className="text-3xl font-bold leading-none drop-shadow-md" style={{ fontVariantNumeric: "tabular-nums" }}>
+                        {currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+                      </div>
+                      <div className="text-[10px] mt-1 drop-shadow-sm opacity-80">
+                        {currentTime.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+                      </div>
+                      {currentProgram && (
+                        <div className="text-[9px] mt-2 font-semibold drop-shadow-sm opacity-90">
+                          {currentProgram.nome}
+                        </div>
+                      )}
+                      {sponsorLogos.length > 0 && (
+                        <div className="flex flex-wrap justify-center gap-2 mt-3">
+                          {sponsorLogos.map(l => (
+                            l.logo_url && <img key={l.id} src={l.logo_url} alt={l.nome} className="w-8 h-8 object-contain rounded drop-shadow-md" style={{ background: "rgba(255,255,255,0.15)", padding: 2 }} />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
 
