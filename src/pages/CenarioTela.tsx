@@ -27,6 +27,33 @@ const CURRENCY_OPTIONS = [
   { value: "JPY", label: "Iene Japonês (JPY)" }, { value: "BTC", label: "Bitcoin (BTC)" }, { value: "ETH", label: "Ethereum (ETH)" },
 ];
 
+const CURRENCY_API_MAP: Record<string, string> = {
+  USD: "USD-BRL", EUR: "EUR-BRL", GBP: "GBP-BRL", ARS: "ARS-BRL", JPY: "JPY-BRL", BTC: "BTC-BRL", ETH: "ETH-BRL",
+};
+interface LiveCurrency { code: string; name: string; value: string; change: string; direction: "up" | "down" | "neutral"; }
+async function fetchLiveCurrencies(codes: string[]): Promise<LiveCurrency[]> {
+  if (!codes.length) return [];
+  const pairs = codes.map(c => CURRENCY_API_MAP[c]).filter(Boolean).join(",");
+  if (!pairs) return [];
+  try {
+    const res = await fetch(`https://economia.awesomeapi.com.br/last/${pairs}`);
+    const data = await res.json();
+    return codes.map(c => {
+      const key = CURRENCY_API_MAP[c]?.replace("-", "");
+      const item = data[key];
+      if (!item) return null;
+      const pct = parseFloat(item.pctChange);
+      const opt = CURRENCY_OPTIONS.find(o => o.value === c);
+      return {
+        code: c, name: opt?.label?.split("(")[0]?.trim() || item.name,
+        value: parseFloat(item.bid).toLocaleString("pt-BR", { style: "currency", currency: "BRL" }),
+        change: `${pct >= 0 ? "+" : ""}${pct.toFixed(2)}%`,
+        direction: pct > 0 ? "up" as const : pct < 0 ? "down" as const : "neutral" as const,
+      };
+    }).filter(Boolean) as LiveCurrency[];
+  } catch { return []; }
+}
+
 const weatherIcons: Record<number, string> = { 0:"☀️",1:"🌤️",2:"⛅",3:"☁️",45:"🌫️",48:"🌫️",51:"🌦️",53:"🌦️",55:"🌧️",61:"🌧️",63:"🌧️",65:"🌧️",71:"🌨️",73:"🌨️",75:"🌨️",80:"🌧️",81:"🌧️",82:"🌧️",95:"⛈️",96:"⛈️",99:"⛈️" };
 const weatherLabels: Record<number, string> = { 0:"Céu limpo",1:"Parcialmente limpo",2:"Parcialmente nublado",3:"Nublado",45:"Neblina",48:"Neblina",51:"Garoa leve",53:"Garoa",55:"Garoa forte",61:"Chuva leve",63:"Chuva moderada",65:"Chuva forte",71:"Neve leve",73:"Neve",75:"Neve forte",80:"Pancadas leves",81:"Pancadas",82:"Pancadas fortes",95:"Tempestade",96:"Tempestade com granizo",99:"Tempestade severa" };
 function getWIcon(code: number) { return weatherIcons[code] ?? weatherIcons[Object.keys(weatherIcons).map(Number).reduce((a, b) => Math.abs(b - code) < Math.abs(a - code) ? b : a)] ?? "🌡️"; }
