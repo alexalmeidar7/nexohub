@@ -592,7 +592,7 @@ export default function CenarioInterativoPage() {
                   <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.12)", opacity: config.weather.enabled ? 1 : 0.35 }}>
                     <CloudSun size={16} className="text-white" />
                   </div>
-                  {config.weather.enabled && config.weather.showForecast3Days && mockWeather.forecast.map((_, i) => (
+                  {config.weather.enabled && config.weather.showForecast3Days && liveWeather?.daily?.slice(1, 4).map((_, i) => (
                     <div key={i} className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold" style={{ background: "rgba(255,255,255,0.12)" }}>
                       {i + 1}
                     </div>
