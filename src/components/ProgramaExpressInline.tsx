@@ -572,13 +572,13 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
           ))}
         </div>
 
-        <button onClick={addBloco} className="w-full py-2.5 rounded-xl text-xs font-bold transition-all hover:opacity-80" style={{ border: "2px dashed color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 40%, transparent)", color: "var(--layout-accent-color, #2ec1f7)", backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 4%, transparent)" }}>
+        <button onClick={addBloco} className="w-full py-2.5 rounded-xl text-xs font-semibold transition-all hover:scale-[1.01] active:scale-[0.99]" style={{ border: "2px dashed color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 50%, transparent)", color: "var(--layout-accent-color, #2ec1f7)", backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 6%, transparent)" }}>
           <Plus size={14} className="inline mr-1" /> Adicionar Bloco {blocos.length + 1}
         </button>
 
         {/* Save */}
-        <button onClick={handleSave} disabled={saving || !programaId} className="w-full py-3.5 rounded-xl text-sm font-bold transition-all hover:opacity-90 flex items-center justify-center gap-2 disabled:opacity-40" style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #2ec1f7), color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 70%, white 30%))", color: "var(--layout-header-text, #ffffff)", boxShadow: "0 4px 16px color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 30%, transparent)" }}>
-          {saving ? <Loader2 size={16} className="animate-spin" /> : <Zap size={16} />}
+        <button onClick={handleSave} disabled={saving || !programaId} className="w-full py-4 rounded-xl text-sm font-bold transition-all hover:scale-[1.01] hover:shadow-lg active:scale-[0.98] flex items-center justify-center gap-2.5 disabled:opacity-40 disabled:hover:scale-100" style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #2ec1f7), color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 65%, #000 35%))", color: "var(--layout-header-text, #ffffff)", boxShadow: "0 6px 24px color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 35%, transparent)", letterSpacing: "0.03em" }}>
+          {saving ? <Loader2 size={18} className="animate-spin" /> : <Zap size={18} />}
           {saving ? "Salvando..." : "Finalizar Programa Express"}
         </button>
       </div>
