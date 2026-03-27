@@ -202,6 +202,8 @@ export default function RoteiroPrograma() {
     );
   }, [historico, historicoIdx, programas]);
 
+  if (loading) return <ModulePageSkeleton />;
+
   return (
     <div className="animate-fade-in space-y-5">
       <Suspense fallback={<ModulePageSkeleton />}>
