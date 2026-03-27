@@ -276,6 +276,9 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
     setShowResults(false);
     setNoResults(false);
     setShowNewContact(false);
+    setEditedFields(new Set());
+    setLastAutoSaved(null);
+    initialDataRef.current = null;
   };
 
   const parsePastedScript = () => {
