@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { MonitorPlay, CloudSun, Car, DollarSign, MessageCircle, Trash2, Eye, Settings, Home, MapPin, Satellite, Sun, CalendarDays, Search, Upload, Image, Clock, Loader2, Droplets, Wind, Thermometer, ExternalLink, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { MonitorPlay, CloudSun, Car, DollarSign, MessageCircle, Trash2, Eye, Settings, Home, MapPin, Satellite, Sun, CalendarDays, Search, Upload, Image, Clock, Loader2, Droplets, Wind, Thermometer, ExternalLink, TrendingUp, TrendingDown, Minus, ChevronUp, ChevronDown } from "lucide-react";
 import { WeatherIcon } from "@/components/WeatherIcons";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
@@ -1146,8 +1146,8 @@ export default function CenarioInterativoPage() {
                                         <div className="flex items-center gap-1.5">
                                           <span className="font-extrabold text-[12px]" style={{ color: "#fff" }}>{live.value}</span>
                                           <span className="font-bold text-[11px]" style={{ color: live.direction === "up" ? "#4ade80" : live.direction === "down" ? "#f87171" : "rgba(255,255,255,0.75)" }}>{live.change}</span>
-                                          {live.direction === "up" && <TrendingUp size={13} className="cenario-arrow-up" />}
-                                          {live.direction === "down" && <TrendingDown size={13} className="cenario-arrow-down" />}
+                                          {live.direction === "up" && <ChevronUp size={16} strokeWidth={3} className="cenario-arrow-up" />}
+                                          {live.direction === "down" && <ChevronDown size={16} strokeWidth={3} className="cenario-arrow-down" />}
                                           {live.direction !== "up" && live.direction !== "down" && <Minus size={13} style={{ color: "rgba(255,255,255,0.5)" }} />}
                                         </div>
                                       ) : (
@@ -1171,8 +1171,8 @@ export default function CenarioInterativoPage() {
                                       <div className="flex items-center gap-1.5">
                                         <span className="font-extrabold text-[12px]" style={{ color: "#fff" }}>{s.value}</span>
                                         <span className="font-bold text-[11px]" style={{ color: s.direction === "up" ? "#4ade80" : s.direction === "down" ? "#f87171" : "rgba(255,255,255,0.75)" }}>{s.change}</span>
-                                        {s.direction === "up" && <TrendingUp size={13} className="cenario-arrow-up" />}
-                                        {s.direction === "down" && <TrendingDown size={13} className="cenario-arrow-down" />}
+                                        {s.direction === "up" && <ChevronUp size={16} strokeWidth={3} className="cenario-arrow-up" />}
+                                        {s.direction === "down" && <ChevronDown size={16} strokeWidth={3} className="cenario-arrow-down" />}
                                         {s.direction !== "up" && s.direction !== "down" && <Minus size={13} style={{ color: "rgba(255,255,255,0.5)" }} />}
                                       </div>
                                     </div>
