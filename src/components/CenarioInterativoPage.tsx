@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { MonitorPlay, CloudSun, Car, DollarSign, MessageCircle, Trash2, Eye, Settings, Home, MapPin, Satellite, Sun, CalendarDays, Search, Upload, Image, Clock, Loader2, Droplets, Wind, Thermometer } from "lucide-react";
+import { MonitorPlay, CloudSun, Car, DollarSign, MessageCircle, Trash2, Eye, Settings, Home, MapPin, Satellite, Sun, CalendarDays, Search, Upload, Image, Clock, Loader2, Droplets, Wind, Thermometer, ExternalLink } from "lucide-react";
 import { WeatherIcon } from "@/components/WeatherIcons";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
@@ -177,8 +177,22 @@ function BgImageUpload({ value, onChange, mutedText, userId, category }: { value
 export default function CenarioInterativoPage() {
   const { user } = useAuth();
   const [config, setConfig] = useState<CenarioConfig>(defaultConfig);
+  const cenarioBcRef = useRef<BroadcastChannel | null>(null);
+  useEffect(() => {
+    cenarioBcRef.current = new BroadcastChannel("cenario-interativo");
+    return () => cenarioBcRef.current?.close();
+  }, []);
   const [activeTab, setActiveTab] = useState("home");
   const [weatherSubTab, setWeatherSubTab] = useState("today");
+
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    cenarioBcRef.current?.postMessage({ type: "tab-change", tab, subTab: weatherSubTab });
+  };
+  const handleWeatherSubTabChange = (sub: string) => {
+    setWeatherSubTab(sub);
+    cenarioBcRef.current?.postMessage({ type: "tab-change", tab: "weather", subTab: sub });
+  };
   const [trafficSearchCity, setTrafficSearchCity] = useState("");
   const [saving, setSaving] = useState(false);
   const [loaded, setLoaded] = useState(false);
@@ -416,7 +430,7 @@ export default function CenarioInterativoPage() {
               </div>
             </div>
 
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <Tabs value={activeTab} onValueChange={handleTabChange}>
               <TabsList className="w-full grid grid-cols-5 mb-4" style={{ background: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)" }}>
                 <TabsTrigger value="home" className="text-xs gap-1 data-[state=active]:shadow-sm"><Home size={14} /> Home</TabsTrigger>
                 <TabsTrigger value="weather" className="text-xs gap-1 data-[state=active]:shadow-sm"><CloudSun size={14} /> Tempo</TabsTrigger>
@@ -476,7 +490,7 @@ export default function CenarioInterativoPage() {
                       ].map(t => (
                         <button
                           key={t.key}
-                          onClick={() => setWeatherSubTab(t.key)}
+                          onClick={() => handleWeatherSubTabChange(t.key)}
                           className="flex-1 flex items-center justify-center gap-1 rounded-md px-2 py-1.5 text-xs font-medium transition-all"
                           style={{
                             background: weatherSubTab === t.key ? subTabActive : "transparent",
@@ -696,6 +710,13 @@ export default function CenarioInterativoPage() {
             <div className="flex items-center gap-2 mb-4">
               <Eye size={16} style={{ color: mutedText }} />
               <span className="text-sm font-semibold">Preview (9:16)</span>
+              <button
+                onClick={() => window.open("/cenario-tela", "_blank")}
+                className="ml-auto flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-semibold transition-opacity hover:opacity-80"
+                style={{ background: "var(--layout-header-bg, #0d0446)", color: "var(--layout-header-text, #fff)" }}
+              >
+                <ExternalLink size={12} /> Abrir Tela
+              </button>
             </div>
 
             <div

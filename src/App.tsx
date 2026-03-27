@@ -27,6 +27,7 @@ const RoteiroApresentadorEdit = lazy(() => import("./pages/RoteiroApresentadorEd
 const TpExterno = lazy(() => import("./pages/TpExterno"));
 const PlayerCatalog = lazy(() => import("./pages/player/PlayerCatalog"));
 const VmixControl = lazy(() => import("./pages/VmixControl"));
+const CenarioTela = lazy(() => import("./pages/CenarioTela"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -75,6 +76,7 @@ const App = () => (
             <Route path="/roteiro-apresentador-edit" element={<RoteiroApresentadorEdit />} />
             <Route path="/tp-externo" element={<TpExterno />} />
             <Route path="/vmix-control" element={<VmixControl />} />
+            <Route path="/cenario-tela" element={<CenarioTela />} />
 
             {/* Admin routes */}
             <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
