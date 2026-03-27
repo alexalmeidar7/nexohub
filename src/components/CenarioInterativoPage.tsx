@@ -947,23 +947,41 @@ export default function CenarioInterativoPage() {
 
                   {/* Chat overlay */}
                   {activeTab === "chat" && (
-                    <div className="absolute inset-0 flex flex-col p-3" style={{ color: config.chat.bgImage ? "#fff" : "#333" }}>
-                      {config.chat.enabled ? (
-                        <>
-                          <div className="text-[9px] font-bold uppercase opacity-60 mb-2">Chat ao Vivo</div>
-                          <div className="space-y-1.5 flex-1">
-                            {mockMessages.map((m, i) => (
-                              <div key={i} className="rounded px-2 py-1 text-[8px]" style={{ background: "rgba(0,0,0,0.15)" }}>
-                                <span className="font-bold">{m.user}: </span>
-                                <span className="opacity-80">{m.text}</span>
-                              </div>
-                            ))}
-                          </div>
-                          <div className="text-[7px] opacity-40 text-center mt-1">YouTube Live Chat</div>
-                        </>
-                      ) : (
-                        <div className="flex-1 flex items-center justify-center text-[10px] opacity-50">Chat desativado</div>
+                    <div className="absolute inset-0 flex flex-col overflow-hidden" style={{ color: "#fff" }}>
+                      {/* Dark bg when no custom bg */}
+                      {!config.chat.bgImage && (
+                        <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, #0a0a0a 0%, #1a1a1a 100%)" }} />
                       )}
+                      {/* Bottom accent glow */}
+                      <div className="absolute bottom-0 left-0 right-0 h-1/4" style={{ background: "linear-gradient(to top, rgba(200,230,0,0.25), transparent)" }} />
+
+                      <div className="relative z-10 flex flex-col h-full p-3">
+                        {config.chat.enabled ? (
+                          <>
+                            {/* Icon top-right */}
+                            <div className="flex justify-end mb-1">
+                              <MessageCircle size={32} className="drop-shadow-lg" style={{ color: "#c8e600" }} />
+                            </div>
+                            {/* Title */}
+                            <div className="mb-3">
+                              <div className="text-xl font-extrabold leading-tight drop-shadow-lg">mensagens</div>
+                              <div className="text-sm font-bold" style={{ color: "#c8e600" }}>chat</div>
+                            </div>
+                            {/* Glassmorphism card */}
+                            <div className="flex-1 rounded-xl p-3 space-y-2" style={{ background: "rgba(255,255,255,0.12)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.15)" }}>
+                              <div className="text-[10px] font-bold opacity-70 mb-1">mensagens aqui</div>
+                              {mockMessages.map((m, i) => (
+                                <div key={i} className="rounded-lg px-2 py-1.5 text-[8px]" style={{ background: "rgba(255,255,255,0.08)" }}>
+                                  <span className="font-bold">{m.user}: </span>
+                                  <span className="opacity-80">{m.text}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </>
+                        ) : (
+                          <div className="flex-1 flex items-center justify-center text-[10px] opacity-50">Chat desativado</div>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>
