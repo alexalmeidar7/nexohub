@@ -814,7 +814,6 @@ export default function CenarioInterativoPage() {
                     className="absolute top-0 bottom-0 right-0 border-0"
                     style={{ left: 52, width: 'calc(100% - 52px)', zIndex: 5 }}
                     title="Satélite preview"
-                    style={{ zIndex: 5 }}
                   />
                 )}
                 {/* Traffic (Waze) fullscreen behind sidebar */}
