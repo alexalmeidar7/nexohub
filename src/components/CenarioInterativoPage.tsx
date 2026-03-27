@@ -693,15 +693,18 @@ export default function CenarioInterativoPage() {
                   <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.12)", opacity: config.weather.enabled ? 1 : 0.35 }}>
                     <CloudSun size={16} className="text-white" />
                   </div>
-                  {config.weather.enabled && config.weather.showForecast3Days && liveWeather?.daily?.slice(1, 4).map((_, i) => (
-                    <div key={i} className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold" style={{ background: "rgba(255,255,255,0.12)" }}>
-                      {i + 1}
-                    </div>
-                  ))}
-                  {config.weather.enabled && config.weather.showSatellite && (
-                    <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.12)" }}>
-                      <Satellite size={14} className="text-white" />
-                    </div>
+                  {config.weather.enabled && (
+                    <>
+                      {config.weather.showCurrent && (
+                        <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold" style={{ background: "rgba(255,255,255,0.12)" }}>1</div>
+                      )}
+                      {config.weather.showForecast3Days && (
+                        <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold" style={{ background: "rgba(255,255,255,0.12)" }}>2</div>
+                      )}
+                      {config.weather.showSatellite && (
+                        <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold" style={{ background: "rgba(255,255,255,0.12)" }}>3</div>
+                      )}
+                    </>
                   )}
                   <div className="w-9 h-9 rounded-full flex items-center justify-center mt-2" style={{ background: "rgba(255,255,255,0.12)", opacity: config.traffic.enabled ? 1 : 0.35 }}>
                     <Car size={16} className="text-white" />
