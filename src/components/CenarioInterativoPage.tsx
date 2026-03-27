@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { MonitorPlay, CloudSun, Car, DollarSign, MessageCircle, Trash2, Eye, Settings, Home, MapPin, Satellite, Sun, CalendarDays, Search, Upload, Image, Clock, Loader2, Droplets, Wind, Thermometer, ExternalLink } from "lucide-react";
+import { MonitorPlay, CloudSun, Car, DollarSign, MessageCircle, Trash2, Eye, Settings, Home, MapPin, Satellite, Sun, CalendarDays, Search, Upload, Image, Clock, Loader2, Droplets, Wind, Thermometer, ExternalLink, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { WeatherIcon } from "@/components/WeatherIcons";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
@@ -920,39 +920,31 @@ export default function CenarioInterativoPage() {
                           <>
                             {weatherSubTab === "today" && (
                               <>
-                                {/* Icon top-right */}
-                                <div className="flex justify-end mb-0">
+                                <div className="flex justify-end mb-0 cenario-anim-icon">
                                   <WeatherIcon code={liveWeather.current.code} size={36} />
                                 </div>
-                                {/* City + subtitle */}
                                 <div className="mb-2">
-                                  <div className="text-xl font-extrabold leading-tight drop-shadow-lg">{weatherCity || config.city || "Cidade"}</div>
-                                  <div className="text-sm font-bold" style={{ color: "#e1f532" }}>hoje</div>
+                                  <div className="text-xl font-extrabold leading-tight drop-shadow-lg cenario-anim-title">{weatherCity || config.city || "Cidade"}</div>
+                                  <div className="text-sm font-bold cenario-anim-subtitle" style={{ color: "#e1f532" }}>hoje</div>
                                 </div>
-                                {/* Glassmorphism card */}
-                                <div className="flex-1 rounded-xl p-3 flex flex-col items-start gap-2" style={{ background: "rgba(255,255,255,0.18)", backdropFilter: "blur(14px)", border: "1px solid rgba(255,255,255,0.25)" }}>
-                                  {/* 1. Large animated icon */}
-                                  <div className="w-20 h-20 flex items-center justify-center drop-shadow-xl">
+                                <div className="flex-1 rounded-xl p-3 flex flex-col items-start gap-2 cenario-anim-card" style={{ background: "rgba(255,255,255,0.18)", backdropFilter: "blur(14px)", border: "1px solid rgba(255,255,255,0.25)" }}>
+                                  <div className="w-20 h-20 flex items-center justify-center drop-shadow-xl cenario-anim-row-1">
                                     <WeatherIcon code={liveWeather.current.code} size={64} forceDay />
                                   </div>
-                                  {/* 2. Min / Max */}
-                                  <div className="flex items-center gap-1.5 text-white">
+                                  <div className="flex items-center gap-1.5 text-white cenario-anim-row-2">
                                     <Thermometer size={13} />
                                     <span className="text-sm font-extrabold">
                                       {liveWeather.daily[0]?.min ?? "--"}° / {liveWeather.daily[0]?.max ?? "--"}°
                                     </span>
                                   </div>
-                                  {/* 3. Description */}
-                                  <div className="text-[10px] font-semibold text-white drop-shadow-sm">
+                                  <div className="text-[10px] font-semibold text-white drop-shadow-sm cenario-anim-row-3">
                                     {getWLabel(liveWeather.current.code)}
                                   </div>
-                                  {/* 4. Humidity + Rain */}
-                                  <div className="flex items-center gap-3 text-[9px] text-white">
+                                  <div className="flex items-center gap-3 text-[9px] text-white cenario-anim-row-4">
                                     <span className="flex items-center gap-0.5"><Droplets size={10} /> {liveWeather.current.humidity}%</span>
                                     <span className="flex items-center gap-0.5">🌧 {liveWeather.daily[0]?.precip ?? 0}%</span>
                                   </div>
-                                  {/* 5. Separator + Current temp */}
-                                  <div className="w-full pt-2" style={{ borderTop: "1px solid rgba(255,255,255,0.3)" }}>
+                                  <div className="w-full pt-2 cenario-anim-row-5" style={{ borderTop: "1px solid rgba(255,255,255,0.3)" }}>
                                     <div className="text-[9px] text-white font-semibold uppercase tracking-wider">tempo atual</div>
                                     <div className="text-2xl font-black text-white drop-shadow-lg">
                                       {liveWeather.current.temp}°C
@@ -964,16 +956,16 @@ export default function CenarioInterativoPage() {
 
                             {weatherSubTab === "forecast" && (
                               <>
-                                <div className="flex justify-end mb-1">
+                                <div className="flex justify-end mb-1 cenario-anim-icon">
                                   <CalendarDays size={32} className="drop-shadow-lg" style={{ color: "#fff" }} />
                                 </div>
                                 <div className="mb-3">
-                                  <div className="text-xl font-extrabold leading-tight drop-shadow-lg">{weatherCity || config.city || "Cidade"}</div>
-                                  <div className="text-sm font-bold" style={{ color: "#c8e600" }}>próximos dias</div>
+                                  <div className="text-xl font-extrabold leading-tight drop-shadow-lg cenario-anim-title">{weatherCity || config.city || "Cidade"}</div>
+                                  <div className="text-sm font-bold cenario-anim-subtitle" style={{ color: "#c8e600" }}>próximos dias</div>
                                 </div>
-                                <div className="flex-1 rounded-xl p-3 space-y-2" style={{ background: "rgba(255,255,255,0.2)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.3)" }}>
+                                <div className="flex-1 rounded-xl p-3 space-y-2 cenario-anim-card" style={{ background: "rgba(255,255,255,0.2)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.3)" }}>
                                   {liveWeather.daily.slice(1, 4).map((d, i) => (
-                                    <div key={i} className="flex items-center justify-between text-[9px] rounded-lg px-2 py-1.5" style={{ background: "rgba(255,255,255,0.15)" }}>
+                                    <div key={i} className={`flex items-center justify-between text-[9px] rounded-lg px-2 py-1.5 cenario-anim-row-${i + 1}`} style={{ background: "rgba(255,255,255,0.15)" }}>
                                       <span className="font-bold">{new Date(d.date + "T12:00").toLocaleDateString("pt-BR", { weekday: "short", day: "numeric" })}</span>
                                       <span className="text-base">{getWIcon(d.code)}</span>
                                       <span>↓{d.min}° ↑{d.max}°</span>
@@ -1025,27 +1017,30 @@ export default function CenarioInterativoPage() {
                       <div className="relative z-10 flex flex-col h-full p-3">
                         {config.currency.enabled ? (
                           <>
-                            <div className="flex justify-end mb-1">
+                            <div className="flex justify-end mb-1 cenario-anim-icon">
                               <DollarSign size={32} className="drop-shadow-lg" style={{ color: "#e1f532" }} />
                             </div>
                             <div className="mb-2">
-                              <div className="text-2xl font-extrabold leading-tight drop-shadow-lg">cotação</div>
-                              <div className="text-base font-bold tracking-wide" style={{ color: "#e1f532" }}>moedas</div>
+                              <div className="text-2xl font-extrabold leading-tight drop-shadow-lg cenario-anim-title">cotação</div>
+                              <div className="text-base font-bold tracking-wide cenario-anim-subtitle" style={{ color: "#e1f532" }}>moedas</div>
                             </div>
                             <div className="flex-1 p-3 space-y-2 overflow-auto">
-                              
                               {currencyLoading && !liveCurrencies.length ? (
                                 <div className="flex items-center gap-2 text-[10px] opacity-80"><Loader2 size={12} className="animate-spin" /> Carregando...</div>
-                              ) : config.currency.currencies.map(c => {
+                              ) : config.currency.currencies.map((c, idx) => {
                                 const opt = CURRENCY_OPTIONS.find(o => o.value === c);
                                 const live = liveCurrencies.find(l => l.code === c);
+                                const rowClass = `cenario-anim-row-${Math.min(idx + 1, 8)}`;
                                 return (
-                                  <div key={c} className="flex items-center justify-between px-2.5 py-2 text-[11px]">
+                                  <div key={c} className={`flex items-center justify-between px-2.5 py-2 text-[11px] ${rowClass}`}>
                                     <span className="font-semibold leading-tight pr-2" style={{ color: "#fff" }}>{opt?.label?.split("(")[0]?.trim() || c}</span>
                                     {live ? (
                                       <div className="flex items-center gap-1.5">
                                         <span className="font-extrabold text-[12px]" style={{ color: "#fff" }}>{live.value}</span>
                                         <span className="font-bold text-[11px]" style={{ color: live.direction === "up" ? "#4ade80" : live.direction === "down" ? "#f87171" : "rgba(255,255,255,0.75)" }}>{live.change}</span>
+                                        {live.direction === "up" && <TrendingUp size={13} className="cenario-arrow-up" />}
+                                        {live.direction === "down" && <TrendingDown size={13} className="cenario-arrow-down" />}
+                                        {live.direction !== "up" && live.direction !== "down" && <Minus size={13} style={{ color: "rgba(255,255,255,0.5)" }} />}
                                       </div>
                                     ) : (
                                       <span className="opacity-70">---</span>
@@ -1075,20 +1070,17 @@ export default function CenarioInterativoPage() {
                       <div className="relative z-10 flex flex-col h-full p-3">
                         {config.chat.enabled ? (
                           <>
-                            {/* Icon top-right */}
-                            <div className="flex justify-end mb-1">
+                            <div className="flex justify-end mb-1 cenario-anim-icon">
                               <MessageCircle size={32} className="drop-shadow-lg" style={{ color: "#c8e600" }} />
                             </div>
-                            {/* Title */}
                             <div className="mb-3">
-                              <div className="text-xl font-extrabold leading-tight drop-shadow-lg">mensagens</div>
-                              <div className="text-sm font-bold" style={{ color: "#c8e600" }}>chat</div>
+                              <div className="text-xl font-extrabold leading-tight drop-shadow-lg cenario-anim-title">mensagens</div>
+                              <div className="text-sm font-bold cenario-anim-subtitle" style={{ color: "#c8e600" }}>chat</div>
                             </div>
-                            {/* Glassmorphism card */}
-                            <div className="flex-1 rounded-xl p-3 space-y-2" style={{ background: "rgba(255,255,255,0.12)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.15)" }}>
+                            <div className="flex-1 rounded-xl p-3 space-y-2 cenario-anim-card" style={{ background: "rgba(255,255,255,0.12)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.15)" }}>
                               <div className="text-[10px] font-bold opacity-70 mb-1">mensagens aqui</div>
                               {mockMessages.map((m, i) => (
-                                <div key={i} className="rounded-lg px-2 py-1.5 text-[8px]" style={{ background: "rgba(255,255,255,0.08)" }}>
+                                <div key={i} className={`rounded-lg px-2 py-1.5 text-[8px] cenario-anim-row-${Math.min(i + 1, 8)}`} style={{ background: "rgba(255,255,255,0.08)" }}>
                                   <span className="font-bold">{m.user}: </span>
                                   <span className="opacity-80">{m.text}</span>
                                 </div>
