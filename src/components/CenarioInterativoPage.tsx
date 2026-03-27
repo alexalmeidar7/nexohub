@@ -728,18 +728,9 @@ export default function CenarioInterativoPage() {
                       </Button>
                     </div>
 
-                    <div className="rounded-lg overflow-hidden border" style={{ borderColor: "color-mix(in srgb, var(--layout-border-color, #333) 20%, transparent)" }}>
-                      <iframe
-                        title="Mapa de Trânsito - Waze"
-                        src={`https://embed.waze.com/iframe?zoom=13&lat=${trafficCoords?.lat ?? -16.68}&lon=${trafficCoords?.lon ?? -49.26}&pin=1`}
-                        className="w-full h-[280px] border-0"
-                        allowFullScreen
-                        loading="lazy"
-                        referrerPolicy="no-referrer-when-downgrade"
-                      />
-                      <p className="text-[10px] text-center py-1" style={{ color: mutedText }}>
-                        Powered by Waze — trânsito em tempo real
-                      </p>
+                    <div className="rounded-lg p-3 text-xs text-center" style={{ background: subTabBg, color: mutedText }}>
+                      <Car size={16} className="mx-auto mb-1 opacity-60" />
+                      O mapa de trânsito é exibido no Preview ao lado →
                     </div>
 
                     {config.traffic.points.length > 0 && (
