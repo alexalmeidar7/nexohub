@@ -263,7 +263,18 @@ export default function CenarioTela() {
       if (ev.data?.type === "config-update" && ev.data.config && typeof ev.data.config === "object") {
         setConfig(prev => ({ ...prev, ...(ev.data.config as Partial<CenarioConfig>) }));
       }
+
+      if (ev.data?.type === "full-state") {
+        if (ev.data.tab) setActiveTab(ev.data.tab);
+        if (ev.data.subTab) setWeatherSubTab(ev.data.subTab);
+        if (ev.data.currencySubTab) setCurrencySubTab(ev.data.currencySubTab);
+        if (ev.data.config && typeof ev.data.config === "object") {
+          setConfig(prev => ({ ...prev, ...(ev.data.config as Partial<CenarioConfig>) }));
+        }
+      }
     };
+    // Request current state from the config page
+    bc.postMessage({ type: "request-state" });
     return () => bc.close();
   }, []);
 

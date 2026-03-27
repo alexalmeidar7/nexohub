@@ -245,14 +245,36 @@ function BgImageUpload({ value, onChange, mutedText, userId, category }: { value
 export default function CenarioInterativoPage() {
   const { user } = useAuth();
   const [config, setConfig] = useState<CenarioConfig>(defaultConfig);
-  const cenarioBcRef = useRef<BroadcastChannel | null>(null);
-  useEffect(() => {
-    cenarioBcRef.current = new BroadcastChannel("cenario-interativo");
-    return () => cenarioBcRef.current?.close();
-  }, []);
   const [activeTab, setActiveTab] = useState("home");
   const [weatherSubTab, setWeatherSubTab] = useState("today");
   const [currencySubTab, setCurrencySubTab] = useState<"moedas" | "bolsas">("moedas");
+
+  const configRef = useRef(config);
+  const activeTabRef = useRef(activeTab);
+  const weatherSubTabRef = useRef(weatherSubTab);
+  const currencySubTabRef = useRef(currencySubTab);
+  useEffect(() => { configRef.current = config; }, [config]);
+  useEffect(() => { activeTabRef.current = activeTab; }, [activeTab]);
+  useEffect(() => { weatherSubTabRef.current = weatherSubTab; }, [weatherSubTab]);
+  useEffect(() => { currencySubTabRef.current = currencySubTab; }, [currencySubTab]);
+
+  const cenarioBcRef = useRef<BroadcastChannel | null>(null);
+  useEffect(() => {
+    const bc = new BroadcastChannel("cenario-interativo");
+    cenarioBcRef.current = bc;
+    bc.onmessage = (ev) => {
+      if (ev.data?.type === "request-state") {
+        bc.postMessage({
+          type: "full-state",
+          tab: activeTabRef.current,
+          subTab: weatherSubTabRef.current,
+          currencySubTab: currencySubTabRef.current,
+          config: configRef.current,
+        });
+      }
+    };
+    return () => { cenarioBcRef.current = null; bc.close(); };
+  }, []);
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
