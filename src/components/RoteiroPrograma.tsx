@@ -919,8 +919,14 @@ ${perguntaActions}
                     <button
                       onClick={async () => {
                         const isExpress = r.subtitulo?.startsWith("express_xml::");
-                        let parts: any[] = [];
-                        try { parts = typeof r.participantes === "string" ? JSON.parse(r.participantes) : r.participantes || []; } catch { parts = []; }
+                        let parts: any = null;
+                        try {
+                          let raw = r.participantes;
+                          // Handle double-encoded JSON strings
+                          if (typeof raw === "string") raw = JSON.parse(raw);
+                          if (typeof raw === "string") raw = JSON.parse(raw);
+                          parts = raw;
+                        } catch { parts = []; }
 
                         if (isExpress) {
                           const parsed = Array.isArray(parts) ? { blocos: [], participantes: parts } : (parts || {});
