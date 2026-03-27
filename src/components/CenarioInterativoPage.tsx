@@ -161,6 +161,42 @@ export default function CenarioInterativoPage() {
   const [activeTab, setActiveTab] = useState("home");
   const [weatherSubTab, setWeatherSubTab] = useState("today");
   const [trafficSearchCity, setTrafficSearchCity] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+
+  /* ─── Load from DB ─── */
+  useEffect(() => {
+    if (!user?.id) return;
+    (async () => {
+      const { data } = await supabase
+        .from("user_settings")
+        .select("cenario_config")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (data?.cenario_config && typeof data.cenario_config === "object") {
+        setConfig(prev => ({ ...prev, ...(data.cenario_config as Partial<CenarioConfig>) }));
+      }
+      setLoaded(true);
+    })();
+  }, [user?.id]);
+
+  /* ─── Auto-save on config change (debounced) ─── */
+  const saveTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!user?.id || !loaded) return;
+    if (saveTimeout.current) clearTimeout(saveTimeout.current);
+    saveTimeout.current = setTimeout(async () => {
+      setSaving(true);
+      const { error } = await supabase
+        .from("user_settings")
+        .upsert({ user_id: user.id, cenario_config: config as unknown as Record<string, unknown> }, { onConflict: "user_id" });
+      if (error) {
+        console.error("Erro ao salvar cenário:", error);
+      }
+      setSaving(false);
+    }, 1500);
+    return () => { if (saveTimeout.current) clearTimeout(saveTimeout.current); };
+  }, [config, user?.id, loaded]);
 
   const updateHome = (partial: Partial<HomeConfig>) =>
     setConfig(c => ({ ...c, home: { ...c.home, ...partial } }));
@@ -187,6 +223,7 @@ export default function CenarioInterativoPage() {
   };
 
   const trafficMapCity = config.traffic.city || "São Paulo";
+  const uid = user?.id;
 
   /* ─── styles ─── */
   const headerStyle = {
