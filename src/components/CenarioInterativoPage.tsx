@@ -408,7 +408,7 @@ export default function CenarioInterativoPage() {
                         </div>
                         <div>
                           <Label className="text-xs mb-1 block" style={{ color: mutedText }}>Cidade</Label>
-                          <Input placeholder="Ex: São Paulo" value={config.weather.city} onChange={e => updateWeather({ city: e.target.value })} className="text-sm" />
+                          <Input placeholder="Ex: São Paulo" value={config.weather.city} onChange={e => updateWeather({ city: e.target.value })} className="text-sm" style={{ color: textColor, background: "var(--layout-page-bg, #ffffff)" }} />
                         </div>
                       </div>
                     )}
