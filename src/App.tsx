@@ -27,6 +27,7 @@ const RoteiroApresentadorEdit = lazy(() => import("./pages/RoteiroApresentadorEd
 const TpExterno = lazy(() => import("./pages/TpExterno"));
 const PlayerCatalog = lazy(() => import("./pages/player/PlayerCatalog"));
 const VmixControl = lazy(() => import("./pages/VmixControl"));
+const CenarioTela = lazy(() => import("./pages/CenarioTela"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
