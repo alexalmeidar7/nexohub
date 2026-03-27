@@ -788,26 +788,45 @@ export default function CenarioInterativoPage() {
                     <div className="absolute inset-0 flex flex-col p-3 overflow-hidden" style={{ color: config.weather.bgImage ? "#fff" : "#333" }}>
                       {liveWeather ? (
                         <>
-                          <div className="text-center mb-2">
-                            <span className="text-2xl">{getWIcon(liveWeather.current.code)}</span>
-                            <div className="text-2xl font-bold drop-shadow-md">{liveWeather.current.temp}°C</div>
-                            <div className="text-[9px] opacity-80 drop-shadow-sm">{getWLabel(liveWeather.current.code)}</div>
-                            <div className="text-[8px] opacity-60 mt-0.5">{weatherCity || config.city}</div>
-                          </div>
-                          <div className="flex items-center justify-center gap-3 text-[8px] opacity-70 mb-2">
-                            <span>💧 {liveWeather.current.humidity}%</span>
-                            {liveWeather.daily[0] && <span>↓{liveWeather.daily[0].min}° ↑{liveWeather.daily[0].max}°</span>}
-                          </div>
-                          {liveWeather.daily.slice(1, 4).length > 0 && (
-                            <div className="space-y-1 mt-auto">
-                              <div className="text-[8px] font-bold opacity-60 uppercase">Próximos dias</div>
-                              {liveWeather.daily.slice(1, 4).map((d, i) => (
-                                <div key={i} className="flex items-center justify-between text-[9px] rounded px-1.5 py-0.5" style={{ background: "rgba(0,0,0,0.15)" }}>
-                                  <span>{new Date(d.date + "T12:00").toLocaleDateString("pt-BR", { weekday: "short" })}</span>
-                                  <span>{getWIcon(d.code)}</span>
-                                  <span>{d.min}° / {d.max}°</span>
-                                </div>
-                              ))}
+                          {/* Sub-tab: Hoje (today) */}
+                          {weatherSubTab === "today" && (
+                            <>
+                              <div className="text-center mb-2">
+                                <span className="text-2xl">{getWIcon(liveWeather.current.code)}</span>
+                                <div className="text-2xl font-bold drop-shadow-md">{liveWeather.current.temp}°C</div>
+                                <div className="text-[9px] opacity-80 drop-shadow-sm">{getWLabel(liveWeather.current.code)}</div>
+                                <div className="text-[8px] opacity-60 mt-0.5">{weatherCity || config.city}</div>
+                              </div>
+                              <div className="flex items-center justify-center gap-3 text-[8px] opacity-70">
+                                <span>💧 {liveWeather.current.humidity}%</span>
+                                {liveWeather.daily[0] && <span>↓{liveWeather.daily[0].min}° ↑{liveWeather.daily[0].max}°</span>}
+                                {liveWeather.daily[0] && <span>🌧 {liveWeather.daily[0].precip}%</span>}
+                              </div>
+                            </>
+                          )}
+
+                          {/* Sub-tab: 3 Dias (forecast) */}
+                          {weatherSubTab === "forecast" && (
+                            <>
+                              <div className="text-[9px] font-bold uppercase opacity-60 mb-2">Próximos 3 dias</div>
+                              <div className="space-y-1.5 flex-1">
+                                {liveWeather.daily.slice(1, 4).map((d, i) => (
+                                  <div key={i} className="flex items-center justify-between text-[9px] rounded px-2 py-1.5" style={{ background: "rgba(0,0,0,0.15)" }}>
+                                    <span className="font-semibold">{new Date(d.date + "T12:00").toLocaleDateString("pt-BR", { weekday: "short", day: "numeric" })}</span>
+                                    <span>{getWIcon(d.code)}</span>
+                                    <span>↓{d.min}° ↑{d.max}°</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </>
+                          )}
+
+                          {/* Sub-tab: Satélite */}
+                          {weatherSubTab === "satellite" && (
+                            <div className="flex-1 flex flex-col items-center justify-center text-center">
+                              <Satellite size={20} className="mb-1 opacity-60" />
+                              <div className="text-[9px] opacity-60">Imagem de satélite</div>
+                              <div className="text-[8px] opacity-40 mt-0.5">{weatherCity || config.city}</div>
                             </div>
                           )}
                         </>
