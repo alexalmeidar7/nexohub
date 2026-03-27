@@ -79,13 +79,17 @@ const sidebarMenu: MenuItem[] = [
     icon: ShoppingBag, label: "comercial", children: [
       { icon: MessageSquareQuote, label: "testemunhais", page: "testemunhais" },
       { icon: Tag, label: "promoções", page: "promocoes" },
-      { icon: Image, label: "logos", page: "logos" },
       { icon: Film, label: "pre roll", page: "preroll" },
       { icon: ShoppingCart, label: "shopping", page: "shopping" },
       { icon: FileText, label: "propostas comerciais", page: "propostas" },
     ]
   },
-  { icon: Monitor, label: "vmix control", page: undefined as unknown as Page },
+  {
+    icon: Monitor, label: "vmix", children: [
+      { icon: Monitor, label: "vmix control", page: undefined as unknown as Page },
+      { icon: Image, label: "logos", page: "logos" },
+    ]
+  },
   {
     icon: Wrench, label: "ferramentas", children: [
       { icon: Tag, label: "tela promo", page: undefined as unknown as Page },
@@ -104,7 +108,7 @@ const menuToModuleKey: Record<string, string> = {
   "agenda": "agenda",
   "player": "player",
   "comercial": "comercial",
-  "vmix control": "vmix",
+  "vmix": "vmix",
   "ferramentas": "ferramentas",
 };
 
@@ -290,10 +294,6 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   };
 
   const handleMenuClick = (item: MenuItem) => {
-    if (item.label === "vmix control") {
-      window.open("/vmix-control", "_blank");
-      return;
-    }
     if (item.children) {
       toggleMenu(item.label);
     } else if (item.page) {
@@ -317,6 +317,11 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     }
     if (parentLabel === "ferramentas" && child.label === "abrir TP externo") {
       window.open("/tp-externo", "_blank");
+      setHoveredMenu(null);
+      return;
+    }
+    if (parentLabel === "vmix" && child.label === "vmix control") {
+      window.open("/vmix-control", "_blank");
       setHoveredMenu(null);
       return;
     }
@@ -516,10 +521,6 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   <TooltipTrigger asChild>
                     <button
                       onClick={() => {
-                        if (item.label === "vmix control") {
-                          window.open("/vmix-control", "_blank");
-                          return;
-                        }
                         if (item.children) {
                           setHoveredMenu(prev => prev === item.label ? null : item.label);
                         } else if (item.page) {
