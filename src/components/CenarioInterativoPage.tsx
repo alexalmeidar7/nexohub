@@ -310,13 +310,14 @@ export default function CenarioInterativoPage() {
               <Settings size={16} style={{ color: mutedText }} />
               <span className="text-sm font-semibold">Configuração</span>
               <div className="flex items-center gap-2 ml-auto">
-                <div className="flex items-center gap-1.5 rounded-lg px-2 py-1" style={{ background: subTabBg }}>
+                <div className="flex items-center gap-1.5 rounded-lg px-2 py-1 border" style={{ background: "var(--layout-page-bg, #ffffff)", borderColor: "color-mix(in srgb, var(--layout-border-color, #333) 30%, transparent)" }}>
                   <MapPin size={13} style={{ color: mutedText }} />
                   <Input
                     placeholder="Cidade principal..."
                     value={config.city}
                     onChange={e => setConfig(c => ({ ...c, city: e.target.value }))}
                     className="text-xs h-7 w-36 border-0 bg-transparent p-0 focus-visible:ring-0"
+                    style={{ color: textColor }}
                   />
                 </div>
                 {saving && <span className="text-[10px] animate-pulse" style={{ color: mutedText }}>Salvando...</span>}
