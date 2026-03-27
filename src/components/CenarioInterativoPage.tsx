@@ -277,7 +277,7 @@ export default function CenarioInterativoPage() {
                 <p className="text-xs" style={{ color: mutedText }}>
                   Configure a tela inicial do cenário interativo. Esta é a tela padrão exibida quando nenhum módulo está ativo.
                 </p>
-                <BgImageUpload value={config.home.bgImage} onChange={v => updateHome({ bgImage: v })} mutedText={mutedText} />
+                <BgImageUpload value={config.home.bgImage} onChange={v => updateHome({ bgImage: v })} mutedText={mutedText} userId={uid} category="home" />
               </TabsContent>
 
               {/* ═══ Weather ═══ */}
