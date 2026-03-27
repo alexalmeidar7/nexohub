@@ -603,15 +603,12 @@ export default function CenarioInterativoPage() {
                     <div className="rounded-lg overflow-hidden border" style={{ borderColor: "color-mix(in srgb, var(--layout-border-color, #333) 20%, transparent)" }}>
                       <iframe
                         title="Mapa de Trânsito"
-                        src={`https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&q=${encodeURIComponent(trafficMapCity)}&zoom=12&maptype=roadmap`}
+                        src={`https://www.google.com/maps?q=${encodeURIComponent(trafficMapCity)}&z=13&layer=traffic&output=embed`}
                         className="w-full h-[280px] border-0"
                         allowFullScreen
                         loading="lazy"
                         referrerPolicy="no-referrer-when-downgrade"
                       />
-                      <p className="text-[10px] text-center py-1" style={{ color: mutedText }}>
-                        Clique no mapa para marcar pontos de trânsito
-                      </p>
                     </div>
 
                     {config.traffic.points.length > 0 && (
