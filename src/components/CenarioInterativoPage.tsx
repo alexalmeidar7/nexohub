@@ -237,6 +237,8 @@ export default function CenarioInterativoPage() {
   const [weatherLoading, setWeatherLoading] = useState(false);
   const [weatherCoords, setWeatherCoords] = useState<{ lat: number; lon: number } | null>(null);
   const [trafficCoords, setTrafficCoords] = useState<{ lat: number; lon: number } | null>(null);
+  const [liveCurrencies, setLiveCurrencies] = useState<LiveCurrency[]>([]);
+  const [currencyLoading, setCurrencyLoading] = useState(false);
 
   /* ─── Clock tick ─── */
   useEffect(() => {
