@@ -508,13 +508,32 @@ export default function CenarioInterativoPage() {
 
                     {weatherSubTab === "forecast" && (
                       <div className="space-y-3">
-                        <p className="text-xs" style={{ color: mutedText }}>
-                          Exibe a previsão completa para os próximos 3 dias com temperaturas mínima e máxima, condição e ícone.
-                        </p>
                         <div className="flex items-center justify-between">
                           <Label className="text-sm">Exibir previsão 3 dias</Label>
                           <Switch checked={config.weather.showForecast3Days} onCheckedChange={v => updateWeather({ showForecast3Days: v })} />
                         </div>
+                        {weatherLoading && (
+                          <div className="flex items-center gap-2 text-xs" style={{ color: mutedText }}>
+                            <Loader2 size={14} className="animate-spin" /> Carregando...
+                          </div>
+                        )}
+                        {!weatherLoading && liveWeather && liveWeather.daily.slice(1, 4).map((day, i) => {
+                          const d = new Date(day.date + "T12:00:00");
+                          const dayName = d.toLocaleDateString("pt-BR", { weekday: "short", day: "numeric", month: "short" });
+                          return (
+                            <div key={i} className="flex items-center gap-3 rounded-lg px-3 py-2" style={{ background: subTabBg }}>
+                              <span className="text-xl">{getWIcon(day.code)}</span>
+                              <div className="flex-1">
+                                <div className="text-xs font-medium capitalize">{dayName}</div>
+                                <div className="text-[10px]" style={{ color: mutedText }}>{getWLabel(day.code)}</div>
+                              </div>
+                              <div className="text-right text-xs">
+                                <span className="font-bold">{day.max}°</span>
+                                <span style={{ color: mutedText }}> / {day.min}°</span>
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
                     )}
 
