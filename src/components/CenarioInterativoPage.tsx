@@ -163,6 +163,52 @@ export default function CenarioInterativoPage() {
   const [trafficSearchCity, setTrafficSearchCity] = useState("");
   const [saving, setSaving] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const [currentProgram, setCurrentProgram] = useState<{ nome: string; id: string } | null>(null);
+  const [sponsorLogos, setSponsorLogos] = useState<{ id: string; nome: string; logo_url: string }[]>([]);
+
+  /* ─── Clock tick ─── */
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  /* ─── Fetch current program + sponsor logos ─── */
+  useEffect(() => {
+    if (!user?.id) return;
+    const now = new Date();
+    const dayNames = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+    const today = dayNames[now.getDay()];
+    const nowTime = now.toTimeString().slice(0, 5);
+
+    (async () => {
+      const { data: progs } = await supabase
+        .from("programas")
+        .select("id, nome, horario_inicio, horario_fim, dias_semana")
+        .eq("user_id", user.id)
+        .eq("ativo", true);
+
+      const onAir = progs?.find(p => {
+        const dias = p.dias_semana || [];
+        return dias.includes(today) && p.horario_inicio <= nowTime && p.horario_fim > nowTime;
+      });
+
+      if (onAir) {
+        setCurrentProgram({ nome: onAir.nome, id: onAir.id });
+        const { data: logos } = await supabase
+          .from("logos_patrocinadores")
+          .select("id, nome, logo_url")
+          .eq("programa_id", onAir.id)
+          .eq("user_id", user.id)
+          .eq("ativo", true)
+          .eq("excluido", false);
+        setSponsorLogos(logos || []);
+      } else {
+        setCurrentProgram(null);
+        setSponsorLogos([]);
+      }
+    })();
+  }, [user?.id]);
 
   /* ─── Load from DB ─── */
   useEffect(() => {
