@@ -838,7 +838,7 @@ export default function CenarioInterativoPage() {
                     src={`https://embed.waze.com/iframe?zoom=13&lat=${trafficCoords.lat}&lon=${trafficCoords.lon}&pin=1`}
                     className="absolute inset-0 w-full h-full border-0"
                     title="Trânsito preview"
-                    style={{ zIndex: 1 }}
+                    style={{ zIndex: 5 }}
                   />
                 )}
                 {/* ── Dark sidebar ── */}
