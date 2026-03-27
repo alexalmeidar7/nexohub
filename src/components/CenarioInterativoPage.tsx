@@ -100,10 +100,44 @@ interface LiveWeather {
   daily: { date: string; min: number; max: number; code: number; humidity: number; precip: number }[];
 }
 
-const mockCurrencies = [
-  { code: "USD", name: "Dólar", value: "5,42", change: "+0,12%" },
-  { code: "EUR", name: "Euro", value: "5,89", change: "-0,05%" },
-];
+/* ─── Currency API mapping ─── */
+const CURRENCY_API_MAP: Record<string, string> = {
+  USD: "USD-BRL", EUR: "EUR-BRL", GBP: "GBP-BRL", ARS: "ARS-BRL", JPY: "JPY-BRL", BTC: "BTC-BRL", ETH: "ETH-BRL",
+};
+
+interface LiveCurrency {
+  code: string;
+  name: string;
+  value: string;
+  change: string;
+  direction: "up" | "down" | "neutral";
+}
+
+async function fetchLiveCurrencies(codes: string[]): Promise<LiveCurrency[]> {
+  if (!codes.length) return [];
+  const pairs = codes.map(c => CURRENCY_API_MAP[c]).filter(Boolean).join(",");
+  if (!pairs) return [];
+  try {
+    const res = await fetch(`https://economia.awesomeapi.com.br/last/${pairs}`);
+    const data = await res.json();
+    return codes.map(c => {
+      const key = CURRENCY_API_MAP[c]?.replace("-", "");
+      const item = data[key];
+      if (!item) return null;
+      const pct = parseFloat(item.pctChange);
+      const opt = CURRENCY_OPTIONS.find(o => o.value === c);
+      return {
+        code: c,
+        name: opt?.label?.split("(")[0]?.trim() || item.name,
+        value: parseFloat(item.bid).toLocaleString("pt-BR", { style: "currency", currency: "BRL" }),
+        change: `${pct >= 0 ? "+" : ""}${pct.toFixed(2)}%`,
+        direction: pct > 0 ? "up" as const : pct < 0 ? "down" as const : "neutral" as const,
+      };
+    }).filter(Boolean) as LiveCurrency[];
+  } catch {
+    return [];
+  }
+}
 
 const mockMessages = [
   { user: "João Silva", text: "Boa tarde! 🎉" },
