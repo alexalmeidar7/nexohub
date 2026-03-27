@@ -750,7 +750,7 @@ export default function CenarioInterativoPage() {
                 </div>
 
                 {/* ── Content area with bg image ── */}
-                <div className="flex-1 relative" style={{ background: "#e8e8e8" }}>
+                <div className="flex-1 relative" style={{ background: activeTab === "weather" && weatherSubTab === "satellite" && config.weather.showSatellite ? "transparent" : "#e8e8e8", zIndex: 1 }}>
                   {/* Show bg image based on active tab */}
                   {activeTab === "home" && config.home.bgImage && (
                     <img src={config.home.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />
