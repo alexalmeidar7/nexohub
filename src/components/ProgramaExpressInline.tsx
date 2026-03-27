@@ -210,7 +210,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
         const filePath = `express/${user.id}/${fileName}`;
         await supabase.storage.from("empresa-assets").upload(filePath, blob, { upsert: true, contentType: "application/xml" });
         const { data: urlData } = supabase.storage.from("empresa-assets").getPublicUrl(filePath);
-        const blocosJson = JSON.stringify({ blocos, participantes });
+        const blocosJson = JSON.stringify({ blocos, participantes, escaladaList });
         await supabase.from("roteiros").update({ programa_nome: pNome, estudio, titulo: `PROGRAMA EXPRESS — ${pNome}`, subtitulo: `express_xml::${urlData.publicUrl}`, conteudo_html: html, participantes: blocosJson }).eq("id", editingId);
         setLastAutoSaved(Date.now());
       } catch (e) { console.error("Auto-save error:", e); }
