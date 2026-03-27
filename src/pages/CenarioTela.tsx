@@ -530,14 +530,29 @@ export default function CenarioTela() {
                       <div className="font-extrabold leading-tight drop-shadow-lg" style={{ fontSize: "4vh" }}>mensagens</div>
                       <div className="font-bold" style={{ fontSize: "2.5vh", color: "#e1f532" }}>chat</div>
                     </div>
-                    <div className="flex-1 rounded-xl space-y-2" style={{ padding: "2.5vh", background: "rgba(255,255,255,0.12)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.15)" }}>
-                      <div className="font-bold opacity-70" style={{ fontSize: "1.8vh", marginBottom: "1vh" }}>mensagens aqui</div>
-                      {mockMessages.map((m, i) => (
-                        <div key={i} className="rounded-lg" style={{ fontSize: "1.5vh", padding: "1vh 1.5vh", background: "rgba(255,255,255,0.08)" }}>
-                          <span className="font-bold">{m.user}: </span>
-                          <span className="opacity-80">{m.text}</span>
-                        </div>
-                      ))}
+                    <div className="flex-1 rounded-xl overflow-hidden" style={{ background: "rgba(255,255,255,0.12)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.15)" }}>
+                      {(() => {
+                        const ytUrl = config.chat.youtubeVideoUrl || "";
+                        let videoId = "";
+                        const m1 = ytUrl.match(/[?&]v=([a-zA-Z0-9_-]{11})/);
+                        const m2 = ytUrl.match(/youtu\.be\/([a-zA-Z0-9_-]{11})/);
+                        const m3 = ytUrl.match(/\/live\/([a-zA-Z0-9_-]{11})/);
+                        videoId = m1?.[1] || m2?.[1] || m3?.[1] || "";
+                        if (videoId) {
+                          return (
+                            <iframe
+                              src={`https://www.youtube.com/live_chat?v=${videoId}&embed_domain=${window.location.hostname}&dark_theme=1`}
+                              className="w-full h-full border-0"
+                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope"
+                            />
+                          );
+                        }
+                        return (
+                          <div className="flex-1 flex items-center justify-center opacity-50 h-full" style={{ fontSize: "1.8vh" }}>
+                            Insira a URL da live para carregar o chat
+                          </div>
+                        );
+                      })()}
                     </div>
                   </>) : (
                     <div className="flex-1 flex items-center justify-center opacity-50" style={{ fontSize: "1.8vh" }}>Chat desativado</div>
