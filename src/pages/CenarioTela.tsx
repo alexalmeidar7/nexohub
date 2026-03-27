@@ -394,13 +394,13 @@ export default function CenarioTela() {
                       <div className="font-extrabold leading-tight drop-shadow-lg" style={{ fontSize: "4.2vh" }}>cotação</div>
                       <div className="font-bold" style={{ fontSize: "2.6vh", color: "#e1f532" }}>moedas</div>
                     </div>
-                    <div className="flex-1 rounded-xl space-y-2 overflow-auto" style={{ padding: "2.2vh", background: "rgba(6,10,16,0.72)", backdropFilter: "blur(12px)", border: "1px solid rgba(225,245,50,0.28)", boxShadow: "0 12px 28px rgba(0,0,0,0.45)" }}>
+                    <div className="flex-1 space-y-2 overflow-auto" style={{ padding: "2.2vh" }}>
                       <div className="font-bold uppercase tracking-wide" style={{ fontSize: "1.7vh", marginBottom: "0.8vh", color: "rgba(255,255,255,0.9)" }}>cotações em tempo real</div>
                       {config.currency.currencies.map(c => {
                         const opt = CURRENCY_OPTIONS.find(o => o.value === c);
                         const live = liveCurrencies.find(l => l.code === c);
                         return (
-                          <div key={c} className="flex items-center justify-between rounded-lg" style={{ fontSize: "1.95vh", padding: "1.25vh 1.4vh", background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.12)" }}>
+                          <div key={c} className="flex items-center justify-between" style={{ fontSize: "1.95vh", padding: "1.25vh 1.4vh" }}>
                             <span className="font-semibold" style={{ maxWidth: "52%", lineHeight: 1.15 }}>{opt?.label?.split("(")[0]?.trim() || c}</span>
                             {live ? (
                               <div className="flex items-center" style={{ gap: "0.8vh" }}>

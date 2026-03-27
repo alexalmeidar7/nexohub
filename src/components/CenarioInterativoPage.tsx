@@ -1030,7 +1030,7 @@ export default function CenarioInterativoPage() {
                               <div className="text-2xl font-extrabold leading-tight drop-shadow-lg">cotação</div>
                               <div className="text-base font-bold tracking-wide" style={{ color: "#e1f532" }}>moedas</div>
                             </div>
-                            <div className="flex-1 rounded-xl p-3 space-y-2 overflow-auto" style={{ background: "rgba(6,10,16,0.82)", backdropFilter: "blur(12px)", border: "1px solid rgba(225,245,50,0.28)", boxShadow: "0 12px 28px rgba(0,0,0,0.45)" }}>
+                            <div className="flex-1 p-3 space-y-2 overflow-auto">
                               <div className="text-[11px] font-bold uppercase tracking-wide mb-1" style={{ color: "rgba(255,255,255,0.9)" }}>cotações em tempo real</div>
                               {currencyLoading && !liveCurrencies.length ? (
                                 <div className="flex items-center gap-2 text-[10px] opacity-80"><Loader2 size={12} className="animate-spin" /> Carregando...</div>
@@ -1038,7 +1038,7 @@ export default function CenarioInterativoPage() {
                                 const opt = CURRENCY_OPTIONS.find(o => o.value === c);
                                 const live = liveCurrencies.find(l => l.code === c);
                                 return (
-                                  <div key={c} className="flex items-center justify-between rounded-lg px-2.5 py-2 text-[11px]" style={{ background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.12)" }}>
+                                  <div key={c} className="flex items-center justify-between px-2.5 py-2 text-[11px]">
                                     <span className="font-semibold leading-tight pr-2" style={{ color: "#fff" }}>{opt?.label?.split("(")[0]?.trim() || c}</span>
                                     {live ? (
                                       <div className="flex items-center gap-1.5">
