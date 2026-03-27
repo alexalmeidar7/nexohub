@@ -76,6 +76,7 @@ const App = () => (
             <Route path="/roteiro-apresentador-edit" element={<RoteiroApresentadorEdit />} />
             <Route path="/tp-externo" element={<TpExterno />} />
             <Route path="/vmix-control" element={<VmixControl />} />
+            <Route path="/cenario-tela" element={<CenarioTela />} />
 
             {/* Admin routes */}
             <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />

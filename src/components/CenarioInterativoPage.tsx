@@ -696,6 +696,13 @@ export default function CenarioInterativoPage() {
             <div className="flex items-center gap-2 mb-4">
               <Eye size={16} style={{ color: mutedText }} />
               <span className="text-sm font-semibold">Preview (9:16)</span>
+              <button
+                onClick={() => window.open("/cenario-tela", "_blank")}
+                className="ml-auto flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-semibold transition-opacity hover:opacity-80"
+                style={{ background: "var(--layout-header-bg, #0d0446)", color: "var(--layout-header-text, #fff)" }}
+              >
+                <ExternalLink size={12} /> Abrir Tela
+              </button>
             </div>
 
             <div
