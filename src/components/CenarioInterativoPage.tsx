@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { MonitorPlay, CloudSun, Car, DollarSign, MessageCircle, Trash2, Eye, Settings, Home, MapPin, Satellite, Sun, CalendarDays, Search, Upload, Image, Clock } from "lucide-react";
+import { MonitorPlay, CloudSun, Car, DollarSign, MessageCircle, Trash2, Eye, Settings, Home, MapPin, Satellite, Sun, CalendarDays, Search, Upload, Image, Clock, Loader2, Droplets, Wind, Thermometer } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
@@ -77,11 +77,27 @@ const CURRENCY_OPTIONS = [
   { value: "ETH", label: "Ethereum (ETH)" },
 ];
 
-const mockWeather = { temp: 28, city: "São Paulo", icon: "☀️", forecast: [
-  { day: "Seg", min: 19, max: 30, icon: "⛅" },
-  { day: "Ter", min: 20, max: 31, icon: "🌧️" },
-  { day: "Qua", min: 18, max: 27, icon: "⛅" },
-]};
+const weatherIcons: Record<number, string> = {
+  0: "☀️", 1: "🌤️", 2: "⛅", 3: "☁️", 45: "🌫️", 48: "🌫️",
+  51: "🌦️", 53: "🌦️", 55: "🌧️", 61: "🌧️", 63: "🌧️", 65: "🌧️",
+  71: "🌨️", 73: "🌨️", 75: "🌨️", 80: "🌧️", 81: "🌧️", 82: "🌧️",
+  95: "⛈️", 96: "⛈️", 99: "⛈️",
+};
+const weatherLabels: Record<number, string> = {
+  0: "Céu limpo", 1: "Parcialmente limpo", 2: "Parcialmente nublado", 3: "Nublado",
+  45: "Neblina", 48: "Neblina", 51: "Garoa leve", 53: "Garoa", 55: "Garoa forte",
+  61: "Chuva leve", 63: "Chuva moderada", 65: "Chuva forte",
+  71: "Neve leve", 73: "Neve", 75: "Neve forte",
+  80: "Pancadas leves", 81: "Pancadas", 82: "Pancadas fortes",
+  95: "Tempestade", 96: "Tempestade com granizo", 99: "Tempestade severa",
+};
+function getWIcon(code: number) { return weatherIcons[code] ?? weatherIcons[Object.keys(weatherIcons).map(Number).reduce((a, b) => Math.abs(b - code) < Math.abs(a - code) ? b : a)] ?? "🌡️"; }
+function getWLabel(code: number) { return weatherLabels[code] ?? weatherLabels[Object.keys(weatherLabels).map(Number).reduce((a, b) => Math.abs(b - code) < Math.abs(a - code) ? b : a)] ?? ""; }
+
+interface LiveWeather {
+  current: { temp: number; humidity: number; code: number };
+  daily: { date: string; min: number; max: number; code: number; humidity: number; precip: number }[];
+}
 
 const mockCurrencies = [
   { code: "USD", name: "Dólar", value: "5,42", change: "+0,12%" },
@@ -168,6 +184,8 @@ export default function CenarioInterativoPage() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [currentProgram, setCurrentProgram] = useState<{ nome: string; id: string } | null>(null);
   const [sponsorLogos, setSponsorLogos] = useState<{ id: string; nome: string; logo_url: string }[]>([]);
+  const [liveWeather, setLiveWeather] = useState<LiveWeather | null>(null);
+  const [weatherLoading, setWeatherLoading] = useState(false);
 
   /* ─── Clock tick ─── */
   useEffect(() => {
@@ -228,7 +246,57 @@ export default function CenarioInterativoPage() {
     })();
   }, [user?.id]);
 
-  /* ─── Auto-save on config change (debounced) ─── */
+  /* ─── Fetch weather data ─── */
+  const weatherCity = config.weather.city || config.city;
+  const weatherFetchRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!config.weather.enabled || !weatherCity) return;
+    if (weatherFetchRef.current) clearTimeout(weatherFetchRef.current);
+    weatherFetchRef.current = setTimeout(async () => {
+      setWeatherLoading(true);
+      try {
+        // 1. Geocode city
+        const { data: geoData } = await supabase.functions.invoke("fetch-weather", {
+          body: { action: "geocode", query: weatherCity, count: 1 },
+        });
+        const results = geoData?.results;
+        if (!results || results.length === 0) {
+          setLiveWeather(null);
+          setWeatherLoading(false);
+          return;
+        }
+        const { latitude, longitude } = results[0];
+        // 2. Get forecast
+        const { data: forecastData } = await supabase.functions.invoke("fetch-weather", {
+          body: { action: "forecast", lat: latitude, lon: longitude, forecast_days: 5 },
+        });
+        if (forecastData?.ok && forecastData.data) {
+          const d = forecastData.data;
+          setLiveWeather({
+            current: {
+              temp: Math.round(d.current?.temperature_2m ?? 0),
+              humidity: Math.round(d.current?.relative_humidity_2m ?? 0),
+              code: d.current?.weather_code ?? 0,
+            },
+            daily: (d.daily?.time || []).map((date: string, i: number) => ({
+              date,
+              min: Math.round(d.daily.temperature_2m_min?.[i] ?? 0),
+              max: Math.round(d.daily.temperature_2m_max?.[i] ?? 0),
+              code: d.daily.weather_code?.[i] ?? 0,
+              humidity: Math.round(d.daily.relative_humidity_2m_max?.[i] ?? 0),
+              precip: Math.round(d.daily.precipitation_probability_max?.[i] ?? 0),
+            })),
+          });
+        }
+      } catch (err) {
+        console.error("Weather fetch error:", err);
+      }
+      setWeatherLoading(false);
+    }, 1000);
+    return () => { if (weatherFetchRef.current) clearTimeout(weatherFetchRef.current); };
+  }, [config.weather.enabled, weatherCity]);
+
+
   const saveTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (!user?.id || !loaded) return;
@@ -399,29 +467,73 @@ export default function CenarioInterativoPage() {
 
                     {weatherSubTab === "today" && (
                       <div className="space-y-3">
-                        <p className="text-xs" style={{ color: mutedText }}>
-                          Exibe o tempo completo do dia atual: temperatura, umidade, vento, sensação térmica e condição climática.
-                        </p>
                         <div className="flex items-center justify-between">
                           <Label className="text-sm">Exibir tempo atual completo</Label>
                           <Switch checked={config.weather.showCurrent} onCheckedChange={v => updateWeather({ showCurrent: v })} />
                         </div>
                         <div>
-                          <Label className="text-xs mb-1 block" style={{ color: mutedText }}>Cidade</Label>
-                          <Input placeholder="Ex: São Paulo" value={config.weather.city} onChange={e => updateWeather({ city: e.target.value })} className="text-sm" style={{ color: textColor, background: "var(--layout-page-bg, #ffffff)" }} />
+                          <Label className="text-xs mb-1 block" style={{ color: mutedText }}>Cidade (ou use a cidade principal)</Label>
+                          <Input placeholder={config.city || "Ex: São Paulo"} value={config.weather.city} onChange={e => updateWeather({ city: e.target.value })} className="text-sm" style={{ color: textColor, background: "var(--layout-page-bg, #ffffff)" }} />
                         </div>
+                        {weatherLoading && (
+                          <div className="flex items-center gap-2 text-xs" style={{ color: mutedText }}>
+                            <Loader2 size={14} className="animate-spin" /> Carregando dados...
+                          </div>
+                        )}
+                        {!weatherLoading && liveWeather && (
+                          <div className="rounded-lg p-3 space-y-2" style={{ background: subTabBg }}>
+                            <div className="flex items-center gap-3">
+                              <span className="text-3xl">{getWIcon(liveWeather.current.code)}</span>
+                              <div>
+                                <div className="text-2xl font-bold">{liveWeather.current.temp}°C</div>
+                                <div className="text-xs" style={{ color: mutedText }}>{getWLabel(liveWeather.current.code)}</div>
+                              </div>
+                            </div>
+                            <div className="flex gap-4 text-xs" style={{ color: mutedText }}>
+                              <span className="flex items-center gap-1"><Droplets size={12} /> {liveWeather.current.humidity}%</span>
+                              {liveWeather.daily[0] && (
+                                <>
+                                  <span className="flex items-center gap-1"><Thermometer size={12} /> {liveWeather.daily[0].min}° / {liveWeather.daily[0].max}°</span>
+                                  <span>💧 {liveWeather.daily[0].precip}%</span>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                        {!weatherLoading && !liveWeather && weatherCity && (
+                          <p className="text-xs" style={{ color: mutedText }}>Cidade não encontrada. Verifique o nome.</p>
+                        )}
                       </div>
                     )}
 
                     {weatherSubTab === "forecast" && (
                       <div className="space-y-3">
-                        <p className="text-xs" style={{ color: mutedText }}>
-                          Exibe a previsão completa para os próximos 3 dias com temperaturas mínima e máxima, condição e ícone.
-                        </p>
                         <div className="flex items-center justify-between">
                           <Label className="text-sm">Exibir previsão 3 dias</Label>
                           <Switch checked={config.weather.showForecast3Days} onCheckedChange={v => updateWeather({ showForecast3Days: v })} />
                         </div>
+                        {weatherLoading && (
+                          <div className="flex items-center gap-2 text-xs" style={{ color: mutedText }}>
+                            <Loader2 size={14} className="animate-spin" /> Carregando...
+                          </div>
+                        )}
+                        {!weatherLoading && liveWeather && liveWeather.daily.slice(1, 4).map((day, i) => {
+                          const d = new Date(day.date + "T12:00:00");
+                          const dayName = d.toLocaleDateString("pt-BR", { weekday: "short", day: "numeric", month: "short" });
+                          return (
+                            <div key={i} className="flex items-center gap-3 rounded-lg px-3 py-2" style={{ background: subTabBg }}>
+                              <span className="text-xl">{getWIcon(day.code)}</span>
+                              <div className="flex-1">
+                                <div className="text-xs font-medium capitalize">{dayName}</div>
+                                <div className="text-[10px]" style={{ color: mutedText }}>{getWLabel(day.code)}</div>
+                              </div>
+                              <div className="text-right text-xs">
+                                <span className="font-bold">{day.max}°</span>
+                                <span style={{ color: mutedText }}> / {day.min}°</span>
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
                     )}
 
@@ -574,7 +686,7 @@ export default function CenarioInterativoPage() {
                   <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.12)", opacity: config.weather.enabled ? 1 : 0.35 }}>
                     <CloudSun size={16} className="text-white" />
                   </div>
-                  {config.weather.enabled && config.weather.showForecast3Days && mockWeather.forecast.map((_, i) => (
+                  {config.weather.enabled && config.weather.showForecast3Days && liveWeather?.daily?.slice(1, 4).map((_, i) => (
                     <div key={i} className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold" style={{ background: "rgba(255,255,255,0.12)" }}>
                       {i + 1}
                     </div>
