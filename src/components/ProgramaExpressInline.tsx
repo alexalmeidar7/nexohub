@@ -338,26 +338,51 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
   const updateNoticia = (bi: number, ni: number, field: keyof NewsItem, value: any) => {
     if (editingId) markEdited(`noticia-${bi}-${ni}-${field}`);
     setBlocos(prev => {
+      const noticiaAnterior = prev[bi]?.noticias[ni];
       const updated = prev.map((b, i) => i === bi ? { ...b, noticias: b.noticias.map((n, j) => j === ni ? { ...n, [field]: value } : n) } : b);
-      // Sync escaladaList when escalada checkbox is toggled
+
+      if (!noticiaAnterior) return updated;
+
+      // Sync escaladaList when escalada is toggled or when title/image changes on escalada items
       if (field === "escalada") {
-        const noticia = prev[bi]?.noticias[ni];
-        if (noticia) {
-          if (value && noticia.titulo) {
-            setEscaladaList(prevList => {
-              if (prevList.some(e => e.titulo === noticia.titulo)) return prevList;
-              return [...prevList, { titulo: noticia.titulo, imagemUrl: noticia.imagemUrl || "" }];
-            });
-          } else if (!value && noticia.titulo) {
-            setEscaladaList(prevList => prevList.filter(e => e.titulo !== noticia.titulo));
-          }
+        if (value && noticiaAnterior.titulo) {
+          setEscaladaList(prevList => {
+            if (prevList.some(e => e.titulo === noticiaAnterior.titulo)) return prevList;
+            return [...prevList, { titulo: noticiaAnterior.titulo, imagemUrl: noticiaAnterior.imagemUrl || "" }];
+          });
+        } else if (!value && noticiaAnterior.titulo) {
+          setEscaladaList(prevList => prevList.filter(e => e.titulo !== noticiaAnterior.titulo));
         }
       }
+
+      if ((field === "titulo" || field === "imagemUrl") && noticiaAnterior.escalada) {
+        const novoTitulo = field === "titulo" ? String(value || "") : noticiaAnterior.titulo;
+        const novaImagem = field === "imagemUrl" ? String(value || "") : noticiaAnterior.imagemUrl;
+        setEscaladaList(prevList => {
+          const idx = prevList.findIndex(e => e.titulo === noticiaAnterior.titulo || e.titulo === novoTitulo);
+          if (!novoTitulo) {
+            return idx >= 0 ? prevList.filter((_, i) => i !== idx) : prevList;
+          }
+          if (idx >= 0) {
+            return prevList.map((e, i) => i === idx ? { ...e, titulo: novoTitulo, imagemUrl: novaImagem || "" } : e);
+          }
+          return [...prevList, { titulo: novoTitulo, imagemUrl: novaImagem || "" }];
+        });
+      }
+
       return updated;
     });
   };
   const addNoticia = (bi: number) => { setBlocos(prev => prev.map((b, i) => i === bi ? { ...b, noticias: [...b.noticias, { titulo: "", imagemUrl: "", escalada: false }] } : b)); };
-  const removeNoticia = (bi: number, ni: number) => { setBlocos(prev => prev.map((b, i) => i === bi ? { ...b, noticias: b.noticias.filter((_, j) => j !== ni) } : b)); };
+  const removeNoticia = (bi: number, ni: number) => {
+    setBlocos(prev => {
+      const alvo = prev[bi]?.noticias[ni];
+      if (alvo?.escalada && alvo.titulo) {
+        setEscaladaList(prevList => prevList.filter(e => e.titulo !== alvo.titulo));
+      }
+      return prev.map((b, i) => i === bi ? { ...b, noticias: b.noticias.filter((_, j) => j !== ni) } : b);
+    });
+  };
   const addBloco = () => { setBlocos(prev => [...prev, { noticias: [{ titulo: "", imagemUrl: "", escalada: false }] }]); };
   const removeBloco = (bi: number) => { setBlocos(prev => prev.filter((_, i) => i !== bi)); setCollapsedBlocos(prev => { const n = new Set(prev); n.delete(bi); return n; }); };
   const toggleCollapse = (bi: number) => { setCollapsedBlocos(prev => { const n = new Set(prev); if (n.has(bi)) n.delete(bi); else n.add(bi); return n; }); };
