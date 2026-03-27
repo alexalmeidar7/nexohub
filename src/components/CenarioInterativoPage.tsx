@@ -602,13 +602,16 @@ export default function CenarioInterativoPage() {
 
                     <div className="rounded-lg overflow-hidden border" style={{ borderColor: "color-mix(in srgb, var(--layout-border-color, #333) 20%, transparent)" }}>
                       <iframe
-                        title="Mapa de Trânsito"
-                        src={`https://www.google.com/maps?q=${encodeURIComponent(trafficMapCity)}&z=13&layer=traffic&output=embed`}
+                        title="Mapa de Trânsito - Waze"
+                        src={`https://embed.waze.com/iframe?zoom=13&lat=${weatherCoords?.lat ?? -16.68}&lon=${weatherCoords?.lon ?? -49.26}&pin=1`}
                         className="w-full h-[280px] border-0"
                         allowFullScreen
                         loading="lazy"
                         referrerPolicy="no-referrer-when-downgrade"
                       />
+                      <p className="text-[10px] text-center py-1" style={{ color: mutedText }}>
+                        Powered by Waze — trânsito em tempo real
+                      </p>
                     </div>
 
                     {config.traffic.points.length > 0 && (
