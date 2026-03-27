@@ -575,7 +575,7 @@ export default function CenarioInterativoPage() {
                         {config.weather.showSatellite && weatherCoords && (
                           <div className="rounded-lg overflow-hidden border" style={{ borderColor: "color-mix(in srgb, var(--layout-border-color, #333) 20%, transparent)" }}>
                             <iframe
-                              src={`https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=°C&metricWind=km/h&zoom=7&overlay=satellite&product=satellite&level=surface&lat=${weatherCoords.lat}&lon=${weatherCoords.lon}&detailLat=${weatherCoords.lat}&detailLon=${weatherCoords.lon}&marker=true&message=true`}
+                              src={`https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=°C&metricWind=km/h&zoom=7&overlay=satellite&product=satellite&level=surface&lat=${weatherCoords.lat}&lon=${weatherCoords.lon}&detailLat=${weatherCoords.lat}&detailLon=${weatherCoords.lon}&marker=true&message=true&autoPlay=true&border=full`}
                               width="100%"
                               height="220"
                               frameBorder="0"
@@ -711,7 +711,7 @@ export default function CenarioInterativoPage() {
                 {/* Satellite fullscreen behind sidebar */}
                 {activeTab === "weather" && weatherSubTab === "satellite" && config.weather.showSatellite && weatherCoords && (
                   <iframe
-                    src={`https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=°C&metricWind=km/h&zoom=8&overlay=satellite&product=satellite&level=surface&lat=${weatherCoords.lat}&lon=${weatherCoords.lon}&detailLat=${weatherCoords.lat}&detailLon=${weatherCoords.lon}&marker=true&message=true`}
+                    src={`https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=°C&metricWind=km/h&zoom=8&overlay=satellite&product=satellite&level=surface&lat=${weatherCoords.lat}&lon=${weatherCoords.lon}&detailLat=${weatherCoords.lat}&detailLon=${weatherCoords.lon}&marker=true&message=true&autoPlay=true&border=full`}
                     className="absolute inset-0 w-full h-full border-0"
                     title="Satélite preview"
                     style={{ zIndex: 0 }}
