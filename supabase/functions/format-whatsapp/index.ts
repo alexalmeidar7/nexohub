@@ -5,11 +5,40 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+async function shortenUrl(url: string): Promise<string> {
+  try {
+    const res = await fetch(`https://is.gd/create.php?format=simple&url=${encodeURIComponent(url)}`);
+    if (res.ok) {
+      const short = await res.text();
+      return short.trim();
+    }
+  } catch { /* fallback */ }
+  try {
+    const res = await fetch(`https://tinyurl.com/api-create.php?url=${encodeURIComponent(url)}`);
+    if (res.ok) {
+      const short = await res.text();
+      return short.trim();
+    }
+  } catch { /* fallback */ }
+  return url;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { conteudoTexto } = await req.json();
+    const body = await req.json();
+
+    // URL shortening mode
+    if (body.urls && Array.isArray(body.urls)) {
+      const shortened = await Promise.all(body.urls.map((u: string) => shortenUrl(u)));
+      return new Response(JSON.stringify({ shortened }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Original text formatting mode
+    const { conteudoTexto } = body;
     if (!conteudoTexto) {
       return new Response(JSON.stringify({ error: "Conteúdo é obrigatório" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
