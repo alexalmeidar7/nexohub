@@ -170,11 +170,11 @@ export default function CenarioInterativoPage() {
     (async () => {
       const { data } = await supabase
         .from("user_settings")
-        .select("cenario_config")
+        .select("cenario_config" as any)
         .eq("user_id", user.id)
         .maybeSingle();
-      if (data?.cenario_config && typeof data.cenario_config === "object") {
-        setConfig(prev => ({ ...prev, ...(data.cenario_config as Partial<CenarioConfig>) }));
+      if ((data as any)?.cenario_config && typeof (data as any).cenario_config === "object") {
+        setConfig(prev => ({ ...prev, ...((data as any).cenario_config as Partial<CenarioConfig>) }));
       }
       setLoaded(true);
     })();
@@ -187,9 +187,10 @@ export default function CenarioInterativoPage() {
     if (saveTimeout.current) clearTimeout(saveTimeout.current);
     saveTimeout.current = setTimeout(async () => {
       setSaving(true);
+      const payload = { user_id: user.id, cenario_config: config } as any;
       const { error } = await supabase
         .from("user_settings")
-        .upsert({ user_id: user.id, cenario_config: config as unknown as Record<string, unknown> }, { onConflict: "user_id" });
+        .upsert(payload, { onConflict: "user_id" });
       if (error) {
         console.error("Erro ao salvar cenário:", error);
       }
