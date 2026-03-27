@@ -42,12 +42,13 @@ const VmixPage = lazy(() => import("./VmixPage"));
 const TeleprompterPage = lazy(() => import("./TeleprompterPage"));
 const CustomizableDashboard = lazy(() => import("./CustomizableDashboard"));
 const PropostasPage = lazy(() => import("./PropostasPage"));
+const CenarioInterativoPage = lazy(() => import("./CenarioInterativoPage"));
 const MessageNotification = lazy(() => import("./MessageNotification"));
 import DashboardSkeleton from "./skeletons/DashboardSkeleton";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import BotsStatusBox from "./BotsStatusBox";
 
-type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll" | "cortevideo" | "playerconfig" | "vmix" | "propostas" | "tp";
+type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll" | "cortevideo" | "playerconfig" | "vmix" | "propostas" | "tp" | "cenario";
 
 // Sidebar structured menu
 interface MenuItem {
@@ -88,6 +89,7 @@ const sidebarMenu: MenuItem[] = [
     icon: Monitor, label: "vmix", children: [
       { icon: Monitor, label: "vmix control", page: undefined as unknown as Page },
       { icon: Image, label: "logos", page: "logos" },
+      { icon: MonitorPlay, label: "cenário interativo", page: "cenario" },
     ]
   },
   {
@@ -132,6 +134,7 @@ const pageTitle: Record<Page, string> = {
   tp: "Ferramentas — TP",
   playerconfig: "Player — Configurações",
   vmix: "vMix — Controle de Transmissão",
+  cenario: "vMix — Cenário Interativo",
 };
 
 interface DashboardProps {
@@ -655,6 +658,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               {currentPage === "vmix" && <VmixPage />}
               {currentPage === "propostas" && <PropostasPage />}
               {currentPage === "tp" && <TeleprompterPage />}
+              {currentPage === "cenario" && <CenarioInterativoPage />}
             </Suspense>
           </div>
         </main>
