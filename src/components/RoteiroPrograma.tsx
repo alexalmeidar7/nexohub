@@ -102,8 +102,6 @@ export default function RoteiroPrograma() {
     }
   };
 
-  if (loading) return <ModulePageSkeleton />;
-
   const historicoSlot = useMemo(() => {
     if (historico.length === 0) return null;
     const r = historico[historicoIdx];
