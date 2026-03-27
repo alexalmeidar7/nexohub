@@ -21,54 +21,125 @@ serve(async (req) => {
   }
 
   try {
-    const symbols = STOCK_EXCHANGES.map(s => s.symbol).join(",");
-    const url = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(symbols)}&fields=regularMarketPrice,regularMarketChangePercent,shortName`;
-    
-    const res = await fetch(url, {
-      headers: { "User-Agent": "Mozilla/5.0" },
-    });
-
-    if (!res.ok) {
-      // Fallback: try v6
-      const url2 = `https://query2.finance.yahoo.com/v6/finance/quote?symbols=${encodeURIComponent(symbols)}`;
-      const res2 = await fetch(url2, { headers: { "User-Agent": "Mozilla/5.0" } });
-      if (!res2.ok) throw new Error("Yahoo Finance unavailable");
-      const data2 = await res2.json();
-      const results = data2?.quoteResponse?.result || [];
-      return buildResponse(results);
+    const stocks = await fetchFromYahoo();
+    if (stocks.length > 0) {
+      return jsonResponse({ stocks });
     }
 
-    const data = await res.json();
-    const results = data?.quoteResponse?.result || [];
-    return buildResponse(results);
+    // Fallback: try scraping from Google Finance
+    const fallbackStocks = await fetchFromGoogleFinance();
+    return jsonResponse({ stocks: fallbackStocks });
   } catch (error) {
     console.error("fetch-stocks error:", error);
-    return new Response(JSON.stringify({ stocks: [], error: String(error) }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
-    });
+    return jsonResponse({ stocks: [], error: String(error) });
   }
 });
 
-function buildResponse(results: any[]) {
-  const stocks = STOCK_EXCHANGES.map(exchange => {
-    const quote = results.find((r: any) => r.symbol === exchange.symbol);
-    if (!quote) return null;
+async function fetchFromYahoo(): Promise<any[]> {
+  const symbols = STOCK_EXCHANGES.map(s => s.symbol).join(",");
+  
+  // Try multiple Yahoo endpoints
+  const urls = [
+    `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(symbols)}`,
+    `https://query2.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(symbols)}`,
+  ];
 
-    const price = quote.regularMarketPrice || 0;
-    const pctChange = quote.regularMarketChangePercent || 0;
+  for (const url of urls) {
+    try {
+      const res = await fetch(url, {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          "Accept": "application/json",
+        },
+      });
+      
+      if (!res.ok) continue;
+      const text = await res.text();
+      if (text.includes("Too Many Requests") || text.includes("Edge:")) continue;
+      
+      const data = JSON.parse(text);
+      const results = data?.quoteResponse?.result || [];
+      if (results.length === 0) continue;
 
-    return {
-      symbol: exchange.symbol,
-      name: exchange.name,
-      flag: exchange.flag,
-      value: price.toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 2 }),
-      change: `${pctChange >= 0 ? "+" : ""}${pctChange.toFixed(2)}%`,
-      direction: pctChange > 0 ? "up" : pctChange < 0 ? "down" : "neutral",
-    };
-  }).filter(Boolean);
+      return STOCK_EXCHANGES.map(exchange => {
+        const quote = results.find((r: any) => r.symbol === exchange.symbol);
+        if (!quote) return null;
+        const price = quote.regularMarketPrice || 0;
+        const pctChange = quote.regularMarketChangePercent || 0;
+        return {
+          symbol: exchange.symbol,
+          name: exchange.name,
+          flag: exchange.flag,
+          value: formatNumber(price),
+          change: `${pctChange >= 0 ? "+" : ""}${pctChange.toFixed(2)}%`,
+          direction: pctChange > 0 ? "up" : pctChange < 0 ? "down" : "neutral",
+        };
+      }).filter(Boolean);
+    } catch {
+      continue;
+    }
+  }
+  return [];
+}
 
-  return new Response(JSON.stringify({ stocks }), {
+async function fetchFromGoogleFinance(): Promise<any[]> {
+  const googleSymbols: Record<string, { index: string; exchange: string }> = {
+    "^BVSP": { index: "IBOV", exchange: "INDEXBVL" },
+    "^GSPC": { index: ".INX", exchange: "INDEXSP" },
+    "^DJI": { index: ".DJI", exchange: "INDEXDJX" },
+    "^IXIC": { index: ".IXIC", exchange: "INDEXNASDAQ" },
+    "^FTSE": { index: "UKX", exchange: "INDEXFTSE" },
+    "^N225": { index: "NI225", exchange: "INDEXNIKKEI" },
+    "^GDAXI": { index: "DAX", exchange: "INDEXDB" },
+  };
+
+  const results: any[] = [];
+
+  for (const exchange of STOCK_EXCHANGES) {
+    const gf = googleSymbols[exchange.symbol];
+    if (!gf) continue;
+    
+    try {
+      const url = `https://www.google.com/finance/quote/${gf.index}:${gf.exchange}`;
+      const res = await fetch(url, {
+        headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" },
+      });
+      const html = await res.text();
+      
+      // Extract price from data-last-price attribute
+      const priceMatch = html.match(/data-last-price="([^"]+)"/);
+      const changeMatch = html.match(/data-pct-change="([^"]+)"/);
+      
+      if (priceMatch) {
+        const price = parseFloat(priceMatch[1]);
+        const pctChange = changeMatch ? parseFloat(changeMatch[1]) : 0;
+        
+        results.push({
+          symbol: exchange.symbol,
+          name: exchange.name,
+          flag: exchange.flag,
+          value: formatNumber(price),
+          change: `${pctChange >= 0 ? "+" : ""}${pctChange.toFixed(2)}%`,
+          direction: pctChange > 0 ? "up" : pctChange < 0 ? "down" : "neutral",
+        });
+      }
+    } catch {
+      continue;
+    }
+  }
+
+  return results;
+}
+
+function formatNumber(n: number): string {
+  if (n >= 1000) {
+    return n.toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+  }
+  return n.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function jsonResponse(data: any) {
+  return new Response(JSON.stringify(data), {
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 }
