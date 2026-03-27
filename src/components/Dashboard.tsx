@@ -521,10 +521,6 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   <TooltipTrigger asChild>
                     <button
                       onClick={() => {
-                        if (item.label === "vmix control") {
-                          window.open("/vmix-control", "_blank");
-                          return;
-                        }
                         if (item.children) {
                           setHoveredMenu(prev => prev === item.label ? null : item.label);
                         } else if (item.page) {
