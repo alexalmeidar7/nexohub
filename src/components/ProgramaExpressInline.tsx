@@ -508,8 +508,8 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
               </select>
             </div>
             <div>
-              <label className="text-[11px] font-semibold mb-1.5 block" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Programa</label>
-              <select value={programaId} onChange={e => setProgramaId(e.target.value)} className="w-full px-3 py-2.5 rounded-xl text-xs outline-none transition-all" style={inputStyle}>
+              <label className="text-[11px] font-semibold mb-1.5 flex items-center gap-1" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Programa {editedFields.has("programa") && <EditedCheck />}</label>
+              <select value={programaId} onChange={e => { setProgramaId(e.target.value); if (editingId) markEdited("programa"); }} className="w-full px-3 py-2.5 rounded-xl text-xs outline-none transition-all" style={inputStyle}>
                 <option value="">Selecione</option>
                 {filteredProgramas.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
               </select>
