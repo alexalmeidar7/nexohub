@@ -1052,14 +1052,24 @@ export default function CenarioInterativoPage() {
                               <div className="text-sm font-bold" style={{ color: "#c8e600" }}>moedas</div>
                             </div>
                             {/* Glassmorphism card */}
-                            <div className="flex-1 rounded-xl p-3 space-y-2" style={{ background: "rgba(255,255,255,0.12)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.15)" }}>
+                            <div className="flex-1 rounded-xl p-3 space-y-2 overflow-auto" style={{ background: "rgba(255,255,255,0.12)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.15)" }}>
                               <div className="text-[10px] font-bold opacity-70 mb-1">cotações moedas</div>
-                              {config.currency.currencies.map(c => {
+                              {currencyLoading && !liveCurrencies.length ? (
+                                <div className="flex items-center gap-2 text-[9px] opacity-60"><Loader2 size={12} className="animate-spin" /> Carregando...</div>
+                              ) : config.currency.currencies.map(c => {
                                 const opt = CURRENCY_OPTIONS.find(o => o.value === c);
+                                const live = liveCurrencies.find(l => l.code === c);
                                 return (
                                   <div key={c} className="flex items-center justify-between text-[9px] rounded-lg px-2 py-1.5" style={{ background: "rgba(255,255,255,0.08)" }}>
                                     <span className="font-bold">{opt?.label?.split("(")[0]?.trim() || c}</span>
-                                    <span className="opacity-50">---</span>
+                                    {live ? (
+                                      <div className="flex items-center gap-1.5">
+                                        <span className="font-bold">{live.value}</span>
+                                        <span style={{ color: live.direction === "up" ? "#4ade80" : live.direction === "down" ? "#f87171" : "#999" }}>{live.change}</span>
+                                      </div>
+                                    ) : (
+                                      <span className="opacity-50">---</span>
+                                    )}
                                   </div>
                                 );
                               })}
