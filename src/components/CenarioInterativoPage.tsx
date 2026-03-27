@@ -278,6 +278,8 @@ export default function CenarioInterativoPage() {
   const [trafficCoords, setTrafficCoords] = useState<{ lat: number; lon: number } | null>(null);
   const [liveCurrencies, setLiveCurrencies] = useState<LiveCurrency[]>([]);
   const [currencyLoading, setCurrencyLoading] = useState(false);
+  const [liveStocks, setLiveStocks] = useState<LiveStock[]>([]);
+  const [stocksLoading, setStocksLoading] = useState(false);
 
   /* ─── Clock tick ─── */
   useEffect(() => {
@@ -296,9 +298,24 @@ export default function CenarioInterativoPage() {
       setCurrencyLoading(false);
     };
     load();
-    const interval = setInterval(load, 60000); // refresh every 60s
+    const interval = setInterval(load, 60000);
     return () => { cancelled = true; clearInterval(interval); };
   }, [config.currency.enabled, config.currency.currencies.join(",")]);
+
+  /* ─── Fetch live stocks ─── */
+  useEffect(() => {
+    if (!config.currency.enabled) return;
+    let cancelled = false;
+    const load = async () => {
+      setStocksLoading(true);
+      const data = await fetchLiveStocks();
+      if (!cancelled) setLiveStocks(data);
+      setStocksLoading(false);
+    };
+    load();
+    const interval = setInterval(load, 120000); // refresh every 2min
+    return () => { cancelled = true; clearInterval(interval); };
+  }, [config.currency.enabled]);
 
   /* ─── Fetch current program + sponsor logos ─── */
   useEffect(() => {
