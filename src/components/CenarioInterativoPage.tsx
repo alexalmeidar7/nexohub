@@ -271,7 +271,7 @@ export default function CenarioInterativoPage() {
     updateTraffic({ city: trafficSearchCity.trim() });
   };
 
-  const trafficMapCity = config.traffic.city || "São Paulo";
+  const trafficMapCity = config.traffic.city || config.city || "São Paulo";
   const uid = user?.id;
 
   /* ─── styles ─── */
