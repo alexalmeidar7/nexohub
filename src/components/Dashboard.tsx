@@ -79,13 +79,17 @@ const sidebarMenu: MenuItem[] = [
     icon: ShoppingBag, label: "comercial", children: [
       { icon: MessageSquareQuote, label: "testemunhais", page: "testemunhais" },
       { icon: Tag, label: "promoções", page: "promocoes" },
-      { icon: Image, label: "logos", page: "logos" },
       { icon: Film, label: "pre roll", page: "preroll" },
       { icon: ShoppingCart, label: "shopping", page: "shopping" },
       { icon: FileText, label: "propostas comerciais", page: "propostas" },
     ]
   },
-  { icon: Monitor, label: "vmix control", page: undefined as unknown as Page },
+  {
+    icon: Monitor, label: "vmix", children: [
+      { icon: Monitor, label: "vmix control", page: undefined as unknown as Page },
+      { icon: Image, label: "logos", page: "logos" },
+    ]
+  },
   {
     icon: Wrench, label: "ferramentas", children: [
       { icon: Tag, label: "tela promo", page: undefined as unknown as Page },
