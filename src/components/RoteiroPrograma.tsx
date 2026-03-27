@@ -934,19 +934,21 @@ ${perguntaActions}
                           const allLinks: string[] = [];
                           blocosList.forEach((b: any) => (b.noticias || []).forEach((n: any) => { if (n.link) allLinks.push(n.link); }));
 
-                          // Shorten links in parallel
-                          const shortenUrl = async (url: string): Promise<string> => {
-                            try {
-                              const res = await fetch(`https://is.gd/create.php?format=simple&url=${encodeURIComponent(url)}`);
-                              if (res.ok) { const short = await res.text(); return short.trim(); }
-                            } catch { /* fallback */ }
-                            return url;
-                          };
-
-                          toast.info("Encurtando links...");
-                          const shortened = await Promise.all(allLinks.map(shortenUrl));
+                          // Shorten links via edge function (avoids CORS)
                           const linkMap = new Map<string, string>();
-                          allLinks.forEach((url, i) => linkMap.set(url, shortened[i]));
+                          if (allLinks.length > 0) {
+                            toast.info("Encurtando links...");
+                            try {
+                              const { data: shortData } = await supabase.functions.invoke("format-whatsapp", {
+                                body: { urls: allLinks },
+                              });
+                              if (shortData?.shortened) {
+                                allLinks.forEach((url, i) => linkMap.set(url, shortData.shortened[i]));
+                              }
+                            } catch {
+                              allLinks.forEach(url => linkMap.set(url, url));
+                            }
+                          }
 
                           let msg = `*${r.programa_nome || "Programa"}*\n`;
                           msg += `📅 ${dataStr}${horarioInicio ? ` às ${horarioInicio}` : ""}\n\n`;
