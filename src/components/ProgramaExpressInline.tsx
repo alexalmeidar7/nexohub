@@ -98,7 +98,7 @@ function EditedCheck() {
   return <CheckCircle2 size={11} className="shrink-0" style={{ color: "#22c55e" }} />;
 }
 
-export default function ProgramaExpressInline({ programas, estudios, onFinish, editData }: Props) {
+export default function ProgramaExpressInline({ programas, estudios, onFinish, editData, afterHeader }: Props) {
   const { user } = useAuth();
   const [estudio, setEstudio] = useState("");
   const [programaId, setProgramaId] = useState("");
