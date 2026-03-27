@@ -681,16 +681,9 @@ export default function CenarioInterativoPage() {
                           <Input placeholder="Ex: São Paulo" value={config.weather.city} onChange={e => updateWeather({ city: e.target.value })} className="text-sm" style={{ color: textColor, background: "var(--layout-page-bg, #ffffff)" }} />
                         </div>
                         {config.weather.showSatellite && weatherCoords && (
-                          <div className="rounded-lg overflow-hidden border" style={{ borderColor: "color-mix(in srgb, var(--layout-border-color, #333) 20%, transparent)" }}>
-                            <iframe
-                              src={`https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=°C&metricWind=km/h&zoom=7&overlay=satellite&product=satellite&level=surface&lat=${weatherCoords.lat}&lon=${weatherCoords.lon}&detailLat=${weatherCoords.lat}&detailLon=${weatherCoords.lon}&marker=true&message=true&autoPlay=true&border=full`}
-                              width="100%"
-                              height="220"
-                              frameBorder="0"
-                              className="w-full"
-                              title="Imagem de satélite em tempo real"
-                              allow="fullscreen"
-                            />
+                          <div className="rounded-lg p-3 text-xs text-center" style={{ background: subTabBg, color: mutedText }}>
+                            <Satellite size={16} className="mx-auto mb-1 opacity-60" />
+                            O mapa de satélite é exibido no Preview ao lado →
                           </div>
                         )}
                         {config.weather.showSatellite && !weatherCoords && (
