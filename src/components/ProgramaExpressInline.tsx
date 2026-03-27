@@ -46,6 +46,7 @@ interface Props {
   estudios: string[];
   onFinish: () => void;
   editData?: ExpressEditData | null;
+  afterHeader?: React.ReactNode;
 }
 
 /* Inline participant row with editable cargo */
@@ -97,7 +98,7 @@ function EditedCheck() {
   return <CheckCircle2 size={11} className="shrink-0" style={{ color: "#22c55e" }} />;
 }
 
-export default function ProgramaExpressInline({ programas, estudios, onFinish, editData }: Props) {
+export default function ProgramaExpressInline({ programas, estudios, onFinish, editData, afterHeader }: Props) {
   const { user } = useAuth();
   const [estudio, setEstudio] = useState("");
   const [programaId, setProgramaId] = useState("");
@@ -492,6 +493,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
         </button>
       </div>
 
+      {afterHeader}
       <div className="p-6 space-y-5">
         {/* Paste Script */}
         {showPastePopup && (
