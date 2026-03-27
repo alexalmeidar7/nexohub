@@ -808,14 +808,61 @@ export default function CenarioInterativoPage() {
                 </div>
                 {config.currency.enabled && (
                   <div className="space-y-3">
-                    <p className="text-xs" style={{ color: mutedText }}>Selecione as moedas para exibir:</p>
-                    {CURRENCY_OPTIONS.map(opt => (
-                      <label key={opt.value} className="flex items-center gap-3 rounded-lg px-3 py-2 cursor-pointer text-sm hover:bg-black/5 transition-colors" style={{ background: config.currency.currencies.includes(opt.value) ? "color-mix(in srgb, var(--layout-header-bg, #0d0446) 10%, transparent)" : "transparent" }}>
-                        <input type="checkbox" checked={config.currency.currencies.includes(opt.value)} onChange={() => toggleCurrency(opt.value)} className="accent-[var(--layout-header-bg)]" />
-                        <DollarSign size={14} style={{ color: mutedText }} />
-                        {opt.label}
-                      </label>
-                    ))}
+                    {/* Sub-tabs: Moedas / Bolsas */}
+                    <div className="flex gap-1 rounded-lg p-1" style={{ background: subTabBg }}>
+                      {([{ key: "moedas", label: "Moedas", icon: DollarSign }, { key: "bolsas", label: "Bolsas", icon: TrendingUp }] as const).map(t => (
+                        <button
+                          key={t.key}
+                          onClick={() => handleCurrencySubTabChange(t.key as "moedas" | "bolsas")}
+                          className="flex-1 flex items-center justify-center gap-1 rounded-md px-2 py-1.5 text-xs font-medium transition-all"
+                          style={{
+                            background: currencySubTab === t.key ? subTabActive : "transparent",
+                            color: currencySubTab === t.key ? "var(--layout-header-text, #fff)" : textColor,
+                          }}
+                        >
+                          <t.icon size={12} /> {t.label}
+                        </button>
+                      ))}
+                    </div>
+
+                    {currencySubTab === "moedas" && (
+                      <>
+                        <p className="text-xs" style={{ color: mutedText }}>Selecione as moedas para exibir:</p>
+                        {CURRENCY_OPTIONS.map(opt => (
+                          <label key={opt.value} className="flex items-center gap-3 rounded-lg px-3 py-2 cursor-pointer text-sm hover:bg-black/5 transition-colors" style={{ background: config.currency.currencies.includes(opt.value) ? "color-mix(in srgb, var(--layout-header-bg, #0d0446) 10%, transparent)" : "transparent" }}>
+                            <input type="checkbox" checked={config.currency.currencies.includes(opt.value)} onChange={() => toggleCurrency(opt.value)} className="accent-[var(--layout-header-bg)]" />
+                            <DollarSign size={14} style={{ color: mutedText }} />
+                            {opt.label}
+                          </label>
+                        ))}
+                      </>
+                    )}
+
+                    {currencySubTab === "bolsas" && (
+                      <div className="space-y-2">
+                        <p className="text-xs" style={{ color: mutedText }}>Principais bolsas de valores em tempo real:</p>
+                        {stocksLoading && !liveStocks.length ? (
+                          <div className="flex items-center gap-2 text-xs" style={{ color: mutedText }}><Loader2 size={14} className="animate-spin" /> Carregando bolsas...</div>
+                        ) : liveStocks.length > 0 ? (
+                          liveStocks.map(s => (
+                            <div key={s.symbol} className="flex items-center justify-between rounded-lg px-3 py-2 text-sm" style={{ background: subTabBg }}>
+                              <span className="flex items-center gap-2 font-medium">
+                                <span>{s.flag}</span> {s.name}
+                              </span>
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-bold">{s.value}</span>
+                                <span className="font-semibold text-xs" style={{ color: s.direction === "up" ? "#22c55e" : s.direction === "down" ? "#ef4444" : mutedText }}>{s.change}</span>
+                                {s.direction === "up" && <TrendingUp size={14} style={{ color: "#22c55e" }} />}
+                                {s.direction === "down" && <TrendingDown size={14} style={{ color: "#ef4444" }} />}
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <p className="text-xs opacity-60">Dados indisponíveis no momento</p>
+                        )}
+                      </div>
+                    )}
+
                     <BgImageUpload value={config.currency.bgImage} onChange={v => updateCurrency({ bgImage: v })} mutedText={mutedText} userId={uid} category="currency" />
                   </div>
                 )}
