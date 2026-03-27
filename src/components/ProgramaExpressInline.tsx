@@ -46,6 +46,7 @@ interface Props {
   estudios: string[];
   onFinish: () => void;
   editData?: ExpressEditData | null;
+  afterHeader?: React.ReactNode;
 }
 
 /* Inline participant row with editable cargo */
