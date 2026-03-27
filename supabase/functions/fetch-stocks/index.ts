@@ -6,7 +6,7 @@ const corsHeaders = {
 };
 
 const STOCK_EXCHANGES = [
-  { symbol: "^BVSP", name: "Ibovespa", flag: "🇧🇷", gfIndex: "IBOV", gfExchange: "INDEXBVL" },
+  { symbol: "^BVSP", name: "Ibovespa", flag: "🇧🇷", gfIndex: ".BVSP", gfExchange: "INDEXBVL" },
   { symbol: "^GSPC", name: "S&P 500", flag: "🇺🇸", gfIndex: ".INX", gfExchange: "INDEXSP" },
   { symbol: "^DJI", name: "Dow Jones", flag: "🇺🇸", gfIndex: ".DJI", gfExchange: "INDEXDJX" },
   { symbol: "^IXIC", name: "Nasdaq", flag: "🇺🇸", gfIndex: ".IXIC", gfExchange: "INDEXNASDAQ" },
@@ -42,25 +42,31 @@ async function fetchAllFromGoogle(): Promise<any[]> {
       });
       const html = await res.text();
 
-      // Try data-last-price first
+      // Extract price from data-last-price or page title
       let price = 0;
       const priceAttr = html.match(/data-last-price="([^"]+)"/);
       if (priceAttr) {
         price = parseFloat(priceAttr[1]);
       } else {
-        // Fallback: extract from YMlKec class (main price display)
-        const ymlMatch = html.match(/class="[^"]*YMlKec[^"]*"[^>]*>([^<]+)</);
-        if (ymlMatch) {
-          price = parseFloat(ymlMatch[1].replace(/,/g, ""));
+        // Fallback: extract from page title "Index Name 123,456.78 ..."
+        const titleMatch = html.match(/<title>[^<]*?([\d,]+\.\d{2})/);
+        if (titleMatch) {
+          price = parseFloat(titleMatch[1].replace(/,/g, ""));
         }
       }
 
-      // Extract percentage change from text like ">-1.79%<" or ">+0.52%<"
+      // Extract first percentage change
       let pctChange = 0;
-      const pctMatches = html.match(/>([-+]?\d+\.\d+%)</g);
+      // Look for the change near the price section - pattern like "(−1.82%)" or "(+0.52%)"
+      const pctMatches = html.match(/\(([-−+]?\d+\.\d+%)\)/g);
       if (pctMatches && pctMatches.length > 0) {
-        const first = pctMatches[0].replace(">", "").replace("%", "");
-        pctChange = parseFloat(first);
+        const raw = pctMatches[0].replace(/[()%]/g, "").replace("−", "-");
+        pctChange = parseFloat(raw);
+      } else {
+        const simplePct = html.match(/>([-+]?\d+\.\d+%)</);
+        if (simplePct) {
+          pctChange = parseFloat(simplePct[1].replace("%", ""));
+        }
       }
 
       if (price === 0) return null;
