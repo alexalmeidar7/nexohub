@@ -1031,7 +1031,7 @@ export default function CenarioInterativoPage() {
                               <div className="text-base font-bold tracking-wide" style={{ color: "#e1f532" }}>moedas</div>
                             </div>
                             <div className="flex-1 p-3 space-y-2 overflow-auto">
-                              <div className="text-[11px] font-bold uppercase tracking-wide mb-1" style={{ color: "rgba(255,255,255,0.9)" }}>cotações em tempo real</div>
+                              
                               {currencyLoading && !liveCurrencies.length ? (
                                 <div className="flex items-center gap-2 text-[10px] opacity-80"><Loader2 size={12} className="animate-spin" /> Carregando...</div>
                               ) : config.currency.currencies.map(c => {
