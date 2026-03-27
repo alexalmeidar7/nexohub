@@ -421,7 +421,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
       await supabase.storage.from("empresa-assets").upload(filePath, blob, { upsert: true, contentType: "application/xml" });
       const { data: urlData } = supabase.storage.from("empresa-assets").getPublicUrl(filePath);
       const xmlUrl = urlData.publicUrl;
-      const blocosJson = JSON.stringify({ blocos, participantes });
+      const blocosJson = JSON.stringify({ blocos, participantes, escaladaList });
 
       if (editingId) {
         const { error } = await supabase.from("roteiros").update({ programa_nome: programaNome, estudio, titulo: `PROGRAMA EXPRESS — ${programaNome}`, subtitulo: `express_xml::${xmlUrl}`, conteudo_html: html, participantes: blocosJson }).eq("id", editingId);
