@@ -271,7 +271,26 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
   };
 
   const updateNoticia = (bi: number, ni: number, field: keyof NewsItem, value: any) => {
-    setBlocos(prev => prev.map((b, i) => i === bi ? { ...b, noticias: b.noticias.map((n, j) => j === ni ? { ...n, [field]: value } : n) } : b));
+    setBlocos(prev => {
+      const updated = prev.map((b, i) => i === bi ? { ...b, noticias: b.noticias.map((n, j) => j === ni ? { ...n, [field]: value } : n) } : b);
+      // Sync escaladaList when escalada checkbox is toggled
+      if (field === "escalada") {
+        const noticia = prev[bi]?.noticias[ni];
+        if (noticia) {
+          if (value && noticia.titulo) {
+            // Add to escalada list if not already there
+            setEscaladaList(prevList => {
+              if (prevList.includes(noticia.titulo)) return prevList;
+              return [...prevList, noticia.titulo];
+            });
+          } else if (!value && noticia.titulo) {
+            // Remove from escalada list
+            setEscaladaList(prevList => prevList.filter(t => t !== noticia.titulo));
+          }
+        }
+      }
+      return updated;
+    });
   };
   const addNoticia = (bi: number) => { setBlocos(prev => prev.map((b, i) => i === bi ? { ...b, noticias: [...b.noticias, { titulo: "", imagemUrl: "", escalada: false }] } : b)); };
   const removeNoticia = (bi: number, ni: number) => { setBlocos(prev => prev.map((b, i) => i === bi ? { ...b, noticias: b.noticias.filter((_, j) => j !== ni) } : b)); };
