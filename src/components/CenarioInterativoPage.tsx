@@ -1,11 +1,12 @@
-import { useState } from "react";
-import { MonitorPlay, CloudSun, Car, DollarSign, MessageCircle, Plus, Trash2, Eye, Settings, Home, MapPin, Satellite, Sun, CalendarDays, Search } from "lucide-react";
+import { useState, useRef } from "react";
+import { MonitorPlay, CloudSun, Car, DollarSign, MessageCircle, Trash2, Eye, Settings, Home, MapPin, Satellite, Sun, CalendarDays, Search, Upload, Image } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 
 /* ─── types ─── */
 interface WeatherConfig {
@@ -14,6 +15,7 @@ interface WeatherConfig {
   showForecast3Days: boolean;
   showSatellite: boolean;
   city: string;
+  bgImage: string;
 }
 
 interface TrafficPoint {
@@ -27,19 +29,27 @@ interface TrafficConfig {
   enabled: boolean;
   city: string;
   points: TrafficPoint[];
+  bgImage: string;
 }
 
 interface CurrencyConfig {
   enabled: boolean;
   currencies: string[];
+  bgImage: string;
 }
 
 interface ChatConfig {
   enabled: boolean;
   youtubeVideoUrl: string;
+  bgImage: string;
+}
+
+interface HomeConfig {
+  bgImage: string;
 }
 
 interface CenarioConfig {
+  home: HomeConfig;
   weather: WeatherConfig;
   traffic: TrafficConfig;
   currency: CurrencyConfig;
@@ -47,10 +57,11 @@ interface CenarioConfig {
 }
 
 const defaultConfig: CenarioConfig = {
-  weather: { enabled: true, showCurrent: true, showForecast3Days: true, showSatellite: false, city: "" },
-  traffic: { enabled: false, city: "", points: [] },
-  currency: { enabled: true, currencies: ["USD", "EUR"] },
-  chat: { enabled: false, youtubeVideoUrl: "" },
+  home: { bgImage: "" },
+  weather: { enabled: true, showCurrent: true, showForecast3Days: true, showSatellite: false, city: "", bgImage: "" },
+  traffic: { enabled: false, city: "", points: [], bgImage: "" },
+  currency: { enabled: true, currencies: ["USD", "EUR"], bgImage: "" },
+  chat: { enabled: false, youtubeVideoUrl: "", bgImage: "" },
 };
 
 const CURRENCY_OPTIONS = [
@@ -63,7 +74,6 @@ const CURRENCY_OPTIONS = [
   { value: "ETH", label: "Ethereum (ETH)" },
 ];
 
-/* ─── preview mock data ─── */
 const mockWeather = { temp: 28, city: "São Paulo", icon: "☀️", forecast: [
   { day: "Seg", min: 19, max: 30, icon: "⛅" },
   { day: "Ter", min: 20, max: 31, icon: "🌧️" },
@@ -81,14 +91,59 @@ const mockMessages = [
   { user: "Carlos", text: "Manda salve pra galera!" },
 ];
 
+/* ─── BG Upload helper ─── */
+function BgImageUpload({ value, onChange, mutedText }: { value: string; onChange: (v: string) => void; mutedText: string }) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { toast.error("Imagem deve ter no máximo 5MB"); return; }
+    const reader = new FileReader();
+    reader.onload = () => onChange(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+  return (
+    <div className="space-y-2">
+      <Label className="text-xs flex items-center gap-1" style={{ color: mutedText }}>
+        <Image size={12} /> Imagem de fundo
+      </Label>
+      {value ? (
+        <div className="relative rounded-lg overflow-hidden border" style={{ borderColor: "color-mix(in srgb, var(--layout-border-color, #333) 20%, transparent)" }}>
+          <img src={value} alt="Fundo" className="w-full h-24 object-cover" />
+          <button
+            onClick={() => onChange("")}
+            className="absolute top-1 right-1 rounded-full p-1"
+            style={{ background: "rgba(0,0,0,0.6)" }}
+          >
+            <Trash2 size={12} className="text-white" />
+          </button>
+        </div>
+      ) : (
+        <button
+          onClick={() => inputRef.current?.click()}
+          className="w-full rounded-lg border-2 border-dashed flex flex-col items-center justify-center gap-1 py-4 text-xs transition-colors hover:opacity-80"
+          style={{ borderColor: "color-mix(in srgb, var(--layout-border-color, #333) 30%, transparent)", color: mutedText }}
+        >
+          <Upload size={16} />
+          <span>Clique para enviar imagem</span>
+          <span className="text-[10px]">PNG, JPG (máx. 5MB)</span>
+        </button>
+      )}
+      <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
+    </div>
+  );
+}
+
 /* ─── COMPONENT ─── */
 export default function CenarioInterativoPage() {
   const { user } = useAuth();
   const [config, setConfig] = useState<CenarioConfig>(defaultConfig);
-  const [activeTab, setActiveTab] = useState("weather");
+  const [activeTab, setActiveTab] = useState("home");
   const [weatherSubTab, setWeatherSubTab] = useState("today");
   const [trafficSearchCity, setTrafficSearchCity] = useState("");
 
+  const updateHome = (partial: Partial<HomeConfig>) =>
+    setConfig(c => ({ ...c, home: { ...c.home, ...partial } }));
   const updateWeather = (partial: Partial<WeatherConfig>) =>
     setConfig(c => ({ ...c, weather: { ...c.weather, ...partial } }));
   const updateTraffic = (partial: Partial<TrafficConfig>) =>
@@ -112,9 +167,8 @@ export default function CenarioInterativoPage() {
   };
 
   const trafficMapCity = config.traffic.city || "São Paulo";
-  const trafficMapUrl = `https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d50000!2d-46.6333!3d-23.5505!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1spt-BR!2sbr!4v1&q=${encodeURIComponent(trafficMapCity)}&layer=traffic`;
 
-  /* ─── header style ─── */
+  /* ─── styles ─── */
   const headerStyle = {
     background: "linear-gradient(135deg, var(--layout-header-bg, #0d0446), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))",
     color: "var(--layout-header-text, #ffffff)",
@@ -129,7 +183,6 @@ export default function CenarioInterativoPage() {
   const subTabBg = "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)";
   const subTabActive = "var(--layout-header-bg, #0d0446)";
 
-  /* ─── RENDER ─── */
   return (
     <div className="animate-fade-in space-y-5">
       <div className="rounded-2xl overflow-hidden" style={pageStyle}>
@@ -153,12 +206,21 @@ export default function CenarioInterativoPage() {
             </div>
 
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="w-full grid grid-cols-4 mb-4" style={{ background: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)" }}>
+              <TabsList className="w-full grid grid-cols-5 mb-4" style={{ background: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)" }}>
+                <TabsTrigger value="home" className="text-xs gap-1 data-[state=active]:shadow-sm"><Home size={14} /> Home</TabsTrigger>
                 <TabsTrigger value="weather" className="text-xs gap-1 data-[state=active]:shadow-sm"><CloudSun size={14} /> Tempo</TabsTrigger>
                 <TabsTrigger value="traffic" className="text-xs gap-1 data-[state=active]:shadow-sm"><Car size={14} /> Trânsito</TabsTrigger>
                 <TabsTrigger value="currency" className="text-xs gap-1 data-[state=active]:shadow-sm"><DollarSign size={14} /> Cotação</TabsTrigger>
                 <TabsTrigger value="chat" className="text-xs gap-1 data-[state=active]:shadow-sm"><MessageCircle size={14} /> Chat</TabsTrigger>
               </TabsList>
+
+              {/* ═══ Home ═══ */}
+              <TabsContent value="home" className="space-y-4">
+                <p className="text-xs" style={{ color: mutedText }}>
+                  Configure a tela inicial do cenário interativo. Esta é a tela padrão exibida quando nenhum módulo está ativo.
+                </p>
+                <BgImageUpload value={config.home.bgImage} onChange={v => updateHome({ bgImage: v })} mutedText={mutedText} />
+              </TabsContent>
 
               {/* ═══ Weather ═══ */}
               <TabsContent value="weather" className="space-y-4">
@@ -169,7 +231,6 @@ export default function CenarioInterativoPage() {
 
                 {config.weather.enabled && (
                   <>
-                    {/* Sub-tabs */}
                     <div className="flex gap-1 rounded-lg p-1" style={{ background: subTabBg }}>
                       {[
                         { key: "today", label: "Hoje", icon: <Sun size={13} /> },
@@ -190,7 +251,6 @@ export default function CenarioInterativoPage() {
                       ))}
                     </div>
 
-                    {/* Sub-tab: Hoje */}
                     {weatherSubTab === "today" && (
                       <div className="space-y-3">
                         <p className="text-xs" style={{ color: mutedText }}>
@@ -207,7 +267,6 @@ export default function CenarioInterativoPage() {
                       </div>
                     )}
 
-                    {/* Sub-tab: 3 Dias */}
                     {weatherSubTab === "forecast" && (
                       <div className="space-y-3">
                         <p className="text-xs" style={{ color: mutedText }}>
@@ -220,7 +279,6 @@ export default function CenarioInterativoPage() {
                       </div>
                     )}
 
-                    {/* Sub-tab: Satélite */}
                     {weatherSubTab === "satellite" && (
                       <div className="space-y-3">
                         <p className="text-xs" style={{ color: mutedText }}>
@@ -237,7 +295,7 @@ export default function CenarioInterativoPage() {
                         {config.weather.showSatellite && (
                           <div className="rounded-lg overflow-hidden border" style={{ borderColor: "color-mix(in srgb, var(--layout-border-color, #333) 20%, transparent)" }}>
                             <img
-                              src={`https://satellite.imdl.es/imagery/GOES16_ABI/BAND13/-23.55/-46.63/4/latest.jpg`}
+                              src="https://satellite.imdl.es/imagery/GOES16_ABI/BAND13/-23.55/-46.63/4/latest.jpg"
                               alt="Imagem de satélite"
                               className="w-full h-40 object-cover"
                               onError={e => { (e.target as HTMLImageElement).src = "https://placehold.co/400x200/1a1a2e/white?text=Satélite"; }}
@@ -246,6 +304,8 @@ export default function CenarioInterativoPage() {
                         )}
                       </div>
                     )}
+
+                    <BgImageUpload value={config.weather.bgImage} onChange={v => updateWeather({ bgImage: v })} mutedText={mutedText} />
                   </>
                 )}
               </TabsContent>
@@ -258,7 +318,6 @@ export default function CenarioInterativoPage() {
                 </div>
                 {config.traffic.enabled && (
                   <>
-                    {/* City search */}
                     <div className="flex gap-2">
                       <Input
                         placeholder="Nome da cidade..."
@@ -272,7 +331,6 @@ export default function CenarioInterativoPage() {
                       </Button>
                     </div>
 
-                    {/* Embedded map with traffic */}
                     <div className="rounded-lg overflow-hidden border" style={{ borderColor: "color-mix(in srgb, var(--layout-border-color, #333) 20%, transparent)" }}>
                       <iframe
                         title="Mapa de Trânsito"
@@ -287,7 +345,6 @@ export default function CenarioInterativoPage() {
                       </p>
                     </div>
 
-                    {/* Marked points */}
                     {config.traffic.points.length > 0 && (
                       <div className="space-y-2 mt-2">
                         <Label className="text-xs font-medium" style={{ color: mutedText }}>Pontos marcados</Label>
@@ -300,6 +357,8 @@ export default function CenarioInterativoPage() {
                         ))}
                       </div>
                     )}
+
+                    <BgImageUpload value={config.traffic.bgImage} onChange={v => updateTraffic({ bgImage: v })} mutedText={mutedText} />
                   </>
                 )}
               </TabsContent>
@@ -311,7 +370,7 @@ export default function CenarioInterativoPage() {
                   <Switch checked={config.currency.enabled} onCheckedChange={v => updateCurrency({ enabled: v })} />
                 </div>
                 {config.currency.enabled && (
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     <p className="text-xs" style={{ color: mutedText }}>Selecione as moedas para exibir:</p>
                     {CURRENCY_OPTIONS.map(opt => (
                       <label key={opt.value} className="flex items-center gap-3 rounded-lg px-3 py-2 cursor-pointer text-sm hover:bg-black/5 transition-colors" style={{ background: config.currency.currencies.includes(opt.value) ? "color-mix(in srgb, var(--layout-header-bg, #0d0446) 10%, transparent)" : "transparent" }}>
@@ -320,6 +379,7 @@ export default function CenarioInterativoPage() {
                         {opt.label}
                       </label>
                     ))}
+                    <BgImageUpload value={config.currency.bgImage} onChange={v => updateCurrency({ bgImage: v })} mutedText={mutedText} />
                   </div>
                 )}
               </TabsContent>
@@ -331,9 +391,10 @@ export default function CenarioInterativoPage() {
                   <Switch checked={config.chat.enabled} onCheckedChange={v => updateChat({ enabled: v })} />
                 </div>
                 {config.chat.enabled && (
-                  <div>
+                  <div className="space-y-3">
                     <Label className="text-xs mb-1 block" style={{ color: mutedText }}>URL do vídeo/live do YouTube</Label>
                     <Input placeholder="https://youtube.com/watch?v=..." value={config.chat.youtubeVideoUrl} onChange={e => updateChat({ youtubeVideoUrl: e.target.value })} className="text-sm" />
+                    <BgImageUpload value={config.chat.bgImage} onChange={v => updateChat({ bgImage: v })} mutedText={mutedText} />
                   </div>
                 )}
               </TabsContent>
@@ -387,11 +448,28 @@ export default function CenarioInterativoPage() {
                   </div>
                 </div>
 
-                {/* ── Light content area ── */}
-                <div className="flex-1" style={{ background: "#e8e8e8" }} />
+                {/* ── Content area with bg image ── */}
+                <div className="flex-1 relative" style={{ background: "#e8e8e8" }}>
+                  {/* Show bg image based on active tab */}
+                  {activeTab === "home" && config.home.bgImage && (
+                    <img src={config.home.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />
+                  )}
+                  {activeTab === "weather" && config.weather.bgImage && (
+                    <img src={config.weather.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />
+                  )}
+                  {activeTab === "traffic" && config.traffic.bgImage && (
+                    <img src={config.traffic.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />
+                  )}
+                  {activeTab === "currency" && config.currency.bgImage && (
+                    <img src={config.currency.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />
+                  )}
+                  {activeTab === "chat" && config.chat.bgImage && (
+                    <img src={config.chat.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />
+                  )}
+                </div>
               </div>
 
-              {!config.weather.enabled && !config.traffic.enabled && !config.currency.enabled && !config.chat.enabled && (
+              {!config.weather.enabled && !config.traffic.enabled && !config.currency.enabled && !config.chat.enabled && !config.home.bgImage && (
                 <div className="absolute inset-0 flex items-center justify-center text-center" style={{ background: "rgba(26,26,26,0.85)" }}>
                   <div className="text-white opacity-50">
                     <MonitorPlay size={28} className="mx-auto mb-2" />
