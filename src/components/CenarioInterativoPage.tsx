@@ -77,11 +77,27 @@ const CURRENCY_OPTIONS = [
   { value: "ETH", label: "Ethereum (ETH)" },
 ];
 
-const mockWeather = { temp: 28, city: "São Paulo", icon: "☀️", forecast: [
-  { day: "Seg", min: 19, max: 30, icon: "⛅" },
-  { day: "Ter", min: 20, max: 31, icon: "🌧️" },
-  { day: "Qua", min: 18, max: 27, icon: "⛅" },
-]};
+const weatherIcons: Record<number, string> = {
+  0: "☀️", 1: "🌤️", 2: "⛅", 3: "☁️", 45: "🌫️", 48: "🌫️",
+  51: "🌦️", 53: "🌦️", 55: "🌧️", 61: "🌧️", 63: "🌧️", 65: "🌧️",
+  71: "🌨️", 73: "🌨️", 75: "🌨️", 80: "🌧️", 81: "🌧️", 82: "🌧️",
+  95: "⛈️", 96: "⛈️", 99: "⛈️",
+};
+const weatherLabels: Record<number, string> = {
+  0: "Céu limpo", 1: "Parcialmente limpo", 2: "Parcialmente nublado", 3: "Nublado",
+  45: "Neblina", 48: "Neblina", 51: "Garoa leve", 53: "Garoa", 55: "Garoa forte",
+  61: "Chuva leve", 63: "Chuva moderada", 65: "Chuva forte",
+  71: "Neve leve", 73: "Neve", 75: "Neve forte",
+  80: "Pancadas leves", 81: "Pancadas", 82: "Pancadas fortes",
+  95: "Tempestade", 96: "Tempestade com granizo", 99: "Tempestade severa",
+};
+function getWIcon(code: number) { return weatherIcons[code] ?? weatherIcons[Object.keys(weatherIcons).map(Number).reduce((a, b) => Math.abs(b - code) < Math.abs(a - code) ? b : a)] ?? "🌡️"; }
+function getWLabel(code: number) { return weatherLabels[code] ?? weatherLabels[Object.keys(weatherLabels).map(Number).reduce((a, b) => Math.abs(b - code) < Math.abs(a - code) ? b : a)] ?? ""; }
+
+interface LiveWeather {
+  current: { temp: number; humidity: number; code: number };
+  daily: { date: string; min: number; max: number; code: number; humidity: number; precip: number }[];
+}
 
 const mockCurrencies = [
   { code: "USD", name: "Dólar", value: "5,42", change: "+0,12%" },
