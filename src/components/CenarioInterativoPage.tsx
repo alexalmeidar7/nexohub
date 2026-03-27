@@ -818,12 +818,14 @@ export default function CenarioInterativoPage() {
                 )}
                 {/* Traffic (Waze) fullscreen behind sidebar */}
                 {activeTab === "traffic" && config.traffic.enabled && trafficCoords && (
-                  <iframe
-                    src={`https://embed.waze.com/iframe?zoom=13&lat=${trafficCoords.lat}&lon=${trafficCoords.lon}&pin=1`}
-                    className="absolute inset-0 h-full border-0"
-                    style={{ left: 52, width: 'calc(100% - 52px)', zIndex: 5 }}
-                    title="Trânsito preview"
-                  />
+                  <div className="absolute inset-0 overflow-hidden" style={{ left: 52, width: 'calc(100% - 52px)', zIndex: 5 }}>
+                    <iframe
+                      src={`https://embed.waze.com/iframe?zoom=13&lat=${trafficCoords.lat}&lon=${trafficCoords.lon}&pin=1`}
+                      className="absolute border-0"
+                      style={{ top: 0, left: 0, width: '100%', height: 'calc(100% + 80px)' }}
+                      title="Trânsito preview"
+                    />
+                  </div>
                 )}
                 {/* ── Dark sidebar ── */}
                 <div className="w-[52px] flex-shrink-0 flex flex-col items-center py-4 gap-1 relative" style={{ background: (activeTab === "weather" && weatherSubTab === "satellite" && config.weather.showSatellite) || (activeTab === "traffic" && config.traffic.enabled) ? "rgba(26,26,26,0.7)" : "#1a1a1a", zIndex: 10, backdropFilter: (activeTab === "weather" && weatherSubTab === "satellite") || (activeTab === "traffic" && config.traffic.enabled) ? "blur(4px)" : "none" }}>
