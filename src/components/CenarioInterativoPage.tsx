@@ -782,6 +782,105 @@ export default function CenarioInterativoPage() {
                       )}
                     </div>
                   )}
+
+                  {/* Weather overlay */}
+                  {activeTab === "weather" && (
+                    <div className="absolute inset-0 flex flex-col p-3 overflow-hidden" style={{ color: config.weather.bgImage ? "#fff" : "#333" }}>
+                      {liveWeather ? (
+                        <>
+                          <div className="text-center mb-2">
+                            <span className="text-2xl">{getWIcon(liveWeather.current.code)}</span>
+                            <div className="text-2xl font-bold drop-shadow-md">{liveWeather.current.temp}°C</div>
+                            <div className="text-[9px] opacity-80 drop-shadow-sm">{getWLabel(liveWeather.current.code)}</div>
+                            <div className="text-[8px] opacity-60 mt-0.5">{weatherCity || config.city}</div>
+                          </div>
+                          <div className="flex items-center justify-center gap-3 text-[8px] opacity-70 mb-2">
+                            <span>💧 {liveWeather.current.humidity}%</span>
+                            {liveWeather.daily[0] && <span>↓{liveWeather.daily[0].min}° ↑{liveWeather.daily[0].max}°</span>}
+                          </div>
+                          {liveWeather.daily.slice(1, 4).length > 0 && (
+                            <div className="space-y-1 mt-auto">
+                              <div className="text-[8px] font-bold opacity-60 uppercase">Próximos dias</div>
+                              {liveWeather.daily.slice(1, 4).map((d, i) => (
+                                <div key={i} className="flex items-center justify-between text-[9px] rounded px-1.5 py-0.5" style={{ background: "rgba(0,0,0,0.15)" }}>
+                                  <span>{new Date(d.date + "T12:00").toLocaleDateString("pt-BR", { weekday: "short" })}</span>
+                                  <span>{getWIcon(d.code)}</span>
+                                  <span>{d.min}° / {d.max}°</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <div className="flex-1 flex items-center justify-center text-[10px] opacity-50">
+                          <CloudSun size={20} className="mr-1" /> {weatherCity ? "Carregando..." : "Configure uma cidade"}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Traffic overlay */}
+                  {activeTab === "traffic" && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center p-3" style={{ color: config.traffic.bgImage ? "#fff" : "#333" }}>
+                      {config.traffic.enabled ? (
+                        <>
+                          <Car size={24} className="mb-1 drop-shadow-md" />
+                          <div className="text-xs font-bold drop-shadow-md">Trânsito</div>
+                          <div className="text-[9px] opacity-70 mt-0.5">{config.traffic.city || config.city || "—"}</div>
+                          <div className="text-[8px] opacity-50 mt-1">Mapa Waze em tempo real</div>
+                        </>
+                      ) : (
+                        <div className="text-[10px] opacity-50">Trânsito desativado</div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Currency overlay */}
+                  {activeTab === "currency" && (
+                    <div className="absolute inset-0 flex flex-col p-3" style={{ color: config.currency.bgImage ? "#fff" : "#333" }}>
+                      {config.currency.enabled ? (
+                        <>
+                          <div className="text-[9px] font-bold uppercase opacity-60 mb-2">Cotações</div>
+                          <div className="space-y-1.5 flex-1">
+                            {config.currency.currencies.map(c => {
+                              const opt = CURRENCY_OPTIONS.find(o => o.value === c);
+                              return (
+                                <div key={c} className="flex items-center justify-between rounded px-2 py-1.5 text-[9px]" style={{ background: "rgba(0,0,0,0.15)" }}>
+                                  <span className="font-semibold">{opt?.label?.split("(")[0]?.trim() || c}</span>
+                                  <span className="opacity-60">---</span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                          <div className="text-[7px] opacity-40 text-center mt-1">Valores em tempo real</div>
+                        </>
+                      ) : (
+                        <div className="flex-1 flex items-center justify-center text-[10px] opacity-50">Cotação desativada</div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Chat overlay */}
+                  {activeTab === "chat" && (
+                    <div className="absolute inset-0 flex flex-col p-3" style={{ color: config.chat.bgImage ? "#fff" : "#333" }}>
+                      {config.chat.enabled ? (
+                        <>
+                          <div className="text-[9px] font-bold uppercase opacity-60 mb-2">Chat ao Vivo</div>
+                          <div className="space-y-1.5 flex-1">
+                            {mockMessages.map((m, i) => (
+                              <div key={i} className="rounded px-2 py-1 text-[8px]" style={{ background: "rgba(0,0,0,0.15)" }}>
+                                <span className="font-bold">{m.user}: </span>
+                                <span className="opacity-80">{m.text}</span>
+                              </div>
+                            ))}
+                          </div>
+                          <div className="text-[7px] opacity-40 text-center mt-1">YouTube Live Chat</div>
+                        </>
+                      ) : (
+                        <div className="flex-1 flex items-center justify-center text-[10px] opacity-50">Chat desativado</div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
 
