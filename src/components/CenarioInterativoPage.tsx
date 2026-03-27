@@ -522,7 +522,7 @@ export default function CenarioInterativoPage() {
       setSaving(false);
     }, 1500);
     return () => { if (saveTimeout.current) clearTimeout(saveTimeout.current); };
-  }, [config, user?.id, loaded]);
+  }, [config, user?.id, loaded, activeTab, weatherSubTab, currencySubTab]);
 
   const updateHome = (partial: Partial<HomeConfig>) =>
     setConfig(c => ({ ...c, home: { ...c.home, ...partial } }));

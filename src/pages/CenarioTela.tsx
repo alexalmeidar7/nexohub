@@ -167,8 +167,13 @@ export default function CenarioTela() {
     const load = async () => {
       const { data } = await supabase.from("user_settings").select("cenario_config" as any).eq("user_id", user.id).maybeSingle();
       if ((data as any)?.cenario_config && typeof (data as any).cenario_config === "object") {
-        const merged = { ...defaultConfig, ...((data as any).cenario_config as Partial<CenarioConfig>) };
+        const raw = (data as any).cenario_config as any;
+        const { _activeTab, _weatherSubTab, _currencySubTab, ...rest } = raw;
+        const merged = { ...defaultConfig, ...rest };
         setConfig(merged);
+        if (_activeTab) setActiveTab(_activeTab);
+        if (_weatherSubTab) setWeatherSubTab(_weatherSubTab);
+        if (_currencySubTab) setCurrencySubTab(_currencySubTab);
         try {
           localStorage.setItem("cenario_interativo_config_cache_v1", JSON.stringify(merged));
         } catch {
