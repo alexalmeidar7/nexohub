@@ -471,6 +471,7 @@ export default function CenarioInterativoPage() {
                         onChange={e => setTrafficSearchCity(e.target.value)}
                         onKeyDown={e => e.key === "Enter" && handleTrafficSearch()}
                         className="text-sm flex-1"
+                        style={{ color: textColor, background: "var(--layout-page-bg, #ffffff)" }}
                       />
                       <Button size="sm" onClick={handleTrafficSearch} className="gap-1 text-xs" style={{ background: "var(--layout-header-bg, #0d0446)", color: "var(--layout-header-text, #fff)" }}>
                         <Search size={14} /> Buscar
