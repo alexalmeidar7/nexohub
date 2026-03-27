@@ -281,43 +281,33 @@ export default function CenarioInterativoPage() {
                 <div className="w-[52px] flex-shrink-0 flex flex-col items-center py-4 gap-1" style={{ background: "#1a1a1a" }}>
                   {/* Home */}
                   <div className="w-9 h-9 rounded-full flex items-center justify-center mb-2" style={{ background: "rgba(255,255,255,0.12)" }}>
-                    <MonitorPlay size={16} className="text-white" />
+                    <Home size={16} className="text-white" />
                   </div>
 
                   {/* Weather icon */}
-                  {config.weather.enabled && (
-                    <>
-                      <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.12)" }}>
-                        <CloudSun size={16} className="text-white" />
-                      </div>
-                      {config.weather.showForecast3Days && mockWeather.forecast.map((_, i) => (
-                        <div key={i} className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold" style={{ background: "rgba(255,255,255,0.12)" }}>
-                          {i + 1}
-                        </div>
-                      ))}
-                    </>
-                  )}
+                  <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.12)", opacity: config.weather.enabled ? 1 : 0.35 }}>
+                    <CloudSun size={16} className="text-white" />
+                  </div>
+                  {config.weather.enabled && config.weather.showForecast3Days && mockWeather.forecast.map((_, i) => (
+                    <div key={i} className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold" style={{ background: "rgba(255,255,255,0.12)" }}>
+                      {i + 1}
+                    </div>
+                  ))}
 
                   {/* Traffic icon */}
-                  {config.traffic.enabled && config.traffic.points.length > 0 && (
-                    <div className="w-9 h-9 rounded-full flex items-center justify-center mt-2" style={{ background: "rgba(255,255,255,0.12)" }}>
-                      <Car size={16} className="text-white" />
-                    </div>
-                  )}
+                  <div className="w-9 h-9 rounded-full flex items-center justify-center mt-2" style={{ background: "rgba(255,255,255,0.12)", opacity: config.traffic.enabled ? 1 : 0.35 }}>
+                    <Car size={16} className="text-white" />
+                  </div>
 
                   {/* Currency icon */}
-                  {config.currency.enabled && config.currency.currencies.length > 0 && (
-                    <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.15)" }}>
-                      <DollarSign size={16} className="text-white" />
-                    </div>
-                  )}
+                  <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.15)", opacity: config.currency.enabled ? 1 : 0.35 }}>
+                    <DollarSign size={16} className="text-white" />
+                  </div>
 
                   {/* Chat icon */}
-                  {config.chat.enabled && (
-                    <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.15)" }}>
-                      <MessageCircle size={16} className="text-white" />
-                    </div>
-                  )}
+                  <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.15)", opacity: config.chat.enabled ? 1 : 0.35 }}>
+                    <MessageCircle size={16} className="text-white" />
+                  </div>
                 </div>
 
                 {/* ── Light content area ── */}
