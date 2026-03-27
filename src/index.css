@@ -611,3 +611,8 @@ table:not([data-no-row-hover]) tbody tr:hover {
 .cenario-anim-row-8 { animation: cenario-slide-up 0.45s ease-out 1.05s both; }
 .cenario-arrow-up { animation: cenario-neon-blink-up 1s ease-in-out infinite; color: #4ade80; }
 .cenario-arrow-down { animation: cenario-neon-blink-down 1s ease-in-out infinite; color: #f87171; }
+
+@keyframes cenario-page-enter {
+  0% { opacity: 0; transform: translateY(12px) scale(0.97); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
