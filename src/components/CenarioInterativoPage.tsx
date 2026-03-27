@@ -715,7 +715,7 @@ export default function CenarioInterativoPage() {
                     src={`https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=°C&metricWind=km/h&zoom=8&overlay=satellite&product=satellite&level=surface&lat=${weatherCoords.lat}&lon=${weatherCoords.lon}&detailLat=${weatherCoords.lat}&detailLon=${weatherCoords.lon}&marker=true&message=true&autoPlay=true&border=full`}
                     className="absolute inset-0 w-full h-full border-0"
                     title="Satélite preview"
-                    style={{ zIndex: 0 }}
+                    style={{ zIndex: 2 }}
                   />
                 )}
                 {/* Traffic (Waze) fullscreen behind sidebar */}
