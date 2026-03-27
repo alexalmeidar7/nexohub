@@ -493,6 +493,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
         </button>
       </div>
 
+      {afterHeader}
       <div className="p-6 space-y-5">
         {/* Paste Script */}
         {showPastePopup && (
