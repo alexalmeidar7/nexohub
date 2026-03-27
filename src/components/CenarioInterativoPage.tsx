@@ -50,6 +50,7 @@ interface HomeConfig {
 }
 
 interface CenarioConfig {
+  city: string;
   home: HomeConfig;
   weather: WeatherConfig;
   traffic: TrafficConfig;
@@ -58,6 +59,7 @@ interface CenarioConfig {
 }
 
 const defaultConfig: CenarioConfig = {
+  city: "",
   home: { bgImage: "" },
   weather: { enabled: true, showCurrent: true, showForecast3Days: true, showSatellite: false, city: "", bgImage: "" },
   traffic: { enabled: false, city: "", points: [], bgImage: "" },
@@ -269,7 +271,7 @@ export default function CenarioInterativoPage() {
     updateTraffic({ city: trafficSearchCity.trim() });
   };
 
-  const trafficMapCity = config.traffic.city || "São Paulo";
+  const trafficMapCity = config.traffic.city || config.city || "São Paulo";
   const uid = user?.id;
 
   /* ─── styles ─── */
@@ -304,11 +306,22 @@ export default function CenarioInterativoPage() {
 
           {/* ── LEFT: Configuration ── */}
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-4">
+            <div className="flex items-center gap-2 mb-4 flex-wrap">
               <Settings size={16} style={{ color: mutedText }} />
               <span className="text-sm font-semibold">Configuração</span>
-              {saving && <span className="text-[10px] ml-auto animate-pulse" style={{ color: mutedText }}>Salvando...</span>}
-              {!saving && loaded && <span className="text-[10px] ml-auto" style={{ color: mutedText }}>✓ Salvo</span>}
+              <div className="flex items-center gap-2 ml-auto">
+                <div className="flex items-center gap-1.5 rounded-lg px-2 py-1" style={{ background: subTabBg }}>
+                  <MapPin size={13} style={{ color: mutedText }} />
+                  <Input
+                    placeholder="Cidade principal..."
+                    value={config.city}
+                    onChange={e => setConfig(c => ({ ...c, city: e.target.value }))}
+                    className="text-xs h-7 w-36 border-0 bg-transparent p-0 focus-visible:ring-0"
+                  />
+                </div>
+                {saving && <span className="text-[10px] animate-pulse" style={{ color: mutedText }}>Salvando...</span>}
+                {!saving && loaded && <span className="text-[10px]" style={{ color: mutedText }}>✓ Salvo</span>}
+              </div>
             </div>
 
             <Tabs value={activeTab} onValueChange={setActiveTab}>
