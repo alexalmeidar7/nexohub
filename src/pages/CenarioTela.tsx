@@ -173,33 +173,33 @@ export default function CenarioTela() {
           )}
 
           {/* Sidebar */}
-          <div className="flex-shrink-0 flex flex-col items-center py-[3vh] gap-[0.8vh] relative" style={{ width: "9%", background: isMapTab ? "rgba(26,26,26,0.7)" : "#1a1a1a", zIndex: 3, backdropFilter: isMapTab ? "blur(4px)" : "none" }}>
-            <div className="rounded-full flex items-center justify-center" style={{ width: "5vh", height: "5vh", background: "rgba(255,255,255,0.12)", border: activeTab === "home" ? "2px solid #e1f532" : "2px solid transparent", animation: activeTab === "home" ? "cenario-active-blink 1.5s ease-in-out infinite" : "none" }}>
+          <div className="flex-shrink-0 flex flex-col items-center py-[3vh] px-[0.8vh] gap-[0.8vh] relative" style={{ width: "11%", background: isMapTab ? "rgba(26,26,26,0.7)" : "#1a1a1a", zIndex: 3, backdropFilter: isMapTab ? "blur(4px)" : "none" }}>
+            <button onClick={() => setActiveTab("home")} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: "5vh", height: "5vh", background: "rgba(255,255,255,0.12)", border: activeTab === "home" ? "2px solid #e1f532" : "2px solid transparent", animation: activeTab === "home" ? "cenario-active-blink 1.5s ease-in-out infinite" : "none" }}>
               <Home style={{ width: "2.2vh", height: "2.2vh" }} className="text-white" />
-            </div>
+            </button>
             <div className="rounded-2xl flex flex-col items-center gap-[0.5vh]" style={{ padding: "0.5vh", background: "rgba(255,255,255,0.08)", opacity: config.weather.enabled ? 1 : 0.35 }}>
-              <div className="rounded-full flex items-center justify-center" style={{ width: "5vh", height: "5vh", background: "rgba(255,255,255,0.12)", border: activeTab === "weather" ? "2px solid #e1f532" : "2px solid transparent", animation: activeTab === "weather" ? "cenario-active-blink 1.5s ease-in-out infinite" : "none" }}>
+              <button onClick={() => { setActiveTab("weather"); setWeatherSubTab("today"); }} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: "5vh", height: "5vh", background: "rgba(255,255,255,0.12)", border: activeTab === "weather" ? "2px solid #e1f532" : "2px solid transparent", animation: activeTab === "weather" ? "cenario-active-blink 1.5s ease-in-out infinite" : "none" }}>
                 <CloudSun style={{ width: "2.2vh", height: "2.2vh" }} className="text-white" />
-              </div>
+              </button>
               {config.weather.enabled && config.weather.showCurrent && (
-                <div className="rounded-full flex items-center justify-center text-white font-bold" style={{ width: "3.8vh", height: "3.8vh", fontSize: "1.5vh", background: weatherSubTab === "today" ? "rgba(225,245,50,0.25)" : "rgba(255,255,255,0.12)", border: weatherSubTab === "today" ? "1px solid rgba(225,245,50,0.5)" : "1px solid transparent" }}>1</div>
+                <button onClick={() => { setActiveTab("weather"); setWeatherSubTab("today"); }} className="rounded-full flex items-center justify-center text-white font-bold cursor-pointer" style={{ width: "3.8vh", height: "3.8vh", fontSize: "1.5vh", background: activeTab === "weather" && weatherSubTab === "today" ? "rgba(225,245,50,0.25)" : "rgba(255,255,255,0.12)", border: activeTab === "weather" && weatherSubTab === "today" ? "1px solid rgba(225,245,50,0.5)" : "1px solid transparent" }}>1</button>
               )}
               {config.weather.enabled && config.weather.showForecast3Days && (
-                <div className="rounded-full flex items-center justify-center text-white font-bold" style={{ width: "3.8vh", height: "3.8vh", fontSize: "1.5vh", background: weatherSubTab === "forecast" ? "rgba(225,245,50,0.25)" : "rgba(255,255,255,0.12)", border: weatherSubTab === "forecast" ? "1px solid rgba(225,245,50,0.5)" : "1px solid transparent" }}>2</div>
+                <button onClick={() => { setActiveTab("weather"); setWeatherSubTab("forecast"); }} className="rounded-full flex items-center justify-center text-white font-bold cursor-pointer" style={{ width: "3.8vh", height: "3.8vh", fontSize: "1.5vh", background: activeTab === "weather" && weatherSubTab === "forecast" ? "rgba(225,245,50,0.25)" : "rgba(255,255,255,0.12)", border: activeTab === "weather" && weatherSubTab === "forecast" ? "1px solid rgba(225,245,50,0.5)" : "1px solid transparent" }}>2</button>
               )}
               {config.weather.enabled && config.weather.showSatellite && (
-                <div className="rounded-full flex items-center justify-center text-white font-bold" style={{ width: "3.8vh", height: "3.8vh", fontSize: "1.5vh", background: weatherSubTab === "satellite" ? "rgba(225,245,50,0.25)" : "rgba(255,255,255,0.12)", border: weatherSubTab === "satellite" ? "1px solid rgba(225,245,50,0.5)" : "1px solid transparent" }}>3</div>
+                <button onClick={() => { setActiveTab("weather"); setWeatherSubTab("satellite"); }} className="rounded-full flex items-center justify-center text-white font-bold cursor-pointer" style={{ width: "3.8vh", height: "3.8vh", fontSize: "1.5vh", background: activeTab === "weather" && weatherSubTab === "satellite" ? "rgba(225,245,50,0.25)" : "rgba(255,255,255,0.12)", border: activeTab === "weather" && weatherSubTab === "satellite" ? "1px solid rgba(225,245,50,0.5)" : "1px solid transparent" }}>3</button>
               )}
             </div>
-            <div className="rounded-full flex items-center justify-center" style={{ width: "5vh", height: "5vh", marginTop: "1vh", background: "rgba(255,255,255,0.12)", opacity: config.traffic.enabled ? 1 : 0.35, border: activeTab === "traffic" ? "2px solid #e1f532" : "2px solid transparent", animation: activeTab === "traffic" ? "cenario-active-blink 1.5s ease-in-out infinite" : "none" }}>
+            <button onClick={() => setActiveTab("traffic")} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: "5vh", height: "5vh", marginTop: "1vh", background: "rgba(255,255,255,0.12)", opacity: config.traffic.enabled ? 1 : 0.35, border: activeTab === "traffic" ? "2px solid #e1f532" : "2px solid transparent", animation: activeTab === "traffic" ? "cenario-active-blink 1.5s ease-in-out infinite" : "none" }}>
               <Car style={{ width: "2.2vh", height: "2.2vh" }} className="text-white" />
-            </div>
-            <div className="rounded-full flex items-center justify-center" style={{ width: "5vh", height: "5vh", background: "rgba(255,255,255,0.15)", opacity: config.currency.enabled ? 1 : 0.35, border: activeTab === "currency" ? "2px solid #e1f532" : "2px solid transparent", animation: activeTab === "currency" ? "cenario-active-blink 1.5s ease-in-out infinite" : "none" }}>
+            </button>
+            <button onClick={() => setActiveTab("currency")} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: "5vh", height: "5vh", background: "rgba(255,255,255,0.15)", opacity: config.currency.enabled ? 1 : 0.35, border: activeTab === "currency" ? "2px solid #e1f532" : "2px solid transparent", animation: activeTab === "currency" ? "cenario-active-blink 1.5s ease-in-out infinite" : "none" }}>
               <DollarSign style={{ width: "2.2vh", height: "2.2vh" }} className="text-white" />
-            </div>
-            <div className="rounded-full flex items-center justify-center" style={{ width: "5vh", height: "5vh", background: "rgba(255,255,255,0.15)", opacity: config.chat.enabled ? 1 : 0.35, border: activeTab === "chat" ? "2px solid #e1f532" : "2px solid transparent", animation: activeTab === "chat" ? "cenario-active-blink 1.5s ease-in-out infinite" : "none" }}>
+            </button>
+            <button onClick={() => setActiveTab("chat")} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: "5vh", height: "5vh", background: "rgba(255,255,255,0.15)", opacity: config.chat.enabled ? 1 : 0.35, border: activeTab === "chat" ? "2px solid #e1f532" : "2px solid transparent", animation: activeTab === "chat" ? "cenario-active-blink 1.5s ease-in-out infinite" : "none" }}>
               <MessageCircle style={{ width: "2.2vh", height: "2.2vh" }} className="text-white" />
-            </div>
+            </button>
           </div>
 
           {/* Content */}
