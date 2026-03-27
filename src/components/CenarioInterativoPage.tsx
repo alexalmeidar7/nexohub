@@ -832,8 +832,8 @@ export default function CenarioInterativoPage() {
                                 {/* Glassmorphism card */}
                                 <div className="flex-1 rounded-xl p-3 flex flex-col items-start gap-2" style={{ background: "rgba(255,255,255,0.18)", backdropFilter: "blur(14px)", border: "1px solid rgba(255,255,255,0.25)" }}>
                                   {/* 1. Large animated icon */}
-                                  <div className="w-16 h-16 rounded-full bg-white/70 flex items-center justify-center drop-shadow-xl">
-                                    <WeatherIcon code={liveWeather.current.code} size={44} />
+                                  <div className="w-20 h-20 flex items-center justify-center drop-shadow-xl">
+                                    <WeatherIcon code={liveWeather.current.code} size={64} forceDay />
                                   </div>
                                   {/* 2. Min / Max */}
                                   <div className="flex items-center gap-1.5 text-white">
