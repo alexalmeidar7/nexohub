@@ -511,7 +511,8 @@ export default function CenarioInterativoPage() {
     if (saveTimeout.current) clearTimeout(saveTimeout.current);
     saveTimeout.current = setTimeout(async () => {
       setSaving(true);
-      const payload = { user_id: user.id, cenario_config: config } as any;
+      const configWithTabs = { ...config, _activeTab: activeTab, _weatherSubTab: weatherSubTab, _currencySubTab: currencySubTab };
+      const payload = { user_id: user.id, cenario_config: configWithTabs } as any;
       const { error } = await supabase
         .from("user_settings")
         .upsert(payload, { onConflict: "user_id" });
@@ -521,7 +522,7 @@ export default function CenarioInterativoPage() {
       setSaving(false);
     }, 1500);
     return () => { if (saveTimeout.current) clearTimeout(saveTimeout.current); };
-  }, [config, user?.id, loaded]);
+  }, [config, user?.id, loaded, activeTab, weatherSubTab, currencySubTab]);
 
   const updateHome = (partial: Partial<HomeConfig>) =>
     setConfig(c => ({ ...c, home: { ...c.home, ...partial } }));
