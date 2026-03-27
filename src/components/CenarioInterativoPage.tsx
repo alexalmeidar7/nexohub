@@ -775,10 +775,10 @@ export default function CenarioInterativoPage() {
                 {/* Satellite fullscreen behind sidebar */}
                 {activeTab === "weather" && weatherSubTab === "satellite" && config.weather.showSatellite && weatherCoords && (
                   <iframe
-                    src={`https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=°C&metricWind=km/h&zoom=8&overlay=satellite&product=satellite&level=surface&lat=${weatherCoords.lat}&lon=${weatherCoords.lon}&detailLat=${weatherCoords.lat}&detailLon=${weatherCoords.lon}&marker=true&message=true&autoPlay=true&border=full`}
+                    src={`https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=°C&metricWind=km/h&zoom=8&overlay=satellite&product=satellite&level=surface&lat=${weatherCoords.lat}&lon=${weatherCoords.lon}&detailLat=${weatherCoords.lat}&detailLon=${weatherCoords.lon}&marker=true&message=true&autoplay=true&border=full`}
                     className="absolute inset-0 w-full h-full border-0"
                     title="Satélite preview"
-                    style={{ zIndex: 2 }}
+                    style={{ zIndex: 1 }}
                   />
                 )}
                 {/* Traffic (Waze) fullscreen behind sidebar */}
@@ -787,11 +787,11 @@ export default function CenarioInterativoPage() {
                     src={`https://embed.waze.com/iframe?zoom=13&lat=${trafficCoords.lat}&lon=${trafficCoords.lon}&pin=1`}
                     className="absolute inset-0 w-full h-full border-0"
                     title="Trânsito preview"
-                    style={{ zIndex: 0 }}
+                    style={{ zIndex: 1 }}
                   />
                 )}
                 {/* ── Dark sidebar ── */}
-                <div className="w-[52px] flex-shrink-0 flex flex-col items-center py-4 gap-1 relative" style={{ background: (activeTab === "weather" && weatherSubTab === "satellite" && config.weather.showSatellite) || (activeTab === "traffic" && config.traffic.enabled) ? "rgba(26,26,26,0.7)" : "#1a1a1a", zIndex: 1, backdropFilter: (activeTab === "weather" && weatherSubTab === "satellite") || (activeTab === "traffic" && config.traffic.enabled) ? "blur(4px)" : "none" }}>
+                <div className="w-[52px] flex-shrink-0 flex flex-col items-center py-4 gap-1 relative" style={{ background: (activeTab === "weather" && weatherSubTab === "satellite" && config.weather.showSatellite) || (activeTab === "traffic" && config.traffic.enabled) ? "rgba(26,26,26,0.7)" : "#1a1a1a", zIndex: 10, backdropFilter: (activeTab === "weather" && weatherSubTab === "satellite") || (activeTab === "traffic" && config.traffic.enabled) ? "blur(4px)" : "none" }}>
                   <div className="w-9 h-9 rounded-full flex items-center justify-center mb-2" style={{ background: "rgba(255,255,255,0.12)", border: activeTab === "home" ? "2px solid #e1f532" : "2px solid transparent", animation: activeTab === "home" ? "cenario-active-blink 1.5s ease-in-out infinite" : "none" }}>
                     <Home size={16} className="text-white" />
                   </div>

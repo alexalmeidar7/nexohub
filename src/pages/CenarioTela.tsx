@@ -195,11 +195,11 @@ export default function CenarioTela() {
       <div className="relative h-full" style={{ aspectRatio: "9/16", maxHeight: "100vh" }}>
         <div className="absolute inset-0 flex" style={{ fontSize: "1.8vh" }}>
 
-          {/* Satellite fullscreen */}
+          {/* Satellite fullscreen — behind sidebar */}
           {activeTab === "weather" && weatherSubTab === "satellite" && config.weather.showSatellite && weatherCoords && (
             <iframe
-              src={`https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=°C&metricWind=km/h&zoom=8&overlay=satellite&product=satellite&level=surface&lat=${weatherCoords.lat}&lon=${weatherCoords.lon}&detailLat=${weatherCoords.lat}&detailLon=${weatherCoords.lon}&marker=true&message=true&autoPlay=true&border=full`}
-              className="absolute inset-0 w-full h-full border-0" title="Satélite" style={{ zIndex: 2 }}
+              src={`https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=°C&metricWind=km/h&zoom=8&overlay=satellite&product=satellite&level=surface&lat=${weatherCoords.lat}&lon=${weatherCoords.lon}&detailLat=${weatherCoords.lat}&detailLon=${weatherCoords.lon}&marker=true&message=true&autoplay=true&border=full`}
+              className="absolute inset-0 w-full h-full border-0" title="Satélite" style={{ zIndex: 1 }}
             />
           )}
 
@@ -207,12 +207,12 @@ export default function CenarioTela() {
           {activeTab === "traffic" && config.traffic.enabled && trafficCoords && (
             <iframe
               src={`https://embed.waze.com/iframe?zoom=13&lat=${trafficCoords.lat}&lon=${trafficCoords.lon}&pin=1`}
-              className="absolute inset-0 w-full h-full border-0" title="Trânsito" style={{ zIndex: 2 }}
+              className="absolute inset-0 w-full h-full border-0" title="Trânsito" style={{ zIndex: 1 }}
             />
           )}
 
-          {/* Sidebar */}
-          <div className="flex-shrink-0 flex flex-col items-center py-[3vh] px-[0.8vh] gap-[0.8vh] relative" style={{ width: "11%", background: isMapTab ? "rgba(26,26,26,0.7)" : "#1a1a1a", zIndex: 3, backdropFilter: isMapTab ? "blur(4px)" : "none" }}>
+          {/* Sidebar — always on top */}
+          <div className="flex-shrink-0 flex flex-col items-center py-[3vh] px-[0.8vh] gap-[0.8vh] relative" style={{ width: "11%", background: isMapTab ? "rgba(26,26,26,0.7)" : "#1a1a1a", zIndex: 10, backdropFilter: isMapTab ? "blur(4px)" : "none" }}>
             <button onClick={() => setActiveTab("home")} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: "5vh", height: "5vh", background: "rgba(255,255,255,0.12)", border: activeTab === "home" ? "2px solid #e1f532" : "2px solid transparent", animation: activeTab === "home" ? "cenario-active-blink 1.5s ease-in-out infinite" : "none" }}>
               <Home style={{ width: "2.2vh", height: "2.2vh" }} className="text-white" />
             </button>
