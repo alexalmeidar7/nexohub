@@ -278,14 +278,12 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
         const noticia = prev[bi]?.noticias[ni];
         if (noticia) {
           if (value && noticia.titulo) {
-            // Add to escalada list if not already there
             setEscaladaList(prevList => {
-              if (prevList.includes(noticia.titulo)) return prevList;
-              return [...prevList, noticia.titulo];
+              if (prevList.some(e => e.titulo === noticia.titulo)) return prevList;
+              return [...prevList, { titulo: noticia.titulo, imagemUrl: noticia.imagemUrl || "" }];
             });
           } else if (!value && noticia.titulo) {
-            // Remove from escalada list
-            setEscaladaList(prevList => prevList.filter(t => t !== noticia.titulo));
+            setEscaladaList(prevList => prevList.filter(e => e.titulo !== noticia.titulo));
           }
         }
       }
