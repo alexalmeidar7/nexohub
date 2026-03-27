@@ -572,13 +572,13 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
           ))}
         </div>
 
-        <button onClick={addBloco} className="w-full py-2.5 rounded-xl text-xs font-bold transition-all hover:opacity-80" style={{ border: "2px dashed color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 40%, transparent)", color: "var(--layout-accent-color, #2ec1f7)", backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 4%, transparent)" }}>
+        <button onClick={addBloco} className="w-full py-2.5 rounded-xl text-xs font-semibold transition-all hover:scale-[1.01] active:scale-[0.99]" style={{ border: "2px dashed color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 50%, transparent)", color: "var(--layout-accent-color, #2ec1f7)", backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 6%, transparent)" }}>
           <Plus size={14} className="inline mr-1" /> Adicionar Bloco {blocos.length + 1}
         </button>
 
         {/* Save */}
-        <button onClick={handleSave} disabled={saving || !programaId} className="w-full py-3.5 rounded-xl text-sm font-bold transition-all hover:opacity-90 flex items-center justify-center gap-2 disabled:opacity-40" style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #2ec1f7), color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 70%, white 30%))", color: "var(--layout-header-text, #ffffff)", boxShadow: "0 4px 16px color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 30%, transparent)" }}>
-          {saving ? <Loader2 size={16} className="animate-spin" /> : <Zap size={16} />}
+        <button onClick={handleSave} disabled={saving || !programaId} className="w-full py-4 rounded-xl text-sm font-bold transition-all hover:scale-[1.01] hover:shadow-lg active:scale-[0.98] flex items-center justify-center gap-2.5 disabled:opacity-40 disabled:hover:scale-100" style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #2ec1f7), color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 65%, #000 35%))", color: "var(--layout-header-text, #ffffff)", boxShadow: "0 6px 24px color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 35%, transparent)", letterSpacing: "0.03em" }}>
+          {saving ? <Loader2 size={18} className="animate-spin" /> : <Zap size={18} />}
           {saving ? "Salvando..." : "Finalizar Programa Express"}
         </button>
       </div>
@@ -634,8 +634,8 @@ function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRe
           <Link2 size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2" style={{ color: "var(--layout-icon-color, #888)" }} />
           <input value={linkInput} onChange={e => setLinkInput(e.target.value)} onPaste={e => { const t = e.clipboardData.getData("text"); setTimeout(() => handlePasteLink(t), 50); }} placeholder="Cole o link da matéria" className="block w-full min-w-0 max-w-full pl-7 pr-3 py-1.5 rounded-lg text-[11px] outline-none" style={{ ...inputStyle, width: "100%", maxWidth: "100%", boxSizing: "border-box" }} />
         </div>
-        <button onClick={() => handlePasteLink(linkInput)} disabled={isFetching || !linkInput} className="px-2 py-1.5 rounded-lg text-[10px] font-bold disabled:opacity-30 shrink-0" style={{ backgroundColor: "var(--layout-accent-color, #2ec1f7)", color: "var(--layout-header-text, #fff)" }}>
-          {isFetching ? <Loader2 size={12} className="animate-spin" /> : "Buscar"}
+        <button onClick={() => handlePasteLink(linkInput)} disabled={isFetching || !linkInput} className="px-3.5 py-1.5 rounded-lg text-[11px] font-semibold disabled:opacity-30 shrink-0 flex items-center gap-1.5 transition-all hover:scale-105 hover:shadow-md active:scale-95" style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #2ec1f7), color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 75%, #000 25%))", color: "var(--layout-header-text, #fff)", boxShadow: "0 2px 8px color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 25%, transparent)" }}>
+          {isFetching ? <Loader2 size={12} className="animate-spin" /> : <><Search size={11} /> Buscar</>}
         </button>
       </div>
       <div className="w-full min-w-0 max-w-full overflow-hidden">
