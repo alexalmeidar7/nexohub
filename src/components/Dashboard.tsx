@@ -73,6 +73,7 @@ const sidebarMenu: MenuItem[] = [
   {
     icon: MonitorPlay, label: "player", children: [
       { icon: Settings, label: "configurações", page: "playerconfig" },
+      { icon: Film, label: "pre roll", page: "preroll" },
       { icon: ExternalLink, label: "módulo externo", page: undefined as unknown as Page },
     ]
   },
@@ -80,7 +81,6 @@ const sidebarMenu: MenuItem[] = [
     icon: ShoppingBag, label: "comercial", children: [
       { icon: MessageSquareQuote, label: "testemunhais", page: "testemunhais" },
       { icon: Tag, label: "promoções", page: "promocoes" },
-      { icon: Film, label: "pre roll", page: "preroll" },
       { icon: ShoppingCart, label: "shopping", page: "shopping" },
       { icon: FileText, label: "propostas comerciais", page: "propostas" },
     ]
