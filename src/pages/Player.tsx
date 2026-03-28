@@ -929,7 +929,7 @@ export default function PlayerPage() {
     let fetchCycleCount = 0;
 
     const fetchAndSync = async () => {
-      if (inFlight || cancelled || document.hidden) return;
+      if (inFlight || cancelled) return;
       inFlight = true;
       try {
         // Re-fetch XML URL if not cached or after repeated failures
@@ -950,7 +950,7 @@ export default function PlayerPage() {
         if (directFetchOk !== false) {
           try {
             const directRes = await fetch(cachedXmlUrl, {
-              signal: AbortSignal.timeout(3000),
+              signal: AbortSignal.timeout(2000),
               cache: "no-store",
             });
             if (directRes.ok) {
@@ -1025,7 +1025,7 @@ export default function PlayerPage() {
     };
 
     fetchAndSync(); // immediate first fetch
-    const interval = setInterval(fetchAndSync, 3000);
+    const interval = setInterval(fetchAndSync, 1500);
 
     // Resume sync immediately when page becomes visible again (e.g. after alt-tab in fullscreen)
     const onVisibility = () => { if (!document.hidden && !cancelled) fetchAndSync(); };
