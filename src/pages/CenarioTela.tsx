@@ -165,9 +165,9 @@ export default function CenarioTela() {
 
   /* Load config from DB + poll every 10s */
   useEffect(() => {
-    if (!user?.id) return;
+    if (!effectiveUserId) return;
     const load = async () => {
-      const { data } = await supabase.from("user_settings").select("cenario_config" as any).eq("user_id", user.id).maybeSingle();
+      const { data } = await supabase.from("user_settings").select("cenario_config" as any).eq("user_id", effectiveUserId).maybeSingle();
       if ((data as any)?.cenario_config && typeof (data as any).cenario_config === "object") {
         const raw = (data as any).cenario_config as any;
         const { _activeTab, _weatherSubTab, _currencySubTab, ...rest } = raw;
@@ -186,7 +186,7 @@ export default function CenarioTela() {
     load();
     const interval = setInterval(load, 10000);
     return () => clearInterval(interval);
-  }, [user?.id]);
+  }, [effectiveUserId]);
 
   /* Keep cache synced */
   useEffect(() => {
