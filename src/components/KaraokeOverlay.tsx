@@ -474,14 +474,13 @@ export default function KaraokeOverlay({
   );
 }
 
-function KaraokeLine({ text, progress, active, accentHsl }: { text: string; progress: number; active: boolean; accentHsl: string }) {
+function KaraokeLine({ text, progress, active, accentHsl, fontSize = 1.6 }: { text: string; progress: number; active: boolean; accentHsl: string; fontSize?: number }) {
   const words = text.split(/\s+/);
   const highlightedCount = active ? Math.ceil(words.length * progress) : 0;
-  // The "next" word to sing — show bouncing ball above it
   const ballIdx = active ? highlightedCount : -1;
 
   return (
-    <p className="text-center leading-relaxed transition-all duration-300 relative" style={{ fontSize: active ? "1.6rem" : "1.2rem" }}>
+    <p className="text-center leading-relaxed transition-all duration-300 relative" style={{ fontSize: active ? `${fontSize}rem` : `${fontSize * 0.75}rem` }}>
       {words.map((word, i) => {
         const isHighlighted = i < highlightedCount;
         const isBallWord = i === ballIdx && active;
