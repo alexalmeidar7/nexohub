@@ -100,6 +100,15 @@ export default function KaraokeOverlay({
   onLyricsNotFound,
   onLyricsFound,
 }: KaraokeOverlayProps) {
+  // Read themed accent color from CSS variables
+  const accentColor = useMemo(() => {
+    const root = document.documentElement;
+    const raw = getComputedStyle(root).getPropertyValue("--primary").trim();
+    if (!raw) return "74 92% 70%";
+    return raw;
+  }, []);
+  const accentHsl = `hsl(${accentColor})`;
+  const accentAlpha = (a: number) => `hsl(${accentColor} / ${a})`;
   const [lines, setLines] = useState<LrcLine[]>([]);
   const [currentLineIdx, setCurrentLineIdx] = useState(-1);
   const [progress, setProgress] = useState(0);
