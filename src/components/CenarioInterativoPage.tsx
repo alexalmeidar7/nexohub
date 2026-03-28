@@ -914,7 +914,7 @@ export default function CenarioInterativoPage() {
               <Eye size={16} style={{ color: mutedText }} />
               <span className="text-sm font-semibold">Preview (9:16)</span>
               <button
-                onClick={() => window.open(`/cenario-tela?tab=${activeTab}&weatherSubTab=${weatherSubTab}`, "_blank")}
+                onClick={() => window.open(`/cenario-tela?tab=${activeTab}&weatherSubTab=${weatherSubTab}&uid=${user?.id || ""}`, "_blank")}
                 className="ml-auto flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-semibold transition-opacity hover:opacity-80"
                 style={{ background: "var(--layout-header-bg, #0d0446)", color: "var(--layout-header-text, #fff)" }}
               >
