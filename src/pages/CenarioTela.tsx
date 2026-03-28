@@ -164,6 +164,7 @@ export default function CenarioTela() {
   }, []);
 
   /* Load config from DB + poll every 10s */
+  const initialTabLoaded = useRef(false);
   useEffect(() => {
     if (!effectiveUserId) return;
     const load = async () => {
@@ -173,9 +174,13 @@ export default function CenarioTela() {
         const { _activeTab, _weatherSubTab, _currencySubTab, ...rest } = raw;
         const merged = { ...defaultConfig, ...rest };
         setConfig(merged);
-        if (_activeTab) setActiveTab(_activeTab);
-        if (_weatherSubTab) setWeatherSubTab(_weatherSubTab);
-        if (_currencySubTab) setCurrencySubTab(_currencySubTab);
+        // Only restore saved tab on the very first load, not on subsequent polls
+        if (!initialTabLoaded.current) {
+          initialTabLoaded.current = true;
+          if (_activeTab) setActiveTab(_activeTab);
+          if (_weatherSubTab) setWeatherSubTab(_weatherSubTab);
+          if (_currencySubTab) setCurrencySubTab(_currencySubTab);
+        }
         try {
           localStorage.setItem("cenario_interativo_config_cache_v1", JSON.stringify(merged));
         } catch {
