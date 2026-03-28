@@ -1025,7 +1025,7 @@ export default function PlayerPage() {
     };
 
     fetchAndSync(); // immediate first fetch
-    const interval = setInterval(fetchAndSync, 3000);
+    const interval = setInterval(fetchAndSync, 1500);
 
     // Resume sync immediately when page becomes visible again (e.g. after alt-tab in fullscreen)
     const onVisibility = () => { if (!document.hidden && !cancelled) fetchAndSync(); };
