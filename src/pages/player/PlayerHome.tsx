@@ -368,83 +368,54 @@ function StreamingCard({ channel, currentProgram, nowPlaying, onClick }: {
   onClick: () => void;
 }) {
   const [hovered, setHovered] = useState(false);
-  const [frames, setFrames] = useState<string[]>([]);
-  const [frameIdx, setFrameIdx] = useState(0);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const hlsRef = useRef<any>(null);
   const isVideo = channel.type === "video" || channel.type === "video_live";
+  const [videoReady, setVideoReady] = useState(false);
 
   useEffect(() => {
-    if (!isVideo || !channel.url) return;
+    if (!hovered || !isVideo || !channel.url) {
+      // Cleanup when not hovered
+      if (hlsRef.current) { hlsRef.current.destroy(); hlsRef.current = null; }
+      if (videoRef.current) { videoRef.current.pause(); videoRef.current.src = ""; }
+      setVideoReady(false);
+      return;
+    }
+
     let cancelled = false;
-    let hls: any = null;
-    let refreshTimer: ReturnType<typeof setInterval> | null = null;
+    const video = videoRef.current;
+    if (!video) return;
 
-    const capture = async () => {
-      const video = document.createElement("video");
-      video.crossOrigin = "anonymous";
-      video.muted = true;
-      video.playsInline = true;
-      const canvas = document.createElement("canvas");
-      canvas.width = 320;
-      canvas.height = 180;
-
-      const doCapture = () => new Promise<string[]>((resolve) => {
-        const ctx = canvas.getContext("2d");
-        if (!ctx) { resolve([]); return; }
-        const captured: string[] = [];
-        let count = 0;
-        const grab = () => {
-          if (cancelled || count >= 10) { resolve(captured); return; }
-          ctx.drawImage(video, 0, 0, 320, 180);
-          captured.push(canvas.toDataURL("image/jpeg", 0.7));
-          count++;
-          setTimeout(grab, 300);
-        };
-        grab();
-      });
-
+    const startStream = async () => {
       try {
         if (channel.url!.includes(".m3u8")) {
           const Hls = (await import("hls.js")).default;
+          if (cancelled) return;
           if (Hls.isSupported()) {
-            hls = new Hls({ maxBufferLength: 5 });
+            const hls = new Hls({ maxBufferLength: 5, lowLatencyMode: true });
+            hlsRef.current = hls;
             hls.loadSource(channel.url!);
             hls.attachMedia(video);
-            await new Promise<void>((res) => {
-              hls.on(Hls.Events.MANIFEST_PARSED, () => {
-                video.play().then(() => setTimeout(() => res(), 600)).catch(() => res());
-              });
+            hls.on(Hls.Events.MANIFEST_PARSED, () => {
+              if (!cancelled) video.play().then(() => setVideoReady(true)).catch(() => {});
             });
           }
         } else {
           video.src = channel.url!;
-          await video.play().catch(() => {});
-          await new Promise(r => setTimeout(r, 600));
+          video.play().then(() => setVideoReady(true)).catch(() => {});
         }
-        if (!cancelled) {
-          const newFrames = await doCapture();
-          if (!cancelled && newFrames.length > 0) setFrames(newFrames);
-        }
-      } catch {} finally {
-        video.pause();
-        video.src = "";
-        if (hls) { hls.destroy(); hls = null; }
-      }
+      } catch {}
     };
 
-    capture();
-    refreshTimer = setInterval(capture, 30000);
-    return () => { cancelled = true; if (hls) hls.destroy(); if (refreshTimer) clearInterval(refreshTimer); };
-  }, [isVideo, channel.url]);
-
-  useEffect(() => {
-    if (!hovered || frames.length === 0) return;
-    intervalRef.current = setInterval(() => setFrameIdx(prev => (prev + 1) % frames.length), 400);
-    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
-  }, [hovered, frames.length]);
+    startStream();
+    return () => {
+      cancelled = true;
+      if (hlsRef.current) { hlsRef.current.destroy(); hlsRef.current = null; }
+    };
+  }, [hovered, isVideo, channel.url]);
 
   const cardHeight = 240;
-  const expandedWidth = hovered && isVideo && frames.length > 0 ? 160 + Math.round(cardHeight * 16 / 9) : 160;
+  const expandedWidth = hovered && isVideo ? 160 + Math.round(cardHeight * 16 / 9) : 160;
 
   return (
     <button
@@ -474,10 +445,16 @@ function StreamingCard({ channel, currentProgram, nowPlaying, onClick }: {
         )}
       </div>
 
-      {/* Video preview – fills expanded right area */}
-      {hovered && isVideo && frames.length > 0 && (
+      {/* Video preview – live video on hover */}
+      {hovered && isVideo && (
         <div className="absolute top-0 bottom-0 right-0 z-[1]" style={{ left: "160px" }}>
-          <img src={frames[frameIdx]} alt="preview" className="w-full h-full object-cover" />
+          <video
+            ref={videoRef}
+            className="w-full h-full object-cover"
+            muted
+            playsInline
+            style={{ opacity: videoReady ? 1 : 0, transition: "opacity 0.3s" }}
+          />
         </div>
       )}
 
@@ -497,8 +474,8 @@ function StreamingCard({ channel, currentProgram, nowPlaying, onClick }: {
         ao vivo
       </span>
 
-      {/* Play overlay on hover — hidden for video cards with preview */}
-      {!(isVideo && frames.length > 0) && (
+      {/* Play overlay on hover — hidden for video cards */}
+      {!isVideo && (
         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 z-[5] pointer-events-none">
           <div className="w-12 h-12 rounded-full backdrop-blur-md flex items-center justify-center shadow-2xl" style={{ background: "hsla(var(--player-accent) / 0.85)", boxShadow: "0 8px 32px hsla(var(--player-accent) / 0.5)" }}>
             <Play className="h-5 w-5 text-white fill-white" />
