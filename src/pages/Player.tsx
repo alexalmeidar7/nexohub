@@ -124,6 +124,7 @@ interface ShopProduct {
 
 const MUSIC_DATA_KEY = "masterview_music_data";
 const MUSIC_START_KEY = "masterview_music_start";
+const MUSIC_SYNC_EVENT = "masterview:music-sync";
 
 const DAY_MAP_SHORT: Record<number, string> = { 0: "dom", 1: "seg", 2: "ter", 3: "qua", 4: "qui", 5: "sex", 6: "sab" };
 const DAY_MAP_FULL: Record<number, string> = { 0: "Domingo", 1: "Segunda", 2: "Terça", 3: "Quarta", 4: "Quinta", 5: "Sexta", 6: "Sábado" };
@@ -897,6 +898,49 @@ export default function PlayerPage() {
   useEffect(() => {
     if (!effectiveUserId) return;
 
+    const isPlaceholderTrack = (track: { titulo?: string; artista?: string }) => {
+      const titulo = (track.titulo || "").trim().toLowerCase();
+      const artista = (track.artista || "").trim().toLowerCase();
+      return (titulo === "" || titulo === "sem título" || titulo === "sem titulo")
+        && (artista === "" || artista === "desconhecido");
+    };
+
+    const broadcastMusicSync = (payload: MusicData) => {
+      window.dispatchEvent(new CustomEvent<MusicData>(MUSIC_SYNC_EVENT, { detail: payload }));
+    };
+
+    const syncFromStorage = () => {
+      try {
+        const raw = localStorage.getItem(MUSIC_DATA_KEY);
+        if (!raw) return;
+
+        const parsed = JSON.parse(raw) as Partial<MusicData>;
+        const normalized: MusicData = {
+          titulo: normalizeMusicText(parsed.titulo || "") || "Sem título",
+          artista: normalizeMusicText(parsed.artista || "") || "Desconhecido",
+          duracao: Number(parsed.duracao) > 0 ? Number(parsed.duracao) : 0,
+          capa: parsed.capa || "",
+          horario: parsed.horario || "",
+        };
+
+        setMusicData((prev) => {
+          if (!prev) return normalized;
+          if (
+            prev.titulo === normalized.titulo
+            && prev.artista === normalized.artista
+            && prev.capa === normalized.capa
+            && prev.duracao === normalized.duracao
+            && (prev.horario || "") === (normalized.horario || "")
+          ) {
+            return prev;
+          }
+          return { ...prev, ...normalized };
+        });
+      } catch {
+        // ignore invalid storage payload
+      }
+    };
+
 
     const parseXml = (xmlStr: string) => {
       try {
@@ -927,10 +971,19 @@ export default function PlayerPage() {
     let xmlFetchFails = 0;
     let directFetchOk: boolean | null = null;
     let fetchCycleCount = 0;
+    let lockStartedAt = 0;
+    let activeRequestId = 0;
 
     const fetchAndSync = async () => {
-      if (inFlight || cancelled) return;
+      if (cancelled) return;
+
+      const nowMs = Date.now();
+      const lockIsFresh = inFlight && nowMs - lockStartedAt < 3500;
+      if (lockIsFresh) return;
+
+      const requestId = ++activeRequestId;
       inFlight = true;
+      lockStartedAt = nowMs;
       try {
         // Re-fetch XML URL if not cached or after repeated failures
         if (!cachedXmlUrl || xmlFetchFails > 3) {
@@ -950,7 +1003,7 @@ export default function PlayerPage() {
         if (directFetchOk !== false) {
           try {
             const directRes = await fetch(cachedXmlUrl, {
-              signal: AbortSignal.timeout(2000),
+              signal: AbortSignal.timeout(1500),
               cache: "no-store",
             });
             if (directRes.ok) {
@@ -979,15 +1032,29 @@ export default function PlayerPage() {
 
         // Apply music data IMMEDIATELY, fetch cover in background
         setMusicData(prev => {
+          const prevHasRealTrack = !!prev && !isPlaceholderTrack(prev);
+          const incomingIsPlaceholder = isPlaceholderTrack(data);
+          if (prevHasRealTrack && incomingIsPlaceholder) return prev;
+
           if (!prev || prev.titulo !== data.titulo || prev.artista !== data.artista) {
-            localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify(data));
+            const next = { ...data };
+            localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify(next));
             localStorage.setItem(MUSIC_START_KEY, Date.now().toString());
-            return { ...data };
+            broadcastMusicSync(next);
+            return next;
           }
-          if (prev && data.capa && prev.capa !== data.capa) {
-            localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify({ ...prev, capa: data.capa }));
-            return { ...prev, capa: data.capa };
+
+          const hasMetaDiff = (data.capa && prev.capa !== data.capa)
+            || (data.horario && prev.horario !== data.horario)
+            || (data.duracao > 0 && prev.duracao !== data.duracao);
+
+          if (hasMetaDiff) {
+            const next = { ...prev, ...data, capa: data.capa || prev.capa };
+            localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify(next));
+            broadcastMusicSync(next);
+            return next;
           }
+
           return prev;
         });
 
@@ -996,7 +1063,15 @@ export default function PlayerPage() {
           const cacheKey = `${data.artista}-${data.titulo}`;
           if (coverCacheRef.current[cacheKey]) {
             const cover = coverCacheRef.current[cacheKey];
-            setMusicData(prev => prev && prev.titulo === data.titulo && !prev.capa ? { ...prev, capa: cover } : prev);
+            setMusicData(prev => {
+              if (prev && prev.titulo === data.titulo && prev.artista === data.artista && !prev.capa) {
+                const next = { ...prev, capa: cover };
+                localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify(next));
+                broadcastMusicSync(next);
+                return next;
+              }
+              return prev;
+            });
           } else if (!noCoverCacheRef.current[cacheKey]) {
             (async () => {
               try {
@@ -1008,9 +1083,11 @@ export default function PlayerPage() {
                   if (cover) {
                     coverCacheRef.current[cacheKey] = cover;
                     setMusicData(prev => {
-                      if (prev && prev.titulo === data.titulo && !prev.capa) {
-                        localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify({ ...prev, capa: cover }));
-                        return { ...prev, capa: cover };
+                      if (prev && prev.titulo === data.titulo && prev.artista === data.artista && !prev.capa) {
+                        const next = { ...prev, capa: cover };
+                        localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify(next));
+                        broadcastMusicSync(next);
+                        return next;
                       }
                       return prev;
                     });
@@ -1021,8 +1098,22 @@ export default function PlayerPage() {
           }
         }
       } catch {}
-      finally { inFlight = false; }
+      finally {
+        if (requestId === activeRequestId) {
+          inFlight = false;
+        }
+      }
     };
+
+    syncFromStorage();
+
+    const onStorage = (event: StorageEvent) => {
+      if (!event.key || event.key === MUSIC_DATA_KEY) syncFromStorage();
+    };
+    const onMusicSync = () => syncFromStorage();
+
+    window.addEventListener("storage", onStorage);
+    window.addEventListener(MUSIC_SYNC_EVENT, onMusicSync as EventListener);
 
     fetchAndSync(); // immediate first fetch
     const interval = setInterval(fetchAndSync, 1500);
@@ -1031,7 +1122,13 @@ export default function PlayerPage() {
     const onVisibility = () => { if (!document.hidden && !cancelled) fetchAndSync(); };
     document.addEventListener("visibilitychange", onVisibility);
 
-    return () => { cancelled = true; clearInterval(interval); document.removeEventListener("visibilitychange", onVisibility); };
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener(MUSIC_SYNC_EVENT, onMusicSync as EventListener);
+    };
   }, [effectiveUserId]);
 
   // Play stream
