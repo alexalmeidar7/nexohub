@@ -925,6 +925,8 @@ export default function PlayerPage() {
     let inFlight = false;
     let cancelled = false;
     let xmlFetchFails = 0;
+    let directFetchOk: boolean | null = null;
+    let fetchCycleCount = 0;
 
     const fetchAndSync = async () => {
       if (inFlight || cancelled || document.hidden) return;
@@ -938,38 +940,44 @@ export default function PlayerPage() {
         }
         if (!cachedXmlUrl || cancelled) return;
 
-        // Use edge function instead of unreliable allorigins proxy
+        // Reset direct fetch flag every 20 cycles to re-test CORS
+        fetchCycleCount++;
+        if (fetchCycleCount % 20 === 0) directFetchOk = null;
+
         let text = "";
-        try {
-          const { data: rssData, error: rssError } = await supabase.functions.invoke("fetch-rss", {
-            body: { url: cachedXmlUrl },
-          });
-          if (rssError || !rssData?.content) { xmlFetchFails++; return; }
-          text = rssData.content;
-          xmlFetchFails = 0;
-        } catch { xmlFetchFails++; return; }
+
+        // Fast path: try direct fetch first (~200ms vs ~1-2s via edge)
+        if (directFetchOk !== false) {
+          try {
+            const directRes = await fetch(cachedXmlUrl, {
+              signal: AbortSignal.timeout(3000),
+              cache: "no-store",
+            });
+            if (directRes.ok) {
+              directFetchOk = true;
+              text = await directRes.text();
+            }
+          } catch {
+            if (directFetchOk === null) directFetchOk = false;
+          }
+        }
+
+        // Fallback: edge function
+        if (!text) {
+          try {
+            const { data: rssData, error: rssError } = await supabase.functions.invoke("fetch-rss", {
+              body: { url: cachedXmlUrl },
+            });
+            if (rssError || !rssData?.content) { xmlFetchFails++; return; }
+            text = rssData.content;
+            xmlFetchFails = 0;
+          } catch { xmlFetchFails++; return; }
+        }
 
         const data = parseXml(text);
         if (!data || cancelled) return;
 
-        if (!data.capa) {
-          const cacheKey = `${data.artista}-${data.titulo}`;
-          if (coverCacheRef.current[cacheKey]) {
-            data.capa = coverCacheRef.current[cacheKey];
-          } else if (!noCoverCacheRef.current[cacheKey]) {
-            try {
-              const query = encodeURIComponent(`${data.artista} ${data.titulo}`);
-              const itunesRes = await fetch(`https://itunes.apple.com/search?term=${query}&media=music&limit=1`);
-              const itunesData = await itunesRes.json();
-              if (itunesData.results?.length > 0) {
-                const cover = itunesData.results[0].artworkUrl100?.replace("100x100", "600x600") || "";
-                if (cover) { data.capa = cover; coverCacheRef.current[cacheKey] = cover; }
-                else noCoverCacheRef.current[cacheKey] = true;
-              } else noCoverCacheRef.current[cacheKey] = true;
-            } catch { noCoverCacheRef.current[cacheKey] = true; }
-          }
-        }
-
+        // Apply music data IMMEDIATELY, fetch cover in background
         setMusicData(prev => {
           if (!prev || prev.titulo !== data.titulo || prev.artista !== data.artista) {
             localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify(data));
@@ -982,6 +990,36 @@ export default function PlayerPage() {
           }
           return prev;
         });
+
+        // Non-blocking cover fetch
+        if (!data.capa) {
+          const cacheKey = `${data.artista}-${data.titulo}`;
+          if (coverCacheRef.current[cacheKey]) {
+            const cover = coverCacheRef.current[cacheKey];
+            setMusicData(prev => prev && prev.titulo === data.titulo && !prev.capa ? { ...prev, capa: cover } : prev);
+          } else if (!noCoverCacheRef.current[cacheKey]) {
+            (async () => {
+              try {
+                const query = encodeURIComponent(`${data.artista} ${data.titulo}`);
+                const itunesRes = await fetch(`https://itunes.apple.com/search?term=${query}&media=music&limit=1`, { signal: AbortSignal.timeout(5000) });
+                const itunesData = await itunesRes.json();
+                if (itunesData.results?.length > 0) {
+                  const cover = itunesData.results[0].artworkUrl100?.replace("100x100", "600x600") || "";
+                  if (cover) {
+                    coverCacheRef.current[cacheKey] = cover;
+                    setMusicData(prev => {
+                      if (prev && prev.titulo === data.titulo && !prev.capa) {
+                        localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify({ ...prev, capa: cover }));
+                        return { ...prev, capa: cover };
+                      }
+                      return prev;
+                    });
+                  } else noCoverCacheRef.current[cacheKey] = true;
+                } else noCoverCacheRef.current[cacheKey] = true;
+              } catch { noCoverCacheRef.current[cacheKey] = true; }
+            })();
+          }
+        }
       } catch {}
       finally { inFlight = false; }
     };
