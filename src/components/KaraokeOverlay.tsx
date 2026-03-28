@@ -122,7 +122,7 @@ export default function KaraokeOverlay({
   const [error, setError] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
   const [exitAnim, setExitAnim] = useState(false);
-  const [speedOffset, setSpeedOffset] = useState(0);
+  const [speedOffset, setSpeedOffset] = useState(-25);
   const [syncMode, setSyncMode] = useState(false);
   const animRef = useRef<number>(0);
   const lastFetchRef = useRef("");
