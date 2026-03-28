@@ -199,24 +199,24 @@ export default function CenarioTela() {
 
   /* Fetch current program + sponsor logos */
   useEffect(() => {
-    if (!user?.id) return;
+    if (!effectiveUserId) return;
     const load = async () => {
       const now = new Date();
       const dayNames = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
       const today = dayNames[now.getDay()];
       const nowTime = now.toTimeString().slice(0, 5);
-      const { data: progs } = await supabase.from("programas").select("id, nome, horario_inicio, horario_fim, dias_semana").eq("user_id", user.id).eq("ativo", true);
+      const { data: progs } = await supabase.from("programas").select("id, nome, horario_inicio, horario_fim, dias_semana").eq("user_id", effectiveUserId).eq("ativo", true);
       const onAir = progs?.find(p => (p.dias_semana || []).includes(today) && p.horario_inicio <= nowTime && p.horario_fim > nowTime);
       if (onAir) {
         setCurrentProgram({ nome: onAir.nome, id: onAir.id });
-        const { data: logos } = await supabase.from("logos_patrocinadores").select("id, nome, logo_url").eq("programa_id", onAir.id).eq("user_id", user.id).eq("ativo", true).eq("excluido", false);
+        const { data: logos } = await supabase.from("logos_patrocinadores").select("id, nome, logo_url").eq("programa_id", onAir.id).eq("user_id", effectiveUserId).eq("ativo", true).eq("excluido", false);
         setSponsorLogos(logos || []);
       } else { setCurrentProgram(null); setSponsorLogos([]); }
     };
     load();
     const interval = setInterval(load, 30000);
     return () => clearInterval(interval);
-  }, [user?.id]);
+  }, [effectiveUserId]);
 
   /* Fetch weather */
   const weatherCity = config.weather.city || config.city;
