@@ -102,6 +102,8 @@ function Confetti({ active }: { active: boolean }) {
   );
 }
 
+const FONT_SIZE_KEY = "karaoke_font_size";
+
 export default function KaraokeOverlay({
   artist,
   title,
@@ -124,6 +126,12 @@ export default function KaraokeOverlay({
   const [exitAnim, setExitAnim] = useState(false);
   const [speedOffset, setSpeedOffset] = useState(-25);
   const [syncMode, setSyncMode] = useState(false);
+  const [fontSize, setFontSize] = useState(() => {
+    const saved = localStorage.getItem(FONT_SIZE_KEY);
+    return saved ? parseFloat(saved) : 1.6;
+  });
+  const [controlsVisible, setControlsVisible] = useState(false);
+  const hideTimerRef = useRef<ReturnType<typeof setTimeout>>();
   const animRef = useRef<number>(0);
   const lastFetchRef = useRef("");
   const scrollRef = useRef<HTMLDivElement>(null);
