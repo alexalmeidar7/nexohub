@@ -366,10 +366,23 @@ export default function KaraokeOverlay({
       <Confetti active={showConfetti} />
       <div
         className="absolute left-0 right-0 z-[60] flex flex-col items-center pointer-events-none animate-fade-in"
-        style={{ bottom: "220px" }}
+        style={{ bottom: "180px" }}
       >
-        {/* Badge + speed + config button */}
-        <div className="flex items-center gap-2 mb-3 pointer-events-auto">
+        {/* Lyrics — no background */}
+        <div className="w-[90vw] max-w-[700px] flex flex-col items-center gap-1 px-4 py-2">
+          {loading && (
+            <span className="text-white/50 text-xs animate-pulse">Buscando letra...</span>
+          )}
+          {lines.length > 0 && (
+            <>
+              {line1 && <KaraokeLine text={line1.text} progress={progress} active accentHsl={accentHsl} />}
+              {line2 && <KaraokeLine text={line2.text} progress={0} active={false} accentHsl={accentHsl} />}
+            </>
+          )}
+        </div>
+
+        {/* Controls below lyrics */}
+        <div className="flex items-center gap-2 mt-3 pointer-events-auto">
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full"
             style={{ backgroundColor: accent }}>
             <Mic size={14} className="text-primary-foreground" />
@@ -406,27 +419,15 @@ export default function KaraokeOverlay({
             </button>
           )}
         </div>
-
-        {/* Lyrics container */}
-        <div
-          className="w-[90vw] max-w-[700px] flex flex-col items-center gap-0.5 px-6 py-4 rounded-2xl backdrop-blur-xl"
-          style={{
-            backgroundColor: "rgba(0,0,0,0.5)",
-            boxShadow: "0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1)",
-            border: "1px solid rgba(255,255,255,0.1)"
-          }}
-        >
-          {loading && (
-            <span className="text-white/50 text-xs animate-pulse">Buscando letra...</span>
-          )}
-          {lines.length > 0 && (
-            <>
-              {line1 && <KaraokeLine text={line1.text} progress={progress} active accentHsl={accentHsl} />}
-              {line2 && <KaraokeLine text={line2.text} progress={0} active={false} accentHsl={accentHsl} />}
-            </>
-          )}
-        </div>
       </div>
+
+      {/* Bouncing ball keyframes */}
+      <style>{`
+        @keyframes karaokeBounce {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-10px); }
+        }
+      `}</style>
     </>
   );
 }
@@ -434,26 +435,46 @@ export default function KaraokeOverlay({
 function KaraokeLine({ text, progress, active, accentHsl }: { text: string; progress: number; active: boolean; accentHsl: string }) {
   const words = text.split(/\s+/);
   const highlightedCount = active ? Math.ceil(words.length * progress) : 0;
+  // The "next" word to sing — show bouncing ball above it
+  const ballIdx = active ? highlightedCount : -1;
 
   return (
-    <p className="text-center leading-relaxed transition-all duration-300" style={{ fontSize: active ? "1.6rem" : "1.2rem" }}>
+    <p className="text-center leading-relaxed transition-all duration-300 relative" style={{ fontSize: active ? "1.6rem" : "1.2rem" }}>
       {words.map((word, i) => {
         const isHighlighted = i < highlightedCount;
+        const isBallWord = i === ballIdx && active;
         return (
           <span
             key={i}
-            className="inline-block mx-1 transition-all duration-200"
+            className="inline-block mx-1 transition-all duration-200 relative"
             style={{
               color: active
                 ? isHighlighted
                   ? "#ffffff"
                   : "rgba(255,255,255,0.35)"
                 : "rgba(255,255,255,0.25)",
-              textShadow: isHighlighted ? `0 0 20px hsl(${accentHsl} / 0.8), 0 0 40px hsl(${accentHsl} / 0.4)` : "none",
+              textShadow: isHighlighted
+                ? `0 0 20px hsl(${accentHsl} / 0.8), 0 0 40px hsl(${accentHsl} / 0.4)`
+                : "none",
               transform: isHighlighted ? "scale(1.05)" : "scale(1)",
               fontWeight: active ? 700 : 500,
             }}
           >
+            {/* Bouncing ball */}
+            {isBallWord && (
+              <span
+                className="absolute left-1/2 -translate-x-1/2 pointer-events-none"
+                style={{
+                  top: "-18px",
+                  width: 10,
+                  height: 10,
+                  borderRadius: "50%",
+                  backgroundColor: `hsl(${accentHsl})`,
+                  boxShadow: `0 0 12px hsl(${accentHsl} / 0.7), 0 0 24px hsl(${accentHsl} / 0.3)`,
+                  animation: "karaokeBounce 0.5s ease-in-out infinite",
+                }}
+              />
+            )}
             {word}
           </span>
         );
