@@ -384,24 +384,29 @@ export default function KaraokeOverlay({
     <>
       <Confetti active={showConfetti} />
       <div
-        className="absolute left-0 right-0 z-[60] flex flex-col items-center pointer-events-none animate-fade-in"
-        style={{ bottom: "180px" }}
+        className="absolute left-0 right-0 z-[60] flex flex-col items-center animate-fade-in"
+        style={{ bottom: controlsVisible ? "180px" : "100px", transition: "bottom 0.4s ease" }}
+        onMouseEnter={handleLyricsMouseEnter}
+        onMouseLeave={handleLyricsMouseLeave}
       >
         {/* Lyrics — no background */}
-        <div className="w-[90vw] max-w-[700px] flex flex-col items-center gap-1 px-4 py-2">
+        <div className="w-[90vw] max-w-[700px] flex flex-col items-center gap-1 px-4 py-2 pointer-events-auto cursor-default">
           {loading && (
             <span className="text-white/50 text-xs animate-pulse">Buscando letra...</span>
           )}
           {lines.length > 0 && (
             <>
-              {line1 && <KaraokeLine text={line1.text} progress={progress} active accentHsl={accentHsl} />}
-              {line2 && <KaraokeLine text={line2.text} progress={0} active={false} accentHsl={accentHsl} />}
+              {line1 && <KaraokeLine text={line1.text} progress={progress} active accentHsl={accentHsl} fontSize={fontSize} />}
+              {line2 && <KaraokeLine text={line2.text} progress={0} active={false} accentHsl={accentHsl} fontSize={fontSize} />}
             </>
           )}
         </div>
 
-        {/* Controls below lyrics */}
-        <div className="flex items-center gap-2 mt-3 pointer-events-auto">
+        {/* Controls below lyrics — show on hover */}
+        <div
+          className="flex items-center gap-2 mt-3 pointer-events-auto transition-all duration-300"
+          style={{ opacity: controlsVisible ? 1 : 0, transform: controlsVisible ? "translateY(0)" : "translateY(8px)", pointerEvents: controlsVisible ? "auto" : "none" }}
+        >
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full"
             style={{ backgroundColor: accent }}>
             <Mic size={14} className="text-primary-foreground" />
