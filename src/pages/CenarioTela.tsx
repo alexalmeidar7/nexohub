@@ -94,6 +94,8 @@ const mockMessages = [
 export default function CenarioTela() {
   const { user } = useAuth();
   usePageTitle("NexoHub - Cenário Interativo");
+  const uidFromUrl = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("uid") : null;
+  const effectiveUserId = user?.id || uidFromUrl || null;
 
   const [config, setConfig] = useState<CenarioConfig>(defaultConfig);
   const [activeTab, setActiveTab] = useState(() => {
