@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { Mic, Minus, Plus, Settings } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
