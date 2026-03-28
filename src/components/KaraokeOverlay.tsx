@@ -136,10 +136,21 @@ export default function KaraokeOverlay({
   const lastFetchRef = useRef("");
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Persist speed offset
+  // Persist speed offset & font size
   useEffect(() => {
     localStorage.setItem(SPEED_OFFSET_KEY, String(speedOffset));
   }, [speedOffset]);
+  useEffect(() => {
+    localStorage.setItem(FONT_SIZE_KEY, String(fontSize));
+  }, [fontSize]);
+
+  const handleLyricsMouseEnter = () => {
+    clearTimeout(hideTimerRef.current);
+    setControlsVisible(true);
+  };
+  const handleLyricsMouseLeave = () => {
+    hideTimerRef.current = setTimeout(() => setControlsVisible(false), 1500);
+  };
 
   // Fetch lyrics when song changes
   useEffect(() => {
