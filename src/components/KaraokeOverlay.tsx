@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useMemo } from "react";
-import { Mic, Minus, Plus, Settings } from "lucide-react";
+import { Mic, Minus, Plus, Settings, Type } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 const MUSIC_START_KEY = "masterview_music_start";
@@ -102,6 +102,8 @@ function Confetti({ active }: { active: boolean }) {
   );
 }
 
+const FONT_SIZE_KEY = "karaoke_font_size";
+
 export default function KaraokeOverlay({
   artist,
   title,
@@ -124,14 +126,31 @@ export default function KaraokeOverlay({
   const [exitAnim, setExitAnim] = useState(false);
   const [speedOffset, setSpeedOffset] = useState(-25);
   const [syncMode, setSyncMode] = useState(false);
+  const [fontSize, setFontSize] = useState(() => {
+    const saved = localStorage.getItem(FONT_SIZE_KEY);
+    return saved ? parseFloat(saved) : 1.6;
+  });
+  const [controlsVisible, setControlsVisible] = useState(false);
+  const hideTimerRef = useRef<ReturnType<typeof setTimeout>>();
   const animRef = useRef<number>(0);
   const lastFetchRef = useRef("");
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Persist speed offset
+  // Persist speed offset & font size
   useEffect(() => {
     localStorage.setItem(SPEED_OFFSET_KEY, String(speedOffset));
   }, [speedOffset]);
+  useEffect(() => {
+    localStorage.setItem(FONT_SIZE_KEY, String(fontSize));
+  }, [fontSize]);
+
+  const handleLyricsMouseEnter = () => {
+    clearTimeout(hideTimerRef.current);
+    setControlsVisible(true);
+  };
+  const handleLyricsMouseLeave = () => {
+    hideTimerRef.current = setTimeout(() => setControlsVisible(false), 1500);
+  };
 
   // Fetch lyrics when song changes
   useEffect(() => {
@@ -272,7 +291,7 @@ export default function KaraokeOverlay({
           onClick={(e) => { if (e.target === e.currentTarget) setSyncMode(false); }}
         >
           {/* Header */}
-          <div className="flex items-center gap-2 mb-3">
+          <div className="flex items-center gap-2 mb-3 flex-wrap justify-center">
             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full"
               style={{ backgroundColor: accent }}>
               <Mic size={14} className="text-primary-foreground" />
@@ -292,6 +311,24 @@ export default function KaraokeOverlay({
               <button onClick={() => adjustSpeed(5)}
                 className="w-7 h-7 rounded-full flex items-center justify-center transition-all hover:bg-white/20 active:scale-95"
                 title="Adiantar 5s">
+                <Plus size={14} className="text-white" />
+              </button>
+            </div>
+            {/* Font size controls */}
+            <div className="flex items-center gap-1 px-2 py-1 rounded-full backdrop-blur-md"
+              style={{ backgroundColor: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.2)" }}>
+              <Type size={13} className="text-white mr-0.5" />
+              <button onClick={() => setFontSize(prev => Math.max(1, prev - 0.2))}
+                className="w-7 h-7 rounded-full flex items-center justify-center transition-all hover:bg-white/20 active:scale-95"
+                title="Diminuir fonte">
+                <Minus size={14} className="text-white" />
+              </button>
+              <span className="text-white text-[11px] font-bold min-w-[28px] text-center tabular-nums">
+                {fontSize.toFixed(1)}
+              </span>
+              <button onClick={() => setFontSize(prev => Math.min(3, prev + 0.2))}
+                className="w-7 h-7 rounded-full flex items-center justify-center transition-all hover:bg-white/20 active:scale-95"
+                title="Aumentar fonte">
                 <Plus size={14} className="text-white" />
               </button>
             </div>
@@ -365,24 +402,29 @@ export default function KaraokeOverlay({
     <>
       <Confetti active={showConfetti} />
       <div
-        className="absolute left-0 right-0 z-[60] flex flex-col items-center pointer-events-none animate-fade-in"
-        style={{ bottom: "180px" }}
+        className="absolute left-0 right-0 z-[60] flex flex-col items-center animate-fade-in"
+        style={{ bottom: controlsVisible ? "180px" : "100px", transition: "bottom 0.4s ease" }}
+        onMouseEnter={handleLyricsMouseEnter}
+        onMouseLeave={handleLyricsMouseLeave}
       >
         {/* Lyrics — no background */}
-        <div className="w-[90vw] max-w-[700px] flex flex-col items-center gap-1 px-4 py-2">
+        <div className="w-[90vw] max-w-[700px] flex flex-col items-center gap-1 px-4 py-2 pointer-events-auto cursor-default">
           {loading && (
             <span className="text-white/50 text-xs animate-pulse">Buscando letra...</span>
           )}
           {lines.length > 0 && (
             <>
-              {line1 && <KaraokeLine text={line1.text} progress={progress} active accentHsl={accentHsl} />}
-              {line2 && <KaraokeLine text={line2.text} progress={0} active={false} accentHsl={accentHsl} />}
+              {line1 && <KaraokeLine text={line1.text} progress={progress} active accentHsl={accentHsl} fontSize={fontSize} />}
+              {line2 && <KaraokeLine text={line2.text} progress={0} active={false} accentHsl={accentHsl} fontSize={fontSize} />}
             </>
           )}
         </div>
 
-        {/* Controls below lyrics */}
-        <div className="flex items-center gap-2 mt-3 pointer-events-auto">
+        {/* Controls below lyrics — show on hover */}
+        <div
+          className="flex items-center gap-2 mt-3 pointer-events-auto transition-all duration-300"
+          style={{ opacity: controlsVisible ? 1 : 0, transform: controlsVisible ? "translateY(0)" : "translateY(8px)", pointerEvents: controlsVisible ? "auto" : "none" }}
+        >
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full"
             style={{ backgroundColor: accent }}>
             <Mic size={14} className="text-primary-foreground" />
@@ -432,14 +474,13 @@ export default function KaraokeOverlay({
   );
 }
 
-function KaraokeLine({ text, progress, active, accentHsl }: { text: string; progress: number; active: boolean; accentHsl: string }) {
+function KaraokeLine({ text, progress, active, accentHsl, fontSize = 1.6 }: { text: string; progress: number; active: boolean; accentHsl: string; fontSize?: number }) {
   const words = text.split(/\s+/);
   const highlightedCount = active ? Math.ceil(words.length * progress) : 0;
-  // The "next" word to sing — show bouncing ball above it
   const ballIdx = active ? highlightedCount : -1;
 
   return (
-    <p className="text-center leading-relaxed transition-all duration-300 relative" style={{ fontSize: active ? "1.6rem" : "1.2rem" }}>
+    <p className="text-center leading-relaxed transition-all duration-300 relative" style={{ fontSize: active ? `${fontSize}rem` : `${fontSize * 0.75}rem` }}>
       {words.map((word, i) => {
         const isHighlighted = i < highlightedCount;
         const isBallWord = i === ballIdx && active;
