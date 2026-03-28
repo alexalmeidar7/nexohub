@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { Mic, Minus, Plus, Settings } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -6,7 +6,7 @@ const MUSIC_START_KEY = "masterview_music_start";
 const SPEED_OFFSET_KEY = "karaoke_speed_offset";
 
 interface LrcLine {
-  time: number; // seconds
+  time: number;
   text: string;
 }
 
@@ -36,18 +36,30 @@ function parseLrc(lrc: string): LrcLine[] {
   return lines;
 }
 
+/** Read the primary accent HSL from CSS variables */
+function getAccentHsl(): string {
+  const raw = getComputedStyle(document.documentElement).getPropertyValue("--primary").trim();
+  return raw || "74 92% 70%";
+}
+
 // Confetti component
 function Confetti({ active }: { active: boolean }) {
-  const [particles, setParticles] = useState<Array<{ id: number; x: number; delay: number; size: number; rotation: number }>>([]);
+  const [particles, setParticles] = useState<Array<{ id: number; x: number; delay: number; size: number; rotation: number; shade: string }>>([]);
 
   useEffect(() => {
     if (active) {
+      const hsl = getAccentHsl();
       const newParticles = Array.from({ length: 60 }, (_, i) => ({
         id: i,
         x: Math.random() * 100,
         delay: Math.random() * 0.5,
         size: 6 + Math.random() * 10,
         rotation: Math.random() * 360,
+        shade: Math.random() > 0.3
+          ? `hsl(${hsl})`
+          : Math.random() > 0.5
+            ? `hsl(${hsl} / 0.7)`
+            : `hsl(${hsl} / 0.5)`,
       }));
       setParticles(newParticles);
       const timer = setTimeout(() => setParticles([]), 3500);
@@ -61,7 +73,6 @@ function Confetti({ active }: { active: boolean }) {
     <div className="fixed inset-0 pointer-events-none z-[100] overflow-hidden">
       {particles.map((p) => {
         const isCircle = Math.random() > 0.5;
-        const shade = Math.random() > 0.3 ? "#a10a0b" : Math.random() > 0.5 ? "#ff2d2d" : "#ff6b6b";
         return (
           <div
             key={p.id}
@@ -71,11 +82,11 @@ function Confetti({ active }: { active: boolean }) {
               top: "-20px",
               width: p.size,
               height: p.size,
-              backgroundColor: shade,
+              backgroundColor: p.shade,
               borderRadius: isCircle ? "50%" : "2px",
               animation: `confettiFall 3s ease-out ${p.delay}s forwards`,
               transform: `rotate(${p.rotation}deg)`,
-              boxShadow: `0 0 10px ${shade}80`,
+              boxShadow: `0 0 10px ${p.shade}`,
             }}
           />
         );
@@ -91,15 +102,19 @@ function Confetti({ active }: { active: boolean }) {
   );
 }
 
-export default function KaraokeOverlay({ 
-  artist, 
-  title, 
-  audioElement, 
-  visible, 
+export default function KaraokeOverlay({
+  artist,
+  title,
+  audioElement,
+  visible,
   duration,
   onLyricsNotFound,
   onLyricsFound,
 }: KaraokeOverlayProps) {
+  const accentHsl = useMemo(() => getAccentHsl(), []);
+  const accent = `hsl(${accentHsl})`;
+  const accentA = (a: number) => `hsl(${accentHsl} / ${a})`;
+
   const [lines, setLines] = useState<LrcLine[]>([]);
   const [currentLineIdx, setCurrentLineIdx] = useState(-1);
   const [progress, setProgress] = useState(0);
@@ -162,7 +177,7 @@ export default function KaraokeOverlay({
       const startStr = localStorage.getItem(MUSIC_START_KEY);
       if (startStr) {
         const elapsed = (Date.now() - parseInt(startStr, 10)) / 1000 + 3 + speedOffset;
-        
+
         let idx = -1;
         for (let i = lines.length - 1; i >= 0; i--) {
           if (elapsed >= lines[i].time) {
@@ -205,7 +220,6 @@ export default function KaraokeOverlay({
   };
 
   const handleSyncLineClick = (idx: number) => {
-    // Calculate the time difference and adjust offset
     const startStr = localStorage.getItem(MUSIC_START_KEY);
     if (startStr && lines[idx]) {
       const elapsed = (Date.now() - parseInt(startStr, 10)) / 1000 + 3;
@@ -218,25 +232,23 @@ export default function KaraokeOverlay({
 
   // Error state
   if (error && !loading) {
-    if (exitAnim) {
-      return <Confetti active={showConfetti} />;
-    }
+    if (exitAnim) return <Confetti active={showConfetti} />;
 
     return (
       <>
         <Confetti active={showConfetti} />
         <div
-          className="absolute left-0 right-0 z-[25] flex flex-col items-center pointer-events-none animate-fade-in"
+          className="absolute left-0 right-0 z-[60] flex flex-col items-center pointer-events-none animate-fade-in"
           style={{ bottom: "220px" }}
         >
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full mb-3"
-            style={{ backgroundColor: "#a10a0b" }}>
-            <Mic size={14} className="text-white" />
-            <span className="text-white font-bold text-[11px] tracking-wider uppercase">Karaoke</span>
+            style={{ backgroundColor: accent }}>
+            <Mic size={14} className="text-primary-foreground" />
+            <span className="text-primary-foreground font-bold text-[11px] tracking-wider uppercase">Karaoke</span>
           </div>
-          <div 
+          <div
             className="px-6 py-4 rounded-2xl backdrop-blur-xl transition-all duration-700"
-            style={{ 
+            style={{
               backgroundColor: "rgba(0,0,0,0.5)",
               border: "1px solid rgba(255,255,255,0.1)",
             }}
@@ -248,90 +260,92 @@ export default function KaraokeOverlay({
     );
   }
 
-  // Sync/expanded mode
+  // Sync/expanded mode — high z-index, full-screen overlay for reliable clicks
   if (syncMode && lines.length > 0) {
     return (
       <>
         <Confetti active={showConfetti} />
+        {/* Full-screen backdrop to capture clicks and prevent pass-through */}
         <div
-          className="absolute left-0 right-0 z-[25] flex flex-col items-center pointer-events-auto animate-fade-in"
-          style={{ bottom: "155px" }}
+          className="fixed inset-0 z-[90] flex flex-col items-center justify-center"
+          style={{ backgroundColor: "rgba(0,0,0,0.6)" }}
+          onClick={(e) => { if (e.target === e.currentTarget) setSyncMode(false); }}
         >
           {/* Header */}
           <div className="flex items-center gap-2 mb-3">
             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full"
-              style={{ backgroundColor: "#a10a0b" }}>
-              <Mic size={14} className="text-white" />
-              <span className="text-white font-bold text-[11px] tracking-wider uppercase">Sincronizar</span>
+              style={{ backgroundColor: accent }}>
+              <Mic size={14} className="text-primary-foreground" />
+              <span className="text-primary-foreground font-bold text-[11px] tracking-wider uppercase">Sincronizar</span>
             </div>
             {/* Speed controls */}
             <div className="flex items-center gap-1 px-2 py-1 rounded-full backdrop-blur-md"
               style={{ backgroundColor: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.2)" }}>
               <button onClick={() => adjustSpeed(-5)}
-                className="w-6 h-6 rounded-full flex items-center justify-center transition-all hover:bg-white/20 active:scale-95"
+                className="w-7 h-7 rounded-full flex items-center justify-center transition-all hover:bg-white/20 active:scale-95"
                 title="Atrasar 5s">
-                <Minus size={12} className="text-white" />
+                <Minus size={14} className="text-white" />
               </button>
-              <span className="text-white text-[10px] font-bold min-w-[32px] text-center tabular-nums">
+              <span className="text-white text-[11px] font-bold min-w-[36px] text-center tabular-nums">
                 {speedOffset > 0 ? "+" : ""}{speedOffset}s
               </span>
               <button onClick={() => adjustSpeed(5)}
-                className="w-6 h-6 rounded-full flex items-center justify-center transition-all hover:bg-white/20 active:scale-95"
+                className="w-7 h-7 rounded-full flex items-center justify-center transition-all hover:bg-white/20 active:scale-95"
                 title="Adiantar 5s">
-                <Plus size={12} className="text-white" />
+                <Plus size={14} className="text-white" />
               </button>
             </div>
             {/* Close */}
             <button onClick={() => setSyncMode(false)}
-              className="w-7 h-7 rounded-full flex items-center justify-center backdrop-blur-md transition-all hover:bg-white/20 active:scale-95"
+              className="w-8 h-8 rounded-full flex items-center justify-center backdrop-blur-md transition-all hover:bg-white/20 active:scale-95"
               style={{ backgroundColor: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.2)" }}
               title="Fechar">
-              <span className="text-white text-xs font-bold">✕</span>
+              <span className="text-white text-sm font-bold">✕</span>
             </button>
           </div>
 
           {/* Expanded lyrics panel */}
-          <div 
+          <div
             ref={scrollRef}
             className="w-[92vw] max-w-[720px] rounded-2xl backdrop-blur-xl overflow-y-auto"
-            style={{ 
-              maxHeight: "45vh",
-              backgroundColor: "rgba(0,0,0,0.65)",
-              boxShadow: "0 12px 48px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1)",
-              border: "1px solid rgba(255,255,255,0.12)"
+            style={{
+              maxHeight: "60vh",
+              backgroundColor: "rgba(0,0,0,0.75)",
+              boxShadow: `0 12px 48px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1), 0 0 60px ${accentA(0.15)}`,
+              border: `1px solid ${accentA(0.2)}`
             }}
           >
             {/* Instruction banner */}
-            <div className="sticky top-0 z-10 px-4 py-2.5 text-center backdrop-blur-md"
-              style={{ 
-                backgroundColor: "rgba(161,10,11,0.25)",
-                borderBottom: "1px solid rgba(161,10,11,0.3)"
+            <div className="sticky top-0 z-10 px-4 py-3 text-center backdrop-blur-md"
+              style={{
+                backgroundColor: accentA(0.2),
+                borderBottom: `1px solid ${accentA(0.3)}`
               }}>
-              <span className="text-white/80 text-xs font-medium">
-                🎵 Clique na frase que está tocando no momento
+              <span className="text-white/90 text-sm font-medium">
+                🎵 Clique na frase que está tocando agora
               </span>
             </div>
 
-            <div className="px-4 py-3 flex flex-col gap-0.5">
+            <div className="px-3 py-3 flex flex-col gap-0.5">
               {lines.map((line, idx) => {
                 const isCurrent = idx === currentLineIdx;
                 return (
                   <button
                     key={idx}
                     data-line-idx={idx}
-                    onClick={() => handleSyncLineClick(idx)}
-                    className="text-left px-3 py-2 rounded-xl transition-all duration-200 hover:bg-white/10 active:scale-[0.98]"
+                    onClick={(e) => { e.stopPropagation(); handleSyncLineClick(idx); }}
+                    className="text-left px-4 py-3 rounded-xl transition-all duration-200 hover:bg-white/15 active:scale-[0.98] cursor-pointer select-none"
                     style={{
-                      backgroundColor: isCurrent ? "rgba(161,10,11,0.3)" : "transparent",
-                      border: isCurrent ? "1px solid rgba(161,10,11,0.4)" : "1px solid transparent",
+                      backgroundColor: isCurrent ? accentA(0.25) : "transparent",
+                      border: isCurrent ? `1px solid ${accentA(0.4)}` : "1px solid transparent",
                     }}
                   >
                     <span
-                      className="text-sm leading-relaxed transition-all duration-200"
+                      className="text-base leading-relaxed transition-all duration-200"
                       style={{
-                        color: isCurrent ? "#ffffff" : "rgba(255,255,255,0.45)",
+                        color: isCurrent ? "#ffffff" : "rgba(255,255,255,0.5)",
                         fontWeight: isCurrent ? 700 : 400,
-                        textShadow: isCurrent ? "0 0 15px rgba(161,10,11,0.6)" : "none",
+                        textShadow: isCurrent ? `0 0 15px ${accentA(0.6)}` : "none",
                       }}
                     >
                       {line.text}
@@ -351,17 +365,17 @@ export default function KaraokeOverlay({
     <>
       <Confetti active={showConfetti} />
       <div
-        className="absolute left-0 right-0 z-[25] flex flex-col items-center pointer-events-none animate-fade-in"
+        className="absolute left-0 right-0 z-[60] flex flex-col items-center pointer-events-none animate-fade-in"
         style={{ bottom: "220px" }}
       >
         {/* Badge + speed + config button */}
         <div className="flex items-center gap-2 mb-3 pointer-events-auto">
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full"
-            style={{ backgroundColor: "#a10a0b" }}>
-            <Mic size={14} className="text-white" />
-            <span className="text-white font-bold text-[11px] tracking-wider uppercase">Karaoke</span>
+            style={{ backgroundColor: accent }}>
+            <Mic size={14} className="text-primary-foreground" />
+            <span className="text-primary-foreground font-bold text-[11px] tracking-wider uppercase">Karaoke</span>
           </div>
-          
+
           {/* Speed adjustment */}
           <div className="flex items-center gap-1 px-2 py-1 rounded-full backdrop-blur-md"
             style={{ backgroundColor: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.2)" }}>
@@ -394,9 +408,9 @@ export default function KaraokeOverlay({
         </div>
 
         {/* Lyrics container */}
-        <div 
+        <div
           className="w-[90vw] max-w-[700px] flex flex-col items-center gap-0.5 px-6 py-4 rounded-2xl backdrop-blur-xl"
-          style={{ 
+          style={{
             backgroundColor: "rgba(0,0,0,0.5)",
             boxShadow: "0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1)",
             border: "1px solid rgba(255,255,255,0.1)"
@@ -407,8 +421,8 @@ export default function KaraokeOverlay({
           )}
           {lines.length > 0 && (
             <>
-              {line1 && <KaraokeLine text={line1.text} progress={progress} active />}
-              {line2 && <KaraokeLine text={line2.text} progress={0} active={false} />}
+              {line1 && <KaraokeLine text={line1.text} progress={progress} active accentHsl={accentHsl} />}
+              {line2 && <KaraokeLine text={line2.text} progress={0} active={false} accentHsl={accentHsl} />}
             </>
           )}
         </div>
@@ -417,7 +431,7 @@ export default function KaraokeOverlay({
   );
 }
 
-function KaraokeLine({ text, progress, active }: { text: string; progress: number; active: boolean }) {
+function KaraokeLine({ text, progress, active, accentHsl }: { text: string; progress: number; active: boolean; accentHsl: string }) {
   const words = text.split(/\s+/);
   const highlightedCount = active ? Math.ceil(words.length * progress) : 0;
 
@@ -435,7 +449,7 @@ function KaraokeLine({ text, progress, active }: { text: string; progress: numbe
                   ? "#ffffff"
                   : "rgba(255,255,255,0.35)"
                 : "rgba(255,255,255,0.25)",
-              textShadow: isHighlighted ? "0 0 20px rgba(161,10,11,0.8), 0 0 40px rgba(161,10,11,0.4)" : "none",
+              textShadow: isHighlighted ? `0 0 20px hsl(${accentHsl} / 0.8), 0 0 40px hsl(${accentHsl} / 0.4)` : "none",
               transform: isHighlighted ? "scale(1.05)" : "scale(1)",
               fontWeight: active ? 700 : 500,
             }}
