@@ -291,7 +291,7 @@ export default function KaraokeOverlay({
           onClick={(e) => { if (e.target === e.currentTarget) setSyncMode(false); }}
         >
           {/* Header */}
-          <div className="flex items-center gap-2 mb-3">
+          <div className="flex items-center gap-2 mb-3 flex-wrap justify-center">
             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full"
               style={{ backgroundColor: accent }}>
               <Mic size={14} className="text-primary-foreground" />
@@ -311,6 +311,24 @@ export default function KaraokeOverlay({
               <button onClick={() => adjustSpeed(5)}
                 className="w-7 h-7 rounded-full flex items-center justify-center transition-all hover:bg-white/20 active:scale-95"
                 title="Adiantar 5s">
+                <Plus size={14} className="text-white" />
+              </button>
+            </div>
+            {/* Font size controls */}
+            <div className="flex items-center gap-1 px-2 py-1 rounded-full backdrop-blur-md"
+              style={{ backgroundColor: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.2)" }}>
+              <Type size={13} className="text-white mr-0.5" />
+              <button onClick={() => setFontSize(prev => Math.max(1, prev - 0.2))}
+                className="w-7 h-7 rounded-full flex items-center justify-center transition-all hover:bg-white/20 active:scale-95"
+                title="Diminuir fonte">
+                <Minus size={14} className="text-white" />
+              </button>
+              <span className="text-white text-[11px] font-bold min-w-[28px] text-center tabular-nums">
+                {fontSize.toFixed(1)}
+              </span>
+              <button onClick={() => setFontSize(prev => Math.min(3, prev + 0.2))}
+                className="w-7 h-7 rounded-full flex items-center justify-center transition-all hover:bg-white/20 active:scale-95"
+                title="Aumentar fonte">
                 <Plus size={14} className="text-white" />
               </button>
             </div>
