@@ -406,6 +406,11 @@ export default function KaraokeOverlay({
         style={{ bottom: controlsVisible ? "180px" : "100px", transition: "bottom 0.4s ease" }}
         onMouseEnter={handleLyricsMouseEnter}
         onMouseLeave={handleLyricsMouseLeave}
+        onWheel={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          adjustSpeed(e.deltaY > 0 ? -1 : 1);
+        }}
       >
         {/* Lyrics — no background */}
         <div className="w-[90vw] max-w-[700px] flex flex-col items-center gap-1 px-4 py-2 pointer-events-auto cursor-default">
@@ -425,12 +430,6 @@ export default function KaraokeOverlay({
           className="flex items-center gap-2 mt-3 pointer-events-auto transition-all duration-300"
           style={{ opacity: controlsVisible ? 1 : 0, transform: controlsVisible ? "translateY(0)" : "translateY(8px)", pointerEvents: controlsVisible ? "auto" : "none" }}
         >
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full"
-            style={{ backgroundColor: accent }}>
-            <Mic size={14} className="text-primary-foreground" />
-            <span className="text-primary-foreground font-bold text-[11px] tracking-wider uppercase">Karaoke</span>
-          </div>
-
           {/* Speed adjustment */}
           <div className="flex items-center gap-1 px-2 py-1 rounded-full backdrop-blur-md"
             style={{ backgroundColor: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.2)" }}>
