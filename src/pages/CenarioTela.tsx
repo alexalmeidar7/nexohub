@@ -94,6 +94,8 @@ const mockMessages = [
 export default function CenarioTela() {
   const { user } = useAuth();
   usePageTitle("NexoHub - Cenário Interativo");
+  const uidFromUrl = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("uid") : null;
+  const effectiveUserId = user?.id || uidFromUrl || null;
 
   const [config, setConfig] = useState<CenarioConfig>(defaultConfig);
   const [activeTab, setActiveTab] = useState(() => {
@@ -163,9 +165,9 @@ export default function CenarioTela() {
 
   /* Load config from DB + poll every 10s */
   useEffect(() => {
-    if (!user?.id) return;
+    if (!effectiveUserId) return;
     const load = async () => {
-      const { data } = await supabase.from("user_settings").select("cenario_config" as any).eq("user_id", user.id).maybeSingle();
+      const { data } = await supabase.from("user_settings").select("cenario_config" as any).eq("user_id", effectiveUserId).maybeSingle();
       if ((data as any)?.cenario_config && typeof (data as any).cenario_config === "object") {
         const raw = (data as any).cenario_config as any;
         const { _activeTab, _weatherSubTab, _currencySubTab, ...rest } = raw;
@@ -184,7 +186,7 @@ export default function CenarioTela() {
     load();
     const interval = setInterval(load, 10000);
     return () => clearInterval(interval);
-  }, [user?.id]);
+  }, [effectiveUserId]);
 
   /* Keep cache synced */
   useEffect(() => {
@@ -197,24 +199,24 @@ export default function CenarioTela() {
 
   /* Fetch current program + sponsor logos */
   useEffect(() => {
-    if (!user?.id) return;
+    if (!effectiveUserId) return;
     const load = async () => {
       const now = new Date();
       const dayNames = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
       const today = dayNames[now.getDay()];
       const nowTime = now.toTimeString().slice(0, 5);
-      const { data: progs } = await supabase.from("programas").select("id, nome, horario_inicio, horario_fim, dias_semana").eq("user_id", user.id).eq("ativo", true);
+      const { data: progs } = await supabase.from("programas").select("id, nome, horario_inicio, horario_fim, dias_semana").eq("user_id", effectiveUserId).eq("ativo", true);
       const onAir = progs?.find(p => (p.dias_semana || []).includes(today) && p.horario_inicio <= nowTime && p.horario_fim > nowTime);
       if (onAir) {
         setCurrentProgram({ nome: onAir.nome, id: onAir.id });
-        const { data: logos } = await supabase.from("logos_patrocinadores").select("id, nome, logo_url").eq("programa_id", onAir.id).eq("user_id", user.id).eq("ativo", true).eq("excluido", false);
+        const { data: logos } = await supabase.from("logos_patrocinadores").select("id, nome, logo_url").eq("programa_id", onAir.id).eq("user_id", effectiveUserId).eq("ativo", true).eq("excluido", false);
         setSponsorLogos(logos || []);
       } else { setCurrentProgram(null); setSponsorLogos([]); }
     };
     load();
     const interval = setInterval(load, 30000);
     return () => clearInterval(interval);
-  }, [user?.id]);
+  }, [effectiveUserId]);
 
   /* Fetch weather */
   const weatherCity = config.weather.city || config.city;
