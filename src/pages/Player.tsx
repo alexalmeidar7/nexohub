@@ -924,14 +924,17 @@ export default function PlayerPage() {
     let cachedXmlUrl: string | null = null;
     let inFlight = false;
     let cancelled = false;
+    let xmlFetchFails = 0;
 
     const fetchAndSync = async () => {
-      if (inFlight || cancelled) return;
+      if (inFlight || cancelled || document.hidden) return;
       inFlight = true;
       try {
-        if (!cachedXmlUrl) {
+        // Re-fetch XML URL if not cached or after repeated failures
+        if (!cachedXmlUrl || xmlFetchFails > 3) {
           const { data: settings } = await supabase.from("user_settings").select("music_xml_url").eq("user_id", effectiveUserId).maybeSingle();
           cachedXmlUrl = settings?.music_xml_url || null;
+          if (cachedXmlUrl) xmlFetchFails = 0;
         }
         if (!cachedXmlUrl || cancelled) return;
 
@@ -941,9 +944,10 @@ export default function PlayerPage() {
           const { data: rssData, error: rssError } = await supabase.functions.invoke("fetch-rss", {
             body: { url: cachedXmlUrl },
           });
-          if (rssError || !rssData?.content) return;
+          if (rssError || !rssData?.content) { xmlFetchFails++; return; }
           text = rssData.content;
-        } catch { return; }
+          xmlFetchFails = 0;
+        } catch { xmlFetchFails++; return; }
 
         const data = parseXml(text);
         if (!data || cancelled) return;
@@ -983,8 +987,13 @@ export default function PlayerPage() {
     };
 
     fetchAndSync(); // immediate first fetch
-    const interval = setInterval(fetchAndSync, 2000);
-    return () => { cancelled = true; clearInterval(interval); };
+    const interval = setInterval(fetchAndSync, 3000);
+
+    // Resume sync immediately when page becomes visible again (e.g. after alt-tab in fullscreen)
+    const onVisibility = () => { if (!document.hidden && !cancelled) fetchAndSync(); };
+    document.addEventListener("visibilitychange", onVisibility);
+
+    return () => { cancelled = true; clearInterval(interval); document.removeEventListener("visibilitychange", onVisibility); };
   }, [effectiveUserId]);
 
   // Play stream
