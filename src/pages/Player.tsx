@@ -929,7 +929,7 @@ export default function PlayerPage() {
     let fetchCycleCount = 0;
 
     const fetchAndSync = async () => {
-      if (inFlight || cancelled || document.hidden) return;
+      if (inFlight || cancelled) return;
       inFlight = true;
       try {
         // Re-fetch XML URL if not cached or after repeated failures
