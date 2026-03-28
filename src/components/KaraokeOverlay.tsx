@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useMemo } from "react";
-import { Mic, Minus, Plus, Settings } from "lucide-react";
+import { Mic, Minus, Plus, Settings, Type } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 const MUSIC_START_KEY = "masterview_music_start";
