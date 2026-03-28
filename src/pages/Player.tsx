@@ -950,7 +950,7 @@ export default function PlayerPage() {
         if (directFetchOk !== false) {
           try {
             const directRes = await fetch(cachedXmlUrl, {
-              signal: AbortSignal.timeout(3000),
+              signal: AbortSignal.timeout(2000),
               cache: "no-store",
             });
             if (directRes.ok) {
