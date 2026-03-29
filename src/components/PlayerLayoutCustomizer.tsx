@@ -92,6 +92,9 @@ export interface PlayerColors {
   liveControlBg: string;
   liveControlText: string;
   liveControlIcon: string;
+  // Audio Channel Settings
+  liveAudioBgMode: string; // "thumb" | "cover" | "gradient"
+  spectrumColor: string;
   // Watch / Player Controls
   watchTopBarBg: string;
   watchTopBarText: string;
