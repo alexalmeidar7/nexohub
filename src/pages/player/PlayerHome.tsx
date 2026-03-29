@@ -307,11 +307,12 @@ function HeroBanner({
         <div className="flex items-center gap-3">
           <button
             onClick={onPlay}
-            className="flex items-center gap-2 px-6 py-3 rounded-lg text-sm font-bold transition-all duration-300 hover:scale-105"
+            className="flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold transition-all duration-300 hover:scale-105"
             style={{
-              background: "var(--layout-button-bg)",
-              color: "var(--layout-button-text)",
-              boxShadow: "0 4px 24px color-mix(in srgb, var(--layout-button-bg) 40%, transparent)",
+              background: "rgba(255,255,255,0.12)",
+              backdropFilter: "blur(20px)",
+              color: "#fff",
+              border: "1px solid rgba(255,255,255,0.15)",
             }}
           >
             <Play className="h-4 w-4 fill-current" />
@@ -319,12 +320,12 @@ function HeroBanner({
           </button>
           <button
             onClick={onGrade}
-            className="flex items-center gap-2 px-5 py-3 rounded-lg text-sm font-semibold transition-all duration-300 hover:opacity-80"
+            className="flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold transition-all duration-300 hover:scale-105"
             style={{
-              background: "color-mix(in srgb, var(--layout-button-bg) 30%, transparent)",
-              color: "var(--layout-button-text)",
-              backdropFilter: "blur(12px)",
-              border: "1px solid color-mix(in srgb, var(--layout-button-bg) 40%, transparent)",
+              background: "rgba(255,255,255,0.06)",
+              backdropFilter: "blur(20px)",
+              color: "rgba(255,255,255,0.7)",
+              border: "1px solid rgba(255,255,255,0.08)",
             }}
           >
             <LayoutGrid className="h-4 w-4" />
@@ -426,10 +427,12 @@ function StreamingCard({ channel, currentProgram, nowPlaying, onClick }: {
       style={{
         width: `${expandedWidth}px`,
         height: `${cardHeight}px`,
-        background: "linear-gradient(145deg, rgba(255,255,255,0.06) 0%, hsl(var(--player-bg)) 100%)",
+        background: "rgba(255,255,255,0.04)",
+        backdropFilter: "blur(20px)",
+        WebkitBackdropFilter: "blur(20px)",
         transform: "none",
-        boxShadow: hovered ? "0 0 12px 2px hsla(var(--player-accent) / 0.5)" : "none",
-        border: hovered ? "2px solid hsl(var(--player-accent))" : "1px solid rgba(255,255,255,0.06)",
+        boxShadow: hovered ? "0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px hsla(var(--player-accent) / 0.4)" : "0 2px 8px rgba(0,0,0,0.2)",
+        border: hovered ? "1px solid hsla(var(--player-accent) / 0.5)" : "1px solid rgba(255,255,255,0.08)",
       }}
     >
       {/* Cover image – pinned to left 160px */}
@@ -468,17 +471,17 @@ function StreamingCard({ channel, currentProgram, nowPlaying, onClick }: {
       {/* Live badge */}
       <span
         className="absolute top-2.5 left-2.5 z-10 text-[9px] uppercase tracking-wider font-bold px-2 py-1 rounded-lg flex items-center gap-1.5"
-        style={{ background: "var(--layout-button-bg)", color: "var(--layout-button-text)", boxShadow: "0 4px 16px color-mix(in srgb, var(--layout-button-bg) 50%, transparent)" }}
+        style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(12px)", color: "#fff", border: "1px solid rgba(255,255,255,0.1)" }}
       >
-        <span className="inline-block w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+        <span className="inline-block w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
         ao vivo
       </span>
 
       {/* Play overlay on hover — hidden for video cards */}
       {!isVideo && (
         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 z-[5] pointer-events-none">
-          <div className="w-12 h-12 rounded-full backdrop-blur-md flex items-center justify-center shadow-2xl" style={{ background: "hsla(var(--player-accent) / 0.85)", boxShadow: "0 8px 32px hsla(var(--player-accent) / 0.5)" }}>
-            <Play className="h-5 w-5 text-white fill-white" />
+          <div className="w-11 h-11 rounded-full backdrop-blur-xl flex items-center justify-center" style={{ background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.2)" }}>
+            <Play className="h-4 w-4 text-white fill-white" />
           </div>
         </div>
       )}
@@ -729,12 +732,14 @@ function TrendingCard({ item, idx, channels, onClick }: {
       style={{
         width: `${expandedWidth}px`,
         height: `${cardHeight}px`,
-        background: "linear-gradient(145deg, rgba(255,255,255,0.06) 0%, hsl(var(--player-bg)) 100%)",
+        background: "rgba(255,255,255,0.04)",
+        backdropFilter: "blur(20px)",
+        WebkitBackdropFilter: "blur(20px)",
         zIndex: hovered ? 20 : 1,
         boxShadow: hovered
-          ? "0 8px 30px -4px hsla(var(--player-accent) / 0.45), 0 0 0 1.5px hsl(var(--player-accent))"
-          : "0 4px 12px -4px rgba(0,0,0,0.3)",
-        border: hovered ? "1.5px solid hsl(var(--player-accent))" : "1px solid rgba(255,255,255,0.06)",
+          ? "0 12px 40px rgba(0,0,0,0.4), 0 0 0 1px hsla(var(--player-accent) / 0.4)"
+          : "0 2px 8px rgba(0,0,0,0.2)",
+        border: hovered ? "1px solid hsla(var(--player-accent) / 0.5)" : "1px solid rgba(255,255,255,0.08)",
         transition: "width 0.5s cubic-bezier(0.25,0.1,0.25,1), box-shadow 0.4s ease, border 0.3s ease",
       }}
     >
@@ -788,8 +793,8 @@ function TrendingCard({ item, idx, channels, onClick }: {
 
       {/* Ranking badge */}
       <div
-        className="absolute top-2.5 left-2.5 z-10 w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-black"
-        style={{ background: "linear-gradient(135deg, hsl(var(--player-accent)), hsl(var(--player-accent-hover)))", boxShadow: "0 4px 16px hsla(var(--player-accent) / 0.5)" }}
+        className="absolute top-2.5 left-2.5 z-10 w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-black"
+        style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.15)" }}
       >
         {idx + 1}
       </div>
@@ -820,19 +825,19 @@ function CatalogCard({ image, title, subtitle, logoUrl, onClick }: { image?: str
       style={{
         width: "160px",
         aspectRatio: "2/3",
-        background: "linear-gradient(145deg, rgba(255,255,255,0.06) 0%, hsl(var(--player-bg)) 100%)",
-        border: "1px solid rgba(255,255,255,0.06)",
-        boxShadow: "0 4px 20px -8px rgba(0,0,0,0.4)",
+        background: "rgba(255,255,255,0.04)",
+        backdropFilter: "blur(20px)",
+        WebkitBackdropFilter: "blur(20px)",
+        border: "1px solid rgba(255,255,255,0.08)",
+        boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.borderColor = "hsl(var(--player-accent))";
-        e.currentTarget.style.borderWidth = "2px";
-        e.currentTarget.style.boxShadow = "0 0 12px 2px hsla(var(--player-accent) / 0.5)";
+        e.currentTarget.style.borderColor = "hsla(var(--player-accent) / 0.5)";
+        e.currentTarget.style.boxShadow = "0 12px 40px rgba(0,0,0,0.4), 0 0 0 1px hsla(var(--player-accent) / 0.4)";
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)";
-        e.currentTarget.style.borderWidth = "1px";
-        e.currentTarget.style.boxShadow = "none";
+        e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)";
+        e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.2)";
       }}
     >
       {image ? (
@@ -852,8 +857,8 @@ function CatalogCard({ image, title, subtitle, logoUrl, onClick }: { image?: str
 
       {/* Play overlay */}
       <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 z-[5] pointer-events-none">
-        <div className="w-12 h-12 rounded-full backdrop-blur-md flex items-center justify-center shadow-2xl" style={{ background: "hsla(var(--player-accent) / 0.85)", boxShadow: "0 8px 32px hsla(var(--player-accent) / 0.5)" }}>
-          <Play className="h-5 w-5 text-white fill-white" />
+        <div className="w-11 h-11 rounded-full backdrop-blur-xl flex items-center justify-center" style={{ background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.2)" }}>
+          <Play className="h-4 w-4 text-white fill-white" />
         </div>
       </div>
 
@@ -875,19 +880,19 @@ function HistoryCard({ item, onClick }: { item: { channel_name: string; channel_
       style={{
         width: "160px",
         aspectRatio: "2/3",
-        background: "linear-gradient(145deg, rgba(255,255,255,0.06) 0%, hsl(var(--player-bg)) 100%)",
-        border: "1px solid rgba(255,255,255,0.06)",
-        boxShadow: "0 4px 20px -8px rgba(0,0,0,0.4)",
+        background: "rgba(255,255,255,0.04)",
+        backdropFilter: "blur(20px)",
+        WebkitBackdropFilter: "blur(20px)",
+        border: "1px solid rgba(255,255,255,0.08)",
+        boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.borderColor = "hsl(var(--player-accent))";
-        e.currentTarget.style.borderWidth = "2px";
-        e.currentTarget.style.boxShadow = "0 0 12px 2px hsla(var(--player-accent) / 0.5)";
+        e.currentTarget.style.borderColor = "hsla(var(--player-accent) / 0.5)";
+        e.currentTarget.style.boxShadow = "0 12px 40px rgba(0,0,0,0.4), 0 0 0 1px hsla(var(--player-accent) / 0.4)";
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)";
-        e.currentTarget.style.borderWidth = "1px";
-        e.currentTarget.style.boxShadow = "none";
+        e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)";
+        e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.2)";
       }}
     >
       {item.channel_cover_url ? (
@@ -904,8 +909,8 @@ function HistoryCard({ item, onClick }: { item: { channel_name: string; channel_
 
       {/* Play overlay */}
       <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 z-[5] pointer-events-none">
-        <div className="w-12 h-12 rounded-full backdrop-blur-md flex items-center justify-center shadow-2xl" style={{ background: "hsla(var(--player-accent) / 0.85)", boxShadow: "0 8px 32px hsla(var(--player-accent) / 0.5)" }}>
-          <Play className="h-5 w-5 text-white fill-white" />
+        <div className="w-11 h-11 rounded-full backdrop-blur-xl flex items-center justify-center" style={{ background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.2)" }}>
+          <Play className="h-4 w-4 text-white fill-white" />
         </div>
       </div>
 
@@ -1476,8 +1481,10 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                         {shopProducts.map((product: any) => (
                           <div
                             key={product.id}
-                            className="group rounded-xl overflow-hidden transition-all duration-300 hover:border-white/80"
-                            style={{ background: "linear-gradient(160deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%)", border: "1px solid rgba(255,255,255,0.08)" }}
+                            className="group rounded-xl overflow-hidden transition-all duration-300"
+                            style={{ background: "rgba(255,255,255,0.04)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.08)" }}
+                            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "hsla(var(--player-accent) / 0.4)"; e.currentTarget.style.boxShadow = "0 8px 32px rgba(0,0,0,0.3)"; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.boxShadow = "none"; }}
                           >
                             <div className="aspect-square overflow-hidden relative">
                               {product.image_url ? (
@@ -1487,7 +1494,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                                   <ShoppingBag className="h-8 w-8 text-white/20" />
                                 </div>
                               )}
-                              <div className="absolute bottom-2 right-2 px-2 py-1 rounded-full text-xs font-bold text-white" style={{ background: "hsl(var(--player-accent))", boxShadow: "0 4px 16px hsla(var(--player-accent) / 0.5)" }}>
+                              <div className="absolute bottom-2 right-2 px-2 py-1 rounded-full text-xs font-bold text-white" style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.1)" }}>
                                 R$ {product.price.toFixed(2).replace(".", ",")}
                               </div>
                               {product.stock <= 3 && (
@@ -1505,7 +1512,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="mt-1 w-full text-center text-[10px] font-bold py-2 rounded-lg transition-all uppercase tracking-wider text-white"
-                                  style={{ background: "linear-gradient(135deg, hsl(var(--player-accent)), hsl(var(--player-accent-hover)))", boxShadow: "0 2px 12px hsla(var(--player-accent) / 0.3)" }}
+                                  style={{ background: "rgba(255,255,255,0.1)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.15)" }}
                                 >
                                   Comprar
                                 </a>
@@ -1552,8 +1559,10 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                   {shopProducts.map((product: any) => (
                     <div
                       key={product.id}
-                      className="group rounded-xl overflow-hidden transition-all duration-300 hover:border-white/80"
-                      style={{ background: "linear-gradient(160deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%)", border: "1px solid rgba(255,255,255,0.08)" }}
+                      className="group rounded-xl overflow-hidden transition-all duration-300"
+                      style={{ background: "rgba(255,255,255,0.04)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.08)" }}
+                      onMouseEnter={(e) => { e.currentTarget.style.borderColor = "hsla(var(--player-accent) / 0.4)"; e.currentTarget.style.boxShadow = "0 8px 32px rgba(0,0,0,0.3)"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.boxShadow = "none"; }}
                     >
                       <div className="aspect-square overflow-hidden relative">
                         {product.image_url ? (
@@ -1563,7 +1572,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                             <ShoppingBag className="h-8 w-8 text-white/20" />
                           </div>
                         )}
-                        <div className="absolute bottom-2 right-2 px-2 py-1 rounded-full text-xs font-bold text-white" style={{ background: "hsl(var(--player-accent))", boxShadow: "0 4px 16px hsla(var(--player-accent) / 0.5)" }}>
+                        <div className="absolute bottom-2 right-2 px-2 py-1 rounded-full text-xs font-bold text-white" style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.1)" }}>
                           R$ {product.price.toFixed(2).replace(".", ",")}
                         </div>
                         {product.stock <= 3 && (
@@ -1581,7 +1590,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                             target="_blank"
                             rel="noopener noreferrer"
                             className="mt-1 w-full text-center text-[10px] font-bold py-2 rounded-lg transition-all uppercase tracking-wider text-white"
-                            style={{ background: "linear-gradient(135deg, hsl(var(--player-accent)), hsl(var(--player-accent-hover)))", boxShadow: "0 2px 12px hsla(var(--player-accent) / 0.3)" }}
+                            style={{ background: "rgba(255,255,255,0.1)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.15)" }}
                           >
                             Comprar
                           </a>

@@ -54,7 +54,10 @@ export default function PlayerSidebar({
         onMouseLeave={() => autoHide && setHovered(false)}
         className="w-[52px] flex flex-col items-center py-6 pl-2 gap-2 z-40 fixed left-0 top-0 bottom-0 transition-all duration-300 ease-in-out"
         style={{
-          background: "transparent",
+          background: "rgba(0,0,0,0.3)",
+          backdropFilter: "blur(24px)",
+          WebkitBackdropFilter: "blur(24px)",
+          borderRight: "1px solid rgba(255,255,255,0.06)",
           transform: isShown ? "translateX(0)" : "translateX(-100%)",
           opacity: isShown ? 1 : 0,
           pointerEvents: isShown ? "auto" : "none",
@@ -114,9 +117,10 @@ export default function PlayerSidebar({
                 className="group/btn relative w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-200 focus-visible:outline-none"
                 style={{
                   background: isActive
-                    ? "linear-gradient(135deg, hsl(var(--player-accent)), hsl(var(--player-accent-hover)))"
+                    ? "rgba(255,255,255,0.1)"
                     : "transparent",
-                  boxShadow: isActive ? "0 2px 12px hsla(var(--player-accent) / 0.35)" : "none",
+                  boxShadow: isActive ? "inset 0 0 0 1px rgba(255,255,255,0.15)" : "none",
+                  border: isActive ? "1px solid rgba(255,255,255,0.12)" : "1px solid transparent",
                 }}
                 title={item.label}
                 aria-label={item.label}
