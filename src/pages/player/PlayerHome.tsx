@@ -731,12 +731,14 @@ function TrendingCard({ item, idx, channels, onClick }: {
       style={{
         width: `${expandedWidth}px`,
         height: `${cardHeight}px`,
-        background: "linear-gradient(145deg, rgba(255,255,255,0.06) 0%, hsl(var(--player-bg)) 100%)",
+        background: "rgba(255,255,255,0.04)",
+        backdropFilter: "blur(20px)",
+        WebkitBackdropFilter: "blur(20px)",
         zIndex: hovered ? 20 : 1,
         boxShadow: hovered
-          ? "0 8px 30px -4px hsla(var(--player-accent) / 0.45), 0 0 0 1.5px hsl(var(--player-accent))"
-          : "0 4px 12px -4px rgba(0,0,0,0.3)",
-        border: hovered ? "1.5px solid hsl(var(--player-accent))" : "1px solid rgba(255,255,255,0.06)",
+          ? "0 12px 40px rgba(0,0,0,0.4), 0 0 0 1px hsla(var(--player-accent) / 0.4)"
+          : "0 2px 8px rgba(0,0,0,0.2)",
+        border: hovered ? "1px solid hsla(var(--player-accent) / 0.5)" : "1px solid rgba(255,255,255,0.08)",
         transition: "width 0.5s cubic-bezier(0.25,0.1,0.25,1), box-shadow 0.4s ease, border 0.3s ease",
       }}
     >
