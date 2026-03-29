@@ -407,10 +407,128 @@ function CatalogMockup({ c }: { c: PlayerColors }) {
   );
 }
 
+/* ── Background Config UI ── */
+function BgConfigEditor({ config, onChange, solidColor }: { config: ScreenBgConfig; solidColor: string; onChange: (c: ScreenBgConfig) => void }) {
+  const bgTypes: { value: BgType; label: string; icon: React.ReactNode }[] = [
+    { value: "solid", label: "Cor Sólida", icon: <Paintbrush size={12} /> },
+    { value: "image", label: "Imagem", icon: <Image size={12} /> },
+    { value: "gradient", label: "Degradê", icon: <Palette size={12} /> },
+  ];
+
+  const positions: GradientPosition[] = ["top-left", "top", "top-right", "left", "center", "right", "bottom-left", "bottom", "bottom-right"];
+  const angles = [0, 45, 90, 135, 180, 225, 270, 315];
+
+  return (
+    <div className="space-y-3 p-3 rounded-xl" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 4%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)" }}>
+      <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Tipo de Fundo</span>
+      <div className="flex gap-1.5">
+        {bgTypes.map(t => (
+          <button key={t.value} onClick={() => onChange({ ...config, bgType: t.value })}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold rounded-lg transition-all"
+            style={{
+              backgroundColor: config.bgType === t.value ? "var(--layout-header-bg, #1a1a1a)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)",
+              color: config.bgType === t.value ? "var(--layout-header-text, #fff)" : "var(--layout-page-text, #1a1a1a)",
+            }}>
+            {t.icon} {t.label}
+          </button>
+        ))}
+      </div>
+
+      {config.bgType === "image" && (
+        <div className="space-y-1.5">
+          <span className="text-[10px] font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>URL da Imagem</span>
+          <input
+            value={config.bgImage}
+            onChange={(e) => onChange({ ...config, bgImage: e.target.value })}
+            placeholder="https://exemplo.com/imagem.jpg"
+            className="w-full px-3 py-2 rounded-lg text-[11px] outline-none"
+            style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 12%, transparent)" }}
+          />
+        </div>
+      )}
+
+      {config.bgType === "gradient" && (
+        <div className="space-y-3">
+          {/* Gradient type */}
+          <div className="flex gap-1.5">
+            {(["linear", "radial"] as GradientType[]).map(gt => (
+              <button key={gt} onClick={() => onChange({ ...config, gradientType: gt })}
+                className="flex-1 px-3 py-1.5 text-[10px] font-bold rounded-lg transition-all"
+                style={{
+                  backgroundColor: config.gradientType === gt ? "var(--layout-header-bg, #1a1a1a)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)",
+                  color: config.gradientType === gt ? "var(--layout-header-text, #fff)" : "var(--layout-page-text, #1a1a1a)",
+                }}>
+                {gt === "linear" ? "Linear" : "Circular (Radial)"}
+              </button>
+            ))}
+          </div>
+
+          {/* Colors */}
+          <div className="grid grid-cols-2 gap-2">
+            <PColorInput label="Cor 1" value={config.gradientColor1} onChange={(v) => onChange({ ...config, gradientColor1: v })} />
+            <PColorInput label="Cor 2" value={config.gradientColor2} onChange={(v) => onChange({ ...config, gradientColor2: v })} />
+          </div>
+
+          {/* Position / Angle */}
+          {config.gradientType === "linear" ? (
+            <div className="space-y-1.5">
+              <span className="text-[10px] font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Ângulo: {config.gradientAngle}°</span>
+              <div className="flex flex-wrap gap-1">
+                {angles.map(a => (
+                  <button key={a} onClick={() => onChange({ ...config, gradientAngle: a })}
+                    className="w-8 h-8 rounded-lg text-[9px] font-bold transition-all"
+                    style={{
+                      backgroundColor: config.gradientAngle === a ? "var(--layout-header-bg, #1a1a1a)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)",
+                      color: config.gradientAngle === a ? "var(--layout-header-text, #fff)" : "var(--layout-page-text, #1a1a1a)",
+                    }}>
+                    {a}°
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-1.5">
+              <span className="text-[10px] font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Posição do centro</span>
+              <div className="grid grid-cols-3 gap-1 w-fit">
+                {positions.map(p => (
+                  <button key={p} onClick={() => onChange({ ...config, gradientPosition: p })}
+                    className="w-8 h-8 rounded-lg text-[8px] font-bold transition-all flex items-center justify-center"
+                    style={{
+                      backgroundColor: config.gradientPosition === p ? "var(--layout-header-bg, #1a1a1a)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)",
+                      color: config.gradientPosition === p ? "var(--layout-header-text, #fff)" : "var(--layout-page-text, #1a1a1a)",
+                    }}>
+                    {positionLabels[p].split(" ")[0]}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Preview strip */}
+          <div className="h-6 rounded-lg" style={buildBgStyle(solidColor, config)} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+const defaultBgConfigs: ScreenBgConfigs = {
+  loading: { ...defaultScreenBg },
+  login: { ...defaultScreenBg },
+  home: { ...defaultScreenBg },
+  live: { ...defaultScreenBg },
+  catalog: { ...defaultScreenBg },
+};
+
+const screenBgColorKey: Record<ScreenTab, keyof PlayerColors> = {
+  loading: "loadingBg", login: "loginBg", home: "homeBg", live: "liveBg", catalog: "catalogBg",
+};
+
 /* ── Main Component ── */
 export default function PlayerLayoutCustomizer() {
   const { user } = useAuth();
   const [colors, setColors] = useState<PlayerColors>(defaultPlayerColors);
+  const [bgConfigs, setBgConfigs] = useState<ScreenBgConfigs>({ ...defaultBgConfigs });
   const [saving, setSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const [activeTab, setActiveTab] = useState<ScreenTab>("loading");
@@ -426,10 +544,22 @@ export default function PlayerLayoutCustomizer() {
         .eq("user_id", user.id)
         .maybeSingle();
       if (!active) return;
-      if (data?.dashboard_items && typeof data.dashboard_items === "object" && (data.dashboard_items as any).player_colors) {
-        const loaded = { ...defaultPlayerColors, ...(data.dashboard_items as any).player_colors };
-        setColors(loaded);
-        originalRef.current = loaded;
+      const di = data?.dashboard_items as any;
+      if (di && typeof di === "object") {
+        if (di.player_colors) {
+          const loaded = { ...defaultPlayerColors, ...di.player_colors };
+          setColors(loaded);
+          originalRef.current = loaded;
+        }
+        if (di.player_bg_configs) {
+          setBgConfigs(prev => {
+            const merged = { ...prev };
+            for (const k of Object.keys(prev) as ScreenTab[]) {
+              if (di.player_bg_configs[k]) merged[k] = { ...defaultScreenBg, ...di.player_bg_configs[k] };
+            }
+            return merged;
+          });
+        }
       }
     })();
     return () => { active = false; };
@@ -437,6 +567,11 @@ export default function PlayerLayoutCustomizer() {
 
   const updateColor = (key: keyof PlayerColors, value: string) => {
     setColors(prev => ({ ...prev, [key]: value }));
+    setHasChanges(true);
+  };
+
+  const updateBgConfig = (tab: ScreenTab, cfg: ScreenBgConfig) => {
+    setBgConfigs(prev => ({ ...prev, [tab]: cfg }));
     setHasChanges(true);
   };
 
@@ -451,7 +586,7 @@ export default function PlayerLayoutCustomizer() {
         .maybeSingle();
 
       const current = (existing?.dashboard_items && typeof existing.dashboard_items === "object") ? { ...(existing.dashboard_items as any) } : {};
-      const payload = { ...current, player_colors: colors };
+      const payload = { ...current, player_colors: colors, player_bg_configs: bgConfigs };
 
       const { error } = await supabase
         .from("user_settings")
@@ -471,6 +606,7 @@ export default function PlayerLayoutCustomizer() {
 
   const resetColors = async () => {
     setColors(defaultPlayerColors);
+    setBgConfigs({ ...defaultBgConfigs });
     if (!user) return;
     setSaving(true);
     try {
@@ -480,7 +616,7 @@ export default function PlayerLayoutCustomizer() {
         .eq("user_id", user.id)
         .maybeSingle();
       const current = (existing?.dashboard_items && typeof existing.dashboard_items === "object") ? { ...(existing.dashboard_items as any) } : {};
-      const payload = { ...current, player_colors: defaultPlayerColors };
+      const payload = { ...current, player_colors: defaultPlayerColors, player_bg_configs: defaultBgConfigs };
       await supabase.from("user_settings").upsert([{ user_id: user.id, dashboard_items: payload as any, updated_at: new Date().toISOString() }], { onConflict: "user_id" });
       toast.success("Cores do Player restauradas ao padrão.");
       originalRef.current = defaultPlayerColors;
