@@ -28,6 +28,7 @@ export const defaultScreenBg: ScreenBgConfig = {
   gradientColor2: "#1a1a1a",
   gradientPosition: "center",
   gradientAngle: 135,
+  gradientMidpoint: 50,
 };
 
 export type ScreenBgConfigs = Record<ScreenTab, ScreenBgConfig>;
