@@ -134,6 +134,14 @@ export function usePlayerColors() {
     root.style.setProperty("--player-live-audio-bg-mode", colors.liveAudioBgMode || "cover");
     root.style.setProperty("--player-spectrum-color", colors.spectrumColor || "#dc2626");
 
+    // Audio gradient settings
+    root.style.setProperty("--player-audio-gradient-color1", String(colors.liveAudioGradientColor1 || "#dc2626"));
+    root.style.setProperty("--player-audio-gradient-color2", String(colors.liveAudioGradientColor2 || "#000000"));
+    root.style.setProperty("--player-audio-gradient-type", String(colors.liveAudioGradientType || "radial"));
+    root.style.setProperty("--player-audio-gradient-position", String(colors.liveAudioGradientPosition || "bottom"));
+    root.style.setProperty("--player-audio-gradient-angle", String(colors.liveAudioGradientAngle ?? 135));
+    root.style.setProperty("--player-audio-gradient-midpoint", String(colors.liveAudioGradientMidpoint ?? 62));
+
     // Watch controls
     root.style.setProperty("--player-watch-topbar-bg", colors.watchTopBarBg || "#000000cc");
     root.style.setProperty("--player-watch-topbar-text", colors.watchTopBarText || "#ffffff");
