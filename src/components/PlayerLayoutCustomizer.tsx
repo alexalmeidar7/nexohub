@@ -121,6 +121,8 @@ export const defaultPlayerColors: PlayerColors = {
   homeCardBg: "#1a1a1a",
   homeCardText: "#ffffff",
   homeCardBorder: "#333333",
+  homeBadgeBg: "#dc2626",
+  homeBadgeText: "#ffffff",
   homeBannerOverlay: "#000000",
   liveBg: "#000000",
   liveCardBg: "#1a1a1a",
