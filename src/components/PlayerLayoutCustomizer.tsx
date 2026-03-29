@@ -78,6 +78,8 @@ export interface PlayerColors {
   homeCardBg: string;
   homeCardText: string;
   homeCardBorder: string;
+  homeBadgeBg: string;
+  homeBadgeText: string;
   homeBannerOverlay: string;
   // Live Channels
   liveBg: string;
