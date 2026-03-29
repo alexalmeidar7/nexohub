@@ -477,7 +477,7 @@ export default function KaraokeOverlay({
         }}
       >
         {/* Lyrics — no background */}
-        <div className="w-[90vw] max-w-[700px] flex flex-col items-center gap-1.5 px-6 py-3 pointer-events-auto cursor-default rounded-2xl"
+        <div className="w-[94vw] sm:w-[90vw] max-w-[700px] flex flex-col items-center gap-1 sm:gap-1.5 px-3 sm:px-6 py-2 sm:py-3 pointer-events-auto cursor-default rounded-2xl"
           style={{ background: "linear-gradient(to top, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.25) 70%, transparent 100%)" }}>
           {loading && (
             <span className="text-white/50 text-xs animate-pulse">Buscando letra...</span>
@@ -539,12 +539,15 @@ export default function KaraokeOverlay({
 }
 
 function KaraokeLine({ text, progress, active, accentHsl, fontSize = 1.6 }: { text: string; progress: number; active: boolean; accentHsl: string; fontSize?: number }) {
+  const isMobile = typeof window !== "undefined" && window.innerWidth < 640;
+  const mobileFactor = isMobile ? 0.65 : 1;
+  const effectiveSize = fontSize * mobileFactor;
   const words = text.split(/\s+/);
   const highlightedCount = active ? Math.ceil(words.length * progress) : 0;
   const ballIdx = active ? highlightedCount : -1;
 
   return (
-    <p className="text-center leading-snug transition-all duration-300 relative" style={{ fontSize: active ? `${fontSize}rem` : `${fontSize * 0.7}rem`, letterSpacing: "-0.01em" }}>
+    <p className="text-center leading-snug transition-all duration-300 relative" style={{ fontSize: active ? `${effectiveSize}rem` : `${effectiveSize * 0.7}rem`, letterSpacing: "-0.01em" }}>
       {words.map((word, i) => {
         const isHighlighted = i < highlightedCount;
         const isBallWord = i === ballIdx && active;
