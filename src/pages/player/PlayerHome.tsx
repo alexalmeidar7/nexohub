@@ -1628,6 +1628,25 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
           <MiniPlayerWidget data={miniPlayerData} onClose={() => { clearMiniPlayerData(); setMiniPlayerData(null); }} />
         </Suspense>
       )}
+
+      {/* Profile edit dialog */}
+      {profileDialogOpen && user && (
+        <ProfileDialog
+          user={user}
+          profileName={profileName}
+          profileEmail={profileEmail}
+          profileCity={profileCity}
+          profileAvatar={profileAvatar}
+          onClose={() => setProfileDialogOpen(false)}
+          onSaved={(data) => {
+            if (data.nome) setProfileName(data.nome);
+            if (data.email) setProfileEmail(data.email);
+            setProfileCity([data.cidade, data.estado].filter(Boolean).join(", "));
+            if (data.avatar_url) setProfileAvatar(data.avatar_url);
+            setProfileDialogOpen(false);
+          }}
+        />
+      )}
     </div>
   );
 }
