@@ -413,7 +413,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       {/* Mobile menu overlay */}
       {mobileMenuOpen && (
         <div className="lg:hidden fixed inset-0 z-50 flex">
-          <div className="w-[280px] flex flex-col h-full overflow-y-auto" style={{ background: `${layoutColors.navBg}73`, backdropFilter: "blur(32px) saturate(1.5)", WebkitBackdropFilter: "blur(32px) saturate(1.5)", borderRight: `1px solid ${layoutColors.borderColor}1a` }}>
+          <div className="w-[280px] flex flex-col h-full overflow-y-auto" style={{ background: `${layoutColors.navBg}a6`, backdropFilter: "blur(40px) saturate(1.8)", WebkitBackdropFilter: "blur(40px) saturate(1.8)", borderRight: `1px solid ${layoutColors.borderColor}15`, boxShadow: "inset -1px 0 0 rgba(255,255,255,0.04)" }}>
             <div className="flex items-center justify-between px-4 pt-3 pb-2">
               <img src={seloNexohub} alt="NexoHUB" className="h-4" />
               <button onClick={() => setMobileMenuOpen(false)} className="p-1.5 rounded-full" style={{ backgroundColor: layoutColors.buttonBg }}>
