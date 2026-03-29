@@ -215,7 +215,7 @@ export default function AudioSpectrum({ audioElement, barColor, style = "bars", 
 
       // Get real frequency data
       const analyser = analyserRef.current;
-      let freqData: Uint8Array | null = freqDataRef.current;
+      let freqData: Uint8Array<ArrayBuffer> | null = freqDataRef.current;
       if (analyser && freqData) {
         analyser.getByteFrequencyData(freqData);
       } else {
