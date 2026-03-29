@@ -2469,7 +2469,7 @@ export default function PlayerPage() {
           </div>
 
           {/* Program info: "no ar" */}
-          <div className="hidden sm:flex flex-col min-w-0 px-4 sm:px-6 border-r border-white/[0.06] overflow-hidden" style={{ flex: "0 1 350px" }}>
+          <div className="hidden sm:flex flex-col min-w-0 px-4 sm:px-6 border-r border-white/[0.06] overflow-hidden" style={{ flex: "0 0 280px", maxWidth: "350px" }}>
             <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--player-watch-topbar-accent, hsl(var(--player-accent)))" }}>no ar</span>
             <span key={`noar-${currentProg?.nome}-${channelAnimKey}`} className="text-lg sm:text-xl font-bold leading-tight truncate" style={{ color: "var(--player-watch-topbar-text, rgba(255,255,255,0.9))", animation: "playerFadeSlideIn 0.4s ease-out" }}>{currentProg?.nome || "—"}</span>
             <div key={`noar-sub-${currentProg?.nome}-${channelAnimKey}`} className="flex items-center gap-2 text-xs" style={{ color: "color-mix(in srgb, var(--player-watch-topbar-text, #ffffff) 50%, transparent)", animation: "playerFadeSlideIn 0.4s ease-out 0.1s both" }}>
