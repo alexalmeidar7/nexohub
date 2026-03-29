@@ -95,6 +95,12 @@ export interface PlayerColors {
   // Audio Channel Settings
   liveAudioBgMode: string; // "thumb" | "cover" | "gradient"
   spectrumColor: string;
+  liveAudioGradientColor1: string;
+  liveAudioGradientColor2: string;
+  liveAudioGradientType: string; // "linear" | "radial"
+  liveAudioGradientPosition: string;
+  liveAudioGradientAngle: number;
+  liveAudioGradientMidpoint: number;
   // Watch / Player Controls
   watchTopBarBg: string;
   watchTopBarText: string;
