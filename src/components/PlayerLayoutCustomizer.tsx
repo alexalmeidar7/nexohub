@@ -49,8 +49,9 @@ export function buildBgStyle(solidColor: string, bgCfg?: ScreenBgConfig): React.
   if (!bgCfg || bgCfg.bgType === "solid") return { backgroundColor: solidColor };
   if (bgCfg.bgType === "image" && bgCfg.bgImage) return { backgroundImage: `url(${bgCfg.bgImage})`, backgroundSize: "cover", backgroundPosition: "center" };
   if (bgCfg.bgType === "gradient") {
-    if (bgCfg.gradientType === "linear") return { background: `linear-gradient(${bgCfg.gradientAngle}deg, ${bgCfg.gradientColor1}, ${bgCfg.gradientColor2})` };
-    return { background: `radial-gradient(ellipse ${positionToCSS[bgCfg.gradientPosition]}, ${bgCfg.gradientColor1}, ${bgCfg.gradientColor2})` };
+    const mid = bgCfg.gradientMidpoint ?? 50;
+    if (bgCfg.gradientType === "linear") return { background: `linear-gradient(${bgCfg.gradientAngle}deg, ${bgCfg.gradientColor1} 0%, ${bgCfg.gradientColor2} ${mid}%)` };
+    return { background: `radial-gradient(ellipse ${positionToCSS[bgCfg.gradientPosition]}, ${bgCfg.gradientColor1} 0%, ${bgCfg.gradientColor2} ${mid}%)` };
   }
   return { backgroundColor: solidColor };
 }
