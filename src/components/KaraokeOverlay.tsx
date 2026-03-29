@@ -467,7 +467,7 @@ export default function KaraokeOverlay({
       <Confetti active={showConfetti} />
       <div
         className="absolute left-0 right-0 z-[60] flex flex-col items-center animate-fade-in"
-        style={{ bottom: controlsVisible ? "180px" : "100px", transition: "bottom 0.4s ease" }}
+        style={{ bottom: controlsVisible ? "120px" : "40px", transition: "bottom 0.4s ease" }}
         onMouseEnter={handleLyricsMouseEnter}
         onMouseLeave={handleLyricsMouseLeave}
         onWheel={(e) => {
@@ -477,7 +477,8 @@ export default function KaraokeOverlay({
         }}
       >
         {/* Lyrics — no background */}
-        <div className="w-[90vw] max-w-[700px] flex flex-col items-center gap-1 px-4 py-2 pointer-events-auto cursor-default">
+        <div className="w-[90vw] max-w-[700px] flex flex-col items-center gap-1.5 px-6 py-3 pointer-events-auto cursor-default rounded-2xl"
+          style={{ background: "linear-gradient(to top, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.25) 70%, transparent 100%)" }}>
           {loading && (
             <span className="text-white/50 text-xs animate-pulse">Buscando letra...</span>
           )}
@@ -543,25 +544,25 @@ function KaraokeLine({ text, progress, active, accentHsl, fontSize = 1.6 }: { te
   const ballIdx = active ? highlightedCount : -1;
 
   return (
-    <p className="text-center leading-relaxed transition-all duration-300 relative" style={{ fontSize: active ? `${fontSize}rem` : `${fontSize * 0.75}rem` }}>
+    <p className="text-center leading-snug transition-all duration-300 relative" style={{ fontSize: active ? `${fontSize}rem` : `${fontSize * 0.7}rem`, letterSpacing: "-0.01em" }}>
       {words.map((word, i) => {
         const isHighlighted = i < highlightedCount;
         const isBallWord = i === ballIdx && active;
         return (
           <span
             key={i}
-            className="inline-block mx-1 transition-all duration-200 relative"
+            className="inline-block mx-[3px] transition-all duration-200 relative"
             style={{
               color: active
                 ? isHighlighted
                   ? "#ffffff"
-                  : "rgba(255,255,255,0.35)"
-                : "rgba(255,255,255,0.25)",
+                  : "rgba(255,255,255,0.4)"
+                : "rgba(255,255,255,0.3)",
               textShadow: isHighlighted
-                ? `0 0 20px hsl(${accentHsl} / 0.8), 0 0 40px hsl(${accentHsl} / 0.4)`
-                : "none",
-              transform: isHighlighted ? "scale(1.05)" : "scale(1)",
-              fontWeight: active ? 700 : 500,
+                ? `0 1px 3px rgba(0,0,0,0.8), 0 0 20px hsl(${accentHsl} / 0.7), 0 0 40px hsl(${accentHsl} / 0.3)`
+                : active ? "0 1px 4px rgba(0,0,0,0.7)" : "0 1px 3px rgba(0,0,0,0.5)",
+              transform: isHighlighted ? "scale(1.04)" : "scale(1)",
+              fontWeight: active ? 800 : 500,
             }}
           >
             {/* Bouncing ball */}
