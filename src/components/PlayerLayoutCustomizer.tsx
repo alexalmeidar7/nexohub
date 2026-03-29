@@ -147,6 +147,8 @@ export const defaultPlayerColors: PlayerColors = {
   liveControlBg: "#0a0a0a",
   liveControlText: "#ffffff",
   liveControlIcon: "#999999",
+  liveAudioBgMode: "cover",
+  spectrumColor: "#dc2626",
   watchTopBarBg: "#000000cc",
   watchTopBarText: "#ffffff",
   watchTopBarAccent: "#dc2626",
