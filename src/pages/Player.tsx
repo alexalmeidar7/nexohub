@@ -628,6 +628,11 @@ export default function PlayerPage() {
   useEffect(() => {
     // Reset like state on every music change
     setLiked(false);
+    const musicKey = `${musicData?.titulo}||${musicData?.artista}`;
+    if (musicKey !== prevMusicRef.current) {
+      prevMusicRef.current = musicKey;
+      setMusicAnimKey(prev => prev + 1);
+    }
   }, [musicData?.titulo, musicData?.artista]);
 
   const toggleLike = useCallback(async () => {
