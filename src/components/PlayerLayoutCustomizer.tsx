@@ -670,18 +670,28 @@ export default function PlayerLayoutCustomizer() {
           </MockupFrame>
         </div>
 
-        {/* Color pickers */}
-        <div>
-          <div className="flex items-center gap-2 mb-3">
-            <Palette size={14} style={{ color: "var(--layout-icon-color, #888)" }} />
-            <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>
-              Cores — {screenTabs.find(t => t.key === activeTab)?.label}
-            </span>
-          </div>
-          <div className="grid grid-cols-2 gap-2.5">
-            {screenColorKeys[activeTab].map(({ key, label }) => (
-              <PColorInput key={key} label={label} value={colors[key]} onChange={(v) => updateColor(key, v)} />
-            ))}
+        {/* Background config + Color pickers */}
+        <div className="space-y-4">
+          {/* Background type */}
+          <BgConfigEditor
+            config={bgConfigs[activeTab]}
+            solidColor={colors[screenBgColorKey[activeTab]]}
+            onChange={(cfg) => updateBgConfig(activeTab, cfg)}
+          />
+
+          {/* Color pickers */}
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <Palette size={14} style={{ color: "var(--layout-icon-color, #888)" }} />
+              <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>
+                Cores — {screenTabs.find(t => t.key === activeTab)?.label}
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-2.5">
+              {screenColorKeys[activeTab].map(({ key, label }) => (
+                <PColorInput key={key} label={label} value={colors[key]} onChange={(v) => updateColor(key, v)} />
+              ))}
+            </div>
           </div>
         </div>
       </div>
