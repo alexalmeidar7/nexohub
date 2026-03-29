@@ -171,6 +171,8 @@ export const defaultPlayerColors: PlayerColors = {
   watchScrubber: "#dc2626",
   watchMusicBg: "#000000ee",
   watchMusicText: "#ffffff",
+  watchMusicTitleColor: "#ffffff",
+  watchMusicArtistColor: "#ffffffd9",
   watchMusicAccent: "#dc2626",
   catalogBg: "#0a0a0a",
   catalogText: "#ffffff",
