@@ -332,9 +332,9 @@ function HomeMockup({ c, bg }: { c: PlayerColors; bg?: ScreenBgConfig }) {
   );
 }
 
-function LiveMockup({ c }: { c: PlayerColors }) {
+function LiveMockup({ c, bg }: { c: PlayerColors; bg?: ScreenBgConfig }) {
   return (
-    <div className="absolute inset-0 flex flex-col" style={{ backgroundColor: c.liveBg }}>
+    <div className="absolute inset-0 flex flex-col" style={buildBgStyle(c.liveBg, bg)}>
       {/* Video area */}
       <div className="flex-1 relative" style={{ background: `linear-gradient(180deg, ${c.liveBg}, ${c.liveAccent}11)` }}>
         <div className="absolute top-2 left-2">
