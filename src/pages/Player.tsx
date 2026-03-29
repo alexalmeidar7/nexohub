@@ -2567,37 +2567,37 @@ export default function PlayerPage() {
 
       {/* Bottom minimal controls — for live channels (non-catalog) */}
       {!isCatalog && !isYoutube && !isPrerollVisible && !midrollActive && playing && (
-        <div className="absolute left-0 right-0 bottom-0 z-50" style={{ height: "100px" }} onMouseEnter={showBar} onMouseLeave={hideBar}>
+        <div className="absolute left-0 right-0 bottom-0 z-50" style={{ height: "110px" }} onMouseEnter={showBar} onMouseLeave={hideBar}>
           <div
-            className="absolute left-0 right-0 bottom-0 mx-auto px-4 sm:px-8 pb-4 pt-3 transition-all duration-400 ease-in-out"
+            className="absolute left-0 right-0 bottom-0 mx-auto px-5 sm:px-10 pb-5 pt-3 transition-all duration-400 ease-in-out"
             style={{ maxWidth: "1400px", opacity: barVisible ? 1 : 0, transform: barVisible ? "translateY(0)" : "translateY(16px)", pointerEvents: barVisible ? "auto" : "none" }}
           >
             {/* Single row: Play | Title+Artist | Slider | Like+Volume */}
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-3 shrink-0">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center shrink-0">
                 {/* Play/Pause circle */}
                 <button
                   onClick={handlePlayCanal}
-                  className="w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center shrink-0 transition-all hover:scale-105"
-                  style={{ backgroundColor: "hsl(var(--player-accent))", color: "#000", border: "2px solid rgba(0,0,0,0.2)" }}
+                  className="w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center shrink-0 transition-all hover:scale-105"
+                  style={{ backgroundColor: "hsl(var(--player-accent))", color: "#000" }}
                   title={playing ? "Pausar" : "Reproduzir"}
                 >
-                  {playing ? <Pause size={18} fill="currentColor" /> : <Play size={18} fill="currentColor" className="ml-0.5" />}
+                  {playing ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" className="ml-0.5" />}
                 </button>
               </div>
 
               {/* Center: Title/Artist + Slider */}
               <div className="flex-1 min-w-0">
                 {/* Title + Artist */}
-                <div className="flex flex-col mb-1">
-                  <span className="text-white text-sm sm:text-base font-extrabold italic leading-tight truncate">
+                <div className="flex flex-col mb-1.5">
+                  <span className="text-sm sm:text-base font-black italic leading-tight truncate" style={{ color: "#ffffff" }}>
                     {musicData?.titulo && musicData.titulo !== "Sem título" ? musicData.titulo : ""}
                   </span>
-                  <span className="text-white/70 text-xs sm:text-sm font-semibold leading-tight truncate">
+                  <span className="text-xs sm:text-sm font-bold leading-tight truncate" style={{ color: "rgba(255,255,255,0.85)" }}>
                     {musicData?.artista && musicData.artista !== "Desconhecido" ? musicData.artista : ""}
                   </span>
                 </div>
-                {/* Slider + times */}
+                {/* Slider */}
                 {(() => {
                   void musicTick;
                   let musicElapsed = 0;
@@ -2621,16 +2621,16 @@ export default function PlayerPage() {
                   }
                   const musicPct = musicTotal > 0 ? Math.min(100, (musicElapsed / musicTotal) * 100) : 0;
                   return (
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 group cursor-pointer relative">
-                        <div className="w-full h-[3px] bg-white/30 rounded-full overflow-hidden group-hover:h-[5px] transition-all">
-                          <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${musicPct}%`, backgroundColor: "#fff" }} />
+                    <div className="relative">
+                      <div className="w-full group cursor-pointer">
+                        <div className="w-full h-[2px] rounded-full overflow-hidden group-hover:h-[4px] transition-all" style={{ backgroundColor: "rgba(255,255,255,0.25)" }}>
+                          <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${musicPct}%`, backgroundColor: "#ffffff" }} />
                         </div>
                       </div>
                     </div>
                   );
                 })()}
-                {/* Times below slider */}
+                {/* Times below slider — left and right aligned */}
                 {(() => {
                   void musicTick;
                   let musicElapsed = 0;
@@ -2653,30 +2653,31 @@ export default function PlayerPage() {
                     }
                   }
                   return (
-                    <div className="flex items-center justify-between mt-0.5">
-                      <span className="text-white/50 text-[10px] tabular-nums">{fmtTime(musicElapsed)}</span>
-                      <span className="text-white/50 text-[10px] tabular-nums">{fmtTime(musicTotal)}</span>
+                    <div className="flex items-center justify-between mt-1">
+                      <span className="text-[10px] tabular-nums font-medium" style={{ color: "rgba(255,255,255,0.6)" }}>{fmtTime(musicElapsed)}</span>
+                      <span className="text-[10px] tabular-nums font-medium" style={{ color: "rgba(255,255,255,0.6)" }}>{fmtTime(musicTotal)}</span>
                     </div>
                   );
                 })()}
               </div>
 
-              {/* Like + Volume on right */}
-              <div className="flex items-center gap-2 shrink-0">
+              {/* Like + Volume — dark circles */}
+              <div className="flex items-center gap-2.5 shrink-0">
                 {/* Like */}
                 {(isAudio || isVideo) && musicData?.titulo && (
                   <div className="relative">
                     <button
                       onClick={toggleLike}
-                      className={`w-9 h-9 rounded-full flex items-center justify-center transition-all ${liked ? "bg-white/20" : "bg-black/40 hover:bg-black/60"}`}
+                      className="w-10 h-10 rounded-full flex items-center justify-center transition-all hover:scale-105"
+                      style={{ backgroundColor: "rgba(30,30,30,0.85)" }}
                       title={liked ? "Descurtir" : "Curtir"}
                     >
                       <Heart
-                        size={15}
+                        size={16}
                         className="transition-colors"
                         style={{
                           color: liked ? "#fff" : "rgba(255,255,255,0.8)",
-                          fill: liked ? "#fff" : "none",
+                          fill: liked ? "#fff" : "rgba(255,255,255,0.8)",
                         }}
                       />
                     </button>
@@ -2695,10 +2696,11 @@ export default function PlayerPage() {
                 <div className="relative" onMouseEnter={showVolume} onMouseLeave={hideVolume}>
                   <button
                     onClick={toggleMuteWithOsd}
-                    className="w-9 h-9 rounded-full flex items-center justify-center transition-all bg-black/40 hover:bg-black/60"
+                    className="w-10 h-10 rounded-full flex items-center justify-center transition-all hover:scale-105"
+                    style={{ backgroundColor: "rgba(30,30,30,0.85)" }}
                     title={muted ? "Ativar som" : "Desativar som"}
                   >
-                    {muted ? <VolumeX size={15} className="text-white/80" /> : volume < 50 ? <Volume1 size={15} className="text-white/80" /> : <Volume2 size={15} className="text-white/80" />}
+                    {muted ? <VolumeX size={16} style={{ color: "rgba(255,255,255,0.8)" }} /> : volume < 50 ? <Volume1 size={16} style={{ color: "rgba(255,255,255,0.8)" }} /> : <Volume2 size={16} style={{ color: "rgba(255,255,255,0.8)" }} />}
                   </button>
                   {volumeHover && (
                     <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-[100] rounded-xl px-3 py-3 flex flex-col items-center gap-1.5 border border-white/10 shadow-2xl backdrop-blur-xl" style={{ backgroundColor: "rgba(0,0,0,0.8)" }}>
