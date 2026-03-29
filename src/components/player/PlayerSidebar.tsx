@@ -87,14 +87,14 @@ export default function PlayerSidebar({
         <div ref={profileRef} className="relative flex flex-col items-center mb-2">
           <button
             onClick={() => setProfileOpen(v => !v)}
-            className="w-9 h-9 rounded-full bg-player-surface/30 flex items-center justify-center overflow-hidden cursor-pointer transition-transform duration-200 hover:scale-110 focus-visible:outline-none"
+            className="w-9 h-9 rounded-full bg-player-accent flex items-center justify-center overflow-hidden cursor-pointer transition-transform duration-200 hover:scale-110 focus-visible:outline-none"
           >
             {loading ? (
               <Skeleton className="w-full h-full rounded-full bg-white/10" />
             ) : avatarUrl ? (
-              <img src={avatarUrl} alt={userName} className="w-full h-full object-cover" />
+              <img src={avatarUrl} alt={userName} className="w-full h-full object-contain" />
             ) : (
-              <img src="/avatars/usr-default.png" alt="Visitante" className="w-full h-full object-cover" />
+              <img src="/avatars/usr-default.png" alt="Visitante" className="w-full h-full object-contain" />
             )}
           </button>
 
