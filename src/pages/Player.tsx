@@ -2572,6 +2572,7 @@ export default function PlayerPage() {
             </button>
 
             {/* Shop */}
+            {shopActive && (
             <button
               onClick={() => setShopOpen(!shopOpen)}
               className="w-9 h-9 rounded-xl flex items-center justify-center transition-all backdrop-blur-xl relative hover:scale-105"
@@ -2584,6 +2585,7 @@ export default function PlayerPage() {
               <ShoppingCart size={15} className={shopOpen ? "text-player-accent" : "text-white/80"} />
               {showShopIcon && <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full animate-pulse bg-player-accent" />}
             </button>
+            )}
 
             {/* Chat */}
             <button
