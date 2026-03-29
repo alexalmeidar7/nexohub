@@ -2368,7 +2368,7 @@ export default function PlayerPage() {
       {isAudio && playing && (
         <Suspense fallback={null}>
           <div className="absolute inset-0 z-[1] flex items-end justify-center pointer-events-none" style={{ opacity: 0.3 }}>
-            <AudioSpectrum audioElement={audioRef.current} style={spectrumStyle} onStyleChange={handleSpectrumStyleChange} userId={user?.id || publicUserId} />
+            <AudioSpectrum audioElement={audioRef.current} style={spectrumStyle} onStyleChange={handleSpectrumStyleChange} />
           </div>
         </Suspense>
       )}
