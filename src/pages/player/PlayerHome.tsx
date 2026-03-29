@@ -426,10 +426,12 @@ function StreamingCard({ channel, currentProgram, nowPlaying, onClick }: {
       style={{
         width: `${expandedWidth}px`,
         height: `${cardHeight}px`,
-        background: "linear-gradient(145deg, rgba(255,255,255,0.06) 0%, hsl(var(--player-bg)) 100%)",
+        background: "rgba(255,255,255,0.04)",
+        backdropFilter: "blur(20px)",
+        WebkitBackdropFilter: "blur(20px)",
         transform: "none",
-        boxShadow: hovered ? "0 0 12px 2px hsla(var(--player-accent) / 0.5)" : "none",
-        border: hovered ? "2px solid hsl(var(--player-accent))" : "1px solid rgba(255,255,255,0.06)",
+        boxShadow: hovered ? "0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px hsla(var(--player-accent) / 0.4)" : "0 2px 8px rgba(0,0,0,0.2)",
+        border: hovered ? "1px solid hsla(var(--player-accent) / 0.5)" : "1px solid rgba(255,255,255,0.08)",
       }}
     >
       {/* Cover image – pinned to left 160px */}
