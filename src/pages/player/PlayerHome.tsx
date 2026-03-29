@@ -1319,10 +1319,13 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
         activeKey={visibleSection === "catalog-detail" ? "content" : activeSection}
         avatarUrl={profileAvatar}
         userName={userName}
+        userEmail={profileEmail}
+        userCity={profileCity}
         showLogout={!!user}
         showSignup={!user && !!onBackToAccess}
         onLogout={handleSignOut}
         onSignup={onBackToAccess}
+        onEditProfile={user ? () => setProfileDialogOpen(true) : undefined}
         loading={!dataLoaded}
       />
 
