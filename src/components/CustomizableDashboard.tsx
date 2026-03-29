@@ -1648,7 +1648,7 @@ function DashboardPlayerWidget({ onVideoChange }: { onVideoChange?: (active: boo
           </div>
 
           {channels.length > 1 && (
-            <button onClick={goNext} className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-all hover:scale-110" style={{ background: "rgba(255,255,255,0.1)" }} onMouseEnter={e => { e.currentTarget.style.background = "color-mix(in srgb, var(--layout-accent-color) 35%, transparent)"; }} onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.1)"; }}>
+            <button onClick={goNext} className="w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0 transition-all hover:scale-110" style={{ background: "rgba(255,255,255,0.1)", backdropFilter: "blur(16px) saturate(1.4)", WebkitBackdropFilter: "blur(16px) saturate(1.4)", border: "1px solid rgba(255,255,255,0.12)", boxShadow: "0 2px 8px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.08)" }} onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.2)"; }} onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.1)"; }}>
               <ChevronRight size={14} className="text-white/70" />
             </button>
           )}
