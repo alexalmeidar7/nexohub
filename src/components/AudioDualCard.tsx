@@ -56,6 +56,8 @@ export default function AudioDualCard({
   whatsappPhone,
   onOpenChat,
   userId,
+  spectrumStyle = "bars",
+  onSpectrumStyleChange,
 }: AudioDualCardProps) {
   const isMobile = useIsMobile();
   const isSemTitulo = !musicTitle || musicTitle === "Sem título";
