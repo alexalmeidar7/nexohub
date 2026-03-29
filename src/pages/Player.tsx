@@ -2967,7 +2967,7 @@ export default function PlayerPage() {
               </div>
             ) : null}
             {selectedVideoId ? (
-              <span className="text-[10px] mt-1 inline-block" style={{ color: "hsl(var(--player-accent))" }}>{fmtTime(ytCurrentTime)} - {fmtTime(ytDuration)}</span>
+              <span className="text-[10px] mt-1 inline-block" style={{ color: "var(--player-watch-scrubber, hsl(var(--player-accent)))" }}>{fmtTime(ytCurrentTime)} - {fmtTime(ytDuration)}</span>
             ) : null}
           </div>
 
