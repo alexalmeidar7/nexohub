@@ -703,15 +703,18 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                       key={opt.type}
                       onClick={() => !exists && addWidget(opt)}
                       disabled={exists}
-                      className="w-full flex items-start gap-3 px-4 py-4 rounded-xl text-sm transition-all text-left"
+                      className="w-full flex items-start gap-3 px-4 py-4 rounded-xl text-sm transition-all text-left hover:scale-[1.01]"
                       style={{
                         background: exists ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.06)",
+                        backdropFilter: "blur(12px)",
+                        WebkitBackdropFilter: "blur(12px)",
                         border: "1px solid rgba(255,255,255,0.08)",
+                        boxShadow: exists ? "none" : "inset 0 1px 0 rgba(255,255,255,0.04)",
                         opacity: exists ? 0.4 : 1,
                         color: "#fff",
                       }}
-                      onMouseEnter={e => { if (!exists) { e.currentTarget.style.background = `color-mix(in srgb, var(--layout-button-bg, #333) 15%, transparent)`; } }}
-                      onMouseLeave={e => { e.currentTarget.style.background = exists ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.06)"; }}
+                      onMouseEnter={e => { if (!exists) { e.currentTarget.style.background = "rgba(255,255,255,0.12)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.18)"; } }}
+                      onMouseLeave={e => { e.currentTarget.style.background = exists ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.06)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; }}
                     >
                       <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: `linear-gradient(135deg, var(--layout-accent-color, #444), var(--layout-button-bg, #333))` }}>
                         {opt.type === "agenda" && <CalendarDays size={14} style={{ color: "var(--layout-button-text, #fff)" }} />}
