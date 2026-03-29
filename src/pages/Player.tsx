@@ -2635,10 +2635,10 @@ export default function PlayerPage() {
               <div className="flex-1 min-w-0">
                 {/* Title + Artist */}
                 <div className="flex flex-col mb-1.5">
-                  <span className="text-sm sm:text-base font-black italic leading-tight truncate" style={{ color: "#ffffff" }}>
+                   <span className="text-sm sm:text-base font-black italic leading-tight truncate" style={{ color: "var(--player-watch-music-text, #ffffff)" }}>
                     {musicData?.titulo && musicData.titulo !== "Sem título" ? musicData.titulo : ""}
                   </span>
-                  <span className="text-xs sm:text-sm font-bold leading-tight truncate" style={{ color: "rgba(255,255,255,0.85)" }}>
+                  <span className="text-xs sm:text-sm font-bold leading-tight truncate" style={{ color: "color-mix(in srgb, var(--player-watch-music-text, #ffffff) 85%, transparent)" }}>
                     {musicData?.artista && musicData.artista !== "Desconhecido" ? musicData.artista : ""}
                   </span>
                 </div>
