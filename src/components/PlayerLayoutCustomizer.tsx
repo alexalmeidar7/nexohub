@@ -92,6 +92,16 @@ export interface PlayerColors {
   liveControlBg: string;
   liveControlText: string;
   liveControlIcon: string;
+  // Watch / Player Controls
+  watchTopBarBg: string;
+  watchTopBarText: string;
+  watchTopBarAccent: string;
+  watchBottomBarBg: string;
+  watchBottomBarText: string;
+  watchScrubber: string;
+  watchMusicBg: string;
+  watchMusicText: string;
+  watchMusicAccent: string;
   // Catalog / On Demand
   catalogBg: string;
   catalogText: string;
@@ -134,6 +144,15 @@ export const defaultPlayerColors: PlayerColors = {
   liveControlBg: "#0a0a0a",
   liveControlText: "#ffffff",
   liveControlIcon: "#999999",
+  watchTopBarBg: "#000000cc",
+  watchTopBarText: "#ffffff",
+  watchTopBarAccent: "#dc2626",
+  watchBottomBarBg: "#000000cc",
+  watchBottomBarText: "#ffffff",
+  watchScrubber: "#dc2626",
+  watchMusicBg: "#000000ee",
+  watchMusicText: "#ffffff",
+  watchMusicAccent: "#dc2626",
   catalogBg: "#0a0a0a",
   catalogText: "#ffffff",
   catalogCardBg: "#1a1a1a",
@@ -192,6 +211,15 @@ const screenColorKeys: Record<ScreenTab, { key: keyof PlayerColors; label: strin
     { key: "liveControlBg", label: "Controles" },
     { key: "liveControlText", label: "Texto Controles" },
     { key: "liveControlIcon", label: "Ícones" },
+    { key: "watchTopBarBg", label: "Barra Topo" },
+    { key: "watchTopBarText", label: "Texto Barra Topo" },
+    { key: "watchTopBarAccent", label: "Destaque Barra Topo" },
+    { key: "watchBottomBarBg", label: "Barra Inferior" },
+    { key: "watchBottomBarText", label: "Texto Barra Inferior" },
+    { key: "watchScrubber", label: "Scrubber" },
+    { key: "watchMusicBg", label: "Fundo Música" },
+    { key: "watchMusicText", label: "Texto Música" },
+    { key: "watchMusicAccent", label: "Destaque Música" },
   ],
   catalog: [
     { key: "catalogBg", label: "Fundo" },

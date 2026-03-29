@@ -130,6 +130,17 @@ export function usePlayerColors() {
     root.style.setProperty("--player-live-control-bg", colors.liveControlBg);
     root.style.setProperty("--player-live-control-text", colors.liveControlText);
 
+    // Watch controls
+    root.style.setProperty("--player-watch-topbar-bg", colors.watchTopBarBg || "#000000cc");
+    root.style.setProperty("--player-watch-topbar-text", colors.watchTopBarText || "#ffffff");
+    root.style.setProperty("--player-watch-topbar-accent", colors.watchTopBarAccent || "#dc2626");
+    root.style.setProperty("--player-watch-bottombar-bg", colors.watchBottomBarBg || "#000000cc");
+    root.style.setProperty("--player-watch-bottombar-text", colors.watchBottomBarText || "#ffffff");
+    root.style.setProperty("--player-watch-scrubber", colors.watchScrubber || "#dc2626");
+    root.style.setProperty("--player-watch-music-bg", colors.watchMusicBg || "#000000ee");
+    root.style.setProperty("--player-watch-music-text", colors.watchMusicText || "#ffffff");
+    root.style.setProperty("--player-watch-music-accent", colors.watchMusicAccent || "#dc2626");
+
     // Glow gradient from accent + bg
     const glowGradient = `radial-gradient(ellipse at 50% 100%, ${colors.homeAccent}55 0%, ${colors.homeBg} 50%, ${colors.homeBg} 100%)`;
     root.style.setProperty("--player-glow", glowGradient);
