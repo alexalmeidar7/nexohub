@@ -2125,7 +2125,7 @@ export default function PlayerPage() {
       { icon: Film, label: "Conteúdo", key: "content", action: () => {} },
       ...(user && shopActive ? [{ icon: ShoppingBag, label: "Loja", key: "shop", action: () => setShopOpen((o: boolean) => !o) }] : []),
     ];
-  }, [handleHomeClick, user, is991Channel]);
+  }, [handleHomeClick, user, is991Channel, shopActive]);
 
   if (loading) {
     return (
