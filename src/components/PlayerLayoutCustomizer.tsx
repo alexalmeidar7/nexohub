@@ -92,6 +92,16 @@ export interface PlayerColors {
   liveControlBg: string;
   liveControlText: string;
   liveControlIcon: string;
+  // Watch / Player Controls
+  watchTopBarBg: string;
+  watchTopBarText: string;
+  watchTopBarAccent: string;
+  watchBottomBarBg: string;
+  watchBottomBarText: string;
+  watchScrubber: string;
+  watchMusicBg: string;
+  watchMusicText: string;
+  watchMusicAccent: string;
   // Catalog / On Demand
   catalogBg: string;
   catalogText: string;
