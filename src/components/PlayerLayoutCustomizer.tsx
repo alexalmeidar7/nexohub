@@ -78,6 +78,8 @@ export interface PlayerColors {
   homeCardBg: string;
   homeCardText: string;
   homeCardBorder: string;
+  homeBadgeBg: string;
+  homeBadgeText: string;
   homeBannerOverlay: string;
   // Live Channels
   liveBg: string;
@@ -119,6 +121,8 @@ export const defaultPlayerColors: PlayerColors = {
   homeCardBg: "#1a1a1a",
   homeCardText: "#ffffff",
   homeCardBorder: "#333333",
+  homeBadgeBg: "#dc2626",
+  homeBadgeText: "#ffffff",
   homeBannerOverlay: "#000000",
   liveBg: "#000000",
   liveCardBg: "#1a1a1a",
@@ -173,6 +177,8 @@ const screenColorKeys: Record<ScreenTab, { key: keyof PlayerColors; label: strin
     { key: "homeCardBg", label: "Card" },
     { key: "homeCardText", label: "Texto Card" },
     { key: "homeCardBorder", label: "Borda Card" },
+    { key: "homeBadgeBg", label: "Badge" },
+    { key: "homeBadgeText", label: "Texto Badge" },
     { key: "homeBannerOverlay", label: "Overlay Banner" },
   ],
   live: [
