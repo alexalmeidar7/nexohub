@@ -423,6 +423,10 @@ export default function PlayerPage() {
   const ccRecognitionRef = useRef<any>(null);
   const ccIsListeningRef = useRef(false);
   const ccClearTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const [channelNavDir, setChannelNavDir] = useState<1 | -1>(1);
+  const [channelAnimKey, setChannelAnimKey] = useState(0);
+  const [musicAnimKey, setMusicAnimKey] = useState(0);
+  const prevMusicRef = useRef<string>("");
 
   const canal = canais[currentIndex] || null;
   const liveChannels = useMemo(
@@ -624,6 +628,11 @@ export default function PlayerPage() {
   useEffect(() => {
     // Reset like state on every music change
     setLiked(false);
+    const musicKey = `${musicData?.titulo}||${musicData?.artista}`;
+    if (musicKey !== prevMusicRef.current) {
+      prevMusicRef.current = musicKey;
+      setMusicAnimKey(prev => prev + 1);
+    }
   }, [musicData?.titulo, musicData?.artista]);
 
   const toggleLike = useCallback(async () => {
@@ -1537,6 +1546,8 @@ export default function PlayerPage() {
     const nextIndex = canais.findIndex((c) => c.id === nextChannel.id);
     if (nextIndex < 0) return;
 
+    setChannelNavDir(dir);
+    setChannelAnimKey(prev => prev + 1);
     setCurrentIndex(nextIndex);
 
     // Stop any playing audio/video when switching channels — full cleanup
@@ -2401,11 +2412,11 @@ export default function PlayerPage() {
       {isAudio && playing && musicData?.capa && musicData.titulo !== "Sem título" && (
         <div className="absolute inset-0 z-[2] flex items-center justify-center pointer-events-none">
           <img
-            key={musicData.capa}
+            key={`cover-${musicAnimKey}`}
             src={musicData.capa}
             alt=""
-            className="w-48 h-48 sm:w-64 sm:h-64 lg:w-72 lg:h-72 rounded-2xl object-cover animate-fade-in"
-            style={{ boxShadow: "0 20px 60px rgba(0,0,0,0.6), 0 0 80px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.15)", outline: "1px solid rgba(255,255,255,0.05)", outlineOffset: "3px" }}
+            className="w-48 h-48 sm:w-64 sm:h-64 lg:w-72 lg:h-72 rounded-2xl object-cover"
+            style={{ boxShadow: "0 20px 60px rgba(0,0,0,0.6), 0 0 80px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.15)", outline: "1px solid rgba(255,255,255,0.05)", outlineOffset: "3px", animation: "playerCoverIn 0.5s ease-out" }}
           />
         </div>
       )}
@@ -2451,17 +2462,17 @@ export default function PlayerPage() {
                 <button onClick={() => navigateChannel(1)} className="hover:opacity-100 transition-colors p-0.5" style={{ color: "var(--player-watch-topbar-text, rgba(255,255,255,0.4))" }}><ChevronDown size={16} /></button>
               )}
             </div>
-            <div className="flex items-center gap-2 min-w-0">
-              <span className="text-xl sm:text-2xl font-black tabular-nums" style={{ color: "var(--player-watch-topbar-text, rgba(255,255,255,0.9))" }}>{canal?.numero_canal || "--"}</span>
-              <span className="text-base sm:text-lg font-bold truncate max-w-[180px]" style={{ color: "var(--player-watch-topbar-text, rgba(255,255,255,0.8))" }}>{canal?.name || "Sem canal"}</span>
+            <div className="flex items-center gap-2 min-w-0 overflow-hidden">
+              <span key={`chnum-${channelAnimKey}`} className="text-xl sm:text-2xl font-black tabular-nums" style={{ color: "var(--player-watch-topbar-text, rgba(255,255,255,0.9))", animation: `playerSlide${channelNavDir > 0 ? "Up" : "Down"} 0.35s ease-out` }}>{canal?.numero_canal || "--"}</span>
+              <span key={`chname-${channelAnimKey}`} className="text-base sm:text-lg font-bold truncate max-w-[180px]" style={{ color: "var(--player-watch-topbar-text, rgba(255,255,255,0.8))", animation: `playerSlide${channelNavDir > 0 ? "Up" : "Down"} 0.35s ease-out 0.05s both` }}>{canal?.name || "Sem canal"}</span>
             </div>
           </div>
 
           {/* Program info: "no ar" */}
-          <div className="hidden sm:flex flex-col min-w-0 px-4 sm:px-6 border-r border-white/[0.06]" style={{ flex: "0 1 350px" }}>
+          <div className="hidden sm:flex flex-col min-w-0 px-4 sm:px-6 border-r border-white/[0.06] overflow-hidden" style={{ flex: "0 1 350px" }}>
             <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--player-watch-topbar-accent, hsl(var(--player-accent)))" }}>no ar</span>
-            <span className="text-lg sm:text-xl font-bold leading-tight truncate" style={{ color: "var(--player-watch-topbar-text, rgba(255,255,255,0.9))" }}>{currentProg?.nome || "—"}</span>
-            <div className="flex items-center gap-2 text-xs" style={{ color: "color-mix(in srgb, var(--player-watch-topbar-text, #ffffff) 50%, transparent)" }}>
+            <span key={`noar-${currentProg?.nome}-${channelAnimKey}`} className="text-lg sm:text-xl font-bold leading-tight truncate" style={{ color: "var(--player-watch-topbar-text, rgba(255,255,255,0.9))", animation: "playerFadeSlideIn 0.4s ease-out" }}>{currentProg?.nome || "—"}</span>
+            <div key={`noar-sub-${currentProg?.nome}-${channelAnimKey}`} className="flex items-center gap-2 text-xs" style={{ color: "color-mix(in srgb, var(--player-watch-topbar-text, #ffffff) 50%, transparent)", animation: "playerFadeSlideIn 0.4s ease-out 0.1s both" }}>
               <span className="truncate">{currentPresenter?.nome || ""}</span>
               {currentProg && (
                 <span className="shrink-0">{currentProg.horario_inicio.slice(0, 5)}/{currentProg.horario_fim.slice(0, 5)}</span>
@@ -2474,9 +2485,9 @@ export default function PlayerPage() {
           </div>
 
           {/* Next program: "a seguir" */}
-          <div className="hidden lg:flex flex-col min-w-0 px-4 sm:px-6 border-r border-white/[0.06]" style={{ flex: "0 1 220px" }}>
+          <div className="hidden lg:flex flex-col min-w-0 px-4 sm:px-6 border-r border-white/[0.06] overflow-hidden" style={{ flex: "0 1 220px" }}>
             <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--player-watch-topbar-accent, hsl(var(--player-accent)))" }}>a seguir</span>
-            <span className="text-lg font-bold leading-tight truncate" style={{ color: "var(--player-watch-topbar-text, rgba(255,255,255,0.9))" }}>{nextProg?.nome || "—"}</span>
+            <span key={`aseguir-${nextProg?.nome}-${channelAnimKey}`} className="text-lg font-bold leading-tight truncate" style={{ color: "var(--player-watch-topbar-text, rgba(255,255,255,0.9))", animation: "playerFadeSlideIn 0.4s ease-out 0.15s both" }}>{nextProg?.nome || "—"}</span>
             <span className="text-xs" style={{ color: "color-mix(in srgb, var(--player-watch-topbar-text, #ffffff) 35%, transparent)" }}>
               {nextProg ? `${nextProg.horario_inicio.slice(0, 5)}` : "..."}
             </span>
@@ -2635,7 +2646,7 @@ export default function PlayerPage() {
               {/* Center: Title/Artist + Slider */}
               <div className="flex-1 min-w-0">
                 {/* Title + Artist */}
-                <div className="flex flex-col mb-1.5">
+                <div key={`music-info-${musicAnimKey}`} className="flex flex-col mb-1.5" style={{ animation: "playerFadeSlideIn 0.4s ease-out" }}>
                    <span className="text-sm sm:text-base font-black italic leading-tight truncate" style={{ color: "var(--player-watch-music-text, #ffffff)" }}>
                     {musicData?.titulo && musicData.titulo !== "Sem título" ? musicData.titulo : ""}
                   </span>
@@ -3040,6 +3051,22 @@ export default function PlayerPage() {
         }
         .marquee-scroll[data-overflow="false"] {
           animation: none;
+        }
+        @keyframes playerSlideUp {
+          0% { opacity: 0; transform: translateY(100%); }
+          100% { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes playerSlideDown {
+          0% { opacity: 0; transform: translateY(-100%); }
+          100% { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes playerFadeSlideIn {
+          0% { opacity: 0; transform: translateY(8px); }
+          100% { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes playerCoverIn {
+          0% { opacity: 0; transform: scale(0.85); }
+          100% { opacity: 1; transform: scale(1); }
         }
       `}</style>
       </div>
