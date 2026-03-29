@@ -2474,9 +2474,9 @@ export default function PlayerPage() {
 
           {/* Next program: "a seguir" */}
           <div className="hidden lg:flex flex-col min-w-0 px-4 sm:px-6 border-r border-white/[0.06]" style={{ flex: "0 1 220px" }}>
-            <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "hsl(var(--player-accent))" }}>a seguir</span>
-            <span className="text-white/90 text-lg font-bold leading-tight truncate">{nextProg?.nome || "—"}</span>
-            <span className="text-white/35 text-xs">
+            <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--player-watch-topbar-accent, hsl(var(--player-accent)))" }}>a seguir</span>
+            <span className="text-lg font-bold leading-tight truncate" style={{ color: "var(--player-watch-topbar-text, rgba(255,255,255,0.9))" }}>{nextProg?.nome || "—"}</span>
+            <span className="text-xs" style={{ color: "color-mix(in srgb, var(--player-watch-topbar-text, #ffffff) 35%, transparent)" }}>
               {nextProg ? `${nextProg.horario_inicio.slice(0, 5)}` : "..."}
             </span>
           </div>
