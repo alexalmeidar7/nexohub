@@ -1512,7 +1512,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="mt-1 w-full text-center text-[10px] font-bold py-2 rounded-lg transition-all uppercase tracking-wider text-white"
-                                  style={{ background: "linear-gradient(135deg, hsl(var(--player-accent)), hsl(var(--player-accent-hover)))", boxShadow: "0 2px 12px hsla(var(--player-accent) / 0.3)" }}
+                                  style={{ background: "rgba(255,255,255,0.1)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.15)" }}
                                 >
                                   Comprar
                                 </a>
