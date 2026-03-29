@@ -15,6 +15,7 @@ type Step = "splash" | "access" | "welcome" | "home";
 export default function PlayerHub() {
   usePageTitle("Player");
   useLayoutColors();
+  const { colors: playerColors, bgConfigs: playerBgConfigs } = usePlayerColors();
   const { user, loading } = useAuth();
   const { userSlug } = useParams();
   const [searchParams] = useSearchParams();
