@@ -2564,49 +2564,39 @@ export default function PlayerPage() {
                 {playing ? <Pause size={22} fill="currentColor" /> : <Play size={22} fill="currentColor" className="ml-0.5" />}
               </button>
 
-              {/* Progress bar + time */}
+              {/* Music progress bar + time */}
               <div className="flex-1 min-w-0 flex flex-col gap-1">
-                {/* Music info on mobile */}
-                <div className="sm:hidden flex items-center gap-2 text-white/70 text-xs truncate">
-                  {musicData?.titulo && musicData.titulo !== "Sem título" && (
-                    <MarqueeText text={`♫ ${musicData.titulo} — ${musicData.artista}`} className="text-white/60 text-xs" />
-                  )}
-                </div>
-                <div className="w-full group cursor-pointer relative"
-                  onMouseMove={(e) => {
-                    const rect = e.currentTarget.getBoundingClientRect();
-                    const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-                    const tooltip = e.currentTarget.querySelector("[data-seek-tooltip]") as HTMLElement;
-                    if (tooltip && currentProg) {
-                      const startParts = currentProg.horario_inicio.split(":").map(Number);
-                      const endParts = currentProg.horario_fim.split(":").map(Number);
-                      const startMin = startParts[0] * 60 + startParts[1];
-                      const endMin = endParts[0] * 60 + endParts[1];
-                      const totalSec = (endMin - startMin) * 60;
-                      const seekSec = pct * totalSec;
-                      tooltip.style.left = `${pct * 100}%`;
-                      tooltip.style.opacity = "1";
-                      tooltip.textContent = fmtTime(seekSec);
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    const tooltip = e.currentTarget.querySelector("[data-seek-tooltip]") as HTMLElement;
-                    if (tooltip) tooltip.style.opacity = "0";
-                  }}
-                >
-                  <div data-seek-tooltip className="absolute -top-6 text-[10px] font-bold text-white bg-black/90 px-1.5 py-0.5 rounded pointer-events-none -translate-x-1/2 opacity-0 transition-opacity z-10 whitespace-nowrap" />
-                  <div className="w-full h-1 bg-white/20 rounded-full overflow-hidden group-hover:h-2.5 transition-all">
-                    <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${progress}%`, backgroundColor: "hsl(var(--player-accent))" }} />
-                  </div>
-                </div>
-                <div className="flex items-center justify-between text-white/50 text-[11px] tabular-nums">
-                  <span>{currentProg ? currentProg.horario_inicio.slice(0, 5) : "--:--"}</span>
-                  {/* Music info desktop */}
-                  <span className="hidden sm:block text-white/40 text-xs truncate max-w-[300px]">
-                    {musicData?.titulo && musicData.titulo !== "Sem título" ? `♫ ${musicData.titulo} — ${musicData.artista}` : ""}
-                  </span>
-                  <span>{currentProg ? currentProg.horario_fim.slice(0, 5) : "--:--"}</span>
-                </div>
+                {(() => {
+                  // Compute music elapsed time from horario
+                  let musicElapsed = 0;
+                  let musicTotal = musicData?.duracao || 0;
+                  if (musicData?.horario && musicTotal > 0) {
+                    const now = new Date();
+                    const parts = musicData.horario.split(":").map(Number);
+                    const startDate = new Date(now);
+                    startDate.setHours(parts[0] || 0, parts[1] || 0, parts[2] || 0, 0);
+                    musicElapsed = Math.max(0, (now.getTime() - startDate.getTime()) / 1000);
+                    if (musicElapsed > musicTotal) musicElapsed = musicTotal;
+                  }
+                  const musicPct = musicTotal > 0 ? Math.min(100, (musicElapsed / musicTotal) * 100) : 0;
+
+                  return (
+                    <>
+                      <div className="w-full group cursor-pointer relative">
+                        <div className="w-full h-1 bg-white/20 rounded-full overflow-hidden group-hover:h-2.5 transition-all">
+                          <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${musicPct}%`, backgroundColor: "hsl(var(--player-accent))" }} />
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between text-white/50 text-[11px] tabular-nums">
+                        <span>{fmtTime(musicElapsed)}</span>
+                        <span className="hidden sm:block text-white/40 text-xs truncate max-w-[300px]">
+                          {musicData?.titulo && musicData.titulo !== "Sem título" ? `♫ ${musicData.titulo} — ${musicData.artista}` : ""}
+                        </span>
+                        <span>{fmtTime(musicTotal)}</span>
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
 
               {/* Like + Volume on right */}
