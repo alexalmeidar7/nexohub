@@ -115,11 +115,11 @@ export default function PlayerSidebar({
               >
                 {/* Header */}
                 <div className="flex items-center gap-3">
-                  <div className="w-11 h-11 rounded-full overflow-hidden shrink-0" style={{ border: "2px solid rgba(255,255,255,0.15)" }}>
+                  <div className="w-11 h-11 rounded-full overflow-hidden shrink-0 bg-player-accent" style={{ border: "2px solid rgba(255,255,255,0.15)" }}>
                     {avatarUrl ? (
-                      <img src={avatarUrl} alt={userName} className="w-full h-full object-cover" />
+                      <img src={avatarUrl} alt={userName} className="w-full h-full object-contain" />
                     ) : (
-                      <img src="/avatars/usr-default.png" alt="Visitante" className="w-full h-full object-cover" />
+                      <img src="/avatars/usr-default.png" alt="Visitante" className="w-full h-full object-contain" />
                     )}
                   </div>
                   <div className="flex flex-col min-w-0">
