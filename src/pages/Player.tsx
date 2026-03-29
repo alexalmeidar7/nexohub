@@ -2440,7 +2440,7 @@ export default function PlayerPage() {
               style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.12)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)" }}
               title="Voltar ao Hub"
             >
-              <Home size={15} className="text-white/80" />
+              <Home size={15} style={{ color: "var(--player-watch-topbar-text, rgba(255,255,255,0.8))" }} />
             </button>
             <div className="flex flex-col items-center gap-0.5">
               {liveChannels.length > 1 && (
