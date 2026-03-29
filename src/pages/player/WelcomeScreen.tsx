@@ -306,11 +306,11 @@ export default function WelcomeScreen({ userName, avatarUrl, onContinue }: Welco
                   setProfile(p => ({ ...p, avatar_url: av }));
                   setAvatarPickerOpen(false);
                 }}
-                className={`w-20 h-20 rounded-full overflow-hidden border-2 transition-colors mx-auto ${
+                className={`w-20 h-20 rounded-full overflow-hidden border-2 transition-colors mx-auto bg-player-accent ${
                   profile.avatar_url === av ? "border-player-accent" : "border-transparent hover:border-player-accent-hover"
                 }`}
               >
-                <img src={av} alt="Avatar" className="w-full h-full object-cover" />
+                <img src={av} alt="Avatar" className="w-full h-full object-contain" />
               </button>
             ))}
           </div>
