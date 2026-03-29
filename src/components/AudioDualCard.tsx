@@ -138,10 +138,10 @@ export default function AudioDualCard({
 
   return (
     <div className="absolute inset-0 z-10 flex items-center justify-center overflow-hidden" style={{ paddingBottom: isMobile ? "70px" : "100px" }}>
-      {/* Background — CSS gradient from layout colors */}
+      {/* Background — transparent to let Player bg show through */}
       <div 
         className="absolute inset-0"
-        style={{ background: "var(--player-glow, radial-gradient(ellipse at 30% 50%, rgba(68,68,68,0.2) 0%, #1a1a1a 60%, #000 100%))" }}
+        style={{ background: "radial-gradient(ellipse at 30% 50%, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.5) 60%, rgba(0,0,0,0.7) 100%)" }}
       />
       {/* Wrapper */}
       <div className={`relative ${isMobile ? "flex flex-col items-center gap-2 w-[85vw] max-w-[320px]" : `flex items-center justify-center ${isTV ? "max-w-[1200px]" : "max-w-[800px]"}`}`} style={isMobile ? {} : { width: isTV ? "80vw" : "80vw", height: isTV ? "80vh" : "min(80vh, 420px)" }}>
