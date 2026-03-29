@@ -1,8 +1,57 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Palette, Save, RotateCcw, Loader2, Monitor, Play, Home, Tv, Film, LogIn } from "lucide-react";
+import { Palette, Save, RotateCcw, Loader2, Monitor, Play, Home, Tv, Film, LogIn, Image, Paintbrush } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+
+/* ── Background Config ── */
+export type BgType = "solid" | "image" | "gradient";
+export type GradientType = "linear" | "radial";
+export type GradientPosition = "top" | "top-right" | "right" | "bottom-right" | "bottom" | "bottom-left" | "left" | "top-left" | "center";
+
+export interface ScreenBgConfig {
+  bgType: BgType;
+  bgImage: string;
+  gradientType: GradientType;
+  gradientColor1: string;
+  gradientColor2: string;
+  gradientPosition: GradientPosition;
+  gradientAngle: number; // for linear
+}
+
+export const defaultScreenBg: ScreenBgConfig = {
+  bgType: "solid",
+  bgImage: "",
+  gradientType: "linear",
+  gradientColor1: "#000000",
+  gradientColor2: "#1a1a1a",
+  gradientPosition: "center",
+  gradientAngle: 135,
+};
+
+export type ScreenBgConfigs = Record<ScreenTab, ScreenBgConfig>;
+
+const positionLabels: Record<GradientPosition, string> = {
+  "top-left": "↖ Sup. Esq.", "top": "↑ Superior", "top-right": "↗ Sup. Dir.",
+  "left": "← Esquerda", "center": "● Centro", "right": "→ Direita",
+  "bottom-left": "↙ Inf. Esq.", "bottom": "↓ Inferior", "bottom-right": "↘ Inf. Dir.",
+};
+
+const positionToCSS: Record<GradientPosition, string> = {
+  "top-left": "at top left", "top": "at top center", "top-right": "at top right",
+  "left": "at center left", "center": "at center", "right": "at center right",
+  "bottom-left": "at bottom left", "bottom": "at bottom center", "bottom-right": "at bottom right",
+};
+
+export function buildBgStyle(solidColor: string, bgCfg?: ScreenBgConfig): React.CSSProperties {
+  if (!bgCfg || bgCfg.bgType === "solid") return { backgroundColor: solidColor };
+  if (bgCfg.bgType === "image" && bgCfg.bgImage) return { backgroundImage: `url(${bgCfg.bgImage})`, backgroundSize: "cover", backgroundPosition: "center" };
+  if (bgCfg.bgType === "gradient") {
+    if (bgCfg.gradientType === "linear") return { background: `linear-gradient(${bgCfg.gradientAngle}deg, ${bgCfg.gradientColor1}, ${bgCfg.gradientColor2})` };
+    return { background: `radial-gradient(ellipse ${positionToCSS[bgCfg.gradientPosition]}, ${bgCfg.gradientColor1}, ${bgCfg.gradientColor2})` };
+  }
+  return { backgroundColor: solidColor };
+}
 
 /* ── Player Color Schema ── */
 export interface PlayerColors {
