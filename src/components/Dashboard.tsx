@@ -627,8 +627,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             <div className="flex items-center gap-3 mb-2 ml-1 px-4 py-2 rounded-2xl backdrop-blur-2xl" style={{ background: `${layoutColors.headerBg}b3`, color: layoutColors.headerText, border: `1px solid ${layoutColors.borderColor}1a`, boxShadow: "0 4px 20px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.06)" }}>
               <button
                 onClick={() => setCurrentPage("dashboard")}
-                className="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold transition-all"
-                style={{ backgroundColor: layoutColors.headerText, color: layoutColors.headerBg }}
+                className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs font-bold transition-all hover:scale-105"
+                style={{ backgroundColor: layoutColors.headerText, color: layoutColors.headerBg, boxShadow: "inset 0 1px 0 rgba(255,255,255,0.15)" }}
                 onMouseEnter={e => { e.currentTarget.style.opacity = "0.85"; }}
                 onMouseLeave={e => { e.currentTarget.style.opacity = "1"; }}
               >
