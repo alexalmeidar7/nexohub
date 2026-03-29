@@ -1,8 +1,57 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Palette, Save, RotateCcw, Loader2, Monitor, Play, Home, Tv, Film, LogIn } from "lucide-react";
+import { Palette, Save, RotateCcw, Loader2, Monitor, Play, Home, Tv, Film, LogIn, Image, Paintbrush } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+
+/* ── Background Config ── */
+export type BgType = "solid" | "image" | "gradient";
+export type GradientType = "linear" | "radial";
+export type GradientPosition = "top" | "top-right" | "right" | "bottom-right" | "bottom" | "bottom-left" | "left" | "top-left" | "center";
+
+export interface ScreenBgConfig {
+  bgType: BgType;
+  bgImage: string;
+  gradientType: GradientType;
+  gradientColor1: string;
+  gradientColor2: string;
+  gradientPosition: GradientPosition;
+  gradientAngle: number; // for linear
+}
+
+export const defaultScreenBg: ScreenBgConfig = {
+  bgType: "solid",
+  bgImage: "",
+  gradientType: "linear",
+  gradientColor1: "#000000",
+  gradientColor2: "#1a1a1a",
+  gradientPosition: "center",
+  gradientAngle: 135,
+};
+
+export type ScreenBgConfigs = Record<ScreenTab, ScreenBgConfig>;
+
+const positionLabels: Record<GradientPosition, string> = {
+  "top-left": "↖ Sup. Esq.", "top": "↑ Superior", "top-right": "↗ Sup. Dir.",
+  "left": "← Esquerda", "center": "● Centro", "right": "→ Direita",
+  "bottom-left": "↙ Inf. Esq.", "bottom": "↓ Inferior", "bottom-right": "↘ Inf. Dir.",
+};
+
+const positionToCSS: Record<GradientPosition, string> = {
+  "top-left": "at top left", "top": "at top center", "top-right": "at top right",
+  "left": "at center left", "center": "at center", "right": "at center right",
+  "bottom-left": "at bottom left", "bottom": "at bottom center", "bottom-right": "at bottom right",
+};
+
+export function buildBgStyle(solidColor: string, bgCfg?: ScreenBgConfig): React.CSSProperties {
+  if (!bgCfg || bgCfg.bgType === "solid") return { backgroundColor: solidColor };
+  if (bgCfg.bgType === "image" && bgCfg.bgImage) return { backgroundImage: `url(${bgCfg.bgImage})`, backgroundSize: "cover", backgroundPosition: "center" };
+  if (bgCfg.bgType === "gradient") {
+    if (bgCfg.gradientType === "linear") return { background: `linear-gradient(${bgCfg.gradientAngle}deg, ${bgCfg.gradientColor1}, ${bgCfg.gradientColor2})` };
+    return { background: `radial-gradient(ellipse ${positionToCSS[bgCfg.gradientPosition]}, ${bgCfg.gradientColor1}, ${bgCfg.gradientColor2})` };
+  }
+  return { backgroundColor: solidColor };
+}
 
 /* ── Player Color Schema ── */
 export interface PlayerColors {
@@ -215,9 +264,9 @@ function MockupFrame({ children, label }: { children: React.ReactNode; label: st
   );
 }
 
-function LoadingMockup({ c }: { c: PlayerColors }) {
+function LoadingMockup({ c, bg }: { c: PlayerColors; bg?: ScreenBgConfig }) {
   return (
-    <div className="absolute inset-0 flex flex-col items-center justify-center gap-3" style={{ backgroundColor: c.loadingBg }}>
+    <div className="absolute inset-0 flex flex-col items-center justify-center gap-3" style={buildBgStyle(c.loadingBg, bg)}>
       <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ backgroundColor: c.loadingSpinner + "22" }}>
         <div className="w-8 h-8 rounded-full border-3 animate-spin" style={{ borderColor: c.loadingSpinner + "33", borderTopColor: c.loadingSpinner }} />
       </div>
@@ -226,9 +275,9 @@ function LoadingMockup({ c }: { c: PlayerColors }) {
   );
 }
 
-function LoginMockup({ c }: { c: PlayerColors }) {
+function LoginMockup({ c, bg }: { c: PlayerColors; bg?: ScreenBgConfig }) {
   return (
-    <div className="absolute inset-0 flex items-center justify-center" style={{ backgroundColor: c.loginBg }}>
+    <div className="absolute inset-0 flex items-center justify-center" style={buildBgStyle(c.loginBg, bg)}>
       <div className="w-[60%] max-w-[200px] rounded-2xl p-4 space-y-3" style={{ backgroundColor: c.loginCardBg, border: "1px solid rgba(255,255,255,0.08)" }}>
         <div className="w-10 h-10 mx-auto rounded-xl" style={{ background: `linear-gradient(135deg, ${c.loginButtonBg}, ${c.loginButtonBg}88)` }} />
         <p className="text-center text-[10px] font-bold" style={{ color: c.loginText }}>Bem-vindo</p>
@@ -244,9 +293,9 @@ function LoginMockup({ c }: { c: PlayerColors }) {
   );
 }
 
-function HomeMockup({ c }: { c: PlayerColors }) {
+function HomeMockup({ c, bg }: { c: PlayerColors; bg?: ScreenBgConfig }) {
   return (
-    <div className="absolute inset-0 flex flex-col" style={{ backgroundColor: c.homeBg }}>
+    <div className="absolute inset-0 flex flex-col" style={buildBgStyle(c.homeBg, bg)}>
       {/* Sidebar indicator */}
       <div className="absolute left-0 top-0 bottom-0 w-[30px] flex flex-col items-center justify-center gap-2 z-10" style={{ backgroundColor: c.homeBg + "ee" }}>
         {[Home, Tv, Film].map((Icon, i) => (
@@ -283,9 +332,9 @@ function HomeMockup({ c }: { c: PlayerColors }) {
   );
 }
 
-function LiveMockup({ c }: { c: PlayerColors }) {
+function LiveMockup({ c, bg }: { c: PlayerColors; bg?: ScreenBgConfig }) {
   return (
-    <div className="absolute inset-0 flex flex-col" style={{ backgroundColor: c.liveBg }}>
+    <div className="absolute inset-0 flex flex-col" style={buildBgStyle(c.liveBg, bg)}>
       {/* Video area */}
       <div className="flex-1 relative" style={{ background: `linear-gradient(180deg, ${c.liveBg}, ${c.liveAccent}11)` }}>
         <div className="absolute top-2 left-2">
@@ -319,9 +368,9 @@ function LiveMockup({ c }: { c: PlayerColors }) {
   );
 }
 
-function CatalogMockup({ c }: { c: PlayerColors }) {
+function CatalogMockup({ c, bg }: { c: PlayerColors; bg?: ScreenBgConfig }) {
   return (
-    <div className="absolute inset-0 flex flex-col" style={{ backgroundColor: c.catalogBg }}>
+    <div className="absolute inset-0 flex flex-col" style={buildBgStyle(c.catalogBg, bg)}>
       {/* Hero */}
       <div className="h-[40%] relative" style={{ background: `linear-gradient(135deg, ${c.catalogAccent}22, ${c.catalogBg})` }}>
         <div className="absolute bottom-2 left-3">
@@ -358,10 +407,128 @@ function CatalogMockup({ c }: { c: PlayerColors }) {
   );
 }
 
+/* ── Background Config UI ── */
+function BgConfigEditor({ config, onChange, solidColor }: { config: ScreenBgConfig; solidColor: string; onChange: (c: ScreenBgConfig) => void }) {
+  const bgTypes: { value: BgType; label: string; icon: React.ReactNode }[] = [
+    { value: "solid", label: "Cor Sólida", icon: <Paintbrush size={12} /> },
+    { value: "image", label: "Imagem", icon: <Image size={12} /> },
+    { value: "gradient", label: "Degradê", icon: <Palette size={12} /> },
+  ];
+
+  const positions: GradientPosition[] = ["top-left", "top", "top-right", "left", "center", "right", "bottom-left", "bottom", "bottom-right"];
+  const angles = [0, 45, 90, 135, 180, 225, 270, 315];
+
+  return (
+    <div className="space-y-3 p-3 rounded-xl" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 4%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)" }}>
+      <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Tipo de Fundo</span>
+      <div className="flex gap-1.5">
+        {bgTypes.map(t => (
+          <button key={t.value} onClick={() => onChange({ ...config, bgType: t.value })}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold rounded-lg transition-all"
+            style={{
+              backgroundColor: config.bgType === t.value ? "var(--layout-header-bg, #1a1a1a)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)",
+              color: config.bgType === t.value ? "var(--layout-header-text, #fff)" : "var(--layout-page-text, #1a1a1a)",
+            }}>
+            {t.icon} {t.label}
+          </button>
+        ))}
+      </div>
+
+      {config.bgType === "image" && (
+        <div className="space-y-1.5">
+          <span className="text-[10px] font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>URL da Imagem</span>
+          <input
+            value={config.bgImage}
+            onChange={(e) => onChange({ ...config, bgImage: e.target.value })}
+            placeholder="https://exemplo.com/imagem.jpg"
+            className="w-full px-3 py-2 rounded-lg text-[11px] outline-none"
+            style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 12%, transparent)" }}
+          />
+        </div>
+      )}
+
+      {config.bgType === "gradient" && (
+        <div className="space-y-3">
+          {/* Gradient type */}
+          <div className="flex gap-1.5">
+            {(["linear", "radial"] as GradientType[]).map(gt => (
+              <button key={gt} onClick={() => onChange({ ...config, gradientType: gt })}
+                className="flex-1 px-3 py-1.5 text-[10px] font-bold rounded-lg transition-all"
+                style={{
+                  backgroundColor: config.gradientType === gt ? "var(--layout-header-bg, #1a1a1a)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)",
+                  color: config.gradientType === gt ? "var(--layout-header-text, #fff)" : "var(--layout-page-text, #1a1a1a)",
+                }}>
+                {gt === "linear" ? "Linear" : "Circular (Radial)"}
+              </button>
+            ))}
+          </div>
+
+          {/* Colors */}
+          <div className="grid grid-cols-2 gap-2">
+            <PColorInput label="Cor 1" value={config.gradientColor1} onChange={(v) => onChange({ ...config, gradientColor1: v })} />
+            <PColorInput label="Cor 2" value={config.gradientColor2} onChange={(v) => onChange({ ...config, gradientColor2: v })} />
+          </div>
+
+          {/* Position / Angle */}
+          {config.gradientType === "linear" ? (
+            <div className="space-y-1.5">
+              <span className="text-[10px] font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Ângulo: {config.gradientAngle}°</span>
+              <div className="flex flex-wrap gap-1">
+                {angles.map(a => (
+                  <button key={a} onClick={() => onChange({ ...config, gradientAngle: a })}
+                    className="w-8 h-8 rounded-lg text-[9px] font-bold transition-all"
+                    style={{
+                      backgroundColor: config.gradientAngle === a ? "var(--layout-header-bg, #1a1a1a)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)",
+                      color: config.gradientAngle === a ? "var(--layout-header-text, #fff)" : "var(--layout-page-text, #1a1a1a)",
+                    }}>
+                    {a}°
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-1.5">
+              <span className="text-[10px] font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Posição do centro</span>
+              <div className="grid grid-cols-3 gap-1 w-fit">
+                {positions.map(p => (
+                  <button key={p} onClick={() => onChange({ ...config, gradientPosition: p })}
+                    className="w-8 h-8 rounded-lg text-[8px] font-bold transition-all flex items-center justify-center"
+                    style={{
+                      backgroundColor: config.gradientPosition === p ? "var(--layout-header-bg, #1a1a1a)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)",
+                      color: config.gradientPosition === p ? "var(--layout-header-text, #fff)" : "var(--layout-page-text, #1a1a1a)",
+                    }}>
+                    {positionLabels[p].split(" ")[0]}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Preview strip */}
+          <div className="h-6 rounded-lg" style={buildBgStyle(solidColor, config)} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+const defaultBgConfigs: ScreenBgConfigs = {
+  loading: { ...defaultScreenBg },
+  login: { ...defaultScreenBg },
+  home: { ...defaultScreenBg },
+  live: { ...defaultScreenBg },
+  catalog: { ...defaultScreenBg },
+};
+
+const screenBgColorKey: Record<ScreenTab, keyof PlayerColors> = {
+  loading: "loadingBg", login: "loginBg", home: "homeBg", live: "liveBg", catalog: "catalogBg",
+};
+
 /* ── Main Component ── */
 export default function PlayerLayoutCustomizer() {
   const { user } = useAuth();
   const [colors, setColors] = useState<PlayerColors>(defaultPlayerColors);
+  const [bgConfigs, setBgConfigs] = useState<ScreenBgConfigs>({ ...defaultBgConfigs });
   const [saving, setSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const [activeTab, setActiveTab] = useState<ScreenTab>("loading");
@@ -377,10 +544,22 @@ export default function PlayerLayoutCustomizer() {
         .eq("user_id", user.id)
         .maybeSingle();
       if (!active) return;
-      if (data?.dashboard_items && typeof data.dashboard_items === "object" && (data.dashboard_items as any).player_colors) {
-        const loaded = { ...defaultPlayerColors, ...(data.dashboard_items as any).player_colors };
-        setColors(loaded);
-        originalRef.current = loaded;
+      const di = data?.dashboard_items as any;
+      if (di && typeof di === "object") {
+        if (di.player_colors) {
+          const loaded = { ...defaultPlayerColors, ...di.player_colors };
+          setColors(loaded);
+          originalRef.current = loaded;
+        }
+        if (di.player_bg_configs) {
+          setBgConfigs(prev => {
+            const merged = { ...prev };
+            for (const k of Object.keys(prev) as ScreenTab[]) {
+              if (di.player_bg_configs[k]) merged[k] = { ...defaultScreenBg, ...di.player_bg_configs[k] };
+            }
+            return merged;
+          });
+        }
       }
     })();
     return () => { active = false; };
@@ -388,6 +567,11 @@ export default function PlayerLayoutCustomizer() {
 
   const updateColor = (key: keyof PlayerColors, value: string) => {
     setColors(prev => ({ ...prev, [key]: value }));
+    setHasChanges(true);
+  };
+
+  const updateBgConfig = (tab: ScreenTab, cfg: ScreenBgConfig) => {
+    setBgConfigs(prev => ({ ...prev, [tab]: cfg }));
     setHasChanges(true);
   };
 
@@ -402,7 +586,7 @@ export default function PlayerLayoutCustomizer() {
         .maybeSingle();
 
       const current = (existing?.dashboard_items && typeof existing.dashboard_items === "object") ? { ...(existing.dashboard_items as any) } : {};
-      const payload = { ...current, player_colors: colors };
+      const payload = { ...current, player_colors: colors, player_bg_configs: bgConfigs };
 
       const { error } = await supabase
         .from("user_settings")
@@ -422,6 +606,7 @@ export default function PlayerLayoutCustomizer() {
 
   const resetColors = async () => {
     setColors(defaultPlayerColors);
+    setBgConfigs({ ...defaultBgConfigs });
     if (!user) return;
     setSaving(true);
     try {
@@ -431,7 +616,7 @@ export default function PlayerLayoutCustomizer() {
         .eq("user_id", user.id)
         .maybeSingle();
       const current = (existing?.dashboard_items && typeof existing.dashboard_items === "object") ? { ...(existing.dashboard_items as any) } : {};
-      const payload = { ...current, player_colors: defaultPlayerColors };
+      const payload = { ...current, player_colors: defaultPlayerColors, player_bg_configs: defaultBgConfigs };
       await supabase.from("user_settings").upsert([{ user_id: user.id, dashboard_items: payload as any, updated_at: new Date().toISOString() }], { onConflict: "user_id" });
       toast.success("Cores do Player restauradas ao padrão.");
       originalRef.current = defaultPlayerColors;
@@ -442,11 +627,11 @@ export default function PlayerLayoutCustomizer() {
   };
 
   const mockupMap: Record<ScreenTab, React.ReactNode> = {
-    loading: <LoadingMockup c={colors} />,
-    login: <LoginMockup c={colors} />,
-    home: <HomeMockup c={colors} />,
-    live: <LiveMockup c={colors} />,
-    catalog: <CatalogMockup c={colors} />,
+    loading: <LoadingMockup c={colors} bg={bgConfigs.loading} />,
+    login: <LoginMockup c={colors} bg={bgConfigs.login} />,
+    home: <HomeMockup c={colors} bg={bgConfigs.home} />,
+    live: <LiveMockup c={colors} bg={bgConfigs.live} />,
+    catalog: <CatalogMockup c={colors} bg={bgConfigs.catalog} />,
   };
 
   return (
@@ -485,18 +670,28 @@ export default function PlayerLayoutCustomizer() {
           </MockupFrame>
         </div>
 
-        {/* Color pickers */}
-        <div>
-          <div className="flex items-center gap-2 mb-3">
-            <Palette size={14} style={{ color: "var(--layout-icon-color, #888)" }} />
-            <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>
-              Cores — {screenTabs.find(t => t.key === activeTab)?.label}
-            </span>
-          </div>
-          <div className="grid grid-cols-2 gap-2.5">
-            {screenColorKeys[activeTab].map(({ key, label }) => (
-              <PColorInput key={key} label={label} value={colors[key]} onChange={(v) => updateColor(key, v)} />
-            ))}
+        {/* Background config + Color pickers */}
+        <div className="space-y-4">
+          {/* Background type */}
+          <BgConfigEditor
+            config={bgConfigs[activeTab]}
+            solidColor={colors[screenBgColorKey[activeTab]]}
+            onChange={(cfg) => updateBgConfig(activeTab, cfg)}
+          />
+
+          {/* Color pickers */}
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <Palette size={14} style={{ color: "var(--layout-icon-color, #888)" }} />
+              <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>
+                Cores — {screenTabs.find(t => t.key === activeTab)?.label}
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-2.5">
+              {screenColorKeys[activeTab].map(({ key, label }) => (
+                <PColorInput key={key} label={label} value={colors[key]} onChange={(v) => updateColor(key, v)} />
+              ))}
+            </div>
           </div>
         </div>
       </div>
