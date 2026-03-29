@@ -2538,7 +2538,7 @@ export default function PlayerPage() {
       </div>
 
       {/* Bottom minimal controls — for live channels (non-catalog) */}
-      {!isCatalog && !isPrerollVisible && !midrollActive && playing && (
+      {!isCatalog && !isYoutube && !isPrerollVisible && !midrollActive && playing && (
         <div className="absolute left-0 right-0 bottom-0 z-50" style={{ height: "120px" }} onMouseEnter={showBar} onMouseLeave={hideBar}>
           <div
             className="absolute left-0 right-0 bottom-4 sm:bottom-8 mx-auto px-4 sm:px-8 transition-all duration-400 ease-in-out"
