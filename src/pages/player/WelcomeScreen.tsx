@@ -206,9 +206,9 @@ export default function WelcomeScreen({ userName, avatarUrl, onContinue }: Welco
           <div className="flex flex-col items-center mb-4">
             <button
               onClick={() => setAvatarPickerOpen(true)}
-              className="w-24 h-24 rounded-full overflow-hidden border-2 border-player-accent hover:border-player-accent-hover transition-colors cursor-pointer"
+              className="w-24 h-24 rounded-full overflow-hidden border-2 border-player-accent hover:border-player-accent-hover transition-colors cursor-pointer bg-player-accent"
             >
-              <img src={profile.avatar_url || "/avatars/usr-default.png"} alt="Avatar" className="w-full h-full object-cover" />
+              <img src={profile.avatar_url || "/avatars/usr-default.png"} alt="Avatar" className="w-full h-full object-contain" />
             </button>
             <span className="text-player-muted-foreground text-xs mt-1">clique para alterar</span>
           </div>
