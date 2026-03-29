@@ -1541,6 +1541,8 @@ export default function PlayerPage() {
     const nextIndex = canais.findIndex((c) => c.id === nextChannel.id);
     if (nextIndex < 0) return;
 
+    setChannelNavDir(dir);
+    setChannelAnimKey(prev => prev + 1);
     setCurrentIndex(nextIndex);
 
     // Stop any playing audio/video when switching channels — full cleanup
