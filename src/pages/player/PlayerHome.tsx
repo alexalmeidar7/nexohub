@@ -10,6 +10,7 @@ import PlayerSidebar from "@/components/player/PlayerSidebar";
 const MiniPlayerWidget = lazy(() => import("@/components/player/MiniPlayerWidget"));
 const PlayerGradeDialog = lazy(() => import("@/components/player/PlayerGradeDialog"));
 const CatalogDetailInline = lazy(() => import("@/components/player/CatalogDetailInline"));
+const ProfileDialog = lazy(() => import("@/components/player/ProfileDialog"));
 
 interface Channel {
   id: string;
@@ -953,6 +954,9 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   const [channelName, setChannelName] = useState("");
   const [profileName, setProfileName] = useState("");
   const [profileAvatar, setProfileAvatar] = useState<string | null>(null);
+  const [profileEmail, setProfileEmail] = useState("");
+  const [profileCity, setProfileCity] = useState("");
+  const [profileDialogOpen, setProfileDialogOpen] = useState(false);
   const [programas, setProgramas] = useState<Programa[]>([]);
   const [dataLoaded, setDataLoaded] = useState(false);
   const [watchHistory, setWatchHistory] = useState<any[]>([]);
@@ -1096,9 +1100,11 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   // Fetch profile
   useEffect(() => {
     if (!user) return;
-    supabase.from("profiles").select("nome, avatar_url").eq("user_id", user.id).single().then(({ data }) => {
+    supabase.from("profiles").select("nome, avatar_url, email, cidade, estado").eq("user_id", user.id).single().then(({ data }) => {
       if (data?.nome) setProfileName(data.nome);
       setProfileAvatar(data?.avatar_url && data.avatar_url.trim() !== '' ? data.avatar_url : '/avatars/usr-default.png');
+      if (data?.email) setProfileEmail(data.email);
+      setProfileCity([data?.cidade, data?.estado].filter(Boolean).join(", "));
     });
   }, [user]);
 
@@ -1314,10 +1320,13 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
         activeKey={visibleSection === "catalog-detail" ? "content" : activeSection}
         avatarUrl={profileAvatar}
         userName={userName}
+        userEmail={profileEmail}
+        userCity={profileCity}
         showLogout={!!user}
         showSignup={!user && !!onBackToAccess}
         onLogout={handleSignOut}
         onSignup={onBackToAccess}
+        onEditProfile={user ? () => setProfileDialogOpen(true) : undefined}
         loading={!dataLoaded}
       />
 
@@ -1619,6 +1628,25 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
         <Suspense fallback={null}>
           <MiniPlayerWidget data={miniPlayerData} onClose={() => { clearMiniPlayerData(); setMiniPlayerData(null); }} />
         </Suspense>
+      )}
+
+      {/* Profile edit dialog */}
+      {profileDialogOpen && user && (
+        <ProfileDialog
+          user={user}
+          profileName={profileName}
+          profileEmail={profileEmail}
+          profileCity={profileCity}
+          profileAvatar={profileAvatar}
+          onClose={() => setProfileDialogOpen(false)}
+          onSaved={(data) => {
+            if (data.nome) setProfileName(data.nome);
+            if (data.email) setProfileEmail(data.email);
+            setProfileCity([data.cidade, data.estado].filter(Boolean).join(", "));
+            if (data.avatar_url) setProfileAvatar(data.avatar_url);
+            setProfileDialogOpen(false);
+          }}
+        />
       )}
     </div>
   );
