@@ -495,6 +495,23 @@ export default function PlayerPage() {
   const warmupAbortRef = useRef<AbortController | null>(null);
   const isPrerollVisible = Boolean((prerollUrl || (prerollMediaType === "youtube" && prerollYoutubeUrl)) && (!prerollDone || prerollShowing));
 
+  // Top bar auto-hide logic
+  const [topBarVisible, setTopBarVisible] = useState(true);
+  const topBarTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const resetTopBarTimer = useCallback(() => {
+    setTopBarVisible(true);
+    if (topBarTimerRef.current) clearTimeout(topBarTimerRef.current);
+    topBarTimerRef.current = setTimeout(() => setTopBarVisible(false), 2000);
+  }, []);
+
+  useEffect(() => {
+    if (playing && !isCatalog && !isYoutube) {
+      resetTopBarTimer();
+    }
+    return () => { if (topBarTimerRef.current) clearTimeout(topBarTimerRef.current); };
+  }, [playing, isCatalog, isYoutube, resetTopBarTimer]);
+
   // Mid-roll state for YouTube
   const [midrollActive, setMidrollActive] = useState(false);
   const [midrollResumeTime, setMidrollResumeTime] = useState(0);
@@ -2393,9 +2410,22 @@ export default function PlayerPage() {
         </div>
       )}
 
-      {/* Top Header Bar — always visible for live channels */}
+      {/* Top hover zone — triggers top bar visibility */}
       {!isCatalog && !isYoutube && !isPrerollVisible && !midrollActive && playing && (
-        <div className="absolute top-0 left-0 right-0 z-50 flex items-center gap-0 px-3 sm:px-6 py-2.5 sm:py-3 animate-fade-in" style={{ backgroundColor: "rgba(0,0,0,0.85)", animation: "slideDownIn 0.5s ease-out" }}>
+        <div
+          className="absolute top-0 left-0 right-0 z-[51] h-14"
+          onMouseEnter={resetTopBarTimer}
+        />
+      )}
+
+      {/* Top Header Bar — auto-hides after 2s for live channels */}
+      {!isCatalog && !isYoutube && !isPrerollVisible && !midrollActive && playing && (
+        <div
+          className="absolute top-0 left-0 right-0 z-50 flex items-center gap-0 px-3 sm:px-6 py-2.5 sm:py-3 transition-all duration-500 ease-in-out"
+          style={{ backgroundColor: "rgba(0,0,0,0.85)", opacity: topBarVisible ? 1 : 0, pointerEvents: topBarVisible ? "auto" : "none", transform: topBarVisible ? "translateY(0)" : "translateY(-100%)" }}
+          onMouseEnter={() => { setTopBarVisible(true); if (topBarTimerRef.current) clearTimeout(topBarTimerRef.current); }}
+          onMouseLeave={resetTopBarTimer}
+        >
           {/* Home + Channel nav + name */}
           <div className="flex items-center gap-2 sm:gap-3 shrink-0 pr-4 sm:pr-6 border-r border-white/10">
             <button
