@@ -933,6 +933,13 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
           <LayoutCustomizer />
         </Suspense>
       </CollapsibleBox>}
+
+      {/* Box 4: Player Layout */}
+      {(section === "all" || section === "player") && <CollapsibleBox title="Layout do Player — Cores e Personalização" icon={<Tv size={16} style={{ opacity: 0.8 }} />}>
+        <Suspense fallback={<div className="flex items-center gap-2 text-xs py-8 justify-center" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}><Loader2 size={16} className="animate-spin" /> Carregando...</div>}>
+          <PlayerLayoutCustomizer />
+        </Suspense>
+      </CollapsibleBox>}
         </div>
       </div>
     </div>
