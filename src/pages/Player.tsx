@@ -349,6 +349,7 @@ export default function PlayerPage() {
    const [barVisible, setBarVisible] = useState(true);
    const [backBtnVisible, setBackBtnVisible] = useState(false);
   const [pageFadeOut, setPageFadeOut] = useState(false);
+  const [musicTick, setMusicTick] = useState(0);
   const [musicData, setMusicData] = useState<MusicData | null>(() => {
     try {
       const stored = localStorage.getItem(MUSIC_DATA_KEY);
