@@ -2387,6 +2387,8 @@ export default function PlayerPage() {
             whatsappPhone={whatsappPhone}
             onOpenChat={() => setChatOpen(true)}
             userId={user?.id || publicUserId}
+            spectrumStyle={spectrumStyle}
+            onSpectrumStyleChange={handleSpectrumStyleChange}
           />
         </Suspense>
       )}
