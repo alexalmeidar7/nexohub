@@ -607,11 +607,12 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
           <div
             className="relative rounded-2xl p-6 max-w-md w-full mx-4 max-h-[80vh] overflow-y-auto"
             style={{
-              background: "rgba(0, 0, 0, 0.95)",
-              backdropFilter: "blur(24px)",
-              border: "1px solid rgba(255,255,255,0.15)",
-              boxShadow: "0 20px 60px rgba(0,0,0,0.5)",
-            }}
+               background: "rgba(15, 15, 15, 0.75)",
+               backdropFilter: "blur(40px) saturate(1.8)",
+               WebkitBackdropFilter: "blur(40px) saturate(1.8)",
+               border: "1px solid rgba(255,255,255,0.12)",
+               boxShadow: "0 24px 80px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(0,0,0,0.15)",
+             }}
             onClick={e => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4">
