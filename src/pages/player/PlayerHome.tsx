@@ -215,20 +215,6 @@ function HeroBanner({
             <span className="inline-block w-2 h-2 rounded-full bg-white animate-pulse" />
             {activeSlide?.label || "ao vivo"}
           </span>
-          {(channelIsHd || channelIsStereo) && (
-            <span className="flex items-center gap-2">
-              {channelIsHd && (
-                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wide text-white/60 border border-white/20" style={{ fontFamily: "monospace" }}>
-                  1080P <span className="text-[7px] font-extrabold tracking-widest ml-0.5 px-1 rounded" style={{ background: "hsla(var(--player-accent) / 0.3)", color: "hsl(var(--player-accent))" }}>FULL HD</span>
-                </span>
-              )}
-              {channelIsStereo && (
-                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wide text-white/40 border border-white/15">
-                  STEREO
-                </span>
-              )}
-            </span>
-          )}
         </div>
         {/* Program name */}
         {displayProgram ? (
@@ -281,6 +267,16 @@ function HeroBanner({
                     </span>
                   );
                 })()}
+                {channelIsHd && (
+                  <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wide text-white/60 border border-white/20" style={{ fontFamily: "monospace" }}>
+                    1080P <span className="text-[7px] font-extrabold tracking-widest ml-0.5 px-1 rounded" style={{ background: "hsla(var(--player-accent) / 0.3)", color: "hsl(var(--player-accent))" }}>FULL HD</span>
+                  </span>
+                )}
+                {channelIsStereo && (
+                  <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wide text-white/40 border border-white/15">
+                    STEREO
+                  </span>
+                )}
               </div>
             )}
           </>
