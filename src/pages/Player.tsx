@@ -2380,8 +2380,8 @@ export default function PlayerPage() {
         </Suspense>
       )}
 
-      {/* Floating album cover — centered on screen for audio/video channels */}
-      {(isAudio || isVideo) && playing && musicData?.capa && musicData.titulo !== "Sem título" && (
+      {/* Floating album cover — centered on screen for audio channels only */}
+      {isAudio && playing && musicData?.capa && musicData.titulo !== "Sem título" && (
         <div className="absolute inset-0 z-[2] flex items-center justify-center pointer-events-none">
           <img
             key={musicData.capa}
