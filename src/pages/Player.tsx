@@ -2572,6 +2572,10 @@ export default function PlayerPage() {
                 >
                   {playing ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" className="ml-0.5" />}
                 </button>
+                {/* Music cover */}
+                {musicData?.capa && (
+                  <img src={musicData.capa} alt="" className="w-10 h-10 sm:w-11 sm:h-11 rounded-lg object-cover shrink-0 shadow-lg" />
+                )}
                 {/* Music title + artist */}
                 <div className="flex flex-col min-w-0">
                   <span className="text-white text-sm sm:text-base font-bold leading-tight truncate max-w-[300px] sm:max-w-[450px]">
