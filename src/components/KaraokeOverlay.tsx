@@ -290,6 +290,9 @@ export default function KaraokeOverlay({
 
   if (!visible) return null;
 
+  // Song ended — hide lyrics until next song triggers a re-fetch
+  if (songEnded && !loading) return null;
+
   const line1Idx = currentLineIdx >= 0 ? currentLineIdx : 0;
   const line2Idx = line1Idx + 1;
   const line1 = lines[line1Idx];
