@@ -2840,7 +2840,7 @@ export default function PlayerPage() {
               >
                 <div data-seek-tooltip className="absolute -top-6 text-[10px] font-bold text-white bg-black/90 px-1.5 py-0.5 rounded pointer-events-none -translate-x-1/2 opacity-0 transition-opacity z-10 whitespace-nowrap" />
                 <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden group-hover:h-3 transition-all relative">
-                  <div className="h-full rounded-full transition-all duration-300" style={{ width: `${ytProgressPct}%`, backgroundColor: "hsl(var(--player-accent))" }} />
+                  <div className="h-full rounded-full transition-all duration-300" style={{ width: `${ytProgressPct}%`, backgroundColor: "var(--player-watch-scrubber, hsl(var(--player-accent)))" }} />
                 </div>
                 {midrollBreakPoints.map((bp, i) => (
                   <div
