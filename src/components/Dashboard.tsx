@@ -487,12 +487,12 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         <div
           className="flex items-center px-2 lg:px-2 xl:px-5 py-2 xl:py-2.5 flex-shrink min-w-0"
           style={{
-            background: `${layoutColors.navBg}d9`,
-            backdropFilter: "blur(20px) saturate(1.6)",
-            WebkitBackdropFilter: "blur(20px) saturate(1.6)",
+            background: `${layoutColors.navBg}b3`,
+            backdropFilter: "blur(32px) saturate(1.8)",
+            WebkitBackdropFilter: "blur(32px) saturate(1.8)",
             borderRadius: "16px",
-            border: `1px solid ${layoutColors.borderColor}33`,
-            boxShadow: "0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.06)",
+            border: `1px solid ${layoutColors.borderColor}22`,
+            boxShadow: "0 8px 32px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(0,0,0,0.15)",
           }}
         >
           <img src={logoMenu} alt="NexoHUB" className="h-4 mr-2 xl:mr-5 flex-shrink-0 opacity-90" />
