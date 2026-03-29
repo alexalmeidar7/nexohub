@@ -510,9 +510,12 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                   key={item.id}
                   className={`relative group rounded-2xl animate-fade-in flex flex-col ${isDragging ? "opacity-40 scale-95" : ""}`}
                   style={{
-                    background: "var(--layout-widget-bg)",
-                    border: isDragOver ? "2px solid var(--layout-button-bg)" : "1px solid color-mix(in srgb, var(--layout-border-color) 30%, transparent)",
-                    boxShadow: "0 4px 20px color-mix(in srgb, var(--layout-border-color) 25%, transparent)",
+                    background: "color-mix(in srgb, var(--layout-widget-bg) 70%, transparent)",
+                    backdropFilter: "blur(32px) saturate(1.6)",
+                    WebkitBackdropFilter: "blur(32px) saturate(1.6)",
+                    border: isDragOver ? "2px solid var(--layout-button-bg)" : "1px solid color-mix(in srgb, var(--layout-border-color) 20%, transparent)",
+                    boxShadow: "0 8px 32px color-mix(in srgb, var(--layout-border-color) 30%, transparent), inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(0,0,0,0.08)",
+                    borderRadius: "20px",
                     minHeight: item.widgetType === "agenda" ? "200px" : "150px",
                     maxHeight: item.widgetType === "agenda" ? "240px" : "none",
                     overflow: item.widgetType === "player" ? "visible" : "hidden",
