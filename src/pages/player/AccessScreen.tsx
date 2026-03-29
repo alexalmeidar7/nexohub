@@ -32,8 +32,8 @@ export default function AccessScreen({ logoUrl, onLoginSuccess, onGuest }: Acces
       <div className="flex items-start gap-8">
         {/* Guest option (left) */}
         <button onClick={onGuest} className="flex flex-col items-center gap-4 group">
-          <div className="w-32 h-32 rounded-full bg-player-accent-soft flex items-center justify-center transition-transform group-hover:scale-105 overflow-hidden">
-            <img src="/avatars/usr-default.png" alt="Visitante" className="w-full h-full object-cover" />
+          <div className="w-32 h-32 rounded-full bg-player-accent flex items-center justify-center transition-transform group-hover:scale-105 overflow-hidden">
+            <img src="/avatars/usr-default.png" alt="Visitante" className="w-full h-full object-contain" />
           </div>
           <p className="text-player-muted-foreground text-xs text-center max-w-[10rem] leading-relaxed">cadastre-se ou faça login para ter uma experiência incrível com a Positiva!</p>
           <div className="flex items-center gap-2">
